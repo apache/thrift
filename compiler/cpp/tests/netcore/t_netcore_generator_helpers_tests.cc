@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -36,7 +36,8 @@ TEST_CASE("t_netstd_generator::netstd_type_usings() without option wcf should re
                                 "using System.Threading;\n"
                                 "using System.Threading.Tasks;\n"
                                 "using Thrift;\n"
-                                "using Thrift.Collections;\n" + endl;
+                                "using Thrift.Collections;\n"
+                                "\n";
 
     t_program* program = new t_program(path, name);
     t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
@@ -65,7 +66,8 @@ TEST_CASE("t_netstd_generator::netstd_type_usings() with option wcf should retur
                                     "using Thrift;\n"
                                     "using Thrift.Collections;\n"
                                     "using System.ServiceModel;\n"
-                                    "using System.Runtime.Serialization;\n" + endl;
+                                    "using System.Runtime.Serialization;\n"
+                                    "\n";
 
     t_program* program = new t_program(path, name);
     t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);

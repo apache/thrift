@@ -39,9 +39,6 @@ using std::vector;
 using std::stack;
 using std::set;
 
-static const string endl = "\n";
-static const string quot = "\"";
-
 static const string default_ns_prefix = "http://thrift.apache.org/xml/ns/";
 
 /**
@@ -196,7 +193,7 @@ void t_xml_generator::write_xml_comment(string msg) {
   close_top_element();
   // TODO: indent any EOLs that may occur with msg
   // TODO: proper msg escaping needed?
-  f_xml_ << indent() << "<!-- " << msg << " -->"  << endl;
+  f_xml_ << indent() << "<!-- " << msg << " -->"  << '\n';
   top_element_is_empty = false;
 }
 
@@ -204,7 +201,7 @@ void t_xml_generator::close_top_element() {
   if( top_element_is_open) {
     top_element_is_open = false;
     if (elements_.size() > 0 && top_element_is_empty) {
-      f_xml_ << ">" << endl;
+      f_xml_ << ">" << '\n';
     }
   }
 }
@@ -224,9 +221,9 @@ void t_xml_generator::write_element_start(string name) {
 void t_xml_generator::write_element_end() {
   indent_down();
   if (top_element_is_empty && top_element_is_open) {
-    f_xml_ << " />" << endl;
+    f_xml_ << " />" << '\n';
   } else {
-    f_xml_ << indent() << "</" << elements_.top() << ">" << endl;
+    f_xml_ << indent() << "</" << elements_.top() << ">" << '\n';
   }
   top_element_is_empty = false;
   elements_.pop();
@@ -248,7 +245,7 @@ void t_xml_generator::write_element_string(string name, string val) {
   top_element_is_empty = false;
   f_xml_ << indent()
     << "<" << name << ">" << escape_xml_string(val) << "</" << name << ">"
-    << endl;
+    << '\n';
 }
 
 string t_xml_generator::escape_xml_string(const string& input) {
@@ -511,7 +508,7 @@ void t_xml_generator::write_const_value(t_const_value* value) {
 
   default:
     indent_up();
-    f_xml_ << indent() << "<null />" << endl;
+    f_xml_ << indent() << "<null />" << '\n';
     indent_down();
     break;
   }

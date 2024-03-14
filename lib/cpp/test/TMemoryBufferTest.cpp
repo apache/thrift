@@ -36,8 +36,6 @@ using apache::thrift::protocol::TBinaryProtocol;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TTransportException;
 using std::shared_ptr;
-using std::cout;
-using std::endl;
 using std::string;
 
 BOOST_AUTO_TEST_CASE(test_read_write_grow) {

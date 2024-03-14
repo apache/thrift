@@ -26,8 +26,6 @@ using std::string;
 using std::vector;
 using std::map;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * LUA code generator.
  *
@@ -190,7 +188,7 @@ void t_lua_generator::init_generator() {
   f_consts_ << autogen_comment() << lua_includes();
   f_types_ << autogen_comment() << lua_includes();
   if (gen_requires_) {
-    f_types_ << endl << "require '" << cur_namespace << "constants'";
+    f_types_ << '\n' << "require '" << cur_namespace << "constants'";
   }
 }
 
@@ -207,7 +205,7 @@ void t_lua_generator::generate_typedef(t_typedef* ttypedef) {
   if (ttypedef->get_type()->get_name().empty()) {
     return;
   }
-  f_types_ << endl << endl << indent() << ttypedef->get_symbolic() << " = "
+  f_types_ << '\n' << '\n' << indent() << ttypedef->get_symbolic() << " = "
            << ttypedef->get_type()->get_name();
 }
 
@@ -215,7 +213,7 @@ void t_lua_generator::generate_typedef(t_typedef* ttypedef) {
  * Generates code for an enumerated type (table)
  */
 void t_lua_generator::generate_enum(t_enum* tenum) {
-  f_types_ << endl << endl << tenum->get_name() << " = {" << endl;
+  f_types_ << '\n' << '\n' << tenum->get_name() << " = {" << '\n';
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -227,7 +225,7 @@ void t_lua_generator::generate_enum(t_enum* tenum) {
     if (c_iter != constants.end()) {
       f_types_ << ",";
     }
-    f_types_ << endl;
+    f_types_ << '\n';
   }
   f_types_ << "}";
 }
@@ -240,7 +238,7 @@ void t_lua_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_consts_ << endl << endl << name << " = ";
+  f_consts_ << '\n' << '\n' << name << " = ";
   f_consts_ << render_const_value(type, value);
 }
 
@@ -281,7 +279,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << type->get_name() << " = {" << endl;
+    out << type->get_name() << " = {" << '\n';
     indent_up();
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -312,7 +310,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
     out << "}";
     indent_down();
   } else if (type->is_map()) {
-    out << type->get_name() << "{" << endl;
+    out << type->get_name() << "{" << '\n';
     indent_up();
 
     t_type* ktype = ((t_map*)type)->get_key_type();
@@ -327,7 +325,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
       if (v_iter != val.end()) {
         out << ",";
       }
-      out << endl;
+      out << '\n';
     }
     indent_down();
     indent(out) << "}";
@@ -338,7 +336,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
     } else {
       etype = ((t_set*)type)->get_elem_type();
     }
-    out << type->get_name() << " = {" << endl;
+    out << type->get_name() << " = {" << '\n';
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end();) {
@@ -351,7 +349,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
       }
       ++v_iter;
       if (v_iter != val.end()) {
-        out << "," << endl;
+        out << "," << '\n';
       }
     }
     out << "}";
@@ -382,15 +380,15 @@ void t_lua_generator::generate_lua_struct_definition(ostream& out,
   vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
 
-  indent(out) << endl << endl << tstruct->get_name();
+  indent(out) << '\n' << '\n' << tstruct->get_name();
   if (is_exception) {
-    out << " = TException:new{" << endl << indent() << "  __type = '" << tstruct->get_name() << "'";
+    out << " = TException:new{" << '\n' << indent() << "  __type = '" << tstruct->get_name() << "'";
     if (members.size() > 0) {
       out << ",";
     }
-    out << endl;
+    out << '\n';
   } else {
-    out << " = __TObject:new{" << endl;
+    out << " = __TObject:new{" << '\n';
   }
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end();) {
@@ -398,12 +396,12 @@ void t_lua_generator::generate_lua_struct_definition(ostream& out,
     out << (*m_iter)->get_name();
     ++m_iter;
     if (m_iter != members.end()) {
-      out << "," << endl;
+      out << "," << '\n';
     }
   }
   indent_down();
   indent(out);
-  out << endl << "}";
+  out << '\n' << "}";
 
   generate_lua_struct_reader(out, tstruct);
   generate_lua_struct_writer(out, tstruct);
@@ -417,48 +415,48 @@ void t_lua_generator::generate_lua_struct_reader(ostream& out, t_struct* tstruct
   vector<t_field*>::const_iterator f_iter;
 
   // function
-  indent(out) << endl << endl << "function " << tstruct->get_name() << ":read(iprot)" << endl;
+  indent(out) << '\n' << '\n' << "function " << tstruct->get_name() << ":read(iprot)" << '\n';
   indent_up();
 
-  indent(out) << "iprot:readStructBegin()" << endl;
+  indent(out) << "iprot:readStructBegin()" << '\n';
 
   // while: Read in fields
-  indent(out) << "while true do" << endl;
+  indent(out) << "while true do" << '\n';
   indent_up();
 
   // if: Check what to read
-  indent(out) << "local fname, ftype, fid = iprot:readFieldBegin()" << endl;
-  indent(out) << "if ftype == TType.STOP then" << endl;
+  indent(out) << "local fname, ftype, fid = iprot:readFieldBegin()" << '\n';
+  indent(out) << "if ftype == TType.STOP then" << '\n';
   indent_up();
-  indent(out) << "break" << endl;
+  indent(out) << "break" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     indent_down();
-    indent(out) << "elseif fid == " << (*f_iter)->get_key() << " then" << endl;
+    indent(out) << "elseif fid == " << (*f_iter)->get_key() << " then" << '\n';
     indent_up();
-    indent(out) << "if ftype == " << type_to_enum((*f_iter)->get_type()) << " then" << endl;
+    indent(out) << "if ftype == " << type_to_enum((*f_iter)->get_type()) << " then" << '\n';
     indent_up();
 
     // Read field contents
     generate_deserialize_field(out, *f_iter, false, "self.");
 
     indent_down();
-    indent(out) << "else" << endl;
-    indent(out) << "  iprot:skip(ftype)" << endl;
-    indent(out) << "end" << endl;
+    indent(out) << "else" << '\n';
+    indent(out) << "  iprot:skip(ftype)" << '\n';
+    indent(out) << "end" << '\n';
   }
 
   // end if
   indent_down();
-  indent(out) << "else" << endl;
-  indent(out) << "  iprot:skip(ftype)" << endl;
-  indent(out) << "end" << endl;
-  indent(out) << "iprot:readFieldEnd()" << endl;
+  indent(out) << "else" << '\n';
+  indent(out) << "  iprot:skip(ftype)" << '\n';
+  indent(out) << "end" << '\n';
+  indent(out) << "iprot:readFieldEnd()" << '\n';
 
   // end while
   indent_down();
-  indent(out) << "end" << endl;
-  indent(out) << "iprot:readStructEnd()" << endl;
+  indent(out) << "end" << '\n';
+  indent(out) << "iprot:readStructEnd()" << '\n';
 
   // end function
   indent_down();
@@ -474,28 +472,28 @@ void t_lua_generator::generate_lua_struct_writer(ostream& out, t_struct* tstruct
   vector<t_field*>::const_iterator f_iter;
 
   // function
-  indent(out) << endl << endl << "function " << tstruct->get_name() << ":write(oprot)" << endl;
+  indent(out) << '\n' << '\n' << "function " << tstruct->get_name() << ":write(oprot)" << '\n';
   indent_up();
 
-  indent(out) << "oprot:writeStructBegin('" << tstruct->get_name() << "')" << endl;
+  indent(out) << "oprot:writeStructBegin('" << tstruct->get_name() << "')" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     // To check element of self whether nil or not.
     // avoid the value(false) of BOOL is lost.
-    indent(out) << "if self." << (*f_iter)->get_name() << " ~= nil then" << endl;
+    indent(out) << "if self." << (*f_iter)->get_name() << " ~= nil then" << '\n';
     indent_up();
     indent(out) << "oprot:writeFieldBegin('" << (*f_iter)->get_name() << "', "
                 << type_to_enum((*f_iter)->get_type()) << ", " << (*f_iter)->get_key() << ")"
-                << endl;
+                << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "self.");
 
-    indent(out) << "oprot:writeFieldEnd()" << endl;
+    indent(out) << "oprot:writeFieldEnd()" << '\n';
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
   }
-  indent(out) << "oprot:writeFieldStop()" << endl;
-  indent(out) << "oprot:writeStructEnd()" << endl;
+  indent(out) << "oprot:writeFieldStop()" << '\n';
+  indent(out) << "oprot:writeStructEnd()" << '\n';
 
   // end function
   indent_down();
@@ -518,15 +516,15 @@ void t_lua_generator::generate_service(t_service* tservice) {
   // Headers
   f_service_ << autogen_comment() << lua_includes();
   if (gen_requires_) {
-    f_service_ << endl << "require '" << cur_ns << "ttypes'" << endl;
+    f_service_ << '\n' << "require '" << cur_ns << "ttypes'" << '\n';
 
     if (tservice->get_extends() != nullptr) {
       f_service_ << "require '" << get_namespace(tservice->get_extends()->get_program())
-                 << tservice->get_extends()->get_name() << "'" << endl;
+                 << tservice->get_extends()->get_name() << "'" << '\n';
     }
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   generate_service_client(f_service_, tservice);
   generate_service_interface(f_service_, tservice);
@@ -544,11 +542,11 @@ void t_lua_generator::generate_service_interface(ostream& out, t_service* tservi
   // Interface object definition
   out << classname << " = ";
   if (extends_s) {
-    out << extends_s->get_name() << "Iface:new{" << endl;
+    out << extends_s->get_name() << "Iface:new{" << '\n';
   } else {
-    out << "__TObject:new{" << endl;
+    out << "__TObject:new{" << '\n';
   }
-  out << "  __type = '" << classname << "'" << endl << "}" << endl << endl;
+  out << "  __type = '" << classname << "'" << '\n' << "}" << '\n' << '\n';
 }
 
 void t_lua_generator::generate_service_client(ostream& out, t_service* tservice) {
@@ -562,7 +560,7 @@ void t_lua_generator::generate_service_client(ostream& out, t_service* tservice)
   } else {
     out << "__TClient";
   }
-  out << ", {" << endl << "  __type = '" << classname << "'" << endl << "})" << endl;
+  out << ", {" << '\n' << "  __type = '" << classname << "'" << '\n' << "})" << '\n';
 
   // Send/Recv functions
   vector<t_function*> functions = tservice->get_functions();
@@ -572,28 +570,28 @@ void t_lua_generator::generate_service_client(ostream& out, t_service* tservice)
     string funcname = (*f_iter)->get_name();
 
     // Wrapper function
-    indent(out) << endl << "function " << classname << ":" << sig << endl;
+    indent(out) << '\n' << "function " << classname << ":" << sig << '\n';
     indent_up();
 
-    indent(out) << "self:send_" << sig << endl << indent();
+    indent(out) << "self:send_" << sig << '\n' << indent();
     if (!(*f_iter)->is_oneway()) {
       if (!(*f_iter)->get_returntype()->is_void()) {
         out << "return ";
       }
-      out << "self:recv_" << sig << endl;
+      out << "self:recv_" << sig << '\n';
     }
 
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
 
     // Send function
-    indent(out) << endl << "function " << classname << ":send_" << sig << endl;
+    indent(out) << '\n' << "function " << classname << ":send_" << sig << '\n';
     indent_up();
 
     indent(out) << "self.oprot:writeMessageBegin('" << funcname << "', "
                 << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL")
-                << ", self._seqid)" << endl;
-    indent(out) << "local args = " << funcname << "_args:new{}" << endl;
+                << ", self._seqid)" << '\n';
+    indent(out) << "local args = " << funcname << "_args:new{}" << '\n';
 
     // Set the args
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
@@ -603,60 +601,60 @@ void t_lua_generator::generate_service_client(ostream& out, t_service* tservice)
       if ((*fld_iter)->get_value() != nullptr) {
         // Insert default value for nil arguments
         t_type* type = get_true_type((*fld_iter)->get_type());
-        indent(out) << "if " << argname << " ~= nil then" << endl;
+        indent(out) << "if " << argname << " ~= nil then" << '\n';
         indent_up();
-        indent(out) << "args." << argname << " = " << argname << endl;
+        indent(out) << "args." << argname << " = " << argname << '\n';
         indent_down();
-        indent(out) << "else" << endl;
+        indent(out) << "else" << '\n';
         indent_up();
-        indent(out) << "args." << argname << " = " << render_const_value(type, (*fld_iter)->get_value()) << endl;
+        indent(out) << "args." << argname << " = " << render_const_value(type, (*fld_iter)->get_value()) << '\n';
         indent_down();
-        indent(out) << "end" << endl;
+        indent(out) << "end" << '\n';
       } else {
-        indent(out) << "args." << argname << " = " << argname << endl;
+        indent(out) << "args." << argname << " = " << argname << '\n';
       }
     }
 
-    indent(out) << "args:write(self.oprot)" << endl;
-    indent(out) << "self.oprot:writeMessageEnd()" << endl;
-    indent(out) << "self.oprot.trans:flush()" << endl;
+    indent(out) << "args:write(self.oprot)" << '\n';
+    indent(out) << "self.oprot:writeMessageEnd()" << '\n';
+    indent(out) << "self.oprot.trans:flush()" << '\n';
 
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
 
     // Recv function
     if (!(*f_iter)->is_oneway()) {
-      indent(out) << endl << "function " << classname << ":recv_" << sig << endl;
+      indent(out) << '\n' << "function " << classname << ":recv_" << sig << '\n';
       indent_up();
 
       out << indent() << "local fname, mtype, rseqid = self.iprot:"
-          << "readMessageBegin()" << endl << indent() << "if mtype == TMessageType.EXCEPTION then"
-          << endl << indent() << "  local x = TApplicationException:new{}" << endl << indent()
-          << "  x:read(self.iprot)" << endl << indent() << "  self.iprot:readMessageEnd()" << endl
-          << indent() << "  error(x)" << endl << indent() << "end" << endl << indent()
-          << "local result = " << funcname << "_result:new{}" << endl << indent()
-          << "result:read(self.iprot)" << endl << indent() << "self.iprot:readMessageEnd()" << endl;
+          << "readMessageBegin()" << '\n' << indent() << "if mtype == TMessageType.EXCEPTION then"
+          << '\n' << indent() << "  local x = TApplicationException:new{}" << '\n' << indent()
+          << "  x:read(self.iprot)" << '\n' << indent() << "  self.iprot:readMessageEnd()" << '\n'
+          << indent() << "  error(x)" << '\n' << indent() << "end" << '\n' << indent()
+          << "local result = " << funcname << "_result:new{}" << '\n' << indent()
+          << "result:read(self.iprot)" << '\n' << indent() << "self.iprot:readMessageEnd()" << '\n';
 
       // Return the result if it's not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        out << indent() << "if result.success ~= nil then" << endl << indent() << "  return result.success"
-            << endl;
+        out << indent() << "if result.success ~= nil then" << '\n' << indent() << "  return result.success"
+            << '\n';
 
         // Throw custom exceptions
         const std::vector<t_field*>& xf = (*f_iter)->get_xceptions()->get_members();
         vector<t_field*>::const_iterator x_iter;
         for (x_iter = xf.begin(); x_iter != xf.end(); ++x_iter) {
-          out << indent() << "elseif result." << (*x_iter)->get_name() << " then" << endl
-              << indent() << "  error(result." << (*x_iter)->get_name() << ")" << endl;
+          out << indent() << "elseif result." << (*x_iter)->get_name() << " then" << '\n'
+              << indent() << "  error(result." << (*x_iter)->get_name() << ")" << '\n';
         }
 
-        out << indent() << "end" << endl << indent()
+        out << indent() << "end" << '\n' << indent()
             << "error(TApplicationException:new{errorCode = "
-            << "TApplicationException.MISSING_RESULT})" << endl;
+            << "TApplicationException.MISSING_RESULT})" << '\n';
       }
 
       indent_down();
-      indent(out) << "end" << endl;
+      indent(out) << "end" << '\n';
     }
   }
 }
@@ -666,40 +664,40 @@ void t_lua_generator::generate_service_processor(ostream& out, t_service* tservi
   t_service* extends_s = tservice->get_extends();
 
   // Define processor table
-  out << endl << classname << " = __TObject.new(";
+  out << '\n' << classname << " = __TObject.new(";
   if (extends_s != nullptr) {
-    out << extends_s->get_name() << "Processor" << endl;
+    out << extends_s->get_name() << "Processor" << '\n';
   } else {
-    out << "__TProcessor" << endl;
+    out << "__TProcessor" << '\n';
   }
-  out << ", {" << endl << " __type = '" << classname << "'" << endl << "})" << endl;
+  out << ", {" << '\n' << " __type = '" << classname << "'" << '\n' << "})" << '\n';
 
   // Process function
-  indent(out) << endl << "function " << classname << ":process(iprot, oprot, server_ctx)" << endl;
+  indent(out) << '\n' << "function " << classname << ":process(iprot, oprot, server_ctx)" << '\n';
   indent_up();
 
-  indent(out) << "local name, mtype, seqid = iprot:readMessageBegin()" << endl;
-  indent(out) << "local func_name = 'process_' .. name" << endl;
-  indent(out) << "if not self[func_name] or ttype(self[func_name]) ~= 'function' then" << endl;
+  indent(out) << "local name, mtype, seqid = iprot:readMessageBegin()" << '\n';
+  indent(out) << "local func_name = 'process_' .. name" << '\n';
+  indent(out) << "if not self[func_name] or ttype(self[func_name]) ~= 'function' then" << '\n';
   indent_up();
   indent(out) << "if oprot ~= nil then";
   indent_up();
-  out << endl << indent() << "iprot:skip(TType.STRUCT)" << endl << indent()
-      << "iprot:readMessageEnd()" << endl << indent() << "x = TApplicationException:new{" << endl
-      << indent() << "  errorCode = TApplicationException.UNKNOWN_METHOD" << endl << indent() << "}"
-      << endl << indent() << "oprot:writeMessageBegin(name, TMessageType.EXCEPTION, "
-      << "seqid)" << endl << indent() << "x:write(oprot)" << endl << indent()
-      << "oprot:writeMessageEnd()" << endl << indent() << "oprot.trans:flush()" << endl;
+  out << '\n' << indent() << "iprot:skip(TType.STRUCT)" << '\n' << indent()
+      << "iprot:readMessageEnd()" << '\n' << indent() << "x = TApplicationException:new{" << '\n'
+      << indent() << "  errorCode = TApplicationException.UNKNOWN_METHOD" << '\n' << indent() << "}"
+      << '\n' << indent() << "oprot:writeMessageBegin(name, TMessageType.EXCEPTION, "
+      << "seqid)" << '\n' << indent() << "x:write(oprot)" << '\n' << indent()
+      << "oprot:writeMessageEnd()" << '\n' << indent() << "oprot.trans:flush()" << '\n';
   indent_down();
-  out << indent() << "end" << endl << indent()
-      << "return false, 'Unknown function '..name" << endl;
+  out << indent() << "end" << '\n' << indent()
+      << "return false, 'Unknown function '..name" << '\n';
   indent_down();
-  indent(out) << "else" << endl << indent()
-              << "  return self[func_name](self, seqid, iprot, oprot, server_ctx)" << endl << indent()
-              << "end" << endl;
+  indent(out) << "else" << '\n' << indent()
+              << "  return self[func_name](self, seqid, iprot, oprot, server_ctx)" << '\n' << indent()
+              << "end" << '\n';
 
   indent_down();
-  indent(out) << "end" << endl;
+  indent(out) << "end" << '\n';
 
   // Generate the process subfunctions
   vector<t_function*> functions = tservice->get_functions();
@@ -717,18 +715,18 @@ void t_lua_generator::generate_process_function(ostream& out,
   string resultname = tfunction->get_name() + "_result";
   string fn_name = tfunction->get_name();
 
-  indent(out) << endl << "function " << classname << ":process_" << fn_name
-              << "(seqid, iprot, oprot, server_ctx)" << endl;
+  indent(out) << '\n' << "function " << classname << ":process_" << fn_name
+              << "(seqid, iprot, oprot, server_ctx)" << '\n';
   indent_up();
 
   // Read the request
-  out << indent() << "local args = " << argsname << ":new{}" << endl << indent()
-      << "local reply_type = TMessageType.REPLY" << endl << indent() << "args:read(iprot)" << endl
-      << indent() << "iprot:readMessageEnd()" << endl;
+  out << indent() << "local args = " << argsname << ":new{}" << '\n' << indent()
+      << "local reply_type = TMessageType.REPLY" << '\n' << indent() << "args:read(iprot)" << '\n'
+      << indent() << "iprot:readMessageEnd()" << '\n';
 
   if (!tfunction->is_oneway()) {
       out << indent() << "local result = " << resultname
-          << ":new{}" << endl;
+          << ":new{}" << '\n';
   }
 
   out <<  indent() << "local status, res = pcall(self.handler." << fn_name
@@ -738,13 +736,13 @@ void t_lua_generator::generate_process_function(ostream& out,
   if (args->get_members().size() > 0) {
     out << ", " << argument_list(args, "args.");
   }
-  out << ")" << endl;
+  out << ")" << '\n';
 
   if (!tfunction->is_oneway()) {
       // Check for errors
-      out << indent() << "if not status then" << endl << indent()
-          << "  reply_type = TMessageType.EXCEPTION" << endl << indent()
-          << "  result = TApplicationException:new{message = res}" << endl;
+      out << indent() << "if not status then" << '\n' << indent()
+          << "  reply_type = TMessageType.EXCEPTION" << '\n' << indent()
+          << "  result = TApplicationException:new{message = res}" << '\n';
 
       // Handle custom exceptions
       const std::vector<t_field*>& xf = tfunction->get_xceptions()->get_members();
@@ -752,19 +750,19 @@ void t_lua_generator::generate_process_function(ostream& out,
           vector<t_field*>::const_iterator x_iter;
           for (x_iter = xf.begin(); x_iter != xf.end(); ++x_iter) {
               out << indent() << "elseif ttype(res) == '" << (*x_iter)->get_type()->get_name() << "' then"
-                  << endl << indent() << "  result." << (*x_iter)->get_name() << " = res" << endl;
+                  << '\n' << indent() << "  result." << (*x_iter)->get_name() << " = res" << '\n';
           }
       }
 
       // Set the result and write the reply
-      out << indent() << "else" << endl << indent() << "  result.success = res" << endl << indent()
-          << "end" << endl << indent() << "oprot:writeMessageBegin('" << fn_name << "', reply_type, "
-          << "seqid)" << endl << indent() << "result:write(oprot)" << endl << indent()
-          << "oprot:writeMessageEnd()" << endl << indent() << "oprot.trans:flush()" << endl;
+      out << indent() << "else" << '\n' << indent() << "  result.success = res" << '\n' << indent()
+          << "end" << '\n' << indent() << "oprot:writeMessageBegin('" << fn_name << "', reply_type, "
+          << "seqid)" << '\n' << indent() << "result:write(oprot)" << '\n' << indent()
+          << "oprot:writeMessageEnd()" << '\n' << indent() << "oprot.trans:flush()" << '\n';
   }
-  out << indent() << "return status, res" << endl;
+  out << indent() << "return status, res" << '\n';
   indent_down();
-  indent(out) << "end" << endl;
+  indent(out) << "end" << '\n';
 }
 
 // Service helpers
@@ -772,7 +770,7 @@ void t_lua_generator::generate_service_helpers(ostream& out, t_service* tservice
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  out << endl << "-- HELPER FUNCTIONS AND STRUCTURES";
+  out << '\n' << "-- HELPER FUNCTIONS AND STRUCTURES";
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
     generate_lua_struct_definition(out, ts, false);
@@ -853,7 +851,7 @@ void t_lua_generator::generate_deserialize_field(ostream& out,
     } else if (type->is_enum()) {
       out << "readI32()";
     }
-    out << endl;
+    out << '\n';
 
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
@@ -867,7 +865,7 @@ void t_lua_generator::generate_deserialize_struct(ostream& out,
                                                   bool local,
                                                   string prefix) {
   indent(out) << (local ? "local " : "") << prefix << " = " << tstruct->get_name() << ":new{}"
-              << endl << indent() << prefix << ":read(iprot)" << endl;
+              << '\n' << indent() << prefix << ":read(iprot)" << '\n';
 }
 
 void t_lua_generator::generate_deserialize_container(ostream& out,
@@ -885,18 +883,18 @@ void t_lua_generator::generate_deserialize_container(ostream& out,
   t_field fetype(g_type_i8, etype);
 
   // Declare variables, read header
-  indent(out) << (local ? "local " : "") << prefix << " = {}" << endl;
+  indent(out) << (local ? "local " : "") << prefix << " = {}" << '\n';
   if (ttype->is_map()) {
     indent(out) << "local " << ktype << ", " << vtype << ", " << size << " = iprot:readMapBegin() "
-                << endl;
+                << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "local " << etype << ", " << size << " = iprot:readSetBegin()" << endl;
+    indent(out) << "local " << etype << ", " << size << " = iprot:readSetBegin()" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "local " << etype << ", " << size << " = iprot:readListBegin()" << endl;
+    indent(out) << "local " << etype << ", " << size << " = iprot:readListBegin()" << '\n';
   }
 
   // Deserialize
-  indent(out) << "for _i=1," << size << " do" << endl;
+  indent(out) << "for _i=1," << size << " do" << '\n';
   indent_up();
 
   if (ttype->is_map()) {
@@ -908,15 +906,15 @@ void t_lua_generator::generate_deserialize_container(ostream& out,
   }
 
   indent_down();
-  indent(out) << "end" << endl;
+  indent(out) << "end" << '\n';
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "iprot:readMapEnd()" << endl;
+    indent(out) << "iprot:readMapEnd()" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "iprot:readSetEnd()" << endl;
+    indent(out) << "iprot:readSetEnd()" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "iprot:readListEnd()" << endl;
+    indent(out) << "iprot:readListEnd()" << '\n';
   }
 }
 
@@ -930,7 +928,7 @@ void t_lua_generator::generate_deserialize_map_element(ostream& out, t_map* tmap
   generate_deserialize_field(out, &fkey, true);
   generate_deserialize_field(out, &fval, true);
 
-  indent(out) << prefix << "[" << key << "] = " << val << endl;
+  indent(out) << prefix << "[" << key << "] = " << val << '\n';
 }
 
 void t_lua_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
@@ -940,7 +938,7 @@ void t_lua_generator::generate_deserialize_set_element(ostream& out, t_set* tset
 
   generate_deserialize_field(out, &felem, true);
 
-  indent(out) << prefix << "[" << elem << "] = " << elem << endl;
+  indent(out) << prefix << "[" << elem << "] = " << elem << '\n';
 }
 
 void t_lua_generator::generate_deserialize_list_element(ostream& out,
@@ -953,7 +951,7 @@ void t_lua_generator::generate_deserialize_list_element(ostream& out,
 
   generate_deserialize_field(out, &felem, true);
 
-  indent(out) << "table.insert(" << prefix << ", " << elem << ")" << endl;
+  indent(out) << "table.insert(" << prefix << ", " << elem << ")" << '\n';
 }
 
 /**
@@ -1008,7 +1006,7 @@ void t_lua_generator::generate_serialize_field(ostream& out, t_field* tfield, st
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ")";
     }
-    out << endl;
+    out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s' TYPE '%s'\n",
            name.c_str(),
@@ -1018,7 +1016,7 @@ void t_lua_generator::generate_serialize_field(ostream& out, t_field* tfield, st
 
 void t_lua_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  indent(out) << prefix << ":write(oprot)" << endl;
+  indent(out) << prefix << ":write(oprot)" << '\n';
 }
 
 void t_lua_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
@@ -1026,48 +1024,48 @@ void t_lua_generator::generate_serialize_container(ostream& out, t_type* ttype, 
   if (ttype->is_map()) {
     indent(out) << "oprot:writeMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
-                << "ttable_size(" << prefix << "))" << endl;
+                << "ttable_size(" << prefix << "))" << '\n';
   } else if (ttype->is_set()) {
     indent(out) << "oprot:writeSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
-                << "ttable_size(" << prefix << "))" << endl;
+                << "ttable_size(" << prefix << "))" << '\n';
   } else if (ttype->is_list()) {
     indent(out) << "oprot:writeListBegin(" << type_to_enum(((t_list*)ttype)->get_elem_type())
                 << ", "
-                << "#" << prefix << ")" << endl;
+                << "#" << prefix << ")" << '\n';
   }
 
   // Serialize
   if (ttype->is_map()) {
     string kiter = tmp("kiter");
     string viter = tmp("viter");
-    indent(out) << "for " << kiter << "," << viter << " in pairs(" << prefix << ") do" << endl;
+    indent(out) << "for " << kiter << "," << viter << " in pairs(" << prefix << ") do" << '\n';
     indent_up();
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
-    indent(out) << "for " << iter << ",_ in pairs(" << prefix << ") do" << endl;
+    indent(out) << "for " << iter << ",_ in pairs(" << prefix << ") do" << '\n';
     indent_up();
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
   } else if (ttype->is_list()) {
     string iter = tmp("iter");
-    indent(out) << "for _," << iter << " in ipairs(" << prefix << ") do" << endl;
+    indent(out) << "for _," << iter << " in ipairs(" << prefix << ") do" << '\n';
     indent_up();
     generate_serialize_list_element(out, (t_list*)ttype, iter);
     indent_down();
-    indent(out) << "end" << endl;
+    indent(out) << "end" << '\n';
   }
 
   // Finish writing
   if (ttype->is_map()) {
-    indent(out) << "oprot:writeMapEnd()" << endl;
+    indent(out) << "oprot:writeMapEnd()" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "oprot:writeSetEnd()" << endl;
+    indent(out) << "oprot:writeSetEnd()" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "oprot:writeListEnd()" << endl;
+    indent(out) << "oprot:writeListEnd()" << '\n';
   }
 }
 

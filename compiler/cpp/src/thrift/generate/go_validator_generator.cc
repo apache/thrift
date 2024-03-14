@@ -82,19 +82,19 @@ void go_validator_generator::generate_field_validator(std::ostream& out,
   }
   if (type->is_enum()) {
     if (context.tgt[0] == '*') {
-      out << indent() << "if " << context.tgt.substr(1) << " != nil {" << endl;
+      out << indent() << "if " << context.tgt.substr(1) << " != nil {" << '\n';
       indent_up();
     }
     generate_enum_field_validator(out, context);
     if (context.tgt[0] == '*') {
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     }
     return;
   } else if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     if (context.tgt[0] == '*') {
-      out << indent() << "if " << context.tgt.substr(1) << " != nil {" << endl;
+      out << indent() << "if " << context.tgt.substr(1) << " != nil {" << '\n';
       indent_up();
     }
     switch (tbase) {
@@ -119,7 +119,7 @@ void go_validator_generator::generate_field_validator(std::ostream& out,
     }
     if (context.tgt[0] == '*') {
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     }
     return;
   } else if (type->is_list()) {
@@ -146,7 +146,7 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
     if (key == "vt.in") {
       if (values.size() > 1) {
         std::string exist = GenID("_exist");
-        out << indent() << "var " << exist << " bool" << endl;
+        out << indent() << "var " << exist << " bool" << '\n';
 
         std::string src = GenID("_src");
         out << indent() << src << " := []int64{";
@@ -162,19 +162,19 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
           }
           out << ")";
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if int64(" << context.tgt << ") == src {" << endl;
+        out << indent() << "if int64(" << context.tgt << ") == src {" << '\n';
         indent_up();
-        out << indent() << exist << " = true" << endl;
-        out << indent() << "break" << endl;
+        out << indent() << exist << " = true" << '\n';
+        out << indent() << "break" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
-        out << indent() << "if " << exist << " == false {" << endl;
+        out << indent() << "}" << '\n';
+        out << indent() << "if " << exist << " == false {" << '\n';
       } else {
         out << indent() << "if int64(" << context.tgt << ") != int64(";
         if (values[0]->is_field_reference()) {
@@ -182,18 +182,18 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_enum()->get_value();
         }
-        out << ") {" << endl;
+        out << ") {" << '\n';
       }
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.in check failed\")" << endl;
+          << " not valid, rule vt.in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
       if (values.size() > 1) {
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       }
     } else if (key == "vt.not_in") {
       if (values.size() > 1) {
@@ -211,11 +211,11 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
           }
           out << ")";
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if int64(" << context.tgt << ") == src {" << endl;
+        out << indent() << "if int64(" << context.tgt << ") == src {" << '\n';
       } else {
         out << indent() << "if int64(" << context.tgt << ") == ";
         out << "int64(";
@@ -224,18 +224,18 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_enum()->get_value();
         }
-        out << ") {" << endl;
+        out << ") {" << '\n';
       }
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.not_in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.not_in check failed\")" << endl;
+          << " not valid, rule vt.not_in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
       if (values.size() > 1) {
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       }
     } else if (key == "vt.defined_only") {
       if (values[0]->get_bool()) {
@@ -243,14 +243,14 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
       } else {
         continue;
       }
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
           << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-          << " check failed\")" << endl;
+          << " check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     }
   }
 }
@@ -276,14 +276,14 @@ void go_validator_generator::generate_bool_field_validator(std::ostream& out,
         }
       }
     }
-    out << "{" << endl;
+    out << "{" << '\n';
     indent_up();
     out << indent()
         << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
         << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-        << " check failed\")" << endl;
+        << " check failed\")" << '\n';
     indent_down();
-    out << indent() << "}" << endl;
+    out << indent() << "}" << '\n';
   }
 }
 
@@ -308,19 +308,19 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
       } else {
         out << values[0]->get_double();
       }
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
           << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-          << " check failed\")" << endl;
+          << " check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
       continue;
     } else if (key == "vt.in") {
       if (values.size() > 1) {
         std::string exist = GenID("_exist");
-        out << indent() << "var " << exist << " bool" << endl;
+        out << indent() << "var " << exist << " bool" << '\n';
 
         std::string src = GenID("_src");
         out << indent() << src << " := []float64{";
@@ -334,19 +334,19 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
             out << (*it)->get_double();
           }
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if " << context.tgt << " == src {" << endl;
+        out << indent() << "if " << context.tgt << " == src {" << '\n';
         indent_up();
-        out << indent() << exist << " = true" << endl;
-        out << indent() << "break" << endl;
+        out << indent() << exist << " = true" << '\n';
+        out << indent() << "break" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
-        out << indent() << "if " << exist << " == false {" << endl;
+        out << indent() << "}" << '\n';
+        out << indent() << "if " << exist << " == false {" << '\n';
       } else {
         out << indent() << "if " << context.tgt << " != ";
         if (values[0]->is_field_reference()) {
@@ -354,16 +354,16 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_double();
         }
-        out << "{" << endl;
+        out << "{" << '\n';
       }
 
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.in check failed\")" << endl;
+          << " not valid, rule vt.in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.not_in") {
       if (values.size() > 1) {
         std::string src = GenID("_src");
@@ -378,11 +378,11 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
             out << (*it)->get_double();
           }
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if " << context.tgt << " == src {" << endl;
+        out << indent() << "if " << context.tgt << " == src {" << '\n';
       } else {
         out << indent() << "if " << context.tgt << " == ";
         if (values[0]->is_field_reference()) {
@@ -390,18 +390,18 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_double();
         }
-        out << "{" << endl;
+        out << "{" << '\n';
       }
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.not_in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.not_in check failed\")" << endl;
+          << " not valid, rule vt.not_in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
       if (values.size() > 1) {
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       }
     }
   }
@@ -460,18 +460,18 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
       } else {
         out << values[0]->get_int();
       }
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
           << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-          << " check failed\")" << endl;
+          << " check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.in") {
       if (values.size() > 1) {
         std::string exist = GenID("_exist");
-        out << indent() << "var " << exist << " bool" << endl;
+        out << indent() << "var " << exist << " bool" << '\n';
 
         std::string src = GenID("_src");
         out << indent() << src << " := []";
@@ -499,19 +499,19 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
             out << (*it)->get_int();
           }
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if " << context.tgt << " == src {" << endl;
+        out << indent() << "if " << context.tgt << " == src {" << '\n';
         indent_up();
-        out << indent() << exist << " = true" << endl;
-        out << indent() << "break" << endl;
+        out << indent() << exist << " = true" << '\n';
+        out << indent() << "break" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
-        out << indent() << "if " << exist << " == false {" << endl;
+        out << indent() << "}" << '\n';
+        out << indent() << "if " << exist << " == false {" << '\n';
       } else {
         out << indent() << "if " << context.tgt << " != ";
         if (values[0]->is_field_reference()) {
@@ -531,15 +531,15 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_int();
         }
-        out << "{" << endl;
+        out << "{" << '\n';
       }
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.in check failed\")" << endl;
+          << " not valid, rule vt.in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.not_in") {
       if (values.size() > 1) {
         std::string src = GenID("_src");
@@ -584,11 +584,11 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
             out << (*it)->get_int();
           }
         }
-        out << "}" << endl;
+        out << "}" << '\n';
 
-        out << indent() << "for _, src := range " << src << " {" << endl;
+        out << indent() << "for _, src := range " << src << " {" << '\n';
         indent_up();
-        out << indent() << "if " << context.tgt << " == src {" << endl;
+        out << indent() << "if " << context.tgt << " == src {" << '\n';
       } else {
         out << indent() << "if " << context.tgt << " == ";
         if (values[0]->is_field_reference()) {
@@ -608,18 +608,18 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
         } else {
           out << values[0]->get_int();
         }
-        out << "{" << endl;
+        out << "{" << '\n';
       }
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"vt.not_in\", \""
           << context.field_symbol << "\", \"" << context.field_symbol
-          << " not valid, rule vt.not_in check failed\")" << endl;
+          << " not valid, rule vt.not_in check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
       if (values.size() > 1) {
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       }
     }
   }
@@ -635,7 +635,7 @@ void go_validator_generator::generate_string_field_validator(std::ostream& out,
   if (type->is_binary()) {
     target = GenID("_tgt");
     out << indent() << target << " := "
-        << "string(" << context.tgt << ")" << endl;
+        << "string(" << context.tgt << ")" << '\n';
   }
   for (auto it = context.rules.begin(); it != context.rules.end(); it++) {
     const std::vector<validation_value*>& values = (*it)->get_values();
@@ -729,14 +729,14 @@ void go_validator_generator::generate_string_field_validator(std::ostream& out,
       }
       out << ")";
     }
-    out << "{" << endl;
+    out << "{" << '\n';
     indent_up();
     out << indent()
         << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
         << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-        << " check failed\")" << endl;
+        << " check failed\")" << '\n';
     indent_down();
-    out << indent() << "}" << endl;
+    out << indent() << "}" << '\n';
   }
 }
 
@@ -764,19 +764,19 @@ void go_validator_generator::generate_list_field_validator(std::ostream& out,
       } else {
         out << values[0]->get_int();
       }
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
           << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-          << " check failed\")" << endl;
+          << " check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.elem") {
-      out << indent() << "for i := 0; i < len(" << context.tgt << ");i++ {" << endl;
+      out << indent() << "for i := 0; i < len(" << context.tgt << ");i++ {" << '\n';
       indent_up();
       std::string src = GenID("_elem");
-      out << indent() << src << " := " << context.tgt << "[i]" << endl;
+      out << indent() << src << " := " << context.tgt << "[i]" << '\n';
       t_type* elem_type;
       if (context.type->is_list()) {
         elem_type = ((t_list*)context.type)->get_elem_type();
@@ -791,7 +791,7 @@ void go_validator_generator::generate_list_field_validator(std::ostream& out,
                             std::vector<validation_rule*>{(*it)->get_inner()}};
       generate_field_validator(out, ctx);
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     }
   }
 }
@@ -815,17 +815,17 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
       } else {
         out << values[0]->get_int();
       }
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
       out << indent()
           << "return thrift.NewValidationException(thrift.VALIDATION_FAILED, \"" + key + "\", \""
           << context.field_symbol << "\", \"" << context.field_symbol << " not valid, rule " << key
-          << " check failed\")" << endl;
+          << " check failed\")" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.key") {
       std::string src = GenID("_key");
-      out << indent() << "for " << src << " := range " << context.tgt << " {" << endl;
+      out << indent() << "for " << src << " := range " << context.tgt << " {" << '\n';
       indent_up();
       generator_context ctx{context.field_symbol + ".key",
                             "",
@@ -835,10 +835,10 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
                             std::vector<validation_rule*>{(*it)->get_inner()}};
       generate_field_validator(out, ctx);
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else if (key == "vt.value") {
       std::string src = GenID("_value");
-      out << indent() << "for _, " << src << " := range " << context.tgt << " {" << endl;
+      out << indent() << "for _, " << src << " := range " << context.tgt << " {" << '\n';
       indent_up();
       generator_context ctx{context.field_symbol + ".value",
                             "",
@@ -848,7 +848,7 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
                             std::vector<validation_rule*>{(*it)->get_inner()}};
       generate_field_validator(out, ctx);
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     }
   }
 }
@@ -875,31 +875,31 @@ void go_validator_generator::generate_struct_field_validator(std::ostream& out,
   }
   if (generate_valid) {
     if (last_valid_rule == nullptr) {
-      out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << endl;
+      out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
       indent_up();
-      out << indent() << "return err" << endl;
+      out << indent() << "return err" << '\n';
       indent_down();
-      out << indent() << "}" << endl;
+      out << indent() << "}" << '\n';
     } else {
       const std::vector<validation_value*>& values = last_valid_rule->get_values();
       if (!values[0]->get_bool()) {
-        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << endl;
+        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
         indent_up();
-        out << indent() << "return err" << endl;
+        out << indent() << "return err" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       } else if (values[0]->is_field_reference()) {
         out << indent() << "if !";
         out << get_field_reference_name(values[0]->get_field_reference());
-        out << "{" << endl;
+        out << "{" << '\n';
         indent_up();
-        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << endl;
+        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
         indent_up();
-        out << indent() << "return err" << endl;
+        out << indent() << "return err" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
         indent_down();
-        out << indent() << "}" << endl;
+        out << indent() << "}" << '\n';
       }
     }
   }

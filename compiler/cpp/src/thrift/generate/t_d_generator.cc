@@ -43,8 +43,6 @@ using std::set;
 using std::string;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * D code generator.
  *
@@ -105,7 +103,7 @@ protected:
 
     // Print header
     f_types_ << autogen_comment() << "module " << render_package(*program_) << program_name_
-             << "_types;" << endl << endl;
+             << "_types;" << '\n' << '\n';
 
     print_default_imports(f_types_);
 
@@ -113,10 +111,10 @@ protected:
     const vector<t_program*>& includes = program_->get_includes();
     for (auto include : includes) {
       f_types_ << "public import " << render_package(*include) << include->get_name()
-               << "_types;" << endl;
+               << "_types;" << '\n';
     }
     if (!includes.empty())
-      f_types_ << endl;
+      f_types_ << '\n';
   }
 
   void close_generator() override {
@@ -131,22 +129,22 @@ protected:
       f_consts.open(f_consts_name.c_str());
 
       f_consts << autogen_comment() << "module " << render_package(*program_) << program_name_
-               << "_constants;" << endl << endl;
+               << "_constants;" << '\n' << '\n';
 
       print_default_imports(f_consts);
 
-      f_consts << "import " << render_package(*get_program()) << program_name_ << "_types;" << endl
-               << endl;
+      f_consts << "import " << render_package(*get_program()) << program_name_ << "_types;" << '\n'
+               << '\n';
 
       vector<t_const*>::iterator c_iter;
       for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
         this->emit_doc(*c_iter, f_consts);
         string name = suffix_if_reserved((*c_iter)->get_name());
         t_type* type = (*c_iter)->get_type();
-        indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << endl;
+        indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << '\n';
       }
 
-      f_consts << endl << "shared static this() {" << endl;
+      f_consts << '\n' << "shared static this() {" << '\n';
       indent_up();
 
       bool first = true;
@@ -154,24 +152,24 @@ protected:
         if (first) {
           first = false;
         } else {
-          f_consts << endl;
+          f_consts << '\n';
         }
         t_type* type = (*c_iter)->get_type();
         indent(f_consts) << suffix_if_reserved((*c_iter)->get_name()) << " = ";
         if (!is_immutable_type(type)) {
           f_consts << "cast(immutable(" << render_type_name(type) << ")) ";
         }
-        f_consts << render_const_value(type, (*c_iter)->get_value()) << ";" << endl;
+        f_consts << render_const_value(type, (*c_iter)->get_value()) << ";" << '\n';
       }
       indent_down();
-      indent(f_consts) << "}" << endl;
+      indent(f_consts) << "}" << '\n';
     }
   }
 
   void generate_typedef(t_typedef* ttypedef) override {
     this->emit_doc(ttypedef, f_types_);
     f_types_ << indent() << "alias " << render_type_name(ttypedef->get_type()) << " "
-             << ttypedef->get_symbolic() << ";" << endl << endl;
+             << ttypedef->get_symbolic() << ";" << '\n' << '\n';
   }
 
   void generate_enum(t_enum* tenum) override {
@@ -179,7 +177,7 @@ protected:
 
     this->emit_doc(tenum, f_types_);
     string enum_name = suffix_if_reserved(tenum->get_name());
-    f_types_ << indent() << "enum " << enum_name << " {" << endl;
+    f_types_ << indent() << "enum " << enum_name << " {" << '\n';
 
     indent_up();
 
@@ -190,11 +188,11 @@ protected:
       f_types_ << " = " << (*c_iter)->get_value() << ",";
     }
 
-    f_types_ << endl;
+    f_types_ << '\n';
     indent_down();
-    indent(f_types_) << "}" << endl;
+    indent(f_types_) << "}" << '\n';
 
-    f_types_ << endl;
+    f_types_ << '\n';
   }
 
   void generate_struct(t_struct* tstruct) override {
@@ -213,19 +211,19 @@ protected:
     ofstream_with_content_based_conditional_update f_service;
     f_service.open(f_servicename.c_str());
     f_service << autogen_comment() << "module " << suffix_if_reserved(render_package(*program_)) << svc_name << ";"
-              << endl << endl;
+              << '\n' << '\n';
 
     print_default_imports(f_service);
 
-    f_service << "import " << suffix_if_reserved(render_package(*get_program())) << program_name_ << "_types;" << endl;
+    f_service << "import " << suffix_if_reserved(render_package(*get_program())) << program_name_ << "_types;" << '\n';
 
     t_service* extends_service = tservice->get_extends();
     if (extends_service != nullptr) {
       f_service << "import " << suffix_if_reserved(render_package(*(extends_service->get_program())))
-                << suffix_if_reserved(extends_service->get_name()) << ";" << endl;
+                << suffix_if_reserved(extends_service->get_name()) << ";" << '\n';
     }
 
-    f_service << endl;
+    f_service << '\n';
 
     string extends = "";
     if (tservice->get_extends() != nullptr) {
@@ -233,7 +231,7 @@ protected:
     }
 
     this->emit_doc(tservice, f_service);
-    f_service << indent() << "interface " << svc_name << extends << " {" << endl;
+    f_service << indent() << "interface " << svc_name << extends << " {" << '\n';
     indent_up();
 
     // Collect all the exception types service methods can throw so we can
@@ -247,7 +245,7 @@ protected:
       this->emit_doc(*fn_iter, f_service);
       f_service << indent();
       print_function_signature(f_service, *fn_iter);
-      f_service << ";" << endl;
+      f_service << ";" << '\n';
 
       const vector<t_field*>& exceptions = (*fn_iter)->get_xceptions()->get_members();
       vector<t_field*>::const_iterator ex_iter;
@@ -258,13 +256,13 @@ protected:
 
     // Alias the exception types into the current scope.
     if (!exception_types.empty())
-      f_service << endl;
+      f_service << '\n';
     set<t_type*>::const_iterator et_iter;
     for (et_iter = exception_types.begin(); et_iter != exception_types.end(); ++et_iter) {
       indent(f_service) << "alias " << render_package(*(*et_iter)->get_program())
                         << (*et_iter)->get_program()->get_name() << "_types"
                         << "." << (*et_iter)->get_name() << " " << (*et_iter)->get_name() << ";"
-                        << endl;
+                        << '\n';
     }
 
     // Write the method metadata.
@@ -283,7 +281,7 @@ protected:
         meta << ",";
       }
 
-      meta << endl << indent() << "TMethodMeta(`" << suffix_if_reserved((*fn_iter)->get_name()) << "`, " << endl;
+      meta << '\n' << indent() << "TMethodMeta(`" << suffix_if_reserved((*fn_iter)->get_name()) << "`, " << '\n';
       indent_up();
       indent(meta) << "[";
 
@@ -309,7 +307,7 @@ protected:
       meta << "]";
 
       if (!(*fn_iter)->get_xceptions()->get_members().empty() || (*fn_iter)->is_oneway()) {
-        meta << "," << endl << indent() << "[";
+        meta << "," << '\n' << indent() << "[";
 
         bool first = true;
         const vector<t_field*>& exceptions = (*fn_iter)->get_xceptions()->get_members();
@@ -329,22 +327,22 @@ protected:
       }
 
       if ((*fn_iter)->is_oneway()) {
-        meta << "," << endl << indent() << "TMethodType.ONEWAY";
+        meta << "," << '\n' << indent() << "TMethodType.ONEWAY";
       }
 
       indent_down();
-      meta << endl << indent() << ")";
+      meta << '\n' << indent() << ")";
     }
     indent_down();
 
     string meta_str(meta.str());
     if (!meta_str.empty()) {
-      f_service << endl << indent() << "enum methodMeta = [" << meta_str << endl << indent() << "];"
-                << endl;
+      f_service << '\n' << indent() << "enum methodMeta = [" << meta_str << '\n' << indent() << "];"
+                << '\n';
     }
 
     indent_down();
-    indent(f_service) << "}" << endl;
+    indent(f_service) << "}" << '\n';
 
     // Server skeleton generation.
     string f_skeletonname = package_dir_ + svc_name + "_server.skeleton.d";
@@ -358,14 +356,14 @@ protected:
     if (!doc->has_doc()) {
       return;
     }
-    indent(out) << "/**" << std::endl;
+    indent(out) << "/**" << '\n';
     indent_up();
-    // No endl -- comments reliably have a newline at the end.
+    // No line break -- comments reliably have a newline at the end.
     // This is true even for stuff like:
     //     /** method infos */ void foo(/** huh?*/ 1: i64 stuff)
     indent(out) << doc->get_doc();
     indent_down();
-    indent(out) << "*/" << std::endl;
+    indent(out) << "*/" << '\n';
   }
 
 private:
@@ -376,59 +374,59 @@ private:
   void print_server_skeleton(ostream& out, t_service* tservice) {
     string svc_name = suffix_if_reserved(tservice->get_name());
 
-    out << "/*" << endl
-        << " * This auto-generated skeleton file illustrates how to build a server. If you" << endl
-        << " * intend to customize it, you should edit a copy with another file name to " << endl
-        << " * avoid overwriting it when running the generator again." << endl << " */" << endl
-        << "module " << render_package(*tservice->get_program()) << svc_name << "_server;" << endl
-        << endl << "import std.stdio;" << endl << "import thrift.codegen.processor;" << endl
-        << "import thrift.protocol.binary;" << endl << "import thrift.server.simple;" << endl
-        << "import thrift.server.transport.socket;" << endl << "import thrift.transport.buffered;"
-        << endl << "import thrift.util.hashset;" << endl << endl << "import "
-        << render_package(*tservice->get_program()) << svc_name << ";" << endl << "import "
-        << render_package(*get_program()) << program_name_ << "_types;" << endl << endl << endl
-        << "class " << svc_name << "Handler : " << svc_name << " {" << endl;
+    out << "/*" << '\n'
+        << " * This auto-generated skeleton file illustrates how to build a server. If you" << '\n'
+        << " * intend to customize it, you should edit a copy with another file name to " << '\n'
+        << " * avoid overwriting it when running the generator again." << '\n' << " */" << '\n'
+        << "module " << render_package(*tservice->get_program()) << svc_name << "_server;" << '\n'
+        << '\n' << "import std.stdio;" << '\n' << "import thrift.codegen.processor;" << '\n'
+        << "import thrift.protocol.binary;" << '\n' << "import thrift.server.simple;" << '\n'
+        << "import thrift.server.transport.socket;" << '\n' << "import thrift.transport.buffered;"
+        << '\n' << "import thrift.util.hashset;" << '\n' << '\n' << "import "
+        << render_package(*tservice->get_program()) << svc_name << ";" << '\n' << "import "
+        << render_package(*get_program()) << program_name_ << "_types;" << '\n' << '\n' << '\n'
+        << "class " << svc_name << "Handler : " << svc_name << " {" << '\n';
 
     indent_up();
-    out << indent() << "this() {" << endl << indent() << "  // Your initialization goes here."
-        << endl << indent() << "}" << endl << endl;
+    out << indent() << "this() {" << '\n' << indent() << "  // Your initialization goes here."
+        << '\n' << indent() << "}" << '\n' << '\n';
 
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator f_iter;
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       out << indent();
       print_function_signature(out, *f_iter);
-      out << " {" << endl;
+      out << " {" << '\n';
 
       indent_up();
 
-      out << indent() << "// Your implementation goes here." << endl << indent() << "writeln(\""
-          << suffix_if_reserved((*f_iter)->get_name()) << " called\");" << endl;
+      out << indent() << "// Your implementation goes here." << '\n' << indent() << "writeln(\""
+          << suffix_if_reserved((*f_iter)->get_name()) << " called\");" << '\n';
 
       t_type* rt = (*f_iter)->get_returntype();
       if (!rt->is_void()) {
-        indent(out) << "return typeof(return).init;" << endl;
+        indent(out) << "return typeof(return).init;" << '\n';
       }
 
       indent_down();
 
-      out << indent() << "}" << endl << endl;
+      out << indent() << "}" << '\n' << '\n';
     }
 
     indent_down();
-    out << "}" << endl << endl;
+    out << "}" << '\n' << '\n';
 
-    out << indent() << "void main() {" << endl;
+    out << indent() << "void main() {" << '\n';
     indent_up();
-    out << indent() << "auto protocolFactory = new TBinaryProtocolFactory!();" << endl << indent()
+    out << indent() << "auto protocolFactory = new TBinaryProtocolFactory!();" << '\n' << indent()
         << "auto processor = new TServiceProcessor!" << svc_name << "(new " << svc_name
-        << "Handler);" << endl << indent() << "auto serverTransport = new TServerSocket(9090);"
-        << endl << indent() << "auto transportFactory = new TBufferedTransportFactory;" << endl
-        << indent() << "auto server = new TSimpleServer(" << endl << indent()
-        << "  processor, serverTransport, transportFactory, protocolFactory);" << endl << indent()
-        << "server.serve();" << endl;
+        << "Handler);" << '\n' << indent() << "auto serverTransport = new TServerSocket(9090);"
+        << '\n' << indent() << "auto transportFactory = new TBufferedTransportFactory;" << '\n'
+        << indent() << "auto server = new TSimpleServer(" << '\n' << indent()
+        << "  processor, serverTransport, transportFactory, protocolFactory);" << '\n' << indent()
+        << "server.serve();" << '\n';
     indent_down();
-    out << "}" << endl;
+    out << "}" << '\n';
   }
 
   /**
@@ -439,9 +437,9 @@ private:
     const vector<t_field*>& members = tstruct->get_members();
 
     if (is_exception) {
-      indent(out) << "class " << suffix_if_reserved(tstruct->get_name()) << " : TException {" << endl;
+      indent(out) << "class " << suffix_if_reserved(tstruct->get_name()) << " : TException {" << '\n';
     } else {
-      indent(out) << "struct " << suffix_if_reserved(tstruct->get_name()) << " {" << endl;
+      indent(out) << "struct " << suffix_if_reserved(tstruct->get_name()) << " {" << '\n';
     }
     indent_up();
 
@@ -449,11 +447,11 @@ private:
     vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       indent(out) << render_type_name((*m_iter)->get_type()) << " " << suffix_if_reserved((*m_iter)->get_name()) << ";"
-                  << endl;
+                  << '\n';
     }
 
     if (!members.empty())
-      indent(out) << endl;
+      indent(out) << '\n';
     indent(out) << "mixin TStructHelpers!(";
 
     if (!members.empty()) {
@@ -471,7 +469,7 @@ private:
         } else {
           out << ",";
         }
-        out << endl;
+        out << '\n';
 
         indent(out) << "TFieldMeta(`" << suffix_if_reserved((*m_iter)->get_name()) << "`, " << (*m_iter)->get_key();
 
@@ -485,13 +483,13 @@ private:
       }
 
       indent_down();
-      out << endl << indent() << "]";
+      out << '\n' << indent() << "]";
     }
 
-    out << ");" << endl;
+    out << ");" << '\n';
 
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) << "}" << '\n' << '\n';
   }
 
   /**
@@ -559,13 +557,13 @@ private:
     } else if (type->is_enum()) {
       out << "cast(" << render_type_name(type) << ")" << value->get_integer();
     } else {
-      out << "{" << endl;
+      out << "{" << '\n';
       indent_up();
 
-      indent(out) << render_type_name(type) << " v;" << endl;
+      indent(out) << render_type_name(type) << " v;" << '\n';
       if (type->is_struct() || type->is_xception()) {
         indent(out) << "v = " << (type->is_xception() ? "new " : "") << render_type_name(type)
-                    << "();" << endl;
+                    << "();" << '\n';
 
         const vector<t_field*>& fields = ((t_struct*)type)->get_members();
         vector<t_field*>::const_iterator f_iter;
@@ -583,7 +581,7 @@ private:
                 + v_iter->first->get_string();
           }
           string val = render_const_value(field_type, v_iter->second);
-          indent(out) << "v.set!`" << v_iter->first->get_string() << "`(" << val << ");" << endl;
+          indent(out) << "v.set!`" << v_iter->first->get_string() << "`(" << val << ");" << '\n';
         }
       } else if (type->is_map()) {
         t_type* ktype = ((t_map*)type)->get_key_type();
@@ -597,7 +595,7 @@ private:
           if (!is_immutable_type(ktype)) {
             out << "cast(immutable(" << render_type_name(ktype) << "))";
           }
-          out << key << "] = " << val << ";" << endl;
+          out << key << "] = " << val << ";" << '\n';
         }
       } else if (type->is_list()) {
         t_type* etype = ((t_list*)type)->get_elem_type();
@@ -605,7 +603,7 @@ private:
         vector<t_const_value*>::const_iterator v_iter;
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
           string val = render_const_value(etype, *v_iter);
-          indent(out) << "v ~= " << val << ";" << endl;
+          indent(out) << "v ~= " << val << ";" << '\n';
         }
       } else if (type->is_set()) {
         t_type* etype = ((t_set*)type)->get_elem_type();
@@ -613,12 +611,12 @@ private:
         vector<t_const_value*>::const_iterator v_iter;
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
           string val = render_const_value(etype, *v_iter);
-          indent(out) << "v ~= " << val << ";" << endl;
+          indent(out) << "v ~= " << val << ";" << '\n';
         }
       } else {
         throw "Compiler error: Invalid type in render_const_value: " + type->get_name();
       }
-      indent(out) << "return v;" << endl;
+      indent(out) << "return v;" << '\n';
 
       indent_down();
       indent(out) << "}()";
@@ -728,8 +726,8 @@ private:
    */
 
   void print_default_imports(ostream& out) {
-    indent(out) << "import thrift.base;" << endl << "import thrift.codegen.base;" << endl
-                << "import thrift.util.hashset;" << endl << endl;
+    indent(out) << "import thrift.base;" << '\n' << "import thrift.codegen.base;" << '\n'
+                << "import thrift.util.hashset;" << '\n' << '\n';
   }
 
   /**
