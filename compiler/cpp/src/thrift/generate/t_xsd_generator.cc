@@ -36,8 +36,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * XSD generator, creates an XSD for the base types etc.
  *
@@ -121,22 +119,22 @@ void t_xsd_generator::init_generator() {
   string f_php_name = get_out_dir() + program_->get_name() + "_xsd.php";
   f_php_.open(f_php_name.c_str());
 
-  f_php_ << "<?php" << endl
-         << autogen_comment() << endl;
+  f_php_ << "<?php" << '\n'
+         << autogen_comment() << '\n';
 }
 
 void t_xsd_generator::close_generator() {
-  f_php_ << "?>" << endl;
+  f_php_ << "?>" << '\n';
   f_php_.close();
 }
 
 void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
-  indent(s_xsd_types_) << "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
+  indent(s_xsd_types_) << "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << '\n';
   indent_up();
   indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />"
-                       << endl;
+                       << '\n';
   indent_down();
-  indent(s_xsd_types_) << "</xsd:simpleType>" << endl << endl;
+  indent(s_xsd_types_) << "</xsd:simpleType>" << '\n' << '\n';
 }
 
 void t_xsd_generator::generate_struct(t_struct* tstruct) {
@@ -144,12 +142,12 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
   const vector<t_field*>& members = tstruct->get_members();
   bool xsd_all = tstruct->get_xsd_all();
 
-  indent(s_xsd_types_) << "<xsd:complexType name=\"" << tstruct->get_name() << "\">" << endl;
+  indent(s_xsd_types_) << "<xsd:complexType name=\"" << tstruct->get_name() << "\">" << '\n';
   indent_up();
   if (xsd_all) {
-    indent(s_xsd_types_) << "<xsd:all>" << endl;
+    indent(s_xsd_types_) << "<xsd:all>" << '\n';
   } else {
-    indent(s_xsd_types_) << "<xsd:sequence>" << endl;
+    indent(s_xsd_types_) << "<xsd:sequence>" << '\n';
   }
   indent_up();
 
@@ -164,12 +162,12 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
 
   indent_down();
   if (xsd_all) {
-    indent(s_xsd_types_) << "</xsd:all>" << endl;
+    indent(s_xsd_types_) << "</xsd:all>" << '\n';
   } else {
-    indent(s_xsd_types_) << "</xsd:sequence>" << endl;
+    indent(s_xsd_types_) << "</xsd:sequence>" << '\n';
   }
   indent_down();
-  indent(s_xsd_types_) << "</xsd:complexType>" << endl << endl;
+  indent(s_xsd_types_) << "</xsd:complexType>" << '\n' << '\n';
 }
 
 void t_xsd_generator::generate_element(ostream& out,
@@ -185,15 +183,15 @@ void t_xsd_generator::generate_element(ostream& out,
   string snillable = nillable ? " nillable=\"true\"" : "";
 
   if (ttype->is_void() || ttype->is_list()) {
-    indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
+    indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << '\n';
     indent_up();
     if (attrs == nullptr && ttype->is_void()) {
-      indent(out) << "<xsd:complexType />" << endl;
+      indent(out) << "<xsd:complexType />" << '\n';
     } else {
-      indent(out) << "<xsd:complexType>" << endl;
+      indent(out) << "<xsd:complexType>" << '\n';
       indent_up();
       if (ttype->is_list()) {
-        indent(out) << "<xsd:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" << endl;
+        indent(out) << "<xsd:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" << '\n';
         indent_up();
         string subname;
         t_type* subtype = ((t_list*)ttype)->get_elem_type();
@@ -203,55 +201,55 @@ void t_xsd_generator::generate_element(ostream& out,
           subname = type_name(subtype);
         }
         f_php_ << "$GLOBALS['" << program_->get_name() << "_xsd_elt_" << name << "'] = '" << subname
-               << "';" << endl;
+               << "';" << '\n';
         generate_element(out, subname, subtype, nullptr, false, false, true);
         indent_down();
-        indent(out) << "</xsd:sequence>" << endl;
-        indent(out) << "<xsd:attribute name=\"list\" type=\"xsd:boolean\" />" << endl;
+        indent(out) << "</xsd:sequence>" << '\n';
+        indent(out) << "<xsd:attribute name=\"list\" type=\"xsd:boolean\" />" << '\n';
       }
       if (attrs != nullptr) {
         const vector<t_field*>& members = attrs->get_members();
         vector<t_field*>::const_iterator a_iter;
         for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
           indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\""
-                      << type_name((*a_iter)->get_type()) << "\" />" << endl;
+                      << type_name((*a_iter)->get_type()) << "\" />" << '\n';
         }
       }
       indent_down();
-      indent(out) << "</xsd:complexType>" << endl;
+      indent(out) << "</xsd:complexType>" << '\n';
     }
     indent_down();
-    indent(out) << "</xsd:element>" << endl;
+    indent(out) << "</xsd:element>" << '\n';
   } else {
     if (attrs == nullptr) {
       indent(out) << "<xsd:element name=\"" << name << "\""
                   << " type=\"" << type_name(ttype) << "\"" << soptional << snillable << " />"
-                  << endl;
+                  << '\n';
     } else {
       // Wow, all this work for a SIMPLE TYPE with attributes?!?!?!
       indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">"
-                  << endl;
+                  << '\n';
       indent_up();
-      indent(out) << "<xsd:complexType>" << endl;
+      indent(out) << "<xsd:complexType>" << '\n';
       indent_up();
-      indent(out) << "<xsd:complexContent>" << endl;
+      indent(out) << "<xsd:complexContent>" << '\n';
       indent_up();
-      indent(out) << "<xsd:extension base=\"" << type_name(ttype) << "\">" << endl;
+      indent(out) << "<xsd:extension base=\"" << type_name(ttype) << "\">" << '\n';
       indent_up();
       const vector<t_field*>& members = attrs->get_members();
       vector<t_field*>::const_iterator a_iter;
       for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
         indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\""
-                    << type_name((*a_iter)->get_type()) << "\" />" << endl;
+                    << type_name((*a_iter)->get_type()) << "\" />" << '\n';
       }
       indent_down();
-      indent(out) << "</xsd:extension>" << endl;
+      indent(out) << "</xsd:extension>" << '\n';
       indent_down();
-      indent(out) << "</xsd:complexContent>" << endl;
+      indent(out) << "</xsd:complexContent>" << '\n';
       indent_down();
-      indent(out) << "</xsd:complexType>" << endl;
+      indent(out) << "</xsd:complexType>" << '\n';
       indent_down();
-      indent(out) << "</xsd:element>" << endl;
+      indent(out) << "</xsd:element>" << '\n';
     }
   }
 }
@@ -274,10 +272,10 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   }
 
   // Print the XSD header
-  f_xsd_ << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" << endl
-         << "<xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"" << ns << ">" << endl
+  f_xsd_ << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" << '\n'
+         << "<xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"" << ns << ">" << '\n'
          << xml_autogen_comment()
-         << endl;
+         << '\n';
 
   // Print out the type definitions
   indent(f_xsd_) << s_xsd_types_.str();
@@ -292,7 +290,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
     string elemname = (*f_iter)->get_name() + "_response";
     t_type* returntype = (*f_iter)->get_returntype();
     generate_element(f_xsd_, elemname, returntype);
-    f_xsd_ << endl;
+    f_xsd_ << '\n';
 
     t_struct* xs = (*f_iter)->get_xceptions();
     const std::vector<t_field*>& xceptions = xs->get_members();
@@ -308,7 +306,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   }
 
   // Close the XSD document
-  f_xsd_ << endl << "</xsd:schema>" << endl;
+  f_xsd_ << '\n' << "</xsd:schema>" << '\n';
   f_xsd_.close();
 }
 

@@ -394,7 +394,7 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
   }
 
   void communicate(const char* event, void* ctx, const char* fn_name) {
-    std::cout << event << ": " << *static_cast<std::string*>(ctx) << " = " << fn_name << std::endl;
+    std::cout << event << ": " << *static_cast<std::string*>(ctx) << " = " << fn_name << '\n';
   }
 };
 
@@ -655,7 +655,7 @@ int main(int argc, char** argv) {
     }
 
   } catch (std::exception& e) {
-    cerr << e.what() << endl;
+    cerr << e.what() << '\n';
     cout << desc << "\n";
     return 1;
   }
@@ -767,7 +767,7 @@ int main(int argc, char** argv) {
   if (port != 0) {
     cout << port;
   }
-  cout << endl;
+  cout << '\n';
 
   // Multiplexed Processor if needed
   if (boost::starts_with(protocol_type, "multi")) {
@@ -823,7 +823,7 @@ int main(int argc, char** argv) {
               : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     } else {
-      cerr << "server-type nonblocking requires transport of http or framed" << endl;
+      cerr << "server-type nonblocking requires transport of http or framed" << '\n';
       exit(1);
     }
   }
@@ -857,6 +857,6 @@ int main(int argc, char** argv) {
     server.reset();
   }
 
-  cout << "done." << endl;
+  cout << "done." << '\n';
   return 0;
 }
