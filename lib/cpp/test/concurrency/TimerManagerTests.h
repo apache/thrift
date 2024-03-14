@@ -108,7 +108,7 @@ public:
         return false;
       }
 
-      std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
+      std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << '\n';
     }
 
     if (orphanTask->_done) {

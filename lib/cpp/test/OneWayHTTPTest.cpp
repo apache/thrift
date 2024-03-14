@@ -55,9 +55,6 @@ using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransportException;
 using std::shared_ptr;
-using std::cout;
-using std::cerr;
-using std::endl;
 using std::string;
 namespace utf = boost::unit_test;
 

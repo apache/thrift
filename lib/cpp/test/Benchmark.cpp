@@ -53,7 +53,6 @@ int main() {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   using std::cout;
-  using std::endl;
 
   OneOfEach ooe;
   ooe.im_true = true;
@@ -83,7 +82,7 @@ int main() {
       ooe.write(&prot);
     }
     elapsed = timer.frame();
-    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   buf->getBuffer(&data, &datasize);
@@ -99,7 +98,7 @@ int main() {
       ooe2.read(&prot);
     }
     elapsed = timer.frame();
-    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -112,7 +111,7 @@ int main() {
       ooe.write(&prot);
     }
     elapsed = timer.frame();
-    cout << "Write little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Write little endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -126,7 +125,7 @@ int main() {
       ooe2.read(&prot);
     }
     elapsed = timer.frame();
-    cout << " Read little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Read little endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -139,7 +138,7 @@ int main() {
       ooe.write(&prot);
     }
     elapsed = timer.frame();
-    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Write big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -153,7 +152,7 @@ int main() {
       ooe2.read(&prot);
     }
     elapsed = timer.frame();
-    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Read big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
 
@@ -176,7 +175,7 @@ int main() {
 
     listDoublePerf.write(&prot);
     elapsed = timer.frame();
-    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   buf->getBuffer(&data, &datasize);
@@ -190,7 +189,7 @@ int main() {
 
     listDoublePerf2.read(&prot);
     elapsed = timer.frame();
-    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -201,7 +200,7 @@ int main() {
 
     listDoublePerf.write(&prot);
     elapsed = timer.frame();
-    cout << "Double write little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Double write little endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -213,7 +212,7 @@ int main() {
 
     listDoublePerf2.read(&prot);
     elapsed = timer.frame();
-    cout << " Double read little endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Double read little endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -224,7 +223,7 @@ int main() {
 
     listDoublePerf.write(&prot);
     elapsed = timer.frame();
-    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << "Double write big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
   {
@@ -236,7 +235,7 @@ int main() {
 
     listDoublePerf2.read(&prot);
     elapsed = timer.frame();
-    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << endl;
+    cout << " Double read big endian: " << num / (1000 * elapsed) << " kHz" << '\n';
   }
 
 
