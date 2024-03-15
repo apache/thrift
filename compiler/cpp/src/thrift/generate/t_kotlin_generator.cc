@@ -1615,7 +1615,7 @@ void t_kotlin_generator::generate_service_processor(t_service* tservice) {
                  "org.apache.thrift.AsyncProcessFunction<"
               << tservice->get_name()
               << ", out org.apache.thrift.TBase<*, "
-                 "*>, out kotlin.Any>> = mapOf("
+                 "*>, out kotlin.Any, out org.apache.thrift.TBase<*, *>>> = mapOf("
               << endl;
   indent_up();
   {
@@ -1656,16 +1656,27 @@ void t_kotlin_generator::generate_service_process_function(ostream& out,
                                                            t_function* tfunc) {
   string args_name = tservice->get_name() + "FunctionArgs." + tfunc->get_name() + "_args";
   string rtype = type_name(tfunc->get_returntype(), true);
+  string resultname = tservice->get_name() + "FunctionResult." + tfunc->get_name() + "_result";
 
   indent(out) << "class " << tfunc->get_name() << "<I : " << tservice->get_name()
               << ">(private val scope: kotlinx.coroutines.CoroutineScope) : "
                  "org.apache.thrift.AsyncProcessFunction<I, "
-              << args_name << ", " << rtype << ">(\"" << tfunc->get_name()
-              << "\"), ProcessFunction {" << endl;
+              << args_name << ", " << rtype << ", "
+              << (tfunc->is_oneway() ? "org.apache.thrift.TBase<*, *>" : resultname)
+              << ">(\"" << tfunc->get_name() << "\"), ProcessFunction {" 
+              << endl;
   indent_up();
   {
     indent(out) << "override fun isOneway() = " << (tfunc->is_oneway() ? "true" : "false") << endl;
     indent(out) << "override fun getEmptyArgsInstance() = " << args_name << "()" << endl;
+    indent(out) << "override fun getEmptyResultInstance() = ";
+    if (tfunc->is_oneway()) {
+      out << "null" << endl;
+    }
+    else {
+      out << resultname << "()" << endl;
+    }
+    indent(out) << endl;
     indent(out) << "override fun start(iface: I, args: " << args_name
                 << ", resultHandler: org.apache.thrift.async.AsyncMethodCallback<" << rtype
                 << ">) {" << endl;
