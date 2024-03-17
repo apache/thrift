@@ -149,18 +149,7 @@ EXTRA_DIST = \
 	coding_standards.md \
 	thrift_protocol.ini \
 	README.apache.md \
-	README.md \
-	test/Fixtures.php \
-	test/TestValidators.thrift \
-	test/JsonSerialize/JsonSerializeTest.php \
-	test/Protocol/BinarySerializerTest.php \
-	test/Protocol/TJSONProtocolFixtures.php \
-	test/Protocol/TJSONProtocolTest.php \
-	test/Protocol/TSimpleJSONProtocolFixtures.php \
-	test/Protocol/TSimpleJSONProtocolTest.php \
-	test/Validator/BaseValidatorTest.php \
-	test/Validator/ValidatorTest.php \
-	test/Validator/ValidatorTestOop.php
+	README.md
 
 
 MAINTAINERCLEANFILES = \
