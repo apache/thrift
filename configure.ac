@@ -214,7 +214,7 @@ if test "$with_kotlin" = "yes";  then
   AC_PATH_PROG([GRADLE], [gradle])
   AC_SUBST(CLASSPATH)
   AC_SUBST(GRADLE_OPTS)
-  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && "x$GRADLE" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$GRADLE" != "x" ; then
     have_kotlin="yes"
   fi
 fi
