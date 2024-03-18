@@ -62,7 +62,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ProcessorMiddlewareTest.thrift \
 				ClientMiddlewareExceptionTest.thrift \
 				ValidateTest.thrift \
-				ForwardType.thrift
+				ForwardType.thrift \
+				StringParseAllocationTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -98,6 +99,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ClientMiddlewareExceptionTest.thrift
 	$(THRIFT) $(THRIFTARGS) ValidateTest.thrift
 	$(THRIFT) $(THRIFTARGS) ForwardType.thrift
+	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -169,6 +171,7 @@ EXTRA_DIST = \
 	RefAnnotationFieldsTest.thrift \
 	RequiredFieldTest.thrift \
 	ServicesTest.thrift \
+	StringParseAllocationTest.thrift \
 	TypedefFieldTest.thrift \
 	UnionBinaryTest.thrift \
 	UnionDefaultValueTest.thrift \
