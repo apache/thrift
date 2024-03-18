@@ -35,7 +35,7 @@ class TFramedTransportFactoryTest extends TestCase
     {
         $transport = $this->createMock(TTransport::class);
         $factory = new TFramedTransportFactory();
-        $framedTransport = $factory::getTransport($transport);
+        $framedTransport = $factory->getTransport($transport);
 
         $this->assertInstanceOf(TFramedTransport::class, $framedTransport);
 
