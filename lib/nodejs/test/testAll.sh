@@ -118,6 +118,7 @@ fi
 # unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 
