@@ -34,7 +34,7 @@ class TTransportFactoryTest extends TestCase
     {
         $transport = $this->createMock(TTransport::class);
         $factory = new TTransportFactory();
-        $result = $factory::getTransport($transport);
+        $result = $factory->getTransport($transport);
 
         $this->assertSame($transport, $result);
     }
