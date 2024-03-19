@@ -19,7 +19,7 @@
  * under the License.
  */
 
-namespace Test\Thrift\Unit;
+namespace Test\Thrift\Integration;
 
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TProtocolException;
@@ -28,38 +28,41 @@ use Thrift\Transport\TMemoryBuffer;
 
 abstract class BaseValidatorTest extends TestCase
 {
+    abstract public function getNsGlobal();
+
     public function testEmptyStructValidator()
     {
-        $this->assertNoReadValidator('ThriftTest\EmptyStruct');
-        $this->assertNoWriteValidator('ThriftTest\EmptyStruct');
+        $this->assertNoReadValidator($this->getNsGlobal() . '\ThriftTest\EmptyStruct');
+        $this->assertNoWriteValidator($this->getNsGlobal() . '\ThriftTest\EmptyStruct');
     }
 
     public function testBonkValidator()
     {
-        $this->assertNoReadValidator('ThriftTest\Bonk');
-        $this->assertHasWriteValidator('ThriftTest\Bonk');
+        $this->assertNoReadValidator($this->getNsGlobal() . '\ThriftTest\Bonk');
+        $this->assertHasWriteValidator($this->getNsGlobal() . '\ThriftTest\Bonk');
     }
 
     public function testStructAValidator()
     {
-        $this->assertHasReadValidator('ThriftTest\StructA');
-        $this->assertHasWriteValidator('ThriftTest\StructA');
+        $this->assertHasReadValidator($this->getNsGlobal() . '\ThriftTest\StructA');
+        $this->assertHasWriteValidator($this->getNsGlobal() . '\ThriftTest\StructA');
     }
 
     public function testUnionOfStringsValidator()
     {
-        $this->assertNoWriteValidator('TestValidators\UnionOfStrings');
+        $this->assertNoWriteValidator($this->getNsGlobal() . '\TestValidators\UnionOfStrings');
     }
 
     public function testServiceResultValidator()
     {
-        $this->assertNoReadValidator('TestValidators\TestService_test_result');
-        $this->assertNoWriteValidator('TestValidators\TestService_test_result');
+        $this->assertNoReadValidator($this->getNsGlobal() . '\TestValidators\TestService_test_result');
+        $this->assertNoWriteValidator($this->getNsGlobal() . '\TestValidators\TestService_test_result');
     }
 
     public function testReadEmpty()
     {
-        $bonk = new \ThriftTest\Bonk();
+        $className = $this->getNsGlobal() . '\ThriftTest\Bonk';
+        $bonk = new $className();
         $transport = new TMemoryBuffer("\000");
         $protocol = new TBinaryProtocol($transport);
         $bonk->read($protocol);
@@ -68,7 +71,8 @@ abstract class BaseValidatorTest extends TestCase
 
     public function testWriteEmpty()
     {
-        $bonk = new \ThriftTest\Bonk();
+        $className = $this->getNsGlobal() . '\ThriftTest\Bonk';
+        $bonk = new $className();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
         try {
@@ -83,7 +87,8 @@ abstract class BaseValidatorTest extends TestCase
     public function testWriteWithMissingRequired()
     {
         // Check that we are not able to write StructA with a missing required field
-        $structa = new \ThriftTest\StructA();
+        $className = $this->getNsGlobal() . '\ThriftTest\StructA';
+        $structa = new $className();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
 
@@ -100,7 +105,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         $transport = new TMemoryBuffer(base64_decode('CwABAAAAA2FiYwA='));
         $protocol = new TBinaryProtocol($transport);
-        $structa = new \ThriftTest\StructA();
+        $className = $this->getNsGlobal() . '\ThriftTest\StructA';
+        $structa = new $className();
         $structa->read($protocol);
         $this->assertEquals("abc", $structa->s);
     }
@@ -109,7 +115,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
-        $structa = new \ThriftTest\StructA();
+        $className = $this->getNsGlobal() . '\ThriftTest\StructA';
+        $structa = new $className();
         $structa->s = "abc";
         $structa->write($protocol);
         $writeResult = base64_encode($transport->getBuffer());
