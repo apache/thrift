@@ -120,11 +120,11 @@ jobs:
           mkdir -p ./lib/php/test/Resources/packages/phpvo
           mkdir -p ./lib/php/test/Resources/packages/phpjs
           mkdir -p ./lib/php/test/Resources/packages/phpcm
-          compiler/cpp/thrift --gen php -r --out ./lib/php/test/Resources/packages/php lib/php/test/Resources/ThriftTest.thrift
-          compiler/cpp/thrift --gen php:validate -r --out ./lib/php/test/Resources/packages/phpv lib/php/test/Resources/ThriftTest.thrift
-          compiler/cpp/thrift --gen php:validate,oop -r --out ./lib/php/test/Resources/packages/phpvo lib/php/test/Resources/ThriftTest.thrift
-          compiler/cpp/thrift --gen php:json -r --out ./lib/php/test/Resources/packages/phpjs lib/php/test/Resources/ThriftTest.thrift
-          compiler/cpp/thrift --gen php:classmap,server,rest -r --out ./lib/php/test/Resources/packages/phpcm lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:nsglobal="Basic" -r --out ./lib/php/test/Resources/packages/php lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate,nsglobal="Validate" -r --out ./lib/php/test/Resources/packages/phpv lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate,oop,nsglobal="ValidateOop" -r --out ./lib/php/test/Resources/packages/phpvo lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:json,nsglobal="Json" -r --out ./lib/php/test/Resources/packages/phpjs lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:classmap,server,rest,nsglobal="Classmap" -r --out ./lib/php/test/Resources/packages/phpcm lib/php/test/Resources/ThriftTest.thrift
 
       - name: Run Tests
         run: vendor/bin/phpunit -c lib/php/phpunit.xml
