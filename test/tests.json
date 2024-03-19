@@ -539,6 +539,31 @@
   },
   {
     "name": "php",
+    "server": {
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip"
+      ],
+      "protocols": [
+        "binary",
+        "binary:accel",
+        "compact",
+        "json"
+      ],
+      "command": [
+        "php",
+        "-dextension_dir=php_ext_dir",
+        "--php-ini=test_php.ini",
+        "--no-php-ini",
+        "-ddisplay_errors=stderr",
+        "-dlog_errors=0",
+        "-derror_reporting=E_ALL",
+        "TestServer.php"
+      ]
+    },
     "client": {
       "timeout": 6,
       "transports": [
