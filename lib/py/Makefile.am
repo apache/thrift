@@ -69,6 +69,9 @@ dist-hook:
 	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f
 	find $(distdir) -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	CMakeLists.txt \
 	MANIFEST.in \

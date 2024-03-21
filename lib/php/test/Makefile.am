@@ -41,6 +41,9 @@ check: deps stubs
 
 distclean-local:
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 clean-local:
 	$(RM) -r ./Resources/packages
 	$(RM) test-log-junit.xml

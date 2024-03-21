@@ -24,6 +24,9 @@ if WITH_JAVA
 SUBDIRS += test
 endif
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
   thrift-idl.xsd \
   test

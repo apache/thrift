@@ -18,6 +18,9 @@
 #
 
 DESTDIR ?= /
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = setup.py src
 
 all:

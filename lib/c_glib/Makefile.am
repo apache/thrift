@@ -112,6 +112,9 @@ include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h \
                             src/thrift/c_glib/processor/thrift_multiplexed_processor.h
 
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
              CMakeLists.txt \
              coding_standards.md \
