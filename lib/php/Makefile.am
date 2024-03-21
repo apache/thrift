@@ -134,6 +134,8 @@ phptype_DATA = \
 clean-local:
 	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) clean; fi
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	lib \
@@ -149,7 +151,8 @@ EXTRA_DIST = \
 	coding_standards.md \
 	thrift_protocol.ini \
 	README.apache.md \
-	README.md
+	README.md \
+	test
 
 
 MAINTAINERCLEANFILES = \

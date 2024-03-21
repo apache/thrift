@@ -79,6 +79,9 @@ tutorialclient_http: all
 clean-local:
 	$(RM) -r gen-haxe bin
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src \
 	cpp.hxml \

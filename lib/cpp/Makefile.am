@@ -252,6 +252,9 @@ WINDOWS_DIST = \
              libthriftnb.vcxproj.filters \
              3rdparty.props
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
              CMakeLists.txt \
              coding_standards.md \
