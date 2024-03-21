@@ -136,6 +136,9 @@ clean-local:
 client: stubs
 	$(GO) run TestClient.go
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	dontexportrwtest \
 	tests \

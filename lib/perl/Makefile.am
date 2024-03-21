@@ -36,6 +36,9 @@ clean-local:
 	$(RM) Makefile-perl.mk.old
 	$(RM) -r gen-perl gen-perl2
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	coding_standards.md \
 	build-cpan-dist.sh \

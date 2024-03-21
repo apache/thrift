@@ -116,6 +116,9 @@ clean-local:
 style-local:
 	$(CPPSTYLE_CMD)
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \

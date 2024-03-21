@@ -30,5 +30,8 @@ check: stubs
 clean-local:
 	$(RM) -r Sources/Common/gen-swift/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -r $(distdir)/gen-swift/

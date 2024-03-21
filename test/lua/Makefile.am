@@ -30,5 +30,8 @@ precross: stubs
 clean-local:
 	$(RM) -r gen-lua/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -r $(distdir)/gen-lua/
