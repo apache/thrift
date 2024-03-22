@@ -140,6 +140,8 @@ EXTRA_DIST = \
 	dontexportrwtest \
 	tests \
 	common \
+	go.mod \
+	go.sum \
 	BinaryKeyTest.thrift \
 	ClientMiddlewareExceptionTest.thrift \
 	ConflictArgNamesTest.thrift \

@@ -63,4 +63,6 @@ genmock: gopath
 EXTRA_DIST = \
 	src/bin \
 	src/common \
+	go.mod \
+	go.sum \
 	genmock.sh
