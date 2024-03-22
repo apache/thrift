@@ -919,9 +919,9 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
       // Special case. Exceptions derive from Error, and error has a non optional message field.
       // Ignore the optional flag in this case, otherwise we will generate a incompatible field
-      // in the eyes of typescript. 
+      // in the eyes of typescript.
       string optional_flag = is_exception && member_name == "message" ? "" : ts_get_req(*m_iter);
- 
+
       f_types_ts_ << ts_indent() << ts_access << member_name << optional_flag << ": "
                   << ts_get_type((*m_iter)->get_type()) << ";" << endl;
     }
@@ -2019,23 +2019,23 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     if (gen_node_) {
       if((*f_iter)->is_oneway()) {
-        f_service_ << indent() << "this.output.flush();" << endl;
+        f_service_ << indent() << outputVar << ".flush();" << endl;
         f_service_ << indent() << js_const_type_ << "callback = this._reqs[this.seqid()] || function() {};" << endl;
         f_service_ << indent() << "delete this._reqs[this.seqid()];" << endl;
         f_service_ << indent() << "callback(null);" << endl;
       } else {
-        f_service_ << indent() << "return this.output.flush();" << endl;
+        f_service_ << indent() << "return " << outputVar << ".flush();" << endl;
       }
     } else {
       if (gen_jquery_) {
-        f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
+        f_service_ << indent() << "return " << outputVar << ".getTransport().flush(callback);" << endl;
       } else if (gen_es6_) {
         f_service_ << indent() << js_const_type_ << "self = this;" << endl;
         if((*f_iter)->is_oneway()) {
-          f_service_ << indent() << "this.output.getTransport().flush(true, null);" << endl;
+          f_service_ << indent() << outputVar << ".getTransport().flush(true, null);" << endl;
           f_service_ << indent() << "callback();" << endl;
         } else {
-          f_service_ << indent() << "this.output.getTransport().flush(true, () => {" << endl;
+          f_service_ << indent() << outputVar << ".getTransport().flush(true, () => {" << endl;
           indent_up();
           f_service_ << indent() << js_let_type_ << "error = null, result = null;" << endl;
           f_service_ << indent() << "try {" << endl;
@@ -2051,11 +2051,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         f_service_ << indent() << "if (callback) {" << endl;
         indent_up();
         if((*f_iter)->is_oneway()) {
-          f_service_ << indent() << "this.output.getTransport().flush(true, null);" << endl;
+          f_service_ << indent() << outputVar << ".getTransport().flush(true, null);" << endl;
           f_service_ << indent() << "callback();" << endl;
         } else {
           f_service_ << indent() << js_const_type_ << "self = this;" << endl;
-          f_service_ << indent() << "this.output.getTransport().flush(true, function() {" << endl;
+          f_service_ << indent() << outputVar << ".getTransport().flush(true, function() {" << endl;
           indent_up();
           f_service_ << indent() << js_let_type_ << "result = null;" << endl;
           f_service_ << indent() << "try {" << endl;
@@ -2069,7 +2069,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         }
         indent_down();
         f_service_ << indent() << "} else {" << endl;
-        f_service_ << indent() << "  return this.output.getTransport().flush();" << endl;
+        f_service_ << indent() << "  return " << outputVar << ".getTransport().flush();" << endl;
         f_service_ << indent() << "}" << endl;
       }
     }
