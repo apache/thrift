@@ -52,7 +52,7 @@
     <PackageTags>Apache Thrift RPC</PackageTags>
     <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.21.0/CHANGES.md</PackageReleaseNotes>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright 2023 The Apache Software Foundation</Copyright>
+    <Copyright>Copyright 2024 The Apache Software Foundation</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
