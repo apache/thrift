@@ -77,8 +77,8 @@ void t_generator::generate_program() {
 }
 
 std::set<std::string> t_generator::lang_keywords_for_validation() const {
-  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only. 
-  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no 
+  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only.
+  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no
   // mechanism or way to deal with it properly, so we absolutely need to fail on it as the last possible resort.
   return {};
 }
@@ -172,11 +172,11 @@ void t_generator::generate_docstring_comment(ostream& out,
     docs.getline(line, 1024);
 
     if (strlen(line) > 0) {
-      indent(out) << line_prefix << line << std::endl;
+      indent(out) << line_prefix << line << '\n';
     } else if (line_prefix.empty()){
-      out << std::endl;
+      out << '\n';
     } else if(!docs.eof()) {
-      indent(out) << line_prefix << std::endl;
+      indent(out) << line_prefix << '\n';
     }
   }
   if (!comment_end.empty())

@@ -55,7 +55,6 @@ namespace transport {
 
 using std::shared_ptr;
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 using namespace apache::thrift::protocol;

@@ -51,7 +51,6 @@ using namespace apache::thrift::transport;
 using namespace thrift::test;
 
 using std::cout;
-using std::endl;
 using std::fixed;
 using std::make_pair;
 using std::map;
@@ -76,51 +75,51 @@ class TestHandler : public ThriftTestIf {
   TestHandler() = default;
 
   void testVoid() override {
-    cout << "[C -> C++] testVoid()" << endl;
+    cout << "[C -> C++] testVoid()" << '\n';
   }
 
   void testString(string& out, const string &thing) override {
-    cout << "[C -> C++] testString(\"" << thing << "\")" << endl;
+    cout << "[C -> C++] testString(\"" << thing << "\")" << '\n';
     out = thing;
   }
 
   bool testBool(const bool thing) override {
-    cout << "[C -> C++] testBool(" << (thing ? "true" : "false") << ")" << endl;
+    cout << "[C -> C++] testBool(" << (thing ? "true" : "false") << ")" << '\n';
     return thing;
   }
   int8_t testByte(const int8_t thing) override {
-    cout << "[C -> C++] testByte(" << (int)thing << ")" << endl;
+    cout << "[C -> C++] testByte(" << (int)thing << ")" << '\n';
     return thing;
   }
   int32_t testI32(const int32_t thing) override {
-    cout << "[C -> C++] testI32(" << thing << ")" << endl;
+    cout << "[C -> C++] testI32(" << thing << ")" << '\n';
     return thing;
   }
 
   int64_t testI64(const int64_t thing) override {
-    cout << "[C -> C++] testI64(" << thing << ")" << endl;
+    cout << "[C -> C++] testI64(" << thing << ")" << '\n';
     return thing;
   }
 
   double testDouble(const double thing) override {
     cout.precision(6);
-    cout << "[C -> C++] testDouble(" << fixed << thing << ")" << endl;
+    cout << "[C -> C++] testDouble(" << fixed << thing << ")" << '\n';
     return thing;
   }
 
   void testBinary(string& out, const string &thing) override {
-    cout << "[C -> C++] testBinary(\"" << thing << "\")" << endl;
+    cout << "[C -> C++] testBinary(\"" << thing << "\")" << '\n';
     out = thing;
   }
 
   void testStruct(Xtruct& out, const Xtruct &thing) override {
-    cout << "[C -> C++] testStruct({\"" << thing.string_thing << "\", " << (int)thing.byte_thing << ", " << thing.i32_thing << ", " << thing.i64_thing << "})" << endl;
+    cout << "[C -> C++] testStruct({\"" << thing.string_thing << "\", " << (int)thing.byte_thing << ", " << thing.i32_thing << ", " << thing.i64_thing << "})" << '\n';
     out = thing;
   }
 
   void testNest(Xtruct2& out, const Xtruct2& nest) override {
     const Xtruct &thing = nest.struct_thing;
-    cout << "[C -> C++] testNest({" << (int)nest.byte_thing << ", {\"" << thing.string_thing << "\", " << (int)thing.byte_thing << ", " << thing.i32_thing << ", " << thing.i64_thing << "}, " << nest.i32_thing << "})" << endl;
+    cout << "[C -> C++] testNest({" << (int)nest.byte_thing << ", {\"" << thing.string_thing << "\", " << (int)thing.byte_thing << ", " << thing.i32_thing << ", " << thing.i64_thing << "}, " << nest.i32_thing << "})" << '\n';
     out = nest;
   }
 
@@ -136,7 +135,7 @@ class TestHandler : public ThriftTestIf {
       }
       cout << m_iter->first << " => " << m_iter->second;
     }
-    cout << "})" << endl;
+    cout << "})" << '\n';
     out = thing;
   }
 
@@ -152,7 +151,7 @@ class TestHandler : public ThriftTestIf {
       }
       cout << "\"" << m_iter->first << "\" => \"" << m_iter->second << "\"";
     }
-    cout << "})" << endl;
+    cout << "})" << '\n';
     out = thing;
   }
 
@@ -169,7 +168,7 @@ class TestHandler : public ThriftTestIf {
       }
       cout << *s_iter;
     }
-    cout << "})" << endl;
+    cout << "})" << '\n';
     out = thing;
   }
 
@@ -185,21 +184,21 @@ class TestHandler : public ThriftTestIf {
       }
       cout << *l_iter;
     }
-    cout << "})" << endl;
+    cout << "})" << '\n';
     out = thing;
   }
 
   Numberz::type testEnum(const Numberz::type thing) override {
-    cout << "[C -> C++] testEnum(" << thing << ")" << endl;
+    cout << "[C -> C++] testEnum(" << thing << ")" << '\n';
     return thing;
   }
 
   UserId testTypedef(const UserId thing) override {
-    cout << "[C -> C++] testTypedef(" << thing << ")" << endl;
+    cout << "[C -> C++] testTypedef(" << thing << ")" << '\n';
     return thing;  }
 
   void testMapMap(map<int32_t, map<int32_t,int32_t> > &mapmap, const int32_t hello) override {
-    cout << "[C -> C++] testMapMap(" << hello << ")" << endl;
+    cout << "[C -> C++] testMapMap(" << hello << ")" << '\n';
 
     map<int32_t,int32_t> pos;
     map<int32_t,int32_t> neg;
@@ -216,7 +215,7 @@ class TestHandler : public ThriftTestIf {
   void testInsanity(map<UserId, map<Numberz::type,Insanity> > &insane, const Insanity &argument) override {
     THRIFT_UNUSED_VARIABLE (argument);
 
-    cout << "[C -> C++] testInsanity()" << endl;
+    cout << "[C -> C++] testInsanity()" << '\n';
 
     Xtruct hello;
     hello.string_thing = "Hello2";
@@ -278,7 +277,7 @@ class TestHandler : public ThriftTestIf {
       }
       cout << "}, ";
     }
-    cout << "}" << endl;
+    cout << "}" << '\n';
 
 
   }
@@ -288,7 +287,7 @@ class TestHandler : public ThriftTestIf {
     THRIFT_UNUSED_VARIABLE (arg4);
     THRIFT_UNUSED_VARIABLE (arg5);
 
-    cout << "[C -> C++] testMulti()" << endl;
+    cout << "[C -> C++] testMulti()" << '\n';
 
     hello.string_thing = "Hello2";
     hello.byte_thing = arg0;
@@ -299,7 +298,7 @@ class TestHandler : public ThriftTestIf {
   void testException(const std::string &arg)
     noexcept(false)  override
   {
-    cout << "[C -> C++] testException(" << arg << ")" << endl;
+    cout << "[C -> C++] testException(" << arg << ")" << '\n';
     if (arg.compare("Xception") == 0) {
       Xception e;
       e.errorCode = 1001;
@@ -317,7 +316,7 @@ class TestHandler : public ThriftTestIf {
 
   void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) noexcept(false) override {
 
-    cout << "[C -> C++] testMultiException(" << arg0 << ", " << arg1 << ")" << endl;
+    cout << "[C -> C++] testMultiException(" << arg0 << ", " << arg1 << ")" << '\n';
 
     if (arg0.compare("Xception") == 0) {
       Xception e;
@@ -336,9 +335,9 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testOneway(int sleepFor) override {
-    cout << "testOneway(" << sleepFor << "): Sleeping..." << endl;
+    cout << "testOneway(" << sleepFor << "): Sleeping..." << '\n';
     sleep(sleepFor);
-    cout << "testOneway(" << sleepFor << "): done sleeping!" << endl;
+    cout << "testOneway(" << sleepFor << "): done sleeping!" << '\n';
   }
 };
 

@@ -76,7 +76,7 @@ public:
       {
         Synchronized s(_monitor);
 
-        // std::cout << "Thread " << _count << " completed " << std::endl;
+        // std::cout << "Thread " << _count << " completed " << '\n';
 
         _count--;
         if (_count % 10000 == 0) {
@@ -131,13 +131,13 @@ public:
       threadManager->add(*ix);
     }
 
-    std::cout << "\t\t\t\tloaded " << count << " tasks to execute" << std::endl;
+    std::cout << "\t\t\t\tloaded " << count << " tasks to execute" << '\n';
 
     {
       Synchronized s(monitor);
 
       while (activeCount > 0) {
-        std::cout << "\t\t\t\tactiveCount = " << activeCount << std::endl;
+        std::cout << "\t\t\t\tactiveCount = " << activeCount << '\n';
         monitor.wait();
       }
     }
@@ -184,13 +184,13 @@ public:
 
     std::cout << "\t\t\tfirst start: " << firstTime << " Last end: " << lastTime
               << " min: " << minTime << "ms max: " << maxTime << "ms average: " << averageTime
-              << "ms" << std::endl;
+              << "ms" << '\n';
 
     bool success = (time01 - time00) >= ((int64_t)count * timeout) / (int64_t)workerCount;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure")
               << "! expected time: " << ((int64_t)count * timeout) / (int64_t)workerCount << "ms elapsed time: " << time01 - time00
-              << "ms" << std::endl;
+              << "ms" << '\n';
 
     return success;
   }
@@ -307,7 +307,7 @@ public:
       }
 
       std::cout << "\t\t\t"
-                << "Pending tasks " << threadManager->pendingTaskCount() << std::endl;
+                << "Pending tasks " << threadManager->pendingTaskCount() << '\n';
 
       {
         Synchronized s(blockMonitor);
@@ -323,18 +323,18 @@ public:
       }
 
       std::cout << "\t\t\t"
-                << "Pending tasks " << threadManager->pendingTaskCount() << std::endl;
+                << "Pending tasks " << threadManager->pendingTaskCount() << '\n';
 
       try {
         threadManager->add(extraTask, 1);
       } catch (TimedOutException&) {
         std::cout << "\t\t\t"
-                  << "add timed out unexpectedly" << std::endl;
+                  << "add timed out unexpectedly" << '\n';
         throw TException("Unexpected timeout adding task");
 
       } catch (TooManyPendingTasksException&) {
         std::cout << "\t\t\t"
-                  << "add encountered too many pending exepctions" << std::endl;
+                  << "add encountered too many pending exepctions" << '\n';
         throw TException("Unexpected timeout adding task");
       }
 
@@ -375,10 +375,10 @@ public:
       }
 
     } catch (TException& e) {
-      std::cout << "ERROR: " << e.what() << std::endl;
+      std::cout << "ERROR: " << e.what() << '\n';
     }
 
-    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << std::endl;
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << '\n';
     return success;
   }
 
@@ -403,7 +403,7 @@ public:
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);
 
-    std::cout << "\t\t\t\tstarting.. " << std::endl;
+    std::cout << "\t\t\t\tstarting.. " << '\n';
 
     threadManager->start();
     threadManager->setExpireCallback(expiredNotifier); // std::bind(&ThreadManagerTests::expiredNotifier, this));
@@ -414,7 +414,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 1);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tadd 2nd worker.. " << std::endl;
+    std::cout << "\t\t\t\tadd 2nd worker.. " << '\n';
 
     threadManager->addWorker();
 
@@ -422,7 +422,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 2);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tremove 2nd worker.. " << std::endl;
+    std::cout << "\t\t\t\tremove 2nd worker.. " << '\n';
 
     threadManager->removeWorker();
 
@@ -430,7 +430,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 1);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tremove 1st worker.. " << std::endl;
+    std::cout << "\t\t\t\tremove 1st worker.. " << '\n';
 
     threadManager->removeWorker();
 
@@ -438,7 +438,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tadd blocking task.. " << std::endl;
+    std::cout << "\t\t\t\tadd blocking task.. " << '\n';
 
     // We're going to throw a blocking task into the mix
     Monitor entryMonitor;   // signaled when task is running
@@ -454,7 +454,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 1);
 
-    std::cout << "\t\t\t\tadd other task.. " << std::endl;
+    std::cout << "\t\t\t\tadd other task.. " << '\n';
 
     shared_ptr<ThreadManagerTests::Task> otherTask(
       new ThreadManagerTests::Task(doneMonitor, activeCount, 0));
@@ -465,7 +465,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 2);
 
-    std::cout << "\t\t\t\tremove blocking task specifically.. " << std::endl;
+    std::cout << "\t\t\t\tremove blocking task specifically.. " << '\n';
 
     threadManager->remove(blockingTask);
 
@@ -473,7 +473,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 1);
 
-    std::cout << "\t\t\t\tremove next pending task.." << std::endl;
+    std::cout << "\t\t\t\tremove next pending task.." << '\n';
 
     shared_ptr<Runnable> nextTask = threadManager->removeNextPending();
     if (nextTask != otherTask) {
@@ -485,7 +485,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tremove next pending task (none left).." << std::endl;
+    std::cout << "\t\t\t\tremove next pending task (none left).." << '\n';
 
     nextTask = threadManager->removeNextPending();
     if (nextTask) {
@@ -493,7 +493,7 @@ public:
       return false;
     }
 
-    std::cout << "\t\t\t\tadd 2 expired tasks and 1 not.." << std::endl;
+    std::cout << "\t\t\t\tadd 2 expired tasks and 1 not.." << '\n';
 
     shared_ptr<ThreadManagerTests::Task> expiredTask(
       new ThreadManagerTests::Task(doneMonitor, activeCount, 0));
@@ -509,7 +509,7 @@ public:
     EXPECT(threadManager->pendingTaskCount(), 3);
     EXPECT(threadManager->expiredTaskCount(), 0);
 
-    std::cout << "\t\t\t\tremove expired tasks.." << std::endl;
+    std::cout << "\t\t\t\tremove expired tasks.." << '\n';
 
     if (!m_expired.empty()) {
       std::cerr << "\t\t\t\t\texpected m_expired to be empty" << std::endl;
@@ -543,12 +543,12 @@ public:
     EXPECT(threadManager->pendingTaskCount(), 0);
     EXPECT(threadManager->expiredTaskCount(), 2);
 
-    std::cout << "\t\t\t\tadd expired task (again).." << std::endl;
+    std::cout << "\t\t\t\tadd expired task (again).." << '\n';
 
     threadManager->add(expiredTask, 0, 1);  // expires in 1ms
     sleep_(50);  // make sure enough time elapses for it to expire - the shortest expiration time is 1ms
 
-    std::cout << "\t\t\t\tadd worker to consume expired task.." << std::endl;
+    std::cout << "\t\t\t\tadd worker to consume expired task.." << '\n';
 
     threadManager->addWorker();
     sleep_(100);  // make sure it has time to spin up and expire the task
@@ -570,7 +570,7 @@ public:
     EXPECT(threadManager->pendingTaskCount(), 0);
     EXPECT(threadManager->expiredTaskCount(), 3);
 
-    std::cout << "\t\t\t\ttry to remove too many workers" << std::endl;
+    std::cout << "\t\t\t\ttry to remove too many workers" << '\n';
     try {
       threadManager->removeWorker(2);
       std::cerr << "\t\t\t\t\texpected InvalidArgumentException" << std::endl;
@@ -579,7 +579,7 @@ public:
       /* expected */
     }
 
-    std::cout << "\t\t\t\tremove worker.. " << std::endl;
+    std::cout << "\t\t\t\tremove worker.. " << '\n';
 
     threadManager->removeWorker();
 
@@ -588,7 +588,7 @@ public:
     EXPECT(threadManager->pendingTaskCount(), 0);
     EXPECT(threadManager->expiredTaskCount(), 3);
 
-    std::cout << "\t\t\t\tadd blocking task.. " << std::endl;
+    std::cout << "\t\t\t\tadd blocking task.. " << '\n';
 
     threadManager->add(blockingTask);
 
@@ -596,7 +596,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 1);
 
-    std::cout << "\t\t\t\tadd worker.. " << std::endl;
+    std::cout << "\t\t\t\tadd worker.. " << '\n';
 
     threadManager->addWorker();
     {
@@ -610,7 +610,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tunblock task and remove worker.. " << std::endl;
+    std::cout << "\t\t\t\tunblock task and remove worker.. " << '\n';
 
     {
       Synchronized s(blockMonitor);
@@ -623,7 +623,7 @@ public:
     EXPECT(threadManager->idleWorkerCount(), 0);
     EXPECT(threadManager->pendingTaskCount(), 0);
 
-    std::cout << "\t\t\t\tcleanup.. " << std::endl;
+    std::cout << "\t\t\t\tcleanup.. " << '\n';
 
     blockingTask.reset();
     threadManager.reset();

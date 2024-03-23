@@ -51,35 +51,35 @@ int main(int argc, char** argv) {
 
     ThreadFactoryTests threadFactoryTests;
 
-    std::cout << "ThreadFactory tests..." << std::endl;
+    std::cout << "ThreadFactory tests..." << '\n';
 
     const int reapLoops = 2 * WEIGHT;
     const int reapCount = 100 * WEIGHT;
     const size_t floodLoops = 3;
     const size_t floodCount = 500 * WEIGHT;
 
-    std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << std::endl;
+    std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << '\n';
 
     if (!threadFactoryTests.reapNThreads(reapLoops, reapCount)) {
       std::cerr << "\t\ttThreadFactory reap N threads FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tThreadFactory flood N threads test: N = " << floodLoops << "x" << floodCount << std::endl;
+    std::cout << "\t\tThreadFactory flood N threads test: N = " << floodLoops << "x" << floodCount << '\n';
 
     if (!threadFactoryTests.floodNTest(floodLoops, floodCount)) {
       std::cerr << "\t\ttThreadFactory flood N threads FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tThreadFactory synchronous start test" << std::endl;
+    std::cout << "\t\tThreadFactory synchronous start test" << '\n';
 
     if (!threadFactoryTests.synchStartTest()) {
       std::cerr << "\t\ttThreadFactory synchronous start FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tThreadFactory monitor timeout test" << std::endl;
+    std::cout << "\t\tThreadFactory monitor timeout test" << '\n';
 
     if (!threadFactoryTests.monitorTimeoutTest()) {
       std::cerr << "\t\ttThreadFactory monitor timeout FAILED" << std::endl;
@@ -89,14 +89,14 @@ int main(int argc, char** argv) {
 
   if (runAll || args[0].compare("util") == 0) {
 
-    std::cout << "Util tests..." << std::endl;
+    std::cout << "Util tests..." << '\n';
 
-    std::cout << "\t\tUtil minimum time" << std::endl;
+    std::cout << "\t\tUtil minimum time" << '\n';
 
     int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     int64_t time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    std::cout << "\t\t\tMinimum time: " << time01 - time00 << "ms" << std::endl;
+    std::cout << "\t\t\tMinimum time: " << time01 - time00 << "ms" << '\n';
 
     time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     time01 = time00;
@@ -107,14 +107,14 @@ int main(int argc, char** argv) {
       time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
-    std::cout << "\t\t\tscall per ms: " << count / (time01 - time00) << std::endl;
+    std::cout << "\t\t\tscall per ms: " << count / (time01 - time00) << '\n';
   }
 
   if (runAll || args[0].compare("timer-manager") == 0) {
 
-    std::cout << "TimerManager tests..." << std::endl;
+    std::cout << "TimerManager tests..." << '\n';
 
-    std::cout << "\t\tTimerManager test00" << std::endl;
+    std::cout << "\t\tTimerManager test00" << '\n';
 
     TimerManagerTests timerManagerTests;
 
@@ -123,28 +123,28 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    std::cout << "\t\tTimerManager test01" << std::endl;
+    std::cout << "\t\tTimerManager test01" << '\n';
 
     if (!timerManagerTests.test01()) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tTimerManager test02" << std::endl;
+    std::cout << "\t\tTimerManager test02" << '\n';
 
     if (!timerManagerTests.test02()) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tTimerManager test03" << std::endl;
+    std::cout << "\t\tTimerManager test03" << '\n';
 
     if (!timerManagerTests.test03()) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
       return 1;
     }
 
-    std::cout << "\t\tTimerManager test04" << std::endl;
+    std::cout << "\t\tTimerManager test04" << '\n';
 
     if (!timerManagerTests.test04()) {
       std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
 
   if (runAll || args[0].compare("thread-manager") == 0) {
 
-    std::cout << "ThreadManager tests..." << std::endl;
+    std::cout << "ThreadManager tests..." << '\n';
 
     {
       size_t workerCount = 10 * WEIGHT;
@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 
       ThreadManagerTests threadManagerTests;
 
-      std::cout << "\t\tThreadManager api test:" << std::endl;
+      std::cout << "\t\tThreadManager api test:" << '\n';
 
       if (!threadManagerTests.apiTest()) {
         std::cerr << "\t\tThreadManager apiTest FAILED" << std::endl;
@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
       }
 
       std::cout << "\t\tThreadManager load test: worker count: " << workerCount
-                << " task count: " << taskCount << " delay: " << delay << std::endl;
+                << " task count: " << taskCount << " delay: " << delay << '\n';
 
       if (!threadManagerTests.loadTest(taskCount, delay, workerCount)) {
         std::cerr << "\t\tThreadManager loadTest FAILED" << std::endl;
@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
       }
 
       std::cout << "\t\tThreadManager block test: worker count: " << workerCount
-                << " delay: " << delay << std::endl;
+                << " delay: " << delay << '\n';
 
       if (!threadManagerTests.blockTest(delay, workerCount)) {
         std::cerr << "\t\tThreadManager blockTest FAILED" << std::endl;
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
 
   if (runAll || args[0].compare("thread-manager-benchmark") == 0) {
 
-    std::cout << "ThreadManager benchmark tests..." << std::endl;
+    std::cout << "ThreadManager benchmark tests..." << '\n';
 
     {
 
@@ -207,7 +207,7 @@ int main(int argc, char** argv) {
         size_t taskCount = workerCount * tasksPerWorker;
 
         std::cout << "\t\tThreadManager load test: worker count: " << workerCount
-                  << " task count: " << taskCount << " delay: " << delay << std::endl;
+                  << " task count: " << taskCount << " delay: " << delay << '\n';
 
         ThreadManagerTests threadManagerTests;
 
@@ -220,6 +220,6 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::cout << "ALL TESTS PASSED" << std::endl;
+  std::cout << "ALL TESTS PASSED" << '\n';
   return 0;
 }

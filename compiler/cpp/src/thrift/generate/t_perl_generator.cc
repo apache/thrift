@@ -37,8 +37,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * PERL code generator.
  *
@@ -246,8 +244,8 @@ void t_perl_generator::init_generator() {
   f_types_ << autogen_comment() << perl_includes();
 
   // Print header
-  f_consts_ << autogen_comment() << "package " << perl_namespace(program_) << "Constants;" << endl
-            << perl_includes() << endl;
+  f_consts_ << autogen_comment() << "package " << perl_namespace(program_) << "Constants;" << '\n'
+            << perl_includes() << '\n';
 }
 
 /**
@@ -271,10 +269,10 @@ string t_perl_generator::perl_includes() {
  */
 void t_perl_generator::close_generator() {
   // Close types file
-  f_types_ << "1;" << endl;
+  f_types_ << "1;" << '\n';
   f_types_.close();
 
-  f_consts_ << "1;" << endl;
+  f_consts_ << "1;" << '\n';
   f_consts_.close();
 }
 
@@ -294,13 +292,13 @@ void t_perl_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_perl_generator::generate_enum(t_enum* tenum) {
-  f_types_ << "package " << perl_namespace(program_) << tenum->get_name() << ";" << endl;
+  f_types_ << "package " << perl_namespace(program_) << tenum->get_name() << ";" << '\n';
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    f_types_ << "use constant " << (*c_iter)->get_name() << " => " << value << ";" << endl;
+    f_types_ << "use constant " << (*c_iter)->get_name() << " => " << value << ";" << '\n';
   }
 }
 
@@ -314,7 +312,7 @@ void t_perl_generator::generate_const(t_const* tconst) {
 
   f_consts_ << "use constant " << name << " => ";
   f_consts_ << render_const_value(type, value);
-  f_consts_ << ";" << endl << endl;
+  f_consts_ << ";" << '\n' << '\n';
 }
 
 /**
@@ -355,7 +353,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
   } else if (type->is_enum()) {
     out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << perl_namespace(type->get_program()) << type->get_name() << "->new({" << endl;
+    out << perl_namespace(type->get_program()) << type->get_name() << "->new({" << '\n';
     indent_up();
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -376,14 +374,14 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
       out << " => ";
       out << render_const_value(field_type, v_iter->second);
       out << ",";
-      out << endl;
+      out << '\n';
     }
     indent_down();
     indent(out) << "})";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    out << "{" << endl;
+    out << "{" << '\n';
     indent_up();
 
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
@@ -392,7 +390,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
       indent(out) << render_const_value(ktype, v_iter->first);
       out << " => ";
       out << render_const_value(vtype, v_iter->second);
-      out << "," << endl;
+      out << "," << '\n';
     }
     indent_down();
     indent(out) << "}";
@@ -403,7 +401,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
     } else {
       etype = ((t_set*)type)->get_elem_type();
     }
-    out << "[" << endl;
+    out << "[" << '\n';
     indent_up();
 
     const vector<t_const_value*>& val = value->get_list();
@@ -414,7 +412,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
       if (type->is_set()) {
         out << " => 1";
       }
-      out << "," << endl;
+      out << "," << '\n';
     }
     indent_down();
     indent(out) << "]";
@@ -480,12 +478,12 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
     out << ") );\n";
   }
 
-  out << endl;
+  out << '\n';
 
   // new()
   indent_up();
-  out << "sub new {" << endl << indent() << "my $classname = shift;" << endl << indent()
-      << "my $self      = {};" << endl << indent() << "my $vals      = shift || {};" << endl;
+  out << "sub new {" << '\n' << indent() << "my $classname = shift;" << '\n' << indent()
+      << "my $self      = {};" << '\n' << indent() << "my $vals      = shift || {};" << '\n';
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "undef";
@@ -493,7 +491,7 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
     if ((*m_iter)->get_value() != nullptr && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
-    out << indent() << "$self->{" << (*m_iter)->get_name() << "} = " << dval << ";" << endl;
+    out << indent() << "$self->{" << (*m_iter)->get_name() << "} = " << dval << ";" << '\n';
   }
 
   // Generate constructor from array
@@ -503,27 +501,27 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
       t_type* t = get_true_type((*m_iter)->get_type());
       if ((*m_iter)->get_value() != nullptr && (t->is_struct() || t->is_xception())) {
         indent(out) << "$self->{" << (*m_iter)->get_name()
-                    << "} = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
+                    << "} = " << render_const_value(t, (*m_iter)->get_value()) << ";" << '\n';
       }
     }
 
-    out << indent() << "if (UNIVERSAL::isa($vals,'HASH')) {" << endl;
+    out << indent() << "if (UNIVERSAL::isa($vals,'HASH')) {" << '\n';
     indent_up();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << indent() << "if (defined $vals->{" << (*m_iter)->get_name() << "}) {" << endl
+      out << indent() << "if (defined $vals->{" << (*m_iter)->get_name() << "}) {" << '\n'
           << indent() << "  $self->{" << (*m_iter)->get_name() << "} = $vals->{"
-          << (*m_iter)->get_name() << "};" << endl << indent() << "}" << endl;
+          << (*m_iter)->get_name() << "};" << '\n' << indent() << "}" << '\n';
     }
     indent_down();
-    out << indent() << "}" << endl;
+    out << indent() << "}" << '\n';
   }
 
-  out << indent() << "return bless ($self, $classname);" << endl;
+  out << indent() << "return bless ($self, $classname);" << '\n';
   indent_down();
   out << "}\n\n";
 
-  out << "sub getName {" << endl << indent() << "  return '" << tstruct->get_name() << "';" << endl
-      << indent() << "}" << endl << endl;
+  out << "sub getName {" << '\n' << indent() << "  return '" << tstruct->get_name() << "';" << '\n'
+      << indent() << "}" << '\n' << '\n';
 
   generate_perl_struct_reader(out, tstruct);
   generate_perl_struct_writer(out, tstruct);
@@ -536,32 +534,32 @@ void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstru
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << "sub read {" << endl;
+  out << "sub read {" << '\n';
 
   indent_up();
 
-  out << indent() << "my ($self, $input) = @_;" << endl << indent() << "my $xfer  = 0;" << endl
-      << indent() << "my $fname;" << endl << indent() << "my $ftype = 0;" << endl << indent()
-      << "my $fid   = 0;" << endl;
+  out << indent() << "my ($self, $input) = @_;" << '\n' << indent() << "my $xfer  = 0;" << '\n'
+      << indent() << "my $fname;" << '\n' << indent() << "my $ftype = 0;" << '\n' << indent()
+      << "my $fid   = 0;" << '\n';
 
-  indent(out) << "$xfer += $input->readStructBegin(\\$fname);" << endl;
+  indent(out) << "$xfer += $input->readStructBegin(\\$fname);" << '\n';
 
   // Loop over reading in fields
-  indent(out) << "while (1)" << endl;
+  indent(out) << "while (1)" << '\n';
 
   scope_up(out);
 
-  indent(out) << "$xfer += $input->readFieldBegin(\\$fname, \\$ftype, \\$fid);" << endl;
+  indent(out) << "$xfer += $input->readFieldBegin(\\$fname, \\$ftype, \\$fid);" << '\n';
 
   // Check for field STOP marker and break
-  indent(out) << "if ($ftype == Thrift::TType::STOP) {" << endl;
+  indent(out) << "if ($ftype == Thrift::TType::STOP) {" << '\n';
   indent_up();
-  indent(out) << "last;" << endl;
+  indent(out) << "last;" << '\n';
   indent_down();
-  indent(out) << "}" << endl;
+  indent(out) << "}" << '\n';
 
   // Switch statement on the field we are reading
-  indent(out) << "SWITCH: for($fid)" << endl;
+  indent(out) << "SWITCH: for($fid)" << '\n';
 
   scope_up(out);
 
@@ -569,34 +567,34 @@ void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstru
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
     indent(out) << "/^" << (*f_iter)->get_key() << "$/ && do{";
-    indent(out) << "if ($ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+    indent(out) << "if ($ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << '\n';
 
     indent_up();
     generate_deserialize_field(out, *f_iter, "self->");
     indent_down();
 
-    indent(out) << "} else {" << endl;
+    indent(out) << "} else {" << '\n';
 
-    indent(out) << "  $xfer += $input->skip($ftype);" << endl;
+    indent(out) << "  $xfer += $input->skip($ftype);" << '\n';
 
-    out << indent() << "}" << endl << indent() << "last; };" << endl;
+    out << indent() << "}" << '\n' << indent() << "last; };" << '\n';
   }
   // In the default case we skip the field
 
-  indent(out) << "  $xfer += $input->skip($ftype);" << endl;
+  indent(out) << "  $xfer += $input->skip($ftype);" << '\n';
 
   scope_down(out);
 
-  indent(out) << "$xfer += $input->readFieldEnd();" << endl;
+  indent(out) << "$xfer += $input->readFieldEnd();" << '\n';
 
   scope_down(out);
 
-  indent(out) << "$xfer += $input->readStructEnd();" << endl;
+  indent(out) << "$xfer += $input->readStructEnd();" << '\n';
 
-  indent(out) << "return $xfer;" << endl;
+  indent(out) << "return $xfer;" << '\n';
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "}" << '\n' << '\n';
 }
 
 /**
@@ -607,38 +605,38 @@ void t_perl_generator::generate_perl_struct_writer(ostream& out, t_struct* tstru
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << "sub write {" << endl;
+  out << "sub write {" << '\n';
 
   indent_up();
-  indent(out) << "my ($self, $output) = @_;" << endl;
-  indent(out) << "my $xfer   = 0;" << endl;
+  indent(out) << "my ($self, $output) = @_;" << '\n';
+  indent(out) << "my $xfer   = 0;" << '\n';
 
-  indent(out) << "$xfer += $output->writeStructBegin('" << name << "');" << endl;
+  indent(out) << "$xfer += $output->writeStructBegin('" << name << "');" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "if (defined $self->{" << (*f_iter)->get_name() << "}) {" << endl;
+    out << indent() << "if (defined $self->{" << (*f_iter)->get_name() << "}) {" << '\n';
     indent_up();
 
     indent(out) << "$xfer += $output->writeFieldBegin("
                 << "'" << (*f_iter)->get_name() << "', " << type_to_enum((*f_iter)->get_type())
-                << ", " << (*f_iter)->get_key() << ");" << endl;
+                << ", " << (*f_iter)->get_key() << ");" << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "self->");
 
-    indent(out) << "$xfer += $output->writeFieldEnd();" << endl;
+    indent(out) << "$xfer += $output->writeFieldEnd();" << '\n';
 
     indent_down();
-    indent(out) << "}" << endl;
+    indent(out) << "}" << '\n';
   }
 
-  out << indent() << "$xfer += $output->writeFieldStop();" << endl << indent()
-      << "$xfer += $output->writeStructEnd();" << endl;
+  out << indent() << "$xfer += $output->writeFieldStop();" << '\n' << indent()
+      << "$xfer += $output->writeStructEnd();" << '\n';
 
-  out << indent() << "return $xfer;" << endl;
+  out << indent() << "return $xfer;" << '\n';
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "}" << '\n' << '\n';
 }
 
 /**
@@ -655,13 +653,13 @@ void t_perl_generator::generate_use_includes(std::ostream& os, bool& done, t_typ
     std::vector<t_program*>& currInc = current->get_includes();
     std::vector<t_program*>::size_type numInc = currInc.size();
     if (selfish) {
-      os << "use " << perl_namespace(current) << "Types;" << endl;
+      os << "use " << perl_namespace(current) << "Types;" << '\n';
     }
     for (std::vector<t_program*>::size_type i = 0; i < numInc; ++i) {
       t_program* incProgram = currInc.at(i);
-      os << "use " << perl_namespace(incProgram) << "Types;" << endl;
+      os << "use " << perl_namespace(incProgram) << "Types;" << '\n';
     }
-    os << endl;
+    os << '\n';
     done = true;
   }
 }
@@ -683,10 +681,10 @@ void t_perl_generator::generate_service(t_service* tservice) {
   t_service* extends_s = tservice->get_extends();
   if (extends_s != nullptr) {
     f_service_ << "use " << perl_namespace(extends_s->get_program()) << extends_s->get_name() << ";"
-               << endl;
+               << '\n';
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   // Generate the three main parts of the service (well, two for now in PERL)
   generate_service_helpers(tservice);
@@ -696,7 +694,7 @@ void t_perl_generator::generate_service(t_service* tservice) {
   generate_service_processor(tservice);
 
   // Close service file
-  f_service_ << "1;" << endl;
+  f_service_ << "1;" << '\n';
   f_service_.close();
 }
 
@@ -721,59 +719,59 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
   indent_up();
 
   // Generate the header portion
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Processor;" << endl
-             << endl << "use strict;" << endl << extends_processor << endl << endl;
+  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Processor;" << '\n'
+             << '\n' << "use strict;" << '\n' << extends_processor << '\n' << '\n';
 
   if (extends.empty()) {
-    f_service_ << "sub new {" << endl;
+    f_service_ << "sub new {" << '\n';
 
     indent_up();
 
-    f_service_ << indent() << "my ($classname, $handler) = @_;" << endl << indent()
-               << "my $self      = {};" << endl;
+    f_service_ << indent() << "my ($classname, $handler) = @_;" << '\n' << indent()
+               << "my $self      = {};" << '\n';
 
-    f_service_ << indent() << "$self->{handler} = $handler;" << endl;
+    f_service_ << indent() << "$self->{handler} = $handler;" << '\n';
 
-    f_service_ << indent() << "return bless ($self, $classname);" << endl;
+    f_service_ << indent() << "return bless ($self, $classname);" << '\n';
 
     indent_down();
 
-    f_service_ << "}" << endl << endl;
+    f_service_ << "}" << '\n' << '\n';
   }
 
   // Generate the server implementation
-  f_service_ << "sub process {" << endl;
+  f_service_ << "sub process {" << '\n';
   indent_up();
 
-  f_service_ << indent() << "my ($self, $input, $output) = @_;" << endl;
+  f_service_ << indent() << "my ($self, $input, $output) = @_;" << '\n';
 
-  f_service_ << indent() << "my $rseqid = 0;" << endl << indent() << "my $fname  = undef;" << endl
-             << indent() << "my $mtype  = 0;" << endl << endl;
+  f_service_ << indent() << "my $rseqid = 0;" << '\n' << indent() << "my $fname  = undef;" << '\n'
+             << indent() << "my $mtype  = 0;" << '\n' << '\n';
 
-  f_service_ << indent() << "$input->readMessageBegin(\\$fname, \\$mtype, \\$rseqid);" << endl;
+  f_service_ << indent() << "$input->readMessageBegin(\\$fname, \\$mtype, \\$rseqid);" << '\n';
 
   // HOT: check for method implementation
-  f_service_ << indent() << "my $methodname = 'process_'.$fname;" << endl << indent()
-             << "if (!$self->can($methodname)) {" << endl;
+  f_service_ << indent() << "my $methodname = 'process_'.$fname;" << '\n' << indent()
+             << "if (!$self->can($methodname)) {" << '\n';
   indent_up();
 
-  f_service_ << indent() << "$input->skip(Thrift::TType::STRUCT);" << endl << indent()
-             << "$input->readMessageEnd();" << endl << indent()
+  f_service_ << indent() << "$input->skip(Thrift::TType::STRUCT);" << '\n' << indent()
+             << "$input->readMessageEnd();" << '\n' << indent()
              << "my $x = Thrift::TApplicationException->new('Function '.$fname.' not implemented.', "
-                "Thrift::TApplicationException::UNKNOWN_METHOD);" << endl << indent()
-             << "$output->writeMessageBegin($fname, Thrift::TMessageType::EXCEPTION, $rseqid);" << endl
-             << indent() << "$x->write($output);" << endl << indent()
-             << "$output->writeMessageEnd();" << endl << indent()
-             << "$output->getTransport()->flush();" << endl << indent() << "return;" << endl;
+                "Thrift::TApplicationException::UNKNOWN_METHOD);" << '\n' << indent()
+             << "$output->writeMessageBegin($fname, Thrift::TMessageType::EXCEPTION, $rseqid);" << '\n'
+             << indent() << "$x->write($output);" << '\n' << indent()
+             << "$output->writeMessageEnd();" << '\n' << indent()
+             << "$output->getTransport()->flush();" << '\n' << indent() << "return;" << '\n';
 
   indent_down();
-  f_service_ << indent() << "}" << endl << indent()
-             << "$self->$methodname($rseqid, $input, $output);" << endl << indent() << "return 1;"
-             << endl;
+  f_service_ << indent() << "}" << '\n' << indent()
+             << "$self->$methodname($rseqid, $input, $output);" << '\n' << indent() << "return 1;"
+             << '\n';
 
   indent_down();
 
-  f_service_ << "}" << endl << endl;
+  f_service_ << "}" << '\n' << '\n';
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -788,21 +786,21 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
  */
 void t_perl_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
   // Open function
-  f_service_ << "sub process_" << tfunction->get_name() << " {" << endl;
+  f_service_ << "sub process_" << tfunction->get_name() << " {" << '\n';
 
   indent_up();
 
-  f_service_ << indent() << "my ($self, $seqid, $input, $output) = @_;" << endl;
+  f_service_ << indent() << "my ($self, $seqid, $input, $output) = @_;" << '\n';
 
   string argsname = perl_namespace(tservice->get_program()) + service_name_ + "_"
                     + tfunction->get_name() + "_args";
   string resultname = perl_namespace(tservice->get_program()) + service_name_ + "_"
                       + tfunction->get_name() + "_result";
 
-  f_service_ << indent() << "my $args = " << argsname << "->new();" << endl << indent()
-             << "$args->read($input);" << endl;
+  f_service_ << indent() << "my $args = " << argsname << "->new();" << '\n' << indent()
+             << "$args->read($input);" << '\n';
 
-  f_service_ << indent() << "$input->readMessageEnd();" << endl;
+  f_service_ << indent() << "$input->readMessageEnd();" << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -810,12 +808,12 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "my $result = " << resultname << "->new();" << endl;
+    f_service_ << indent() << "my $result = " << resultname << "->new();" << '\n';
   }
 
   // Try block for a function with exceptions
   if (xceptions.size() > 0) {
-    f_service_ << indent() << "eval {" << endl;
+    f_service_ << indent() << "eval {" << '\n';
     indent_up();
   }
 
@@ -838,55 +836,55 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
     }
     f_service_ << "$args->" << (*f_iter)->get_name();
   }
-  f_service_ << ");" << endl;
+  f_service_ << ");" << '\n';
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << indent() << "}; if( UNIVERSAL::isa($@,'"
                  << perl_namespace((*x_iter)->get_type()->get_program())
-                 << (*x_iter)->get_type()->get_name() << "') ){ " << endl;
+                 << (*x_iter)->get_type()->get_name() << "') ){ " << '\n';
 
       indent_up();
-      f_service_ << indent() << "$result->{" << (*x_iter)->get_name() << "} = $@;" << endl;
-      f_service_ << indent() << "$@ = undef;" << endl;
+      f_service_ << indent() << "$result->{" << (*x_iter)->get_name() << "} = $@;" << '\n';
+      f_service_ << indent() << "$@ = undef;" << '\n';
       indent_down();
       f_service_ << indent();
     }
-    f_service_ << "}" << endl;
+    f_service_ << "}" << '\n';
 
     // catch-all for unexpected exceptions (THRIFT-3191)
-    f_service_ << indent() << "if ($@) {" << endl;
+    f_service_ << indent() << "if ($@) {" << '\n';
     indent_up();
-    f_service_ << indent() << "$@ =~ s/^\\s+|\\s+$//g;" << endl
-               << indent() << "my $err = Thrift::TApplicationException->new(\"Unexpected Exception: \" . $@, Thrift::TApplicationException::INTERNAL_ERROR);" << endl
-               << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::EXCEPTION, $seqid);" << endl
-               << indent() << "$err->write($output);" << endl
-               << indent() << "$output->writeMessageEnd();" << endl
-               << indent() << "$output->getTransport()->flush();" << endl
-               << indent() << "$@ = undef;" << endl
-               << indent() << "return;" << endl;
+    f_service_ << indent() << "$@ =~ s/^\\s+|\\s+$//g;" << '\n'
+               << indent() << "my $err = Thrift::TApplicationException->new(\"Unexpected Exception: \" . $@, Thrift::TApplicationException::INTERNAL_ERROR);" << '\n'
+               << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::EXCEPTION, $seqid);" << '\n'
+               << indent() << "$err->write($output);" << '\n'
+               << indent() << "$output->writeMessageEnd();" << '\n'
+               << indent() << "$output->getTransport()->flush();" << '\n'
+               << indent() << "$@ = undef;" << '\n'
+               << indent() << "return;" << '\n';
     indent_down();
-    f_service_ << indent() << "}" << endl;
+    f_service_ << indent() << "}" << '\n';
   }
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    f_service_ << indent() << "return;" << endl;
+    f_service_ << indent() << "return;" << '\n';
     indent_down();
-    f_service_ << "}" << endl;
+    f_service_ << "}" << '\n';
     return;
   }
 
   // Serialize the reply
-  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::REPLY, $seqid);" << endl
-             << indent() << "$result->write($output);" << endl
-             << indent() << "$output->writeMessageEnd();" << endl
-             << indent() << "$output->getTransport()->flush();" << endl;
+  f_service_ << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::REPLY, $seqid);" << '\n'
+             << indent() << "$result->write($output);" << '\n'
+             << indent() << "$output->writeMessageEnd();" << '\n'
+             << indent() << "$output->getTransport()->flush();" << '\n';
 
   // Close function
   indent_down();
-  f_service_ << "}" << endl << endl;
+  f_service_ << "}" << '\n' << '\n';
 }
 
 /**
@@ -898,7 +896,7 @@ void t_perl_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  f_service_ << "# HELPER FUNCTIONS AND STRUCTURES" << endl << endl;
+  f_service_ << "# HELPER FUNCTIONS AND STRUCTURES" << '\n' << '\n';
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
@@ -945,15 +943,15 @@ void t_perl_generator::generate_service_interface(t_service* tservice) {
                  + "If);";
   }
 
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "If;" << endl << endl
-             << "use strict;" << endl << extends_if << endl << endl;
+  f_service_ << "package " << perl_namespace(program_) << service_name_ << "If;" << '\n' << '\n'
+             << "use strict;" << '\n' << extends_if << '\n' << '\n';
 
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ << "sub " << function_signature(*f_iter) << endl << "  die 'implement interface';\n}"
-               << endl << endl;
+    f_service_ << "sub " << function_signature(*f_iter) << '\n' << "  die 'implement interface';\n}"
+               << '\n' << '\n';
   }
   indent_down();
 }
@@ -970,31 +968,31 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
     extends_if = "use base qw(" + perl_namespace(extends_s->get_program()) + extends_s->get_name()
                  + "Rest);";
   }
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Rest;" << endl << endl
-             << "use strict;" << endl << extends_if << endl << endl;
+  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Rest;" << '\n' << '\n'
+             << "use strict;" << '\n' << extends_if << '\n' << '\n';
 
   if (extends.empty()) {
-    f_service_ << "sub new {" << endl;
+    f_service_ << "sub new {" << '\n';
 
     indent_up();
 
-    f_service_ << indent() << "my ($classname, $impl) = @_;" << endl << indent()
-               << "my $self     ={ impl => $impl };" << endl << endl << indent()
-               << "return bless($self,$classname);" << endl;
+    f_service_ << indent() << "my ($classname, $impl) = @_;" << '\n' << indent()
+               << "my $self     ={ impl => $impl };" << '\n' << '\n' << indent()
+               << "return bless($self,$classname);" << '\n';
 
     indent_down();
 
-    f_service_ << "}" << endl << endl;
+    f_service_ << "}" << '\n' << '\n';
   }
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ << "sub " << (*f_iter)->get_name() << "{" << endl;
+    f_service_ << "sub " << (*f_iter)->get_name() << "{" << '\n';
 
     indent_up();
 
-    f_service_ << indent() << "my ($self, $request) = @_;" << endl << endl;
+    f_service_ << indent() << "my ($self, $request) = @_;" << '\n' << '\n';
 
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
     vector<t_field*>::const_iterator a_iter;
@@ -1002,19 +1000,19 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
       //t_type* atype = get_true_type((*a_iter)->get_type());
       string req = "$request->{'" + (*a_iter)->get_name() + "'}";
       f_service_ << indent() << "my $" << (*a_iter)->get_name() << " = (" << req << ") ? " << req
-                 << " : undef;" << endl;
+                 << " : undef;" << '\n';
       /* slist no longer supported
       if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
         f_service_ << indent() << "my @" << (*a_iter)->get_name() << " = split(/,/, $"
-                   << (*a_iter)->get_name() << ");" << endl << indent() << "$"
-                   << (*a_iter)->get_name() << " = \\@" << (*a_iter)->get_name() << endl;
+                   << (*a_iter)->get_name() << ");" << '\n' << indent() << "$"
+                   << (*a_iter)->get_name() << " = \\@" << (*a_iter)->get_name() << '\n';
       }
       */
     }
     f_service_ << indent() << "return $self->{impl}->" << (*f_iter)->get_name() << "("
-               << argument_list((*f_iter)->get_arglist()) << ");" << endl;
+               << argument_list((*f_iter)->get_arglist()) << ");" << '\n';
     indent_down();
-    indent(f_service_) << "}" << endl << endl;
+    indent(f_service_) << "}" << '\n' << '\n';
   }
 }
 
@@ -1032,31 +1030,31 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
     extends_client = "use base qw(" + extends + "Client);";
   }
 
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Client;" << endl << endl
-             << extends_client << endl << "use base qw(" << perl_namespace(program_)
-             << service_name_ << "If);" << endl;
+  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Client;" << '\n' << '\n'
+             << extends_client << '\n' << "use base qw(" << perl_namespace(program_)
+             << service_name_ << "If);" << '\n';
 
   // Constructor function
-  f_service_ << "sub new {" << endl;
+  f_service_ << "sub new {" << '\n';
 
   indent_up();
 
-  f_service_ << indent() << "my ($classname, $input, $output) = @_;" << endl << indent()
-             << "my $self      = {};" << endl;
+  f_service_ << indent() << "my ($classname, $input, $output) = @_;" << '\n' << indent()
+             << "my $self      = {};" << '\n';
 
   if (!extends.empty()) {
-    f_service_ << indent() << "$self = $classname->SUPER::new($input, $output);" << endl;
+    f_service_ << indent() << "$self = $classname->SUPER::new($input, $output);" << '\n';
   } else {
-    f_service_ << indent() << "$self->{input}  = $input;" << endl << indent()
-               << "$self->{output} = defined $output ? $output : $input;" << endl << indent()
-               << "$self->{seqid}  = 0;" << endl;
+    f_service_ << indent() << "$self->{input}  = $input;" << '\n' << indent()
+               << "$self->{output} = defined $output ? $output : $input;" << '\n' << indent()
+               << "$self->{seqid}  = 0;" << '\n';
   }
 
-  f_service_ << indent() << "return bless($self,$classname);" << endl;
+  f_service_ << indent() << "return bless($self,$classname);" << '\n';
 
   indent_down();
 
-  f_service_ << "}" << endl << endl;
+  f_service_ << "}" << '\n' << '\n';
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -1068,7 +1066,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    f_service_ << "sub " << function_signature(*f_iter) << endl;
+    f_service_ << "sub " << function_signature(*f_iter) << '\n';
 
     indent_up();
 
@@ -1083,21 +1081,21 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
       }
       f_service_ << "$" << (*fld_iter)->get_name();
     }
-    f_service_ << ");" << endl;
+    f_service_ << ");" << '\n';
 
     if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << "return ";
       }
-      f_service_ << "$self->recv_" << funname << "();" << endl;
+      f_service_ << "$self->recv_" << funname << "();" << '\n';
     }
 
     indent_down();
 
-    f_service_ << "}" << endl << endl;
+    f_service_ << "}" << '\n' << '\n';
 
-    f_service_ << "sub send_" << function_signature(*f_iter) << endl;
+    f_service_ << "sub send_" << function_signature(*f_iter) << '\n';
 
     indent_up();
 
@@ -1107,23 +1105,23 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
     // Serialize the request header
     f_service_ << indent() << "$self->{output}->writeMessageBegin('" << (*f_iter)->get_name()
                << "', " << ((*f_iter)->is_oneway() ? "Thrift::TMessageType::ONEWAY" : "Thrift::TMessageType::CALL")
-               << ", $self->{seqid});" << endl;
+               << ", $self->{seqid});" << '\n';
 
-    f_service_ << indent() << "my $args = " << argsname << "->new();" << endl;
+    f_service_ << indent() << "my $args = " << argsname << "->new();" << '\n';
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << indent() << "$args->{" << (*fld_iter)->get_name() << "} = $"
-                 << (*fld_iter)->get_name() << ";" << endl;
+                 << (*fld_iter)->get_name() << ";" << '\n';
     }
 
     // Write to the stream
-    f_service_ << indent() << "$args->write($self->{output});" << endl << indent()
-               << "$self->{output}->writeMessageEnd();" << endl << indent()
-               << "$self->{output}->getTransport()->flush();" << endl;
+    f_service_ << indent() << "$args->write($self->{output});" << '\n' << indent()
+               << "$self->{output}->writeMessageEnd();" << '\n' << indent()
+               << "$self->{output}->getTransport()->flush();" << '\n';
 
     indent_down();
 
-    f_service_ << "}" << endl;
+    f_service_ << "}" << '\n';
 
     if (!(*f_iter)->is_oneway()) {
       std::string resultname = perl_namespace(tservice->get_program()) + service_name_ + "_"
@@ -1134,29 +1132,29 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs);
       // Open function
-      f_service_ << endl << "sub " << function_signature(&recv_function) << endl;
+      f_service_ << '\n' << "sub " << function_signature(&recv_function) << '\n';
 
       indent_up();
 
-      f_service_ << indent() << "my $rseqid = 0;" << endl << indent() << "my $fname;" << endl
-                 << indent() << "my $mtype = 0;" << endl << endl;
+      f_service_ << indent() << "my $rseqid = 0;" << '\n' << indent() << "my $fname;" << '\n'
+                 << indent() << "my $mtype = 0;" << '\n' << '\n';
 
       f_service_ << indent() << "$self->{input}->readMessageBegin(\\$fname, \\$mtype, \\$rseqid);"
-                 << endl << indent() << "if ($mtype == Thrift::TMessageType::EXCEPTION) {" << endl
-                 << indent() << "  my $x = Thrift::TApplicationException->new();" << endl << indent()
-                 << "  $x->read($self->{input});" << endl << indent()
-                 << "  $self->{input}->readMessageEnd();" << endl << indent() << "  die $x;" << endl
-                 << indent() << "}" << endl;
+                 << '\n' << indent() << "if ($mtype == Thrift::TMessageType::EXCEPTION) {" << '\n'
+                 << indent() << "  my $x = Thrift::TApplicationException->new();" << '\n' << indent()
+                 << "  $x->read($self->{input});" << '\n' << indent()
+                 << "  $self->{input}->readMessageEnd();" << '\n' << indent() << "  die $x;" << '\n'
+                 << indent() << "}" << '\n';
 
-      f_service_ << indent() << "my $result = " << resultname << "->new();" << endl << indent()
-                 << "$result->read($self->{input});" << endl;
+      f_service_ << indent() << "my $result = " << resultname << "->new();" << '\n' << indent()
+                 << "$result->read($self->{input});" << '\n';
 
-      f_service_ << indent() << "$self->{input}->readMessageEnd();" << endl << endl;
+      f_service_ << indent() << "$self->{input}->readMessageEnd();" << '\n' << '\n';
 
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << indent() << "if (defined $result->{success} ) {" << endl << indent()
-                   << "  return $result->{success};" << endl << indent() << "}" << endl;
+        f_service_ << indent() << "if (defined $result->{success} ) {" << '\n' << indent()
+                   << "  return $result->{success};" << '\n' << indent() << "}" << '\n';
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -1164,21 +1162,21 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ << indent() << "if (defined $result->{" << (*x_iter)->get_name() << "}) {"
-                   << endl << indent() << "  die $result->{" << (*x_iter)->get_name() << "};"
-                   << endl << indent() << "}" << endl;
+                   << '\n' << indent() << "  die $result->{" << (*x_iter)->get_name() << "};"
+                   << '\n' << indent() << "}" << '\n';
       }
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << "return;" << '\n';
       } else {
         f_service_ << indent() << "die \"" << (*f_iter)->get_name() << " failed: unknown result\";"
-                   << endl;
+                   << '\n';
       }
 
       // Close function
       indent_down();
-      f_service_ << "}" << endl;
+      f_service_ << "}" << '\n';
     }
   }
 }
@@ -1244,7 +1242,7 @@ void t_perl_generator::generate_deserialize_field(ostream& out,
     } else if (type->is_enum()) {
       out << "readI32(\\$" << name << ");";
     }
-    out << endl;
+    out << '\n';
 
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
@@ -1263,8 +1261,8 @@ void t_perl_generator::generate_deserialize_struct(ostream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
   out << indent() << "$" << prefix << " = " << perl_namespace(tstruct->get_program())
-      << tstruct->get_name() << "->new();" << endl << indent() << "$xfer += $" << prefix
-      << "->read($input);" << endl;
+      << tstruct->get_name() << "->new();" << '\n' << indent() << "$xfer += $" << prefix
+      << "->read($input);" << '\n';
 }
 
 void t_perl_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
@@ -1280,33 +1278,33 @@ void t_perl_generator::generate_deserialize_container(ostream& out, t_type* ttyp
   t_field fvtype(g_type_i8, vtype);
   t_field fetype(g_type_i8, etype);
 
-  out << indent() << "my $" << size << " = 0;" << endl;
+  out << indent() << "my $" << size << " = 0;" << '\n';
 
   // Declare variables, read header
   if (ttype->is_map()) {
-    out << indent() << "$" << prefix << " = {};" << endl << indent() << "my $" << ktype << " = 0;"
-        << endl << indent() << "my $" << vtype << " = 0;" << endl;
+    out << indent() << "$" << prefix << " = {};" << '\n' << indent() << "my $" << ktype << " = 0;"
+        << '\n' << indent() << "my $" << vtype << " = 0;" << '\n';
 
     out << indent() << "$xfer += $input->readMapBegin("
-        << "\\$" << ktype << ", \\$" << vtype << ", \\$" << size << ");" << endl;
+        << "\\$" << ktype << ", \\$" << vtype << ", \\$" << size << ");" << '\n';
 
   } else if (ttype->is_set()) {
 
-    out << indent() << "$" << prefix << " = {};" << endl << indent() << "my $" << etype << " = 0;"
-        << endl << indent() << "$xfer += $input->readSetBegin("
-        << "\\$" << etype << ", \\$" << size << ");" << endl;
+    out << indent() << "$" << prefix << " = {};" << '\n' << indent() << "my $" << etype << " = 0;"
+        << '\n' << indent() << "$xfer += $input->readSetBegin("
+        << "\\$" << etype << ", \\$" << size << ");" << '\n';
 
   } else if (ttype->is_list()) {
 
-    out << indent() << "$" << prefix << " = [];" << endl << indent() << "my $" << etype << " = 0;"
-        << endl << indent() << "$xfer += $input->readListBegin("
-        << "\\$" << etype << ", \\$" << size << ");" << endl;
+    out << indent() << "$" << prefix << " = [];" << '\n' << indent() << "my $" << etype << " = 0;"
+        << '\n' << indent() << "$xfer += $input->readListBegin("
+        << "\\$" << etype << ", \\$" << size << ");" << '\n';
   }
 
   // For loop iterates over elements
   string i = tmp("_i");
   indent(out) << "for (my $" << i << " = 0; $" << i << " < $" << size << "; ++$" << i << ")"
-              << endl;
+              << '\n';
 
   scope_up(out);
 
@@ -1322,11 +1320,11 @@ void t_perl_generator::generate_deserialize_container(ostream& out, t_type* ttyp
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "$xfer += $input->readMapEnd();" << endl;
+    indent(out) << "$xfer += $input->readMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "$xfer += $input->readSetEnd();" << endl;
+    indent(out) << "$xfer += $input->readSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "$xfer += $input->readListEnd();" << endl;
+    indent(out) << "$xfer += $input->readListEnd();" << '\n';
   }
 
   scope_down(out);
@@ -1341,24 +1339,24 @@ void t_perl_generator::generate_deserialize_map_element(ostream& out, t_map* tma
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(out) << declare_field(&fkey, true, true) << endl;
-  indent(out) << declare_field(&fval, true, true) << endl;
+  indent(out) << declare_field(&fkey, true, true) << '\n';
+  indent(out) << declare_field(&fval, true, true) << '\n';
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) << "$" << prefix << "->{$" << key << "} = $" << val << ";" << endl;
+  indent(out) << "$" << prefix << "->{$" << key << "} = $" << val << ";" << '\n';
 }
 
 void t_perl_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
   string elem = tmp("elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << "my $" << elem << " = undef;" << endl;
+  indent(out) << "my $" << elem << " = undef;" << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << "$" << prefix << "->{$" << elem << "} = 1;" << endl;
+  indent(out) << "$" << prefix << "->{$" << elem << "} = 1;" << '\n';
 }
 
 void t_perl_generator::generate_deserialize_list_element(ostream& out,
@@ -1367,11 +1365,11 @@ void t_perl_generator::generate_deserialize_list_element(ostream& out,
   string elem = tmp("elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << "my $" << elem << " = undef;" << endl;
+  indent(out) << "my $" << elem << " = undef;" << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << "push(@{$" << prefix << "},$" << elem << ");" << endl;
+  indent(out) << "push(@{$" << prefix << "},$" << elem << ");" << '\n';
 }
 
 /**
@@ -1435,7 +1433,7 @@ void t_perl_generator::generate_serialize_field(ostream& out, t_field* tfield, s
     } else if (type->is_enum()) {
       out << "writeI32($" << name << ");";
     }
-    out << endl;
+    out << '\n';
 
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
@@ -1453,7 +1451,7 @@ void t_perl_generator::generate_serialize_field(ostream& out, t_field* tfield, s
  */
 void t_perl_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  indent(out) << "$xfer += $" << prefix << "->write($output);" << endl;
+  indent(out) << "$xfer += $" << prefix << "->write($output);" << '\n';
 }
 
 /**
@@ -1466,17 +1464,17 @@ void t_perl_generator::generate_serialize_container(ostream& out, t_type* ttype,
     indent(out) << "$xfer += $output->writeMapBegin("
                 << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
-                << "scalar(keys %{$" << prefix << "}));" << endl;
+                << "scalar(keys %{$" << prefix << "}));" << '\n';
   } else if (ttype->is_set()) {
     indent(out) << "$xfer += $output->writeSetBegin("
                 << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
-                << "scalar(@{$" << prefix << "}));" << endl;
+                << "scalar(@{$" << prefix << "}));" << '\n';
 
   } else if (ttype->is_list()) {
 
     indent(out) << "$xfer += $output->writeListBegin("
                 << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", "
-                << "scalar(@{$" << prefix << "}));" << endl;
+                << "scalar(@{$" << prefix << "}));" << '\n';
   }
 
   scope_up(out);
@@ -1485,7 +1483,7 @@ void t_perl_generator::generate_serialize_container(ostream& out, t_type* ttype,
     string kiter = tmp("kiter");
     string viter = tmp("viter");
     indent(out) << "while( my ($" << kiter << ",$" << viter << ") = each %{$" << prefix << "}) "
-                << endl;
+                << '\n';
 
     scope_up(out);
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
@@ -1493,14 +1491,14 @@ void t_perl_generator::generate_serialize_container(ostream& out, t_type* ttype,
 
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
-    indent(out) << "foreach my $" << iter << " (@{$" << prefix << "})" << endl;
+    indent(out) << "foreach my $" << iter << " (@{$" << prefix << "})" << '\n';
     scope_up(out);
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     scope_down(out);
 
   } else if (ttype->is_list()) {
     string iter = tmp("iter");
-    indent(out) << "foreach my $" << iter << " (@{$" << prefix << "}) " << endl;
+    indent(out) << "foreach my $" << iter << " (@{$" << prefix << "}) " << '\n';
     scope_up(out);
     generate_serialize_list_element(out, (t_list*)ttype, iter);
     scope_down(out);
@@ -1509,11 +1507,11 @@ void t_perl_generator::generate_serialize_container(ostream& out, t_type* ttype,
   scope_down(out);
 
   if (ttype->is_map()) {
-    indent(out) << "$xfer += $output->writeMapEnd();" << endl;
+    indent(out) << "$xfer += $output->writeMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "$xfer += $output->writeSetEnd();" << endl;
+    indent(out) << "$xfer += $output->writeSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "$xfer += $output->writeListEnd();" << endl;
+    indent(out) << "$xfer += $output->writeListEnd();" << '\n';
   }
 
   scope_down(out);

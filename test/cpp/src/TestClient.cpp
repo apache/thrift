@@ -70,7 +70,7 @@ using namespace thrift::test;
 //
 
 template<typename Proto>
-class TPedanticProtocol : public Proto 
+class TPedanticProtocol : public Proto
 {
     public:
         TPedanticProtocol(std::shared_ptr<TTransport>& transport)
@@ -98,7 +98,7 @@ class TPedanticProtocol : public Proto
                 ss << "ERROR: send request with seqid " << m_last_seqid << " and got reply with seqid " << seqid;
                 throw std::logic_error(ss.str());
             } /* else {
-                std::cout << "verified seqid " << m_last_seqid << " round trip OK" << std::endl;
+                std::cout << "verified seqid " << m_last_seqid << " round trip OK" << '\n';
             } */
             return result;
         }
@@ -127,9 +127,9 @@ static void testString_clientReturn(event_base* base,
     std::ostringstream os;
     os << "test" << testNr;
     const bool ok = (s == os.str());
-    cout << "testString: " << s << " " << ((ok) ? "ok" : "failed") << endl;
+    cout << "testString: " << s << " " << ((ok) ? "ok" : "failed") << '\n';
   } catch (TException& exn) {
-    cout << "Error: " << exn.what() << endl;
+    cout << "Error: " << exn.what() << '\n';
   }
 
   if (testNr == 9)
@@ -139,7 +139,7 @@ static void testString_clientReturn(event_base* base,
 static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client) {
   try {
     client->recv_testVoid();
-    cout << "testVoid" << endl;
+    cout << "testVoid" << '\n';
 
     for (int testNr = 0; testNr < 10; ++testNr) {
       std::ostringstream os;
@@ -151,16 +151,16 @@ static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client)
                        os.str());
     }
   } catch (TException& exn) {
-    cout << "Error: " << exn.what() << endl;
+    cout << "Error: " << exn.what() << '\n';
   }
 }
 
 // Workaround for absense of C++11 "auto" keyword.
 template <typename T>
 bool print_eq(T expected, T actual) {
-  cout << "(" << actual << ")" << endl;
+  cout << "(" << actual << ")" << '\n';
   if (expected != actual) {
-    cout << "*** FAILED ***" << endl << "Expected: " << expected << " but got: " << actual << endl;
+    cout << "*** FAILED ***" << '\n' << "Expected: " << expected << " but got: " << actual << '\n';
     return false;
   }
   return true;
@@ -174,7 +174,7 @@ bool print_eq(T expected, T actual) {
   } catch (TTransportException&) {                                                                 \
     throw;                                                                                         \
   } catch (exception & ex) {                                                                       \
-    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    cout << "*** FAILED ***" << '\n' << ex.what() << '\n';                                         \
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
@@ -246,7 +246,7 @@ int main(int argc, char** argv) {
   boost::program_options::notify(vm);
 
   if (vm.count("help")) {
-    cout << desc << endl;
+    cout << desc << '\n';
     return ERR_UNKNOWN;
   }
 
@@ -278,8 +278,8 @@ int main(int argc, char** argv) {
     }
 
   } catch (exception& e) {
-    cerr << e.what() << endl;
-    cout << desc << endl;
+    cerr << e.what() << '\n';
+    cout << desc << '\n';
     return ERR_UNKNOWN;
   }
 
@@ -307,9 +307,9 @@ int main(int argc, char** argv) {
   std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
-    cout << "Client Certificate File: " << certPath << endl;
-    cout << "Client Key         File: " << keyPath << endl;
-    cout << "CA                 File: " << caPath << endl;
+    cout << "Client Certificate File: " << certPath << '\n';
+    cout << "Client Key         File: " << keyPath << '\n';
+    cout << "CA                 File: " << caPath << '\n';
 
     factory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -374,14 +374,14 @@ int main(int argc, char** argv) {
   if (port != 0) {
     cout << host << ":" << port;
   }
-  cout << endl;
+  cout << '\n';
 
   if (transport_type.compare("evhttp") == 0) {
     event_base* base = event_base_new();
-    cout << "Libevent Version: " << event_get_version() << endl;
-    cout << "Libevent Method: " << event_base_get_method(base) << endl;
+    cout << "Libevent Version: " << event_get_version() << '\n';
+    cout << "Libevent Method: " << event_base_get_method(base) << '\n';
 #if LIBEVENT_VERSION_NUMBER >= 0x02000000
-    cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
+    cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << '\n';
 #endif
 
     std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
@@ -409,7 +409,7 @@ int main(int argc, char** argv) {
     try {
       transport->open();
     } catch (TTransportException& ex) {
-      cout << "Connect failed: " << ex.what() << endl;
+      cout << "Connect failed: " << ex.what() << '\n';
       return ERR_UNKNOWN;
     }
 
@@ -426,12 +426,12 @@ int main(int argc, char** argv) {
     try {
       cout << "testVoid()" << flush;
       testClient.testVoid();
-      cout << " = void" << endl;
+      cout << " = void" << '\n';
     } catch (TTransportException&) {
       // Stop here if transport got broken
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_BASETYPES;
     }
 
@@ -441,9 +441,9 @@ int main(int argc, char** argv) {
     cout << "testString(\"Test\")" << flush;
     string s;
     testClient.testString(s, "Test");
-    cout << " = " << s << endl;
+    cout << " = " << s << '\n';
     if (s != "Test") {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_BASETYPES;
     }
 
@@ -459,9 +459,9 @@ int main(int argc, char** argv) {
           cout << "secondService.secondTestString(\"foo\") => " << flush;
         std::string result;
       ssc.secondtestString(result, "foo");
-      cout << "{" << result << "}" << endl;
+      cout << "{" << result << "}" << '\n';
       } catch (std::exception& e) {
-      cout << "  *** FAILED *** " << e.what() << endl;
+      cout << "  *** FAILED *** " << e.what() << '\n';
       return_code |= ERR_EXCEPTIONS;
     }
     }
@@ -502,16 +502,16 @@ int main(int argc, char** argv) {
 #endif
       cout << "testString(" << str << ") = " << flush;
       testClient.testString(s, str);
-      cout << s << endl;
+      cout << s << '\n';
       if (s != str) {
         cout.imbue(locale("en_US.UTF8"));
-        cout << "*** FAILED ***" << endl << "Expected string: " << str << " but got: " << s << endl << "CLEAR";
+        cout << "*** FAILED ***" << '\n' << "Expected string: " << str << " but got: " << s << '\n' << "CLEAR";
         return_code |= ERR_BASETYPES;
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_BASETYPES;
       return return_code;
     }
@@ -525,11 +525,11 @@ int main(int argc, char** argv) {
           " char-to-test-json-parsing: ]] \"]] \\\" }}}{ [[[ ");
       cout << "testString(" << str << ") = " << flush;
       testClient.testString(s, str);
-      cout << s << endl;
+      cout << s << '\n';
       if (s != str) {
         cout.imbue(locale("en_US.UTF8"));
-        cout << "*** FAILED ***" << endl
-             << "Expected string: " << str << " but got: " << s << endl
+        cout << "*** FAILED ***" << '\n'
+             << "Expected string: " << str << " but got: " << s << '\n'
              << "CLEAR";
         ;
         return_code |= ERR_BASETYPES;
@@ -537,7 +537,7 @@ int main(int argc, char** argv) {
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_BASETYPES;
       return return_code;
     }
@@ -602,15 +602,15 @@ int main(int argc, char** argv) {
       double expected = pow(static_cast<double>(10), 307);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
-      cout << "(" << actual << ")" << endl;
+      cout << "(" << actual << ")" << '\n';
       if (expected - actual > pow(static_cast<double>(10), 292)) {
-        cout << "*** FAILED ***" << endl
-             << "Expected: " << expected << " but got: " << actual << endl;
+        cout << "*** FAILED ***" << '\n'
+             << "Expected: " << expected << " but got: " << actual << '\n';
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_BASETYPES;
     }
 
@@ -618,15 +618,15 @@ int main(int argc, char** argv) {
       double expected = pow(static_cast<double>(10), -292);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
-      cout << "(" << actual << ")" << endl;
+      cout << "(" << actual << ")" << '\n';
       if (expected - actual > pow(static_cast<double>(10), -307)) {
-        cout << "*** FAILED ***" << endl
-             << "Expected: " << expected << " but got: " << actual << endl;
+        cout << "*** FAILED ***" << '\n'
+             << "Expected: " << expected << " but got: " << actual << '\n';
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_BASETYPES;
     }
 
@@ -656,7 +656,7 @@ int main(int argc, char** argv) {
            in.i32_thing,
            in.i64_thing);
     if (in != out) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
@@ -679,7 +679,7 @@ int main(int argc, char** argv) {
            in.i64_thing,
            in2.i32_thing);
     if (in2 != out2) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
@@ -714,9 +714,9 @@ int main(int argc, char** argv) {
       }
       cout << m_iter->first << " => " << m_iter->second;
     }
-    cout << "}" << endl;
+    cout << "}" << '\n';
     if (mapin != mapout) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_CONTAINERS;
     }
 
@@ -739,15 +739,15 @@ int main(int argc, char** argv) {
           first = false;
         cout << it->first << " => " << it->second;
       }
-      cout << "}" << endl;
+      cout << "}" << '\n';
       if (smapin != smapout) {
-        cout << "*** FAILED ***" << endl;
+        cout << "*** FAILED ***" << '\n';
         return_code |= ERR_CONTAINERS;
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_CONTAINERS;
     }
 
@@ -782,9 +782,9 @@ int main(int argc, char** argv) {
       }
       cout << *s_iter;
     }
-    cout << "}" << endl;
+    cout << "}" << '\n';
     if (setin != setout) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_CONTAINERS;
     }
 
@@ -796,14 +796,14 @@ int main(int argc, char** argv) {
       vector<int32_t> listout;
       testClient.testList(listout, vector<int32_t>());
       if (!listout.empty()) {
-        cout << "*** FAILED ***" << endl;
-        cout << "invalid length: " << listout.size() << endl;
+        cout << "*** FAILED ***" << '\n';
+        cout << "invalid length: " << listout.size() << '\n';
         return_code |= ERR_CONTAINERS;
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_CONTAINERS;
     }
     try {
@@ -835,15 +835,15 @@ int main(int argc, char** argv) {
         }
         cout << *l_iter;
       }
-      cout << "}" << endl;
+      cout << "}" << '\n';
       if (listin != listout) {
-        cout << "*** FAILED ***" << endl;
+        cout << "*** FAILED ***" << '\n';
         return_code |= ERR_CONTAINERS;
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_CONTAINERS;
     }
 
@@ -852,41 +852,41 @@ int main(int argc, char** argv) {
      */
     cout << "testEnum(ONE)" << flush;
     Numberz::type ret = testClient.testEnum(Numberz::ONE);
-    cout << " = " << ret << endl;
+    cout << " = " << ret << '\n';
     if (ret != Numberz::ONE) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
     cout << "testEnum(TWO)" << flush;
     ret = testClient.testEnum(Numberz::TWO);
-    cout << " = " << ret << endl;
+    cout << " = " << ret << '\n';
     if (ret != Numberz::TWO) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
     cout << "testEnum(THREE)" << flush;
     ret = testClient.testEnum(Numberz::THREE);
-    cout << " = " << ret << endl;
+    cout << " = " << ret << '\n';
     if (ret != Numberz::THREE) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
     cout << "testEnum(FIVE)" << flush;
     ret = testClient.testEnum(Numberz::FIVE);
-    cout << " = " << ret << endl;
+    cout << " = " << ret << '\n';
     if (ret != Numberz::FIVE) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
     cout << "testEnum(EIGHT)" << flush;
     ret = testClient.testEnum(Numberz::EIGHT);
-    cout << " = " << ret << endl;
+    cout << " = " << ret << '\n';
     if (ret != Numberz::EIGHT) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
@@ -895,9 +895,9 @@ int main(int argc, char** argv) {
      */
     cout << "testTypedef(309858235082523)" << flush;
     UserId uid = testClient.testTypedef(309858235082523LL);
-    cout << " = " << uid << endl;
+    cout << " = " << uid << '\n';
     if (uid != 309858235082523LL) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_STRUCTS;
     }
 
@@ -917,7 +917,7 @@ int main(int argc, char** argv) {
       }
       cout << "}, ";
     }
-    cout << "}" << endl;
+    cout << "}" << '\n';
     if (mm.size() != 2 ||
         mm[-4][-4] != -4 ||
         mm[-4][-3] != -3 ||
@@ -927,7 +927,7 @@ int main(int argc, char** argv) {
         mm[4][3] != 3 ||
         mm[4][2] != 2 ||
         mm[4][1] != 1) {
-      cout << "*** FAILED ***" << endl;
+      cout << "*** FAILED ***" << '\n';
       return_code |= ERR_CONTAINERS;
     }
 
@@ -984,7 +984,7 @@ int main(int argc, char** argv) {
         }
         cout << "}, ";
       }
-      cout << "}" << endl;
+      cout << "}" << '\n';
       bool failed = false;
       map<UserId, map<Numberz::type, Insanity> >::const_iterator it1 = whoa.find(UserId(1));
       if (whoa.size() != 2) {
@@ -1012,7 +1012,7 @@ int main(int argc, char** argv) {
         }
       }
       if (failed) {
-        cout << "*** FAILED ***" << endl;
+        cout << "*** FAILED ***" << '\n';
         return_code |= ERR_STRUCTS;
       }
     }
@@ -1020,7 +1020,7 @@ int main(int argc, char** argv) {
     /**
      * MULTI TEST
      */
-    cout << "testMulti()" << endl;
+    cout << "testMulti()" << '\n';
     try {
       map<int16_t, string> mul_map;
       Xtruct mul_result;
@@ -1033,13 +1033,13 @@ int main(int argc, char** argv) {
       xxs.i32_thing = 4242;
       xxs.i64_thing = 424242;
       if (mul_result != xxs) {
-        cout << "*** FAILED ***" << endl;
+        cout << "*** FAILED ***" << '\n';
         return_code |= ERR_STRUCTS;
       }
     } catch (TTransportException&) {
       throw;
     } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_STRUCTS;
     }
 
@@ -1048,7 +1048,7 @@ int main(int argc, char** argv) {
     try {
       cout << "testClient.testException(\"Xception\") =>" << flush;
       testClient.testException("Xception");
-      cout << "  void\n*** FAILED ***" << endl;
+      cout << "  void\n*** FAILED ***" << '\n';
       return_code |= ERR_EXCEPTIONS;
 
     } catch (Xception& e) {
@@ -1058,19 +1058,19 @@ int main(int argc, char** argv) {
     try {
       cout << "testClient.testException(\"TException\") =>" << flush;
       testClient.testException("TException");
-      cout << "  void\n*** FAILED ***" << endl;
+      cout << "  void\n*** FAILED ***" << '\n';
       return_code |= ERR_EXCEPTIONS;
 
     } catch (const TException&) {
-      cout << "  Caught TException" << endl;
+      cout << "  Caught TException" << '\n';
     }
 
     try {
       cout << "testClient.testException(\"success\") =>" << flush;
       testClient.testException("success");
-      cout << "  void" << endl;
+      cout << "  void" << '\n';
     } catch (exception & ex) {                                                                       \
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_EXCEPTIONS;
     }
 
@@ -1080,7 +1080,7 @@ int main(int argc, char** argv) {
       cout << "testClient.testMultiException(\"Xception\", \"test 1\") =>" << flush;
       Xtruct result;
       testClient.testMultiException(result, "Xception", "test 1");
-      cout << "  result\n*** FAILED ***" << endl;
+      cout << "  result\n*** FAILED ***" << '\n';
       return_code |= ERR_EXCEPTIONS;
     } catch (Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
@@ -1090,7 +1090,7 @@ int main(int argc, char** argv) {
       cout << "testClient.testMultiException(\"Xception2\", \"test 2\") =>" << flush;
       Xtruct result;
       testClient.testMultiException(result, "Xception2", "test 2");
-      cout << "  result\n*** FAILED ***" << endl;
+      cout << "  result\n*** FAILED ***" << '\n';
       return_code |= ERR_EXCEPTIONS;
 
     } catch (Xception2& e) {
@@ -1103,7 +1103,7 @@ int main(int argc, char** argv) {
       testClient.testMultiException(result, "success", "test 3");
       printf("  {{\"%s\"}}\n", result.string_thing.c_str());
     } catch (exception & ex) {                                                                       \
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
+      cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
       return_code |= ERR_EXCEPTIONS;
     }
 
@@ -1134,16 +1134,16 @@ int main(int argc, char** argv) {
      */
     cout << "re-test testI32(-1)" << flush;
     int i32 = testClient.testI32(-1);
-    cout << " = " << i32 << endl;
+    cout << " = " << i32 << '\n';
     if (i32 != -1)
       return_code |= ERR_BASETYPES;
 
-    cout << endl << "All tests done." << endl << flush;
+    cout << '\n' << "All tests done." << '\n' << flush;
 
     uint64_t stop = now();
     uint64_t tot = stop - start;
 
-    cout << "Total time: " << stop - start << " us" << endl;
+    cout << "Total time: " << stop - start << " us" << '\n';
 
     time_tot += tot;
     if (time_min == 0 || tot < time_min) {
@@ -1160,9 +1160,9 @@ int main(int argc, char** argv) {
 
   uint64_t time_avg = time_tot / numTests;
 
-  cout << "Min time: " << time_min << " us" << endl;
-  cout << "Max time: " << time_max << " us" << endl;
-  cout << "Avg time: " << time_avg << " us" << endl;
+  cout << "Min time: " << time_min << " us" << '\n';
+  cout << "Max time: " << time_max << " us" << '\n';
+  cout << "Avg time: " << time_avg << " us" << '\n';
 
   return return_code;
 }
@@ -1204,26 +1204,26 @@ int binary_test(ThriftTestClient& testClient, string::size_type siz)
     string bin_request;
     string bin_result;
 
-    cout << "testBinary(siz = " << siz << ")" << endl;
+    cout << "testBinary(siz = " << siz << ")" << '\n';
     binary_fill(bin_request, siz);
     try {
         testClient.testBinary(bin_result, bin_request);
 
         if (bin_request.size() != bin_result.size()) {
-            cout << "*** FAILED: request size " << bin_request.size() << "; result size " << bin_result.size() << endl;
+            cout << "*** FAILED: request size " << bin_request.size() << "; result size " << bin_result.size() << '\n';
             return ERR_BASETYPES;
         }
 
         for (string::size_type i = 0; i < siz; ++i) {
             if (bin_request.at(i) != bin_result.at(i)) {
-                cout << "*** FAILED: at position " << i << " request[i] is h" << hex << bin_request.at(i) << " result[i] is h" << hex << bin_result.at(i) << endl;
+                cout << "*** FAILED: at position " << i << " request[i] is h" << hex << bin_request.at(i) << " result[i] is h" << hex << bin_result.at(i) << '\n';
                 return ERR_BASETYPES;
             }
         }
     } catch (TTransportException&) {
         throw;
     } catch (exception& ex) {
-        cout << "*** FAILED ***" << endl << ex.what() << endl;
+        cout << "*** FAILED ***" << '\n' << ex.what() << '\n';
         return ERR_BASETYPES;
     }
 

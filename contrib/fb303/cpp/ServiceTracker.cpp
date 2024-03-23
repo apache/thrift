@@ -344,7 +344,7 @@ ServiceTracker::defaultLogMethod(int level, const string &message)
       break;
     }
     cout << '[' << level_string << "] [" << now_pretty << "] "
-         << message << endl;
+         << message << '\n';
   }
 }
 

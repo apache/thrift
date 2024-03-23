@@ -39,8 +39,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const std::string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * Erlang code generator.
  *
@@ -268,14 +266,14 @@ void t_erl_generator::init_generator() {
 
   hrl_header(f_types_hrl_file_, program_module_name + "_types");
 
-  f_types_file_ << erl_autogen_comment() << endl
-                << "-module(" << program_module_name << "_types)." << endl
-                << erl_imports() << endl;
+  f_types_file_ << erl_autogen_comment() << '\n'
+                << "-module(" << program_module_name << "_types)." << '\n'
+                << erl_imports() << '\n';
 
-  f_types_file_ << "-include(\"" << program_module_name << "_types.hrl\")." << endl
-                  << endl;
+  f_types_file_ << "-include(\"" << program_module_name << "_types.hrl\")." << '\n'
+                  << '\n';
 
-  f_types_hrl_file_ << render_includes() << endl;
+  f_types_hrl_file_ << render_includes() << '\n';
 
   // consts files
   string f_consts_name = get_out_dir() + program_module_name + "_constants.erl";
@@ -284,28 +282,28 @@ void t_erl_generator::init_generator() {
   f_consts_file_.open(f_consts_name.c_str());
   f_consts_hrl_file_.open(f_consts_hrl_name.c_str());
 
-  f_consts_file_ << erl_autogen_comment() << endl
-                 << "-module(" << program_module_name << "_constants)." << endl
-                 << erl_imports() << endl
-                 << "-include(\"" << program_module_name << "_types.hrl\")." << endl
-                 << endl;
+  f_consts_file_ << erl_autogen_comment() << '\n'
+                 << "-module(" << program_module_name << "_constants)." << '\n'
+                 << erl_imports() << '\n'
+                 << "-include(\"" << program_module_name << "_types.hrl\")." << '\n'
+                 << '\n';
 
-  f_consts_hrl_file_ << erl_autogen_comment() << endl << erl_imports() << endl
-                     << "-include(\"" << program_module_name << "_types.hrl\")." << endl << endl;
+  f_consts_hrl_file_ << erl_autogen_comment() << '\n' << erl_imports() << '\n'
+                     << "-include(\"" << program_module_name << "_types.hrl\")." << '\n' << '\n';
 }
 
 /**
  * Boilerplate at beginning and end of header files
  */
 void t_erl_generator::hrl_header(ostream& out, string name) {
-  out << erl_autogen_comment() << endl
-      << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
-      << endl;
+  out << erl_autogen_comment() << '\n'
+      << "-ifndef(_" << name << "_included)." << '\n' << "-define(_" << name << "_included, yeah)."
+      << '\n';
 }
 
 void t_erl_generator::hrl_footer(ostream& out, string name) {
   (void)name;
-  out << "-endif." << endl;
+  out << "-endif." << '\n';
 }
 
 /**
@@ -365,13 +363,13 @@ void t_erl_generator::close_generator() {
   export_types_string("struct_names", 0);
   export_types_string("exception_names", 0);
 
-  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
+  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << '\n' << '\n';
 
   f_types_file_ << f_info_.str();
-  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << endl << endl;
+  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << '\n' << '\n';
 
   f_types_file_ << f_info_ext_.str();
-  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
+  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << '\n' << '\n';
 
   generate_const_functions();
 
@@ -527,10 +525,10 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
     string name = (*c_iter)->get_name();
     indent(f_types_hrl_file_) << "-define(" << constify(make_safe_for_module_name(program_name_))
                               << "_" << constify(tenum->get_name()) << "_" << constify(name) << ", "
-                              << value << ")." << endl;
+                              << value << ")." << '\n';
   }
 
-  f_types_hrl_file_ << endl;
+  f_types_hrl_file_ << '\n';
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
@@ -551,7 +549,7 @@ void t_erl_generator::generate_enum_info(t_enum* tenum){
     }
     indent_down();
   }
-  f_types_file_ << "\n";
+  f_types_file_ << '\n';
   indent(f_types_file_) << "];\n\n";
   indent_down();
 }
@@ -579,7 +577,7 @@ void t_erl_generator::generate_const(t_const* tconst) {
   v_consts_.push_back(tconst);
 
   f_consts_hrl_file_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
-                     << constify(name) << ", " << render_const_value(type, value) << ")." << endl << endl;
+                     << constify(name) << ", " << render_const_value(type, value) << ")." << '\n' << '\n';
 }
 
 /**
@@ -809,7 +807,7 @@ void t_erl_generator::generate_erl_struct(t_struct* tstruct, bool is_exception) 
  * @param tstruct The struct definition
  */
 void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tstruct) {
-  indent(out) << "%% struct " << type_name(tstruct) << endl << endl;
+  indent(out) << "%% struct " << type_name(tstruct) << '\n' << '\n';
 
   std::stringstream buf;
   buf << indent() << "-record(" << type_name(tstruct) << ", {";
@@ -819,13 +817,13 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();) {
     generate_erl_struct_member(buf, *m_iter);
     if (++m_iter != members.end()) {
-      buf << "," << endl << field_indent;
+      buf << "," << '\n' << field_indent;
     }
   }
   buf << "}).";
 
-  out << buf.str() << endl;
-  out << "-type " + type_name(tstruct) << "() :: #" + type_name(tstruct) + "{}." << endl << endl;
+  out << buf.str() << '\n';
+  out << "-type " + type_name(tstruct) << "() :: #" + type_name(tstruct) + "{}." << '\n' << '\n';
 }
 
 /**
@@ -871,19 +869,19 @@ string t_erl_generator::render_member_value(t_field* field) {
  * Generates the read method for a struct
  */
 void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << endl;
+  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << '\n';
   indent_up();
-  out << indent() << render_type_term(tstruct, true) << ";" << endl;
+  out << indent() << render_type_term(tstruct, true) << ";" << '\n';
   indent_down();
-  out << endl;
+  out << '\n';
 }
 
 void t_erl_generator::generate_erl_extended_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << endl;
+  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << '\n';
   indent_up();
-  out << indent() << render_type_term(tstruct, true, true) << ";" << endl;
+  out << indent() << render_type_term(tstruct, true, true) << ";" << '\n';
   indent_down();
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -909,11 +907,11 @@ void t_erl_generator::generate_service(t_service* tservice) {
   if (tservice->get_extends() != nullptr) {
     f_service_hrl_ << "-include(\""
                    << make_safe_for_module_name(tservice->get_extends()->get_name())
-                   << "_thrift.hrl\"). % inherit " << endl;
+                   << "_thrift.hrl\"). % inherit " << '\n';
   }
 
   f_service_hrl_ << "-include(\"" << make_safe_for_module_name(program_name_) << "_types.hrl\")."
-                 << endl << endl;
+                 << '\n' << '\n';
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_helpers(tservice); // cpiro: New Erlang Order
@@ -924,13 +922,13 @@ void t_erl_generator::generate_service(t_service* tservice) {
 
   // indent_down();
 
-  f_service_file_ << erl_autogen_comment() << endl << "-module(" << service_name_ << "_thrift)."
-                  << endl << "-behaviour(thrift_service)." << endl << endl << erl_imports() << endl;
+  f_service_file_ << erl_autogen_comment() << '\n' << "-module(" << service_name_ << "_thrift)."
+                  << '\n' << "-behaviour(thrift_service)." << '\n' << '\n' << erl_imports() << '\n';
 
   f_service_file_ << "-include(\"" << make_safe_for_module_name(tservice->get_name())
-                  << "_thrift.hrl\")." << endl << endl;
+                  << "_thrift.hrl\")." << '\n' << '\n';
 
-  f_service_file_ << "-export([" << export_lines_.str() << "])." << endl << endl;
+  f_service_file_ << "-export([" << export_lines_.str() << "])." << '\n' << '\n';
 
   f_service_file_ << f_service_.str();
 
@@ -946,7 +944,7 @@ void t_erl_generator::generate_service_metadata(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   size_t num_functions = functions.size();
 
-  indent(f_service_) << "function_names() -> " << endl;
+  indent(f_service_) << "function_names() -> " << '\n';
   indent_up();
   indent(f_service_) << "[";
 
@@ -972,14 +970,14 @@ void t_erl_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   //  indent(f_service_) <<
-  //  "% HELPER FUNCTIONS AND STRUCTURES" << endl << endl;
+  //  "% HELPER FUNCTIONS AND STRUCTURES" << '\n' << '\n';
 
   export_string("struct_info", 1);
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_erl_function_helpers(*f_iter);
   }
-  f_service_ << "struct_info(_) -> erlang:error(function_clause)." << endl;
+  f_service_ << "struct_info(_) -> erlang:error(function_clause)." << '\n';
 }
 
 /**
@@ -1002,26 +1000,26 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
-  f_service_ << "%%% interface" << endl;
+  f_service_ << "%%% interface" << '\n';
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ << indent() << "% " << function_signature(*f_iter) << endl;
+    f_service_ << indent() << "% " << function_signature(*f_iter) << '\n';
 
     generate_function_info(tservice, *f_iter);
   }
 
   // Inheritance - pass unknown functions to base class
   if (tservice->get_extends() != nullptr) {
-    indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
+    indent(f_service_) << "function_info(Function, InfoType) ->" << '\n';
     indent_up();
     indent(f_service_) << make_safe_for_module_name(tservice->get_extends()->get_name())
-                       << "_thrift:function_info(Function, InfoType)." << endl;
+                       << "_thrift:function_info(Function, InfoType)." << '\n';
     indent_down();
   } else {
     // return function_clause error for non-existent functions
-    indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)." << endl;
+    indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)." << '\n';
   }
 
-  indent(f_service_) << endl;
+  indent(f_service_) << '\n';
 }
 
 /**
@@ -1036,30 +1034,30 @@ void t_erl_generator::generate_function_info(t_service* tservice, t_function* tf
   t_struct* arg_struct = tfunction->get_arglist();
 
   // function_info(Function, params_type):
-  indent(f_service_) << "function_info(" << name_atom << ", params_type) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", params_type) ->" << '\n';
   indent_up();
 
-  indent(f_service_) << render_type_term(arg_struct, true) << ";" << endl;
+  indent(f_service_) << render_type_term(arg_struct, true) << ";" << '\n';
 
   indent_down();
 
   // function_info(Function, reply_type):
-  indent(f_service_) << "function_info(" << name_atom << ", reply_type) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", reply_type) ->" << '\n';
   indent_up();
 
   if (!tfunction->get_returntype()->is_void())
-    indent(f_service_) << render_type_term(tfunction->get_returntype(), false) << ";" << endl;
+    indent(f_service_) << render_type_term(tfunction->get_returntype(), false) << ";" << '\n';
   else if (tfunction->is_oneway())
-    indent(f_service_) << "oneway_void;" << endl;
+    indent(f_service_) << "oneway_void;" << '\n';
   else
     indent(f_service_) << "{struct, []}"
-                       << ";" << endl;
+                       << ";" << '\n';
   indent_down();
 
   // function_info(Function, exceptions):
-  indent(f_service_) << "function_info(" << name_atom << ", exceptions) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", exceptions) ->" << '\n';
   indent_up();
-  indent(f_service_) << render_type_term(xs, true) << ";" << endl;
+  indent(f_service_) << render_type_term(xs, true) << ";" << '\n';
   indent_down();
 }
 
@@ -1246,11 +1244,11 @@ std::string t_erl_generator::render_type_term(t_type* type,
         }
 
         if (++i != end) {
-          buf << "," << endl << field_indent;
+          buf << "," << '\n' << field_indent;
         }
       }
 
-      buf << "]}" << endl;
+      buf << "]}" << '\n';
       return buf.str();
     } else {
       return "{struct, {" + atomify(type_module(type)) + ", " + type_name(type) + "}}";

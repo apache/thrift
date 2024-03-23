@@ -55,8 +55,6 @@ using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TBufferedTransport;
 using apache::thrift::transport::TFramedTransport;
 using std::shared_ptr;
-using std::cout;
-using std::endl;
 using std::string;
 using std::memset;
 using namespace apache::thrift;

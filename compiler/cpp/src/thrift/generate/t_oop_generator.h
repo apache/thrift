@@ -42,13 +42,13 @@ public:
    */
 
   void scope_up(std::ostream& out) {
-    indent(out) << "{" << std::endl;
+    indent(out) << "{" << '\n';
     indent_up();
   }
 
   void scope_down(std::ostream& out) {
     indent_down();
-    indent(out) << "}" << std::endl;
+    indent(out) << "}" << '\n';
   }
 
   std::string upcase_string(std::string original) {

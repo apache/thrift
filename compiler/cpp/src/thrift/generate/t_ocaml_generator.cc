@@ -38,8 +38,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * OCaml code generator.
  *
@@ -241,10 +239,10 @@ void t_ocaml_generator::init_generator() {
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
-  f_types_ << ocaml_autogen_comment() << endl << ocaml_imports() << endl;
-  f_types_i_ << ocaml_autogen_comment() << endl << ocaml_imports() << endl;
-  f_consts_ << ocaml_autogen_comment() << endl << ocaml_imports() << endl << "open "
-            << capitalize(program_name_) << "_types" << endl;
+  f_types_ << ocaml_autogen_comment() << '\n' << ocaml_imports() << '\n';
+  f_types_i_ << ocaml_autogen_comment() << '\n' << ocaml_imports() << '\n';
+  f_consts_ << ocaml_autogen_comment() << '\n' << ocaml_imports() << '\n' << "open "
+            << capitalize(program_name_) << "_types" << '\n';
 }
 
 /**
@@ -277,9 +275,9 @@ t_ocaml_generator::~t_ocaml_generator() {
  */
 void t_ocaml_generator::generate_typedef(t_typedef* ttypedef) {
   f_types_ << indent() << "type " << decapitalize(ttypedef->get_symbolic()) << " = "
-           << render_ocaml_type(ttypedef->get_type()) << endl << endl;
+           << render_ocaml_type(ttypedef->get_type()) << '\n' << '\n';
   f_types_i_ << indent() << "type " << decapitalize(ttypedef->get_symbolic()) << " = "
-             << render_ocaml_type(ttypedef->get_type()) << endl << endl;
+             << render_ocaml_type(ttypedef->get_type()) << '\n' << '\n';
 }
 
 /**
@@ -289,46 +287,46 @@ void t_ocaml_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_ocaml_generator::generate_enum(t_enum* tenum) {
-  indent(f_types_) << "module " << capitalize(tenum->get_name()) << " = " << endl << "struct"
-                   << endl;
-  indent(f_types_i_) << "module " << capitalize(tenum->get_name()) << " : " << endl << "sig"
-                     << endl;
+  indent(f_types_) << "module " << capitalize(tenum->get_name()) << " = " << '\n' << "struct"
+                   << '\n';
+  indent(f_types_i_) << "module " << capitalize(tenum->get_name()) << " : " << '\n' << "sig"
+                     << '\n';
   indent_up();
-  indent(f_types_) << "type t = " << endl;
-  indent(f_types_i_) << "type t = " << endl;
+  indent(f_types_) << "type t = " << '\n';
+  indent(f_types_i_) << "type t = " << '\n';
   indent_up();
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     string name = capitalize((*c_iter)->get_name());
-    indent(f_types_) << "| " << name << endl;
-    indent(f_types_i_) << "| " << name << endl;
+    indent(f_types_) << "| " << name << '\n';
+    indent(f_types_i_) << "| " << name << '\n';
   }
   indent_down();
 
-  indent(f_types_) << "let to_i = function" << endl;
-  indent(f_types_i_) << "val to_i : t -> Int32.t" << endl;
+  indent(f_types_) << "let to_i = function" << '\n';
+  indent(f_types_i_) << "val to_i : t -> Int32.t" << '\n';
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-    indent(f_types_) << "| " << name << " -> " << value << "l" << endl;
+    indent(f_types_) << "| " << name << " -> " << value << "l" << '\n';
   }
   indent_down();
 
-  indent(f_types_) << "let of_i = function" << endl;
-  indent(f_types_i_) << "val of_i : Int32.t -> t" << endl;
+  indent(f_types_) << "let of_i = function" << '\n';
+  indent(f_types_i_) << "val of_i : Int32.t -> t" << '\n';
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-    indent(f_types_) << "| " << value << "l -> " << name << endl;
+    indent(f_types_) << "| " << value << "l -> " << name << '\n';
   }
-  indent(f_types_) << "| _ -> raise Thrift_error" << endl;
+  indent(f_types_) << "| _ -> raise Thrift_error" << '\n';
   indent_down();
   indent_down();
-  indent(f_types_) << "end" << endl;
-  indent(f_types_i_) << "end" << endl;
+  indent(f_types_) << "end" << '\n';
+  indent(f_types_i_) << "end" << '\n';
 }
 
 /**
@@ -339,7 +337,7 @@ void t_ocaml_generator::generate_const(t_const* tconst) {
   string name = decapitalize(tconst->get_name());
   t_const_value* value = tconst->get_value();
 
-  indent(f_consts_) << "let " << name << " = " << render_const_value(type, value) << endl << endl;
+  indent(f_consts_) << "let " << name << " = " << render_const_value(type, value) << '\n' << '\n';
 }
 
 /**
@@ -395,9 +393,9 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
   } else if (type->is_struct() || type->is_xception()) {
     string cname = type_name(type);
     string ct = tmp("_c");
-    out << endl;
+    out << '\n';
     indent_up();
-    indent(out) << "(let " << ct << " = new " << cname << " in" << endl;
+    indent(out) << "(let " << ct << " = new " << cname << " in" << '\n';
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -417,7 +415,7 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
       out << indent();
       out << ct << "#set_" << fname << " ";
       out << render_const_value(field_type, v_iter->second);
-      out << ";" << endl;
+      out << ";" << '\n';
     }
     indent(out) << ct << ")";
     indent_down();
@@ -428,14 +426,14 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     string hm = tmp("_hm");
-    out << endl;
+    out << '\n';
     indent_up();
-    indent(out) << "(let " << hm << " = Hashtbl.create " << val.size() << " in" << endl;
+    indent(out) << "(let " << hm << " = Hashtbl.create " << val.size() << " in" << '\n';
     indent_up();
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(ktype, v_iter->first);
       string val = render_const_value(vtype, v_iter->second);
-      indent(out) << "Hashtbl.add " << hm << " " << key << " " << val << ";" << endl;
+      indent(out) << "Hashtbl.add " << hm << " " << key << " " << val << ";" << '\n';
     }
     indent(out) << hm << ")";
     indent_down();
@@ -443,14 +441,14 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
   } else if (type->is_list()) {
     t_type* etype;
     etype = ((t_list*)type)->get_elem_type();
-    out << "[" << endl;
+    out << "[" << '\n';
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << indent();
       out << render_const_value(etype, *v_iter);
-      out << ";" << endl;
+      out << ";" << '\n';
     }
     indent_down();
     indent(out) << "]";
@@ -459,15 +457,15 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     string hm = tmp("_hm");
-    indent(out) << "(let " << hm << " = Hashtbl.create " << val.size() << " in" << endl;
+    indent(out) << "(let " << hm << " = Hashtbl.create " << val.size() << " in" << '\n';
     indent_up();
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string val = render_const_value(etype, *v_iter);
-      indent(out) << "Hashtbl.add " << hm << " " << val << " true;" << endl;
+      indent(out) << "Hashtbl.add " << hm << " " << val << " true;" << '\n';
     }
-    indent(out) << hm << ")" << endl;
+    indent(out) << hm << ")" << '\n';
     indent_down();
-    out << endl;
+    out << '\n';
   } else {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
@@ -503,15 +501,15 @@ void t_ocaml_generator::generate_ocaml_method_copy(ostream& out, const vector<t_
   vector<t_field*>::const_iterator m_iter;
 
   /* Create a copy of the current object */
-  indent(out) << "method copy =" << endl;
+  indent(out) << "method copy =" << '\n';
   indent_up();
   indent_up();
-  indent(out) << "let _new = Oo.copy self in" << endl;
+  indent(out) << "let _new = Oo.copy self in" << '\n';
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     generate_ocaml_member_copy(out, *m_iter);
 
   indent_down();
-  indent(out) << "_new" << endl;
+  indent(out) << "_new" << '\n';
   indent_down();
 }
 
@@ -564,10 +562,10 @@ void t_ocaml_generator::generate_ocaml_member_copy(ostream& out, t_field* tmembe
   if (copy_of != grab_field) {
     indent(out);
     if (!struct_member_persistent(tmember)) {
-      out << "if _" << mname << " <> None then" << endl;
+      out << "if _" << mname << " <> None then" << '\n';
       indent(out) << "  ";
     }
-    out << "_new#set_" << mname << " " << copy_of << ";" << endl;
+    out << "_new#set_" << mname << " " << copy_of << ";" << '\n';
   }
 }
 
@@ -582,24 +580,24 @@ void t_ocaml_generator::generate_ocaml_struct_definition(ostream& out,
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   string tname = type_name(tstruct);
-  indent(out) << "class " << tname << " =" << endl;
-  indent(out) << "object (self)" << endl;
+  indent(out) << "class " << tname << " =" << '\n';
+  indent(out) << "object (self)" << '\n';
 
   indent_up();
 
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       generate_ocaml_struct_member(out, tname, (*m_iter));
-      out << endl;
+      out << '\n';
     }
   }
   generate_ocaml_method_copy(out, members);
   generate_ocaml_struct_writer(out, tstruct);
   indent_down();
-  indent(out) << "end" << endl;
+  indent(out) << "end" << '\n';
 
   if (is_exception) {
-    indent(out) << "exception " << capitalize(tname) << " of " << tname << endl;
+    indent(out) << "exception " << capitalize(tname) << " of " << tname << '\n';
   }
 
   generate_ocaml_struct_reader(out, tstruct);
@@ -621,37 +619,37 @@ void t_ocaml_generator::generate_ocaml_struct_member(ostream& out,
   t_const_value* val = tmember->get_value();
   if (val) {
     if (struct_member_persistent(tmember))
-      out << " = " << render_const_value(tmember->get_type(), tmember->get_value()) << endl;
+      out << " = " << render_const_value(tmember->get_type(), tmember->get_value()) << '\n';
     else
       out << " option = Some " << render_const_value(tmember->get_type(), tmember->get_value())
-          << endl;
+          << '\n';
   } else {
     // assert(!struct_member_persistent(tmember))
-    out << " option = None" << endl;
+    out << " option = None" << '\n';
   }
 
   if (struct_member_persistent(tmember)) {
-    indent(out) << "method get_" << mname << " = Some _" << mname << endl;
-    indent(out) << "method grab_" << mname << " = _" << mname << endl;
-    indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- " << x << endl;
+    indent(out) << "method get_" << mname << " = Some _" << mname << '\n';
+    indent(out) << "method grab_" << mname << " = _" << mname << '\n';
+    indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- " << x << '\n';
   } else {
-    indent(out) << "method get_" << mname << " = _" << mname << endl;
+    indent(out) << "method get_" << mname << " = _" << mname << '\n';
     indent(out) << "method grab_" << mname << " = match _" << mname
                 << " with None->raise (Field_empty \"" << tname << "." << mname << "\") | Some "
-                << x << " -> " << x << endl;
+                << x << " -> " << x << '\n';
     indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- Some " << x
-                << endl;
-    indent(out) << "method unset_" << mname << " = _" << mname << " <- None" << endl;
+                << '\n';
+    indent(out) << "method unset_" << mname << " = _" << mname << " <- None" << '\n';
   }
 
   indent(out) << "method reset_" << mname << " = _" << mname << " <- ";
   if (val) {
     if (struct_member_persistent(tmember))
-      out << render_const_value(tmember->get_type(), tmember->get_value()) << endl;
+      out << render_const_value(tmember->get_type(), tmember->get_value()) << '\n';
     else
-      out << "Some " << render_const_value(tmember->get_type(), tmember->get_value()) << endl;
+      out << "Some " << render_const_value(tmember->get_type(), tmember->get_value()) << '\n';
   } else {
-    out << "None" << endl;
+    out << "None" << '\n';
   }
 }
 
@@ -719,8 +717,8 @@ void t_ocaml_generator::generate_ocaml_struct_sig(ostream& out,
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   string tname = type_name(tstruct);
-  indent(out) << "class " << tname << " :" << endl;
-  indent(out) << "object ('a)" << endl;
+  indent(out) << "class " << tname << " :" << '\n';
+  indent(out) << "object ('a)" << '\n';
 
   indent_up();
 
@@ -729,24 +727,24 @@ void t_ocaml_generator::generate_ocaml_struct_sig(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       string mname = decapitalize((*m_iter)->get_name());
       string type = render_ocaml_type((*m_iter)->get_type());
-      indent(out) << "method get_" << mname << " : " << type << " option" << endl;
-      indent(out) << "method grab_" << mname << " : " << type << endl;
-      indent(out) << "method set_" << mname << " : " << type << " -> unit" << endl;
+      indent(out) << "method get_" << mname << " : " << type << " option" << '\n';
+      indent(out) << "method grab_" << mname << " : " << type << '\n';
+      indent(out) << "method set_" << mname << " : " << type << " -> unit" << '\n';
       if (!struct_member_persistent(*m_iter))
-        indent(out) << "method unset_" << mname << " : unit" << endl;
-      indent(out) << "method reset_" << mname << " : unit" << endl;
+        indent(out) << "method unset_" << mname << " : unit" << '\n';
+      indent(out) << "method reset_" << mname << " : unit" << '\n';
     }
   }
-  indent(out) << "method copy : 'a" << endl;
-  indent(out) << "method write : Protocol.t -> unit" << endl;
+  indent(out) << "method copy : 'a" << '\n';
+  indent(out) << "method write : Protocol.t -> unit" << '\n';
   indent_down();
-  indent(out) << "end" << endl;
+  indent(out) << "end" << '\n';
 
   if (is_exception) {
-    indent(out) << "exception " << capitalize(tname) << " of " << tname << endl;
+    indent(out) << "exception " << capitalize(tname) << " of " << tname << '\n';
   }
 
-  indent(out) << "val read_" << tname << " : Protocol.t -> " << tname << endl;
+  indent(out) << "val read_" << tname << " : Protocol.t -> " << tname << '\n';
 }
 
 /**
@@ -759,55 +757,55 @@ void t_ocaml_generator::generate_ocaml_struct_reader(ostream& out, t_struct* tst
   string str = tmp("_str");
   string t = tmp("_t");
   string id = tmp("_id");
-  indent(out) << "let rec read_" << sname << " (iprot : Protocol.t) =" << endl;
+  indent(out) << "let rec read_" << sname << " (iprot : Protocol.t) =" << '\n';
   indent_up();
-  indent(out) << "let " << str << " = new " << sname << " in" << endl;
+  indent(out) << "let " << str << " = new " << sname << " in" << '\n';
   indent_up();
-  indent(out) << "ignore(iprot#readStructBegin);" << endl;
+  indent(out) << "ignore(iprot#readStructBegin);" << '\n';
 
   // Loop over reading in fields
-  indent(out) << "(try while true do" << endl;
+  indent(out) << "(try while true do" << '\n';
   indent_up();
   indent_up();
 
   // Read beginning field marker
-  indent(out) << "let (_," << t << "," << id << ") = iprot#readFieldBegin in" << endl;
+  indent(out) << "let (_," << t << "," << id << ") = iprot#readFieldBegin in" << '\n';
 
   // Check for field STOP marker and break
-  indent(out) << "if " << t << " = Protocol.T_STOP then" << endl;
+  indent(out) << "if " << t << " = Protocol.T_STOP then" << '\n';
   indent_up();
-  indent(out) << "raise Break" << endl;
+  indent(out) << "raise Break" << '\n';
   indent_down();
-  indent(out) << "else ();" << endl;
+  indent(out) << "else ();" << '\n';
 
-  indent(out) << "(match " << id << " with " << endl;
+  indent(out) << "(match " << id << " with " << '\n';
   indent_up();
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     indent(out) << "| " << (*f_iter)->get_key() << " -> (";
-    out << "if " << t << " = " << type_to_enum((*f_iter)->get_type()) << " then" << endl;
+    out << "if " << t << " = " << type_to_enum((*f_iter)->get_type()) << " then" << '\n';
     indent_up();
     indent_up();
     generate_deserialize_field(out, *f_iter, str);
     indent_down();
-    out << indent() << "else" << endl << indent() << "  iprot#skip " << t << ")" << endl;
+    out << indent() << "else" << '\n' << indent() << "  iprot#skip " << t << ")" << '\n';
     indent_down();
   }
 
   // In the default case we skip the field
   out << indent() << "| _ -> "
-      << "iprot#skip " << t << ");" << endl;
+      << "iprot#skip " << t << ");" << '\n';
   indent_down();
   // Read field end marker
-  indent(out) << "iprot#readFieldEnd;" << endl;
+  indent(out) << "iprot#readFieldEnd;" << '\n';
   indent_down();
-  indent(out) << "done; ()" << endl;
+  indent(out) << "done; ()" << '\n';
   indent_down();
-  indent(out) << "with Break -> ());" << endl;
+  indent(out) << "with Break -> ());" << '\n';
 
-  indent(out) << "iprot#readStructEnd;" << endl;
+  indent(out) << "iprot#readStructEnd;" << '\n';
 
-  indent(out) << str << endl << endl;
+  indent(out) << str << '\n' << '\n';
   indent_down();
   indent_down();
 }
@@ -819,9 +817,9 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
   string str = tmp("_str");
   string f = tmp("_f");
 
-  indent(out) << "method write (oprot : Protocol.t) =" << endl;
+  indent(out) << "method write (oprot : Protocol.t) =" << '\n';
   indent_up();
-  indent(out) << "oprot#writeStructBegin \"" << name << "\";" << endl;
+  indent(out) << "oprot#writeStructBegin \"" << name << "\";" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* tmember = (*f_iter);
@@ -835,10 +833,10 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
         // Avoid redundant encoding of members having default values.
         indent(out) << "(match " << mname << " with "
                     << render_const_value(tmember->get_type(), tmember->get_value()) << " -> () | "
-                    << _v << " -> " << endl;
+                    << _v << " -> " << '\n';
       } else {
         _v = mname;
-        indent(out) << "(" << endl;
+        indent(out) << "(" << '\n';
       }
 
     } else {
@@ -853,12 +851,12 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
           out << " | Some " << render_const_value(tmember->get_type(), tmember->get_value())
               << " -> ()";
         }
-        out << " | Some _v -> " << endl;
+        out << " | Some _v -> " << '\n';
       } else {
-        out << endl;
+        out << '\n';
         indent(out) << "| None -> raise (Field_empty \"" << type_name(tstruct) << "." << mname
-                    << "\")" << endl;
-        indent(out) << "| Some _v -> " << endl;
+                    << "\")" << '\n';
+        indent(out) << "| Some _v -> " << '\n';
       }
 
       _v = "_v";
@@ -866,20 +864,20 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
     indent_up();
     // Write field header
     indent(out) << "oprot#writeFieldBegin(\"" << tmember->get_name() << "\","
-                << type_to_enum(tmember->get_type()) << "," << tmember->get_key() << ");" << endl;
+                << type_to_enum(tmember->get_type()) << "," << tmember->get_key() << ");" << '\n';
 
     // Write field contents
     generate_serialize_field(out, tmember, _v);
 
     // Write field closer
-    indent(out) << "oprot#writeFieldEnd" << endl;
+    indent(out) << "oprot#writeFieldEnd" << '\n';
 
     indent_down();
-    indent(out) << ");" << endl;
+    indent(out) << ");" << '\n';
   }
 
   // Write the struct map
-  out << indent() << "oprot#writeFieldStop;" << endl << indent() << "oprot#writeStructEnd" << endl;
+  out << indent() << "oprot#writeFieldStop;" << '\n' << indent() << "oprot#writeStructEnd" << '\n';
 
   indent_down();
 }
@@ -895,19 +893,19 @@ void t_ocaml_generator::generate_service(t_service* tservice) {
   string f_service_i_name = get_out_dir() + capitalize(service_name_) + ".mli";
   f_service_i_.open(f_service_i_name.c_str());
 
-  f_service_ << ocaml_autogen_comment() << endl << ocaml_imports() << endl;
-  f_service_i_ << ocaml_autogen_comment() << endl << ocaml_imports() << endl;
+  f_service_ << ocaml_autogen_comment() << '\n' << ocaml_imports() << '\n';
+  f_service_i_ << ocaml_autogen_comment() << '\n' << ocaml_imports() << '\n';
 
   /* if (tservice->get_extends() != nullptr) {
     f_service_ <<
-      "open " << capitalize(tservice->get_extends()->get_name()) << endl;
+      "open " << capitalize(tservice->get_extends()->get_name()) << '\n';
     f_service_i_ <<
-      "open " << capitalize(tservice->get_extends()->get_name()) << endl;
+      "open " << capitalize(tservice->get_extends()->get_name()) << '\n';
   }
   */
-  f_service_ << "open " << capitalize(program_name_) << "_types" << endl << endl;
+  f_service_ << "open " << capitalize(program_name_) << "_types" << '\n' << '\n';
 
-  f_service_i_ << "open " << capitalize(program_name_) << "_types" << endl << endl;
+  f_service_i_ << "open " << capitalize(program_name_) << "_types" << '\n' << '\n';
 
   // Generate the three main parts of the service
   generate_service_helpers(tservice);
@@ -925,7 +923,7 @@ void t_ocaml_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  indent(f_service_) << "(* HELPER FUNCTIONS AND STRUCTURES *)" << endl << endl;
+  indent(f_service_) << "(* HELPER FUNCTIONS AND STRUCTURES *)" << '\n' << '\n';
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
@@ -961,15 +959,15 @@ void t_ocaml_generator::generate_ocaml_function_helpers(t_function* tfunction) {
  * @param tservice The service to generate a header definition for
  */
 void t_ocaml_generator::generate_service_interface(t_service* tservice) {
-  f_service_ << indent() << "class virtual iface =" << endl << "object (self)" << endl;
-  f_service_i_ << indent() << "class virtual iface :" << endl << "object" << endl;
+  f_service_ << indent() << "class virtual iface =" << '\n' << "object (self)" << '\n';
+  f_service_i_ << indent() << "class virtual iface :" << '\n' << "object" << '\n';
 
   indent_up();
 
   if (tservice->get_extends() != nullptr) {
     string extends = type_name(tservice->get_extends());
-    indent(f_service_) << "inherit " << extends << ".iface" << endl;
-    indent(f_service_i_) << "inherit " << extends << ".iface" << endl;
+    indent(f_service_) << "inherit " << extends << ".iface" << '\n';
+    indent(f_service_i_) << "inherit " << extends << ".iface" << '\n';
   }
 
   vector<t_function*> functions = tservice->get_functions();
@@ -977,13 +975,13 @@ void t_ocaml_generator::generate_service_interface(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string ft = function_type(*f_iter, true, true);
     f_service_ << indent() << "method virtual " << decapitalize((*f_iter)->get_name()) << " : "
-               << ft << endl;
+               << ft << '\n';
     f_service_i_ << indent() << "method virtual " << decapitalize((*f_iter)->get_name()) << " : "
-                 << ft << endl;
+                 << ft << '\n';
   }
   indent_down();
-  indent(f_service_) << "end" << endl << endl;
-  indent(f_service_i_) << "end" << endl << endl;
+  indent(f_service_) << "end" << '\n' << '\n';
+  indent(f_service_i_) << "end" << '\n' << '\n';
 }
 
 /**
@@ -995,17 +993,17 @@ void t_ocaml_generator::generate_service_interface(t_service* tservice) {
  */
 void t_ocaml_generator::generate_service_client(t_service* tservice) {
   string extends = "";
-  indent(f_service_) << "class client (iprot : Protocol.t) (oprot : Protocol.t) =" << endl
-                     << "object (self)" << endl;
-  indent(f_service_i_) << "class client : Protocol.t -> Protocol.t -> " << endl << "object" << endl;
+  indent(f_service_) << "class client (iprot : Protocol.t) (oprot : Protocol.t) =" << '\n'
+                     << "object (self)" << '\n';
+  indent(f_service_i_) << "class client : Protocol.t -> Protocol.t -> " << '\n' << "object" << '\n';
   indent_up();
 
   if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
-    indent(f_service_) << "inherit " << extends << ".client iprot oprot as super" << endl;
-    indent(f_service_i_) << "inherit " << extends << ".client" << endl;
+    indent(f_service_) << "inherit " << extends << ".client iprot oprot as super" << '\n';
+    indent(f_service_i_) << "inherit " << extends << ".client" << '\n';
   }
-  indent(f_service_) << "val mutable seqid = 0" << endl;
+  indent(f_service_) << "val mutable seqid = 0" << '\n';
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -1017,24 +1015,24 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    indent(f_service_) << "method " << function_signature(*f_iter) << " = " << endl;
+    indent(f_service_) << "method " << function_signature(*f_iter) << " = " << '\n';
     indent(f_service_i_) << "method " << decapitalize((*f_iter)->get_name()) << " : "
-                         << function_type(*f_iter, true, false) << endl;
+                         << function_type(*f_iter, true, false) << '\n';
     indent_up();
     indent(f_service_) << "self#send_" << funname;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << " " << decapitalize((*fld_iter)->get_name());
     }
-    f_service_ << ";" << endl;
+    f_service_ << ";" << '\n';
 
     if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
-      f_service_ << "self#recv_" << funname << endl;
+      f_service_ << "self#recv_" << funname << '\n';
     }
     indent_down();
 
-    indent(f_service_) << "method private send_" << function_signature(*f_iter) << " = " << endl;
+    indent(f_service_) << "method private send_" << function_signature(*f_iter) << " = " << '\n';
     indent_up();
 
     std::string argsname = decapitalize((*f_iter)->get_name() + "_args");
@@ -1042,19 +1040,19 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
     // Serialize the request header
     f_service_ << indent() << "oprot#writeMessageBegin (\"" << (*f_iter)->get_name() << "\", "
                << ((*f_iter)->is_oneway() ? "Protocol.ONEWAY" : "Protocol.CALL") << ", seqid);"
-               << endl;
+               << '\n';
 
-    f_service_ << indent() << "let args = new " << argsname << " in" << endl;
+    f_service_ << indent() << "let args = new " << argsname << " in" << '\n';
     indent_up();
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << indent() << "args#set_" << (*fld_iter)->get_name() << " "
-                 << (*fld_iter)->get_name() << ";" << endl;
+                 << (*fld_iter)->get_name() << ";" << '\n';
     }
 
     // Write to the stream
-    f_service_ << indent() << "args#write oprot;" << endl << indent() << "oprot#writeMessageEnd;"
-               << endl << indent() << "oprot#getTransport#flush" << endl;
+    f_service_ << indent() << "args#write oprot;" << '\n' << indent() << "oprot#writeMessageEnd;"
+               << '\n' << indent() << "oprot#getTransport#flush" << '\n';
 
     indent_down();
     indent_down();
@@ -1068,20 +1066,20 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
                                &noargs);
       // Open function
       f_service_ << indent() << "method private " << function_signature(&recv_function) << " ="
-                 << endl;
+                 << '\n';
       indent_up();
 
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
-      f_service_ << indent() << "let (fname, mtype, rseqid) = iprot#readMessageBegin in" << endl;
+      f_service_ << indent() << "let (fname, mtype, rseqid) = iprot#readMessageBegin in" << '\n';
       indent_up();
-      f_service_ << indent() << "(if mtype = Protocol.EXCEPTION then" << endl << indent()
-                 << "  let x = Application_Exn.read iprot in" << endl;
+      f_service_ << indent() << "(if mtype = Protocol.EXCEPTION then" << '\n' << indent()
+                 << "  let x = Application_Exn.read iprot in" << '\n';
       indent_up();
       f_service_ << indent() << "  (iprot#readMessageEnd;" << indent()
-                 << "   raise (Application_Exn.E x))" << endl;
+                 << "   raise (Application_Exn.E x))" << '\n';
       indent_down();
-      f_service_ << indent() << "else ());" << endl;
+      f_service_ << indent() << "else ());" << '\n';
       string res = "_";
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -1090,32 +1088,32 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
       if (!(*f_iter)->get_returntype()->is_void() || xceptions.size() > 0) {
         res = "result";
       }
-      f_service_ << indent() << "let " << res << " = read_" << resultname << " iprot in" << endl;
+      f_service_ << indent() << "let " << res << " = read_" << resultname << " iprot in" << '\n';
       indent_up();
-      f_service_ << indent() << "iprot#readMessageEnd;" << endl;
+      f_service_ << indent() << "iprot#readMessageEnd;" << '\n';
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << indent() << "match result#get_success with Some v -> v | None -> (" << endl;
+        f_service_ << indent() << "match result#get_success with Some v -> v | None -> (" << '\n';
         indent_up();
       }
 
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ << indent() << "(match result#get_" << (*x_iter)->get_name()
-                   << " with None -> () | Some _v ->" << endl;
+                   << " with None -> () | Some _v ->" << '\n';
         indent(f_service_) << "  raise (" << capitalize(exception_ctor((*x_iter)->get_type()))
-                           << " _v));" << endl;
+                           << " _v));" << '\n';
       }
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "()" << endl;
+        indent(f_service_) << "()" << '\n';
       } else {
         f_service_
             << indent()
             << "raise (Application_Exn.E (Application_Exn.create Application_Exn.MISSING_RESULT \""
-            << (*f_iter)->get_name() << " failed: unknown result\")))" << endl;
+            << (*f_iter)->get_name() << " failed: unknown result\")))" << '\n';
         indent_down();
       }
 
@@ -1127,8 +1125,8 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
   }
 
   indent_down();
-  indent(f_service_) << "end" << endl << endl;
-  indent(f_service_i_) << "end" << endl << endl;
+  indent(f_service_) << "end" << '\n' << '\n';
+  indent(f_service_i_) << "end" << '\n' << '\n';
 }
 
 /**
@@ -1142,50 +1140,50 @@ void t_ocaml_generator::generate_service_server(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   // Generate the header portion
-  indent(f_service_) << "class processor (handler : iface) =" << endl << indent() << "object (self)"
-                     << endl;
-  indent(f_service_i_) << "class processor : iface ->" << endl << indent() << "object" << endl;
+  indent(f_service_) << "class processor (handler : iface) =" << '\n' << indent() << "object (self)"
+                     << '\n';
+  indent(f_service_i_) << "class processor : iface ->" << '\n' << indent() << "object" << '\n';
   indent_up();
 
-  f_service_ << indent() << "inherit Processor.t" << endl << endl;
-  f_service_i_ << indent() << "inherit Processor.t" << endl << endl;
+  f_service_ << indent() << "inherit Processor.t" << '\n' << '\n';
+  f_service_i_ << indent() << "inherit Processor.t" << '\n' << '\n';
   string extends = "";
 
   if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     indent(f_service_) << "inherit " + extends + ".processor (handler :> " + extends + ".iface)"
-                       << endl;
-    indent(f_service_i_) << "inherit " + extends + ".processor" << endl;
+                       << '\n';
+    indent(f_service_i_) << "inherit " + extends + ".processor" << '\n';
   }
 
   if (extends.empty()) {
-    indent(f_service_) << "val processMap = Hashtbl.create " << functions.size() << endl;
+    indent(f_service_) << "val processMap = Hashtbl.create " << functions.size() << '\n';
   }
   indent(f_service_i_)
-      << "val processMap : (string, int * Protocol.t * Protocol.t -> unit) Hashtbl.t" << endl;
+      << "val processMap : (string, int * Protocol.t * Protocol.t -> unit) Hashtbl.t" << '\n';
 
   // Generate the server implementation
-  indent(f_service_) << "method process iprot oprot =" << endl;
-  indent(f_service_i_) << "method process : Protocol.t -> Protocol.t -> bool" << endl;
+  indent(f_service_) << "method process iprot oprot =" << '\n';
+  indent(f_service_i_) << "method process : Protocol.t -> Protocol.t -> bool" << '\n';
   indent_up();
 
-  f_service_ << indent() << "let (name, typ, seqid)  = iprot#readMessageBegin in" << endl;
+  f_service_ << indent() << "let (name, typ, seqid)  = iprot#readMessageBegin in" << '\n';
   indent_up();
   // TODO(mcslee): validate message
 
   // HOT: dictionary function lookup
-  f_service_ << indent() << "if Hashtbl.mem processMap name then" << endl << indent()
-             << "  (Hashtbl.find processMap name) (seqid, iprot, oprot)" << endl << indent()
-             << "else (" << endl << indent() << "  iprot#skip(Protocol.T_STRUCT);" << endl
-             << indent() << "  iprot#readMessageEnd;" << endl << indent()
+  f_service_ << indent() << "if Hashtbl.mem processMap name then" << '\n' << indent()
+             << "  (Hashtbl.find processMap name) (seqid, iprot, oprot)" << '\n' << indent()
+             << "else (" << '\n' << indent() << "  iprot#skip(Protocol.T_STRUCT);" << '\n'
+             << indent() << "  iprot#readMessageEnd;" << '\n' << indent()
              << "  let x = Application_Exn.create Application_Exn.UNKNOWN_METHOD (\"Unknown "
-                "function \"^name) in" << endl << indent()
-             << "    oprot#writeMessageBegin(name, Protocol.EXCEPTION, seqid);" << endl << indent()
-             << "    x#write oprot;" << endl << indent() << "    oprot#writeMessageEnd;" << endl
-             << indent() << "    oprot#getTransport#flush" << endl << indent() << ");" << endl;
+                "function \"^name) in" << '\n' << indent()
+             << "    oprot#writeMessageBegin(name, Protocol.EXCEPTION, seqid);" << '\n' << indent()
+             << "    x#write oprot;" << '\n' << indent() << "    oprot#writeMessageEnd;" << '\n'
+             << indent() << "    oprot#getTransport#flush" << '\n' << indent() << ");" << '\n';
 
   // Read end of args field, the T_STOP, and the struct close
-  f_service_ << indent() << "true" << endl;
+  f_service_ << indent() << "true" << '\n';
   indent_down();
   indent_down();
   // Generate the process subfunctions
@@ -1193,17 +1191,17 @@ void t_ocaml_generator::generate_service_server(t_service* tservice) {
     generate_process_function(tservice, *f_iter);
   }
 
-  indent(f_service_) << "initializer" << endl;
+  indent(f_service_) << "initializer" << '\n';
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ << indent() << "Hashtbl.add processMap \"" << (*f_iter)->get_name()
-               << "\" self#process_" << (*f_iter)->get_name() << ";" << endl;
+               << "\" self#process_" << (*f_iter)->get_name() << ";" << '\n';
   }
   indent_down();
 
   indent_down();
-  indent(f_service_) << "end" << endl << endl;
-  indent(f_service_i_) << "end" << endl << endl;
+  indent(f_service_) << "end" << '\n' << '\n';
+  indent(f_service_i_) << "end" << '\n' << '\n';
 }
 
 /**
@@ -1215,7 +1213,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
   (void)tservice;
   // Open function
   indent(f_service_) << "method private process_" << tfunction->get_name()
-                     << " (seqid, iprot, oprot) =" << endl;
+                     << " (seqid, iprot, oprot) =" << '\n';
   indent_up();
 
   string argsname = decapitalize(tfunction->get_name()) + "_args";
@@ -1231,9 +1229,9 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
     args = "_";
   }
 
-  f_service_ << indent() << "let " << args << " = read_" << argsname << " iprot in" << endl;
+  f_service_ << indent() << "let " << args << " = read_" << argsname << " iprot in" << '\n';
   indent_up();
-  f_service_ << indent() << "iprot#readMessageEnd;" << endl;
+  f_service_ << indent() << "iprot#readMessageEnd;" << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -1241,13 +1239,13 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "let result = new " << resultname << " in" << endl;
+    f_service_ << indent() << "let result = new " << resultname << " in" << '\n';
     indent_up();
   }
 
   // Try block for a function with exceptions
   if (xceptions.size() > 0) {
-    f_service_ << indent() << "(try" << endl;
+    f_service_ << indent() << "(try" << '\n';
     indent_up();
   }
 
@@ -1259,20 +1257,20 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     f_service_ << " args#get_" << (*f_iter)->get_name();
   }
-  f_service_ << ");" << endl;
+  f_service_ << ");" << '\n';
 
   if (xceptions.size() > 0) {
     indent_down();
-    indent(f_service_) << "with" << endl;
+    indent(f_service_) << "with" << '\n';
     indent_up();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << indent() << "| " << capitalize(exception_ctor((*x_iter)->get_type())) << " "
-                 << (*x_iter)->get_name() << " -> " << endl;
+                 << (*x_iter)->get_name() << " -> " << '\n';
       indent_up();
       indent_up();
       if (!tfunction->is_oneway()) {
         f_service_ << indent() << "result#set_" << (*x_iter)->get_name() << " "
-                   << (*x_iter)->get_name() << endl;
+                   << (*x_iter)->get_name() << '\n';
       } else {
         indent(f_service_) << "()";
       }
@@ -1280,21 +1278,21 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
       indent_down();
     }
     indent_down();
-    f_service_ << indent() << ");" << endl;
+    f_service_ << indent() << ");" << '\n';
   }
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    f_service_ << indent() << "()" << endl;
+    f_service_ << indent() << "()" << '\n';
     indent_down();
     indent_down();
     return;
   }
 
   f_service_ << indent() << "oprot#writeMessageBegin (\"" << tfunction->get_name()
-             << "\", Protocol.REPLY, seqid);" << endl << indent() << "result#write oprot;" << endl
-             << indent() << "oprot#writeMessageEnd;" << endl << indent()
-             << "oprot#getTransport#flush" << endl;
+             << "\", Protocol.REPLY, seqid);" << '\n' << indent() << "result#write oprot;" << '\n'
+             << indent() << "oprot#writeMessageEnd;" << '\n' << indent()
+             << "oprot#getTransport#flush" << '\n';
 
   // Close function
   indent_down();
@@ -1311,7 +1309,7 @@ void t_ocaml_generator::generate_deserialize_field(ostream& out, t_field* tfield
   string name = decapitalize(tfield->get_name());
   indent(out) << prefix << "#set_" << name << " ";
   generate_deserialize_type(out, type);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1396,46 +1394,46 @@ void t_ocaml_generator::generate_deserialize_container(ostream& out, t_type* tty
   t_field fvtype(g_type_i8, vtype);
   t_field fetype(g_type_i8, etype);
 
-  out << endl;
+  out << '\n';
   indent_up();
   // Declare variables, read header
   if (ttype->is_map()) {
     indent(out) << "(let (" << ktype << "," << vtype << "," << size << ") = iprot#readMapBegin in"
-                << endl;
-    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << endl;
+                << '\n';
+    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << '\n';
     indent_up();
-    indent(out) << "for i = 1 to " << size << " do" << endl;
+    indent(out) << "for i = 1 to " << size << " do" << '\n';
     indent_up();
     indent(out) << "let _k = ";
     generate_deserialize_type(out, ((t_map*)ttype)->get_key_type());
-    out << " in" << endl;
+    out << " in" << '\n';
     indent(out) << "let _v = ";
     generate_deserialize_type(out, ((t_map*)ttype)->get_val_type());
-    out << " in" << endl;
+    out << " in" << '\n';
     indent_up();
-    indent(out) << "Hashtbl.add " << con << " _k _v" << endl;
+    indent(out) << "Hashtbl.add " << con << " _k _v" << '\n';
     indent_down();
     indent_down();
     indent(out) << "done; iprot#readMapEnd; " << con << ")";
     indent_down();
   } else if (ttype->is_set()) {
-    indent(out) << "(let (" << etype << "," << size << ") = iprot#readSetBegin in" << endl;
-    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << endl;
+    indent(out) << "(let (" << etype << "," << size << ") = iprot#readSetBegin in" << '\n';
+    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << '\n';
     indent_up();
-    indent(out) << "for i = 1 to " << size << " do" << endl;
+    indent(out) << "for i = 1 to " << size << " do" << '\n';
     indent_up();
     indent(out) << "Hashtbl.add " << con << " ";
     generate_deserialize_type(out, ((t_set*)ttype)->get_elem_type());
-    out << " true" << endl;
+    out << " true" << '\n';
     indent_down();
     indent(out) << "done; iprot#readSetEnd; " << con << ")";
     indent_down();
   } else if (ttype->is_list()) {
-    indent(out) << "(let (" << etype << "," << size << ") = iprot#readListBegin in" << endl;
+    indent(out) << "(let (" << etype << "," << size << ") = iprot#readListBegin in" << '\n';
     indent_up();
     indent(out) << "let " << con << " = (Array.to_list (Array.init " << size << " (fun _ -> ";
     generate_deserialize_type(out, ((t_list*)ttype)->get_elem_type());
-    out << "))) in" << endl;
+    out << "))) in" << '\n';
     indent_up();
     indent(out) << "iprot#readListEnd; " << con << ")";
     indent_down();
@@ -1510,7 +1508,7 @@ void t_ocaml_generator::generate_serialize_field(ostream& out, t_field* tfield, 
            tfield->get_name().c_str(),
            type->get_name().c_str());
   }
-  out << ";" << endl;
+  out << ";" << '\n';
 }
 
 /**
@@ -1528,38 +1526,38 @@ void t_ocaml_generator::generate_serialize_container(ostream& out, t_type* ttype
   if (ttype->is_map()) {
     indent(out) << "oprot#writeMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ",";
     out << type_to_enum(((t_map*)ttype)->get_val_type()) << ",";
-    out << "Hashtbl.length " << prefix << ");" << endl;
+    out << "Hashtbl.length " << prefix << ");" << '\n';
   } else if (ttype->is_set()) {
     indent(out) << "oprot#writeSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type()) << ",";
-    out << "Hashtbl.length " << prefix << ");" << endl;
+    out << "Hashtbl.length " << prefix << ");" << '\n';
   } else if (ttype->is_list()) {
     indent(out) << "oprot#writeListBegin(" << type_to_enum(((t_list*)ttype)->get_elem_type())
                 << ",";
-    out << "List.length " << prefix << ");" << endl;
+    out << "List.length " << prefix << ");" << '\n';
   }
 
   if (ttype->is_map()) {
     string kiter = tmp("_kiter");
     string viter = tmp("_viter");
-    indent(out) << "Hashtbl.iter (fun " << kiter << " -> fun " << viter << " -> " << endl;
+    indent(out) << "Hashtbl.iter (fun " << kiter << " -> fun " << viter << " -> " << '\n';
     indent_up();
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
     indent_down();
-    indent(out) << ") " << prefix << ";" << endl;
+    indent(out) << ") " << prefix << ";" << '\n';
   } else if (ttype->is_set()) {
     string iter = tmp("_iter");
     indent(out) << "Hashtbl.iter (fun " << iter << " -> fun _ -> ";
     indent_up();
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     indent_down();
-    indent(out) << ") " << prefix << ";" << endl;
+    indent(out) << ") " << prefix << ";" << '\n';
   } else if (ttype->is_list()) {
     string iter = tmp("_iter");
     indent(out) << "List.iter (fun " << iter << " -> ";
     indent_up();
     generate_serialize_list_element(out, (t_list*)ttype, iter);
     indent_down();
-    indent(out) << ") " << prefix << ";" << endl;
+    indent(out) << ") " << prefix << ";" << '\n';
   }
 
   if (ttype->is_map()) {

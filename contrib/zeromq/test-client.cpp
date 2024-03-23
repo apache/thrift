@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     usleep(50000);
   } else {
     int value = client.get();
-    std::cout << value << std::endl;
+    std::cout << value << '\n';
   }
 
   return 0;
