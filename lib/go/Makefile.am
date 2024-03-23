@@ -48,6 +48,9 @@ clean-local:
 all-local:
 	$(GO) build $(GOBUILDEXTRA) ./thrift
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	thrift \
 	coding_standards.md \

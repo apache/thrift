@@ -37,6 +37,9 @@ clean-local:
 	$(RM) -r test/episodic-code-generation-test/gen*
 	$(RM) -r test/episodic-code-generation-test/node_modules
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	examples \
 	lib \

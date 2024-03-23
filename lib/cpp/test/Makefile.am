@@ -424,6 +424,9 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic
 clean-local:
 	$(RM) gen-cpp/*
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	concurrency \
 	processor \

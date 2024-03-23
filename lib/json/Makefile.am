@@ -28,6 +28,9 @@ clean-local:
 dist-hook:
 	$(RM) -r $(distdir)/test/build/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
     schema.json \
     test

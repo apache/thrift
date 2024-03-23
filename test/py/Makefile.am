@@ -54,6 +54,8 @@ thrift_gen =                                    \
         gen-py-enum/DoubleConstantsTest/__init__.py \
         gen-py-enum/Recursive/__init__.py
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 precross: $(thrift_gen)
 BUILT_SOURCES = $(thrift_gen)

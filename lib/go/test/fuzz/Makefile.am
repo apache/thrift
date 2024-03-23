@@ -27,6 +27,9 @@ check: gopathfuzz
 clean-local:
 	$(RM) -rf gopathfuzz gen-go
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	fuzz.go \
 	fuzz_test.go \

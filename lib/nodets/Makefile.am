@@ -41,6 +41,9 @@ clean-local:
 	$(RM) -r $(top_srcdir)/node_modules
 	$(RM) -r test-compiled
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	test \
 	coding_standards.md

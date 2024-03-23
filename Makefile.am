@@ -131,6 +131,9 @@ skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	.asf.yaml \
 	.clang-format \

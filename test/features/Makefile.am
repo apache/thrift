@@ -14,6 +14,9 @@
 # under the License.
 #
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	local_thrift \
 	index.html \

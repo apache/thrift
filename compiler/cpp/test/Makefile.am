@@ -23,5 +23,8 @@
 
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 AM_CPPFLAGS = -I$(top_srcdir)/compiler/cpp/src
 AM_CXXFLAGS = -Wall -Wextra -pedantic

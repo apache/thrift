@@ -114,6 +114,9 @@ WINDOWS_DIST = \
              compiler.vcxproj \
              compiler.vcxproj.filters
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
              coding_standards.md \
              README.md \

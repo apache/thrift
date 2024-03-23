@@ -45,6 +45,9 @@ tutorialsecureclient: all
 clean-local:
 	$(RM) -r gen-* go-tutorial calculator-remote
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src/client.go \
 	src/handler.go \

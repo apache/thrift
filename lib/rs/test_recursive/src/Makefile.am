@@ -29,6 +29,9 @@ check: stubs
 clean-local:
 	-$(RM) vehicles.rs
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	lib.rs \
 	Vehicles.thrift

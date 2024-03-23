@@ -47,6 +47,9 @@ clean-local:
 	-$(RM) src/identifiers.rs
 	-$(RM) -r bin
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Cargo.toml \
 	thrifts/Base_One.thrift \

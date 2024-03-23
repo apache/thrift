@@ -78,6 +78,9 @@ tutorialclient: all
 style-local:
 	$(CPPSTYLE_CMD)
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	CMakeLists.txt \
 	CppClient.cpp \

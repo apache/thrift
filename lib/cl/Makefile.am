@@ -32,6 +32,9 @@ clean-local:
 	$(RM) run-tests quicklisp.lisp backport-update.zip
 	$(RM) -rf lib externals quicklisp
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	README.md \
 	READMES \

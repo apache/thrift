@@ -23,6 +23,9 @@
 gen_swift:
 	$(THRIFT) --gen swift -r -o Sources/Common $(top_srcdir)/tutorial/tutorial.thrift
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 tutorial: gen_swift
 	swift run TutorialRunner
 

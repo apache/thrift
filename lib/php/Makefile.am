@@ -134,6 +134,8 @@ phptype_DATA = \
 clean-local:
 	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) clean; fi
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	lib \
@@ -150,17 +152,7 @@ EXTRA_DIST = \
 	thrift_protocol.ini \
 	README.apache.md \
 	README.md \
-	test/Fixtures.php \
-	test/TestValidators.thrift \
-	test/JsonSerialize/JsonSerializeTest.php \
-	test/Protocol/BinarySerializerTest.php \
-	test/Protocol/TJSONProtocolFixtures.php \
-	test/Protocol/TJSONProtocolTest.php \
-	test/Protocol/TSimpleJSONProtocolFixtures.php \
-	test/Protocol/TSimpleJSONProtocolTest.php \
-	test/Validator/BaseValidatorTest.php \
-	test/Validator/ValidatorTest.php \
-	test/Validator/ValidatorTestOop.php
+	test
 
 
 MAINTAINERCLEANFILES = \

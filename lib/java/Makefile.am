@@ -56,6 +56,9 @@ maven-publish:
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	build.gradle \
 	gradle.properties \

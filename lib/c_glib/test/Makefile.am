@@ -401,6 +401,9 @@ CLEANFILES =                            \
     *.gcda                              \
     *.gcov
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
              CMakeLists.txt \
              ContainerTest.thrift

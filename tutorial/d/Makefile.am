@@ -47,6 +47,9 @@ clean:
 	$(RM) -r gen-d/
 	find . -type f -name '*.o' | xargs rm -f
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -f $(distdir)/$(PROGS)
 	$(RM) -r $(distdir)/gen-d/

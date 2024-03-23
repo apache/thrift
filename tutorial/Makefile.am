@@ -101,6 +101,9 @@ clean-local:
 
 endif
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \

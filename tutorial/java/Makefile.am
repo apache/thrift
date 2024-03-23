@@ -39,6 +39,9 @@ tutorialserver: all
 tutorialclient: all
 	$(ANT) $(ANT_FLAGS) tutorialclient
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	build.properties \
 	build.xml \

@@ -120,6 +120,9 @@ dist-hook:
 	find $(distdir) -type d -name "__pycache__" | xargs rm -rf
 	find $(distdir) -type f -name "*.pyc" | xargs rm -f
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	audit \
 	c_glib \

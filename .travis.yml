@@ -47,7 +47,7 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-    - DISTRO=ubuntu-bionic
+    - DISTRO=ubuntu-focal
     - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
@@ -58,12 +58,6 @@ env:
 jobs:
   include:
     # ========================= stage: docker =========================
-    - stage: docker
-      script: true
-      env:
-        - JOB="Docker Build ubuntu-bionic 18.04 LTS"
-        - DISTRO=ubuntu-bionic
-        - TRAVIS_BUILD_STAGE=docker
     - script: true
       env:
         - JOB="Docker Build ubuntu-focal 20.04 LTS"
@@ -129,12 +123,6 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Focal)"
         - DISTRO=ubuntu-focal
-        - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Bionic)"
-        - DISTRO=ubuntu-bionic
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------

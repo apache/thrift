@@ -39,6 +39,9 @@ clean-local:
 	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/bin
 	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/obj
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	README.md \
 	Directory.Build.props \

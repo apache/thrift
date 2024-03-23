@@ -78,6 +78,9 @@ dist-hook:
 	$(RM) -r $(distdir)/test/gen-erl/
 	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	include \
 	src \

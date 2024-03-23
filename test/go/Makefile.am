@@ -60,6 +60,9 @@ check: gopath genmock
 genmock: gopath
 	sh genmock.sh
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src/bin \
 	src/common \

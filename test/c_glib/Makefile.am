@@ -78,5 +78,8 @@ dist-hook:
 	$(RM) $(distdir)/libtestcglib.la
 	find $(distdir) -type f -iname "*.o" | xargs rm -f
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src

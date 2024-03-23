@@ -79,6 +79,9 @@ tutorialserver: all
 tutorialclient: all
 	./tutorial_client
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	c_glib_server.c \
 	c_glib_client.c
