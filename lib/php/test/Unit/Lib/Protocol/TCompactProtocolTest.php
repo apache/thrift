@@ -30,37 +30,36 @@ use Thrift\Type\TType;
 
 class TCompactProtocolTest extends TestCase
 {
+    private const COMPACT_STOP = 0x00;
+    private const COMPACT_TRUE = 0x01;
+    private const COMPACT_FALSE = 0x02;
+    private const COMPACT_BYTE = 0x03;
+    private const COMPACT_I16 = 0x04;
+    private const COMPACT_I32 = 0x05;
+    private const COMPACT_I64 = 0x06;
+    private const COMPACT_DOUBLE = 0x07;
+    private const COMPACT_BINARY = 0x08;
+    private const COMPACT_LIST = 0x09;
+    private const COMPACT_SET = 0x0A;
+    private const COMPACT_MAP = 0x0B;
+    private const COMPACT_STRUCT = 0x0C;
 
-    const COMPACT_STOP = 0x00;
-    const COMPACT_TRUE = 0x01;
-    const COMPACT_FALSE = 0x02;
-    const COMPACT_BYTE = 0x03;
-    const COMPACT_I16 = 0x04;
-    const COMPACT_I32 = 0x05;
-    const COMPACT_I64 = 0x06;
-    const COMPACT_DOUBLE = 0x07;
-    const COMPACT_BINARY = 0x08;
-    const COMPACT_LIST = 0x09;
-    const COMPACT_SET = 0x0A;
-    const COMPACT_MAP = 0x0B;
-    const COMPACT_STRUCT = 0x0C;
+    private const STATE_CLEAR = 0;
+    private const STATE_FIELD_WRITE = 1;
+    private const STATE_VALUE_WRITE = 2;
+    private const STATE_CONTAINER_WRITE = 3;
+    private const STATE_BOOL_WRITE = 4;
+    private const STATE_FIELD_READ = 5;
+    private const STATE_CONTAINER_READ = 6;
+    private const STATE_VALUE_READ = 7;
+    private const STATE_BOOL_READ = 8;
 
-    const STATE_CLEAR = 0;
-    const STATE_FIELD_WRITE = 1;
-    const STATE_VALUE_WRITE = 2;
-    const STATE_CONTAINER_WRITE = 3;
-    const STATE_BOOL_WRITE = 4;
-    const STATE_FIELD_READ = 5;
-    const STATE_CONTAINER_READ = 6;
-    const STATE_VALUE_READ = 7;
-    const STATE_BOOL_READ = 8;
-
-    const VERSION_MASK = 0x1f;
-    const VERSION = 1;
-    const PROTOCOL_ID = 0x82;
-    const TYPE_MASK = 0xe0;
-    const TYPE_BITS = 0x07;
-    const TYPE_SHIFT_AMOUNT = 5;
+    private const VERSION_MASK = 0x1f;
+    private const VERSION = 1;
+    private const PROTOCOL_ID = 0x82;
+    private const TYPE_MASK = 0xe0;
+    private const TYPE_BITS = 0x07;
+    private const TYPE_SHIFT_AMOUNT = 5;
 
     /**
      * @dataProvider toZigZagDataProvider

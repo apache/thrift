@@ -30,8 +30,8 @@ use Thrift\Type\TType;
 
 class TBinaryProtocolTest extends TestCase
 {
-    const VERSION_MASK = 0xffff0000;
-    const VERSION_1 = 0x80010000;
+    private const VERSION_MASK = 0xffff0000;
+    private const VERSION_1 = 0x80010000;
 
     /**
      * @dataProvider writeMessageBeginDataProvider
