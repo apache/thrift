@@ -119,6 +119,8 @@ public:
 
   inline uint32_t writeBinary(const std::string& str);
 
+  inline uint32_t writeUUID(const std::string& str);
+
   /**
    * Reading functions
    */
@@ -165,6 +167,8 @@ public:
   inline uint32_t readString(StrType& str);
 
   inline uint32_t readBinary(std::string& str);
+
+  inline uint32_t readUUID(std::string& str);
 
   int getMinSerializedSize(TType type) override;
 
