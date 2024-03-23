@@ -19,15 +19,12 @@
  * under the License.
  */
 
-namespace Thrift\Factory;
+namespace Test\Thrift\Unit\Lib\Server\Fixture;
 
-use Thrift\Transport\TTransport;
-
-interface TTransportFactoryInterface
+class TestProcessor
 {
-    /**
-     * @param TTransport $transport
-     * @return TTransport
-     */
-    public function getTransport(TTransport $transport);
+    public function process($input, $output)
+    {
+        return true;
+    }
 }

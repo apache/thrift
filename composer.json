@@ -26,7 +26,8 @@
         "php-mock/php-mock-phpunit": "^2.10",
         "ext-json": "*",
         "ext-xml": "*",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "ext-pcntl": "*"
     },
     "autoload": {
         "psr-4": {"Thrift\\": "lib/php/lib/"}
