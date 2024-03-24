@@ -18,7 +18,7 @@
  under the License.
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         bootstrap="../../vendor/autoload.php"
+         bootstrap="test/bootstrap.php"
          cacheResult="false"
          colors="true"
          convertErrorsToExceptions="true"
@@ -34,8 +34,11 @@
         </whitelist>
     </filter>
     <testsuites>
-        <testsuite name="Thrift PHP Test Suite">
+        <testsuite name="Thrift PHP Unit Test Suite">
             <directory>./test/Unit</directory>
+        </testsuite>
+        <testsuite name="Thrift PHP Integration Test Suite">
+            <directory>./test/Integration</directory>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -25,10 +25,6 @@ use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use Thrift\ClassLoader\ThriftClassLoader;
 
-/***
- * This test depends on running the compiler against the ./Resources/ThriftTest.thrift file:
- * lib/php/test$ ../../../compiler/cpp/thrift --gen php:classmap,server,rest -r  --out ./Resources/packages/phpcm ./Resources/ThriftTest.thrift
- */
 class ThriftClassLoaderTest extends TestCase
 {
     use PHPMock;
@@ -107,110 +103,6 @@ class ThriftClassLoaderTest extends TestCase
             ],
             'class' => '\E\TestClass',
             'isClassExist' => true,
-            'useApcu' => true,
-            'apcuPrefix' => 'APCU_PREFIX',
-        ];
-    }
-
-    /**
-     * @dataProvider registerDefinitionDataProvider
-     */
-    public function testRegisterDefinition(
-        $definitions,
-        $class,
-        $checkInterfaceExist = false,
-        $useApcu = false,
-        $apcuPrefix = null
-    ) {
-        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_fetch')
-             ->expects($useApcu ? $this->once() : $this->never())
-             ->with($apcuPrefix . $class)
-             ->willReturn(false);
-
-        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
-            ->expects($useApcu ? $this->once() : $this->never())
-             ->with($apcuPrefix . $class, $this->anything())
-             ->willReturn(true);
-
-        $loader = new ThriftClassLoader($useApcu, $apcuPrefix);
-        foreach ($definitions as $namespace => $paths) {
-            $loader->registerDefinition($namespace, $paths);
-        }
-        $loader->register();
-
-        $loader->loadClass($class);
-        if ($checkInterfaceExist) {
-            $this->assertTrue(interface_exists($class, false), "->loadClass() loads '$class'");
-        } else {
-            $this->assertTrue(class_exists($class, false), "->loadClass() loads '$class'");
-        }
-    }
-
-    public function registerDefinitionDataProvider()
-    {
-        yield 'loadType' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => 'ThriftTest\Xtruct',
-        ];
-        yield 'loadInterface' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTestIf',
-            'checkInterfaceExist' => true,
-        ];
-        yield 'loadClient' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTestClient',
-        ];
-        yield 'loadProcessor' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTestProcessor',
-        ];
-        yield 'loadRest' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTestRest',
-        ];
-        yield 'load_args' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTest_testVoid_args',
-        ];
-        yield 'load_result' => [
-            'definitions' => [
-                'ThriftTest' => __DIR__ . '/../../../Resources/packages/phpcm',
-            ],
-            'class' => '\ThriftTest\ThriftTest_testVoid_result',
-        ];
-        yield 'pathAsArray' => [
-            'definitions' => [
-                'ThriftTest' => [__DIR__ . '/../../../Resources/packages/phpcm'],
-            ],
-            'class' => 'ThriftTest\Xtruct',
-        ];
-        yield 'severalDefinitions' => [
-            'definitions' => [
-                'ThriftTest' => [__DIR__ . '/../../../Resources/packages/phpcm'],
-                'TestValidators' => [__DIR__ . '/../../../Resources/packages/phpcm'],
-            ],
-            'class' => '\TestValidators\TestServiceClient',
-        ];
-        yield 'useApcu' => [
-            'definitions' => [
-                'ThriftTest' => [__DIR__ . '/../../../Resources/packages/phpcm'],
-                'TestValidators' => [__DIR__ . '/../../../Resources/packages/phpcm'],
-            ],
-            'class' => '\TestValidators\TestServiceClient',
-            'checkInterfaceExist' => false,
             'useApcu' => true,
             'apcuPrefix' => 'APCU_PREFIX',
         ];

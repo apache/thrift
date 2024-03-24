@@ -19,23 +19,16 @@
  * under the License.
  */
 
-namespace Test\Thrift\Unit;
-
-use Thrift\ClassLoader\ThriftClassLoader;
+namespace Test\Thrift\Integration;
 
 /***
  * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
- * lib/php/test$ ../../../compiler/cpp/thrift --gen php:validate -r  --out ./Resources/packages/phpv ./Resources/ThriftTest.thrift
+ * lib/php/test$ ../../../compiler/cpp/thrift --gen php:validate,oop,nsglobal="ValidateOop" -r --out ./Resources/packages/phpvo ./Resources/ThriftTest.thrift
  */
-class ValidatorTest extends BaseValidatorTest
+class ValidatorOopTest extends BaseValidatorTest
 {
-    public function setUp(): void
+    public function getNsGlobal()
     {
-        $loader = new ThriftClassLoader();
-        $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/phpv');
-        $loader->registerDefinition('ThriftTest', __DIR__ . '/../Resources/packages/phpv');
-        $loader->registerNamespace('TestValidators', __DIR__ . '/../Resources/packages/phpv');
-        $loader->registerDefinition('TestValidators', __DIR__ . '/../Resources/packages/phpv');
-        $loader->register();
+        return 'ValidateOop';
     }
 }
