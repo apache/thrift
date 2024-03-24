@@ -22,170 +22,112 @@
 
 namespace Test\Thrift\Unit\Lib\Protocol;
 
-namespace Unit\Lib\Protocol;
-
 use PHPUnit\Framework\TestCase;
-use Thrift\Protocol\SimpleJSON\Context;
-use Thrift\Protocol\SimpleJSON\ListContext;
-use Thrift\Protocol\SimpleJSON\StructContext;
+use Thrift\Exception\TException;
 use Thrift\Protocol\TSimpleJSONProtocol;
 use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
 
 class TSimpleJSONProtocolTest extends TestCase
 {
-    private const COMMA = ',';
-    private const COLON = ':';
-    private const LBRACE = '{';
-    private const RBRACE = '}';
-    private const LBRACKET = '[';
-    private const RBRACKET = ']';
-    private const QUOTE = '"';
-
-    public function testWriteMessage()
-    {
-        $name = 'test';
-        $type = TType::STRING;
-        $seqid = 1;
+    /**
+     * Reading methods.
+     *
+     * simplejson is not meant to be read back into thrift
+     * - see http://wiki.apache.org/thrift/ThriftUsageJava
+     * - use JSON instead
+     *
+     * @dataProvider readDataProvider
+     */
+    public function testRead(
+        $methodName,
+        $methodArguments
+    ) {
+        $this->expectException(TException::class);
+        $this->expectExceptionMessage("Not implemented");
 
         $transport = $this->createMock(TTransport::class);
         $protocol = new TSimpleJSONProtocol($transport);
-        $reflection = new \ReflectionClass($protocol);
-        $writeContext = $reflection->getProperty('writeContext_');
-        $writeContext->setAccessible(true);
-        $writeContextStack = $reflection->getProperty('writeContextStack_');
-        $writeContextStack->setAccessible(true);
-
-        $transport
-            ->expects($this->exactly(7))
-            ->method('write')
-            ->withConsecutive(
-                ...[
-                       [self::LBRACKET],
-                       ['"'.$name.'"'],
-                       [','],
-                       [$type],
-                       [','],
-                       [$seqid],
-                      [self::RBRACKET],
-                   ]
-            );
-
-        $protocol->writeMessageBegin($name, $type, $seqid);
-
-        $this->assertInstanceOf(ListContext::class, $writeContext->getValue($protocol));
-        $this->assertCount(1, $writeContextStack->getValue($protocol));
-
-        $protocol->writeMessageEnd();
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
+        $protocol->$methodName(...$methodArguments);
     }
 
-    public function testWriteStruct()
+    public function readDataProvider()
     {
-        $name = 'test';
-
-        $transport = $this->createMock(TTransport::class);
-        $protocol = new TSimpleJSONProtocol($transport);
-        $reflection = new \ReflectionClass($protocol);
-        $writeContext = $reflection->getProperty('writeContext_');
-        $writeContext->setAccessible(true);
-        $writeContextStack = $reflection->getProperty('writeContextStack_');
-        $writeContextStack->setAccessible(true);
-
-        $transport
-            ->expects($this->exactly(2))
-            ->method('write')
-            ->withConsecutive(
-                ...[
-                       [self::LBRACE],
-                       [self::RBRACE],
-                   ]
-            );
-
-        $protocol->writeStructBegin($name);
-
-        $this->assertInstanceOf(StructContext::class, $writeContext->getValue($protocol));
-        $this->assertCount(1, $writeContextStack->getValue($protocol));
-
-        $protocol->writeStructEnd();
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
-    }
-
-    public function testWriteField()
-    {
-        $fieldName = 'fieldName';
-        $fieldType = TType::STRING;
-        $fieldId = 1;
-
-        $transport = $this->createMock(TTransport::class);
-        $protocol = new TSimpleJSONProtocol($transport);
-        $reflection = new \ReflectionClass($protocol);
-        $writeContext = $reflection->getProperty('writeContext_');
-        $writeContext->setAccessible(true);
-        $writeContextStack = $reflection->getProperty('writeContextStack_');
-        $writeContextStack->setAccessible(true);
-
-        $transport
-            ->expects($this->exactly(1))
-            ->method('write')
-            ->withConsecutive(
-                ...[
-                       ['"'.$fieldName.'"'],
-                   ]
-            );
-
-        $protocol->writeFieldBegin($fieldName, $fieldType, $fieldId);
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
-
-        $protocol->writeFieldEnd();
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
-
-        $protocol->writeFieldStop();
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
-    }
-
-
-    public function testWriteList()
-    {
-        $elemType = TType::STRING;
-        $size = 10;
-
-        $transport = $this->createMock(TTransport::class);
-        $protocol = new TSimpleJSONProtocol($transport);
-        $reflection = new \ReflectionClass($protocol);
-        $writeContext = $reflection->getProperty('writeContext_');
-        $writeContext->setAccessible(true);
-        $writeContextStack = $reflection->getProperty('writeContextStack_');
-        $writeContextStack->setAccessible(true);
-
-        $transport
-            ->expects($this->exactly(2))
-            ->method('write')
-            ->withConsecutive(
-                ...[
-                       [self::LBRACKET],
-                       [self::RBRACKET],
-                   ]
-            );
-
-        $protocol->writeListBegin($elemType, $size);
-
-        $this->assertInstanceOf(ListContext::class, $writeContext->getValue($protocol));
-        $this->assertCount(1, $writeContextStack->getValue($protocol));
-
-        $protocol->writeListEnd();
-
-        $this->assertInstanceOf(Context::class, $writeContext->getValue($protocol));
-        $this->assertCount(0, $writeContextStack->getValue($protocol));
+        yield 'readMessageBegin' => [
+            'methodName' => 'readMessageBegin',
+            'methodArguments' => ['name', 'type', 'seqId'],
+        ];
+        yield 'readMessageEnd' => [
+            'methodName' => 'readMessageEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readStructBegin' => [
+            'methodName' => 'readStructBegin',
+            'methodArguments' => ['name'],
+        ];
+        yield 'readStructEnd' => [
+            'methodName' => 'readStructEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readFieldBegin' => [
+            'methodName' => 'readFieldBegin',
+            'methodArguments' => ['name', TType::STRING, 1],
+        ];
+        yield 'readFieldEnd' => [
+            'methodName' => 'readFieldEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readMapBegin' => [
+            'methodName' => 'readMapBegin',
+            'methodArguments' => [TType::STRING, TType::STRING, 1],
+        ];
+        yield 'readMapEnd' => [
+            'methodName' => 'readMapEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readListBegin' => [
+            'methodName' => 'readListBegin',
+            'methodArguments' => [TType::STRING, 1],
+        ];
+        yield 'readListEnd' => [
+            'methodName' => 'readListEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readSetBegin' => [
+            'methodName' => 'readSetBegin',
+            'methodArguments' => [TType::STRING, 1],
+        ];
+        yield 'readSetEnd' => [
+            'methodName' => 'readSetEnd',
+            'methodArguments' => [],
+        ];
+        yield 'readBool' => [
+            'methodName' => 'readBool',
+            'methodArguments' => [true],
+        ];
+        yield 'readByte' => [
+            'methodName' => 'readByte',
+            'methodArguments' => [0x01],
+        ];
+        yield 'readI16' => [
+            'methodName' => 'readI16',
+            'methodArguments' => [1],
+        ];
+        yield 'readI32' => [
+            'methodName' => 'readI32',
+            'methodArguments' => [1],
+        ];
+        yield 'readI64' => [
+            'methodName' => 'readI64',
+            'methodArguments' => [1],
+        ];
+        yield 'readDouble' => [
+            'methodName' => 'readDouble',
+            'methodArguments' => [0.1],
+        ];
+        yield 'readString' => [
+            'methodName' => 'readString',
+            'methodArguments' => ['string'],
+        ];
     }
 }

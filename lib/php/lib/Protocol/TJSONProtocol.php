@@ -233,6 +233,7 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
+        #TODO add compatibility with for NAN and INF
         $this->trans_->write(json_encode($num));
 
         if ($this->context_->escapeNum()) {
@@ -407,18 +408,6 @@ class TJSONProtocol extends TProtocol
 
             return floatval($this->readJSONNumericChars());
         }
-    }
-
-    private function readJSONBase64()
-    {
-        $arr = $this->readJSONString(false);
-        $data = base64_decode($arr, true);
-
-        if ($data === false) {
-            throw new TProtocolException("Invalid base64 data " . $arr, TProtocolException::INVALID_DATA);
-        }
-
-        return $data;
     }
 
     private function readJSONObjectStart()
