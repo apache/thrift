@@ -259,7 +259,7 @@ class THeaderTransportFactory : public TTransportFactory {
 public:
   THeaderTransportFactory() = default;
 
-  ~THeaderTransportFactory() override = default;
+  virtual ~THeaderTransportFactory() override = default;
 
   /**
    * Wraps the transport into a header one.

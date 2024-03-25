@@ -38,7 +38,7 @@ class THttpTransport : public TVirtualTransport<THttpTransport> {
 public:
   THttpTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr);
 
-  ~THttpTransport() override;
+  virtual ~THttpTransport() override;
 
   void open() override { transport_->open(); }
 

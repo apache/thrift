@@ -44,7 +44,7 @@ class TNullTransport : public TVirtualTransport<TNullTransport> {
 public:
   TNullTransport() = default;
 
-  ~TNullTransport() override = default;
+  virtual ~TNullTransport() override = default;
 
   bool isOpen() const override { return true; }
 
@@ -215,7 +215,7 @@ public:
   TPipedTransportFactory(std::shared_ptr<TTransport> dstTrans) {
     initializeTargetTransport(dstTrans);
   }
-  ~TPipedTransportFactory() override = default;
+  virtual ~TPipedTransportFactory() override = default;
 
   /**
    * Wraps the base transport into a piped transport.
@@ -248,7 +248,7 @@ public:
                             std::shared_ptr<TTransport> dstTrans,
                             std::shared_ptr<TConfiguration> config = nullptr);
 
-  ~TPipedFileReaderTransport() override;
+  virtual ~TPipedFileReaderTransport() override;
 
   // TTransport functions
   bool isOpen() const override;
@@ -294,7 +294,7 @@ public:
   TPipedFileReaderTransportFactory() = default;
   TPipedFileReaderTransportFactory(std::shared_ptr<TTransport> dstTrans)
     : TPipedTransportFactory(dstTrans) {}
-  ~TPipedFileReaderTransportFactory() override = default;
+  virtual ~TPipedFileReaderTransportFactory() override = default;
 
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
     std::shared_ptr<TFileReaderTransport> pFileReaderTransport

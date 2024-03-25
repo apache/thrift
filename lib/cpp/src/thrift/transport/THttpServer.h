@@ -30,7 +30,7 @@ class THttpServer : public THttpTransport {
 public:
   THttpServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr);
 
-  ~THttpServer() override;
+  virtual ~THttpServer() override;
 
   void flush() override;
 
@@ -49,7 +49,7 @@ class THttpServerTransportFactory : public TTransportFactory {
 public:
   THttpServerTransportFactory() = default;
 
-  ~THttpServerTransportFactory() override = default;
+  virtual ~THttpServerTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.

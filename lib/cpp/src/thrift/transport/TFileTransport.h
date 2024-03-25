@@ -123,7 +123,7 @@ typedef struct readState {
 class TFileTransportBuffer {
 public:
   TFileTransportBuffer(uint32_t size);
-  ~TFileTransportBuffer();
+  virtual ~TFileTransportBuffer();
 
   bool addEvent(eventInfo* event);
   eventInfo* getNext();
@@ -174,7 +174,7 @@ public:
 class TFileTransport : public TFileReaderTransport, public TFileWriterTransport {
 public:
   TFileTransport(std::string path, bool readOnly = false, std::shared_ptr<TConfiguration> config = nullptr);
-  ~TFileTransport() override;
+  virtual ~TFileTransport() override;
 
   // TODO: what is the correct behaviour for this?
   // the log file is generally always open

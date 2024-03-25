@@ -37,7 +37,7 @@ class TQIODeviceTransport
     : public apache::thrift::transport::TVirtualTransport<TQIODeviceTransport> {
 public:
   explicit TQIODeviceTransport(std::shared_ptr<QIODevice> dev);
-  ~TQIODeviceTransport() override;
+  virtual ~TQIODeviceTransport() override;
 
   void open() override;
   bool isOpen() const override;

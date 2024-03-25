@@ -40,7 +40,7 @@ class PeekProcessor : public apache::thrift::TProcessor {
 
 public:
   PeekProcessor();
-  ~PeekProcessor() override;
+  virtual ~PeekProcessor() override;
 
   // Input here: actualProcessor  - the underlying processor
   //             protocolFactory  - the protocol factory used to wrap the memory buffer

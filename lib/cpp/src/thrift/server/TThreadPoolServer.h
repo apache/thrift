@@ -69,7 +69,7 @@ public:
       const std::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
-  ~TThreadPoolServer() override;
+  virtual ~TThreadPoolServer() override;
 
   /**
    * Post-conditions (return guarantees):

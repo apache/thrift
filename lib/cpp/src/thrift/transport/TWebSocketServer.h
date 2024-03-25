@@ -58,7 +58,7 @@ public:
       resetHandshake();
   }
 
-  ~TWebSocketServer() override = default;
+  virtual ~TWebSocketServer() override = default;
 
   uint32_t readAll_virt(uint8_t* buf, uint32_t len) override {
     // If we do not have a good handshake, the client will attempt one.
@@ -384,7 +384,7 @@ class TBinaryWebSocketServerTransportFactory : public TTransportFactory {
 public:
   TBinaryWebSocketServerTransportFactory() = default;
 
-  ~TBinaryWebSocketServerTransportFactory() override = default;
+  virtual ~TBinaryWebSocketServerTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.
@@ -401,7 +401,7 @@ class TTextWebSocketServerTransportFactory : public TTransportFactory {
 public:
   TTextWebSocketServerTransportFactory() = default;
 
-  ~TTextWebSocketServerTransportFactory() override = default;
+  virtual ~TTextWebSocketServerTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.

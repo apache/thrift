@@ -100,7 +100,7 @@ public:
     boolValue_.hasBoolValue = false;
   }
 
-  ~TCompactProtocolT() override { free(string_buf_); }
+  virtual ~TCompactProtocolT() override { free(string_buf_); }
 
   /**
    * Writing functions
@@ -251,7 +251,7 @@ public:
   TCompactProtocolFactoryT(int32_t string_limit, int32_t container_limit)
     : string_limit_(string_limit), container_limit_(container_limit) {}
 
-  ~TCompactProtocolFactoryT() override = default;
+  virtual ~TCompactProtocolFactoryT() override = default;
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 
