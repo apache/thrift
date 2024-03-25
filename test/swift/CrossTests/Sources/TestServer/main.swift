@@ -34,19 +34,31 @@ class TestServer {
     let processor = ThriftTestProcessor(service: service)
     
     
-    switch (parameters.proto, parameters.transport) {
-    case (.binary, .buffered):
+    switch (parameters.proto, parameters.transport, parameters.domainSocket) {
+    case (.binary, .buffered, .none):
       let proto = TBinaryProtocol.self
       server = try TSocketServer(port: parameters.port!, inProtocol: proto, outProtocol: proto, processor: processor)
-    case (.binary, .framed):
+    case (.binary, .framed, .none):
       let proto = TBinaryProtocol.self
       server = try TFramedSocketServer(port: parameters.port!, inProtocol: proto, outProtocol: proto, processor: processor)
-    case (.compact, .buffered):
+    case (.compact, .buffered, .none):
       let proto = TCompactProtocol.self
       server = try TSocketServer(port: parameters.port!, inProtocol: proto, outProtocol: proto, processor: processor)
-    case (.compact, .framed):
+    case (.compact, .framed, .none):
       let proto = TCompactProtocol.self
       server = try TFramedSocketServer(port: parameters.port!, inProtocol: proto, outProtocol: proto, processor: processor)
+    case (.binary, .buffered, .some(let domainSocket)):
+      let proto = TBinaryProtocol.self
+      server = try TSocketServer(path: domainSocket, inProtocol: proto, outProtocol: proto, processor: processor)
+    case (.binary, .framed, .some(let domainSocket)):
+      let proto = TBinaryProtocol.self
+      server = try TFramedSocketServer(path: domainSocket, inProtocol: proto, outProtocol: proto, processor: processor)
+    case (.compact, .buffered, .some(let domainSocket)):
+      let proto = TCompactProtocol.self
+      server = try TSocketServer(path: domainSocket, inProtocol: proto, outProtocol: proto, processor: processor)
+    case (.compact, .framed, .some(let domainSocket)):
+      let proto = TCompactProtocol.self
+      server = try TFramedSocketServer(path: domainSocket, inProtocol: proto, outProtocol: proto, processor: processor)
     default:
       throw ParserError.unsupportedOption
     }

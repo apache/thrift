@@ -173,6 +173,15 @@ public class TSocketTransport : TTransport {
     
     self.init(socketDescriptor: sock)
   }
+
+  public convenience init(path: String) throws {
+    let socket = UnixSocket(path: path)
+    let errno = socket.connect()
+    guard errno == 0 else {
+      throw TTransportError(error: .notOpen, message: "Error binding to socket at path: \(path). Errno: \(errno)")
+    }
+    self.init(socketDescriptor: socket.fd)
+  }
   
   deinit {
     close()
