@@ -24,7 +24,6 @@
 #include <limits>
 #include <stdint.h>
 
-// TODO(dreiss): defval appears to be unused.  Look into removing it.
 // TODO(dreiss): Make parse_spec_args recursive, and cache the output
 //               permanently in the object.  (Malloc and orphan.)
 // TODO(dreiss): Why do we need cStringIO for reading, why not just char*?
