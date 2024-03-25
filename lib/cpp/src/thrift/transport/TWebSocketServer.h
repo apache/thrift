@@ -31,7 +31,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/THttpServer.h>
 #if defined(_MSC_VER) || defined(__MINGW32__)
-#include <Shlwapi.h>
+#include <shlwapi.h>
 #define THRIFT_strncasecmp(str1, str2, len) _strnicmp(str1, str2, len)
 #define THRIFT_strcasestr(haystack, needle) StrStrIA(haystack, needle)
 #else
