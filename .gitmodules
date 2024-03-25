@@ -1,0 +1,6 @@
+[submodule ".github/actions/cloudtruth/configure-action"]
+	path = .github/actions/cloudtruth/configure-action
+	url = https://github.com/cloudtruth/configure-action
+[submodule ".github/actions/pypa/gh-action-pypi-publish"]
+	path = .github/actions/pypa/gh-action-pypi-publish
+	url = https://github.com/pypa/gh-action-pypi-publish
