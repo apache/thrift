@@ -124,6 +124,58 @@ if(UNIX)
     endif()
 endif()
 
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+  set(PREV_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mbmi2 -mbmi -mlzcnt -msse3 -mavx512bw -mavx512vl")
+  check_cxx_source_compiles(
+  "
+  #include <immintrin.h>
+  int main(){unsigned int a,b;_pdep_u32(a,b); return 0;}
+  "
+  HAVE_BMI2)
+  check_cxx_source_compiles(
+  "
+  #include <immintrin.h>
+  int main(){unsigned int a; _tzcnt_u32(a); return 0;}
+  "
+  HAVE_BMI)
+  check_cxx_source_compiles(
+  "
+  #include <immintrin.h>
+  int main(){unsigned int c;_lzcnt_u32(c); return 0;}
+  "
+  HAVE_LZCNT)
+  check_cxx_source_compiles(
+  "
+  #include <immintrin.h>
+  int main(){const __m128i* p;_mm_lddqu_si128(p); return 0;}
+  "
+  HAVE_SSE3)
+  check_cxx_source_compiles(
+  "
+  #include <immintrin.h>
+  int main(){__m128i a,b;_mm_mask_cmp_epi8_mask(0x3ff,a,b,_MM_CMPINT_NLT); return 0;}
+  "
+  HAVE_AVX512BW_AVX512VL)
+
+  if (HAVE_BMI2)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mbmi2")
+  endif()
+  if (HAVE_BMI)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mbmi")
+  endif()
+  if (HAVE_LZCNT)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlzcnt")
+  endif()
+  if (HAVE_SSE3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+  endif()
+  if (HAVE_AVX512BW_AVX512VL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512bw -mavx512vl")
+  endif()
+  set(CMAKE_REQUIRED_FLAGS ${PREV_CMAKE_REQUIRED_FLAGS})
+endif ()
+
 set(thriftcpp_threads_SOURCES
     src/thrift/concurrency/ThreadFactory.cpp
     src/thrift/concurrency/Thread.cpp
