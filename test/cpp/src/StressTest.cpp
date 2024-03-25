@@ -95,6 +95,9 @@ public:
   void echoList(vector<int8_t>& out, const vector<int8_t>& arg) override { out = arg; }
   void echoSet(set<int8_t>& out, const set<int8_t>& arg) override { out = arg; }
   void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) override { out = arg; }
+  void echoBinary(string& out, const string& arg) override {
+    out = arg;
+  }
 
 private:
   count_map counts_;
@@ -105,6 +108,14 @@ enum TransportOpenCloseBehavior {
   OpenAndCloseTransportInThread,
   DontOpenAndCloseTransportInThread
 };
+enum TestLoopType {
+  TestLoopVoid,
+  TestLoopByte,
+  TestLoopI32,
+  TestLoopI64,
+  TestLoopString,
+  TestLoopBinary
+};
 class ClientThread : public Runnable {
 public:
   ClientThread(std::shared_ptr<TTransport> transport,
@@ -112,7 +123,7 @@ public:
                Monitor& monitor,
                size_t& workerCount,
                size_t loopCount,
-               TType loopType,
+               TestLoopType loopType,
                TransportOpenCloseBehavior behavior)
     : _transport(transport),
       _client(client),
@@ -139,20 +150,23 @@ public:
     }
 
     switch (_loopType) {
-    case T_VOID:
+    case TestLoopVoid:
       loopEchoVoid();
       break;
-    case T_BYTE:
+    case TestLoopByte:
       loopEchoByte();
       break;
-    case T_I32:
+    case TestLoopI32:
       loopEchoI32();
       break;
-    case T_I64:
+    case TestLoopI64:
       loopEchoI64();
       break;
-    case T_STRING:
+    case TestLoopString:
       loopEchoString();
+      break;
+    case TestLoopBinary:
+      loopEchoBinary();
       break;
     default:
       cerr << "Unexpected loop type" << _loopType << endl;
@@ -224,12 +238,26 @@ public:
     }
   }
 
+  void loopEchoBinary() {
+    /* fillSize, the length of the binary data transfered, is kept small to
+     * ensure that TBinaryProtocol's readString can call TBufferTransport's
+     * borrow and NOT fall into the borrowSlow path. */
+    size_t fillSize = 410;
+    char fillData = '!';
+    string arg(fillSize, fillData);
+    for (size_t ix = 0; ix < _loopCount; ix++) {
+      string result;
+      _client->echoBinary(result, arg);
+      assert(result == arg);
+    }
+  }
+
   std::shared_ptr<TTransport> _transport;
   std::shared_ptr<ServiceIf> _client;
   Monitor& _monitor;
   size_t& _workerCount;
   size_t _loopCount;
-  TType _loopType;
+  TestLoopType _loopType;
   int64_t _startTime;
   int64_t _endTime;
   bool _done;
@@ -267,9 +295,9 @@ int main(int argc, char** argv) {
   string protocolType = "binary";
   size_t workerCount = 8;
   size_t clientCount = 4;
-  size_t loopCount = 50000;
-  TType loopType = T_VOID;
-  string callName = "echoVoid";
+  size_t loopCount = 256000;
+  TestLoopType loopType = TestLoopBinary;
+  string callName = "echoBinary";
   bool runServer = true;
   bool logRequests = false;
   string requestLogPath = "./requestlog.tlog";
@@ -488,15 +516,17 @@ int main(int argc, char** argv) {
     set<std::shared_ptr<Thread> > clientThreads;
 
     if (callName == "echoVoid") {
-      loopType = T_VOID;
+      loopType = TestLoopVoid;
     } else if (callName == "echoByte") {
-      loopType = T_BYTE;
+      loopType = TestLoopByte;
     } else if (callName == "echoI32") {
-      loopType = T_I32;
+      loopType = TestLoopI32;
     } else if (callName == "echoI64") {
-      loopType = T_I64;
+      loopType = TestLoopI64;
     } else if (callName == "echoString") {
-      loopType = T_STRING;
+      loopType = TestLoopString;
+    } else if (callName == "echoBinary") {
+      loopType = TestLoopBinary;
     } else {
       throw invalid_argument("Unknown service call " + callName);
     }

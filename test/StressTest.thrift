@@ -31,5 +31,6 @@ service Service {
   list<i8>  echoList(1: list<i8> arg),
   set<i8>  echoSet(1: set<i8> arg),
   map<i8, i8>  echoMap(1: map<i8, i8> arg),
+  binary echoBinary(1: binary arg),
 }
 
