@@ -29,38 +29,44 @@ class TFramedTransport extends TBufferedTransport {
   int _receivedHeaderBytes = 0;
 
   int _bodySize = 0;
-  Uint8List _body;
+  Uint8List? _body;
   int _receivedBodyBytes = 0;
 
-  Completer<Uint8List> _frameCompleter;
+  Completer<Uint8List>? _frameCompleter;
 
   TFramedTransport(TTransport transport) : _transport = transport {
-    if (transport == null) {
-      throw ArgumentError.notNull("transport");
-    }
+    reset(isOpen: true);
+    // if (transport == null) {
+    //   throw ArgumentError.notNull("transport");
+    // }
   }
 
   @override
   bool get isOpen => _transport.isOpen;
 
   @override
-  Future open() {
-    _reset(isOpen: true);
+  Future<void> open() {
+    reset(isOpen: true);
     return _transport.open();
   }
 
   @override
-  Future close() {
-    _reset(isOpen: false);
+  Future<void> close() {
+    reset(isOpen: false);
     return _transport.close();
   }
 
   @override
-  int read(Uint8List buffer, int offset, int length) {
+  Future<int> read(Uint8List buffer, int offset, int length) async {
     if (hasReadData) {
-      int got = super.read(buffer, offset, length);
+      int got = await super.read(buffer, offset, length);
       if (got > 0) return got;
     }
+
+    // read another frame of data (taken from the Java implementation)
+    // NOT taken from the dart 1 implementation
+    // NOT SURE IF THIS IS THE RIGHT WAY TO DO IT
+    await _readFrame();
 
     // IMPORTANT: by the time you've got here,
     // an entire frame is available for reading
@@ -68,21 +74,21 @@ class TFramedTransport extends TBufferedTransport {
     return super.read(buffer, offset, length);
   }
 
-  void _readFrame() {
+  Future<void> _readFrame() async {
     if (_body == null) {
-      bool gotFullHeader = _readFrameHeader();
+      bool gotFullHeader = await _readFrameHeader();
       if (!gotFullHeader) {
         return;
       }
     }
 
-    _readFrameBody();
+    await _readFrameBody();
   }
 
-  bool _readFrameHeader() {
+  Future<bool> _readFrameHeader() async {
     var remainingHeaderBytes = headerByteCount - _receivedHeaderBytes;
 
-    int got = _transport.read(
+    int got = await _transport.read(
         _headerBytes, _receivedHeaderBytes, remainingHeaderBytes);
     if (got < 0) {
       throw TTransportError(TTransportErrorType.UNKNOWN,
@@ -112,10 +118,11 @@ class TFramedTransport extends TBufferedTransport {
     }
   }
 
-  void _readFrameBody() {
+  Future<void> _readFrameBody() async {
     var remainingBodyBytes = _bodySize - _receivedBodyBytes;
 
-    int got = _transport.read(_body, _receivedBodyBytes, remainingBodyBytes);
+    int got =
+        await _transport.read(_body!, _receivedBodyBytes, remainingBodyBytes);
     if (got < 0) {
       throw TTransportError(
           TTransportErrorType.UNKNOWN, "Socket closed during frame body read");
@@ -124,24 +131,24 @@ class TFramedTransport extends TBufferedTransport {
     _receivedBodyBytes += got;
 
     if (_receivedBodyBytes == _bodySize) {
-      var body = _body;
+      var body = _body!;
 
       _bodySize = 0;
       _body = null;
       _receivedBodyBytes = 0;
 
-      _setReadBuffer(body);
+      setReadBuffer(body);
 
       var completer = _frameCompleter;
       _frameCompleter = null;
-      completer.complete(Uint8List(0));
+      completer!.complete(Uint8List(0));
     } else {
       _registerForReadableBytes();
     }
   }
 
   @override
-  Future flush() {
+  Future<void> flush() {
     if (_frameCompleter == null) {
       Uint8List buffer = consumeWriteBuffer();
       int length = buffer.length;
@@ -154,14 +161,14 @@ class TFramedTransport extends TBufferedTransport {
       _registerForReadableBytes();
     }
 
-    return _frameCompleter.future;
+    return _frameCompleter!.future;
   }
 
   void _registerForReadableBytes() {
     _transport.flush().then((_) {
       _readFrame();
     }).catchError((e) {
-      var completer = _frameCompleter;
+      var completer = _frameCompleter!;
 
       _receivedHeaderBytes = 0;
       _bodySize = 0;

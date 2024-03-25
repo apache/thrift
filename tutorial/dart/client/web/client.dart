@@ -17,14 +17,15 @@
 
 import 'dart:html';
 
-import 'package:thrift/thrift.dart';
-import 'package:thrift/thrift_browser.dart';
 import 'package:shared/shared.dart';
 import 'package:tutorial/tutorial.dart';
 
+import 'package:thrift/thrift.dart';
+import 'package:thrift/thrift_browser.dart';
+
 /// Adapted from the AS3 tutorial
 void main() {
-  new CalculatorUI(querySelector('#output')).start();
+  new CalculatorUI(querySelector('#output') as DivElement).start();
 }
 
 class CalculatorUI {
@@ -32,8 +33,8 @@ class CalculatorUI {
 
   CalculatorUI(this.output);
 
-  TTransport _transport;
-  Calculator _calculatorClient;
+  late TTransport _transport;
+  late Calculator _calculatorClient;
 
   void start() {
     _buildInterface();
@@ -120,12 +121,12 @@ class CalculatorUI {
   void _onAddClick(MouseEvent e) {
     _validate();
 
-    InputElement num1 = querySelector("#add1");
-    InputElement num2 = querySelector("#add2");
-    SpanElement result = querySelector("#addResult");
+    final num1 = querySelector("#add1") as InputElement;
+    final num2 = querySelector("#add2") as InputElement;
+    final result = querySelector("#addResult") as SpanElement;
 
     _calculatorClient
-        .add(int.parse(num1.value), int.parse(num2.value))
+        .add(int.parse(num1.value ?? "0"), int.parse(num2.value ?? "0"))
         .then((int n) {
       result.text = "$n";
     });
@@ -211,21 +212,21 @@ class CalculatorUI {
   void _onCalcClick(MouseEvent e) {
     _validate();
 
-    InputElement num1 = querySelector("#calc1");
-    InputElement num2 = querySelector("#calc2");
-    SelectElement op = querySelector("#calcOp");
-    SpanElement result = querySelector("#calcResult");
-    InputElement logId = querySelector("#logId");
-    InputElement comment = querySelector("#comment");
+    final num1 = querySelector("#calc1") as InputElement;
+    final num2 = querySelector("#calc2") as InputElement;
+    final op = querySelector("#calcOp") as SelectElement;
+    final result = querySelector("#calcResult") as SpanElement;
+    final logId = querySelector("#logId") as InputElement;
+    final comment = querySelector("#comment") as InputElement;
 
-    int logIdValue = int.parse(logId.value);
+    int logIdValue = int.parse(logId.value!);
     logId.value = (logIdValue + 1).toString();
 
     Work work = new Work();
-    work.num1 = int.parse(num1.value);
-    work.num2 = int.parse(num2.value);
-    work.op = int.parse(op.options[op.selectedIndex].value);
-    work.comment = comment.value;
+    work.num1 = int.parse(num1.value!);
+    work.num2 = int.parse(num2.value!);
+    work.op = int.parse(op.options[op.selectedIndex!].value);
+    work.comment = comment.value!;
 
     _calculatorClient.calculate(logIdValue, work).then((int n) {
       result.text = "$n";
@@ -266,11 +267,11 @@ class CalculatorUI {
   void _onGetStructClick(MouseEvent e) {
     _validate();
 
-    InputElement structKey = querySelector("#structKey");
-    TextAreaElement result = querySelector("#getStructResult");
+    InputElement structKey = querySelector("#structKey") as InputElement;
+    TextAreaElement result = querySelector("#getStructResult") as TextAreaElement;
 
     _calculatorClient
-        .getStruct(int.parse(structKey.value))
+        .getStruct(int.parse(structKey.value!))
         .then((SharedStruct s) {
       result.text = "${s.toString()}";
     });

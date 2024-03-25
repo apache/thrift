@@ -15,9 +15,10 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
+/// Adapted from the C# version.
+
 part of thrift;
 
-/// Adapted from the C# version.
 class TMultiplexedProtocol extends TProtocolDecorator {
   static const SEPARATOR = ':';
 
@@ -25,11 +26,7 @@ class TMultiplexedProtocol extends TProtocolDecorator {
 
   TMultiplexedProtocol(TProtocol protocol, String serviceName)
       : _serviceName = serviceName,
-        super(protocol) {
-    if (serviceName == null) {
-      throw ArgumentError.notNull("serviceName");
-    }
-  }
+        super(protocol);
 
   @override
   void writeMessageBegin(TMessage message) {

@@ -1,3 +1,5 @@
+part of thrift;
+
 /// Licensed to the Apache Software Foundation (ASF) under one
 /// or more contributor license agreements. See the NOTICE file
 /// distributed with this work for additional information
@@ -15,8 +17,6 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
-part of thrift;
-
 class TJsonProtocolFactory implements TProtocolFactory<TJsonProtocol> {
   @override
   TJsonProtocol getProtocol(TTransport transport) {
@@ -32,9 +32,9 @@ class TJsonProtocol extends TProtocol {
 
   static const Utf8Codec utf8Codec = Utf8Codec();
 
-  _BaseContext _context;
-  _BaseContext _rootContext;
-  _LookaheadReader _reader;
+  late _BaseContext _context;
+  late _BaseContext _rootContext;
+  late _LookaheadReader _reader;
 
   final List<_BaseContext> _contextStack = [];
   final Uint8List _tempBuffer = Uint8List(4);
@@ -60,34 +60,27 @@ class TJsonProtocol extends TProtocol {
     _context = _rootContext;
   }
 
-  /// Read a byte that must match [char]; otherwise throw a [TProtocolError].
   void _readJsonSyntaxChar(int charByte) {
-    int byte = _reader.read();
+    int? byte = _reader.read();
     if (byte != charByte) {
-      throw TProtocolError(TProtocolErrorType.INVALID_DATA,
-          "Expected character ${String.fromCharCode(charByte)} but found: ${String.fromCharCode(byte)}");
+      throw TProtocolError(
+          TProtocolErrorType.INVALID_DATA, "Expected character ${String.fromCharCode(charByte)} but found: ${String.fromCharCode(byte)}");
     }
   }
 
   int _hexVal(int byte) {
-    if (byte >= _Constants.HEX_0_BYTES[0] &&
-        byte <= _Constants.HEX_9_BYTES[0]) {
+    if (byte >= _Constants.HEX_0_BYTES[0] && byte <= _Constants.HEX_9_BYTES[0]) {
       return byte - _Constants.HEX_0_BYTES[0];
-    } else if (byte >= _Constants.HEX_A_BYTES[0] &&
-        byte <= _Constants.HEX_F_BYTES[0]) {
+    } else if (byte >= _Constants.HEX_A_BYTES[0] && byte <= _Constants.HEX_F_BYTES[0]) {
       byte += 10;
       return byte - _Constants.HEX_A_BYTES[0];
     } else {
-      throw TProtocolError(
-          TProtocolErrorType.INVALID_DATA, "Expected hex character");
+      throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Expected hex character");
     }
   }
 
   int _hexChar(int byte) => byte.toRadixString(16).codeUnitAt(0);
 
-  /// write
-
-  /// Write the [bytes] as JSON characters, escaping as needed.
   void _writeJsonString(Uint8List bytes) {
     _context.write();
     transport.writeAll(_Constants.QUOTE_BYTES);
@@ -121,8 +114,8 @@ class TJsonProtocol extends TProtocol {
     transport.writeAll(_Constants.QUOTE_BYTES);
   }
 
-  void _writeJsonInteger(int i) {
-    if (i == null) i = 0;
+  void _writeJsonInteger(int? i) {
+    i ??= 0;
 
     _context.write();
     String str = i.toString();
@@ -136,8 +129,8 @@ class TJsonProtocol extends TProtocol {
     }
   }
 
-  void _writeJsonDouble(double d) {
-    if (d == null) d = 0.0;
+  void _writeJsonDouble(double? d) {
+    d ??= 0.0;
 
     _context.write();
     String str = d.toString();
@@ -266,7 +259,7 @@ class TJsonProtocol extends TProtocol {
   }
 
   @override
-  void writeBool(bool b) {
+  void writeBool(bool? b) {
     if (b == null) b = false;
     _writeJsonInteger(b ? 1 : 0);
   }
@@ -297,7 +290,7 @@ class TJsonProtocol extends TProtocol {
   }
 
   @override
-  void writeString(String s) {
+  void writeString(String? s) {
     var bytes = s != null ? utf8Codec.encode(s) : Uint8List.fromList([]);
     _writeJsonString(bytes);
   }
@@ -316,9 +309,18 @@ class TJsonProtocol extends TProtocol {
     List<int> bytes = [];
     List<int> codeunits = [];
 
+    // if (_context == null) {
+    //   throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Context is null");
+    // }
+
     if (!skipContext) {
       _context.read();
     }
+
+    // if (_reader == null) {
+    //   throw TProtocolError(
+    //       TProtocolErrorType.INVALID_DATA, "Attempt to read from null reader");
+    // }
 
     _readJsonSyntaxChar(_Constants.QUOTE_BYTES[0]);
     while (true) {
@@ -340,8 +342,7 @@ class TJsonProtocol extends TProtocol {
         String char = String.fromCharCode(byte);
         int offset = _Constants.ESCAPE_CHARS.indexOf(char);
         if (offset == -1) {
-          throw TProtocolError(
-              TProtocolErrorType.INVALID_DATA, "Expected control char");
+          throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Expected control char");
         }
         byte = _Constants.ESCAPE_CHAR_VALS.codeUnitAt(offset);
         bytes.add(byte);
@@ -350,20 +351,15 @@ class TJsonProtocol extends TProtocol {
 
       // it's \uXXXX
       transport.readAll(_tempBuffer, 0, 4);
-      byte = (_hexVal(_tempBuffer[0]) << 12) +
-          (_hexVal(_tempBuffer[1]) << 8) +
-          (_hexVal(_tempBuffer[2]) << 4) +
-          _hexVal(_tempBuffer[3]);
+      byte = (_hexVal(_tempBuffer[0]) << 12) + (_hexVal(_tempBuffer[1]) << 8) + (_hexVal(_tempBuffer[2]) << 4) + _hexVal(_tempBuffer[3]);
       if (_isHighSurrogate(byte)) {
         if (codeunits.isNotEmpty) {
-          throw TProtocolError(
-              TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
+          throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
         }
         codeunits.add(byte);
       } else if (_isLowSurrogate(byte)) {
         if (codeunits.isEmpty) {
-          throw TProtocolError(
-              TProtocolErrorType.INVALID_DATA, "Expected high surrogate");
+          throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Expected high surrogate");
         }
         codeunits.add(byte);
         bytes.addAll(utf8Codec.encode(String.fromCharCodes(codeunits)));
@@ -374,8 +370,7 @@ class TJsonProtocol extends TProtocol {
     }
 
     if (codeunits.isNotEmpty) {
-      throw TProtocolError(
-          TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
+      throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Expected low surrogate");
     }
 
     return Uint8List.fromList(bytes);
@@ -406,8 +401,7 @@ class TJsonProtocol extends TProtocol {
     try {
       return int.parse(str);
     } on FormatException catch (_) {
-      throw TProtocolError(TProtocolErrorType.INVALID_DATA,
-          "Bad data encounted in numeric data");
+      throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Bad data encounted in numeric data");
     }
   }
 
@@ -418,14 +412,12 @@ class TJsonProtocol extends TProtocol {
       Uint8List bytes = _readJsonString(skipContext: true);
       double d;
       try {
-        d = double.tryParse(utf8Codec.decode(bytes));
+        d = double.parse(utf8Codec.decode(bytes));
       } catch (_) {
-        throw TProtocolError(TProtocolErrorType.INVALID_DATA,
-            "Bad data encounted in numeric data");
+        throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Bad data encounted in numeric data");
       }
       if (!_context.escapeNumbers && !d.isNaN && !d.isInfinite) {
-        throw TProtocolError(TProtocolErrorType.INVALID_DATA,
-            "Numeric data unexpectedly quoted");
+        throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Numeric data unexpectedly quoted");
       }
       return d;
     } else {
@@ -436,8 +428,7 @@ class TJsonProtocol extends TProtocol {
       try {
         return double.parse(_readJsonNumericChars());
       } on FormatException catch (_) {
-        throw TProtocolError(TProtocolErrorType.INVALID_DATA,
-            "Bad data encounted in numeric data");
+        throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Bad data encounted in numeric data");
       }
     }
   }
@@ -478,8 +469,7 @@ class TJsonProtocol extends TProtocol {
 
     _readJsonArrayStart();
     if (_readJsonInteger() != VERSION_1) {
-      throw TProtocolError(
-          TProtocolErrorType.BAD_VERSION, "Message contained bad version.");
+      throw TProtocolError(TProtocolErrorType.BAD_VERSION, "Message contained bad version.");
     }
 
     Uint8List buffer = _readJsonString();
@@ -613,7 +603,7 @@ class TJsonProtocol extends TProtocol {
 }
 
 class _Constants {
-  static const utf8codec = Utf8Codec();
+  static final Utf8Codec utf8codec = Utf8Codec();
 
   static final Uint8List HEX_0_BYTES = Uint8List.fromList('0'.codeUnits);
   static final Uint8List HEX_9_BYTES = Uint8List.fromList('9'.codeUnits);
@@ -671,11 +661,10 @@ class _Constants {
 
   static Uint8List getTypeNameBytesForTypeId(int typeId) {
     if (!_TYPE_ID_TO_NAME_BYTES.containsKey(typeId)) {
-      throw TProtocolError(
-          TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
+      throw TProtocolError(TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
     }
 
-    return _TYPE_ID_TO_NAME_BYTES[typeId];
+    return _TYPE_ID_TO_NAME_BYTES[typeId]!;
   }
 
   static final Map<String, int> _NAME_TO_TYPE_ID = Map.unmodifiable({
@@ -695,11 +684,10 @@ class _Constants {
   static int getTypeIdForTypeName(Uint8List bytes) {
     String name = utf8codec.decode(bytes);
     if (!_NAME_TO_TYPE_ID.containsKey(name)) {
-      throw TProtocolError(
-          TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
+      throw TProtocolError(TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
     }
 
-    return _NAME_TO_TYPE_ID[name];
+    return _NAME_TO_TYPE_ID[name]!;
   }
 
   static final Set<int> _JSON_NUMERICS = Set.from([
@@ -801,8 +789,7 @@ class _PairContext extends _BaseContext {
   bool _first = true;
   bool _colon = true;
 
-  Uint8List get symbolBytes =>
-      _colon ? _Constants.COLON_BYTES : _Constants.COMMA_BYTES;
+  Uint8List get symbolBytes => _colon ? _Constants.COLON_BYTES : _Constants.COMMA_BYTES;
 
   @override
   void write() {

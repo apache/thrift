@@ -19,17 +19,15 @@ part of thrift;
 
 class TSerializer {
   final message = TMessage('Serializer', TMessageType.ONEWAY, 1);
-  TBufferedTransport transport;
-  TProtocol protocol;
+  late TBufferedTransport transport;
+  late TProtocol protocol;
 
-  TSerializer({TProtocolFactory protocolFactory}) {
-    this.transport = TBufferedTransport();
+  TSerializer({TProtocolFactory? protocolFactory}) {
+    transport = TBufferedTransport();
 
-    if (protocolFactory == null) {
-      protocolFactory = TBinaryProtocolFactory();
-    }
+    protocolFactory ??= TBinaryProtocolFactory();
 
-    this.protocol = protocolFactory.getProtocol(this.transport);
+    protocol = protocolFactory.getProtocol(transport);
   }
 
   Uint8List write(TBase base) {

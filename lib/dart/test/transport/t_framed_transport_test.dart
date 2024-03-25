@@ -24,14 +24,36 @@ import 'dart:typed_data' show Uint8List;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
-void main() {
+Future<void> foo() async {
+  late FakeReadOnlySocket socket;
+  late TSocketTransport socketTransport;
+  late TFramedTransport transport;
+
+  socket = FakeReadOnlySocket();
+  socketTransport = TClientSocketTransport(socket);
+  transport = TFramedTransport(socketTransport);
+
+  // Paul here - seems like this should set the transport read iterator
+  socket.messageController.add(Uint8List.fromList([0x00, 0x00, 0x00, 0x06]));
+
+  var readBuffer = Uint8List(128);
+  var readBytes = await transport.read(readBuffer, 0, readBuffer.lengthInBytes);
+  expect(readBytes, 0);
+}
+
+// This test doesn't seem to work because the call
+// > socket.messageController.add
+// doesn't seem to set the transport read iterator
+void main() async {
+  await foo();
+
   group('TFramedTransport partial reads', () {
     final flushAwaitDuration = Duration(seconds: 10);
 
-    FakeReadOnlySocket socket;
-    TSocketTransport socketTransport;
-    TFramedTransport transport;
-    var messageAvailable;
+    late FakeReadOnlySocket socket;
+    late TSocketTransport socketTransport;
+    late TFramedTransport transport;
+    late bool messageAvailable;
 
     setUp(() {
       socket = FakeReadOnlySocket();
@@ -40,9 +62,10 @@ void main() {
       messageAvailable = false;
     });
 
-    expectNoReadableBytes() {
+    Future<void> expectNoReadableBytes() async {
       var readBuffer = Uint8List(128);
-      var readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
+      var readBytes =
+          await transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 0);
       expect(messageAvailable, false);
     }
@@ -52,7 +75,7 @@ void main() {
         () async {
       // buffer into which we'll read
       var readBuffer = Uint8List(10);
-      var readBytes;
+      late int readBytes;
 
       // registers for readable bytes
       var flushFuture = transport.flush().timeout(flushAwaitDuration);
@@ -61,19 +84,20 @@ void main() {
       });
 
       // write header bytes
+      // Paul here - seems like this should set the tranport read iterator
       socket.messageController
           .add(Uint8List.fromList([0x00, 0x00, 0x00, 0x06]));
 
       // you shouldn't be able to get any bytes from the read,
       // because the header has been consumed internally
-      expectNoReadableBytes();
+      await expectNoReadableBytes();
 
       // write first batch of body
       socket.messageController.add(Uint8List.fromList(utf8.encode("He")));
 
       // you shouldn't be able to get any bytes from the read,
       // because the frame has been consumed internally
-      expectNoReadableBytes();
+      await expectNoReadableBytes();
 
       // write second batch of body
       socket.messageController.add(Uint8List.fromList(utf8.encode("llo!")));
@@ -84,7 +108,7 @@ void main() {
       expect(messageAvailable, true);
 
       // at this point the frame is complete, so we expect the read to complete
-      readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
+      readBytes = await transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 6);
       expect(readBuffer.sublist(0, 6), utf8.encode("Hello!"));
     });
@@ -94,7 +118,7 @@ void main() {
         'and body is also sent in pieces', () async {
       // buffer into which we'll read
       var readBuffer = Uint8List(10);
-      var readBytes;
+      late int readBytes;
 
       // registers for readable bytes
       var flushFuture = transport.flush().timeout(flushAwaitDuration);
@@ -113,7 +137,9 @@ void main() {
 
       // you shouldn't be able to get any bytes from the read again
       // because only the header was read, and there's no frame body
-      readBytes = expectNoReadableBytes();
+      readBytes = await transport.read(readBuffer, 0, readBuffer.lengthInBytes);
+      expect(readBytes, 0);
+      expect(messageAvailable, false);
 
       // write first batch of body
       socket.messageController.add(Uint8List.fromList(utf8.encode("H")));
@@ -131,7 +157,7 @@ void main() {
       expect(messageAvailable, true);
 
       // at this point the frame is complete, so we expect the read to complete
-      readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
+      readBytes = await transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 3);
       expect(readBuffer.sublist(0, 3), utf8.encode("Hi!"));
     });
@@ -146,7 +172,7 @@ class FakeReadOnlySocket extends TSocket {
       StreamController<TSocketState>();
 
   @override
-  Future close() async {
+  Future<void> close() async {
     messageController.close();
     errorController.close();
     stateController.close();
@@ -168,7 +194,7 @@ class FakeReadOnlySocket extends TSocket {
   Stream<TSocketState> get onState => stateController.stream;
 
   @override
-  Future open() async {
+  Future<void> open() async {
     // noop
   }
 
