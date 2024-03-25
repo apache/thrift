@@ -70,7 +70,7 @@ using namespace thrift::test;
 //
 
 template<typename Proto>
-class TPedanticProtocol : public Proto 
+class TPedanticProtocol : public Proto
 {
     public:
         TPedanticProtocol(std::shared_ptr<TTransport>& transport)
@@ -166,10 +166,34 @@ bool print_eq(T expected, T actual) {
   return true;
 }
 
+bool print_eq_uuid(std::string expected, const std::string& actual) {
+  if(!expected.empty() && ((expected.at(0) == '{') && (expected.back() == '}')))
+    expected = expected.substr(1, expected.size()-2);
+
+  cout << "(" << actual << ")" << endl;
+  if (expected != actual) {
+    cout << "*** FAILED ***" << endl << "Expected: " << expected << " but got: " << actual << endl;
+    return false;
+  }
+  return true;
+}
+
 #define BASETYPE_IDENTITY_TEST(func, value)                                                        \
   cout << #func "(" << value << ") = ";                                                            \
   try {                                                                                            \
     if (!print_eq(value, testClient.func(value)))                                                  \
+      return_code |= ERR_BASETYPES;                                                                \
+  } catch (TTransportException&) {                                                                 \
+    throw;                                                                                         \
+  } catch (exception & ex) {                                                                       \
+    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    return_code |= ERR_BASETYPES;                                                                  \
+  }
+
+#define UUID_TEST(func, value)                                                            \
+  cout << #func "(" << value << ") = ";                                                            \
+  try {                                                                                            \
+    if (!print_eq_uuid(value, testClient.func(value)))                                             \
       return_code |= ERR_BASETYPES;                                                                \
   } catch (TTransportException&) {                                                                 \
     throw;                                                                                         \
@@ -638,6 +662,11 @@ int main(int argc, char** argv) {
       if (i > 0) { i *= 2; } else { ++i; }
     }
 
+    /**
+     * UUID TEST
+     */
+    UUID_TEST(testUuid, std::string{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"});
+    UUID_TEST(testUuid, std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"});
 
     /**
      * STRUCT TEST

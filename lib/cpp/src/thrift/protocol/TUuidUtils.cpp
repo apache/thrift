@@ -17,49 +17,36 @@
  * under the License.
  */
 
-#ifndef _THRIFT_ENUM_H_
-#define _THRIFT_ENUM_H_
+#include <thrift/protocol/TUuidUtils.hpp>
+
+#include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace apache {
 namespace thrift {
 namespace protocol {
 
-/**
- * Enumerated definition of the types that the Thrift protocol supports.
- * Take special note of the T_END type which is used specifically to mark
- * the end of a sequence of fields.
- */
-enum TType {
-  T_STOP       = 0,
-  T_VOID       = 1,
-  T_BOOL       = 2,
-  T_BYTE       = 3,
-  T_I08        = 3,
-  T_I16        = 6,
-  T_I32        = 8,
-  T_U64        = 9,
-  T_I64        = 10,
-  T_DOUBLE     = 4,
-  T_STRING     = 11,
-  T_UTF7       = 11,
-  T_STRUCT     = 12,
-  T_MAP        = 13,
-  T_SET        = 14,
-  T_LIST       = 15,
-  T_UUID       = 16,
-};
+bool uuid_encode(const std::string& in, std::string& out) {
+  try {
+    static const boost::uuids::string_generator gen;
+    const boost::uuids::uuid uuid{gen(in)};
+    out.resize(uuid.size());
+    std::copy(uuid.begin(), uuid.end(), out.begin());
+    return true;
+  } catch (const std::runtime_error&) {
+    // Invalid string most probably
+    return false;
+  }
+}
 
-/**
- * Enumerated definition of the message types that the Thrift protocol
- * supports.
- */
-enum TMessageType {
-  T_CALL       = 1,
-  T_REPLY      = 2,
-  T_EXCEPTION  = 3,
-  T_ONEWAY     = 4
-};
+void uuid_decode(const std::string& in, std::string& out) {
+  boost::uuids::uuid uuid{};
+  const size_t to_copy = std::min(in.size(), uuid.size());
+  std::copy(in.begin(), in.begin() + to_copy, uuid.begin());
+  out = boost::uuids::to_string(uuid);
+}
 
-}}} // apache::thrift::protocol
-
-#endif // #define _THRIFT_ENUM_H_
+}
+}
+} // apache::thrift::protocol
