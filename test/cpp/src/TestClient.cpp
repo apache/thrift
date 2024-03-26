@@ -658,7 +658,7 @@ int main(int argc, char** argv) {
     UUID_TEST(testUuid, std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"}, expected_uuid);
     UUID_TEST(testUuid, std::string{"5e2ab18817264e75a04f1ed9a6a89c4c"}, expected_uuid);
     UUID_TEST(testUuid, std::string{"{5e2ab18817264e75a04f1ed9a6a89c4c}"}, expected_uuid);
-    UUID_TEST(testUuid, std::string{}, "00000000-0000-0000-0000-000000000000");
+    UUID_TEST(testUuid, std::string{}, std::string{"00000000-0000-0000-0000-000000000000"});
 
     /**
      * STRUCT TEST
