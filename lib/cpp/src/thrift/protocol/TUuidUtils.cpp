@@ -28,10 +28,14 @@ namespace thrift {
 namespace protocol {
 
 bool uuid_encode(const std::string& in, std::string& out) {
+  static const boost::uuids::string_generator gen;
+  static const std::string empty_uuid(boost::uuids::uuid::static_size(), '\0');
+  out = empty_uuid;
+  if (in.empty()) {
+    return true;
+  }
   try {
-    static const boost::uuids::string_generator gen;
     const boost::uuids::uuid uuid{gen(in)};
-    out.resize(uuid.size());
     std::copy(uuid.begin(), uuid.end(), out.begin());
     return true;
   } catch (const std::runtime_error&) {

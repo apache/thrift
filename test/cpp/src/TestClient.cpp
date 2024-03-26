@@ -166,18 +166,6 @@ bool print_eq(T expected, T actual) {
   return true;
 }
 
-bool print_eq_uuid(std::string expected, const std::string& actual) {
-  if(!expected.empty() && ((expected.at(0) == '{') && (expected.back() == '}')))
-    expected = expected.substr(1, expected.size()-2);
-
-  cout << "(" << actual << ")" << endl;
-  if (expected != actual) {
-    cout << "*** FAILED ***" << endl << "Expected: " << expected << " but got: " << actual << endl;
-    return false;
-  }
-  return true;
-}
-
 #define BASETYPE_IDENTITY_TEST(func, value)                                                        \
   cout << #func "(" << value << ") = ";                                                            \
   try {                                                                                            \
@@ -190,10 +178,10 @@ bool print_eq_uuid(std::string expected, const std::string& actual) {
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
-#define UUID_TEST(func, value)                                                            \
+#define UUID_TEST(func, value, expected)                                                           \
   cout << #func "(" << value << ") = ";                                                            \
   try {                                                                                            \
-    if (!print_eq_uuid(value, testClient.func(value)))                                             \
+    if (!print_eq(expected, testClient.func(value)))                                               \
       return_code |= ERR_BASETYPES;                                                                \
   } catch (TTransportException&) {                                                                 \
     throw;                                                                                         \
@@ -665,8 +653,12 @@ int main(int argc, char** argv) {
     /**
      * UUID TEST
      */
-    UUID_TEST(testUuid, std::string{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"});
-    UUID_TEST(testUuid, std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"});
+    const std::string expected_uuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+    UUID_TEST(testUuid, std::string{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"5e2ab18817264e75a04f1ed9a6a89c4c"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"{5e2ab18817264e75a04f1ed9a6a89c4c}"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{}, "00000000-0000-0000-0000-000000000000");
 
     /**
      * STRUCT TEST

@@ -66,6 +66,7 @@ int main() {
   ooe.some_characters = "JSON THIS! \"\1";
   ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
+  ooe.rfc4122_uuid = "{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}";
 
   int num = 100000;
   std::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
