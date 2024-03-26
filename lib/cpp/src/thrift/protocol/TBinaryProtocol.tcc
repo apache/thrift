@@ -200,9 +200,12 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const std::string& 
   const bool encoded = uuid_encode(str, out);
   if(!encoded)
     throw TProtocolException(TProtocolException::INVALID_DATA);
+  // This should not happen, but check for now
+  if(out.size() != 16)
+    throw TProtocolException(TProtocolException::UNKNOWN);
   // TODO: Consider endian swapping, see lib/delphi/src/Thrift.Utils.pas:377
-  const uint32_t written = TBinaryProtocolT<Transport_, ByteOrder_>::writeString(out);
-  return written;
+  this->trans_->write((uint8_t*)out.data(), 16);
+  return 16;
 }
 
 /**
@@ -443,9 +446,9 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(std::string& str) {
   std::string in;
-  const uint32_t read = TBinaryProtocolT<Transport_, ByteOrder_>::readString(in);
+  readStringBody(in, 16);
   uuid_decode(in, str);
-  return read;
+  return 16;
 }
 
 template <class Transport_, class ByteOrder_>
