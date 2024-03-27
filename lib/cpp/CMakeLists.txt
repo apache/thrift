@@ -43,6 +43,7 @@ set(thriftcpp_SOURCES
    src/thrift/protocol/TJSONProtocol.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
    src/thrift/protocol/TProtocol.cpp
+   src/thrift/protocol/TUuidUtils.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp

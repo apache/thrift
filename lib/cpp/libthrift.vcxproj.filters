@@ -30,6 +30,9 @@
     <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp">
       <Filter>protocol</Filter>
     </ClCompile>
+    <ClCompile Include="src\thrift\protocol\TUuidUtils.cpp">
+      <Filter>protocol</Filter>
+    </ClCompile>
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp">
       <Filter>transport</Filter>
     </ClCompile>

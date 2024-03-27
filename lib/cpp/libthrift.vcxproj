@@ -49,6 +49,7 @@
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp" />
     <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp" />
     <ClCompile Include="src\thrift\protocol\TProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TUuidUtils.cpp" />
     <ClCompile Include="src\thrift\server\TConnectedClient.cpp" />
     <ClCompile Include="src\thrift\server\TServer.cpp" />
     <ClCompile Include="src\thrift\server\TServerFramework.cpp" />
