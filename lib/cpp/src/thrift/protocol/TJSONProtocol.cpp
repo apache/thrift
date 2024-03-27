@@ -69,7 +69,7 @@ static const std::string kTypeNameString("str");
 static const std::string kTypeNameMap("map");
 static const std::string kTypeNameList("lst");
 static const std::string kTypeNameSet("set");
-static const std::string kTypeNameUuid("uuid");
+static const std::string kTypeNameUuid("uid");
 
 static const std::string& getTypeNameForTypeID(TType typeID) {
   switch (typeID) {
