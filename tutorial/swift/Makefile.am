@@ -31,3 +31,13 @@ tutorialserver: gen_swift
 
 tutorialclient: gen_swift
 	swift run TutorialClient
+
+EXTRA_DIST = \
+	Package.swift \
+	swift-dep \
+	Sources/TutorialClient/main.swift \
+	Sources/TutorialRunner/main.swift \
+	Sources/TutorialServer/main.swift \
+	Sources/TutorialServer/CalculatorService.swift \
+	README.md
+

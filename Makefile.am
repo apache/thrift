@@ -141,6 +141,12 @@ EXTRA_DIST = \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
+	.github/dependabot.yml \
+	.github/pull_request_template.md \
+	.github/stale.yml \
+	.github/workflows/build.yml \
+	.github/workflows/cmake.yml \
+	.github/workflows/pypi.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
