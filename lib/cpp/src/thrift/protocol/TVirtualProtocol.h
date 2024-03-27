@@ -393,8 +393,8 @@ public:
     return static_cast<Protocol_*>(this)->writeBinary(str);
   }
 
-  uint32_t writeUUID_virt(const std::string& str) override {
-    return static_cast<Protocol_*>(this)->writeUUID(str);
+  uint32_t writeUUID_virt(const TUuid& uuid) override {
+    return static_cast<Protocol_*>(this)->writeUUID(uuid);
   }
 
   /**
@@ -475,8 +475,8 @@ public:
     return static_cast<Protocol_*>(this)->readBinary(str);
   }
 
-  uint32_t readUUID_virt(std::string& str) override {
-    return static_cast<Protocol_*>(this)->readUUID(str);
+  uint32_t readUUID_virt(TUuid& uuid) override {
+    return static_cast<Protocol_*>(this)->readUUID(uuid);
   }
 
   uint32_t skip_virt(TType type) override { return static_cast<Protocol_*>(this)->skip(type); }

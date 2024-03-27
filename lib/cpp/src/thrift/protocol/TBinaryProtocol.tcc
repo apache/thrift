@@ -21,7 +21,6 @@
 #define _THRIFT_PROTOCOL_TBINARYPROTOCOL_TCC_ 1
 
 #include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/protocol/TUuidUtils.hpp>
 #include <thrift/transport/TTransportException.h>
 
 #include <limits>
@@ -195,16 +194,9 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string
 }
 
 template <class Transport_, class ByteOrder_>
-uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const std::string& str) {
-  std::string out;
-  const bool encoded = uuid_encode(str, out);
-  if(!encoded)
-    throw TProtocolException(TProtocolException::INVALID_DATA);
-  // This should not happen, but check for now
-  if(out.size() != 16)
-    throw TProtocolException(TProtocolException::UNKNOWN);
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const TUuid& uuid) {
   // TODO: Consider endian swapping, see lib/delphi/src/Thrift.Utils.pas:377
-  this->trans_->write((uint8_t*)out.data(), 16);
+  this->trans_->write(&uuid.data[0], 16);
   return 16;
 }
 
@@ -444,10 +436,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) 
 }
 
 template <class Transport_, class ByteOrder_>
-uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(std::string& str) {
-  std::string in;
-  readStringBody(in, 16);
-  uuid_decode(in, str);
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(TUuid& uuid) {
+  this->trans_->readAll(reinterpret_cast<uint8_t*>(&uuid.data[0]), 16);
   return 16;
 }
 

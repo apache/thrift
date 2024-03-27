@@ -82,6 +82,7 @@ set(UnitTest_SOURCES
     TServerSocketTest.cpp
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
+    TUuidTest.cpp
 )
 
 add_executable(UnitTests ${UnitTest_SOURCES})

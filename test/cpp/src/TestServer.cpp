@@ -132,8 +132,8 @@ public:
     _return = thing;
   }
 
-  std::string testUuid(const std::string thing) override {
-    printf("testUuid(\"{%s}\")\n", thing.c_str());
+  TUuid testUuid(const TUuid thing) override {
+    printf("testUuid(\"{%s}\")\n", to_string(thing).c_str());
     return thing;
   }
 
@@ -447,8 +447,8 @@ public:
     cob(res);
   }
 
-  void testUuid(::std::function<void(std::string const& _return)> cob, const std::string thing) override {
-    std::string res = _delegate->testUuid(thing);
+  void testUuid(::std::function<void(TUuid const& _return)> cob, const TUuid thing) override {
+    TUuid res = _delegate->testUuid(thing);
     cob(res);
   }
 

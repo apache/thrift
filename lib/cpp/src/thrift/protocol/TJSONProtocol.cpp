@@ -18,7 +18,6 @@
  */
 
 #include <thrift/protocol/TJSONProtocol.h>
-#include <thrift/protocol/TUuidUtils.hpp>
 
 #include <boost/locale.hpp>
 
@@ -717,14 +716,8 @@ uint32_t TJSONProtocol::writeBinary(const std::string& str) {
   return writeJSONBase64(str);
 }
 
-uint32_t TJSONProtocol::writeUUID(const std::string& str) {
-  std::string out_raw;
-  uuid_encode(str, out_raw);
-
-  std::string out_encoded;
-  uuid_decode(out_raw, out_encoded);
-
-  return writeJSONString(out_encoded);
+uint32_t TJSONProtocol::writeUUID(const TUuid& uuid) {
+  return writeJSONString(to_string(uuid));
 }
 
 /**
@@ -1123,8 +1116,11 @@ uint32_t TJSONProtocol::readBinary(std::string& str) {
   return readJSONBase64(str);
 }
 
-uint32_t TJSONProtocol::readUUID(std::string& str) {
-  return readJSONString(str);
+uint32_t TJSONProtocol::readUUID(TUuid& uuid) {
+  std::string uuid_str;
+  const uint32_t result = readJSONString(uuid_str);
+  uuid = uuid_str;
+  return result;
 }
 
 // Return the minimum number of bytes a type will consume on the wire
