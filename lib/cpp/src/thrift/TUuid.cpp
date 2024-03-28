@@ -40,26 +40,26 @@ TUuid::TUuid(const std::string& str) noexcept {
 }
 
 TUuid& TUuid::operator=(const std::string& str) {
-  std::fill(std::begin(data), std::end(data), 0);
+  std::fill(this->begin(), this->end(), 0);
   if (str.empty()) {
     return *this;
   }
 
   const boost::uuids::uuid uuid{gen(str)};
-  std::copy(uuid.begin(), uuid.end(), std::begin(data));
+  std::copy(uuid.begin(), uuid.end(), this->begin());
   return
    *this;
 }
 
 bool TUuid::is_nil() const noexcept {
   boost::uuids::uuid uuid_tmp{};
-  std::copy(std::begin(data), std::end(data), std::begin(uuid_tmp));
+  std::copy(this->begin(), this->end(), std::begin(uuid_tmp));
   return uuid_tmp.is_nil();
 }
 
 std::string to_string(const TUuid& in) {
   boost::uuids::uuid uuid_tmp{};
-  std::copy(std::begin(in.data), std::end(in.data), std::begin(uuid_tmp));
+  std::copy(std::begin(in), std::end(in), std::begin(uuid_tmp));
   return boost::uuids::to_string(uuid_tmp);
 }
 

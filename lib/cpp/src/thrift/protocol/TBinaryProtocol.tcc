@@ -196,7 +196,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const TUuid& uuid) {
   // TODO: Consider endian swapping, see lib/delphi/src/Thrift.Utils.pas:377
-  this->trans_->write(&uuid.data[0], 16);
+  this->trans_->write(uuid.data(), uuid.size());
   return 16;
 }
 
@@ -437,7 +437,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) 
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(TUuid& uuid) {
-  this->trans_->readAll(reinterpret_cast<uint8_t*>(&uuid.data[0]), 16);
+  this->trans_->readAll(uuid.begin(), uuid.size());
   return 16;
 }
 

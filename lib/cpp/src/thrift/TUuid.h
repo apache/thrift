@@ -32,6 +32,12 @@ namespace thrift {
  */
 class TUuid {
 public:
+  typedef uint8_t value_type;
+  typedef uint8_t* iterator;
+  typedef uint8_t const* const_iterator;
+  typedef std::size_t size_type;
+  typedef std::ptrdiff_t difference_type;
+
   TUuid() = default;
   TUuid(const TUuid& other) = default;
   TUuid(TUuid&& other) = default;
@@ -76,25 +82,34 @@ public:
    */
   inline bool operator!=(const TUuid& other) const;
 
+  iterator begin() noexcept { return data_; }
+  const_iterator begin() const noexcept { return data_; }
+  iterator end() noexcept { return data_ + size(); }
+  const_iterator end() const noexcept { return data_ + size(); }
+  size_type size() const noexcept { return 16; }
+  inline const_iterator data() const { return data_; }
+  inline iterator data() { return data_; }
+
+  void swap(TUuid& other) noexcept { std::swap(data_, other.data_); }
+
+private:
   /**
    * The UUID data.
    */
-  uint8_t data[16] = {};
+  uint8_t data_[16] = {};
 };
 
 std::string to_string(const TUuid& uuid) noexcept(false);
 
-inline void swap(TUuid& lhs, TUuid& rhs) {
-  using ::std::swap;
-  swap(lhs.data, rhs.data);
+inline void swap(TUuid& lhs, TUuid& rhs) noexcept {
+  lhs.swap(rhs);
 }
 
 inline bool TUuid::operator==(const TUuid& other) const {
   // Compare using temporary strings.
   // Can't use strcmp() since we expect embeded zeros
   // Perhaps the reason we should use std::array instead
-  return std::string(std::begin(this->data), std::end(this->data))
-         == std::string(std::begin(other.data), std::end(other.data));
+  return std::string(this->begin(), this->end()) == std::string(other.begin(), other.end());
 }
 
 inline bool TUuid::operator!=(const TUuid& other) const {
@@ -105,6 +120,7 @@ inline std::ostream& operator<<(std::ostream& out, const TUuid& obj) {
   out << to_string(obj);
   return out;
 }
+
 } // namespace thrift
 } // namespace apache
 

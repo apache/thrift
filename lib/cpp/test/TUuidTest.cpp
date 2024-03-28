@@ -19,6 +19,9 @@
 
 
 #include <boost/test/unit_test.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/random_generator.hpp>
 
 #include <thrift/TUuid.h>
 
@@ -60,7 +63,7 @@ BOOST_AUTO_TEST_CASE(compare) {
   // This comparison is expected to fail if strcmp is used
   TUuid uuid_1{};
   TUuid uuid_2{};
-  uuid_2.data[15] = 0x64;
+  uuid_2.data()[15] = 0x64;
   BOOST_TEST(uuid_1 != uuid_2);
 }
 
@@ -84,6 +87,50 @@ BOOST_AUTO_TEST_CASE(assign_invalid) {
   BOOST_CHECK_THROW(uuid_1 = "123", std::runtime_error);
   BOOST_TEST(uuid_1.is_nil());
   BOOST_TEST(to_string(uuid_1) == std::string{"00000000-0000-0000-0000-000000000000"});
+}
+
+BOOST_AUTO_TEST_CASE(swap) {
+  TUuid uuid_1{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+  TUuid uuid_2{};
+  BOOST_TEST(!uuid_1.is_nil());
+  BOOST_TEST(uuid_2.is_nil());
+
+  using std::swap;
+  swap(uuid_1, uuid_2);
+
+  BOOST_TEST(uuid_1.is_nil());
+  BOOST_TEST(!uuid_2.is_nil());
+
+  BOOST_TEST(to_string(uuid_1) == std::string{"00000000-0000-0000-0000-000000000000"});
+  BOOST_TEST(to_string(uuid_2) == std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"});
+}
+
+BOOST_AUTO_TEST_CASE(begin_end) {
+  TUuid uuid_1{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+  BOOST_TEST(std::distance(std::begin(uuid_1), std::end(uuid_1)) == uuid_1.size());
+}
+
+BOOST_AUTO_TEST_CASE(into_boost_uuid) {
+  TUuid uuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+  boost::uuids::uuid boost_uuid{};
+  BOOST_TEST(boost_uuid.is_nil());
+  std::copy(std::begin(uuid), std::end(uuid), boost_uuid.begin());
+  BOOST_TEST(!boost_uuid.is_nil());
+  BOOST_TEST(boost::uuids::to_string(boost_uuid) == "5e2ab188-1726-4e75-a04f-1ed9a6a89c4c");
+  BOOST_TEST(boost::uuids::to_string(boost_uuid) == to_string(uuid));
+}
+
+BOOST_AUTO_TEST_CASE(from_boost_uuid) {
+  static boost::uuids::random_generator gen;
+  boost::uuids::uuid boost_uuid{gen()};
+  BOOST_TEST(!boost_uuid.is_nil());
+  TUuid uuid;
+  BOOST_TEST(uuid.is_nil());
+
+  std::copy(std::begin(boost_uuid), std::end(boost_uuid), uuid.begin());
+  BOOST_TEST(!uuid.is_nil());
+
+  BOOST_TEST(to_string(boost_uuid) == to_string(uuid));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

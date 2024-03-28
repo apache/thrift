@@ -391,7 +391,7 @@ uint32_t TDebugProtocol::writeUUID(const TUuid& uuid) {
   size_t size = writePlain("{\n");
   indentUp();
   size += writeIndented("[raw] = ");
-  size += writeString(std::string(std::begin(uuid.data), std::end(uuid.data)));
+  size += writeString(std::string(std::begin(uuid), std::end(uuid)));
   size += writeIndented("[enc] = \"" + to_string(uuid) + "\"\n");
   indentDown();
   size += writeIndented("}\n");

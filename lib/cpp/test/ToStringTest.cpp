@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(generated_uuid_to_string) {
 
   BOOST_CHECK_EQUAL(to_string(l),
                     "CrazyNesting(string_field=, set_field=<null>, list_field=[], binary_field=, "
-                    "uuid_field={4b686716-5f20-4deb-8ce0-9eaf379e8a3d})");
+                    "uuid_field=4b686716-5f20-4deb-8ce0-9eaf379e8a3d)");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
