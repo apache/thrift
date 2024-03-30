@@ -639,15 +639,19 @@ try_again:
 
 void TSocket::write(const uint8_t* buf, uint32_t len) {
   uint32_t sent = 0;
-
-  while (sent < len) {
-    uint32_t b = write_partial(buf + sent, len - sent);
-    if (b == 0) {
-      // This should only happen if the timeout set with SO_SNDTIMEO expired.
-      // Raise an exception.
-      throw TTransportException(TTransportException::TIMED_OUT, "send timeout expired");
+  try{
+      while (sent < len) {
+      uint32_t b = write_partial(buf + sent, len - sent);
+      if (b == 0) {
+        // This should only happen if the timeout set with SO_SNDTIMEO expired.
+        // Raise an exception.
+        throw TTransportException(TTransportException::TIMED_OUT, "send timeout expired");
+      }
+      sent += b;
     }
-    sent += b;
+  }
+  catch(TTransportException e) {
+    throw e;
   }
 }
 
