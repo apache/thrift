@@ -76,7 +76,7 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
     RMDIR /S /Q C:\TEMP\WIN3P
 
 # Install OpenSSL 1.1.0
-ADD http://slproweb.com/download/Win64OpenSSL-1_1_0j.exe C:\TEMP\openssl.exe
+ADD http://slproweb.com/download/Win64OpenSSL-1_1_0l.exe C:\TEMP\openssl.exe
 RUN C:\TEMP\openssl.exe /silent && `
     DEL C:\TEMP\openssl.exe
 
