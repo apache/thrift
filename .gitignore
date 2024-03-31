@@ -75,6 +75,8 @@ project.lock.json
 /compiler/cpp/src/thrift/plugin/gen.stamp
 /compiler/cpp/Debug
 /compiler/cpp/Release
+/compiler/cpp/compiler/Debug
+/compiler/cpp/compiler/Release
 /compiler/cpp/src/thrift/libparse.a
 /compiler/cpp/src/thrift/thriftl.cc
 /compiler/cpp/src/thrift/thrifty.cc

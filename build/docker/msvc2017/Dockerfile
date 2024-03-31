@@ -67,7 +67,7 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
 
 # Install zlib
 COPY appveyor\build-zlib.bat C:\TEMP\build-zlib.bat
-ENV ZLIB_VERSION=1.2.11
+ENV ZLIB_VERSION=1.2.13
 ENV WIN3P=C:\TEMP\WIN3P
 RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
     MKDIR C:\TEMP\WIN3P && `
