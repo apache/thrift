@@ -232,7 +232,7 @@ type
     procedure WriteI64( const i64: Int64);
     procedure WriteDouble( const d: Double);
     procedure WriteString( const s: string );
-    procedure WriteAnsiString( const s: AnsiString);
+    procedure WriteAnsiString( const s: AnsiString);  deprecated 'AnsiString routines are deprecated, see THRIFT-5750';
     procedure WriteBinary( const b: TBytes); overload;
     procedure WriteBinary( const b: IThriftBytes); overload;
     procedure WriteUuid( const uuid: TGuid);
@@ -259,7 +259,7 @@ type
     function ReadBinaryCOM : IThriftBytes;
     function ReadUuid: TGuid;
     function ReadString: string;
-    function ReadAnsiString: AnsiString;
+    function ReadAnsiString: AnsiString;  deprecated 'AnsiString routines are deprecated, see THRIFT-5750';
 
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
@@ -311,7 +311,6 @@ type
     procedure WriteI64( const i64: Int64); virtual; abstract;
     procedure WriteDouble( const d: Double); virtual; abstract;
     procedure WriteString( const s: string ); virtual;
-    procedure WriteAnsiString( const s: AnsiString); virtual;
     procedure WriteBinary( const b: TBytes); overload; virtual; abstract;
     procedure WriteUuid( const b: TGuid); virtual; abstract;
 
@@ -336,13 +335,19 @@ type
     function ReadBinary: TBytes; virtual; abstract;
     function ReadUuid: TGuid; virtual; abstract;
     function ReadString: string; virtual;
-    function ReadAnsiString: AnsiString; virtual;
 
     // provide generic implementation for all derived classes
     procedure WriteBinary( const bytes : IThriftBytes); overload; virtual;
     function ReadBinaryCOM : IThriftBytes;  virtual;
 
     property  Transport: ITransport read GetTransport;
+
+  private
+    // THRIFT-5750 unit visible, but no longer protected - awaiting final removal
+    // - Note that you can implement whavetever you want in your derived class, but no longer inherit
+    // - The function can still be called via IProtocol until final removal
+    function ReadAnsiString: AnsiString; virtual;  //deprecated;
+    procedure WriteAnsiString( const s: AnsiString); virtual; //deprecated;
 
   public
     constructor Create( const aTransport : ITransport); virtual;
@@ -508,7 +513,6 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const d: Double); override;
     procedure WriteString( const s: string ); override;
-    procedure WriteAnsiString( const s: AnsiString); override;
     procedure WriteBinary( const b: TBytes); override;
     procedure WriteBinary( const bytes : IThriftBytes); overload; override;
     procedure WriteUuid( const uuid: TGuid); override;
@@ -534,7 +538,15 @@ type
     function ReadBinary: TBytes; override;
     function ReadUuid: TGuid; override;
     function ReadString: string; override;
-    function ReadAnsiString: AnsiString; override;
+
+  private
+    // THRIFT-5750 unit visible, but no longer protected - awaiting final removal
+    // - Note that you can implement whavetever you want in your derived class, but no longer inherit
+    // - The function can still be called via IProtocol until final removal
+    {$WARN SYMBOL_DEPRECATED OFF}
+    function ReadAnsiString: AnsiString; override;  deprecated;
+    procedure WriteAnsiString( const s: AnsiString); override;  deprecated;
+    {$WARN SYMBOL_DEPRECATED DEFAULT}
   end;
 
 
@@ -1520,7 +1532,9 @@ end;
 
 procedure TProtocolDecorator.WriteAnsiString( const s: AnsiString);
 begin
+  {$WARN SYMBOL_DEPRECATED OFF}
   FWrappedProtocol.WriteAnsiString( s);
+  {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
 
@@ -1670,7 +1684,9 @@ end;
 
 function TProtocolDecorator.ReadAnsiString: AnsiString;
 begin
+  {$WARN SYMBOL_DEPRECATED OFF}
   result := FWrappedProtocol.ReadAnsiString;
+  {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
 
