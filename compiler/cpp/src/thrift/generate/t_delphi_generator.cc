@@ -68,7 +68,6 @@ public:
     has_const = false;
     std::map<std::string, std::string>::const_iterator iter;
 
-    ansistr_binary_ = false;
     register_types_ = false;
     constprefix_ = false;
     old_names_ = false;
@@ -78,10 +77,7 @@ public:
     com_types_ = false;
     rtti_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("ansistr_binary") == 0) {
-        ansistr_binary_ = true;
-        pwarning(0, "The 'ansistr_binary' option is deprecated.");
-      } else if( iter->first.compare("register_types") == 0) {
+      if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
       } else if( iter->first.compare("old_names") == 0) {
         old_names_ = true;
@@ -100,10 +96,6 @@ public:
       } else {
         throw "unknown option delphi:" + iter->first;
       }
-    }
-
-    if(com_types_ && ansistr_binary_) {
-      throw "com_types and ansistr_binary are mutually exclusive";
     }
 
     out_dir_base_ = "gen-delphi";
@@ -468,7 +460,6 @@ private:
   void init_known_types_list();
   bool is_void(t_type* type);
   int indent_impl_;
-  bool ansistr_binary_;
   bool register_types_;
   bool constprefix_;
   bool old_names_;
@@ -760,7 +751,6 @@ void t_delphi_generator::close_generator() {
 
   f_all << "const" << endl;
   indent_up();
-  indent(f_all) << "c" << tmp_unit << "_Option_AnsiStr_Binary = " << (ansistr_binary_ ? "True" : "False") << ";" << endl;
   indent(f_all) << "c" << tmp_unit << "_Option_Register_Types = " << (register_types_ ? "True" : "False") << ";" << endl;
   indent(f_all) << "c" << tmp_unit << "_Option_ConstPrefix    = " << (constprefix_ ? "True" : "False") << ";" << endl;
   indent(f_all) << "c" << tmp_unit << "_Option_Events         = " << (events_ ? "True" : "False") << ";" << endl;
@@ -2634,11 +2624,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
         break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
-          if (ansistr_binary_) {
-            out << "ReadAnsiString();";
-          } else {
-            out << (com_types_ ? "ReadBinaryCOM();" :  "ReadBinary();");
-          }
+          out << (com_types_ ? "ReadBinaryCOM();" :  "ReadBinary();");
         } else {
           out << "ReadString();";
         }
@@ -2837,11 +2823,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
         break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
-          if (ansistr_binary_) {
-            out << "WriteAnsiString(";
-          } else {
-            out << "WriteBinary(";
-          }
+          out << "WriteBinary(";
         } else {
           out << "WriteString(";
         }
@@ -3180,8 +3162,6 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     return "";
   case t_base_type::TYPE_STRING:
     if (tbase->is_binary()) {
-      if (ansistr_binary_)
-        return "System.AnsiString";
       if( com_types_)
         return "IThriftBytes";
       if( rtti_)
@@ -3400,11 +3380,7 @@ string t_delphi_generator::empty_value(t_type* type) {
       return "0";
     case t_base_type::TYPE_STRING:
       if (type->is_binary()) {
-        if (ansistr_binary_) {
-          return "''";
-        } else {
-          return "nil";
-        }
+        return "nil";
       } else {
         return "''";
       }
@@ -4072,7 +4048,6 @@ std::string t_delphi_generator::display_name() const {
 THRIFT_REGISTER_GENERATOR(
     delphi,
     "Delphi",
-    "    ansistr_binary:  Use AnsiString for binary datatype (default is TBytes).\n"
     "    register_types:  Enable TypeRegistry, allows for creation of struct, union\n"
     "                     and container instances by interface or TypeInfo()\n"
     "    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n"
