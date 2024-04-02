@@ -126,12 +126,12 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         THRIFT-123  C++ - Library  Drop C++03  [THRIFT-123](https://issues.apache.org/jira/browse/THRIFT-3978) - Drop C++03
         ```
 
-        For example, if the row above was row "B" in EXCEL it would look something like:
+        For example, if the row above was row "1" in EXCEL it would look something like:
 
         ```text
-        =CONCAT("[", B1, "]",
+        =CONCAT("[", A1, "]",
                 "https://issues.apache.org/jira/browse/", 
-                B1, " - ", B3)
+                A1, " - ", C1)
         ```
 
     1. Create a level 3 section in `CHANGES.md` under the release for each component and copy the items from the RelNote column into the changes file.
@@ -148,12 +148,16 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         ~$ git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
         ```
 
-    1. In the clean copy of the release branch, start a docker build container and run `make dist`:
-
-        ```code
-        ~$ cd thrift-1.0.0-src
-        ~/thrift-1.0.0-src$ docker run -v $(pwd):/thrift/src:rw \
-            -it thrift/thrift-build:ubuntu-bionic /bin/bash
+    1. In the clean copy of the release branch, build the container image:
+	
+        ```bash
+        ~$ docker build -t thrift build/docker/ubuntu-jammy
+        ```
+	
+    1. Run the container and `make dist`:
+	
+        ```bash
+        ~$ docker run -v $(pwd):/thrift/src -it thrift /bin/bash
         root@8b4101188aa2:/thrift/src# ./bootstrap.sh && ./configure && make dist
         ```
 
