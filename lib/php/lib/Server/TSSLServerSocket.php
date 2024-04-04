@@ -49,6 +49,10 @@ class TSSLServerSocket extends TServerSocket
     {
         $ssl_host = $this->getSSLHost($host);
         parent::__construct($ssl_host, $port);
+        // Initialize a stream context if not provided
+        if ($context === null) {
+            $context = stream_context_create();
+        }
         $this->context_ = $context;
     }
 

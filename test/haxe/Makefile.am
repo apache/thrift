@@ -84,6 +84,9 @@ check_php_web: $(BIN_PHP_WEB) $(BIN_CPP)
 	sleep 10
 
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src \
 	cpp.hxml \

@@ -19,15 +19,14 @@
  * under the License.
  */
 
-namespace Thrift\Factory;
+namespace Test\Thrift\Unit\Lib\Server;
 
-use Thrift\Transport\TTransport;
+use PHPUnit\Framework\TestCase;
 
-interface TTransportFactoryInterface
+class TForkingServerTest extends TestCase
 {
-    /**
-     * @param TTransport $transport
-     * @return TTransport
-     */
-    public function getTransport(TTransport $transport);
+    public function testServe(): void
+    {
+        $this->markTestSkipped('Unit test could not be written for class which use pcntl_fork and exit functions');
+    }
 }

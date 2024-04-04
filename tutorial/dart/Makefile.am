@@ -66,6 +66,9 @@ tutorialclient: pub-get-gen pub-get-client
 tutorialconsoleclient: pub-get-console-client
 	${DART} console_client/bin/main.dart
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	client/web/client.dart \
 	client/web/index.html \
