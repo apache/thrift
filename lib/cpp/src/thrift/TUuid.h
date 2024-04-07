@@ -29,6 +29,9 @@ namespace thrift {
 
 /**
  * Thrift wrapper class for a UUID type.
+ *
+ * The UUID is stored as a 16 byte buffer.
+ * This class stores the UUID in network order when assigned from a string.
  */
 class TUuid {
 public:
@@ -99,12 +102,24 @@ private:
   uint8_t data_[16] = {};
 };
 
+/**
+ * Get the String representation of a TUUID.
+ *
+ * The format returned is:
+ *   - "hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh"
+ */
 std::string to_string(const TUuid& uuid) noexcept(false);
 
+/**
+ * Swap two TUuid objects
+ */
 inline void swap(TUuid& lhs, TUuid& rhs) noexcept {
   lhs.swap(rhs);
 }
 
+/**
+ * TUuid equality comparison operator implementation
+ */
 inline bool TUuid::operator==(const TUuid& other) const {
   // Compare using temporary strings.
   // Can't use strcmp() since we expect embeded zeros
@@ -112,10 +127,16 @@ inline bool TUuid::operator==(const TUuid& other) const {
   return std::string(this->begin(), this->end()) == std::string(other.begin(), other.end());
 }
 
+/**
+ * TUuid inequality comparison operator implementation
+ */
 inline bool TUuid::operator!=(const TUuid& other) const {
   return !(*this == other);
 }
 
+/**
+ * TUuid ostream stream operator implementation
+ */
 inline std::ostream& operator<<(std::ostream& out, const TUuid& obj) {
   out << to_string(obj);
   return out;

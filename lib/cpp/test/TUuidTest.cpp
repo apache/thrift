@@ -133,4 +133,33 @@ BOOST_AUTO_TEST_CASE(from_boost_uuid) {
   BOOST_TEST(to_string(boost_uuid) == to_string(uuid));
 }
 
+BOOST_AUTO_TEST_CASE(test_byte_order_variant) {
+  TUuid uuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+  boost::uuids::uuid boost_uuid{};
+  BOOST_TEST(boost_uuid.is_nil());
+  std::copy(std::begin(uuid), std::end(uuid), boost_uuid.begin());
+  BOOST_TEST(!boost_uuid.is_nil());
+  BOOST_TEST(boost_uuid.variant() == boost::uuids::uuid::variant_rfc_4122);
+}
+
+BOOST_AUTO_TEST_CASE(test_byte_order_verify_network) {
+  const TUuid uuid{"{00112233-4455-6677-8899-aabbccddeeff}"};
+
+  for (uint8_t idx = 0; idx < uuid.size(); ++idx) {
+    const uint8_t expected = idx * 0x11;
+    BOOST_TEST(*(std::begin(uuid) + idx) == expected);
+  }
+
+  const uint8_t test[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+  TUuid new_uuid;
+  std::copy(std::begin(test), std::end(uuid), std::begin(new_uuid));
+
+  BOOST_TEST(!new_uuid.is_nil());
+  BOOST_TEST(to_string(new_uuid) == std::string{"00112233-4455-6677-8899-aabbccddeeff"});
+
+  BOOST_TEST(new_uuid == uuid);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
