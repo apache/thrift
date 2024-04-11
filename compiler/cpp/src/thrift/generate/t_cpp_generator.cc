@@ -3067,8 +3067,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
               << indent() << "  this->sync_->updatePending(fname, mtype, rseqid);" << '\n'
               << '\n'
               << indent()
-              << "  // this will temporarily unlock the readMutex, and let other clients get work "
-                 "done"  << '\n'
+              << "  // this will temporarily unlock the readMutex, and let other clients get work done" << '\n'
               << indent() << "  this->sync_->waitForWork(seqid);" << '\n'
               << indent() << "} // end while(true)" << '\n';
         }
