@@ -325,6 +325,7 @@ public class NonblockingSaslHandler {
       if (eventHandler != null) {
         if (!serverContextCreated) {
           serverContext = eventHandler.createContext(requestProtocol, responseProtocol);
+          serverContext.applyTransport(underlyingTransport);
           serverContextCreated = true;
         }
         eventHandler.processContext(serverContext, memoryTransport, memoryTransport);

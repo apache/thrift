@@ -34,13 +34,7 @@ import org.apache.thrift.protocol.TCompactProtocol
 import org.apache.thrift.protocol.TJSONProtocol
 import org.apache.thrift.protocol.TProtocol
 import org.apache.thrift.protocol.TProtocolFactory
-import org.apache.thrift.server.ServerContext
-import org.apache.thrift.server.TNonblockingServer
-import org.apache.thrift.server.TServer
-import org.apache.thrift.server.TServerEventHandler
-import org.apache.thrift.server.TSimpleServer
-import org.apache.thrift.server.TThreadPoolServer
-import org.apache.thrift.server.TThreadedSelectorServer
+import org.apache.thrift.server.*
 import org.apache.thrift.transport.TNonblockingServerSocket
 import org.apache.thrift.transport.TNonblockingServerSocket.NonblockingAbstractServerSocketArgs
 import org.apache.thrift.transport.TSSLTransportFactory
@@ -73,7 +67,9 @@ object TestServer {
         }
     }
 
-    internal class TestServerContext(var connectionId: Int) : ServerContext {
+    internal class TestServerContext(
+        var connectionId: Int
+    ) : SocketAddressServerContext() {
 
         override fun <T> unwrap(iface: Class<T>): T {
             try {
@@ -102,7 +98,10 @@ object TestServer {
             )
         }
 
-        override fun createContext(input: TProtocol, output: TProtocol): ServerContext {
+        override fun createContext(
+            input: TProtocol,
+            output: TProtocol
+        ): ServerContext {
             // we can create some connection level data which is stored while connection is alive &
             // served
             val ctx = TestServerContext(nextConnectionId++)
