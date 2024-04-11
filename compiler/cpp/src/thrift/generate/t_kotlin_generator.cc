@@ -1970,7 +1970,7 @@ bool t_kotlin_generator::is_enum_map(t_type* ttype) {
  */
 string t_kotlin_generator::kotlin_package() {
   if (!package_name_.empty()) {
-    return string("package ") + package_name_ + string{"\n\n"};
+    return string("package ") + package_name_ + "\n" + "\n";
   }
   return "";
 }
