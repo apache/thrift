@@ -43,7 +43,6 @@ using std::stringstream;
 using std::unordered_map;
 using std::vector;
 
-static const string br = "\n"; // Line break
 static const string episode_file_name = "thrift.js.episode";
 // largest consecutive integer representable by a double (2 ^ 53 - 1)
 static const int64_t max_safe_integer = 0x1fffffffffffff;
@@ -339,17 +338,17 @@ public:
    * @return string The documentation
    */
   string ts_print_doc(t_doc* tdoc) {
-    string result = br;
+    string result = "\n";
 
     if (tdoc->has_doc()) {
       std::stringstream doc(tdoc->get_doc());
       string item;
 
-      result += ts_indent() + "/**" + br;
+      result += ts_indent() + "/**" + "\n";
       while (std::getline(doc, item)) {
-        result += ts_indent() + " * " + item + br;
+        result += ts_indent() + " * " + item + "\n";
       }
-      result += ts_indent() + " */" + br;
+      result += ts_indent() + " */" + "\n";
     }
     return result;
   }

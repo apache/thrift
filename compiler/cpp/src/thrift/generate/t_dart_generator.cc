@@ -37,8 +37,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string br = "\n"; // Line break
-
 /**
  * Use the current Thrift version for static libraries.  When releasing, update
  * the version in these files.
@@ -338,7 +336,7 @@ string t_dart_generator::dart_library(string file_name) {
  * @return List of imports for services
  */
 string t_dart_generator::service_imports() {
-  return "import 'dart:async';" + br;
+  return string("import 'dart:async';") + "\n";
 }
 
 /**
@@ -347,14 +345,14 @@ string t_dart_generator::service_imports() {
  * @return List of imports necessary for thrift
  */
 string t_dart_generator::dart_thrift_imports() {
-  string imports = "import 'dart:typed_data' show Uint8List;" + br +
-                   "import 'package:thrift/thrift.dart';" + br;
+  string imports = string("import 'dart:typed_data' show Uint8List;") + "\n" +
+                   string("import 'package:thrift/thrift.dart';") + "\n";
 
   // add import for this library
   if (package_prefix_.empty()) {
-    imports += "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + br;
+    imports += "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + "\n";
   } else {
-    imports += "import 'package:" + package_prefix_ + library_name_ + ".dart';" + br;
+    imports += "import 'package:" + package_prefix_ + library_name_ + ".dart';" + "\n";
   }
 
   // add imports for included thrift files
@@ -363,9 +361,9 @@ string t_dart_generator::dart_thrift_imports() {
     string include_name = find_library_name(include);
     string named_import = "t_" + include_name;
     if (package_prefix_.empty()) {
-      imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + br;
+      imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + "\n";
     } else {
-      imports += "import 'package:" + package_prefix_ + include_name + ".dart' as " + named_import + ";" + br;
+      imports += "import 'package:" + package_prefix_ + include_name + ".dart' as " + named_import + ";" + "\n";
     }
   }
 
@@ -408,7 +406,7 @@ void t_dart_generator::export_class_to_library(string file_name, string class_na
   } else {
     subdir = library_name_;
   }
-  library_exports_ += "export '" + subdir + "/" + file_name + ".dart' show " + class_name + ";" + br;
+  library_exports_ += "export '" + subdir + "/" + file_name + ".dart' show " + class_name + ";" + "\n";
 }
 
 void t_dart_generator::generate_dart_pubspec() {
@@ -631,7 +629,7 @@ void t_dart_generator::print_const_value(std::ostream& out,
       string val = render_const_value(out, name, vtype, v_iter->second);
       indent(out) << key << ": " << val << "," << '\n';
     }
-    scope_down(out, ";" + br);
+    scope_down(out, string(";") + "\n");
 
     out << '\n';
   } else if (type->is_list() || type->is_set()) {
