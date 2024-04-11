@@ -61,28 +61,28 @@ int main(int argc, char** argv) {
     std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << '\n';
 
     if (!threadFactoryTests.reapNThreads(reapLoops, reapCount)) {
-      std::cerr << "\t\ttThreadFactory reap N threads FAILED" << std::endl;
+      std::cerr << "\t\ttThreadFactory reap N threads FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tThreadFactory flood N threads test: N = " << floodLoops << "x" << floodCount << '\n';
 
     if (!threadFactoryTests.floodNTest(floodLoops, floodCount)) {
-      std::cerr << "\t\ttThreadFactory flood N threads FAILED" << std::endl;
+      std::cerr << "\t\ttThreadFactory flood N threads FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tThreadFactory synchronous start test" << '\n';
 
     if (!threadFactoryTests.synchStartTest()) {
-      std::cerr << "\t\ttThreadFactory synchronous start FAILED" << std::endl;
+      std::cerr << "\t\ttThreadFactory synchronous start FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tThreadFactory monitor timeout test" << '\n';
 
     if (!threadFactoryTests.monitorTimeoutTest()) {
-      std::cerr << "\t\ttThreadFactory monitor timeout FAILED" << std::endl;
+      std::cerr << "\t\ttThreadFactory monitor timeout FAILED" << '\n';
       return 1;
     }
   }
@@ -119,35 +119,35 @@ int main(int argc, char** argv) {
     TimerManagerTests timerManagerTests;
 
     if (!timerManagerTests.test00()) {
-      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      std::cerr << "\t\tTimerManager tests FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tTimerManager test01" << '\n';
 
     if (!timerManagerTests.test01()) {
-      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      std::cerr << "\t\tTimerManager tests FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tTimerManager test02" << '\n';
 
     if (!timerManagerTests.test02()) {
-      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      std::cerr << "\t\tTimerManager tests FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tTimerManager test03" << '\n';
 
     if (!timerManagerTests.test03()) {
-      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      std::cerr << "\t\tTimerManager tests FAILED" << '\n';
       return 1;
     }
 
     std::cout << "\t\tTimerManager test04" << '\n';
 
     if (!timerManagerTests.test04()) {
-      std::cerr << "\t\tTimerManager tests FAILED" << std::endl;
+      std::cerr << "\t\tTimerManager tests FAILED" << '\n';
       return 1;
     }
   }
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
       std::cout << "\t\tThreadManager api test:" << '\n';
 
       if (!threadManagerTests.apiTest()) {
-        std::cerr << "\t\tThreadManager apiTest FAILED" << std::endl;
+        std::cerr << "\t\tThreadManager apiTest FAILED" << '\n';
         return 1;
       }
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
                 << " task count: " << taskCount << " delay: " << delay << '\n';
 
       if (!threadManagerTests.loadTest(taskCount, delay, workerCount)) {
-        std::cerr << "\t\tThreadManager loadTest FAILED" << std::endl;
+        std::cerr << "\t\tThreadManager loadTest FAILED" << '\n';
         return 1;
       }
 
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
                 << " delay: " << delay << '\n';
 
       if (!threadManagerTests.blockTest(delay, workerCount)) {
-        std::cerr << "\t\tThreadManager blockTest FAILED" << std::endl;
+        std::cerr << "\t\tThreadManager blockTest FAILED" << '\n';
         return 1;
       }
     }
@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
 
         if (!threadManagerTests.loadTest(taskCount, delay, workerCount))
         {
-          std::cerr << "\t\tThreadManager loadTest FAILED" << std::endl;
+          std::cerr << "\t\tThreadManager loadTest FAILED" << '\n';
           return 1;
         }
       }

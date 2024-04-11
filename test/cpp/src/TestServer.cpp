@@ -655,7 +655,7 @@ int main(int argc, char** argv) {
     }
 
   } catch (std::exception& e) {
-    cerr << e.what() << endl;
+    cerr << e.what() << '\n';
     cout << desc << "\n";
     return 1;
   }
@@ -823,7 +823,7 @@ int main(int argc, char** argv) {
               : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     } else {
-      cerr << "server-type nonblocking requires transport of http or framed" << endl;
+      cerr << "server-type nonblocking requires transport of http or framed" << '\n';
       exit(1);
     }
   }

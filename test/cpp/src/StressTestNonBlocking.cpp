@@ -152,7 +152,7 @@ public:
       loopEchoString();
       break;
     default:
-      cerr << "Unexpected loop type" << _loopType << endl;
+      cerr << "Unexpected loop type" << _loopType << '\n';
       break;
     }
 
@@ -334,7 +334,7 @@ int main(int argc, char** argv) {
     }
 
   } catch (std::exception& e) {
-    cerr << e.what() << endl;
+    cerr << e.what() << '\n';
     cerr << usage.str();
   }
 
@@ -412,7 +412,7 @@ int main(int argc, char** argv) {
           new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket2, threadManager)));
     }
 
-    cerr << "Starting the server on port " << port << " and " << (port + 1) << endl;
+    cerr << "Starting the server on port " << port << " and " << (port + 1) << '\n';
     serverThread->start();
     serverThread2->start();
 
@@ -471,7 +471,7 @@ int main(int argc, char** argv) {
       Synchronized s(monitor);
       threadCount = clientCount;
 
-      cerr << "Launch " << clientCount << " client threads" << endl;
+      cerr << "Launch " << clientCount << " client threads" << '\n';
 
       time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
@@ -531,7 +531,7 @@ int main(int argc, char** argv) {
     for (iter = count.begin(); iter != count.end(); ++iter) {
       printf("%s => %d\n", iter->first, iter->second);
     }
-    cerr << "done." << endl;
+    cerr << "done." << '\n';
   }
 
   return 0;

@@ -155,7 +155,7 @@ public:
       loopEchoString();
       break;
     default:
-      cerr << "Unexpected loop type" << _loopType << endl;
+      cerr << "Unexpected loop type" << _loopType << '\n';
       break;
     }
 
@@ -386,7 +386,7 @@ int main(int argc, char** argv) {
     }
 
   } catch (std::exception& e) {
-    cerr << e.what() << endl;
+    cerr << e.what() << '\n';
     cerr << usage.str();
   }
 
@@ -468,7 +468,7 @@ int main(int argc, char** argv) {
     server->setServerEventHandler(observer);
     std::shared_ptr<Thread> serverThread = threadFactory->newThread(server);
 
-    cerr << "Starting the server on port " << port << endl;
+    cerr << "Starting the server on port " << port << '\n';
 
     serverThread->start();
     observer->waitForService();
@@ -538,7 +538,7 @@ int main(int argc, char** argv) {
       Synchronized s(monitor);
       threadCount = clientCount;
 
-      cerr << "Launch " << clientCount << " " << clientType << " client threads" << endl;
+      cerr << "Launch " << clientCount << " " << clientType << " client threads" << '\n';
 
       time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
@@ -598,7 +598,7 @@ int main(int argc, char** argv) {
     for (iter = count.begin(); iter != count.end(); ++iter) {
       printf("%s => %d\n", iter->first, iter->second);
     }
-    cerr << "done." << endl;
+    cerr << "done." << '\n';
   }
 
   return 0;

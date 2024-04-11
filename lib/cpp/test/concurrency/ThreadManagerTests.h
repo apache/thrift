@@ -390,7 +390,7 @@ public:
     sleep_(100);
     int64_t b = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if (b - a < 50 || b - a > 150) {
-      std::cerr << "\t\t\texpected 100ms gap, found " << (b-a) << "ms gap instead." << std::endl;
+      std::cerr << "\t\t\texpected 100ms gap, found " << (b-a) << "ms gap instead." << '\n';
       return false;
     }
 
@@ -408,7 +408,7 @@ public:
     threadManager->start();
     threadManager->setExpireCallback(expiredNotifier); // std::bind(&ThreadManagerTests::expiredNotifier, this));
 
-#define EXPECT(FUNC, COUNT) { size_t c = FUNC; if (c != COUNT) { std::cerr << "expected " #FUNC" to be " #COUNT ", but was " << c << std::endl; return false; } }
+#define EXPECT(FUNC, COUNT) { size_t c = FUNC; if (c != COUNT) { std::cerr << "expected " #FUNC" to be " #COUNT ", but was " << c << '\n'; return false; } }
 
     EXPECT(threadManager->workerCount(), 1);
     EXPECT(threadManager->idleWorkerCount(), 1);
@@ -477,7 +477,7 @@ public:
 
     shared_ptr<Runnable> nextTask = threadManager->removeNextPending();
     if (nextTask != otherTask) {
-      std::cerr << "\t\t\t\t\texpected removeNextPending to return otherTask" << std::endl;
+      std::cerr << "\t\t\t\t\texpected removeNextPending to return otherTask" << '\n';
       return false;
     }
 
@@ -489,7 +489,7 @@ public:
 
     nextTask = threadManager->removeNextPending();
     if (nextTask) {
-      std::cerr << "\t\t\t\t\texpected removeNextPending to return an empty Runnable" << std::endl;
+      std::cerr << "\t\t\t\t\texpected removeNextPending to return an empty Runnable" << '\n';
       return false;
     }
 
@@ -512,25 +512,25 @@ public:
     std::cout << "\t\t\t\tremove expired tasks.." << '\n';
 
     if (!m_expired.empty()) {
-      std::cerr << "\t\t\t\t\texpected m_expired to be empty" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired to be empty" << '\n';
       return false;
     }
 
     threadManager->removeExpiredTasks();
 
     if (m_expired.size() != 2) {
-      std::cerr << "\t\t\t\t\texpected m_expired to be set" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired to be set" << '\n';
       return false;
     }
 
     if (m_expired.front() != expiredTask) {
-      std::cerr << "\t\t\t\t\texpected m_expired[0] to be the expired task" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired[0] to be the expired task" << '\n';
       return false;
     }
     m_expired.pop_front();
 
     if (m_expired.front() != expiredTask) {
-      std::cerr << "\t\t\t\t\texpected m_expired[1] to be the expired task" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired[1] to be the expired task" << '\n';
       return false;
     }
 
@@ -554,12 +554,12 @@ public:
     sleep_(100);  // make sure it has time to spin up and expire the task
 
     if (m_expired.empty()) {
-      std::cerr << "\t\t\t\t\texpected m_expired to be set" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired to be set" << '\n';
       return false;
     }
 
     if (m_expired.front() != expiredTask) {
-      std::cerr << "\t\t\t\t\texpected m_expired to be the expired task" << std::endl;
+      std::cerr << "\t\t\t\t\texpected m_expired to be the expired task" << '\n';
       return false;
     }
 
@@ -573,7 +573,7 @@ public:
     std::cout << "\t\t\t\ttry to remove too many workers" << '\n';
     try {
       threadManager->removeWorker(2);
-      std::cerr << "\t\t\t\t\texpected InvalidArgumentException" << std::endl;
+      std::cerr << "\t\t\t\t\texpected InvalidArgumentException" << '\n';
       return false;
     } catch (const InvalidArgumentException&) {
       /* expected */

@@ -67,12 +67,12 @@ public:
 
   void roundTripRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
-    cerr << "roundTripRPC()" << endl;
+    cerr << "roundTripRPC()" << '\n';
 #endif
   }
   void oneWayRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
-    cerr << "oneWayRPC()" << std::endl ;
+    cerr << "oneWayRPC()" << '\n';
 #endif
  }
 };
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 
   int port = ss->getPort() ;
 #ifdef ENABLE_STDERR_LOGGING
-  cerr << "port " << port << endl ;
+  cerr << "port " << port << '\n';
 #endif
 
   {

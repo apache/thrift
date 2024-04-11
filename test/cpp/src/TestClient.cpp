@@ -186,7 +186,7 @@ bool print_eq(T expected, T actual) {
   } catch (TTransportException&) {                                                                 \
     throw;                                                                                         \
   } catch (exception & ex) {                                                                       \
-    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    cout << "*** FAILED ***" << '\n' << ex.what() << '\n';                                         \
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
