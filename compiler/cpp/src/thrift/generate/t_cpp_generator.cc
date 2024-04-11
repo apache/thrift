@@ -979,7 +979,7 @@ bool t_cpp_generator::has_field_with_default_value(t_struct* tstruct)
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
-    if (is_reference(*m_iter) || t->is_string()) {
+    if (is_reference(*m_iter) || t->is_string() || t->is_uuid()) {
       t_const_value* cv = (*m_iter)->get_value();
       if (cv != nullptr) {
         return true;
@@ -1030,7 +1030,7 @@ void t_cpp_generator::generate_default_constructor(ostream& out,
       } else if (t->is_enum()) {
         dval += "static_cast<" + type_name(t) + ">(0)";
       } else {
-        dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
+        dval += (t->is_string() || is_reference(*m_iter) || t->is_uuid()) ? "" : "0";
       }
       if (!init_ctor) {
         init_ctor = true;
@@ -4044,6 +4044,9 @@ void t_cpp_generator::generate_deserialize_field(ostream& out,
     case t_base_type::TYPE_VOID:
       throw "compiler error: cannot serialize void field in a struct: " + name;
       break;
+    case t_base_type::TYPE_UUID:
+      out << "readUUID(" << name << ");";
+      break;
     case t_base_type::TYPE_STRING:
       if (type->is_binary()) {
         out << "readBinary(" << name << ");";
@@ -4070,7 +4073,7 @@ void t_cpp_generator::generate_deserialize_field(ostream& out,
       out << "readDouble(" << name << ");";
       break;
     default:
-      throw "compiler error: no C++ reader for base type " + t_base_type::t_base_name(tbase) + name;
+      throw "compiler error: no C++ reader for base type " + t_base_type::t_base_name(tbase) + " " + name;
     }
     out << '\n';
   } else if (type->is_enum()) {
@@ -4252,6 +4255,9 @@ void t_cpp_generator::generate_serialize_field(ostream& out,
       case t_base_type::TYPE_VOID:
         throw "compiler error: cannot serialize void field in a struct: " + name;
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUUID(" << name << ");";
+        break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
           out << "writeBinary(" << name << ");";
@@ -4279,7 +4285,7 @@ void t_cpp_generator::generate_serialize_field(ostream& out,
         break;
       default:
         throw "compiler error: no C++ writer for base type " + t_base_type::t_base_name(tbase)
-            + name;
+            + " " + name;
       }
     } else if (type->is_enum()) {
       out << "writeI32(static_cast<int32_t>(" << name << "));";
@@ -4566,6 +4572,9 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
     return "int64_t";
   case t_base_type::TYPE_DOUBLE:
     return "double";
+  case t_base_type::TYPE_UUID:
+    // TODO: discuss possibility of a class TUuid;
+    return "std::string";
   default:
     throw "compiler error: no C++ base type name for base type " + t_base_type::t_base_name(tbase);
   }
@@ -4606,6 +4615,9 @@ string t_cpp_generator::declare_field(t_field* tfield,
       switch (tbase) {
       case t_base_type::TYPE_VOID:
       case t_base_type::TYPE_STRING:
+        break;
+      case t_base_type::TYPE_UUID:
+        result += " = std::string(\"00000000-0000-0000-0000-000000000000\")";
         break;
       case t_base_type::TYPE_BOOL:
         result += " = false";
@@ -4733,6 +4745,8 @@ string t_cpp_generator::type_to_enum(t_type* type) {
       return "::apache::thrift::protocol::T_I64";
     case t_base_type::TYPE_DOUBLE:
       return "::apache::thrift::protocol::T_DOUBLE";
+    case t_base_type::TYPE_UUID:
+      return "::apache::thrift::protocol::T_UUID";
     default:
       break;
     }
@@ -4774,6 +4788,7 @@ bool t_cpp_generator::is_struct_storage_not_throwing(t_struct* tstruct) const {
         continue;
       case t_base_type::TYPE_VOID:
       case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_UUID:
       default:
         return false;
     }

@@ -132,6 +132,11 @@ public:
     _return = thing;
   }
 
+  std::string testUuid(const std::string thing) override {
+    printf("testUuid(\"{%s}\")\n", thing.c_str());
+    return thing;
+  }
+
   void testStruct(Xtruct& out, const Xtruct& thing) override {
     printf("testStruct({\"%s\", %d, %d, %" PRId64 "})\n",
            thing.string_thing.c_str(),
@@ -439,6 +444,11 @@ public:
                           const std::string& thing) override {
     std::string res;
     _delegate->testBinary(res, thing);
+    cob(res);
+  }
+
+  void testUuid(::std::function<void(std::string const& _return)> cob, const std::string thing) override {
+    std::string res = _delegate->testUuid(thing);
     cob(res);
   }
 

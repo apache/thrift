@@ -178,6 +178,18 @@ bool print_eq(T expected, T actual) {
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
+#define UUID_TEST(func, value, expected)                                                           \
+  cout << #func "(" << value << ") = ";                                                            \
+  try {                                                                                            \
+    if (!print_eq(expected, testClient.func(value)))                                               \
+      return_code |= ERR_BASETYPES;                                                                \
+  } catch (TTransportException&) {                                                                 \
+    throw;                                                                                         \
+  } catch (exception & ex) {                                                                       \
+    cout << "*** FAILED ***" << endl << ex.what() << endl;                                         \
+    return_code |= ERR_BASETYPES;                                                                  \
+  }
+
 int binary_test(ThriftTestClient& testClient, string::size_type siz);
 
 BOOST_CONSTEXPR_OR_CONST int ERR_BASETYPES = 1;
@@ -638,6 +650,15 @@ int main(int argc, char** argv) {
       if (i > 0) { i *= 2; } else { ++i; }
     }
 
+    /**
+     * UUID TEST
+     */
+    const std::string expected_uuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+    UUID_TEST(testUuid, std::string{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"5e2ab18817264e75a04f1ed9a6a89c4c"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{"{5e2ab18817264e75a04f1ed9a6a89c4c}"}, expected_uuid);
+    UUID_TEST(testUuid, std::string{}, std::string{"00000000-0000-0000-0000-000000000000"});
 
     /**
      * STRUCT TEST

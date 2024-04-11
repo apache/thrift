@@ -18,6 +18,7 @@
  */
 
 #include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/protocol/TUuidUtils.hpp>
 
 #include <boost/locale.hpp>
 
@@ -68,6 +69,7 @@ static const std::string kTypeNameString("str");
 static const std::string kTypeNameMap("map");
 static const std::string kTypeNameList("lst");
 static const std::string kTypeNameSet("set");
+static const std::string kTypeNameUuid("uid");
 
 static const std::string& getTypeNameForTypeID(TType typeID) {
   switch (typeID) {
@@ -93,6 +95,8 @@ static const std::string& getTypeNameForTypeID(TType typeID) {
     return kTypeNameSet;
   case T_LIST:
     return kTypeNameList;
+  case T_UUID:
+    return kTypeNameUuid;
   default:
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED, "Unrecognized type");
   }
@@ -139,6 +143,9 @@ static TType getTypeIDForTypeName(const std::string& name) {
       break;
     case 't':
       result = T_BOOL;
+      break;
+    case 'u':
+      result = T_UUID;
       break;
     }
   }
@@ -710,6 +717,16 @@ uint32_t TJSONProtocol::writeBinary(const std::string& str) {
   return writeJSONBase64(str);
 }
 
+uint32_t TJSONProtocol::writeUUID(const std::string& str) {
+  std::string out_raw;
+  uuid_encode(str, out_raw);
+
+  std::string out_encoded;
+  uuid_decode(out_raw, out_encoded);
+
+  return writeJSONString(out_encoded);
+}
+
 /**
  * Reading functions
  */
@@ -1106,6 +1123,10 @@ uint32_t TJSONProtocol::readBinary(std::string& str) {
   return readJSONBase64(str);
 }
 
+uint32_t TJSONProtocol::readUUID(std::string& str) {
+  return readJSONString(str);
+}
+
 // Return the minimum number of bytes a type will consume on the wire
 int TJSONProtocol::getMinSerializedSize(TType type)
 {
@@ -1113,7 +1134,7 @@ int TJSONProtocol::getMinSerializedSize(TType type)
   {
     case T_STOP: return 0;
     case T_VOID: return 0;
-    case T_BOOL: return 1;  // written as int  
+    case T_BOOL: return 1;  // written as int
     case T_BYTE: return 1;
     case T_DOUBLE: return 1;
     case T_I16: return 1;
@@ -1124,6 +1145,7 @@ int TJSONProtocol::getMinSerializedSize(TType type)
     case T_MAP: return 2;  // empty map
     case T_SET: return 2;  // empty set
     case T_LIST: return 2;  // empty list
+    case T_UUID: return 16;  // empty UUID
     default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }

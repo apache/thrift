@@ -18,6 +18,7 @@
  */
 
 #include <thrift/protocol/TDebugProtocol.h>
+#include <thrift/protocol/TUuidUtils.hpp>
 
 #include <thrift/TToString.h>
 #include <cassert>
@@ -70,10 +71,8 @@ string TDebugProtocol::fieldTypeName(TType type) {
     return "set";
   case T_LIST:
     return "list";
-  case T_UTF8:
-    return "utf8";
-  case T_UTF16:
-    return "utf16";
+  case T_UUID:
+    return "uuid";
   default:
     return "unknown";
   }
@@ -387,6 +386,24 @@ uint32_t TDebugProtocol::writeString(const string& str) {
 uint32_t TDebugProtocol::writeBinary(const string& str) {
   // XXX Hex?
   return TDebugProtocol::writeString(str);
+}
+
+uint32_t TDebugProtocol::writeUUID(const string& str) {
+  std::string out_raw;
+  uuid_encode(str, out_raw);
+
+  std::string out_encoded;
+  uuid_decode(out_raw, out_encoded);
+
+  size_t size = writePlain("{\n");
+  indentUp();
+  size += writeIndented("[in ] = \"" + str + "\",\n");
+  size += writeIndented("[raw] = ");
+  size += writeString(out_raw);
+  size += writeIndented("[enc] = \"" + out_encoded + "\"\n");
+  indentDown();
+  size += writeIndented("}\n");
+  return size;
 }
 }
 }
