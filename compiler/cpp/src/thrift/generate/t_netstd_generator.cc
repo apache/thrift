@@ -51,7 +51,7 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     : t_oop_generator(program)
 {
     (void)option_string;
-    use_net6_features = false;
+    target_net_version = 0;
     suppress_deepcopy = false;
     add_async_postfix = false;
     use_pascal_case_properties = false;
@@ -83,7 +83,10 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
           suppress_deepcopy = true;
         }
         else if (iter->first.compare("net6") == 0) {
-          use_net6_features = true;
+          target_net_version = 6;
+        }
+        else if (iter->first.compare("net8") == 0) {
+          target_net_version = 8;
         }
         else if (iter->first.compare("async_postfix") == 0) {
           add_async_postfix = true;
@@ -123,11 +126,6 @@ bool t_netstd_generator::is_serialize_enabled() const { return serialize_; }
 
 bool t_netstd_generator::is_union_enabled() const { return union_; }
 
-map<string, int> t_netstd_generator::get_keywords_list() const
-{
-    return netstd_keywords;
-}
-
 void t_netstd_generator::init_generator()
 {
     MKDIR(get_out_dir().c_str());
@@ -151,7 +149,6 @@ void t_netstd_generator::init_generator()
     }
 
     namespace_dir_ = subdir;
-    init_keywords();
 
     while (!member_mapping_scopes.empty())
     {
@@ -159,13 +156,13 @@ void t_netstd_generator::init_generator()
     }
 
     pverbose(".NET Standard options:\n");
-    pverbose("- union ........... %s\n", (is_union_enabled() ? "ON" : "off"));
-    pverbose("- serialize ....... %s\n", (is_serialize_enabled() ? "ON" : "off"));
-    pverbose("- wcf ............. %s\n", (is_wcf_enabled() ? "ON" : "off"));
-    pverbose("- pascal .......... %s\n", (use_pascal_case_properties ? "ON" : "off"));
-    pverbose("- net6 ............ %s\n", (use_net6_features ? "ON" : "off"));
-    pverbose("- no_deepcopy ..... %s\n", (suppress_deepcopy ? "ON" : "off"));
-    pverbose("- async_postfix ... %s\n", (add_async_postfix ? "ON" : "off"));
+    pverbose("- union ................ %s\n", (is_union_enabled() ? "ON" : "off"));
+    pverbose("- serialize ............ %s\n", (is_serialize_enabled() ? "ON" : "off"));
+    pverbose("- wcf .................. %s\n", (is_wcf_enabled() ? "ON" : "off"));
+    pverbose("- pascal ............... %s\n", (use_pascal_case_properties ? "ON" : "off"));
+    pverbose("- target NET version ... %d\n", target_net_version);
+    pverbose("- no_deepcopy .......... %s\n", (suppress_deepcopy ? "ON" : "off"));
+    pverbose("- async_postfix ........ %s\n", (add_async_postfix ? "ON" : "off"));
 }
 
 string t_netstd_generator::normalize_name(string name, bool is_arg_name)
@@ -185,120 +182,16 @@ string t_netstd_generator::normalize_name(string name, bool is_arg_name)
         return "@" + name;
     }
 
+    // prevent CS8981 "The type name only contains lower-cased ascii characters"
+    if( name.find_first_not_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos)
+    {
+        return "@" + name;
+    }
+
     // no changes necessary
     return name;
 }
 
-void t_netstd_generator::init_keywords()
-{
-    netstd_keywords.clear();
-
-    // C# keywords
-    netstd_keywords["abstract"] = 1;
-    netstd_keywords["as"] = 1;
-    netstd_keywords["base"] = 1;
-    netstd_keywords["bool"] = 1;
-    netstd_keywords["break"] = 1;
-    netstd_keywords["byte"] = 1;
-    netstd_keywords["case"] = 1;
-    netstd_keywords["catch"] = 1;
-    netstd_keywords["char"] = 1;
-    netstd_keywords["checked"] = 1;
-    netstd_keywords["class"] = 1;
-    netstd_keywords["const"] = 1;
-    netstd_keywords["continue"] = 1;
-    netstd_keywords["decimal"] = 1;
-    netstd_keywords["default"] = 1;
-    netstd_keywords["delegate"] = 1;
-    netstd_keywords["do"] = 1;
-    netstd_keywords["double"] = 1;
-    netstd_keywords["else"] = 1;
-    netstd_keywords["enum"] = 1;
-    netstd_keywords["event"] = 1;
-    netstd_keywords["explicit"] = 1;
-    netstd_keywords["extern"] = 1;
-    netstd_keywords["false"] = 1;
-    netstd_keywords["finally"] = 1;
-    netstd_keywords["fixed"] = 1;
-    netstd_keywords["float"] = 1;
-    netstd_keywords["for"] = 1;
-    netstd_keywords["foreach"] = 1;
-    netstd_keywords["goto"] = 1;
-    netstd_keywords["if"] = 1;
-    netstd_keywords["implicit"] = 1;
-    netstd_keywords["in"] = 1;
-    netstd_keywords["int"] = 1;
-    netstd_keywords["interface"] = 1;
-    netstd_keywords["internal"] = 1;
-    netstd_keywords["is"] = 1;
-    netstd_keywords["lock"] = 1;
-    netstd_keywords["long"] = 1;
-    netstd_keywords["namespace"] = 1;
-    netstd_keywords["new"] = 1;
-    netstd_keywords["null"] = 1;
-    netstd_keywords["object"] = 1;
-    netstd_keywords["operator"] = 1;
-    netstd_keywords["out"] = 1;
-    netstd_keywords["override"] = 1;
-    netstd_keywords["params"] = 1;
-    netstd_keywords["private"] = 1;
-    netstd_keywords["protected"] = 1;
-    netstd_keywords["public"] = 1;
-    netstd_keywords["readonly"] = 1;
-    netstd_keywords["ref"] = 1;
-    netstd_keywords["return"] = 1;
-    netstd_keywords["sbyte"] = 1;
-    netstd_keywords["sealed"] = 1;
-    netstd_keywords["short"] = 1;
-    netstd_keywords["sizeof"] = 1;
-    netstd_keywords["stackalloc"] = 1;
-    netstd_keywords["static"] = 1;
-    netstd_keywords["string"] = 1;
-    netstd_keywords["struct"] = 1;
-    netstd_keywords["switch"] = 1;
-    netstd_keywords["this"] = 1;
-    netstd_keywords["throw"] = 1;
-    netstd_keywords["true"] = 1;
-    netstd_keywords["try"] = 1;
-    netstd_keywords["typeof"] = 1;
-    netstd_keywords["uint"] = 1;
-    netstd_keywords["ulong"] = 1;
-    netstd_keywords["unchecked"] = 1;
-    netstd_keywords["unsafe"] = 1;
-    netstd_keywords["ushort"] = 1;
-    netstd_keywords["using"] = 1;
-    netstd_keywords["virtual"] = 1;
-    netstd_keywords["void"] = 1;
-    netstd_keywords["volatile"] = 1;
-    netstd_keywords["while"] = 1;
-
-    // C# contextual keywords
-    netstd_keywords["add"] = 1;
-    netstd_keywords["alias"] = 1;
-    netstd_keywords["ascending"] = 1;
-    netstd_keywords["async"] = 1;
-    netstd_keywords["await"] = 1;
-    netstd_keywords["descending"] = 1;
-    netstd_keywords["dynamic"] = 1;
-    netstd_keywords["from"] = 1;
-    netstd_keywords["get"] = 1;
-    netstd_keywords["global"] = 1;
-    netstd_keywords["group"] = 1;
-    netstd_keywords["into"] = 1;
-    netstd_keywords["join"] = 1;
-    netstd_keywords["let"] = 1;
-    netstd_keywords["orderby"] = 1;
-    netstd_keywords["partial"] = 1;
-    netstd_keywords["remove"] = 1;
-    netstd_keywords["select"] = 1;
-    netstd_keywords["set"] = 1;
-    netstd_keywords["value"] = 1;
-    netstd_keywords["var"] = 1;
-    netstd_keywords["where"] = 1;
-    netstd_keywords["yield"] = 1;
-
-    netstd_keywords["when"] = 1;
-}
 
 void t_netstd_generator::reset_indent() {
   while( indent_count() > 0) {
@@ -309,21 +202,24 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
-    if( use_net6_features) {
+    if( target_net_version >= 6) {
+      out << "// Thrift code generated for net" << target_net_version << endl;
       out << "#nullable enable                 // requires C# 8.0" << endl;
-    } else {
-      out << "#nullable disable                // suppress C# 8.0 nullable contexts (we still support earlier versions)" << endl;
     }
 
     // this one must be first
     out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl;
 
-    out << "#pragma warning disable IDE0017  // object init can be simplified" << endl
-        << "#pragma warning disable IDE0028  // collection init can be simplified" << endl
-        << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl
-        << "#pragma warning disable CA1822   // empty " << DEEP_COPY_METHOD_NAME << "() methods still non-static" << endl;
+    if( target_net_version >= 8) {
+      out << "#pragma warning disable IDE0290  // use primary CTOR" << endl;
+    } else {
+      out << "#pragma warning disable IDE0017  // object init can be simplified" << endl;
+      out << "#pragma warning disable IDE0028  // collection init can be simplified" << endl;
+    }
+    out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl;
+    out << "#pragma warning disable CA1822   // empty " << DEEP_COPY_METHOD_NAME << "() methods still non-static" << endl;
 
-    if( ! use_net6_features) {
+    if( target_net_version < 6) {
         out << "#pragma warning disable IDE0083  // pattern matching \"that is not SomeType\" requires net5.0 but we still support earlier versions" << endl;
     }
     out << endl;
@@ -429,7 +325,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     {
         generate_netstd_doc(out, *c_iter);
         int value = (*c_iter)->get_value();
-        out << indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
+        out << indent() << normalize_name((*c_iter)->get_name()) << " = " << value << "," << endl;
     }
 
     scope_down(out);
@@ -474,7 +370,7 @@ void t_netstd_generator::generate_consts(ostream& out, vector<t_const*> consts)
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter)
     {
         generate_netstd_doc(out, *c_iter);
-        if (print_const_value(out, (*c_iter)->get_name(), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
+        if (print_const_value(out, normalize_name((*c_iter)->get_name()), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
         {
             need_static_constructor = true;
         }
@@ -586,13 +482,19 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
 
     if (!defval || needtype)
     {
-        out << (in_static ? "" : type->is_base_type() ? "public const " : "public static ") << type_name(type) << " ";
+        if(in_static) {
+          out << type_name(type) << " ";
+        } else if(type->is_base_type()) {
+          out << "public const " << type_name(type) << " ";
+        } else  {
+          out << "public static " << (target_net_version >= 6 ? "readonly " : "") << type_name(type) << " ";
+        }
     }
 
     if (type->is_base_type())
     {
         string v2 = render_const_value(out, name, type, value);
-        out << normalize_name(name) << " = " << v2 << ";" << endl;
+        out << name << " = " << v2 << ";" << endl;
         need_static_construction = false;
     }
     else if (type->is_enum())
@@ -602,15 +504,21 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
     }
     else if (type->is_struct() || type->is_xception())
     {
-        out << name << " = new " << type_name(type) << "();" << endl;
+        if(target_net_version >= 6) {
+          out << name << " = new();" << endl;
+        } else {
+          out << name << " = new " << type_name(type) << "();" << endl;
+        }
     }
-    else if (type->is_map())
+    else if (type->is_map() || type->is_list() || type->is_set())
     {
-        out << name << " = new " << type_name(type) << "();" << endl;
-    }
-    else if (type->is_list() || type->is_set())
-    {
-        out << name << " = new " << type_name(type) << "();" << endl;
+        if(target_net_version >= 8) {
+          out << name << " = [];" << endl;
+        } else if(target_net_version >= 6) {
+          out << name << " = new();" << endl;
+        } else {
+          out << name << " = new " << type_name(type) << "();" << endl;
+        }
     }
 
     if (defval && !type->is_base_type() && !type->is_enum())
@@ -637,6 +545,9 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
             } else {
                 render << '"' << get_escaped_string(value) << '"';
             }
+            break;
+        case t_base_type::TYPE_UUID:
+            render << "new System.Guid(\"" << get_escaped_string(value) << "\")";
             break;
         case t_base_type::TYPE_BOOL:
             render << ((value->get_integer() > 0) ? "true" : "false");
@@ -667,7 +578,7 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
     }
     else
     {
-        string t = tmp("tmp");
+        string t = normalize_name(tmp("tmp"));
         print_const_value(out, t, type, value, true, true, true);
         render << t;
     }
@@ -776,7 +687,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
     {
         out << indent() << "public static bool Equals(this " << iter->first << " instance, object that)" << endl;
         scope_up(out);
-        if( use_net6_features) {
+        if( target_net_version >= 6) {
             out << indent() << "if (that is not " << iter->first << " other) return false;" << endl;
         } else {
             out << indent() << "if (!(that is " << iter->first << " other)) return false;" << endl;
@@ -814,7 +725,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
 
                 out << indent() << "foreach (var pair in source)" << endl;
                 indent_up();
-                if( use_net6_features) {
+                if( target_net_version >= 6) {
                     out << indent() << tmp_instance << ".Add(pair.Key" << copy_key;
                     out << ", pair.Value" << copy_val;
                 } else {
@@ -852,7 +763,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
 
                 out << indent() << "foreach (var elem in source)" << endl;
                 indent_up();
-                if( use_net6_features) {
+                if( target_net_version >= 6) {
                     out << indent() << tmp_instance << ".Add(elem" << copy_elm;
                 } else {
                     out << indent() << tmp_instance << ".Add(";
@@ -1055,7 +966,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         {
             if (field_is_required((*m_iter)))
             {
-                print_const_value(out, "this." + prop_name(*m_iter), t, (*m_iter)->get_value(), true, true);
+                print_const_value(out, "this." + normalize_name(prop_name(*m_iter)), t, (*m_iter)->get_value(), true, true);
             }
             else
             {
@@ -1186,7 +1097,14 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
 
     // return directly if there are only required fields
     string tmp_instance = tmp("tmp");
-    out << indent() << "var " << tmp_instance << " = new " << sharp_struct_name << "();" << endl;
+    out << indent() << "var " << tmp_instance << " = new " << sharp_struct_name << "()";
+    bool inline_assignment = (target_net_version >= 6);
+    if(inline_assignment) {
+      out << endl << indent() << "{" << endl;
+      indent_up();
+    } else {
+      out << endl;
+    }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         bool needs_typecast = false;
@@ -1195,19 +1113,44 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
         string copy_op = get_deep_copy_method_call(ttype, true, needs_typecast, suffix);
 
         bool is_required = field_is_required(*m_iter);
+        bool null_allowed = type_can_be_null((*m_iter)->get_type());
+
+        if(inline_assignment) {
+          if( null_allowed || (!is_required)) {  // = has isset
+            indent_down();
+            out << indent() << "};" << endl;
+            inline_assignment = false;
+          }
+        }
+
         generate_null_check_begin( out, *m_iter);
 
-        out << indent() << tmp_instance << "." << prop_name(*m_iter) << " = ";
+        out << indent();
+        if(!inline_assignment) {
+          out << tmp_instance << ".";
+        }
+        out << prop_name(*m_iter) << " = ";
         if( needs_typecast) {
             out << "(" << type_name(ttype) << ")";
         }
-        out << "this." << prop_name(*m_iter) << copy_op << ";" << endl;
+        out << "this." << prop_name(*m_iter) << copy_op;
+        out << (inline_assignment ? "," : ";") << endl;
 
         generate_null_check_end( out, *m_iter);
         if( !is_required) {
-            out << indent() << tmp_instance << ".__isset." << get_isset_name(normalize_name((*m_iter)->get_name()))
-                 << " = this.__isset." << get_isset_name(normalize_name((*m_iter)->get_name())) << ";" << endl;
+            out << indent();
+            if(!inline_assignment) {
+              out << tmp_instance << ".";
+            }
+            out << "__isset." << get_isset_name(normalize_name((*m_iter)->get_name()));
+            out << " = this.__isset." << get_isset_name(normalize_name((*m_iter)->get_name()));
+            out << (inline_assignment ? "," : ";") << endl;
         }
+    }
+
+    if(inline_assignment) {
+      indent_down();
+      out << indent() << "};" << endl;
     }
 
     out << indent() << "return " << tmp_instance << ";" << endl;
@@ -1380,6 +1323,9 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
     if (fields.size() > 0)
     {
         tmpvar = tmp("tmp");
+        if(target_net_version >= 8) {
+          out << indent() << "#pragma warning disable IDE0017  // simplified init" << endl;
+        }
         out << indent() << "var " << tmpvar << " = new TField();" << endl;
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
@@ -1393,6 +1339,9 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
 
             out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << endl;
             generate_null_check_end(out, *f_iter);
+        }
+        if(target_net_version >= 8) {
+          out << indent() << "#pragma warning restore IDE0017  // simplified init" << endl;
         }
     }
 
@@ -1432,6 +1381,9 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
     if (fields.size() > 0)
     {
         tmpvar = tmp("tmp");
+        if(target_net_version >= 8) {
+          out << indent() << "#pragma warning disable IDE0017  // simplified init" << endl;
+        }
         out << indent() << "var " << tmpvar << " = new TField();" << endl;
         bool first = true;
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
@@ -1475,6 +1427,9 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
 
             indent_down();
             out << indent() << "}" << endl;
+        }
+        if(target_net_version >= 8) {
+          out << indent() << "#pragma warning restore IDE0017  // simplified init" << endl;
         }
     }
 
@@ -1571,14 +1526,14 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     // Let's define the class first
     start_netstd_namespace(out);
 
-    out << indent() << "public abstract partial class " << tunion->get_name() << " : TUnionBase" << endl;
+    out << indent() << "public abstract partial class " << normalize_name(tunion->get_name()) << " : TUnionBase" << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "public abstract global::System.Threading.Tasks.Task WriteAsync(TProtocol tProtocol, CancellationToken " << CANCELLATION_TOKEN_NAME << ");" << endl
         << indent() << "public readonly int Isset;" << endl
         << indent() << "public abstract object" << nullable_suffix() <<" Data { get; }" << endl
-        << indent() << "protected " << tunion->get_name() << "(int isset)" << endl
+        << indent() << "protected " << normalize_name(tunion->get_name()) << "(int isset)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "Isset = isset;" << endl;
@@ -1590,7 +1545,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
 
     out << indent() << "public override bool Equals(object" << nullable_suffix() << " that)" << endl;
     scope_up(out);
-    if( use_net6_features) {
+    if( target_net_version >= 6) {
         out << indent() << "if (that is not " << tunion->get_name() << " other) return false;" << endl;
     } else {
         out << indent() << "if (!(that is " << tunion->get_name() << " other)) return false;" << endl;
@@ -1599,7 +1554,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << endl;
     out << indent() << "if(this.Isset != other.Isset) return false;" << endl;
     out << endl;
-    if(use_net6_features) {
+    if(target_net_version >= 6) {
         out << indent() << "return Isset switch" << endl;
         scope_up(out);
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
@@ -1637,13 +1592,13 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << indent() << "public override int GetHashCode()" << endl;
     out << indent() << "{" << endl;
     indent_up();
-    if(use_net6_features) {
+    if(target_net_version >= 6) {
         out << indent() << "return Isset switch" << endl;
         out << indent() << "{" << endl;
         indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
-            string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");  
+            string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");
             out << indent() << (*f_iter)->get_key() << " => As_" << (*f_iter)->get_name() << null_coalesce << ".GetHashCode()";
             if( null_coalesce.size() > 0) {
               out << " ?? 0";
@@ -1659,7 +1614,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
-            string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");  
+            string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");
             out << indent() << "case " << (*f_iter)->get_key() << ":" << endl;
             indent_up();
             out << indent() << "return As_" << (*f_iter)->get_name() << null_coalesce << ".GetHashCode()";
@@ -1683,7 +1638,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         out << indent() << "public " << tunion->get_name() << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
         out << indent() << "{" << endl;
         indent_up();
-        if(use_net6_features) {
+        if(target_net_version >= 6) {
             out << indent() << "return Isset switch" << endl;
             out << indent() << "{" << endl;
             indent_up();
@@ -1775,7 +1730,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "return (" << tfield->get_key() << " == Isset) && (Data != null)"
         << " ? (" << type_name(tfield->get_type()) << nullable_field_suffix(tfield) << ")Data"
         << " : default"
-        << (use_net6_features ? "" : ("(" + type_name(tfield->get_type()) + ")"))
+        << (target_net_version >= 6 ? "" : ("(" + type_name(tfield->get_type()) + ")"))
         << ";" << endl;
     indent_down();
     out << indent() << "}" << endl;
@@ -1784,13 +1739,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << endl;
 
 
-    out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl;
+    out << indent() << "public class " << normalize_name(tfield->get_name()) << " : " << normalize_name(tunion->get_name()) << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "private readonly " << type_name(tfield->get_type()) << " _data;" << endl
         << indent() << "public override object" << nullable_suffix() <<" Data { get { return _data; } }" << endl
-        << indent() << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
+        << indent() << "public " << normalize_name(tfield->get_name()) << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "this._data = data;" << endl;
@@ -1798,13 +1753,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "}" << endl;
 
     if( ! suppress_deepcopy) {
-        out << indent() << "public new " << tfield->get_name() << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
+        out << indent() << "public new " << normalize_name(tfield->get_name()) << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
         out << indent() << "{" << endl;
         indent_up();
         bool needs_typecast = false;
         string suffix("");
         string copy_op = get_deep_copy_method_call(tfield->get_type(), true, needs_typecast, suffix);
-        out << indent() << "return new " << tfield->get_name() << "(_data" << copy_op << ");" << endl;
+        out << indent() << "return new " << normalize_name(tfield->get_name()) << "(_data" << copy_op << ");" << endl;
         indent_down();
         out << indent() << "}" << endl << endl;
     }
@@ -1812,7 +1767,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "public override bool Equals(object" << nullable_suffix() << " that)" << endl;
     out << indent() << "{" << endl;
     indent_up();
-    if(use_net6_features) {
+    if(target_net_version >= 6) {
         out << indent() << "if (that is not " << tunion->get_name() << " other) return false;" << endl;
     } else {
         out << indent() << "if (!(that is " << tunion->get_name() << " other)) return false;" << endl;
@@ -1841,11 +1796,15 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "var struc = new TStruct(\"" << tunion->get_name() << "\");" << endl
         << indent() << "await oprot.WriteStructBeginAsync(struc, " << CANCELLATION_TOKEN_NAME << ");" << endl;
 
-    out << indent() << "var field = new TField();" << endl
-        << indent() << "field.Name = \"" << tfield->get_name() << "\";" << endl
-        << indent() << "field.Type = " << type_to_enum(tfield->get_type()) << ";" << endl
-        << indent() << "field.ID = " << tfield->get_key() << ";" << endl
-        << indent() << "await oprot.WriteFieldBeginAsync(field, " << CANCELLATION_TOKEN_NAME << ");" << endl;
+    out << indent() << "var field = new TField()" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "Name = \"" << tfield->get_name() << "\"," << endl
+        << indent() << "Type = " << type_to_enum(tfield->get_type()) << "," << endl
+        << indent() << "ID = " << tfield->get_key() << endl;
+    indent_down();
+    out << indent() << "};" << endl;
+    out << indent() << "await oprot.WriteFieldBeginAsync(field, " << CANCELLATION_TOKEN_NAME << ");" << endl;
 
     generate_serialize_field(out, tfield, "_data", true, false);
 
@@ -1871,7 +1830,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
     out << indent() << "public override bool Equals(object" << nullable_suffix() << " that)" << endl
         << indent() << "{" << endl;
     indent_up();
-    if(use_net6_features) {
+    if(target_net_version >= 6) {
         out << indent() << "if (that is not " << type_name(tstruct,false) << " other) return false;" << endl;
     } else {
         out << indent() << "if (!(that is " << type_name(tstruct,false) << " other)) return false;" << endl;
@@ -2058,8 +2017,8 @@ void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function
   if( func->annotations_.end() != iter) {
     out << indent() << "[Obsolete";
     // empty annotation values end up with "1" somewhere, ignore these as well
-    if ((iter->second.length() > 0) && (iter->second != "1")) {
-      out << "(" << make_csharp_string_literal(iter->second) << ")";
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      out << "(" << make_csharp_string_literal(iter->second.back()) << ")";
     }
     out << "]" << endl;
   }
@@ -2312,9 +2271,14 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
 
     if (extends.empty())
     {
-        out << indent() << "protected Dictionary<string, ProcessFunction> processMap_ = new"
-            << (use_net6_features ? "" : " Dictionary<string, ProcessFunction>")  // Simplify new expression (IDE0090)
-            << "();" << endl;
+        out << indent() << "protected Dictionary<string, ProcessFunction> processMap_ = ";
+        if(target_net_version >= 8) {
+          out << "[];" << endl;
+        } else if(target_net_version >= 6) {
+          out << "new();" << endl;
+        } else {
+          out << "new Dictionary<string, ProcessFunction>();" << endl;
+        }
     }
 
     out << endl;
@@ -2705,6 +2669,9 @@ void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfiel
                     out << "ReadStringAsync(" << CANCELLATION_TOKEN_NAME << ");";
                 }
                 break;
+            case t_base_type::TYPE_UUID:
+                out << "ReadUuidAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                break;
             case t_base_type::TYPE_BOOL:
                 out << "ReadBoolAsync(" << CANCELLATION_TOKEN_NAME << ");";
                 break;
@@ -2908,6 +2875,9 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
                 }
                 out << name << ", " << CANCELLATION_TOKEN_NAME << ");";
                 break;
+            case t_base_type::TYPE_UUID:
+                out << "WriteUuidAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                break;
             case t_base_type::TYPE_BOOL:
                 out << "WriteBoolAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
                 break;
@@ -3063,7 +3033,7 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
     if (is_required)
     {
         out << " { get; set; }";
-        if( use_net6_features && (!force_member_nullable(tfield))) {
+        if( (target_net_version >= 6) && (!force_member_nullable(tfield))) {
             out << initialize_field(tfield) << ";";
         }
         out << endl;
@@ -3361,7 +3331,7 @@ bool t_netstd_generator::is_nullable_type(t_type* ttype) {
 
 
 string t_netstd_generator::nullable_suffix() {
-  if(use_net6_features) {
+  if(target_net_version >= 6) {
     return "?";
   } else {
     return "";
@@ -3375,10 +3345,10 @@ string t_netstd_generator::nullable_field_suffix(t_field* tfield) {
   else
     return nullable_field_suffix(tfield->get_type());
 }
-  
+
 
 string t_netstd_generator::nullable_field_suffix(t_type* ttype) {
-  if( ! use_net6_features) {
+  if( target_net_version < 6) {
     return "";
   }
 
@@ -3403,7 +3373,7 @@ string t_netstd_generator::nullable_field_suffix(t_type* ttype) {
 }
 
 string t_netstd_generator::nullable_value_access(t_type* ttype) {
-  if( ! use_net6_features)
+  if( target_net_version < 6)
     return "";
 
   ttype = resolve_typedef(ttype);
@@ -3429,9 +3399,9 @@ string t_netstd_generator::nullable_value_access(t_type* ttype) {
 }
 
 bool t_netstd_generator::force_member_nullable(t_field* tfield) {
-  // IMPORTANT: 
+  // IMPORTANT:
   // If tfield is a struct that contains a required field of the same type (directly or indirectly),
-  // auto-initializing such a member field would immediately produce an OOM, or at least unexpectedly 
+  // auto-initializing such a member field would immediately produce an OOM, or at least unexpectedly
   // allocate potentially large amounts of memory -> ALWAYS leave containers and struct members nullable
   t_type* ttype = resolve_typedef(tfield->get_type());
   return ttype->is_struct() || ttype->is_container();
@@ -3455,7 +3425,7 @@ string t_netstd_generator::type_name(t_type* ttype, bool with_namespace)
     if (ttype->is_set())
     {
         t_set* tset = static_cast<t_set*>(ttype);
-		return "HashSet<" + type_name(tset->get_elem_type()) + ">";
+        return "HashSet<" + type_name(tset->get_elem_type()) + ">";
     }
 
     if (ttype->is_list())
@@ -3494,6 +3464,8 @@ string t_netstd_generator::base_type_name(t_base_type* tbase)
         } else {
             return "string";
         }
+    case t_base_type::TYPE_UUID:
+        return "global::System.Guid";
     case t_base_type::TYPE_BOOL:
         return "bool";
     case t_base_type::TYPE_I8:
@@ -3528,12 +3500,15 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool is_not_
         case t_base_type::TYPE_STRING:
             if (ttype->is_binary()) {
                 suffix = nullable_suffix();
-                if( use_net6_features) {
+                if( target_net_version >= 8) {
+                    null_check = is_not_null ? "!" : " ?? []";
+                }
+                else if( target_net_version >= 6) {
                     null_check = is_not_null ? "!" : " ?? Array.Empty<byte>()";
                 }
                 return ".ToArray()" + null_check;
             } else {
-                if( use_net6_features) {
+                if( target_net_version >= 6) {
                     null_check = is_not_null ? "!" : " ?? string.Empty";
                 }
                 return null_check;  // simple assignment will do, strings are immutable in C#
@@ -3549,23 +3524,25 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool is_not_
     }
     else if (is_union_enabled() && ttype->is_struct() && static_cast<t_struct*>(ttype)->is_union())
     {
-        needs_typecast = (! ttype->is_container());        
+        needs_typecast = (! ttype->is_container());
         suffix = nullable_suffix();
-        if( use_net6_features) {
+        if( target_net_version >= 6) {
             null_check = is_not_null ? "!" : " ?? new "+ttype->get_name() +".___undefined()";
-        }        
+        }
         return "." + DEEP_COPY_METHOD_NAME + "()" + null_check;
     }
     else
     {
-        needs_typecast = (! ttype->is_container());        
+        needs_typecast = (! ttype->is_container());
         suffix = nullable_suffix();
-        if( use_net6_features) {
+        if( (target_net_version >= 8) && ttype->is_container()) {
+            null_check = is_not_null ? "!" : " ?? []";
+        } else if( target_net_version >= 6) {
             null_check = is_not_null ? "!" : " ?? new()";
-        }        
+        }
         return "." + DEEP_COPY_METHOD_NAME + "()" + null_check;
     }
-    
+
     throw "UNEXPECTED TYPE IN get_deep_copy_method_call: " + ttype->get_name();
 }
 
@@ -3587,8 +3564,8 @@ string t_netstd_generator::declare_field(t_field* tfield, bool init, bool allow_
 string t_netstd_generator::initialize_field(t_field* tfield)
 {
     t_type* ttype = tfield->get_type();
-    ttype = resolve_typedef(ttype);    
-    
+    ttype = resolve_typedef(ttype);
+
     if (ttype->is_base_type() && field_has_default(tfield))
     {
         std::ofstream dummy;
@@ -3606,15 +3583,18 @@ string t_netstd_generator::initialize_field(t_field* tfield)
         case t_base_type::TYPE_VOID:
             throw "NO T_VOID CONSTRUCT";
         case t_base_type::TYPE_STRING:
-            if(use_net6_features && field_is_required(tfield)) {
+            if((target_net_version >= 6) && field_is_required(tfield)) {
                 if (ttype->is_binary()) {
-                    return " = Array.Empty<byte>()";
+                    return target_net_version >= 8 ? "= []" : " = Array.Empty<byte>()";
                 } else {
                     return " = string.Empty";
                 }
             } else {
                 return " = null";
             }
+            break;
+        case t_base_type::TYPE_UUID:
+            return " = System.Guid.Empty";
             break;
         case t_base_type::TYPE_BOOL:
             return " = false";
@@ -3636,7 +3616,7 @@ string t_netstd_generator::initialize_field(t_field* tfield)
     }
     else if (ttype->is_container())
     {
-        if(use_net6_features) {
+        if(target_net_version >= 6) {
             return " = new()";
         } else {
             return " = new " + type_name(ttype) + "()";
@@ -3644,8 +3624,8 @@ string t_netstd_generator::initialize_field(t_field* tfield)
     }
     else if (ttype->is_struct())
     {
-        t_struct* tstruct = static_cast<t_struct*>(ttype);        
-        if(use_net6_features) {
+        t_struct* tstruct = static_cast<t_struct*>(ttype);
+        if(target_net_version >= 6) {
             if(tstruct->is_union()) {
                 return " = new " + type_name(ttype) + ".___undefined()";
             } else {
@@ -3655,7 +3635,7 @@ string t_netstd_generator::initialize_field(t_field* tfield)
             return " = new " + type_name(ttype) + "()";
         }
     }
-    
+
     throw "UNEXPECTED TYPE IN initialize_field: " + ttype->get_name();
 }
 
@@ -3727,6 +3707,8 @@ string t_netstd_generator::type_to_enum(t_type* type)
             throw "NO T_VOID CONSTRUCT";
         case t_base_type::TYPE_STRING:
             return "TType.String";
+        case t_base_type::TYPE_UUID:
+            return "TType.Uuid";
         case t_base_type::TYPE_BOOL:
             return "TType.Bool";
         case t_base_type::TYPE_I8:
@@ -3860,6 +3842,11 @@ string t_netstd_generator::get_enum_class_name(t_type* type)
     return "global::" + package + type->get_name();
 }
 
+std::string t_netstd_generator::display_name() const {
+  return "C#";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     netstd,
     "C#",
@@ -3868,6 +3855,7 @@ THRIFT_REGISTER_GENERATOR(
     "    union:           Use new union typing, which includes a static read function for union types.\n"
     "    pascal:          Generate Pascal Case property names according to Microsoft naming convention.\n"
     "    net6:            Enable features that require net6 and C# 8 or higher.\n"
+    "    net8:            Enable features that require net8 and C# 12 or higher.\n"
     "    no_deepcopy:     Suppress generation of " + DEEP_COPY_METHOD_NAME + "() method.\n"
     "    async_postfix:   Append \"Async\" to all service methods (maintains compatibility with existing code).\n"
 )

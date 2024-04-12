@@ -21,8 +21,8 @@
 #define T_FIELD_H
 
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "thrift/parse/t_doc.h"
 #include "thrift/parse/t_type.h"
@@ -106,7 +106,7 @@ public:
     }
   };
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
   bool get_reference() const { return reference_; }
 

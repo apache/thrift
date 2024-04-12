@@ -33,6 +33,9 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -566,7 +569,7 @@ try_again:
         throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
       }
     } else /* ret == 0 */ {
-      GlobalOutput.perror("TSocket::read() THRIFT_EAGAIN (timed out) after %f ms", recvTimeout_);
+      GlobalOutput.printf("TSocket::read() THRIFT_EAGAIN (timed out) after %d ms", recvTimeout_);
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
     }
 

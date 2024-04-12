@@ -27,6 +27,8 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Protocol
 {
@@ -401,6 +403,10 @@ namespace Thrift.Protocol
         {
             await WriteJsonBase64Async(bytes, cancellationToken);
         }
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken = default)
+        {
+            await WriteStringAsync(uuid.ToString("D"), cancellationToken);  // no curly braces
+        }
 
         /// <summary>
         ///     Read in a JSON string, unescaping as appropriate.. Skip Reading from the
@@ -431,11 +437,11 @@ namespace Thrift.Protocol
                     // escaped?
                     if (ch != TJSONProtocolConstants.EscSequences[0])
                     {
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync(wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -450,11 +456,11 @@ namespace Thrift.Protocol
                             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected control char");
                         }
                         ch = TJSONProtocolConstants.EscapeCharValues[off];
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync( wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -484,20 +490,20 @@ namespace Thrift.Protocol
 
                         codeunits.Add((char) wch);
                         var tmp = Utf8Encoding.GetBytes(codeunits.ToArray());
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory(0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                         codeunits.Clear();
                     }
                     else
                     {
                         var tmp = Utf8Encoding.GetBytes(new[] { (char)wch });
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory( 0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                     }
                 }
@@ -690,7 +696,9 @@ namespace Thrift.Protocol
 
         public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await ReadJsonArrayEndAsync(cancellationToken);
+            Transport.ResetConsumedMessageSize();
         }
 
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
@@ -817,6 +825,11 @@ namespace Thrift.Protocol
             return await ReadJsonBase64Async(cancellationToken);
         }
 
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken = default)
+        {
+            return new Guid( await ReadStringAsync(cancellationToken));
+        }
+
         // Return the minimum number of bytes a type will consume on the wire
         public override int GetMinSerializedSize(TType type)
         {
@@ -835,6 +848,7 @@ namespace Thrift.Protocol
                 case TType.Map: return 2;  // empty map
                 case TType.Set: return 2;  // empty set
                 case TType.List: return 2;  // empty list
+                case TType.Uuid: return 36;  // "E236974D-F0B0-4E05-8F29-0B455D41B1A1"
                 default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }

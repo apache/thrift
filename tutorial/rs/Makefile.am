@@ -45,6 +45,9 @@ clean-local:
 	-$(RM) src/tutorial.rs
 	-$(RM) -r bin
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Cargo.toml \
 	src/lib.rs \

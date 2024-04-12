@@ -30,10 +30,13 @@ clean-local:
 	rm -rf .build
 
 precross:
-	swift
+	swift build
 
 check-local:
 	swift test
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	Package.swift \

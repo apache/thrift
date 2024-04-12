@@ -20,11 +20,11 @@
 #ifndef T_TYPE_H
 #define T_TYPE_H
 
-#include <string>
-#include <map>
-#include <cstring>
-#include <stdint.h>
 #include "thrift/parse/t_doc.h"
+#include <cstring>
+#include <map>
+#include <stdint.h>
+#include <string>
 
 class t_program;
 
@@ -47,6 +47,7 @@ public:
   virtual bool is_void() const { return false; }
   virtual bool is_base_type() const { return false; }
   virtual bool is_string() const { return false; }
+  virtual bool is_uuid() const { return false; }
   virtual bool is_binary() const { return false; }
   virtual bool is_bool() const { return false; }
   virtual bool is_typedef() const { return false; }
@@ -82,7 +83,7 @@ public:
     return rv;
   }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 protected:
   t_type() : program_(nullptr) { ; }

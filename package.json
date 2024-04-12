@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/apache/thrift.git"
   },
-  "version": "0.17.0",
+  "version": "0.21.0",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org",
@@ -52,8 +52,8 @@
     "eslint": "^5.7.0",
     "eslint-config-prettier": "^3.1.0",
     "eslint-plugin-prettier": "^3.0.0",
-    "html-validator-cli": "^4.1.4",
-    "jsdoc": "^3.6.7",
+    "html-validator-cli": "^2.0.0",
+    "jsdoc": "^4.0.2",
     "json-int64": "^1.0.2",
     "nyc": "^15.0.0",
     "prettier": "^1.14.3",

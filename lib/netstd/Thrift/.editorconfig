@@ -2,3 +2,8 @@
 
 # CS1591: missing XML comment for public element
 dotnet_diagnostic.CS1591.severity = silent
+
+# silence certain yet unfixed false positives for net8
+dotnet_diagnostic.IDE0290.severity = silent
+dotnet_diagnostic.CA1510.severity = silent
+dotnet_diagnostic.CA1513.severity = silent

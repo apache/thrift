@@ -84,14 +84,13 @@ where
         let header = self.read_byte()?;
         let element_type = collection_u8_to_type(header & 0x0F)?;
 
-        let element_count;
         let possible_element_count = (header & 0xF0) >> 4;
-        if possible_element_count != 15 {
+        let element_count = if possible_element_count != 15 {
             // high bits set high if count and type encoded separately
-            element_count = possible_element_count as i32;
+            possible_element_count as i32
         } else {
-            element_count = self.transport.read_varint::<u32>()? as i32;
-        }
+            self.transport.read_varint::<u32>()? as i32
+        };
 
         Ok((element_type, element_count))
     }
@@ -251,6 +250,10 @@ where
         self.transport
             .read_f64::<LittleEndian>()
             .map_err(From::from)
+    }
+
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        uuid::Uuid::from_slice(&self.read_bytes()?).map_err(From::from)
     }
 
     fn read_string(&mut self) -> crate::Result<String> {
@@ -539,6 +542,10 @@ where
             .map_err(From::from)
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.write_bytes(uuid.as_bytes())
+    }
+
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
         self.write_bytes(s.as_bytes())
     }
@@ -638,6 +645,7 @@ fn type_to_u8(field_type: TType) -> u8 {
         TType::Set => 0x0A,
         TType::Map => 0x0B,
         TType::Struct => 0x0C,
+        TType::Uuid => 0x0D,
         _ => panic!("should not have attempted to convert {} to u8", field_type),
     }
 }
@@ -662,6 +670,7 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
         0x0A => Ok(TType::Set),
         0x0B => Ok(TType::Map),
         0x0C => Ok(TType::Struct),
+        0x0D => Ok(TType::Uuid),
         unkn => Err(crate::Error::Protocol(crate::ProtocolError {
             kind: crate::ProtocolErrorKind::InvalidData,
             message: format!("cannot convert {} into TType", unkn),
@@ -2452,7 +2461,7 @@ mod tests {
             }
         );
         let read_value_1 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_1, true);
+        assert!(read_value_1);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
@@ -2464,7 +2473,7 @@ mod tests {
             }
         );
         let read_value_2 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_2, false);
+        assert!(!read_value_2);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
@@ -2476,7 +2485,7 @@ mod tests {
             }
         );
         let read_value_3 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_3, true);
+        assert!(read_value_3);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
@@ -2488,7 +2497,7 @@ mod tests {
             }
         );
         let read_value_4 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_4, false);
+        assert!(!read_value_4);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_5 = assert_success!(i_prot.read_field_begin());
@@ -2765,16 +2774,16 @@ mod tests {
         assert_eq!(&rcvd_ident, &map_ident);
         // key 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // val 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // key 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // val 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // map end
         assert_success!(i_prot.read_map_end());
     }

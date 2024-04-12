@@ -40,8 +40,7 @@ public enum TType: Int32 {
   case map      = 13
   case set      = 14
   case list     = 15
-  case utf8     = 16
-  case utf16    = 17
+  case uuid     = 16
 }
 
 public protocol TProtocol {
@@ -65,12 +64,14 @@ public protocol TProtocol {
   func read() throws -> String
   func read() throws -> Bool
   func read() throws -> UInt8
+  func read() throws -> Int8
   func read() throws -> Int16
   func read() throws -> Int32
   func read() throws -> Int64
   func read() throws -> Double
   func read() throws -> Data
-  
+  func read() throws -> UUID
+    
   // Writing methods
   
   func writeMessageBegin(name: String, type messageType: TMessageType, sequenceID: Int32) throws
@@ -90,11 +91,13 @@ public protocol TProtocol {
   func write(_ value: String) throws
   func write(_ value: Bool) throws
   func write(_ value: UInt8) throws
+  func write(_ value: Int8) throws
   func write(_ value: Int16) throws
   func write(_ value: Int32) throws
   func write(_ value: Int64) throws
   func write(_ value: Double) throws
   func write(_ value: Data) throws
+  func write(_ value: UUID) throws
 }
 
 public extension TProtocol {
@@ -132,12 +135,13 @@ public extension TProtocol {
   func skip(type: TType) throws {
     switch type {
     case .bool:   _ = try read() as Bool
-    case .i8:   _ = try read() as UInt8
+    case .i8:   _ = try read() as Int8
     case .i16:    _ = try read() as Int16
     case .i32:    _ = try read() as Int32
     case .i64:    _ = try read() as Int64
     case .double: _ = try read() as Double
     case .string: _ = try read() as String
+    case .uuid: _ = try read() as UUID
       
     case .struct:
       _ = try readStructBegin()

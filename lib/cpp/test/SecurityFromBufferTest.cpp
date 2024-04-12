@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <memory>
+#include <openssl/opensslv.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
@@ -198,15 +199,16 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix) {
   try {
     // matrix of connection success between client and server with different SSLProtocol selections
         static_assert(apache::thrift::transport::LATEST == 5, "Mismatch in assumed number of ssl protocols");
+        bool ossl1 = (OPENSSL_VERSION_NUMBER < 0x30000000L);
         bool matrix[apache::thrift::transport::LATEST + 1][apache::thrift::transport::LATEST + 1] =
         {
     //   server    = SSLTLS   SSLv2    SSLv3    TLSv1_0  TLSv1_1  TLSv1_2
     // client
-    /* SSLTLS  */  { true,    false,   false,   true,    true,    true    },
+    /* SSLTLS  */  { true,    false,   false,   ossl1,   ossl1,   true    },
     /* SSLv2   */  { false,   false,   false,   false,   false,   false   },
     /* SSLv3   */  { false,   false,   true,    false,   false,   false   },
-    /* TLSv1_0 */  { true,    false,   false,   true,    false,   false   },
-    /* TLSv1_1 */  { true,    false,   false,   false,   true,    false   },
+    /* TLSv1_0 */  { ossl1,   false,   false,   ossl1,   false,   false   },
+    /* TLSv1_1 */  { ossl1,   false,   false,   false,   ossl1,   false   },
     /* TLSv1_2 */  { true,    false,   false,   false,   false,   true    }
         };
 

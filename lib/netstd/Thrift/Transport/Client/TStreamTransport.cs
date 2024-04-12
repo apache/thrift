@@ -14,6 +14,7 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 using System;
 using System.IO;
 using System.Threading;
@@ -80,8 +81,11 @@ namespace Thrift.Transport.Client
                     "Cannot read from null inputstream");
             }
 
-            // The ReadAsync method should not be used since it does not check the ReceiveTimeout property.
-            return await Task.Run( () => InputStream.Read( buffer, offset, length ), cancellationToken );
+#if NET5_0_OR_GREATER
+            return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
+            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#endif
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -92,8 +96,11 @@ namespace Thrift.Transport.Client
                     "Cannot write to null outputstream");
             }
 
-            // The WriteAsync method should not be used since it does not check the SendTimeout property.
-            await Task.Run( () => OutputStream.Write( buffer, offset, length ), cancellationToken );
+#if NET5_0_OR_GREATER
+            await OutputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
+            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#endif
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)

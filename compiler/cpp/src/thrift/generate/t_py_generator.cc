@@ -52,7 +52,7 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator (program) {
-    update_keywords();
+    update_keywords_for_validation();
 
     std::map<std::string, std::string>::const_iterator iter;
 
@@ -64,6 +64,7 @@ public:
     gen_zope_interface_ = false;
     gen_twisted_ = false;
     gen_dynamic_ = false;
+    gen_enum_ = false;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -72,7 +73,9 @@ public:
     import_dynbase_ = "";
     package_prefix_ = "";
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("new_style") == 0) {
+      if( iter->first.compare("enum") == 0) {
+        gen_enum_ = true;
+      } else if( iter->first.compare("new_style") == 0) {
         pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
       } else if( iter->first.compare("old_style") == 0) {
         gen_newstyle_ = false;
@@ -154,6 +157,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -277,12 +281,12 @@ public:
   }
 
   static bool is_immutable(t_type* ttype) {
-    std::map<std::string, std::string>::iterator it = ttype->annotations_.find("python.immutable");
+    std::map<std::string, std::vector<std::string>>::iterator it = ttype->annotations_.find("python.immutable");
 
     if (it == ttype->annotations_.end()) {
       // Exceptions are immutable by default.
       return ttype->is_xception();
-    } else if (it->second == "false") {
+    } else if (!it->second.empty() && it->second.back() == "false") {
       return false;
     } else {
       return true;
@@ -295,6 +299,7 @@ private:
    * True if we should generate new-style classes.
    */
   bool gen_newstyle_;
+  bool gen_enum_;
 
   /**
   * True if we should generate dynamic style classes.
@@ -353,7 +358,7 @@ private:
   std::string module_;
 
 protected:
-  std::set<std::string> lang_keywords() const override {
+  std::set<std::string> lang_keywords_for_validation() const override {
     std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
           "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
           "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
@@ -464,7 +469,9 @@ string t_py_generator::py_imports() {
      << endl
      << "from thrift.TRecursive import fix_spec"
      << endl;
-
+  if (gen_enum_) {
+    ss << "from enum import IntEnum" << endl;
+  }
   if (gen_utf8strings_) {
     ss << endl << "import sys";
   }
@@ -502,9 +509,22 @@ void t_py_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_py_generator::generate_enum(t_enum* tenum) {
   std::ostringstream to_string_mapping, from_string_mapping;
+  std::string base_class;
 
-  f_types_ << endl << endl << "class " << tenum->get_name() << (gen_newstyle_ ? "(object)" : "")
-           << (gen_dynamic_ ? "(" + gen_dynbaseclass_ + ")" : "") << ":" << endl;
+  if (gen_enum_) {
+    base_class = "IntEnum";
+  } else if (gen_newstyle_) {
+    base_class = "object";
+  } else if (gen_dynamic_) {
+    base_class = gen_dynbaseclass_;
+  }
+
+  f_types_ << endl
+           << endl
+           << "class " << tenum->get_name()
+           << (base_class.empty() ? "" : "(" + base_class + ")")
+           << ":"
+           << endl;
   indent_up();
   generate_python_docstring(f_types_, tenum);
 
@@ -528,7 +548,9 @@ void t_py_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
   f_types_ << endl;
-  f_types_ << to_string_mapping.str() << endl << from_string_mapping.str();
+  if (!gen_enum_) {
+    f_types_ << to_string_mapping.str() << endl << from_string_mapping.str();
+  }
 }
 
 /**
@@ -581,7 +603,14 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    out << value->get_integer();
+    out << indent();
+    int64_t int_val = value->get_integer();
+    if (gen_enum_) {
+      t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
+      out << type_name(type) << "." << enum_val->get_name();
+    } else {
+      out << int_val;
+    }
   } else if (type->is_struct() || type->is_xception()) {
     out << type_name(type) << "(**{" << endl;
     indent_up();
@@ -842,7 +871,12 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       }
 
       if (is_immutable(tstruct)) {
-        if (gen_newstyle_ || gen_dynamic_) {
+        if (gen_enum_ && type->is_enum()) {
+          indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
+                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name()
+                      << " if hasattr("  << (*m_iter)->get_name() << ", 'value') else "
+                      << type_name(type) << ".__members__.get(" << (*m_iter)->get_name() << "))" << endl;
+        } else if (gen_newstyle_ || gen_dynamic_) {
           indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << endl;
         } else {
@@ -859,12 +893,42 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
   if (is_immutable(tstruct)) {
     out << endl;
-    out << indent() << "def __setattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
-    out << indent() << "def __delattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
+    out << indent() << "def __setattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__setattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
+    out << indent() << "def __delattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__delattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
 
     // Hash all of the members in order, and also hash in the class
     // to avoid collisions for stuff like single-field structures.
@@ -876,6 +940,32 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     }
 
     out << "))" << endl;
+  } else if (gen_enum_) {
+    bool has_enum = false;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* type = (*m_iter)->get_type();
+      if (type->is_enum()) {
+        has_enum = true;
+        break;
+      }
+    }
+
+    if (has_enum) {
+      out << endl;
+      indent(out) << "def __setattr__(self, name, value):" << endl;
+      indent_up();
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        t_type* type = (*m_iter)->get_type();
+        if (type->is_enum()) {
+          out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << endl
+              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') else "
+              << type_name(type) << ".__members__.get(value))" << endl
+              << indent() << indent_str() << "return" << endl;
+        }
+      }
+      indent(out) << "super().__setattr__(name, value)" << endl << endl;
+      indent_down();
+    }
   }
 
   if (!gen_dynamic_) {
@@ -981,7 +1071,7 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
   indent_down();
 
   indent(out) << "iprot.readStructBegin()" << endl;
-  
+
   if (is_immutable(tstruct)) {
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* tfield = *f_iter;
@@ -2216,7 +2306,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     generate_deserialize_struct(out, (t_struct*)type, name);
   } else if (type->is_container()) {
     generate_deserialize_container(out, type, name);
-  } else if (type->is_base_type() || type->is_enum()) {
+  } else if (type->is_base_type()) {
     indent(out) << name << " = iprot.";
 
     if (type->is_base_type()) {
@@ -2254,11 +2344,15 @@ void t_py_generator::generate_deserialize_field(ostream& out,
       default:
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
-    } else if (type->is_enum()) {
-      out << "readI32()";
     }
     out << endl;
-
+  } else if (type->is_enum()) {
+    if (gen_enum_) {
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
+    } else {
+      indent(out) << name << " = iprot.readI32()";
+    }
+    out << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(),
@@ -2443,7 +2537,11 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      out << "writeI32(" << name << ")";
+      if (gen_enum_){
+        out << "writeI32(" << name << ".value)";
+      } else {
+        out << "writeI32(" << name << ")";
+      }
     }
     out << endl;
   } else {
@@ -2731,6 +2829,8 @@ string t_py_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType.I32";
@@ -2783,6 +2883,11 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
 }
 
+std::string t_py_generator::display_name() const {
+  return "Python";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     py,
     "Python",
@@ -2801,4 +2906,6 @@ THRIFT_REGISTER_GENERATOR(
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
-    "    old_style:       Deprecated. Generate old-style classes.\n")
+    "    old_style:       Deprecated. Generate old-style classes.\n"
+    "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
+)

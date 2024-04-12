@@ -38,9 +38,7 @@ const (
 	MAP    = 13
 	SET    = 14
 	LIST   = 15
-	UTF8   = 16
-	UTF16  = 17
-	//BINARY = 18   wrong and unusued
+	UUID   = 16
 )
 
 var typeNames = map[int]string{
@@ -57,8 +55,7 @@ var typeNames = map[int]string{
 	MAP:    "MAP",
 	SET:    "SET",
 	LIST:   "LIST",
-	UTF8:   "UTF8",
-	UTF16:  "UTF16",
+	UUID:   "UUID",
 }
 
 func (p TType) String() string {

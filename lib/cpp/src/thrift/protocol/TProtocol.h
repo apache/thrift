@@ -21,8 +21,26 @@
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
 #ifdef _WIN32
+// Including Winsock2.h adds problematic macros like min() and max().
+// Try to work around:
+#ifndef NOMINMAX
+#define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 // Need to come before any Windows.h includes
 #include <winsock2.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
+#undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 #endif
 
 #include <thrift/transport/TTransport.h>
@@ -84,6 +102,20 @@ static inline To bitwise_cast(From from) {
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+
+#ifdef __ZEPHYR__
+#  include <zephyr/sys/byteorder.h>
+
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER__
+#  define __THRIFT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#  define __THRIFT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+
+#  if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
+#    undef bswap_64
+#    undef bswap_32
+#    undef bswap_16
+#  endif
 #endif
 
 #ifndef __THRIFT_BYTE_ORDER
@@ -243,6 +275,8 @@ public:
 
   virtual uint32_t writeBinary_virt(const std::string& str) = 0;
 
+  virtual uint32_t writeUUID_virt(const std::string& str) = 0;
+
   uint32_t writeMessageBegin(const std::string& name,
                              const TMessageType messageType,
                              const int32_t seqid) {
@@ -350,6 +384,11 @@ public:
     return writeBinary_virt(str);
   }
 
+  uint32_t writeUUID(const std::string& str) {
+    T_VIRTUAL_CALL();
+    return writeUUID_virt(str);
+  }
+
   /**
    * Reading functions
    */
@@ -397,6 +436,8 @@ public:
   virtual uint32_t readString_virt(std::string& str) = 0;
 
   virtual uint32_t readBinary_virt(std::string& str) = 0;
+
+  virtual uint32_t readUUID_virt(std::string& str) = 0;
 
   uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
     T_VIRTUAL_CALL();
@@ -498,6 +539,11 @@ public:
     return readBinary_virt(str);
   }
 
+  uint32_t readUUID(std::string& str) {
+    T_VIRTUAL_CALL();
+    return readUUID_virt(str);
+  }
+
   /*
    * std::vector is specialized for bool, and its elements are individual bits
    * rather than bools.   We need to define a different version of readBool()
@@ -544,14 +590,14 @@ public:
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
   // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
-  virtual int getMinSerializedSize(TType type) { 
+  virtual int getMinSerializedSize(TType type) {
     THRIFT_UNUSED_VARIABLE(type);
     return 0;
   }
 
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), 
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0),
       recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
 

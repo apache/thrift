@@ -34,7 +34,7 @@ unit TestClient;
 interface
 
 uses
-  Windows, SysUtils, Classes, Math, ComObj, ActiveX,
+  Classes, Windows, SysUtils, Math, ActiveX, ComObj,
   {$IFDEF SupportsAsync} System.Threading, {$ENDIF}
   DateUtils,
   Generics.Collections,
@@ -57,13 +57,17 @@ uses
   Thrift.Collections;
 
 type
-  TThreadConsole = class
-  private
-    FThread : TThread;
+  TClientThread = class;
+
+  TThreadConsole = class(TThriftConsole)
+  strict private
+    FThread : TClientThread;
+    FLogThreadID : Boolean;
   public
-    procedure Write( const S : string);
-    procedure WriteLine( const S : string);
-    constructor Create( AThread: TThread);
+    constructor Create( const aThread: TClientThread; const aLogThreadID : Boolean);
+
+    procedure Write( const S: string); override;
+    procedure WriteLine( const S: string); override;
   end;
 
   TTestSetup = record
@@ -97,11 +101,13 @@ type
       FifteenMB        // quite a bit of data, but still below the default max frame size
     );
 
-  private
+  strict private
     FSetup : TTestSetup;
     FTransport : ITransport;
     FProtocol : IProtocol;
-    FNumIteration : Integer;
+    FNumIterations : Integer;
+
+    FThreadNo : Integer;
     FConsole : TThreadConsole;
 
     // test reporting, will be refactored out into separate class later
@@ -133,18 +139,23 @@ type
     {$IFDEF Win64}
     procedure UseInterlockedExchangeAdd64;
     {$ENDIF}
-  protected
+
+  strict protected
     procedure Execute; override;
+    property Console : TThreadConsole read FConsole;
+
   public
-    constructor Create( const aSetup : TTestSetup; const aNumIteration: Integer);
+    constructor Create( const aSetup : TTestSetup; const aNumIteration, aThreadNo: Integer; const aLogThreadID : Boolean);
     destructor Destroy; override;
+
+    property ThreadNo : Integer read FThreadNo;
   end;
 
   TTestClient = class
   private
     class var
-      FNumIteration : Integer;
-      FNumThread : Integer;
+      FNumIterations : Integer;
+      FNumThreads : Integer;
 
     class procedure PrintCmdLineHelp;
     class procedure InvalidArgs;
@@ -314,15 +325,15 @@ begin
       end
       else if IsSwitch( sArg, '-n', sValue) or IsSwitch( sArg, '--testloops', sValue) then begin
         // -n [ --testloops ] arg (=1) Number of Tests
-        FNumIteration := StrToIntDef( sValue, 0);
-        if FNumIteration <= 0
+        FNumIterations := StrToIntDef( sValue, 0);
+        if FNumIterations <= 0
         then InvalidArgs;
 
       end
       else if IsSwitch( sArg, '-t', sValue) or IsSwitch( sArg, '--threads', sValue) then begin
         // -t [ --threads ] arg (=1)   Number of Test threads
-        FNumThread := StrToIntDef( sValue, 0);
-        if FNumThread <= 0
+        FNumThreads := StrToIntDef( sValue, 0);
+        if FNumThreads <= 0
         then InvalidArgs;
       end
       else if IsSwitch( sArg, '--performance', sValue) then begin
@@ -342,7 +353,7 @@ begin
                         'Thrift TestClient (Delphi)',
                         MB_OK or MB_ICONEXCLAMATION);
 
-    SetLength( threads, FNumThread);
+    SetLength( threads, FNumThreads);
     dtStart := Now;
 
     // layered transports are not really meant to be stacked upon each other
@@ -355,14 +366,20 @@ begin
 
     Console.WriteLine(THRIFT_PROTOCOLS[setup.protType]+' protocol');
 
-    for test := 0 to FNumThread - 1 do begin
-      thread := TClientThread.Create( setup, FNumIteration);
+    if FNumThreads <> 1
+    then Console.WriteLine(IntToStr(FNumThreads)+' client threads');
+
+    if FNumIterations <> 1
+    then Console.WriteLine(IntToStr(FNumIterations)+' iterations');
+
+    for test := 0 to FNumThreads - 1 do begin
+      thread := TClientThread.Create( setup, FNumIterations, test, FNumThreads<>1);
       threads[test] := thread;
       thread.Start;
     end;
 
     result := 0;
-    for test := 0 to FNumThread - 1 do begin
+    for test := 0 to FNumThreads - 1 do begin
       threadExitCode := threads[test].WaitFor;
       result := result or threadExitCode;
       threads[test].Free;
@@ -393,6 +410,7 @@ var
   i32 : Integer;
   i64 : Int64;
   binOut,binIn : TBytes;
+  guidIn, guidOut : TGuid;
   dub : Double;
   o : IXtruct;
   o2 : IXtruct2;
@@ -408,8 +426,8 @@ var
   strkey : string;
   listout : IThriftList<Integer>;
   listin : IThriftList<Integer>;
-  setout : IHashSet<Integer>;
-  setin : IHashSet<Integer>;
+  setout : IThriftHashSet<Integer>;
+  setin : IThriftHashSet<Integer>;
   ret : TNumberz;
   uid : Int64;
   mm : IThriftDictionary<Integer, IThriftDictionary<Integer, Integer>>;
@@ -543,6 +561,16 @@ begin
   i64 := client.testI64(-34359738368);
   Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
 
+  guidOut := StringToGUID('{00112233-4455-6677-8899-AABBCCDDEEFF}');
+  Console.WriteLine('testUuid('+GUIDToString(guidOut)+')');
+  try
+    guidIn := client.testUuid(guidOut);
+    Expect( IsEqualGUID(guidIn, guidOut), 'testUuid('+GUIDToString(guidOut)+') = '+GUIDToString(guidIn));
+  except
+    on e:TApplicationException do Console.WriteLine('testUuid(): '+e.Message);
+    on e:Exception do Expect( FALSE, 'testUuid(): Unexpected exception "'+e.ClassName+'": '+e.Message);
+  end;
+
   // random binary small
   for testsize := Low(TTestSize) to High(TTestSize) do begin
     binOut := PrepareBinaryData( TRUE, testsize);
@@ -672,7 +700,7 @@ begin
   // Translates to an STL set, Java HashSet, set in Python, etc.
   // Note: PHP does not support sets, so it is treated similar to a List
   StartTestGroup( 'testSet', test_Containers);
-  setout := THashSetImpl<Integer>.Create;
+  setout := TThriftHashSetImpl<Integer>.Create;
   for j := -2 to 2 do
   begin
     setout.Add( j );
@@ -928,7 +956,7 @@ begin
   except
     on x:TXception do begin
       Expect( x.__isset_ErrorCode, 'x.__isset_ErrorCode = '+BoolToString(x.__isset_ErrorCode));
-      Expect( x.__isset_Message_,  'x.__isset_Message_ = '+BoolToString(x.__isset_Message_));
+      Expect( x.__isset_Message,  'x.__isset_Message = '+BoolToString(x.__isset_Message));
       Expect( x.ErrorCode = 1001, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
       Expect( x.Message_ = 'This is an Xception', 'x.Message = "'+x.Message_+'"');
     end;
@@ -1283,12 +1311,13 @@ begin
 end;
 
 
-constructor TClientThread.Create( const aSetup : TTestSetup; const aNumIteration: Integer);
+constructor TClientThread.Create( const aSetup : TTestSetup; const aNumIteration, aThreadNo: Integer; const aLogThreadID : Boolean);
 begin
   FSetup := aSetup;
-  FNumIteration := ANumIteration;
+  FThreadNo := aThreadNo;
+  FNumIterations := aNumIteration;
 
-  FConsole := TThreadConsole.Create( Self );
+  FConsole := TThreadConsole.Create( Self, aLogThreadID);
   FCurrentTest := test_Unknown;
 
   // error list: keep correct order, allow for duplicates
@@ -1320,7 +1349,7 @@ begin
     // must be run in the context of the thread
     InitializeProtocolTransportStack;
     try
-      for i := 0 to FNumIteration - 1 do begin
+      for i := 0 to FNumIterations - 1 do begin
         ClientTest;
         {$IFDEF SupportsAsync}
         ClientAsyncTest;
@@ -1473,38 +1502,30 @@ end;
 
 { TThreadConsole }
 
-constructor TThreadConsole.Create(AThread: TThread);
+constructor TThreadConsole.Create( const aThread: TClientThread; const aLogThreadID : Boolean);
 begin
   inherited Create;
   FThread := AThread;
+  FLogThreadID := aLogThreadID;
 end;
 
 procedure TThreadConsole.Write(const S: string);
-var
-  proc : TThreadProcedure;
 begin
-  proc := procedure
-  begin
-    Console.Write( S );
-  end;
-  TThread.Synchronize( FThread, proc);
+  if FLogThreadID
+  then ConsoleHelper.Console.Write( IntToStr(FThread.ThreadNo)+'> '+S)
+  else ConsoleHelper.Console.Write( S);
 end;
 
 procedure TThreadConsole.WriteLine(const S: string);
-var
-  proc : TThreadProcedure;
 begin
-  proc := procedure
-  begin
-    Console.WriteLine( S );
-  end;
-  TThread.Synchronize( FThread, proc);
+  if FLogThreadID
+  then ConsoleHelper.Console.WriteLine( IntToStr(FThread.ThreadNo)+'> '+S)
+  else ConsoleHelper.Console.WriteLine( S);
 end;
 
+
 initialization
-begin
-  TTestClient.FNumIteration := 1;
-  TTestClient.FNumThread := 1;
-end;
+  TTestClient.FNumIterations := 1;
+  TTestClient.FNumThreads := 1;
 
 end.

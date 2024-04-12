@@ -31,6 +31,10 @@ clean-local:
 	-$(RM) light_rail.rs
 	-$(RM) streetcars.rs
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
+	mod.rs \
 	LightRail.thrift \
 	Streetcars.thrift

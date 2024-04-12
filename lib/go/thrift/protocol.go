@@ -52,6 +52,7 @@ type TProtocol interface {
 	WriteDouble(ctx context.Context, value float64) error
 	WriteString(ctx context.Context, value string) error
 	WriteBinary(ctx context.Context, value []byte) error
+	WriteUUID(ctx context.Context, value Tuuid) error
 
 	ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqid int32, err error)
 	ReadMessageEnd(ctx context.Context) error
@@ -73,6 +74,7 @@ type TProtocol interface {
 	ReadDouble(ctx context.Context) (value float64, err error)
 	ReadString(ctx context.Context) (value string, err error)
 	ReadBinary(ctx context.Context) (value []byte, err error)
+	ReadUUID(ctx context.Context) (value Tuuid, err error)
 
 	Skip(ctx context.Context, fieldType TType) (err error)
 	Flush(ctx context.Context) (err error)
@@ -116,6 +118,9 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		return
 	case STRING:
 		_, err = self.ReadString(ctx)
+		return
+	case UUID:
+		_, err = self.ReadUUID(ctx)
 		return
 	case STRUCT:
 		if _, err = self.ReadStructBegin(ctx); err != nil {
@@ -180,5 +185,4 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 	default:
 		return NewTProtocolExceptionWithType(INVALID_DATA, fmt.Errorf("Unknown data type %d", fieldType))
 	}
-	return nil
 }

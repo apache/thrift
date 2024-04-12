@@ -31,6 +31,9 @@ clean-local:
 	$(RM) -r Interfaces/bin
 	$(RM) -r Interfaces/obj
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Client \
 	Interfaces \

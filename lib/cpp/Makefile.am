@@ -69,6 +69,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
                        src/thrift/protocol/TMultiplexedProtocol.cpp \
                        src/thrift/protocol/TProtocol.cpp \
+                       src/thrift/protocol/TUuidUtils.cpp \
                        src/thrift/transport/TTransportException.cpp \
                        src/thrift/transport/TFDTransport.cpp \
                        src/thrift/transport/TFileTransport.cpp \
@@ -251,6 +252,9 @@ WINDOWS_DIST = \
              libthriftnb.vcxproj \
              libthriftnb.vcxproj.filters \
              3rdparty.props
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
              CMakeLists.txt \

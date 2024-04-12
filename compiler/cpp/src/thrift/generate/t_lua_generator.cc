@@ -56,12 +56,15 @@ public:
   /**
    * Init and close methods
    */
+
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
    */
+
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
   void generate_const(t_const* tconst) override;
@@ -80,6 +83,7 @@ private:
   /**
    * Struct-level generation functions
    */
+
   void generate_lua_struct_definition(std::ostream& out,
                                       t_struct* tstruct,
                                       bool is_xception = false);
@@ -89,6 +93,7 @@ private:
   /**
    * Service-level generation functions
    */
+
   void generate_service_client(std::ostream& out, t_service* tservice);
   void generate_service_interface(std::ostream& out, t_service* tservice);
   void generate_service_processor(std::ostream& out, t_service* tservice);
@@ -99,6 +104,7 @@ private:
   /**
    * Deserialization (Read)
    */
+
   void generate_deserialize_field(std::ostream& out,
                                   t_field* tfield,
                                   bool local,
@@ -125,6 +131,7 @@ private:
   /**
    * Serialization (Write)
    */
+
   void generate_serialize_field(std::ostream& out, t_field* tfield, std::string prefix = "");
 
   void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
@@ -1146,6 +1153,8 @@ string t_lua_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType.I32";
@@ -1161,6 +1170,11 @@ string t_lua_generator::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_lua_generator::display_name() const {
+  return "Lua";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     lua,

@@ -108,13 +108,19 @@ The context object passed into the server handler function will be canceled when
 the client closes the connection (this is a best effort check, not a guarantee
 -- there's no guarantee that the context object is always canceled when client
 closes the connection, but when it's canceled you can always assume the client
-closed the connection). When implementing Go Thrift server, you can take
-advantage of that to abandon requests that's no longer needed:
+closed the connection). The cause of the cancellation (via `context.Cause(ctx)`)
+would also be set to `thrift.ErrAbandonRequest`.
+
+When implementing Go Thrift server, you can take advantage of that to abandon
+requests that's no longer needed by returning `thrift.ErrAbandonRequest`:
 
     func MyEndpoint(ctx context.Context, req *thriftRequestType) (*thriftResponseType, error) {
         ...
         if ctx.Err() == context.Canceled {
             return nil, thrift.ErrAbandonRequest
+            // Or just return ctx.Err(), compiler generated processor code will
+            // handle it for you automatically:
+            // return nil, ctx.Err()
         }
         ...
     }
@@ -132,3 +138,27 @@ if this interval is set to a value too low (for example, 1ms), it might cause
 excessive cpu overhead.
 
 This feature is also only enabled on non-oneway endpoints.
+
+A note about server stop implementations
+========================================
+
+[TSimpleServer.Stop](https://pkg.go.dev/github.com/apache/thrift/lib/go/thrift#TSimpleServer.Stop) will wait for all client connections to be closed after 
+the last received request to be handled, as the time spent by Stop
+ may sometimes be too long:
+* When socket timeout is not set, server might be hanged before all active
+  clients to finish handling the last received request.
+* When the socket timeout is too long (e.g one hour), server will
+  hang for that duration before all active clients to finish handling the
+  last received request.
+
+To prevent Stop from hanging for too long, you can set 
+thrift.ServerStopTimeout in your main or init function:
+
+    thrift.ServerStopTimeout = <max_duration_to_stop>
+
+If it's set to <=0, the feature will be disabled (by default), and server 
+will wait for all the client connections to be closed gracefully with 
+zero err time. Otherwise, the stop will wait for all the client 
+connections to be closed gracefully util thrift.ServerStopTimeout is 
+reached, and client connections that are not closed after thrift.ServerStopTimeout 
+will be closed abruptly which may cause some client errors.

@@ -43,7 +43,7 @@ namespace Thrift.Transport.Server
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = TTlsSocketTransport.DefaultSslProtocols)
             : base(config)
         {
             if (!certificate.HasPrivateKey)
@@ -65,7 +65,7 @@ namespace Thrift.Transport.Server
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = TTlsSocketTransport.DefaultSslProtocols)
             : this(null, config, certificate, clientCertValidator, localCertificateSelectionCallback, sslProtocols)
         {
             try
@@ -139,7 +139,11 @@ namespace Thrift.Transport.Server
 
             try
             {
+                #if NET6_0_OR_GREATER
+                var client = await _server.AcceptTcpClientAsync(cancellationToken);
+                #else
                 var client = await _server.AcceptTcpClientAsync();
+                #endif
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert

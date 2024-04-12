@@ -256,6 +256,35 @@ class AbstractTest(unittest.TestCase):
         y = self.client.testMultiException('success', 'foobar')
         self.assertEqual(y.string_thing, 'foobar')
 
+    def testException__traceback__(self):
+        print('testException__traceback__')
+        self.client.testException('Safe')
+        expect_slots = uses_slots = False
+        expect_dynamic = uses_dynamic = False
+        try:
+            self.client.testException('Xception')
+            self.fail("should have gotten exception")
+        except Xception as x:
+            uses_slots = hasattr(x, '__slots__')
+            uses_dynamic = (not isinstance(x, TException))
+            # We set expected values here so that we get clean tracebackes when
+            # the assertions fail.
+            try:
+                x.__traceback__ = x.__traceback__
+                # If `__traceback__` was set without errors than we expect that
+                # the slots option was used and that dynamic classes were not.
+                expect_slots = True
+                expect_dynamic = False
+            except Exception as e:
+                self.assertTrue(isinstance(e, TypeError))
+                # There are no other meaningful tests we can preform because we
+                # are unable to determine the desired state of either `__slots__`
+                # or `dynamic`.
+                return
+
+        self.assertEqual(expect_slots, uses_slots)
+        self.assertEqual(expect_dynamic, uses_dynamic)
+
     def testOneway(self):
         print('testOneway')
         start = time.time()

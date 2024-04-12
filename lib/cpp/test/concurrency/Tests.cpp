@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
 
 #include "ThreadFactoryTests.h"
 #include "TimerManagerTests.h"
@@ -31,7 +32,7 @@ static int WEIGHT = 10;
 
 int main(int argc, char** argv) {
 
-  std::vector<std::string> args(argc - 1 > 1 ? argc - 1 : 1);
+  std::vector<std::string> args((argc - 1) > 1 ? (argc - 1) : 1);
 
   args[0] = "all";
 
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
 	  WEIGHT = 1;
   }
 
-  bool runAll = args[0].compare("all") == 0;
+  const bool runAll = args[0].compare("all") == 0;
 
   if (runAll || args[0].compare("thread-factory") == 0) {
 
@@ -52,10 +53,10 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadFactory tests..." << std::endl;
 
-    int reapLoops = 2 * WEIGHT;
-    int reapCount = 100 * WEIGHT;
-    size_t floodLoops = 3;
-    size_t floodCount = 500 * WEIGHT;
+    const int reapLoops = 2 * WEIGHT;
+    const int reapCount = 100 * WEIGHT;
+    const size_t floodLoops = 3;
+    const size_t floodCount = 500 * WEIGHT;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << reapLoops << "x" << reapCount << std::endl;
 

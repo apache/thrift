@@ -45,10 +45,6 @@ uses
   Thrift.WinHTTP,
   Thrift.Stream;
 
-const
-  DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024; // 100 MB
-  DEFAULT_THRIFT_TIMEOUT = 5 * 1000; // ms
-
 type
   IStreamTransport = interface;
 
@@ -600,7 +596,7 @@ end;
 procedure TEndpointTransportBase.CheckReadBytesAvailable( const numBytes : Int64);
 // Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
 begin
-  if RemainingMessageSize < numBytes
+  if (RemainingMessageSize < numBytes) or (numBytes < 0)
   then raise TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
 end;
 
@@ -608,7 +604,7 @@ end;
 procedure TEndpointTransportBase.CountConsumedMessageBytes( const numBytes : Int64);
 // Consumes numBytes from the RemainingMessageSize.
 begin
-  if (RemainingMessageSize >= numBytes)
+  if (RemainingMessageSize >= numBytes) and (numBytes >= 0)
   then Dec( FRemainingMessageSize, numBytes)
   else begin
     FRemainingMessageSize := 0;

@@ -127,7 +127,7 @@ begin
   Result.open('POST', FUri, False, '', '');
   Result.setRequestHeader( 'Content-Type', THRIFT_MIMETYPE);
   Result.setRequestHeader( 'Accept', THRIFT_MIMETYPE);
-  Result.setRequestHeader( 'User-Agent', 'Delphi/IHTTPClient');
+  Result.setRequestHeader( 'User-Agent', 'ApacheThriftDelphi/msxml');
 
   for pair in FCustomHeaders do begin
     Result.setRequestHeader( pair.Key, pair.Value );

@@ -78,7 +78,7 @@ empty :=
 space := $(empty) $(empty)
 comma := ,
 
-CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_NETSTD@ @MAYBE_NODETS@
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_NETSTD@ @MAYBE_NODETS@ @MAYBE_KOTLIN@ @MAYBE_SWIFT@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 if WITH_PY3
@@ -131,6 +131,9 @@ skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	.asf.yaml \
 	.clang-format \
@@ -141,6 +144,12 @@ EXTRA_DIST = \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
+	.github/dependabot.yml \
+	.github/pull_request_template.md \
+	.github/stale.yml \
+	.github/workflows/build.yml \
+	.github/workflows/cmake.yml \
+	.github/workflows/pypi.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
@@ -156,6 +165,7 @@ EXTRA_DIST = \
 	doap.rdf \
 	doc \
 	dub.json \
+	go.mod \
 	jitpack.yml \
 	LANGUAGES.md \
 	LICENSE \

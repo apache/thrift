@@ -28,6 +28,8 @@ import haxe.ds.GenericStack;
 import haxe.crypto.Base64;
 import haxe.Int64;
 
+import uuid.Uuid;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TField;
@@ -35,6 +37,7 @@ import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TList;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.helper.UuidHelper;
 
 
 
@@ -164,6 +167,10 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
         WriteJSONBase64(bin);
     }
 
+    public function writeUuid(uuid : String) : Void {
+		writeString( UuidHelper.CanonicalUuid(uuid)); 
+    }
+
     public function readMessageBegin():TMessage {
         var message : TMessage = new TMessage();
         ReadJSONArrayStart();
@@ -287,6 +294,10 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 
     public function readBinary() : Bytes {
         return ReadJSONBase64();
+    }
+
+    public function readUuid() : String {
+        return UuidHelper.CanonicalUuid( readString()); 
     }
 
     // Push a new JSON context onto the stack.
@@ -794,6 +805,7 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 			case TType.MAP: return 2;  // empty map
 			case TType.SET: return 2;  // empty set
 			case TType.LIST: return 2;  // empty list
+			case TType.UUID: return 36;  // "E236974D-F0B0-4E05-8F29-0B455D41B1A1"
 			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
 		}
 	}
@@ -892,6 +904,7 @@ class JSONConstants {
     public static var NAME_MAP    = 'map';
     public static var NAME_LIST   = 'lst';
     public static var NAME_SET    = 'set';
+	public static var NAME_UUID   = 'uid';
 
     public static function GetTypeNameForTypeID(typeID : Int) : String {
         switch (typeID)
@@ -907,6 +920,7 @@ class JSONConstants {
             case TType.MAP:         return NAME_MAP;
             case TType.SET:         return NAME_SET;
             case TType.LIST:     return NAME_LIST;
+            case TType.UUID:     return NAME_UUID;
         }
         throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
     }
@@ -922,7 +936,8 @@ class JSONConstants {
         NAME_STRUCT => TType.STRUCT,
         NAME_MAP    => TType.MAP,
         NAME_SET    => TType.SET,
-        NAME_LIST   => TType.LIST
+        NAME_LIST   => TType.LIST,
+		NAME_UUID   => TType.UUID
     ];
 
     public static function GetTypeIDForTypeName(name : String) : Int

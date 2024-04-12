@@ -243,7 +243,7 @@ func TestSerializer(t *testing.T) {
 
 func TestSerializerPoolAsync(t *testing.T) {
 	var wg sync.WaitGroup
-	var counter int64
+	var counter atomic.Int64
 	s := NewTSerializerPool(NewTSerializer)
 	d := NewTDeserializerPool(NewTDeserializer)
 	f := func(i int64) bool {
@@ -251,18 +251,20 @@ func TestSerializerPoolAsync(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			t.Run(
-				fmt.Sprintf("#%d-%d", atomic.AddInt64(&counter, 1), i),
+				fmt.Sprintf("#%d-%d", counter.Add(1), i),
 				func(t *testing.T) {
 					m := MyTestStruct{
 						Int64: i,
 					}
 					str, err := s.WriteString(context.Background(), &m)
 					if err != nil {
-						t.Fatal("serialize:", err)
+						t.Error("serialize:", err)
+						return
 					}
 					var m1 MyTestStruct
 					if err = d.ReadString(context.Background(), &m1, str); err != nil {
-						t.Fatal("deserialize:", err)
+						t.Error("deserialize:", err)
+						return
 
 					}
 

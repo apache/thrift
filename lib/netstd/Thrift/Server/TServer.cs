@@ -65,8 +65,7 @@ namespace Thrift.Server
         // Log delegation? deprecated, use ILogger 
         protected void LogError( string msg)
         {
-            if (Logger != null)
-                Logger.LogError("{Msg}",msg);  // NOTE: Log message template, not string interpolation!
+            Logger?.LogError("{Msg}",msg);  // NOTE: Log message template, not string interpolation!
         }
 
         public abstract void Stop();

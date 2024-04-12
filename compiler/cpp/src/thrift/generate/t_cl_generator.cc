@@ -72,6 +72,7 @@ class t_cl_generator : public t_oop_generator {
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_typedef     (t_typedef*  ttypedef) override;
   void generate_enum        (t_enum*     tenum) override;
@@ -550,6 +551,11 @@ string t_cl_generator::type_name(t_type* ttype) {
 
   return prefix + name;
 }
+
+std::string t_cl_generator::display_name() const {
+  return "Common Lisp";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     cl,

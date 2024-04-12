@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -35,6 +36,8 @@ use Thrift\Factory\TStringFuncFactory;
  */
 class TMemoryBuffer extends TTransport
 {
+    protected $buf_ = '';
+
     /**
      * Constructor. Optionally pass an initial value
      * for the buffer.
@@ -43,8 +46,6 @@ class TMemoryBuffer extends TTransport
     {
         $this->buf_ = $buf;
     }
-
-    protected $buf_ = '';
 
     public function isOpen()
     {

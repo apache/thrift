@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -822,7 +825,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
     throw TSSLException("SSL_get_?bio returned nullptr");
   }
 
-  if (BIO_get_fd(bio, &fdSocket) <= 0) {
+  if (BIO_get_fd(bio, &fdSocket) < 0) {
     throw TSSLException("BIO_get_fd failed");
   }
 

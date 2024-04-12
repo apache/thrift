@@ -34,6 +34,7 @@ var host = flag.String("host", "localhost", "Host to connect")
 var port = flag.Int64("port", 9090, "Port number to connect")
 var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/thrifttest.thrift), instead of host and port")
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
+var _ = flag.Bool("zlib", false, "For compatibility. Ignored.")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
 var testloops = flag.Int("testloops", 1, "Number of Tests")
@@ -137,6 +138,21 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		if binout[i] != bin[i] {
 			t.Fatalf("Unexpected TestBinary() result expected %d, got %d ", binout[i], bin[i])
 		}
+	}
+
+	uout := thrift.Tuuid{
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55,
+		0x66, 0x77,
+		0x88, 0x99,
+		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	}
+	u, err := client.TestUuid(defaultCtx, uout)
+	if err != nil {
+		t.Fatalf("TestUuid failed with %v", err)
+	}
+	if u != uout {
+		t.Fatalf("Unexpected TestUuid() result expected %v, got %v", uout, u)
 	}
 
 	xs := thrifttest.NewXtruct()

@@ -61,16 +61,15 @@ public:
     out_dir_base_ = "gen-ocaml";
   }
 
-  /**
-   * Init and close methods
-   */
+  ~t_ocaml_generator() override;
 
   void init_generator() override;
-  void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
    */
+
   void generate_program() override;
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
@@ -147,16 +146,20 @@ public:
    * Helper rendering functions
    */
 
-  std::string ocaml_autogen_comment();
+  /** Need to disable codegen comment for unit tests to be version-agnostic */
+  virtual std::string ocaml_autogen_comment();
+
   std::string ocaml_imports();
   std::string type_name(t_type* ttype);
+  std::string exception_ctor(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string function_type(t_function* tfunc, bool method = false, bool options = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string render_ocaml_type(t_type* type);
 
-private:
+// Need access to output file streams for testing.
+protected:
   /**
    * File streams
    */
@@ -216,9 +219,6 @@ void t_ocaml_generator::generate_program() {
   // Generate constants
   vector<t_const*> consts = program_->get_consts();
   generate_consts(consts);
-
-  // Close the generator
-  close_generator();
 }
 
 /**
@@ -262,12 +262,12 @@ string t_ocaml_generator::ocaml_imports() {
   return "open Thrift";
 }
 
-/**
- * Closes the type files
- */
-void t_ocaml_generator::close_generator() {
-  // Close types file
+t_ocaml_generator::~t_ocaml_generator() {
+  f_consts_.close();
   f_types_.close();
+  f_types_i_.close();
+  f_service_.close();
+  f_service_i_.close();
 }
 
 /**
@@ -914,10 +914,6 @@ void t_ocaml_generator::generate_service(t_service* tservice) {
   generate_service_interface(tservice);
   generate_service_client(tservice);
   generate_service_server(tservice);
-
-  // Close service file
-  f_service_.close();
-  f_service_i_.close();
 }
 
 /**
@@ -1108,7 +1104,7 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ << indent() << "(match result#get_" << (*x_iter)->get_name()
                    << " with None -> () | Some _v ->" << endl;
-        indent(f_service_) << "  raise (" << capitalize(type_name((*x_iter)->get_type()))
+        indent(f_service_) << "  raise (" << capitalize(exception_ctor((*x_iter)->get_type()))
                            << " _v));" << endl;
       }
 
@@ -1270,7 +1266,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice, t_functio
     indent(f_service_) << "with" << endl;
     indent_up();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << indent() << "| " << capitalize(type_name((*x_iter)->get_type())) << " "
+      f_service_ << indent() << "| " << capitalize(exception_ctor((*x_iter)->get_type())) << " "
                  << (*x_iter)->get_name() << " -> " << endl;
       indent_up();
       indent_up();
@@ -1673,6 +1669,18 @@ string t_ocaml_generator::type_name(t_type* ttype) {
   return prefix + name;
 }
 
+string t_ocaml_generator::exception_ctor(t_type* ttype) {
+  string prefix = "";
+  t_program* program = ttype->get_program();
+  if (program != nullptr && program != program_) {
+    if (!ttype->is_service()) {
+      prefix = capitalize(program->get_name()) + "_types.";
+    }
+  }
+
+  return prefix + capitalize(ttype->get_name());
+}
+
 /**
  * Converts the parse type to a Protocol.t_type enum
  */
@@ -1698,6 +1706,8 @@ string t_ocaml_generator::type_to_enum(t_type* type) {
       return "Protocol.T_I64";
     case t_base_type::TYPE_DOUBLE:
       return "Protocol.T_DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "Protocol.T_I32";
@@ -1739,6 +1749,8 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
       return "Int64.t";
     case t_base_type::TYPE_DOUBLE:
       return "float";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return capitalize(((t_enum*)type)->get_name()) + ".t";
@@ -1758,5 +1770,10 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_ocaml_generator::display_name() const {
+  return "OCaml";
+}
+
 
 THRIFT_REGISTER_GENERATOR(ocaml, "OCaml", "")

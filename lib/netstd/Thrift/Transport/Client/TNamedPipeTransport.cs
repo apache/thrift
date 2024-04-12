@@ -28,7 +28,7 @@ namespace Thrift.Transport.Client
     {
         private NamedPipeClientStream PipeStream;
         private readonly int ConnectTimeout;
-		private const int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;   // Timeout.Infinite is not a good default
+        private const int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;   // Timeout.Infinite is not a good default
 
         public TNamedPipeTransport(string pipe, TConfiguration config, int timeout = DEFAULT_CONNECT_TIMEOUT) 
             : this(".", pipe, config, timeout)
@@ -61,6 +61,8 @@ namespace Thrift.Transport.Client
         {
             if (PipeStream != null)
             {
+                if (PipeStream.IsConnected)
+                    PipeStream.Close();
                 PipeStream.Dispose();
                 PipeStream = null;
             }
@@ -74,10 +76,10 @@ namespace Thrift.Transport.Client
             }
 
             CheckReadBytesAvailable(length);
-#if NETSTANDARD2_0
-            var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
             var numRead = await PipeStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
+            var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
 #endif
             CountConsumedMessageBytes(numRead);
             return numRead;
@@ -96,10 +98,10 @@ namespace Thrift.Transport.Client
             var nBytes = Math.Min(15 * 4096, length); // 16 would exceed the limit
             while (nBytes > 0)
             {
-#if NETSTANDARD2_0
-                await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                 await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken);
+#else
+                await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
 #endif
                 offset += nBytes;
                 length -= nBytes;
@@ -107,20 +109,24 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
+            await PipeStream.FlushAsync(cancellationToken);
             ResetConsumedMessageSize();
-            return Task.CompletedTask;
         }
 
         
         protected override void Dispose(bool disposing)
         {
-            if(disposing) 
+            if (disposing)
             {
-              PipeStream?.Dispose();
+                if (PipeStream != null)
+                {
+                    if (PipeStream.IsConnected)
+                        PipeStream.Close();
+                    PipeStream.Dispose();
+                    PipeStream = null;
+                }
             }
         }
     }

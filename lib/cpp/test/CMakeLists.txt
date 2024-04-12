@@ -192,8 +192,8 @@ add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 set(AllProtocolsTest_SOURCES
     AllProtocolTests.cpp
     AllProtocolTests.tcc
-    GenericHelpers
-    )
+    GenericHelpers.h
+)
 
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
 target_link_libraries(AllProtocolsTest

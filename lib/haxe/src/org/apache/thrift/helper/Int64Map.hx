@@ -27,7 +27,7 @@ import haxe.ds.IntMap;
 // Int64Map allows mapping of Int64 keys to arbitrary values.
 // ObjectMap<> cannot be used, since we want to compare by value, not address
 
-class Int64Map<T> implements IMap< Int64, T> {
+class Int64Map<T> implements haxe.Constraints.IMap< Int64, T> {
 
     private var SubMaps : IntMap< IntMap< T>>;  // Hi -> Lo -> Value
 
@@ -141,7 +141,7 @@ class Int64Map<T> implements IMap< Int64, T> {
 		SubMaps.clear();
     }
 
-    public function copy() : IMap< Int64, T> {
+    public function copy() : haxe.Constraints.IMap< Int64, T> {
 		var retval = new Int64Map<T>();
 		for( key in this.keys())
 			retval.set( key, this.get(key));

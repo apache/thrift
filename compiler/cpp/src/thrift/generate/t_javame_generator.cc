@@ -67,6 +67,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -2869,6 +2870,8 @@ string t_javame_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
         break;
+      default:
+        throw "compiler error: unhandled type";
       }
 
     } else if (ttype->is_enum()) {
@@ -2951,6 +2954,8 @@ string t_javame_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType.I32";
@@ -3290,5 +3295,10 @@ void t_javame_generator::generate_java_struct_clear(std::ostream& out, t_struct*
 
   indent(out) << "}" << endl << endl;
 }
+
+std::string t_javame_generator::display_name() const {
+  return "Java ME";
+}
+
 
 THRIFT_REGISTER_GENERATOR(javame, "Java ME", "")

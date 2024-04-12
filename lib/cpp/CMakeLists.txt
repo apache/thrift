@@ -43,6 +43,7 @@ set(thriftcpp_SOURCES
    src/thrift/protocol/TJSONProtocol.cpp
    src/thrift/protocol/TMultiplexedProtocol.cpp
    src/thrift/protocol/TProtocol.cpp
+   src/thrift/protocol/TUuidUtils.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp
@@ -182,11 +183,17 @@ endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     target_link_libraries(thriftz PUBLIC thrift)
-    target_link_libraries(thriftz PUBLIC ${ZLIB_LIBRARIES})
+
+    if(TARGET ZLIB::ZLIB)
+        target_link_libraries(thriftz PUBLIC ZLIB::ZLIB)
+    else()
+        include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
+        target_link_libraries(thriftz PUBLIC ${ZLIB_LIBRARIES})
+    endif()
+
     ADD_PKGCONFIG_THRIFT(thrift-z)
 endif()
 

@@ -22,7 +22,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>Interfaces</AssemblyName>
     <PackageId>Interfaces</PackageId>
-    <Version>0.17.0.0</Version>
+    <Version>0.21.0.0</Version>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="6.2.0" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">

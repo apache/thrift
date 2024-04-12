@@ -104,6 +104,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -943,7 +944,12 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent() << "def " << function_signature(&recv_function) << endl;
       f_service_.indent_up();
 
-      // TODO(mcslee): Validate message reply here, seq ids etc.
+      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << endl;
+      f_service_.indent() << "handle_exception(mtype)" << endl;
+
+      f_service_.indent() << "if reply_seqid(rseqid)==false" << endl;
+      f_service_.indent() << "  raise \"seqid reply faild\"" << endl;
+      f_service_.indent() << "end" << endl;
 
       f_service_.indent() << "result = receive_message(" << resultname << ")" << endl;
 
@@ -1171,6 +1177,8 @@ string t_rb_generator::type_to_enum(t_type* type) {
       return "::Thrift::Types::I64";
     case t_base_type::TYPE_DOUBLE:
       return "::Thrift::Types::DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "::Thrift::Types::I32";
@@ -1280,6 +1288,11 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
   out.indent_down();
   out.indent() << "end" << endl << endl;
 }
+
+std::string t_rb_generator::display_name() const {
+  return "Ruby";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     rb,

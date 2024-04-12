@@ -21,6 +21,7 @@
 #define _THRIFT_PROTOCOL_TBINARYPROTOCOL_TCC_ 1
 
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TUuidUtils.hpp>
 #include <thrift/transport/TTransportException.h>
 
 #include <limits>
@@ -193,6 +194,20 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string
   return TBinaryProtocolT<Transport_, ByteOrder_>::writeString(str);
 }
 
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const std::string& str) {
+  std::string out;
+  const bool encoded = uuid_encode(str, out);
+  if(!encoded)
+    throw TProtocolException(TProtocolException::INVALID_DATA);
+  // This should not happen, but check for now
+  if(out.size() != 16)
+    throw TProtocolException(TProtocolException::UNKNOWN);
+  // TODO: Consider endian swapping, see lib/delphi/src/Thrift.Utils.pas:377
+  this->trans_->write((uint8_t*)out.data(), 16);
+  return 16;
+}
+
 /**
  * Reading functions
  */
@@ -286,7 +301,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
-  
+
   TMap map(keyType, valType, size);
   checkReadBytesAvailable(map);
 
@@ -429,6 +444,14 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) 
 }
 
 template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(std::string& str) {
+  std::string in;
+  readStringBody(in, 16);
+  uuid_decode(in, str);
+  return 16;
+}
+
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, int32_t size) {
   uint32_t result = 0;
@@ -448,9 +471,9 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, 
   }
 
   // Try to borrow first
-  const uint8_t* borrow_buf;
   uint32_t got = size;
-  if ((borrow_buf = this->trans_->borrow(nullptr, &got))) {
+  const uint8_t* borrow_buf = this->trans_->borrow(nullptr, &got);
+  if (borrow_buf) {
     str.assign((const char*)borrow_buf, size);
     this->trans_->consume(size);
     return size;

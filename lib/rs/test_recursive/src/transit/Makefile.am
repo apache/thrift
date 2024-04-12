@@ -34,7 +34,11 @@ clean-local:
 	-$(RM) trains.rs
 	-$(RM) transporters.rs
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
+	mod.rs \
 	Buses.thrift \
 	Trains.thrift \
 	Transporters.thrift

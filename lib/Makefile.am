@@ -36,6 +36,11 @@ PRECROSS_TARGET += precross-java
 SUBDIRS += js
 endif
 
+if WITH_KOTLIN
+SUBDIRS += kotlin
+PRECROSS_TARGET += precross-kotlin
+endif
+
 if WITH_PYTHON
 SUBDIRS += py
 endif
@@ -97,6 +102,9 @@ endif
 
 # All of the libs that don't use Automake need to go in here
 # so they will end up in our release tarballs.
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	d \
 	dart \

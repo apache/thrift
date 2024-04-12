@@ -69,6 +69,9 @@ check: $(BIN_CPP) $(BIN_PHP)
 	$(BIN_CPP)
 	php -f $(BIN_PHP)
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
              src \
              cpp.hxml \

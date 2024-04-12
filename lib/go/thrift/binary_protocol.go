@@ -130,7 +130,6 @@ func (p *TBinaryProtocol) WriteMessageBegin(ctx context.Context, name string, ty
 		e = p.WriteI32(ctx, seqId)
 		return e
 	}
-	return nil
 }
 
 func (p *TBinaryProtocol) WriteMessageEnd(ctx context.Context) error {
@@ -258,6 +257,11 @@ func (p *TBinaryProtocol) WriteBinary(ctx context.Context, value []byte) error {
 		return e
 	}
 	_, err := p.trans.Write(value)
+	return NewTProtocolException(err)
+}
+
+func (p *TBinaryProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	_, err := p.trans.Write(value[:])
 	return NewTProtocolException(err)
 }
 
@@ -487,6 +491,15 @@ func (p *TBinaryProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
 
 	buf, err := safeReadBytes(size, p.trans)
 	return buf, NewTProtocolException(err)
+}
+
+func (p *TBinaryProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	buf := p.buffer[0:16]
+	err = p.readAll(ctx, buf)
+	if err == nil {
+		copy(value[:], buf)
+	}
+	return value, err
 }
 
 func (p *TBinaryProtocol) Flush(ctx context.Context) (err error) {

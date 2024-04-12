@@ -62,7 +62,7 @@ public:
     validate_ = false;
     json_serializable_ = false;
     getters_setters_ = false;
-	    
+        
     nsglobal_ = ""; // by default global namespace is empty
     classmap_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
@@ -99,6 +99,7 @@ public:
       throw "oop and inlined are mutually exclusive.";
     }
 
+    update_keywords_for_validation();
     out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
     escape_['$'] = "\\$";
   }
@@ -115,6 +116,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -128,6 +130,7 @@ public:
   void generate_service(t_service* tservice) override;
 
   std::string render_const_value(t_type* type, t_const_value* value);
+  std::set<std::string> lang_keywords_for_validation() const override;
 
   /**
    * Structs!
@@ -417,6 +420,22 @@ private:
    */
   bool getters_setters_;
 };
+
+std::set<std::string> t_php_generator::lang_keywords_for_validation() const {
+  std::string keywords[] = { "BEGIN", "END", "__CLASS__", "__DIR__", "__FILE__", "__FUNCTION__",
+      "__LINE__", "__METHOD__", "__NAMESPACE__", "abstract", "alias", "and", "args", "as",
+      "assert", "begin", "break", "case", "catch", "class", "clone", "continue", "declare",
+      "def", "default", "del", "delete", "do", "dynamic", "elif", "else", "elseif", "elsif",
+      "end", "enddeclare", "endfor", "endforeach", "endif", "endswitch", "endwhile", "ensure",
+      "except", "exec", "finally", "float", "for", "foreach", "from", "function", "global",
+      "goto", "if", "implements", "import", "in", "inline", "instanceof", "interface", "is",
+      "lambda", "module", "native", "new", "next", "nil", "not", "or", "package", "pass",
+      "public", "print", "private", "protected", "raise", "redo", "rescue", "retry", "register",
+      "return", "self", "sizeof", "static", "super", "switch", "synchronized", "then", "this",
+      "throw", "transient", "try", "undef", "unless", "unsigned", "until", "use", "var",
+      "virtual", "volatile", "when", "while", "with", "xor", "yield" };
+  return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+}
 
 bool t_php_generator::is_valid_namespace(const std::string& sub_namespace) {
   return sub_namespace == "path";
@@ -874,8 +893,8 @@ void t_php_generator::generate_reflection_getters(ostringstream& out,
  * Generates a setter for the generated private fields
  */
 void t_php_generator::generate_reflection_setters(ostringstream& out,
-						  string field_name,
-						  string cap_name) {
+                          string field_name,
+                          string cap_name) {
 
   out << indent() << "public function set" << cap_name << "(" << "$" << field_name << ")" << endl
       << indent() << "{" << endl;
@@ -1266,6 +1285,7 @@ void t_php_generator::generate_php_struct_required_validator(ostream& out,
 void t_php_generator::generate_php_struct_json_serialize(ostream& out,
                                                          t_struct* tstruct,
                                                          bool is_result) {
+  indent(out) << "#[\\ReturnTypeWillChange]" << endl;                                                          
   indent(out) << "public function jsonSerialize() {" << endl;
   indent_up();
 
@@ -1785,10 +1805,12 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? "
                    << cast << req << " : null;" << endl;
       }
+      /* slist no longer supported
       if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = explode(',', $"
                        << (*a_iter)->get_name() << ");" << endl;
-      } else if (atype->is_map() || atype->is_list()) {
+      } else */
+      if (atype->is_map() || atype->is_list()) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = json_decode($"
                        << (*a_iter)->get_name() << ", true);" << endl;
       } else if (atype->is_set()) {
@@ -2796,6 +2818,8 @@ string t_php_generator::type_to_enum(t_type* type) {
       return "TType::I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType::DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType::I32";
@@ -2837,6 +2861,8 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
       return "int";
     case t_base_type::TYPE_DOUBLE:
       return "double";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "int";
@@ -2864,6 +2890,11 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_php_generator::display_name() const {
+  return "PHP";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     php,

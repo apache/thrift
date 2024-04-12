@@ -24,60 +24,91 @@
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
--include("thrift_protocol_behaviour.hrl").
+-export([
+    new/2,
+    read/2,
+    write/2,
+    flush_transport/1,
+    close_transport/1
+]).
 
--export([new/2,
-         read/2,
-         write/2,
-         flush_transport/1,
-         close_transport/1
-        ]).
-
--record(protocol, {module, data}).
+-record(protocol, {
+    module :: module(),
+    data :: term()
+}).
 -type protocol() :: #protocol{}.
 
--record (multiplexed_protocol, {protocol_module_to_decorate::atom(),
-								protocol_data_to_decorate::term(),
-								service_name::nonempty_string()}).
+-record(multiplexed_protocol, {
+    protocol_module_to_decorate :: atom(),
+    protocol_data_to_decorate :: term(),
+    service_name :: nonempty_string()
+}).
 
--type state() :: #multiplexed_protocol{}.
-
--spec new(ProtocolToDecorate::protocol(), ServiceName::nonempty_string()) -> {ok, Protocol::protocol()}.
-new(ProtocolToDecorate, ServiceName) when is_record(ProtocolToDecorate, protocol),
-                                          is_list(ServiceName) ->
-    State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolToDecorate#protocol.module,
-                                    protocol_data_to_decorate = ProtocolToDecorate#protocol.data,
-                                                 service_name = ServiceName},
+-spec new(ProtocolToDecorate :: protocol(), ServiceName :: nonempty_string()) ->
+    {ok, Protocol :: protocol()}.
+new(ProtocolToDecorate, ServiceName) when
+    is_record(ProtocolToDecorate, protocol),
+    is_list(ServiceName)
+->
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolToDecorate#protocol.module,
+        protocol_data_to_decorate = ProtocolToDecorate#protocol.data,
+        service_name = ServiceName
+    },
     thrift_protocol:new(?MODULE, State).
 
-flush_transport(State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolModuleToDecorate,
-                                                protocol_data_to_decorate = State0}) ->
+flush_transport(
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolModuleToDecorate,
+        protocol_data_to_decorate = State0
+    }
+) ->
     {State1, ok} = ProtocolModuleToDecorate:flush_transport(State0),
     {State#multiplexed_protocol{protocol_data_to_decorate = State1}, ok}.
 
-close_transport(State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolModuleToDecorate,
-                                                protocol_data_to_decorate = State0}) ->
+close_transport(
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolModuleToDecorate,
+        protocol_data_to_decorate = State0
+    }
+) ->
     {State1, ok} = ProtocolModuleToDecorate:close_transport(State0),
     {State#multiplexed_protocol{protocol_data_to_decorate = State1}, ok}.
 
-write(State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolModuleToDecorate,
-                                      protocol_data_to_decorate = State0,
-                                                   service_name = ServiceName},
-      Message = #protocol_message_begin{name = Name}) ->
-    {State1, ok} = ProtocolModuleToDecorate:write(State0,
-                                                  Message#protocol_message_begin{name=ServiceName ++
-                                                                                      ?MULTIPLEXED_SERVICE_SEPARATOR ++
-                                                                                      Name}),
+write(
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolModuleToDecorate,
+        protocol_data_to_decorate = State0,
+        service_name = ServiceName
+    },
+    Message = #protocol_message_begin{name = Name}
+) ->
+    {State1, ok} = ProtocolModuleToDecorate:write(
+        State0,
+        Message#protocol_message_begin{
+            name =
+                ServiceName ++
+                    ?MULTIPLEXED_SERVICE_SEPARATOR ++
+                    Name
+        }
+    ),
     {State#multiplexed_protocol{protocol_data_to_decorate = State1}, ok};
-
-write(State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolModuleToDecorate,
-                                      protocol_data_to_decorate = State0},
-      Message) ->
+write(
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolModuleToDecorate,
+        protocol_data_to_decorate = State0
+    },
+    Message
+) ->
     {State1, ok} = ProtocolModuleToDecorate:write(State0, Message),
     {State#multiplexed_protocol{protocol_data_to_decorate = State1}, ok}.
 
-read(State = #multiplexed_protocol{protocol_module_to_decorate = ProtocolModuleToDecorate,
-                                     protocol_data_to_decorate = State0},
-     Message) ->
+read(
+    State = #multiplexed_protocol{
+        protocol_module_to_decorate = ProtocolModuleToDecorate,
+        protocol_data_to_decorate = State0
+    },
+    Message
+) ->
     {State1, Result} = ProtocolModuleToDecorate:read(State0, Message),
     {State#multiplexed_protocol{protocol_data_to_decorate = State1}, Result}.

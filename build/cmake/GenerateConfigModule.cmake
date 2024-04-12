@@ -41,4 +41,8 @@ if (NOT CYGWIN)
 		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ThriftConfig.cmake"
 						"${CMAKE_CURRENT_BINARY_DIR}/ThriftConfigVersion.cmake"
 						DESTINATION "${CMAKE_INSTALL_DIR}/thrift")
+        if(WITH_LIBEVENT)
+            install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/FindLibevent.cmake"
+                            DESTINATION "${CMAKE_INSTALL_DIR}/thrift")
+        endif()
 endif()

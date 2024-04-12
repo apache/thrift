@@ -73,6 +73,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -1037,6 +1038,8 @@ string t_st_generator::type_to_enum(t_type* type) {
       return "TType i64";
     case t_base_type::TYPE_DOUBLE:
       return "TType double";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType i32";
@@ -1052,5 +1055,10 @@ string t_st_generator::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_st_generator::display_name() const {
+  return "Smalltalk";
+}
+
 
 THRIFT_REGISTER_GENERATOR(st, "Smalltalk", "")

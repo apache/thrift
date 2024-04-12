@@ -96,26 +96,21 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
 
     // throw away our socket
     CFSocketInvalidate(sock)
-
-    // register for notifications of accepted incoming connections
-    _ = NotificationCenter.default.addObserver(forName: .NSFileHandleConnectionAccepted,
-                                               object: nil, queue: nil) {
-                                                [weak self] notification in
-                                                guard let strongSelf = self else { return }
-                                                guard let clientSocket = notification.userInfo?[NSFileHandleNotificationFileHandleItem] as? FileHandle else { return }
-                                                strongSelf.connectionAccepted(clientSocket)
-    }
-
-    // tell socket to listen
-    socketFileHandle.acceptConnectionInBackgroundAndNotify()
-
+    
     print("TSocketServer: Listening on TCP port \(port)")
+    
+    // tell socket to listen
+    acceptConnectionInBackgroundAndNotify(handle: socketFileHandle)
   }
-
-  deinit {
-    NotificationCenter.default.removeObserver(self)
+  
+  private func acceptConnectionInBackgroundAndNotify(handle: FileHandle) {
+    DispatchQueue(label: "TSocketServer.connectionAccept").async {
+      let acceptedFD = accept(handle.fileDescriptor, nil, nil)
+      DispatchQueue.main.async {
+        self.connectionAccepted(FileHandle(fileDescriptor: acceptedFD))
+      }
+    }
   }
-
   func connectionAccepted(_ clientSocket: FileHandle) {
     // Now that we have a client connected, handle the request on queue
     processingQueue.async {
@@ -123,7 +118,7 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
     }
 
     // continue accepting connections
-    socketFileHandle.acceptConnectionInBackgroundAndNotify()
+    acceptConnectionInBackgroundAndNotify(handle: socketFileHandle)
   }
 
   open func createTransport(fileHandle: FileHandle) -> TTransport {
@@ -145,7 +140,7 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
     DispatchQueue.main.async {
       NotificationCenter.default
         .post(name: Notification.Name(rawValue: TSocketServerClientConnectionFinished),
-              object: self,
+              object: nil,
               userInfo: [TSocketServerProcessorKey: self.processor,
                          TSocketServerTransportKey: transport])
     }

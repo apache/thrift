@@ -52,6 +52,7 @@ const (
 	COMPACT_SET           = 0x0A
 	COMPACT_MAP           = 0x0B
 	COMPACT_STRUCT        = 0x0C
+	COMPACT_UUID          = 0x0D
 )
 
 var (
@@ -72,6 +73,7 @@ func init() {
 		SET:    COMPACT_SET,
 		MAP:    COMPACT_MAP,
 		STRUCT: COMPACT_STRUCT,
+		UUID:   COMPACT_UUID,
 	}
 }
 
@@ -354,6 +356,12 @@ func (p *TCompactProtocol) WriteBinary(ctx context.Context, bin []byte) error {
 	return nil
 }
 
+// Write a Tuuid to the wire as 16 bytes.
+func (p *TCompactProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	_, err := p.trans.Write(value[:])
+	return NewTProtocolException(err)
+}
+
 //
 // Reading methods.
 //
@@ -516,7 +524,7 @@ func (p *TCompactProtocol) ReadListBegin(ctx context.Context) (elemType TType, s
 		}
 		size = int(size2)
 	}
-	err = checkSizeForProtocol(size32, p.cfg)
+	err = checkSizeForProtocol(int32(size), p.cfg)
 	if err != nil {
 		return
 	}
@@ -637,6 +645,16 @@ func (p *TCompactProtocol) ReadBinary(ctx context.Context) (value []byte, err er
 
 	buf, e := safeReadBytes(length, p.trans)
 	return buf, NewTProtocolException(e)
+}
+
+// Read fixed 16 bytes as UUID.
+func (p *TCompactProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	buf := p.buffer[0:16]
+	_, e := io.ReadFull(p.trans, buf)
+	if e == nil {
+		copy(value[:], buf)
+	}
+	return value, NewTProtocolException(e)
 }
 
 func (p *TCompactProtocol) Flush(ctx context.Context) (err error) {
@@ -825,6 +843,8 @@ func (p *TCompactProtocol) getTType(t tCompactType) (TType, error) {
 		return MAP, nil
 	case COMPACT_STRUCT:
 		return STRUCT, nil
+	case COMPACT_UUID:
+		return UUID, nil
 	}
 	return STOP, NewTProtocolException(fmt.Errorf("don't know what type: %v", t&0x0f))
 }

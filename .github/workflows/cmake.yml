@@ -1,0 +1,40 @@
+name: 'Build with CMake'
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+env:
+  BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
+
+permissions:
+  contents: read
+
+jobs:
+  compiler:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
+      - name: Generate makefile using CMake
+        run: |
+          mkdir cmake_build
+          cd cmake_build
+          cmake .. -DBUILD_LIBRARIES=OFF
+
+      - name: Run make
+        run: |
+          cd cmake_build
+          cmake --build .
+
+      - name: Run test
+        run: |
+          cd cmake_build
+          ctest -j$(nproc)

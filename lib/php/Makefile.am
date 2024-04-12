@@ -64,7 +64,9 @@ phpfactory_DATA = \
 	lib/Factory/TJSONProtocolFactory.php \
 	lib/Factory/TProtocolFactory.php \
 	lib/Factory/TStringFuncFactory.php \
+	lib/Factory/TTransportFactoryInterface.php
 	lib/Factory/TTransportFactory.php
+	lib/Factory/TFramedTransportFactory.php
 
 phpprotocoldir = $(phpdir)/Protocol
 phpprotocol_DATA = \
@@ -132,6 +134,8 @@ phptype_DATA = \
 clean-local:
 	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) clean; fi
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	lib \
@@ -140,23 +144,15 @@ EXTRA_DIST = \
 	src/ext/thrift_protocol/config.w32 \
 	src/ext/thrift_protocol/php_thrift_protocol.cpp \
 	src/ext/thrift_protocol/php_thrift_protocol.h \
+	src/ext/thrift_protocol/php_thrift_protocol.stub.php \
+	src/ext/thrift_protocol/php_thrift_protocol_arginfo.h \
 	src/Thrift.php \
 	src/TStringUtils.php \
 	coding_standards.md \
 	thrift_protocol.ini \
 	README.apache.md \
 	README.md \
-	test/Fixtures.php \
-	test/TestValidators.thrift \
-	test/JsonSerialize/JsonSerializeTest.php \
-	test/Protocol/BinarySerializerTest.php \
-	test/Protocol/TJSONProtocolFixtures.php \
-	test/Protocol/TJSONProtocolTest.php \
-	test/Protocol/TSimpleJSONProtocolFixtures.php \
-	test/Protocol/TSimpleJSONProtocolTest.php \
-	test/Validator/BaseValidatorTest.php \
-	test/Validator/ValidatorTest.php \
-	test/Validator/ValidatorTestOop.php
+	test
 
 
 MAINTAINERCLEANFILES = \
