@@ -1613,7 +1613,7 @@ void t_kotlin_generator::generate_service_processor(t_service* tservice) {
                  "org.apache.thrift.AsyncProcessFunction<"
               << tservice->get_name()
               << ", out org.apache.thrift.TBase<*, "
-                 "*>, out kotlin.Any>> = mapOf("
+                 "*>, out kotlin.Any, out org.apache.thrift.TBase<*, *>>> = mapOf("
               << '\n';
   indent_up();
   {
