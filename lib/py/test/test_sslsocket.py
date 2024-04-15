@@ -19,6 +19,7 @@
 
 import inspect
 import logging
+import time
 import os
 import platform
 import ssl
@@ -76,7 +77,9 @@ class ServerAcceptor(threading.Thread):
         try:
             self._client = self._server.accept()
             if self._client:
-                self._client.read(5)  # hello
+                data = self._client.read(5)  # hello/sleep
+                if data == b"sleep":
+                    time.sleep(2)
                 self._client.write(b"there")
         except Exception:
             logging.exception('error on server side (%s):' % self.name)
