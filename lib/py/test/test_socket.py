@@ -11,6 +11,24 @@ from thrift.transport.TTransport import TTransportException
 
 
 class TSocketTest(unittest.TestCase):
+    def test_socket_readtimeout_exception(self):
+        acc = ServerAcceptor(TServerSocket(port=0))
+        acc.start()
+
+        sock = TSocket(host="localhost", port=acc.port)
+        sock.open()
+        sock.setTimeout(1)
+        sock.write(b"sleep")
+
+        with self.assertRaises(TTransportException) as ctx:
+            sock.read(5)
+        exc = ctx.exception
+        self.assertEqual(exc.message, "read timeout")
+
+        acc.client.close() # this also blocks until the other thread is done
+        acc.close()
+        sock.close()
+
     def test_isOpen_checks_for_readability(self):
         # https://docs.python.org/3/library/socket.html#notes-on-socket-timeouts
         # https://docs.python.org/3/library/socket.html#socket.socket.settimeout

@@ -151,6 +151,8 @@ class TSocket(TSocketBase):
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
+        except socket.timeout as e:
+            raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
                     (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
@@ -161,8 +163,6 @@ class TSocket(TSocketBase):
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
                 buff = ''
-            elif e.args[0] == errno.ETIMEDOUT:
-                raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
