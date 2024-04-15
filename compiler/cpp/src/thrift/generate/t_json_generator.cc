@@ -535,7 +535,7 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
 }
 
 string t_json_generator::json_str(const string& str) {
-  return string("\"") + escape_json_string(str) + string("\n");
+  return string("\"") + escape_json_string(str) + string("\"");
 }
 
 void t_json_generator::generate_constant(t_const* con) {
