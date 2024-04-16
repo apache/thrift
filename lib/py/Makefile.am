@@ -45,7 +45,7 @@ all-local: py3-build
 # Old version (can't put inline because it's not portable).
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
-	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
+	$(PYTHON) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
 check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
