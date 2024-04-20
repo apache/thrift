@@ -16,10 +16,14 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO.Pipes;
+using System.Linq;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
+using Thrift.Protocol;
 
 namespace Thrift.Transport.Client
 {
@@ -127,6 +131,33 @@ namespace Thrift.Transport.Client
                     PipeStream.Dispose();
                     PipeStream = null;
                 }
+            }
+        }
+
+        internal class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                // connection is simply the pipe name
+                var server = connection.First().Key;
+
+                // name can be '\\ServerName\pipe\PipeName' or 'PipeName'
+                // note that PipeName can have backslashes as well
+                string sServer, sPipe;
+                if (server.StartsWith("\\\\"))
+                {
+                    var pieces = server.Substring(2).Split('\\');
+                    if ((pieces.Length < 3) || (pieces[1] != "pipe"))
+                        throw new TTransportException(TTransportException.ExceptionType.Unknown, "Invalid pipe name");
+                    sServer = pieces[0];
+                    sPipe = string.Join("\\", pieces.Skip(2).ToArray());
+                }
+                else
+                {
+                    sServer = ".";
+                    sPipe = server;
+                }
+                return new TNamedPipeTransport(sServer, sPipe, config);
             }
         }
     }

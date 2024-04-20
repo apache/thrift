@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
@@ -282,6 +283,17 @@ namespace Thrift.Transport.Client
             }
         }
 
+        new internal class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                var sHost = connection["host"];
+                var sPort = connection["port"];
+                var sCert = connection["cert"];
+                var certificate = new X509Certificate2(sCert);
+                return new TTlsSocketTransport(sHost, int.Parse(sPort), config, 0, certificate);
+            }
+        }
 
     }
 }

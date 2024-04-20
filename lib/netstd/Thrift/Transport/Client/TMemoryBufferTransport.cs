@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -173,6 +174,15 @@ namespace Thrift.Transport.Client
                 }
             }
             IsDisposed = true;
+        }
+
+        internal class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                Debug.Assert((connection?.Count ?? 0) == 0);  // unused data
+                return new TMemoryBufferTransport(config);
+            }
         }
     }
 }

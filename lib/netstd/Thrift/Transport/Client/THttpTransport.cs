@@ -293,5 +293,15 @@ namespace Thrift.Transport.Client
             }
             _isDisposed = true;
         }
+
+        public class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                // connection is simply the server name
+                var server = connection.First().Key;
+                return new THttpTransport(new Uri(server), config);
+            }
+        }
     }
 }

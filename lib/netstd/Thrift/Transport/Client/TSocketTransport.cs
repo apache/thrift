@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -224,6 +225,16 @@ namespace Thrift.Transport.Client
                 }
             }
             _isDisposed = true;
+        }
+
+        new internal class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                var sHost = connection["host"];
+                var sPort = connection["port"];
+                return new TSocketTransport(sHost, int.Parse(sPort), config);
+            }
         }
     }
 }

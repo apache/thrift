@@ -16,9 +16,12 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Thrift.Protocol;
 
 namespace Thrift.Transport.Client
 {
@@ -122,6 +125,27 @@ namespace Thrift.Transport.Client
                 }
             }
             _isDisposed = true;
+        }
+
+        internal class Factory : TEndpointTransportFactory
+        {
+            public override TEndpointTransport GetTransport(TConfiguration config, Dictionary<string, string> connection)
+            {
+                // optionally we can pass in a file name for read/write
+                Stream input = null;
+                Stream output = null;
+
+                if (connection != null)
+                {
+                    if (connection.TryGetValue("infile", out var sValue))
+                        input = new FileStream(sValue, FileMode.Open, FileAccess.Read);
+
+                    if (connection.TryGetValue("outfile", out sValue))
+                        output = new FileStream(sValue, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                }
+
+                return new TStreamTransport(input, output, config);
+            }
         }
     }
 }
