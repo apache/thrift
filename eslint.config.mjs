@@ -24,7 +24,7 @@ export default [
         ...globals.node,
       },
 
-      ecmaVersion: 2017,
+      ecmaVersion: 2022,
       sourceType: "commonjs",
     },
 
@@ -39,6 +39,12 @@ export default [
           checkLoops: false,
         },
       ],
+    },
+  },
+  {
+    files: ["**/*.mjs"],
+    languageOptions: {
+      sourceType: "module",
     },
   },
 ];
