@@ -68,6 +68,7 @@ public:
     gen_jquery_ = false;
     gen_ts_ = false;
     gen_es6_ = false;
+    gen_esm_ = false;
     gen_episode_file_ = false;
 
     bool with_ns_ = false;
@@ -83,6 +84,8 @@ public:
         with_ns_ = true;
       } else if( iter->first.compare("es6") == 0) {
         gen_es6_ = true;
+      } else if ( iter->first.compare("esm") == 0) {
+        gen_esm_ = true;
       } else if( iter->first.compare("imports") == 0) {
         parse_imports(program, iter->second);
       } else if (iter->first.compare("thrift_package_output_directory") == 0) {
@@ -103,6 +106,10 @@ public:
 
     if (!gen_node_ && with_ns_) {
       throw std::invalid_argument("invalid switch: [-gen js:with_ns] is only valid when using node.js");
+    }
+
+    if (!gen_node_ && gen_esm_) {
+      throw std::invalid_argument("invalid switch: [-gen js:esm] is only valid when using node.js");
     }
 
     // Depending on the processing flags, we will update these to be ES6 compatible
@@ -278,13 +285,6 @@ public:
     return js_namespace(p);
   }
 
-  std::string js_export_namespace(t_program* p) {
-    if (gen_node_) {
-      return "exports.";
-    }
-    return js_namespace(p);
-  }
-
   bool has_js_namespace(t_program* p) {
     if (no_ns_) {
       return false;
@@ -375,6 +375,11 @@ private:
   bool gen_es6_;
 
   /**
+   * True if we should generate ES modules, instead of CommonJS.
+   */
+  bool gen_esm_;
+
+  /**
    * True if we will generate an episode file.
    */
   bool gen_episode_file_;
@@ -452,7 +457,7 @@ void t_js_generator::init_generator() {
     f_episode_.open(f_episode_file_path);
   }
 
-  const auto f_types_name = outdir + program_->get_name() + "_types.js";
+  const auto f_types_name = outdir + program_->get_name() + "_types" + (gen_esm_ ? ".mjs" : ".js");
   f_types_.open(f_types_name.c_str());
   if (gen_episode_file_) {
     const auto types_module = program_->get_name() + "_types";
@@ -478,7 +483,13 @@ void t_js_generator::init_generator() {
   }
 
   if (gen_node_) {
-    f_types_ << js_const_type_ << "ttypes = module.exports = {};" << '\n';
+    if (gen_esm_) {
+      // Import the current module, so we can reference it as ttypes. This is
+      // fine in ESM, because it allows circular imports.
+      f_types_ << "import * as ttypes from './" + program_->get_name() + "_types.mjs';" << '\n';
+    } else {
+      f_types_ << js_const_type_ << "ttypes = module.exports = {};" << '\n';
+    }
   }
 
   string pns;
@@ -507,12 +518,26 @@ void t_js_generator::init_generator() {
  */
 string t_js_generator::js_includes() {
   if (gen_node_) {
-    string result = js_const_type_ + "thrift = require('thrift');\n"
-        + js_const_type_ + "Thrift = thrift.Thrift;\n";
-    if (!gen_es6_) {
-      result += js_const_type_ + "Q = thrift.Q;\n";
+    string result;
+    
+    if (gen_esm_) {
+      result += "import { Thrift } from 'thrift';\n";
+    } else {
+      result += js_const_type_ + "thrift = require('thrift');\n"
+          + js_const_type_ + "Thrift = thrift.Thrift;\n";
     }
-    result += js_const_type_ + "Int64 = require('node-int64');\n";
+    if (!gen_es6_) {
+      if (gen_esm_) {
+        result += "import { Q } from 'thrift';\n";
+      } else {
+        result += js_const_type_ + "Q = thrift.Q;\n";
+      }
+    }
+    if (gen_esm_) {
+      result += "import Int64 from 'node-int64';";
+    } else {
+      result += js_const_type_ + "Int64 = require('node-int64');\n";
+    }
     return result;
   }
   string result = "if (typeof Int64 === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "Int64 = require('node-int64');\n}\n";
@@ -556,7 +581,11 @@ string t_js_generator::render_includes() {
   if (gen_node_) {
     const vector<t_program*>& includes = program_->get_includes();
     for (auto include : includes) {
-      result += js_const_type_ + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes = require('" + get_import_path(include) + "');\n";
+      if (gen_esm_) {
+        result += "import * as " + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes from '" + get_import_path(include) + "';\n";
+      } else {
+        result += js_const_type_ + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes = require('" + get_import_path(include) + "');\n";
+      }
     }
     if (includes.size() > 0) {
       result += "\n";
@@ -590,17 +619,17 @@ string t_js_generator::render_ts_includes() {
 
 string t_js_generator::get_import_path(t_program* program) {
   const string import_file_name(program->get_name() + "_types");
+  const string import_file_name_with_extension = import_file_name + (gen_esm_ ? ".mjs" : ".js");
+
   if (program->get_recursive()) {
-    return "./" + import_file_name;
+    return "./" + import_file_name_with_extension;
   }
 
-  const string import_file_name_with_extension = import_file_name + ".js";
-
-    auto module_name_and_import_path_iterator = module_name_2_import_path.find(import_file_name);
-    if (module_name_and_import_path_iterator != module_name_2_import_path.end()) {
-      return module_name_and_import_path_iterator->second;
-    }
-    return "./" + import_file_name;
+  auto module_name_and_import_path_iterator = module_name_2_import_path.find(import_file_name);
+  if (module_name_and_import_path_iterator != module_name_2_import_path.end()) {
+    return module_name_and_import_path_iterator->second;
+  }
+  return "./" + import_file_name_with_extension;
 }
 
 /**
@@ -638,7 +667,11 @@ void t_js_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_js_generator::generate_enum(t_enum* tenum) {
-  f_types_ << js_type_namespace(tenum->get_program()) << tenum->get_name() << " = {" << '\n';
+  if (gen_esm_) {
+    f_types_ << "export const " << tenum->get_name() << " = {" << '\n';
+  } else {
+    f_types_ << js_type_namespace(tenum->get_program()) << tenum->get_name() << " = {" << '\n';
+  }
 
   if (gen_ts_) {
     f_types_ts_ << ts_print_doc(tenum) << ts_indent() << ts_declare() << "enum "
@@ -680,7 +713,11 @@ void t_js_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_types_ << js_type_namespace(program_) << name << " = ";
+  if (gen_esm_) {
+    f_types_ << "export const " << name << " = ";
+  } else {
+    f_types_ << js_type_namespace(program_) << name << " = ";
+  }
   f_types_ << render_const_value(type, value) << ";" << '\n';
 
   if (gen_ts_) {
@@ -859,9 +896,18 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
   vector<t_field*>::const_iterator m_iter;
 
   if (gen_node_) {
+    string commonjs_export = "";
+
+    if (is_exported) {
+      if (gen_esm_) {
+        out << "export ";
+      } else {
+        commonjs_export = " = module.exports." + tstruct->get_name();
+      }
+    }
+
     string prefix = has_js_namespace(tstruct->get_program()) ? js_namespace(tstruct->get_program()) : js_const_type_;
-    out << prefix << tstruct->get_name() <<
-      (is_exported ? " = module.exports." + tstruct->get_name() : "");
+    out << prefix << tstruct->get_name() << commonjs_export;
     if (gen_ts_) {
       f_types_ts_ << ts_print_doc(tstruct) << ts_indent() << ts_declare() << "class "
                   << tstruct->get_name() << (is_exception ? " extends Thrift.TException" : "")
@@ -1198,7 +1244,7 @@ void t_js_generator::generate_js_struct_writer(ostream& out, t_struct* tstruct) 
  * @param tservice The service definition
  */
 void t_js_generator::generate_service(t_service* tservice) {
-  string f_service_name = get_out_dir() + service_name_ + ".js";
+  string f_service_name = get_out_dir() + service_name_ + (gen_esm_ ? ".mjs" : ".js");
   f_service_.open(f_service_name.c_str());
   if (gen_episode_file_) {
     f_episode_ << service_name_ << ":" << thrift_package_output_directory_ << "/" << service_name_ << '\n';
@@ -1282,7 +1328,11 @@ void t_js_generator::generate_service(t_service* tservice) {
                     << tservice->get_extends()->get_name() << "');" << '\n';
     }
 
-    f_service_ << js_const_type_ << "ttypes = require('./" + program_->get_name() + "_types');" << '\n';
+    if (gen_esm_) {
+      f_service_ << "import * as ttypes from './" + program_->get_name() + "_types.mjs';" << '\n';
+    } else {
+      f_service_ << js_const_type_ << "ttypes = require('./" + program_->get_name() + "_types');" << '\n';
+    }
   }
 
   generate_service_helpers(tservice);
@@ -1317,27 +1367,28 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
 
-  if (gen_node_) {
-    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : js_const_type_;
-    f_service_ << prefix << service_name_ << "Processor = " << "exports.Processor";
-    if (gen_ts_) {
-      f_service_ts_ << '\n' << "declare class Processor ";
-      if (tservice->get_extends() != nullptr) {
-        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << ".Processor ";
-      }
-      f_service_ts_ << "{" << '\n';
-      indent_up();
-
-      if(tservice->get_extends() == nullptr) {
-        f_service_ts_ << ts_indent() << "private _handler: object;" << '\n' << '\n';
-      }
-      f_service_ts_ << ts_indent() << "constructor(handler: object);" << '\n';
-      f_service_ts_ << ts_indent() << "process(input: thrift.TProtocol, output: thrift.TProtocol): void;" << '\n';
-      indent_down();
-    }
+  std::string service_var;
+  if (!gen_node_ || has_js_namespace(tservice->get_program())) {
+    service_var = js_namespace(tservice->get_program()) + service_name_ + "Processor";
+    f_service_ << service_var;
   } else {
-    f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Processor = "
-             << "exports.Processor";
+    service_var = service_name_ + "Processor";
+    f_service_ << js_const_type_ << service_var;
+  };
+  if (gen_node_ && gen_ts_) {
+    f_service_ts_ << '\n' << "declare class Processor ";
+    if (tservice->get_extends() != nullptr) {
+      f_service_ts_ << "extends " << tservice->get_extends()->get_name() << ".Processor ";
+    }
+    f_service_ts_ << "{" << '\n';
+    indent_up();
+
+    if(tservice->get_extends() == nullptr) {
+      f_service_ts_ << ts_indent() << "private _handler: object;" << '\n' << '\n';
+    }
+    f_service_ts_ << ts_indent() << "constructor(handler: object);" << '\n';
+    f_service_ts_ << ts_indent() << "process(input: thrift.TProtocol, output: thrift.TProtocol): void;" << '\n';
+    indent_down();
   }
 
   bool is_subclass_service = tservice->get_extends() != nullptr;
@@ -1418,6 +1469,12 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
   }
   if (gen_node_ && gen_ts_) {
     f_service_ts_ << "}" << '\n';
+  }
+
+  if(gen_esm_) {
+    f_service_ << "export { " << service_var << " as Processor };" << '\n';
+  } else {
+    f_service_ << "exports.Processor = " << service_var << ";" << '\n';
   }
 }
 
@@ -1702,9 +1759,10 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
   bool is_subclass_service = tservice->get_extends() != nullptr;
 
+  string client_var = js_namespace(tservice->get_program()) + service_name_ + "Client";
   if (gen_node_) {
-    string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : js_const_type_;
-    f_service_ << prefix << service_name_ << "Client = " << "exports.Client";
+    string prefix = has_js_namespace(tservice->get_program()) ? "" : js_const_type_;
+    f_service_ << prefix << client_var;
     if (gen_ts_) {
       f_service_ts_ << ts_print_doc(tservice) << ts_indent() << ts_declare() << "class "
                     << "Client ";
@@ -1714,8 +1772,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       f_service_ts_ << "{" << '\n';
     }
   } else {
-    f_service_ << js_namespace(tservice->get_program()) << service_name_
-               << "Client";
+    f_service_ << client_var;
     if (gen_ts_) {
       f_service_ts_ << ts_print_doc(tservice) << ts_indent() << ts_declare() << "class "
                     << service_name_ << "Client ";
@@ -2203,6 +2260,12 @@ void t_js_generator::generate_service_client(t_service* tservice) {
   if (gen_es6_) {
     indent_down();
     f_service_ << "};" << '\n';
+  }
+
+  if(gen_esm_) {
+    f_service_ << "export { " << client_var << " as Client };" << '\n';
+  } else if(gen_node_) {
+    f_service_ << "exports.Client = " << client_var << ";" << '\n';
   }
 }
 
