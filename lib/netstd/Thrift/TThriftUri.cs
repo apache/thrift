@@ -17,24 +17,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+
+#pragma warning disable IDE0028  // net8 only
+#pragma warning disable IDE0074  // net8 only
 
 namespace Thrift
 {
     public class TThriftUri
     {
-        public const string THRIFT_URI_SCHEME = "thrift://";
+        // RFC 3986: If a URI contains an authority component, then the path component
+        // must either be empty or begin with a slash("/") character.If a URI
+        // does not contain an authority component, then the path cannot begin
+        // with two slash characters("//").  
+        public const string THRIFT_URI_SCHEME = "thrift:/";
 
         public readonly string Protocol;
-        public readonly string EndpointTransport;
-        public readonly List<string> LayeredTransports = new List<string>();
+        public readonly string Transport;
+        public readonly List<KeyValuePair<string, Dictionary<string, string>>> Layers = new List<KeyValuePair<string, Dictionary<string, string>>>();
         public readonly Dictionary<string,string> QueryData = new Dictionary<string, string>();
 
         public TThriftUri(string protocol, string endpointTransport, Dictionary<string, string> data)
         {
             Protocol = (protocol ?? "").Trim();
-            EndpointTransport = (endpointTransport ?? "").Trim();
+            Transport = (endpointTransport ?? "").Trim();
             if(data!=null)
                 foreach (var pair in data)
                     QueryData.Add(pair.Key, pair.Value);
@@ -52,28 +60,33 @@ namespace Thrift
             var sQuery = string.Join("?", pieces.Skip(1).ToArray());
 
             // analyze path
-            // thrift://protocol/transport/layer/layer?data
+            // - rather simple:  thrift://protocol/transport?data
+            // - sophisticated:  thrift://protocol/transport/mplex:name/framed/zlib?data
+
+            // it starts with protocol and endpoint transport
             pieces = sPath.Split('/');
             if (pieces.Length < 2)
                 throw new TApplicationException(TApplicationException.ExceptionType.ProtocolError, "Invalid URI: not enough data");
             Protocol = pieces[0].Trim();
-            EndpointTransport = pieces[1].Trim();
+            Transport = pieces[1].Trim();
+
+            // any layers on top, which can have parameters too
+            // it is perfectly legal to mix transport layers and protocol decorators here
+            // the canonical form is protocol decorators first, transport layers second
             for (int i = 2; i < pieces.Length; i++)
-                LayeredTransports.Add(pieces[i].Trim());
+            {
+                var layer = pieces[i].Trim().Split(':');
+                var sKey = Uri.UnescapeDataString(layer[0]);
+                var sValue = Uri.UnescapeDataString(string.Join(":", layer.Skip(1).ToArray()));
+                var args = ParseArgumentList(sValue);
+                Layers.Add(new KeyValuePair<string, Dictionary<string,string>>(sKey, args));
+            }
 
             // analyze query data
             if (!string.IsNullOrEmpty(sQuery))
-            {
-                pieces = sQuery.Split('&');
-                foreach (var piece in pieces)
-                {
-                    var pair = piece.Split('=');
-                    var sKey = Uri.UnescapeDataString(pair[0]);
-                    var sValue = Uri.UnescapeDataString(string.Join("=", pair.Skip(1).ToArray()));
-                    QueryData.Add(sKey, sValue);
-                }
-            }
+                ParseArgumentList(sQuery, QueryData);
 
+            // validate the data
             Validate();
         }
 
@@ -83,29 +96,63 @@ namespace Thrift
             sb.Append(THRIFT_URI_SCHEME);
             sb.Append(Protocol);
             sb.Append('/');
-            sb.Append(EndpointTransport);
+            sb.Append(Transport);
 
-            foreach (var layer in LayeredTransports)
+            foreach (var layer in Layers)
             {
                 sb.Append('/');
-                sb.Append(layer.Trim());
+                sb.Append(Uri.EscapeDataString(layer.Key));
+                if (layer.Value?.Count > 0)
+                {
+                    sb.Append(':');
+                    sb.Append(ArgumentListToString(layer.Value));
+                }
             }
 
             if (QueryData.Count > 0)
             {
-                var kvpair = new List<string>();
-                foreach (var pair in QueryData)
-                {
-                    var sTmp = Uri.EscapeDataString(pair.Key);
-                    if (!string.IsNullOrEmpty(pair.Value))
-                        sTmp += "=" + Uri.EscapeDataString(pair.Value);
-                    kvpair.Add(sTmp);
-                }
                 sb.Append('?');
-                sb.Append(string.Join("&", kvpair));
+                sb.Append(ArgumentListToString(QueryData));
             }
 
             return sb.ToString();
+        }
+
+
+        private static Dictionary<string, string> ParseArgumentList(string sQuery, Dictionary<string, string> args = null)
+        {
+            // args can be null or an existing dictionary
+            if( args == null)
+                args = new Dictionary<string, string>();
+            Debug.Assert(args.Count == 0);
+
+            if (!string.IsNullOrEmpty(sQuery))
+            {
+                var pieces = sQuery.Split('&');
+                foreach (var piece in pieces)
+                {
+                    var pair = piece.Split('=');
+                    var sKey = Uri.UnescapeDataString(pair[0]);
+                    var sValue = Uri.UnescapeDataString(string.Join("=", pair.Skip(1).ToArray()));
+                    args.Add(sKey, sValue);
+                }
+            }
+
+            return args;
+        }
+
+        private static string ArgumentListToString(Dictionary<string, string> arguments)
+        {
+            var pieces = new List<string>();
+            foreach (var pair in arguments)
+            {
+                var sTmp = Uri.EscapeDataString(pair.Key);
+                if (!string.IsNullOrEmpty(pair.Value))
+                    sTmp += "=" + Uri.EscapeDataString(pair.Value);
+                pieces.Add(sTmp);
+            }
+
+            return string.Join("&", pieces);
         }
 
 
@@ -113,7 +160,7 @@ namespace Thrift
         {
             if (string.IsNullOrEmpty(Protocol))
                 throw new TApplicationException(TApplicationException.ExceptionType.ProtocolError, "Invalid URI: Protocol missing");
-            if (string.IsNullOrEmpty(EndpointTransport))
+            if (string.IsNullOrEmpty(Transport))
                 throw new TApplicationException(TApplicationException.ExceptionType.ProtocolError, "Invalid URI: Endpoint transport missing");
         }
     }

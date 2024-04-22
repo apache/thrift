@@ -18,11 +18,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Text;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Thrift.Transport;
-using Thrift.Transport.Client;
 
 namespace Thrift.Tests.UriFactory
 {
@@ -31,40 +29,120 @@ namespace Thrift.Tests.UriFactory
     {
         private enum BuiltinProtocols { binary, compact, json };
         private enum BuiltinTransports { http, namedpipes, socket, tlssocket, file, memory };
-        private enum BuiltinLayered { framed, buffered };
+        private enum BuiltinProtocolDecorators { none, mplex };
+        private enum BuiltinLayeredTransports { none, framed, buffered };
 
         private readonly string InputFile = Path.GetTempFileName();
         private readonly string OutputFile = Path.GetTempFileName();
 
-        [TestMethod]
-        public void TFactory_Can_Parse_And_Construct_All_Builtin_Types()
+        private static HashSet<BuiltinTransports> GetAllSocketTransports()
         {
+            // these are known to slow down the test
+            return new HashSet<BuiltinTransports> {
+                BuiltinTransports.socket,
+                BuiltinTransports.tlssocket,
+            };
+        }
+
+        [TestMethod]
+        public void TFactory_Can_Parse_And_Construct_Complex_ThriftUris()
+        {
+            var exclude = GetAllSocketTransports();
+            var transports = new HashSet<BuiltinTransports>();
+            foreach (var trans in Enum.GetValues<BuiltinTransports>())
+                if (!exclude.Contains(trans))
+                    transports.Add(trans);
+
+            InternalTestMethodImplementation(
+                Enum.GetValues<BuiltinProtocols>(),
+                transports,
+                Enum.GetValues<BuiltinProtocolDecorators>(),
+                Enum.GetValues<BuiltinLayeredTransports>()
+                );
+        }
+
+        [TestMethod]
+        public void TFactory_Can_Parse_And_Construct_Socket_Transports()
+        {
+            var transports = GetAllSocketTransports();
+
+            // minimize iterations, as these are known to slow down the test
+            InternalTestMethodImplementation(
+                [BuiltinProtocols.binary],
+                transports,
+                [BuiltinProtocolDecorators.none],
+                [BuiltinLayeredTransports.none]
+                );
+        }
+
+        private void InternalTestMethodImplementation(IEnumerable<BuiltinProtocols> protocols, IEnumerable<BuiltinTransports> transports, IEnumerable<BuiltinProtocolDecorators> decorators, IEnumerable<BuiltinLayeredTransports> layeredTransports)
+        {
+            // those must not be empty to have at least one test run
+            Assert.IsTrue(protocols.Count() > 0);
+            Assert.IsTrue(transports.Count() > 0);
+
+            // "none" should always be included and should be first
+            Assert.IsTrue(decorators.FirstOrDefault() == BuiltinProtocolDecorators.none);
+            Assert.IsTrue(layeredTransports.FirstOrDefault() == BuiltinLayeredTransports.none);
+
             // thrift://protocol/transport/layer/layer?data
-            foreach (var proto in Enum.GetValues<BuiltinProtocols>())
+            var numTests = 0;
+            foreach (var proto in protocols)
             {
-                foreach (var trans in Enum.GetValues<BuiltinTransports>())
+                foreach (var trans in transports)
                 {
                     var iTest = 0;
                     while (InitializeTransportSpecificArgs(trans, iTest++, out var connection))
                     {
-
                         // test basic combination first
                         var sData = MakeQueryString(connection);
                         var sUri = TThriftUri.THRIFT_URI_SCHEME + proto + "/" + trans;
-                        TestUri(sUri + sData);
 
-                        // layers can be stacked upon each other, so lets do exactly that - just to test it
-                        foreach (var layer in Enum.GetValues<BuiltinLayered>())
+                        // decorators can be stacked upon each other, so lets do exactly that - just to test it
+                        var sDecorator = string.Empty;
+                        foreach (var decorator in decorators)
                         {
-                            sUri += "/" + layer;
-                            TestUri(sUri + sData);
+                            sDecorator += MakeDecoratorString(decorator);
+
+                            // layers can be stacked upon each other, so lets do exactly that - just to test it
+                            var sLayer = string.Empty;
+                            foreach (var layer in layeredTransports)
+                            {
+                                sLayer += MakeLayeredTransportString(layer);
+
+                                // build final URI
+                                TestUri(sUri + sDecorator + sLayer +sData);
+                                numTests++;
+                            }
                         }
                     }
                 }
             }
 
+            // we had at least one test?
+            Assert.IsTrue(numTests > 0);
+
             File.Delete(InputFile);
             File.Delete(OutputFile);
+        }
+
+        private string MakeLayeredTransportString(BuiltinLayeredTransports layer)
+        {
+            return layer switch
+            {
+                BuiltinLayeredTransports.none => string.Empty,
+                _ => "/" + layer.ToString()
+            };
+        }
+
+        private static string MakeDecoratorString(BuiltinProtocolDecorators protdeco)
+        {
+            return protdeco switch
+            {
+                BuiltinProtocolDecorators.none => string.Empty,
+                BuiltinProtocolDecorators.mplex => "/" + protdeco.ToString() + ":" + Uri.EscapeDataString("Rather\0Obscure\tMplex\nService/Name"),
+                _ => "/" + protdeco.ToString(),
+            };
         }
 
         private bool InitializeTransportSpecificArgs(BuiltinTransports trans, int test, out Dictionary<string, string> connection)
@@ -148,7 +226,7 @@ namespace Thrift.Tests.UriFactory
 
         private static void TestUri(string sUri)
         {
-            var parsed = new TThriftUri( sUri);
+            var parsed = new TThriftUri(sUri);
             Assert.AreEqual(sUri, parsed.ToString());
 
             try
@@ -165,7 +243,7 @@ namespace Thrift.Tests.UriFactory
                     proto?.Dispose();
                 }
             }
-            catch(System.Security.Cryptography.CryptographicException)
+            catch (System.Security.Cryptography.CryptographicException)
             {
                 // that may happen, but is not relevant here
             }

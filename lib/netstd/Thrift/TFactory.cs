@@ -17,20 +17,40 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
+using System.Reflection.Emit;
+using System.Xml.Linq;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
-using Thrift.Transport.Server;
-using static System.Net.WebRequestMethods;
+
+#pragma warning disable IDE0028  // collection init is net8 only
 
 namespace Thrift
 {
     public static class TFactory
     {
+        private class LayerFactory
+        {
+            // its either one or the other, can't be both
+            public readonly TProtocolDecoratorFactory ProtocolDecorator;
+            public readonly TTransportFactory LayeredTransport;
+
+            public LayerFactory(TProtocolDecoratorFactory factory)
+            {
+                ProtocolDecorator = factory;
+            }
+
+            public LayerFactory(TTransportFactory factory)
+            {
+                LayeredTransport = factory;
+            }
+        }
+
+
         private static readonly Dictionary<string, TProtocolFactory> RegisteredProtocols = new Dictionary<string, TProtocolFactory>();
-        private static readonly Dictionary<string, TTransportFactory> RegisteredLayeredTransports = new Dictionary<string, TTransportFactory>();
         private static readonly Dictionary<string, TEndpointTransportFactory> RegisteredEndpointTransports = new Dictionary<string, TEndpointTransportFactory>();
+        private static readonly Dictionary<string, LayerFactory> RegisteredLayers = new Dictionary<string, LayerFactory>();
+
 
         static TFactory()
         {
@@ -38,6 +58,9 @@ namespace Thrift
             Register("binary", new TBinaryProtocol.Factory());
             Register("compact", new TCompactProtocol.Factory());
             Register("json", new TJsonProtocol.Factory());
+
+            // protocol decorators
+            Register("mplex", new TMultiplexedProtocol.Factory());
 
             // layered transports
             Register("framed", new TFramedTransport.Factory());
@@ -56,20 +79,30 @@ namespace Thrift
 
         public static void Register(string name, TProtocolFactory factory)
         {
+            // throws intentionally if name is already used
             lock (RegisteredProtocols)
-                RegisteredProtocols.Add(name, factory);  // throws intentionally if name is already used
-        }
-
-        public static void Register(string name, TTransportFactory factory)
-        {
-            lock (RegisteredLayeredTransports)
-                RegisteredLayeredTransports.Add(name, factory);  // throws intentionally if name is already used
+                RegisteredProtocols.Add(name, factory);
         }
 
         public static void Register(string name, TEndpointTransportFactory factory)
         {
+            // throws intentionally if name is already used
             lock (RegisteredEndpointTransports)
-                RegisteredEndpointTransports.Add(name, factory);  // throws intentionally if name is already used
+                RegisteredEndpointTransports.Add(name, factory);
+        }
+
+        public static void Register(string name, TTransportFactory factory)
+        {
+            // throws intentionally if name is already used
+            lock (RegisteredLayers)
+                RegisteredLayers.Add(name, new LayerFactory(factory));  
+        }
+
+        public static void Register(string name, TProtocolDecoratorFactory factory)
+        {
+            // throws intentionally if name is already used
+            lock (RegisteredLayers)
+                RegisteredLayers.Add(name, new LayerFactory(factory));
         }
 
 
@@ -82,31 +115,49 @@ namespace Thrift
 
         public static TProtocol ConstructClientProtocolTransportStack(TThriftUri uri, TConfiguration config, out TTransport transport)
         {
-            transport = CreateEndpointTransport(uri.EndpointTransport, config, uri.QueryData);
-            foreach (var layer in uri.LayeredTransports)
-                transport = CreateLayeredTransport(layer, transport);
-            return CreateProtocol(uri.Protocol, transport);
+            transport = CreateEndpointTransport(uri.Transport, config, uri.QueryData);
+            foreach (var layer in uri.Layers)
+                transport = AddLayeredTransport(transport, layer.Key);
+
+            var protocol = CreateProtocol(uri.Protocol, transport);
+            foreach (var layer in uri.Layers)
+                protocol = AddProtocolDecorator(protocol, layer.Key, layer.Value);
+
+            return protocol;
         }
 
         private static TEndpointTransport CreateEndpointTransport(string name, TConfiguration config, Dictionary<string, string> args)
         {
             if (RegisteredEndpointTransports.TryGetValue(name, out var factory))
                 return factory.GetTransport(config, args);
-            throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "Endpoint transport '" + name + "' not registered");
-        }
 
-        private static TTransport CreateLayeredTransport(string name, TTransport transport)
-        {
-            if (RegisteredLayeredTransports.TryGetValue(name, out var factory))
-                return factory.GetTransport(transport);
-            throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "layered transport '" + name + "' not registered");
+            throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "Endpoint transport '" + name + "' not registered");
         }
 
         private static TProtocol CreateProtocol(string name, TTransport transport)
         {
             if (RegisteredProtocols.TryGetValue(name, out var factory))
                 return factory.GetProtocol(transport);
+
             throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "Protocol '" + name + "' not registered");
+        }
+
+        private static TProtocol AddProtocolDecorator(TProtocol protocol, string name, Dictionary<string, string> args)
+        {
+            if (!RegisteredLayers.TryGetValue(name, out var factory))
+                throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "Thrift protocol/transport layer '" + name + "' not registered");
+            if (factory.ProtocolDecorator != null)
+                return factory.ProtocolDecorator.GetProtocol(protocol, args);
+            return protocol;
+        }
+
+        private static TTransport AddLayeredTransport(TTransport transport, string name)
+        {
+            if (!RegisteredLayers.TryGetValue(name, out var factory))
+                throw new TApplicationException(TApplicationException.ExceptionType.Unknown, "Thrift protocol/transport layer '" + name + "' not registered");
+            if (factory.LayeredTransport != null)
+                return factory.LayeredTransport.GetTransport(transport);
+            return transport;
         }
     }
 }

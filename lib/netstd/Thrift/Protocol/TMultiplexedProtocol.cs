@@ -15,9 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
+using Thrift.Transport;
 
 #pragma warning disable IDE0079 // net20 - unneeded suppression
 #pragma warning disable IDE0290 // net8 - primary CTOR
@@ -88,6 +91,15 @@ namespace Thrift.Protocol
                 default:
                     await base.WriteMessageBeginAsync(message, cancellationToken);
                     break;
+            }
+        }
+
+        internal class Factory : TProtocolDecoratorFactory
+        {
+            public override TProtocol GetProtocol(TProtocol proto, Dictionary<string, string> arguments)
+            {
+                var sService = arguments?.FirstOrDefault().Key ?? string.Empty;
+                return new TMultiplexedProtocol(proto, sService);
             }
         }
     }
