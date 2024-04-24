@@ -2019,6 +2019,8 @@ void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function
     // empty annotation values end up with "1" somewhere, ignore these as well
     if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
       out << "(" << make_csharp_string_literal(iter->second.back()) << ")";
+    } else {
+      out << "(" << make_csharp_string_literal("This code is deprecated.") << ")";  // generic message to prevent CA1041
     }
     out << "]" << '\n';
   }
