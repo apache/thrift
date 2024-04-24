@@ -38,10 +38,10 @@ namespace Thrift.Tests.UriFactory
         private static HashSet<BuiltinTransports> GetAllSocketTransports()
         {
             // these are known to slow down the test
-            return new HashSet<BuiltinTransports> {
+            return [
                 BuiltinTransports.socket,
                 BuiltinTransports.tlssocket,
-            };
+            ];
         }
 
         [TestMethod]
@@ -78,8 +78,8 @@ namespace Thrift.Tests.UriFactory
         private void InternalTestMethodImplementation(IEnumerable<BuiltinProtocols> protocols, IEnumerable<BuiltinTransports> transports, IEnumerable<BuiltinProtocolDecorators> decorators, IEnumerable<BuiltinLayeredTransports> layeredTransports)
         {
             // those must not be empty to have at least one test run
-            Assert.IsTrue(protocols.Count() > 0);
-            Assert.IsTrue(transports.Count() > 0);
+            Assert.IsTrue(protocols.Any());
+            Assert.IsTrue(transports.Any());
 
             // "none" should always be included and should be first
             Assert.IsTrue(decorators.FirstOrDefault() == BuiltinProtocolDecorators.none);
@@ -126,7 +126,7 @@ namespace Thrift.Tests.UriFactory
             File.Delete(OutputFile);
         }
 
-        private string MakeLayeredTransportString(BuiltinLayeredTransports layer)
+        private static string MakeLayeredTransportString(BuiltinLayeredTransports layer)
         {
             return layer switch
             {

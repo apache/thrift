@@ -21,8 +21,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-#pragma warning disable IDE0028  // net8 only
-#pragma warning disable IDE0074  // net8 only
+//#pragma warning disable IDE0028  // net8 only
+//#pragma warning disable IDE0074  // net8 only
 
 namespace Thrift
 {
@@ -32,7 +32,7 @@ namespace Thrift
         // must either be empty or begin with a slash("/") character.If a URI
         // does not contain an authority component, then the path cannot begin
         // with two slash characters("//").  
-        public const string THRIFT_URI_SCHEME = "thrift:/";
+        public const string THRIFT_URI_SCHEME = "thrift:";
 
         public readonly string Protocol;
         public readonly string Transport;

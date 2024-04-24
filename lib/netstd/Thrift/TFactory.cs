@@ -23,7 +23,8 @@ using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 
-#pragma warning disable IDE0028  // collection init is net8 only
+#pragma warning disable IDE0079  // unneeded suppression -> all except net8
+#pragma warning disable IDE0028  // simplify collection init -> net8 only
 
 namespace Thrift
 {
