@@ -25,6 +25,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079  // unneeded suppression -> all except net8
+#pragma warning disable IDE0301  // simplify collection init -> net8 only
 
 namespace Thrift.Transport.Client
 {
