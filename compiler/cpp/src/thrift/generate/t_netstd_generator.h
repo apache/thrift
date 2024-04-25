@@ -104,7 +104,7 @@ public:
   void generate_netstd_union_reader(ostream& out, t_struct* tunion);
   void generate_function_helpers(ostream& out, t_function* tfunction);
   void generate_service_interface(ostream& out, t_service* tservice);
-  void generate_deprecation_attribute(ostream& out, t_function* func);
+  void generate_deprecation_attribute(ostream& out, std::map<std::string, std::vector<std::string>>& annotations);
   void generate_service_helpers(ostream& out, t_service* tservice);
   void generate_service_client(ostream& out, t_service* tservice);
   void generate_service_server(ostream& out, t_service* tservice);
@@ -218,6 +218,8 @@ private:
   string initialize_field(t_field* tfield);
 
   void pragmas_and_directives(ostream& out);
+  bool any_deprecations();
+  bool is_deprecated(std::map<std::string, std::vector<std::string>>& annotations);
   bool is_nullable_type(t_type* ttype);
   bool force_member_nullable(t_field* tfield);  // see there
   string nullable_suffix();                     // unconditionally

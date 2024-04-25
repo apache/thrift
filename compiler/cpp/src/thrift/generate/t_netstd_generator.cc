@@ -219,10 +219,94 @@ void t_netstd_generator::pragmas_and_directives(ostream& out)
     out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << '\n';
     out << "#pragma warning disable CA1822   // empty " << DEEP_COPY_METHOD_NAME << "() methods still non-static" << '\n';
 
+    if( any_deprecations()) {
+      out << "#pragma warning disable CS0618   // silence our own deprecation warnings" << '\n';
+    }
+
     if( target_net_version < 6) {
         out << "#pragma warning disable IDE0083  // pattern matching \"that is not SomeType\" requires net5.0 but we still support earlier versions" << '\n';
     }
     out << '\n';
+}
+
+
+bool t_netstd_generator::any_deprecations()
+{
+  // enums
+  vector<t_enum*> enums = program_->get_enums();
+  vector<t_enum*>::iterator en_iter;
+  for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
+    if( is_deprecated((*en_iter)->annotations_)) {
+      return true;
+    }
+
+    // enum values
+    vector<t_enum_value*> evals = (*en_iter)->get_constants();
+    vector<t_enum_value*>::iterator ev_iter;
+    for (ev_iter = evals.begin(); ev_iter != evals.end(); ++ev_iter) {
+      if( is_deprecated((*ev_iter)->annotations_)) {
+        return true;
+      }
+    }
+  }
+
+  // typedefs
+  vector<t_typedef*> typedefs = program_->get_typedefs();
+  vector<t_typedef*>::iterator td_iter;
+  for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
+    if( is_deprecated((*td_iter)->annotations_)) {
+        return true;
+    }
+  }
+
+  // structs, exceptions, unions
+  vector<t_struct*> objects = program_->get_objects();
+  vector<t_struct*>::iterator o_iter;
+  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+    if( is_deprecated((*o_iter)->annotations_)) {
+      return true;
+    }
+
+    // struct members
+    const vector<t_field*>& members = (*o_iter)->get_members();
+    vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if( is_deprecated((*m_iter)->annotations_)) {
+        return true;
+      }
+    }
+  }
+
+  /* not yet
+  // constants
+  vector<t_const*> consts = program_->get_consts();
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    if( is_deprecated((*c_iter)->annotations_)) {
+      return true;
+    }
+  }
+  */
+
+  // services
+  vector<t_service*> services = program_->get_services();
+  vector<t_service*>::iterator sv_iter;
+  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
+    if( is_deprecated((*sv_iter)->annotations_)) {
+      return true;
+    }
+
+    // service methods
+    vector<t_function*> functions = (*sv_iter)->get_functions();
+    vector<t_function*>::iterator f_iter;
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      if( is_deprecated((*f_iter)->annotations_)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 
@@ -315,6 +399,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     start_netstd_namespace(out);
     generate_netstd_doc(out, tenum);
 
+    generate_deprecation_attribute(out, tenum->annotations_);
     out << indent() << "public enum " << type_name(tenum,false) << '\n';
     scope_up(out);
 
@@ -325,6 +410,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     {
         generate_netstd_doc(out, *c_iter);
         int value = (*c_iter)->get_value();
+        generate_deprecation_attribute(out, (*c_iter)->annotations_);
         out << indent() << normalize_name((*c_iter)->get_name()) << " = " << value << "," << '\n';
     }
 
@@ -850,6 +936,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
 
     string sharp_struct_name = type_name(tstruct, false);
 
+    generate_deprecation_attribute(out, tstruct->annotations_);
     out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << sharp_struct_name << " : ";
 
     if (is_exception)
@@ -1055,6 +1142,7 @@ void t_netstd_generator::generate_netstd_wcffault(ostream& out, t_struct* tstruc
 
     bool is_final = tstruct->annotations_.find("final") != tstruct->annotations_.end();
 
+    generate_deprecation_attribute(out, tstruct->annotations_);
     out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << type_name(tstruct,false) << "Fault" << '\n'
         << indent() << "{" << '\n';
     indent_up();
@@ -1103,7 +1191,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
       out << '\n' << indent() << "{" << '\n';
       indent_up();
     } else {
-      out << '\n';
+      out << ";\n";
     }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1526,6 +1614,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     // Let's define the class first
     start_netstd_namespace(out);
 
+    generate_deprecation_attribute(out, tunion->annotations_);
     out << indent() << "public abstract partial class " << normalize_name(tunion->get_name()) << " : TUnionBase" << '\n';
     out << indent() << "{" << '\n';
     indent_up();
@@ -1979,6 +2068,7 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
         out << indent() << "[ServiceContract(Namespace=\"" << wcf_namespace_ << "\")]" << '\n';
     }
 
+    generate_deprecation_attribute(out, tservice->annotations_);
     prepare_member_name_mapping(tservice);
     out << indent() << "public interface IAsync" << extends_iface << '\n'
         << indent() << "{" << '\n';
@@ -2003,7 +2093,7 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
             }
         }
 
-        generate_deprecation_attribute(out, *f_iter);
+        generate_deprecation_attribute(out, (*f_iter)->annotations_);
         out << indent() << function_signature_async(*f_iter) << ";" << '\n' << '\n';
     }
     indent_down();
@@ -2011,10 +2101,16 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
     cleanup_member_name_mapping(tservice);
 }
 
-void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function* func)
+bool t_netstd_generator::is_deprecated(std::map<std::string, std::vector<std::string>>& annotations)
 {
-  auto iter = func->annotations_.find("deprecated");
-  if( func->annotations_.end() != iter) {
+  auto iter = annotations.find("deprecated");
+  return (annotations.end() != iter);
+}
+
+void t_netstd_generator::generate_deprecation_attribute(ostream& out, std::map<std::string, std::vector<std::string>>& annotations)
+{
+  auto iter = annotations.find("deprecated");
+  if( annotations.end() != iter) {
     out << indent() << "[Obsolete";
     // empty annotation values end up with "1" somewhere, ignore these as well
     if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
@@ -2066,6 +2162,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
     out << '\n';
 
     generate_netstd_doc(out, tservice);
+    generate_deprecation_attribute(out, tservice->annotations_);
     prepare_member_name_mapping(tservice);
     out << indent() << "public class Client : " << extends_client << "IAsync" << '\n'
         << indent() << "{" << '\n';
@@ -2089,7 +2186,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         string function_name = raw_func_name + (add_async_postfix ? "Async" : "");
 
         // async
-        generate_deprecation_attribute(out, *functions_iterator);
+        generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << '\n'
             << indent() << "{" << '\n';
         indent_up();
@@ -2107,7 +2204,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         out << indent() << "}" << '\n' << '\n';
 
         // async send
-        generate_deprecation_attribute(out, *functions_iterator);
+        generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
         out << indent() << "public async " << function_signature_async(*functions_iterator, "send_", MODE_NO_RETURN) << '\n'
             << indent() << "{" << '\n';
         indent_up();
@@ -2148,7 +2245,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         if (!(*functions_iterator)->is_oneway())
         {
             // async recv
-            generate_deprecation_attribute(out, *functions_iterator);
+            generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
             out << indent() << "public async " << function_signature_async(*functions_iterator, "recv_", MODE_NO_ARGS) << '\n'
                 << indent() << "{" << '\n';
             indent_up();
@@ -3022,6 +3119,7 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
     {
         out << indent() << "[DataMember(Order = 0)]" << '\n';
     }
+    generate_deprecation_attribute(out, tfield->annotations_);
 
     out << indent()
         << (isPublic ? "public " : "private ")
