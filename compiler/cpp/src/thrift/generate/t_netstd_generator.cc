@@ -2519,8 +2519,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator f_iter;
 
-    bool is_deprecated = (tfunction->annotations_.end() != tfunction->annotations_.find("deprecated"));
-    if( is_deprecated) {
+    if( is_deprecated(tfunction->annotations_)) {
       out << indent() << "#pragma warning disable CS0618,CS0612" << '\n';
     }
 
@@ -2558,7 +2557,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
     out << "" << CANCELLATION_TOKEN_NAME << ");" << '\n';
 
-    if( is_deprecated) {
+    if( is_deprecated(tfunction->annotations_)) {
       out << indent() << "#pragma warning restore CS0618,CS0612" << '\n';
     }
 

@@ -191,6 +191,9 @@ public:
                                              t_struct* tstruct,
                                              bool is_exception);
 
+  bool is_deprecated(std::map<std::string, std::vector<std::string>>& annotations);
+  std::string render_deprecation_attribute(std::map<std::string, std::vector<std::string>>& annotations, std::string prefix, std::string postfix);
+
   bool const_needs_var(t_type* type);
   void print_const_prop(std::ostream& out, string name, t_type* type, t_const_value* value);
   void print_private_field(std::ostream& out, string name, t_type* type, t_const_value* value);
@@ -961,11 +964,12 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
       }
       generate_delphi_doc(s_enum, *c_iter);
       indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
+      s_enum << render_deprecation_attribute((*c_iter)->annotations_, " // ", "");
     }
   }
   s_enum << '\n';
   indent_down();
-  indent(s_enum) << ");" << '\n' << '\n';
+  indent(s_enum) << ")" << render_deprecation_attribute(tenum->annotations_, " ", "") << ";" << '\n' << '\n';
   indent_down();
 }
 
@@ -1709,7 +1713,9 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     }
 
     indent_down();
-    indent(out) << "end;" << '\n';
+    indent(out) << "end;"
+                << render_deprecation_attribute(tstruct->annotations_, " // ", "")
+                << '\n';
     if(rtti_) {
       indent(out) << "{$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}" << '\n';
     }
@@ -1800,11 +1806,11 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   indent_up();
 
   if ((members.size() > 0) && is_exception && (!is_x_factory)) {
-    indent(out) << "constructor Create; overload;" << '\n';
+    indent(out) << "constructor Create; overload;" << render_deprecation_attribute(tstruct->annotations_," ",";") << '\n';
     indent(out) << "constructor Create(" << constructor_argument_list(tstruct, indent())
-                << "); overload;" << '\n';
+                << "); overload;" << render_deprecation_attribute(tstruct->annotations_," ",";") << '\n';
   } else {
-    indent(out) << "constructor Create;" << '\n';
+    indent(out) << "constructor Create;" << render_deprecation_attribute(tstruct->annotations_," ",";") << '\n';
   }
 
   indent(out) << "destructor Destroy; override;" << '\n';
@@ -1905,7 +1911,9 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
     indent(s_service) << function_signature(*f_iter, for_async) << '\n';
   }
   indent_down();
-  indent(s_service) << "end;" << '\n' << '\n';
+  indent(s_service) << "end;" 
+                    << render_deprecation_attribute( tservice->annotations_, " // ", "")
+                    << '\n' << '\n';
 
   indent_down();
 }
@@ -2222,7 +2230,9 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
   }
 
   indent_down();
-  indent(s_service) << "end;" << '\n' << '\n';
+  indent(s_service) << "end;"
+                    << render_deprecation_attribute( tservice->annotations_, " // ", "")
+                    << '\n' << '\n';
 }
 
 void t_delphi_generator::generate_service_server(t_service* tservice) {
@@ -2990,7 +3000,9 @@ void t_delphi_generator::generate_delphi_property(ostream& out,
               << type_name(ftype, false, true, is_xception, true)
               << " read " << prop_name(tfield, struct_is_xception, fieldPrefix)
               << " write " << prop_name(tfield, struct_is_xception, "Set")
-              << ";" << '\n';
+              << ";"
+              << render_deprecation_attribute(tfield->annotations_, " // ", ";")
+              << '\n';
 }
 
 std::string t_delphi_generator::prop_name(t_field* tfield, bool is_xception, std::string prefix) {
@@ -3238,15 +3250,7 @@ string t_delphi_generator::function_signature(t_function* tfunction,
 
   // deprecated method? only at intf decl!
   if( full_cls == "") {
-    auto iter = tfunction->annotations_.find("deprecated");
-    if( tfunction->annotations_.end() != iter && !iter->second.empty()) {
-      signature += " deprecated";
-      // empty annotation values end up with "1" somewhere, ignore these as well
-      if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
-        signature += " " + make_pascal_string_literal(iter->second.back());
-      }
-      signature += ";";
-    }
+    signature += render_deprecation_attribute(tfunction->annotations_, " ", ";");
   }
 
   return signature;
@@ -3417,6 +3421,7 @@ void t_delphi_generator::generate_delphi_property_writer_definition(ostream& out
 
   indent(out) << "procedure " << prop_name(tfield, is_xception_class, "Set")
               << "( const Value: " << type_name(ftype, false, true, is_xception, true) << ");"
+              << render_deprecation_attribute(tfield->annotations_, " ", ";")
               << '\n';
 }
 
@@ -3427,7 +3432,9 @@ void t_delphi_generator::generate_delphi_property_reader_definition(ostream& out
   bool is_xception = ftype->is_xception();
 
   indent(out) << "function " << prop_name(tfield, is_xception_class, "Get") << ": "
-              << type_name(ftype, false, true, is_xception, true) << ";" << '\n';
+              << type_name(ftype, false, true, is_xception, true) << ";" 
+              << render_deprecation_attribute(tfield->annotations_, " ", ";")
+              << '\n';
 }
 
 void t_delphi_generator::generate_delphi_isset_reader_writer_definition(ostream& out,
@@ -4041,6 +4048,33 @@ bool t_delphi_generator::is_void(t_type* type) {
 std::string t_delphi_generator::display_name() const {
   return "Delphi";
 }
+
+
+bool t_delphi_generator::is_deprecated(std::map<std::string, std::vector<std::string>>& annotations)
+{
+  auto iter = annotations.find("deprecated");
+  return (annotations.end() != iter);
+}
+
+std::string t_delphi_generator::render_deprecation_attribute(std::map<std::string, std::vector<std::string>>& annotations, std::string prefix, std::string postfix)
+{
+  std::string result = "";
+  auto iter = annotations.find("deprecated");
+  if( annotations.end() != iter) {
+    result += prefix;
+    result += "deprecated";
+
+    // empty annotation values end up with "1" somewhere, ignore these as well
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      result += " " + make_pascal_string_literal(iter->second.back());
+    }
+
+    result += postfix;
+  }
+  return result;
+}
+
+
 
 
 THRIFT_REGISTER_GENERATOR(
