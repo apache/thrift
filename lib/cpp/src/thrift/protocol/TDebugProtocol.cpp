@@ -18,7 +18,6 @@
  */
 
 #include <thrift/protocol/TDebugProtocol.h>
-#include <thrift/protocol/TUuidUtils.hpp>
 
 #include <thrift/TToString.h>
 #include <cassert>
@@ -388,19 +387,12 @@ uint32_t TDebugProtocol::writeBinary(const string& str) {
   return TDebugProtocol::writeString(str);
 }
 
-uint32_t TDebugProtocol::writeUUID(const string& str) {
-  std::string out_raw;
-  uuid_encode(str, out_raw);
-
-  std::string out_encoded;
-  uuid_decode(out_raw, out_encoded);
-
+uint32_t TDebugProtocol::writeUUID(const TUuid& uuid) {
   size_t size = writePlain("{\n");
   indentUp();
-  size += writeIndented("[in ] = \"" + str + "\",\n");
   size += writeIndented("[raw] = ");
-  size += writeString(out_raw);
-  size += writeIndented("[enc] = \"" + out_encoded + "\"\n");
+  size += writeString(std::string(std::begin(uuid), std::end(uuid)));
+  size += writeIndented("[enc] = \"" + to_string(uuid) + "\"\n");
   indentDown();
   size += writeIndented("}\n");
   return size;

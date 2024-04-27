@@ -57,6 +57,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FOR
 
 libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
+                       src/thrift/TUuid.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
                        src/thrift/async/TAsyncProtocolProcessor.cpp \
@@ -69,7 +70,6 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
                        src/thrift/protocol/TMultiplexedProtocol.cpp \
                        src/thrift/protocol/TProtocol.cpp \
-                       src/thrift/protocol/TUuidUtils.cpp \
                        src/thrift/transport/TTransportException.cpp \
                        src/thrift/transport/TFDTransport.cpp \
                        src/thrift/transport/TFileTransport.cpp \
@@ -137,6 +137,7 @@ include_thrift_HEADERS = \
                          src/thrift/thrift-config.h \
                          src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
+                         src/thrift/TUuid.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
                          src/thrift/TProcessor.h \
