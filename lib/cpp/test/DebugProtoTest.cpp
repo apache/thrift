@@ -75,7 +75,6 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
     "    [2] = 3,\n"
     "  },\n"
     "  15: rfc4122_uuid (uuid) = {\n"
-    "    [in ] = \"\",\n"
     "    [raw] = \"\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\",\n"
     "    [enc] = \"00000000-0000-0000-0000-000000000000\"\n"
     "  }\n"
@@ -103,7 +102,7 @@ void testCaseSetup_2() {
                                "\xb0\xcf\x81\xe2\x84\x8e\x20\xce\x91\x74\x74"
                                "\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80"
                                "\xbc";
-  n->my_ooe.rfc4122_uuid = "{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}";
+  n->my_ooe.rfc4122_uuid = apache::thrift::TUuid{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"};
   n->my_bonk.type = 31337;
   n->my_bonk.message = "I am a bonk... xor!";
 }
@@ -148,7 +147,6 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
     "      [2] = 3,\n"
     "    },\n"
     "    15: rfc4122_uuid (uuid) = {\n"
-    "      [in ] = \"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}\",\n"
     "      [raw] = \"^*\\xb1\\x88\\x17&Nu\\xa0O\\x1e\\xd9\\xa6\\xa8\\x9cL\",\n"
     "      [enc] = \"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c\"\n"
     "    }\n"
@@ -240,7 +238,6 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [2] = 3,\n"
     "      },\n"
     "      15: rfc4122_uuid (uuid) = {\n"
-    "        [in ] = \"\",\n"
     "        [raw] = \"\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\",\n"
     "        [enc] = \"00000000-0000-0000-0000-000000000000\"\n"
     "      }\n"
@@ -276,7 +273,6 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [2] = 3,\n"
     "      },\n"
     "      15: rfc4122_uuid (uuid) = {\n"
-    "        [in ] = \"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}\",\n"
     "        [raw] = \"^*\\xb1\\x88\\x17&Nu\\xa0O\\x1e\\xd9\\xa6\\xa8\\x9cL\",\n"
     "        [enc] = \"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c\"\n"
     "      }\n"

@@ -83,6 +83,8 @@ Benchmark_LDADD = libtestgencpp.la
 
 check_PROGRAMS = \
 	UnitTests \
+	UnitTestsUuid \
+	UnitTestsUuidNoDirective \
 	TFDTransportTest \
 	TPipedTransportTest \
 	DebugProtoTest \
@@ -131,9 +133,34 @@ UnitTests_SOURCES = \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
 	TTransportCheckThrow.h \
-	ThrifttReadCheckTests.cpp
+	ThrifttReadCheckTests.cpp \
+	TUuidTest.cpp
 
 UnitTests_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoost.cpp
+
+UnitTestsUuid_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_CPPFLAGS = \
+   $(AM_CPPFLAGS) \
+  -DTHRIFT_TUUID_SUPPORT_BOOST_UUID
+
+UnitTestsUuidNoDirective_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoostNoDirective.cpp
+
+UnitTestsUuidNoDirective_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
@@ -386,7 +413,7 @@ OpenSSLManualInitTest_LDADD = \
 gen-cpp/AnnotationTest_constants.cpp gen-cpp/AnnotationTest_constants.h gen-cpp/AnnotationTest_types.cpp gen-cpp/AnnotationTest_types.h: $(top_srcdir)/test/AnnotationTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/v0.16/DebugProtoTest.thrift
+gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/DoubleConstantsTest_constants.cpp gen-cpp/DoubleConstantsTest_constants.h: $(top_srcdir)/test/DoubleConstantsTest.thrift
@@ -408,7 +435,7 @@ gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recurs
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/v0.16/ThriftTest.thrift
+gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h: OneWayTest.thrift

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <thrift/protocol/TUuidUtils.hpp>
+#include <thrift/TUuid.h>
 
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -25,32 +25,37 @@
 
 namespace apache {
 namespace thrift {
-namespace protocol {
 
-bool uuid_encode(const std::string& in, std::string& out) {
-  static const boost::uuids::string_generator gen;
-  static const std::string empty_uuid(boost::uuids::uuid::static_size(), '\0');
-  out = empty_uuid;
-  if (in.empty()) {
-    return true;
+namespace {
+static const boost::uuids::string_generator gen;
+}
+
+TUuid::TUuid(const std::string& str) noexcept {
+  std::fill(this->begin(), this->end(), 0);
+  if (str.empty()) {
+    return ;
   }
+
   try {
-    const boost::uuids::uuid uuid{gen(in)};
-    std::copy(uuid.begin(), uuid.end(), out.begin());
-    return true;
+    const boost::uuids::uuid uuid{gen(str)};
+    std::copy(uuid.begin(), uuid.end(), this->begin());
   } catch (const std::runtime_error&) {
     // Invalid string most probably
-    return false;
   }
 }
 
-void uuid_decode(const std::string& in, std::string& out) {
-  boost::uuids::uuid uuid{};
-  const size_t to_copy = std::min(in.size(), uuid.size());
-  std::copy(in.begin(), in.begin() + to_copy, uuid.begin());
-  out = boost::uuids::to_string(uuid);
+bool TUuid::is_nil() const noexcept {
+  boost::uuids::uuid uuid_tmp{};
+  std::copy(this->begin(), this->end(), std::begin(uuid_tmp));
+  return uuid_tmp.is_nil();
 }
 
+std::string to_string(const TUuid& in) {
+  boost::uuids::uuid uuid_tmp{};
+  std::copy(std::begin(in), std::end(in), std::begin(uuid_tmp));
+  return boost::uuids::to_string(uuid_tmp);
 }
+
+
 }
-} // apache::thrift::protocol
+} // apache::thrift
