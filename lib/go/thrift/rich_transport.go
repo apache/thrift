@@ -49,9 +49,15 @@ func (r *RichTransport) RemainingBytes() (num_bytes uint64) {
 	return r.TTransport.RemainingBytes()
 }
 
+var bytePool = newPool(nil, func(b *[1]byte) {
+	b[0] = 0
+})
+
 func readByte(r io.Reader) (c byte, err error) {
-	v := [1]byte{0}
-	n, err := r.Read(v[0:1])
+	v := bytePool.get()
+	defer bytePool.put(&v)
+
+	n, err := r.Read(v[:])
 	if n > 0 && (err == nil || errors.Is(err, io.EOF)) {
 		return v[0], nil
 	}
@@ -65,7 +71,10 @@ func readByte(r io.Reader) (c byte, err error) {
 }
 
 func writeByte(w io.Writer, c byte) error {
-	v := [1]byte{c}
-	_, err := w.Write(v[0:1])
+	v := bytePool.get()
+	defer bytePool.put(&v)
+
+	v[0] = c
+	_, err := w.Write(v[:])
 	return err
 }
