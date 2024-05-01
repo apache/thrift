@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>ApacheThrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -89,7 +89,7 @@
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web">
-			<Version>8.0.0</Version>
+			<Version>8.0.4</Version>
 		</PackageReference>
 	</ItemGroup>
 
