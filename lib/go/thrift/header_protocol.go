@@ -119,6 +119,11 @@ func (p *THeaderProtocol) ClearWriteHeaders() {
 }
 
 // AddTransform add a transform for writing.
+//
+// Deprecated: This only applies to the next message written, and the next read
+// message will cause write transforms to be reset from what's configured in
+// TConfiguration. For sticky transforms, use TConfiguration.THeaderTransforms
+// instead.
 func (p *THeaderProtocol) AddTransform(transform THeaderTransformID) error {
 	return p.transport.AddTransform(transform)
 }
