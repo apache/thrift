@@ -56,47 +56,47 @@ const (
 //
 // For example, say you want to migrate this old code into using TConfiguration:
 //
-//     sccket, err := thrift.NewTSocketTimeout("host:port", time.Second, time.Second)
-//     transFactory := thrift.NewTFramedTransportFactoryMaxLength(
-//         thrift.NewTTransportFactory(),
-//         1024 * 1024 * 256,
-//     )
-//     protoFactory := thrift.NewTBinaryProtocolFactory(true, true)
+//	socket, err := thrift.NewTSocketTimeout("host:port", time.Second, time.Second)
+//	transFactory := thrift.NewTFramedTransportFactoryMaxLength(
+//	    thrift.NewTTransportFactory(),
+//	    1024 * 1024 * 256,
+//	)
+//	protoFactory := thrift.NewTBinaryProtocolFactory(true, true)
 //
 // This is the wrong way to do it because in the end the TConfiguration used by
 // socket and transFactory will be overwritten by the one used by protoFactory
 // because of TConfiguration propagation:
 //
-//     // bad example, DO NOT USE
-//     sccket := thrift.NewTSocketConf("host:port", &thrift.TConfiguration{
-//         ConnectTimeout: time.Second,
-//         SocketTimeout:  time.Second,
-//     })
-//     transFactory := thrift.NewTFramedTransportFactoryConf(
-//         thrift.NewTTransportFactory(),
-//         &thrift.TConfiguration{
-//             MaxFrameSize: 1024 * 1024 * 256,
-//         },
-//     )
-//     protoFactory := thrift.NewTBinaryProtocolFactoryConf(&thrift.TConfiguration{
-//         TBinaryStrictRead:  thrift.BoolPtr(true),
-//         TBinaryStrictWrite: thrift.BoolPtr(true),
-//     })
+//	// bad example, DO NOT USE
+//	socket := thrift.NewTSocketConf("host:port", &thrift.TConfiguration{
+//	    ConnectTimeout: time.Second,
+//	    SocketTimeout:  time.Second,
+//	})
+//	transFactory := thrift.NewTFramedTransportFactoryConf(
+//	    thrift.NewTTransportFactory(),
+//	    &thrift.TConfiguration{
+//	        MaxFrameSize: 1024 * 1024 * 256,
+//	    },
+//	)
+//	protoFactory := thrift.NewTBinaryProtocolFactoryConf(&thrift.TConfiguration{
+//	    TBinaryStrictRead:  thrift.BoolPtr(true),
+//	    TBinaryStrictWrite: thrift.BoolPtr(true),
+//	})
 //
 // This is the correct way to do it:
 //
-//     conf := &thrift.TConfiguration{
-//         ConnectTimeout: time.Second,
-//         SocketTimeout:  time.Second,
+//	conf := &thrift.TConfiguration{
+//	    ConnectTimeout: time.Second,
+//	    SocketTimeout:  time.Second,
 //
-//         MaxFrameSize: 1024 * 1024 * 256,
+//	    MaxFrameSize: 1024 * 1024 * 256,
 //
-//         TBinaryStrictRead:  thrift.BoolPtr(true),
-//         TBinaryStrictWrite: thrift.BoolPtr(true),
-//     }
-//     sccket := thrift.NewTSocketConf("host:port", conf)
-//     transFactory := thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), conf)
-//     protoFactory := thrift.NewTBinaryProtocolFactoryConf(conf)
+//	    TBinaryStrictRead:  thrift.BoolPtr(true),
+//	    TBinaryStrictWrite: thrift.BoolPtr(true),
+//	}
+//	socket := thrift.NewTSocketConf("host:port", conf)
+//	transFactory := thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), conf)
+//	protoFactory := thrift.NewTBinaryProtocolFactoryConf(conf)
 //
 // [1]: https://github.com/apache/thrift/blob/master/doc/specs/thrift-tconfiguration.md
 type TConfiguration struct {
@@ -132,6 +132,8 @@ type TConfiguration struct {
 	// THeaderProtocolIDPtr and THeaderProtocolIDPtrMust helper functions
 	// are provided to help filling this value.
 	THeaderProtocolID *THeaderProtocolID
+	// The write transforms to be applied to THeaderTransport.
+	THeaderTransforms []THeaderTransformID
 
 	// Used internally by deprecated constructors, to avoid overriding
 	// underlying TTransport/TProtocol's cfg by accidental propagations.
@@ -243,6 +245,18 @@ func (tc *TConfiguration) GetTHeaderProtocolID() THeaderProtocolID {
 		return THeaderProtocolDefault
 	}
 	return protoID
+}
+
+// GetTHeaderTransforms returns the THeaderTransformIDs to be applied on
+// THeaderTransport writing.
+//
+// It's nil-safe. If tc is nil, empty slice will be returned (meaning no
+// transforms to be applied).
+func (tc *TConfiguration) GetTHeaderTransforms() []THeaderTransformID {
+	if tc == nil {
+		return nil
+	}
+	return tc.THeaderTransforms
 }
 
 // THeaderProtocolIDPtr validates and returns the pointer to id.
