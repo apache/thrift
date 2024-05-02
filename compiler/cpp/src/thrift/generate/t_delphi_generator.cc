@@ -964,7 +964,7 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
       }
       generate_delphi_doc(s_enum, *c_iter);
       indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
-      s_enum << render_deprecation_attribute((*c_iter)->annotations_, " // ", "");
+      s_enum << render_deprecation_attribute((*c_iter)->annotations_, " {", "}");
     }
   }
   s_enum << '\n';
@@ -1714,7 +1714,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
 
     indent_down();
     indent(out) << "end;"
-                << render_deprecation_attribute(tstruct->annotations_, " // ", "")
+                << render_deprecation_attribute(tstruct->annotations_, " {", "}")
                 << '\n';
     if(rtti_) {
       indent(out) << "{$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}" << '\n';
@@ -1912,7 +1912,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   }
   indent_down();
   indent(s_service) << "end;" 
-                    << render_deprecation_attribute( tservice->annotations_, " // ", "")
+                    << render_deprecation_attribute( tservice->annotations_, " {", "}")
                     << '\n' << '\n';
 
   indent_down();
@@ -2231,7 +2231,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
 
   indent_down();
   indent(s_service) << "end;"
-                    << render_deprecation_attribute( tservice->annotations_, " // ", "")
+                    << render_deprecation_attribute( tservice->annotations_, " {", "}")
                     << '\n' << '\n';
 }
 
@@ -3001,7 +3001,7 @@ void t_delphi_generator::generate_delphi_property(ostream& out,
               << " read " << prop_name(tfield, struct_is_xception, fieldPrefix)
               << " write " << prop_name(tfield, struct_is_xception, "Set")
               << ";"
-              << render_deprecation_attribute(tfield->annotations_, " // ", ";")
+              << render_deprecation_attribute(tfield->annotations_, " {", "}")
               << '\n';
 }
 
