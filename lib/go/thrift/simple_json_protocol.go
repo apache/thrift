@@ -1195,7 +1195,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 	for continueFor {
 		c, err := p.reader.ReadByte()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return NUMERIC_NULL, NewTProtocolException(err)
