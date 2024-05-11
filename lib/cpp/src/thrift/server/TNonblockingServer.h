@@ -36,6 +36,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <unordered_set>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -259,7 +260,7 @@ private:
    * which in turn allows their transports, protocols, processors and handlers
    * to deallocate and clean up correctly.
    */
-  std::vector<TConnection*> activeConnections_;
+  std::unordered_set<TConnection*> activeConnections_;
 
   /*
   */
