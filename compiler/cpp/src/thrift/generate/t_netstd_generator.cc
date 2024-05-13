@@ -393,7 +393,8 @@ void t_netstd_generator::generate_enum(t_enum* tenum)
 void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
 {
     reset_indent();
-    out << autogen_comment() << '\n';
+    out << autogen_comment();
+    out << "using System;" << '\n' << '\n';  // needed for Obsolete() attribute
 
     pragmas_and_directives(out);
     start_netstd_namespace(out);
