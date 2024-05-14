@@ -286,6 +286,10 @@ public:
 
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
 
+  std::string indent_str() const {
+    return "\t";
+  }
+
 private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
