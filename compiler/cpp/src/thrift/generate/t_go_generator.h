@@ -266,6 +266,8 @@ public:
   std::string type_to_go_key_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
+  void generate_deprecation_comment(std::ostream& os, const std::map<std::string, std::vector<std::string>>& annotations);
+
   void indent_up() { t_generator::indent_up(); }
   void indent_down() { t_generator::indent_down(); }
   std::string indent() { return t_generator::indent(); }

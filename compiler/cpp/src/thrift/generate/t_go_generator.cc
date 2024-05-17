@@ -768,9 +768,11 @@ void t_go_generator::generate_typedef(t_typedef* ttypedef) {
     return;
   }
 
+  generate_deprecation_comment(f_types_, ttypedef->annotations_);
   f_types_ << "type " << new_type_name << " " << base_type << '\n' << '\n';
   // Generate a convenience function that converts an instance of a type
   // (which may be a constant) into a pointer to an instance of a type.
+  generate_deprecation_comment(f_types_, ttypedef->annotations_);
   f_types_ << "func " << new_type_name << "Ptr(v " << new_type_name << ") *" << new_type_name
            << " { return &v }" << '\n' << '\n';
 }
@@ -785,13 +787,15 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   std::ostringstream to_string_mapping, from_string_mapping;
   std::string tenum_name(publicize(tenum->get_name()));
   generate_go_docstring(f_types_, tenum);
-  f_types_ << '\n' << "type " << tenum_name << " int64" << '\n' << "const (" << '\n';
+  generate_deprecation_comment(f_types_, tenum->annotations_);
+  f_types_ << "type " << tenum_name << " int64" << '\n' << "const (" << '\n';
 
   to_string_mapping << indent() << "func (p " << tenum_name << ") String() string {" << '\n';
   indent_up();
   to_string_mapping << indent() << "switch p {" << '\n';
   indent_down();
 
+  generate_deprecation_comment(from_string_mapping, tenum->annotations_);
   from_string_mapping << indent() << "func " << tenum_name << "FromString(s string) (" << tenum_name
                       << ", error) {" << '\n';
   indent_up();
@@ -808,6 +812,7 @@ void t_go_generator::generate_enum(t_enum* tenum) {
 
     string iter_std_name(escape_string((*c_iter)->get_name()));
     string iter_name((*c_iter)->get_name());
+    generate_deprecation_comment(f_types_, (*c_iter)->annotations_);
     f_types_ << indent() << tenum_name << "_" << iter_name << ' ' << tenum_name << " = "
              << value << '\n';
     // Dictionaries to/from string names of enums
@@ -841,6 +846,7 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   // Generate a convenience function that converts an instance of an enum
   // (which may be a constant) into a pointer to an instance of that enum
   // type.
+  generate_deprecation_comment(f_types_, tenum->annotations_);
   f_types_ << "func " << tenum_name << "Ptr(v " << tenum_name << ") *" << tenum_name
            << " { return &v }" << '\n' << '\n';
 
@@ -889,7 +895,7 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   f_types_ << indent() << "}" << '\n';
   f_types_ << indent() << "return int64(*p), nil" << '\n';
   indent_down();
-  f_types_ << "}" << '\n';
+  f_types_ << "}" << '\n' << '\n';
 
 }
 
@@ -1187,7 +1193,7 @@ void t_go_generator::generate_go_struct(t_struct* tstruct, bool is_exception) {
   go_validator_generator(this).generate_struct_validator(f_types_, tstruct);
   f_types_ << indent() << "return nil" << '\n';
   indent_down();
-  f_types_ << "}" << '\n';
+  f_types_ << "}" << '\n' << '\n';
 }
 
 void t_go_generator::get_publicized_name_and_def_value(t_field* tfield,
@@ -1235,6 +1241,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
   std::string tstruct_name(publicize(tstruct->get_name(), is_args || is_result));
   generate_go_docstring(out, tstruct);
+  generate_deprecation_comment(out, tstruct->annotations_);
   out << indent() << "type " << tstruct_name << " struct {" << '\n';
   /*
      Here we generate the structure specification for the fastbinary codec.
@@ -1314,6 +1321,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       // Trailing whitespace
       gotag.resize(gotag.size()-1);
 
+      generate_deprecation_comment(out, (*m_iter)->annotations_);
       indent(out) << publicize((*m_iter)->get_name()) << " " << goType << " `thrift:\""
                   << escape_string((*m_iter)->get_name()) << "," << sorted_keys_pos;
       if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
@@ -1325,6 +1333,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     }
   } else {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      generate_deprecation_comment(out, (*m_iter)->annotations_);
       // This fills in default values, as opposed to nulls
       out << indent() << publicize((*m_iter)->get_name()) << " "
           << type_to_go_type((*m_iter)->get_type()) << '\n';
@@ -1333,6 +1342,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
   indent_down();
   out << indent() << "}" << '\n' << '\n';
+  generate_deprecation_comment(out, tstruct->annotations_);
   out << indent() << "func New" << tstruct_name << "() *" << tstruct_name << " {" << '\n';
   indent_up();
   out << indent() << "return &";
@@ -1348,6 +1358,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     string goType = type_to_go_type_with_opt(fieldType, false);
     string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
     if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
+      generate_deprecation_comment(out, (*m_iter)->annotations_);
       out << indent() << "var " << def_var_name << " " << goType;
       if (def_value != nullptr) {
         out << " = " << render_const_value(fieldType, def_value, (*m_iter)->get_name());
@@ -1366,6 +1377,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     if (is_pointer_field(*m_iter)) {
       string goOptType = type_to_go_type_with_opt(fieldType, true);
       string maybepointer = goOptType != goType ? "*" : "";
+      generate_deprecation_comment(out, (*m_iter)->annotations_);
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << '\n';
       indent_up();
@@ -1376,15 +1388,16 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       out << indent() << "}" << '\n';
       out << indent() << "return " << maybepointer << "p." << publicized_name << '\n';
       indent_down();
-      out << indent() << "}" << '\n';
+      out << indent() << "}" << '\n' << '\n';
     } else {
       out << '\n';
+      generate_deprecation_comment(out, (*m_iter)->annotations_);
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << '\n';
       indent_up();
       out << indent() << "return p." << publicized_name << '\n';
       indent_down();
-      out << indent() << "}" << '\n';
+      out << indent() << "}" << '\n' << '\n';
     }
   }
 
@@ -1468,6 +1481,7 @@ void t_go_generator::generate_isset_helpers(ostream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     const string field_name(publicize(escape_string((*f_iter)->get_name())));
     if ((*f_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*f_iter)) {
+      generate_deprecation_comment(out, (*f_iter)->annotations_);
       out << indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {"
           << '\n';
       indent_up();
@@ -1981,6 +1995,7 @@ void t_go_generator::generate_service_interface(t_service* tservice) {
     indent_down();
   }
 
+  generate_deprecation_comment(f_types_, tservice->annotations_);
   f_types_ << indent() << "type " << interfaceName << " interface {" << extends_if;
   indent_up();
   generate_go_docstring(f_types_, tservice);
@@ -1992,6 +2007,7 @@ void t_go_generator::generate_service_interface(t_service* tservice) {
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       generate_go_docstring(f_types_, (*f_iter));
+      generate_deprecation_comment(f_types_, (*f_iter)->annotations_);
       f_types_ << indent() << function_signature_if(*f_iter, "", true) << '\n';
     }
   }
@@ -2030,6 +2046,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   extends_field = extends_client.substr(extends_client.find(".") + 1);
 
   generate_go_docstring(f_types_, tservice);
+  generate_deprecation_comment(f_types_, tservice->annotations_);
   f_types_ << indent() << "type " << serviceName << "Client struct {" << '\n';
   indent_up();
 
@@ -2044,6 +2061,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   f_types_ << indent() << "}" << '\n' << '\n';
 
   // Legacy constructor function
+  generate_deprecation_comment(f_types_, tservice->annotations_);
   f_types_ << indent() << "func New" << serviceName
              << "ClientFactory(t thrift.TTransport, f thrift.TProtocolFactory) *" << serviceName
              << "Client {" << '\n';
@@ -2063,6 +2081,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   indent_down();
   f_types_ << indent() << "}" << '\n' << '\n';
   // Legacy constructor function with custom input & output protocols
+  generate_deprecation_comment(f_types_, tservice->annotations_);
   f_types_
       << indent() << "func New" << serviceName
       << "ClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *"
@@ -2085,6 +2104,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   f_types_ << indent() << "}" << '\n' << '\n';
 
   // Constructor function
+  generate_deprecation_comment(f_types_, tservice->annotations_);
   f_types_ << indent() << "func New" << serviceName
     << "Client(c thrift.TClient) *" << serviceName << "Client {" << '\n';
   indent_up();
@@ -2133,6 +2153,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     string funname = publicize((*f_iter)->get_name());
     // Open function
     generate_go_docstring(f_types_, (*f_iter));
+    generate_deprecation_comment(f_types_, (*f_iter)->annotations_);
     f_types_ << indent() << "func (p *" << serviceName << "Client) "
                << function_signature_if(*f_iter, "", true) << " {" << '\n';
     indent_up();
@@ -2475,6 +2496,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "case \"simplejson\":" << '\n';
   indent_up();
   f_remote << indent() << "protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(cfg)" << '\n';
+  indent_down();
   f_remote << indent() << "case \"json\":" << '\n';
   indent_up();
   f_remote << indent() << "protocolFactory = thrift.NewTJSONProtocolFactory()" << '\n';
@@ -2831,6 +2853,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
   string self(tmp("self"));
 
   if (extends_processor.empty()) {
+    generate_deprecation_comment(f_types_, tservice->annotations_);
     f_types_ << indent() << "type " << serviceName << "Processor struct {" << '\n';
     indent_up();
     f_types_ << indent() << "processorMap map[string]thrift.TProcessorFunction" << '\n';
@@ -2858,6 +2881,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "return p.processorMap" << '\n';
     indent_down();
     f_types_ << indent() << "}" << '\n' << '\n';
+    generate_deprecation_comment(f_types_, tservice->annotations_);
     f_types_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
                << ") *" << serviceName << "Processor {" << '\n' << '\n';
     indent_up();
@@ -3905,6 +3929,7 @@ void t_go_generator::generate_go_docstring(ostream& out,
         ss << '\n';
       }
     }
+    ss << '\n';
   }
 
   if (has_doc) {
@@ -4283,6 +4308,32 @@ void t_go_generator::parse_go_tags(map<string,string>* tags, const string in) {
           }
           value+=in[index];
       }
+  }
+}
+
+void t_go_generator::generate_deprecation_comment(ostream& out, const map<string, vector<string>>& annotations) {
+  auto iter = annotations.find("deprecated");
+  if (annotations.end() != iter) {
+    out << indent() << "// Deprecated: ";
+
+    bool first = true;
+    for (auto str_iter = iter->second.begin(); str_iter != iter->second.end(); ++str_iter) {
+      if (*str_iter == "1") {
+        // Empty annotations will generate "1", skip those.
+        continue;
+      }
+      if (first) {
+        first = false;
+      } else {
+        out << "; ";
+      }
+      out << *str_iter;
+    }
+    if (first) {
+      // All deprecation annotations are empty, put a generic reason here
+      out << "(no reason given)";
+    }
+    out << '\n';
   }
 }
 
