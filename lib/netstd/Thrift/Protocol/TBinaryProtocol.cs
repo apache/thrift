@@ -475,7 +475,13 @@ namespace Thrift.Protocol
             protected readonly bool StrictRead;
             protected readonly bool StrictWrite;
 
-            public Factory(bool strictRead = false, bool strictWrite = true)
+            // emtpy constructor preserves binary compatibility with v19.0 and lower versions of this class
+            public Factory()
+                : this(false, true)
+            {
+            }
+
+            public Factory(bool strictRead, bool strictWrite)
             {
                 StrictRead = strictRead;
                 StrictWrite = strictWrite;
