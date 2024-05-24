@@ -55,6 +55,18 @@ type
 
   TLayeredTransports = set of TLayeredTransport;
 
+  {$SCOPEDENUMS ON}
+  TTestSize = (
+    Empty,           // Edge case: the zero-length empty binary
+    Normal,          // Fairly small array of usual size (256 bytes)
+    ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
+    PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+    FifteenMB        // quite a bit of data, but still below the default max frame size
+  );
+  {$SCOPEDENUMS OFF}
+
+
+
 const
   PROTOCOL_CLASSES : array[TKnownProtocol] of TProtocolImplClass = (
     TBinaryProtocolImpl,
@@ -151,6 +163,8 @@ const
 
 function BytesToHex( const bytes : TBytes) : string;
 
+function PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
+
 
 implementation
 
@@ -163,6 +177,40 @@ begin
     result := result + IntToHex(bytes[i],2);
   end;
 end;
+
+
+function PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
+var i : Integer;
+begin
+  case aSize of
+    TTestSize.Empty          : SetLength( result, 0);
+    TTestSize.Normal         : SetLength( result, $100);
+    TTestSize.ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
+    TTestSize.PipeWriteLimit : SetLength( result, 65535 + 128);
+    TTestSize.FifteenMB      : SetLength( result, 15 * 1024 * 1024);
+  else
+    raise EArgumentException.Create('aSize');
+  end;
+
+  ASSERT( Low(result) = 0);
+  if Length(result) = 0 then Exit;
+
+  // linear distribution, unless random is requested
+  if not aRandomDist then begin
+    for i := Low(result) to High(result) do begin
+      result[i] := i mod $100;
+    end;
+    Exit;
+  end;
+
+  // random distribution of all 256 values
+  FillChar( result[0], Length(result) * SizeOf(result[0]), $0);
+  for i := Low(result) to High(result) do begin
+    result[i] := Byte( Random($100));
+  end;
+end;
+
+
 
 
 end.

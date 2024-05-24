@@ -39,8 +39,10 @@ uses
   DateUtils,
   Generics.Collections,
   TestConstants,
+  TestLogger,
   ConsoleHelper,
   PerfTests,
+  UnitTests,
   Thrift,
   Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
@@ -82,25 +84,6 @@ type
   end;
 
   TClientThread = class( TThread )
-  private type
-    TTestGroup = (
-      test_Unknown,
-      test_BaseTypes,
-      test_Structs,
-      test_Containers,
-      test_Exceptions
-      // new values here
-    );
-    TTestGroups = set of TTestGroup;
-
-    TTestSize = (
-      Empty,           // Edge case: the zero-length empty binary
-      Normal,          // Fairly small array of usual size (256 bytes)
-      ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
-      PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
-      FifteenMB        // quite a bit of data, but still below the default max frame size
-    );
-
   strict private
     FSetup : TTestSetup;
     FTransport : ITransport;
@@ -109,18 +92,7 @@ type
 
     FThreadNo : Integer;
     FConsole : TThreadConsole;
-
-    // test reporting, will be refactored out into separate class later
-    FTestGroup : string;
-    FCurrentTest : TTestGroup;
-    FSuccesses : Integer;
-    FErrors : TStringList;
-    FFailed : TTestGroups;
-    FExecuted : TTestGroups;
-    procedure StartTestGroup( const aGroup : string; const aTest : TTestGroup);
-    procedure Expect( aTestResult : Boolean; const aTestInfo : string);
-    procedure ReportResults;
-    function  CalculateExitCode : Byte;
+    FLogger : ITestLogger;
 
     procedure ClientTest;
     {$IFDEF SupportsAsync}
@@ -131,14 +103,13 @@ type
     procedure ShutdownProtocolTransportStack;
     function  InitializeHttpTransport( const aTimeoutSetting : Integer; const aConfig : IThriftConfiguration = nil) : IHTTPClient;
 
-    procedure JSONProtocolReadWriteTest;
-    function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
     {$ENDIF}
-    {$IFDEF Win64}
-    procedure UseInterlockedExchangeAdd64;
-    {$ENDIF}
+
+    procedure StartTestGroup( const aGroup : string; const aTest : TClientTestGroup); inline;
+    procedure Expect( aTestResult : Boolean; const aTestInfo : string); inline;
+    function CalculateExitCode : Byte;
 
   strict protected
     procedure Execute; override;
@@ -174,7 +145,7 @@ const
    EXITCODE_FAILBIT_CONTAINERS = $04;
    EXITCODE_FAILBIT_EXCEPTIONS = $08;
 
-   MAP_FAILURES_TO_EXITCODE_BITS : array[TClientThread.TTestGroup] of Byte = (
+   MAP_FAILURES_TO_EXITCODE_BITS : array[TClientTestGroup] of Byte = (
      EXITCODE_SUCCESS,  // no bits here
      EXITCODE_FAILBIT_BASETYPES,
      EXITCODE_FAILBIT_STRUCTS,
@@ -1052,260 +1023,26 @@ end;
 {$ENDIF}
 
 
-function TClientThread.PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
-var i : Integer;
+procedure TClientThread.StartTestGroup( const aGroup : string; const aTest : TClientTestGroup);
 begin
-  case aSize of
-    Empty          : SetLength( result, 0);
-    Normal         : SetLength( result, $100);
-    ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
-    PipeWriteLimit : SetLength( result, 65535 + 128);
-    FifteenMB      : SetLength( result, 15 * 1024 * 1024);
-  else
-    raise EArgumentException.Create('aSize');
-  end;
-
-  ASSERT( Low(result) = 0);
-  if Length(result) = 0 then Exit;
-
-  // linear distribution, unless random is requested
-  if not aRandomDist then begin
-    for i := Low(result) to High(result) do begin
-      result[i] := i mod $100;
-    end;
-    Exit;
-  end;
-
-  // random distribution of all 256 values
-  FillChar( result[0], Length(result) * SizeOf(result[0]), $0);
-  for i := Low(result) to High(result) do begin
-    result[i] := Byte( Random($100));
-  end;
-end;
-
-
-{$IFDEF Win64}
-procedure TClientThread.UseInterlockedExchangeAdd64;
-var a,b : Int64;
-begin
-  a := 1;
-  b := 2;
-  Thrift.Utils.InterlockedExchangeAdd64( a,b);
-  Expect( a = 3, 'InterlockedExchangeAdd64');
-end;
-{$ENDIF}
-
-
-procedure TClientThread.JSONProtocolReadWriteTest;
-// Tests only then read/write procedures of the JSON protocol
-// All tests succeed, if we can read what we wrote before
-// Note that passing this test does not imply, that our JSON is really compatible to what
-// other clients or servers expect as the real JSON. This is beyond the scope of this test.
-var prot   : IProtocol;
-    stm    : TStringStream;
-    list   : TThriftList;
-    config : IThriftConfiguration;
-    binary, binRead, emptyBinary : TBytes;
-    i,iErr : Integer;
-const
-  TEST_SHORT   = ShortInt( $FE);
-  TEST_SMALL   = SmallInt( $FEDC);
-  TEST_LONG    = LongInt( $FEDCBA98);
-  TEST_I64     = Int64( $FEDCBA9876543210);
-  TEST_DOUBLE  = -1.234e-56;
-  DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
-  TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
-  // Test THRIFT-2336 and THRIFT-3404 with U+1D11E (G Clef symbol) and 'Русское Название';
-  G_CLEF_AND_CYRILLIC_TEXT = #$1d11e' '#$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
-  G_CLEF_AND_CYRILLIC_JSON = '"\ud834\udd1e \u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
-  // test both possible solidus encodings
-  SOLIDUS_JSON_DATA = '"one/two\/three"';
-  SOLIDUS_EXCPECTED = 'one/two/three';
-begin
-  stm  := TStringStream.Create;
-  try
-    StartTestGroup( 'JsonProtocolTest', test_Unknown);
-
-    config := TThriftConfigurationImpl.Create;
-
-    // prepare binary data
-    binary := PrepareBinaryData( FALSE, Normal);
-    SetLength( emptyBinary, 0); // empty binary data block
-
-    // output setup
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
-
-    // write
-    Init( list, TType.String_, 9);
-    prot.WriteListBegin( list);
-    prot.WriteBool( TRUE);
-    prot.WriteBool( FALSE);
-    prot.WriteByte( TEST_SHORT);
-    prot.WriteI16( TEST_SMALL);
-    prot.WriteI32( TEST_LONG);
-    prot.WriteI64( TEST_I64);
-    prot.WriteDouble( TEST_DOUBLE);
-    prot.WriteString( TEST_STRING);
-    prot.WriteBinary( binary);
-    prot.WriteString( '');  // empty string
-    prot.WriteBinary( emptyBinary); // empty binary data block
-    prot.WriteListEnd;
-
-    // input setup
-    Expect( stm.Position = stm.Size, 'Stream position/length after write');
-    stm.Position := 0;
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
-
-    // read and compare
-    list := prot.ReadListBegin;
-    Expect( list.ElementType = TType.String_, 'list element type');
-    Expect( list.Count = 9, 'list element count');
-    Expect( prot.ReadBool, 'WriteBool/ReadBool: TRUE');
-    Expect( not prot.ReadBool, 'WriteBool/ReadBool: FALSE');
-    Expect( prot.ReadByte   = TEST_SHORT,  'WriteByte/ReadByte');
-    Expect( prot.ReadI16    = TEST_SMALL,  'WriteI16/ReadI16');
-    Expect( prot.ReadI32    = TEST_LONG,   'WriteI32/ReadI32');
-    Expect( prot.ReadI64    = TEST_I64,    'WriteI64/ReadI64');
-    Expect( abs(prot.ReadDouble-TEST_DOUBLE) < abs(DELTA_DOUBLE), 'WriteDouble/ReadDouble');
-    Expect( prot.ReadString = TEST_STRING, 'WriteString/ReadString');
-    binRead := prot.ReadBinary;
-    Expect( Length(prot.ReadString) = 0, 'WriteString/ReadString (empty string)');
-    Expect( Length(prot.ReadBinary) = 0, 'empty WriteBinary/ReadBinary (empty data block)');
-    prot.ReadListEnd;
-
-    // test binary data
-    Expect( Length(binary) = Length(binRead), 'Binary data length check');
-    iErr := -1;
-    for i := Low(binary) to High(binary) do begin
-      if binary[i] <> binRead[i] then begin
-        iErr := i;
-        Break;
-      end;
-    end;
-    if iErr < 0
-    then Expect( TRUE,  'Binary data check ('+IntToStr(Length(binary))+' Bytes)')
-    else Expect( FALSE, 'Binary data check at offset '+IntToStr(iErr));
-
-    Expect( stm.Position = stm.Size, 'Stream position after read');
-
-
-    // Solidus can be encoded in two ways. Make sure we can read both
-    stm.Position := 0;
-    stm.Size     := 0;
-    stm.WriteString(SOLIDUS_JSON_DATA);
-    stm.Position := 0;
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
-    Expect( prot.ReadString = SOLIDUS_EXCPECTED, 'Solidus encoding');
-
-
-    // Widechars should work too. Do they?
-    // After writing, we ensure that we are able to read it back
-    // We can't assume hex-encoding, since (nearly) any Unicode char is valid JSON
-    stm.Position := 0;
-    stm.Size     := 0;
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
-    prot.WriteString( G_CLEF_AND_CYRILLIC_TEXT);
-    stm.Position := 0;
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
-    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Writing JSON with chars > 8 bit');
-
-    // Widechars should work with hex-encoding too. Do they?
-    stm.Position := 0;
-    stm.Size     := 0;
-    stm.WriteString( G_CLEF_AND_CYRILLIC_JSON);
-    stm.Position := 0;
-    prot := TJSONProtocolImpl.Create(
-              TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
-    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Reading JSON with chars > 8 bit');
-
-
-  finally
-    stm.Free;
-    prot := nil;  //-> Release
-    StartTestGroup( '', test_Unknown);  // no more tests here
-  end;
-end;
-
-
-procedure TClientThread.StartTestGroup( const aGroup : string; const aTest : TTestGroup);
-begin
-  FTestGroup := aGroup;
-  FCurrentTest := aTest;
-
-  Include( FExecuted, aTest);
-
-  if FTestGroup <> '' then begin
-    Console.WriteLine('');
-    Console.WriteLine( aGroup+' tests');
-    Console.WriteLine( StringOfChar('-',60));
-  end;
+  FLogger.StartTestGroup( aGroup, aTest);
 end;
 
 
 procedure TClientThread.Expect( aTestResult : Boolean; const aTestInfo : string);
 begin
-  if aTestResult  then begin
-    Inc(FSuccesses);
-    Console.WriteLine( aTestInfo+': passed');
-  end
-  else begin
-    FErrors.Add( FTestGroup+': '+aTestInfo);
-    Include( FFailed, FCurrentTest);
-    Console.WriteLine( aTestInfo+': *** FAILED ***');
-
-    // We have a failed test!
-    // -> issue DebugBreak ONLY if a debugger is attached,
-    // -> unhandled DebugBreaks would cause Windows to terminate the app otherwise
-    if IsDebuggerPresent
-    then {$IFDEF CPUX64} DebugBreak {$ELSE} asm int 3 end {$ENDIF};
-  end;
-end;
-
-
-procedure TClientThread.ReportResults;
-var nTotal : Integer;
-    sLine : string;
-begin
-  // prevent us from stupid DIV/0 errors
-  nTotal := FSuccesses + FErrors.Count;
-  if nTotal = 0 then begin
-    Console.WriteLine('No results logged');
-    Exit;
-  end;
-
-  Console.WriteLine('');
-  Console.WriteLine( StringOfChar('=',60));
-  Console.WriteLine( IntToStr(nTotal)+' tests performed');
-  Console.WriteLine( IntToStr(FSuccesses)+' tests succeeded ('+IntToStr(round(100*FSuccesses/nTotal))+'%)');
-  Console.WriteLine( IntToStr(FErrors.Count)+' tests failed ('+IntToStr(round(100*FErrors.Count/nTotal))+'%)');
-  Console.WriteLine( StringOfChar('=',60));
-  if FErrors.Count > 0 then begin
-    Console.WriteLine('FAILED TESTS:');
-    for sLine in FErrors do Console.WriteLine('- '+sLine);
-    Console.WriteLine( StringOfChar('=',60));
-    InterlockedIncrement( ExitCode);  // return <> 0 on errors
-  end;
-  Console.WriteLine('');
+  FLogger.Expect( aTestResult, aTestInfo);
 end;
 
 
 function TClientThread.CalculateExitCode : Byte;
-var test : TTestGroup;
+var test : TClientTestGroup;
+    failed, executed : TClientTestGroups;
 begin
   result := EXITCODE_SUCCESS;
-  for test := Low(TTestGroup) to High(TTestGroup) do begin
-    if (test in FFailed) or not (test in FExecuted)
+  FLogger.QueryTestStats( failed, executed);
+  for test := Low(TClientTestGroup) to High(TClientTestGroup) do begin
+    if (test in failed) or not (test in executed)
     then result := result or MAP_FAILURES_TO_EXITCODE_BITS[test];
   end;
 end;
@@ -1318,12 +1055,7 @@ begin
   FNumIterations := aNumIteration;
 
   FConsole := TThreadConsole.Create( Self, aLogThreadID);
-  FCurrentTest := test_Unknown;
-
-  // error list: keep correct order, allow for duplicates
-  FErrors := TStringList.Create;
-  FErrors.Sorted := FALSE;
-  FErrors.Duplicates := dupAccept;
+  FLogger := TTestLoggerImpl.Create;
 
   inherited Create( TRUE);
 end;
@@ -1331,7 +1063,7 @@ end;
 destructor TClientThread.Destroy;
 begin
   FreeAndNil( FConsole);
-  FreeAndNil( FErrors);
+  FLogger := nil; //-> Release
   inherited;
 end;
 
@@ -1341,10 +1073,9 @@ var
 begin
   // perform all tests
   try
-    {$IFDEF Win64}
-    UseInterlockedExchangeAdd64;
-    {$ENDIF}
-    JSONProtocolReadWriteTest;
+    // builtin (quick) unit tests on one thread only
+    if ThreadNo = 0
+    then TQuickUnitTests.Execute(FLogger);
 
     // must be run in the context of the thread
     InitializeProtocolTransportStack;
@@ -1357,7 +1088,7 @@ begin
       end;
 
       // report the outcome
-      ReportResults;
+      FLogger.ReportResults;
       SetReturnValue( CalculateExitCode);
 
     finally
