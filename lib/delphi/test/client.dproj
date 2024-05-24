@@ -50,9 +50,13 @@
 			<DelphiCompile Include="client.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="Performance\DataFactory.pas"/>
-			<DCCReference Include="Performance\PerfTests.pas"/>
-			<DCCReference Include="TestClient.pas"/>
+			<DCCReference Include="ConsoleHelper.pas"/>
+			<DCCReference Include="testsuite\TestConstants.pas"/>
+			<DCCReference Include="testsuite\client\TestClient.pas"/>
+			<DCCReference Include="testsuite\client\TestLogger.pas"/>
+			<DCCReference Include="testsuite\client\UnitTests.pas"/>
+			<DCCReference Include="testsuite\client\Performance\PerfTests.pas"/>
+			<DCCReference Include="testsuite\client\Performance\DataFactory.pas"/>
 			<DCCReference Include="gen-delphi\Thrift.Test.pas"/>
 			<DCCReference Include="..\src\Thrift.pas"/>
 			<DCCReference Include="..\src\Thrift.Transport.pas"/>
@@ -125,7 +129,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Parameters>
-						<Parameters Name="RunParams">--protocol=compact  </Parameters>
+						<Parameters Name="RunParams">--protocol=compact</Parameters>
 					</Parameters>
 				</Delphi.Personality>
 				<Platforms>
