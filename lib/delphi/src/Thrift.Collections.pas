@@ -224,6 +224,7 @@ type
   public
     constructor Create( const aCapacity: Integer = 0);  overload;
     constructor Create( const aCapacity: Integer; const aComparer : IEqualityComparer<T>);  overload;
+    destructor Destroy; override;
     function ToString : string;  override;
   end;
 
@@ -262,6 +263,14 @@ begin
   inherited Create;
   FDictionary := TDictionary<T,Byte>.Create( aCapacity, aComparer);
 end;
+
+
+destructor TThriftHashSetImpl<T>.Destroy;
+begin
+  FDictionary.Free;
+  inherited Destroy;
+end;
+
 
 function TThriftHashSetImpl<T>.GetCount: Integer;
 begin
