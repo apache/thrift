@@ -27,7 +27,7 @@ import CoreFoundation
   
 extension UInt {
   public static func &(lhs: UInt, rhs: Int) -> UInt {
-    let cast = unsafeBitCast(rhs, to: UInt.self)
+    let cast = UInt(bitPattern: rhs)
     return lhs & cast
   }
 }
