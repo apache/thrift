@@ -48,43 +48,38 @@ For background on Thrift see the [Thrift whitepaper (pdf)](https://thrift.apache
 
 ### Integer encoding
 
-The _compact protocol_ uses multiple encodings for ints: the _zigzag int_, and the _var int_.
+The _compact protocol_ uses [ZigZag](https://en.wikipedia.org/wiki/Variable-length_quantity#Zigzag_encoding)'ed
+varint (aka [ULEB128](https://en.wikipedia.org/wiki/LEB128)) encoding.
 
-Values of type `int32` and `int64` are first transformed to a *zigzag int*. A zigzag int folds positive and negative
-numbers into the positive number space. When we read 0, 1, 2, 3, 4 or 5 from the wire, this is translated to 0, -1, 1,
--2 or 2 respectively. Here are the (Scala) formulas to convert from int32/int64 to a zigzag int and back:
+Values of type `int8` are encoded as one byte, rest are converted to `int64`, Zigzag'ed then encoded as varint.
+Zigzag encoding maps signed integers to another domain, one where the sign bit is encoded in the least significant
+bit (LSB). For example 0 maps to 0, -1 to 1, 1 to 2, -2 to 3, etc. Hence the term zigzag. Mapping the sign bit to
+the LSB is important for compactness when the absolute value of the value is small, as ULEB encoding is more
+efficient for small values. Here are the (Scala) formulas to convert from `int64` to a zigzag `int64` and back:
 
 ```scala
-def intToZigZag(n: Int): Int = (n << 1) ^ (n >> 31)
-def zigzagToInt(n: Int): Int = (n >>> 1) ^ - (n & 1)
-def longToZigZag(n: Long): Long = (n << 1) ^ (n >> 63)
-def zigzagToLong(n: Long): Long = (n >>> 1) ^ - (n & 1)
+def ToZigzag(n: Long): Long = (n << 1) ^ (n >> 63)
+def FromZigzag(n: Long): Long = (n >>> 1) ^ - (n & 1)
 ```
 
-The zigzag int is then encoded as a *var int*, also known as *Unsigned LEB128*.  Var ints take 1 to 5 bytes (int32) or 
-1 to 10 bytes (int64). The process consists in taking a Big Endian unsigned integer, left-padding the bit-string to 
-make it a multiple of 7 bits, splitting it into 7-bit groups, prefixing the most-significant 7-bit group with the 0 
-bit, prefixing the remaining 7-bit groups with the 1 bit and encoding the resulting bit-string in Little Endian.
+A ULEB128 is encoded 7-bits at a time, starting from the LSB. Each 7-bits are encoded as 8-bits with the top bit set
+if this is not the last byte, unset otherwise.
 
 For example, the integer 50399 is encoded as follows:
 
 ```
-50399 = 1100 0100 1101 1111         (Big Endian representation)
-      = 00000 1100 0100 1101 1111   (Left-padding)
-      = 0000011 0001001 1011111     (7-bit groups)
-      = 00000011 10001001 11011111  (Most-significant bit prefixes)
-      = 11011111 10001001 00000011  (Little Endian representation)
-      = 0xDF 0x89 0x03
+50399 =          11000100 11011111  (LSB)
+      =  0000011  0001001  1011111  (7-bit groups)
+      = 00000011 10001001 11011111  (add continuation bits)
+      =     0x03     0x89     0xDF  (hex)
+→ 0xDF 0x89 0x03 (write to ram LSB first)
 ```
 
-Var ints are sometimes used directly inside the compact protocol to represent positive numbers.
-
-To encode an `int16` as zigzag int, it is first converted to an `int32` and then encoded as such. The type `int8` simply
-uses a single byte as in the binary protocol.
+Varints are sometimes used directly inside the compact protocol to represent positive numbers.
 
 ### Enum encoding
 
-The generated code encodes `Enum`s by taking the ordinal value and then encoding that as an int32.
+The generated code encodes `Enum`s by taking the ordinal value and then encoding that as an `int32`.
 
 ### Binary encoding
 
@@ -99,35 +94,32 @@ Binary protocol, binary data, 1+ bytes:
 
 Where:
 
-* `byte length` is the length of the byte array, using var int encoding (must be >= 0).
+* `byte length` is the length of the byte array, using varint encoding (must be >= 0).
 * `bytes` are the bytes of the byte array.
 
 ### String encoding
 
-*String*s are first encoded to UTF-8, and then send as binary. They do not
-include a NUL delimiter.
+*String*s are first encoded to UTF-8, and then send as binary. They do not include a NUL delimiter.
 
 ### Double encoding
 
-Values of type `double` are first converted to an int64 according to the IEEE 754 floating-point "double format" bit
-layout. Most run-times provide a library to make this conversion. But while the binary protocol encodes the int64 
-in 8 bytes in big endian order, the compact protocol encodes it in little endian order - this is due to an early 
-implementation bug that finally became the de-facto standard.
+Values of type `double` are first converted to an `int64` according to the IEEE 754 floating-point "double format"
+bit layout. Most run-times provide a library to make this conversion. But while the binary protocol encodes the
+`int64` in 8 bytes in big endian order, the compact protocol encodes it in little endian order - this is due to an
+early implementation bug that finally became the de-facto standard.
 
 ### Boolean encoding
 
 Booleans are encoded differently depending on whether it is a field value (in a struct) or an element value (in a set,
-list or map). Field values are encoded directly in the field header. Element values of type `bool` are sent as an int8;
-true as `1` and false as `0`.
+list or map). Field values are encoded directly in the field header. Element values of type `bool` are sent as an
+`int8`; true as `1` and false as `0`.
 
 ### Universal unique identifier encoding
 
-Values of `uuid` type are expected as 16-byte binary in big endian (or "network") order. Byte order conversion 
-might be necessary on certain platforms, e.g. Windows holds GUIDs in a complex record-like structure whose 
-memory layout differs.
+Values of `uuid` type are expected as 16-byte binary in big endian order. Byte order conversion might be necessary on
+certain platforms, e.g. Windows holds GUIDs in a complex record-like structure whose memory layout differs.
 
 *Note*: Since the length is fixed, no `byte length` prefix is necessary and the field is always 16 bytes long.
-
 
 ## Message
 
@@ -145,8 +137,8 @@ Where:
 * `pppppppp` is the protocol id, fixed to `1000 0010`, 0x82.
 * `mmm` is the message type, an unsigned 3 bit integer.
 * `vvvvv` is the version, an unsigned 5 bit integer, fixed to `00001`.
-* `seq id` is the sequence id, a signed 32 bit integer encoded as a var int.
-* `name length` is the byte length of the name field, a signed 32 bit integer encoded as a var int (must be >= 0).
+* `seq id` is the sequence id, a signed 32 bit integer encoded as a varint.
+* `name length` is the byte length of the name field, a signed 32 bit integer encoded as a varint (must be >= 0).
 * `name` is the method name to invoke, a UTF-8 encoded string.
 
 Message types are encoded with the following values:
@@ -204,7 +196,7 @@ Where:
 
 * `dddd` is the field id delta, an unsigned 4 bits integer, strictly positive.
 * `tttt` is field-type id, an unsigned 4 bit integer.
-* `field id` the field id, a signed 16 bit integer encoded as zigzag int.
+* `field id` the field id, a varint (int16). Max field id is 32767.
 * `field-value` the encoded field value.
 
 The field id delta can be computed by `current-field-id - previous-field-id`, or just `current-field-id` if this is the
@@ -250,7 +242,7 @@ Where:
 
 * `ssss` is the size, 4 bit unsigned int, values `0` - `14`
 * `tttt` is the element-type, a 4 bit unsigned int
-* `size` is the size, a var int (int32), positive values `15` or higher
+* `size` is the size, a varint (int32), positive values `15` or higher
 * `elements` are the encoded elements
 
 The short form should be used when the length is in the range 0 - 14 (inclusive).
