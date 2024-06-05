@@ -178,6 +178,7 @@ include_protocol_HEADERS = \
                          src/thrift/protocol/TProtocolTap.h \
                          src/thrift/protocol/TProtocolTypes.h \
                          src/thrift/protocol/TProtocolException.h \
+                         src/thrift/protocol/TUuidUtils.hpp \
                          src/thrift/protocol/TVirtualProtocol.h \
                          src/thrift/protocol/TProtocol.h
 

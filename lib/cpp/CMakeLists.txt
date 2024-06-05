@@ -208,7 +208,7 @@ endif()
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
-    FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc" PATTERN "*.hpp")
 # Copy config.h file
 install(DIRECTORY "${CMAKE_BINARY_DIR}/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h")
