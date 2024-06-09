@@ -83,6 +83,8 @@ Benchmark_LDADD = libtestgencpp.la
 
 check_PROGRAMS = \
 	UnitTests \
+	UnitTestsUuid \
+	UnitTestsUuidNoDirective \
 	TFDTransportTest \
 	TPipedTransportTest \
 	DebugProtoTest \
@@ -131,9 +133,34 @@ UnitTests_SOURCES = \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
 	TTransportCheckThrow.h \
-	ThrifttReadCheckTests.cpp
+	ThrifttReadCheckTests.cpp \
+	TUuidTest.cpp
 
 UnitTests_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoost.cpp
+
+UnitTestsUuid_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_CPPFLAGS = \
+   $(AM_CPPFLAGS) \
+  -DTHRIFT_TUUID_SUPPORT_BOOST_UUID
+
+UnitTestsUuidNoDirective_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoostNoDirective.cpp
+
+UnitTestsUuidNoDirective_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
