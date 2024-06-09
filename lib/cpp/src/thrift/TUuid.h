@@ -22,6 +22,10 @@
 
 #include <thrift/Thrift.h>
 
+#ifdef THRIFT_TUUID_SUPPORT_BOOST_UUID
+#include <boost/uuid/uuid.hpp>
+#endif // THRIFT_TUUID_SUPPORT_BOOST_UUID
+
 #include <algorithm>
 
 namespace apache {
@@ -61,6 +65,25 @@ public:
    * nil (empty) UUID.
    */
   explicit TUuid(const std::string& str) noexcept;
+
+#ifdef THRIFT_TUUID_SUPPORT_BOOST_UUID
+  /**
+   * Construct the TUuid from a boost::uuids::uuid.
+   *
+   * This constructor will only be available if the <tt>THRIFT_TUUID_SUPPORT_BOOST_UUID</tt>
+   * compiler directive is set when this file is included.
+   *
+   * This constructor is by default implicit. It can be made explicit by defining the
+   * <tt>THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT</tt> compiler directive.
+   */
+  #ifdef THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT
+  explicit
+  #endif // THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT
+  TUuid(const boost::uuids::uuid& buuid) noexcept
+  {
+    std::copy(std::begin(buuid.data), std::end(buuid.data), std::begin(this->data_));
+  }
+#endif // THRIFT_TUUID_SUPPORT_BOOST_UUID
 
   /**
    * Copy assignment from a UUID string.

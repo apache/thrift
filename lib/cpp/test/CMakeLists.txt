@@ -95,6 +95,25 @@ if(MSVC)
     set_property( TARGET UnitTests APPEND_STRING PROPERTY COMPILE_FLAGS /wd4503 )
 endif()
 
+# Test the THRIFT_TUUID_SUPPORT_BOOST_UUID compiler directive globally set on the target
+add_executable(UnitTestsUuid
+    UnitTestMain.cpp
+    TUuidTestBoost.cpp
+)
+target_link_libraries(UnitTestsUuid testgencpp ${Boost_LIBRARIES})
+target_link_libraries(UnitTestsUuid thrift)
+target_compile_definitions(UnitTestsUuid PUBLIC THRIFT_TUUID_SUPPORT_BOOST_UUID)
+add_test(NAME UnitTestsUuid COMMAND UnitTestsUuid)
+
+# Test not setting the THRIFT_TUUID_SUPPORT_BOOST_UUID compiler directive as with the test above.
+# The test does set the directive before including the thrift header to test the behaviour
+add_executable(UnitTestsUuidNoDirective
+    UnitTestMain.cpp
+    TUuidTestBoostNoDirective.cpp
+)
+target_link_libraries(UnitTestsUuidNoDirective testgencpp ${Boost_LIBRARIES})
+target_link_libraries(UnitTestsUuidNoDirective thrift)
+add_test(NAME UnitTestsUuidNoDirective COMMAND UnitTestsUuidNoDirective)
 
 set( TInterruptTest_SOURCES
      TSocketInterruptTest.cpp
