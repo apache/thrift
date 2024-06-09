@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(test_byte_order_verify_network) {
                             0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
   TUuid new_uuid;
-  std::copy(std::begin(test), std::end(uuid), std::begin(new_uuid));
+  std::copy(std::begin(test), std::end(test), std::begin(new_uuid));
 
   BOOST_TEST(!new_uuid.is_nil());
   BOOST_TEST(to_string(new_uuid) == std::string{"00112233-4455-6677-8899-aabbccddeeff"});
