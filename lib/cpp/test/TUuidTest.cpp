@@ -162,4 +162,25 @@ BOOST_AUTO_TEST_CASE(test_byte_order_verify_network) {
   BOOST_TEST(new_uuid == uuid);
 }
 
+BOOST_AUTO_TEST_CASE(test_character_buffer) {
+
+  const uint8_t test[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+  const TUuid uuid{test};
+
+  BOOST_TEST(to_string(uuid) == std::string{"00112233-4455-6677-8899-aabbccddeeff"});
+}
+
+BOOST_AUTO_TEST_CASE(test_boost_buffer) {
+
+  static boost::uuids::random_generator gen;
+  boost::uuids::uuid boost_uuid{gen()};
+  BOOST_TEST(!boost_uuid.is_nil());
+
+  const TUuid uuid{boost_uuid.data};
+
+  BOOST_TEST(to_string(boost_uuid) == to_string(uuid));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

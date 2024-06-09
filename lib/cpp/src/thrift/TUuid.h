@@ -53,6 +53,14 @@ public:
   ~TUuid() = default;
 
   /**
+   * Construct the object from a 16 byte buffer.
+   */
+  explicit TUuid(const uint8_t (&data)[16]) noexcept
+  {
+    std::copy(std::begin(data), std::end(data), std::begin(this->data_));
+  }
+
+  /**
    * Construct the object from the specified string.
    *
    * Supported string formats are:
