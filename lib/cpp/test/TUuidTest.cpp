@@ -21,7 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/string_generator.hpp>
 
 #include <thrift/TUuid.h>
 
@@ -121,8 +121,8 @@ BOOST_AUTO_TEST_CASE(into_boost_uuid) {
 }
 
 BOOST_AUTO_TEST_CASE(from_boost_uuid) {
-  static boost::uuids::random_generator gen;
-  boost::uuids::uuid boost_uuid{gen()};
+  static boost::uuids::string_generator gen;
+  boost::uuids::uuid boost_uuid{gen("1f610073-db33-4d21-adf2-75460d4955cc")};
   BOOST_TEST(!boost_uuid.is_nil());
   TUuid uuid;
   BOOST_TEST(uuid.is_nil());
@@ -174,8 +174,8 @@ BOOST_AUTO_TEST_CASE(test_character_buffer) {
 
 BOOST_AUTO_TEST_CASE(test_boost_buffer) {
 
-  static boost::uuids::random_generator gen;
-  boost::uuids::uuid boost_uuid{gen()};
+  static boost::uuids::string_generator gen;
+  boost::uuids::uuid boost_uuid{gen("1f610073-db33-4d21-adf2-75460d4955cc")};
   BOOST_TEST(!boost_uuid.is_nil());
 
   const TUuid uuid{boost_uuid.data};
