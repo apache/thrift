@@ -70,12 +70,12 @@ BOOST_AUTO_TEST_CASE(compare) {
 BOOST_AUTO_TEST_CASE(assign_valid) {
   TUuid uuid_1{};
   BOOST_TEST(uuid_1.is_nil());
-  uuid_1 = "5e2ab188-1726-4e75-a04f-1ed9a6a89c4c";
+  uuid_1 = TUuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
   BOOST_TEST(!uuid_1.is_nil());
 
   BOOST_TEST(uuid_1 == TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"));
 
-  uuid_1 = "{12345678-1726-4e75-a04f-1ed9a6a89c4c}";
+  uuid_1 = TUuid{"{12345678-1726-4e75-a04f-1ed9a6a89c4c}"};
   BOOST_TEST(uuid_1 != TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"));
   BOOST_TEST(uuid_1 == TUuid("{12345678-1726-4e75-a04f-1ed9a6a89c4c}"));
 }
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(assign_invalid) {
   TUuid uuid_1{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
   BOOST_TEST(!uuid_1.is_nil());
 
-  BOOST_CHECK_THROW(uuid_1 = "123", std::runtime_error);
+  BOOST_CHECK_NO_THROW(uuid_1 = TUuid{"123"});
   BOOST_TEST(uuid_1.is_nil());
   BOOST_TEST(to_string(uuid_1) == std::string{"00000000-0000-0000-0000-000000000000"});
 }

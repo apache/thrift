@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(test_specialization_1) {
   ooe.some_characters = "JSON THIS! \"\1";
   ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
-  ooe.rfc4122_uuid = "00000000-0000-0000-0000-000000000000";
+  ooe.rfc4122_uuid = apache::thrift::TUuid{"00000000-0000-0000-0000-000000000000"};
 
   Nesting n;
   n.my_ooe = ooe;

@@ -31,24 +31,17 @@ static const boost::uuids::string_generator gen;
 }
 
 TUuid::TUuid(const std::string& str) noexcept {
+  std::fill(this->begin(), this->end(), 0);
+  if (str.empty()) {
+    return ;
+  }
 
   try {
-    this->operator=(str);
+    const boost::uuids::uuid uuid{gen(str)};
+    std::copy(uuid.begin(), uuid.end(), this->begin());
   } catch (const std::runtime_error&) {
     // Invalid string most probably
   }
-}
-
-TUuid& TUuid::operator=(const std::string& str) {
-  std::fill(this->begin(), this->end(), 0);
-  if (str.empty()) {
-    return *this;
-  }
-
-  const boost::uuids::uuid uuid{gen(str)};
-  std::copy(uuid.begin(), uuid.end(), this->begin());
-  return
-   *this;
 }
 
 bool TUuid::is_nil() const noexcept {

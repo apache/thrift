@@ -1119,7 +1119,7 @@ uint32_t TJSONProtocol::readBinary(std::string& str) {
 uint32_t TJSONProtocol::readUUID(TUuid& uuid) {
   std::string uuid_str;
   const uint32_t result = readJSONString(uuid_str);
-  uuid = uuid_str;
+  uuid = TUuid{uuid_str};
   return result;
 }
 

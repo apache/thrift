@@ -94,14 +94,6 @@ public:
 #endif // THRIFT_TUUID_SUPPORT_BOOST_UUID
 
   /**
-   * Copy assignment from a UUID string.
-   *
-   * This function will throw an exception if the string is not
-   * a valid UUID.
-   */
-  TUuid& operator=(const std::string& str) noexcept(false);
-
-  /**
    * Check if the UUID is nil.
    */
   bool is_nil() const noexcept;
