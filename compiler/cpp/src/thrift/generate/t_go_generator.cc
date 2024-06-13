@@ -1209,19 +1209,25 @@ void t_go_generator::generate_go_struct_initializer(ostream& out,
                                                     t_struct* tstruct,
                                                     bool is_args_or_result) {
   out << publicize(type_name(tstruct), is_args_or_result) << "{";
+  indent_up();
   const vector<t_field*>& members = tstruct->get_members();
+  bool empty = true;
   for (auto member : members) {
     bool pointer_field = is_pointer_field(member);
     string publicized_name;
     t_const_value* def_value;
     get_publicized_name_and_def_value(member, &publicized_name, &def_value);
     if (!pointer_field && def_value != nullptr && !omit_initialization(member)) {
+      empty = false;
       out << '\n' << indent() << publicized_name << ": "
-          << render_field_initial_value(member, member->get_name(), pointer_field) << ","
-          << '\n';
+          << render_field_initial_value(member, member->get_name(), pointer_field) << ",";
     }
   }
 
+  indent_down();
+  if (!empty) {
+    out << '\n' << indent();
+  }
   out << "}" << '\n';
 }
 
