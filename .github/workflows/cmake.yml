@@ -27,14 +27,24 @@ jobs:
         run: |
           mkdir cmake_build
           cd cmake_build
-          cmake .. -DBUILD_LIBRARIES=OFF
+          cmake .. \
+            -DBUILD_COMPILER=ON \
+            -DBUILD_LIBRARIES=ON \
+            -DWITH_JAVA=ON \
+            -DWITH_PYTHON=OFF \
+            -DWITH_NODEJS=OFF
 
       - name: Run make
         run: |
           cd cmake_build
           cmake --build .
 
+      - name: Run pack
+        run: |
+          cd cmake_build
+          cpack
+
       - name: Run test
         run: |
           cd cmake_build
-          ctest -j$(nproc)
+          ctest -VV
