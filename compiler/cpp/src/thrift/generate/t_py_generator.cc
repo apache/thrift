@@ -3015,5 +3015,5 @@ THRIFT_REGISTER_GENERATOR(
     "                     Package prefix for generated files.\n"
     "    old_style:       Deprecated. Generate old-style classes.\n"
     "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
-    "    type_hints:      Generate type hints and type checks in write method, including IntEnum generation.\n"
+    "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
 )
