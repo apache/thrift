@@ -44,6 +44,7 @@ SCRIPTS = [
     'TestEof.py',
     'TestSyntax.py',
     'TestSocket.py',
+    'TestTypes.py'
 ]
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
