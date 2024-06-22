@@ -831,6 +831,8 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
   out << ":" << '\n';
   indent_up();
   generate_python_docstring(out, tstruct);
+  std::string thrift_spec_type = gen_type_hints_ ? ": typing.Any" : "";
+  out << indent() << "thrift_spec" << thrift_spec_type << " = None" << '\n';
 
   out << '\n';
 
