@@ -19,5 +19,6 @@
 
 #ifdef _WIN32
 #include <thrift/windows/config.h>
-#endif
+#else
 #include <thrift/config.h>
+#endif

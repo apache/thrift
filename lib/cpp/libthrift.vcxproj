@@ -125,13 +125,14 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>thrift</RootNamespace>
     <ProjectName>libthrift</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -143,7 +144,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -156,7 +157,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -170,7 +171,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -217,24 +218,32 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
@@ -244,9 +253,10 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;THRIFT_STATIC_DEFINE;_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src;C:\software_development\external_packages\boost\boost_1_84_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -272,8 +282,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;THRIFT_STATIC_DEFINE;_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src;C:\software_development\external_packages\boost\boost_1_84_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -300,9 +311,10 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;THRIFT_STATIC_DEFINE;_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDll</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src;C:\software_development\external_packages\boost\boost_1_84_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -336,8 +348,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;THRIFT_STATIC_DEFINE;_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDll</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src;C:\software_development\external_packages\boost\boost_1_84_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

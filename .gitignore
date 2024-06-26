@@ -454,3 +454,5 @@ compiler/cpp/tests/*.cmake
 compiler/cpp/tests/Testing/
 compiler/cpp/tests/bin/
 compiler/cpp/tests/*.a
+
+**/bin/*

@@ -53,6 +53,7 @@
   <ItemGroup>
     <ClCompile Include="src\thrift\audit\t_audit.cpp" />
     <ClCompile Include="src\thrift\common.cc" />
+    <ClCompile Include="src\thrift\generate\go_validator_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_c_glib_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cl_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cpp_generator.cc" />
@@ -83,6 +84,7 @@
     <ClCompile Include="src\thrift\generate\t_swift_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_xml_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_xsd_generator.cc" />
+    <ClCompile Include="src\thrift\generate\validator_parser.cc" />
     <ClCompile Include="src\thrift\main.cc" />
     <ClCompile Include="src\thrift\parse\parse.cc" />
     <ClCompile Include="src\thrift\parse\t_typedef.cc" />
@@ -97,29 +99,34 @@
     <ProjectGuid>{89975A1A-F799-4556-98B8-64E30AB39A90}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>compiler</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -142,24 +149,32 @@
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
+    <OutDir>$(SolutionDir)\bin\output\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(SolutionDir)\bin\intermediate\$(Configuration)\$(PlatformToolset)\x$(PlatformArchitecture)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -177,7 +192,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
+      <Command>C:\software_development\win_flex_bison-2.5.25\win_flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; C:\software_development\win_flex_bison-2.5.25\win_bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -189,14 +204,14 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
+      <Command>C:\software_development\win_flex_bison-2.5.25\win_flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; C:\software_development\win_flex_bison-2.5.25\win_bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -219,7 +234,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
+      <Command>C:\software_development\win_flex_bison-2.5.25\win_flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; C:\software_development\win_flex_bison-2.5.25\win_bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -242,7 +257,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
+      <Command>C:\software_development\win_flex_bison-2.5.25\win_flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; C:\software_development\win_flex_bison-2.5.25\win_bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -24,7 +24,11 @@
 #include <io.h>
 #endif
 
+#ifdef _WIN32
+#include <thrift/windows/config.h>
+#else
 #include <thrift/config.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
