@@ -26,6 +26,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.long
+import java.net.SocketAddress
 import kotlinx.coroutines.GlobalScope
 import org.apache.thrift.TException
 import org.apache.thrift.TMultiplexedProcessor
@@ -73,7 +74,11 @@ object TestServer {
         }
     }
 
-    internal class TestServerContext(var connectionId: Int) : ServerContext {
+    internal class TestServerContext(
+        var connectionId: Int,
+        var remoteSocketAddress: SocketAddress,
+        var localSocketAddress: SocketAddress
+    ) : ServerContext {
 
         override fun <T> unwrap(iface: Class<T>): T {
             try {
@@ -102,10 +107,15 @@ object TestServer {
             )
         }
 
-        override fun createContext(input: TProtocol, output: TProtocol): ServerContext {
+        override fun createContext(
+            input: TProtocol,
+            output: TProtocol,
+            remoteSocketAddress: SocketAddress,
+            localSocketAddress: SocketAddress
+        ): ServerContext {
             // we can create some connection level data which is stored while connection is alive &
             // served
-            val ctx = TestServerContext(nextConnectionId++)
+            val ctx = TestServerContext(nextConnectionId++, remoteSocketAddress, localSocketAddress)
             println(
                 "TServerEventHandler.createContext - connection #" +
                     ctx.connectionId +
