@@ -53,7 +53,7 @@ public:
                        int port,
                        struct event_base* eb,
                        struct evdns_base *dnsbase = nullptr);
-  ~TEvhttpClientChannel() override;
+  virtual ~TEvhttpClientChannel() override;
 
   void sendAndRecvMessage(const VoidCallback& cob,
                                   apache::thrift::transport::TMemoryBuffer* sendBuf,

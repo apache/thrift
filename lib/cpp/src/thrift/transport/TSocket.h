@@ -75,7 +75,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  ~TSocket() override;
+  virtual ~TSocket() override;
 
   /**
    * Whether the socket is alive.

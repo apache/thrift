@@ -58,7 +58,7 @@ public:
   /**
    * Destructor.
    */
-  ~TConnectedClient() override;
+  virtual ~TConnectedClient() override;
 
   /**
    * Drive the client until it is done.

@@ -105,7 +105,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  ~TSocketPool() override;
+  virtual ~TSocketPool() override;
 
   /**
    * Add a server to the pool

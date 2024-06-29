@@ -105,7 +105,7 @@ private:
   // thread details
 private:
   TOverlappedSubmissionThread();
-  ~TOverlappedSubmissionThread();
+  virtual ~TOverlappedSubmissionThread();
   void run();
   static unsigned __stdcall thread_proc(void* addr);
 
@@ -122,7 +122,7 @@ private:
 
 public:
   TAutoOverlapThread() : p(TOverlappedSubmissionThread::acquire_instance()) {}
-  ~TAutoOverlapThread() { TOverlappedSubmissionThread::release_instance(); }
+  virtual ~TAutoOverlapThread() { TOverlappedSubmissionThread::release_instance(); }
   TOverlappedSubmissionThread* operator->() { return p; }
 };
 }

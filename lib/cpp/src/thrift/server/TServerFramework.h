@@ -75,7 +75,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
-  ~TServerFramework() override;
+  virtual ~TServerFramework() override;
 
   /**
    * Accept clients from the TServerTransport and add them for processing.

@@ -66,7 +66,7 @@ public:
   TTransportException(TTransportExceptionType type, const std::string& message, int errno_copy)
     : apache::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)), type_(type) {}
 
-  ~TTransportException() noexcept override = default;
+  virtual ~TTransportException() noexcept override = default;
 
   /**
    * Returns an error code that provides information about the type of error

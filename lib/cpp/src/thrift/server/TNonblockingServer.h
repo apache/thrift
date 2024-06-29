@@ -376,7 +376,7 @@ public:
     setThreadManager(threadManager);
   }
 
-  ~TNonblockingServer() override;
+  virtual ~TNonblockingServer() override;
 
   void setThreadManager(std::shared_ptr<ThreadManager> threadManager);
 
@@ -741,7 +741,7 @@ public:
                        THRIFT_SOCKET listenSocket,
                        bool useHighPriority);
 
-  ~TNonblockingIOThread() override;
+  virtual ~TNonblockingIOThread() override;
 
   // Returns the event-base for this thread.
   event_base* getEventBase() const { return eventBase_; }

@@ -77,7 +77,7 @@ public:
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
           new apache::thrift::concurrency::ThreadFactory(false)));
 
-  ~TThreadedServer() override;
+  virtual ~TThreadedServer() override;
 
   /**
    * Post-conditions (return guarantees):
@@ -115,7 +115,7 @@ protected:
   {
   public:
     TConnectedClientRunner(const std::shared_ptr<TConnectedClient>& pClient);
-    ~TConnectedClientRunner() override;
+    virtual ~TConnectedClientRunner() override;
     void run() override /* override */;
   private:
     std::shared_ptr<TConnectedClient> pClient_;

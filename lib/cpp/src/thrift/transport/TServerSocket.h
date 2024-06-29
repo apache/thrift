@@ -82,7 +82,7 @@ public:
    */
   TServerSocket(const std::string& path);
 
-  ~TServerSocket() override;
+  virtual ~TServerSocket() override;
 
 
   bool isOpen() const override;
