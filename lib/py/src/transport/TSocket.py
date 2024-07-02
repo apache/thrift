@@ -159,7 +159,8 @@ class TSocket(TSocketBase):
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
-        except socket.timeout as e:
+        # TODO: remove socket.timeout when 3.10 becomes the earliest version of python supported.
+        except (socket.timeout, TimeoutError) as e:
             raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
