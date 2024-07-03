@@ -822,10 +822,10 @@ void t_go_generator::generate_enum(t_enum* tenum) {
     if (iter_std_name != escape_string(iter_name)) {
       from_string_mapping << indent() << "case \"" << iter_std_name << "\", \""
                           << escape_string(iter_name) << "\": return " << tenum_name << "_"
-                          << iter_name << ", nil " << '\n';
+                          << iter_name << ", nil" << '\n';
     } else {
       from_string_mapping << indent() << "case \"" << iter_std_name << "\": return " << tenum_name
-                          << "_" << iter_name << ", nil " << '\n';
+                          << "_" << iter_name << ", nil" << '\n';
     }
   }
 
@@ -2714,7 +2714,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "defer " << mbTrans << ".Close()" << '\n';
         f_remote << indent() << "_, " << err1 << " := " << mbTrans << ".WriteString(" << arg << ")"
                  << '\n';
-        f_remote << indent() << "if " << err1 << " != nil { " << '\n';
+        f_remote << indent() << "if " << err1 << " != nil {" << '\n';
         indent_up();
         f_remote << indent() << "Usage()" << '\n';
         f_remote << indent() << "return" << '\n';
