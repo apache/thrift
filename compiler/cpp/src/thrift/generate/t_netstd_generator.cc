@@ -1103,7 +1103,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
       out << endl << indent() << "{" << endl;
       indent_up();
     } else {
-      out << endl;
+      out << ";" << endl;
     }
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
