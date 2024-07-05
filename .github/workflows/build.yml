@@ -297,6 +297,67 @@ jobs:
             lib/kotlin/cross-test-server/build/install/TestServer/
           retention-days: 3
 
+  lib-netstd:
+    needs: compiler
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
+
+#      the sdk is installed by default, but keep this step for reference
+#      - name: Set up .NET SDK
+#        run: |
+#          sudo apt-get install -y --no-install-recommends dotnet-sdk-8.0
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for netstd
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for netstd
+        run: make -C lib/netstd
+
+      - name: Run make install for netstd
+        run: sudo make -C lib/netstd install
+
+      - name: Run make check for netstd
+        run: make -C lib/netstd check
+
+      - name: Run make check for test/netstd
+        run: make -C test/netstd check
+
+      - name: Run make precross for test/netstd
+        run: make -C test/netstd precross
+
+      - name: Upload netstd precross artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: netstd-precross
+          if-no-files-found: error
+          path: |
+            test/netstd/Client/bin/Release/
+            test/netstd/Server/bin/Release/
+          retention-days: 3
+
   lib-swift:
     needs: compiler
     runs-on: ubuntu-22.04
