@@ -49,9 +49,9 @@ void t_generator::generate_program() {
   vector<t_struct*> objects = program_->get_objects();
 
   vector<t_struct*>::iterator o_iter;
-  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
-    generate_forward_declaration(*o_iter);
-  }
+  // for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+  //   generate_forward_declaration(*o_iter);
+  // }
   for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
     if ((*o_iter)->is_xception()) {
       generate_xception(*o_iter);
