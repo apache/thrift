@@ -70,7 +70,7 @@ jobs:
       # only upload while building ubuntu-20.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-20.04'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -157,7 +157,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -181,7 +181,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.22'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: go-precross
           if-no-files-found: error
@@ -235,7 +235,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -253,7 +253,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libthrift
           if-no-files-found: error
@@ -266,7 +266,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-precross
           if-no-files-found: error
@@ -288,13 +288,74 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kotlin-precross
           if-no-files-found: error
           path: |
             lib/kotlin/cross-test-client/build/install/TestClient/
             lib/kotlin/cross-test-server/build/install/TestServer/
+          retention-days: 3
+
+  lib-netstd:
+    needs: compiler
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
+
+#      the sdk is installed by default, but keep this step for reference
+#      - name: Set up .NET SDK
+#        run: |
+#          sudo apt-get install -y --no-install-recommends dotnet-sdk-8.0
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for netstd
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for netstd
+        run: make -C lib/netstd
+
+      - name: Run make install for netstd
+        run: sudo make -C lib/netstd install
+
+      - name: Run make check for netstd
+        run: make -C lib/netstd check
+
+      - name: Run make check for test/netstd
+        run: make -C test/netstd check
+
+      - name: Run make precross for test/netstd
+        run: make -C test/netstd precross
+
+      - name: Upload netstd precross artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: netstd-precross
+          if-no-files-found: error
+          path: |
+            test/netstd/Client/bin/Release/
+            test/netstd/Server/bin/Release/
           retention-days: 3
 
   lib-swift:
@@ -310,7 +371,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -324,7 +385,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: swift-precross
           if-no-files-found: error
@@ -363,7 +424,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -386,7 +447,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rs-precross
           if-no-files-found: error
@@ -434,7 +495,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -490,31 +551,31 @@ jobs:
           sudo apt-get install -y --no-install-recommends openssl ca-certificates
 
       - name: Download java precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: java-precross
           path: lib/java/build
 
       - name: Download kotlin precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: kotlin-precross
           path: lib/kotlin
 
       - name: Download swift precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: swift-precross
           path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: rs-precross
           path: test/rs/bin
 
       - name: Download go precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: go-precross
           path: test/go/bin
@@ -540,10 +601,10 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cross-test-log
+          name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
           path: test/log/
           retention-days: 3
 
