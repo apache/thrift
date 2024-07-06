@@ -41,7 +41,7 @@ jobs:
   compiler:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -67,9 +67,9 @@ jobs:
       - name: Run thrift version
         run: /usr/local/bin/thrift -version
 
-      # only upload while building ubuntu-20.04
+      # only upload while building ubuntu-22.04
       - name: Archive built thrift compiler
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
           name: thrift-compiler
@@ -131,7 +131,7 @@ jobs:
 
   lib-go:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         go:
@@ -191,7 +191,7 @@ jobs:
 
   lib-java-kotlin:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GRADLE_VERSION: "8.4"
     steps:
@@ -299,7 +299,7 @@ jobs:
 
   lib-swift:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -335,7 +335,7 @@ jobs:
 
   lib-rust:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       TOOLCHAIN_VERSION: 1.65.0
     steps:
@@ -400,7 +400,7 @@ jobs:
 
   lib-python:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version:
@@ -463,7 +463,7 @@ jobs:
       - lib-rust
       - lib-go
       - lib-python
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
