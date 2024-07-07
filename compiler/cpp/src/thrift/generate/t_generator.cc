@@ -49,9 +49,9 @@ void t_generator::generate_program() {
   vector<t_struct*> objects = program_->get_objects();
 
   vector<t_struct*>::iterator o_iter;
-  // for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
-  //   generate_forward_declaration(*o_iter);
-  // }
+  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+    generate_forward_declaration(*o_iter);
+  }
   for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
     if ((*o_iter)->is_xception()) {
       generate_xception(*o_iter);
@@ -77,8 +77,8 @@ void t_generator::generate_program() {
 }
 
 std::set<std::string> t_generator::lang_keywords_for_validation() const {
-  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only. 
-  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no 
+  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only.
+  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no
   // mechanism or way to deal with it properly, so we absolutely need to fail on it as the last possible resort.
   return {};
 }
