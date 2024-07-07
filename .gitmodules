@@ -1,3 +1,3 @@
 [submodule "thrift_cr"]
-  path = cr
+  path = lib/cr
   url = https://github.com/kylepellham/thrift_cr
