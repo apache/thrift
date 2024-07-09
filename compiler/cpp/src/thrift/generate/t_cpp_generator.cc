@@ -69,6 +69,7 @@ public:
     gen_no_ostream_operators_ = false;
     gen_no_skeleton_ = false;
     has_members_ = false;
+    arkitech_layout_ = false;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("pure_enums") == 0) {
@@ -90,7 +91,10 @@ public:
         gen_no_ostream_operators_ = true;
       } else if ( iter->first.compare("no_skeleton") == 0) {
         gen_no_skeleton_ = true;
-      } else {
+      } else if ( iter->first.compare("arkitech") == 0) {
+		arkitech_layout_ = true;
+	  }
+      else {
         throw "unknown option cpp:" + iter->first;
       }
     }
@@ -372,8 +376,15 @@ private:
   bool has_members_;
 
   /**
+   * use arkitech layout for generated code (use namespace as filename)
+   */
+  bool arkitech_layout_;
+
+  /**
    * Strings for namespace, computed once up front then used directly
    */
+
+  std::string program_file_name_;
 
   std::string ns_open_;
   std::string ns_close_;
@@ -397,8 +408,32 @@ private:
   // writing to the output files are separate from the generator classes
   // themselves.
   friend class ProcessorGenerator;
+
+  std::string t_cpp_generator::_get_file_name(const t_program* program);
+  std::string t_cpp_generator::_get_file_name(const t_service* service);
 };
 
+std::string t_cpp_generator::_get_file_name(const t_program* program) {
+  if (arkitech_layout_) {
+    std::string ns = program->get_namespace("cpp");
+    if (ns.size() > 0)
+      // return get_legal_program_name(ns + "_" + program->get_name());
+      return get_legal_program_name(ns);
+    else
+      return get_legal_program_name(program->get_name());
+  } else
+    return get_legal_program_name(program->get_name());
+}
+std::string t_cpp_generator::_get_file_name(const t_service* service) {
+  if (arkitech_layout_) {
+    std::string ns = service->get_program()->get_namespace("cpp");
+    if (ns.size() > 0)
+      return get_legal_program_name(ns + "_" + service->get_name());
+    else
+      return service->get_name();
+  } else
+    return service->get_name();
+}
 /**
  * Prepares for file generation by opening up the necessary file output
  * streams.
@@ -408,18 +443,19 @@ void t_cpp_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   program_name_ = get_legal_program_name(program_name_);
+  program_file_name_ = _get_file_name(program_);
 
   // Make output file
-  string f_types_name = get_out_dir() + program_name_ + "_types.h";
+  string f_types_name = get_out_dir() + program_file_name_ + "_types.h";
   f_types_.open(f_types_name);
 
-  string f_types_impl_name = get_out_dir() + program_name_ + "_types.cpp";
+  string f_types_impl_name = get_out_dir() + program_file_name_ + "_types.cpp";
   f_types_impl_.open(f_types_impl_name.c_str());
 
   if (gen_templates_) {
     // If we don't open the stream, it appears to just discard data,
     // which is fine.
-    string f_types_tcc_name = get_out_dir() + program_name_ + "_types.tcc";
+    string f_types_tcc_name = get_out_dir() + program_file_name_ + "_types.tcc";
     f_types_tcc_.open(f_types_tcc_name.c_str());
   }
 
@@ -429,9 +465,11 @@ void t_cpp_generator::init_generator() {
   f_types_tcc_ << autogen_comment();
 
   // Start ifndef
-  f_types_ << "#ifndef " << program_name_ << "_TYPES_H" << endl << "#define " << program_name_
+  f_types_ << "#ifndef " << program_file_name_ << "_TYPES_H" << endl
+           << "#define " << program_file_name_
            << "_TYPES_H" << endl << endl;
-  f_types_tcc_ << "#ifndef " << program_name_ << "_TYPES_TCC" << endl << "#define " << program_name_
+  f_types_tcc_ << "#ifndef " << program_file_name_ << "_TYPES_TCC" << endl
+               << "#define " << program_file_name_
                << "_TYPES_TCC" << endl << endl;
 
   // Include base types
@@ -450,12 +488,13 @@ void t_cpp_generator::init_generator() {
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
   for (auto include : includes) {
-    f_types_ << "#include \"" << get_include_prefix(*include) << include->get_name()
+    auto file_name = _get_file_name(include);
+    f_types_ << "#include \"" << get_include_prefix(*include) << file_name
              << "_types.h\"" << endl;
 
     // XXX(simpkins): If gen_templates_ is enabled, we currently assume all
     // included files were also generated with templates enabled.
-    f_types_tcc_ << "#include \"" << get_include_prefix(*include) << include->get_name()
+    f_types_tcc_ << "#include \"" << get_include_prefix(*include) << file_name
                  << "_types.tcc\"" << endl;
   }
   f_types_ << endl;
@@ -472,9 +511,9 @@ void t_cpp_generator::init_generator() {
   f_types_ << endl;
 
   // Include the types file
-  f_types_impl_ << "#include \"" << get_include_prefix(*get_program()) << program_name_
+  f_types_impl_ << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
                 << "_types.h\"" << endl << endl;
-  f_types_tcc_ << "#include \"" << get_include_prefix(*get_program()) << program_name_
+  f_types_tcc_ << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
                << "_types.h\"" << endl << endl;
 
   // The swap() code needs <algorithm> for std::swap()
@@ -507,7 +546,7 @@ void t_cpp_generator::close_generator() {
   // so clients don't have to explicitly include the tcc file.
   // TODO(simpkins): Make this a separate option.
   if (gen_templates_) {
-    f_types_ << "#include \"" << get_include_prefix(*get_program()) << program_name_
+    f_types_ << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
              << "_types.tcc\"" << endl << endl;
   }
 
@@ -520,7 +559,7 @@ void t_cpp_generator::close_generator() {
   f_types_impl_.close();
   f_types_tcc_.close();
 
-  string f_types_impl_name = get_out_dir() + program_name_ + "_types.cpp";
+  string f_types_impl_name = get_out_dir() + program_file_name_ + "_types.cpp";
 
   if (!has_members_) {
     remove(f_types_impl_name.c_str());
@@ -713,12 +752,17 @@ void t_cpp_generator::generate_enum_to_string_helper_function(std::ostream& out,
  * Generates a class that holds all the constants.
  */
 void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
-  string f_consts_name = get_out_dir() + program_name_ + "_constants.h";
+  string f_consts_name = get_out_dir() + program_file_name_ + "_constants.h";
+  string constant_file_prefix = program_name_ + "_";
   ofstream_with_content_based_conditional_update f_consts;
+
+  if (arkitech_layout_)
+    constant_file_prefix = "";
+
   if (consts.size() > 0) {
     f_consts.open(f_consts_name);
 
-    string f_consts_impl_name = get_out_dir() + program_name_ + "_constants.cpp";
+    string f_consts_impl_name = get_out_dir() + program_file_name_ + "_constants.cpp";
     ofstream_with_content_based_conditional_update f_consts_impl;
     f_consts_impl.open(f_consts_impl_name);
 
@@ -727,15 +771,22 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
     f_consts_impl << autogen_comment();
 
     // Start ifndef
-    f_consts << "#ifndef " << program_name_ << "_CONSTANTS_H" << endl << "#define " << program_name_
-             << "_CONSTANTS_H" << endl << endl << "#include \"" << get_include_prefix(*get_program())
-             << program_name_ << "_types.h\"" << endl << endl << ns_open_ << endl << endl;
+    f_consts << "#ifndef " << program_file_name_ << "_CONSTANTS_H" << endl
+             << "#define " << program_file_name_ << "_CONSTANTS_H" << endl
+             << endl
+             << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
+             << "_types.h\"" << endl
+             << endl
+             << ns_open_ << endl
+             << endl;
 
-    f_consts_impl << "#include \"" << get_include_prefix(*get_program()) << program_name_
+    f_consts_impl << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
                   << "_constants.h\"" << endl << endl << ns_open_ << endl << endl;
 
-    f_consts << "class " << program_name_ << "Constants {" << endl << " public:" << endl << "  "
-             << program_name_ << "Constants();" << endl << endl;
+    f_consts << "class " << constant_file_prefix << "Constants {" << endl
+             << " public:" << endl
+             << "  "
+             << constant_file_prefix << "Constants();" << endl << endl;
     indent_up();
     vector<t_const*>::iterator c_iter;
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -746,8 +797,10 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
     indent_down();
     f_consts << "};" << endl;
 
-    f_consts_impl << "const " << program_name_ << "Constants g_" << program_name_ << "_constants;"
-                  << endl << endl << program_name_ << "Constants::" << program_name_
+    f_consts_impl << "const " << constant_file_prefix << "Constants g_" << constant_file_prefix
+                  << "constants;" << endl
+                  << endl
+                  << constant_file_prefix << "Constants::" << constant_file_prefix
                   << "Constants() {" << endl;
     indent_up();
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -759,8 +812,9 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
     indent_down();
     indent(f_consts_impl) << "}" << endl;
 
-    f_consts << endl << "extern const " << program_name_ << "Constants g_" << program_name_
-             << "_constants;" << endl << endl << ns_close_ << endl << endl << "#endif" << endl;
+    f_consts << endl
+             << "extern const " << constant_file_prefix << "Constants g_" << constant_file_prefix
+             << "constants;" << endl << endl << ns_close_ << endl << endl << "#endif" << endl;
     f_consts.close();
 
     f_consts_impl << endl << ns_close_ << endl << endl;
@@ -1858,14 +1912,16 @@ void t_cpp_generator::generate_exception_what_method(std::ostream& out, t_struct
  */
 void t_cpp_generator::generate_service(t_service* tservice) {
   string svcname = tservice->get_name();
+  string svc_file_name = _get_file_name(tservice);
 
   // Make output files
-  string f_header_name = get_out_dir() + svcname + ".h";
+  string f_header_name = get_out_dir() + svc_file_name + ".h";
   f_header_.open(f_header_name.c_str());
 
   // Print header file includes
   f_header_ << autogen_comment();
-  f_header_ << "#ifndef " << svcname << "_H" << endl << "#define " << svcname << "_H" << endl
+  f_header_ << "#ifndef " << svc_file_name << "_H" << endl
+            << "#define " << svc_file_name << "_H" << endl
             << endl;
   if (gen_cob_style_) {
     f_header_ << "#include <thrift/transport/TBufferTransports.h>" << endl // TMemoryBuffer
@@ -1879,13 +1935,15 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   }
   f_header_ << "#include <thrift/async/TConcurrentClientSyncInfo.h>" << endl;
   f_header_ << "#include <memory>" << endl;
-  f_header_ << "#include \"" << get_include_prefix(*get_program()) << program_name_ << "_types.h\""
+  f_header_ << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
+            << "_types.h\""
             << endl;
 
   t_service* extends_service = tservice->get_extends();
   if (extends_service != nullptr) {
+    std::string extends_service_file_name = _get_file_name(extends_service);
     f_header_ << "#include \"" << get_include_prefix(*(extends_service->get_program()))
-              << extends_service->get_name() << ".h\"" << endl;
+              << extends_service_file_name << ".h\"" << endl;
   }
 
   f_header_ << endl << ns_open_ << endl << endl;
@@ -1896,24 +1954,26 @@ void t_cpp_generator::generate_service(t_service* tservice) {
                "#endif\n\n";
 
   // Service implementation file includes
-  string f_service_name = get_out_dir() + svcname + ".cpp";
+  string f_service_name = get_out_dir() + svc_file_name + ".cpp";
   f_service_.open(f_service_name.c_str());
   f_service_ << autogen_comment();
-  f_service_ << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl;
+  f_service_ << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".h\""
+             << endl;
   if (gen_cob_style_) {
     f_service_ << "#include \"thrift/async/TAsyncChannel.h\"" << endl;
   }
   if (gen_templates_) {
-    f_service_ << "#include \"" << get_include_prefix(*get_program()) << svcname << ".tcc\""
+    f_service_ << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".tcc\""
                << endl;
 
-    string f_service_tcc_name = get_out_dir() + svcname + ".tcc";
+    string f_service_tcc_name = get_out_dir() + svc_file_name + ".tcc";
     f_service_tcc_.open(f_service_tcc_name.c_str());
     f_service_tcc_ << autogen_comment();
-    f_service_tcc_ << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\""
+    f_service_tcc_ << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".h\""
                    << endl;
 
-    f_service_tcc_ << "#ifndef " << svcname << "_TCC" << endl << "#define " << svcname << "_TCC"
+    f_service_tcc_ << "#ifndef " << svc_file_name << "_TCC" << endl
+                   << "#define " << svc_file_name << "_TCC"
                    << endl << endl;
 
     if (gen_cob_style_) {
@@ -1965,8 +2025,9 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   // TODO(simpkins): Make this a separate option
   if (gen_templates_) {
-    f_header_ << "#include \"" << get_include_prefix(*get_program()) << svcname << ".tcc\"" << endl
-              << "#include \"" << get_include_prefix(*get_program()) << program_name_
+    f_header_ << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".tcc\""
+              << endl
+              << "#include \"" << get_include_prefix(*get_program()) << program_file_name_
               << "_types.tcc\"" << endl << endl;
   }
 
@@ -2224,9 +2285,10 @@ void t_cpp_generator::generate_function_call(ostream& out,
 
 void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
   string svcname = tservice->get_name();
+  string svc_file_name = _get_file_name(tservice);
 
   // Service implementation file includes
-  string f_skeleton_name = get_out_dir() + svcname + "_async_server.skeleton.cpp";
+  string f_skeleton_name = get_out_dir() + svc_file_name + "_async_server.skeleton.cpp";
 
   string ns = namespace_prefix(tservice->get_program()->get_namespace("cpp"));
 
@@ -2237,7 +2299,8 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
              << endl
              << "// filename to avoid overwriting it and rewrite as asynchronous any functions"
              << endl << "// that would otherwise introduce unwanted latency." << endl << endl
-             << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl
+             << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".h\""
+             << endl
              << "#include <thrift/protocol/TBinaryProtocol.h>" << endl
              << "#include <thrift/async/TAsyncProtocolProcessor.h>" << endl
              << "#include <thrift/async/TEvhttpServer.h>" << endl
@@ -3881,9 +3944,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
  */
 void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   string svcname = tservice->get_name();
+  string svc_file_name = _get_file_name(tservice);
 
   // Service implementation file includes
-  string f_skeleton_name = get_out_dir() + svcname + "_server.skeleton.cpp";
+  string f_skeleton_name = get_out_dir() + svc_file_name + "_server.skeleton.cpp";
 
   string ns = namespace_prefix(tservice->get_program()->get_namespace("cpp"));
 
@@ -3891,7 +3955,8 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   f_skeleton.open(f_skeleton_name.c_str());
   f_skeleton << "// This autogenerated skeleton file illustrates how to build a server." << endl
              << "// You should copy it to another filename to avoid overwriting it." << endl << endl
-             << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl
+             << "#include \"" << get_include_prefix(*get_program()) << svc_file_name << ".h\""
+             << endl
              << "#include <thrift/protocol/TBinaryProtocol.h>" << endl
              << "#include <thrift/server/TSimpleServer.h>" << endl
              << "#include <thrift/transport/TServerSocket.h>" << endl
@@ -4771,4 +4836,5 @@ THRIFT_REGISTER_GENERATOR(
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
     "                     Omit generation of ostream definitions.\n"
-    "    no_skeleton:     Omits generation of skeleton.\n")
+    "    no_skeleton:     Omits generation of skeleton.\n"
+    "    arkitech:        Use arkitech file layout (use namespace as filename).\n")
