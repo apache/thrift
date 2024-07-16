@@ -74,6 +74,8 @@ under the Apache 2.0 License:
   lib/netstd/Thrift/Transport/TTransportFactory.cs
   lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs
   lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj
+  lib/netstd/Tests/Thrift.PublicInterfaces.Compile-C#12.Tests/Thrift.PublicInterfaces.Compile-C#12.Tests.csproj
+  lib/netstd/Tests/Thrift.PublicInterfaces.Compile-C#12.Tests/Properties/AssemblyInfo.cs
   lib/rb/lib/thrift.rb
   lib/st/README.md
   lib/st/thrift.st

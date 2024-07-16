@@ -7,9 +7,9 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -71,6 +71,7 @@ FILES[lib/js/src/thrift.js]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.PublicInterfaces.Compile-C#12.Tests/Thrift.PublicInterfaces.Compile-C#12.Tests.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
 FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
