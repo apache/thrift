@@ -5,7 +5,7 @@ Thrift client library for Microsoft .NET Standard
 # Build the library
 
 ## How to build on Windows
-- Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable
+- Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable. Or build from source by using the cmake target "copy-thrift-compiler", which places the binary to a place there it's found.
 - Open the Thrift.sln project with Visual Studio and build.
 or 
 - Build with scripts
