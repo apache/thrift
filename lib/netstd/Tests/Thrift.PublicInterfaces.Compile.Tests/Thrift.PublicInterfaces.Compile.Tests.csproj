@@ -46,6 +46,9 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
+    <CreateProperty Condition="'$(OS)' == 'Windows_NT'" Value=".exe">
+      <Output TaskParameter="Value" PropertyName="EXECUTABLE_SUFFIX" />
+    </CreateProperty>
     <!-- Check on the path -->
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
@@ -54,11 +57,11 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
     <!-- Check in the current directory -->
-    <CreateProperty Condition="Exists('thrift')" Value="thrift">
+    <CreateProperty Condition="Exists('thrift$(EXECUTABLE_SUFFIX)')" Value="thrift$(EXECUTABLE_SUFFIX)">
       <Output TaskParameter="Value" PropertyName="PathToThrift" />
     </CreateProperty>
     <!-- Check for the root projects output -->
-    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Value="$(ProjectDir)/../../../../compiler/cpp/thrift">
+    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)')" Value="$(ProjectDir)/../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)">
       <Output TaskParameter="Value" PropertyName="PathToThrift" />
     </CreateProperty>
     <Error Condition="!Exists('$(PathToThrift)')" Text="Thrift executable could not be found." />
