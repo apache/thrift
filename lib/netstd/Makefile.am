@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = . 
+SUBDIRS = .
 
 all-local:
 	$(DOTNETCORE) build -c Release
@@ -77,4 +77,3 @@ EXTRA_DIST = \
 	build.sh \
 	runtests.cmd \
 	runtests.sh
-	
