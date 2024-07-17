@@ -19,7 +19,6 @@
 
 #define  MAX_MESSAGE_SIZE  2
 
-#include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <climits>

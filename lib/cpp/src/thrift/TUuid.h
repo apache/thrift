@@ -27,6 +27,7 @@
 #endif // THRIFT_TUUID_SUPPORT_BOOST_UUID
 
 #include <algorithm>
+#include <sstream>
 
 namespace apache {
 namespace thrift {
