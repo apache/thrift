@@ -47,6 +47,8 @@ set(testgencpp_SOURCES
     gen-cpp/OneWayService.h
     gen-cpp/TypedefTest_types.cpp
     gen-cpp/TypedefTest_types.h
+    gen-cpp/Thrift5272_types.cpp
+    gen-cpp/Thrift5272_types.h
     ThriftTest_extras.cpp
     DebugProtoTest_extras.cpp
 )
@@ -83,6 +85,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
     TUuidTest.cpp
+    Thrift5272.cpp
 )
 
 add_executable(UnitTests ${UnitTest_SOURCES})
@@ -369,6 +372,8 @@ endif()
 #
 # Common thrift code generation rules
 #
+# files from /test
+#
 
 add_custom_command(OUTPUT gen-cpp/AnnotationTest_constants.cpp
                           gen-cpp/AnnotationTest_constants.h
@@ -407,8 +412,14 @@ add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
+# files from /lib/cpp/test
+
 add_custom_command(OUTPUT gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h
     COMMAND ${THRIFT_COMPILER} --gen cpp ${CMAKE_CURRENT_SOURCE_DIR}/OneWayTest.thrift
+)
+
+add_custom_command(OUTPUT gen-cpp/Thrift5272_types.cpp gen-cpp/Thrift5272_types.h
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${CMAKE_CURRENT_SOURCE_DIR}/Thrift5272.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h
