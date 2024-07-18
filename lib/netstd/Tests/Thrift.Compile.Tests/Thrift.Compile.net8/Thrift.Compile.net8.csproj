@@ -24,8 +24,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latestMajor</LangVersion>
     <Version>$(ThriftVersion).0</Version>
-    <AssemblyName>Thrift.PublicInterfaces.Compile.Tests</AssemblyName>
-    <PackageId>Thrift.PublicInterfaces.Compile.Tests</PackageId>
+    <AssemblyName>Thrift.Compile.net8</AssemblyName>
+    <PackageId>Thrift.Compile.net8</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -34,7 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../Thrift/Thrift.csproj" />
+    <ProjectReference Include="../../../Thrift/Thrift.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -61,7 +61,7 @@
       <Output TaskParameter="Value" PropertyName="PathToThrift" />
     </CreateProperty>
     <!-- Check for the root projects output -->
-    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)')" Value="$(ProjectDir)/../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)">
+    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)')" Value="$(ProjectDir)/../../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)">
       <Output TaskParameter="Value" PropertyName="PathToThrift" />
     </CreateProperty>
     <Error Condition="!Exists('$(PathToThrift)')" Text="Thrift executable could not be found." />
@@ -72,21 +72,17 @@
     <Error Condition="$('$(ThriftBinaryVersion)'::StartsWith('$(ThriftVersionOutput)')) == true" Text="Thrift version returned: '$(ThriftBinaryVersion)' is not equal to the projects version '$(ThriftVersionOutput)'." />
     <Message Importance="high" Text="Generating tests with thrift binary: '$(PathToThrift)'" />
     <!-- Generate the thrift test files -->
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./CassandraTest.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./optional_required_default.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./name_conflicts.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./../../../../test/ThriftTest.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5253.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5320.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5382.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5795.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../CassandraTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../name_conflicts.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../../../../../test/ThriftTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../Thrift5253.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../Thrift5320.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../Thrift5382.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ../Thrift5795.thrift" />
     <!-- special options (see ticket) -->
-    <!-- wil be reacivated later
-    <Exec Command="$(PathToThrift) -gen netstd                       -r ./Thrift5794-netstd.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:net6                  -r ./Thrift5794-net6.thrift" />
-    -->
-    <Exec Command="$(PathToThrift) -gen netstd:net8                  -r ./Thrift5794-net8.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:net8                  -r ../Thrift5794.thrift" />
   </Target>
 
 </Project>

@@ -23,7 +23,9 @@ all-local:
 	$(DOTNETCORE) build -c Release
 
 check-local:
-	$(DOTNETCORE) test Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj
+	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj
+	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net6/Thrift.Compile.net6.csproj
+	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
@@ -36,8 +38,12 @@ clean-local:
 	$(RM) -r Tests/Thrift.Tests/obj
 	$(RM) -r Tests/Thrift.IntegrationTests/bin
 	$(RM) -r Tests/Thrift.IntegrationTests/obj
-	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/bin
-	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net6/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net6/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/obj
 
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
@@ -48,11 +54,13 @@ EXTRA_DIST = \
 	Benchmarks/Thrift.Benchmarks \
 	Tests/Thrift.IntegrationTests/Protocols \
 	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
-	Tests/Thrift.PublicInterfaces.Compile.Tests \
-	Tests/Thrift.PublicInterfaces.Compile.Tests/CassandraTest.thrift \
-	Tests/Thrift.PublicInterfaces.Compile.Tests/optional_required_default.thrift \
-	Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs \
-	Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj \
+	Tests/Thrift.Compile.Tests \
+	Tests/Thrift.Compile.Tests/CassandraTest.thrift \
+	Tests/Thrift.Compile.Tests/optional_required_default.thrift \
+	Tests/Thrift.Compile.Tests/Properties/AssemblyInfo.cs \
+	Tests/Thrift.Compile.Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj \
+	Tests/Thrift.Compile.Tests/Thrift.Compile.Tests/Thrift.Compile.net6/Thrift.Compile.net6.csproj \
+	Tests/Thrift.Compile.Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \
 	Tests/Thrift.Tests/Protocols \

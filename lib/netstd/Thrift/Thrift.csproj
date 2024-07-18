@@ -62,7 +62,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
     <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="8.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="8.0.1" />
     <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
     <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
@@ -89,7 +89,7 @@
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web">
-			<Version>8.0.4</Version>
+			<Version>8.0.7</Version>
 		</PackageReference>
 	</ItemGroup>
 
