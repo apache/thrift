@@ -360,7 +360,7 @@ string t_netstd_generator::netstd_type_usings() const
         namespaces += "using System.ServiceModel;\n";
         namespaces += "using System.Runtime.Serialization;\n";
     }
-
+    
     return namespaces;
 }
 
@@ -814,7 +814,11 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
 
             string suffix("");
             string tmp_instance = tmp("tmp");
-            out << indent() << "var " << tmp_instance << " = new " << iter->first << "(source.Count);" << '\n';
+            if( (target_net_version < 5) && iter->second->is_set()) {
+                out << indent() << "var " << tmp_instance << " = new " << iter->first << "();" << '\n';
+            } else {
+                out << indent() << "var " << tmp_instance << " = new " << iter->first << "(source.Count);" << '\n';                
+            }
             if( iter->second->is_map())
             {
                 t_map* tmap = static_cast<t_map*>(iter->second);
@@ -2864,7 +2868,11 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
         out << indent() << "var " << obj << " = await iprot.ReadListBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
     }
 
-    out << indent() << prefix << " = new " << type_name(ttype) << "(" << obj << ".Count);" << '\n';
+    if( (target_net_version < 5) && ttype->is_set()) {
+        out << indent() << prefix << " = new " << type_name(ttype) << "();" << '\n';
+    } else {
+        out << indent() << prefix << " = new " << type_name(ttype) << "(" << obj << ".Count);" << '\n';
+    }
     string i = tmp("_i");
     out << indent() << "for(int " << i << " = 0; " << i << " < " << obj << ".Count; ++" << i << ")" << '\n'
         << indent() << "{" << '\n';
