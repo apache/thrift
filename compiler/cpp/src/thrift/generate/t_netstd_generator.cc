@@ -202,6 +202,20 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
+    if( target_net_version >= 8) {
+        out << "// targeting net 8" << '\n';
+        out << "#if( !NET8_0_OR_GREATER)" << '\n';
+    } else if( target_net_version >= 6) {
+        out << "// targeting net 6" << '\n';
+        out << "#if( NET8_0_OR_GREATER || !NET6_0_OR_GREATER)" << '\n';
+    } else {
+        out << "// targeting netstandard 2.x" << '\n';
+        out << "#if(! NETSTANDARD2_0_OR_GREATER)" << '\n';
+    }
+    out << "#error Unexpected target platform. See 'thrift --help' for details." << '\n';
+    out << "#endif" << '\n';
+    out << '\n';
+
     if( target_net_version >= 6) {
       out << "// Thrift code generated for net" << target_net_version << '\n';
       out << "#nullable enable                 // requires C# 8.0" << '\n';
