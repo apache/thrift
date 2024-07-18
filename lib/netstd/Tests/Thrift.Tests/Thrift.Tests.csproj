@@ -35,7 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Thrift\Thrift.csproj" />
-    <ProjectReference Include="..\Thrift.PublicInterfaces.Compile.Tests\Thrift.PublicInterfaces.Compile.Tests.csproj" />
+    <ProjectReference Include="..\Thrift.Compile.Tests\Thrift.Compile.net8\Thrift.Compile.net8.csproj" />
   </ItemGroup>
 
   <ItemGroup>

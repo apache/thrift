@@ -372,9 +372,12 @@ string t_netstd_generator::netstd_type_usings() const
     if (is_wcf_enabled())
     {
         namespaces += "using System.ServiceModel;\n";
+    }
+    if (is_wcf_enabled() || is_serialize_enabled())
+    {
         namespaces += "using System.Runtime.Serialization;\n";
     }
-    
+
     return namespaces;
 }
 
