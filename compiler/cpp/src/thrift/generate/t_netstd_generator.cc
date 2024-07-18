@@ -314,7 +314,20 @@ void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
     if (!namespace_name_.empty())
     {
-        out << "namespace " << namespace_name_ << '\n';
+        std::string normalized;
+        
+        const char* delim = ".";
+        char* str = strdup(namespace_name_.c_str());
+        char* next = strtok(str, delim);
+        while( next != NULL) {
+            if( normalized.length() > 0) {
+                normalized += ".";
+            }
+            normalized += normalize_name(next,false);
+            next = strtok(NULL, delim);
+        }
+        
+        out << "namespace " << normalized << '\n';
         scope_up(out);
     }
 }
