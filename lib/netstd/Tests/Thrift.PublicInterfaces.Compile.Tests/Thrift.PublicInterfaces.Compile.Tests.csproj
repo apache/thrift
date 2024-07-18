@@ -82,8 +82,10 @@
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5382.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net8 -r ./Thrift5795.thrift" />
     <!-- special options (see ticket) -->
+    <!-- wil be reacivated later
     <Exec Command="$(PathToThrift) -gen netstd                       -r ./Thrift5794-netstd.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:net6                  -r ./Thrift5794-net6.thrift" />
+    -->
     <Exec Command="$(PathToThrift) -gen netstd:net8                  -r ./Thrift5794-net8.thrift" />
   </Target>
 
