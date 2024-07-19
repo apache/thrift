@@ -35,7 +35,7 @@ precross: $(THRIFT)
 		--console=plain
 
 check-local: $(THRIFT)
-	$(GRADLE) $(GRADLE_OPTS) test \
+	$(GRADLE) $(GRADLE_OPTS) check \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
@@ -51,4 +51,4 @@ EXTRA_DIST = \
 	gradle.properties \
 	README.md \
 	settings.gradle.kts \
-	src 
+	src
