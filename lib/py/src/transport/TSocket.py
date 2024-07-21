@@ -208,7 +208,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         else:
             # We cann't update backlog when it is already listening, since the
             # handle has been created.
-            logger.warn('You have to set backlog before listen.')
+            logger.warning('You have to set backlog before listen.')
 
     def listen(self):
         res0 = self._resolveAddr()

@@ -397,8 +397,8 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
                 self._validate_callback(client.peercert, addr[0])
                 client.is_valid = True
             except Exception:
-                logger.warn('Failed to validate client certificate address: %s',
-                            addr[0], exc_info=True)
+                logger.warning('Failed to validate client certificate address: %s',
+                               addr[0], exc_info=True)
                 client.close()
                 plain_client.close()
                 return None
