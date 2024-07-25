@@ -373,7 +373,12 @@ string include_file(string filename) {
   }
 
   // Uh oh
-  pwarning(0, "Could not find include file %s\n", filename.c_str());
+  if (g_strict >= 192) {
+    // On strict mode this should be failure instead of warning
+    failure("Could not find include file %s", filename.c_str());
+  } else {
+    pwarning(0, "Could not find include file %s\n", filename.c_str());
+  }
   return std::string();
 }
 
