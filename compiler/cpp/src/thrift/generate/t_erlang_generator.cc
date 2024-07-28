@@ -91,7 +91,8 @@ public:
     , app_namespaces_(false)
     , idiomatic_names_(false)
     , scoped_typenames_(false)
-    , app_prefix_("") {
+    , app_prefix_("")
+    , use_maps_(false) {
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
@@ -111,6 +112,9 @@ public:
       }
       if(iter->first.compare("app_namespaces") == 0) {
         app_namespaces_ = true;
+        continue;
+      if (iter->first.compare("use_maps") == 0) {
+        use_maps_ = true;
         continue;
       }
       throw "unknown option: " + iter->first;
@@ -133,6 +137,14 @@ public:
     std::string nl() {
       string s = endl;
       for (size_t i = 0; i < indent; ++i) {
+        s += indent_str;
+      }
+      return s;
+    }
+
+    std::string nl(size_t _indent) {
+      string s = endl;
+      for (size_t i = 0; i < _indent; ++i) {
         s += indent_str;
       }
       return s;
@@ -175,6 +187,7 @@ private:
   bool app_namespaces_;
   bool idiomatic_names_;
   bool scoped_typenames_;
+  bool use_maps_;
   std::string app_prefix_; // deprecated
 
   /**
@@ -225,6 +238,10 @@ private:
   void generate_struct_definition(std::ostream& out, t_struct* tstruct);
   void generate_struct_member(std::ostream& out, std::string name, t_field* tmember, indenter& ind);
   void generate_struct_info(std::ostream& out, t_struct* tstruct);
+  void generate_struct_api_new(ostream& out, vector<t_struct*> structs);
+  void generate_struct_api_new_spec(ostream& out, vector<t_struct*> structs, vector<t_struct*> xceptions);
+  void generate_struct_api_get(ostream& out, vector<t_struct*> structs);
+  void generate_struct_api_get_type(ostream& out, vector<t_struct*> structs);
   void generate_typespecs(std::ostream& out);
   std::string comment_title(const std::string& title);
   void generate_typespec_function_name(std::ostream& os);
@@ -236,6 +253,7 @@ private:
   void generate_typedef_info(std::ostream& os, t_typedef*);
   void generate_typedef_types(std::ostream& os);
   void generate_struct_types(std::ostream& os);
+  void generate_struct_type_member(std::ostream& os, t_struct* tstruct);
   void generate_typedef_metadata(std::ostream& erlout);
   void generate_struct_metadata(std::ostream& erlout, std::ostream& hrlout);
   void generate_record_metadata(std::ostream& erlout);
@@ -301,7 +319,7 @@ void t_erlang_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   // types files
-  string base_name = render_module_name(get_program());
+  string base_name = type_module(get_program());
   string f_erl_filename = get_out_dir() + base_name + ".erl";
   string f_hrl_filename = get_out_dir() + base_name + ".hrl";
 
@@ -309,9 +327,11 @@ void t_erlang_generator::init_generator() {
   f_hrl_file_.open(f_hrl_filename.c_str());
 
   f_erl_file_ << erl_autogen_comment() << endl
-              << render_attribute("module", base_name) << endl
-              << render_local_include(get_program()) << endl;
-
+              << render_attribute("module", base_name) << endl;
+  if(!use_maps_)
+  {
+    f_erl_file_ << render_local_include(get_program()) << endl;
+  }
   f_hrl_file_ << render_hrl_header(base_name) << endl
               << render_includes() << endl;
 
@@ -320,11 +340,21 @@ void t_erlang_generator::init_generator() {
               << render_export("typedefs", 0)
               << render_export("structs", 0)
               << render_export("services", 0)
+              << render_export("flags", 0)
               << render_export("typedef_info", 1)
               << render_export("enum_info", 1)
-              << render_export("struct_info", 1)
-              << render_export("record_name", 1)
-              << render_export("functions", 1)
+              << render_export("struct_info", 1);
+  if(!use_maps_)
+  {
+    f_erl_file_ << render_export("record_name", 1);
+  }
+  else
+  {
+    f_erl_file_ << render_export("struct_new", 2)
+                << render_export("struct_get", 1)
+                << render_export("struct_get_type", 1);
+  }
+  f_erl_file_ << render_export("functions", 1)
               << render_export("function_info", 3)
               << endl
               << render_export_type("namespace", 0)
@@ -390,7 +420,9 @@ void t_erlang_generator::close_generator() {
   generate_typedef_metadata(f_erl_file_);
   generate_enum_metadata(f_erl_file_);
   generate_struct_metadata(f_erl_file_, f_hrl_file_);
-  generate_record_metadata(f_erl_file_);
+  if(!use_maps_){
+    generate_record_metadata(f_erl_file_);
+  }
   generate_service_metadata(f_erl_file_);
 
   f_hrl_file_ << render_hrl_footer();
@@ -669,15 +701,29 @@ void t_erlang_generator::generate_struct_types(std::ostream& os) {
     if ((*it)->is_union()) {
       generate_union_definition(os, *it);
     } else {
-      os << "%% struct " << type_name(*it) << endl;
-      os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
+        os << "%% struct " << type_name(*it) << endl;
+        if(!use_maps_){
+            os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
+        }
+        else{
+            os << "-type " + type_name(*it) << "() :: #{";
+            generate_struct_type_member(os, *it);
+            os << "}." << endl << endl;
+        }
     }
   }
 
   vec const& xceptions = get_program()->get_xceptions();
   for(vec::const_iterator it = xceptions.begin(); it != xceptions.end(); ++it) {
     os << "%% exception " << type_name(*it) << endl;
-    os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
+    if(!use_maps_){
+        os << "-type " + type_name(*it) << "() :: #" + scoped_type_name(*it) + "{}." << endl << endl;
+    }
+    else{
+        os << "-type " + type_name(*it) << "() :: #{";
+        generate_struct_type_member(os, *it);
+        os << "}." << endl << endl;
+    }
   }
 }
 
@@ -1001,18 +1047,61 @@ void t_erlang_generator::generate_struct_metadata(std::ostream& erl, std::ostrea
     erl << "(struct_name() | exception_name()) -> struct_info() | no_return()." << endl << endl;
     for(vec::const_iterator it = structs.begin(); it != structs.end(); ++it) {
       generate_struct_info(erl, *it);
-      if (!(*it)->is_union()) {
+      if (!(*it)->is_union() && !use_maps_) {
         generate_struct_definition(hrl, *it);
       }
     }
     for(vec::const_iterator it = xceptions.begin(); it != xceptions.end(); ++it) {
       generate_struct_info(erl, *it);
-      generate_struct_definition(hrl, *it);
+      if(!use_maps_){
+            generate_struct_definition(hrl, *it);
+        }
     }
   } else {
     erl << ERROR_SPEC << endl << endl;
   }
   erl << "struct_info(_) -> erlang:error(badarg)." << endl << endl;
+
+  if(use_maps_){
+    if (structs.size() > 0 || xceptions.size() > 0) {
+        generate_struct_api_new_spec(erl, structs, xceptions);
+        generate_struct_api_new(erl, structs);
+        generate_struct_api_new(erl, xceptions);
+    }
+    else{
+        erl << "-spec struct_new(_, _) -> no_return()." << endl << endl;
+    }
+    erl << "struct_new(_, _) -> error(badarg)." << endl << endl;
+
+    if (structs.size() > 0 || xceptions.size() > 0) {
+        erl << "-spec struct_get(map()) -> map() | no_return()."
+            << endl << endl;
+        generate_struct_api_get(erl, structs);
+        generate_struct_api_get(erl, xceptions);
+    }
+    else{
+        erl << "-spec struct_get" << ERROR_SPEC << endl << endl;
+    }
+    erl << "struct_get(_) -> error(badarg)." << endl << endl;
+
+    if (structs.size() > 0 || xceptions.size() > 0) {
+        erl << "-spec struct_get_type(map()) -> atom() | no_return()."
+            << endl << endl;
+        generate_struct_api_get_type(erl, structs);
+        generate_struct_api_get_type(erl, xceptions);
+    }
+    else{
+        erl << "-spec struct_get_type" << ERROR_SPEC << endl << endl;
+    }
+    erl << "struct_get_type(_) -> error(badarg)." << endl << endl;
+    erl << "-spec flags() -> list()." << endl << endl;
+    erl << "flags() -> [structs_as_maps]." << endl << endl;
+  }
+  else
+  {
+    erl << "-spec flags() -> list()." << endl << endl;
+    erl << "flags() -> []." << endl << endl;
+  }
 }
 
 void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
@@ -1094,17 +1183,48 @@ void t_erlang_generator::generate_struct_definition(ostream& out, t_struct* tstr
   out << "})." << endl << endl;
 }
 
+void t_erlang_generator::generate_struct_type_member(std::ostream& os, t_struct* tstruct)
+{
+    indenter ind;
+    vector<t_field*> const& members = tstruct->get_members();
+    os << ind.nlup();
+    os << "'$struct' := " << scoped_type_name(tstruct);
+    if (members.size() > 0) {
+        os << ",";
+        os << ind.nlup();
+        for (vector<t_field*>::const_iterator _it = members.begin(); _it != members.end();) {
+          generate_struct_member(os, type_name(tstruct), *_it, ind);
+          if (++_it != members.end()) {
+            os << "," << ind.nl();
+          }
+        }
+        os << ind.nldown();
+    }
+    else{
+        os << ind.nldown();
+    }
+}
 /**
  * Generates the record field definition
  */
 void t_erlang_generator::generate_struct_member(ostream& out, std::string name, t_field* tmember, indenter& ind) {
   out << field_name(tmember);
-  if (tmember->get_value()) {
-    out << " = " << render_member_value(name + "." + field_name(tmember), tmember, ind);
+  if(!use_maps_){
+      if (tmember->get_value()) {
+        out << " = " << render_member_value(name + "." + field_name(tmember), tmember, ind);
+      }
+      out << " :: " << render_member_type(tmember, true);
+      if (tmember->get_req() == t_field::T_OPTIONAL) {
+        out << " | undefined";
+      }
   }
-  out << " :: " << render_member_type(tmember, true);
-  if (tmember->get_req() == t_field::T_OPTIONAL) {
-    out << " | undefined";
+  else{
+      if (tmember->get_req() == t_field::T_OPTIONAL) {
+        out << " => " << render_member_type(tmember, true);
+      }
+      else{
+        out << " := " << render_member_type(tmember, true);
+      }
   }
 }
 
@@ -1123,6 +1243,94 @@ void t_erlang_generator::generate_struct_info(ostream& out, t_struct* tstruct) {
   indenter i;
   out << "struct_info(" << type_name(tstruct) << ") ->" << i.nlup()
       << render_type_term(tstruct, true, i) << ";" << endl << endl;
+}
+
+/**
+ * Generates the new, get and get_type method for a struct
+ */
+
+void t_erlang_generator::generate_struct_api_new_spec(ostream& out, vector<t_struct*> structs, vector<t_struct*> xceptions) {
+    //erl << "-spec struct_new(struct_name() | exception_name(), map()) -> map() | no_return()."
+    indenter ind;
+    out << "-spec struct_new" << ind.nl(1);
+    for(vector<t_struct*>::const_iterator _it = structs.begin(); _it != structs.end(); ++_it)
+    {
+        out << "(" << type_name(*_it) << ", map()) -> " << type_name(*_it) << "()";
+        if(_it + 1 == structs.end() && xceptions.size() == 0){
+            out << ".";
+        }
+        else{
+            out << ";" << ind.nl(1);
+        }
+    }
+    for(vector<t_struct*>::const_iterator _it = xceptions.begin(); _it != xceptions.end(); ++_it)
+    {
+        out << "(" << type_name(*_it) << ", map()) -> " << type_name(*_it) << "()";
+        if(_it + 1 == xceptions.end()){
+            out << ".";
+        }
+        else{
+            out << ";" << ind.nl(1);
+        }
+    }
+    out << endl << endl;
+}
+void t_erlang_generator::generate_struct_api_new(ostream& out, vector<t_struct*> structs) {
+    for(vector<t_struct*>::const_iterator _it = structs.begin(); _it != structs.end(); ++_it)
+    {
+        indenter ind;
+        string f_head = "";
+        string f_body = "";
+        vector<t_field*> const& members = (*_it)->get_members();
+
+        if (members.size() > 0) {
+            f_head += "struct_new(" + type_name(*_it) + ", Map = #{";
+
+            f_body += "Map#{" + ind.nl(2);
+            f_body += "'$struct' => " + type_name(*_it);
+            int arg_count = 0;
+            for (vector<t_field*>::const_iterator it = members.begin(); it != members.end();) {
+                if ((*it)->get_req() == t_field::T_REQUIRED) {
+                    if(arg_count++){
+                        f_head += ", ";
+                    }
+                    string name = field_name(*it);
+                    string arg_name = "_Arg_" + name;
+                    arg_name.erase(std::remove(arg_name.begin(), arg_name.end(), '\''), arg_name.end());
+
+                    f_head += name + " := " + arg_name;
+                }
+                it++;
+            }
+            f_body += ind.nl(1) + "};" + endl + endl;
+            f_head += "}) ->" + ind.nl(1);
+            out << f_head << f_body;
+        }
+        else{
+            out << "struct_new(" << type_name(*_it) << ", _) ->" << ind.nl(1);
+            out << "#{" << ind.nl(2);
+            out << "'$struct' => " << type_name(*_it) << ind.nl(1);
+            out << "};" << endl << endl;
+        }
+    }
+}
+
+void t_erlang_generator::generate_struct_api_get(ostream& out, vector<t_struct*> structs) {
+    for(vector<t_struct*>::const_iterator _it = structs.begin(); _it != structs.end(); ++_it)
+    {
+        indenter ind;
+        out << "struct_get(#{'$struct' := " << type_name(*_it) << "} = Map) ->" << ind.nl(1);
+        out << "maps:remove('$struct', Map);" << endl << endl;
+    }
+}
+
+void t_erlang_generator::generate_struct_api_get_type(ostream& out, vector<t_struct*> structs) {
+    for(vector<t_struct*>::const_iterator _it = structs.begin(); _it != structs.end(); ++_it)
+    {
+        indenter ind;
+        out << "struct_get_type(#{'$struct' := " << type_name(*_it) << "}) ->" << ind.nl(1);
+        out << type_name(*_it) << ";" << endl << endl;
+    }
 }
 
 /**
@@ -1578,4 +1786,5 @@ THRIFT_REGISTER_GENERATOR(
   "                      (conflicts with 'app_namespaces')\n"
   "    app_prefix=       Application prefix for generated Erlang files.\n"
   "                      (deprecated, conflicts with 'app_namespaces')\n"
+  "    use_maps:         Generate maps from structs instead of records.\n"
 )
