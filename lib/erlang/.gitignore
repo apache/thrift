@@ -1,0 +1,4 @@
+/.eunit
+/.rebar
+/ebin
+.generated
