@@ -27,5 +27,4 @@
 -spec flush(state()) -> {state(), ok | {error, _Reason}}.
 -spec close(state()) -> {state(), ok | {error, _Reason}}.
 
-
 -endif.

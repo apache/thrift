@@ -26,58 +26,52 @@
 %% protocol callbacks
 -export([read/2, read_exact/2, write/2, flush/1, close/1]).
 
-
 -record(t_membuffer, {
-  buffer = []
+    buffer = []
 }).
 
 -type state() :: #t_membuffer{}.
-
 
 -spec new() -> thrift_transport:t_transport().
 
 new() -> new(<<>>).
 
--spec new(Buf::iodata()) -> thrift_transport:t_transport().
+-spec new(Buf :: iodata()) -> thrift_transport:t_transport().
 
 new(Buf) when is_list(Buf) ->
-  State = #t_membuffer{buffer = iolist_to_binary(Buf)},
-  thrift_transport:new(?MODULE, State);
+    State = #t_membuffer{buffer = iolist_to_binary(Buf)},
+    thrift_transport:new(?MODULE, State);
 new(Buf) when is_binary(Buf) ->
-  State = #t_membuffer{buffer = Buf},
-  thrift_transport:new(?MODULE, State).
-
+    State = #t_membuffer{buffer = Buf},
+    thrift_transport:new(?MODULE, State).
 
 -include("thrift_transport_behaviour.hrl").
 
+read(State = #t_membuffer{buffer = Buf}, Len) when
+    is_integer(Len), Len >= 0
+->
+    Give = min(byte_size(Buf), Len),
+    {Result, Remaining} = split_binary(Buf, Give),
+    {State#t_membuffer{buffer = Remaining}, {ok, Result}}.
 
-read(State = #t_membuffer{buffer = Buf}, Len)
-when is_integer(Len), Len >= 0 ->
-  Give = min(byte_size(Buf), Len),
-  {Result, Remaining} = split_binary(Buf, Give),
-  {State#t_membuffer{buffer = Remaining}, {ok, Result}}.
+read_exact(State = #t_membuffer{buffer = Buf}, Len) when
+    is_integer(Len), Len >= 0
+->
+    case byte_size(Buf) of
+        X when X >= Len ->
+            {Result, Remaining} = split_binary(Buf, Len),
+            {State#t_membuffer{buffer = Remaining}, {ok, Result}};
+        _ ->
+            {State, {error, eof}}
+    end.
 
-
-read_exact(State = #t_membuffer{buffer = Buf}, Len)
-when is_integer(Len), Len >= 0 ->
-  case byte_size(Buf) of
-    X when X >= Len ->
-      {Result, Remaining} = split_binary(Buf, Len),
-      {State#t_membuffer{buffer = Remaining}, {ok, Result}};
-    _ ->
-      {State, {error, eof}}
-  end.
-
-
-write(State = #t_membuffer{buffer = Buf}, Data)
-when is_list(Data); is_binary(Data) ->
-  {State#t_membuffer{buffer = <<Buf/binary, (iolist_to_binary(Data))/binary>>}, ok}.
-
+write(State = #t_membuffer{buffer = Buf}, Data) when
+    is_list(Data); is_binary(Data)
+->
+    {State#t_membuffer{buffer = <<Buf/binary, (iolist_to_binary(Data))/binary>>}, ok}.
 
 flush(State = #t_membuffer{}) ->
-  {State, ok}.
-
+    {State, ok}.
 
 close(State = #t_membuffer{buffer = Buf}) ->
-  {State, {ok, Buf}}.
-
+    {State, {ok, Buf}}.

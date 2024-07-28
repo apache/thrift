@@ -29,9 +29,8 @@
 
 %% NOTE: Keep this in sync with thrift_protocol:read and read_specific.
 -spec read
-        (state(), tprot_empty_tag()) ->  {state(),  ok                | {error, _Reason}};
-        (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
-        (state(), tprot_data_tag()) ->   {state(), {ok, any()}        | {error, _Reason}}.
-
+    (state(), tprot_empty_tag()) -> {state(), ok | {error, _Reason}};
+    (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
+    (state(), tprot_data_tag()) -> {state(), {ok, any()} | {error, _Reason}}.
 
 -endif.

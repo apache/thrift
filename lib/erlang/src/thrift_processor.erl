@@ -28,67 +28,91 @@
 
 init({_Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
     {ok, Proto} = ProtoGen(),
-    loop(#thrift_processor{protocol = Proto,
-                           service = Service,
-                           handler = Handler}).
+    loop(#thrift_processor{
+        protocol = Proto,
+        service = Service,
+        handler = Handler
+    }).
 
-loop(State0 = #thrift_processor{protocol  = Proto0,
-                                handler = Handler,
-                                service = Service}) ->
-
+loop(
+    State0 = #thrift_processor{
+        protocol = Proto0,
+        handler = Handler,
+        service = Service
+    }
+) ->
     {Proto1, MessageBegin} = thrift_protocol:read(Proto0, message_begin),
     State1 = State0#thrift_processor{protocol = Proto1},
 
     ErrorHandler = fun
-        (HandlerModules) when is_list(HandlerModules) -> thrift_multiplexed_map_wrapper:fetch(?MULTIPLEXED_ERROR_HANDLER_KEY, HandlerModules);
-        (HandlerModule) -> HandlerModule
+        (HandlerModules) when is_list(HandlerModules) ->
+            thrift_multiplexed_map_wrapper:fetch(?MULTIPLEXED_ERROR_HANDLER_KEY, HandlerModules);
+        (HandlerModule) ->
+            HandlerModule
     end,
 
     case MessageBegin of
-
-        #protocol_message_begin{name = Function,
-                                type = Type,
-                                seqid = Seqid} when Type =:= ?tMessageType_CALL; Type =:= ?tMessageType_ONEWAY ->
+        #protocol_message_begin{
+            name = Function,
+            type = Type,
+            seqid = Seqid
+        } when Type =:= ?tMessageType_CALL; Type =:= ?tMessageType_ONEWAY ->
             case string:tokens(Function, ?MULTIPLEXED_SERVICE_SEPARATOR) of
                 [ServiceName, FunctionName] ->
-                    SubService  = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
+                    SubService = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
                     SubHandler = thrift_multiplexed_map_wrapper:fetch(ServiceName, Handler),
-                    case handle_function(State1#thrift_processor{service=SubService, handler=SubHandler}, list_to_atom(FunctionName), Seqid) of
-                        {State2, ok} -> loop(State2#thrift_processor{service=Service, handler=Handler});
+                    case
+                        handle_function(
+                            State1#thrift_processor{service = SubService, handler = SubHandler},
+                            list_to_atom(FunctionName),
+                            Seqid
+                        )
+                    of
+                        {State2, ok} ->
+                            loop(State2#thrift_processor{service = Service, handler = Handler});
                         {_State2, {error, Reason}} ->
-							apply(ErrorHandler(Handler), handle_error, [list_to_atom(Function), Reason]),
+                            apply(ErrorHandler(Handler), handle_error, [
+                                list_to_atom(Function), Reason
+                            ]),
                             thrift_protocol:close_transport(Proto1),
                             ok
                     end;
                 _ ->
                     case handle_function(State1, list_to_atom(Function), Seqid) of
-                        {State2, ok} -> loop(State2);
+                        {State2, ok} ->
+                            loop(State2);
                         {_State2, {error, Reason}} ->
-							apply(ErrorHandler(Handler), handle_error, [list_to_atom(Function), Reason]),
+                            apply(ErrorHandler(Handler), handle_error, [
+                                list_to_atom(Function), Reason
+                            ]),
                             thrift_protocol:close_transport(Proto1),
                             ok
                     end
             end;
         {error, timeout = Reason} ->
-			apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
+            apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
             thrift_protocol:close_transport(Proto1),
             ok;
         {error, closed = Reason} ->
             %% error_logger:info_msg("Client disconnected~n"),
-			apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
+            apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
             thrift_protocol:close_transport(Proto1),
             exit(shutdown);
         {error, Reason} ->
-			apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
+            apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
             thrift_protocol:close_transport(Proto1),
             exit(shutdown)
     end.
 
-handle_function(State0=#thrift_processor{protocol = Proto0,
-                                         handler = Handler,
-                                         service = Service},
-                Function,
-                Seqid) ->
+handle_function(
+    State0 = #thrift_processor{
+        protocol = Proto0,
+        handler = Handler,
+        service = Service
+    },
+    Function,
+    Seqid
+) ->
     InParams = get_function_info(Service, Function, params_type),
 
     {Proto1, {ok, Params}} = thrift_protocol:read(Proto0, InParams),
@@ -105,32 +129,39 @@ handle_function(State0=#thrift_processor{protocol = Proto0,
             handle_function_catch(State1, Function, Type, Data, Seqid)
     end.
 
-handle_function_catch(State = #thrift_processor{service = Service},
-                      Function, ErrType, ErrData, Seqid) ->
+handle_function_catch(
+    State = #thrift_processor{service = Service},
+    Function,
+    ErrType,
+    ErrData,
+    Seqid
+) ->
     IsOneway = get_function_info(Service, Function, reply_type) =:= oneway_void,
 
     case {ErrType, ErrData} of
         _ when IsOneway ->
             Stack = erlang:get_stacktrace(),
             error_logger:warning_msg(
-              "oneway void ~p threw error which must be ignored: ~p",
-              [Function, {ErrType, ErrData, Stack}]),
+                "oneway void ~p threw error which must be ignored: ~p",
+                [Function, {ErrType, ErrData, Stack}]
+            ),
             {State, ok};
-
         {throw, Exception} when is_tuple(Exception), size(Exception) > 0 ->
             %error_logger:warning_msg("~p threw exception: ~p~n", [Function, Exception]),
             handle_exception(State, Function, Exception, Seqid);
-            % we still want to accept more requests from this client
+        % we still want to accept more requests from this client
 
         {error, Error} ->
             handle_error(State, Function, Error, Seqid)
     end.
 
-handle_success(State = #thrift_processor{service = Service},
-               Function,
-               Result,
-               Seqid) ->
-    ReplyType  = get_function_info(Service, Function, reply_type),
+handle_success(
+    State = #thrift_processor{service = Service},
+    Function,
+    Result,
+    Seqid
+) ->
+    ReplyType = get_function_info(Service, Function, reply_type),
     StructName = atom_to_list(Function) ++ "_result",
 
     case Result of
@@ -140,19 +171,19 @@ handle_success(State = #thrift_processor{service = Service},
                 {StructName, ReplyData}
             },
             send_reply(State, Function, ?tMessageType_REPLY, Reply, Seqid);
-
         ok when ReplyType == {struct, struct, []} ->
             send_reply(State, Function, ?tMessageType_REPLY, {ReplyType, {StructName}}, Seqid);
-
         ok when ReplyType == oneway_void ->
             %% no reply for oneway void
             {State, ok}
     end.
 
-handle_exception(State = #thrift_processor{service = Service},
-                 Function,
-                 Exception,
-                 Seqid) ->
+handle_exception(
+    State = #thrift_processor{service = Service},
+    Function,
+    Exception,
+    Seqid
+) ->
     ExceptionType = element(1, Exception),
     %% Fetch a structure like {struct, [{-2, {struct, {Module, Type}}},
     %%                                  {-3, {struct, {Module, Type}}}]}
@@ -164,15 +195,17 @@ handle_exception(State = #thrift_processor{service = Service},
 
     %% Assuming we had a type1 exception, we'd get: [undefined, Exception, undefined]
     %% e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
-    ExceptionList = [case Module:record_name(Type) of
-                         ExceptionType -> Exception;
-                         _ -> undefined
-                     end
-                     || {_Fid, _, {struct, exception, {Module, Type}}, _, _} <- XInfo],
+    ExceptionList = [
+        case Module:record_name(Type) of
+            ExceptionType -> Exception;
+            _ -> undefined
+        end
+     || {_Fid, _, {struct, exception, {Module, Type}}, _, _} <- XInfo
+    ],
 
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
 
-                                                % Make sure we got at least one defined
+    % Make sure we got at least one defined
     case lists:all(fun(X) -> X =:= undefined end, ExceptionList) of
         true ->
             handle_unknown_exception(State, Function, Exception, Seqid);
@@ -185,8 +218,7 @@ handle_exception(State = #thrift_processor{service = Service},
 %% not one of the exceptions that was defined for the function.
 %%
 handle_unknown_exception(State, Function, Exception, Seqid) ->
-    handle_error(State, Function, {exception_not_declared_as_thrown,
-                                   Exception}, Seqid).
+    handle_error(State, Function, {exception_not_declared_as_thrown, Exception}, Seqid).
 
 handle_error(State, Function, Error, Seqid) ->
     Stack = erlang:get_stacktrace(),
@@ -195,23 +227,29 @@ handle_error(State, Function, Error, Seqid) ->
     Message =
         case application:get_env(thrift, exceptions_include_traces) of
             {ok, true} ->
-                lists:flatten(io_lib:format("An error occurred: ~p~n",
-                                            [{Error, Stack}]));
+                lists:flatten(
+                    io_lib:format(
+                        "An error occurred: ~p~n",
+                        [{Error, Stack}]
+                    )
+                );
             _ ->
                 "An unknown handler error occurred."
         end,
-    Reply = {?TApplicationException_Structure,
-             #'TApplicationException'{
-                message = Message,
-                type = ?TApplicationException_UNKNOWN}},
+    Reply =
+        {?TApplicationException_Structure, #'TApplicationException'{
+            message = Message,
+            type = ?TApplicationException_UNKNOWN
+        }},
     send_reply(State, Function, ?tMessageType_EXCEPTION, Reply, Seqid).
 
 send_reply(State = #thrift_processor{protocol = Proto0}, Function, ReplyMessageType, Reply, Seqid) ->
     try
         {Proto1, ok} = thrift_protocol:write(Proto0, #protocol_message_begin{
-                                               name = atom_to_list(Function),
-                                               type = ReplyMessageType,
-                                               seqid = Seqid}),
+            name = atom_to_list(Function),
+            type = ReplyMessageType,
+            seqid = Seqid
+        }),
         {Proto2, ok} = thrift_protocol:write(Proto1, Reply),
         {Proto3, ok} = thrift_protocol:write(Proto2, message_end),
         {Proto4, ok} = thrift_protocol:flush_transport(Proto3),

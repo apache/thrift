@@ -27,19 +27,19 @@
 -define(THRIFT_TYPE, {struct, struct, {implicit_default_thrift, 'HereIAm'}}).
 
 encode_decode_default_test() ->
-  {ok, Transport} = thrift_memory_buffer:new(),
-  {ok, Protocol0} = thrift_binary_protocol:new(Transport),
-  InitialData = #'HereIAm'{},
-  {Protocol1, ok} = thrift_protocol:write(Protocol0, {?THRIFT_TYPE, InitialData}),
-  {_Protocol2, {ok, RoundtripData}} = thrift_protocol:read(Protocol1, ?THRIFT_TYPE),
-  InitialData = RoundtripData.
+    {ok, Transport} = thrift_memory_buffer:new(),
+    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    InitialData = #'HereIAm'{},
+    {Protocol1, ok} = thrift_protocol:write(Protocol0, {?THRIFT_TYPE, InitialData}),
+    {_Protocol2, {ok, RoundtripData}} = thrift_protocol:read(Protocol1, ?THRIFT_TYPE),
+    InitialData = RoundtripData.
 
 implicit_default_test() ->
-  {ok, Transport} = thrift_memory_buffer:new(),
-  {ok, Protocol0} = thrift_binary_protocol:new(Transport),
-  InitialData = #'HereIAm'{age = undefined},
-  {Protocol1, ok} = thrift_protocol:write(Protocol0, {?THRIFT_TYPE, InitialData}),
-  {_Protocol2, {ok, RoundtripData}} = thrift_protocol:read(Protocol1, ?THRIFT_TYPE),
-  #'HereIAm'{name = <<"Jóhansson">>, age = 42} = RoundtripData.
+    {ok, Transport} = thrift_memory_buffer:new(),
+    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    InitialData = #'HereIAm'{age = undefined},
+    {Protocol1, ok} = thrift_protocol:write(Protocol0, {?THRIFT_TYPE, InitialData}),
+    {_Protocol2, {ok, RoundtripData}} = thrift_protocol:read(Protocol1, ?THRIFT_TYPE),
+    #'HereIAm'{name = <<"Jóhansson">>, age = 42} = RoundtripData.
 
 -endif.

@@ -25,30 +25,34 @@
 -include("gen-erlang/thrift_test_thrift.hrl").
 
 write_test_() ->
-  [
-    ?_assertMatch(ok, write(byte, +42)),
-    ?_assertMatch(ok, write(byte, -42)),
-    ?_assertMatch({error, {invalid, [], _}}, write(byte, -200)),
-    ?_assertMatch(ok, write(string, <<"1337">>)),
-    ?_assertMatch({error, {invalid, [], _}}, write(string, "1337")),
-    ?_assertMatch({error, {invalid, [], _}}, write(string, 1337)),
-    ?_assertMatch(
-      ok,
-      write({struct, struct, {thrift_test_thrift, 'EmptyStruct'}}, #'EmptyStruct'{})
-    ),
-    ?_assertMatch(
-      {error, {invalid, [], _}},
-      write({struct, struct, {thrift_test_thrift, 'EmptyStruct'}}, #'Bools'{})
-    ),
-    ?_assertMatch(
-      ok,
-      write({struct, struct, {thrift_test_thrift, 'OneField'}}, #'OneField'{field = #'EmptyStruct'{}})
-    ),
-    ?_assertMatch(
-      {error, {invalid, [field], _}},
-      write({struct, struct, {thrift_test_thrift, 'OneField'}}, #'OneField'{field = #'Bools'{}})
-    )
-  ].
+    [
+        ?_assertMatch(ok, write(byte, +42)),
+        ?_assertMatch(ok, write(byte, -42)),
+        ?_assertMatch({error, {invalid, [], _}}, write(byte, -200)),
+        ?_assertMatch(ok, write(string, <<"1337">>)),
+        ?_assertMatch({error, {invalid, [], _}}, write(string, "1337")),
+        ?_assertMatch({error, {invalid, [], _}}, write(string, 1337)),
+        ?_assertMatch(
+            ok,
+            write({struct, struct, {thrift_test_thrift, 'EmptyStruct'}}, #'EmptyStruct'{})
+        ),
+        ?_assertMatch(
+            {error, {invalid, [], _}},
+            write({struct, struct, {thrift_test_thrift, 'EmptyStruct'}}, #'Bools'{})
+        ),
+        ?_assertMatch(
+            ok,
+            write({struct, struct, {thrift_test_thrift, 'OneField'}}, #'OneField'{
+                field = #'EmptyStruct'{}
+            })
+        ),
+        ?_assertMatch(
+            {error, {invalid, [field], _}},
+            write({struct, struct, {thrift_test_thrift, 'OneField'}}, #'OneField'{
+                field = #'Bools'{}
+            })
+        )
+    ].
 
 write(Type, Data) ->
     {ok, Trans} = thrift_membuffer_transport:new(),
