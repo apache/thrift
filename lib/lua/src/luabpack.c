@@ -45,6 +45,7 @@ static int64_t T_ntohll(uint64_t data) {
  *  c - Signed Byte
  *  s - Signed Short
  *  i - Signed Int
+ *  I - Unsigned Int
  *  l - Signed Long
  *  d - Double
  */
@@ -69,6 +70,12 @@ static int l_bpack(lua_State *L) {
     case 'i': {
       int32_t data = luaL_checkinteger(L, 2);
       data = (int32_t)htonl(data);
+      luaL_addlstring(&buf, (void*)&data, sizeof(data));
+      break;
+    }
+    case 'I': {
+      uint32_t data = luaL_checkinteger(L, 2);
+      data = (uint32_t)htonl(data);
       luaL_addlstring(&buf, (void*)&data, sizeof(data));
       break;
     }
@@ -97,6 +104,7 @@ static int l_bpack(lua_State *L) {
  *  C - Unsigned Byte
  *  s - Signed Short
  *  i - Signed Int
+ *  I - Unsigned Int
  *  l - Signed Long
  *  d - Double
  */
@@ -141,6 +149,17 @@ static int l_bunpack(lua_State *L) {
       luaL_argcheck(L, len == sizeof(val), 1, "Invalid input string size.");
       memcpy(&val, data, sizeof(val));
       val = (int32_t)ntohl(val);
+      lua_pushnumber(L, val);
+      break;
+    }
+    /**
+     * unpack unsigned Int.
+     */
+    case 'I': {
+      uint32_t val;
+      luaL_argcheck(L, len == sizeof(val), 1, "Invalid input string size.");
+      memcpy(&val, data, sizeof(val));
+      val = (uint32_t)ntohl(val);
       lua_pushnumber(L, val);
       break;
     }

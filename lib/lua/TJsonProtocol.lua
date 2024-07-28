@@ -43,6 +43,7 @@ TTypeToString[TType.STRUCT] = "rec"
 TTypeToString[TType.LIST]   = "lst"
 TTypeToString[TType.SET]    = "set"
 TTypeToString[TType.MAP]    = "map"
+TTypeToString[TType.UUID]   = "uid"
 
 StringToTType = {
   tf  = TType.BOOL,
@@ -55,7 +56,8 @@ StringToTType = {
   rec = TType.STRUCT,
   map = TType.MAP,
   set = TType.SET,
-  lst = TType.LIST
+  lst = TType.LIST,
+  uid = TType.UUID,
 }
 
 JSONNode = {
@@ -410,6 +412,10 @@ function TJSONProtocol:writeString(str)
   self:writeJSONString(str)
 end
 
+function TJSONProtocol:writeUuid(uuid)
+  self:writeJSONString(uuid:getString())
+end
+
 function TJSONProtocol:writeBinary(str)
   -- Should be utf-8
   self:writeJSONBase64(str)
@@ -705,6 +711,10 @@ end
 
 function TJSONProtocol:readString()
   return self:readJSONString()
+end
+
+function TJSONProtocol:readUuid()
+  return TUUIDfromString(self:readJSONString())
 end
 
 function TJSONProtocol:readBinary()
