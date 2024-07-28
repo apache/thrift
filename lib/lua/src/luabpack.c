@@ -303,6 +303,11 @@ static const struct luaL_Reg lua_bpack[] = {
 };
 
 int luaopen_libluabpack(lua_State *L) {
+#if LUA_VERSION_NUM >= 502
+    lua_newtable(L);
+    luaL_setfuncs(L, lua_bpack, 0);
+#else
   luaL_register(L, "libluabpack", lua_bpack);
+#endif
   return 1;
 }

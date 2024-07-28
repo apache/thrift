@@ -18,9 +18,9 @@
 --
 
 require 'TProtocol'
-require 'libluabpack'
-require 'libluabitwise'
-require 'liblualongnumber'
+local libluabpack = require 'libluabpack'
+local libluabitwise = require 'libluabitwise'
+local liblualongnumber = require 'liblualongnumber'
 
 TCompactProtocol = __TObject.new(TProtocolBase, {
   __type = 'TCompactProtocol',

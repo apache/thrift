@@ -24,7 +24,7 @@ require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
 require('ThriftTest_ThriftTest')
-require('liblualongnumber')
+local liblualongnumber = require('liblualongnumber')
 
 local client
 
