@@ -1061,10 +1061,10 @@ void t_js_generator::generate_js_struct_reader(ostream& out, t_struct* tstruct) 
   vector<t_field*>::const_iterator f_iter;
 
   if (gen_es6_) {
-    indent(out) << "read (input) {" << '\n';
+    indent(out) << "[Symbol.for(\"read\")] (input) {" << '\n';
   } else {
     indent(out) << js_namespace(tstruct->get_program()) << tstruct->get_name()
-        << ".prototype.read = function(input) {" << '\n';
+        << ".prototype[Symbol.for(\"read\")] = function(input) {" << '\n';
   }
 
   indent_up();
@@ -1151,10 +1151,10 @@ void t_js_generator::generate_js_struct_writer(ostream& out, t_struct* tstruct) 
   vector<t_field*>::const_iterator f_iter;
 
   if (gen_es6_) {
-    indent(out) << "write (output) {" << '\n';
+    indent(out) << "[Symbol.for(\"write\")] (output) {" << '\n';
   } else {
     indent(out) << js_namespace(tstruct->get_program()) << tstruct->get_name()
-        << ".prototype.write = function(output) {" << '\n';
+        << ".prototype[Symbol.for(\"write\")] = function(output) {" << '\n';
   }
 
   indent_up();
@@ -1395,7 +1395,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
                 "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, "
                 "'Unknown function ' + r.fname);" << '\n' << indent()
              << "  output.writeMessageBegin(r.fname, Thrift.MessageType.EXCEPTION, r.rseqid);"
-             << '\n' << indent() << "  x.write(output);" << '\n' << indent()
+             << '\n' << indent() << "  x[Symbol.for(\"write\")](output);" << '\n' << indent()
              << "  output.writeMessageEnd();" << '\n' << indent() << "  output.flush();" << '\n'
              << indent() << "}" << '\n';
 
@@ -1447,7 +1447,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
                       + "_result";
 
   indent(f_service_) << js_const_type_ << "args = new " << argsname << "();" << '\n' << indent()
-             << "args.read(input);" << '\n' << indent() << "input.readMessageEnd();" << '\n';
+             << "args[Symbol.for(\"read\")](input);" << '\n' << indent() << "input.readMessageEnd();" << '\n';
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
@@ -1509,7 +1509,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   f_service_ << indent() << js_const_type_ << "result_obj = new " << resultname << "({success: result});" << '\n'
              << indent() << "output.writeMessageBegin(\"" << tfunction->get_name()
              << "\", Thrift.MessageType.REPLY, seqid);" << '\n' << indent()
-             << "result_obj.write(output);" << '\n' << indent() << "output.writeMessageEnd();" << '\n'
+             << "result_obj[Symbol.for(\"write\")](output);" << '\n' << indent() << "output.writeMessageEnd();" << '\n'
              << indent() << "output.flush();" << '\n';
   indent_down();
 
@@ -1562,7 +1562,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     indent(f_service_) << "}" << '\n';
   }
 
-  f_service_ << indent() << "result.write(output);" << '\n' << indent()
+  f_service_ << indent() << "result[Symbol.for(\"write\")](output);" << '\n' << indent()
              << "output.writeMessageEnd();" << '\n' << indent() << "output.flush();" << '\n';
   indent_down();
   indent(f_service_) << "});" << '\n';
@@ -1610,7 +1610,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
                             " err.message);" << '\n' << indent() << "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << '\n';
   indent_down();
-  f_service_ << indent() << "}" << '\n' << indent() << "result_obj.write(output);" << '\n' << indent()
+  f_service_ << indent() << "}" << '\n' << indent() << "result_obj[Symbol.for(\"write\")](output);" << '\n' << indent()
              << "output.writeMessageEnd();" << '\n' << indent() << "output.flush();" << '\n';
 
   indent_down();
@@ -2013,7 +2013,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
 
     // Write to the stream
-    f_service_ << indent() << "args.write(" << outputVar << ");" << '\n' << indent() << outputVar
+    f_service_ << indent() << "args[Symbol.for(\"write\")](" << outputVar << ");" << '\n' << indent() << outputVar
                << ".writeMessageEnd();" << '\n';
 
     if (gen_node_) {
@@ -2152,13 +2152,13 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
       indent_up();
       f_service_ << indent() << js_const_type_ << "x = new Thrift.TApplicationException();" << '\n'
-                 << indent() << "x.read(" << inputVar << ");" << '\n'
+                 << indent() << "x[Symbol.for(\"read\")](" << inputVar << ");" << '\n'
                  << indent() << inputVar << ".readMessageEnd();" << '\n'
                  << indent() << render_recv_throw("x") << '\n';
       scope_down(f_service_);
 
       f_service_ << indent() << js_const_type_ << "result = new " << resultname << "();" << '\n' << indent()
-                 << "result.read(" << inputVar << ");" << '\n';
+                 << "result[Symbol.for(\"read\")](" << inputVar << ");" << '\n';
 
       f_service_ << indent() << inputVar << ".readMessageEnd();" << '\n' << '\n';
 
@@ -2299,7 +2299,7 @@ void t_js_generator::generate_deserialize_field(ostream& out,
  */
 void t_js_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   out << indent() << prefix << " = new " << js_type_namespace(tstruct->get_program())
-      << tstruct->get_name() << "();" << '\n' << indent() << prefix << ".read(input);" << '\n';
+      << tstruct->get_name() << "();" << '\n' << indent() << prefix << "[Symbol.for(\"read\")](input);" << '\n';
 }
 
 void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
@@ -2482,7 +2482,7 @@ void t_js_generator::generate_serialize_field(ostream& out, t_field* tfield, str
  */
 void t_js_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  indent(out) << prefix << ".write(output);" << '\n';
+  indent(out) << prefix << "[Symbol.for(\"write\")](output);" << '\n';
 }
 
 /**
