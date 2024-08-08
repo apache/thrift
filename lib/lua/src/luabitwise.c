@@ -78,6 +78,11 @@ static const struct luaL_Reg funcs[] = {
 };
 
 int luaopen_libluabitwise(lua_State *L) {
+#if LUA_VERSION_NUM >= 502
+    lua_newtable(L);
+    luaL_setfuncs(L, funcs, 0);
+#else
   luaL_register(L, "libluabitwise", funcs);
+#endif
   return 1;
 }

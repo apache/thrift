@@ -24,7 +24,7 @@ require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
 require('TServer')
-require('liblualongnumber')
+local liblualongnumber = require('liblualongnumber')
 
 --------------------------------------------------------------------------------
 -- Handler

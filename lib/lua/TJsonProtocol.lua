@@ -18,8 +18,9 @@
 --
 
 require 'TProtocol'
-require 'libluabpack'
-require 'libluabitwise'
+local libluabpack = require 'libluabpack'
+local libluabitwise = require 'libluabitwise'
+local liblualongnumber = require 'liblualongnumber'
 
 TJSONProtocol = __TObject.new(TProtocolBase, {
   __type = 'TJSONProtocol',

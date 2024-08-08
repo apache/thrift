@@ -18,8 +18,8 @@
 --
 
 require 'TProtocol'
-require 'libluabpack'
-require 'libluabitwise'
+local libluabpack = require 'libluabpack'
+local libluabitwise = require 'libluabitwise'
 
 TBinaryProtocol = __TObject.new(TProtocolBase, {
   __type = 'TBinaryProtocol',
