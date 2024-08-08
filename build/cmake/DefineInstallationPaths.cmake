@@ -20,7 +20,9 @@
 
 # Define the default install paths
 set(BIN_INSTALL_DIR "bin" CACHE PATH "The binary install dir (default: bin)")
-if(MSVC)
+# For MSVC builds, install shared libs to bin/, while keeping the install
+# dir for static libs as lib/.
+if(MSVC AND BUILD_SHARED_LIBS)
     set(LIB_INSTALL_DIR "bin${LIB_SUFFIX}" CACHE PATH "The library install dir (default: bin${LIB_SUFFIX})")
 else()
     set(LIB_INSTALL_DIR "lib${LIB_SUFFIX}" CACHE PATH "The library install dir (default: lib${LIB_SUFFIX})")
