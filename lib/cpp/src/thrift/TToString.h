@@ -45,6 +45,14 @@ std::string to_string(const T& t) {
   return o.str();
 }
 
+// special handling of i8 datatypes (THRIFT-5272)
+inline std::string to_string(const int8_t& t) {
+  std::ostringstream o;
+  o.imbue(default_locale);
+  o << static_cast<int>(t);
+  return o.str();
+}
+
 // TODO: replace the computations below with std::numeric_limits::max_digits10 once C++11
 // is enabled.
 inline std::string to_string(const float& t) {
