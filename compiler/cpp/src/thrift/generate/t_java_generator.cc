@@ -3328,6 +3328,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << indent() << "if (result." << generate_isset_check("success") << ") {" << '\n'
+                   << indent() << "  after();" << '\n'
                    << indent() << "  return result.success;" << '\n'
                    << indent() << "}" << '\n';
       }

@@ -545,6 +545,9 @@ public abstract class AbstractNonblockingServer extends TServer {
       // get ready for another go-around
       buffer_ = ByteBuffer.allocate(4);
       state_ = FrameBufferState.READING_FRAME_SIZE;
+
+      // reset useless cache
+      response_.reset();
     }
 
     /**

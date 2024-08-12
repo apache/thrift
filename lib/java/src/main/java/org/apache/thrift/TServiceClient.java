@@ -22,6 +22,8 @@ package org.apache.thrift;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 
 /**
  * A TServiceClient is used to communicate with a TService implementation across protocols and
@@ -92,5 +94,12 @@ public abstract class TServiceClient {
     }
     result.read(iprot_);
     iprot_.readMessageEnd();
+  }
+
+  protected void after() {
+    TTransport transport = this.iprot_.getTransport();
+    if (transport instanceof TFramedTransport) {
+      ((TFramedTransport) transport).clear();
+    }
   }
 }
