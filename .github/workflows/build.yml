@@ -209,24 +209,21 @@ jobs:
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
           sudo apt-get install -y wget unzip ant maven
 
-      - name: Setup gradle
+      - name: Setup gradle wrapper
         run: |
-          wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
-          (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
-          unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
-          sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
-          sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
-          gradle --version
+          cd lib/java
+          gradle wrapper --gradle-version $GRADLE_VERSION
+          ./gradlew --version
 
       - name: Run spotlessCheck for Java
         run: |
           cd lib/java
-          gradle spotlessCheck
+          ./gradlew spotlessCheck
 
       - name: Run ktfmtCheck for Kotlin
         run: |
           cd lib/kotlin
-          gradle ktfmtCheck
+          ../java/gradlew ktfmtCheck
 
       - name: Run bootstrap
         run: ./bootstrap.sh
