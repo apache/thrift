@@ -304,6 +304,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
     /**
      * Sets the selection key (this is not thread safe).
+     *
      * @param selectionKey the new key to set.
      */
     public void setSelectionKey(SelectionKey selectionKey) {
