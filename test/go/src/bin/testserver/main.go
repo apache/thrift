@@ -59,7 +59,10 @@ func main() {
 				return
 			}
 		} else {
-			http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
+				fmt.Println(err)
+				return
+			}
 		}
 	} else {
 		server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
