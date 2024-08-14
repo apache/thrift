@@ -41,7 +41,7 @@ var certPath = flag.String("certPath", "keys", "Directory that contains SSL cert
 func main() {
 	flag.Parse()
 
-	processor, serverTransport, transportFactory, protocolFactory, err := common.GetServerParams(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
+	processor, serverTransport, transportFactory, protocolFactory, _, err := common.GetServerParams(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
 
 	if err != nil {
 		log.Fatalf("Unable to process server params: %v", err)

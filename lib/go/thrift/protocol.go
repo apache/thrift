@@ -146,7 +146,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, keyType, maxDepth-1)
 			if err != nil {
 				return err
@@ -163,7 +163,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, elemType, maxDepth-1)
 			if err != nil {
 				return err
@@ -175,7 +175,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, elemType, maxDepth-1)
 			if err != nil {
 				return err

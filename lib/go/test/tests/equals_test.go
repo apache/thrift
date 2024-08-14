@@ -255,7 +255,7 @@ func genMapFoo() *equalstest.MapEqualsFoo {
 
 func genInt64Slice(length int) []int64 {
 	ret := make([]int64, length)
-	for i := 0; i < length; i++ {
+	for i := range ret {
 		ret[i] = int64(length - i)
 	}
 	return ret
@@ -263,7 +263,7 @@ func genInt64Slice(length int) []int64 {
 
 func genStringSlice(length int) []string {
 	ret := make([]string, length)
-	for i := 0; i < length; i++ {
+	for i := range ret {
 		ret[i] = strconv.Itoa(length - i)
 	}
 	return ret
@@ -271,7 +271,7 @@ func genStringSlice(length int) []string {
 
 func genBytesSlice(length int) [][]byte {
 	ret := make([][]byte, length)
-	for i := 0; i < length; i++ {
+	for i := range ret {
 		ret[i] = []byte(strconv.Itoa(length - i))
 	}
 	return ret
@@ -279,7 +279,7 @@ func genBytesSlice(length int) [][]byte {
 
 func genInt64StringMap(length int) map[int64]string {
 	ret := make(map[int64]string, length)
-	for i := 0; i < length; i++ {
+	for i := range length {
 		ret[int64(i)] = strconv.Itoa(i)
 	}
 	return ret

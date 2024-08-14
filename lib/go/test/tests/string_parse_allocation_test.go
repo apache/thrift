@@ -42,7 +42,7 @@ func BenchmarkSimpleJsonStringParse_Allocations(b *testing.B) {
 	b.StopTimer()
 	numEscapedQuotes := 1000
 	var sb strings.Builder
-	for i := 0; i < numEscapedQuotes; i++ {
+	for range numEscapedQuotes {
 		sb.WriteString(`\"`)
 	}
 
@@ -51,7 +51,7 @@ func BenchmarkSimpleJsonStringParse_Allocations(b *testing.B) {
 	transport := thrift.NewTMemoryBuffer()
 	p := thrift.NewTJSONProtocol(transport)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		transport.Reset()
 		transport.WriteString(testString)
 		transport.Flush(context.Background())

@@ -319,7 +319,7 @@ func (p *MyTestStruct) readField9(ctx context.Context, iprot TProtocol) error {
 	}
 	tMap := make(map[string]string, size)
 	p.StringMap = tMap
-	for i := 0; i < size; i++ {
+	for range size {
 		var _key0 string
 		if v, err := iprot.ReadString(ctx); err != nil {
 			return PrependError("error reading field 0: ", err)
@@ -347,7 +347,7 @@ func (p *MyTestStruct) readField10(ctx context.Context, iprot TProtocol) error {
 	}
 	tSlice := make([]string, 0, size)
 	p.StringList = tSlice
-	for i := 0; i < size; i++ {
+	for range size {
 		var _elem2 string
 		if v, err := iprot.ReadString(ctx); err != nil {
 			return PrependError("error reading field 0: ", err)
@@ -369,7 +369,7 @@ func (p *MyTestStruct) readField11(ctx context.Context, iprot TProtocol) error {
 	}
 	tSet := make(map[string]struct{}, size)
 	p.StringSet = tSet
-	for i := 0; i < size; i++ {
+	for range size {
 		var _elem3 string
 		if v, err := iprot.ReadString(ctx); err != nil {
 			return PrependError("error reading field 0: ", err)

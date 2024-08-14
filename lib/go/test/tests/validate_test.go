@@ -107,7 +107,7 @@ func TestBasicValidator(t *testing.T) {
 	}
 	bt = validatetest.NewBasicTest()
 	bt.Map1 = make(map[string]string)
-	for i := 0; i < 11; i++ {
+	for i := range 11 {
 		bt.Map1[strconv.Itoa(i)] = strconv.Itoa(i)
 	}
 	if err := bt.Validate(); err == nil {
@@ -149,7 +149,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	for i := 0; i < 11; i++ {
+	for range 11 {
 		bt.Set1 = append(bt.Set1, "0")
 	}
 	if err := bt.Validate(); err == nil {
@@ -272,7 +272,7 @@ func TestFieldReference(t *testing.T) {
 	frt = validatetest.NewFieldReferenceTest()
 	frt.MaxSize = 8
 	frt.Map0 = make(map[string]string)
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		frt.Map0[strconv.Itoa(i)] = strconv.Itoa(i)
 	}
 	if err := frt.Validate(); err == nil {
@@ -289,7 +289,7 @@ func TestFieldReference(t *testing.T) {
 	}
 	frt = validatetest.NewFieldReferenceTest()
 	frt.MaxSize = 8
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		frt.List0 = append(frt.List0, "0")
 	}
 	if err := frt.Validate(); err == nil {
@@ -306,7 +306,7 @@ func TestFieldReference(t *testing.T) {
 	}
 	frt = validatetest.NewFieldReferenceTest()
 	frt.MaxSize = 8
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		frt.Set0 = append(frt.Set0, "0")
 	}
 	if err := frt.Validate(); err == nil {
