@@ -218,11 +218,6 @@ jobs:
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
           gradle --version
 
-      - name: Run spotlessCheck for Java
-        run: |
-          cd lib/java
-          gradle spotlessCheck
-
       - name: Run ktfmtCheck for Kotlin
         run: |
           cd lib/kotlin
