@@ -1,3 +1,3 @@
 module github.com/apache/thrift
 
-go 1.21
+go 1.22.0

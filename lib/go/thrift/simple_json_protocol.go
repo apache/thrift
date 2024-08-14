@@ -1306,7 +1306,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 
 // Safely peeks into the buffer, reading only what is necessary
 func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
-	for i := 0; i < len(b); i++ {
+	for i := range b {
 		a, _ := p.reader.Peek(i + 1)
 		if len(a) < (i+1) || a[i] != b[i] {
 			return false

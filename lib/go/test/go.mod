@@ -1,6 +1,6 @@
 module github.com/apache/thrift/lib/go/test
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/apache/thrift v0.0.0-00010101000000-000000000000

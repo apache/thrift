@@ -133,7 +133,7 @@ func main() {
 	if *clients != 0 {
 		ready.Add(*clients + 1)
 		done.Add(*clients)
-		for i := 0; i < *clients; i++ {
+		for range *clients {
 			go client(protocolFactory)
 		}
 		ready.Done()
@@ -170,45 +170,45 @@ func client(protocolFactory thrift.TProtocolFactory) {
 	ready.Wait()
 	switch callType {
 	case echoVoid:
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoVoid(ctx)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoByte:
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoByte(ctx, 42)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoI32:
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoI32(ctx, 4242)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoI64:
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoI64(ctx, 424242)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoString:
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoString(ctx, "TestString")
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echiList:
 		l := []int8{-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8}
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoList(ctx, l)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoSet:
 		s := []int8{-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8}
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoSet(ctx, s)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoMap:
 		m := map[int8]int8{-10: 10, -9: 9, -8: 8, -7: 7, -6: 6, -5: 5, -4: 4, -3: 3, -2: 2, -1: 1, 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
-		for i := 0; i < *loop; i++ {
+		for range *loop {
 			client.EchoMap(ctx, m)
 			atomic.AddInt64(&clicounter, 1)
 		}

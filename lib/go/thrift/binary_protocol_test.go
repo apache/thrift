@@ -112,7 +112,7 @@ func generateSafeReadBytesBenchmark(askedSize int32, dataSize int) func(b *testi
 	return func(b *testing.B) {
 		data := make([]byte, dataSize)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			safeReadBytes(askedSize, bytes.NewReader(data))
 		}
 	}

@@ -20,8 +20,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	t "log"
 	"reflect"
 
@@ -41,11 +43,15 @@ var testloops = flag.Int("testloops", 1, "Number of Tests")
 
 func main() {
 	flag.Parse()
-	client, _, err := common.StartClient(*host, *port, *domain_socket, *transport, *protocol, *ssl)
+	addr := *domain_socket
+	if addr == "" {
+		addr = fmt.Sprintf("%s:%d", *host, *port)
+	}
+	client, _, err := common.StartClient(addr, *transport, *protocol, *ssl)
 	if err != nil {
 		t.Fatalf("Unable to start client: ", err)
 	}
-	for i := 0; i < *testloops; i++ {
+	for range *testloops {
 		callEverything(client)
 	}
 }
@@ -127,17 +133,15 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 	}
 
 	binout := make([]byte, 256)
-	for i := 0; i < 256; i++ {
+	for i := range binout {
 		binout[i] = byte(i)
 	}
 	bin, err := client.TestBinary(defaultCtx, binout)
 	if err != nil {
 		t.Fatalf("TestBinary failed with %v", err)
 	}
-	for i := 0; i < 256; i++ {
-		if binout[i] != bin[i] {
-			t.Fatalf("Unexpected TestBinary() result expected %d, got %d ", binout[i], bin[i])
-		}
+	if !bytes.Equal(binout, bin) {
+		t.Fatalf("Unexpected TestBinary() result expected % 02x, got % 02x ", binout, bin)
 	}
 
 	uout := thrift.Tuuid{

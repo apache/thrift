@@ -451,7 +451,7 @@ func TestReadJSONProtocolBinary(t *testing.T) {
 	if len(v) != len(value) {
 		t.Fatalf("Bad value for %s value length %v, wrote: %v, received length: %v", thetype, len(value), s, len(v))
 	}
-	for i := 0; i < len(v); i++ {
+	for i := range v {
 		if v[i] != value[i] {
 			t.Fatalf("Bad value for %s at index %d value %v, wrote: %v, received: %v", thetype, i, value[i], s, v[i])
 		}

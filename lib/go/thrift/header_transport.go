@@ -494,7 +494,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 		)
 		t.frameReader = reader
 		transformIDs := make([]THeaderTransformID, transformCount)
-		for i := 0; i < int(transformCount); i++ {
+		for i := range int(transformCount) {
 			id, err := hp.readVarint32()
 			if err != nil {
 				return err
@@ -536,7 +536,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 			if err != nil {
 				return err
 			}
-			for i := 0; i < int(count); i++ {
+			for range int(count) {
 				key, err := hp.ReadString(ctx)
 				if err != nil {
 					return err
