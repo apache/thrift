@@ -49,7 +49,7 @@ func GetServerParams(
 ) (thrift.TProcessor, thrift.TServerTransport, thrift.TTransportFactory, thrift.TProtocolFactory, string /* addr */, error) {
 
 	var err error
-	hostPort := fmt.Sprintf("%s:0", host)
+	hostPort := fmt.Sprintf("%s:%d", host, port)
 	var cfg *thrift.TConfiguration = nil
 
 	var protocolFactory thrift.TProtocolFactory
@@ -73,6 +73,15 @@ func GetServerParams(
 
 	var serverTransport thrift.TServerTransport
 	var addr string
+	if transport == "http" {
+		// In cross-test servers, we would call http.ListenAndServe
+		// again on the host:port, so don't use the listen to fill the
+		// addr and just generate it here instead.
+		addr = hostPort
+		if domain_socket != "" {
+			addr = domain_socket
+		}
+	}
 	if ssl {
 		cfg := new(tls.Config)
 		if cert, err := tls.LoadX509KeyPair(certPath+"/server.crt", certPath+"/server.key"); err != nil {
@@ -80,14 +89,16 @@ func GetServerParams(
 		} else {
 			cfg.Certificates = append(cfg.Certificates, cert)
 		}
-		transport, transportErr := thrift.NewTSSLServerSocket(hostPort, cfg)
+		serverSocket, transportErr := thrift.NewTSSLServerSocket(hostPort, cfg)
 		if transportErr == nil {
-			listenErr := transport.Listen()
-			if listenErr == nil {
-				serverTransport = transport
-				addr = transport.Addr().String()
-			} else {
-				err = listenErr
+			if transport != "http" {
+				listenErr := serverSocket.Listen()
+				if listenErr == nil {
+					serverTransport = serverSocket
+					addr = serverSocket.Addr().String()
+				} else {
+					err = listenErr
+				}
 			}
 		} else {
 			err = transportErr
@@ -97,14 +108,16 @@ func GetServerParams(
 			serverTransport, err = thrift.NewTServerSocket(domain_socket)
 			addr = domain_socket
 		} else {
-			transport, transportErr := thrift.NewTServerSocket(hostPort)
+			serverSocket, transportErr := thrift.NewTServerSocket(hostPort)
 			if transportErr == nil {
-				listenErr := transport.Listen()
-				if listenErr == nil {
-					serverTransport = transport
-					addr = transport.Addr().String()
-				} else {
-					err = listenErr
+				if transport != "http" {
+					listenErr := serverSocket.Listen()
+					if listenErr == nil {
+						serverTransport = serverSocket
+						addr = serverSocket.Addr().String()
+					} else {
+						err = listenErr
+					}
 				}
 			} else {
 				err = transportErr
