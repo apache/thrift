@@ -637,11 +637,11 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         SelectionKey newKey;
         try {
           if (attachment == null) {
-            newKey = channel.register(newSelector, interestOpts);
+            newKey = channel.register(newSelector, interestOps);
           } else {
-            newKey = channel.register(newSelector, interestOpts, attachment);
+            newKey = channel.register(newSelector, interestOps, attachment);
             if (attachment instanceof FrameBuffer) {
-              ((FrameBuffer) attachment.setSelectionKey(newKey);
+              ((FrameBuffer) attachment).setSelectionKey(newKey);
             }
           }
         } catch (ClosedChannelException e) {
