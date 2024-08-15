@@ -114,8 +114,7 @@ class TestClient : CliktCommand() {
             TransportType.Framed -> TNonblockingSocket(host, port, socketTimeout)
             else ->
                 throw UnsupportedOperationException(
-                    "only frame transport type is supported for now, got $transportType"
-                )
+                    "only frame transport type is supported for now, got $transportType")
         }
 
     private val clientManager = TAsyncClientManager()
@@ -273,8 +272,7 @@ class TestClient : CliktCommand() {
                             if (xtructs != null) {
                                 for ((string_thing, byte_thing, i32_thing, i64_thing) in xtructs) {
                                     print(
-                                        "{\"$string_thing\", $byte_thing, $i32_thing, $i64_thing}, "
-                                    )
+                                        "{\"$string_thing\", $byte_thing, $i32_thing, $i64_thing}, ")
                                 }
                             }
                             print("}")
@@ -286,15 +284,13 @@ class TestClient : CliktCommand() {
                     if (whoa.size == 2 && whoa.containsKey(1L) && whoa.containsKey(2L)) {
                         val firstMap = whoa[1L]!!
                         val secondMap = whoa[2L]!!
-                        if (
-                            firstMap.size == 2 &&
-                                firstMap.containsKey(Numberz.TWO) &&
-                                firstMap.containsKey(Numberz.THREE) &&
-                                secondMap.size == 1 &&
-                                secondMap.containsKey(Numberz.SIX) &&
-                                insane == firstMap[Numberz.TWO] &&
-                                insane == firstMap[Numberz.THREE]
-                        ) {
+                        if (firstMap.size == 2 &&
+                            firstMap.containsKey(Numberz.TWO) &&
+                            firstMap.containsKey(Numberz.THREE) &&
+                            secondMap.size == 1 &&
+                            secondMap.containsKey(Numberz.SIX) &&
+                            insane == firstMap[Numberz.TWO] &&
+                            insane == firstMap[Numberz.THREE]) {
                             val six = secondMap[Numberz.SIX]!!
                             // Cannot use "new Insanity().equals(six)" because as of now,
                             // struct/container
@@ -365,11 +361,9 @@ class TestClient : CliktCommand() {
 
     private suspend fun multiplexTest(returnCode: Int): Int {
         var code = returnCode
-        if (
-            protocolType == ProtocolType.Multi ||
-                protocolType == ProtocolType.MultiJson ||
-                protocolType == ProtocolType.MultiCompact
-        ) {
+        if (protocolType == ProtocolType.Multi ||
+            protocolType == ProtocolType.MultiJson ||
+            protocolType == ProtocolType.MultiCompact) {
             val secondClient: SecondServiceClient = createSecondServiceClient()
             print("secondtestString(\"Test2\")")
             val s = secondClient.secondtestString("Test2")
@@ -529,8 +523,7 @@ private suspend fun ThriftTestClient.structTest(returnCode: Int): Pair<Xtruct, I
     out.i64_thing = -5
     val input: Xtruct = testStruct(out)
     print(
-        """ = {"${input.string_thing}",${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}"""
-    )
+        """ = {"${input.string_thing}",${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}""")
     if (input != out) {
         code = code or ERR_STRUCTS
         println("*** FAILURE ***\n")
@@ -579,16 +572,14 @@ private suspend fun ThriftTestClient.nestedMapTest(returnCode: Int): Int {
     } else {
         val m1 = mm[4]!!
         val m2 = mm[-4]!!
-        if (
-            m1[1] != 1 ||
-                m1[2] != 2 ||
-                m1[3] != 3 ||
-                m1[4] != 4 ||
-                m2[-1] != -1 ||
-                m2[-2] != -2 ||
-                m2[-3] != -3 ||
-                m2[-4] != -4
-        ) {
+        if (m1[1] != 1 ||
+            m1[2] != 2 ||
+            m1[3] != 3 ||
+            m1[4] != 4 ||
+            m2[-1] != -1 ||
+            m2[-2] != -2 ||
+            m2[-3] != -3 ||
+            m2[-4] != -4) {
             returnCode1 = returnCode1 or ERR_CONTAINERS
             println("*** FAILURE ***\n")
         }
@@ -648,8 +639,7 @@ private suspend fun ThriftTestClient.nestedStructTest(out: Xtruct, returnCode: I
     val input = xstruct2.struct_thing!!
     print(
         """ = {${xstruct2.byte_thing}, {"${input.string_thing}", ${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}, ${xstruct2.i32_thing}}
-    """
-    )
+    """)
     if (xstruct2 != out2) {
         code = code or ERR_STRUCTS
         println("*** FAILURE ***\n")

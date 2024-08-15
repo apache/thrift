@@ -36,7 +36,6 @@ internal class MetaDataTest {
                 "max" to "100000",
                 "min" to "1",
             ),
-            idField.fieldAnnotations
-        )
+            idField.fieldAnnotations)
     }
 }
