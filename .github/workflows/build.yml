@@ -448,7 +448,7 @@ jobs:
         run: make -C lib/py
 
       - name: Run make install for python
-        run: sudo make -C lib/py install
+        run: make -C lib/py install
 
       # - name: Run make install-exec-hook for python
       #   run: sudo make -C lib/py install-exec-hook
