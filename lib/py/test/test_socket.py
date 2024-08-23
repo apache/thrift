@@ -67,9 +67,11 @@ class TSocketTest(unittest.TestCase):
             # once the server side closes, it no longer shows open
             acc.client.close()  # this also blocks until the other thread is done
             acc.close()
-            self.assertFalse(sock.isOpen())
 
-            sock.close()
+            self.assertIsNotNone(sock.handle)
+            self.assertFalse(sock.isOpen())
+            # after isOpen() returned False the socket should be closed (THRIFT-5813)
+            self.assertIsNone(sock.handle)
 
 
 if __name__ == "__main__":

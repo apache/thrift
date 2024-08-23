@@ -90,18 +90,22 @@ class TSocket(TSocketBase):
             self.handle.settimeout(0)
             try:
                 peeked_bytes = self.handle.recv(1, socket.MSG_PEEK)
+                # the length will be zero if we got EOF (indicating connection closed)
+                if len(peeked_bytes) == 1:
+                    return True
             except (socket.error, OSError) as exc:  # on modern python this is just BlockingIOError
                 if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
                     return True
-                return False
             except ValueError:
                 # SSLSocket fails on recv with non-zero flags; fallback to the old behavior
                 return True
         finally:
             self.handle.settimeout(original_timeout)
 
-        # the length will be zero if we got EOF (indicating connection closed)
-        return len(peeked_bytes) == 1
+        # The caller may assume that after isOpen() returns False, calling close()
+        # is not needed, so it is safer to close the socket here.
+        self.close()
+        return False
 
     def setTimeout(self, ms):
         if ms is None:
