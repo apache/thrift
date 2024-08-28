@@ -483,7 +483,7 @@ jobs:
 
       - name: Python setup
         run: |
-          python -m pip install --upgrade pip setuptools wheel flake8 six tornado twisted zope.interface
+          python -m pip install --upgrade pip setuptools wheel flake8 tornado twisted zope.interface
           python --version
           pip --version
 
