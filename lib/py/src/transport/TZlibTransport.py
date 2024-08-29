@@ -22,10 +22,9 @@ class, using the python standard library zlib module to implement
 data compression.
 """
 
-
+from io import BytesIO as BufferIO
 import zlib
 from .TTransport import TTransportBase, CReadableTransport
-from ..compat import BufferIO
 
 
 class TZlibTransportFactory(object):
@@ -43,6 +42,7 @@ class TZlibTransportFactory(object):
     and makes the statistics from getCompSavings() and getCompRatio()
     easier to understand.
     """
+
     # class scoped cache of last transport given and zlibtransport returned
     _last_trans = None
     _last_z = None
@@ -72,6 +72,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     and decompresses reads, using the python standard
     library zlib module.
     """
+
     # Read buffer size for the python fastbinary C extension,
     # the TBinaryProtocolAccelerated class.
     DEFAULT_BUFFSIZE = 4096
@@ -224,7 +225,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
             self.bytes_out += len(wout)
             self.bytes_out_comp += len(zbuf)
         else:
-            zbuf = ''
+            zbuf = ""
         ztail = self._zcomp_write.flush(zlib.Z_SYNC_FLUSH)
         self.bytes_out_comp += len(ztail)
         if (len(zbuf) + len(ztail)) > 0:
