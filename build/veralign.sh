@@ -68,7 +68,9 @@ FILES[lib/java/gradle.properties]=simpleReplace
 FILES[lib/js/package-lock.json]=jsonReplace
 FILES[lib/js/package.json]=jsonReplace
 FILES[lib/js/src/thrift.js]=simpleReplace
+FILES[lib/js/package-lock.json]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
+FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net6/Thrift.Compile.net6.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj]=simpleReplace
@@ -103,6 +105,8 @@ FILES[tutorial/netstd/Client/Client.csproj]=simpleReplace
 FILES[tutorial/netstd/Interfaces/Interfaces.csproj]=simpleReplace
 FILES[tutorial/netstd/Server/Server.csproj]=simpleReplace
 FILES[tutorial/ocaml/_oasis]=simpleReplace
+FILES[lib/ts/package-lock.json]=simpleReplace
+FILES[package-lock.json]=simpleReplace
 
 
 
