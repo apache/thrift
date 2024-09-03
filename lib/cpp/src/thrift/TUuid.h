@@ -90,7 +90,7 @@ public:
   #endif // THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT
   TUuid(const boost::uuids::uuid& buuid) noexcept
   {
-    std::copy(std::begin(buuid.data), std::end(buuid.data), std::begin(this->data_));
+    std::copy(buuid.begin(), buuid.end(), std::begin(this->data_));
   }
 #endif // THRIFT_TUUID_SUPPORT_BOOST_UUID
 
