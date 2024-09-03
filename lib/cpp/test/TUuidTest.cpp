@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(into_boost_uuid) {
 
 BOOST_AUTO_TEST_CASE(from_boost_uuid) {
   static boost::uuids::string_generator gen;
-  boost::uuids::uuid boost_uuid{gen("1f610073-db33-4d21-adf2-75460d4955cc")};
+  boost::uuids::uuid boost_uuid = gen("1f610073-db33-4d21-adf2-75460d4955cc");
   BOOST_TEST(!boost_uuid.is_nil());
   TUuid uuid;
   BOOST_TEST(uuid.is_nil());
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(test_character_buffer) {
 BOOST_AUTO_TEST_CASE(test_boost_buffer) {
 
   static boost::uuids::string_generator gen;
-  boost::uuids::uuid boost_uuid{gen("1f610073-db33-4d21-adf2-75460d4955cc")};
+  boost::uuids::uuid boost_uuid = gen("1f610073-db33-4d21-adf2-75460d4955cc");
   BOOST_TEST(!boost_uuid.is_nil());
 
   const TUuid uuid{boost_uuid.data};

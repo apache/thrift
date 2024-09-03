@@ -37,7 +37,7 @@ TUuid::TUuid(const std::string& str) noexcept {
   }
 
   try {
-    const boost::uuids::uuid uuid{gen(str)};
+    const boost::uuids::uuid uuid = gen(str);
     std::copy(uuid.begin(), uuid.end(), this->begin());
   } catch (const std::runtime_error&) {
     // Invalid string most probably
