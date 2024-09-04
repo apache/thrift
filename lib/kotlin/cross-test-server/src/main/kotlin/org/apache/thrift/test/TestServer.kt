@@ -84,7 +84,8 @@ object TestServer {
                 }
             } catch (e: Exception) {
                 throw RuntimeException(
-                    "The context is not a wrapper and does not implement the interface")
+                    "The context is not a wrapper and does not implement the interface"
+                )
             }
         }
 
@@ -98,7 +99,8 @@ object TestServer {
 
         override fun preServe() {
             println(
-                "TServerEventHandler.preServe - called only once before server starts accepting connections")
+                "TServerEventHandler.preServe - called only once before server starts accepting connections"
+            )
         }
 
         override fun createContext(input: TProtocol, output: TProtocol): ServerContext {
@@ -108,32 +110,35 @@ object TestServer {
             println(
                 "TServerEventHandler.createContext - connection #" +
                     ctx.connectionId +
-                    " established")
+                    " established"
+            )
             return ctx
         }
 
         override fun deleteContext(
             serverContext: ServerContext,
             input: TProtocol,
-            output: TProtocol
+            output: TProtocol,
         ) {
             val ctx = serverContext.unwrap(TestServerContext::class.java)
             println(
                 "TServerEventHandler.deleteContext - connection #" +
                     ctx.connectionId +
-                    " terminated")
+                    " terminated"
+            )
         }
 
         override fun processContext(
             serverContext: ServerContext,
             inputTransport: TTransport,
-            outputTransport: TTransport
+            outputTransport: TTransport,
         ) {
             val ctx = serverContext.unwrap(TestServerContext::class.java)
             println(
                 "TServerEventHandler.processContext - connection #" +
                     ctx.connectionId +
-                    " is ready to process next request")
+                    " is ready to process next request"
+            )
         }
     }
 }
@@ -142,7 +147,7 @@ enum class ServerType(val key: String) {
     Simple("simple"),
     ThreadPool("thread-pool"),
     NonBlocking("nonblocking"),
-    ThreadedSelector("threaded-selector")
+    ThreadedSelector("threaded-selector"),
 }
 
 enum class ProtocolType(val key: String) {
@@ -151,14 +156,14 @@ enum class ProtocolType(val key: String) {
     Json("json"),
     MultiJson("multij"),
     Compact("compact"),
-    MultiCompact("multic")
+    MultiCompact("multic"),
 }
 
 enum class TransportType(val key: String) {
     Buffered("buffered"),
     FastFramed("fastframed"),
     Framed("framed"),
-    Zlib("zlib")
+    Zlib("zlib"),
 }
 
 class TestServerCommand : CliktCommand() {
@@ -193,12 +198,14 @@ class TestServerCommand : CliktCommand() {
                 protocolType,
                 getProtocolFactory(),
                 getTransportFactory(),
-                useSSL)
+                useSSL,
+            )
         // Set server event handler
         serverEngine.setServerEventHandler(TestServer.TestServerEventHandler())
         // Run it
         println(
-            "Starting the ${if (useSSL) "ssl server" else "server"} [$protocolType/$transportType/$serverType] on port $port")
+            "Starting the ${if (useSSL) "ssl server" else "server"} [$protocolType/$transportType/$serverType] on port $port"
+        )
         serverEngine.serve()
     }
 
@@ -241,7 +248,7 @@ private fun getServerEngine(
     protocolType: ProtocolType,
     tProtocolFactory: TProtocolFactory,
     tTransportFactory: TTransportFactory,
-    ssl: Boolean
+    ssl: Boolean,
 ): TServer {
     val isMulti =
         protocolType == ProtocolType.Multi ||
@@ -261,7 +268,8 @@ private fun getServerEngine(
                 ServerType.NonBlocking -> {
                     val tNonblockingServerArgs = TNonblockingServer.Args(tNonblockingServerSocket)
                     tNonblockingServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor)
+                        if (isMulti) multiplexedProcessor else testProcessor
+                    )
                     tNonblockingServerArgs.protocolFactory(tProtocolFactory)
                     tNonblockingServerArgs.transportFactory(tTransportFactory)
                     return TNonblockingServer(tNonblockingServerArgs)
@@ -270,7 +278,8 @@ private fun getServerEngine(
                     val tThreadedSelectorServerArgs =
                         TThreadedSelectorServer.Args(tNonblockingServerSocket)
                     tThreadedSelectorServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor)
+                        if (isMulti) multiplexedProcessor else testProcessor
+                    )
                     tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory)
                     tThreadedSelectorServerArgs.transportFactory(tTransportFactory)
                     return TThreadedSelectorServer(tThreadedSelectorServerArgs)
@@ -297,7 +306,8 @@ private fun getServerEngine(
                 else -> {
                     val tThreadPoolServerArgs = TThreadPoolServer.Args(tServerSocket)
                     tThreadPoolServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor)
+                        if (isMulti) multiplexedProcessor else testProcessor
+                    )
                     tThreadPoolServerArgs.protocolFactory(tProtocolFactory)
                     tThreadPoolServerArgs.transportFactory(tTransportFactory)
                     return TThreadPoolServer(tThreadPoolServerArgs)
