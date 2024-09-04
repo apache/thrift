@@ -113,7 +113,7 @@ AC_DEFUN([_AX_BOOST_BASE_RUNDETECT],[
     dnl are found, e.g. when only header-only libraries are installed!
     AS_CASE([${host_cpu}],
       [x86_64],[libsubdirs="lib64 libx32 lib lib64"],
-      [ppc64|powerpc64|s390x|sparc64|aarch64|ppc64le|powerpc64le|riscv64],[libsubdirs="lib64 lib lib64"],
+      [ppc64|powerpc64|s390x|sparc64|aarch64|ppc64le|powerpc64le|riscv64|loongarch64],[libsubdirs="lib64 lib lib64"],
       [libsubdirs="lib"]
     )
 
