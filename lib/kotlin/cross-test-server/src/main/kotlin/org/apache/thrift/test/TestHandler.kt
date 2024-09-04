@@ -96,7 +96,8 @@ class TestHandler : ThriftTest {
 
     override suspend fun testStruct(thing: Xtruct): Xtruct {
         logger.info(
-            """testStruct({"${thing.string_thing}", ${thing.byte_thing}, ${thing.i32_thing}, ${thing.i64_thing}})""")
+            """testStruct({"${thing.string_thing}", ${thing.byte_thing}, ${thing.i32_thing}, ${thing.i64_thing}})"""
+        )
         return thing
     }
 
@@ -104,7 +105,8 @@ class TestHandler : ThriftTest {
         val thing2: Xtruct = thing.struct_thing!!
         logger.info(
             """testNest({${thing.byte_thing}, {"${thing2.string_thing}", ${thing2.byte_thing}, ${thing2.i32_thing}, ${thing2.i64_thing}}, ${thing.i32_thing}})"""
-                .trimIndent())
+                .trimIndent()
+        )
         return thing
     }
 
@@ -200,7 +202,7 @@ class TestHandler : ThriftTest {
         arg2: Long,
         arg3: Map<Short, String>,
         arg4: Numberz,
-        arg5: Long
+        arg5: Long,
     ): Xtruct {
         logger.info("testMulti()\n")
         val hello = Xtruct()
