@@ -16,6 +16,7 @@
 - [THRIFT-5678](https://issues.apache.org/jira/browse/THRIFT-5678) - TConnectedClient: warning due to non-virtual dtor
 - [THRIFT-5492](https://issues.apache.org/jira/browse/THRIFT-5492) - Bogus END_OF_FILE exception
 - [THRIFT-5272](https://issues.apache.org/jira/browse/THRIFT-5272) - printTo does not properly handle i8 datatypes
+- [THRIFT-5816](https://issues.apache.org/jira/browse/THRIFT-5816) - Fix UUID for boost 1.86.0 (change in data member usage)
 
 ### Compiler (General)	
 
