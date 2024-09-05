@@ -132,9 +132,9 @@ public:
     _return = thing;
   }
 
-  TUuid testUuid(const TUuid thing) override {
+  void testUuid(apache::thrift::TUuid& _return, const apache::thrift::TUuid& thing) override {
     printf("testUuid(\"{%s}\")\n", to_string(thing).c_str());
-    return thing;
+    _return = thing;
   }
 
   void testStruct(Xtruct& out, const Xtruct& thing) override {
@@ -447,8 +447,9 @@ public:
     cob(res);
   }
 
-  void testUuid(::std::function<void(TUuid const& _return)> cob, const TUuid thing) override {
-    TUuid res = _delegate->testUuid(thing);
+  void testUuid(::std::function<void(apache::thrift::TUuid const& _return)> cob, const apache::thrift::TUuid& thing) override {
+    TUuid res;
+    _delegate->testUuid(res, thing);
     cob(res);
   }
 
