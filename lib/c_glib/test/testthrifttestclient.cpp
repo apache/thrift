@@ -112,9 +112,9 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
-  apache::thrift::TUuid testUuid(const apache::thrift::TUuid thing) override {
+  void testUuid(apache::thrift::TUuid& out, const apache::thrift::TUuid& thing) override {
     cout << "[C -> C++] testUuid(\"" << thing << "\")" << '\n';
-    return thing;
+    out = thing;
   }
 
   void testStruct(Xtruct& out, const Xtruct &thing) override {
