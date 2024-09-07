@@ -405,7 +405,7 @@ function TJSONProtocol:writeI64(i64)
 end
 
 function TJSONProtocol:writeDouble(dub)
-  self:writeJSONDouble(string.format("%.16f", dub))
+  self:writeJSONDouble(string.format("%.20f", dub))
 end
 
 function TJSONProtocol:writeString(str)
