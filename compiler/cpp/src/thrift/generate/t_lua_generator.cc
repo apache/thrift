@@ -730,6 +730,8 @@ void t_lua_generator::generate_process_function(ostream& out,
   if (!tfunction->is_oneway()) {
       out << indent() << "local result = " << resultname
           << ":new{}" << '\n';
+  } else {
+    out << indent() << "oprot.trans:flushOneway()" << '\n';
   }
 
   out <<  indent() << "local status, res = pcall(self.handler." << fn_name
