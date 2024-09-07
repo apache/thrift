@@ -10,12 +10,13 @@
 
 ### C++
 
-- [THRIFT-5773](https://issues.apache.org/jira/browse/THRIFT-5773) - UUID wrapper for C++
-- [THRIFT-5772](https://issues.apache.org/jira/browse/THRIFT-5772) - Add UUID support for C++
-- [THRIFT-5682](https://issues.apache.org/jira/browse/THRIFT-5682) - UB in generated C++ code	 stops compiling with C++20"
-- [THRIFT-5678](https://issues.apache.org/jira/browse/THRIFT-5678) - TConnectedClient: warning due to non-virtual dtor
-- [THRIFT-5492](https://issues.apache.org/jira/browse/THRIFT-5492) - Bogus END_OF_FILE exception
 - [THRIFT-5272](https://issues.apache.org/jira/browse/THRIFT-5272) - printTo does not properly handle i8 datatypes
+- [THRIFT-5492](https://issues.apache.org/jira/browse/THRIFT-5492) - Bogus END_OF_FILE exception
+- [THRIFT-5678](https://issues.apache.org/jira/browse/THRIFT-5678) - TConnectedClient: warning due to non-virtual dtor
+- [THRIFT-5682](https://issues.apache.org/jira/browse/THRIFT-5682) - UB in generated C++ code	 stops compiling with C++20"
+- [THRIFT-5709](https://issues.apache.org/jira/browse/THRIFT-5709) - Drastically improve `to_num()` performace
+- [THRIFT-5772](https://issues.apache.org/jira/browse/THRIFT-5772) - Add UUID support for C++
+- [THRIFT-5773](https://issues.apache.org/jira/browse/THRIFT-5773) - UUID wrapper for C++
 - [THRIFT-5816](https://issues.apache.org/jira/browse/THRIFT-5816) - Fix UUID for boost 1.86.0 (change in data member usage)
 
 ### Compiler (General)	
