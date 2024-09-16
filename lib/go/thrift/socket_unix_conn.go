@@ -58,7 +58,7 @@ func (sc *socketConn) checkConn() error {
 	var n int
 
 	if readErr := rc.Read(func(fd uintptr) bool {
-		n, _, err = syscall.Recvfrom(int(fd), sc.buffer[:], syscall.MSG_PEEK|syscall.MSG_DONTWAIT)
+		n, _, err = peekNonblocking(int(fd), sc.buffer[:])
 		return true
 	}); readErr != nil {
 		return readErr
