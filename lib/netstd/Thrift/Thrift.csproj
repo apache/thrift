@@ -51,6 +51,9 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC</PackageTags>
     <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.22.0/CHANGES.md</PackageReleaseNotes>
+    <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
     <Copyright>Copyright 2024 The Apache Software Foundation</Copyright>
   </PropertyGroup>
