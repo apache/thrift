@@ -197,6 +197,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
+      openjdk-8-jdk-headless \
       openjdk-17-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
