@@ -48,17 +48,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
-    }
-}
-
 tasks {
     application {
         applicationName = "TestServer"
@@ -73,7 +62,7 @@ tasks {
 
     task<Exec>("compileThrift") {
         val thriftBin = if (hasProperty("thrift.compiler")) {
-            file(property("thrift.compiler"))
+            file(property("thrift.compiler")!!)
         } else {
             project.rootDir.resolve("../../compiler/cpp/thrift")
         }
