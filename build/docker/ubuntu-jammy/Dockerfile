@@ -272,7 +272,7 @@ RUN apt-get install -y --no-install-recommends \
 
 USER ${user}
 RUN `# Rust dependencies` \
-    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.83.0 -y
 ENV PATH /home/${user}/.cargo/bin:$PATH
 USER root
 
