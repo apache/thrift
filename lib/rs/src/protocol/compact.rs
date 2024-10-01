@@ -681,8 +681,6 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
 #[cfg(test)]
 mod tests {
 
-    use std::i32;
-
     use crate::protocol::{
         TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
         TMessageType, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType,
@@ -2818,7 +2816,7 @@ mod tests {
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let read_double = i_prot.read_double().unwrap();
-        assert!(read_double - double < std::f64::EPSILON);
+        assert!((read_double - double).abs() < f64::EPSILON);
     }
 
     #[test]
