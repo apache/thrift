@@ -113,7 +113,6 @@ def run_setup(with_binary):
           author_email='dev@thrift.apache.org',
           url='http://thrift.apache.org',
           license='Apache License 2.0',
-          install_requires=['six>=1.7.2'],
           extras_require={
               'ssl': ssl_deps,
               'tornado': tornado_deps,
@@ -132,7 +131,6 @@ def run_setup(with_binary):
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
-              'Programming Language :: Python :: 2',
               'Programming Language :: Python :: 3',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'

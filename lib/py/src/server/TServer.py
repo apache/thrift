@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from six.moves import queue
+import queue
 import logging
 import os
 import threading
