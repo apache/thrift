@@ -152,10 +152,12 @@ void cleanupOpenSSL() {
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE)
   ENGINE_cleanup();             // https://www.openssl.org/docs/man1.1.0/crypto/ENGINE_cleanup.html - cleanup call is needed before 1.1.0
 #endif
+#if !defined(OPENSSL_IS_AWSLC)
   CONF_modules_unload(1);
+#endif
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(OPENSSL_IS_AWSLC)
   // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
   OPENSSL_thread_stop();
 #else
@@ -393,7 +395,7 @@ void TSSLSocket::close() {
     SSL_free(ssl_);
     ssl_ = nullptr;
     handshakeCompleted_ = false;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(OPENSSL_IS_AWSLC)
     // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
     OPENSSL_thread_stop();
 #else
