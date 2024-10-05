@@ -206,8 +206,8 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
   `# Lua dependencies` \
-  lua5.2 \
-  lua5.2-dev
+  lua5.4 \
+  liblua5.4-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
 # lua5.3 does not install alternatives!
 # need to update our luasocket code, lua doesn't have luaL_openlib any more

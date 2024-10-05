@@ -223,6 +223,11 @@ LUALIB_API int luaopen_liblualongnumber(lua_State *L) {
   lua_pop(L, 1);
   set_methods(L, LONG_NUM_TYPE, methods);
 
+#if LUA_VERSION_NUM >= 502
+    lua_newtable(L);
+    luaL_setfuncs(L, funcs, 0);
+#else
   luaL_register(L, "liblualongnumber", funcs);
+#endif
   return 1;
 }
