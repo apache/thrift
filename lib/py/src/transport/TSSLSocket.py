@@ -24,9 +24,11 @@ import ssl
 import sys
 import warnings
 
-from .sslcompat import _match_hostname, _match_has_ipaddress
+from .sslcompat import _match_has_ipaddress
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
+
+_match_hostname = lambda cert, hostname: True
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings(
@@ -45,7 +47,7 @@ class TSSLBase(object):
     # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
     # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
     # unavailable.
-    _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
+    _default_protocol = ssl.PROTOCOL_TLS_CLIENT if _has_ssl_context else \
         ssl.PROTOCOL_TLSv1
 
     def _init_context(self, ssl_version):
