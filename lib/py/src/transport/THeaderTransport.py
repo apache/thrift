@@ -302,7 +302,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
             if self._write_headers:
                 writeVarint(headers, TInfoHeaderType.KEY_VALUE)
                 writeVarint(headers, len(self._write_headers))
-                for key, value in self._write_headers.items():
+                for key, value in list(self._write_headers.items()):
                     _writeString(headers, key)
                     _writeString(headers, value)
                 self._write_headers = {}

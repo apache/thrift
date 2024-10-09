@@ -320,7 +320,7 @@ class TProtocolBase(object):
         # abort/skip if types disagree
         keys = self._read_by_ttype(ktype, spec, kspec)
         vals = self._read_by_ttype(vtype, spec, vspec)
-        keyvals = islice(zip(keys, vals), map_len)
+        keyvals = islice(list(zip(keys, vals)), map_len)
         results = (TFrozenDict if is_immutable else dict)(keyvals)
         self.readMapEnd()
         return results

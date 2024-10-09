@@ -42,8 +42,6 @@ class TestJSONString(unittest.TestCase):
         transport = TTransport.TBufferedTransportFactory().getTransport(buf)
         protocol = TJSONProtocol(transport)
 
-        if sys.version_info[0] == 2:
-            unicode_text = unicode_text.encode('utf8')
         self.assertEqual(protocol.readString(), unicode_text)
 
     def test_TJSONProtocol_write(self):
