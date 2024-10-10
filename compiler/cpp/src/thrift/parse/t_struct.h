@@ -131,6 +131,27 @@ public:
     return nullptr;
   }
 
+  void validate() const {
+    std::string what = "struct";
+    if( is_union()) {
+      what = "union";
+    }
+    if( is_xception()) {
+      what = "exception";
+    }
+
+    std::vector<t_field*>::const_iterator it;
+    std::vector<t_field*> list = get_members();
+    for(it=list.begin(); it != list.end(); ++it) {
+      (*it)->get_type()->validate();
+      if (!is_method_xcepts_) {  // this is in fact the only legal usage for any exception type
+        if( (*it)->get_type()->get_true_type()->is_xception()) {
+          failure("%s %s: exception type \"%s\" cannot be used as member field type %s", what.c_str(), get_name().c_str(), (*it)->get_type()->get_name().c_str(), (*it)->get_name().c_str());
+        }
+      }
+    }
+  }
+
 private:
   members_type members_;
   members_type members_in_id_order_;

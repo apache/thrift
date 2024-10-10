@@ -24,7 +24,10 @@ namespace * Thrift5320.exceptions
 
 
 exception Task { 
-	1: Task left 
-	2: Task right 
+	1: ErrorData data  // it would be illegal to use exception as struct type
+}
+
+struct ErrorData {
+	1: string messitsch
 }
 
