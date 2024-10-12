@@ -30,6 +30,7 @@ foreach(LANG ${KEYWORD_LANGS})
     endforeach()
 endforeach()
 
+set(Python_ADDITIONAL_VERSIONS 3.7 3.8 3.9 3.10)
 find_package(PythonInterp QUIET)
 if(PYTHONINTERP_FOUND)
   add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})

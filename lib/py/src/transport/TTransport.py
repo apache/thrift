@@ -16,10 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+from io import BytesIO as BufferIO
 from struct import pack, unpack
 from thrift.Thrift import TException
-from ..compat import BufferIO
 
 
 class TTransportException(TException):
@@ -56,9 +55,9 @@ class TTransportBase(object):
         pass
 
     def readAll(self, sz):
-        buff = b''
+        buff = b""
         have = 0
-        while (have < sz):
+        while have < sz:
             chunk = self.read(sz - have)
             chunkLen = len(chunk)
             have += chunkLen
@@ -139,13 +138,14 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
     The implementation uses a (configurable) fixed-size read buffer
     but buffers all writes until a flush is performed.
     """
+
     DEFAULT_BUFFER = 4096
 
     def __init__(self, trans, rbuf_size=DEFAULT_BUFFER):
         self.__trans = trans
         self.__wbuf = BufferIO()
         # Pass string argument to initialize read buffer as cStringIO.InputType
-        self.__rbuf = BufferIO(b'')
+        self.__rbuf = BufferIO(b"")
         self.__rbuf_size = rbuf_size
 
     def isOpen(self):
@@ -261,9 +261,12 @@ class TFramedTransportFactory(object):
 class TFramedTransport(TTransportBase, CReadableTransport):
     """Class that wraps another transport and frames its I/O when writing."""
 
-    def __init__(self, trans,):
+    def __init__(
+        self,
+        trans,
+    ):
         self.__trans = trans
-        self.__rbuf = BufferIO(b'')
+        self.__rbuf = BufferIO(b"")
         self.__wbuf = BufferIO()
 
     def isOpen(self):
@@ -285,7 +288,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
 
     def readFrame(self):
         buff = self.__trans.readAll(4)
-        sz, = unpack('!i', buff)
+        (sz,) = unpack("!i", buff)
         self.__rbuf = BufferIO(self.__trans.readAll(sz))
 
     def write(self, buf):
@@ -353,8 +356,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     ERROR = 4
     COMPLETE = 5
 
-    def __init__(self, transport, host, service, mechanism='GSSAPI',
-                 **sasl_kwargs):
+    def __init__(self, transport, host, service, mechanism="GSSAPI", **sasl_kwargs):
         """
         transport: an underlying transport to use, typically just a TSocket
         host: the name of the server, from a SASL perspective
@@ -371,13 +373,13 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         self.sasl = SASLClient(host, service, mechanism, **sasl_kwargs)
 
         self.__wbuf = BufferIO()
-        self.__rbuf = BufferIO(b'')
+        self.__rbuf = BufferIO(b"")
 
     def open(self):
         if not self.transport.isOpen():
             self.transport.open()
 
-        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
+        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, "ascii"))
         self.send_sasl_msg(self.OK, self.sasl.process())
 
         while True:
@@ -389,14 +391,15 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
                     raise TTransportException(
                         TTransportException.NOT_OPEN,
                         "The server erroneously indicated "
-                        "that SASL negotiation was complete")
+                        "that SASL negotiation was complete",
+                    )
                 else:
                     break
             else:
                 raise TTransportException(
                     TTransportException.NOT_OPEN,
-                    "Bad SASL negotiation status: %d (%s)"
-                    % (status, challenge))
+                    "Bad SASL negotiation status: %d (%s)" % (status, challenge),
+                )
 
     def isOpen(self):
         return self.transport.isOpen()
@@ -435,7 +438,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
 
     def _read_frame(self):
         header = self.transport.readAll(4)
-        length, = unpack('!i', header)
+        (length,) = unpack("!i", header)
         encoded = self.transport.readAll(length)
         self.__rbuf = BufferIO(self.sasl.unwrap(encoded))
 

@@ -22,14 +22,14 @@ import sys
 import threading
 import unittest
 import time
-
-gen_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py")
-sys.path.append(gen_path)
 import _import_local_thrift  # noqa
 from TestServer import TestServer
 from thrift.transport import TSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TNonblockingServer
+
+gen_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py")
+sys.path.append(gen_path)
 
 
 class Handler:
