@@ -97,16 +97,16 @@ public:
                           t_const_value* value);
 
   void render_struct_initializer(std::ostream& out,
-						         t_struct* type,
+                                 t_struct* type,
                                  t_const_value* value);
   void render_map_initializer(std::ostream& out,
-						      t_map* type,
+                              t_map* type,
                               t_const_value* value);
   void render_list_initializer(std::ostream& out,
-						       t_list* type,
+                               t_list* type,
                                t_const_value* value);
   void render_set_initializer(std::ostream& out,
-						      t_set* type,
+                              t_set* type,
                               t_const_value* value);
 
   // helper
