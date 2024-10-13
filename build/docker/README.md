@@ -135,11 +135,11 @@ If you do not want to use the same scripts Travis CI does, you can do it manuall
 
 Build the image:
 
-Linux/Mac:
+Linux:
 
     thrift$ docker build --build-arg uid=$(id -u) --build-arg gid=$(id -g) -t thrift build/docker/ubuntu-jammy
 
-Windows:
+Windows/Mac:
 
     thrift$ docker build -t thrift build/docker/ubuntu-jammy
 
