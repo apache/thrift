@@ -96,11 +96,10 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
-    ssl_deps = []
-    if sys.version_info[0] == 2:
-        ssl_deps.append('ipaddress')
-    if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
+    ssl_deps = [
+        'ipaddress; python_version < "3.0"',
+        'backports.ssl_match_hostname>=3.5; python_version < "3.5"',
+    ]
     tornado_deps = ['tornado>=4.0']
     twisted_deps = ['twisted']
 
@@ -142,15 +141,5 @@ def run_setup(with_binary):
           )
 
 
-try:
-    with_binary = True
-    run_setup(with_binary)
-except BuildFailed:
-    print()
-    print('*' * 80)
-    print("An error occurred while trying to compile with the C extension enabled")
-    print("Attempting to build without the extension now")
-    print('*' * 80)
-    print()
-
-    run_setup(False)
+with_binary = os.environ.get('THRIFT_BUILD_PURE_PYTHON') != '1'
+run_setup(with_binary)
