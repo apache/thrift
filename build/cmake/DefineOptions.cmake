@@ -87,7 +87,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
 
 # OpenSSL
 if(WITH_CPP OR WITH_C_GLIB)
-    find_package(OpenSSL QUIET)
+    find_package(OpenSSL)
     CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                         "OPENSSL_FOUND" OFF)
 endif()
