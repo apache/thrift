@@ -19,6 +19,7 @@
 
 package org.apache.thrift.test;
 
+import java.net.SocketAddress;
 import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -69,8 +70,15 @@ public class TestServer {
 
     int connectionId;
 
-    public TestServerContext(int connectionId) {
+    SocketAddress remoteSocketAddress;
+
+    SocketAddress localSocketAddress;
+
+    public TestServerContext(
+        int connectionId, SocketAddress remoteSocketAddress, SocketAddress localSocketAddress) {
       this.connectionId = connectionId;
+      this.remoteSocketAddress = remoteSocketAddress;
+      this.localSocketAddress = localSocketAddress;
     }
 
     public int getConnectionId() {
@@ -79,6 +87,22 @@ public class TestServer {
 
     public void setConnectionId(int connectionId) {
       this.connectionId = connectionId;
+    }
+
+    public SocketAddress getRemoteSocketAddress() {
+      return remoteSocketAddress;
+    }
+
+    public void setRemoteSocketAddress(SocketAddress remoteSocketAddress) {
+      this.remoteSocketAddress = remoteSocketAddress;
+    }
+
+    public SocketAddress getLocalSocketAddress() {
+      return localSocketAddress;
+    }
+
+    public void setLocalSocketAddress(SocketAddress localSocketAddress) {
+      this.localSocketAddress = localSocketAddress;
     }
 
     @Override
@@ -110,9 +134,14 @@ public class TestServer {
           "TServerEventHandler.preServe - called only once before server starts accepting connections");
     }
 
-    public ServerContext createContext(TProtocol input, TProtocol output) {
+    public ServerContext createContext(
+        TProtocol input,
+        TProtocol output,
+        SocketAddress remoteSocketAddress,
+        SocketAddress localSocketAddress) {
       // we can create some connection level data which is stored while connection is alive & served
-      TestServerContext ctx = new TestServerContext(nextConnectionId++);
+      TestServerContext ctx =
+          new TestServerContext(nextConnectionId++, remoteSocketAddress, localSocketAddress);
       System.out.println(
           "TServerEventHandler.createContext - connection #"
               + ctx.getConnectionId()
