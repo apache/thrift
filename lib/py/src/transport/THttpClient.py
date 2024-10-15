@@ -24,11 +24,11 @@ import sys
 import warnings
 import base64
 
-from six.moves import urllib
-from six.moves import http_client
+import urllib.parse
+import urllib.request
+import http.client
 
 from .TTransport import TTransportBase
-import six
 
 
 class THttpClient(TTransportBase):
@@ -60,9 +60,9 @@ class THttpClient(TTransportBase):
             self.scheme = parsed.scheme
             assert self.scheme in ('http', 'https')
             if self.scheme == 'http':
-                self.port = parsed.port or http_client.HTTP_PORT
+                self.port = parsed.port or http.client.HTTP_PORT
             elif self.scheme == 'https':
-                self.port = parsed.port or http_client.HTTPS_PORT
+                self.port = parsed.port or http.client.HTTPS_PORT
                 self.certfile = cert_file
                 self.keyfile = key_file
                 self.context = ssl.create_default_context(cafile=cafile) if (cafile and not ssl_context) else ssl_context
@@ -107,10 +107,10 @@ class THttpClient(TTransportBase):
 
     def open(self):
         if self.scheme == 'http':
-            self.__http = http_client.HTTPConnection(self.host, self.port,
+            self.__http = http.client.HTTPConnection(self.host, self.port,
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http_client.HTTPSConnection(self.host, self.port,
+            self.__http = http.client.HTTPSConnection(self.host, self.port,
                                                       key_file=self.keyfile,
                                                       cert_file=self.certfile,
                                                       timeout=self.__timeout,
@@ -173,7 +173,7 @@ class THttpClient(TTransportBase):
             self.__http.putheader('User-Agent', user_agent)
 
         if self.__custom_headers:
-            for key, val in six.iteritems(self.__custom_headers):
+            for key, val in self.__custom_headers.items():
                 self.__http.putheader(key, val)
 
         # Saves the cookie sent by the server in the previous response.

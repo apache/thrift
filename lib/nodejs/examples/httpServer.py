@@ -16,5 +16,5 @@ processor = HelloSvc.Processor(HelloSvcHandler())
 protoFactory = TJSONProtocol.TJSONProtocolFactory()
 port = 9090
 server = THttpServer.THttpServer(processor, ("localhost", port), protoFactory)
-print "Python server running on port " + str(port)
+print("Python server running on port " + str(port))
 server.serve()

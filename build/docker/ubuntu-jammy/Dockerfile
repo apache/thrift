@@ -259,7 +259,6 @@ RUN apt-get install -y --no-install-recommends \
   python3-all-dev \
   python3-pip \
   python3-setuptools \
-  python3-six \
   python3-tornado \
   python3-twisted \
   python3-wheel \
