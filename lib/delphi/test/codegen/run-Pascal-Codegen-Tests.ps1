@@ -29,17 +29,14 @@ $FAIL_THRIFT = @(
 $FAIL_DELPHI = @()
 
 # unexpected but known bugs (TODO: fix them)
-$KNOWN_BUGS = @(
-	"ConstantsDemo.thrift",
-	"ConstOptionalField.thrift",
-	"IgnoreInitialismsTest.thrift",
-	"JavaTypes.thrift",	
-	"JavaDefinitionOrderB.thrift",
-	"JavaDeepCopyTest.thrift",
-	"NameConflictTest.thrift",
-	"Types.thrift",
-	"Thrift5320.thrift",
-	"Service.thrift")
+$KNOWN_BUGS = @( "ConstOptionalField.thrift"
+               , "IgnoreInitialismsTest.thrift"
+               , "JavaTypes.thrift"
+               , "JavaDefinitionOrderB.thrift"
+               , "JavaDeepCopyTest.thrift"
+               , "NameConflictTest.thrift"
+			   , "Thrift5320.thrift"   # this conflicts with Delphi scopes, but it's a bad practice testcase anyway
+               )
 
 
 
