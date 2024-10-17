@@ -216,7 +216,8 @@ public:
                                  std::ostream& out,
                                  std::string name,
                                  t_type* type,
-                                 t_const_value* value);
+                                 t_const_value* value,
+                                 bool guidAsLiteral);
   void print_const_def_value(std::ostream& vars,
                              std::ostream& out,
                              std::string name,
@@ -422,8 +423,8 @@ private:
   };
 
   // reserved variables and types (lowercase!)
-  const std::string DELPHI_RESERVED_NAMES[8] = {
-    "result", "system", "sysutils", "tbytes", "tclass", "thrift", "tinterfacedobject", "tobject"
+  const std::string DELPHI_RESERVED_NAMES[10] = {
+    "result", "system", "sysutils", "types", "tbytes", "tclass", "thrift", "tinterfacedobject", "tobject", "ttask"
   };
 
   // reserved method names (lowercase!)
@@ -687,8 +688,9 @@ void t_delphi_generator::init_generator() {
     unitname = include->get_name();
     nsname = include->get_namespace("delphi");
     if ("" != nsname) {
-      unitname = normalize_name(nsname,false,false,true/*force underscore*/);
+      unitname = nsname;
     }
+    unitname = normalize_name(unitname,false,false,true/*force underscore*/);
     add_delphi_uses_list(unitname);
   }
 
@@ -1182,7 +1184,7 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
       if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      string val = render_const_value(vars, out, name, field_type, v_iter->second);
+      string val = render_const_value(vars, out, name, field_type, v_iter->second, false);
       indent_impl(out) << cls_prefix << normalize_name(name) << "."
                        << prop_name(v_iter->first->get_string(), type->is_xception())
                        << " := " << val << ";" << '\n';
@@ -1193,8 +1195,8 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(vars, out, name, ktype, v_iter->first);
-      string val = render_const_value(vars, out, name, vtype, v_iter->second);
+      string key = render_const_value(vars, out, name, ktype, v_iter->first, false);
+      string val = render_const_value(vars, out, name, vtype, v_iter->second, false);
       indent_impl(out) << cls_prefix << normalize_name(name) << "[" << key << "]"
                        << " := " << val << ";" << '\n';
     }
@@ -1209,7 +1211,7 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(vars, out, name, etype, *v_iter);
+      string val = render_const_value(vars, out, name, etype, *v_iter, false);
       indent_impl(out) << cls_prefix << normalize_name(name) << ".Add(" << val << ");" << '\n';
     }
   }
@@ -1228,7 +1230,13 @@ bool t_delphi_generator::const_needs_var(t_type* type) {
   while (truetype->is_typedef()) {
     truetype = ((t_typedef*)truetype)->get_type();
   }
-  return (!truetype->is_base_type());
+
+  if(!truetype->is_base_type()) {
+    return true;
+  }
+
+  t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
+  return (tbase == t_base_type::TYPE_UUID);
 }
 
 void t_delphi_generator::print_const_prop(std::ostream& out,
@@ -1241,7 +1249,7 @@ void t_delphi_generator::print_const_prop(std::ostream& out,
                 << '\n';
   } else {
     std::ostringstream vars; // dummy
-    string v2 = render_const_value(vars, out, name, type, value);
+    string v2 = render_const_value(vars, out, name, type, value, true);
     indent(out) << "const " << name << " = " << v2 << ";" << '\n';
   }
 }
@@ -1257,9 +1265,11 @@ void t_delphi_generator::print_const_value(std::ostream& vars,
   }
 
   if (truetype->is_base_type()) {
-    // already done
-    // string v2 = render_const_value( vars, out, name, type, value);
-    // indent_impl(out) << name << " := " << v2 << ";" << '\n';
+    t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
+    if(tbase == t_base_type::TYPE_UUID) {   // already done otherwise
+      string v2 = render_const_value( vars, out, name, type, value, false);
+      indent_impl(out) << name << " := " << v2 << ";" << '\n';
+    }
   } else if (truetype->is_enum()) {
     indent_impl(out) << name << " := " << type_name(type) << "." << value->get_identifier_name()
                      << ";" << '\n';
@@ -1295,7 +1305,8 @@ string t_delphi_generator::render_const_value(ostream& vars,
                                               ostream& out,
                                               string name,
                                               t_type* type,
-                                              t_const_value* value) {
+                                              t_const_value* value,
+                                              bool guidAsLiteral) {
   (void)name;
 
   t_type* truetype = type;
@@ -1312,7 +1323,11 @@ string t_delphi_generator::render_const_value(ostream& vars,
       render << "'" << get_escaped_string(value) << "'";
       break;
     case t_base_type::TYPE_UUID:
-      render << "['{" << value->get_uuid() << "}']";
+      if(guidAsLiteral) {
+        render << "['{" << value->get_uuid() << "}']";
+      } else {
+        render << "StringToGUID('{" << value->get_uuid() << "}')";
+      }      
       break;
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "True" : "False");
@@ -3102,7 +3117,7 @@ string t_delphi_generator::type_name(t_type* ttype,
   string nm = normalize_clsnm(ttype->get_name(), type_prefix);
 
   if (b_exception_factory) {
-    nm = nm + "Factory";
+    nm = normalize_clsnm(ttype->get_name(), type_prefix, true) + "Factory";
   }
 
   if (b_cls) {
