@@ -21,10 +21,56 @@ name: "PyPI publishing"
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
+  build_wheels:
+    name: Build wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: macos-12, arch: x86_64, build: "*" }
+          - { os: macos-12, arch: arm64, build: "*" }
+          - { os: windows-latest, arch: AMD64, build: "*" }
+          - { os: ubuntu-latest, arch: x86_64, build: "*" }
+
+          # arm is slow on github actions
+          # split built to multiple jobs to make whole job finish faster
+          - { os: ubuntu-latest, arch: aarch64, build: "*[05]-manylinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[16]-manylinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[27]-manylinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[38]-manylinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[49]-manylinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[05]-musllinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[16]-musllinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[27]-musllinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[38]-musllinux*" }
+          - { os: ubuntu-latest, arch: aarch64, build: "*[49]-musllinux*" }
+    steps:
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.os == 'ubuntu-latest'
+
+      - uses: actions/checkout@v4
+
+      - uses: pypa/cibuildwheel@v2.21.1
+        with:
+          package-dir: lib/py
+        env:
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BUILD: ${{ matrix.build }}
+          CIBW_SKIP: 'pp*'
+
+      - run: ls ./wheelhouse/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'wheels-${{ runner.os }}-${{ matrix.arch }}-${{ strategy.job-index }}'
+          path: ./wheelhouse/*.whl
+
   pypi-publish:
+    needs: [ 'build_wheels' ]
     name: Publish release to PyPI
     runs-on: ubuntu-latest
     # Specifying a GitHub environment is optional, but strongly encouraged
@@ -41,9 +87,18 @@ jobs:
           python-version: "3.8"
 
       - name: Build
-        run: |
-          cd lib/py
-          python setup.py sdist
+        working-directory: lib/py
+        env:
+          THRIFT_BUILD_PURE_PYTHON: '1'
+        run: pipx run build
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: lib/py/dist/
+          merge-multiple: true
+
+      - run: ls -ahl lib/py/dist/
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
