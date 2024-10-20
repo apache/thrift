@@ -273,6 +273,9 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
         out << value->get_double();
       }
       break;
+    case t_base_type::TYPE_UUID:
+      out << "TUUIDfromString(" << value->get_string() << ")";
+      break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
@@ -727,6 +730,8 @@ void t_lua_generator::generate_process_function(ostream& out,
   if (!tfunction->is_oneway()) {
       out << indent() << "local result = " << resultname
           << ":new{}" << '\n';
+  } else {
+    out << indent() << "oprot.trans:flushOneway()" << '\n';
   }
 
   out <<  indent() << "local status, res = pcall(self.handler." << fn_name
@@ -844,6 +849,9 @@ void t_lua_generator::generate_deserialize_field(ostream& out,
         break;
       case t_base_type::TYPE_DOUBLE:
         out << "readDouble()";
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid()";
         break;
       default:
         throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
@@ -1000,6 +1008,9 @@ void t_lua_generator::generate_serialize_field(ostream& out, t_field* tfield, st
       case t_base_type::TYPE_DOUBLE:
         out << "writeDouble(" << name << ")";
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ")";
+        break;
       default:
         throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -1151,6 +1162,8 @@ string t_lua_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
     default:
       throw "compiler error: unhandled type";
     }

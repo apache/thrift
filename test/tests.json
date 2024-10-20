@@ -695,24 +695,31 @@
     },
     "client": {
       "timeout": 5,
-      "transports": [
-        "buffered",
-        "framed",
-        "http"
-      ],
-      "sockets": [
-        "ip"
-      ],
-      "protocols": [
-        "binary",
-        "compact",
-        "json"
-      ],
       "command": [
         "lua",
         "test_basic_client.lua"
       ]
     },
+    "server": {
+      "delay": 5,
+      "command": [
+        "lua",
+        "test_basic_server.lua"
+      ]
+    },
+    "transports": [
+      "buffered",
+      "framed",
+      "http"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
     "workdir": "lua"
   },
   {
