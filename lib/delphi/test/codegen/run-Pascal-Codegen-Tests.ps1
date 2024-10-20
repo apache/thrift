@@ -26,17 +26,16 @@ $FAIL_THRIFT = @(
 	"Include.thrift")   # subdir includes don't work here
 
 # expected to fail at Delphi Compiler
-$FAIL_DELPHI = @()
+$FAIL_DELPHI = @(
+    "Thrift5320.thrift"   # this conflicts with Delphi scopes, but it's a bad practice testcase anyway
+)
 
 # unexpected but known bugs (TODO: fix them)
-$KNOWN_BUGS = @( "ConstOptionalField.thrift"
-               , "IgnoreInitialismsTest.thrift"
-               , "JavaTypes.thrift"
-               , "JavaDefinitionOrderB.thrift"
-               , "JavaDeepCopyTest.thrift"
-               , "NameConflictTest.thrift"
-			   , "Thrift5320.thrift"   # this conflicts with Delphi scopes, but it's a bad practice testcase anyway
-               )
+$KNOWN_BUGS = @(
+	"IgnoreInitialismsTest.thrift", 
+	"JavaDefinitionOrderB.thrift",
+	"NameConflictTest.thrift"
+    ) 
 
 
 

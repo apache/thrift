@@ -1237,7 +1237,14 @@ bool t_delphi_generator::const_needs_var(t_type* type) {
   }
 
   t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
-  return (tbase == t_base_type::TYPE_UUID);
+  switch (tbase) {
+  case t_base_type::TYPE_UUID:
+    return true;
+  case t_base_type::TYPE_STRING:
+    return truetype->is_binary();
+  default:
+    return false;
+  }
 }
 
 void t_delphi_generator::print_const_prop(std::ostream& out,
@@ -1266,10 +1273,9 @@ void t_delphi_generator::print_const_value(std::ostream& vars,
   }
 
   if (truetype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
-    if(tbase == t_base_type::TYPE_UUID) {   // already done otherwise
-      string v2 = render_const_value( vars, out, name, type, value, false);
-      indent_impl(out) << name << " := " << v2 << ";" << '\n';
+    if(const_needs_var(type)) {
+      string the_value = render_const_value( vars, out, name, type, value, false);
+      indent_impl(out) << name << " := " << the_value << ";" << '\n';
     }
   } else if (truetype->is_enum()) {
     indent_impl(out) << name << " := " << type_name(type) << "." << value->get_identifier_name()
@@ -1321,7 +1327,11 @@ string t_delphi_generator::render_const_value(ostream& vars,
     t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      render << "'" << get_escaped_string(value) << "'";
+      if (truetype->is_binary()) {        
+        render << "TEncoding.UTF8.GetBytes('" << get_escaped_string(value) << "')";
+      } else {
+        render << "'" << get_escaped_string(value) << "'";
+      }
       break;
     case t_base_type::TYPE_UUID:
       if(guidAsLiteral) {
