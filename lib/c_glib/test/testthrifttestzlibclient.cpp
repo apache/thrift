@@ -107,9 +107,9 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
-  apache::thrift::TUuid testUuid(const apache::thrift::TUuid thing) override {
+  void testUuid(apache::thrift::TUuid& out, const apache::thrift::TUuid& thing) override {
     cout << "[C -> C++] testUuid(\"" << thing << "\")" << '\n';
-    return thing;
+    out = thing;
   }
 
   void testStruct(Xtruct& out, const Xtruct &thing) override {
@@ -297,7 +297,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testException(const std::string &arg)
-    throw(Xception, apache::thrift::TException) override
+    noexcept(false) override
   {
     cout << "[C -> C++] testException(" << arg << ")" << '\n';
     if (arg.compare("Xception") == 0) {
@@ -315,7 +315,7 @@ class TestHandler : public ThriftTestIf {
     }
   }
 
-  void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) throw(Xception, Xception2) override {
+  void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) noexcept(false) override {
 
     cout << "[C -> C++] testMultiException(" << arg0 << ", " << arg1 << ")" << '\n';
 
