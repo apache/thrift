@@ -20,12 +20,6 @@
 import unittest
 import os
 import sys
-
-gen_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py"
-)
-sys.path.append(gen_path)
-
 import _import_local_thrift  # noqa
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
@@ -34,6 +28,11 @@ from thrift.protocol.TCompactProtocol import TCompactProtocolAcceleratedFactory
 from thrift.transport import TTransport
 from thrift.TSerialization import serialize, deserialize
 from TestServer.ttypes import Message
+
+gen_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py"
+)
+sys.path.append(gen_path)
 
 
 class TestSerializer(unittest.TestCase):

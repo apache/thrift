@@ -47,7 +47,7 @@ ECHO OPENSSL_ROOT          = %OPENSSL_ROOT%
 ECHO SETUP                 = %SETUP%
 ECHO SRCDIR                = %SRCDIR%
 ECHO WIN3P                 = %WIN3P%
-ECHO WITH_PYTHON           = %WITH_PYTHON%
+ECHO WITH_PY3              = %WITH_PY3%
 ECHO ZLIB_STATIC_SUFFIX    = %ZLIB_STATIC_SUFFIX%
 IF NOT "%PROFILE_CLASS%" == "MSVC" (
   ECHO/

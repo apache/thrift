@@ -147,8 +147,7 @@ class TSocket(TSocketBase):
             except socket.error:
                 handle.close()
                 logger.info('Could not connect to %s', sockaddr, exc_info=True)
-        msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
-                                                          addrs))
+        msg = 'Could not connect to any of %s' % list([a[4] for a in addrs])
         logger.error(msg)
         raise TTransportException(type=TTransportException.NOT_OPEN, message=msg)
 
