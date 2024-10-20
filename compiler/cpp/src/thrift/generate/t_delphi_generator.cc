@@ -423,8 +423,9 @@ private:
   };
 
   // reserved variables and types (lowercase!)
-  const std::string DELPHI_RESERVED_NAMES[10] = {
-    "result", "system", "sysutils", "types", "tbytes", "tclass", "thrift", "tinterfacedobject", "tobject", "ttask"
+  const std::string DELPHI_RESERVED_NAMES[11] = {
+    "result", "system", "sysutils", "types", "texception", "tbytes", "tclass", "thrift", "tinterfacedobject",
+    "tobject", "ttask"
   };
 
   // reserved method names (lowercase!)
