@@ -131,7 +131,6 @@ call build-libevent.bat || EXIT /B
 pip.exe ^
     install backports.ssl_match_hostname ^
             ipaddress ^
-            six ^
             tornado ^
             twisted || EXIT /B
 
