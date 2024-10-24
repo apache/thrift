@@ -37,7 +37,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
 #endif
-#include <Windows.h>
+#include <windows.h>
 #ifdef _THRIFT_UNDEF_NOMINMAX
 #undef NOMINMAX
 #undef _THRIFT_UNDEF_NOMINMAX

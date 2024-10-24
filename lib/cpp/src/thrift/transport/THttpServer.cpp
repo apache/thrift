@@ -25,7 +25,7 @@
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
 #if defined(_MSC_VER) || defined(__MINGW32__)
-  #include <Shlwapi.h>
+  #include <shlwapi.h>
 #endif
 
 using std::string;
