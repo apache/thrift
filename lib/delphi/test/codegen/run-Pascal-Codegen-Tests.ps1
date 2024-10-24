@@ -33,7 +33,6 @@ $FAIL_DELPHI = @(
 # unexpected but known bugs (TODO: fix them)
 $KNOWN_BUGS = @(
 	"IgnoreInitialismsTest.thrift", 
-	"JavaDefinitionOrderB.thrift",
 	"NameConflictTest.thrift"
     ) 
 
