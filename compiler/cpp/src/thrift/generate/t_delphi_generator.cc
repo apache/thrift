@@ -962,6 +962,8 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
   indent_down();
   indent(s_enum) << ")" << render_deprecation_attribute(tenum->annotations_, " ", "") << ";" << '\n' << '\n';
   indent_down();
+
+  add_defined_type(tenum);
 }
 
 std::string t_delphi_generator::make_pascal_string_literal(std::string value) {
