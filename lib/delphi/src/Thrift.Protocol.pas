@@ -232,7 +232,6 @@ type
     procedure WriteI64( const i64: Int64);
     procedure WriteDouble( const d: Double);
     procedure WriteString( const s: string );
-    procedure WriteAnsiString( const s: AnsiString);  deprecated 'AnsiString routines are deprecated, see THRIFT-5750';
     procedure WriteBinary( const b: TBytes); overload;
     procedure WriteBinary( const b: IThriftBytes); overload;
     procedure WriteUuid( const uuid: TGuid);
@@ -259,7 +258,6 @@ type
     function ReadBinaryCOM : IThriftBytes;
     function ReadUuid: TGuid;
     function ReadString: string;
-    function ReadAnsiString: AnsiString;  deprecated 'AnsiString routines are deprecated, see THRIFT-5750';
 
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
@@ -341,13 +339,6 @@ type
     function ReadBinaryCOM : IThriftBytes;  virtual;
 
     property  Transport: ITransport read GetTransport;
-
-  private
-    // THRIFT-5750 unit visible, but no longer protected - awaiting final removal
-    // - Note that you can implement whavetever you want in your derived class, but no longer inherit
-    // - The function can still be called via IProtocol until final removal
-    function ReadAnsiString: AnsiString; virtual;  //deprecated;
-    procedure WriteAnsiString( const s: AnsiString); virtual; //deprecated;
 
   public
     constructor Create( const aTransport : ITransport); virtual;
@@ -538,15 +529,6 @@ type
     function ReadBinary: TBytes; override;
     function ReadUuid: TGuid; override;
     function ReadString: string; override;
-
-  private
-    // THRIFT-5750 unit visible, but no longer protected - awaiting final removal
-    // - Note that you can implement whavetever you want in your derived class, but no longer inherit
-    // - The function can still be called via IProtocol until final removal
-    {$WARN SYMBOL_DEPRECATED OFF}
-    function ReadAnsiString: AnsiString; override;  deprecated;
-    procedure WriteAnsiString( const s: AnsiString); override;  deprecated;
-    {$WARN SYMBOL_DEPRECATED DEFAULT}
   end;
 
 
@@ -701,36 +683,9 @@ begin
   FTrans.ResetConsumedMessageSize;
 end;
 
-function TProtocolImpl.ReadAnsiString: AnsiString;
-var
-  b : TBytes;
-  len : Integer;
-begin
-  Result := '';
-  b := ReadBinary;
-  len := Length( b );
-  if len > 0 then begin
-    SetLength( Result, len);
-    System.Move( b[0], Pointer(Result)^, len );
-  end;
-end;
-
 function TProtocolImpl.ReadString: string;
 begin
   Result := TEncoding.UTF8.GetString( ReadBinary );
-end;
-
-procedure TProtocolImpl.WriteAnsiString(const s: AnsiString);
-var
-  b : TBytes;
-  len : Integer;
-begin
-  len := Length(s);
-  SetLength( b, len);
-  if len > 0 then begin
-    System.Move( Pointer(s)^, b[0], len );
-  end;
-  WriteBinary( b );
 end;
 
 procedure TProtocolImpl.WriteString(const s: string);
@@ -1530,14 +1485,6 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteAnsiString( const s: AnsiString);
-begin
-  {$WARN SYMBOL_DEPRECATED OFF}
-  FWrappedProtocol.WriteAnsiString( s);
-  {$WARN SYMBOL_DEPRECATED DEFAULT}
-end;
-
-
 procedure TProtocolDecorator.WriteBinary( const b: TBytes);
 begin
   FWrappedProtocol.WriteBinary( b);
@@ -1679,14 +1626,6 @@ end;
 function TProtocolDecorator.ReadString: string;
 begin
   result := FWrappedProtocol.ReadString;
-end;
-
-
-function TProtocolDecorator.ReadAnsiString: AnsiString;
-begin
-  {$WARN SYMBOL_DEPRECATED OFF}
-  result := FWrappedProtocol.ReadAnsiString;
-  {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
 

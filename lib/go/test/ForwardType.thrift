@@ -25,6 +25,7 @@ struct Struct {
   1: optional Exc foo
 }
 
-exception Exc {
+// FIX: Use of "exception" is illegal. An exception is not a normal struct type and cannot be used as such.
+struct Exc {  
   1: optional i32 code
 }

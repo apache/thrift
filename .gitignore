@@ -211,7 +211,6 @@ project.lock.json
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
 /lib/delphi/**/*.2007
-/lib/delphi/**/codegen/*.bat
 /lib/erl/.eunit
 /lib/erl/.generated
 /lib/erl/.rebar/

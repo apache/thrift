@@ -60,7 +60,7 @@ class t_cl_generator : public t_oop_generator {
       if(iter->first.compare("no_asd") == 0) {
         no_asd = true;
       } else if (iter->first.compare("sys_pref") == 0) {
-	system_prefix = iter->second;
+      system_prefix = iter->second;
       } else {
         throw "unknown option cl:" + iter->first;
       }
