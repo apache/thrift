@@ -1,5 +1,8 @@
+from __future__ import print_function
+
 import sys
-sys.path.append('gen-py')
+
+sys.path.append("gen-py")
 
 from hello import HelloSvc
 from thrift.protocol import TJSONProtocol
@@ -16,5 +19,5 @@ processor = HelloSvc.Processor(HelloSvcHandler())
 protoFactory = TJSONProtocol.TJSONProtocolFactory()
 port = 9090
 server = THttpServer.THttpServer(processor, ("localhost", port), protoFactory)
-print "Python server running on port " + str(port)
+print("Python server running on port", port)
 server.serve()
