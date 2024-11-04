@@ -41,12 +41,12 @@ abstract class TConstant
      */
     public static function get($constant)
     {
-        if (is_null(static::class::$$constant)) {
-            static::class::$$constant = call_user_func(
+        if (is_null(static::$$constant)) {
+            static::$$constant = call_user_func(
                 sprintf(static::class . '::init_%s', $constant)
             );
         }
 
-        return static::class::$$constant;
+        return static::$$constant;
     }
 }
