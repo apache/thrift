@@ -46,7 +46,7 @@ sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options
 sudo apt-get install -qq ant openjdk-8-jdk maven
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-six python3-six
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support
 
 # Ruby dependencies
 sudo apt-get install -qq ruby ruby-dev

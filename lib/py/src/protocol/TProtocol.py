@@ -21,10 +21,8 @@ from thrift.Thrift import TException, TType, TFrozenDict
 from thrift.transport.TTransport import TTransportException
 from ..compat import binary_to_str, str_to_binary
 
-import six
 import sys
 from itertools import islice
-from six.moves import zip
 
 
 class TProtocolException(TException):
@@ -373,8 +371,8 @@ class TProtocolBase(object):
     def writeContainerMap(self, val, spec):
         ktype, kspec, vtype, vspec, _ = spec
         self.writeMapBegin(ktype, vtype, len(val))
-        for _ in zip(self._write_by_ttype(ktype, six.iterkeys(val), spec, kspec),
-                     self._write_by_ttype(vtype, six.itervalues(val), spec, vspec)):
+        for _ in zip(self._write_by_ttype(ktype, val.keys(), spec, kspec),
+                     self._write_by_ttype(vtype, val.values(), spec, vspec)):
             pass
         self.writeMapEnd()
 
