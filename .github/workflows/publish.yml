@@ -1,0 +1,52 @@
+#
+# Apache Thrift release publishing workflow
+#
+# When a release is created in GitHub, it should be created in pre-release
+# mode first.  This will trigger a "prereleased" event which will cause this
+# workflow to run and publish packages to various package managers.  You
+# must check the Actions tab in GitHub to see the result of the workflow.
+#
+# github.event.action is either "prereleased" or "released" and corresponds
+# with a named environment in CloudTruth
+#
+#           |         Destinations
+# Language  | Prereleased   | Released
+# ----------+---------------+---------------
+# py        | test.pypi.org | pypi.org
+#
+---
+name: Publish
+
+on:
+  release:
+    types:
+      - prereleased
+      - released
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-python@v3
+      - name: Get configuration and secrets from CloudTruth
+        uses: ./.github/actions/cloudtruth/configure-action
+        with:
+          apikey: "${{ secrets.CLOUDTRUTH_API_KEY }}"
+          project: "${{ github.repository }}"
+          environment: "${{ github.event.action }}"
+      - name: build sdist
+        run: "cd lib/py && python setup.py sdist"
+      - name: Publish to PyPI
+        uses: ./.github/actions/pypa/gh-action-pypi-publish
+        with:
+          password: "${{ env.PYPI_PASSWORD }}"
+          repository_url: "${{ env.PYPI_REPOSITORY }}"
+          packages_dir: lib/py/dist
