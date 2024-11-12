@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <LangVersion>latestMajor</LangVersion>
     <AssemblyName>Thrift.IntegrationTests</AssemblyName>
     <PackageId>Thrift.IntegrationTests</PackageId>
@@ -36,10 +36,10 @@
 
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.83.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.3.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.3.1" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Thrift\Thrift.csproj" />

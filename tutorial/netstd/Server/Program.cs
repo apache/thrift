@@ -15,6 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,20 +29,13 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Thrift;
+using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
 using Thrift.Transport.Server;
 using tutorial;
-using shared;
-using Thrift.Processor;
-using System.Diagnostics;
 
 #pragma warning disable IDE0057  // substr
 
@@ -61,27 +60,25 @@ namespace Server
     public class Program
     {
         private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
-        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
+        private static readonly TConfiguration Configuration = new();
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            args ??= Array.Empty<string>();
+            args ??= [];
 
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            // -help is rather unusual but we leave it for compatibility
+            if (args.Any(x => x.Equals("-help") || x.Equals("--help") || x.Equals("-h") || x.Equals("-?")))
             {
                 DisplayHelp();
                 return;
             }
 
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
+            using var source = new CancellationTokenSource();
+            await RunAsync(args, source.Token);
 
-                Logger.LogInformation("Press any key to stop...");
-
-                Console.ReadLine();
-                source.Cancel();
-            }
+            Logger.LogInformation("Press any key to stop...");
+            Console.ReadLine();
+            source.Cancel();
 
             Logger.LogInformation("Server stopped");
         }
@@ -149,7 +146,7 @@ Sample:
 
         private static Protocol GetProtocol(string[] args)
         {
-            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(protocol))
                 return Protocol.Binary;
 
@@ -162,7 +159,7 @@ Sample:
 
         private static Buffering GetBuffering(string[] args)
         {
-            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(":")?[1];
+            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(buffering))
                 return Buffering.None;
 
@@ -175,7 +172,7 @@ Sample:
 
         private static Transport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(transport))
                 return Transport.Tcp;
 
@@ -196,7 +193,7 @@ Sample:
                 _ => throw new ArgumentException("unsupported value $transport", nameof(transport)),
             };
 
-            TTransportFactory transportFactory = buffering switch
+            TTransportFactory? transportFactory = buffering switch
             {
                 Buffering.Buffered => new TBufferedTransport.Factory(),
                 Buffering.Framed => new TFramedTransport.Factory(),
@@ -258,34 +255,32 @@ Sample:
         {
             // due to files location in net core better to take certs from top folder
             var certFile = GetCertPath(Directory.GetParent(Directory.GetCurrentDirectory()));
-            return new X509Certificate2(certFile, "ThriftTest");
+            //return new X509Certificate2(certFile, "ThriftTest");
+            return X509CertificateLoader.LoadPkcs12FromFile(certFile, "ThriftTest");
         }
 
-        private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
+        private static string GetCertPath(DirectoryInfo? di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile =
-                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
-                    .FirstOrDefault();
+            var certFile = topDir?.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
             if (certFile == null)
             {
                 if (maxCount == 0)
                     throw new FileNotFoundException("Cannot find file in directories");
-                return GetCertPath(di.Parent, maxCount - 1);
+                return GetCertPath(di?.Parent, --maxCount);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+        private static X509Certificate2 LocalCertificateSelectionCallback(object sender,
             string targetHost, X509CertificateCollection localCertificates,
-            X509Certificate remoteCertificate, string[] acceptableIssuers)
+            X509Certificate? remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool ClientCertValidator(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool ClientCertValidator(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
@@ -369,7 +364,7 @@ Sample:
 
         public class CalculatorAsyncHandler : Calculator.IAsync
         {
-            private readonly Dictionary<int, SharedStruct> _log = new();
+            private readonly Dictionary<int, SharedStruct> _log = [];
 
             public CalculatorAsyncHandler()
             {
@@ -394,12 +389,12 @@ Sample:
                 return await Task.FromResult(num1 + num2);
             }
 
-            public async Task<int> calculate(int logid, Work w, CancellationToken cancellationToken)
+            public async Task<int> calculate(int logid, Work? w, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])", logid, w.Op, w.Num1, w.Num2);
+                Logger.LogInformation("Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])", logid, w?.Op, w?.Num1, w?.Num2);
 
                 int val;
-                switch (w.Op)
+                switch (w?.Op)
                 {
                     case Operation.ADD:
                         val = w.Num1 + w.Num2;
@@ -431,7 +426,7 @@ Sample:
                     {
                         var io = new InvalidOperation
                         {
-                            WhatOp = (int) w.Op,
+                            WhatOp = ((int?)w?.Op) ?? -1,
                             Why = "Unknown operation"
                         };
 

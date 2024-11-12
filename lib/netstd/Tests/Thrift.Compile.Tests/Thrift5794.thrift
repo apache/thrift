@@ -19,7 +19,7 @@
 
 // Testcase for THRIFT-5794 uncompilable code generated w/o net8 option
 
-namespace * Thrift5794.net6
+namespace * Thrift5794
 
 struct foo {
   1: double a;

@@ -225,7 +225,8 @@ namespace ThriftTest
                     throw new FileNotFoundException($"Cannot find file: {clientCertName}");
                 }
 
-                var cert = new X509Certificate2(existingPath, "thrift");
+                //var cert = new X509Certificate2(existingPath, "thrift");
+                var cert = X509CertificateLoader.LoadPkcs12FromFile(existingPath, "thrift");
 
                 return cert;
             }
@@ -444,7 +445,7 @@ namespace ThriftTest
 
         public static string BytesToHex(byte[] data)
         {
-            return BitConverter.ToString(data).Replace("-", string.Empty);
+            return Convert.ToHexString(data);
         }
 
 

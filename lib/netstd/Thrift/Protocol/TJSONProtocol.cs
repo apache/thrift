@@ -29,6 +29,8 @@ using Thrift.Transport;
 
 #pragma warning disable IDE0079 // net20 - unneeded suppression
 #pragma warning disable IDE0290 // net8 - primary CTOR
+#pragma warning disable IDE0305 // net9 - collection init
+#pragma warning disable IDE0300 // net9 - collection init
 
 namespace Thrift.Protocol
 {

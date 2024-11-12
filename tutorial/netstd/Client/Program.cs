@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -25,16 +25,12 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 using tutorial;
-using shared;
 
-#pragma warning disable IDE0063  // using
 #pragma warning disable IDE0057  // substr
 
 namespace Client
@@ -58,7 +54,7 @@ namespace Client
     public class Program
     {
         private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
-        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
+        private static readonly TConfiguration Configuration = new();
 
         private static void DisplayHelp()
         {
@@ -97,11 +93,12 @@ Sample:
 ");
         }
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            args ??= Array.Empty<string>();
+            args ??= [];
 
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            // -help is rather unusual but we leave it for compatibility
+            if (args.Any(x => x.Equals("-help") || x.Equals("--help") || x.Equals("-h") || x.Equals("-?")))
             {
                 DisplayHelp();
                 return;
@@ -109,10 +106,8 @@ Sample:
 
             Logger.LogInformation("Starting client...");
 
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
-            }
+            using var source = new CancellationTokenSource();
+            await RunAsync(args, source.Token);
         }
 
         
@@ -150,7 +145,7 @@ Sample:
 
         private static Protocol GetProtocol(string[] args)
         {
-            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(protocol))
                 return Protocol.Binary;
 
@@ -163,7 +158,7 @@ Sample:
 
         private static Buffering GetBuffering(string[] args)
         {
-            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(":")?[1];
+            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(buffering))
                 return Buffering.None;
 
@@ -176,7 +171,7 @@ Sample:
 
         private static Transport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(transport))
                 return Transport.Tcp;
 
@@ -191,7 +186,7 @@ Sample:
         private static TTransport MakeTransport(string[] args)
         {
             // construct endpoint transport
-            TTransport transport = null;
+            TTransport? transport = null;
             Transport selectedTransport = GetTransport(args);
             {
                 switch (selectedTransport)
@@ -241,7 +236,7 @@ Sample:
 
         private static int GetNumberOfClients(string[] args)
         {
-            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':')?[1];
+            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
 
             Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
@@ -254,35 +249,42 @@ Sample:
         private static X509Certificate2 GetCertificate()
         {
             // due to files location in net core better to take certs from top folder
-            var certFile = GetCertPath(Directory.GetParent(Directory.GetCurrentDirectory()));
-            return new X509Certificate2(certFile, "ThriftTest");
+            var dir = Directory.GetParent(Directory.GetCurrentDirectory());
+            if (dir != null)
+            {
+                var certFile = GetCertPath(dir);
+                //return new X509Certificate2(certFile, "ThriftTest");
+                return X509CertificateLoader.LoadPkcs12FromFile(certFile, "ThriftTest");
+            }
+            else
+            {
+                Logger.LogError("Root path of {path} not found", Directory.GetCurrentDirectory());
+                throw new Exception($"Root path of {Directory.GetCurrentDirectory()} not found");
+            }
         }
 
-        private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
+        private static string GetCertPath(DirectoryInfo? di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile =
-                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
-                    .FirstOrDefault();
+            var certFile = topDir?.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
             if (certFile == null)
             {
                 if (maxCount == 0)
                     throw new FileNotFoundException("Cannot find file in directories");
-                return GetCertPath(di.Parent, maxCount - 1);
+                return GetCertPath(di?.Parent, --maxCount);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+        private static X509Certificate2 LocalCertificateSelectionCallback(object sender,
             string targetHost, X509CertificateCollection localCertificates,
-            X509Certificate remoteCertificate, string[] acceptableIssuers)
+            X509Certificate? remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool CertValidator(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool CertValidator(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
