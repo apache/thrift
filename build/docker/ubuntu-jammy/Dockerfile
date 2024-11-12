@@ -138,10 +138,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
-  dotnet-sdk-8.0 \
-  dotnet-runtime-8.0 \
-  aspnetcore-runtime-8.0 \
-  dotnet-apphost-pack-8.0
+  dotnet-sdk-9.0 \
+  dotnet-runtime-9.0 \
+  aspnetcore-runtime-9.0 \
+  dotnet-apphost-pack-9.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=25.3.2.9

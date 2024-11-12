@@ -82,6 +82,10 @@ namespace Thrift.Transport.Client
             }
         }
 
+        #if NET9_0_OR_GREATER
+        [Obsolete("SYSLIB0057: X509Certificate2 and X509Certificate constructors for binary and file content are obsolete")]
+        #pragma warning disable SYSLIB0057
+        #endif
         public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
             string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
@@ -94,6 +98,7 @@ namespace Thrift.Transport.Client
                 sslProtocols)
         {
         }
+        #pragma warning restore SYSLIB0057
 
         public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
             X509Certificate2 certificate = null,

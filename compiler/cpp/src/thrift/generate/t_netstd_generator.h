@@ -175,7 +175,7 @@ private:
   bool wcf_;
   bool use_pascal_case_properties;
   bool suppress_deepcopy;
-  int  target_net_version;  // 0 = any, 6 = net6, 8 = net8
+  int  target_net_version;  // 0 = any, 6 = net6, 8 = net8, etc.
   bool add_async_postfix;
 
   const std::string CSHARP_KEYWORDS[101] = {

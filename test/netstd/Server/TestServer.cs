@@ -37,6 +37,7 @@ using Thrift.Transport.Server;
 
 #pragma warning disable IDE0063  // using can be simplified, we don't
 #pragma warning disable IDE0057  // substr can be simplified, we don't
+#pragma warning disable IDE0130  // unexpected folder structure
 
 namespace ThriftTest
 {
@@ -554,9 +555,10 @@ namespace ThriftTest
             {
                 throw new FileNotFoundException($"Cannot find file: {serverCertName}");
             }
-                                    
-            var cert = new X509Certificate2(existingPath, "thrift");
-                        
+
+            //var cert = new X509Certificate2(existingPath, "thrift");
+            var cert = X509CertificateLoader.LoadPkcs12FromFile(existingPath, "thrift");
+
             return cert;
         }
 

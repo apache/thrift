@@ -24,7 +24,7 @@ all-local:
 
 check-local:
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj
-	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net6/Thrift.Compile.net6.csproj
+	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
@@ -40,8 +40,8 @@ clean-local:
 	$(RM) -r Tests/Thrift.IntegrationTests/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/obj
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net6/bin
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net6/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/obj
 
@@ -58,7 +58,7 @@ EXTRA_DIST = \
 	Tests/Thrift.Compile.Tests/CassandraTest.thrift \
 	Tests/Thrift.Compile.Tests/optional_required_default.thrift \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj \
-	Tests/Thrift.Compile.Tests/Thrift.Compile.net6/Thrift.Compile.net6.csproj \
+	Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \

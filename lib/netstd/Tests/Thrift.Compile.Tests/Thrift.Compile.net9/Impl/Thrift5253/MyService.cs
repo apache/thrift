@@ -22,7 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift5253;
 
-namespace Thrift.Compile.net6.Impl.Thrift5253
+namespace Thrift.Compile.net9.Impl.Thrift5253
 {
     class MyServiceImpl : MyService.IAsync
     {

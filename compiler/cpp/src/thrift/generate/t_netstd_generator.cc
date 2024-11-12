@@ -82,8 +82,8 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
         else if (iter->first.compare("no_deepcopy") == 0) {
           suppress_deepcopy = true;
         }
-        else if (iter->first.compare("net6") == 0) {
-          target_net_version = 6;
+        else if (iter->first.compare("net9") == 0) {
+          target_net_version = 9;
         }
         else if (iter->first.compare("net8") == 0) {
           target_net_version = 8;
@@ -202,12 +202,12 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
-    if( target_net_version >= 8) {
+    if( target_net_version >= 9) {
+        out << "// targeting net 9" << '\n';
+        out << "#if( !NET9_0_OR_GREATER)" << '\n';
+    } else if( target_net_version >= 8) {
         out << "// targeting net 8" << '\n';
-        out << "#if( !NET8_0_OR_GREATER)" << '\n';
-    } else if( target_net_version >= 6) {
-        out << "// targeting net 6" << '\n';
-        out << "#if( NET8_0_OR_GREATER || !NET6_0_OR_GREATER)" << '\n';
+        out << "#if( NET9_0_OR_GREATER || !NET8_0_OR_GREATER)" << '\n';
     } else {
         out << "// targeting netstandard 2.x" << '\n';
         out << "#if(! NETSTANDARD2_0_OR_GREATER)" << '\n';
@@ -224,12 +224,20 @@ void t_netstd_generator::pragmas_and_directives(ostream& out)
     // this one must be first
     out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << '\n';
 
-    if( target_net_version >= 8) {
-      out << "#pragma warning disable IDE0290  // use primary CTOR" << '\n';
-    } else {
+    if( target_net_version >= 9) {
+      out << "#pragma warning disable IDE0130  // unexpected folder structure" << '\n';
+    }
+
+    if( target_net_version < 8) {
       out << "#pragma warning disable IDE0017  // object init can be simplified" << '\n';
       out << "#pragma warning disable IDE0028  // collection init can be simplified" << '\n';
+      out << "#pragma warning disable IDE0305  // collection init can be simplified" << '\n';
+      out << "#pragma warning disable IDE0034  // simplify default expression" << '\n';
+      out << "#pragma warning disable IDE0066  // use switch expression" << '\n';
+      out << "#pragma warning disable IDE0090  // simplify new expression" << '\n';
     }
+
+    out << "#pragma warning disable IDE0290  // use primary CTOR" << '\n';
     out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << '\n';
     out << "#pragma warning disable CA1822   // empty " << DEEP_COPY_METHOD_NAME << "() methods still non-static" << '\n';
 
@@ -3992,8 +4000,8 @@ THRIFT_REGISTER_GENERATOR(
     "    serial:          Add serialization support to generated classes.\n"
     "    union:           Use new union typing, which includes a static read function for union types.\n"
     "    pascal:          Generate Pascal Case property names according to Microsoft naming convention.\n"
-    "    net6:            Enable features that require net6 and C# 8 or higher.\n"
     "    net8:            Enable features that require net8 and C# 12 or higher.\n"
+    "    net9:            Enable features that require net9 and C# 13 or higher.\n"
     "    no_deepcopy:     Suppress generation of " + DEEP_COPY_METHOD_NAME + "() method.\n"
     "    async_postfix:   Append \"Async\" to all service methods (maintains compatibility with existing code).\n"
 )

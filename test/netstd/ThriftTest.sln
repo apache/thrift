@@ -17,9 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Benchmarks", "..\..\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Compile.net8", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.net8\Thrift.Compile.net8.csproj", "{05FAA75C-06BE-462F-999F-63823D08C75A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Compile.net6", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.net6\Thrift.Compile.net6.csproj", "{761EB615-D476-4423-888E-7D7665E769B1}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Compile.netstd2", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.netstd2\Thrift.Compile.netstd2.csproj", "{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.Compile.net9", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.net9\Thrift.Compile.net9.csproj", "{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -115,18 +115,6 @@ Global
 		{05FAA75C-06BE-462F-999F-63823D08C75A}.Release|x64.Build.0 = Release|Any CPU
 		{05FAA75C-06BE-462F-999F-63823D08C75A}.Release|x86.ActiveCfg = Release|Any CPU
 		{05FAA75C-06BE-462F-999F-63823D08C75A}.Release|x86.Build.0 = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|x64.Build.0 = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Debug|x86.Build.0 = Debug|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|x64.ActiveCfg = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|x64.Build.0 = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|x86.ActiveCfg = Release|Any CPU
-		{761EB615-D476-4423-888E-7D7665E769B1}.Release|x86.Build.0 = Release|Any CPU
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -139,6 +127,18 @@ Global
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Release|x64.Build.0 = Release|Any CPU
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Release|x86.ActiveCfg = Release|Any CPU
 		{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}.Release|x86.Build.0 = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|x64.Build.0 = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Debug|x86.Build.0 = Debug|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x64.ActiveCfg = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x64.Build.0 = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x86.ActiveCfg = Release|Any CPU
+		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

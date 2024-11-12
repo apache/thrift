@@ -314,7 +314,7 @@ jobs:
 #      the sdk is installed by default, but keep this step for reference
 #      - name: Set up .NET SDK
 #        run: |
-#          sudo apt-get install -y --no-install-recommends dotnet-sdk-8.0
+#          sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
 
       - name: Run bootstrap
         run: ./bootstrap.sh

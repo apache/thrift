@@ -21,11 +21,11 @@
   <PropertyGroup>
     <ThriftVersion>0.22.0</ThriftVersion>
     <ThriftVersionOutput>Thrift version $(ThriftVersion)</ThriftVersionOutput>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <LangVersion>latestMajor</LangVersion>
     <Version>$(ThriftVersion).0</Version>
-    <AssemblyName>Thrift.Compile.net6</AssemblyName>
-    <PackageId>Thrift.Compile.net6</PackageId>
+    <AssemblyName>Thrift.Compile.net9</AssemblyName>
+    <PackageId>Thrift.Compile.net9</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -38,9 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Formats.Asn1" Version="6.0.1" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="6.0.4" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="6.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -74,17 +72,17 @@
     <Error Condition="$('$(ThriftBinaryVersion)'::StartsWith('$(ThriftVersionOutput)')) == true" Text="Thrift version returned: '$(ThriftBinaryVersion)' is not equal to the projects version '$(ThriftVersionOutput)'." />
     <Message Importance="high" Text="Generating tests with thrift binary: '$(PathToThrift)'" />
     <!-- Generate the thrift test files -->
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../CassandraTest.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../optional_required_default.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../name_conflicts.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../../../../../test/ThriftTest.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../Thrift5253.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../Thrift5320.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../Thrift5382.thrift" />
-    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net6 -r ../Thrift5795.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../CassandraTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../name_conflicts.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../../../../../test/ThriftTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5253.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5320.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5382.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5795.thrift" />
     <!-- special options (see ticket) -->
-    <Exec Command="$(PathToThrift) -gen netstd:net6                  -r ../Thrift5794.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:net9                  -r ../Thrift5794.thrift" />
   </Target>
 
 </Project>
