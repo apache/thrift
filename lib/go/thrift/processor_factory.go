@@ -19,7 +19,11 @@
 
 package thrift
 
-import "context"
+import (
+	"context"
+	"fmt"
+	"strings"
+)
 
 // A processor is a generic object which operates upon an input stream and
 // writes to some output stream.
@@ -78,3 +82,49 @@ func NewTProcessorFunctionFactory(p TProcessorFunction) TProcessorFunctionFactor
 func (p *tProcessorFunctionFactory) GetProcessorFunction(trans TTransport) TProcessorFunction {
 	return p.processor
 }
+
+// ProcessorError is the combined original error returned by the endpoint
+// implementation, and I/O error when writing the response back to the client.
+//
+// This type will be returned by Process function if there's an error happened
+// during writing the response back to the client. ProcessorMiddlewares can
+// check for this type (use errors.As) to get the underlying write and endpoint
+// errors.
+type ProcessorError struct {
+	// WriteError is the error happened during writing the response to the
+	// client, always set.
+	WriteError TException
+
+	// EndpointError is the original error returned by the endpoint
+	// implementation, might be nil.
+	EndpointError TException
+}
+
+func (pe *ProcessorError) Unwrap() []error {
+	if pe.EndpointError != nil {
+		return []error{
+			pe.WriteError,
+			pe.EndpointError,
+		}
+	}
+	return []error{pe.WriteError}
+}
+
+func (pe *ProcessorError) Error() string {
+	var sb strings.Builder
+	sb.WriteString("thrift.ProcessorError: ")
+	sb.WriteString(fmt.Sprintf("write response to client: %v", pe.WriteError))
+	if pe.EndpointError != nil {
+		sb.WriteString(fmt.Sprintf("; original error from endpoint: %v", pe.EndpointError))
+	}
+	return sb.String()
+}
+
+func (pe *ProcessorError) TExceptionType() TExceptionType {
+	return pe.WriteError.TExceptionType()
+}
+
+var (
+	_ error      = (*ProcessorError)(nil)
+	_ TException = (*ProcessorError)(nil)
+)
