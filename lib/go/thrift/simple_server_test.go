@@ -294,6 +294,7 @@ func TestErrAbandonRequest(t *testing.T) {
 	if !errors.Is(ErrAbandonRequest, context.Canceled) {
 		t.Error("errors.Is(ErrAbandonRequest, context.Canceled) returned false")
 	}
+	//lint:ignore SA1032 Intentional order for this test.
 	if errors.Is(context.Canceled, ErrAbandonRequest) {
 		t.Error("errors.Is(context.Canceled, ErrAbandonRequest) returned true")
 	}

@@ -2988,7 +2988,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   string write_err;
   if (!tfunction->is_oneway()) {
     write_err = tmp("_write_err");
-    f_types_ << indent() << "var " << write_err << " error" << '\n';
+    f_types_ << indent() << "var " << write_err << " thrift.TException" << '\n';
   }
   f_types_ << indent() << "args := " << argsname << "{}" << '\n';
   f_types_ << indent() << "if err2 := args." << read_method_name_ << "(ctx, iprot); err2 != nil {" << '\n';
@@ -3120,14 +3120,24 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     // Avoid writing the error to the wire if it's ErrAbandonRequest
     f_types_ << indent() << "if errors.Is(err2, thrift.ErrAbandonRequest) {" << '\n';
     indent_up();
-    f_types_ << indent() << "return false, thrift.WrapTException(err2)" << '\n';
+    f_types_ << indent() << "return false, &thrift.ProcessorError{" << '\n';
+    indent_up();
+    f_types_ << indent() << "WriteError:    thrift.WrapTException(err2)," << '\n';
+    f_types_ << indent() << "EndpointError: err," << '\n';
+    indent_down();
+    f_types_ << indent() << "}" << '\n';
     indent_down();
     f_types_ << indent() << "}" << '\n';
     f_types_ << indent() << "if errors.Is(err2, context.Canceled) {" << '\n';
     indent_up();
-    f_types_ << indent() << "if err := context.Cause(ctx); errors.Is(err, thrift.ErrAbandonRequest) {" << '\n';
+    f_types_ << indent() << "if err3 := context.Cause(ctx); errors.Is(err3, thrift.ErrAbandonRequest) {" << '\n';
     indent_up();
-    f_types_ << indent() << "return false, thrift.WrapTException(err)" << '\n';
+    f_types_ << indent() << "return false, &thrift.ProcessorError{" << '\n';
+    indent_up();
+    f_types_ << indent() << "WriteError:    thrift.WrapTException(err3)," << '\n';
+    f_types_ << indent() << "EndpointError: err," << '\n';
+    indent_down();
+    f_types_ << indent() << "}" << '\n';
     indent_down();
     f_types_ << indent() << "}" << '\n';
     indent_down();
@@ -3168,7 +3178,12 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
 
     f_types_ << indent() << "if " << write_err << " != nil {" << '\n';
     indent_up();
-    f_types_ << indent() << "return false, thrift.WrapTException(" << write_err << ")" << '\n';
+    f_types_ << indent() << "return false, &thrift.ProcessorError{" << '\n';
+    indent_up();
+    f_types_ << indent() << "WriteError:    " << write_err << "," << '\n';
+    f_types_ << indent() << "EndpointError: err," << '\n';
+    indent_down();
+    f_types_ << indent() << "}" << '\n';
     indent_down();
     f_types_ << indent() << "}" << '\n';
 
@@ -3230,7 +3245,12 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
 
     f_types_ << indent() << "if " << write_err << " != nil {" << '\n';
     indent_up();
-    f_types_ << indent() << "return false, thrift.WrapTException(" << write_err << ")" << '\n';
+    f_types_ << indent() << "return false, &thrift.ProcessorError{" << '\n';
+    indent_up();
+    f_types_ << indent() << "WriteError:    " << write_err << "," << '\n';
+    f_types_ << indent() << "EndpointError: err," << '\n';
+    indent_down();
+    f_types_ << indent() << "}" << '\n';
     indent_down();
     f_types_ << indent() << "}" << '\n';
 
