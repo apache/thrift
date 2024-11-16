@@ -38,12 +38,14 @@ public:
   bool is_map() const override { return true; }
 
   void validate() const {
+#ifndef ALLOW_EXCEPTIONS_AS_TYPE
     if( get_key_type()->get_true_type()->is_xception()) {
       failure("exception type \"%s\" cannot be used inside a map", get_key_type()->get_name().c_str());
     }
     if( get_val_type()->get_true_type()->is_xception()) {
       failure("exception type \"%s\" cannot be used inside a map", get_val_type()->get_name().c_str());
     }
+#endif
   }
 
 private:
