@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <string>
 
+#define ALLOW_EXCEPTIONS_AS_TYPE
+
 class t_program;
 
 /**
@@ -54,6 +56,7 @@ public:
   virtual bool is_enum() const { return false; }
   virtual bool is_struct() const { return false; }
   virtual bool is_xception() const { return false; }
+  virtual bool is_method_xcepts() const { return false; }
   virtual bool is_container() const { return false; }
   virtual bool is_list() const { return false; }
   virtual bool is_set() const { return false; }

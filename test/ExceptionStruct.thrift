@@ -17,33 +17,40 @@
  * under the License.
  */
 
-#ifndef T_LIST_H
-#define T_LIST_H
+namespace * test.ExceptionStruct
 
-#include "thrift/parse/t_container.h"
+enum ErrorCode {
+  GenericError,
+  ServerOverload,
+  InvalidData
+}
 
-/**
- * A list is a lightweight container type that just wraps another data type.
- *
- */
-class t_list : public t_container {
-public:
-  t_list(t_type* elem_type) : elem_type_(elem_type) {}
+struct GetRequest {
+  1: string id
+  2: binary data     // some arbitrary data
+}
 
-  t_type* get_elem_type() const { return elem_type_; }
+struct GetResponse {
+  1: i32 job_nr
+  2: binary data     // some arbitrary data
+}
 
-  bool is_list() const override { return true; }
+struct BatchGetRequest {
+  1: list<GetRequest> requests
+}
 
-  void validate() const {
-#ifndef ALLOW_EXCEPTIONS_AS_TYPE
-    if( get_elem_type()->get_true_type()->is_xception()) {
-      failure("exception type \"%s\" cannot be used inside a list", get_elem_type()->get_name().c_str());
-    }
-#endif
-  }
+struct BatchGetResponse {
+  1: map<string, GetRequest> responses,  // key is id
+  2: map<string, SomeException> errors,  // key is id
+}
 
-private:
-  t_type* elem_type_;
-};
+exception SomeException {
+  2: ErrorCode error
+}
 
-#endif
+service Foo {
+  GetResponse get(1: GetRequest request) throws(1: SomeException error);
+  BatchGetResponse batchGet(1: BatchGetRequest request) throws(1: SomeException error); // may or may not be the same exception type, only throw exception when full request failed
+}
+
+# eof
