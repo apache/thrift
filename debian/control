@@ -32,7 +32,7 @@ Description: Compiler for Thrift definition files
 Package: python-thrift
 Architecture: any
 Section: python
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-six
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: python-twisted-web, python-backports.ssl-match-hostname, python-ipaddress
 Provides: ${python:Provides}
 Description: Python bindings for Thrift (Python 2)
@@ -65,7 +65,7 @@ Description: Python bindings for Thrift (debug version)
 Package: python3-thrift
 Architecture: any
 Section: python
-Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}, python3-six
+Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: python3-twisted-web
 Provides: ${python:Provides}
 Description: Python bindings for Thrift (Python 3)
