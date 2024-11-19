@@ -92,8 +92,15 @@ def _optional_dependencies():
         logger.debug('ssl.match_hostname is available')
         match = match_hostname
     except ImportError:
-        logger.warning('using legacy validation callback')
-        match = legacy_validate_callback
+        # https://docs.python.org/3/whatsnew/3.12.html:
+        # "Remove the ssl.match_hostname() function. It was deprecated in Python
+        # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
+        # longer uses the ssl.match_hostname() function.""
+        if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
+            match = lambda cert, hostname: True
+        else:
+            logger.warning('using legacy validation callback')
+            match = legacy_validate_callback
     return ipaddr, match
 
 
