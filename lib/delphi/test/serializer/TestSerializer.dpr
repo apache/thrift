@@ -44,6 +44,8 @@ uses
   System_ in 'gen-delphi\System_.pas',
   SysUtils_ in 'gen-delphi\SysUtils_.pas',
   DebugProtoTest in 'gen-delphi\DebugProtoTest.pas',
+  test.ExceptionStruct in 'gen-delphi\test.ExceptionStruct.pas',
+  test.SimpleException in 'gen-delphi\test.SimpleException.pas',
   TestSerializer.Tests in 'TestSerializer.Tests.pas';
 
 
