@@ -40,6 +40,8 @@ uses
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   System_ in 'gen-delphi\System_.pas',
   SysUtils_ in 'gen-delphi\SysUtils_.pas',
+  test.ExceptionStruct in 'gen-delphi\test.ExceptionStruct.pas',
+  test.SimpleException in 'gen-delphi\test.SimpleException.pas',
   DebugProtoTest in 'gen-delphi\DebugProtoTest.pas',
   TestSerializer.Data in 'TestSerializer.Data.pas';
 
@@ -69,11 +71,26 @@ begin
 end;
 
 
+function CreateBatchGetResponse : IBatchGetResponse; stdcall;
+begin
+  result := Fixtures.CreateBatchGetResponse;
+end;
+
+
+function CreateSimpleException : IError; stdcall;
+begin
+  result := Fixtures.CreateSimpleException;
+end;
+
+
 exports
   CreateOneOfEach,
   CreateNesting,
   CreateHolyMoley,
-  CreateCompactProtoTestStruct;
+  CreateCompactProtoTestStruct,
+  CreateBatchGetResponse,
+  CreateSimpleException;
+
 
 begin
   IsMultiThread := TRUE;
