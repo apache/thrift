@@ -347,7 +347,7 @@ namespace Thrift.Transport.Server
             catch (Exception e)
             {
                 Close();
-                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message);
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message, e);
             }
         }
 

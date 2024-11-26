@@ -167,7 +167,7 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
         }
 
@@ -260,16 +260,20 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
             catch (HttpRequestException wx)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown,
-                    "Couldn't connect to server: " + wx);
+                    "Couldn't connect to server: " + wx, wx);
+            }
+            catch (OperationCanceledException ocx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
             }
             catch (Exception ex)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message, ex);
             }
             finally
             {
