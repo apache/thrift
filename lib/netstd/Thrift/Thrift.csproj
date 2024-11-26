@@ -88,7 +88,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web">
-			<Version>8.0.10</Version>
+      <Version>8.0.11</Version> 
 		</PackageReference>
 	</ItemGroup>
 

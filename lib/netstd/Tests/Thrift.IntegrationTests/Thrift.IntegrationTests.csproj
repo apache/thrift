@@ -36,7 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.83.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
     <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
