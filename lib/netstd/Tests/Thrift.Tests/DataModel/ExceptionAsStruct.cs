@@ -42,9 +42,9 @@ namespace Thrift.Tests.DataModel
             VerifyIdenticalContent(checking, initial);
         }
 
-        private string FormatKey(int i) => $"Test {i}";
+        private static string FormatKey(int i) => $"Test {i}";
 
-        private BatchGetResponse CreateInitialData()
+        private static BatchGetResponse CreateInitialData()
         {
             var initial = new BatchGetResponse()
             {
@@ -63,7 +63,7 @@ namespace Thrift.Tests.DataModel
             return initial;
         }
 
-        private async Task<T> WriteAndReadBack<T>(T input) where T : TBase,new()
+        private static async Task<T> WriteAndReadBack<T>(T input) where T : TBase,new()
         {
             var stream = new MemoryStream();
             var config = new TConfiguration();
@@ -83,7 +83,7 @@ namespace Thrift.Tests.DataModel
             return output;
         }
 
-        private void VerifyIdenticalContent(BatchGetResponse left, BatchGetResponse right)
+        private static void VerifyIdenticalContent(BatchGetResponse left, BatchGetResponse right)
         {
             // Errors
             Assert.IsNotNull(left.Errors);
