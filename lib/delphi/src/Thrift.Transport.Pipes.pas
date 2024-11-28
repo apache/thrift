@@ -912,7 +912,7 @@ begin
     FReadHandle      := hPipe;
     FWriteHandle     := hPipeW;
   finally
-    if sd <> nil then LocalFree( Cardinal(sd));
+    if sd <> nil then LocalFree( NativeUInt(sd));
   end;
 end;
 
@@ -1117,8 +1117,8 @@ begin
     else raise TTransportExceptionNotOpen.Create('CreateNamedPipe() failed ' + IntToStr(GetLastError));
 
   finally
-    if sd <> nil then LocalFree( Cardinal( sd));
-    if acl <> nil then LocalFree( Cardinal( acl));
+    if sd <> nil then LocalFree( NativeUInt(sd));
+    if acl <> nil then LocalFree( NativeUInt(acl));
     if everyone_sid <> nil then FreeSid(everyone_sid);
   end;
 end;
