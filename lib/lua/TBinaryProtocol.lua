@@ -18,8 +18,8 @@
 --
 
 require 'TProtocol'
-require 'libluabpack'
-require 'libluabitwise'
+local libluabpack = require 'libluabpack'
+local libluabitwise = require 'libluabitwise'
 
 TBinaryProtocol = __TObject.new(TProtocolBase, {
   __type = 'TBinaryProtocol',
@@ -111,6 +111,11 @@ function TBinaryProtocol:writeI32(i32)
   self.trans:write(buff)
 end
 
+function TBinaryProtocol:writeUI32(i32)
+  local buff = libluabpack.bpack('I', i32)
+  self.trans:write(buff)
+end
+
 function TBinaryProtocol:writeI64(i64)
   local buff = libluabpack.bpack('l', i64)
   self.trans:write(buff)
@@ -125,6 +130,13 @@ function TBinaryProtocol:writeString(str)
   -- Should be utf-8
   self:writeI32(string.len(str))
   self.trans:write(str)
+end
+
+function TBinaryProtocol:writeUuid(uuid)
+  self:writeUI32(uuid.two)
+  self:writeUI32(uuid.three)
+  self:writeUI32(uuid.zero)
+  self:writeUI32(uuid.one)
 end
 
 function TBinaryProtocol:readMessageBegin()
@@ -226,6 +238,12 @@ function TBinaryProtocol:readI32()
   return val
 end
 
+function TBinaryProtocol:readUI32()
+  local buff = self.trans:readAll(4)
+  local val = libluabpack.bunpack('I', buff)
+  return val
+end
+
 function TBinaryProtocol:readI64()
   local buff = self.trans:readAll(8)
   local val = libluabpack.bunpack('l', buff)
@@ -242,6 +260,19 @@ function TBinaryProtocol:readString()
   local len = self:readI32()
   local str = self.trans:readAll(len)
   return str
+end
+
+function TBinaryProtocol:readUuid()
+  local a = self:readUI32()
+  local b = self:readUI32()
+  local c = self:readUI32()
+  local d = self:readUI32()
+  return TUUID:new {
+    zero = c,
+    one = d,
+    two = a,
+    three = b
+  }
 end
 
 TBinaryProtocolFactory = TProtocolFactory:new{

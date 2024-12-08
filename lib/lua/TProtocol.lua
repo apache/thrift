@@ -86,6 +86,7 @@ function TProtocolBase:writeI32(i32) end
 function TProtocolBase:writeI64(i64) end
 function TProtocolBase:writeDouble(dub) end
 function TProtocolBase:writeString(str) end
+function TProtocolBase:writeUuid(uuid) end
 function TProtocolBase:readMessageBegin() end
 function TProtocolBase:readMessageEnd() end
 function TProtocolBase:readStructBegin() end
@@ -105,6 +106,7 @@ function TProtocolBase:readI32() end
 function TProtocolBase:readI64() end
 function TProtocolBase:readDouble() end
 function TProtocolBase:readString() end
+function TProtocolBase:readUuid() end
 
 function TProtocolBase:skip(ttype)
   if ttype == TType.BOOL then
@@ -151,6 +153,8 @@ function TProtocolBase:skip(ttype)
       self:skip(ettype)
     end
     self:readListEnd()
+  elseif ttype == TType.UUID then
+    self:readUuid()
   else
     terror(TProtocolException:new{
       message = 'Invalid data'
