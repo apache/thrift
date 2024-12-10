@@ -172,10 +172,6 @@ public:
                                           std::string cls_prefix,
                                           t_struct* tstruct,
                                           bool is_exception);
-  void generate_delphi_create_exception_impl(ostream& out,
-                                             string cls_prefix,
-                                             t_struct* tstruct,
-                                             bool is_exception);
 
   bool is_deprecated(std::map<std::string, std::vector<std::string>>& annotations);
   std::string render_deprecation_attribute(std::map<std::string, std::vector<std::string>>& annotations, std::string prefix, std::string postfix);
@@ -1381,6 +1377,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
                                                      t_struct* tstruct,
                                                      bool is_result,
                                                      bool is_const_class) {
+  (void)is_result;
 
   string cls_nm = type_name(tstruct, true, false);
 
@@ -1580,8 +1577,6 @@ void t_delphi_generator::generate_delphi_exception_impl(ostream& out,
   generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, true);
   generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, true);
   generate_delphi_struct_tostring_impl(out, cls_prefix, tstruct, true);
-
-  generate_delphi_create_exception_impl(out, cls_prefix, tstruct, true);
 }
 
 void t_delphi_generator::print_delphi_struct_type_factory_func(ostream& out, t_struct* tstruct) {
@@ -2990,7 +2985,6 @@ void t_delphi_generator::generate_delphi_property(ostream& out,
   (void)isPublic;
 
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
   generate_delphi_doc(out, tfield);
   indent(out) << "property " << prop_name(tfield, struct_is_xception) << ": "
               << type_name(ftype, false, true/*, false, true*/)
@@ -3188,7 +3182,6 @@ string t_delphi_generator::declare_field(t_field* tfield,
                                          std::string prefix,
                                          bool is_xception_class) {
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   string result = prop_name(tfield, is_xception_class, prefix) + ": "
                   + type_name(ftype, false, true) + ";";
@@ -3395,7 +3388,6 @@ void t_delphi_generator::generate_delphi_property_writer_definition(ostream& out
                                                                     t_field* tfield,
                                                                     bool is_xception_class) {
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   indent(out) << "procedure " << prop_name(tfield, is_xception_class, "Set")
               << "( const Value: " << type_name(ftype, false, true/*, false, true*/) << ");"
@@ -3407,7 +3399,6 @@ void t_delphi_generator::generate_delphi_property_reader_definition(ostream& out
                                                                     t_field* tfield,
                                                                     bool is_xception_class) {
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   indent(out) << "function " << prop_name(tfield, is_xception_class, "Get") << ": "
               << type_name(ftype, false, true/*, false*/) << ";" 
@@ -3418,6 +3409,7 @@ void t_delphi_generator::generate_delphi_property_reader_definition(ostream& out
 void t_delphi_generator::generate_delphi_isset_reader_writer_definition(ostream& out,
                                                                  t_field* tfield,
                                                                  bool is_xception) {
+  (void)is_xception;
   indent(out) << "function " << prop_name(tfield, false,"Get__isset_") << ": System.Boolean;" << '\n';
   indent(out) << "procedure " << prop_name(tfield, false, "Set__isset_") << "( const value : System.Boolean);" << '\n';
 }
@@ -3436,7 +3428,6 @@ void t_delphi_generator::generate_delphi_clear_union_value(ostream& out,
   (void)is_union;
 
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   indent_impl(out) << "if " << prop_name(tfield, is_xception_class,"F__isset_") << " then begin" << '\n';
   indent_up_impl();
@@ -3459,7 +3450,6 @@ void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out,
   (void)type;
 
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   indent_impl(out) << "procedure " << cls_prefix << name << "."
                    << prop_name(tfield, is_xception_class,"Set")
@@ -3493,7 +3483,6 @@ void t_delphi_generator::generate_delphi_property_reader_impl(ostream& out,
   (void)type;
 
   t_type* ftype = tfield->get_type();
-  bool is_xception = ftype->is_xception();
 
   indent_impl(out) << "function " << cls_prefix << name << "."
                    << prop_name(tfield, is_xception_class,"Get") << ": "
@@ -3545,15 +3534,6 @@ void t_delphi_generator::generate_delphi_isset_reader_writer_impl(ostream& out,
   indent_impl(out) << "end;" << '\n' << '\n';
 }
 
-void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out,
-                                                               string cls_prefix,
-                                                               t_struct* tstruct,
-                                                               bool is_exception) {
-  (void)cls_prefix;
-
-  string exception_cls_nm = type_name(tstruct, true, true);
-  string cls_nm = type_name(tstruct, true, false/*, is_exception, is_exception*/);
-}
 
 void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
                                                             string cls_prefix,
