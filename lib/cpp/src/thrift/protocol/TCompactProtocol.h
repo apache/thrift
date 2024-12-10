@@ -167,7 +167,14 @@ public:
   uint32_t writeListEnd() { return 0; }
   uint32_t writeSetEnd() { return 0; }
   uint32_t writeFieldEnd() { return 0; }
+private:
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t writeVarint64NoneBMI2(uint64_t n);
 
+#if defined(__BMI2__) && defined(__LZCNT__)
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t writeVarint64BMI2(uint64_t n);
+#endif
 protected:
   int32_t writeFieldBeginInternal(const char* name,
                                   const TType fieldType,
@@ -222,6 +229,19 @@ public:
   uint32_t readMapEnd() { return 0; }
   uint32_t readListEnd() { return 0; }
   uint32_t readSetEnd() { return 0; }
+
+private:
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t readVarint64FastPathNoneAVX(const uint8_t* buf,const std::size_t bufsz,int64_t& i64);
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t readVarint64SlowPathNoneAVX(uint8_t* buf,const std::size_t bufsz,int64_t& i64);
+  #if defined(__SSE3__) && defined(__AVX512BW__) && defined(__AVX512VL__) && \
+  defined(__BMI2__) && defined(__BMI__)
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t readVarint64FastPathAVX(const uint8_t* buf,const std::size_t bufsz,int64_t& i64);
+  template<bool needConsume=true>
+  inline __attribute__((always_inline)) uint32_t readVarint64SlowPathAVX(uint8_t* buf,const std::size_t bufsz,int64_t& i64);
+  #endif
 
 protected:
   uint32_t readVarint32(int32_t& i32);
