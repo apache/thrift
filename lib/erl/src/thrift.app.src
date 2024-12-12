@@ -21,8 +21,8 @@
     % A quick description of the application.
     {description, "Thrift bindings"},
 
-  % The version of the applicaton
-  {vsn, "0.22.0"},
+    % The version of the applicaton
+    {vsn, "0.22.0"},
 
     % All modules used by the application.
     {modules, []},
