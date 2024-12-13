@@ -249,7 +249,7 @@ The short form should be used when the length is in the range 0 - 14 (inclusive)
 
 The following element-types are used (see note 1 below):
 
-* `BOOL`, encoded as `1` or '2' (see note 2 below)
+* `BOOL`, encoded as `1` or `2` (see note 2 below)
 * `I8`, encoded as `3`
 * `I16`, encoded as `4`
 * `I32`, encoded as `5`
@@ -266,8 +266,8 @@ The following element-types are used (see note 1 below):
 1. Although field-types and element-types lists are currently very similar, there is _no guarantee_ that this will
 remain true after new types are added.
 2. For historical and compatibility reasons, a reader should be capable to deal with *both* cases. 
-The only valid value in the original spec was '2', but due to an widespread implementation bug the defacto 
-standard across large parts of the library became '1' instead. As a result, both values are now allowed.
+The only valid value in the original spec was `2`, but due to an widespread implementation bug the defacto 
+standard across large parts of the library became `1` instead. As a result, both values are now allowed.
 
 The maximum list/set size is configurable. By default there is no limit (meaning the limit is the maximum int32 value:
 2147483647).
