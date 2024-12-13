@@ -112,7 +112,7 @@ early implementation bug that finally became the de-facto standard.
 
 Booleans are encoded differently depending on whether it is a field value (in a struct) or an element value (in a set,
 list or map). Field values are encoded directly in the field header. Element values of type `bool` are sent as an
-`int8`; true as `1` and false as `0`.
+`int8`; true as `1` and false as `2`.
 
 ### Universal unique identifier encoding
 
@@ -249,7 +249,7 @@ The short form should be used when the length is in the range 0 - 14 (inclusive)
 
 The following element-types are used (see note below):
 
-* `BOOL`, encoded as `2`
+* `BOOL`, encoded as `1`
 * `I8`, encoded as `3`
 * `I16`, encoded as `4`
 * `I32`, encoded as `5`
