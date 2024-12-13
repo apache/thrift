@@ -112,7 +112,7 @@ early implementation bug that finally became the de-facto standard.
 
 Booleans are encoded differently depending on whether it is a field value (in a struct) or an element value (in a set,
 list or map). Field values are encoded directly in the field header. Element values of type `bool` are sent as an
-`int8`; true as `1` and false as `0`.
+`int8`; true as `1` and false as `2`.
 
 ### Universal unique identifier encoding
 
@@ -247,9 +247,9 @@ Where:
 
 The short form should be used when the length is in the range 0 - 14 (inclusive).
 
-The following element-types are used (see note below):
+The following element-types are used (see note 1 below):
 
-* `BOOL`, encoded as `2`
+* `BOOL`, encoded as `1` or '2' (see note 2 below)
 * `I8`, encoded as `3`
 * `I16`, encoded as `4`
 * `I32`, encoded as `5`
@@ -262,8 +262,12 @@ The following element-types are used (see note below):
 * `STRUCT`, used for structs and union fields, encoded as `12`
 * `UUID`, encoded as `13`
 
-*Note*: Although field-types and element-types lists are currently very similar, there is _no guarantee_ that this will
+*Note*: 
+1. Although field-types and element-types lists are currently very similar, there is _no guarantee_ that this will
 remain true after new types are added.
+2. For historical and compatibility reasons, a reader should be capable to deal with *both* cases. 
+The only valid value in the original spec was '2', but due to an widespread implementation bug the defacto 
+standard across large parts of the library became '1' instead. As a result, both values are now allowed.
 
 The maximum list/set size is configurable. By default there is no limit (meaning the limit is the maximum int32 value:
 2147483647).
