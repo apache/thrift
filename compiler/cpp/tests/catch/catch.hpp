@@ -6338,7 +6338,7 @@ namespace Catch {
 #endif
 
 #ifdef __AFXDLL
-#include <AfxWin.h>
+#include <afxwin.h>
 #else
 #include <windows.h>
 #endif
