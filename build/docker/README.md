@@ -196,6 +196,6 @@ Last updated: March 5, 2024
 | python2   | 2.7.18        |               |       |
 | python3   | 3.8.10        | 3.10.12       |       |
 | ruby      | 2.7.0p0       | 3.0.2p107     |       |
-| rust      | 1.65.0        | 1.65.0        |       |
+| rust      | 1.81.0        | 1.81.0        |       |
 | smalltalk |               |               | Not in CI |
 | swift     | 5.7           | 5.7           |       |
