@@ -875,11 +875,13 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex TSSLSocketFactory::mutex_;
 bool TSSLSocketFactory::manualOpenSSLInitialization_ = false;
+bool TSSLSocketFactory::didWeInitializeOpenSSL_ = false;
 
 TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
     if (!manualOpenSSLInitialization_) {
+      didWeInitializeOpenSSL_ = true;
       initializeOpenSSL();
     }
     randomize();
@@ -892,8 +894,9 @@ TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
   ctx_.reset();
   count_--;
-  if (count_ == 0 && !manualOpenSSLInitialization_) {
+  if (count_ == 0 && didWeInitializeOpenSSL_) {
     cleanupOpenSSL();
+    didWeInitializeOpenSSL_ = false;
   }
 }
 

@@ -31,7 +31,7 @@
 namespace apache {
 namespace thrift {
 
-THRIFT_EXPORT TOutput GlobalOutput;
+/*THRIFT_EXPORT*/ TOutput GlobalOutput;   // if you need this exported, build your own wrapper lib around and export it yourself
 
 TOutput::TOutput() : f_(&errorTimeWrapper) {}
 
