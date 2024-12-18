@@ -20,7 +20,7 @@
 #ifndef _THRIFT_OUTPUT_H_
 #define _THRIFT_OUTPUT_H_ 1
 
-#include <thrift/thrift_export.h>
+//#include <thrift/thrift_export.h>
 
 namespace apache {
 namespace thrift {

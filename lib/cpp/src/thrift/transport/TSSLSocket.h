@@ -327,7 +327,8 @@ private:
   std::shared_ptr<AccessManager> access_;
   static concurrency::Mutex mutex_;
   static uint64_t count_;
-  THRIFT_EXPORT static bool manualOpenSSLInitialization_;
+  /*THRIFT_EXPORT*/ static bool manualOpenSSLInitialization_;     // questionable to export a private member
+  static bool didWeInitializeOpenSSL_;  // in that case we also perform de-init
   void setup(std::shared_ptr<TSSLSocket> ssl);
   static int passwordCallback(char* password, int size, int, void* data);
 };
