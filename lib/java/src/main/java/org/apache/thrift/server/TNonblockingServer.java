@@ -113,6 +113,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
    * need to be read.
    */
   protected class SelectAcceptThread extends AbstractSelectThread {
+    private static final String SELECT_THREAD_NAME_FORMAT = "thrift-select-thread";
 
     // The server transport on which new client transports will be accepted
     private final TNonblockingServerTransport serverTransport;
@@ -122,6 +123,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
         throws IOException {
       this.serverTransport = serverTransport;
       serverTransport.registerSelector(selector);
+      setName(SELECT_THREAD_NAME_FORMAT);
     }
 
     public boolean isStopped() {
