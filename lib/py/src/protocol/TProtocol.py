@@ -261,11 +261,6 @@ class TProtocolBase(object):
                 raise TProtocolException(type=TProtocolException.INVALID_DATA,
                                          message='Invalid binary field type %d' % ttype)
             return ('readBinary', 'writeBinary', False)
-        if sys.version_info[0] == 2 and spec == 'UTF8':
-            if ttype != TType.STRING:
-                raise TProtocolException(type=TProtocolException.INVALID_DATA,
-                                         message='Invalid string field type %d' % ttype)
-            return ('readUtf8', 'writeUtf8', False)
         return self._TTYPE_HANDLERS[ttype] if ttype < len(self._TTYPE_HANDLERS) else (None, None, False)
 
     def _read_by_ttype(self, ttype, spec, espec):
