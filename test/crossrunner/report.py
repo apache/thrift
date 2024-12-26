@@ -17,7 +17,6 @@
 # under the License.
 #
 
-from __future__ import print_function
 import datetime
 import json
 import multiprocessing
@@ -317,10 +316,7 @@ class SummaryReporter(TestReporter):
             self._print_bar()
 
     def _http_server_command(self, port):
-        if sys.version_info[0] < 3:
-            return 'python -m SimpleHTTPServer %d' % port
-        else:
-            return 'python -m http.server %d' % port
+        return 'python -m http.server %d' % port
 
     def _print_footer(self):
         fail_count = len(self._expected_failure) + len(self._unexpected_failure)
