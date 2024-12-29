@@ -1629,7 +1629,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
     }
 
     if (optionals > 0) {
-      std::string output_string = "private static final _Fields optionals[] = {";
+      std::string output_string = "private static final _Fields[] optionals = {";
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
           output_string = output_string + "_Fields." + constant_name((*m_iter)->get_name()) + ",";
