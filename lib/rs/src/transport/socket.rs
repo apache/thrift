@@ -52,6 +52,7 @@ use crate::{new_transport_error, TransportErrorKind};
 /// use thrift::transport::TTcpChannel;
 ///
 /// let stream = TcpStream::connect("127.0.0.1:9189").unwrap();
+/// stream.set_nodelay(true).unwrap();
 ///
 /// // no need to call c.open() since we've already connected above
 /// let mut c = TTcpChannel::with_stream(stream);
@@ -94,6 +95,7 @@ impl TTcpChannel {
         } else {
             match TcpStream::connect(&remote_address) {
                 Ok(s) => {
+                    s.set_nodelay(true)?;
                     self.stream = Some(s);
                     Ok(())
                 }
