@@ -1701,7 +1701,7 @@ void t_go_generator::generate_go_struct_reader(ostream& out,
       out << indent() << "if !isset" << field_name << "{" << '\n';
       indent_up();
       out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
-                         "fmt.Errorf(\"Required field " << field_name << " is not set\"));" << '\n';
+                      << "fmt.Errorf(\"Required field " << field_name << " is not set\"))" << '\n';
       indent_down();
       out << indent() << "}" << '\n';
     }
@@ -1748,7 +1748,8 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
     std::string tstruct_name(publicize(tstruct->get_name()));
     out << indent() << "if c := p.CountSetFields" << tstruct_name << "(); c != 1 {" << '\n';
     indent_up();
-    out << indent() << "return fmt.Errorf(\"%T write union: exactly one field must be set (%d set)\", p, c)" << '\n';
+    out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
+                    << "fmt.Errorf(\"%T write union: exactly one field must be set (%d set)\", p, c))" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
   }
@@ -3719,10 +3720,9 @@ void t_go_generator::generate_serialize_container(ostream& out,
     indent_down();
     out << indent() << "}(" << wrapped_prefix << "[i], " << wrapped_prefix << "[j]) {" << '\n';
     indent_up();
-    out << indent()
-        << "return thrift.PrependError(\"\", fmt.Errorf(\"%T error writing set field: slice is not "
-           "unique\", "
-        << wrapped_prefix << "))" << '\n';
+    out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
+                    << "fmt.Errorf(\"%T error writing set field: slice is not " "unique\", "
+                    << wrapped_prefix << "))" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
     indent_down();
