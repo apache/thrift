@@ -749,8 +749,8 @@ void t_rs_generator::render_const_value(t_type* ttype,
   } else if (ttype->is_enum()) {
     f_gen_ << "{" << '\n';
     indent_up();
-    f_gen_ << indent() << to_rust_type(ttype) << "::try_from(" << tvalue->get_integer()
-           << ").expect(\"expecting valid const value\")" << '\n';
+    f_gen_ << indent() << to_rust_type(ttype) << "::from(" << tvalue->get_integer()
+           << ")" << '\n';
     indent_down();
     f_gen_ << indent() << "}";
   } else if (ttype->is_struct() || ttype->is_xception()) {

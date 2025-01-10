@@ -400,7 +400,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-24.04
     env:
-      TOOLCHAIN_VERSION: 1.65.0
+      TOOLCHAIN_VERSION: 1.83.0
     steps:
       - uses: actions/checkout@v4
 
