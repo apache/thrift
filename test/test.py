@@ -27,7 +27,6 @@
 # subprocess management that are needed for reliability.
 #
 
-from __future__ import print_function
 from itertools import chain
 import json
 import logging

@@ -278,9 +278,6 @@ class AbstractTest(unittest.TestCase):
         self.assertTrue(len(rep) > 0)
 
     def testIntegerLimits(self):
-        if (sys.version_info[0] == 2 and sys.version_info[1] <= 6):
-            print('Skipping testIntegerLimits for Python 2.6')
-            return
         bad_values = [CompactProtoTestStruct(a_byte=128), CompactProtoTestStruct(a_byte=-129),
                       CompactProtoTestStruct(a_i16=32768), CompactProtoTestStruct(a_i16=-32769),
                       CompactProtoTestStruct(a_i32=2147483648), CompactProtoTestStruct(a_i32=-2147483649),

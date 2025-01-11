@@ -17,30 +17,13 @@
 # under the License.
 #
 
-import sys
+from io import BytesIO as BufferIO  # noqa
 
-if sys.version_info[0] == 2:
+def binary_to_str(bin_val):
+    return bin_val.decode('utf8')
 
-    from cStringIO import StringIO as BufferIO
+def str_to_binary(str_val):
+    return bytes(str_val, 'utf8')
 
-    def binary_to_str(bin_val):
-        return bin_val
-
-    def str_to_binary(str_val):
-        return str_val
-
-    def byte_index(bytes_val, i):
-        return ord(bytes_val[i])
-
-else:
-
-    from io import BytesIO as BufferIO  # noqa
-
-    def binary_to_str(bin_val):
-        return bin_val.decode('utf8')
-
-    def str_to_binary(str_val):
-        return bytes(str_val, 'utf8')
-
-    def byte_index(bytes_val, i):
-        return bytes_val[i]
+def byte_index(bytes_val, i):
+    return bytes_val[i]

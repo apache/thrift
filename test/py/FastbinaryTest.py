@@ -25,8 +25,6 @@ PYTHONPATH=./gen-py:../../lib/py/build/lib... ./FastbinaryTest.py
 
 # TODO(dreiss): Test error cases.  Check for memory leaks.
 
-from __future__ import print_function
-
 import math
 import os
 import sys
@@ -68,15 +66,11 @@ ooe2.integer32 = 32
 ooe2.integer64 = 64
 ooe2.double_precision = (math.sqrt(5) + 1) / 2
 ooe2.some_characters = ":R (me going \"rrrr\")"
-ooe2.zomg_unicode = u"\xd3\x80\xe2\x85\xae\xce\x9d\x20"\
-                    u"\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe"\
-                    u"\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"\
-                    u"\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba"\
-                    u"\xc7\x83\xe2\x80\xbc"
-
-if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
-    ooe1.zomg_unicode = ooe1.zomg_unicode.encode('utf8')
-    ooe2.zomg_unicode = ooe2.zomg_unicode.encode('utf8')
+ooe2.zomg_unicode = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"\
+                    "\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe"\
+                    "\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"\
+                    "\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba"\
+                    "\xc7\x83\xe2\x80\xbc"
 
 hm = HolyMoley(**{"big": [], "contain": set(), "bonks": {}})
 hm.big.append(ooe1)
@@ -86,10 +80,7 @@ hm.big[1].a_bite = 0x22
 
 hm.contain.add(("and a one", "and a two"))
 hm.contain.add(("then a one, two", "three!", "FOUR!"))
-if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
-    hm.contain.add((u"\xd7\n\a\t".encode('utf8'),))
-else:
-    hm.contain.add((u"\xd7\n\a\t",))
+hm.contain.add(("\xd7\n\a\t",))
 hm.contain.add(())
 
 hm.bonks["nothing"] = []

@@ -17,7 +17,6 @@
 # under the License.
 #
 
-from __future__ import absolute_import
 import logging
 import socket
 import struct
@@ -34,7 +33,7 @@ __all__ = ['TTornadoServer', 'TTornadoStreamTransport']
 logger = logging.getLogger(__name__)
 
 
-class _Lock(object):
+class _Lock:
     def __init__(self):
         self._waiters = deque()
 

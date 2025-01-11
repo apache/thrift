@@ -106,9 +106,6 @@ class AbstractTest(unittest.TestCase):
         Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
         Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
         Bân-lâm-gú, 粵語"""
-        if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
-            s1 = s1.encode('utf8')
-            s2 = s2.encode('utf8')
         self.assertEqual(self.client.testString(s1), s1)
         self.assertEqual(self.client.testString(s2), s2)
 

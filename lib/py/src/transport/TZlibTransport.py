@@ -22,13 +22,12 @@ class, using the python standard library zlib module to implement
 data compression.
 """
 
-from __future__ import division
 import zlib
 from .TTransport import TTransportBase, CReadableTransport
 from ..compat import BufferIO
 
 
-class TZlibTransportFactory(object):
+class TZlibTransportFactory:
     """Factory transport that builds zlib compressed transports.
 
     This factory caches the last single client/transport that it was passed
