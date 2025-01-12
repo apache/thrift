@@ -519,6 +519,32 @@ jobs:
       - name: Run make check for python
         run: make -C lib/py check
 
+  lib-nodejs:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-nodejs/with-nodejs/')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run tests
+        run: make -C lib/nodejs check
+
   cross-test:
     needs:
       - lib-java-kotlin
