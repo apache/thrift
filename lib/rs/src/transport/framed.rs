@@ -97,7 +97,7 @@ where
             self.buf.resize(buf_capacity, 0);
 
             self.chan.read_exact(&mut self.buf[..message_size])?;
-            self.cap = message_size as usize;
+            self.cap = message_size;
             self.pos = 0;
         }
 
