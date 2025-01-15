@@ -531,7 +531,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-nodejs/with-nodejs/')
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
 
       - uses: actions/download-artifact@v4
         with:
@@ -543,8 +543,11 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run tests
+      - name: Run js tests
         run: make -C lib/nodejs check
+
+      - name: Run ts tests
+        run: make -C lib/nodets check
 
   cross-test:
     needs:
