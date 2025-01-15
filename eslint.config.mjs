@@ -6,12 +6,12 @@ export default [
   {
     ignores: [
       // TODO: Use eslint on js lib and generated code
-  
+
       // Ignore lib/js for now, which uses jshint currently
       "lib/js/*",
       // Ignore all generated code for now
       "**/gen-*/",
-  
+
       // Don't lint nested node_modules
       "**/node_modules/",
     ],

@@ -25,17 +25,17 @@ var SharedStruct = require("./gen-nodejs/shared_types").SharedStruct;
 var data = {};
 
 var server = thrift.createServer(Calculator, {
-  ping: function(result) {
+  ping: function (result) {
     console.log("ping()");
     result(null);
   },
 
-  add: function(n1, n2, result) {
+  add: function (n1, n2, result) {
     console.log("add(", n1, ",", n2, ")");
     result(null, n1 + n2);
   },
 
-  calculate: function(logid, work, result) {
+  calculate: function (logid, work, result) {
     console.log("calculate(", logid, ",", work, ")");
 
     var val = 0;
@@ -49,7 +49,7 @@ var server = thrift.createServer(Calculator, {
       if (work.num2 === 0) {
         var x = new ttypes.InvalidOperation();
         x.whatOp = work.op;
-        x.why = 'Cannot divide by 0';
+        x.why = "Cannot divide by 0";
         result(x);
         return;
       }
@@ -57,28 +57,27 @@ var server = thrift.createServer(Calculator, {
     } else {
       var x = new ttypes.InvalidOperation();
       x.whatOp = work.op;
-      x.why = 'Invalid operation';
+      x.why = "Invalid operation";
       result(x);
       return;
     }
 
     var entry = new SharedStruct();
     entry.key = logid;
-    entry.value = ""+val;
+    entry.value = "" + val;
     data[logid] = entry;
 
     result(null, val);
   },
 
-  getStruct: function(key, result) {
+  getStruct: function (key, result) {
     console.log("getStruct(", key, ")");
     result(null, data[key]);
   },
 
-  zip: function() {
+  zip: function () {
     console.log("zip()");
-  }
-
+  },
 });
 
 server.listen(9090);
