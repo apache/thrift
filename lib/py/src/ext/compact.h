@@ -49,7 +49,8 @@ public:
       double f;
       int64_t t;
     } transfer;
-    transfer.f = htolell(dub);
+    transfer.f = dub;
+    transfer.t = htolell(transfer.t);
     writeBuffer(reinterpret_cast<char*>(&transfer.t), sizeof(int64_t));
   }
 
