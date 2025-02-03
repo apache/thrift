@@ -34,7 +34,7 @@ public:
 
   bool is_list() const override { return true; }
 
-  void validate() const {
+  void validate() const override {
 #ifndef ALLOW_EXCEPTIONS_AS_TYPE
     if( get_elem_type()->get_true_type()->is_xception()) {
       failure("exception type \"%s\" cannot be used inside a list", get_elem_type()->get_name().c_str());
