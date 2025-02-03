@@ -83,7 +83,7 @@ public:
 
   std::map<std::string, std::vector<std::string>> annotations_;
 
-  void validate() const {
+  void validate() const override {
     get_returntype()->validate();
 
 #ifndef ALLOW_EXCEPTIONS_AS_TYPE
