@@ -680,7 +680,7 @@ end;
 
 procedure TProtocolImpl.Reset;
 begin
-  FTrans.ResetConsumedMessageSize;
+  FTrans.ResetMessageSizeAndConsumedBytes;
 end;
 
 function TProtocolImpl.ReadString: string;

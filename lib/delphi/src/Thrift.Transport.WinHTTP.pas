@@ -334,7 +334,7 @@ begin
   end;
 
   // we're about to receive a new message, so reset everyting
-  ResetConsumedMessageSize(-1);
+  ResetMessageSizeAndConsumedBytes(-1);
   FInputStream := THTTPResponseStream.Create( http);
   if http.QueryTotalResponseSize( dwSize)  // FALSE indicates "no info available"
   then UpdateKnownMessageSize( dwSize);

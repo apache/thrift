@@ -256,7 +256,7 @@ begin
     xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
     FInputStream := nil;
     FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
-    ResetConsumedMessageSize;
+    ResetMessageSizeAndConsumedBytes;
     UpdateKnownMessageSize( FInputStream.Size);
   finally
     ms.Free;
