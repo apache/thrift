@@ -191,10 +191,10 @@ namespace Thrift.Transport
             IsDisposed = true;
         }
 
-        public override void ResetConsumedMessageSize(long newSize = -1)
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
         {
-            base.ResetConsumedMessageSize(newSize);
-            ReadBuffer.ResetConsumedMessageSize(newSize);
+            base.ResetMessageSizeAndConsumedBytes(newSize);
+            ReadBuffer.ResetMessageSizeAndConsumedBytes(newSize);
         }
     }
 }

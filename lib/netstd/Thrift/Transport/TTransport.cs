@@ -39,7 +39,7 @@ namespace Thrift.Transport
         public abstract TConfiguration Configuration { get; }
         public abstract void UpdateKnownMessageSize(long size);
         public abstract void CheckReadBytesAvailable(long numBytes);
-        public abstract void ResetConsumedMessageSize(long newSize = -1);
+        public abstract void ResetMessageSizeAndConsumedBytes(long newSize = -1);
         public void Dispose()
         {
             Dispose(true);

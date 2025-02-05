@@ -424,7 +424,7 @@ namespace Thrift.Transport.Server
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
                 await PipeStream.FlushAsync(cancellationToken);
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes();
             }
 
             protected override void Dispose(bool disposing)
