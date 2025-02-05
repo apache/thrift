@@ -255,7 +255,7 @@ namespace Thrift.Protocol
         public override Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Transport.ResetConsumedMessageSize();
+            Transport.ResetMessageSizeAndConsumedBytes();
             return Task.CompletedTask;
         }
 
