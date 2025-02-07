@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package;
+package tests;
 
 import org.apache.thrift.*;
 import org.apache.thrift.protocol.*;

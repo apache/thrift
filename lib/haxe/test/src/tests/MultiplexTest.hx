@@ -17,7 +17,8 @@
  * under the License.
  */
 
-package;
+package tests;
+import tests.TestBase;
 
 #if ! (flash || html5 || js)
 
@@ -86,7 +87,7 @@ class AggrServiceHandler implements Aggr_service
 
 
 
-class MultiplexTest extends TestBase {
+class MultiplexTest extends tests.TestBase {
 
     private inline static var NAME_BENCHMARKSERVICE : String = "BenchmarkService";
     private inline static var NAME_AGGR             : String  = "Aggr";
@@ -128,11 +129,11 @@ class MultiplexTest extends TestBase {
        }
         catch( e : TApplicationException)
         {
-            TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
+            tests.TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
         }
         catch( e : TException)
         {
-            TestBase.Expect(false,'$e');
+            tests.TestBase.Expect(false,'$e');
         }
     }
 
@@ -165,7 +166,7 @@ class MultiplexTest extends TestBase {
             trace('calling aggr ...');
             var i = 1;
             var values = aggr.getValues();
-            TestBase.Expect(values != null,'aggr.getValues() == null');
+            tests.TestBase.Expect(values != null,'aggr.getValues() == null');
             for( k in values)
             {
                 trace('fib($i) = $k');
@@ -178,11 +179,11 @@ class MultiplexTest extends TestBase {
         }
         catch( e : TApplicationException)
         {
-            TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
+            tests.TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
         }
         catch( e : TException)
         {
-            TestBase.Expect(false,'$e');
+            tests.TestBase.Expect(false,'$e');
         }
     }
 
@@ -212,11 +213,11 @@ class MultiplexTest extends TestBase {
         }
         catch( e : TApplicationException)
         {
-            TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
+            tests.TestBase.Expect(false,'${e.errorID} ${e.errorMsg}');
         }
         catch( e : TException)
         {
-            TestBase.Expect(false,'$e');
+            tests.TestBase.Expect(false,'$e');
         }
     }
 

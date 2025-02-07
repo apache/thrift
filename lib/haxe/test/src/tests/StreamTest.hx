@@ -17,7 +17,8 @@
  * under the License.
  */
 
-package;
+package tests;
+import tests.TestBase;
 #if sys
 
 import haxe.Int64;
@@ -32,7 +33,7 @@ import org.apache.thrift.meta_data.*;
 import thrift.test.*;  // generated code
 
 
-class StreamTest extends TestBase {
+class StreamTest extends tests.TestBase {
 
 
     private inline static var tmpfile : String = "data.tmp";
@@ -82,10 +83,10 @@ class StreamTest extends TestBase {
             var read = ReadData();
             FileSystem.deleteFile(tmpfile);
 
-            TestBase.Expect( read.string_thing == written.string_thing, "string data");
-            TestBase.Expect( read.byte_thing == written.byte_thing, "byte data");
-            TestBase.Expect( read.i32_thing == written.i32_thing, "i32 data");
-            TestBase.Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
+            tests.TestBase.Expect( read.string_thing == written.string_thing, "string data");
+            tests.TestBase.Expect( read.byte_thing == written.byte_thing, "byte data");
+            tests.TestBase.Expect( read.i32_thing == written.i32_thing, "i32 data");
+            tests.TestBase.Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
 
         } catch(e:Dynamic) {
             FileSystem.deleteFile(tmpfile);
