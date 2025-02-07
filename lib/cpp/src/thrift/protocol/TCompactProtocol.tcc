@@ -701,6 +701,9 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
 
+  // Check against MaxMessageSize before alloc
+  trans_->checkReadBytesAvailable((uint32_t)size);
+
   // Use the heap here to prevent stack overflow for v. large strings
   if (size > string_buf_size_ || string_buf_ == nullptr) {
     void* new_string_buf = std::realloc(string_buf_, (uint32_t)size);
@@ -712,8 +715,6 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   }
   trans_->readAll(string_buf_, size);
   str.assign((char*)string_buf_, size);
-
-  trans_->checkReadBytesAvailable(rsize + (uint32_t)size);
 
   return rsize + (uint32_t)size;
 }
