@@ -168,30 +168,78 @@ BOOST_AUTO_TEST_CASE(test_tthriftbinaryprotocol_read_check_exception) {
 }
 
 BOOST_AUTO_TEST_CASE(test_tthriftcompactprotocol_read_check_exception) {
-  std::shared_ptr<TConfiguration> config (new TConfiguration(MAX_MESSAGE_SIZE));
+  // Set Max Message Size to 11 since all structs are 12B long
+  std::shared_ptr<TConfiguration> config (new TConfiguration(11));
   std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
   std::shared_ptr<TCompactProtocol> protocol(new TCompactProtocol(transport));
 
   uint32_t val = 0;
   TType elemType = apache::thrift::protocol::T_STOP;
   TType elemType1 = apache::thrift::protocol::T_STOP;
-  TList list(T_I32, 8);
+
+  // This list needs 12B
+  TList list(T_I32, 12);
   protocol->writeListBegin(list.elemType_, list.size_);
   protocol->writeListEnd();
   BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
   protocol->readListEnd();
 
-  TSet set(T_I32, 8);
+  // This set needs 12B
+  TSet set(T_I32, 12);
   protocol->writeSetBegin(set.elemType_, set.size_);
   protocol->writeSetEnd();
   BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException);
   protocol->readSetEnd();
 
-  TMap map(T_I32, T_I32, 8);
+
+  // This map needs 12B (2x elem)
+  TMap map(T_I32, T_I32, 6);
   protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
   protocol->writeMapEnd();
   BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
   protocol->readMapEnd();
+
+  // This string needs 12B (1 for size + str)
+  string eleven = "1234567890A";
+  protocol->writeString(eleven);
+  BOOST_CHECK_THROW(protocol->readString(eleven), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_tthriftcompactprotocol_read_check_pass) {
+  // Set Max Message Size to 12 to check the edge case
+  std::shared_ptr<TConfiguration> config (new TConfiguration(12));
+  std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
+  std::shared_ptr<TCompactProtocol> protocol(new TCompactProtocol(transport));
+
+  uint32_t val = 0;
+  TType elemType = apache::thrift::protocol::T_STOP;
+  TType elemType1 = apache::thrift::protocol::T_STOP;
+
+  // This list needs 12B
+  TList list(T_I32, 12);
+  protocol->writeListBegin(list.elemType_, list.size_);
+  protocol->writeListEnd();
+  BOOST_CHECK_NO_THROW(protocol->readListBegin(elemType, val));
+  protocol->readListEnd();
+
+  // This set needs 12B
+  TSet set(T_I32, 12);
+  protocol->writeSetBegin(set.elemType_, set.size_);
+  protocol->writeSetEnd();
+  BOOST_CHECK_NO_THROW(protocol->readSetBegin(elemType, val));
+  protocol->readSetEnd();
+
+  // This map needs 12B (2x elem)
+  TMap map(T_I32, T_I32, 6);
+  protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
+  protocol->writeMapEnd();
+  BOOST_CHECK_NO_THROW(protocol->readMapBegin(elemType, elemType1, val));
+  protocol->readMapEnd();
+
+  // This string needs 12B (1 for size + str)
+  string eleven = "1234567890A";
+  protocol->writeString(eleven);
+  BOOST_CHECK_NO_THROW(protocol->readString(eleven));
 }
 
 BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
