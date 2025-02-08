@@ -43,11 +43,11 @@
     "ws": "^5.2.3"
   },
   "devDependencies": {
-    "@types/node": "^10.12.6",
+    "@types/node": "^22.10.5",
     "@types/node-int64": "^0.4.29",
     "@types/q": "^1.5.1",
     "buffer-equals": "^1.0.4",
-    "commander": "^2.14.1",
+    "commander": "^13.0.0",
     "connect": "^3.6.6",
     "eslint": "^5.7.0",
     "eslint-config-prettier": "^3.1.0",
@@ -58,7 +58,7 @@
     "nyc": "^15.0.0",
     "prettier": "^1.14.3",
     "tape": "^4.9.0",
-    "typescript": "^3.1.6",
+    "typescript": "^5.7.2",
     "utf-8-validate": "^5.0.0"
   },
   "scripts": {
