@@ -23,6 +23,7 @@ using KellermanSoftware.CompareNetObjects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
+using Thrift.Transport;
 using Thrift.Transport.Client;
 
 #pragma warning disable IDE0063  // using
@@ -55,12 +56,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteMessageBeginAsync(expected, default);
                     await protocol.WriteMessageEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream.Seek(0, SeekOrigin.Begin);
 
@@ -89,12 +91,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteStructBeginAsync(expected, default);
                     await protocol.WriteStructEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -124,12 +127,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteFieldBeginAsync(expected, default);
                     await protocol.WriteFieldEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -157,12 +161,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteMapBeginAsync(expected, default);
                     await protocol.WriteMapEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -191,12 +196,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteListBeginAsync(expected, default);
                     await protocol.WriteListEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -224,12 +230,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteSetBeginAsync(expected, default);
                     await protocol.WriteSetEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -257,11 +264,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteBoolAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -288,11 +296,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteByteAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -319,11 +328,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI16Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -350,11 +360,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI32Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -381,11 +392,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI64Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -412,11 +424,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteDoubleAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -443,11 +456,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteStringAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -474,11 +488,12 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteBinaryAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
@@ -494,12 +509,14 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        private static Tuple<Stream, TProtocol> GetProtocolInstance(Type protocolType)
+        private record struct ProtocolTransportStack(Stream Stream, TTransport Transport, TProtocol Protocol);
+
+        private static ProtocolTransportStack GetProtocolInstance(Type protocolType)
         {
             var memoryStream = new MemoryStream();
             var streamClientTransport = new TStreamTransport(memoryStream, memoryStream,Configuration);
             if( Activator.CreateInstance(protocolType, streamClientTransport) is TProtocol protocol)
-                return new Tuple<Stream, TProtocol>(memoryStream, protocol);
+                return new ProtocolTransportStack(memoryStream, streamClientTransport, protocol);
             throw new Exception("Unexpected");
         }
     }
