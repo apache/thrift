@@ -315,6 +315,7 @@ jobs:
 #      caveat: net9 is (currently?) NOT installed, so manually again
       - name: Set up .NET SDK
         run: |
+          sudo add-apt-repository ppa:dotnet/backports
           sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
 #      end
 
