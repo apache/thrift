@@ -136,6 +136,7 @@ RUN apt-get install -y --no-install-recommends \
   dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
+RUN add-apt-repository ppa:dotnet/backports
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
   dotnet-sdk-9.0 \
