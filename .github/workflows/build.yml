@@ -135,8 +135,8 @@ jobs:
     strategy:
       matrix:
         go:
-          - '1.22'
           - '1.23'
+          - '1.24'
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -180,7 +180,7 @@ jobs:
         run: make -C test/go precross
 
       - name: Upload go precross artifacts
-        if: matrix.go == '1.23'
+        if: matrix.go == '1.24'
         uses: actions/upload-artifact@v4
         with:
           name: go-precross
