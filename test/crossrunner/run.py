@@ -28,7 +28,6 @@ import subprocess
 import sys
 import time
 
-from .compat import str_join
 from .report import ExecReporter, SummaryReporter
 from .test import TestEntry
 from .util import domain_socket_path
@@ -72,7 +71,7 @@ class ExecutionContext(object):
         return args
 
     def start(self):
-        joined = str_join(' ', self.cmd)
+        joined = ' '.join(self.cmd)
         self._log.debug('COMMAND: %s', joined)
         self._log.debug('WORKDIR: %s', self.cwd)
         self._log.debug('LOGFILE: %s', self.report.logpath)
