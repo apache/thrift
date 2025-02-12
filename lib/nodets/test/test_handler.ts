@@ -26,7 +26,6 @@ import Thrift = thrift.Thrift;
 import Q = require("q");
 import Int64 = require("node-int64");
 
-
 export class SyncThriftTestHandler {
   testVoid(): Q.IPromise<void> {
     //console.log('testVoid()');
@@ -35,9 +34,9 @@ export class SyncThriftTestHandler {
   testMapMap(hello: number) {
     //console.log('testMapMap(' + hello + ')');
 
-    var mapmap: {[key: number]: {[key: number]: number; }} = [];
-    var pos: {[key: number]: number; } = [];
-    var neg: {[key: number]: number; } = [];
+    var mapmap: { [key: number]: { [key: number]: number } } = [];
+    var pos: { [key: number]: number } = [];
+    var neg: { [key: number]: number } = [];
     for (var i = 1; i < 5; i++) {
       pos[i] = i;
       neg[-i] = -i;
@@ -47,53 +46,60 @@ export class SyncThriftTestHandler {
 
     return Q.resolve(mapmap);
   }
-  testInsanity(argument: ttypes.Insanity): Q.IPromise<{ [k: number]: any; }> {
-    const first_map: { [k: number]: any; } = [];
-    const second_map: { [k: number]: any; } = [];
-  
+  testInsanity(argument: ttypes.Insanity): Q.IPromise<{ [k: number]: any }> {
+    const first_map: { [k: number]: any } = [];
+    const second_map: { [k: number]: any } = [];
+
     first_map[ttypes.Numberz.TWO] = argument;
     first_map[ttypes.Numberz.THREE] = argument;
-  
+
     const looney = new ttypes.Insanity();
     second_map[ttypes.Numberz.SIX] = looney;
-  
-    const insane: { [k: number]: any; } = [];
+
+    const insane: { [k: number]: any } = [];
     insane[1] = first_map;
     insane[2] = second_map;
 
     return Q.resolve(insane);
   }
-  testMulti(arg0: any, arg1: number, arg2: Int64, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number) {
+  testMulti(
+    arg0: any,
+    arg1: number,
+    arg2: Int64,
+    arg3: { [k: number]: string },
+    arg4: ttypes.Numberz,
+    arg5: number,
+  ) {
     var hello = new ttypes.Xtruct();
-    hello.string_thing = 'Hello2';
+    hello.string_thing = "Hello2";
     hello.byte_thing = arg0;
     hello.i32_thing = arg1;
     hello.i64_thing = arg2;
     return Q.resolve(hello);
   }
   testException(arg: string): Q.IPromise<void> {
-    if (arg === 'Xception') {
+    if (arg === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
       x.message = arg;
       throw x;
-    } else if (arg === 'TException') {
+    } else if (arg === "TException") {
       throw new Thrift.TException(arg);
     } else {
       return Q.resolve();
     }
   }
   testMultiException(arg0: string, arg1: string) {
-    if (arg0 === ('Xception')) {
+    if (arg0 === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
-      x.message = 'This is an Xception';
+      x.message = "This is an Xception";
       throw x;
-    } else if (arg0 === ('Xception2')) {
+    } else if (arg0 === "Xception2") {
       var x2 = new ttypes.Xception2();
       x2.errorCode = 2002;
       x2.struct_thing = new ttypes.Xtruct();
-      x2.struct_thing.string_thing = 'This is an Xception2';
+      x2.struct_thing.string_thing = "This is an Xception2";
       throw x2;
     }
 
@@ -101,8 +107,7 @@ export class SyncThriftTestHandler {
     res.string_thing = arg1;
     return Q.resolve(res);
   }
-  testOneway(sleepFor: number) {
-  }
+  testOneway(sleepFor: number) {}
 
   testString(thing: string) {
     return Q.resolve(thing);
@@ -131,10 +136,10 @@ export class SyncThriftTestHandler {
   testNest(thing: ttypes.Xtruct2) {
     return Q.resolve(thing);
   }
-  testMap(thing: { [k: number]: number; }) {
+  testMap(thing: { [k: number]: number }) {
     return Q.resolve(thing);
   }
-  testStringMap(thing: { [k: string]: string; }) {
+  testStringMap(thing: { [k: string]: string }) {
     return Q.resolve(thing);
   }
   testSet(thing: number[]) {
@@ -161,13 +166,16 @@ export class AsyncThriftTestHandler {
     callback(undefined);
     return Q.resolve();
   }
-  testMapMap(hello: number,
-    callback: (err: any, result: { [k: number]: { [k: number]: number; }; }) => void):
-     Q.IPromise<{ [k: number]: { [k: number]: number; }; }> {
-
-    var mapmap: {[key: number]: {[key: number]: number; }} = [];
-    var pos: {[key: number]: number; } = [];
-    var neg: {[key: number]: number; } = [];
+  testMapMap(
+    hello: number,
+    callback: (
+      err: any,
+      result: { [k: number]: { [k: number]: number } },
+    ) => void,
+  ): Q.IPromise<{ [k: number]: { [k: number]: number } }> {
+    var mapmap: { [key: number]: { [key: number]: number } } = [];
+    var pos: { [key: number]: number } = [];
+    var neg: { [key: number]: number } = [];
     for (var i = 1; i < 5; i++) {
       pos[i] = i;
       neg[-i] = -i;
@@ -178,54 +186,69 @@ export class AsyncThriftTestHandler {
     callback(null, mapmap);
     return Q.resolve();
   }
-  testInsanity(argument: ttypes.Insanity, callback?: (err: any, result: { [k: number]: any; }) => void): Q.IPromise<{ [k: number]: any; }> {
-    const first_map: { [k: number]: any; } = [];
-    const second_map: { [k: number]: any; } = [];
-  
+  testInsanity(
+    argument: ttypes.Insanity,
+    callback?: (err: any, result: { [k: number]: any }) => void,
+  ): Q.IPromise<{ [k: number]: any }> {
+    const first_map: { [k: number]: any } = [];
+    const second_map: { [k: number]: any } = [];
+
     first_map[ttypes.Numberz.TWO] = argument;
     first_map[ttypes.Numberz.THREE] = argument;
-  
+
     const looney = new ttypes.Insanity();
     second_map[ttypes.Numberz.SIX] = looney;
-  
-    const insane: { [k: number]: any; } = [];
+
+    const insane: { [k: number]: any } = [];
     insane[1] = first_map;
     insane[2] = second_map;
 
-    if (callback !== undefined){
+    if (callback !== undefined) {
       callback(null, insane);
     }
     return Q.resolve();
   }
-  testMulti(arg0: any, arg1: number, arg2: Int64, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number, result: Function): Q.IPromise<ttypes.Xtruct> {
+  testMulti(
+    arg0: any,
+    arg1: number,
+    arg2: Int64,
+    arg3: { [k: number]: string },
+    arg4: ttypes.Numberz,
+    arg5: number,
+    result: Function,
+  ): Q.IPromise<ttypes.Xtruct> {
     var hello = this.syncHandler.testMulti(arg0, arg1, arg2, arg3, arg4, arg5);
-    hello.then(hello => result(null, hello));
+    hello.then((hello) => result(null, hello));
     return Q.resolve();
   }
   testException(arg: string, result: (err: any) => void): Q.IPromise<void> {
-    if (arg === 'Xception') {
+    if (arg === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
       x.message = arg;
       result(x);
-    } else if (arg === 'TException') {
+    } else if (arg === "TException") {
       result(new Thrift.TException(arg));
     } else {
       result(null);
     }
     return Q.resolve();
   }
-  testMultiException(arg0: string, arg1: string, result: (err: any, res?: ttypes.Xtruct) => void): Q.IPromise<ttypes.Xtruct> {
-    if (arg0 === ('Xception')) {
+  testMultiException(
+    arg0: string,
+    arg1: string,
+    result: (err: any, res?: ttypes.Xtruct) => void,
+  ): Q.IPromise<ttypes.Xtruct> {
+    if (arg0 === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
-      x.message = 'This is an Xception';
+      x.message = "This is an Xception";
       result(x);
-    } else if (arg0 === ('Xception2')) {
+    } else if (arg0 === "Xception2") {
       var x2 = new ttypes.Xception2();
       x2.errorCode = 2002;
       x2.struct_thing = new ttypes.Xtruct();
-      x2.struct_thing.string_thing = 'This is an Xception2';
+      x2.struct_thing.string_thing = "This is an Xception2";
       result(x2);
     } else {
       var res = new ttypes.Xtruct();
@@ -237,63 +260,108 @@ export class AsyncThriftTestHandler {
   testOneway(sleepFor: number, result: Function) {
     this.syncHandler.testOneway(sleepFor);
   }
-  testString(thing: string, callback: (err: any, result: string) => void): Q.IPromise<string> {
+  testString(
+    thing: string,
+    callback: (err: any, result: string) => void,
+  ): Q.IPromise<string> {
     callback(null, thing);
     return Q.resolve();
   }
-  testByte(thing: number, callback: (err: any, result: number) => void): Q.IPromise<number> {
+  testByte(
+    thing: number,
+    callback: (err: any, result: number) => void,
+  ): Q.IPromise<number> {
     callback(null, thing);
     return Q.resolve();
   }
-  testBool(thing: boolean, callback: (err: any, result: boolean) => void ): Q.IPromise<boolean> {
+  testBool(
+    thing: boolean,
+    callback: (err: any, result: boolean) => void,
+  ): Q.IPromise<boolean> {
     callback(null, thing);
     return Q.resolve();
   }
-  testI32(thing: number, callback: (err: any, result: number) => void): Q.IPromise<number>  {
+  testI32(
+    thing: number,
+    callback: (err: any, result: number) => void,
+  ): Q.IPromise<number> {
     callback(null, thing);
     return Q.resolve();
   }
-  testI64(thing: number, callback: (err: any, result: number) => void): Q.IPromise<number>  {
+  testI64(
+    thing: number,
+    callback: (err: any, result: number) => void,
+  ): Q.IPromise<number> {
     callback(null, thing);
     return Q.resolve();
   }
-  testDouble(thing: number, callback: (err: any, result: number) => void): Q.IPromise<number>  {
+  testDouble(
+    thing: number,
+    callback: (err: any, result: number) => void,
+  ): Q.IPromise<number> {
     callback(null, thing);
     return Q.resolve();
   }
-  testBinary(thing: Buffer, callback: (err: any, result: Buffer) => void): Q.IPromise<Buffer> {
+  testBinary(
+    thing: Buffer,
+    callback: (err: any, result: Buffer) => void,
+  ): Q.IPromise<Buffer> {
     callback(null, thing);
     return Q.resolve();
   }
-  testStruct(thing: ttypes.Xtruct, callback: (err: any, result: ttypes.Xtruct) => void): Q.IPromise<ttypes.Xtruct> {
+  testStruct(
+    thing: ttypes.Xtruct,
+    callback: (err: any, result: ttypes.Xtruct) => void,
+  ): Q.IPromise<ttypes.Xtruct> {
     callback(null, thing);
     return Q.resolve();
   }
-  testNest(thing: ttypes.Xtruct2, callback: (err: any, result: ttypes.Xtruct2) => void): Q.IPromise<ttypes.Xtruct2> {
+  testNest(
+    thing: ttypes.Xtruct2,
+    callback: (err: any, result: ttypes.Xtruct2) => void,
+  ): Q.IPromise<ttypes.Xtruct2> {
     callback(null, thing);
     return Q.resolve();
   }
-  testMap(thing: { [k: number]: number; }, callback: (err: any, result: { [k: number]: number; }) => void): Q.IPromise<{ [k: number]: number; }> {
+  testMap(
+    thing: { [k: number]: number },
+    callback: (err: any, result: { [k: number]: number }) => void,
+  ): Q.IPromise<{ [k: number]: number }> {
     callback(null, thing);
     return Q.resolve();
   }
-  testStringMap(thing: { [k: string]: string; }, callback: (err: any, result: { [k: string]: string; }) => void): Q.IPromise<{ [k: string]: string; }> {
+  testStringMap(
+    thing: { [k: string]: string },
+    callback: (err: any, result: { [k: string]: string }) => void,
+  ): Q.IPromise<{ [k: string]: string }> {
     callback(null, thing);
     return Q.resolve();
   }
-  testSet(thing: number[], callback: (err: any, result: number[]) => void): Q.IPromise<number[]> {
+  testSet(
+    thing: number[],
+    callback: (err: any, result: number[]) => void,
+  ): Q.IPromise<number[]> {
     callback(null, thing);
     return Q.resolve();
   }
-  testList(thing: number[], callback: (err: any, result: number[]) => void): Q.IPromise<number[]> {
+  testList(
+    thing: number[],
+    callback: (err: any, result: number[]) => void,
+  ): Q.IPromise<number[]> {
     callback(null, thing);
     return Q.resolve();
   }
-  testEnum(thing: ttypes.Numberz, callback: (err: any, result: ttypes.Numberz) => void): Q.IPromise<ttypes.Numberz> {
+  testEnum(
+    thing: ttypes.Numberz,
+    callback: (err: any, result: ttypes.Numberz) => void,
+  ): Q.IPromise<ttypes.Numberz> {
     callback(null, thing);
     return Q.resolve();
   }
-  testTypedef(thing: number, callback: (err: any, result: number) => void): Q.IPromise<number> {
+  testTypedef(
+    thing: number,
+    callback: (err: any, result: number) => void,
+  ): Q.IPromise<number> {
     callback(null, thing);
     return Q.resolve();
   }
