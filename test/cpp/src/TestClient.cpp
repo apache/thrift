@@ -181,7 +181,9 @@ bool print_eq(T expected, T actual) {
 #define UUID_TEST(func, value, expected)                                                           \
   cout << #func "(" << value << ") = ";                                                            \
   try {                                                                                            \
-    if (!print_eq(expected, testClient.func(value)))                                               \
+    TUuid ret;                                                                                     \
+    testClient.func(ret, value);                                                                   \
+    if (!print_eq(expected, ret))                                                                  \
       return_code |= ERR_BASETYPES;                                                                \
   } catch (TTransportException&) {                                                                 \
     throw;                                                                                         \
