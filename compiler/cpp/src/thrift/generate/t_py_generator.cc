@@ -65,6 +65,8 @@ public:
     gen_twisted_ = false;
     gen_dynamic_ = false;
     gen_enum_ = false;
+    gen_i18n_ = false;
+    
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -306,6 +308,10 @@ private:
   */
   bool gen_dynamic_;
 
+  /**
+  * True if we should add i18n flask babel import.
+  */
+  bool gen_i18n_;
   bool gen_dynbase_;
   std::string gen_dynbaseclass_;
   std::string gen_dynbaseclass_frozen_;
@@ -475,6 +481,9 @@ string t_py_generator::py_imports() {
   if (gen_utf8strings_) {
     ss << endl << "import sys";
   }
+  if (gen_i18n_) {
+    ss << endl << "from flask_babelex import gettext" << endl;
+  }
   return ss.str();
 }
 
@@ -561,6 +570,36 @@ void t_py_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
+  // Check if it's a map type
+  if (type->is_map()) {
+    t_map* tmap = (t_map*)type;
+    t_type* key_type = tmap->get_key_type();
+    t_type* val_type = tmap->get_val_type();
+
+    // Check if key is an enum and value is a string
+    if (key_type->is_enum() && val_type->is_string()) {
+      // Ensure gettext import is included
+      gen_i18n_ = True;
+
+      // Render constant with gettext wrapping
+      indent(f_consts_) << name << " = {";
+      f_consts_ << endl;
+      indent_up();
+
+      const map<t_const_value*, t_const_value*>& map_val = value->get_map();
+      for (auto it = map_val.begin(); it != map_val.end(); ++it) {
+        f_consts_ << indent() << render_const_value(key_type, it->first)
+                  << ": gettext(" << render_const_value(val_type, it->second) << "),"
+                  << endl;
+      }
+
+      indent_down();
+      indent(f_consts_) << "}" << endl;
+      return;
+    }
+  }
+
+  // Default behavior
   indent(f_consts_) << name << " = " << render_const_value(type, value);
   f_consts_ << endl;
 }
