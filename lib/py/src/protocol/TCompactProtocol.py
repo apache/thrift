@@ -163,7 +163,7 @@ class TCompactProtocol(TProtocolBase):
         if tseqid < 0:
             tseqid = 2147483648 + (2147483648 + tseqid)
         self.__writeVarint(tseqid)
-        self.__writeBinary(bytes(name, 'utf8'))
+        self.__writeBinary(bytes(name, 'utf-8'))
         self.state = VALUE_WRITE
 
     def writeMessageEnd(self):
@@ -344,7 +344,7 @@ class TCompactProtocol(TProtocolBase):
         # however the sequence is actually signed...
         if seqid > 2147483647:
             seqid = -2147483648 - (2147483648 - seqid)
-        name = self.__readBinary().decode('utf8')
+        name = self.__readBinary().decode('utf-8')
         return (name, type, seqid)
 
     def readMessageEnd(self):
