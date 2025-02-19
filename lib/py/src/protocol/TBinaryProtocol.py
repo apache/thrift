@@ -17,9 +17,9 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
-from ..compat import binary_to_str
 from struct import pack, unpack
+
+from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
 
 
 class TBinaryProtocol(TProtocolBase):
@@ -146,7 +146,7 @@ class TBinaryProtocol(TProtocolBase):
             if self.strictRead:
                 raise TProtocolException(type=TProtocolException.BAD_VERSION,
                                          message='No protocol version header')
-            name = binary_to_str(self.trans.readAll(sz))
+            name = self.trans.readAll(sz).decode('utf-8')
             type = self.readByte()
             seqid = self.readI32()
         return (name, type, seqid)

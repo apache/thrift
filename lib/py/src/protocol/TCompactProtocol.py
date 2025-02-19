@@ -20,8 +20,6 @@
 from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
 
-from ..compat import binary_to_str, str_to_binary
-
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 
 CLEAR = 0
@@ -165,7 +163,7 @@ class TCompactProtocol(TProtocolBase):
         if tseqid < 0:
             tseqid = 2147483648 + (2147483648 + tseqid)
         self.__writeVarint(tseqid)
-        self.__writeBinary(str_to_binary(name))
+        self.__writeBinary(bytes(name, 'utf-8'))
         self.state = VALUE_WRITE
 
     def writeMessageEnd(self):
@@ -346,7 +344,7 @@ class TCompactProtocol(TProtocolBase):
         # however the sequence is actually signed...
         if seqid > 2147483647:
             seqid = -2147483648 - (2147483648 - seqid)
-        name = binary_to_str(self.__readBinary())
+        name = self.__readBinary().decode('utf-8')
         return (name, type, seqid)
 
     def readMessageEnd(self):
