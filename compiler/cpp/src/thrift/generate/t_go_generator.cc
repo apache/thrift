@@ -1425,8 +1425,15 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
   out << indent() << "return \"<nil>\"" << '\n';
   indent_down();
   out << indent() << "}" << '\n';
-  out << indent() << "return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)"
-      << '\n';
+  if (stringer_mode_ == STRINGER_MODE_FMT) {
+    out << indent() << "return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)"
+        << '\n';
+  } else if (stringer_mode_ == STRINGER_MODE_JSON) {
+    out << indent() << "v, _ := json.Marshal(p)" << '\n';
+    out << indent() << "return \"" << escape_string(tstruct_name) << "\" + string(v)" << '\n';
+  } else {
+    throw "invalid stringer mode: " + stringer_mode_;
+  }
   indent_down();
   out << indent() << "}" << '\n' << '\n';
 
@@ -4397,4 +4404,6 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n"
                           "    skip_remote\n"
-                          "                     Skip the generating of -remote folders for the client binaries for services\n")
+                          "                     Skip the generating of -remote folders for the client binaries for services\n"
+                          "    stringer_mode=\n"
+                          "                     Stringer implementation mode: " + STRINGER_MODE_FMT + ", " + STRINGER_MODE_JSON + ". Default:" + STRINGER_MODE_DEFAULT + "\n")

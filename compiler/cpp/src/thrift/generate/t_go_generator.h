@@ -46,6 +46,9 @@ using std::vector;
 
 const string DEFAULT_THRIFT_IMPORT = "github.com/apache/thrift/lib/go/thrift";
 static std::string package_flag;
+const string STRINGER_MODE_FMT = "fmt";
+const string STRINGER_MODE_JSON = "json";
+const string STRINGER_MODE_DEFAULT = STRINGER_MODE_FMT;
 
 /**
  * Go code generator.
@@ -65,6 +68,7 @@ public:
     read_write_private_ = false;
     ignore_initialisms_ = false;
     skip_remote_ = false;
+    stringer_mode_ = STRINGER_MODE_DEFAULT;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("package_prefix") == 0) {
         gen_package_prefix_ = (iter->second);
@@ -78,6 +82,12 @@ public:
         ignore_initialisms_ = true;
       } else if( iter->first.compare("skip_remote") == 0) {
         skip_remote_ =  true;
+      } else if (iter->first.compare("stringer_mode") == 0) {
+        if (iter->second.compare(STRINGER_MODE_FMT) != 0 &&
+            iter->second.compare(STRINGER_MODE_JSON) != 0) {
+          throw "bad stringer_mode:" + iter->second;
+        }
+        stringer_mode_ = iter->second;
       } else {
         throw "unknown option go:" + iter->first;
       }
@@ -298,6 +308,7 @@ private:
   bool read_write_private_;
   bool ignore_initialisms_;
   bool skip_remote_;
+  std::string stringer_mode_;
 
   /**
    * File streams
