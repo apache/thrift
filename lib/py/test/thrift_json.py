@@ -17,7 +17,6 @@
 # under the License.
 #
 
-import sys
 import unittest
 
 import _import_local_thrift  # noqa

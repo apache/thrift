@@ -23,8 +23,6 @@ import base64
 import math
 import sys
 
-from ..compat import str_to_binary
-
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
@@ -213,7 +211,7 @@ class TJSONProtocolBase(TProtocolBase):
             escaped = ESCAPE_CHAR_VALS.get(s, s)
             json_str.append(escaped)
         json_str.append('"')
-        self.trans.write(str_to_binary(''.join(json_str)))
+        self.trans.write(bytes(''.join(json_str), 'utf-8'))
 
     def writeJSONNumber(self, number, formatter='{0}'):
         self.context.write()
