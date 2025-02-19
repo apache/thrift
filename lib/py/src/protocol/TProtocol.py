@@ -19,7 +19,6 @@
 
 from thrift.Thrift import TException, TType, TFrozenDict
 from thrift.transport.TTransport import TTransportException
-from ..compat import binary_to_str, str_to_binary
 
 import sys
 from itertools import islice
@@ -117,13 +116,13 @@ class TProtocolBase(object):
         pass
 
     def writeString(self, str_val):
-        self.writeBinary(str_to_binary(str_val))
+        self.writeBinary(bytes(str_val, 'utf-8'))
 
     def writeBinary(self, str_val):
         pass
 
     def writeUtf8(self, str_val):
-        self.writeString(str_val.encode('utf8'))
+        self.writeString(str_val.encode('utf-8'))
 
     def readMessageBegin(self):
         pass
@@ -180,13 +179,13 @@ class TProtocolBase(object):
         pass
 
     def readString(self):
-        return binary_to_str(self.readBinary())
+        return self.readBinary().decode('utf-8')
 
     def readBinary(self):
         pass
 
     def readUtf8(self):
-        return self.readString().decode('utf8')
+        return self.readString().decode('utf-8')
 
     def skip(self, ttype):
         if ttype == TType.BOOL:

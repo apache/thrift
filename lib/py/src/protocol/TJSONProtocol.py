@@ -23,8 +23,6 @@ import base64
 import math
 import sys
 
-from ..compat import str_to_binary
-
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
@@ -213,7 +211,7 @@ class TJSONProtocolBase(TProtocolBase):
             escaped = ESCAPE_CHAR_VALS.get(s, s)
             json_str.append(escaped)
         json_str.append('"')
-        self.trans.write(str_to_binary(''.join(json_str)))
+        self.trans.write(bytes(''.join(json_str), 'utf-8'))
 
     def writeJSONNumber(self, number, formatter='{0}'):
         self.context.write()
@@ -313,7 +311,7 @@ class TJSONProtocolBase(TProtocolBase):
                 utf8_bytes = bytearray([ord(character)])
                 while ord(self.reader.peek()) >= 0x80:
                     utf8_bytes.append(ord(self.reader.read()))
-                character = utf8_bytes.decode('utf8')
+                character = utf8_bytes.decode('utf-8')
             string.append(character)
 
             if highSurrogate:
