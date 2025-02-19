@@ -679,22 +679,22 @@ end;
 
 function TPipeTransportBase.GetIsOpen: Boolean;
 begin
-  result := (FInputStream <> nil)  and (FInputStream.IsOpen)
-        and (FOutputStream <> nil) and (FOutputStream.IsOpen);
+  result := (InputStream <> nil)  and (InputStream.IsOpen)
+        and (OutputStream <> nil) and (OutputStream.IsOpen);
 end;
 
 
 procedure TPipeTransportBase.Open;
 begin
-  FInputStream.Open;
-  FOutputStream.Open;
+  InputStream.Open;
+  OutputStream.Open;
 end;
 
 
 procedure TPipeTransportBase.Close;
 begin
-  FInputStream.Close;
-  FOutputStream.Close;
+  InputStream.Close;
+  OutputStream.Close;
 end;
 
 
@@ -709,8 +709,8 @@ constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string;
 // Named pipe constructor
 begin
   inherited Create( nil, nil, aConfig);
-  FInputStream  := TNamedPipeStreamImpl.Create( aPipeName, TRUE, aShareMode, aSecurityAttributes, aTimeOut, aOpenTimeOut);
-  FOutputStream := FInputStream;  // true for named pipes
+  SetInputStream( TNamedPipeStreamImpl.Create( aPipeName, TRUE, aShareMode, aSecurityAttributes, aTimeOut, aOpenTimeOut));
+  SetOutputStream( InputStream);  // true for named pipes
 end;
 
 
@@ -721,8 +721,8 @@ constructor TNamedPipeTransportClientEndImpl.Create( const aPipe : THandle;
 // Named pipe constructor
 begin
   inherited Create( nil, nil, aConfig);
-  FInputStream  := THandlePipeStreamImpl.Create( aPipe, aOwnsHandle, TRUE, aTimeOut);
-  FOutputStream := FInputStream;  // true for named pipes
+  SetInputStream(  THandlePipeStreamImpl.Create( aPipe, aOwnsHandle, TRUE, aTimeOut));
+  SetOutputStream( InputStream);  // true for named pipes
 end;
 
 
@@ -761,8 +761,8 @@ constructor TAnonymousPipeTransportImpl.Create( const aPipeRead, aPipeWrite : TH
 begin
   inherited Create( nil, nil, aConfig);
   // overlapped is not supported with AnonPipes, see MSDN
-  FInputStream  := THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles, FALSE, aTimeout);
-  FOutputStream := THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles, FALSE, aTimeout);
+  SetInputStream(  THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles, FALSE, aTimeout));
+  SetOutputStream( THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles, FALSE, aTimeout));
 end;
 
 

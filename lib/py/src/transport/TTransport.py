@@ -17,9 +17,10 @@
 # under the License.
 #
 
+from io import BytesIO as BufferIO
+
 from struct import pack, unpack
 from thrift.Thrift import TException
-from ..compat import BufferIO
 
 
 class TTransportException(TException):

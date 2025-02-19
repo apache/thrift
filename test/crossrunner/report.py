@@ -17,7 +17,6 @@
 # under the License.
 #
 
-from __future__ import print_function
 import datetime
 import json
 import multiprocessing
@@ -29,13 +28,16 @@ import sys
 import time
 import traceback
 
-from .compat import logfile_open, path_join, str_join
 from .test import TestEntry
 
 LOG_DIR = 'log'
 RESULT_HTML = 'index.html'
 RESULT_JSON = 'results.json'
 FAIL_JSON = 'known_failures_%s.json'
+
+
+def logfile_open(*args):
+    return open(*args, errors='replace')
 
 
 def generate_known_failures(testdir, overwrite, save, out):
@@ -45,7 +47,7 @@ def generate_known_failures(testdir, overwrite, save, out):
             if not r[success_index]:
                 yield TestEntry.get_name(*r)
     try:
-        with logfile_open(path_join(testdir, RESULT_JSON), 'r') as fp:
+        with logfile_open(os.path.join(testdir, RESULT_JSON), 'r') as fp:
             results = json.load(fp)
     except IOError:
         sys.stderr.write('Unable to load last result. Did you run tests ?\n')
@@ -68,7 +70,7 @@ def generate_known_failures(testdir, overwrite, save, out):
 
 def load_known_failures(testdir):
     try:
-        with logfile_open(path_join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
+        with logfile_open(os.path.join(testdir, FAIL_JSON % platform.system()), 'r') as fp:
             return json.load(fp)
     except IOError:
         return []
@@ -85,8 +87,8 @@ class TestReporter(object):
 
     @classmethod
     def test_logfile(cls, test_name, prog_kind, dir=None):
-        relpath = path_join('log', '%s_%s.log' % (test_name, prog_kind))
-        return relpath if not dir else os.path.realpath(path_join(dir, relpath))
+        relpath = os.path.join('log', '%s_%s.log' % (test_name, prog_kind))
+        return relpath if not dir else os.path.realpath(os.path.join(dir, relpath))
 
     def _start(self):
         self._start_time = time.time()
@@ -200,7 +202,7 @@ class ExecReporter(TestReporter):
 
     def _print_header(self):
         self._print_date()
-        print('Executing: %s' % str_join(' ', self._prog.command), file=self.out)
+        print('Executing: %s' % ' '.join(self._prog.command), file=self.out)
         print('Directory: %s' % self._prog.workdir, file=self.out)
         print('config:delay: %s' % self._test.delay, file=self.out)
         print('config:timeout: %s' % self._test.timeout, file=self.out)
@@ -222,8 +224,8 @@ class SummaryReporter(TestReporter):
         super(SummaryReporter, self).__init__()
         self._basedir = basedir
         self._testdir_rel = testdir_relative
-        self.logdir = path_join(self.testdir, LOG_DIR)
-        self.out_path = path_join(self.testdir, RESULT_JSON)
+        self.logdir = os.path.join(self.testdir, LOG_DIR)
+        self.out_path = os.path.join(self.testdir, RESULT_JSON)
         self.concurrent = concurrent
         self.out = sys.stdout
         self._platform = platform.system()
@@ -240,7 +242,7 @@ class SummaryReporter(TestReporter):
 
     @property
     def testdir(self):
-        return path_join(self._basedir, self._testdir_rel)
+        return os.path.join(self._basedir, self._testdir_rel)
 
     def _result_string(self, test):
         if test.success:
@@ -317,10 +319,7 @@ class SummaryReporter(TestReporter):
             self._print_bar()
 
     def _http_server_command(self, port):
-        if sys.version_info[0] < 3:
-            return 'python -m SimpleHTTPServer %d' % port
-        else:
-            return 'python -m http.server %d' % port
+        return 'python -m http.server %d' % port
 
     def _print_footer(self):
         fail_count = len(self._expected_failure) + len(self._unexpected_failure)

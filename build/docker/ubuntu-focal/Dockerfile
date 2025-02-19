@@ -139,10 +139,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
       `# dotnet core dependencies` \
-      dotnet-sdk-9.0 \
-      dotnet-runtime-9.0 \
-      aspnetcore-runtime-9.0 \
-      dotnet-apphost-pack-9.0
+      dotnet-sdk-8.0 \
+      dotnet-runtime-8.0 \
+      aspnetcore-runtime-8.0 \
+      dotnet-apphost-pack-8.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=23.3.4.11
@@ -273,7 +273,7 @@ RUN apt-get install -y --no-install-recommends \
 
 USER ${user}
 RUN `# Rust dependencies` \
-    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.83.0 -y
 ENV PATH /home/${user}/.cargo/bin:$PATH
 USER root
 

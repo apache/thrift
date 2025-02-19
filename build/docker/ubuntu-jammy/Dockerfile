@@ -136,6 +136,7 @@ RUN apt-get install -y --no-install-recommends \
   dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
+RUN add-apt-repository ppa:dotnet/backports
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
   dotnet-sdk-9.0 \
@@ -272,7 +273,7 @@ RUN apt-get install -y --no-install-recommends \
 
 USER ${user}
 RUN `# Rust dependencies` \
-    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.83.0 -y
 ENV PATH /home/${user}/.cargo/bin:$PATH
 USER root
 

@@ -54,7 +54,7 @@ namespace Thrift.Transport.Client
             }
 
             await PipeStream.ConnectAsync( ConnectTimeout, cancellationToken);
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
         }
 
         public override void Close()
@@ -112,7 +112,7 @@ namespace Thrift.Transport.Client
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             await PipeStream.FlushAsync(cancellationToken);
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
         }
 
         

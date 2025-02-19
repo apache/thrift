@@ -43,9 +43,9 @@ namespace Thrift.Transport
             InnerTransport.CheckReadBytesAvailable(numBytes);
         }
 
-        public override void ResetConsumedMessageSize(long newSize = -1)
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
         {
-            InnerTransport.ResetConsumedMessageSize(newSize);
+            InnerTransport.ResetMessageSizeAndConsumedBytes(newSize);
         }
     }
 }

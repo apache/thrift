@@ -130,7 +130,7 @@ public:
     return nullptr;
   }
 
-  void validate() const {
+  void validate() const override {
     std::string what = "struct";
     if( is_union()) {
       what = "union";

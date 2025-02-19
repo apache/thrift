@@ -288,7 +288,7 @@ public:
 
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
 
-  std::string indent_str() const {
+  std::string indent_str() const override {
     return "\t";
   }
 

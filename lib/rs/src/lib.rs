@@ -53,7 +53,7 @@
 //! [tutorial]: https://github.com/apache/thrift/tree/master/tutorial/rs
 
 #![crate_type = "lib"]
-#![doc(test(attr(allow(unused_variables), deny(warnings))))]
+#![doc(test(attr(allow(unused_variables, dead_code), deny(warnings))))]
 #![deny(bare_trait_objects)]
 
 // NOTE: this macro has to be defined before any modules. See:

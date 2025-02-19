@@ -278,7 +278,7 @@ namespace Thrift.Transport.Client
             finally
             {
                 _outputStream = new MemoryStream();
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes();
             }
         }
 

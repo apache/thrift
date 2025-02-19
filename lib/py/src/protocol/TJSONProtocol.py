@@ -263,19 +263,11 @@ class TJSONProtocolBase(TProtocolBase):
 
     def _toChar(self, high, low=None):
         if not low:
-            if sys.version_info[0] == 2:
-                return ("\\u%04x" % high).decode('unicode-escape') \
-                                         .encode('utf-8')
-            else:
-                return chr(high)
+            return chr(high)
         else:
             codepoint = (1 << 16) + ((high & 0x3ff) << 10)
             codepoint += low & 0x3ff
-            if sys.version_info[0] == 2:
-                s = "\\U%08x" % codepoint
-                return s.decode('unicode-escape').encode('utf-8')
-            else:
-                return chr(codepoint)
+            return chr(codepoint)
 
     def readJSONString(self, skipContext):
         highSurrogate = None
@@ -317,7 +309,7 @@ class TJSONProtocolBase(TProtocolBase):
             elif character in ESCAPE_CHAR_VALS:
                 raise TProtocolException(TProtocolException.INVALID_DATA,
                                          "Unescaped control char")
-            elif sys.version_info[0] > 2:
+            else:
                 utf8_bytes = bytearray([ord(character)])
                 while ord(self.reader.peek()) >= 0x80:
                     utf8_bytes.append(ord(self.reader.read()))

@@ -66,6 +66,7 @@ public:
     gen_moveable_ = false;
     gen_no_ostream_operators_ = false;
     gen_no_skeleton_ = false;
+    gen_no_constructors_ = false;
     has_members_ = false;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
@@ -88,6 +89,8 @@ public:
         gen_no_ostream_operators_ = true;
       } else if ( iter->first.compare("no_skeleton") == 0) {
         gen_no_skeleton_ = true;
+      } else if ( iter->first.compare("no_constructors") == 0) {
+        gen_no_constructors_ = true;
       } else {
         throw "unknown option cpp:" + iter->first;
       }
@@ -124,7 +127,7 @@ public:
   void generate_service(t_service* tservice) override;
 
   void print_const_value(std::ostream& out, std::string name, t_type* type, t_const_value* value);
-  std::string render_const_value(std::ostream& out,
+  std::string render_const_value(std::ostream* out,
                                  std::string name,
                                  t_type* type,
                                  t_const_value* value);
@@ -369,9 +372,14 @@ private:
   bool gen_no_default_operators_;
 
    /**
-   * True if we should generate skeleton.
+   * True if we should omit generating skeleton.
    */
   bool gen_no_skeleton_;
+
+  /**
+   * True if we should omit generating constructors/destructors/assignment/destructors.
+   */
+  bool gen_no_constructors_;
 
   /**
    * True if thrift has member(s)
@@ -786,7 +794,7 @@ void t_cpp_generator::print_const_value(ostream& out,
                                         t_const_value* value) {
   type = get_true_type(type);
   if (type->is_base_type()) {
-    string v2 = render_const_value(out, name, type, value);
+    string v2 = render_const_value(&out, name, type, value);
     indent(out) << name << " = " << v2 << ";" << '\n' << '\n';
   } else if (type->is_enum()) {
     indent(out) << name
@@ -810,7 +818,7 @@ void t_cpp_generator::print_const_value(ostream& out,
       if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      string item_val = render_const_value(out, name, field_type, v_iter->second);
+      string item_val = render_const_value(&out, name, field_type, v_iter->second);
       indent(out) << name << "." << v_iter->first->get_string() << " = " << item_val << ";" << '\n';
       if (is_nonrequired_field) {
         indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << '\n';
@@ -823,8 +831,8 @@ void t_cpp_generator::print_const_value(ostream& out,
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(out, name, ktype, v_iter->first);
-      string item_val = render_const_value(out, name, vtype, v_iter->second);
+      string key = render_const_value(&out, name, ktype, v_iter->first);
+      string item_val = render_const_value(&out, name, vtype, v_iter->second);
       indent(out) << name << ".insert(std::make_pair(" << key << ", " << item_val << "));" << '\n';
     }
     out << '\n';
@@ -833,7 +841,7 @@ void t_cpp_generator::print_const_value(ostream& out,
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string item_val = render_const_value(out, name, etype, *v_iter);
+      string item_val = render_const_value(&out, name, etype, *v_iter);
       indent(out) << name << ".push_back(" << item_val << ");" << '\n';
     }
     out << '\n';
@@ -842,7 +850,7 @@ void t_cpp_generator::print_const_value(ostream& out,
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string item_val = render_const_value(out, name, etype, *v_iter);
+      string item_val = render_const_value(&out, name, etype, *v_iter);
       indent(out) << name << ".insert(" << item_val << ");" << '\n';
     }
     out << '\n';
@@ -854,7 +862,7 @@ void t_cpp_generator::print_const_value(ostream& out,
 /**
  *
  */
-string t_cpp_generator::render_const_value(ostream& out,
+string t_cpp_generator::render_const_value(ostream* out,
                                            string name,
                                            t_type* type,
                                            t_const_value* value) {
@@ -891,10 +899,10 @@ string t_cpp_generator::render_const_value(ostream& out,
   } else if (type->is_enum()) {
     render << "static_cast<" << type_name(type) << '>'
            << '(' << value->get_integer() << ')';
-  } else {
+  } else if (out) {
     string t = tmp("tmp");
-    indent(out) << type_name(type) << " " << t << ";" << '\n';
-    print_const_value(out, t, type, value);
+    indent(*out) << type_name(type) << " " << t << ";" << '\n';
+    print_const_value(*out, t, type, value);
     render << t;
   }
 
@@ -924,13 +932,15 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   if (!gen_no_default_operators_) {
     generate_equality_operator(f_types_impl_, tstruct);
   }
-  generate_copy_constructor(f_types_impl_, tstruct, is_exception);
-  if (gen_moveable_) {
-    generate_move_constructor(f_types_impl_, tstruct, is_exception);
-  }
-  generate_assignment_operator(f_types_impl_, tstruct);
-  if (gen_moveable_) {
-    generate_move_assignment_operator(f_types_impl_, tstruct);
+  if (!gen_no_constructors_) {
+    generate_copy_constructor(f_types_impl_, tstruct, is_exception);
+    if (gen_moveable_) {
+      generate_move_constructor(f_types_impl_, tstruct, is_exception);
+    }
+    generate_assignment_operator(f_types_impl_, tstruct);
+    if (gen_moveable_) {
+      generate_move_assignment_operator(f_types_impl_, tstruct);
+    }
   }
 
   if (!has_custom_ostream(tstruct)) {
@@ -1026,7 +1036,7 @@ void t_cpp_generator::generate_default_constructor(ostream& out,
       string dval;
       t_const_value* cv = (*m_iter)->get_value();
       if (cv != nullptr) {
-        dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
+        dval += render_const_value(&out, (*m_iter)->get_name(), t, cv);
       } else if (t->is_enum()) {
         dval += "static_cast<" + type_name(t) + ">(0)";
       } else {
@@ -1266,7 +1276,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
       << " public:" << '\n' << '\n';
   indent_up();
 
-  if (!pointers) {
+  if (!gen_no_constructors_ && !pointers) {
     bool ok_noexcept = is_struct_storage_not_throwing(tstruct);
     // Copy constructor
     indent(out) << tstruct->get_name() << "(const " << tstruct->get_name() << "&)"
@@ -1295,15 +1305,17 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
     indent(out) << clsname_ctor << (has_default_value ? "" : " noexcept") << ";" << '\n';
   }
 
-  if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
-    out << '\n' << indent() << "virtual ~" << tstruct->get_name() << "() noexcept;" << '\n';
+  if (!gen_no_constructors_ && tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
+    out << '\n' << indent();
+    if (!gen_templates_) out << "virtual ";
+    out << "~" << tstruct->get_name() << "() noexcept;\n";
   }
 
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_java_doc(out, *m_iter);
     indent(out) << declare_field(*m_iter,
-                                 false,
+                                 !pointers && gen_no_constructors_,
                                  (pointers && !(*m_iter)->get_type()->is_xception()),
                                  !read) << '\n';
   }
@@ -1376,7 +1388,8 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   out << '\n';
 
   if (is_user_struct && !has_custom_ostream(tstruct)) {
-    out << indent() << "virtual ";
+    out << indent();
+    if (!gen_templates_) out << "virtual ";
     generate_struct_print_method_decl(out, nullptr);
     out << ";" << '\n';
   }
@@ -1419,7 +1432,7 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
   const vector<t_field*>& members = tstruct->get_members();
 
   // Destructor
-  if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
+  if (!gen_no_constructors_ && tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
     force_cpp_out << '\n' << indent() << tstruct->get_name() << "::~" << tstruct->get_name()
                   << "() noexcept {" << '\n';
     indent_up();
@@ -1428,7 +1441,7 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
     force_cpp_out << indent() << "}" << '\n' << '\n';
   }
 
-  if (!pointers)
+  if (!gen_no_constructors_ && !pointers)
   {
     // 'force_cpp_out' always goes into the .cpp file, and never into a .tcc
     // file in case templates are involved. Since the constructor is not templated,
@@ -4607,31 +4620,35 @@ string t_cpp_generator::declare_field(t_field* tfield,
   result += " " + tfield->get_name();
   if (init) {
     t_type* type = get_true_type(tfield->get_type());
+    if (t_const_value* cv = tfield->get_value()) {
+      result += " = " + render_const_value(nullptr, tfield->get_name(), type, cv);
+    } else {
+      if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-      case t_base_type::TYPE_STRING:
-      case t_base_type::TYPE_UUID:
-        break;
-      case t_base_type::TYPE_BOOL:
-        result += " = false";
-        break;
-      case t_base_type::TYPE_I8:
-      case t_base_type::TYPE_I16:
-      case t_base_type::TYPE_I32:
-      case t_base_type::TYPE_I64:
-        result += " = 0";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        result += " = 0.0";
-        break;
-      default:
-        throw "compiler error: no C++ initializer for base type " + t_base_type::t_base_name(tbase);
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+        case t_base_type::TYPE_STRING:
+        case t_base_type::TYPE_UUID:
+          break;
+        case t_base_type::TYPE_BOOL:
+          result += " = false";
+          break;
+        case t_base_type::TYPE_I8:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+          result += " = 0";
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          result += " = 0.0";
+          break;
+        default:
+          throw "compiler error: no C++ initializer for base type " + t_base_type::t_base_name(tbase);
+        }
+      } else if (type->is_enum()) {
+        result += " = static_cast<" + type_name(type) + ">(0)";
       }
-    } else if (type->is_enum()) {
-      result += " = static_cast<" + type_name(type) + ">(0)";
     }
   }
   if (!reference) {

@@ -210,6 +210,10 @@ where
             None => {
                 let b = self.read_byte()?;
                 match b {
+                    // Previous versions of the thrift compact protocol specification said to use 0
+                    // and 1 inside collections, but that differed from existing implementations.
+                    // The specification was updated in https://github.com/apache/thrift/commit/2c29c5665bc442e703480bb0ee60fe925ffe02e8.
+                    0x00 => Ok(false),
                     0x01 => Ok(true),
                     0x02 => Ok(false),
                     unkn => Err(crate::Error::Protocol(crate::ProtocolError {
@@ -652,7 +656,11 @@ fn type_to_u8(field_type: TType) -> u8 {
 
 fn collection_u8_to_type(b: u8) -> crate::Result<TType> {
     match b {
-        0x01 => Ok(TType::Bool),
+        // For historical and compatibility reasons, a reader should be capable to deal with both cases.
+        // The only valid value in the original spec was 2, but due to a widespread implementation bug
+        // the defacto standard across large parts of the library became 1 instead.
+        // As a result, both values are now allowed.
+        0x01 | 0x02 => Ok(TType::Bool),
         o => u8_to_type(o),
     }
 }
@@ -680,8 +688,6 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
 
 #[cfg(test)]
 mod tests {
-
-    use std::i32;
 
     use crate::protocol::{
         TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
@@ -2818,7 +2824,7 @@ mod tests {
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let read_double = i_prot.read_double().unwrap();
-        assert!(read_double - double < std::f64::EPSILON);
+        assert!((read_double - double).abs() < f64::EPSILON);
     }
 
     #[test]
@@ -2840,5 +2846,41 @@ mod tests {
         let (_, mut o_prot) = test_objects();
         assert!(write_fn(&mut o_prot).is_ok());
         assert_eq!(o_prot.transport.write_bytes().len(), 0);
+    }
+
+    #[test]
+    fn must_read_boolean_list() {
+        let (mut i_prot, _) = test_objects();
+
+        let source_bytes: [u8; 3] = [0x21, 2, 1];
+
+        i_prot.transport.set_readable_bytes(&source_bytes);
+
+        let (ttype, element_count) = assert_success!(i_prot.read_list_set_begin());
+
+        assert_eq!(ttype, TType::Bool);
+        assert_eq!(element_count, 2);
+        assert_eq!(i_prot.read_bool().unwrap(), false);
+        assert_eq!(i_prot.read_bool().unwrap(), true);
+
+        assert_success!(i_prot.read_list_end());
+    }
+
+    #[test]
+    fn must_read_boolean_list_alternative_encoding() {
+        let (mut i_prot, _) = test_objects();
+
+        let source_bytes: [u8; 3] = [0x22, 0, 1];
+
+        i_prot.transport.set_readable_bytes(&source_bytes);
+
+        let (ttype, element_count) = assert_success!(i_prot.read_list_set_begin());
+
+        assert_eq!(ttype, TType::Bool);
+        assert_eq!(element_count, 2);
+        assert_eq!(i_prot.read_bool().unwrap(), false);
+        assert_eq!(i_prot.read_bool().unwrap(), true);
+
+        assert_success!(i_prot.read_list_end());
     }
 }

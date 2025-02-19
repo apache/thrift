@@ -135,8 +135,8 @@ jobs:
     strategy:
       matrix:
         go:
-          - '1.22'
           - '1.23'
+          - '1.24'
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -180,7 +180,7 @@ jobs:
         run: make -C test/go precross
 
       - name: Upload go precross artifacts
-        if: matrix.go == '1.23'
+        if: matrix.go == '1.24'
         uses: actions/upload-artifact@v4
         with:
           name: go-precross
@@ -315,6 +315,7 @@ jobs:
 #      caveat: net9 is (currently?) NOT installed, so manually again
       - name: Set up .NET SDK
         run: |
+          sudo add-apt-repository ppa:dotnet/backports
           sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
 #      end
 
@@ -400,7 +401,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-24.04
     env:
-      TOOLCHAIN_VERSION: 1.65.0
+      TOOLCHAIN_VERSION: 1.83.0
     steps:
       - uses: actions/checkout@v4
 
@@ -518,6 +519,35 @@ jobs:
 
       - name: Run make check for python
         run: make -C lib/py check
+
+  lib-nodejs:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run js tests
+        run: make -C lib/nodejs check
+
+      - name: Run ts tests
+        run: make -C lib/nodets check
 
   cross-test:
     needs:
