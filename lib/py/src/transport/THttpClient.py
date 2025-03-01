@@ -111,8 +111,6 @@ class THttpClient(TTransportBase):
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
             self.__http = http.client.HTTPSConnection(self.host, self.port,
-                                                      key_file=self.keyfile,
-                                                      cert_file=self.certfile,
                                                       timeout=self.__timeout,
                                                       context=self.context)
         if self.using_proxy():
