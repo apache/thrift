@@ -19,8 +19,8 @@
 
 import struct
 import zlib
+from io import BytesIO
 
-from thrift.compat import BufferIO, byte_index
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.protocol.TCompactProtocol import TCompactProtocol, readVarint, writeVarint
 from thrift.Thrift import TApplicationException
@@ -30,7 +30,6 @@ from thrift.transport.TTransport import (
     TTransportBase,
     TTransportException,
 )
-
 
 U16 = struct.Struct("!H")
 I32 = struct.Struct("!i")
@@ -92,10 +91,10 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         self._client_type = THeaderClientType.HEADERS
         self._allowed_client_types = allowed_client_types
 
-        self._read_buffer = BufferIO(b"")
+        self._read_buffer = BytesIO(b"")
         self._read_headers = {}
 
-        self._write_buffer = BufferIO()
+        self._write_buffer = BytesIO()
         self._write_headers = {}
         self._write_transforms = []
 
@@ -184,8 +183,8 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         if frame_size & TBinaryProtocol.VERSION_MASK == TBinaryProtocol.VERSION_1:
             self._set_client_type(THeaderClientType.UNFRAMED_BINARY)
             is_unframed = True
-        elif (byte_index(first_word, 0) == TCompactProtocol.PROTOCOL_ID and
-              byte_index(first_word, 1) & TCompactProtocol.VERSION_MASK == TCompactProtocol.VERSION):
+        elif (first_word[0] == TCompactProtocol.PROTOCOL_ID and
+              first_word[1] & TCompactProtocol.VERSION_MASK == TCompactProtocol.VERSION):
             self._set_client_type(THeaderClientType.UNFRAMED_COMPACT)
             is_unframed = True
 
@@ -195,7 +194,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
                 rest = self._transport.read(bytes_left_to_read)
             else:
                 rest = b""
-            self._read_buffer = BufferIO(first_word + rest)
+            self._read_buffer = BytesIO(first_word + rest)
             return
 
         # ok, we're still here so we're framed.
@@ -204,7 +203,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
                 TTransportException.SIZE_LIMIT,
                 "Frame was too large.",
             )
-        read_buffer = BufferIO(self._transport.readAll(frame_size))
+        read_buffer = BytesIO(self._transport.readAll(frame_size))
 
         # the next word is either going to be the version field of a
         # binary/compact protocol message or the magic value + flags of a
@@ -218,8 +217,8 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         elif version & TBinaryProtocol.VERSION_MASK == TBinaryProtocol.VERSION_1:
             self._set_client_type(THeaderClientType.FRAMED_BINARY)
             self._read_buffer = read_buffer
-        elif (byte_index(second_word, 0) == TCompactProtocol.PROTOCOL_ID and
-              byte_index(second_word, 1) & TCompactProtocol.VERSION_MASK == TCompactProtocol.VERSION):
+        elif (second_word[0] == TCompactProtocol.PROTOCOL_ID and
+              second_word[1] & TCompactProtocol.VERSION_MASK == TCompactProtocol.VERSION):
             self._set_client_type(THeaderClientType.FRAMED_COMPACT)
             self._read_buffer = read_buffer
         else:
@@ -229,7 +228,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
             )
 
     def _parse_header_format(self, buffer):
-        # make BufferIO look like TTransport for varint helpers
+        # make BytesIO look like TTransport for varint helpers
         buffer_transport = TMemoryBuffer()
         buffer_transport._buffer = buffer
 
@@ -279,22 +278,22 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         for transform_id in transforms:
             transform_fn = READ_TRANSFORMS_BY_ID[transform_id]
             payload = transform_fn(payload)
-        return BufferIO(payload)
+        return BytesIO(payload)
 
     def write(self, buf):
         self._write_buffer.write(buf)
 
     def flush(self):
         payload = self._write_buffer.getvalue()
-        self._write_buffer = BufferIO()
+        self._write_buffer = BytesIO()
 
-        buffer = BufferIO()
+        buffer = BytesIO()
         if self._client_type == THeaderClientType.HEADERS:
             for transform_id in self._write_transforms:
                 transform_fn = WRITE_TRANSFORMS_BY_ID[transform_id]
                 payload = transform_fn(payload)
 
-            headers = BufferIO()
+            headers = BytesIO()
             writeVarint(headers, self._protocol_id)
             writeVarint(headers, len(self._write_transforms))
             for transform_id in self._write_transforms:
@@ -348,5 +347,5 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         result = bytearray(partialread)
         while len(result) < reqlen:
             result += self.read(reqlen - len(result))
-        self._read_buffer = BufferIO(result)
+        self._read_buffer = BytesIO(result)
         return self._read_buffer
