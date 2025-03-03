@@ -1,6 +1,11 @@
 # Apache Thrift Language Support #
 
-Guidance For: 0.17.0 |
+Guidance For: 0.22.0 |
+[0.21.0](https://github.com/apache/thrift/blob/v0.21.0/LANGUAGES.md) |
+[0.20.0](https://github.com/apache/thrift/blob/v0.20.0/LANGUAGES.md) |
+[0.19.0](https://github.com/apache/thrift/blob/v0.19.0/LANGUAGES.md) |
+[0.18.0](https://github.com/apache/thrift/blob/v0.18.0/LANGUAGES.md) |
+[0.17.0](https://github.com/apache/thrift/blob/v0.17.0/LANGUAGES.md) |
 [0.16.0](https://github.com/apache/thrift/blob/v0.16.0/LANGUAGES.md) |
 [0.15.0](https://github.com/apache/thrift/blob/v0.15.0/LANGUAGES.md) |
 [0.14.0](https://github.com/apache/thrift/blob/v0.14.0/LANGUAGES.md) |
@@ -129,14 +134,14 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <!-- Build Systems ---------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2010</td><td>Athens 12.2</td>
 <!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Delphi%20-%20Compiler%22%2C%20%22Delphi%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Delphi</a></td>
 </tr>
 <tr align=center>
-<td align=left><a href="https://github.com/apache/thrift/blob/master/lib/netstd/README.md">.NET Standard</a></td>
+<td align=left><a href="https://github.com/apache/thrift/blob/master/lib/netstd/README.md">.NET</a></td>
 <!-- Since -----------------><td>0.13.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>.NET Standard 2.x, net8, net9</td>
@@ -145,7 +150,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22netstd%20-%20Compiler%22%2C%20%22netstd%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">.NET Standard</a></td>
+<td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22netstd%20-%20Compiler%22%2C%20%22netstd%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">.NET</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/erl/README.md">Erlang</a></td>
