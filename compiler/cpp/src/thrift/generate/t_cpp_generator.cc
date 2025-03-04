@@ -274,9 +274,12 @@ public:
   bool is_complex_type(t_type* ttype) {
     ttype = get_true_type(ttype);
 
-    return ttype->is_container() || ttype->is_struct() || ttype->is_xception()
+    return ttype->is_container() //
+           || ttype->is_struct() //
+           || ttype->is_xception()
            || (ttype->is_base_type()
-               && (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING));
+               && ((((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING)
+                   || (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_UUID)));
   }
 
   void set_use_include_prefix(bool use_include_prefix) { use_include_prefix_ = use_include_prefix; }
@@ -4498,7 +4501,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
       return bname;
     }
 
-    if (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING) {
+    if ((((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING) || ((((t_base_type*)ttype)->get_base() == t_base_type::TYPE_UUID))) {
       return "const " + bname + "&";
     } else {
       return "const " + bname;
