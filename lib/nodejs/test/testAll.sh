@@ -35,25 +35,23 @@ REPORT_PREFIX="${DIR}/../coverage/report"
 
 COUNT=0
 
-export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
-
 testServer()
 {
-  echo "  [ECMA $1] Testing $2 Client/Server with protocol $3 and transport $4 $5";
+  echo "  [Variant: $1] Testing $2 Client/Server with protocol $3 and transport $4 $5";
   RET=0
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $2 -p $3 -t $4 $5 &
+    ${ISTANBUL} cover ${DIR}/server.mjs --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $2 -p $3 -t $4 $5 &
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/server.js --${1} --type $2 -p $3 -t $4 $5 &
+    node ${DIR}/server.mjs --${1} --type $2 -p $3 -t $4 $5 &
   fi
   SERVERPID=$!
   sleep 0.1
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --${1} --type $2 -p $3 -t $4 $5 || RET=1
+    ${ISTANBUL} cover ${DIR}/client.mjs --dir ${REPORT_PREFIX}${COUNT} -- --${1} --type $2 -p $3 -t $4 $5 || RET=1
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/client.js --${1} --type $2 -p $3 -t $4 $5 || RET=1
+    node ${DIR}/client.mjs --${1} --type $2 -p $3 -t $4 $5 || RET=1
   fi
   kill -2 $SERVERPID || RET=1
   wait $SERVERPID
@@ -90,10 +88,17 @@ TESTOK=0
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/v0.16/ThriftTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Include.thrift
 mkdir ${DIR}/gen-nodejs-es6
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/v0.16/ThriftTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Int64Test.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Include.thrift
+mkdir ${DIR}/gen-nodejs-esm
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/v0.16/ThriftTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Int64Test.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Include.thrift
 
 # generate episodic compilation test code
 TYPES_PACKAGE=${EPISODIC_DIR}/node_modules/types-package
@@ -121,6 +126,7 @@ node ${DIR}/binary.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
+node ${DIR}/include.test.mjs || TESTOK=1
 
 # integration tests
 
@@ -130,11 +136,11 @@ do
   do
     for transport in buffered framed
     do
-      for ecma_version in es5 es6
+      for gen_variant in es5 es6 esm
       do
-        testServer $ecma_version $type $protocol $transport || TESTOK=1
-        testServer $ecma_version $type $protocol $transport --ssl || TESTOK=1
-        testServer $ecma_version $type $protocol $transport --callback || TESTOK=1
+        testServer $gen_variant $type $protocol $transport || TESTOK=1
+        testServer $gen_variant $type $protocol $transport --ssl || TESTOK=1
+        testServer $gen_variant $type $protocol $transport --callback || TESTOK=1
       done
     done
   done
