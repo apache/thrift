@@ -419,7 +419,7 @@ protected:
 
     // Pad the buffer so we can insert the size later.
     int32_t pad = 0;
-    this->write((uint8_t*)&pad, sizeof(pad));
+    this->write(reinterpret_cast<uint8_t*>(&pad), sizeof(pad));
   }
 
   std::shared_ptr<TTransport> transport_;
@@ -468,7 +468,7 @@ private:
 
     if (buf == nullptr && size != 0) {
       assert(owner);
-      buf = (uint8_t*)std::malloc(size);
+      buf = static_cast<uint8_t*>(std::malloc(size));
       if (buf == nullptr) {
 	throw std::bad_alloc();
       }
@@ -593,7 +593,7 @@ public:
     uint8_t* buf;
     uint32_t sz;
     getBuffer(&buf, &sz);
-    return std::string((char*)buf, (std::string::size_type)sz);
+    return {reinterpret_cast<char*>(buf), static_cast<std::string::size_type>(sz)};
   }
 
   void appendBufferToString(std::string& str) {
@@ -603,7 +603,7 @@ public:
     uint8_t* buf;
     uint32_t sz;
     getBuffer(&buf, &sz);
-    str.append((char*)buf, sz);
+    str.append(reinterpret_cast<char*>(buf), sz);
   }
 
   void resetBuffer() {
