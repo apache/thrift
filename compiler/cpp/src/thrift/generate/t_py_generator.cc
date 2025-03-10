@@ -1460,7 +1460,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
   if (gen_tornado_ && extends.empty()) {
     f_service_ << '\n' <<
-      indent() << "@gen.engine" << '\n' <<
+      indent() << "@gen.coroutine" << '\n' <<
       indent() << "def _start_receiving(self):" << '\n';
     indent_up();
     indent(f_service_) << "while True:" << '\n';
