@@ -364,7 +364,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <!-- Build Systems ---------><th>autoconf</th><th>cmake</th>
 <!-- Lang/Lib Levels -------><th>Min</th><th>Max</th>
 <!-- Field types -----------><th>Uuid</th>
-<!-- Low-Level Transports --><th><a href="https://en.wikipedia.org/wiki/Unix_domain_socket">Domain</a></th></th><th>&nbsp;File&nbsp;</th><th>Memory</th><th>&nbsp;Pipe&nbsp;</th><th>Socket</th><th>&nbsp;TLS&nbsp;</th>
+<!-- Low-Level Transports --><th><a href="https://en.wikipedia.org/wiki/Unix_domain_socket">Domain</a></th><th>&nbsp;File&nbsp;</th><th>Memory</th><th>&nbsp;Pipe&nbsp;</th><th>Socket</th><th>&nbsp;TLS&nbsp;</th>
 <!-- Transport Wrappers ----><th>Framed</th><th>Header</th><th>&nbsp;http&nbsp;</th><th>&nbsp;zlib&nbsp;</th>
 <!-- Protocols -------------><th><a href="doc/specs/thrift-binary-protocol.md">Binary</a></th><th><a href="doc/specs/thrift-compact-protocol.md">Compact</a></th><th>&nbsp;JSON&nbsp;</th><th>Multiplex</th>
 <!-- Servers ---------------><th>Forking</th><th>Nonblocking</th><th>Simple</th><th>Threaded</th><th>ThreadPool</th>
