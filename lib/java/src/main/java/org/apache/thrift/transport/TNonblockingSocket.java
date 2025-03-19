@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Transport for use with async client. */
-public class TNonblockingSocket extends TNonblockingTransport {
+public class TNonblockingSocket extends TNonblockingTransport implements SocketAddressProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingSocket.class.getName());
 
@@ -204,5 +204,15 @@ public class TNonblockingSocket extends TNonblockingTransport {
         + ", local: "
         + socketChannel_.socket().getLocalAddress()
         + "]";
+  }
+
+  @Override
+  public SocketAddress getRemoteSocketAddress() {
+    return socketChannel_.socket().getRemoteSocketAddress();
+  }
+
+  @Override
+  public SocketAddress getLocalSocketAddress() {
+    return socketChannel_.socket().getLocalSocketAddress();
   }
 }
