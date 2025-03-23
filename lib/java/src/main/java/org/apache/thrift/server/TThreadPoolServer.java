@@ -277,7 +277,7 @@ public class TThreadPoolServer extends TServer {
     private void logException(Exception x) {
       // We'll usually receive RuntimeException types here
       // Need to unwrap to ascertain real causing exception before we choose to ignore
-      // Ignoring err-logging all transport-level/type exceptions and SocketExceptions
+      LOGGER.debug("Error processing request", x);
       TTransportException tTransportException = null;
 
       if (x instanceof TTransportException) {
@@ -292,8 +292,7 @@ public class TThreadPoolServer extends TServer {
           case TTransportException.TIMED_OUT:
             return; // don't log these
         }
-        if (tTransportException.getCause() != null
-            && (tTransportException.getCause() instanceof SocketException)) {
+        if (tTransportException.getCause() instanceof SocketException) {
           LOGGER.warn(
               "SocketException occurred during processing of message.",
               tTransportException.getCause());
