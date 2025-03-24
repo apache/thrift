@@ -2997,7 +2997,7 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
 }
 
 void t_java_generator::generate_metadata_for_field_annotations(std::ostream& out, t_field* field) {
-  if (field->annotations_.size() == 0) {
+  if (field->annotations_.size() == 0 && field->get_type()->annotations_.size() == 0) {
     return;
   }
   out << ", " << '\n';
@@ -3010,6 +3010,15 @@ void t_java_generator::generate_metadata_for_field_annotations(std::ostream& out
   indent_up();
   indent_up();
   for (auto& annotation : field->annotations_) {
+    indent(out) << ".add(new java.util.AbstractMap.SimpleImmutableEntry<>(\"" + annotation.first
+                       + "\", \"" + annotation.second.back() + "\"))"
+                << '\n';
+  }
+  for (auto& annotation : field->get_type()->annotations_) {
+    // field annotations have higher priority than type annotations
+    if (field->annotations_.find(annotation.first) != field->annotations_.end()) {
+      continue;
+    }
     indent(out) << ".add(new java.util.AbstractMap.SimpleImmutableEntry<>(\"" + annotation.first
                        + "\", \"" + annotation.second.back() + "\"))"
                 << '\n';
