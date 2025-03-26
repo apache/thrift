@@ -554,7 +554,7 @@ public abstract class ProtocolTestBase {
       String result = testClient.recv_testString();
       System.out.println("----result: " + result);
     } catch (TException e) {
-      assertEquals("MaxMessageSize reached", e.getMessage());
+      assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, ((TTransportException) e).getType());
     }
   }
 
@@ -573,7 +573,7 @@ public abstract class ProtocolTestBase {
               testClient.recv_testList();
             },
             "Limitations not achieved as expected");
-    assertEquals("MaxMessageSize reached", e.getMessage());
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
   }
 
   @Test
@@ -595,7 +595,7 @@ public abstract class ProtocolTestBase {
             },
             "Limitations not achieved as expected");
 
-    assertEquals("MaxMessageSize reached", e.getMessage());
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
   }
 
   @Test
@@ -614,6 +614,6 @@ public abstract class ProtocolTestBase {
               testClient.recv_testSet();
             },
             "Limitations not achieved as expected");
-    assertEquals("MaxMessageSize reached", e.getMessage());
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
   }
 }
