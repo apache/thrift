@@ -218,7 +218,7 @@ class TSocket extends TTransport
             throw new TTransportException('Cannot open null host', TTransportException::NOT_OPEN);
         }
 
-        if ($this->port_ <= 0) {
+        if ($this->port_ <= 0 && strpos($this->host_, 'unix://') !== 0) {
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
