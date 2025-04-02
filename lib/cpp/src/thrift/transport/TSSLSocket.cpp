@@ -705,7 +705,7 @@ void TSSLSocket::initializeHandshake() {
 }
 
 void TSSLSocket::authorize() {
-  int rc = SSL_get_verify_result(ssl_);
+  long rc = SSL_get_verify_result(ssl_);
   if (rc != X509_V_OK) { // verify authentication result
     throw TSSLException(string("SSL_get_verify_result(), ") + X509_verify_cert_error_string(rc));
   }
