@@ -40,6 +40,16 @@ using std::stringstream;
 using std::vector;
 
 /**
+ * Helper enum for string mapping
+ */
+enum class StringTo {String, Binary, Both};
+
+/**
+ * Helper enum for sets mapping
+ */
+enum class SetsTo {V1, V2};
+
+/**
  * Erlang code generator.
  *
  */
@@ -58,6 +68,8 @@ public:
     maps_ = false;
     export_lines_first_ = true;
     export_types_lines_first_ = true;
+    string_to_ = StringTo::Both;
+    sets_to_ = SetsTo::V1;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
@@ -68,6 +80,26 @@ public:
         delimiter_ = iter->second;
       } else if( iter->first.compare("app_prefix") == 0) {
         app_prefix_ = iter->second;
+      } else if( iter->first.compare("string") == 0) {
+        auto string_to_value = iter->second;
+        if( string_to_value.compare("string") == 0) {
+          string_to_ = StringTo::String;
+        } else if( string_to_value.compare("binary") == 0) {
+          string_to_ = StringTo::Binary;
+        } else if( string_to_value.compare("both") == 0) {
+          string_to_ = StringTo::Both;
+        } else {
+          throw "unknown string option value:" + string_to_value;
+        }
+      } else if( iter->first.compare("set") == 0) {
+        auto set_to_value = iter->second;
+        if( set_to_value.compare("v1") == 0) {
+          sets_to_ = SetsTo::V1;
+        } else if( set_to_value.compare("v2") == 0) {
+          sets_to_ = SetsTo::V2;
+        } else {
+          throw "unknown set option value:" + set_to_value;
+        }
       } else {
         throw "unknown option erl:" + iter->first;
       }
@@ -100,11 +132,13 @@ public:
   std::string render_member_type(t_field* field);
   std::string render_member_value(t_field* field);
   std::string render_member_requiredness(t_field* field);
+  std::string render_string_type();
 
   //  std::string render_default_value(t_type* type);
   std::string render_default_value(t_field* field);
   std::string render_const_value(t_type* type, t_const_value* value);
   std::string render_type_term(t_type* ttype, bool expand_structs, bool extended_info = false);
+  std::string render_default_sets_value();
 
   /**
    * Struct generation code
@@ -140,6 +174,7 @@ public:
   std::string render_includes();
   std::string type_name(t_type* ttype);
   std::string render_const_list_values(t_type* type, t_const_value* value);
+  std::string render_const_string_value(t_const_value* value);
 
   std::string function_signature(t_function* tfunction, std::string prefix = "");
 
@@ -187,6 +222,12 @@ private:
 
   /* used to avoid module name clashes for different applications */
   std::string app_prefix_;
+
+  /* string type definition strategy */
+  StringTo string_to_;
+
+  /* sets type definition strategy */
+  SetsTo sets_to_;
 
   /**
    * add function to export list
@@ -593,7 +634,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      out << '"' << get_escaped_string(value) << '"';
+      out << render_const_string_value(value);
       break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
@@ -676,7 +717,11 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
         out << ",";
       }
     }
-    out << "])";
+    out << "]";
+    if (sets_to_ == SetsTo::V2) {
+      out << ", [{version, 2}]";
+    }
+    out << ")";
   } else if (type->is_list()) {
     out << "[" << render_const_list_values(type, value) << "]";
   } else {
@@ -703,6 +748,13 @@ string t_erl_generator::render_const_list_values(t_type* type, t_const_value* va
   return out.str();
 }
 
+string t_erl_generator::render_const_string_value(t_const_value* constval) {
+  if (string_to_ == StringTo::Binary) {
+    return "<<\"" + get_escaped_string(constval) + "\">>";
+  }
+  return '"' + get_escaped_string(constval) + '"';
+}
+
 
 string t_erl_generator::render_default_value(t_field* field) {
   t_type* type = field->get_type();
@@ -715,11 +767,22 @@ string t_erl_generator::render_default_value(t_field* field) {
       return "dict:new()";
     }
   } else if (type->is_set()) {
-    return "sets:new()";
+    return render_default_sets_value();
   } else if (type->is_list()) {
     return "[]";
   } else {
     return "undefined";
+  }
+}
+
+string t_erl_generator::render_default_sets_value() {
+  switch (sets_to_) {
+  case SetsTo::V1:
+    return "sets:new()";
+  case SetsTo::V2:
+    return "sets:new([{version,2}])";
+  default:
+    throw "compiler error: unsupported set type";
   }
 }
 
@@ -729,7 +792,7 @@ string t_erl_generator::render_member_type(t_field* field) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      return "string() | binary()";
+      return render_string_type();
     case t_base_type::TYPE_BOOL:
       return "boolean()";
     case t_base_type::TYPE_I8:
@@ -758,6 +821,19 @@ string t_erl_generator::render_member_type(t_field* field) {
     return "list()";
   } else {
     throw "compiler error: unsupported type " + type->get_name();
+  }
+}
+
+string t_erl_generator::render_string_type() {
+  switch (string_to_) {
+  case StringTo::String:
+    return "string()";
+  case StringTo::Binary:
+    return "binary()";
+  case StringTo::Both:
+    return "string() | binary()";
+  default:
+    throw "compiler error: unsupported string type";
   }
 }
 
@@ -807,7 +883,13 @@ void t_erl_generator::generate_erl_struct(t_struct* tstruct, bool is_exception) 
  * @param tstruct The struct definition
  */
 void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tstruct) {
-  indent(out) << "%% struct " << type_name(tstruct) << '\n' << '\n';
+  indent(out) << "%% ";
+  if (tstruct->is_union()) {
+    out << "union ";
+  } else {
+    out << "struct ";
+  }
+  out << type_name(tstruct) << '\n' << '\n';
 
   std::stringstream buf;
   buf << indent() << "-record(" << type_name(tstruct) << ", {";
@@ -1290,4 +1372,6 @@ THRIFT_REGISTER_GENERATOR(
     "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
     "    delimiter=       Delimiter between namespace prefix and record name. Default is '.'.\n"
     "    app_prefix=      Application prefix for generated Erlang files.\n"
-    "    maps:            Generate maps instead of dicts.\n")
+    "    maps:            Generate maps instead of dicts.\n"
+    "    string=          Define string as 'string', 'binary' or 'both'. Default is 'both'.\n"
+    "    set=             Define sets implementation, supported 'v1' and 'v2'. Default is 'v1'.\n")
