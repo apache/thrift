@@ -89,6 +89,11 @@ class TTornadoStreamTransport(TTransportBase):
     def with_timeout(self, timeout, future):
         return gen.with_timeout(timeout, future)
 
+    def isOpen(self):
+       if self.stream is None:
+           return False
+       return not self.stream.closed()
+
     @gen.coroutine
     def open(self, timeout=None):
         logger.debug('socket connecting')
