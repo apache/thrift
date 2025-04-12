@@ -252,6 +252,7 @@ class TSocketTest extends TestCase
         $port = -1;
         $persist = false;
         $debugHandler = null;
+        $handle = fopen('php://memory', 'r+');
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
              ->expects($this->once())
@@ -261,7 +262,23 @@ class TSocketTest extends TestCase
                  $this->anything(), #$errno,
                  $this->anything(), #$errstr,
                  $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-             );
+             )
+             ->willReturn($handle);
+
+        $this->getFunctionMock('Thrift\Transport', 'socket_import_stream')
+            ->expects($this->once())
+            ->with($handle)
+            ->willReturn(true);
+
+        $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
+            ->expects($this->once())
+            ->with(
+                $this->anything(), #$socket,
+                SOL_TCP, #$level
+                TCP_NODELAY, #$option
+                1 #$value
+            )
+            ->willReturn(true);
 
         $transport = new TSocket(
             $host,
