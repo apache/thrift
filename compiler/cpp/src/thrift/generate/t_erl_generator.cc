@@ -557,19 +557,37 @@ void t_erl_generator::generate_const_functions() {
 void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
+  vector<string> value_names;
+  vector<string>::iterator names_iter;
 
   v_enums_.push_back(tenum);
   v_enum_names_.push_back(atomify(tenum->get_name()));
 
+  f_types_hrl_file_ << "%% enum " << tenum->get_name() << "\n" << "\n";
+
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = (*c_iter)->get_name();
-    indent(f_types_hrl_file_) << "-define(" << constify(make_safe_for_module_name(program_name_))
-                              << "_" << constify(tenum->get_name()) << "_" << constify(name) << ", "
-                              << value << ")." << '\n';
+    string define_name = constify(make_safe_for_module_name(program_name_)) + "_" +
+                         constify(tenum->get_name()) + "_" + constify(name);
+    indent(f_types_hrl_file_) << "-define(" << define_name << ", " << value << ")." << '\n';
+    value_names.push_back(define_name);
   }
-
   f_types_hrl_file_ << '\n';
+
+  string enum_definition = "-type " + type_name(tenum) + "() :: ";
+  string value_indent(enum_definition.size(), ' ');
+  f_types_hrl_file_ << enum_definition;
+  bool names_iter_first = false;
+  for (names_iter = value_names.begin(); names_iter != value_names.end(); ++names_iter) {
+    if (names_iter_first) {
+      f_types_hrl_file_ << " |" << "\n" << value_indent;
+    } else {
+      names_iter_first = true;
+    }
+    indent(f_types_hrl_file_) << "?" << *names_iter;
+  }
+  f_types_hrl_file_ << ".\n" << "\n";
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
