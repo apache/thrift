@@ -886,10 +886,12 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   indent(out) << "%% ";
   if (tstruct->is_union()) {
     out << "union ";
+  } else if (tstruct->is_xception()) {
+    out << "exception ";
   } else {
     out << "struct ";
   }
-  out << type_name(tstruct) << '\n' << '\n';
+  out << tstruct->get_name() << '\n' << '\n';
 
   std::stringstream buf;
   buf << indent() << "-record(" << type_name(tstruct) << ", {";
