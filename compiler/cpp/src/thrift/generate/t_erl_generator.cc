@@ -132,6 +132,8 @@ public:
   std::string render_member_type(t_field* field);
   std::string render_member_value(t_field* field);
   std::string render_member_requiredness(t_field* field);
+
+  std::string render_base_type(t_type* type);
   std::string render_typedef_type(t_type* ttype);
   std::string render_string_type();
 
@@ -807,27 +809,12 @@ string t_erl_generator::render_default_sets_value() {
 }
 
 string t_erl_generator::render_member_type(t_field* field) {
-  t_type* type = get_true_type(field->get_type());
+  t_type* type = field->get_type();
   if (type->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-    switch (tbase) {
-    case t_base_type::TYPE_STRING:
-      return render_string_type();
-    case t_base_type::TYPE_BOOL:
-      return "boolean()";
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      return "integer()";
-    case t_base_type::TYPE_DOUBLE:
-      return "float()";
-    default:
-      throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
-    }
+    return render_base_type(type);
   } else if (type->is_enum()) {
-    return "integer()";
-  } else if (type->is_struct() || type->is_xception()) {
+    return type_name(type) + "()";
+  } else if (type->is_struct() || type->is_typedef()) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
@@ -841,6 +828,25 @@ string t_erl_generator::render_member_type(t_field* field) {
     return "list()";
   } else {
     throw "compiler error: unsupported type " + type->get_name();
+  }
+}
+
+string t_erl_generator::render_base_type(t_type* type) {
+  t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+  switch (tbase) {
+  case t_base_type::TYPE_STRING:
+    return render_string_type();
+  case t_base_type::TYPE_BOOL:
+    return "boolean()";
+  case t_base_type::TYPE_I8:
+  case t_base_type::TYPE_I16:
+  case t_base_type::TYPE_I32:
+  case t_base_type::TYPE_I64:
+    return "integer()";
+  case t_base_type::TYPE_DOUBLE:
+    return "float()";
+  default:
+    throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
   }
 }
 
@@ -870,24 +876,8 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
 
 string t_erl_generator::render_typedef_type(t_type* ttype) {
   if (ttype->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-    switch (tbase) {
-    case t_base_type::TYPE_STRING:
-      return render_string_type();
-    case t_base_type::TYPE_BOOL:
-      return "boolean()";
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      return "integer()";
-    case t_base_type::TYPE_DOUBLE:
-      return "float()";
-    default:
-      throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
-    }
-  }
-   else if (ttype->is_enum()) {
+    return render_base_type(ttype);
+  } else if (ttype->is_enum()) {
     return type_name(ttype) + "()";
   } else if (ttype->is_struct() || ttype->is_xception() || ttype->is_typedef()) {
     return type_name(ttype) + "()";
