@@ -133,8 +133,10 @@ public:
   std::string render_member_value(t_field* field);
   std::string render_member_requiredness(t_field* field);
 
+  std::string render_typedef_type(t_typedef* ttypedef);
+
+  std::string render_type(t_type* type);
   std::string render_base_type(t_type* type);
-  std::string render_typedef_type(t_type* ttype);
   std::string render_string_type();
 
   //  std::string render_default_value(t_type* type);
@@ -486,8 +488,7 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
-  t_type* type = ttypedef->get_type();
-  f_types_hrl_file_ << "-type " << type_name(ttypedef) << "() :: " << render_typedef_type(type) << ".\n" << "\n";
+  f_types_hrl_file_ << "-type " << type_name(ttypedef) << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
 }
 
 
@@ -810,11 +811,15 @@ string t_erl_generator::render_default_sets_value() {
 
 string t_erl_generator::render_member_type(t_field* field) {
   t_type* type = field->get_type();
+  return render_type(type);
+}
+
+string t_erl_generator::render_type(t_type* type) {
   if (type->is_base_type()) {
     return render_base_type(type);
   } else if (type->is_enum()) {
     return type_name(type) + "()";
-  } else if (type->is_struct() || type->is_typedef()) {
+  } else if (type->is_struct() || type->is_xception() || type->is_typedef()) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
@@ -874,26 +879,9 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
   }
 }
 
-string t_erl_generator::render_typedef_type(t_type* ttype) {
-  if (ttype->is_base_type()) {
-    return render_base_type(ttype);
-  } else if (ttype->is_enum()) {
-    return type_name(ttype) + "()";
-  } else if (ttype->is_struct() || ttype->is_xception() || ttype->is_typedef()) {
-    return type_name(ttype) + "()";
-  } else if (ttype->is_map()) {
-    if (maps_) {
-      return "map()";
-    } else {
-      return "dict:dict()";
-    }
-  } else if (ttype->is_set()) {
-    return "sets:set()";
-  } else if (ttype->is_list()) {
-    return "list()";
-  } else {
-    throw "compiler error: unsupported type " + ttype->get_name();
-  }
+string t_erl_generator::render_typedef_type(t_typedef* ttypedef) {
+  t_type* type = ttypedef->get_type();
+  return render_type(type);
 }
 
 /**
