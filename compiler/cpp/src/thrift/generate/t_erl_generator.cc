@@ -138,6 +138,7 @@ public:
   std::string render_type(t_type* type);
   std::string render_base_type(t_type* type);
   std::string render_string_type();
+  std::string render_const_name(std::string name);
   std::string render_const_name(std::string sname, std::string name);
 
   //  std::string render_default_value(t_type* type);
@@ -601,8 +602,12 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   f_types_hrl_file_ << ".\n" << "\n";
 }
 
+string t_erl_generator::render_const_name(std::string name) {
+  return constify(make_safe_for_module_name(program_name_)) + "_" + constify(name);
+}
+
 string t_erl_generator::render_const_name(std::string sname, std::string name) {
-  return constify(make_safe_for_module_name(program_name_)) + "_" + constify(sname) + "_" + constify(name);
+  return render_const_name(sname) + "_" + constify(name);
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
@@ -650,8 +655,8 @@ void t_erl_generator::generate_const(t_const* tconst) {
   // Save the tconst so that function can be emitted in generate_const_functions().
   v_consts_.push_back(tconst);
 
-  f_consts_hrl_file_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
-                     << constify(name) << ", " << render_const_value(type, value) << ")." << '\n' << '\n';
+  f_consts_hrl_file_ << "-define(" << render_const_name(name) << ", "
+                     << render_const_value(type, value) << ")." << '\n' << '\n';
 }
 
 /**
