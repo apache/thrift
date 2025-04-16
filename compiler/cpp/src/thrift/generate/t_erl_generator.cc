@@ -138,6 +138,7 @@ public:
   std::string render_type(t_type* type);
   std::string render_base_type(t_type* type);
   std::string render_string_type();
+  std::string render_const_name(std::string sname, std::string name);
 
   //  std::string render_default_value(t_type* type);
   std::string render_default_value(t_field* field);
@@ -488,6 +489,12 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
+  // t_type* type = ttypedef->get_type();
+  // if (type->is_base_type()) {
+  //   f_types_hrl_file_ << "-nominal ";
+  // } else {
+  //   f_types_hrl_file_ << "-type ";
+  // }
   f_types_hrl_file_ << "-type " << type_name(ttypedef) << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
 }
 
@@ -562,7 +569,7 @@ void t_erl_generator::generate_const_functions() {
 void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  vector<string> value_names;
+  vector<string> const_names;
   vector<string>::iterator names_iter;
 
   v_enums_.push_back(tenum);
@@ -573,10 +580,9 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = (*c_iter)->get_name();
-    string define_name = constify(make_safe_for_module_name(program_name_)) + "_" +
-                         constify(tenum->get_name()) + "_" + constify(name);
-    indent(f_types_hrl_file_) << "-define(" << define_name << ", " << value << ")." << '\n';
-    value_names.push_back(define_name);
+    string const_name = render_const_name(tenum->get_name(), name);
+    indent(f_types_hrl_file_) << "-define(" << const_name << ", " << value << ")." << '\n';
+    const_names.push_back(const_name);
   }
   f_types_hrl_file_ << '\n';
 
@@ -584,7 +590,7 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   string value_indent(enum_definition.size(), ' ');
   f_types_hrl_file_ << enum_definition;
   bool names_iter_first = false;
-  for (names_iter = value_names.begin(); names_iter != value_names.end(); ++names_iter) {
+  for (names_iter = const_names.begin(); names_iter != const_names.end(); ++names_iter) {
     if (names_iter_first) {
       f_types_hrl_file_ << " |" << "\n" << value_indent;
     } else {
@@ -593,6 +599,10 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
     indent(f_types_hrl_file_) << "?" << *names_iter;
   }
   f_types_hrl_file_ << ".\n" << "\n";
+}
+
+string t_erl_generator::render_const_name(std::string sname, std::string name) {
+  return constify(make_safe_for_module_name(program_name_)) + "_" + constify(sname) + "_" + constify(name);
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
@@ -679,7 +689,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    indent(out) << value->get_integer();
+    string name = (((t_enum*)type)->get_constant_by_value(value->get_integer()))->get_name();
+    indent(out) << "?" << render_const_name(type->get_name(), name);
 
   } else if (type->is_struct() || type->is_xception()) {
     out << "#" << type_name(type) << "{";
