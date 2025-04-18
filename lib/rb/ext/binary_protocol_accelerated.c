@@ -82,7 +82,7 @@ static void write_string_direct(VALUE trans, VALUE str) {
     rb_raise(rb_eStandardError, "Value should be a string");
   }
   str = convert_to_utf8_byte_buffer(str);
-  write_i32_direct(trans, RSTRING_LEN(str));
+  write_i32_direct(trans, (int32_t)RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
 }
 
@@ -223,7 +223,7 @@ VALUE rb_thrift_binary_proto_write_binary(VALUE self, VALUE buf) {
   CHECK_NIL(buf);
   VALUE trans = GET_TRANSPORT(self);
   buf = force_binary_encoding(buf);
-  write_i32_direct(trans, RSTRING_LEN(buf));
+  write_i32_direct(trans, (int32_t)RSTRING_LEN(buf));
   rb_funcall(trans, write_method_id, 1, buf);
   return Qnil;
 }
@@ -403,9 +403,9 @@ VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
 void Init_binary_protocol_accelerated() {
   VALUE thrift_binary_protocol_class = rb_const_get(thrift_module, rb_intern("BinaryProtocol"));
 
-  VERSION_1 = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_1")));
-  VERSION_MASK = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_MASK")));
-  TYPE_MASK = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("TYPE_MASK")));
+  VERSION_1 = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_1")));
+  VERSION_MASK = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_MASK")));
+  TYPE_MASK = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("TYPE_MASK")));
 
   VALUE bpa_class = rb_define_class_under(thrift_module, "BinaryProtocolAccelerated", thrift_binary_protocol_class);
 
