@@ -132,7 +132,14 @@ public:
   std::string render_member_type(t_field* field);
   std::string render_member_value(t_field* field);
   std::string render_member_requiredness(t_field* field);
+
+  std::string render_typedef_type(t_typedef* ttypedef);
+
+  std::string render_type(t_type* type);
+  std::string render_base_type(t_type* type);
   std::string render_string_type();
+  std::string render_const_name(std::string name);
+  std::string render_const_name(std::string sname, std::string name);
 
   //  std::string render_default_value(t_type* type);
   std::string render_default_value(t_field* field);
@@ -478,12 +485,18 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
 }
 
 /**
- * Generates a typedef. no op
+ * Generates a typedef.
  *
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
-  (void)ttypedef;
+  // t_type* type = ttypedef->get_type();
+  // if (type->is_base_type()) {
+  //   f_types_hrl_file_ << "-nominal ";
+  // } else {
+  //   f_types_hrl_file_ << "-type ";
+  // }
+  f_types_hrl_file_ << "-type " << type_name(ttypedef) << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
 }
 
 
@@ -557,19 +570,44 @@ void t_erl_generator::generate_const_functions() {
 void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
+  vector<string> const_names;
+  vector<string>::iterator names_iter;
 
   v_enums_.push_back(tenum);
   v_enum_names_.push_back(atomify(tenum->get_name()));
 
+  f_types_hrl_file_ << "%% enum " << tenum->get_name() << "\n" << "\n";
+
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = (*c_iter)->get_name();
-    indent(f_types_hrl_file_) << "-define(" << constify(make_safe_for_module_name(program_name_))
-                              << "_" << constify(tenum->get_name()) << "_" << constify(name) << ", "
-                              << value << ")." << '\n';
+    string const_name = render_const_name(tenum->get_name(), name);
+    indent(f_types_hrl_file_) << "-define(" << const_name << ", " << value << ")." << '\n';
+    const_names.push_back(const_name);
   }
-
   f_types_hrl_file_ << '\n';
+
+  string enum_definition = "-type " + type_name(tenum) + "() :: ";
+  string value_indent(enum_definition.size(), ' ');
+  f_types_hrl_file_ << enum_definition;
+  bool names_iter_first = false;
+  for (names_iter = const_names.begin(); names_iter != const_names.end(); ++names_iter) {
+    if (names_iter_first) {
+      f_types_hrl_file_ << " |" << "\n" << value_indent;
+    } else {
+      names_iter_first = true;
+    }
+    indent(f_types_hrl_file_) << "?" << *names_iter;
+  }
+  f_types_hrl_file_ << ".\n" << "\n";
+}
+
+string t_erl_generator::render_const_name(std::string name) {
+  return constify(make_safe_for_module_name(program_name_)) + "_" + constify(name);
+}
+
+string t_erl_generator::render_const_name(std::string sname, std::string name) {
+  return render_const_name(sname) + "_" + constify(name);
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
@@ -617,8 +655,8 @@ void t_erl_generator::generate_const(t_const* tconst) {
   // Save the tconst so that function can be emitted in generate_const_functions().
   v_consts_.push_back(tconst);
 
-  f_consts_hrl_file_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
-                     << constify(name) << ", " << render_const_value(type, value) << ")." << '\n' << '\n';
+  f_consts_hrl_file_ << "-define(" << render_const_name(name) << ", "
+                     << render_const_value(type, value) << ")." << '\n' << '\n';
 }
 
 /**
@@ -656,7 +694,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    indent(out) << value->get_integer();
+    string name = (((t_enum*)type)->get_constant_by_value(value->get_integer()))->get_name();
+    indent(out) << "?" << render_const_name(type->get_name(), name);
 
   } else if (type->is_struct() || type->is_xception()) {
     out << "#" << type_name(type) << "{";
@@ -787,31 +826,20 @@ string t_erl_generator::render_default_sets_value() {
 }
 
 string t_erl_generator::render_member_type(t_field* field) {
-  t_type* type = get_true_type(field->get_type());
+  t_type* type = field->get_type();
+  return render_type(type);
+}
+
+string t_erl_generator::render_type(t_type* type) {
   if (type->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-    switch (tbase) {
-    case t_base_type::TYPE_STRING:
-      return render_string_type();
-    case t_base_type::TYPE_BOOL:
-      return "boolean()";
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      return "integer()";
-    case t_base_type::TYPE_DOUBLE:
-      return "float()";
-    default:
-      throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
-    }
+    return render_base_type(type);
   } else if (type->is_enum()) {
-    return "integer()";
-  } else if (type->is_struct() || type->is_xception()) {
+    return type_name(type) + "()";
+  } else if (type->is_struct() || type->is_xception() || type->is_typedef()) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
-      return "map()";
+      return "maps:map()";
     } else {
       return "dict:dict()";
     }
@@ -821,6 +849,25 @@ string t_erl_generator::render_member_type(t_field* field) {
     return "list()";
   } else {
     throw "compiler error: unsupported type " + type->get_name();
+  }
+}
+
+string t_erl_generator::render_base_type(t_type* type) {
+  t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+  switch (tbase) {
+  case t_base_type::TYPE_STRING:
+    return render_string_type();
+  case t_base_type::TYPE_BOOL:
+    return "boolean()";
+  case t_base_type::TYPE_I8:
+  case t_base_type::TYPE_I16:
+  case t_base_type::TYPE_I32:
+  case t_base_type::TYPE_I64:
+    return "integer()";
+  case t_base_type::TYPE_DOUBLE:
+    return "float()";
+  default:
+    throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
   }
 }
 
@@ -846,6 +893,11 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
   default:
     return "undefined";
   }
+}
+
+string t_erl_generator::render_typedef_type(t_typedef* ttypedef) {
+  t_type* type = ttypedef->get_type();
+  return render_type(type);
 }
 
 /**
@@ -886,10 +938,12 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   indent(out) << "%% ";
   if (tstruct->is_union()) {
     out << "union ";
+  } else if (tstruct->is_xception()) {
+    out << "exception ";
   } else {
     out << "struct ";
   }
-  out << type_name(tstruct) << '\n' << '\n';
+  out << tstruct->get_name() << '\n' << '\n';
 
   std::stringstream buf;
   buf << indent() << "-record(" << type_name(tstruct) << ", {";
