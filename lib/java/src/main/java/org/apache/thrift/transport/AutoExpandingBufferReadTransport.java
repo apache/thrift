@@ -18,19 +18,15 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
 /** TTransport for reading from an AutoExpandingBuffer. */
-public class AutoExpandingBufferReadTransport extends TEndpointTransport {
+public class AutoExpandingBufferReadTransport extends TTransport {
 
   private final AutoExpandingBuffer buf;
 
   private int pos = 0;
   private int limit = 0;
 
-  public AutoExpandingBufferReadTransport(TConfiguration config, int initialCapacity)
-      throws TTransportException {
-    super(config);
+  public AutoExpandingBufferReadTransport(int initialCapacity) {
     this.buf = new AutoExpandingBuffer(initialCapacity);
   }
 

@@ -502,6 +502,7 @@ public class TCompactProtocol extends TProtocol {
     byte type = (byte) ((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
     int seqid = readVarint32();
     String messageName = readString();
+    trans_.readMessageBegin();
     return new TMessage(messageName, type, seqid);
   }
 
@@ -575,7 +576,6 @@ public class TCompactProtocol extends TProtocol {
             getTType((byte) (keyAndValueType >> 4)),
             getTType((byte) (keyAndValueType & 0xf)),
             size);
-    checkReadBytesAvailable(map);
     return map;
   }
 
@@ -593,7 +593,6 @@ public class TCompactProtocol extends TProtocol {
     }
     checkContainerReadLength(size);
     TList list = new TList(getTType(size_and_type), size);
-    checkReadBytesAvailable(list);
     return list;
   }
 
@@ -697,7 +696,6 @@ public class TCompactProtocol extends TProtocol {
     if (length == 0) {
       return EMPTY_BUFFER;
     }
-    getTransport().checkReadBytesAvailable(length);
     if (trans_.getBytesRemainingInBuffer() >= length) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
       trans_.consumeBuffer(length);
@@ -723,8 +721,6 @@ public class TCompactProtocol extends TProtocol {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + length);
     }
 
-    getTransport().checkReadBytesAvailable(length);
-
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(
           TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + length);
@@ -746,7 +742,9 @@ public class TCompactProtocol extends TProtocol {
   // encoding.
   //
   @Override
-  public void readMessageEnd() throws TException {}
+  public void readMessageEnd() throws TException {
+    trans_.readMessageEnd();
+  }
 
   @Override
   public void readFieldEnd() throws TException {}

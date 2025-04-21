@@ -69,7 +69,7 @@ public class TDeserializer {
    * @throws TTransportException if there an error initializing the underlying transport.
    */
   public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
-    trans_ = new TMemoryInputTransport(new TConfiguration());
+    trans_ = new TMemoryInputTransport();
     protocol_ = protocolFactory.getProtocol(trans_);
   }
 

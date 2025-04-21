@@ -152,7 +152,6 @@ public final class TSimpleFileTransport extends TEndpointTransport {
     if (!readable) {
       throw new TTransportException("Read operation on write only file");
     }
-    checkReadBytesAvailable(len);
     int iBytesRead = 0;
     try {
       iBytesRead = file.read(buf, off, len);
@@ -160,6 +159,7 @@ public final class TSimpleFileTransport extends TEndpointTransport {
       file = null;
       throw new TTransportException(ioe.getMessage());
     }
+    consumeReadMessageBytes(iBytesRead);
     return iBytesRead;
   }
 

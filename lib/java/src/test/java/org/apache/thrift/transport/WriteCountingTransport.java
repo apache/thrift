@@ -61,12 +61,12 @@ public class WriteCountingTransport extends TTransport {
   }
 
   @Override
-  public void updateKnownMessageSize(long size) throws TTransportException {
-    trans.updateKnownMessageSize(size);
+  public void readMessageBegin() {
+    trans.readMessageBegin();
   }
 
   @Override
-  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-    trans.checkReadBytesAvailable(numBytes);
+  public void readMessageEnd() {
+    trans.readMessageEnd();
   }
 }

@@ -18,10 +18,8 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
 /** TTransport for writing to an AutoExpandingBuffer. */
-public final class AutoExpandingBufferWriteTransport extends TEndpointTransport {
+public final class AutoExpandingBufferWriteTransport extends TTransport {
 
   private final AutoExpandingBuffer buf;
   private int pos;
@@ -30,7 +28,6 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
   /**
    * Constructor.
    *
-   * @param config the configuration to use. Currently used for defining the maximum message size.
    * @param initialCapacity the initial capacity of the buffer
    * @param frontReserve space, if any, to reserve at the beginning such that the first write is
    *     after this reserve. This allows framed transport to reserve space for the frame buffer
@@ -39,9 +36,8 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
    * @throws IllegalArgumentException if frontReserve is less than zero
    * @throws IllegalArgumentException if frontReserve is greater than initialCapacity
    */
-  public AutoExpandingBufferWriteTransport(
-      TConfiguration config, int initialCapacity, int frontReserve) throws TTransportException {
-    super(config);
+  public AutoExpandingBufferWriteTransport(int initialCapacity, int frontReserve)
+      throws TTransportException {
     if (initialCapacity < 1) {
       throw new IllegalArgumentException("initialCapacity");
     }

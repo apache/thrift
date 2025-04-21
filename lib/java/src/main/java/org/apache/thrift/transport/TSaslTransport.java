@@ -20,7 +20,6 @@
 package org.apache.thrift.transport;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
@@ -37,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * A superclass for SASL client/server thrift transports. A subclass need only implement the <code>
  * open</code> method.
  */
-abstract class TSaslTransport extends TEndpointTransport {
+abstract class TSaslTransport extends TTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSaslTransport.class);
 
@@ -77,12 +76,8 @@ abstract class TSaslTransport extends TEndpointTransport {
    * @param underlyingTransport The thrift transport which this transport is wrapping.
    */
   protected TSaslTransport(TTransport underlyingTransport) throws TTransportException {
-    super(
-        Objects.isNull(underlyingTransport.getConfiguration())
-            ? new TConfiguration()
-            : underlyingTransport.getConfiguration());
     this.underlyingTransport = underlyingTransport;
-    this.readBuffer = new TMemoryInputTransport(underlyingTransport.getConfiguration());
+    this.readBuffer = new TMemoryInputTransport();
   }
 
   /**
@@ -94,13 +89,9 @@ abstract class TSaslTransport extends TEndpointTransport {
    */
   protected TSaslTransport(SaslClient saslClient, TTransport underlyingTransport)
       throws TTransportException {
-    super(
-        Objects.isNull(underlyingTransport.getConfiguration())
-            ? new TConfiguration()
-            : underlyingTransport.getConfiguration());
     sasl = new SaslParticipant(saslClient);
     this.underlyingTransport = underlyingTransport;
-    this.readBuffer = new TMemoryInputTransport(underlyingTransport.getConfiguration());
+    this.readBuffer = new TMemoryInputTransport();
   }
 
   protected void setSaslServer(SaslServer saslServer) {
@@ -153,7 +144,7 @@ abstract class TSaslTransport extends TEndpointTransport {
     }
 
     int payloadBytes = EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES);
-    if (payloadBytes < 0 || payloadBytes > getConfiguration().getMaxMessageSize() /* 100 MB */) {
+    if (payloadBytes < 0 || payloadBytes > 104857600 /* 100 MB */) {
       throw sendAndThrowMessage(
           NegotiationStatus.ERROR, "Invalid payload header length: " + payloadBytes);
     }
@@ -444,6 +435,21 @@ abstract class TSaslTransport extends TEndpointTransport {
     writeLength(dataLength);
     underlyingTransport.write(buf, 0, dataLength);
     underlyingTransport.flush();
+  }
+
+  @Override
+  public TConfiguration getConfiguration() {
+    return underlyingTransport.getConfiguration();
+  }
+
+  @Override
+  public void readMessageBegin() {
+    underlyingTransport.readMessageBegin();
+  }
+
+  @Override
+  public void readMessageEnd() {
+    underlyingTransport.readMessageEnd();
   }
 
   /** Used exclusively by readSaslMessage to return both a status and data. */

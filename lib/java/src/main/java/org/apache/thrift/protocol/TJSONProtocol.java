@@ -832,12 +832,14 @@ public class TJSONProtocol extends TProtocol {
     String name = readJSONString(false).toString(StandardCharsets.UTF_8);
     byte type = (byte) readJSONInteger();
     int seqid = (int) readJSONInteger();
+    trans_.readMessageBegin();
     return new TMessage(name, type, seqid);
   }
 
   @Override
   public void readMessageEnd() throws TException {
     readJSONArrayEnd();
+    trans_.readMessageEnd();
   }
 
   @Override
@@ -880,7 +882,6 @@ public class TJSONProtocol extends TProtocol {
     readJSONObjectStart();
     TMap map = new TMap(keyType, valueType, size);
 
-    checkReadBytesAvailable(map);
     return map;
   }
 
@@ -897,7 +898,6 @@ public class TJSONProtocol extends TProtocol {
     int size = (int) readJSONInteger();
     TList list = new TList(elemType, size);
 
-    checkReadBytesAvailable(list);
     return list;
   }
 
@@ -913,7 +913,6 @@ public class TJSONProtocol extends TProtocol {
     int size = (int) readJSONInteger();
     TSet set = new TSet(elemType, size);
 
-    checkReadBytesAvailable(set);
     return set;
   }
 

@@ -18,7 +18,6 @@
  */
 package org.apache.thrift.transport.layered;
 
-import java.util.Objects;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.*;
 
@@ -100,15 +99,10 @@ public class TFastFramedTransport extends TLayeredTransport {
   public TFastFramedTransport(TTransport underlying, int initialBufferCapacity, int maxLength)
       throws TTransportException {
     super(underlying);
-    TConfiguration config =
-        Objects.isNull(underlying.getConfiguration())
-            ? new TConfiguration()
-            : underlying.getConfiguration();
     this.maxLength = maxLength;
-    config.setMaxFrameSize(maxLength);
     this.initialBufferCapacity = initialBufferCapacity;
-    readBuffer = new AutoExpandingBufferReadTransport(config, initialBufferCapacity);
-    writeBuffer = new AutoExpandingBufferWriteTransport(config, initialBufferCapacity, 4);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
+    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 4);
   }
 
   @Override
@@ -149,7 +143,7 @@ public class TFastFramedTransport extends TLayeredTransport {
           TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
     }
 
-    if (size > getInnerTransport().getConfiguration().getMaxFrameSize()) {
+    if (size > maxLength) {
       close();
       throw new TTransportException(
           TTransportException.CORRUPTED_DATA,
@@ -171,7 +165,7 @@ public class TFastFramedTransport extends TLayeredTransport {
 
   /** Only clears the read buffer! */
   public void clear() throws TTransportException {
-    readBuffer = new AutoExpandingBufferReadTransport(getConfiguration(), initialBufferCapacity);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
   }
 
   @Override

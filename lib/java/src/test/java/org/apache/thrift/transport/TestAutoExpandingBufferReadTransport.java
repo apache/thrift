@@ -21,7 +21,6 @@ package org.apache.thrift.transport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.ByteBuffer;
-import org.apache.thrift.TConfiguration;
 import org.junit.jupiter.api.Test;
 
 public class TestAutoExpandingBufferReadTransport {
@@ -35,10 +34,9 @@ public class TestAutoExpandingBufferReadTransport {
 
   @Test
   public void testIt() throws Exception {
-    AutoExpandingBufferReadTransport t =
-        new AutoExpandingBufferReadTransport(new TConfiguration(), 150);
+    AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(150);
 
-    TMemoryInputTransport membuf = new TMemoryInputTransport(new TConfiguration(), HUNDRED_BYTES);
+    TMemoryInputTransport membuf = new TMemoryInputTransport(HUNDRED_BYTES);
 
     t.fill(membuf, 100);
     assertEquals(100, t.getBytesRemainingInBuffer());
