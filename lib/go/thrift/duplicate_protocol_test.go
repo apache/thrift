@@ -39,9 +39,9 @@ func TestDuplicateToJSONReadMakesEqualJSON(t *testing.T) {
 	if !bytes.Equal(jsonBytesWritten, jsonBytesRead) {
 		t.Errorf(`bytes read into duplicate do not equal bytes written
 		read:
-		%+v
+		%s
 		written:
-		%+v
+		%s
 		`, jsonBytesRead, jsonBytesWritten)
 	}
 
