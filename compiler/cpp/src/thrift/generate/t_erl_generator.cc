@@ -50,6 +50,11 @@ enum class StringTo {String, Binary, Both};
 enum class SetsTo {V1, V2};
 
 /**
+ * Helper enum for type declaration
+ */
+enum class TypeDeclaraion {Type, Nominal};
+
+/**
  * Erlang code generator.
  *
  */
@@ -70,6 +75,7 @@ public:
     export_types_lines_first_ = true;
     string_to_ = StringTo::Both;
     sets_to_ = SetsTo::V1;
+    type_declaration_ = TypeDeclaraion::Type;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
@@ -99,6 +105,15 @@ public:
           sets_to_ = SetsTo::V2;
         } else {
           throw "unknown set option value:" + set_to_value;
+        }
+      } else if( iter->first.compare("type") == 0) {
+        auto type_to_value = iter->second;
+        if( type_to_value.compare("type") == 0) {
+          type_declaration_ = TypeDeclaraion::Type;
+        } else if( type_to_value.compare("nominal") == 0) {
+          type_declaration_ = TypeDeclaraion::Nominal;
+        } else {
+          throw "unknown type option value:" + type_to_value;
         }
       } else {
         throw "unknown option erl:" + iter->first;
@@ -138,6 +153,7 @@ public:
   std::string render_type(t_type* type);
   std::string render_base_type(t_type* type);
   std::string render_string_type();
+  std::string render_type_declaration();
   std::string render_const_name(std::string name);
   std::string render_const_name(std::string sname, std::string name);
 
@@ -235,6 +251,9 @@ private:
 
   /* sets type definition strategy */
   SetsTo sets_to_;
+
+  /* type declaration strategy */
+  TypeDeclaraion type_declaration_;
 
   /**
    * add function to export list
@@ -490,13 +509,8 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
-  // t_type* type = ttypedef->get_type();
-  // if (type->is_base_type()) {
-  //   f_types_hrl_file_ << "-nominal ";
-  // } else {
-  //   f_types_hrl_file_ << "-type ";
-  // }
-  f_types_hrl_file_ << "-type " << type_name(ttypedef) << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
+  f_types_hrl_file_ << render_type_declaration() << type_name(ttypedef)
+                    << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
 }
 
 
@@ -587,7 +601,7 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   }
   f_types_hrl_file_ << '\n';
 
-  string enum_definition = "-type " + type_name(tenum) + "() :: ";
+  string enum_definition = render_type_declaration() + type_name(tenum) + "() :: ";
   string value_indent(enum_definition.size(), ' ');
   f_types_hrl_file_ << enum_definition;
   bool names_iter_first = false;
@@ -884,6 +898,17 @@ string t_erl_generator::render_string_type() {
   }
 }
 
+string t_erl_generator::render_type_declaration() {
+  switch (type_declaration_) {
+  case TypeDeclaraion::Type:
+    return "-type ";
+  case TypeDeclaraion::Nominal:
+    return "-nominal ";
+  default:
+    throw "compiler error: unsupported type declaration";
+  }
+}
+
 string t_erl_generator::render_member_requiredness(t_field* field) {
   switch (field->get_req()) {
   case t_field::T_REQUIRED:
@@ -959,7 +984,8 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   buf << "}).";
 
   out << buf.str() << '\n';
-  out << "-type " + type_name(tstruct) << "() :: #" + type_name(tstruct) + "{}." << '\n' << '\n';
+  out << render_type_declaration() << type_name(tstruct)
+      << "() :: #" + type_name(tstruct) + "{}." << '\n' << '\n';
 }
 
 /**
@@ -1428,4 +1454,5 @@ THRIFT_REGISTER_GENERATOR(
     "    app_prefix=      Application prefix for generated Erlang files.\n"
     "    maps:            Generate maps instead of dicts.\n"
     "    string=          Define string as 'string', 'binary' or 'both'. Default is 'both'.\n"
-    "    set=             Define sets implementation, supported 'v1' and 'v2'. Default is 'v1'.\n")
+    "    set=             Define sets implementation, supported 'v1' and 'v2'. Default is 'v1'.\n"
+    "    type=            Define type declaration, supported 'type' and 'nominal'. Default is 'type'.\n")
