@@ -1,0 +1,50 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: jimdo-runner-1core
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure WL2
+        uses: Jimdo/wonderland2-setup-action@main
+
+      - name: Build and push image
+        run: make push
+        env:
+          LIFECYCLE: release
+
+  slack-workflow-status:
+    name: Post workflow status to Slack
+    needs:
+      - deploy
+    if: always()
+    runs-on: jimdo-runner-1core
+    steps:
+      - name: Determine if we need to notify
+        uses: Jimdo/should-i-notify-action@main
+        id: should_notify
+        with:
+          branch: master
+          needs_context: ${{ toJson(needs) }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Slack workflow notification
+        uses: Gamesight/slack-workflow-status@master
+        if: steps.should_notify.outputs.should_send_message == 'yes'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'creator-deployments'
+          name: 'thrift'

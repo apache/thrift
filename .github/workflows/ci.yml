@@ -1,0 +1,15 @@
+name: CI
+
+on: [pull_request, workflow_call]
+
+jobs:
+  test:
+    runs-on: jimdo-runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build image
+        run: make build
+        env:
+          LIFECYCLE: preview
