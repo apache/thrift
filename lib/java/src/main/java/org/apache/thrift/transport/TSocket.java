@@ -56,7 +56,18 @@ public class TSocket extends TIOStreamTransport {
    * @throws TTransportException if there is an error setting up the streams
    */
   public TSocket(Socket socket) throws TTransportException {
-    super(new TConfiguration());
+    this(socket, new TConfiguration());
+  }
+
+  /**
+   * Constructor that takes an already created socket.
+   *
+   * @param socket Already created socket object
+   * @param configuration Customized configuration for this transport
+   * @throws TTransportException if there is an error setting up the streams
+   */
+  public TSocket(Socket socket, TConfiguration configuration) throws TTransportException {
+    super(configuration);
     socket_ = socket;
     try {
       socket_.setSoLinger(false, 0);

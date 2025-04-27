@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,8 @@ public class TServerSocket extends TServerTransport {
 
   /** Timeout for client sockets from accept */
   private int clientTimeout_ = 0;
+
+  private final TConfiguration configuration_;
 
   public static class ServerSocketTransportArgs
       extends AbstractServerTransportArgs<ServerSocketTransportArgs> {
@@ -78,6 +81,7 @@ public class TServerSocket extends TServerTransport {
 
   public TServerSocket(ServerSocketTransportArgs args) throws TTransportException {
     clientTimeout_ = args.clientTimeout;
+    configuration_ = args.configuration;
     if (args.serverSocket != null) {
       this.serverSocket_ = args.serverSocket;
       return;
@@ -121,7 +125,7 @@ public class TServerSocket extends TServerTransport {
     if (result == null) {
       throw new TTransportException("Blocking server's accept() may not return NULL");
     }
-    TSocket socket = new TSocket(result);
+    TSocket socket = new TSocket(result, configuration_);
     socket.setTimeout(clientTimeout_);
     return socket;
   }
