@@ -19,6 +19,9 @@
 
 SUBDIRS = CrossTests
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 precross:
 	$(MAKE) -C CrossTests precross
 

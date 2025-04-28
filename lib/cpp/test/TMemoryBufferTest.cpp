@@ -36,8 +36,6 @@ using apache::thrift::protocol::TBinaryProtocol;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TTransportException;
 using std::shared_ptr;
-using std::cout;
-using std::endl;
 using std::string;
 
 BOOST_AUTO_TEST_CASE(test_read_write_grow) {
@@ -383,6 +381,14 @@ BOOST_AUTO_TEST_CASE(test_maximum_buffer_size)
   }
 
   BOOST_CHECK_THROW(buf.write(&small_buff[0], 1), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_buffer_overflow)
+{
+  TMemoryBuffer buf;
+  std::vector<uint8_t> small_buff(1);
+  buf.write(&small_buff[0], 1);
+  BOOST_CHECK_THROW(buf.getWritePtr(std::numeric_limits<uint32_t>::max()), TTransportException);
 }
 
 BOOST_AUTO_TEST_CASE(test_memory_buffer_to_get_sizeof_objects)

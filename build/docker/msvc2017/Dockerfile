@@ -67,7 +67,7 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
 
 # Install zlib
 COPY appveyor\build-zlib.bat C:\TEMP\build-zlib.bat
-ENV ZLIB_VERSION=1.2.11
+ENV ZLIB_VERSION=1.2.13
 ENV WIN3P=C:\TEMP\WIN3P
 RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
     MKDIR C:\TEMP\WIN3P && `
@@ -76,7 +76,7 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
     RMDIR /S /Q C:\TEMP\WIN3P
 
 # Install OpenSSL 1.1.0
-ADD http://slproweb.com/download/Win64OpenSSL-1_1_0j.exe C:\TEMP\openssl.exe
+ADD http://slproweb.com/download/Win64OpenSSL-1_1_0l.exe C:\TEMP\openssl.exe
 RUN C:\TEMP\openssl.exe /silent && `
     DEL C:\TEMP\openssl.exe
 

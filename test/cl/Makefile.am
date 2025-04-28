@@ -35,6 +35,9 @@ clean-local:
 	$(RM) TestServer
 	$(RM) TestClient
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	implementation.lisp \
 	make-test-client.lisp \

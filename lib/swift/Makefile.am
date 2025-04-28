@@ -35,6 +35,9 @@ precross:
 check-local:
 	swift test
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Package.swift \
 	Sources \

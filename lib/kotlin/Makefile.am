@@ -40,6 +40,9 @@ check-local: $(THRIFT)
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	build.gradle.kts \
 	CMakeLists.txt \

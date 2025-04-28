@@ -79,7 +79,6 @@ test {
     maxHeapSize = '512m'
 
     systemProperties = [
-        'build.test': "${compileTestJava.destinationDir}",
         'test.port': "${testPort}",
         'javax.net.ssl.trustStore': "${projectDir}/src/crossTest/resources/.truststore",
         'javax.net.ssl.trustStorePassword': 'thrift',

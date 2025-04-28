@@ -41,6 +41,8 @@ uses
   Thrift.WinHTTP,
   Thrift.TypeRegistry,
   System_,
+  test.ExceptionStruct,
+  test.SimpleException,
   DebugProtoTest;
 
 {$TYPEINFO ON}
@@ -81,8 +83,12 @@ type
 
     procedure Test_Serializer_Deserializer;
     procedure Test_COM_Types;
-    procedure Test_OneOfEach(     const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
-    procedure Test_CompactStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+    procedure Test_ThriftBytesCTORs;
+
+    procedure Test_OneOfEach(       const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+    procedure Test_CompactStruct(   const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+    procedure Test_ExceptionStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+    procedure Test_SimpleException( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
 
   public
     constructor Create;
@@ -99,6 +105,8 @@ function CreateOneOfEach : IOneOfEach; stdcall; external SERIALIZERDATA_DLL;
 function CreateNesting : INesting; stdcall; external SERIALIZERDATA_DLL;
 function CreateHolyMoley : IHolyMoley; stdcall; external SERIALIZERDATA_DLL;
 function CreateCompactProtoTestStruct : ICompactProtoTestStruct; stdcall; external SERIALIZERDATA_DLL;
+function CreateBatchGetResponse : IBatchGetResponse; stdcall; external SERIALIZERDATA_DLL;
+function CreateSimpleException : IError; stdcall; external SERIALIZERDATA_DLL;
 
 
 { TTestSerializer }
@@ -265,6 +273,105 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_ExceptionStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+var tested, correct : IBatchGetResponse;
+    bytes   : TBytes;
+    corrDP, testDP : TPair<WideString, IGetRequest>;
+    corrEP, testEP : TPair<WideString, ISomeException>;
+begin
+  // write
+  tested := CreateBatchGetResponse;
+  case method of
+    mt_Bytes:  bytes := Serialize( tested, factory);
+    mt_Stream: begin
+      stream.Size := 0;
+      Serialize( tested, factory, stream);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // init + read
+  correct := TBatchGetResponseImpl.Create;
+  case method of
+    mt_Bytes:  Deserialize( bytes, tested, factory);
+    mt_Stream: begin
+      stream.Position := 0;
+      Deserialize( stream, tested, factory);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // check
+  correct := CreateBatchGetResponse;
+
+  // rewrite the following test if not
+  ASSERT( tested.Responses.Count = 1);
+  ASSERT( correct.Responses.Count = tested.Responses.Count);
+  for corrDP in correct.Responses do begin
+    for testDP in tested.Responses do begin
+      ASSERT( corrDP.Key = testDP.Key);
+      ASSERT( corrDP.Value.Id = testDP.Value.Id);
+      ASSERT( corrDP.Value.Data.Count = testDP.Value.Data.Count);
+    end;
+  end;
+
+  // rewrite the following test if not
+  ASSERT( tested.Errors.Count = 1);
+  ASSERT( correct.Errors.Count = tested.Errors.Count);
+  for corrEP in correct.Errors do begin
+    for testEP in tested.Errors do begin
+      ASSERT( corrEP.Key = testEP.Key);
+      ASSERT( corrEP.Value.Error = testEP.Value.Error);
+    end;
+  end;
+end;
+
+
+procedure TTestSerializer.Test_SimpleException( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
+var tested, correct : IError;
+    bytes   : TBytes;
+begin
+  // write
+  tested := CreateSimpleException;
+  case method of
+    mt_Bytes:  bytes := Serialize( tested, factory);
+    mt_Stream: begin
+      stream.Size := 0;
+      Serialize( tested, factory, stream);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // init + read
+  correct := TErrorImpl.Create;
+  case method of
+    mt_Bytes:  Deserialize( bytes, tested, factory);
+    mt_Stream: begin
+      stream.Position := 0;
+      Deserialize( stream, tested, factory);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // check
+  correct := CreateSimpleException;
+  while correct <> nil do begin
+    // validate
+    ASSERT( correct.ErrorCode = tested.ErrorCode);
+    ASSERT( IsEqualGUID( correct.ExceptionData, tested.ExceptionData));
+
+    // iterate
+    correct := correct.InnerException;
+    tested  := tested.InnerException;
+    ASSERT( (tested <> nil) xor (correct = nil));  // both or none
+  end;
+end;
+
+
 procedure TTestSerializer.Test_Serializer_Deserializer;
 var factory : TFactoryPair;
     stream  : TFileStream;
@@ -278,8 +385,10 @@ begin
       for factory in FProtocols do begin
         Writeln('- '+UserFriendlyName(factory));
 
-        Test_OneOfEach(     method, factory, stream);
-        Test_CompactStruct( method, factory, stream);
+        Test_OneOfEach(       method, factory, stream);
+        Test_CompactStruct(   method, factory, stream);
+        Test_ExceptionStruct( method, factory, stream);
+        Test_SimpleException( method, factory, stream);
       end;
 
       Writeln;
@@ -325,11 +434,28 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_ThriftBytesCTORs;
+var one, two : IThriftBytes;
+    bytes : TBytes;
+    sAscii : AnsiString;
+begin
+  sAscii := 'ABC/xzy';
+  bytes  := TEncoding.ASCII.GetBytes(string(sAscii));
+
+  one := TThriftBytesImpl.Create( PAnsiChar(sAscii), Length(sAscii));
+  two := TThriftBytesImpl.Create( bytes, TRUE);
+
+  ASSERT( one.Count = two.Count);
+  ASSERT( CompareMem( one.QueryRawDataPtr, two.QueryRawDataPtr, one.Count));
+end;
+
+
 procedure TTestSerializer.RunTests;
 begin
   try
     Test_Serializer_Deserializer;
     Test_COM_Types;
+    Test_ThriftBytesCTORs;
   except
     on e:Exception do begin
       Writeln( e.ClassName+': '+ e.Message);

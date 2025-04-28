@@ -90,18 +90,22 @@ class TSocket(TSocketBase):
             self.handle.settimeout(0)
             try:
                 peeked_bytes = self.handle.recv(1, socket.MSG_PEEK)
+                # the length will be zero if we got EOF (indicating connection closed)
+                if len(peeked_bytes) == 1:
+                    return True
             except (socket.error, OSError) as exc:  # on modern python this is just BlockingIOError
                 if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
                     return True
-                return False
             except ValueError:
                 # SSLSocket fails on recv with non-zero flags; fallback to the old behavior
                 return True
         finally:
             self.handle.settimeout(original_timeout)
 
-        # the length will be zero if we got EOF (indicating connection closed)
-        return len(peeked_bytes) == 1
+        # The caller may assume that after isOpen() returns False, calling close()
+        # is not needed, so it is safer to close the socket here.
+        self.close()
+        return False
 
     def setTimeout(self, ms):
         if ms is None:
@@ -151,6 +155,8 @@ class TSocket(TSocketBase):
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
+        except socket.timeout as e:
+            raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
                     (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
@@ -161,8 +167,6 @@ class TSocket(TSocketBase):
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
                 buff = ''
-            elif e.args[0] == errno.ETIMEDOUT:
-                raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
@@ -208,7 +212,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         else:
             # We cann't update backlog when it is already listening, since the
             # handle has been created.
-            logger.warn('You have to set backlog before listen.')
+            logger.warning('You have to set backlog before listen.')
 
     def listen(self):
         res0 = self._resolveAddr()

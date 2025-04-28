@@ -30,15 +30,17 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
   final I iface;
-  final Map<String, AsyncProcessFunction<I, ? extends TBase, ?>> processMap;
+  final Map<String, AsyncProcessFunction<I, ? extends TBase, ?, ? extends TBase>> processMap;
 
   public TBaseAsyncProcessor(
-      I iface, Map<String, AsyncProcessFunction<I, ? extends TBase, ?>> processMap) {
+      I iface,
+      Map<String, AsyncProcessFunction<I, ? extends TBase, ?, ? extends TBase>> processMap) {
     this.iface = iface;
     this.processMap = processMap;
   }
 
-  public Map<String, AsyncProcessFunction<I, ? extends TBase, ?>> getProcessMapView() {
+  public Map<String, AsyncProcessFunction<I, ? extends TBase, ?, ? extends TBase>>
+      getProcessMapView() {
     return Collections.unmodifiableMap(processMap);
   }
 

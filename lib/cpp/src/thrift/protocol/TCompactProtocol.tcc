@@ -93,7 +93,7 @@ uint32_t TCompactProtocolT<Transport_>::writeMessageBegin(
     const int32_t seqid) {
   uint32_t wsize = 0;
   wsize += writeByte(PROTOCOL_ID);
-  wsize += writeByte((VERSION_N & VERSION_MASK) | (((int32_t)messageType << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
+  wsize += writeByte((VERSION_N & VERSION_MASK) | ((static_cast<int32_t>(messageType) << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
   wsize += writeVarint32(seqid);
   wsize += writeString(name);
   return wsize;
@@ -221,7 +221,7 @@ uint32_t TCompactProtocolT<Transport_>::writeBool(const bool value) {
 
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeByte(const int8_t byte) {
-  trans_->write((uint8_t*)&byte, 1);
+  trans_->write(reinterpret_cast<const uint8_t*>(&byte), 1);
   return 1;
 }
 
@@ -259,7 +259,7 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
 
   auto bits = bitwise_cast<uint64_t>(dub);
   bits = THRIFT_htolell(bits);
-  trans_->write((uint8_t*)&bits, 8);
+  trans_->write(reinterpret_cast<const uint8_t*>(&bits), 8);
   return 8;
 }
 
@@ -282,7 +282,7 @@ uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
   if(ssize > (std::numeric_limits<uint32_t>::max)() - wsize)
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   wsize += ssize;
-  trans_->write((uint8_t*)str.data(), ssize);
+  trans_->write(reinterpret_cast<const uint8_t*>(str.data()), ssize);
   return wsize;
 }
 
@@ -350,10 +350,10 @@ uint32_t TCompactProtocolT<Transport_>::writeVarint32(uint32_t n) {
 
   while (true) {
     if ((n & ~0x7F) == 0) {
-      buf[wsize++] = (int8_t)n;
+      buf[wsize++] = static_cast<int8_t>(n);
       break;
     } else {
-      buf[wsize++] = (int8_t)((n & 0x7F) | 0x80);
+      buf[wsize++] = static_cast<int8_t>((n & 0x7F) | 0x80);
       n >>= 7;
     }
   }
@@ -371,10 +371,10 @@ uint32_t TCompactProtocolT<Transport_>::writeVarint64(uint64_t n) {
 
   while (true) {
     if ((n & ~0x7FL) == 0) {
-      buf[wsize++] = (int8_t)n;
+      buf[wsize++] = static_cast<int8_t>(n);
       break;
     } else {
-      buf[wsize++] = (int8_t)((n & 0x7F) | 0x80);
+      buf[wsize++] = static_cast<int8_t>((n & 0x7F) | 0x80);
       n >>= 7;
     }
   }
@@ -431,12 +431,12 @@ uint32_t TCompactProtocolT<Transport_>::readMessageBegin(
   }
 
   rsize += readByte(versionAndType);
-  version = (int8_t)(versionAndType & VERSION_MASK);
+  version = static_cast<int8_t>(versionAndType & VERSION_MASK);
   if (version != VERSION_N) {
     throw TProtocolException(TProtocolException::BAD_VERSION, "Bad protocol version");
   }
 
-  messageType = (TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
+  messageType = static_cast<TMessageType>((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
   rsize += readVarint32(seqid);
   rsize += readString(name);
 
@@ -489,12 +489,12 @@ uint32_t TCompactProtocolT<Transport_>::readFieldBegin(std::string& name,
   }
 
   // mask off the 4 MSB of the type header. it could contain a field id delta.
-  auto modifier = (int16_t)(((uint8_t)byte & 0xf0) >> 4);
+  auto modifier = static_cast<int16_t>(static_cast<uint8_t>(byte & 0xf0) >> 4);
   if (modifier == 0) {
     // not a delta, look ahead for the zigzag varint field id.
     rsize += readI16(fieldId);
   } else {
-    fieldId = (int16_t)(lastFieldId_ + modifier);
+    fieldId = static_cast<int16_t>(lastFieldId_ + modifier);
   }
   fieldType = getTType(type);
 
@@ -535,9 +535,9 @@ uint32_t TCompactProtocolT<Transport_>::readMapBegin(TType& keyType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
 
-  keyType = getTType((int8_t)((uint8_t)kvType >> 4));
-  valType = getTType((int8_t)((uint8_t)kvType & 0xf));
-  size = (uint32_t)msize;
+  keyType = getTType(static_cast<int8_t>(static_cast<uint8_t>(kvType) >> 4));
+  valType = getTType(static_cast<int8_t>(static_cast<uint8_t>(kvType) & 0xf));
+  size = static_cast<uint32_t>(msize);
 
   TMap map(keyType, valType, size);
   checkReadBytesAvailable(map);
@@ -560,7 +560,7 @@ uint32_t TCompactProtocolT<Transport_>::readListBegin(TType& elemType,
 
   rsize += readByte(size_and_type);
 
-  lsize = ((uint8_t)size_and_type >> 4) & 0x0f;
+  lsize = (static_cast<uint8_t>(size_and_type) >> 4) & 0x0f;
   if (lsize == 15) {
     rsize += readVarint32(lsize);
   }
@@ -571,8 +571,8 @@ uint32_t TCompactProtocolT<Transport_>::readListBegin(TType& elemType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
 
-  elemType = getTType((int8_t)(size_and_type & 0x0f));
-  size = (uint32_t)lsize;
+  elemType = getTType(static_cast<int8_t>(size_and_type & 0x0f));
+  size = static_cast<uint32_t>(lsize);
 
   TList list(elemType, size);
   checkReadBytesAvailable(list);
@@ -618,7 +618,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readByte(int8_t& byte) {
   uint8_t b[1];
   trans_->readAll(b, 1);
-  byte = *(int8_t*)b;
+  byte = static_cast<int8_t>(b[0]);
   return 1;
 }
 
@@ -629,7 +629,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readI16(int16_t& i16) {
   int32_t value;
   uint32_t rsize = readVarint32(value);
-  i16 = (int16_t)zigzagToI32(value);
+  i16 = static_cast<int16_t>(zigzagToI32(value));
   return rsize;
 }
 
@@ -701,21 +701,22 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
 
+  // Check against MaxMessageSize before alloc
+  trans_->checkReadBytesAvailable(static_cast<uint32_t>(size));
+
   // Use the heap here to prevent stack overflow for v. large strings
   if (size > string_buf_size_ || string_buf_ == nullptr) {
-    void* new_string_buf = std::realloc(string_buf_, (uint32_t)size);
+    void* new_string_buf = std::realloc(string_buf_, static_cast<uint32_t>(size));
     if (new_string_buf == nullptr) {
       throw std::bad_alloc();
     }
-    string_buf_ = (uint8_t*)new_string_buf;
+    string_buf_ = static_cast<uint8_t*>(new_string_buf);
     string_buf_size_ = size;
   }
   trans_->readAll(string_buf_, size);
-  str.assign((char*)string_buf_, size);
+  str.assign(reinterpret_cast<char*>(string_buf_), size);
 
-  trans_->checkReadBytesAvailable(rsize + (uint32_t)size);
-
-  return rsize + (uint32_t)size;
+  return rsize + static_cast<uint32_t>(size);
 }
 
 /**
@@ -726,7 +727,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readVarint32(int32_t& i32) {
   int64_t val;
   uint32_t rsize = readVarint64(val);
-  i32 = (int32_t)val;
+  i32 = static_cast<int32_t>(val);
   return rsize;
 }
 
@@ -748,7 +749,7 @@ uint32_t TCompactProtocolT<Transport_>::readVarint64(int64_t& i64) {
     while (true) {
       uint8_t byte = borrowed[rsize];
       rsize++;
-      val |= (uint64_t)(byte & 0x7f) << shift;
+      val |= static_cast<uint64_t>(byte & 0x7f) << shift;
       shift += 7;
       if (!(byte & 0x80)) {
         i64 = val;
@@ -767,7 +768,7 @@ uint32_t TCompactProtocolT<Transport_>::readVarint64(int64_t& i64) {
     while (true) {
       uint8_t byte;
       rsize += trans_->readAll(&byte, 1);
-      val |= (uint64_t)(byte & 0x7f) << shift;
+      val |= static_cast<uint64_t>(byte & 0x7f) << shift;
       shift += 7;
       if (!(byte & 0x80)) {
         i64 = val;
@@ -826,7 +827,7 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
     case detail::compact::CT_STRUCT:
       return T_STRUCT;
     default:
-      throw TException(std::string("don't know what type: ") + (char)type);
+      throw TException(std::string("don't know what type: ") + static_cast<char>(type));
   }
 }
 

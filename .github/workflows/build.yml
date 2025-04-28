@@ -10,7 +10,6 @@ env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
   CONFIG_ARGS_FOR_LIBS: >
     --disable-debug
-    --disable-tests
     --disable-dependency-tracking
     --without-cpp
     --without-c_glib
@@ -42,10 +41,13 @@ jobs:
   compiler:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -67,27 +69,81 @@ jobs:
       - name: Run thrift version
         run: /usr/local/bin/thrift -version
 
-      # only upload while building ubuntu-20.04
+      # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
-        if: matrix.os == 'ubuntu-20.04'
-        uses: actions/upload-artifact@v3
+        if: matrix.os == 'ubuntu-24.04'
+        uses: actions/upload-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
           retention-days: 3
 
+  lib-php:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        php-version: [7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, intl, xml, curl
+          ini-values: "error_reporting=E_ALL"
+
+      - name: Install Dependencies
+        run: composer install
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-php/with-php/' | sed 's/without-php_extension/with-php_extension/' )
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Build Thrift Classes
+        run: |
+          mkdir -p ./lib/php/test/Resources/packages/php
+          mkdir -p ./lib/php/test/Resources/packages/phpv
+          mkdir -p ./lib/php/test/Resources/packages/phpvo
+          mkdir -p ./lib/php/test/Resources/packages/phpjs
+          mkdir -p ./lib/php/test/Resources/packages/phpcm
+          compiler/cpp/thrift --gen php:nsglobal="Basic" -r --out ./lib/php/test/Resources/packages/php lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate,nsglobal="Validate" -r --out ./lib/php/test/Resources/packages/phpv lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate,oop,nsglobal="ValidateOop" -r --out ./lib/php/test/Resources/packages/phpvo lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:json,nsglobal="Json" -r --out ./lib/php/test/Resources/packages/phpjs lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:classmap,server,rest,nsglobal="Classmap" -r --out ./lib/php/test/Resources/packages/phpcm lib/php/test/Resources/ThriftTest.thrift
+
+      - name: Run Tests
+        run: vendor/bin/phpunit -c lib/php/phpunit.xml
+
   lib-go:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         go:
-          - '1.19'
-          - '1.20'
+          - '1.23'
+          - '1.24'
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
 
@@ -103,7 +159,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -126,8 +182,8 @@ jobs:
         run: make -C test/go precross
 
       - name: Upload go precross artifacts
-        if: matrix.go == '1.20'
-        uses: actions/upload-artifact@v3
+        if: matrix.go == '1.24'
+        uses: actions/upload-artifact@v4
         with:
           name: go-precross
           if-no-files-found: error
@@ -137,13 +193,13 @@ jobs:
 
   lib-java-kotlin:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env:
-      GRADLE_VERSION: "8.0.2"
+      GRADLE_VERSION: "8.4"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -158,7 +214,7 @@ jobs:
       - name: Setup gradle
         run: |
           wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
-          (echo "ff7bf6a86f09b9b2c40bb8f48b25fc19cf2b2664fd1d220cd7ab833ec758d0d7  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
           unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
           sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
@@ -181,7 +237,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -199,7 +255,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libthrift
           if-no-files-found: error
@@ -212,7 +268,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-precross
           if-no-files-found: error
@@ -234,7 +290,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -243,11 +299,75 @@ jobs:
             lib/kotlin/cross-test-server/build/install/TestServer/
           retention-days: 3
 
+  lib-netstd:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
+
+#      the sdk is installed by default, but keep this step for reference
+#      caveat: net9 is (currently?) NOT installed, so manually again
+      - name: Set up .NET SDK
+        run: |
+          sudo add-apt-repository -y ppa:dotnet/backports
+          sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
+#      end
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for netstd
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for netstd
+        run: make -C lib/netstd
+
+      - name: Run make install for netstd
+        run: sudo make -C lib/netstd install
+
+      - name: Run make check for netstd
+        run: make -C lib/netstd check
+
+      - name: Run make check for test/netstd
+        run: make -C test/netstd check
+
+      - name: Run make precross for test/netstd
+        run: make -C test/netstd precross
+
+      - name: Upload netstd precross artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: netstd-precross
+          if-no-files-found: error
+          path: |
+            test/netstd/Client/bin/Release/
+            test/netstd/Server/bin/Release/
+          retention-days: 3
+
   lib-swift:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -256,7 +376,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -270,7 +390,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: swift-precross
           if-no-files-found: error
@@ -281,11 +401,11 @@ jobs:
 
   lib-rust:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     env:
-      TOOLCHAIN_VERSION: 1.61.0
+      TOOLCHAIN_VERSION: 1.83.0
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -309,7 +429,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -332,7 +452,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rs-precross
           if-no-files-found: error
@@ -346,12 +466,14 @@ jobs:
 
   lib-python:
     needs: compiler
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ["2.x", "3.x"]
+        python-version:
+          - "3.x"
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -360,7 +482,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -370,25 +492,15 @@ jobs:
           python --version
           pip --version
 
-      - name: Python 2.x backport setup
-        if: matrix.python-version == '2.x'
-        run: |
-          python -m pip install --upgrade ipaddress backports.ssl_match_hostname
-
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure 2.x
-        if: matrix.python-version == '2.x'
-        run: |
-          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-python/with-python/')
-
       - name: Run configure 3.x
-        if: matrix.python-version != '2.x'
+        if: matrix.python-version == '3.x'
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -410,6 +522,35 @@ jobs:
       - name: Run make check for python
         run: make -C lib/py check
 
+  lib-nodejs:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run js tests
+        run: make -C lib/nodejs check
+
+      - name: Run ts tests
+        run: make -C lib/nodets check
+
   cross-test:
     needs:
       - lib-java-kotlin
@@ -417,7 +558,7 @@ jobs:
       - lib-rust
       - lib-go
       - lib-python
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
@@ -425,17 +566,17 @@ jobs:
         client_lang: ['java,kotlin', 'go,rs', 'swift']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           # here we intentionally use an older version so that we also verify Java 17 compiles to it
-          java-version: 11
+          java-version: 8
           cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)
@@ -444,31 +585,31 @@ jobs:
           sudo apt-get install -y --no-install-recommends openssl ca-certificates
 
       - name: Download java precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: java-precross
           path: lib/java/build
 
       - name: Download kotlin precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: kotlin-precross
           path: lib/kotlin
 
       - name: Download swift precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: swift-precross
           path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: rs-precross
           path: test/rs/bin
 
       - name: Download go precross artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: go-precross
           path: test/go/bin
@@ -497,10 +638,10 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cross-test-log
+          name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
           path: test/log/
           retention-days: 3
 

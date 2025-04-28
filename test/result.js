@@ -18,47 +18,62 @@
 
 */
 
-$.getJSON('results.json', function(results) {
-    $(document).ready(function() {
-        var transport = 3;
-        var socket = 4;
-        var success = 5;
-        var expected = 6;
-        var returnCode = 7;
-        var logFile = 8;
-        testTable = $('#test_results').DataTable({
-            data: results['results'],
-            columnDefs: [
-                {
-                    targets: 3,
-                    render: function(data, type, row) {
-                        return row[transport] + '-' + row[socket];
-                    },
-                },
-                {
-                    targets: 4,
-                    render: function(data, type, row) {
-                        return (row[success] ? 'success' : 'failure')
-                                + '(' + (row[returnCode] == 128 ? 'timeout' : row[returnCode]) + ')'
-                                + '(<a href="' + row[logFile].server + '">Server</a>, '
-                                + '<a href="' + row[logFile].client + '">Client</a>)';
-                    },
-                },
-                {
-                    targets: 5,
-                    render: function(data, type, row) {
-                        // 'yes' rather than 'expected' to ease search
-                        return row[expected] ? 'yes' : 'unexpected';
-                    },
-                }
-            ],
-        });
-        $('#test_results_filter label input').focus().val('unexpected failure');
-        $('#test_info').text(
-            "Test Date:     " + results['date'] + "\n" +
-            "Revision:      " + results['revision'] + "\n" +
-            "Platform:      " + results['platform'] + "\n" +
-            "Test duration: " + results['duration']) + " seconds";
+$.getJSON("results.json", function (results) {
+  $(document).ready(function () {
+    var transport = 3;
+    var socket = 4;
+    var success = 5;
+    var expected = 6;
+    var returnCode = 7;
+    var logFile = 8;
+    testTable = $("#test_results").DataTable({
+      data: results["results"],
+      columnDefs: [
+        {
+          targets: 3,
+          render: function (data, type, row) {
+            return row[transport] + "-" + row[socket];
+          },
+        },
+        {
+          targets: 4,
+          render: function (data, type, row) {
+            return (
+              (row[success] ? "success" : "failure") +
+              "(" +
+              (row[returnCode] == 128 ? "timeout" : row[returnCode]) +
+              ")" +
+              '(<a href="' +
+              row[logFile].server +
+              '">Server</a>, ' +
+              '<a href="' +
+              row[logFile].client +
+              '">Client</a>)'
+            );
+          },
+        },
+        {
+          targets: 5,
+          render: function (data, type, row) {
+            // 'yes' rather than 'expected' to ease search
+            return row[expected] ? "yes" : "unexpected";
+          },
+        },
+      ],
     });
+    $("#test_results_filter label input").focus().val("unexpected failure");
+    $("#test_info").text(
+      "Test Date:     " +
+        results["date"] +
+        "\n" +
+        "Revision:      " +
+        results["revision"] +
+        "\n" +
+        "Platform:      " +
+        results["platform"] +
+        "\n" +
+        "Test duration: " +
+        results["duration"],
+    ) + " seconds";
+  });
 });
-

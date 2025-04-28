@@ -50,8 +50,9 @@
 			<DelphiCompile Include="server.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="TestServer.pas"/>
-			<DCCReference Include="TestServerEvents.pas"/>
+			<DCCReference Include="testsuite\TestConstants.pas"/>
+			<DCCReference Include="testsuite\server\TestServer.pas"/>
+			<DCCReference Include="testsuite\server\TestServerEvents.pas"/>
 			<DCCReference Include="gen-delphi\Thrift.Test.pas"/>
 			<DCCReference Include="..\src\Thrift.pas"/>
 			<DCCReference Include="..\src\Thrift.Exception.pas"/>
@@ -123,7 +124,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Parameters>
-						<Parameters Name="RunParams">--protocol=compact  </Parameters>
+						<Parameters Name="RunParams">--protocol=compact</Parameters>
 					</Parameters>
 				</Delphi.Personality>
 				<Platforms>

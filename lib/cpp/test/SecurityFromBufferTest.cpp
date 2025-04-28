@@ -109,7 +109,13 @@ struct SecurityFromBufferFixture {
       shared_ptr<TSSLServerSocket> pServerSocket;
 
       pServerSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
-      pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+      #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+          // OpenSSL 1.1.0 introduced @SECLEVEL. Modern distributions limit TLS 1.0/1.1
+          // to @SECLEVEL=0 or 1, so specify it to test all combinations.
+          pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@SECLEVEL=0");
+      #else
+          pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+      #endif
       pServerSocketFactory->loadCertificateFromBuffer(certString("server.crt").c_str());
       pServerSocketFactory->loadPrivateKeyFromBuffer(certString("server.key").c_str());
       pServerSocketFactory->server(true);
@@ -155,6 +161,11 @@ struct SecurityFromBufferFixture {
       try {
         pClientSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
         pClientSocketFactory->authenticate(true);
+        #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+            // OpenSSL 1.1.0 introduced @SECLEVEL. Modern distributions limit TLS 1.0/1.1
+            // to @SECLEVEL=0 or 1, so specify it to test all combinations.
+            pClientSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@SECLEVEL=0");
+        #endif
         pClientSocketFactory->loadCertificateFromBuffer(certString("client.crt").c_str());
         pClientSocketFactory->loadPrivateKeyFromBuffer(certString("client.key").c_str());
         pClientSocketFactory->loadTrustedCertificatesFromBuffer(certString("CA.pem").c_str());
@@ -199,16 +210,15 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix) {
   try {
     // matrix of connection success between client and server with different SSLProtocol selections
         static_assert(apache::thrift::transport::LATEST == 5, "Mismatch in assumed number of ssl protocols");
-        bool ossl1 = OPENSSL_VERSION_MAJOR == 1;
         bool matrix[apache::thrift::transport::LATEST + 1][apache::thrift::transport::LATEST + 1] =
         {
     //   server    = SSLTLS   SSLv2    SSLv3    TLSv1_0  TLSv1_1  TLSv1_2
     // client
-    /* SSLTLS  */  { true,    false,   false,   ossl1,   ossl1,   true    },
+    /* SSLTLS  */  { true,    false,   false,   true,    true,    true    },
     /* SSLv2   */  { false,   false,   false,   false,   false,   false   },
     /* SSLv3   */  { false,   false,   true,    false,   false,   false   },
-    /* TLSv1_0 */  { ossl1,   false,   false,   ossl1,   false,   false   },
-    /* TLSv1_1 */  { ossl1,   false,   false,   false,   ossl1,   false   },
+    /* TLSv1_0 */  { true,    false,   false,   true,    false,   false   },
+    /* TLSv1_1 */  { true,    false,   false,   false,   true,    false   },
     /* TLSv1_2 */  { true,    false,   false,   false,   false,   true    }
         };
 

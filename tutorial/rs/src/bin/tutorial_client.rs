@@ -107,7 +107,7 @@ fn new_client(
 
     // open the underlying TCP stream
     println!("connecting to tutorial server on {}:{}", host, port);
-    c.open(&format!("{}:{}", host, port))?;
+    c.open(format!("{}:{}", host, port))?;
 
     // clone the TCP channel into two halves, one which
     // we'll use for reading, the other for writing

@@ -248,7 +248,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     protected final TNonblockingTransport trans_;
 
     // the SelectionKey that corresponds to our transport
-    protected final SelectionKey selectionKey_;
+    protected SelectionKey selectionKey_;
 
     // the SelectThread that owns the registration of our transport
     protected final AbstractSelectThread selectThread_;
@@ -300,6 +300,15 @@ public abstract class AbstractNonblockingServer extends TServer {
       } else {
         context_ = null;
       }
+    }
+
+    /**
+     * Sets the selection key (this is not thread safe).
+     *
+     * @param selectionKey the new key to set.
+     */
+    public void setSelectionKey(SelectionKey selectionKey) {
+      selectionKey_ = selectionKey;
     }
 
     /**
@@ -375,7 +384,11 @@ public abstract class AbstractNonblockingServer extends TServer {
         // modify our selection key directly.
         if (buffer_.remaining() == 0) {
           // get rid of the read select interests
-          selectionKey_.interestOps(0);
+          if (selectionKey_.isValid()) {
+            selectionKey_.interestOps(0);
+          } else {
+            LOGGER.warn("SelectionKey was invalidated during read");
+          }
           state_ = FrameBufferState.READ_FRAME_COMPLETE;
         }
 
@@ -415,8 +428,12 @@ public abstract class AbstractNonblockingServer extends TServer {
       switch (state_) {
         case AWAITING_REGISTER_WRITE:
           // set the OP_WRITE interest
-          selectionKey_.interestOps(SelectionKey.OP_WRITE);
-          state_ = FrameBufferState.WRITING;
+          if (selectionKey_.isValid()) {
+            selectionKey_.interestOps(SelectionKey.OP_WRITE);
+            state_ = FrameBufferState.WRITING;
+          } else {
+            LOGGER.warn("SelectionKey was invalidated before write");
+          }
           break;
         case AWAITING_REGISTER_READ:
           prepareRead();
@@ -520,7 +537,11 @@ public abstract class AbstractNonblockingServer extends TServer {
     private void prepareRead() {
       // we can set our interest directly without using the queue because
       // we're in the select thread.
-      selectionKey_.interestOps(SelectionKey.OP_READ);
+      if (selectionKey_.isValid()) {
+        selectionKey_.interestOps(SelectionKey.OP_READ);
+      } else {
+        LOGGER.warn("SelectionKey was invalidated before read");
+      }
       // get ready for another go-around
       buffer_ = ByteBuffer.allocate(4);
       state_ = FrameBufferState.READING_FRAME_SIZE;

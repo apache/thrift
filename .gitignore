@@ -75,6 +75,8 @@ project.lock.json
 /compiler/cpp/src/thrift/plugin/gen.stamp
 /compiler/cpp/Debug
 /compiler/cpp/Release
+/compiler/cpp/compiler/Debug
+/compiler/cpp/compiler/Release
 /compiler/cpp/src/thrift/libparse.a
 /compiler/cpp/src/thrift/thriftl.cc
 /compiler/cpp/src/thrift/thrifty.cc
@@ -209,8 +211,6 @@ project.lock.json
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
 /lib/delphi/**/*.2007
-/lib/delphi/**/codegen/*.bat
-/lib/erl/_build/
 /lib/erl/.eunit
 /lib/erl/.generated
 /lib/erl/.rebar/
@@ -280,9 +280,8 @@ project.lock.json
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
-/lib/php/src/packages/
-/lib/php/test/TEST-*.xml
-/lib/php/test/packages/
+/lib/php/tests/Resources/packages/
+/lib/php/test/test-log-junit.xml
 /lib/py/dist/
 /lib/erl/logs/
 /lib/go/pkg

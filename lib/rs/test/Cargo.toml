@@ -10,6 +10,7 @@ publish = false
 clap = "~2.33"
 bitflags = "=1.2"
 log = "0.4"
+uuid = "1"
 
 [dependencies.thrift]
 path = "../"

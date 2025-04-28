@@ -26,6 +26,7 @@ BOOST_AUTO_TEST_CASE(test_specialization_1) {
   ooe.some_characters = "JSON THIS! \"\1";
   ooe.zomg_unicode = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
+  ooe.rfc4122_uuid = apache::thrift::TUuid{"00000000-0000-0000-0000-000000000000"};
 
   Nesting n;
   n.my_ooe = ooe;
@@ -89,6 +90,8 @@ BOOST_AUTO_TEST_CASE(test_specialization_1) {
   OneOfEach ooe2;
   ooe2.read(proto.get());
 
+  BOOST_TEST_INFO("Write: " << ooe);
+  BOOST_TEST_INFO("Read : " << ooe2);
   BOOST_CHECK(ooe == ooe2);
 
   hm.write(proto.get());

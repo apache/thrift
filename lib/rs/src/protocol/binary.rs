@@ -59,7 +59,7 @@ where
     pub transport: T, // FIXME: shouldn't be public
 }
 
-impl<'a, T> TBinaryInputProtocol<T>
+impl<T> TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {
@@ -188,6 +188,14 @@ where
 
     fn read_double(&mut self) -> crate::Result<f64> {
         self.transport.read_f64::<BigEndian>().map_err(From::from)
+    }
+
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        let mut buf = [0u8; 16];
+        self.transport
+            .read_exact(&mut buf)
+            .map(|_| uuid::Uuid::from_bytes(buf))
+            .map_err(From::from)
     }
 
     fn read_string(&mut self) -> crate::Result<String> {
@@ -389,6 +397,12 @@ where
         self.write_bytes(s.as_bytes())
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.transport
+            .write_all(uuid.as_bytes())
+            .map_err(From::from)
+    }
+
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> crate::Result<()> {
         self.write_byte(field_type_to_u8(identifier.element_type))?;
         self.write_i32(identifier.size)
@@ -470,8 +484,7 @@ fn field_type_to_u8(field_type: TType) -> u8 {
         TType::Map => 0x0D,
         TType::Set => 0x0E,
         TType::List => 0x0F,
-        TType::Utf8 => 0x10,
-        TType::Utf16 => 0x11,
+        TType::Uuid => 0x10,
     }
 }
 
@@ -490,8 +503,7 @@ fn field_type_from_u8(b: u8) -> crate::Result<TType> {
         0x0D => Ok(TType::Map),
         0x0E => Ok(TType::Set),
         0x0F => Ok(TType::List),
-        0x10 => Ok(TType::Utf8),
-        0x11 => Ok(TType::Utf16),
+        0x10 => Ok(TType::Uuid),
         unkn => Err(crate::Error::Protocol(ProtocolError {
             kind: ProtocolErrorKind::InvalidData,
             message: format!("cannot convert {} to TType", unkn),
@@ -849,7 +861,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x01]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
@@ -859,7 +871,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x00]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, false);
+        assert!(!read_bool);
     }
 
     #[test]
@@ -869,7 +881,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0xAC]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
@@ -883,6 +895,25 @@ mod tests {
         let buf = o_prot.transport.write_bytes();
         assert_eq!(&buf[0..4], [0x00, 0x00, 0x00, 0x0A]); // length
         assert_eq!(&buf[4..], bytes); // actual bytes
+    }
+
+    #[test]
+    fn must_write_uuid() {
+        let (_, mut o_prot) = test_objects(true);
+        let uuid = uuid::Uuid::new_v4();
+        assert!(o_prot.write_uuid(&uuid).is_ok());
+        let buf = o_prot.transport.write_bytes();
+        assert_eq!(&buf, uuid.as_bytes());
+    }
+
+    #[test]
+    fn must_round_trip_uuid() {
+        let (mut i_prot, mut o_prot) = test_objects(true);
+        let uuid = uuid::uuid!("F9168C5E-CEB2-4faa-B6BF-329BF39FA1E4");
+        assert!(o_prot.write_uuid(&uuid).is_ok());
+        copy_write_buffer_to_read_buffer!(o_prot);
+        let received_uuid = assert_success!(i_prot.read_uuid());
+        assert_eq!(&received_uuid, &uuid);
     }
 
     #[test]

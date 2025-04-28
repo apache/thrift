@@ -50,12 +50,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-kotlin {
-    jvmToolchain {
-        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 tasks {
     application {
         applicationName = "TestClient"
@@ -70,7 +64,7 @@ tasks {
 
     task<Exec>("compileThrift") {
         val thriftBin = if (hasProperty("thrift.compiler")) {
-            file(property("thrift.compiler"))
+            file(property("thrift.compiler")!!)
         } else {
             project.rootDir.resolve("../../compiler/cpp/thrift")
         }

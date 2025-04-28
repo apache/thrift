@@ -25,11 +25,11 @@ exception Exception2 {
 
 // This is a special case, we want to make sure that the middleware don't
 // accidentally pull result as error.
-exception FooResponse {
+struct/*exception*/ FooResponse {      // returning an exception by any means other than "throws" is illegal
 }
 
 service ClientMiddlewareExceptionTest {
-  FooResponse foo() throws(
+  FooResponse foo() throws(            // returning an exception by any means other than "throws" is illegal
       1: Exception1 error1,
       2: Exception2 error2,
   )

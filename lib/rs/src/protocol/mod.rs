@@ -171,6 +171,8 @@ pub trait TInputProtocol {
     fn read_i64(&mut self) -> crate::Result<i64>;
     /// Read a 64-bit float.
     fn read_double(&mut self) -> crate::Result<f64>;
+    /// Read a UUID.
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid>;
     /// Read a fixed-length string (not null terminated).
     fn read_string(&mut self) -> crate::Result<String>;
     /// Read the beginning of a list.
@@ -323,6 +325,8 @@ pub trait TOutputProtocol {
     fn write_i64(&mut self, i: i64) -> crate::Result<()>;
     /// Write a 64-bit float.
     fn write_double(&mut self, d: f64) -> crate::Result<()>;
+    /// Write a UUID
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()>;
     /// Write a fixed-length string.
     fn write_string(&mut self, s: &str) -> crate::Result<()>;
     /// Write the beginning of a list.
@@ -403,6 +407,10 @@ where
 
     fn read_double(&mut self) -> crate::Result<f64> {
         (**self).read_double()
+    }
+
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        (**self).read_uuid()
     }
 
     fn read_string(&mut self) -> crate::Result<String> {
@@ -496,6 +504,10 @@ where
 
     fn write_double(&mut self, d: f64) -> crate::Result<()> {
         (**self).write_double(d)
+    }
+
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        (**self).write_uuid(uuid)
     }
 
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
@@ -821,10 +833,8 @@ pub enum TType {
     Set,
     /// List.
     List,
-    /// UTF-8 string.
-    Utf8,
-    /// UTF-16 string. *Unsupported*.
-    Utf16,
+    /// Uuid.
+    Uuid,
 }
 
 impl Display for TType {
@@ -844,8 +854,7 @@ impl Display for TType {
             TType::Map => write!(f, "map"),
             TType::Set => write!(f, "set"),
             TType::List => write!(f, "list"),
-            TType::Utf8 => write!(f, "UTF8"),
-            TType::Utf16 => write!(f, "UTF16"),
+            TType::Uuid => write!(f, "UUID"),
         }
     }
 }

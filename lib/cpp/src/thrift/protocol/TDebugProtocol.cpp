@@ -70,10 +70,8 @@ string TDebugProtocol::fieldTypeName(TType type) {
     return "set";
   case T_LIST:
     return "list";
-  case T_UTF8:
-    return "utf8";
-  case T_UTF16:
-    return "utf16";
+  case T_UUID:
+    return "uuid";
   default:
     return "unknown";
   }
@@ -387,6 +385,17 @@ uint32_t TDebugProtocol::writeString(const string& str) {
 uint32_t TDebugProtocol::writeBinary(const string& str) {
   // XXX Hex?
   return TDebugProtocol::writeString(str);
+}
+
+uint32_t TDebugProtocol::writeUUID(const TUuid& uuid) {
+  size_t size = writePlain("{\n");
+  indentUp();
+  size += writeIndented("[raw] = ");
+  size += writeString(std::string(std::begin(uuid), std::end(uuid)));
+  size += writeIndented("[enc] = \"" + to_string(uuid) + "\"\n");
+  indentDown();
+  size += writeIndented("}\n");
+  return size;
 }
 }
 }

@@ -335,7 +335,7 @@ gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_requ
 gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/v0.16/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/v0.16/ThriftTest.thrift $(THRIFT)
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
 TESTS = \
@@ -400,6 +400,9 @@ CLEANFILES =                            \
     *.gcno                              \
     *.gcda                              \
     *.gcov
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
              CMakeLists.txt \

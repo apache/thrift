@@ -160,12 +160,21 @@ function THttpTransport:writeHttpHeader(content_len)
   end
 end
 
+function THttpTransport:flushOneway()
+  self.wBuf = ''
+  self:writeHttpHeader(0)
+  self.trans:flush()
+end
+
 function THttpTransport:flush()
   -- If the write fails we still want wBuf to be clear
   local tmp = self.wBuf
   self.wBuf = ''
-  self:writeHttpHeader(string.len(tmp))
-  self.trans:write(tmp)
+  local dataLen = string.len(tmp)
+  self:writeHttpHeader(dataLen)
+  if dataLen > 0 then
+    self.trans:write(tmp)
+  end
   self.trans:flush()
 end
 

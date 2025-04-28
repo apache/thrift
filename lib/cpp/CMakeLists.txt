@@ -31,6 +31,7 @@ endif()
 set(thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
    src/thrift/TOutput.cpp
+   src/thrift/TUuid.cpp
    src/thrift/async/TAsyncChannel.cpp
    src/thrift/async/TAsyncProtocolProcessor.cpp
    src/thrift/async/TConcurrentClientSyncInfo.h

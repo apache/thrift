@@ -191,127 +191,105 @@ type
     function ToString : string;  override;
   end;
 
-  IThriftHashSet<TValue> = interface(IThriftContainer)
-    ['{0923A3B5-D4D4-48A8-91AD-40238E2EAD66}']
-    function GetEnumerator: TEnumerator<TValue>;
-    function GetIsReadOnly: Boolean;
+  IThriftHashSet<T> = interface(IThriftContainer)
+    ['{733E2B57-C374-4359-BBD5-2B9CD8DF737C}']
+    function GetEnumerator: TEnumerator<T>;
     function GetCount: Integer;
     property Count: Integer read GetCount;
-    property IsReadOnly: Boolean read GetIsReadOnly;
-    procedure Add( const item: TValue);
+    function Add( const item: T) : Boolean;
     procedure Clear;
-    function Contains( const item: TValue): Boolean;
-    procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( const item: TValue ): Boolean;
+    function Contains( const item: T): Boolean;
+    function Remove( const item: T): Boolean;
   end;
 
   // compatibility
-  IHashSet<TValue> = interface( IThriftHashSet<TValue>)
+  IHashSet<T> = interface( IThriftHashSet<T>)
     ['{C3CF557F-21D9-4524-B899-D3145B0389BB}']
   end deprecated 'use IThriftHashSet<T>';
 
 
   {$WARN SYMBOL_DEPRECATED OFF}
-  TThriftHashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftHashSet<TValue>, IThriftContainer, ISupportsToString)
+  TThriftHashSetImpl<T> = class( TInterfacedObject, IHashSet<T>, IThriftHashSet<T>, IThriftContainer, ISupportsToString)
   {$WARN SYMBOL_DEPRECATED DEFAULT}
   strict private
-    FDictionary : IThriftDictionary<TValue,Integer>;
-    FIsReadOnly: Boolean;
+    FDictionary : TDictionary<T,Byte>;  // there is no THashSet<T> in older Delphi versions
   strict protected
-    function GetEnumerator: TEnumerator<TValue>;
-    function GetIsReadOnly: Boolean;
+    function GetEnumerator: TEnumerator<T>;
     function GetCount: Integer;
     property Count: Integer read GetCount;
-    property IsReadOnly: Boolean read FIsReadOnly;
-    procedure Add( const item: TValue);
+    function Add( const item: T) : Boolean;
     procedure Clear;
-    function Contains( const item: TValue): Boolean;
-    procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( const item: TValue ): Boolean;
+    function Contains( const item: T): Boolean;
+    function Remove( const item: T): Boolean;
   public
     constructor Create( const aCapacity: Integer = 0);  overload;
-    constructor Create( const aCapacity: Integer; const aComparer : IEqualityComparer<TValue>);  overload;
+    constructor Create( const aCapacity: Integer; const aComparer : IEqualityComparer<T>);  overload;
+    destructor Destroy; override;
     function ToString : string;  override;
   end;
 
   // compatibility
-  THashSetImpl<TValue> = class( TThriftHashSetImpl<TValue>)
+  THashSetImpl<T> = class( TThriftHashSetImpl<T>)
   end deprecated 'use TThriftHashSetImpl<T>';
 
 implementation
 
-{ TThriftHashSetImpl<TValue>. }
+{ TThriftHashSetImpl<T>. }
 
-procedure TThriftHashSetImpl<TValue>.Add( const item: TValue);
+function TThriftHashSetImpl<T>.Add( const item: T) : Boolean;
 begin
-  if not FDictionary.ContainsKey(item) then
-  begin
-    FDictionary.Add( item, 0);
-  end;
+  result := not FDictionary.ContainsKey(item);
+  if result then FDictionary.Add( item, 0);
 end;
 
-procedure TThriftHashSetImpl<TValue>.Clear;
+procedure TThriftHashSetImpl<T>.Clear;
 begin
   FDictionary.Clear;
 end;
 
-function TThriftHashSetImpl<TValue>.Contains( const item: TValue): Boolean;
+function TThriftHashSetImpl<T>.Contains( const item: T): Boolean;
 begin
   Result := FDictionary.ContainsKey(item);
 end;
 
-procedure TThriftHashSetImpl<TValue>.CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-var
-  i : Integer;
-  Enumlator : TEnumerator<TValue>;
-begin
-  Enumlator := GetEnumerator;
-  while Enumlator.MoveNext do
-  begin
-    A[arrayIndex] := Enumlator.Current;
-    Inc(arrayIndex);
-  end;
-end;
-
-constructor TThriftHashSetImpl<TValue>.Create( const aCapacity: Integer);
+constructor TThriftHashSetImpl<T>.Create( const aCapacity: Integer);
 begin
   inherited Create;
-  FDictionary := TThriftDictionaryImpl<TValue,Integer>.Create( aCapacity);
+  FDictionary := TDictionary<T,Byte>.Create( aCapacity);
 end;
 
-constructor TThriftHashSetImpl<TValue>.Create( const aCapacity: Integer; const aComparer : IEqualityComparer<TValue>);
+constructor TThriftHashSetImpl<T>.Create( const aCapacity: Integer; const aComparer : IEqualityComparer<T>);
 begin
   inherited Create;
-  FDictionary := TThriftDictionaryImpl<TValue,Integer>.Create( aCapacity, aComparer);
+  FDictionary := TDictionary<T,Byte>.Create( aCapacity, aComparer);
 end;
 
-function TThriftHashSetImpl<TValue>.GetCount: Integer;
+
+destructor TThriftHashSetImpl<T>.Destroy;
+begin
+  FDictionary.Free;
+  inherited Destroy;
+end;
+
+
+function TThriftHashSetImpl<T>.GetCount: Integer;
 begin
   Result := FDictionary.Count;
 end;
 
-function TThriftHashSetImpl<TValue>.GetEnumerator: TEnumerator<TValue>;
+function TThriftHashSetImpl<T>.GetEnumerator: TEnumerator<T>;
 begin
   Result := FDictionary.Keys.GetEnumerator;
 end;
 
-function TThriftHashSetImpl<TValue>.GetIsReadOnly: Boolean;
+function TThriftHashSetImpl<T>.Remove( const item: T): Boolean;
 begin
-  Result := FIsReadOnly;
+  Result := FDictionary.ContainsKey( item);
+  if Result then FDictionary.Remove( item );
 end;
 
-function TThriftHashSetImpl<TValue>.Remove( const item: TValue): Boolean;
-begin
-  Result := False;
-  if FDictionary.ContainsKey( item ) then
-  begin
-    FDictionary.Remove( item );
-    Result := not FDictionary.ContainsKey( item );
-  end;
-end;
-
-function TThriftHashSetImpl<TValue>.ToString : string;
-var elm : TValue;
+function TThriftHashSetImpl<T>.ToString : string;
+var elm : T;
     sb : TThriftStringBuilder;
     first : Boolean;
 begin
@@ -323,7 +301,7 @@ begin
       then first := FALSE
       else sb.Append(', ');
 
-      sb.Append( StringUtils<TValue>.ToString(elm));
+      sb.Append( StringUtils<T>.ToString(elm));
     end;
     sb.Append('}');
     Result := sb.ToString;

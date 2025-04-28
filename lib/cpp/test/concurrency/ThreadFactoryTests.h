@@ -53,7 +53,7 @@ public:
 
     void run() override {
       Synchronized s(_monitor);
-      
+
       if (--_count == 0) {
         _monitor.notify();
       }
@@ -82,7 +82,7 @@ public:
               threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, activeCount))));
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to create " << lix* count + tix << " thread " << e.what()
-                    << std::endl;
+                    << '\n';
           throw;
         }
       }
@@ -96,7 +96,7 @@ public:
           (*thread)->start();
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to start  " << lix* count + tix << " thread " << e.what()
-                    << std::endl;
+                    << '\n';
           throw;
         }
       }
@@ -107,11 +107,11 @@ public:
           monitor->wait(1000);
         }
       }
-      
-      std::cout << "\t\t\treaped " << lix* count << " threads" << std::endl;
+
+      std::cout << "\t\t\treaped " << lix* count << " threads" << '\n';
     }
 
-    std::cout << "\t\t\tSuccess!" << std::endl;
+    std::cout << "\t\t\tSuccess!" << '\n';
     return true;
   }
 
@@ -202,7 +202,7 @@ public:
 
     bool success = true;
 
-    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "!" << std::endl;
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "!" << '\n';
 
     return true;
   }
@@ -239,7 +239,7 @@ public:
     std::cout << "\t\t\t" << (success ? "Success" : "Failure")
               << ": minimum required time to elapse " << count * timeout
               << "ms; actual elapsed time " << endTime - startTime << "ms"
-              << std::endl;
+              << '\n';
 
     return success;
   }
@@ -250,14 +250,14 @@ public:
     ~FloodTask() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
-        std::cout << "\t\tthread " << _id << " done" << std::endl;
+        std::cout << "\t\tthread " << _id << " done" << '\n';
       }
     }
 
     void run() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
-        std::cout << "\t\tthread " << _id << " started" << std::endl;
+        std::cout << "\t\tthread " << _id << " started" << '\n';
       }
     }
     const size_t _id;
@@ -270,7 +270,7 @@ public:
 
     bool success = false;
     Monitor mon;
-	
+
     for (size_t lix = 0; lix < loop; lix++) {
 
       ThreadFactory threadFactory = ThreadFactory();
@@ -287,14 +287,14 @@ public:
         } catch (TException& e) {
 
           std::cout << "\t\t\tfailed to start  " << lix* count + tix << " thread " << e.what()
-                    << std::endl;
+                    << '\n';
 
           return success;
         }
       }
 
       Synchronized sync(mon);
-      std::cout << "\t\t\tflooded " << (lix + 1) * count << " threads" << std::endl;
+      std::cout << "\t\t\tflooded " << (lix + 1) * count << " threads" << '\n';
       success = true;
     }
 

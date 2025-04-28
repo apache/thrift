@@ -1,5 +1,219 @@
 # Apache Thrift Changelog
 
+## 0.21.0
+
+### Build Process	
+
+- [THRIFT-5815](https://issues.apache.org/jira/browse/THRIFT-5815) - veralign.sh broken and incomplete
+- [THRIFT-5810](https://issues.apache.org/jira/browse/THRIFT-5810) - Wrong installation path for static MSVC libs.
+- [THRIFT-5755](https://issues.apache.org/jira/browse/THRIFT-5755) - Docker image build fail
+
+### C++
+
+- [THRIFT-5272](https://issues.apache.org/jira/browse/THRIFT-5272) - printTo does not properly handle i8 datatypes
+- [THRIFT-5492](https://issues.apache.org/jira/browse/THRIFT-5492) - Bogus END_OF_FILE exception
+- [THRIFT-5678](https://issues.apache.org/jira/browse/THRIFT-5678) - TConnectedClient: warning due to non-virtual dtor
+- [THRIFT-5682](https://issues.apache.org/jira/browse/THRIFT-5682) - UB in generated C++ code	 stops compiling with C++20"
+- [THRIFT-5709](https://issues.apache.org/jira/browse/THRIFT-5709) - Drastically improve `to_num()` performace
+- [THRIFT-5772](https://issues.apache.org/jira/browse/THRIFT-5772) - Add UUID support for C++
+- [THRIFT-5773](https://issues.apache.org/jira/browse/THRIFT-5773) - UUID wrapper for C++
+- [THRIFT-5816](https://issues.apache.org/jira/browse/THRIFT-5816) - Fix UUID for boost 1.86.0 (change in data member usage)
+
+### Compiler (General)	
+
+- [THRIFT-5800](https://issues.apache.org/jira/browse/THRIFT-5800) - "Could not find include file foo.thrift" probably should be failure instead of warning
+- [THRIFT-5766](https://issues.apache.org/jira/browse/THRIFT-5766) - Replace std::endl with "\n"
+
+### Delphi	
+
+- [THRIFT-5789](https://issues.apache.org/jira/browse/THRIFT-5789) - Refactor test suite client implementation
+- [THRIFT-5782](https://issues.apache.org/jira/browse/THRIFT-5782) - implement full deprecation support
+- [THRIFT-5750](https://issues.apache.org/jira/browse/THRIFT-5750) - Remove "ansistr_binary_" option
+- [THRIFT-5788](https://issues.apache.org/jira/browse/THRIFT-5788) - Refactor and streamline hash set implementation
+- [THRIFT-5765](https://issues.apache.org/jira/browse/THRIFT-5765) - Extra override for WriteBinary() to avoid unnecessary memory allocations when using COM types
+- [THRIFT-5764](https://issues.apache.org/jira/browse/THRIFT-5764) - Extra CTOR for TThriftBytesImpl
+
+### Go
+
+- [THRIFT-5786](https://issues.apache.org/jira/browse/THRIFT-5786) - Full deprecation support for go
+- [THRIFT-5654](https://issues.apache.org/jira/browse/THRIFT-5654) - LNK4042 and LNK2019 in go_validator_generator.cc
+- [THRIFT-5784](https://issues.apache.org/jira/browse/THRIFT-5784) - go: Add THeaderTransforms to TConfiguration
+
+### Java
+
+- [THRIFT-5762](https://issues.apache.org/jira/browse/THRIFT-5762) - Expose service result objects in Java
+- [THRIFT-5530](https://issues.apache.org/jira/browse/THRIFT-5530) - could not resolve plugin artifact 'com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:4.0.4'
+- [THRIFT-5230](https://issues.apache.org/jira/browse/THRIFT-5230) - Fix connection leak and CancelledKeyException when handling Epoll bug
+- [THRIFT-4847](https://issues.apache.org/jira/browse/THRIFT-4847) - CancelledKeyException causes TThreadedSelectorServer to fail.
+
+### JSON
+
+- [THRIFT-5761](https://issues.apache.org/jira/browse/THRIFT-5761) - Lib/json tests fail
+
+### netstd
+
+- [THRIFT-5798](https://issues.apache.org/jira/browse/THRIFT-5798) - Expand netstd compile tests to fully cover all current target environments
+- [THRIFT-5797](https://issues.apache.org/jira/browse/THRIFT-5797) - HashSet() CTOR takes no argument for net < 5
+- [THRIFT-5796](https://issues.apache.org/jira/browse/THRIFT-5796) - Indicate target environment via #if check
+- [THRIFT-5795](https://issues.apache.org/jira/browse/THRIFT-5795) - namespace not properly escaped
+- [THRIFT-5794](https://issues.apache.org/jira/browse/THRIFT-5794) - Uncompilable C# code in 0.20.0
+- [THRIFT-5781](https://issues.apache.org/jira/browse/THRIFT-5781) - implement full deprecation support
+- [THRIFT-5780](https://issues.apache.org/jira/browse/THRIFT-5780) - Prevent certain warnings related to net8
+- [THRIFT-5787](https://issues.apache.org/jira/browse/THRIFT-5787) - .NET ApacheThrift client v20.0 breaks compatibility in TBinaryProtocol.Factory constructor
+- [THRIFT-5783](https://issues.apache.org/jira/browse/THRIFT-5783) - drop net7 support
+
+### Node.js
+
+- [THRIFT-5769](https://issues.apache.org/jira/browse/THRIFT-5769) - Large messages crash Node.js client when using TFramedTransport
+
+### PHP
+
+- [THRIFT-5760](https://issues.apache.org/jira/browse/THRIFT-5760) - Update minimal version of php
+- [THRIFT-5758](https://issues.apache.org/jira/browse/THRIFT-5758) - PHP 8.2 Deprecate dynamic properties
+- [THRIFT-5756](https://issues.apache.org/jira/browse/THRIFT-5756) - Run php tests in github actions
+
+### Python
+
+- [THRIFT-4181](https://issues.apache.org/jira/browse/THRIFT-4181) - PEP 484 Type Hinting on generated code
+- [THRIFT-5813](https://issues.apache.org/jira/browse/THRIFT-5813) - Clarify TSocket state after isOpen
+- [THRIFT-5777](https://issues.apache.org/jira/browse/THRIFT-5777) - timeout exception mismatched
+- [THRIFT-5139](https://issues.apache.org/jira/browse/THRIFT-5139) - Type hinting for Python library
+
+### Rust
+
+- [THRIFT-5812](https://issues.apache.org/jira/browse/THRIFT-5812) - Capacity overflow in Rust server
+
+
+## 0.20.0
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
+- [THRIFT-5654](https://issues.apache.org/jira/browse/THRIFT-5654) - LNK4042 and LNK2019 in go_validator_generator.cc
+
+### Build Process
+
+- [THRIFT-5747]https://issues.apache.org/jira/browse/THRIFT-5747 - warning: The macro `AC_HELP_STRING' is obsolete. You should run autoupdate. and some more warnings
+
+### C++
+
+- [THRIFT-5670]https://issues.apache.org/jira/browse/THRIFT-5670 - recvTimeout is not printed correctly for THRIFT_EAGAIN
+
+### Compiler (General)
+
+- [THRIFT-5733]https://issues.apache.org/jira/browse/THRIFT-5733 - Building code with circular `include`s can result in tons of memory usage and eventual segfault
+
+### Delphi
+
+- [THRIFT-5749]https://issues.apache.org/jira/browse/THRIFT-5749 - Option to enable RTTI info
+- [THRIFT-5740]https://issues.apache.org/jira/browse/THRIFT-5740 - inherited interfaces should be explicitly listed in Delphi class decl
+
+### Documentation	
+
+- [THRIFT-4606]https://issues.apache.org/jira/browse/THRIFT-4606 - LGPL license file still present 
+
+### Erlang
+
+- [THRIFT-5635]https://issues.apache.org/jira/browse/THRIFT-5635 - Replace some removed functions with new counterparts
+
+### Go
+
+- [THRIFT-5744]https://issues.apache.org/jira/browse/THRIFT-5744 - Switch to slog for go library
+- [THRIFT-5745]https://issues.apache.org/jira/browse/THRIFT-5745 - Implement slog.LogValuer on go TStructs
+
+
+### Haxe
+
+- [THRIFT-5734]https://issues.apache.org/jira/browse/THRIFT-5734 - generated code may lack required capitalization at class names
+- [THRIFT-5742]https://issues.apache.org/jira/browse/THRIFT-5742 - Add addRange() function to Set helpers to support adding data from arbitrary enumerable containers
+
+### Java
+
+- [THRIFT-5738]https://issues.apache.org/jira/browse/THRIFT-5738 - Compiler build fails on Mac
+
+### netstd
+
+- [THRIFT-5746]https://issues.apache.org/jira/browse/THRIFT-5746 - Upgrade to net8
+- [THRIFT-5743]https://issues.apache.org/jira/browse/THRIFT-5743 - add TLS1.3 to default protocols where available
+- [THRIFT-5726]https://issues.apache.org/jira/browse/THRIFT-5726 - package upgrades and consolidation/improvement of build targets checks 
+
+### PHP
+
+- [THRIFT-5752]https://issues.apache.org/jira/browse/THRIFT-5752 - Add TTransportFactoryInterface
+- [THRIFT-5754]https://issues.apache.org/jira/browse/THRIFT-5754 - Fix PHP 8.1 deprecates passing null to non-nullable internal function parameters
+- [THRIFT-5753]https://issues.apache.org/jira/browse/THRIFT-5753 - PHP 8.1 deprecated warning about return type in jsonSerialize functions
+
+### Python
+
+- [THRIFT-5688]https://issues.apache.org/jira/browse/THRIFT-5688 - Add PyPI publishing github actions
+
+## 0.19.0
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
+- [THRIFT-5654](https://issues.apache.org/jira/browse/THRIFT-5654) - LNK4042 and LNK2019 in go_validator_generator.cc
+
+## Build Process
+
+- [THRIFT-5701](https://issues.apache.org/jira/browse/THRIFT-5701) - Add dependabot
+
+## C++
+
+- [THRIFT-5725](https://issues.apache.org/jira/browse/THRIFT-5725) - Thrift SSL server stops working if the file descriptor returned is zero
+- [THRIFT-5716](https://issues.apache.org/jira/browse/THRIFT-5716) - TMemoryBuffer resizing might shrink the buffer size due to uint32_t overflow
+
+## Compiler (General)	
+
+- [THRIFT-5690](https://issues.apache.org/jira/browse/THRIFT-5690) - Constant expects type to be defined before
+
+## Delphi
+
+- [THRIFT-5686](https://issues.apache.org/jira/browse/THRIFT-5686) - Add comparer and capacity arguments to container classes
+
+## Go
+- [THRIFT-5731](https://issues.apache.org/jira/browse/THRIFT-5731) - Handle ErrAbandonRequest automatically
+
+
+## Haxe
+
+- [THRIFT-5717](https://issues.apache.org/jira/browse/THRIFT-5717) - uuid sets and map keys may throw on some Haxe targets
+- [THRIFT-5704](https://issues.apache.org/jira/browse/THRIFT-5704) - Superfluous block scope in generated write() code
+- [THRIFT-5703](https://issues.apache.org/jira/browse/THRIFT-5703) - Haxe 4.30 emits "Local variable retval used without being initialized" on generated code
+- [THRIFT-5692](https://issues.apache.org/jira/browse/THRIFT-5692) - Support for deprecated methods (via annotation)
+- [THRIFT-5707](https://issues.apache.org/jira/browse/THRIFT-5707) - deprecation warning fixes for @:extern and @:enum
+
+## Java 
+
+- [THRIFT-5700](https://issues.apache.org/jira/browse/THRIFT-5700) - Migration to JakartaEE and Apache HttpComponents 5
+- [THRIFT-5711](https://issues.apache.org/jira/browse/THRIFT-5711) - FutureClient does not extend when service extends from another service 
+- [THRIFT-5702](https://issues.apache.org/jira/browse/THRIFT-5702) - Support Java 8
+- [THRIFT-5696](https://issues.apache.org/jira/browse/THRIFT-5696) - TByteBuffer.java does not allow non-default TConfiguration
+- [THRIFT-5653](https://issues.apache.org/jira/browse/THRIFT-5653) - Fix Java UUID typeid
+
+
+## JavaScript
+
+- [THRIFT-5674](https://issues.apache.org/jira/browse/THRIFT-5674) - Server implementation exceptions are not sent to client in ES6 promise-style invocation
+
+## netstd 
+
+- [THRIFT-5684](https://issues.apache.org/jira/browse/THRIFT-5684) - Upgrade to net7.0
+
+## Node.js 
+
+- [THRIFT-5710](https://issues.apache.org/jira/browse/THRIFT-5710) - NodeJS header transport leaks headers between all instances
+
+## PHP 
+
+- [THRIFT-5723](https://issues.apache.org/jira/browse/THRIFT-5723) - Php8.1 fix warnings
+
+## Swift 
+
+- [THRIFT-5714](https://issues.apache.org/jira/browse/THRIFT-5714) - add TJSONProtocol support in thrift-swift
+
 
 ## 0.18.1
 

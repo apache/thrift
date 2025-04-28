@@ -121,20 +121,20 @@ var _ TException = wrappedTException{}
 //
 // For a endpoint defined in thrift IDL like this:
 //
-//     service MyService {
-//       FooResponse foo(1: FooRequest request) throws (
-//         1: Exception1 error1,
-//         2: Exception2 error2,
-//       )
-//     }
+//	service MyService {
+//	  FooResponse foo(1: FooRequest request) throws (
+//	    1: Exception1 error1,
+//	    2: Exception2 error2,
+//	  )
+//	}
 //
 // The thrift compiler generated go code for the result TStruct would be like:
 //
-//     type MyServiceFooResult struct {
-//       Success *FooResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
-//       Error1 *Exception1 `thrift:"error1,1" db:"error1" json:"error1,omitempty"`
-//       Error2 *Exception2 `thrift:"error2,2" db:"error2" json:"error2,omitempty"`
-//     }
+//	type MyServiceFooResult struct {
+//	  Success *FooResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+//	  Error1 *Exception1 `thrift:"error1,1" db:"error1" json:"error1,omitempty"`
+//	  Error2 *Exception2 `thrift:"error2,2" db:"error2" json:"error2,omitempty"`
+//	}
 //
 // And this function extracts the first non-nil exception out of
 // *MyServiceFooResult.
@@ -144,7 +144,7 @@ func ExtractExceptionFromResult(result TStruct) error {
 		return nil
 	}
 	typ := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		if typ.Field(i).Name == "Success" {
 			continue
 		}

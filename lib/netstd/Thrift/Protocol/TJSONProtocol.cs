@@ -27,6 +27,10 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
+#pragma warning disable IDE0305 // net9 - collection init
+#pragma warning disable IDE0300 // net9 - collection init
 
 namespace Thrift.Protocol
 {
@@ -435,11 +439,11 @@ namespace Thrift.Protocol
                     // escaped?
                     if (ch != TJSONProtocolConstants.EscSequences[0])
                     {
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync(wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -454,11 +458,11 @@ namespace Thrift.Protocol
                             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected control char");
                         }
                         ch = TJSONProtocolConstants.EscapeCharValues[off];
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync( wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -488,20 +492,20 @@ namespace Thrift.Protocol
 
                         codeunits.Add((char) wch);
                         var tmp = Utf8Encoding.GetBytes(codeunits.ToArray());
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory(0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                         codeunits.Clear();
                     }
                     else
                     {
                         var tmp = Utf8Encoding.GetBytes(new[] { (char)wch });
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory( 0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                     }
                 }
@@ -696,7 +700,7 @@ namespace Thrift.Protocol
         {
             cancellationToken.ThrowIfCancellationRequested();
             await ReadJsonArrayEndAsync(cancellationToken);
-            Transport.ResetConsumedMessageSize();
+            Transport.ResetMessageSizeAndConsumedBytes();
         }
 
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)

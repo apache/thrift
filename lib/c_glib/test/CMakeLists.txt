@@ -231,7 +231,7 @@ add_custom_command(OUTPUT
     gen-cpp/ThriftTest.h
     gen-cpp/ThriftTest_constants.h
     gen-cpp/ThriftTest_types.h
-    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/v0.16/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
 # TODO: Add memory checks using ctest_memcheck or similar

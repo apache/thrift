@@ -38,6 +38,8 @@ thrift_test_gen = $(addprefix gen-d/thrift/test/, SecondService.d \
 $(thrift_test_gen): $(top_srcdir)/test/v0.16/ThriftTest.thrift
 	$(THRIFT) --gen d $<
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 # The actual test targets.
 # There just must be some way to reassign a variable without warnings in

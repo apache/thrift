@@ -77,8 +77,8 @@ void t_generator::generate_program() {
 }
 
 std::set<std::string> t_generator::lang_keywords_for_validation() const {
-  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only. 
-  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no 
+  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only.
+  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no
   // mechanism or way to deal with it properly, so we absolutely need to fail on it as the last possible resort.
   return {};
 }
@@ -101,35 +101,43 @@ void t_generator::validate(const vector<T>& list) const{
 
 void t_generator::validate(t_function const* f) const {
   validate_id(f->get_name());
+  f->validate();
   validate(f->get_arglist());
   validate(f->get_xceptions());
 }
 
 void t_generator::validate(t_service const* s) const {
   validate_id(s->get_name());
+  s->validate();
   validate(s->get_functions());
 }
 
 void t_generator::validate(t_enum const* en) const {
   validate_id(en->get_name());
+  en->validate();
   validate(en->get_constants());
 }
 void t_generator::validate(t_struct const* s) const {
   validate_id(s->get_name());
+  s->validate();
   validate(s->get_members());
 }
 
 void t_generator::validate(t_enum_value const* en_val) const {
   validate_id(en_val->get_name());
+  en_val->validate();
 }
 void t_generator::validate(t_typedef const* td) const {
   validate_id(td->get_name());
+  td->validate();
 }
 void t_generator::validate(t_const const* c) const {
   validate_id(c->get_name());
+  c->validate();
 }
 void t_generator::validate(t_field const* f) const {
   validate_id(f->get_name());
+  f->validate();
 }
 
 void t_generator::validate_id(const string& id) const {
@@ -172,11 +180,11 @@ void t_generator::generate_docstring_comment(ostream& out,
     docs.getline(line, 1024);
 
     if (strlen(line) > 0) {
-      indent(out) << line_prefix << line << std::endl;
+      indent(out) << line_prefix << line << '\n';
     } else if (line_prefix.empty()){
-      out << std::endl;
+      out << '\n';
     } else if(!docs.eof()) {
-      indent(out) << line_prefix << std::endl;
+      indent(out) << line_prefix << '\n';
     }
   }
   if (!comment_end.empty())

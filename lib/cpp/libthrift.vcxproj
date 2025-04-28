@@ -57,6 +57,7 @@
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
     <ClCompile Include="src\thrift\TOutput.cpp" />
+    <ClCompile Include="src\thrift\TUuid.cpp" />
     <ClCompile Include="src\thrift\transport\SocketCommon.cpp" />
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp" />
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp" />
@@ -96,6 +97,7 @@
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TOutput.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
+    <ClInclude Include="src\thrift\TUuid.h" />
     <ClInclude Include="src\thrift\transport\TBufferTransports.h" />
     <ClInclude Include="src\thrift\transport\TFDTransport.h" />
     <ClInclude Include="src\thrift\transport\TFileTransport.h" />

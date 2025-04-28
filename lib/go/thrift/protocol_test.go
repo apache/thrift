@@ -45,7 +45,7 @@ var (
 
 func init() {
 	protocol_bdata = make([]byte, PROTOCOL_BINARY_DATA_SIZE)
-	for i := 0; i < PROTOCOL_BINARY_DATA_SIZE; i++ {
+	for i := range PROTOCOL_BINARY_DATA_SIZE {
 		protocol_bdata[i] = byte((i + 'a') % 255)
 	}
 	BOOL_VALUES = []bool{false, true, false, false, true}
@@ -531,7 +531,7 @@ func ReadWriteBinary(t testing.TB, p TProtocol, trans TTransport) {
 	if len(v) != len(value) {
 		t.Errorf("%s: %T %T len(v) != len(value)... %d != %d", "ReadWriteBinary", p, trans, len(v), len(value))
 	} else {
-		for i := 0; i < len(v); i++ {
+		for i := range v {
 			if v[i] != value[i] {
 				t.Errorf("%s: %T %T %s != %s", "ReadWriteBinary", p, trans, v, value)
 			}

@@ -22,6 +22,7 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -42,10 +43,10 @@ type test_unit struct {
 }
 
 var units = []test_unit{
-	{"127.0.0.1", 9095, "", "", "binary", false},
-	{"127.0.0.1", 9091, "", "", "compact", false},
-	{"127.0.0.1", 9092, "", "", "binary", true},
-	{"127.0.0.1", 9093, "", "", "compact", true},
+	{"127.0.0.1", 0, "", "", "binary", false},
+	{"127.0.0.1", 0, "", "", "compact", false},
+	{"127.0.0.1", 0, "", "", "binary", true},
+	{"127.0.0.1", 0, "", "", "compact", true},
 }
 
 func TestAllConnection(t *testing.T) {
@@ -61,29 +62,31 @@ func TestAllConnection(t *testing.T) {
 }
 
 func doUnit(t *testing.T, unit *test_unit) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	handler := NewMockThriftTest(ctrl)
+	t.Run(fmt.Sprintf("%v", *unit), func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		handler := NewMockThriftTest(ctrl)
 
-	processor, serverTransport, transportFactory, protocolFactory, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
-	if err != nil {
-		t.Errorf("GetServerParams failed: %v", err)
-	}
+		processor, serverTransport, transportFactory, protocolFactory, addr, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+		if err != nil {
+			t.Errorf("GetServerParams failed: %v", err)
+		}
 
-	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
-	if err = server.Listen(); err != nil {
-		t.Errorf("Unable to start server: %v", err)
-		return
-	}
-	go server.Serve()
-	defer server.Stop()
-	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
-	if err != nil {
-		t.Errorf("Unable to start client: %v", err)
-		return
-	}
-	defer trans.Close()
-	callEverythingWithMock(t, client, handler)
+		server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
+		if err = server.Listen(); err != nil {
+			t.Errorf("Unable to start server: %v", err)
+			return
+		}
+		go server.Serve()
+		defer server.Stop()
+		client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
+		if err != nil {
+			t.Errorf("Unable to start client: %v", err)
+			return
+		}
+		defer trans.Close()
+		callEverythingWithMock(t, client, handler)
+	})
 }
 
 var rmapmap = map[int32]map[int32]int32{

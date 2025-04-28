@@ -52,7 +52,7 @@ public class TestTByteBuffer {
         assertThrows(
             TTransportException.class,
             () -> new TByteBuffer(configSmall, ByteBuffer.allocate(100)));
-    assertEquals("MaxMessageSize reached", e.getMessage());
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
   }
 
   @Test

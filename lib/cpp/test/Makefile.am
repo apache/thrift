@@ -24,12 +24,13 @@ BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/OptionalRequiredTest_types.h \
                 gen-cpp/Recursive_types.h \
                 gen-cpp/ThriftTest_types.h \
+                gen-cpp/Thrift5272_types.h \
                 gen-cpp/TypedefTest_types.h \
                 gen-cpp/ChildService.h \
                 gen-cpp/EmptyService.h \
                 gen-cpp/ParentService.h \
-		gen-cpp/OneWayTest_types.h \
-		gen-cpp/OneWayService.h \
+                gen-cpp/OneWayTest_types.h \
+                gen-cpp/OneWayService.h \
                 gen-cpp/proc_types.h
 
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
@@ -50,6 +51,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_types.h \
 	gen-cpp/ThriftTest_constants.cpp \
 	gen-cpp/ThriftTest_constants.h \
+	gen-cpp/Thrift5272_types.cpp \
+	gen-cpp/Thrift5272_types.h \
 	gen-cpp/TypedefTest_types.cpp \
 	gen-cpp/TypedefTest_types.h \
 	gen-cpp/OneWayService.cpp \
@@ -83,6 +86,8 @@ Benchmark_LDADD = libtestgencpp.la
 
 check_PROGRAMS = \
 	UnitTests \
+	UnitTestsUuid \
+	UnitTestsUuidNoDirective \
 	TFDTransportTest \
 	TPipedTransportTest \
 	DebugProtoTest \
@@ -102,7 +107,7 @@ check_PROGRAMS = \
 	OpenSSLManualInitTest \
 	EnumTest \
 	RenderedDoubleConstantsTest \
-        AnnotationTest
+	AnnotationTest
 
 if AMX_HAVE_LIBEVENT
 noinst_PROGRAMS += \
@@ -131,9 +136,35 @@ UnitTests_SOURCES = \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
 	TTransportCheckThrow.h \
-	ThrifttReadCheckTests.cpp
+	ThrifttReadCheckTests.cpp \
+	Thrift5272.cpp \
+	TUuidTest.cpp
 
 UnitTests_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoost.cpp
+
+UnitTestsUuid_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+UnitTestsUuid_CPPFLAGS = \
+   $(AM_CPPFLAGS) \
+  -DTHRIFT_TUUID_SUPPORT_BOOST_UUID
+
+UnitTestsUuidNoDirective_SOURCES = \
+	UnitTestMain.cpp \
+	TUuidTestBoostNoDirective.cpp
+
+UnitTestsUuidNoDirective_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
@@ -382,16 +413,17 @@ OpenSSLManualInitTest_LDADD = \
 #
 # Common thrift code generation rules
 #
+# files from /test
+#
 
 gen-cpp/AnnotationTest_constants.cpp gen-cpp/AnnotationTest_constants.h gen-cpp/AnnotationTest_types.cpp gen-cpp/AnnotationTest_types.h: $(top_srcdir)/test/AnnotationTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/v0.16/DebugProtoTest.thrift
+gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/DoubleConstantsTest_constants.cpp gen-cpp/DoubleConstantsTest_constants.h: $(top_srcdir)/test/DoubleConstantsTest.thrift
 	$(THRIFT) --gen cpp $<
-
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
 	$(THRIFT) --gen cpp $<
@@ -408,10 +440,15 @@ gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recurs
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/v0.16/ThriftTest.thrift
+gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp $<
 
+# files from /lib/cpp/test
+
 gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h: OneWayTest.thrift
+	$(THRIFT) --gen cpp $<
+
+gen-cpp/Thrift5272_types.cpp gen-cpp/Thrift5272_types.h: Thrift5272.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift
@@ -424,6 +461,9 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic
 clean-local:
 	$(RM) gen-cpp/*
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	concurrency \
 	processor \
@@ -431,4 +471,6 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	DebugProtoTest_extras.cpp \
 	ThriftTest_extras.cpp \
-	OneWayTest.thrift
+	OneWayTest.thrift \
+	Thrift5272.thrift
+

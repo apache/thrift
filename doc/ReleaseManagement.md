@@ -126,12 +126,12 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         THRIFT-123  C++ - Library  Drop C++03  [THRIFT-123](https://issues.apache.org/jira/browse/THRIFT-3978) - Drop C++03
         ```
 
-        For example, if the row above was row "B" in EXCEL it would look something like:
+        For example, if the row above was row "1" in EXCEL it would look something like:
 
         ```text
-        =CONCAT("[", B1, "]",
+        =CONCAT("[", A1, "]",
                 "https://issues.apache.org/jira/browse/", 
-                B1, " - ", B3)
+                A1, " - ", C1)
         ```
 
     1. Create a level 3 section in `CHANGES.md` under the release for each component and copy the items from the RelNote column into the changes file.
@@ -148,16 +148,27 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         ~$ git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
         ```
 
-    1. In the clean copy of the release branch, start a docker build container and run `make dist`:
-
-        ```code
-        ~$ cd thrift-1.0.0-src
-        ~/thrift-1.0.0-src$ docker run -v $(pwd):/thrift/src:rw \
-            -it thrift/thrift-build:ubuntu-bionic /bin/bash
+    1. In the clean copy of the release branch, build the container image:
+	
+        ```bash
+        ~$ docker build -t thrift build/docker/ubuntu-jammy
+        ```
+	
+    1. Run the container and `make dist`:
+	
+        ```bash
+        ~$ docker run -v $(pwd):/thrift/src -it thrift /bin/bash
         root@8b4101188aa2:/thrift/src# ./bootstrap.sh && ./configure && make dist
         ```
 
         The result will be a file named `thrift-1.0.0.tar.gz`.  Check the size and make sure it is roughly 4MB.  It could get larger over time, but it shouldn't jump by orders of magnitude.  Once satisfied you can exit the docker container with `exit`.
+
+    1. Validate the contents of the tarball
+	
+		Unpack the tarball in some empty folder and do a fresh git clone of the branch into another. 
+		Now compare both folders and check for any files missing. These need to be added to the appropriate `EXTRA_DIST` 
+		makefile section(s). If necessary, commit the changes and repeat generating the source tarball until no more
+		differences can be found.
 
     1. Generate signatures and checksums for the tarball:
 
@@ -268,8 +279,9 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     The CHANGES list for this release is available at:
     https://github.com/apache/thrift/blob/release/1.0.0/CHANGES.md
 
-
     Please download, verify sig/sum, install and test the libraries and languages of your choice.
+
+    I start this voting thread with my own +1 vote.
 
     This vote will close in 72 hours on 2019-07-06 21:00 UTC
 

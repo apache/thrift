@@ -29,7 +29,7 @@
   <artifactId>thrift-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>thrift-maven-plugin</name>
-  <version>0.19.0</version>
+  <version>0.22.0</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -94,12 +94,12 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>30.0-jre</version>
+      <version>32.0.1-jre</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.16</version>
+      <version>3.0.24</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

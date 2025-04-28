@@ -68,6 +68,7 @@ static const std::string kTypeNameString("str");
 static const std::string kTypeNameMap("map");
 static const std::string kTypeNameList("lst");
 static const std::string kTypeNameSet("set");
+static const std::string kTypeNameUuid("uid");
 
 static const std::string& getTypeNameForTypeID(TType typeID) {
   switch (typeID) {
@@ -93,6 +94,8 @@ static const std::string& getTypeNameForTypeID(TType typeID) {
     return kTypeNameSet;
   case T_LIST:
     return kTypeNameList;
+  case T_UUID:
+    return kTypeNameUuid;
   default:
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED, "Unrecognized type");
   }
@@ -139,6 +142,9 @@ static TType getTypeIDForTypeName(const std::string& name) {
       break;
     case 't':
       result = T_BOOL;
+      break;
+    case 'u':
+      result = T_UUID;
       break;
     }
   }
@@ -710,6 +716,10 @@ uint32_t TJSONProtocol::writeBinary(const std::string& str) {
   return writeJSONBase64(str);
 }
 
+uint32_t TJSONProtocol::writeUUID(const TUuid& uuid) {
+  return writeJSONString(to_string(uuid));
+}
+
 /**
  * Reading functions
  */
@@ -1106,6 +1116,13 @@ uint32_t TJSONProtocol::readBinary(std::string& str) {
   return readJSONBase64(str);
 }
 
+uint32_t TJSONProtocol::readUUID(TUuid& uuid) {
+  std::string uuid_str;
+  const uint32_t result = readJSONString(uuid_str);
+  uuid = TUuid{uuid_str};
+  return result;
+}
+
 // Return the minimum number of bytes a type will consume on the wire
 int TJSONProtocol::getMinSerializedSize(TType type)
 {
@@ -1113,7 +1130,7 @@ int TJSONProtocol::getMinSerializedSize(TType type)
   {
     case T_STOP: return 0;
     case T_VOID: return 0;
-    case T_BOOL: return 1;  // written as int  
+    case T_BOOL: return 1;  // written as int
     case T_BYTE: return 1;
     case T_DOUBLE: return 1;
     case T_I16: return 1;
@@ -1124,6 +1141,7 @@ int TJSONProtocol::getMinSerializedSize(TType type)
     case T_MAP: return 2;  // empty map
     case T_SET: return 2;  // empty set
     case T_LIST: return 2;  // empty list
+    case T_UUID: return 16;  // empty UUID
     default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }

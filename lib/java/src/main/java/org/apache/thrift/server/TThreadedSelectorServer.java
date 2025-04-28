@@ -65,18 +65,22 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
     /** The number of threads for selecting on already-accepted connections */
     public int selectorThreads = 2;
+
     /**
      * The size of the executor service (if none is specified) that will handle invocations. This
      * may be set to 0, in which case invocations will be handled directly on the selector threads
      * (as is in TNonblockingServer)
      */
     private int workerThreads = 5;
+
     /** Time to wait for server to stop gracefully */
     private int stopTimeoutVal = 60;
 
     private TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
+
     /** The ExecutorService for handling dispatched requests */
     private ExecutorService executorService = null;
+
     /**
      * The size of the blocking queue per selector thread for passing accepted connections to the
      * selector thread
@@ -622,16 +626,23 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         LOGGER.error("Create new Selector error.", e);
       }
 
-      for (SelectionKey key : oldSelector.selectedKeys()) {
-        if (!key.isValid() && key.readyOps() == 0) continue;
+      for (SelectionKey key : oldSelector.keys()) {
+        if (!key.isValid() || key.interestOps() == 0 || key.channel().keyFor(newSelector) != null) {
+          continue;
+        }
         SelectableChannel channel = key.channel();
         Object attachment = key.attachment();
 
+        int interestOps = key.interestOps();
+        SelectionKey newKey;
         try {
           if (attachment == null) {
-            channel.register(newSelector, key.readyOps());
+            newKey = channel.register(newSelector, interestOps);
           } else {
-            channel.register(newSelector, key.readyOps(), attachment);
+            newKey = channel.register(newSelector, interestOps, attachment);
+            if (attachment instanceof FrameBuffer) {
+              ((FrameBuffer) attachment).setSelectionKey(newKey);
+            }
           }
         } catch (ClosedChannelException e) {
           LOGGER.error("Register new selector key error.", e);

@@ -18,19 +18,19 @@
 #
 
 gopathfuzz: $(THRIFT) fuzz.go
-	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
-	cd gen-go/shared && go mod init shared
-	cd gen-go/tutorial && go mod init tutorial
+	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/fuzz/gen-go/$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
 	touch gopathfuzz
 
 check: gopathfuzz
 	go test -tags gofuzz
 
 clean-local:
-	$(RM) -r gopathfuzz gen-go
+	$(RM) -rf gopathfuzz gen-go
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	fuzz.go \
 	fuzz_test.go \
-	go.mod \
-	go.sum
+	go.mod

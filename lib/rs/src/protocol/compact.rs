@@ -210,6 +210,10 @@ where
             None => {
                 let b = self.read_byte()?;
                 match b {
+                    // Previous versions of the thrift compact protocol specification said to use 0
+                    // and 1 inside collections, but that differed from existing implementations.
+                    // The specification was updated in https://github.com/apache/thrift/commit/2c29c5665bc442e703480bb0ee60fe925ffe02e8.
+                    0x00 => Ok(false),
                     0x01 => Ok(true),
                     0x02 => Ok(false),
                     unkn => Err(crate::Error::Protocol(crate::ProtocolError {
@@ -250,6 +254,10 @@ where
         self.transport
             .read_f64::<LittleEndian>()
             .map_err(From::from)
+    }
+
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        uuid::Uuid::from_slice(&self.read_bytes()?).map_err(From::from)
     }
 
     fn read_string(&mut self) -> crate::Result<String> {
@@ -538,6 +546,10 @@ where
             .map_err(From::from)
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.write_bytes(uuid.as_bytes())
+    }
+
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
         self.write_bytes(s.as_bytes())
     }
@@ -637,13 +649,18 @@ fn type_to_u8(field_type: TType) -> u8 {
         TType::Set => 0x0A,
         TType::Map => 0x0B,
         TType::Struct => 0x0C,
+        TType::Uuid => 0x0D,
         _ => panic!("should not have attempted to convert {} to u8", field_type),
     }
 }
 
 fn collection_u8_to_type(b: u8) -> crate::Result<TType> {
     match b {
-        0x01 => Ok(TType::Bool),
+        // For historical and compatibility reasons, a reader should be capable to deal with both cases.
+        // The only valid value in the original spec was 2, but due to a widespread implementation bug
+        // the defacto standard across large parts of the library became 1 instead.
+        // As a result, both values are now allowed.
+        0x01 | 0x02 => Ok(TType::Bool),
         o => u8_to_type(o),
     }
 }
@@ -661,6 +678,7 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
         0x0A => Ok(TType::Set),
         0x0B => Ok(TType::Map),
         0x0C => Ok(TType::Struct),
+        0x0D => Ok(TType::Uuid),
         unkn => Err(crate::Error::Protocol(crate::ProtocolError {
             kind: crate::ProtocolErrorKind::InvalidData,
             message: format!("cannot convert {} into TType", unkn),
@@ -670,8 +688,6 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
 
 #[cfg(test)]
 mod tests {
-
-    use std::i32;
 
     use crate::protocol::{
         TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
@@ -2451,7 +2467,7 @@ mod tests {
             }
         );
         let read_value_1 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_1, true);
+        assert!(read_value_1);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
@@ -2463,7 +2479,7 @@ mod tests {
             }
         );
         let read_value_2 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_2, false);
+        assert!(!read_value_2);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
@@ -2475,7 +2491,7 @@ mod tests {
             }
         );
         let read_value_3 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_3, true);
+        assert!(read_value_3);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
@@ -2487,7 +2503,7 @@ mod tests {
             }
         );
         let read_value_4 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_4, false);
+        assert!(!read_value_4);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_5 = assert_success!(i_prot.read_field_begin());
@@ -2764,16 +2780,16 @@ mod tests {
         assert_eq!(&rcvd_ident, &map_ident);
         // key 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // val 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // key 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // val 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // map end
         assert_success!(i_prot.read_map_end());
     }
@@ -2808,7 +2824,7 @@ mod tests {
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let read_double = i_prot.read_double().unwrap();
-        assert!(read_double - double < std::f64::EPSILON);
+        assert!((read_double - double).abs() < f64::EPSILON);
     }
 
     #[test]
@@ -2830,5 +2846,41 @@ mod tests {
         let (_, mut o_prot) = test_objects();
         assert!(write_fn(&mut o_prot).is_ok());
         assert_eq!(o_prot.transport.write_bytes().len(), 0);
+    }
+
+    #[test]
+    fn must_read_boolean_list() {
+        let (mut i_prot, _) = test_objects();
+
+        let source_bytes: [u8; 3] = [0x21, 2, 1];
+
+        i_prot.transport.set_readable_bytes(&source_bytes);
+
+        let (ttype, element_count) = assert_success!(i_prot.read_list_set_begin());
+
+        assert_eq!(ttype, TType::Bool);
+        assert_eq!(element_count, 2);
+        assert_eq!(i_prot.read_bool().unwrap(), false);
+        assert_eq!(i_prot.read_bool().unwrap(), true);
+
+        assert_success!(i_prot.read_list_end());
+    }
+
+    #[test]
+    fn must_read_boolean_list_alternative_encoding() {
+        let (mut i_prot, _) = test_objects();
+
+        let source_bytes: [u8; 3] = [0x22, 0, 1];
+
+        i_prot.transport.set_readable_bytes(&source_bytes);
+
+        let (ttype, element_count) = assert_success!(i_prot.read_list_set_begin());
+
+        assert_eq!(ttype, TType::Bool);
+        assert_eq!(element_count, 2);
+        assert_eq!(i_prot.read_bool().unwrap(), false);
+        assert_eq!(i_prot.read_bool().unwrap(), true);
+
+        assert_success!(i_prot.read_list_end());
     }
 }

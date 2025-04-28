@@ -29,10 +29,10 @@ These are only required if you choose to build the libraries for the given langu
     * Qt (optional)
 * Java
     * Java 17 (latest LTS)
-    * Gradle 8.0.2
+    * Gradle 8.4
 * C#: Mono 1.2.4 (and pkg-config to detect it) or Visual Studio 2005+
 * Python 2.6 (including header files for extension modules)
-* PHP 5.0 (optionally including header files for extension modules)
+* PHP 7.1 (optionally including header files for extension modules)
 * Ruby 1.8
     * bundler gem
 * Erlang R12 (R11 works but not recommended)

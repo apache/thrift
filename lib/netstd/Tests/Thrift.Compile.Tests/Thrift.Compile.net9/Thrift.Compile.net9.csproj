@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Licensed to the Apache Software Foundation(ASF) under one
+    or more contributor license agreements.See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+  	  http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+  -->
+
+  <PropertyGroup>
+    <ThriftVersion>0.22.0</ThriftVersion>
+    <ThriftVersionOutput>Thrift version $(ThriftVersion)</ThriftVersionOutput>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
+    <Version>$(ThriftVersion).0</Version>
+    <AssemblyName>Thrift.Compile.net9</AssemblyName>
+    <PackageId>Thrift.Compile.net9</PackageId>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Thrift/Thrift.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
+    <CreateProperty Condition="'$(OS)' == 'Windows_NT'" Value=".exe">
+      <Output TaskParameter="Value" PropertyName="EXECUTABLE_SUFFIX" />
+    </CreateProperty>
+    <!-- Check on the path -->
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
+    </Exec>
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="which thrift" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
+    </Exec>
+    <!-- Check in the current directory -->
+    <CreateProperty Condition="Exists('thrift$(EXECUTABLE_SUFFIX)')" Value="thrift$(EXECUTABLE_SUFFIX)">
+      <Output TaskParameter="Value" PropertyName="PathToThrift" />
+    </CreateProperty>
+    <!-- Check for the root projects output -->
+    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)')" Value="$(ProjectDir)/../../../../../compiler/cpp/thrift$(EXECUTABLE_SUFFIX)">
+      <Output TaskParameter="Value" PropertyName="PathToThrift" />
+    </CreateProperty>
+    <Error Condition="!Exists('$(PathToThrift)')" Text="Thrift executable could not be found." />
+    <!-- Make sure the thrift version found is the same as the projects version -->
+    <Exec Command="$(PathToThrift) -version" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="ThriftBinaryVersion" />
+    </Exec>
+    <Error Condition="$('$(ThriftBinaryVersion)'::StartsWith('$(ThriftVersionOutput)')) == true" Text="Thrift version returned: '$(ThriftBinaryVersion)' is not equal to the projects version '$(ThriftVersionOutput)'." />
+    <Message Importance="high" Text="Generating tests with thrift binary: '$(PathToThrift)'" />
+    <!-- Generate the thrift test files -->
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../CassandraTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../name_conflicts.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../../../../../test/ThriftTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../../../../../test/ExceptionStruct.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5253.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5320.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5382.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift5795.thrift" />
+    <!-- special options (see ticket) -->
+    <Exec Command="$(PathToThrift) -gen netstd:net9                  -r ../Thrift5794.thrift" />
+  </Target>
+
+</Project>

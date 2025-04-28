@@ -34,6 +34,8 @@ public final class TType {
   public static final byte MAP = 13;
   public static final byte SET = 14;
   public static final byte LIST = 15;
-  public static final byte ENUM = 16;
-  public static final byte UUID = 17;
+  public static final byte UUID = 16;
+
+  /** This is not part of the TBinaryProtocol spec but Java specific implementation detail */
+  public static final byte ENUM = -1;
 }

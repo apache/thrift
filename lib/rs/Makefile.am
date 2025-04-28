@@ -45,6 +45,9 @@ clean-local:
 	$(CARGO) clean
 	-$(RM) Cargo.lock
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src \
 	Cargo.toml \

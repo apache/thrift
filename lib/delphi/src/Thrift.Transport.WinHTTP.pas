@@ -51,6 +51,7 @@ type
 
     function CreateRequest: IWinHTTPRequest;
     function SecureProtocolsAsWinHTTPFlags : Cardinal;
+    class procedure EnsureSuccessHttpStatus( const aRequest : IWinHTTPRequest);
 
   strict private
     type
@@ -334,7 +335,8 @@ begin
   end;
 
   // we're about to receive a new message, so reset everyting
-  ResetConsumedMessageSize(-1);
+  ResetMessageSizeAndConsumedBytes(-1);
+  EnsureSuccessHttpStatus(http);  // throws if not
   FInputStream := THTTPResponseStream.Create( http);
   if http.QueryTotalResponseSize( dwSize)  // FALSE indicates "no info available"
   then UpdateKnownMessageSize( dwSize);
@@ -348,6 +350,18 @@ begin
   FOutputMemoryStream.Write( pTmp^, len);
 end;
 
+
+class procedure TWinHTTPClientImpl.EnsureSuccessHttpStatus( const aRequest : IWinHTTPRequest);
+var dwStatus : Cardinal;
+    sText : string;
+begin
+  if (aRequest <> nil)
+  then aRequest.QueryHttpStatus( dwStatus, sText)
+  else raise TTransportExceptionNotOpen.Create('Invalid HTTP request data');
+
+  if (200 > dwStatus) or (dwStatus > 299)
+  then raise TTransportExceptionEndOfFile.Create('HTTP '+UIntToStr(dwStatus)+' '+sText);
+end;
 
 { TWinHTTPClientImpl.THTTPResponseStream }
 

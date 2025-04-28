@@ -37,8 +37,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * Swift 3 code generator.
  *
@@ -51,7 +49,7 @@ public:
                     const string& option_string)
     : t_oop_generator(program) {
     update_keywords_for_validation();
-    
+
     (void)option_string;
     map<string, string>::const_iterator iter;
 
@@ -226,14 +224,14 @@ public:
 private:
 
   void block_open(ostream& out) {
-    out << " {" << endl;
+    out << " {" << '\n';
     indent_up();
   }
 
   void block_close(ostream& out, bool end_line=true) {
     indent_down();
     indent(out) << "}";
-    if (end_line) out << endl;
+    if (end_line) out << '\n';
   }
 
   bool field_is_optional(t_field* tfield) {
@@ -320,18 +318,18 @@ void t_swift_generator::init_generator() {
   string f_decl_fullname = module_path + "/" + f_decl_name;
   f_decl_.open(f_decl_fullname.c_str());
 
-  f_decl_ << autogen_comment() << endl;
+  f_decl_ << autogen_comment() << '\n';
 
-  f_decl_ << swift_imports() << swift_thrift_imports() << endl;
+  f_decl_ << swift_imports() << swift_thrift_imports() << '\n';
 
   // ...and a .swift implementation extensions file
   string f_impl_name = name + "+Exts.swift";
   string f_impl_fullname = module_path + "/" + f_impl_name;
   f_impl_.open(f_impl_fullname.c_str());
 
-  f_impl_ << autogen_comment() << endl;
+  f_impl_ << autogen_comment() << '\n';
 
-  f_impl_ << swift_imports() << swift_thrift_imports() << endl;
+  f_impl_ << swift_imports() << swift_thrift_imports() << '\n';
 
 }
 
@@ -349,16 +347,16 @@ string t_swift_generator::swift_imports() {
 
   vector<string>::const_iterator i_iter;
   for (i_iter=includes_list.begin(); i_iter!=includes_list.end(); ++i_iter) {
-    includes << "import " << *i_iter << endl;
+    includes << "import " << *i_iter << '\n';
   }
 
   if (namespaced_) {
     const vector<t_program*>& program_includes = program_->get_includes();
     for (auto program_include : program_includes) {
-      includes << ("import " + get_real_swift_module(program_include)) << endl;
+      includes << ("import " + get_real_swift_module(program_include)) << '\n';
     }
   }
-  includes << endl;
+  includes << '\n';
 
   return includes.str();
 }
@@ -381,10 +379,10 @@ string t_swift_generator::swift_thrift_imports() {
 
   vector<string>::const_iterator i_iter;
   for (i_iter=includes_list.begin(); i_iter!=includes_list.end(); ++i_iter) {
-    includes << "import " << *i_iter << endl;
+    includes << "import " << *i_iter << '\n';
   }
 
-  includes << endl;
+  includes << '\n';
 
   return includes.str();
 }
@@ -395,7 +393,7 @@ string t_swift_generator::swift_thrift_imports() {
 void t_swift_generator::close_generator() {
   // stick our constants declarations at the end of the header file
   // since they refer to things we are defining.
-  f_decl_ << constants_declarations_ << endl;
+  f_decl_ << constants_declarations_ << '\n';
 }
 
 /**
@@ -405,8 +403,8 @@ void t_swift_generator::close_generator() {
  */
 void t_swift_generator::generate_typedef(t_typedef* ttypedef) {
   f_decl_ << indent() << "public typealias " << ttypedef->get_symbolic()
-          << " = " << type_name(ttypedef->get_type()) << endl;
-  f_decl_ << endl;
+          << " = " << type_name(ttypedef->get_type()) << '\n';
+  f_decl_ << '\n';
 }
 
 
@@ -430,80 +428,80 @@ void t_swift_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    f_decl_ << indent() << "case " << enum_case_name((*c_iter), true) << endl;
+    f_decl_ << indent() << "case " << enum_case_name((*c_iter), true) << '\n';
   }
 
   // unknown associated value case for safety and similar behavior to other languages
   if (safe_enums_) {
-    f_decl_ << indent() << "case unknown(Int32)" << endl;
+    f_decl_ << indent() << "case unknown(Int32)" << '\n';
   }
-  f_decl_ << endl;
+  f_decl_ << '\n';
 
   // TSerializable read(from:)
   f_decl_ << indent() << "public static func read(from proto: TProtocol) throws -> "
           << tenum->get_name();
   block_open(f_decl_);
-  f_decl_ << indent() << "let raw: Int32 = try proto.read()" << endl;
-  f_decl_ << indent() << "let new = " << tenum->get_name() << "(rawValue: raw)" << endl;
+  f_decl_ << indent() << "let raw: Int32 = try proto.read()" << '\n';
+  f_decl_ << indent() << "let new = " << tenum->get_name() << "(rawValue: raw)" << '\n';
 
-  f_decl_ << indent() << "if let unwrapped = new {" << endl;
+  f_decl_ << indent() << "if let unwrapped = new {" << '\n';
   indent_up();
-  f_decl_ << indent() << "return unwrapped" << endl;
+  f_decl_ << indent() << "return unwrapped" << '\n';
   indent_down();
-  f_decl_ << indent() << "} else {" << endl;
+  f_decl_ << indent() << "} else {" << '\n';
   indent_up();
-  f_decl_ << indent() << "throw TProtocolError(error: .invalidData," << endl;
+  f_decl_ << indent() << "throw TProtocolError(error: .invalidData," << '\n';
   f_decl_ << indent() << "                     message: \"Invalid enum value (\\(raw)) for \\("
-          << tenum->get_name() << ".self)\")" << endl;
+          << tenum->get_name() << ".self)\")" << '\n';
   indent_down();
-  f_decl_ << indent() << "}" << endl;
+  f_decl_ << indent() << "}" << '\n';
   block_close(f_decl_);
 
   // empty init for TSerializable
-  f_decl_ << endl;
+  f_decl_ << '\n';
   f_decl_ << indent() << "public init()";
   block_open(f_decl_);
 
-  f_decl_ << indent() << "self = ." << enum_case_name(constants.front(), false) << endl;
+  f_decl_ << indent() << "self = ." << enum_case_name(constants.front(), false) << '\n';
   block_close(f_decl_);
-  f_decl_ << endl;
+  f_decl_ << '\n';
 
   // rawValue getter
   f_decl_ << indent() << "public var rawValue: Int32";
   block_open(f_decl_);
-  f_decl_ << indent() << "switch self {" << endl;
+  f_decl_ << indent() << "switch self {" << '\n';
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     f_decl_ << indent() << "case ." << enum_case_name((*c_iter), true)
-            << ": return " << (*c_iter)->get_value() << endl;
+            << ": return " << (*c_iter)->get_value() << '\n';
   }
   if (safe_enums_) {
-    f_decl_ << indent() << "case .unknown(let value): return value" << endl;
+    f_decl_ << indent() << "case .unknown(let value): return value" << '\n';
   }
-  f_decl_ << indent() << "}" << endl;
+  f_decl_ << indent() << "}" << '\n';
   block_close(f_decl_);
-  f_decl_ << endl;
+  f_decl_ << '\n';
 
   // convenience rawValue initalizer
   f_decl_ << indent() << "public init?(rawValue: Int32)";
   block_open(f_decl_);
-  f_decl_ << indent() << "switch rawValue {" << endl;;
+  f_decl_ << indent() << "switch rawValue {" << '\n';;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     f_decl_ << indent() << "case " << (*c_iter)->get_value()
-            << ": self = ." << enum_case_name((*c_iter), true) << endl;
+            << ": self = ." << enum_case_name((*c_iter), true) << '\n';
   }
   if (!safe_enums_) {
-    f_decl_ << indent() << "default: return nil" << endl;
+    f_decl_ << indent() << "default: return nil" << '\n';
   } else {
-    f_decl_ << indent() << "default: self = .unknown(rawValue)" << endl;
+    f_decl_ << indent() << "default: self = .unknown(rawValue)" << '\n';
   }
-  f_decl_ << indent() << "}" << endl;
+  f_decl_ << indent() << "}" << '\n';
   block_close(f_decl_);
 
 
 
 
   block_close(f_decl_);
-  f_decl_ << endl;
+  f_decl_ << '\n';
 }
 
 /**
@@ -521,36 +519,36 @@ void t_swift_generator::generate_old_enum(t_enum* tenum) {
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     f_decl_ << indent() << "case " << (*c_iter)->get_name()
-            << " = " << (*c_iter)->get_value() << endl;
+            << " = " << (*c_iter)->get_value() << '\n';
   }
 
-  f_decl_ << endl;
-  f_decl_ << indent() << "public init() { self.init(rawValue: " << constants.front()->get_value() << ")! }" << endl;
+  f_decl_ << '\n';
+  f_decl_ << indent() << "public init() { self.init(rawValue: " << constants.front()->get_value() << ")! }" << '\n';
 
   block_close(f_decl_);
-  f_decl_ << endl;
+  f_decl_ << '\n';
 
   f_impl_ << indent() << "extension " << tenum->get_name() << " : TEnum";
   block_open(f_impl_);
 
-  f_impl_ << endl;
+  f_impl_ << '\n';
 
   f_impl_ << indent() << "public static func readValueFromProtocol(proto: TProtocol) throws -> " << tenum->get_name();
   block_open(f_impl_);
-  f_impl_ << indent() << "var raw = Int32()" << endl
-          << indent() << "try proto.readI32(&raw)" << endl
-          << indent() << "return " << tenum->get_name() << "(rawValue: raw)!" << endl;
+  f_impl_ << indent() << "var raw = Int32()" << '\n'
+          << indent() << "try proto.readI32(&raw)" << '\n'
+          << indent() << "return " << tenum->get_name() << "(rawValue: raw)!" << '\n';
   block_close(f_impl_);
-  f_impl_ << endl;
+  f_impl_ << '\n';
 
   f_impl_ << indent() << "public static func writeValue(value: " << tenum->get_name() << ", toProtocol proto: TProtocol) throws";
   block_open(f_impl_);
-  f_impl_ << indent() << "try proto.writeI32(value.rawValue)" << endl;
+  f_impl_ << indent() << "try proto.writeI32(value.rawValue)" << '\n';
   block_close(f_impl_);
-  f_impl_ << endl;
+  f_impl_ << '\n';
 
   block_close(f_impl_);
-  f_impl_ << endl;
+  f_impl_ << '\n';
 }
 
 string t_swift_generator::enum_case_name(t_enum_value* tenum_case, bool declaration) {
@@ -593,7 +591,7 @@ void t_swift_generator::generate_consts(vector<t_const*> consts) {
     t_type* type = (*c_iter)->get_type();
     const_interface << "public let " << capitalize((*c_iter)->get_name()) << " : " << type_name(type) << " = ";
     render_const_value(const_interface, type, (*c_iter)->get_value());
-    const_interface << endl << endl;
+    const_interface << '\n' << '\n';
   }
 
   // this gets spit into the header file in ::close_generator
@@ -647,7 +645,7 @@ void t_swift_generator::generate_docstring(ostream& out, string& doc) {
     vector<string>::const_iterator d_iter;
     for (d_iter = strings.begin(); d_iter != strings.end(); ++d_iter) {
       if ((*d_iter) != "") {
-        out << indent() << "/// " << (*d_iter) << endl;
+        out << indent() << "/// " << (*d_iter) << '\n';
       }
     }
   }
@@ -685,12 +683,12 @@ void t_swift_generator::generate_swift_struct(ostream& out,
     out << indent() << "public enum " << tstruct->get_name();
     block_open(out);
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << endl;
+      out << '\n';
       string doc = (*m_iter)->get_doc();
       generate_docstring(out, doc);
       out << indent() << "case "
           << maybe_escape_identifier((*m_iter)->get_name()) << "(val: "
-          << type_name((*m_iter)->get_type(), false) << ")" << endl;
+          << type_name((*m_iter)->get_type(), false) << ")" << '\n';
     }
   } else {
     // Normal structs
@@ -707,20 +705,20 @@ void t_swift_generator::generate_swift_struct(ostream& out,
     vector<t_field*> sorted = members;
     sort(sorted.begin(), sorted.end(), [](t_field *a, t_field *b) { return (a->get_key() < b->get_key()); } );
     for (m_iter = sorted.begin(); m_iter != sorted.end(); ++m_iter) {
-      out << endl;
+      out << '\n';
       // TODO: Defaults
 
       string doc = (*m_iter)->get_doc();
       generate_docstring(out, doc);
 
-      out << indent() << declare_property(*m_iter, is_private) << endl;
+      out << indent() << declare_property(*m_iter, is_private) << '\n';
     }
 
-    out << endl;
-    out << endl;
+    out << '\n';
+    out << '\n';
 
     if (!struct_has_required_fields(tstruct)) {
-      indent(out) << visibility << " init() { }" << endl;
+      indent(out) << visibility << " init() { }" << '\n';
     }
     if (struct_has_required_fields(tstruct)) {
       generate_swift_struct_init(out, tstruct, false, is_private);
@@ -732,7 +730,7 @@ void t_swift_generator::generate_swift_struct(ostream& out,
 
   block_close(out);
 
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -761,11 +759,11 @@ void t_swift_generator::generate_old_swift_struct(ostream& out,
   vector<t_field*>::const_iterator m_iter;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    out << endl;
-    out << indent() << declare_property(*m_iter, is_private) << endl;
+    out << '\n';
+    out << indent() << declare_property(*m_iter, is_private) << '\n';
   }
 
-  out << endl;
+  out << '\n';
 
   // init
 
@@ -773,7 +771,7 @@ void t_swift_generator::generate_old_swift_struct(ostream& out,
   block_open(out);
   block_close(out);
 
-  out << endl;
+  out << '\n';
 
   if (struct_has_required_fields(tstruct)) {
     generate_swift_struct_init(out, tstruct, false, is_private);
@@ -784,7 +782,7 @@ void t_swift_generator::generate_old_swift_struct(ostream& out,
 
   block_close(out);
 
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -831,20 +829,20 @@ void t_swift_generator::generate_swift_struct_init(ostream& out,
       should_set = should_set || !field_is_optional((*m_iter));
       if (should_set) {
         out << indent() << "self." << maybe_escape_identifier((*m_iter)->get_name()) << " = "
-            << maybe_escape_identifier((*m_iter)->get_name()) << endl;
+            << maybe_escape_identifier((*m_iter)->get_name()) << '\n';
       }
     } else {
       /** legacy Swift2/Cocoa */
       if (all || (*m_iter)->get_req() == t_field::T_REQUIRED || (*m_iter)->get_req() == t_field::T_OPT_IN_REQ_OUT) {
         out << indent() << "self." << maybe_escape_identifier((*m_iter)->get_name()) << " = "
-            << maybe_escape_identifier((*m_iter)->get_name()) << endl;
+            << maybe_escape_identifier((*m_iter)->get_name()) << '\n';
       }
     }
   }
 
   block_close(out);
 
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -861,7 +859,7 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ostream& out,
   string visibility = is_private ? (gen_cocoa_ ? "private" : "fileprivate") : "public";
   indent(out) << "extension " << tstruct->get_name() << " : Hashable";
   block_open(out);
-  out << endl;
+  out << '\n';
   indent(out) << visibility << " func hash(into hasher: inout Hasher)";
   block_open(out);
 
@@ -872,21 +870,21 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ostream& out,
     if (!tstruct->is_union()) {
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         t_field* tfield = *m_iter;
-        indent(out) << "hasher.combine(" << maybe_escape_identifier(tfield->get_name()) << ")" << endl;
+        indent(out) << "hasher.combine(" << maybe_escape_identifier(tfield->get_name()) << ")" << '\n';
       }
     } else {
-      indent(out) << "switch self {" << endl;
+      indent(out) << "switch self {" << '\n';
       for (m_iter = members.begin(); m_iter != members.end(); m_iter++) {
         t_field *tfield = *m_iter;
-        indent(out) << "case ." << tfield->get_name() << "(let val): hasher.combine(val)" << endl;
+        indent(out) << "case ." << tfield->get_name() << "(let val): hasher.combine(val)" << '\n';
       }
-      indent(out) << "}" << endl << endl;
+      indent(out) << "}" << '\n' << '\n';
     }
   }
   block_close(out);
-  out << endl;
+  out << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -912,7 +910,7 @@ void t_swift_generator::generate_swift_struct_equatable_extension(ostream& out,
 
   if (members.size()) {
     if (!tstruct->is_union()) {
-      out << endl;
+      out << '\n';
       indent_up();
 
       for (m_iter = members.begin(); m_iter != members.end();) {
@@ -922,30 +920,30 @@ void t_swift_generator::generate_swift_struct_equatable_extension(ostream& out,
         if (++m_iter != members.end()) {
           out << " &&";
         }
-        out << endl;
+        out << '\n';
       }
       indent_down();
     } else {
       block_open(out);
-      indent(out) << "switch (lhs, rhs) {" << endl;
+      indent(out) << "switch (lhs, rhs) {" << '\n';
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         t_field* tfield = *m_iter;
         indent(out) << "case (." << tfield->get_name() << "(let lval), ."
                     << tfield->get_name() << "(let rval)): return lval == rval"
-                    << endl;
+                    << '\n';
       }
-      indent(out) << "default: return false" << endl;
-      indent(out) << "}" << endl;
+      indent(out) << "default: return false" << '\n';
+      indent(out) << "}" << '\n';
       indent_down();
-      indent(out) << "}()" << endl;
+      indent(out) << "}()" << '\n';
     }
   }
   else {
-    out << " true" << endl;
+    out << " true" << '\n';
   }
 
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -972,7 +970,7 @@ void t_swift_generator::generate_swift_struct_implementation(ostream& out,
   generate_swift_struct_hashable_extension(out, tstruct, is_private);
   generate_swift_struct_thrift_extension(out, tstruct, is_result, is_private);
 
-  out << endl << endl;
+  out << '\n' << '\n';
 }
 
 /**
@@ -993,7 +991,7 @@ void t_swift_generator::generate_swift_struct_thrift_extension(ostream& out,
 
   block_open(out);
 
-  out << endl;
+  out << '\n';
   if (!gen_cocoa_) {
     /** Swift 3, no writer we just write field ID's */
     string access = (is_private) ? (gen_cocoa_ ? "private" : "fileprivate") : "public";
@@ -1012,11 +1010,11 @@ void t_swift_generator::generate_swift_struct_thrift_extension(ostream& out,
       // pad a colon
       out << ":";
     }
-    out << "]" << endl;
+    out << "]" << '\n';
     block_close(out);
-    out << endl;
+    out << '\n';
     out << indent() << access << " static var structName: String { return \""
-        << tstruct->get_name() << "\" }" << endl << endl;
+        << tstruct->get_name() << "\" }" << '\n' << '\n';
 
     if (tstruct->is_union()) {
       generate_swift_union_reader(out, tstruct);
@@ -1037,24 +1035,24 @@ void t_swift_generator::generate_swift_struct_thrift_extension(ostream& out,
   }
 
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstruct) {
   indent(out) << "public static func read(from proto: TProtocol) throws -> "
               << tstruct->get_name();
   block_open(out);
-  indent(out) << "_ = try proto.readStructBegin()" << endl;
+  indent(out) << "_ = try proto.readStructBegin()" << '\n';
 
   indent(out) << "var ret: " << tstruct->get_name() << "?";
-  out << endl;
+  out << '\n';
   indent(out) << "fields: while true";
   block_open(out);
-  out << endl;
-  indent(out) << "let (_, fieldType, fieldID) = try proto.readFieldBegin()" << endl << endl;
+  out << '\n';
+  indent(out) << "let (_, fieldType, fieldID) = try proto.readFieldBegin()" << '\n' << '\n';
   indent(out) << "switch (fieldID, fieldType)";
   block_open(out);
-  indent(out) << "case (_, .stop):            break fields" << endl;
+  indent(out) << "case (_, .stop):            break fields" << '\n';
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1094,28 +1092,28 @@ void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstr
     indent(out) << padding << "ret = " << tstruct->get_name() << "."
                 << (*f_iter)->get_name() << "(val: " << "try "
                 << type_name((*f_iter)->get_type(), false, false)
-                << ".read(from: proto))" << endl;
+                << ".read(from: proto))" << '\n';
   }
 
-  indent(out) << "case let (_, unknownType):  try proto.skip(type: unknownType)" << endl;
+  indent(out) << "case let (_, unknownType):  try proto.skip(type: unknownType)" << '\n';
 
   block_close(out);
-  indent(out) << "try proto.readFieldEnd()" << endl;
+  indent(out) << "try proto.readFieldEnd()" << '\n';
 
   block_close(out);
-  out << endl;
+  out << '\n';
 
-  indent(out) << "try proto.readStructEnd()" << endl;
+  indent(out) << "try proto.readStructEnd()" << '\n';
 
   indent(out) << "if let ret = ret";
   block_open(out);
-  indent(out) << "return ret" << endl;
+  indent(out) << "return ret" << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
   indent(out) << "throw TProtocolError(error: .unknown, message: \"Missing required value for type: "
               << tstruct->get_name() << "\")";
   block_close(out);
-  out << endl;
+  out << '\n';
 
 }
 
@@ -1139,7 +1137,7 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
                << tstruct->get_name();
 
     block_open(out);
-    indent(out) << "_ = try proto.readStructBegin()" << endl;
+    indent(out) << "_ = try proto.readStructBegin()" << '\n';
 
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -1147,20 +1145,20 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       bool optional = field_is_optional(*f_iter);
       indent(out) << "var " << maybe_escape_identifier((*f_iter)->get_name()) << ": "
-                  << type_name((*f_iter)->get_type(), optional, !optional) << endl;
+                  << type_name((*f_iter)->get_type(), optional, !optional) << '\n';
     }
 
-    out << endl;
+    out << '\n';
 
     // Loop over reading in fields
     indent(out) << "fields: while true";
     block_open(out);
-    out << endl;
+    out << '\n';
 
-    indent(out) << "let (_, fieldType, fieldID) = try proto.readFieldBegin()" << endl << endl;
+    indent(out) << "let (_, fieldType, fieldID) = try proto.readFieldBegin()" << '\n' << '\n';
     indent(out) << "switch (fieldID, fieldType)";
     block_open(out);
-    indent(out) << "case (_, .stop):            break fields" << endl;
+    indent(out) << "case (_, .stop):            break fields" << '\n';
 
 
     // Generate deserialization code for known cases
@@ -1198,33 +1196,33 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
       }
 
       out << padding << maybe_escape_identifier((*f_iter)->get_name()) << " = try "
-          << type_name((*f_iter)->get_type(), false, false) << ".read(from: proto)" << endl;
+          << type_name((*f_iter)->get_type(), false, false) << ".read(from: proto)" << '\n';
     }
 
-    indent(out) << "case let (_, unknownType):  try proto.skip(type: unknownType)" << endl;
+    indent(out) << "case let (_, unknownType):  try proto.skip(type: unknownType)" << '\n';
     block_close(out);
-    out << endl;
+    out << '\n';
 
     // Read field end marker
-    indent(out) << "try proto.readFieldEnd()" << endl;
+    indent(out) << "try proto.readFieldEnd()" << '\n';
     block_close(out);
-    out << endl;
-    indent(out) << "try proto.readStructEnd()" << endl;
+    out << '\n';
+    indent(out) << "try proto.readStructEnd()" << '\n';
 
     if (struct_has_required_fields(tstruct)) {
       // performs various checks (e.g. check that all required fields are set)
-      indent(out) << "// Required fields" << endl;
+      indent(out) << "// Required fields" << '\n';
 
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if (field_is_optional(*f_iter)) {
           continue;
         }
         indent(out) << "try proto.validateValue(" << maybe_escape_identifier((*f_iter)->get_name()) << ", "
-                    << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
+                    << "named: \"" << (*f_iter)->get_name() << "\")" << '\n';
       }
     }
 
-    out << endl;
+    out << '\n';
 
     indent(out) << "return " << tstruct->get_name() << "(";
     for (f_iter = fields.begin(); f_iter != fields.end();) {
@@ -1242,8 +1240,8 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
                 << tstruct->get_name();
 
     block_open(out);
-    out << endl;
-    indent(out) << "try __proto.readStructBegin()" << endl << endl;
+    out << '\n';
+    indent(out) << "try __proto.readStructBegin()" << '\n' << '\n';
 
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -1251,66 +1249,66 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       bool optional = field_is_optional(*f_iter);
       indent(out) << "var " << maybe_escape_identifier((*f_iter)->get_name()) << " : "
-                  << type_name((*f_iter)->get_type(), optional, !optional) << endl;
+                  << type_name((*f_iter)->get_type(), optional, !optional) << '\n';
     }
 
-    out << endl;
+    out << '\n';
 
     // Loop over reading in fields
     indent(out) << "fields: while true";
     block_open(out);
-    out << endl;
+    out << '\n';
 
-    indent(out) << "let (_, fieldType, fieldID) = try __proto.readFieldBegin()" << endl << endl;
+    indent(out) << "let (_, fieldType, fieldID) = try __proto.readFieldBegin()" << '\n' << '\n';
     indent(out) << "switch (fieldID, fieldType)";
 
     block_open(out);
 
-    indent(out) << "case (_, .STOP):" << endl;
+    indent(out) << "case (_, .STOP):" << '\n';
     indent_up();
-    indent(out) << "break fields" << endl << endl;
+    indent(out) << "break fields" << '\n' << '\n';
     indent_down();
 
     // Generate deserialization code for known cases
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
-      indent(out) << "case (" << (*f_iter)->get_key() << ", " << type_to_enum((*f_iter)->get_type()) << "):" << endl;
+      indent(out) << "case (" << (*f_iter)->get_key() << ", " << type_to_enum((*f_iter)->get_type()) << "):" << '\n';
       indent_up();
       indent(out) << maybe_escape_identifier((*f_iter)->get_name()) << " = try __proto.readValue() as "
-                  << type_name((*f_iter)->get_type()) << endl << endl;
+                  << type_name((*f_iter)->get_type()) << '\n' << '\n';
       indent_down();
 
     }
 
-    indent(out) << "case let (_, unknownType):" << endl;
+    indent(out) << "case let (_, unknownType):" << '\n';
     indent_up();
-    indent(out) << "try __proto.skipType(unknownType)" << endl;
+    indent(out) << "try __proto.skipType(unknownType)" << '\n';
     indent_down();
     block_close(out);
-    out << endl;
+    out << '\n';
 
     // Read field end marker
-    indent(out) << "try __proto.readFieldEnd()" << endl;
+    indent(out) << "try __proto.readFieldEnd()" << '\n';
 
     block_close(out);
-    out << endl;
-    indent(out) << "try __proto.readStructEnd()" << endl;
-    out << endl;
+    out << '\n';
+    indent(out) << "try __proto.readStructEnd()" << '\n';
+    out << '\n';
 
     if (struct_has_required_fields(tstruct)) {
       // performs various checks (e.g. check that all required fields are set)
-      indent(out) << "// Required fields" << endl;
+      indent(out) << "// Required fields" << '\n';
 
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if (field_is_optional(*f_iter)) {
           continue;
         }
         indent(out) << "try __proto.validateValue(" << (*f_iter)->get_name() << ", "
-                    << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
+                    << "named: \"" << (*f_iter)->get_name() << "\")" << '\n';
       }
     }
 
-    out << endl;
+    out << '\n';
 
     indent(out) << "return " << tstruct->get_name() << "(";
     for (f_iter = fields.begin(); f_iter != fields.end();) {
@@ -1320,11 +1318,11 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
       }
     }
   }
-  out << ")" << endl;
+  out << ")" << '\n';
 
   block_close(out);
 
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1344,14 +1342,14 @@ void t_swift_generator::generate_old_swift_struct_writer(ostream& out,
   indent(out) << visibility << " static func writeValue(__value: " << tstruct->get_name()
               << ", toProtocol __proto: TProtocol) throws";
   block_open(out);
-  out << endl;
+  out << '\n';
 
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "try __proto.writeStructBeginWithName(\"" << name << "\")" << endl;
-  out << endl;
+  indent(out) << "try __proto.writeStructBeginWithName(\"" << name << "\")" << '\n';
+  out << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field *tfield = *f_iter;
@@ -1367,19 +1365,19 @@ void t_swift_generator::generate_old_swift_struct_writer(ostream& out,
                 << (optional ? "" : "__value.") << maybe_escape_identifier(tfield->get_name()) << ", "
                 << "name: \"" << tfield->get_name() << "\", "
                 << "type: " << type_to_enum(tfield->get_type()) << ", "
-                << "id: " << tfield->get_key() << ")" << endl;
+                << "id: " << tfield->get_key() << ")" << '\n';
 
     if (optional) {
       block_close(out);
     }
 
-    out << endl;
+    out << '\n';
   }
 
-  indent(out) << "try __proto.writeFieldStop()" << endl << endl;
-  indent(out) << "try __proto.writeStructEnd()" << endl;
+  indent(out) << "try __proto.writeFieldStop()" << '\n' << '\n';
+  indent(out) << "try __proto.writeStructEnd()" << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1396,12 +1394,12 @@ void t_swift_generator::generate_old_swift_struct_result_writer(ostream& out, t_
   indent(out) << "private static func writeValue(__value: " << tstruct->get_name()
               << ", toProtocol __proto: TProtocol) throws";
   block_open(out);
-  out << endl;
+  out << '\n';
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-  indent(out) << "try __proto.writeStructBeginWithName(\"" << name << "\")" << endl;
-  out << endl;
+  indent(out) << "try __proto.writeStructBeginWithName(\"" << name << "\")" << '\n';
+  out << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field *tfield = *f_iter;
@@ -1413,15 +1411,15 @@ void t_swift_generator::generate_old_swift_struct_result_writer(ostream& out, t_
     indent(out) << "try __proto.writeFieldValue(result, "
                 << "name: \"" << tfield->get_name() << "\", "
                 << "type: " << type_to_enum(tfield->get_type()) << ", "
-                << "id: " << tfield->get_key() << ")" << endl;
+                << "id: " << tfield->get_key() << ")" << '\n';
 
     block_close(out);
   }
   // Write the struct map
-  indent(out) << "try __proto.writeFieldStop()" << endl << endl;
-  indent(out) << "try __proto.writeStructEnd()" << endl;
+  indent(out) << "try __proto.writeFieldStop()" << '\n' << '\n';
+  indent(out) << "try __proto.writeStructEnd()" << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1440,50 +1438,50 @@ void t_swift_generator::generate_swift_struct_printable_extension(ostream& out, 
               << (debug_descriptions_ ? "CustomDebugStringConvertible" : "CustomStringConvertible");
 
   block_open(out);
-  out << endl;
+  out << '\n';
   indent(out) << "public var description : String";
   block_open(out);
   indent(out) << "var desc = \"" << tstruct->get_name();
 
   if (!gen_cocoa_) {
     if (!tstruct->is_union()) {
-      out << "(\"" << endl;
+      out << "(\"" << '\n';
       for (f_iter = fields.begin(); f_iter != fields.end();) {
         indent(out) << "desc += \"" << (*f_iter)->get_name()
                     << "=\\(String(describing: self." << maybe_escape_identifier((*f_iter)->get_name()) << "))";
         if (++f_iter != fields.end()) {
           out << ", ";
         }
-        out << "\"" << endl;
+        out << "\"" << '\n';
       }
     } else {
-      out << ".\"" << endl;
-      indent(out) << "switch self {" << endl;
+      out << ".\"" << '\n';
+      indent(out) << "switch self {" << '\n';
       for (f_iter = fields.begin(); f_iter != fields.end();f_iter++) {
         indent(out) << "case ." << (*f_iter)->get_name() << "(let val): "
                     << "desc += \"" << (*f_iter)->get_name() << "(val: \\(val))\""
-                    << endl;
+                    << '\n';
       }
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
   } else {
-    out << "(\"" << endl;
+    out << "(\"" << '\n';
     for (f_iter = fields.begin(); f_iter != fields.end();) {
       indent(out) << "desc += \"" << (*f_iter)->get_name()
                   << "=\\(self." << maybe_escape_identifier((*f_iter)->get_name()) << ")";
       if (++f_iter != fields.end()) {
         out << ", ";
       }
-      out << "\"" << endl;
+      out << "\"" << '\n';
     }
-    indent(out) << "desc += \")\"" << endl;
+    indent(out) << "desc += \")\"" << '\n';
   }
 
-  indent(out) << "return desc" << endl;
+  indent(out) << "return desc" << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1606,14 +1604,14 @@ void t_swift_generator::generate_swift_service_protocol(ostream& out, t_service*
       out << " : " << parent->get_name();
     }
     block_open(out);
-    out << endl;
+    out << '\n';
 
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator f_iter;
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       function_docstring(out, *f_iter);
-      indent(out) << function_signature(*f_iter) << endl << endl;
+      indent(out) << function_signature(*f_iter) << '\n' << '\n';
     }
 
   } else {
@@ -1624,7 +1622,7 @@ void t_swift_generator::generate_swift_service_protocol(ostream& out, t_service*
     vector<t_function*>::iterator f_iter;
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      out << endl;
+      out << '\n';
       indent(out) << function_signature(*f_iter) << "  // exceptions: ";
       t_struct* xs = (*f_iter)->get_xceptions();
       const vector<t_field*>& xceptions = xs->get_members();
@@ -1632,11 +1630,11 @@ void t_swift_generator::generate_swift_service_protocol(ostream& out, t_service*
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         out << type_name((*x_iter)->get_type()) + ", ";
       }
-      out << endl;
+      out << '\n';
     }
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1652,7 +1650,7 @@ void t_swift_generator::generate_swift_service_protocol_async(ostream& out, t_se
   indent(out) << "public protocol " << tservice->get_name() << "Async";
 
   block_open(out);
-  if (!gen_cocoa_) {  out << endl; }
+  if (!gen_cocoa_) {  out << '\n'; }
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
@@ -1660,20 +1658,20 @@ void t_swift_generator::generate_swift_service_protocol_async(ostream& out, t_se
   if (!gen_cocoa_) {
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       async_function_docstring(out, *f_iter);
-      indent(out) << async_function_signature(*f_iter) << endl << endl;
+      indent(out) << async_function_signature(*f_iter) << '\n' << '\n';
     }
   } else {
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-      out << endl;
-      indent(out) << async_function_signature(*f_iter) << endl;
+      out << '\n';
+      indent(out) << async_function_signature(*f_iter) << '\n';
       if (promise_kit_) {
-        indent(out) << promise_function_signature(*f_iter) << endl;
+        indent(out) << promise_function_signature(*f_iter) << '\n';
       } //
-      out << endl;
+      out << '\n';
     }
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1690,33 +1688,33 @@ void t_swift_generator::generate_swift_service_client(ostream& out, t_service* t
     out << " : " << ((parent == nullptr) ? "TClient" : parent->get_name() + "Client");
     out <<  " /* , " << tservice->get_name() << " */";
     block_open(out);
-    out << endl;
+    out << '\n';
   } else {
     // a
     indent(out) << "public class " << tservice->get_name() << "Client /* : " << tservice->get_name() << " */";
     block_open(out);
-    out << endl;
+    out << '\n';
 
-    indent(out) << "let __inProtocol : TProtocol" << endl << endl;
-    indent(out) << "let __outProtocol : TProtocol" << endl << endl;
+    indent(out) << "let __inProtocol : TProtocol" << '\n' << '\n';
+    indent(out) << "let __outProtocol : TProtocol" << '\n' << '\n';
     indent(out) << "public init(inoutProtocol: TProtocol)";
     block_open(out);
 
-    indent(out) << "__inProtocol = inoutProtocol" << endl;
-    indent(out) << "__outProtocol = inoutProtocol" << endl;
+    indent(out) << "__inProtocol = inoutProtocol" << '\n';
+    indent(out) << "__outProtocol = inoutProtocol" << '\n';
     block_close(out);
-    out << endl;
+    out << '\n';
 
     indent(out) << "public init(inProtocol: TProtocol, outProtocol: TProtocol)";
     block_open(out);
-    indent(out) << "__inProtocol = inProtocol" << endl;
-    indent(out) << "__outProtocol = outProtocol" << endl;
+    indent(out) << "__inProtocol = inProtocol" << '\n';
+    indent(out) << "__outProtocol = outProtocol" << '\n';
     block_close(out);
-    out << endl;
+    out << '\n';
   }
 
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1736,24 +1734,24 @@ void t_swift_generator::generate_swift_service_client_async(ostream& out, t_serv
     out <<  " /* , " << tservice->get_name() << " */";
 
     block_open(out);
-    out << endl;
+    out << '\n';
   } else {
     indent(out) << "public class " << tservice->get_name() << "AsyncClient /* : " << tservice->get_name() << " */";
     block_open(out);
-    out << endl;
+    out << '\n';
 
-    indent(out) << "let __protocolFactory : TProtocolFactory" << endl << endl;
-    indent(out) << "let __transportFactory : TAsyncTransportFactory" << endl << endl;
+    indent(out) << "let __protocolFactory : TProtocolFactory" << '\n' << '\n';
+    indent(out) << "let __transportFactory : TAsyncTransportFactory" << '\n' << '\n';
     indent(out) << "public init(protocolFactory: TProtocolFactory, transportFactory: TAsyncTransportFactory)";
     block_open(out);
 
-    indent(out) << "__protocolFactory = protocolFactory" << endl;
-    indent(out) << "__transportFactory = transportFactory" << endl;
+    indent(out) << "__protocolFactory = protocolFactory" << '\n';
+    indent(out) << "__transportFactory = transportFactory" << '\n';
     block_close(out);
-    out << endl;
+    out << '\n';
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1767,34 +1765,34 @@ void t_swift_generator::generate_swift_service_server(ostream& out, t_service* t
     indent(out) << "open class " << tservice->get_name() << "Processor /* " << tservice->get_name() << " */";
 
     block_open(out);
-    out << endl;
+    out << '\n';
     out << indent() << "typealias ProcessorHandlerDictionary = "
-        << "[String: (Int32, TProtocol, TProtocol, " << tservice->get_name() << ") throws -> Void]" << endl
-        << endl
-        << indent() << "public var service: " << tservice->get_name() << endl
-        << endl
+        << "[String: (Int32, TProtocol, TProtocol, " << tservice->get_name() << ") throws -> Void]" << '\n'
+        << '\n'
+        << indent() << "public var service: " << tservice->get_name() << '\n'
+        << '\n'
         << indent() << "public required init(service: " << tservice->get_name() << ")";
   } else {
     indent(out) << "public class " << tservice->get_name() << "Processor : NSObject /* "
                 << tservice->get_name() << " */";
     block_open(out);
-    out << endl;
+    out << '\n';
 
     out << indent() << "typealias ProcessorHandlerDictionary = "
-        << "[String: (Int, TProtocol, TProtocol, " << tservice->get_name() << ") throws -> Void]" << endl
-        << endl
-        << indent() << "let service : " << tservice->get_name() << endl
-        << endl
+        << "[String: (Int, TProtocol, TProtocol, " << tservice->get_name() << ") throws -> Void]" << '\n'
+        << '\n'
+        << indent() << "let service : " << tservice->get_name() << '\n'
+        << '\n'
         << indent() << "public init(service: " << tservice->get_name() << ")";
   }
 
   block_open(out);
-  indent(out) << "self.service = service" << endl;
+  indent(out) << "self.service = service" << '\n';
   block_close(out);
-  out << endl;
+  out << '\n';
 
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1831,7 +1829,7 @@ void t_swift_generator::generate_swift_service_client_send_function_implementati
     // Serialize the request
     indent(out) << "try outProtocol.writeMessageBegin(name: \"" << funname << "\", "
                 << "type: " << (tfunction->is_oneway() ? ".oneway" : ".call") << ", "
-                << "sequenceID: 0)" << endl;
+                << "sequenceID: 0)" << '\n';
 
     indent(out) << "let args = " << argsname << "(";
 
@@ -1847,18 +1845,18 @@ void t_swift_generator::generate_swift_service_client_send_function_implementati
         out << ", ";
       }
     }
-    out << ")" << endl;
-    indent(out) << "try args.write(to: outProtocol)" << endl;
-    indent(out) << "try outProtocol.writeMessageEnd()" << endl;
+    out << ")" << '\n';
+    indent(out) << "try args.write(to: outProtocol)" << '\n';
+    indent(out) << "try outProtocol.writeMessageEnd()" << '\n';
   } else {
-    out << endl;
+    out << '\n';
 
     // Serialize the request
     indent(out) << "try __outProtocol.writeMessageBeginWithName(\"" << funname << "\", "
                 << "type: " << (tfunction->is_oneway() ? ".ONEWAY" : ".CALL") << ", "
-                << "sequenceID: 0)" << endl;
+                << "sequenceID: 0)" << '\n';
 
-    out << endl;
+    out << '\n';
 
     indent(out) << "let __args = " << argsname << "(";
 
@@ -1874,13 +1872,13 @@ void t_swift_generator::generate_swift_service_client_send_function_implementati
         out << ", ";
       }
     }
-    out << ")" << endl;
-    indent(out) << "try " << argsname << ".writeValue(__args, toProtocol: __outProtocol)" << endl << endl;
-    indent(out) << "try __outProtocol.writeMessageEnd()" << endl;
+    out << ")" << '\n';
+    indent(out) << "try " << argsname << ".writeValue(__args, toProtocol: __outProtocol)" << '\n' << '\n';
+    indent(out) << "try __outProtocol.writeMessageEnd()" << '\n';
   }
 
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -1913,7 +1911,7 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
 
     // check for an exception
 
-    indent(out) << "try inProtocol.readResultMessageBegin() " << endl;
+    indent(out) << "try inProtocol.readResultMessageBegin() " << '\n';
 
     string resultname = function_result_helper_struct_type(tservice, tfunction);
     indent(out);
@@ -1924,15 +1922,15 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
     }
 
     string return_type_name = type_name(tfunction->get_returntype());
-    out << "try " << resultname << ".read(from: inProtocol)" << endl;
+    out << "try " << resultname << ".read(from: inProtocol)" << '\n';
 
-    indent(out) << "try inProtocol.readMessageEnd()" << endl << endl;
+    indent(out) << "try inProtocol.readMessageEnd()" << '\n' << '\n';
 
     // Careful, only return _result if not a void function
     if (!tfunction->get_returntype()->is_void()) {
       indent(out) << "if let success = result.success";
       block_open(out);
-      indent(out) << "return success" << endl;
+      indent(out) << "return success" << '\n';
       block_close(out);
     }
 
@@ -1943,14 +1941,14 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       indent(out) << "if let " << (*x_iter)->get_name() << " = result." << (*x_iter)->get_name();
       block_open(out);
-      indent(out) << "throw " << (*x_iter)->get_name() << endl;
+      indent(out) << "throw " << (*x_iter)->get_name() << '\n';
       block_close(out);
     }
 
     // If you get here it's an exception, unless a void function
     if (!tfunction->get_returntype()->is_void()) {
       indent(out) << "throw TApplicationError(error: .missingResult(methodName: \""
-                  << tfunction->get_name() << "\"))" << endl;
+                  << tfunction->get_name() << "\"))" << '\n';
     }
   } else {
     if (needs_protocol) {
@@ -1966,22 +1964,22 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
     block_open(out);
 
     // check for an exception
-    out << endl;
-    indent(out) << "try __inProtocol.readResultMessageBegin() " << endl << endl;
+    out << '\n';
+    indent(out) << "try __inProtocol.readResultMessageBegin() " << '\n' << '\n';
     string resultname = function_result_helper_struct_type(tservice, tfunction);
     indent(out);
     if (!tfunction->get_returntype()->is_void() || !tfunction->get_xceptions()->get_members().empty()) {
       out << "let __result = ";
     }
-    out << "try " << resultname << ".readValueFromProtocol(__inProtocol)" << endl << endl;
+    out << "try " << resultname << ".readValueFromProtocol(__inProtocol)" << '\n' << '\n';
 
-    indent(out) << "try __inProtocol.readMessageEnd()" << endl << endl;
+    indent(out) << "try __inProtocol.readMessageEnd()" << '\n' << '\n';
 
     // Careful, only return _result if not a void function
     if (!tfunction->get_returntype()->is_void()) {
       indent(out) << "if let __success = __result.success";
       block_open(out);
-      indent(out) << "return __success" << endl;
+      indent(out) << "return __success" << '\n';
       block_close(out);
     }
 
@@ -1992,24 +1990,24 @@ void t_swift_generator::generate_swift_service_client_recv_function_implementati
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       indent(out) << "if let " << (*x_iter)->get_name() << " = __result." << (*x_iter)->get_name();
       block_open(out);
-      indent(out) << "throw " << (*x_iter)->get_name() << endl;
+      indent(out) << "throw " << (*x_iter)->get_name() << '\n';
       block_close(out);
     }
 
     // If you get here it's an exception, unless a void function
     if (!tfunction->get_returntype()->is_void()) {
-      indent(out) << "throw NSError(" << endl;
+      indent(out) << "throw NSError(" << '\n';
       indent_up();
-      indent(out) << "domain: TApplicationErrorDomain, " << endl;
-      indent(out) << "code: Int(TApplicationError.MissingResult.rawValue)," << endl;
-      indent(out) << "userInfo: [TApplicationErrorMethodKey: \"" << tfunction->get_name() << "\"])" << endl;
+      indent(out) << "domain: TApplicationErrorDomain, " << '\n';
+      indent(out) << "code: Int(TApplicationError.MissingResult.rawValue)," << '\n';
+      indent(out) << "userInfo: [TApplicationErrorMethodKey: \"" << tfunction->get_name() << "\"])" << '\n';
       indent_down();
     }
   }
 
   // Close function
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -2035,7 +2033,7 @@ void t_swift_generator::generate_swift_service_client_send_function_invocation(o
     }
   }
 
-  out << ")" << endl;
+  out << ")" << '\n';
 }
 
 /**
@@ -2061,7 +2059,7 @@ void t_swift_generator::generate_swift_service_client_send_async_function_invoca
     out << ", " << (*f_iter)->get_name() << ": " << (*f_iter)->get_name();
   }
 
-  out << ")" << endl;
+  out << ")" << '\n';
 }
 
 /**
@@ -2075,7 +2073,7 @@ void t_swift_generator::generate_swift_service_client_implementation(ostream& ou
   string name = tservice->get_name() + "Client";
   indent(out) << "extension " << name << " : " << tservice->get_name();
   block_open(out);
-  out << endl;
+  out << '\n';
 
   // generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -2092,28 +2090,28 @@ void t_swift_generator::generate_swift_service_client_implementation(ostream& ou
     indent(out) << "public " << function_signature(*f_iter);
     block_open(out);
 
-    if (gen_cocoa_) { out << endl; }
+    if (gen_cocoa_) { out << '\n'; }
 
     generate_swift_service_client_send_function_invocation(out, *f_iter);
     if (!gen_cocoa_) {
-      indent(out) << "try outProtocol.transport.flush()" << endl;
+      indent(out) << "try outProtocol.transport.flush()" << '\n';
     } else {
-      out << endl;
-      indent(out) << "try __outProtocol.transport().flush()" << endl << endl;
+      out << '\n';
+      indent(out) << "try __outProtocol.transport().flush()" << '\n' << '\n';
     }
 
     if (!(*f_iter)->is_oneway()) {
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(out) << "try recv_" << (*f_iter)->get_name() << "()" << endl;
+        indent(out) << "try recv_" << (*f_iter)->get_name() << "()" << '\n';
       } else {
-        indent(out) << "return try recv_" << (*f_iter)->get_name() << "()" << endl;
+        indent(out) << "return try recv_" << (*f_iter)->get_name() << "()" << '\n';
       }
     }
     block_close(out);
-    out << endl;
+    out << '\n';
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -2131,7 +2129,7 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ostre
 
   indent(out) << "extension " << name << " : " << protocol_name;
   block_open(out);
-  out << endl;
+  out << '\n';
 
   // generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -2146,10 +2144,10 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ostre
 
     indent(out) << "public " << async_function_signature(*f_iter);
     block_open(out);
-    out << endl;
-    out << indent() << "let transport   = factory.newTransport()" << endl
-        << indent() << "let proto = Protocol(on: transport)" << endl
-        << endl;
+    out << '\n';
+    out << indent() << "let transport   = factory.newTransport()" << '\n'
+        << indent() << "let proto = Protocol(on: transport)" << '\n'
+        << '\n';
 
     out << indent() << "do";
     block_open(out);
@@ -2157,12 +2155,12 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ostre
     generate_swift_service_client_send_async_function_invocation(out, *f_iter);
 
     indent_down();
-    out << indent() << "} catch let error {" << endl;
+    out << indent() << "} catch let error {" << '\n';
     indent_up();
-    out << indent() << "completion(.error(error))" << endl;
+    out << indent() << "completion(.error(error))" << '\n';
     block_close(out);
 
-    out << endl;
+    out << '\n';
 
     bool ret_is_void = (*f_iter)->get_returntype()->is_void();
     bool is_oneway = (*f_iter)->is_oneway();
@@ -2170,10 +2168,10 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ostre
     string error_completion_call = "completion(.error(error))";
     indent(out) << "transport.flush";
     block_open(out);
-    out << indent() << "(trans, error) in" << endl << endl;
+    out << indent() << "(trans, error) in" << '\n' << '\n';
     out << indent() << "if let error = error";
     block_open(out);
-    out << indent() << error_completion_call << endl;
+    out << indent() << error_completion_call << '\n';
     block_close(out);
 
     if (!is_oneway) {
@@ -2183,24 +2181,24 @@ void t_swift_generator::generate_swift_service_client_async_implementation(ostre
       if (!ret_is_void) {
         out << "let result = ";
       }
-      out << "try self.recv_" << (*f_iter)->get_name() << "(on: proto)" << endl;
+      out << "try self.recv_" << (*f_iter)->get_name() << "(on: proto)" << '\n';
 
-      out << indent() << (ret_is_void ? "completion(.success(Void()))" : "completion(.success(result))") << endl;
+      out << indent() << (ret_is_void ? "completion(.success(Void()))" : "completion(.success(result))") << '\n';
       indent_down();
-      out << indent() << "} catch let error {" << endl;
+      out << indent() << "} catch let error {" << '\n';
       indent_up();
-      out << indent() << error_completion_call << endl;
+      out << indent() << error_completion_call << '\n';
 
       block_close(out);
     } else {
-      out << indent() << "completion(.success(Void()))" << endl;
+      out << indent() << "completion(.success(Void()))" << '\n';
     }
     block_close(out);
     block_close(out);
 
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 void t_swift_generator::generate_old_swift_service_client_async_implementation(ostream& out,
@@ -2211,7 +2209,7 @@ void t_swift_generator::generate_old_swift_service_client_async_implementation(o
 
   indent(out) << "extension " << name << " : " << protocol_name;
   block_open(out);
-  out << endl;
+  out << '\n';
 
   // generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -2226,19 +2224,19 @@ void t_swift_generator::generate_old_swift_service_client_async_implementation(o
 
     indent(out) << "public " << async_function_signature(*f_iter);
     block_open(out);
-    out << endl;
+    out << '\n';
 
-    out << indent() << "let __transport = __transportFactory.newTransport()" << endl
-        << indent() << "let __protocol = __protocolFactory.newProtocolOnTransport(__transport)" << endl
-        << endl;
+    out << indent() << "let __transport = __transportFactory.newTransport()" << '\n'
+        << indent() << "let __protocol = __protocolFactory.newProtocolOnTransport(__transport)" << '\n'
+        << '\n';
 
     generate_swift_service_client_send_async_function_invocation(out, *f_iter);
-    out << endl;
+    out << '\n';
 
     indent(out) << "__transport.flushWithCompletion(";
 
     if ((*f_iter)->is_oneway()) {
-      out << "success, failure: failure)" << endl;
+      out << "success, failure: failure)" << '\n';
     }
     else {
       block_open(out);
@@ -2249,25 +2247,25 @@ void t_swift_generator::generate_old_swift_service_client_async_implementation(o
       if (!(*f_iter)->get_returntype()->is_void()) {
         out << "let result = ";
       }
-      out << "try self.recv_" << (*f_iter)->get_name() << "(__protocol)" << endl;
+      out << "try self.recv_" << (*f_iter)->get_name() << "(__protocol)" << '\n';
 
       out << indent() << "success(";
       if (!(*f_iter)->get_returntype()->is_void()) {
         out << "result";
       }
-      out << ")" << endl;
+      out << ")" << '\n';
 
       block_close(out);
       indent(out) << "catch let error";
       block_open(out);
-      indent(out) << "failure(error as NSError)" << endl;
+      indent(out) << "failure(error as NSError)" << '\n';
       block_close(out);
       block_close(out);
-      indent(out) << ", failure: failure)" << endl;
+      indent(out) << ", failure: failure)" << '\n';
     }
 
     block_close(out);
-    out << endl;
+    out << '\n';
 
     // Promise function
     if (promise_kit_) {
@@ -2275,17 +2273,17 @@ void t_swift_generator::generate_old_swift_service_client_async_implementation(o
       indent(out) << "public " << promise_function_signature(*f_iter);
       block_open(out);
 
-      out << indent() << "let (__promise, __fulfill, __reject) = Promise<" << type_name((*f_iter)->get_returntype()) << ">.pendingPromise()" << endl << endl
-          << indent() << "let __transport = __transportFactory.newTransport()" << endl
-          << indent() << "let __protocol = __protocolFactory.newProtocolOnTransport(__transport)" << endl
-          << endl;
+      out << indent() << "let (__promise, __fulfill, __reject) = Promise<" << type_name((*f_iter)->get_returntype()) << ">.pendingPromise()" << '\n' << '\n'
+          << indent() << "let __transport = __transportFactory.newTransport()" << '\n'
+          << indent() << "let __protocol = __protocolFactory.newProtocolOnTransport(__transport)" << '\n'
+          << '\n';
 
       generate_swift_service_client_send_async_function_invocation(out, *f_iter);
-      out << endl;
+      out << '\n';
       indent(out) << "__transport.flushWithCompletion(";
 
       if ((*f_iter)->is_oneway()) {
-        out << "{ __fulfill() }, failure: { __reject($0) })" << endl;
+        out << "{ __fulfill() }, failure: { __reject($0) })" << '\n';
       }
       else {
         block_open(out);
@@ -2296,37 +2294,37 @@ void t_swift_generator::generate_old_swift_service_client_async_implementation(o
         if (!(*f_iter)->get_returntype()->is_void()) {
           out << "let result = ";
         }
-        out << "try self.recv_" << (*f_iter)->get_name() << "(__protocol)" << endl;
+        out << "try self.recv_" << (*f_iter)->get_name() << "(__protocol)" << '\n';
 
         out << indent() << "__fulfill(";
         if (!(*f_iter)->get_returntype()->is_void()) {
           out << "result";
         }
-        out << ")" << endl;
+        out << ")" << '\n';
 
         block_close(out);
         indent(out) << "catch let error";
         block_open(out);
-        indent(out) << "__reject(error)" << endl;
+        indent(out) << "__reject(error)" << '\n';
         block_close(out);
         block_close(out);
 
-        indent(out) << ", failure: { error in " << endl;
+        indent(out) << ", failure: { error in " << '\n';
         indent_up();
-        indent(out) << "__reject(error)" << endl;
+        indent(out) << "__reject(error)" << '\n';
         indent_down();
-        indent(out) << "})" << endl;
+        indent(out) << "})" << '\n';
       }
 
-      indent(out) << "return __promise" << endl;
+      indent(out) << "return __promise" << '\n';
       block_close(out);
-      out << endl;
+      out << '\n';
 
     }
 
   }
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -2345,12 +2343,12 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
 
   indent(out) << "extension " << name << " : TProcessor";
   block_open(out);
-  out << endl;
+  out << '\n';
   indent(out) << "static let processorHandlers" << (gen_cocoa_ ? " " : "") << ": ProcessorHandlerDictionary =";
   block_open(out);
 
-  out << endl;
-  out << indent() << "var processorHandlers = ProcessorHandlerDictionary()" << endl << endl;
+  out << '\n';
+  out << indent() << "var processorHandlers = ProcessorHandlerDictionary()" << '\n' << '\n';
 
   // generate method map for routing incoming calls
   vector<t_function*> functions = tservice->get_functions();
@@ -2361,25 +2359,25 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
 
     string args_type = function_args_helper_struct_type(tservice, *f_iter);
 
-    out << indent() << "processorHandlers[\"" << tfunction->get_name() << "\"] = { sequenceID, inProtocol, outProtocol, handler in" << endl
-        << endl;
+    out << indent() << "processorHandlers[\"" << tfunction->get_name() << "\"] = { sequenceID, inProtocol, outProtocol, handler in" << '\n'
+        << '\n';
 
     indent_up();
     if (!gen_cocoa_) {
-      out << indent() << "let args = try " << args_type << ".read(from: inProtocol)" << endl
-          << endl
-          << indent() << "try inProtocol.readMessageEnd()" << endl
-          << endl;
+      out << indent() << "let args = try " << args_type << ".read(from: inProtocol)" << '\n'
+          << '\n'
+          << indent() << "try inProtocol.readMessageEnd()" << '\n'
+          << '\n';
     } else {
-      out << indent() << "let args = try " << args_type << ".readValueFromProtocol(inProtocol)" << endl
-          << endl
-          << indent() << "try inProtocol.readMessageEnd()" << endl
-          << endl;
+      out << indent() << "let args = try " << args_type << ".readValueFromProtocol(inProtocol)" << '\n'
+          << '\n'
+          << indent() << "try inProtocol.readMessageEnd()" << '\n'
+          << '\n';
     }
 
     if (!tfunction->is_oneway() ) {
       string result_type = function_result_helper_struct_type(tservice, tfunction);
-      indent(out) << "var result = " << result_type << "()" << endl;
+      indent(out) << "var result = " << result_type << "()" << '\n';
 
       indent(out) << "do";
       block_open(out);
@@ -2406,7 +2404,7 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
         }
       }
 
-      out << ")" << endl;
+      out << ")" << '\n';
       block_close(out);
 
       t_struct* xs = tfunction->get_xceptions();
@@ -2423,37 +2421,37 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
           }
           out << (*x_iter)->get_type()->get_name();
 
-          out << " { result." << (*x_iter)->get_name() << " = error }" << endl;
+          out << " { result." << (*x_iter)->get_name() << " = error }" << '\n';
         }
 
-        indent(out) << "catch let error { throw error }" << endl;
-        out << endl;
+        indent(out) << "catch let error { throw error }" << '\n';
+        out << '\n';
 
         if (!tfunction->is_oneway()) {
-          out << indent() << "try outProtocol.writeMessageBegin(name: \"" << tfunction->get_name() << "\", type: .reply, sequenceID: sequenceID)" << endl
-              << indent() << "try result.write(to: outProtocol)" << endl
-              << indent() << "try outProtocol.writeMessageEnd()" << endl
-              << indent() << "try outProtocol.transport.flush()" << endl;
+          out << indent() << "try outProtocol.writeMessageBegin(name: \"" << tfunction->get_name() << "\", type: .reply, sequenceID: sequenceID)" << '\n'
+              << indent() << "try result.write(to: outProtocol)" << '\n'
+              << indent() << "try outProtocol.writeMessageEnd()" << '\n'
+              << indent() << "try outProtocol.transport.flush()" << '\n';
         }
       } else {
         for (x_iter = xfields.begin(); x_iter != xfields.end(); ++x_iter) {
           indent(out) << "catch let error as " << (*x_iter)->get_type()->get_name();
           block_open(out);
-          indent(out) << "result." << (*x_iter)->get_name() << " = error" << endl;
+          indent(out) << "result." << (*x_iter)->get_name() << " = error" << '\n';
           block_close(out);
         }
 
         indent(out) << "catch let error";
         block_open(out);
-        out << indent() << "throw error" << endl;
+        out << indent() << "throw error" << '\n';
         block_close(out);
 
-        out << endl;
+        out << '\n';
 
         if (!tfunction->is_oneway()) {
-          out << indent() << "try outProtocol.writeMessageBeginWithName(\"" << tfunction->get_name() << "\", type: .REPLY, sequenceID: sequenceID)" << endl
-              << indent() << "try " << result_type << ".writeValue(result, toProtocol: outProtocol)" << endl
-              << indent() << "try outProtocol.writeMessageEnd()" << endl;
+          out << indent() << "try outProtocol.writeMessageBeginWithName(\"" << tfunction->get_name() << "\", type: .REPLY, sequenceID: sequenceID)" << '\n'
+              << indent() << "try " << result_type << ".writeValue(result, toProtocol: outProtocol)" << '\n'
+              << indent() << "try outProtocol.writeMessageEnd()" << '\n';
         }
       }
     }
@@ -2461,11 +2459,11 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
 
   }
 
-  indent(out) << "return processorHandlers" << endl;
+  indent(out) << "return processorHandlers" << '\n';
 
   block_close(out,false);
-  out << "()" << endl;
-  out << endl;
+  out << "()" << '\n';
+  out << '\n';
 
   if (!gen_cocoa_) {
     indent(out) << "public func process(on inProtocol: TProtocol, outProtocol: TProtocol) throws";
@@ -2474,47 +2472,47 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
   }
   block_open(out);
 
-  out << endl;
-  out << indent() << "let (messageName, _, sequenceID) = try inProtocol.readMessageBegin()" << endl
-      << endl
+  out << '\n';
+  out << indent() << "let (messageName, _, sequenceID) = try inProtocol.readMessageBegin()" << '\n'
+      << '\n'
       << indent() << "if let processorHandler = " << name << ".processorHandlers[messageName]";
   block_open(out);
   out << indent() << "do";
   block_open(out);
-  out << indent() << "try processorHandler(sequenceID, inProtocol, outProtocol, service)" << endl;
+  out << indent() << "try processorHandler(sequenceID, inProtocol, outProtocol, service)" << '\n';
   block_close(out);
   if (!gen_cocoa_) {
     out << indent() << "catch let error as TApplicationError";
     block_open(out);
-    out << indent() << "try outProtocol.writeException(messageName: messageName, sequenceID: sequenceID, ex: error)" << endl
-        << indent() << "try outProtocol.transport.flush()" << endl;
+    out << indent() << "try outProtocol.writeException(messageName: messageName, sequenceID: sequenceID, ex: error)" << '\n'
+        << indent() << "try outProtocol.transport.flush()" << '\n';
     block_close(out);
     block_close(out);
     out << indent() << "else";
     block_open(out);
-    out << indent() << "try inProtocol.skip(type: .struct)" << endl
-        << indent() << "try inProtocol.readMessageEnd()" << endl
-        << indent() << "let ex = TApplicationError(error: .unknownMethod(methodName: messageName))" << endl
-        << indent() << "try outProtocol.writeException(messageName: messageName, sequenceID: sequenceID, ex: ex)" << endl
-        << indent() << "try outProtocol.transport.flush()" << endl;
+    out << indent() << "try inProtocol.skip(type: .struct)" << '\n'
+        << indent() << "try inProtocol.readMessageEnd()" << '\n'
+        << indent() << "let ex = TApplicationError(error: .unknownMethod(methodName: messageName))" << '\n'
+        << indent() << "try outProtocol.writeException(messageName: messageName, sequenceID: sequenceID, ex: ex)" << '\n'
+        << indent() << "try outProtocol.transport.flush()" << '\n';
   } else {
     out << indent() << "catch let error as NSError";
     block_open(out);
-    out << indent() << "try outProtocol.writeExceptionForMessageName(messageName, sequenceID: sequenceID, ex: error)" << endl;
+    out << indent() << "try outProtocol.writeExceptionForMessageName(messageName, sequenceID: sequenceID, ex: error)" << '\n';
     block_close(out);
     block_close(out);
     out << indent() << "else";
     block_open(out);
-    out << indent() << "try inProtocol.skipType(.STRUCT)" << endl
-        << indent() << "try inProtocol.readMessageEnd()" << endl
-        << indent() << "try outProtocol.writeExceptionForMessageName(messageName," << endl;
+    out << indent() << "try inProtocol.skipType(.STRUCT)" << '\n'
+        << indent() << "try inProtocol.readMessageEnd()" << '\n'
+        << indent() << "try outProtocol.writeExceptionForMessageName(messageName," << '\n';
     indent_up();
-    out << indent() << "sequenceID: sequenceID," << endl
-        << indent() << "ex: NSError(" << endl;
+    out << indent() << "sequenceID: sequenceID," << '\n'
+        << indent() << "ex: NSError(" << '\n';
     indent_up();
-    out << indent() << "domain: TApplicationErrorDomain, " << endl
-        << indent() << "code: Int(TApplicationError.UnknownMethod.rawValue), " << endl
-        << indent() << "userInfo: [TApplicationErrorMethodKey: messageName]))" << endl;
+    out << indent() << "domain: TApplicationErrorDomain, " << '\n'
+        << indent() << "code: Int(TApplicationError.UnknownMethod.rawValue), " << '\n'
+        << indent() << "userInfo: [TApplicationErrorMethodKey: messageName]))" << '\n';
     indent_down();
     indent_down();
   }
@@ -2522,7 +2520,7 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
   block_close(out);
   block_close(out);
   block_close(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -2812,27 +2810,27 @@ void t_swift_generator::function_docstring(ostream& out, t_function* tfunction) 
     // Description
     string doc = tfunction->get_doc();
     generate_docstring(out, doc);
-    indent(out) << "///" << endl;
+    indent(out) << "///" << '\n';
 
     // Parameters
     const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
     vector<t_field*>::const_iterator f_iter;
     if (!fields.empty()) {
-      indent(out) << "/// - Parameters:" << endl;
+      indent(out) << "/// - Parameters:" << '\n';
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         indent(out) << "///   - " << (*f_iter)->get_name() << ": ";
         string doc = (*f_iter)->get_doc();
         if (!doc.empty() && doc[doc.length()-1] == '\n') {
             doc.erase(doc.length()-1);
         }
-        out << doc << endl;
+        out << doc << '\n';
       }
     }
 
     // Returns
     t_type* ttype = tfunction->get_returntype();
     if (!ttype->is_void()) {
-      indent(out) << "/// - Returns: " << type_name(ttype) << endl;
+      indent(out) << "/// - Returns: " << type_name(ttype) << '\n';
     }
 
     // Throws
@@ -2845,7 +2843,7 @@ void t_swift_generator::function_docstring(ostream& out, t_function* tfunction) 
       if (*x_iter != xceptions.back()) {
         out << ", ";
       }    }
-    out << endl;
+    out << '\n';
 }
 
 /**
@@ -2865,20 +2863,20 @@ void t_swift_generator::async_function_docstring(ostream& out, t_function* tfunc
     // Description
     string doc = tfunction->get_doc();
     generate_docstring(out, doc);
-    indent(out) << "///" << endl;
+    indent(out) << "///" << '\n';
 
     // Parameters
     const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
     vector<t_field*>::const_iterator f_iter;
     if (!fields.empty()) {
-      indent(out) << "/// - Parameters:" << endl;
+      indent(out) << "/// - Parameters:" << '\n';
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         indent(out) << "///   - " << (*f_iter)->get_name() << ": ";
         string doc = (*f_iter)->get_doc();
         if (!doc.empty() && doc[doc.length()-1] == '\n') {
             doc.erase(doc.length()-1);
         }
-        out << doc << endl;
+        out << doc << '\n';
       }
     }
 
@@ -2894,7 +2892,7 @@ void t_swift_generator::async_function_docstring(ostream& out, t_function* tfunc
         out << ", ";
       }
     }
-    out << endl;
+    out << '\n';
 }
 
 /**

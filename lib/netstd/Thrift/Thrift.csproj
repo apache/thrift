@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net8.0;net9.0</TargetFrameworks>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>ApacheThrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -40,8 +40,8 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <Title>Apache Thrift 0.19.0</Title>
-    <Version>0.19.0.0</Version>
+    <Title>Apache Thrift 0.22.0</Title>
+    <Version>0.22.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
     <Authors>Apache Thrift Developers</Authors>
@@ -50,25 +50,34 @@
     <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC</PackageTags>
-    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.19.0/CHANGES.md</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.22.0/CHANGES.md</PackageReleaseNotes>
+    <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright 2023 The Apache Software Foundation</Copyright>
+    <Copyright>Copyright 2024 The Apache Software Foundation</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
-    <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
-    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="7.0.0" />
-    <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Security" Version="4.3.2" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.0" />
+    <!--
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="System.Net.Requests" Version="4.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="System.Net.Security" Version="4.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="System.IO.Pipes" Version="4.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    -->
   </ItemGroup>
 
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'false'" />
+  </ItemGroup>
+	
   <ItemGroup>
     <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
@@ -76,7 +85,19 @@
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-	
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web">
+      <Version>8.0.11</Version> 
+		</PackageReference>
+	</ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web">
+      <Version>9.0.0</Version>
+    </PackageReference>
+  </ItemGroup>
+
   <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">
     <PropertyGroup>
       <TargetFrameworkMonikerAssemblyAttributesPath>$(IntermediateOutputPath)$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)</TargetFrameworkMonikerAssemblyAttributesPath>

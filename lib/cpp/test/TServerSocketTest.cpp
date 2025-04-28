@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(test_bind_to_address) {
   accepted->close();
   sock1.close();
 
-  std::cout << "An error message from getaddrinfo on the console is expected:" << std::endl;
+  std::cout << "An error message from getaddrinfo on the console is expected:" << '\n';
   TServerSocket sock2("257.258.259.260", 0);
   BOOST_CHECK_THROW(sock2.listen(), TTransportException);
   sock2.close();

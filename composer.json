@@ -18,11 +18,16 @@
         "issues": "https://issues.apache.org/jira/browse/THRIFT"
     },
     "require": {
-        "php": "^5.5 || ^7.0 || ^8.0"
+        "php": "^7.1 || ^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.8.36",
-        "squizlabs/php_codesniffer": "3.*"
+        "phpunit/phpunit": "^7.5 || ^8.5 || ^9.5",
+        "squizlabs/php_codesniffer": "3.*",
+        "php-mock/php-mock-phpunit": "^2.10",
+        "ext-json": "*",
+        "ext-xml": "*",
+        "ext-curl": "*",
+        "ext-pcntl": "*"
     },
     "autoload": {
         "psr-4": {"Thrift\\": "lib/php/lib/"}
@@ -35,5 +40,19 @@
         "branch-alias": {
             "dev-master": "1.0.x-dev"
         }
+    },
+    "archive": {
+        "exclude": [
+            "*",
+            ".*",
+            "!/CHANGES.md",
+            "!/LICENSE",
+            "!/NOTICE",
+            "!/README.md",
+            "!/composer.json",
+            "!/lib/php/README.apache.md",
+            "!/lib/php/README.md",
+            "!/lib/php/lib"
+        ]
     }
 }

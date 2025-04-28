@@ -31,12 +31,6 @@ internal class MetaDataTest {
         assertEquals(3, personMetadata.size)
         val idField = personMetadata[Person._Fields.ID]!!
         assertEquals("id", idField.fieldName)
-        assertEquals(
-            mapOf(
-                "max" to "100000",
-                "min" to "1",
-            ),
-            idField.fieldAnnotations
-        )
+        assertEquals(mapOf("max" to "100000", "min" to "1"), idField.fieldAnnotations)
     }
 }

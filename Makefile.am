@@ -131,6 +131,9 @@ skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	.asf.yaml \
 	.clang-format \
@@ -141,6 +144,12 @@ EXTRA_DIST = \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
+	.github/dependabot.yml \
+	.github/pull_request_template.md \
+	.github/stale.yml \
+	.github/workflows/build.yml \
+	.github/workflows/cmake.yml \
+	.github/workflows/pypi.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \

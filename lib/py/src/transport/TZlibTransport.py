@@ -22,13 +22,13 @@ class, using the python standard library zlib module to implement
 data compression.
 """
 
-from __future__ import division
 import zlib
+from io import BytesIO
+
 from .TTransport import TTransportBase, CReadableTransport
-from ..compat import BufferIO
 
 
-class TZlibTransportFactory(object):
+class TZlibTransportFactory:
     """Factory transport that builds zlib compressed transports.
 
     This factory caches the last single client/transport that it was passed
@@ -88,8 +88,8 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         """
         self.__trans = trans
         self.compresslevel = compresslevel
-        self.__rbuf = BufferIO()
-        self.__wbuf = BufferIO()
+        self.__rbuf = BytesIO()
+        self.__wbuf = BytesIO()
         self._init_zlib()
         self._init_stats()
 
@@ -97,8 +97,8 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         """Internal method to initialize/reset the internal StringIO objects
         for read and write buffers.
         """
-        self.__rbuf = BufferIO()
-        self.__wbuf = BufferIO()
+        self.__rbuf = BytesIO()
+        self.__wbuf = BytesIO()
 
     def _init_stats(self):
         """Internal method to reset the internal statistics counters
@@ -203,7 +203,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         self.bytes_in += len(zbuf)
         self.bytes_in_comp += len(buf)
         old = self.__rbuf.read()
-        self.__rbuf = BufferIO(old + buf)
+        self.__rbuf = BytesIO(old + buf)
         if len(old) + len(buf) == 0:
             return False
         return True
@@ -228,7 +228,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         ztail = self._zcomp_write.flush(zlib.Z_SYNC_FLUSH)
         self.bytes_out_comp += len(ztail)
         if (len(zbuf) + len(ztail)) > 0:
-            self.__wbuf = BufferIO()
+            self.__wbuf = BytesIO()
             self.__trans.write(zbuf + ztail)
         self.__trans.flush()
 
@@ -244,5 +244,5 @@ class TZlibTransport(TTransportBase, CReadableTransport):
             retstring += self.read(self.DEFAULT_BUFFSIZE)
         while len(retstring) < reqlen:
             retstring += self.read(reqlen - len(retstring))
-        self.__rbuf = BufferIO(retstring)
+        self.__rbuf = BytesIO(retstring)
         return self.__rbuf

@@ -128,7 +128,7 @@ var _ io.ReadCloser = (*TransformReader)(nil)
 //
 // If you don't know the closers capacity beforehand, just use
 //
-//     &TransformReader{Reader: baseReader}
+//	&TransformReader{Reader: baseReader}
 //
 // instead would be sufficient.
 func NewTransformReaderWithCapacity(baseReader io.Reader, capacity int) *TransformReader {
@@ -151,6 +151,11 @@ func (tr *TransformReader) Close() error {
 }
 
 // AddTransform adds a transform.
+//
+// Deprecated: This only applies to the next message written, and the next read
+// message will cause write transforms to be reset from what's configured in
+// TConfiguration. For sticky transforms, use TConfiguration.THeaderTransforms
+// instead.
 func (tr *TransformReader) AddTransform(id THeaderTransformID) error {
 	switch id {
 	default:
@@ -206,6 +211,25 @@ func (tw *TransformWriter) Close() error {
 	return nil
 }
 
+var zlibDefaultLevelWriterPool = newPool(
+	func() *zlib.Writer {
+		return zlib.NewWriter(nil)
+	},
+	nil,
+)
+
+type zlibPoolCloser struct {
+	writer *zlib.Writer
+}
+
+func (z *zlibPoolCloser) Close() error {
+	defer func() {
+		z.writer.Reset(nil)
+		zlibDefaultLevelWriterPool.put(&z.writer)
+	}()
+	return z.writer.Close()
+}
+
 // AddTransform adds a transform.
 func (tw *TransformWriter) AddTransform(id THeaderTransformID) error {
 	switch id {
@@ -217,9 +241,12 @@ func (tw *TransformWriter) AddTransform(id THeaderTransformID) error {
 	case TransformNone:
 		// no-op
 	case TransformZlib:
-		writeCloser := zlib.NewWriter(tw.Writer)
+		writeCloser := zlibDefaultLevelWriterPool.get()
+		writeCloser.Reset(tw.Writer)
 		tw.Writer = writeCloser
-		tw.closers = append(tw.closers, writeCloser)
+		tw.closers = append(tw.closers, &zlibPoolCloser{
+			writer: writeCloser,
+		})
 	}
 	return nil
 }
@@ -300,11 +327,12 @@ func NewTHeaderTransportConf(trans TTransport, conf *TConfiguration) *THeaderTra
 	}
 	PropagateTConfiguration(trans, conf)
 	return &THeaderTransport{
-		transport:    trans,
-		reader:       bufio.NewReader(trans),
-		writeHeaders: make(THeaderMap),
-		protocolID:   conf.GetTHeaderProtocolID(),
-		cfg:          conf,
+		transport:       trans,
+		reader:          bufio.NewReader(trans),
+		writeHeaders:    make(THeaderMap),
+		writeTransforms: conf.GetTHeaderTransforms(),
+		protocolID:      conf.GetTHeaderProtocolID(),
+		cfg:             conf,
 	}
 }
 
@@ -449,6 +477,11 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	}
 	t.protocolID = THeaderProtocolID(protoID)
 
+	// Reset writeTransforms to the ones from cfg, as we are going to add
+	// compression transforms from what we read, we don't want to accumulate
+	// different transforms read from different requests
+	t.writeTransforms = t.cfg.GetTHeaderTransforms()
+
 	var transformCount int32
 	transformCount, err = hp.readVarint32()
 	if err != nil {
@@ -461,12 +494,21 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 		)
 		t.frameReader = reader
 		transformIDs := make([]THeaderTransformID, transformCount)
-		for i := 0; i < int(transformCount); i++ {
+		for i := range int(transformCount) {
 			id, err := hp.readVarint32()
 			if err != nil {
 				return err
 			}
-			transformIDs[i] = THeaderTransformID(id)
+			tID := THeaderTransformID(id)
+			transformIDs[i] = tID
+
+			// For compression transforms, we should also add them
+			// to writeTransforms so that the response (assuming we
+			// are reading a request) would do the same compression.
+			switch tID {
+			case TransformZlib:
+				t.addWriteTransformsDedupe(tID)
+			}
 		}
 		// The transform IDs on the wire was added based on the order of
 		// writing, so on the reading side we need to reverse the order.
@@ -494,7 +536,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 			if err != nil {
 				return err
 			}
-			for i := 0; i < int(count); i++ {
+			for range int(count) {
 				key, err := hp.ReadString(ctx)
 				if err != nil {
 					return err
@@ -544,7 +586,7 @@ func (t *THeaderTransport) Read(p []byte) (read int, err error) {
 			// the last Read finished the frame, do endOfFrame
 			// handling here.
 			err = t.endOfFrame()
-		} else if err == io.EOF {
+		} else if errors.Is(err, io.EOF) {
 			err = t.endOfFrame()
 			if err != nil {
 				return
@@ -726,6 +768,9 @@ func (t *THeaderTransport) ClearWriteHeaders() {
 }
 
 // AddTransform add a transform for writing.
+//
+// NOTE: This is provided as a low-level API, but in general you should use
+// TConfiguration.THeaderTransforms to set transforms for writing instead.
 func (t *THeaderTransport) AddTransform(transform THeaderTransformID) error {
 	if !supportedTransformIDs[transform] {
 		return NewTProtocolExceptionWithType(
@@ -756,6 +801,17 @@ func (t *THeaderTransport) isFramed() bool {
 	case clientHeaders, clientFramedBinary, clientFramedCompact:
 		return true
 	}
+}
+
+// addWriteTransformsDedupe adds id to writeTransforms only if it's not already
+// there.
+func (t *THeaderTransport) addWriteTransformsDedupe(id THeaderTransformID) {
+	for _, existingID := range t.writeTransforms {
+		if existingID == id {
+			return
+		}
+	}
+	t.writeTransforms = append(t.writeTransforms, id)
 }
 
 // SetTConfiguration implements TConfigurationSetter.

@@ -152,15 +152,19 @@ def testField(type, data):
     protocol.readStructEnd()
 
 
-def testMessage(data):
+def testMessage(data, strict=True):
     message = {}
     message['name'] = data[0]
     message['type'] = data[1]
     message['seqid'] = data[2]
 
+    strictRead, strictWrite = True, True
+    if not strict:
+        strictRead, strictWrite = False, False
+
     buf = TTransport.TMemoryBuffer()
     transport = TTransport.TBufferedTransportFactory().getTransport(buf)
-    protocol = TBinaryProtocol(transport)
+    protocol = TBinaryProtocol(transport, strictRead=strictRead, strictWrite=strictWrite)
     protocol.writeMessageBegin(message['name'], message['type'], message['seqid'])
     protocol.writeMessageEnd()
 
@@ -169,7 +173,7 @@ def testMessage(data):
 
     buf = TTransport.TMemoryBuffer(data_r)
     transport = TTransport.TBufferedTransportFactory().getTransport(buf)
-    protocol = TBinaryProtocol(transport)
+    protocol = TBinaryProtocol(transport, strictRead=strictRead, strictWrite=strictWrite)
     result = protocol.readMessageBegin()
     protocol.readMessageEnd()
     return result
@@ -255,6 +259,24 @@ class TestTBinaryProtocol(unittest.TestCase):
                 self.assertEqual(result[1], dt[1])
                 self.assertEqual(result[2], dt[2])
 
+        except Exception as e:
+            print("Assertion fail")
+            raise e
+
+    def test_TBinaryProtocol_no_strict_write_read(self):
+        TMessageType = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}
+        test_data = [("short message name", TMessageType['T_CALL'], 0),
+                        ("1", TMessageType['T_REPLY'], 12345),
+                        ("loooooooooooooooooooooooooooooooooong", TMessageType['T_EXCEPTION'], 1 << 16),
+                        ("one way push", TMessageType['T_ONEWAY'], 12),
+                        ("Janky", TMessageType['T_CALL'], 0)]
+
+        try:
+            for dt in test_data:
+                result = testMessage(dt, strict=False)
+                self.assertEqual(result[0], dt[0])
+                self.assertEqual(result[1], dt[1])
+                self.assertEqual(result[2], dt[2])
         except Exception as e:
             print("Assertion fail")
             raise e

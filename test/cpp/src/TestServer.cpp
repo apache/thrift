@@ -132,6 +132,11 @@ public:
     _return = thing;
   }
 
+  void testUuid(apache::thrift::TUuid& _return, const apache::thrift::TUuid& thing) override {
+    printf("testUuid(\"{%s}\")\n", to_string(thing).c_str());
+    _return = thing;
+  }
+
   void testStruct(Xtruct& out, const Xtruct& thing) override {
     printf("testStruct({\"%s\", %d, %d, %" PRId64 "})\n",
            thing.string_thing.c_str(),
@@ -389,7 +394,7 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
   }
 
   void communicate(const char* event, void* ctx, const char* fn_name) {
-    std::cout << event << ": " << *static_cast<std::string*>(ctx) << " = " << fn_name << std::endl;
+    std::cout << event << ": " << *static_cast<std::string*>(ctx) << " = " << fn_name << '\n';
   }
 };
 
@@ -439,6 +444,12 @@ public:
                           const std::string& thing) override {
     std::string res;
     _delegate->testBinary(res, thing);
+    cob(res);
+  }
+
+  void testUuid(::std::function<void(apache::thrift::TUuid const& _return)> cob, const apache::thrift::TUuid& thing) override {
+    TUuid res;
+    _delegate->testUuid(res, thing);
     cob(res);
   }
 
@@ -645,7 +656,7 @@ int main(int argc, char** argv) {
     }
 
   } catch (std::exception& e) {
-    cerr << e.what() << endl;
+    cerr << e.what() << '\n';
     cout << desc << "\n";
     return 1;
   }
@@ -757,7 +768,7 @@ int main(int argc, char** argv) {
   if (port != 0) {
     cout << port;
   }
-  cout << endl;
+  cout << '\n';
 
   // Multiplexed Processor if needed
   if (boost::starts_with(protocol_type, "multi")) {
@@ -813,7 +824,7 @@ int main(int argc, char** argv) {
               : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     } else {
-      cerr << "server-type nonblocking requires transport of http or framed" << endl;
+      cerr << "server-type nonblocking requires transport of http or framed" << '\n';
       exit(1);
     }
   }
@@ -847,6 +858,6 @@ int main(int argc, char** argv) {
     server.reset();
   }
 
-  cout << "done." << endl;
+  cout << "done." << '\n';
   return 0;
 }

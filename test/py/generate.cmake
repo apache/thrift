@@ -14,6 +14,7 @@ generate(${MY_PROJECT_DIR}/test/v0.16/ThriftTest.thrift py:no_utf8strings gen-py
 generate(${MY_PROJECT_DIR}/test/v0.16/ThriftTest.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/v0.16/ThriftTest.thrift py:dynamic,slots gen-py-dynamicslots)
 generate(${MY_PROJECT_DIR}/test/v0.16/ThriftTest.thrift py:enum gen-py-enum)
+generate(${MY_PROJECT_DIR}/test/ThriftTest.thrift py:type_hints,enum gen-py-type_hints)
 
 generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py gen-py-default)
 generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py:slots gen-py-slots)
@@ -22,6 +23,7 @@ generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py:no_utf8strings ge
 generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py:dynamic,slots gen-py-dynamicslots)
 generate(${MY_PROJECT_DIR}/test/v0.16/DebugProtoTest.thrift py:enum gen-py-enum)
+generate(${MY_PROJECT_DIR}/test/DebugProtoTest.thrift py:type_hints,enum gen-py-type_hints)
 
 generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py gen-py-default)
 generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:slots gen-py-slots)
@@ -30,6 +32,7 @@ generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:no_utf8strings gen
 generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:dynamic,slots gen-py-dynamicslots)
 generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:enum gen-py-enum)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:type_hints,enum gen-py-type_hints)
 
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py gen-py-default)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:slots gen-py-slots)
@@ -38,3 +41,4 @@ generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:no_utf8strings gen-py-no_utf
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:dynamic,slots gen-py-dynamicslots)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:enum gen-py-enum)
+generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:type_hints,enum gen-py-type_hints)

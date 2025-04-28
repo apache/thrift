@@ -23,6 +23,9 @@
 --setfenv(1, thrift)
 
 package.cpath = package.cpath .. ';bin/?.so' -- TODO FIX
+
+local libluabitwise = require 'libluabitwise'
+
 function ttype(obj)
   if type(obj) == 'table' and
     obj.__type and
@@ -48,7 +51,7 @@ function ttable_size(t)
   return count
 end
 
-version = '0.19.0'
+version = '0.22.0'
 
 TType = {
   STOP   = 0,
@@ -66,8 +69,7 @@ TType = {
   MAP    = 13,
   SET    = 14,
   LIST   = 15,
-  UTF8   = 16,
-  UTF16  = 17
+  UUID   = 16
 }
 
 TMessageType = {
@@ -231,6 +233,35 @@ function TException:write(oprot)
   end
   oprot:writeFieldStop()
   oprot:writeStructEnd()
+end
+
+TUUID = {
+  zero,
+  one,
+  two,
+  three
+}
+
+TUUID = __TObject:new{
+  __type = 'TUUID'
+}
+
+function TUUIDfromString(str)
+  local iterator = string.gmatch(str, "[A-Fa-f0-9][A-Fa-f0-9][A-Fa-f0-9][A-Fa-f0-9]")
+  return TUUID:new {
+    zero = libluabitwise.buor(libluabitwise.ushiftl(tonumber(iterator(), 16), 16), tonumber(iterator(), 16)),
+    one = libluabitwise.buor(libluabitwise.ushiftl(tonumber(iterator(), 16), 16), tonumber(iterator(), 16)),
+    two = libluabitwise.buor(libluabitwise.ushiftl(tonumber(iterator(), 16), 16), tonumber(iterator(), 16)),
+    three = libluabitwise.buor(libluabitwise.ushiftl(tonumber(iterator(), 16), 16), tonumber(iterator(), 16))
+  }
+end
+
+function TUUID:getString()
+  return string.format("%08x-%04x-%04x-%04x-%04x%08x", self.zero, libluabitwise.ushiftr(self.one, 16), libluabitwise.buand(self.one, 0xFFFF), libluabitwise.ushiftr(self.two, 16), libluabitwise.buand(self.two, 0xFFFF), self.three)
+end
+
+function TUUID:__tostring()
+  return "<TUUID: " .. self:getString() .. ">"
 end
 
 -- Basic Client (used in generated lua code)

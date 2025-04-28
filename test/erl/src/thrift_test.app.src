@@ -22,7 +22,7 @@
   {description, "Thrift cross language test"},
 
   % The version of the applicaton
-  {vsn, "0.19.0"},
+  {vsn, "0.22.0"},
 
   % All modules used by the application.
   {modules, [
