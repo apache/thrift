@@ -409,20 +409,23 @@ public class NonblockingSaslHandler {
    * selector.
    */
   public void close() {
-    underlyingTransport.close();
-    selectionKey.cancel();
-    if (saslPeer != null) {
-      saslPeer.dispose();
+    try {
+      if (serverContextCreated) {
+        eventHandler.deleteContext(
+            serverContext,
+            inputProtocolFactory.getProtocol(underlyingTransport),
+            outputProtocolFactory.getProtocol(underlyingTransport));
+      }
+    } finally {
+      selectionKey.cancel();
+      if (saslPeer != null) {
+        saslPeer.dispose();
+      }
+      nextPhase = Phase.CLOSED;
+      currentPhase = Phase.CLOSED;
+      underlyingTransport.close();
+      LOGGER.trace("Connection closed: {}", underlyingTransport);
     }
-    if (serverContextCreated) {
-      eventHandler.deleteContext(
-          serverContext,
-          inputProtocolFactory.getProtocol(underlyingTransport),
-          outputProtocolFactory.getProtocol(underlyingTransport));
-    }
-    nextPhase = Phase.CLOSED;
-    currentPhase = Phase.CLOSED;
-    LOGGER.trace("Connection closed: {}", underlyingTransport);
   }
 
   public enum Phase {

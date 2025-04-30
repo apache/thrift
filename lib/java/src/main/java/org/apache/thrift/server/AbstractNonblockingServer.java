@@ -456,9 +456,12 @@ public abstract class AbstractNonblockingServer extends TServer {
           || state_ == FrameBufferState.AWAITING_CLOSE) {
         readBufferBytesAllocated.addAndGet(-buffer_.array().length);
       }
-      trans_.close();
-      if (eventHandler_ != null) {
-        eventHandler_.deleteContext(context_, inProt_, outProt_);
+      try {
+        if (eventHandler_ != null) {
+          eventHandler_.deleteContext(context_, inProt_, outProt_);
+        }
+      } finally {
+        trans_.close();
       }
     }
 
