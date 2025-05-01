@@ -268,6 +268,7 @@ public class TBinaryProtocol extends TProtocol {
   /** Reading methods. */
   @Override
   public TMessage readMessageBegin() throws TException {
+    trans_.readMessageBegin();
     int size = readI32();
     if (size < 0) {
       int version = size & VERSION_MASK;
@@ -286,7 +287,9 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   @Override
-  public void readMessageEnd() throws TException {}
+  public void readMessageEnd() throws TException {
+    trans_.readMessageEnd();
+  }
 
   @Override
   public TStruct readStructBegin() throws TException {
@@ -310,7 +313,6 @@ public class TBinaryProtocol extends TProtocol {
   public TMap readMapBegin() throws TException {
     TMap map = new TMap(readByte(), readByte(), readI32());
 
-    checkReadBytesAvailable(map);
     checkContainerReadLength(map.size);
     return map;
   }
@@ -322,7 +324,6 @@ public class TBinaryProtocol extends TProtocol {
   public TList readListBegin() throws TException {
     TList list = new TList(readByte(), readI32());
 
-    checkReadBytesAvailable(list);
     checkContainerReadLength(list.size);
     return list;
   }
@@ -334,7 +335,6 @@ public class TBinaryProtocol extends TProtocol {
   public TSet readSetBegin() throws TException {
     TSet set = new TSet(readByte(), readI32());
 
-    checkReadBytesAvailable(set);
     checkContainerReadLength(set.size);
     return set;
   }
@@ -496,8 +496,6 @@ public class TBinaryProtocol extends TProtocol {
     if (length < 0) {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + length);
     }
-
-    getTransport().checkReadBytesAvailable(length);
 
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(

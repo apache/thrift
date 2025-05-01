@@ -176,6 +176,7 @@ public class TIOStreamTransport extends TEndpointTransport {
     if (bytesRead < 0) {
       throw new TTransportException(TTransportException.END_OF_FILE, "Socket is closed by peer.");
     }
+    consumeReadMessageBytes(bytesRead);
     return bytesRead;
   }
 
@@ -199,9 +200,6 @@ public class TIOStreamTransport extends TEndpointTransport {
     }
     try {
       outputStream_.flush();
-
-      resetConsumedMessageSize(-1);
-
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }

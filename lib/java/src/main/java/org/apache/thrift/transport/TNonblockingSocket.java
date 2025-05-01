@@ -136,7 +136,9 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /** Perform a nonblocking read into buffer. */
   public int read(ByteBuffer buffer) throws TTransportException {
     try {
-      return socketChannel_.read(buffer);
+      int iBytesRead = socketChannel_.read(buffer);
+      consumeReadMessageBytes(iBytesRead);
+      return iBytesRead;
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
@@ -149,7 +151,9 @@ public class TNonblockingSocket extends TNonblockingTransport {
           TTransportException.NOT_OPEN, "Cannot read from write-only socket channel");
     }
     try {
-      return socketChannel_.read(ByteBuffer.wrap(buf, off, len));
+      int iBytesRead = socketChannel_.read(ByteBuffer.wrap(buf, off, len));
+      consumeReadMessageBytes(iBytesRead);
+      return iBytesRead;
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }

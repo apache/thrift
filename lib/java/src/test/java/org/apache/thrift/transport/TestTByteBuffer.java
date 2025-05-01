@@ -43,19 +43,6 @@ public class TestTByteBuffer {
   }
 
   @Test
-  public void testSmallTConfiguration() throws Exception {
-    // Test that TByteBuffer init fail with small max message size.
-    final TConfiguration configSmall =
-        new TConfiguration(
-            4, TConfiguration.DEFAULT_MAX_FRAME_SIZE, TConfiguration.DEFAULT_RECURSION_DEPTH);
-    TTransportException e =
-        assertThrows(
-            TTransportException.class,
-            () -> new TByteBuffer(configSmall, ByteBuffer.allocate(100)));
-    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
-  }
-
-  @Test
   public void testLargeTConfiguration() throws Exception {
     // Test that TByteBuffer init pass with large max message size beyond
     // TConfiguration.DEFAULT_MAX_MESSAGE_SIZE.
@@ -64,6 +51,6 @@ public class TestTByteBuffer {
     final TConfiguration configLarge =
         new TConfiguration(
             maxSize, TConfiguration.DEFAULT_MAX_FRAME_SIZE, TConfiguration.DEFAULT_RECURSION_DEPTH);
-    assertDoesNotThrow(() -> new TByteBuffer(configLarge, ByteBuffer.allocate(bufferSize)));
+    assertDoesNotThrow(() -> new TByteBuffer(ByteBuffer.allocate(bufferSize)));
   }
 }

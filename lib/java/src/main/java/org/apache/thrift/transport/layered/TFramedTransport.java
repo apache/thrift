@@ -19,7 +19,6 @@
 
 package org.apache.thrift.transport.layered;
 
-import java.util.Objects;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.TMemoryInputTransport;
@@ -38,6 +37,8 @@ public class TFramedTransport extends TLayeredTransport {
 
   /** Buffer for input */
   private final TMemoryInputTransport readBuffer_;
+
+  private final int maxLength_;
 
   public static class Factory extends TTransportFactory {
     private final int maxLength_;
@@ -65,13 +66,9 @@ public class TFramedTransport extends TLayeredTransport {
   /** Constructor wraps around another transport */
   public TFramedTransport(TTransport transport, int maxLength) throws TTransportException {
     super(transport);
-    TConfiguration _configuration =
-        Objects.isNull(transport.getConfiguration())
-            ? new TConfiguration()
-            : transport.getConfiguration();
-    _configuration.setMaxFrameSize(maxLength);
+    maxLength_ = maxLength;
     writeBuffer_.write(sizeFiller_, 0, 4);
-    readBuffer_ = new TMemoryInputTransport(_configuration, new byte[0]);
+    readBuffer_ = new TMemoryInputTransport(new byte[0]);
   }
 
   public TFramedTransport(TTransport transport) throws TTransportException {
@@ -138,15 +135,11 @@ public class TFramedTransport extends TLayeredTransport {
           TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
     }
 
-    if (size > getInnerTransport().getConfiguration().getMaxFrameSize()) {
+    if (size > maxLength_) {
       close();
       throw new TTransportException(
           TTransportException.CORRUPTED_DATA,
-          "Frame size ("
-              + size
-              + ") larger than max length ("
-              + getInnerTransport().getConfiguration().getMaxFrameSize()
-              + ")!");
+          "Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
     }
 
     byte[] buff = new byte[size];

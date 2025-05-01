@@ -95,7 +95,6 @@ public final class TTupleProtocol extends TCompactProtocol {
     int size = super.readI32();
     TMap map = new TMap(keyType, valTyep, size);
 
-    checkReadBytesAvailable(map);
     return map;
   }
 
@@ -103,7 +102,6 @@ public final class TTupleProtocol extends TCompactProtocol {
     int size = super.readI32();
     TList list = new TList(type, size);
 
-    checkReadBytesAvailable(list);
     return list;
   }
 

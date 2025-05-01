@@ -43,7 +43,6 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import org.apache.thrift.TConfiguration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase;
@@ -536,21 +535,6 @@ public class TestTSaslTransports {
 
     @Override
     public void write(byte[] buf, int off, int len) throws TTransportException {}
-
-    @Override
-    public TConfiguration getConfiguration() {
-      return readBuffer.getConfiguration();
-    }
-
-    @Override
-    public void updateKnownMessageSize(long size) throws TTransportException {
-      readBuffer.updateKnownMessageSize(size);
-    }
-
-    @Override
-    public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-      readBuffer.checkReadBytesAvailable(numBytes);
-    }
   }
 
   @Test

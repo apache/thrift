@@ -35,82 +35,32 @@ public abstract class TEndpointTransport extends TTransport {
     getConfiguration().setMaxFrameSize(maxFrameSize);
   }
 
-  protected long knownMessageSize;
-  protected long remainingMessageSize;
+  private long consumedMessage;
 
-  private TConfiguration _configuration;
+  private final TConfiguration _configuration;
 
   public TConfiguration getConfiguration() {
     return _configuration;
   }
 
-  public TEndpointTransport(TConfiguration config) throws TTransportException {
+  public TEndpointTransport(TConfiguration config) {
     _configuration = Objects.isNull(config) ? new TConfiguration() : config;
-
-    resetConsumedMessageSize(-1);
   }
 
-  /**
-   * Resets RemainingMessageSize to the configured maximum
-   *
-   * @param newSize
-   */
-  protected void resetConsumedMessageSize(long newSize) throws TTransportException {
-    // full reset
-    if (newSize < 0) {
-      knownMessageSize = getMaxMessageSize();
-      remainingMessageSize = getMaxMessageSize();
-      return;
-    }
-
-    // update only: message size can shrink, but not grow
-    if (newSize > knownMessageSize)
-      throw new TTransportException(
-          TTransportException.MESSAGE_SIZE_LIMIT,
-          "Message size exceeds limit: " + getMaxMessageSize());
-
-    knownMessageSize = newSize;
-    remainingMessageSize = newSize;
+  @Override
+  public void readMessageBegin() {
+    consumedMessage = 0;
   }
 
-  /**
-   * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
-   * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
-   *
-   * @param size
-   */
-  public void updateKnownMessageSize(long size) throws TTransportException {
-    long consumed = knownMessageSize - remainingMessageSize;
-    resetConsumedMessageSize(size == 0 ? -1 : size);
-    countConsumedMessageBytes(consumed);
-  }
-
-  /**
-   * Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of
-   * data
-   *
-   * @param numBytes
-   */
-  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-    if (remainingMessageSize < numBytes)
+  public final void consumeReadMessageBytes(int size) throws TTransportException {
+    consumedMessage += size;
+    if (consumedMessage > getMaxMessageSize())
       throw new TTransportException(
           TTransportException.MESSAGE_SIZE_LIMIT,
           "Message size exceeds limit: " + getMaxMessageSize());
   }
 
-  /**
-   * Consumes numBytes from the RemainingMessageSize.
-   *
-   * @param numBytes
-   */
-  protected void countConsumedMessageBytes(long numBytes) throws TTransportException {
-    if (remainingMessageSize >= numBytes) {
-      remainingMessageSize -= numBytes;
-    } else {
-      remainingMessageSize = 0;
-      throw new TTransportException(
-          TTransportException.MESSAGE_SIZE_LIMIT,
-          "Message size exceeds limit: " + getMaxMessageSize());
-    }
+  public long getConsumedMessage() {
+    return consumedMessage;
   }
 }

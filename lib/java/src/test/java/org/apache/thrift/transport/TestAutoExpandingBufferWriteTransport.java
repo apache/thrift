@@ -23,16 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
-import org.apache.thrift.TConfiguration;
 import org.junit.jupiter.api.Test;
 
 public class TestAutoExpandingBufferWriteTransport {
 
-  private final TConfiguration config = new TConfiguration();
-
   @Test
   public void testIt() throws Exception {
-    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(config, 1, 0);
+    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(1, 0);
     assertEquals(0, t.getLength());
     assertEquals(1, t.getBuf().array().length);
     byte[] b1 = new byte[] {1, 2, 3};
@@ -49,7 +46,7 @@ public class TestAutoExpandingBufferWriteTransport {
     assertEquals(2, t.getLength());
     assertEquals(ByteBuffer.wrap(b2), ByteBuffer.wrap(t.getBuf().array(), 0, 2));
 
-    AutoExpandingBufferWriteTransport uut = new AutoExpandingBufferWriteTransport(config, 8, 4);
+    AutoExpandingBufferWriteTransport uut = new AutoExpandingBufferWriteTransport(8, 4);
     assertEquals(4, uut.getLength());
     assertEquals(8, uut.getBuf().array().length);
     uut.write(b1);
@@ -60,19 +57,17 @@ public class TestAutoExpandingBufferWriteTransport {
 
   @Test
   public void testBadInitialSize() throws TTransportException {
-    assertThrows(
-        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 0, 0));
+    assertThrows(IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(0, 0));
   }
 
   @Test
   public void testBadFrontReserveSize() throws IllegalArgumentException, TTransportException {
     assertThrows(
-        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 4, -1));
+        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(4, -1));
   }
 
   @Test
   public void testTooSmallFrontReserveSize() throws IllegalArgumentException, TTransportException {
-    assertThrows(
-        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 4, 5));
+    assertThrows(IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(4, 5));
   }
 }

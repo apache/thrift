@@ -88,7 +88,7 @@ public class SerializationBenchmark {
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {
       T o2 = klass.getConstructor().newInstance();
-      o2.read(factory.getProtocol(new TMemoryInputTransport(new TConfiguration(), serialized)));
+      o2.read(factory.getProtocol(new TMemoryInputTransport(serialized)));
     }
     long endTime = System.currentTimeMillis();
 

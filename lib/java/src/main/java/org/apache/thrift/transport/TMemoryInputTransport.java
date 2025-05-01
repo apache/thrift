@@ -18,40 +18,22 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
-public final class TMemoryInputTransport extends TEndpointTransport {
+public final class TMemoryInputTransport extends TTransport {
 
   private byte[] buf_;
   private int pos_;
   private int endPos_;
 
-  public TMemoryInputTransport() throws TTransportException {
-    this(new TConfiguration());
+  public TMemoryInputTransport() {
+    this(new byte[0]);
   }
 
-  public TMemoryInputTransport(TConfiguration _configuration) throws TTransportException {
-    this(_configuration, new byte[0]);
+  public TMemoryInputTransport(byte[] buf) {
+    this(buf, 0, buf.length);
   }
 
-  public TMemoryInputTransport(byte[] buf) throws TTransportException {
-    this(new TConfiguration(), buf);
-  }
-
-  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf)
-      throws TTransportException {
-    this(_configuration, buf, 0, buf.length);
-  }
-
-  public TMemoryInputTransport(byte[] buf, int offset, int length) throws TTransportException {
-    this(new TConfiguration(), buf, offset, length);
-  }
-
-  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf, int offset, int length)
-      throws TTransportException {
-    super(_configuration);
+  public TMemoryInputTransport(byte[] buf, int offset, int length) {
     reset(buf, offset, length);
-    updateKnownMessageSize(length);
   }
 
   public void reset(byte[] buf) {
@@ -62,20 +44,10 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     buf_ = buf;
     pos_ = offset;
     endPos_ = offset + length;
-    try {
-      resetConsumedMessageSize(-1);
-    } catch (TTransportException e) {
-      // ignore
-    }
   }
 
   public void clear() {
     buf_ = null;
-    try {
-      resetConsumedMessageSize(-1);
-    } catch (TTransportException e) {
-      // ignore
-    }
   }
 
   @Override
@@ -96,7 +68,6 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     if (amtToRead > 0) {
       System.arraycopy(buf_, pos_, buf, off, amtToRead);
       consumeBuffer(amtToRead);
-      countConsumedMessageBytes(amtToRead);
     }
     return amtToRead;
   }
