@@ -62,6 +62,14 @@ public class TConfiguration {
     this.recursionLimit = recursionLimit;
   }
 
+  public void deepCopy(TConfiguration configuration) {
+    if (configuration != null) {
+      setMaxMessageSize(configuration.getMaxMessageSize());
+      setRecursionLimit(configuration.getRecursionLimit());
+      setMaxFrameSize(configuration.getMaxFrameSize());
+    }
+  }
+
   public static final TConfiguration DEFAULT = new Builder().build();
 
   public static TConfiguration.Builder custom() {
