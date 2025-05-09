@@ -239,7 +239,8 @@ public class TThreadPoolServer extends TServer {
         eventHandler = Optional.ofNullable(getEventHandler());
 
         if (eventHandler.isPresent()) {
-          connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
+          connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
+          connectionContext.applyTransport(client_);
         }
 
         while (true) {

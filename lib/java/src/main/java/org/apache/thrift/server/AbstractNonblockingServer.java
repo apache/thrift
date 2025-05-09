@@ -297,6 +297,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       if (eventHandler_ != null) {
         context_ = eventHandler_.createContext(inProt_, outProt_);
+        context_.applyTransport(trans_);
       } else {
         context_ = null;
       }

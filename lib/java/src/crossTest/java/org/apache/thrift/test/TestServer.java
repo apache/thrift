@@ -27,6 +27,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
+import org.apache.thrift.server.SocketAddressServerContext;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServerEventHandler;
@@ -65,7 +66,7 @@ public class TestServer {
     }
   }
 
-  static class TestServerContext implements ServerContext {
+  static class TestServerContext extends SocketAddressServerContext {
 
     int connectionId;
 

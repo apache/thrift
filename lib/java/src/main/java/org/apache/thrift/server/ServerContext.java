@@ -20,6 +20,8 @@
 /** Interface for storing server's connection context. */
 package org.apache.thrift.server;
 
+import org.apache.thrift.transport.TTransport;
+
 public interface ServerContext {
 
   /**
@@ -42,4 +44,11 @@ public interface ServerContext {
    *     unwrapped from this context.
    */
   boolean isWrapperFor(Class<?> iface);
+
+  /**
+   * Apply the transport to save some connection information.
+   *
+   * @param transport The base transport
+   */
+  default void applyTransport(TTransport transport) {}
 }
