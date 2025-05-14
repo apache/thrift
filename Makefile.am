@@ -148,6 +148,7 @@ EXTRA_DIST = \
 	.github/workflows/build.yml \
 	.github/workflows/cmake.yml \
 	.github/workflows/pypi.yml \
+	.github/workflows/release_rust.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
