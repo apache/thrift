@@ -60,7 +60,8 @@ BOOST_AUTO_TEST_CASE(test_json_proto_1) {
   "535897931},\"8\":{\"str\":\"JSON THIS! \\\"\\u0001\"},\"9\":{\"str\":\"\xd7\\"
   "n\\u0007\\t\"},\"10\":{\"tf\":0},\"11\":{\"str\":\"AQIDrQ\"},\"12\":{\"lst\""
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
-  "\",3,1,2,3]},\"15\":{\"uid\":\"00000000-0000-0000-0000-000000000000\"}}");
+  "\",3,1,2,3]},\"15\":{\"uid\":\"00000000-0000-0000-0000-000000000000\"},\"16\""
+  ":{\"lst\":[\"uid\",0]}}");
 
   const std::string result(apache::thrift::ThriftJSONString(*ooe));
 
@@ -86,6 +87,10 @@ void testCaseSetup_2() {
                                "\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80"
                                "\xbc";
   n->my_ooe.rfc4122_uuid = apache::thrift::TUuid{"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"};
+  std::vector<apache::thrift::TUuid> uuiid_list;
+  uuiid_list.push_back(apache::thrift::TUuid{"{fa1af5ec-fdc2-4355-844a-9f0dbfd00e50}"});
+  uuiid_list.push_back(apache::thrift::TUuid{"{1beece83-34f4-4fa3-b757-1ad1ac157fe3}"});
+  n->my_ooe.rfc4122_uuid_list = uuiid_list;
   n->my_bonk.type = 31337;
   n->my_bonk.message = "I am a bonk... xor!";
 }
@@ -101,7 +106,8 @@ BOOST_AUTO_TEST_CASE(test_json_proto_2) {
     "\"str\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκǃ‼\"},\"10\":{\"tf\":0},\"11\":{\"str\":\""
     "AQIDrQ\"},\"12\":{\"lst\":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2"
     ",3]},\"14\":{\"lst\":[\"i64\",3,1,2,3]},\"15\":{\"uid\":\"5e2ab188-1726-"
-    "4e75-a04f-1ed9a6a89c4c\"}}}}"
+    "4e75-a04f-1ed9a6a89c4c\"},\"16\":{\"lst\":[\"uid\",2,\"fa1af5ec-fdc2-4355-"
+    "844a-9f0dbfd00e50\",\"1beece83-34f4-4fa3-b757-1ad1ac157fe3\"]}}}}"
   );
 
   const std::string result(apache::thrift::ThriftJSONString(*n));
@@ -166,13 +172,14 @@ BOOST_AUTO_TEST_CASE(test_json_proto_3) {
   "\"},\"9\":{\"str\":\"\xd7\\n\\u0007\\t\"},\"10\":{\"tf\":0},\"11\":{\"str\":"
   "\"AQIDrQ\"},\"12\":{\"lst\":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2"
   ",3]},\"14\":{\"lst\":[\"i64\",3,1,2,3]},\"15\":{\"uid\":\"00000000-0000-0000"
-  "-0000-000000000000\"}},{\"1\":{\"tf\":1},\"2\":{\"tf\":0},"
+  "-0000-000000000000\"},\"16\":{\"lst\":[\"uid\",0]}},{\"1\":{\"tf\":1},\"2\":{\"tf\":0},"
   "\"3\":{\"i8\":51},\"4\":{\"i16\":16},\"5\":{\"i32\":32},\"6\":{\"i64\":64},"
   "\"7\":{\"dbl\":1.6180339887498949},\"8\":{\"str\":\":R (me going \\\"rrrr\\\""
   ")\"},\"9\":{\"str\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκǃ‼\"},\"10\":{\"tf\":0},\"11\":{"
   "\"str\":\"AQIDrQ\"},\"12\":{\"lst\":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16"
   "\",3,1,2,3]},\"14\":{\"lst\":[\"i64\",3,1,2,3]},\"15\":{\"uid\":\"5e2ab188-"
-  "1726-4e75-a04f-1ed9a6a89c4c\"}}]},\"2\":{\"set\":[\"lst\",3"
+  "1726-4e75-a04f-1ed9a6a89c4c\"},\"16\":{\"lst\":[\"uid\",2,\"fa1af5ec-fdc2-4355-"
+  "844a-9f0dbfd00e50\",\"1beece83-34f4-4fa3-b757-1ad1ac157fe3\"]}}]},\"2\":{\"set\":[\"lst\",3"
   ",[\"str\",0],[\"str\",2,\"and a one\",\"and a two\"],[\"str\",3,\"then a one"
   ", two\",\"three!\",\"FOUR!!\"]]},\"3\":{\"map\":[\"str\",\"lst\",3,{\"nothin"
   "g\":[\"rec\",0],\"poe\":[\"rec\",3,{\"1\":{\"i32\":3},\"2\":{\"str\":\"quoth"
