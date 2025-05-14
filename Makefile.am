@@ -139,7 +139,6 @@ EXTRA_DIST = \
 	.clang-format \
 	.dockerignore \
 	.editorconfig \
-	.eslintrc.json \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
