@@ -1,5 +1,83 @@
 # Apache Thrift Changelog
 
+## 0.22.0
+
+### Build Process
+
+- [THRIFT-5836](https://issues.apache.org/jira/browse/THRIFT-5836) - 0.21.0 fails to build from sources at Arch Linux: No rule to make target 'Thrift5272.thrift', needed by 'gen-cpp/Thrift5272_types.h'
+- [THRIFT-5860](https://issues.apache.org/jira/browse/THRIFT-5860) - cmake 3.5 as a minimum version does not work with cmake 4.0.0
+
+### C glib
+
+- [THRIFT-5817](https://issues.apache.org/jira/browse/THRIFT-5817) - [C++] Avoid copy of TUuid
+
+### C++
+
+- [THRIFT-5637](https://issues.apache.org/jira/browse/THRIFT-5637) - Thrift compiler should be able to output c++ Aggregate types
+- [THRIFT-5667](https://issues.apache.org/jira/browse/THRIFT-5667) - Make ThriftConfig.cmake relocatable
+- [THRIFT-5817](https://issues.apache.org/jira/browse/THRIFT-5817) - [C++] Avoid copy of TUuid
+- [THRIFT-5821](https://issues.apache.org/jira/browse/THRIFT-5821) - Cannot compile against aws-lc libcrypto (openssl replacement from AWS)
+- [THRIFT-5841](https://issues.apache.org/jira/browse/THRIFT-5841) - possible init/deinit conflict with manual initialization flag
+- [THRIFT-5853](https://issues.apache.org/jira/browse/THRIFT-5853) - Remove oldstyle casts from TBufferTransports and TCompactProtocol
+- [THRIFT-5854](https://issues.apache.org/jira/browse/THRIFT-5854) - TCompactProtocol readString checks maxMessageSize at wrong position and off by one
+
+### Compiler (General)
+
+- [THRIFT-5823](https://issues.apache.org/jira/browse/THRIFT-5823) - Fix illegal uses of exceptions as normal struct type
+- [THRIFT-5835](https://issues.apache.org/jira/browse/THRIFT-5835) - Allow exceptions to be used as regular struct datatype
+
+# Delphi
+
+- [THRIFT-5822](https://issues.apache.org/jira/browse/THRIFT-5822) - Remove deprecated AnsiString functions from the library
+- [THRIFT-5824](https://issues.apache.org/jira/browse/THRIFT-5824) - Migrate, refactor and improve Delphi code generation test script
+- [THRIFT-5825](https://issues.apache.org/jira/browse/THRIFT-5825) - UUID constants lead to uncompileable Delphi code
+- [THRIFT-5826](https://issues.apache.org/jira/browse/THRIFT-5826) - binary constants create uncompilable Delphi code
+- [THRIFT-5827](https://issues.apache.org/jira/browse/THRIFT-5827) - enums in typedefs are not resolved in all cases
+- [THRIFT-5837](https://issues.apache.org/jira/browse/THRIFT-5837) - Delphi implementation for THRIFT-5835
+- [THRIFT-5839](https://issues.apache.org/jira/browse/THRIFT-5839) - incorrect cast under Win64
+- [THRIFT-5850](https://issues.apache.org/jira/browse/THRIFT-5850) - Switch IThriftConfiguration interface from Cardinal to Integer
+- [THRIFT-5851](https://issues.apache.org/jira/browse/THRIFT-5851) - Promote known total stream sizes for seekable stream transports properly
+- [THRIFT-5856](https://issues.apache.org/jira/browse/THRIFT-5856) - Client should validate HTTP status
+
+### Go
+
+- [THRIFT-5833](https://issues.apache.org/jira/browse/THRIFT-5833) - go: Combine I/O and original error in compiler generated Process functions
+- [THRIFT-5845](https://issues.apache.org/jira/browse/THRIFT-5845) - The write error for union fields should be TException
+- [THRIFT-5859](https://issues.apache.org/jira/browse/THRIFT-5859) - go: Generate a map for know values of an enum type
+
+### Java
+
+- [THRIFT-5858](https://issues.apache.org/jira/browse/THRIFT-5858) - Introduce new type MESSAGE_SIZE_LIMIT in TTransportException
+
+### netstd
+
+- [THRIFT-5832](https://issues.apache.org/jira/browse/THRIFT-5832) - Drop net6 support and add net9 instead
+- [THRIFT-5838](https://issues.apache.org/jira/browse/THRIFT-5838) - THttpTransport.FlushAsync does not include original exception
+- [THRIFT-5852](https://issues.apache.org/jira/browse/THRIFT-5852) - Promote known total stream sizes for seekable stream transports
+
+### Node.js
+
+- [THRIFT-5811](https://issues.apache.org/jira/browse/THRIFT-5811) - Add ES module support to JS codegen
+- [THRIFT-5848](https://issues.apache.org/jira/browse/THRIFT-5848) - Expose InputBufferUnderrunError in nodejs client
+- [THRIFT-5849](https://issues.apache.org/jira/browse/THRIFT-5849) - Expose createClient in browser version of nodejs package
+
+### PHP
+
+- [THRIFT-1482](https://issues.apache.org/jira/browse/THRIFT-1482) - Unix domain socket support under PHP
+- [THRIFT-5829](https://issues.apache.org/jira/browse/THRIFT-5829) - PHP lib Use of "static" in callables is deprecated notice
+
+### Python
+
+- [THRIFT-5024](https://issues.apache.org/jira/browse/THRIFT-5024) - tutorial\py.tornado\PythonServer.py failed under Tornado6
+- [THRIFT-5847](https://issues.apache.org/jira/browse/THRIFT-5847) - Python3.12 deprecation in THttpClient
+- [THRIFT-5857](https://issues.apache.org/jira/browse/THRIFT-5857) - Remove deprecated Tornado io_loop usage
+- [THRIFT-5861](https://issues.apache.org/jira/browse/THRIFT-5861) - Add isOpen method to TTornadoStreamTransport
+
+### Swift
+
+- [THRIFT-4838](https://issues.apache.org/jira/browse/THRIFT-4838) - add unix domain socket support to Swift TSocketTransport implementation 
+
+
 ## 0.21.0
 
 ### Build Process	
