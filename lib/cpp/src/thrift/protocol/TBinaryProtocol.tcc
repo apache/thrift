@@ -493,6 +493,7 @@ int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
       case T_MAP: return sizeof(int);  // element count
       case T_SET: return sizeof(int);  // element count
       case T_LIST: return sizeof(int);  // element count
+      case T_UUID: return 16; // 16 bytes
       default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }

@@ -78,6 +78,8 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
     "    [raw] = \"\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\",\n"
     "    [enc] = \"00000000-0000-0000-0000-000000000000\"\n"
     "  }\n"
+    "  16: rfc4122_uuid_list (list) = list<uuid>[0] {\n"
+    "  },\n"
     "}");
   const std::string result(apache::thrift::ThriftDebugString(*ooe));
 
@@ -88,6 +90,8 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
 static ::std::shared_ptr<Nesting> n;
 
 void testCaseSetup_2() {
+  using apache::thrift::TUuid;
+
   testCaseSetup_1();
 
   n.reset(new Nesting);
@@ -102,9 +106,14 @@ void testCaseSetup_2() {
                                "\xb0\xcf\x81\xe2\x84\x8e\x20\xce\x91\x74\x74"
                                "\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80"
                                "\xbc";
-  n->my_ooe.rfc4122_uuid = apache::thrift::TUuid{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"};
+  n->my_ooe.rfc4122_uuid = TUuid{"{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}"};
   n->my_bonk.type = 31337;
   n->my_bonk.message = "I am a bonk... xor!";
+
+  std::vector<TUuid> uuiid_list;
+  uuiid_list.push_back(TUuid{"{fa1af5ec-fdc2-4355-844a-9f0dbfd00e50}"});
+  uuiid_list.push_back(TUuid{"{1beece83-34f4-4fa3-b757-1ad1ac157fe3}"});
+  n->my_ooe.rfc4122_uuid_list = uuiid_list;
 }
 
 BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
@@ -150,6 +159,16 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
     "      [raw] = \"^*\\xb1\\x88\\x17&Nu\\xa0O\\x1e\\xd9\\xa6\\xa8\\x9cL\",\n"
     "      [enc] = \"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c\"\n"
     "    }\n"
+    "    16: rfc4122_uuid_list (list) = list<uuid>[2] {\n"
+    "{\n"
+    "        [raw] =         [0] = \"\\xfa\\x1a\\xf5\\xec\\xfd\\xc2CU\\x84J\\x9f\\r\\xbf\\xd0\\x0eP\",\n"
+    "        [enc] = \"fa1af5ec-fdc2-4355-844a-9f0dbfd00e50\"\n"
+    "      }\n"
+    "{\n"
+    "        [raw] =         [1] = \"\\x1b\\xee\\xce\\x834\\xf4O\\xa3\\xb7W\\x1a\\xd1\\xac\\x15\\x7f\\xe3\",\n"
+    "        [enc] = \"1beece83-34f4-4fa3-b757-1ad1ac157fe3\"\n"
+    "      }\n"
+    "    },\n"
     "  },\n"
     "}");
   const std::string result(apache::thrift::ThriftDebugString(*n));
@@ -241,6 +260,8 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [raw] = \"\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\",\n"
     "        [enc] = \"00000000-0000-0000-0000-000000000000\"\n"
     "      }\n"
+    "      16: rfc4122_uuid_list (list) = list<uuid>[0] {\n"
+    "      },\n"
     "    },\n"
     "    [1] = OneOfEach {\n"
     "      01: im_true (bool) = true,\n"
@@ -276,6 +297,16 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_3) {
     "        [raw] = \"^*\\xb1\\x88\\x17&Nu\\xa0O\\x1e\\xd9\\xa6\\xa8\\x9cL\",\n"
     "        [enc] = \"5e2ab188-1726-4e75-a04f-1ed9a6a89c4c\"\n"
     "      }\n"
+    "      16: rfc4122_uuid_list (list) = list<uuid>[2] {\n"
+    "{\n"
+    "          [raw] =           [0] = \"\\xfa\\x1a\\xf5\\xec\\xfd\\xc2CU\\x84J\\x9f\\r\\xbf\\xd0\\x0eP\",\n"
+    "          [enc] = \"fa1af5ec-fdc2-4355-844a-9f0dbfd00e50\"\n"
+    "        }\n"
+    "{\n"
+    "          [raw] =           [1] = \"\\x1b\\xee\\xce\\x834\\xf4O\\xa3\\xb7W\\x1a\\xd1\\xac\\x15\\x7f\\xe3\",\n"
+    "          [enc] = \"1beece83-34f4-4fa3-b757-1ad1ac157fe3\"\n"
+    "        }\n"
+    "      },\n"
     "    },\n"
     "  },\n"
     "  02: contain (set) = set<list>[3] {\n"
