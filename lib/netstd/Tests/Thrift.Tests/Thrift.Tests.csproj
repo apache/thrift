@@ -21,7 +21,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <LangVersion>latestMajor</LangVersion>
-    <Version>0.22.0.0</Version>
+    <Version>0.23.0.0</Version>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
