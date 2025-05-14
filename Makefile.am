@@ -163,6 +163,7 @@ EXTRA_DIST = \
 	doap.rdf \
 	doc \
 	dub.json \
+	eslint.config.mjs \
 	go.mod \
 	jitpack.yml \
 	LANGUAGES.md \
@@ -170,6 +171,7 @@ EXTRA_DIST = \
 	NOTICE \
 	package.json \
 	package-lock.json \
+	Package.swift \
 	phpcs.xml.dist \
 	README.md \
 	rust-toolchain \

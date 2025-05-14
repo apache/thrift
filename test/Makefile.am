@@ -155,6 +155,7 @@ EXTRA_DIST = \
 	DoubleConstantsTest.thrift \
 	EnumContainersTest.thrift \
 	EnumTest.thrift \
+	ExceptionStruct.thrift \
 	FullCamelTest.thrift \
 	Include.thrift \
 	Identifiers.thrift \
