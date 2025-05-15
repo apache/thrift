@@ -31,7 +31,7 @@ public abstract class TServerTransport implements Closeable {
     int backlog = 0; // A value of 0 means the default value will be used (currently set at 50)
     int clientTimeout = 0;
     InetSocketAddress bindAddr;
-    int maxFrameSize = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
+    TConfiguration configuration = new TConfiguration();
 
     public T backlog(int backlog) {
       this.backlog = backlog;
@@ -54,7 +54,12 @@ public abstract class TServerTransport implements Closeable {
     }
 
     public T maxFrameSize(int maxFrameSize) {
-      this.maxFrameSize = maxFrameSize;
+      configuration.setMaxFrameSize(maxFrameSize);
+      return (T) this;
+    }
+
+    public T setTConfiguration(TConfiguration configuration_) {
+      configuration.deepCopy(configuration_);
       return (T) this;
     }
   }
