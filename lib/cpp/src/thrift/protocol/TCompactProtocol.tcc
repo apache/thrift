@@ -61,10 +61,11 @@ enum Types {
   CT_LIST           = 0x09,
   CT_SET            = 0x0A,
   CT_MAP            = 0x0B,
-  CT_STRUCT         = 0x0C
+  CT_STRUCT         = 0x0C,
+  CT_UUID           = 0x0D
 };
 
-const int8_t TTypeToCType[16] = {
+const int8_t TTypeToCType[17] = {
   CT_STOP, // T_STOP
   0, // unused
   CT_BOOLEAN_TRUE, // T_BOOL
@@ -81,6 +82,7 @@ const int8_t TTypeToCType[16] = {
   CT_MAP, // T_MAP
   CT_SET, // T_SET
   CT_LIST, // T_LIST
+  CT_UUID, // T_UUID
 };
 
 }} // end detail::compact namespace
@@ -284,6 +286,15 @@ uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
   wsize += ssize;
   trans_->write(reinterpret_cast<const uint8_t*>(str.data()), ssize);
   return wsize;
+}
+
+/**
+ * Write a TUuid to the wire
+ */
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeUUID(const TUuid& uuid) {
+  trans_->write(uuid.data(), uuid.size());
+  return uuid.size();
 }
 
 //
@@ -719,6 +730,15 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   return rsize + static_cast<uint32_t>(size);
 }
 
+
+/**
+ * Read a TUuid from the wire.
+ */
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readUUID(TUuid& uuid) {
+  return trans_->readAll(uuid.begin(), uuid.size());
+}
+
 /**
  * Read an i32 from the wire as a varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 5 bytes.
@@ -826,6 +846,8 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
       return T_MAP;
     case detail::compact::CT_STRUCT:
       return T_STRUCT;
+    case detail::compact::CT_UUID:
+      return T_UUID;
     default:
       throw TException(std::string("don't know what type: ") + static_cast<char>(type));
   }
@@ -850,6 +872,7 @@ int TCompactProtocolT<Transport_>::getMinSerializedSize(TType type)
     case T_MAP:     return sizeof(int8_t);  // element count
     case T_SET:    return sizeof(int8_t);  // element count
     case T_LIST:    return sizeof(int8_t);  // element count
+    case T_UUID:    return 16; // 16 bytes
     default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }
