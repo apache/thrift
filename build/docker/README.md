@@ -46,14 +46,15 @@ Docker Hub and push the resulting tags.
 
 ## Supported Containers ##
 
-The Travis CI (continuous integration) builds use the Ubuntu Jammy
-(22.04 LTS) and Focal (20.04 LTS) images to maximize language level
+The Travis CI (continuous integration) builds use the Ubuntu Noble (24.04 LTS), 
+Jammy (22.04 LTS) and Focal (20.04 LTS) images to maximize language level
 coverage.
 
 ### Ubuntu ###
 
-* focal (stable, current)
-* jammy (next stable, WIP)
+* focal (stable)
+* jammy (stable)
+* noble (next stable)
 
 ## Unsupported Containers ##
 
@@ -152,50 +153,50 @@ Open a command prompt in the image:
 
 Last updated: March 5, 2024
 
-| Tool      | ubuntu-focal  | ubuntu-jammy  | Notes |
-| :-------- | :------------ | :------------ | :---- |
-| ant       | 1.10.7        | 1.10.12       |       |
-| autoconf  | 2.69          | 2.71          |       |
-| automake  | 1.16.1        | 1.16.5        |       |
-| bison     | 3.5.1         | 3.8.2         |       |
-| boost     | 1.71.0        | 1.74.0        |       |
-| cmake     | 3.16.3        | 3.22.1        |       |
-| cppcheck  | 1.90          | 2.7           |       |
-| flex      | 2.6.4         | 2.6.4         |       |
-| libc6     | 2.31          | 2.35          | glibc |
-| libevent  | 2.0.16        | 2.0.16        |       |
-| libstdc++ | 10.5.0        | 10.5.0        |       |
-| make      | 4.2.1         | 4.3           |       |
-| openssl   | 1.1.1f        | 3.0.2         |       |
-| qt5       | 5.12.8        | 5.15.3        |       |
+| Tool      | ubuntu-focal  | ubuntu-jammy  | ubuntu-noble  | Notes |
+| :-------- | :------------ | :------------ | :------------ | :---- |
+| ant       | 1.10.7        | 1.10.12       |               |       |
+| autoconf  | 2.69          | 2.71          |               |       |
+| automake  | 1.16.1        | 1.16.5        |               |       |
+| bison     | 3.5.1         | 3.8.2         |               |       |
+| boost     | 1.71.0        | 1.74.0        |               |       |
+| cmake     | 3.16.3        | 3.22.1        |               |       |
+| cppcheck  | 1.90          | 2.7           |               |       |
+| flex      | 2.6.4         | 2.6.4         |               |       |
+| libc6     | 2.31          | 2.35          |               | glibc |
+| libevent  | 2.0.16        | 2.0.16        |               |       |
+| libstdc++ | 10.5.0        | 10.5.0        |               |       |
+| make      | 4.2.1         | 4.3           |               |       |
+| openssl   | 1.1.1f        | 3.0.2         |               |       |
+| qt5       | 5.12.8        | 5.15.3        |               |       |
 
 ## Compiler/Language Versions per Dockerfile ##
 
-| Language  | ubuntu-focal  | ubuntu-jammy  | Notes |
-| :-------- | :------------ | :------------ | :---- |
-| as of     | Mar 06, 2018  | Jul 1, 2019   |       |
-| as3       | 4.6.0         | 4.6.0         |       |
-| C++ gcc   | 9.4.0         | 11.4.0        |       |
-| C++ clang | 13.0.0        | 13.0.0        |       |
-| c\_glib   | 3.2.12        | 3.2.12        |       |
-| cl (sbcl) |               | 1.5.3         |       |
-| d         | 2.087.0       | 2.087.0       |       |
-| dart      | 2.7.2-1       | 2.7.2-1       |       |
-| delphi    |               |               | Not in CI |
-| erlang    | OTP-25.3.2.9  | OTP-25.3.2.9  |       |
-| go        | 1.21.7        | 1.21.7        |       |
-| haxe      | 4.2.1         | 4.2.1         |       |
-| java      | 17            | 17            |       |
-| js        | Node.js 16.20.2, npm 8.19.4 | Node.js 16.20.2, npm 8.19.4 |     |
-| lua       | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
-| netstd    | 9.0           | 9.0           |       |
-| nodejs    | 16.20.2       | 16.20.2       |       |
-| ocaml     | 4.08.1        | 4.13.1        |       |
-| perl      | 5.30.0        | 5.34.0        |       |
-| php       | 7.4.3         | 8.1.2         |       |
-| python2   | 2.7.18        |               |       |
-| python3   | 3.8.10        | 3.10.12       |       |
-| ruby      | 2.7.0p0       | 3.0.2p107     |       |
-| rust      | 1.83.0        | 1.83.0        |       |
-| smalltalk |               |               | Not in CI |
-| swift     | 5.7           | 5.7           |       |
+| Tool      | ubuntu-focal  | ubuntu-jammy  | ubuntu-noble  | Notes |
+| :-------- | :------------ | :------------ | :------------ | :---- |
+| as of     | Mar 06, 2018  | Jul 1, 2019   |               |       |
+| as3       | 4.6.0         | 4.6.0         |               |       |
+| C++ gcc   | 9.4.0         | 11.4.0        |               |       |
+| C++ clang | 13.0.0        | 13.0.0        |               |       |
+| c\_glib   | 3.2.12        | 3.2.12        |               |       |
+| cl (sbcl) |               | 1.5.3         |               |       |
+| d         | 2.087.0       | 2.087.0       |               |       |
+| dart      | 2.7.2-1       | 2.7.2-1       |               |       |
+| delphi    |               |               |               | Not in CI |
+| erlang    | OTP-25.3.2.9  | OTP-25.3.2.9  |               |       |
+| go        | 1.21.7        | 1.21.7        |               |       |
+| haxe      | 4.2.1         | 4.2.1         |               |       |
+| java      | 17            | 17            |               |       |
+| js        | Node.js 16.20.2, npm 8.19.4 | |               | Node.js 16.20.2, npm 8.19.4 |
+| lua       | 5.2.4         | 5.2.4         |               | Lua 5.3: see THRIFT-4386 |
+| netstd    | 9.0           | 9.0           | 9.0           |       |
+| nodejs    | 16.20.2       | 16.20.2       |               |       |
+| ocaml     | 4.08.1        | 4.13.1        |               |       |
+| perl      | 5.30.0        | 5.34.0        |               |       |
+| php       | 7.4.3         | 8.1.2         | 8.3           |       |
+| python2   | 2.7.18        |               |               |       |
+| python3   | 3.8.10        | 3.10.12       |               |       |
+| ruby      | 2.7.0p0       | 3.0.2p107     |               |       |
+| rust      | 1.83.0        | 1.83.0        |               |       |
+| smalltalk |               |               |               | Not in CI |
+| swift     | 5.7           | 5.7           | 6.1           |       |

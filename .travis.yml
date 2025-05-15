@@ -68,6 +68,11 @@ jobs:
         - JOB="Docker Build ubuntu-jammy 22.04 LTS"
         - DISTRO=ubuntu-jammy
         - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-noble 24.04 LTS"
+        - DISTRO=ubuntu-noble
+        - TRAVIS_BUILD_STAGE=docker
 
     # ========================= stage: thrift =======================
     # ------------------------- phase: cross ------------------------
