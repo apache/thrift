@@ -51,12 +51,6 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
   /etc/apt/sources.list.d/dart_stable.list
 
-# dotnet (netcore)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/22.04/prod.list && \
-  chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  chown root:root /etc/apt/sources.list.d/microsoft-prod.list
-
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
   echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
