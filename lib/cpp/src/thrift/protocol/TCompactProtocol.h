@@ -140,6 +140,8 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
+  uint32_t writeUUID(const TUuid& str);
+
   int getMinSerializedSize(TType type) override;
 
   void checkReadBytesAvailable(TSet& set) override
@@ -212,6 +214,8 @@ public:
   uint32_t readString(std::string& str);
 
   uint32_t readBinary(std::string& str);
+
+  uint32_t readUUID(TUuid& str);
 
   /*
    *These methods are here for the struct to call, but don't have any wire
