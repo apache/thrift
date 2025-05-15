@@ -145,19 +145,19 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     1. On a linux system get a clean copy of the release branch, for example:
 
         ```bash
-        ~$ git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
+        git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
         ```
 
     1. In the clean copy of the release branch, build the container image:
 	
         ```bash
-        ~$ docker build -t thrift build/docker/ubuntu-jammy
+        docker build -t thrift build/docker/ubuntu-jammy
         ```
 	
     1. Run the container and `make dist`:
 	
         ```bash
-        ~$ docker run -v $(pwd):/thrift/src -it thrift /bin/bash
+        docker run -v $(pwd):/thrift/src -it thrift /bin/bash
         root@8b4101188aa2:/thrift/src# ./bootstrap.sh && ./configure && make dist
         ```
 
