@@ -312,9 +312,10 @@ public abstract class AbstractNonblockingServer extends TServer {
     }
 
     /**
-     * @return the amount of memory currently used to read data from clients. This information can be useful for debugging, metrics, and configuring the maximum memory limit.
+     * @return the amount of memory currently used to read data from clients. This information can
+     *     be useful for debugging, metrics, and configuring the maximum memory limit.
      */
-    public long getReadBufferBytesAllocated(){
+    public long getReadBufferBytesAllocated() {
       return readBufferBytesAllocated.get();
     }
 
@@ -358,9 +359,13 @@ public abstract class AbstractNonblockingServer extends TServer {
 
           // if this frame will push us over the memory limit, then return.
           // with luck, more memory will free up the next time around.
-	  long currentAllocated = readBufferBytesAllocated.get();
+          long currentAllocated = readBufferBytesAllocated.get();
           if (currentAllocated + frameSize > MAX_READ_BUFFER_BYTES) {
-            LOGGER.trace("Deferring reading frame of size {} because {} is already buffered and {} is the limit.", frameSize, currentAllocated, MAX_READ_BUFFER_BYTES); 
+            LOGGER.trace(
+                "Deferring reading frame of size {} because {} is already buffered and {} is the limit.",
+                frameSize,
+                currentAllocated,
+                MAX_READ_BUFFER_BYTES);
             return true;
           }
 
