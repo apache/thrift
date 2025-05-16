@@ -315,7 +315,7 @@ public abstract class AbstractNonblockingServer extends TServer {
      * @return the amount of memory currently used to read data from clients. This information can
      *     be useful for debugging, metrics, and configuring the maximum memory limit.
      */
-    public long getReadBufferBytesAllocated() {
+    public final long getReadBufferBytesAllocated() {
       return readBufferBytesAllocated.get();
     }
 
