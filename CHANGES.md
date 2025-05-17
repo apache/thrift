@@ -20,6 +20,9 @@
 - [THRIFT-5841](https://issues.apache.org/jira/browse/THRIFT-5841) - possible init/deinit conflict with manual initialization flag
 - [THRIFT-5853](https://issues.apache.org/jira/browse/THRIFT-5853) - Remove oldstyle casts from TBufferTransports and TCompactProtocol
 - [THRIFT-5854](https://issues.apache.org/jira/browse/THRIFT-5854) - TCompactProtocol readString checks maxMessageSize at wrong position and off by one
+- [THRIFT-5868](https://issues.apache.org/jira/browse/THRIFT-5868) - UUID Support for TCompactProtocol
+- [THRIFT-5865](https://issues.apache.org/jira/browse/THRIFT-5865) - Fix TBinayProtocol with list<UUID>
+
 
 ### Compiler (General)
 
