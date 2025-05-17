@@ -19,6 +19,7 @@
 
 package org.apache.thrift.server;
 
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.SocketAddressProvider;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -239,7 +241,12 @@ public class TThreadPoolServer extends TServer {
         eventHandler = Optional.ofNullable(getEventHandler());
 
         if (eventHandler.isPresent()) {
-          connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
+          connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
+          SocketAddress remoteAddress =
+              client_ instanceof SocketAddressProvider
+                  ? ((SocketAddressProvider) client_).getRemoteSocketAddress()
+                  : null;
+          connectionContext.setRemoteAddress(remoteAddress);
         }
 
         while (true) {
