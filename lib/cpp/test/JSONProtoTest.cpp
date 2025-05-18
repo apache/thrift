@@ -366,3 +366,16 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
   BOOST_CHECK_THROW(ooe2.read(proto.get()),
     apache::thrift::protocol::TProtocolException);
 }
+
+BOOST_AUTO_TEST_CASE(test_json_invalid_byte_range) {
+  // Test case for byte values outside valid range
+  const char json_string[] = "\"3\":{\"i8\":849}";
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), sizeof(json_string)));
+  std::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+  OneOfEach ooe2;
+  BOOST_CHECK_THROW(ooe2.read(proto.get()),
+    apache::thrift::protocol::TProtocolException);
+}
