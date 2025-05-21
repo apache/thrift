@@ -74,7 +74,7 @@ public class TNonblockingSocket extends TNonblockingTransport implements SocketA
     this(new TConfiguration(), socketChannel, timeout, socketAddress);
   }
 
-  private TNonblockingSocket(
+  public TNonblockingSocket(
       TConfiguration config, SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
       throws IOException, TTransportException {
     super(config);
