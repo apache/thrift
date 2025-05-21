@@ -384,7 +384,8 @@ Bân-lâm-gú, 粵語
    }*/
   
   func testUuid() throws {
-    let uuid = UUID()
+    let uuid = UUID(uuidString: "00112233-4455-6677-8899-aabbccddeeff")!
+    print("testUuid(\(uuid))")
     guard try client.testUuid(thing: uuid) == uuid else {
       resultCode |= Error.baseTypes.rawValue
       return
