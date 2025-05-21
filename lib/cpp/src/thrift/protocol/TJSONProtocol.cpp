@@ -1087,7 +1087,7 @@ uint32_t TJSONProtocol::readBool(bool& value) {
 uint32_t TJSONProtocol::readByte(int8_t& byte) {
   auto tmp = (int16_t)byte;
   uint32_t result = readJSONInteger(tmp);
-  if (tmp > 255 || tmp < -128) {
+  if (tmp > 127 || tmp < -128) {
     throw TProtocolException(TProtocolException::INVALID_DATA,
                             "Expected byte value; got " + to_string(tmp));
   }
