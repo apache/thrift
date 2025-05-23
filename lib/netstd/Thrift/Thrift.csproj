@@ -55,7 +55,7 @@
     <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright 2024 The Apache Software Foundation</Copyright>
+    <Copyright>Copyright 2025 The Apache Software Foundation</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
