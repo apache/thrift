@@ -1,3 +1,4 @@
+// swift-tools-version:5.1
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -17,13 +18,15 @@
  * under the License.
  */
 
-#ifndef _THRIFT_VERSION_H_
-#define _THRIFT_VERSION_H_ 1
+import PackageDescription
 
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
-
-#define THRIFT_VERSION "0.23.0"
-
-#endif // _THRIFT_VERSION_H_
+let package = Package(
+  name: "Thrift",
+  products: [
+    .library(name: "Thrift", targets: ["Thrift"])
+  ],
+  targets: [
+    .target(name: "Thrift", path: "lib/swift/Sources"),
+    .testTarget(name: "ThriftTests", dependencies: ["Thrift"], path: "lib/swift/Tests/ThriftTests")
+  ]
+)

@@ -139,8 +139,6 @@ EXTRA_DIST = \
 	.clang-format \
 	.dockerignore \
 	.editorconfig \
-	.eslintignore \
-	.eslintrc.json \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
@@ -150,6 +148,7 @@ EXTRA_DIST = \
 	.github/workflows/build.yml \
 	.github/workflows/cmake.yml \
 	.github/workflows/pypi.yml \
+	.github/workflows/release_rust.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
@@ -165,6 +164,7 @@ EXTRA_DIST = \
 	doap.rdf \
 	doc \
 	dub.json \
+	eslint.config.mjs \
 	go.mod \
 	jitpack.yml \
 	LANGUAGES.md \
@@ -172,6 +172,7 @@ EXTRA_DIST = \
 	NOTICE \
 	package.json \
 	package-lock.json \
+	Package.swift \
 	phpcs.xml.dist \
 	README.md \
 	rust-toolchain \

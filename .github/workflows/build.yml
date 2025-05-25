@@ -41,7 +41,9 @@ jobs:
   compiler:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -315,7 +317,7 @@ jobs:
 #      caveat: net9 is (currently?) NOT installed, so manually again
       - name: Set up .NET SDK
         run: |
-          sudo add-apt-repository ppa:dotnet/backports
+          sudo add-apt-repository -y ppa:dotnet/backports
           sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
 #      end
 
@@ -621,6 +623,9 @@ jobs:
             test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/* \
             test/rs/bin/* \
             test/go/bin/*
+
+      - name: Create tmp domain socket folder
+        run: mkdir /tmp/v0.16
 
       - name: Run cross test
         env:

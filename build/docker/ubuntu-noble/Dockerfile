@@ -11,11 +11,11 @@
 # limitations under the License.
 
 #
-# Apache Thrift Docker build environment for Ubuntu Jammy
+# Apache Thrift Docker build environment for Ubuntu Noble
 # with some updated packages.
 #
 
-FROM buildpack-deps:jammy-scm
+FROM buildpack-deps:noble-scm
 LABEL MAINTAINER="Apache Thrift <dev@thrift.apache.org>"
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -35,8 +35,8 @@ RUN apt-get update -yq && \
 # Create a user
 ARG user=build
 ARG group=build
-ARG uid=1000
-ARG gid=1000
+ARG uid=1001
+ARG gid=1001
 
 RUN apt-get install -y --no-install-recommends sudo && \
     echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
@@ -67,7 +67,6 @@ RUN apt-get update -yq && \
   debhelper \
   flex \
   gdb \
-  libasound2 \
   libatk-bridge2.0-0 \
   libgtk-3-0 \
   llvm \
@@ -236,13 +235,13 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
   `# Php dependencies` \
-  php8.1 \
-  php8.1-cli \
-  php8.1-dev \
-  php8.1-mbstring \
-  php8.1-xml \
-  php8.1-curl \
-  php8.1-xdebug \
+  php8.3 \
+  php8.3-cli \
+  php8.3-dev \
+  php8.3-mbstring \
+  php8.3-xml \
+  php8.3-curl \
+  php8.3-xdebug \
   php-pear \
   re2c \
   composer
@@ -275,13 +274,13 @@ USER root
 RUN apt-get install -yq \
   libedit-dev \
   libz3-dev \
-  libpython2-dev \
+  python3-flake8 \
   libxml2-dev && \
   cd / && \
-  wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2204/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu22.04.tar.gz && \
-  tar xf swift-5.7-RELEASE-ubuntu22.04.tar.gz && \
-  mv swift-5.7-RELEASE-ubuntu22.04 /usr/share/swift && \
-  rm swift-5.7-RELEASE-ubuntu22.04.tar.gz
+  wget --quiet https://download.swift.org/swift-6.1-release/ubuntu2404/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu24.04.tar.gz && \
+  tar xf swift-6.1-RELEASE-ubuntu24.04.tar.gz && \
+  mv swift-6.1-RELEASE-ubuntu24.04 /usr/share/swift && \
+  rm swift-6.1-RELEASE-ubuntu24.04.tar.gz
 
 ENV PATH /usr/share/swift/usr/bin:$PATH
 RUN swift --version
@@ -297,8 +296,9 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
   `# Static Code Analysis dependencies` \
   cppcheck \
-  sloccount && \
-  pip install flake8
+  sloccount 
+  
+#RUN pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up

@@ -17,13 +17,14 @@
  * under the License.
  */
 
-#ifndef _THRIFT_VERSION_H_
-#define _THRIFT_VERSION_H_ 1
+package org.apache.thrift.transport;
 
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
+import java.net.SocketAddress;
 
-#define THRIFT_VERSION "0.23.0"
+/** Interface that can retrieve the socket address. */
+public interface SocketAddressProvider {
 
-#endif // _THRIFT_VERSION_H_
+  SocketAddress getRemoteSocketAddress();
+
+  SocketAddress getLocalSocketAddress();
+}

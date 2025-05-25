@@ -70,9 +70,9 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     1. [Open Issues with a Fix Version](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20status%20in%20(OPEN%2C%20%27IN%20PROGRESS%27%2C%20REOPENED)%20and%20fixVersion%20is%20not%20empty) - these will be issues that someone placed a fixVersion on in Jira, but have not been resolved or closed yet.  They are likely stale somehow.  Resolutions for these issues include resolving or closing the issue in Jira, or simply removing the fixVersion if the issue hasn't been fixed.
 
-    1. [Open Blocking Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(blocker)%20and%20status%20not%20in%20(closed)%20order%20by%20component%20ASC) - blocking issues should block a release.  Scrub the list to see if they are really blocking the release, and if not change their priority.
+    1. [Open Blocking Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(blocker)%20and%20status%20not%20in%20(closed,resolved)%20order%20by%20component%20ASC) - blocking issues should block a release.  Scrub the list to see if they are really blocking the release, and if not change their priority.
 
-    1. [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) - this list will end up in the known critical issues list in the changes file.  Scrub it to make sure everything is actually critical.
+    1. [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed,resolved)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) - this list will end up in the known critical issues list in the changes file.  Scrub it to make sure everything is actually critical.
 
     It is healthy to scrub these periodically, whether or not you are making a new release.
 
@@ -145,19 +145,19 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     1. On a linux system get a clean copy of the release branch, for example:
 
         ```bash
-        ~$ git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
+        git clone -b "release/1.0.0" git@github.com:apache/thrift.git thrift-1.0.0-src
         ```
 
     1. In the clean copy of the release branch, build the container image:
 	
         ```bash
-        ~$ docker build -t thrift build/docker/ubuntu-jammy
+        docker build -t thrift build/docker/ubuntu-jammy
         ```
 	
     1. Run the container and `make dist`:
 	
         ```bash
-        ~$ docker run -v $(pwd):/thrift/src -it thrift /bin/bash
+        docker run -v $(pwd):/thrift/src -it thrift /bin/bash
         root@8b4101188aa2:/thrift/src# ./bootstrap.sh && ./configure && make dist
         ```
 

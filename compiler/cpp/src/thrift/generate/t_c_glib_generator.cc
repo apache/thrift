@@ -4023,7 +4023,12 @@ void t_c_glib_generator::generate_deserialize_field(ostream& out,
     if (tbase == t_base_type::TYPE_STRING) {
       indent(out) << "if (" << name << " != NULL)" << '\n' << indent() << "{" << '\n';
       indent_up();
-      indent(out) << "g_free(" << name << ");" << '\n' << indent() << name << " = NULL;" << '\n';
+      if (type->is_binary()) {
+        indent(out) << "g_byte_array_free(" << name << ", TRUE);" << '\n';
+      } else {
+        indent(out) << "g_free(" << name << ");" << '\n';
+      }
+      indent(out) << name << " = NULL;" << '\n';
       indent_down();
       indent(out) << "}" << '\n' << '\n';
     }
