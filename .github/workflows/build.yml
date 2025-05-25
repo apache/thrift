@@ -366,6 +366,7 @@ jobs:
   lib-swift:
     needs: compiler
     runs-on: ubuntu-24.04
+    if: false                     # swift is currently broken and no maintainers around -> see THRIFT-5864
     steps:
       - uses: actions/checkout@v4
 
@@ -554,16 +555,17 @@ jobs:
   cross-test:
     needs:
       - lib-java-kotlin
-      - lib-swift
+      #- lib-swift                     # swift is currently broken and no maintainers around -> see THRIFT-5864
       - lib-rust
       - lib-go
       - lib-python
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
+        # swift is currently broken and no maintainers around -> see THRIFT-5864
+        server_lang: ['java', 'kotlin', 'go', 'rs']   # ['java', 'kotlin', 'go', 'rs', 'swift']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs', 'swift']
+        client_lang: ['java,kotlin', 'go,rs']    # ['java,kotlin', 'go,rs', 'swift']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -596,11 +598,12 @@ jobs:
           name: kotlin-precross
           path: lib/kotlin
 
-      - name: Download swift precross artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: swift-precross
-          path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
+      # swift is currently broken and no maintainers around -> see THRIFT-5864
+      #- name: Download swift precross artifacts
+      #  uses: actions/download-artifact@v4
+      #  with:
+      #    name: swift-precross
+      #    path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
         uses: actions/download-artifact@v4
@@ -620,7 +623,7 @@ jobs:
             lib/java/build/run* \
             lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
             lib/kotlin/cross-test-server/build/install/TestServer/bin/* \
-            test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/* \
+            # THRIFT-5864  test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/* \
             test/rs/bin/* \
             test/go/bin/*
 
