@@ -811,11 +811,10 @@ uint32_t TJSONProtocol::readJSONBase64(std::string& str) {
   auto len = static_cast<uint32_t>(tmp.length());
   str.clear();
   // Ignore padding
-  if (len >= 2)  {
-    uint32_t bound = len - 2;
-    for (uint32_t i = len - 1; i >= bound && b[i] == '='; --i) {
-      --len;
-    }
+  uint32_t padding_count = 0;
+  while (len > 0 && b[len - 1] == '=' && padding_count < 2) {
+    --len;
+    ++padding_count;
   }
   while (len >= 4) {
     base64_decode(b, 4);
