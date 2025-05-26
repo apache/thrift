@@ -379,3 +379,26 @@ BOOST_AUTO_TEST_CASE(test_json_invalid_byte_range) {
   BOOST_CHECK_THROW(ooe2.read(proto.get()),
     apache::thrift::protocol::TProtocolException);
 }
+
+BOOST_AUTO_TEST_CASE(test_json_base64_padding_validation) {
+  auto test_base64_padding = [](const std::string& base64_value) {
+    std::string json_string = "{\"11\":{\"str\":\"" + base64_value + "\"}}";
+    std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+      (uint8_t*)(json_string.c_str()), static_cast<uint32_t>(json_string.size())));
+    std::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+
+    OneOfEach ooe;
+    BOOST_CHECK_NO_THROW(ooe.read(proto.get()));
+  };
+
+  // Valid base64 with 1 padding character
+  test_base64_padding("QWE=");
+  // Valid base64 with 2 padding characters
+  test_base64_padding("QQ==");
+  // Just padding
+  test_base64_padding("=");
+  test_base64_padding("==");
+  // Malformed base64 with excessive padding (processed conservatively)
+  test_base64_padding("===");
+  test_base64_padding("====");
+}
