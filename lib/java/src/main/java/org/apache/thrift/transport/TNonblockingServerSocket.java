@@ -49,6 +49,9 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
   /** Limit for client sockets request size */
   private int maxFrameSize_ = 0;
 
+  /** Max message size */
+  private int maxMessageSize_ = 0;
+
   public static class NonblockingAbstractServerSocketArgs
       extends AbstractServerTransportArgs<NonblockingAbstractServerSocketArgs> {}
 
@@ -93,6 +96,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       throws TTransportException {
     clientTimeout_ = args.clientTimeout;
     maxFrameSize_ = args.maxFrameSize;
+    maxMessageSize_ = args.maxMessageSize;
     try {
       serverSocketChannel = ServerSocketChannel.open();
       serverSocketChannel.configureBlocking(false);
@@ -135,6 +139,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       TNonblockingSocket tsocket = new TNonblockingSocket(socketChannel);
       tsocket.setTimeout(clientTimeout_);
       tsocket.setMaxFrameSize(maxFrameSize_);
+      tsocket.setMaxMessageSize(maxMessageSize_);
       return tsocket;
     } catch (IOException iox) {
       throw new TTransportException(iox);
