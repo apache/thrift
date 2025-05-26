@@ -290,10 +290,12 @@ public abstract class AbstractNonblockingServer extends TServer {
       selectThread_ = selectThread;
       buffer_ = ByteBuffer.allocate(4);
 
-      frameTrans_ = new TMemoryInputTransport();
+      frameTrans_ = new TMemoryInputTransport(trans_.getConfiguration());
       response_ = new TByteArrayOutputStream();
       inTrans_ = inputTransportFactory_.getTransport(frameTrans_);
-      outTrans_ = outputTransportFactory_.getTransport(new TIOStreamTransport(response_));
+      outTrans_ =
+          outputTransportFactory_.getTransport(
+              new TIOStreamTransport(trans_.getConfiguration(), response_));
       inProt_ = inputProtocolFactory_.getProtocol(inTrans_);
       outProt_ = outputProtocolFactory_.getProtocol(outTrans_);
 

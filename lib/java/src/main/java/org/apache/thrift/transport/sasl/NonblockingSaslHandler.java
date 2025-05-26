@@ -320,7 +320,8 @@ public class NonblockingSaslHandler {
       byte[] inputPayload = requestReader.getPayload();
       requestReader.clear();
       byte[] rawInput = dataProtected ? saslPeer.unwrap(inputPayload) : inputPayload;
-      TMemoryTransport memoryTransport = new TMemoryTransport(rawInput);
+      TMemoryTransport memoryTransport =
+          new TMemoryTransport(underlyingTransport.getConfiguration(), rawInput);
       TProtocol requestProtocol = inputProtocolFactory.getProtocol(memoryTransport);
       TProtocol responseProtocol = outputProtocolFactory.getProtocol(memoryTransport);
 
