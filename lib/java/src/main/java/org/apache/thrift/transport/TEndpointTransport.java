@@ -35,6 +35,10 @@ public abstract class TEndpointTransport extends TTransport {
     getConfiguration().setMaxFrameSize(maxFrameSize);
   }
 
+  public void setMaxMessageSize(int maxMessageSize) {
+    getConfiguration().setMaxMessageSize(maxMessageSize);
+  }
+
   protected long knownMessageSize;
   protected long remainingMessageSize;
 
