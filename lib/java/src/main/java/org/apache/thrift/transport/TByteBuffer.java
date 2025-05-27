@@ -3,34 +3,18 @@ package org.apache.thrift.transport;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import org.apache.thrift.TConfiguration;
 
 /** ByteBuffer-backed implementation of TTransport. */
-public final class TByteBuffer extends TEndpointTransport {
+public final class TByteBuffer extends TTransport {
   private final ByteBuffer byteBuffer;
-
-  /**
-   * Creates a new TByteBuffer wrapping a given NIO ByteBuffer and custom TConfiguration.
-   *
-   * @param configuration the custom TConfiguration.
-   * @param byteBuffer the NIO ByteBuffer to wrap.
-   * @throws TTransportException on error.
-   */
-  public TByteBuffer(TConfiguration configuration, ByteBuffer byteBuffer)
-      throws TTransportException {
-    super(configuration);
-    this.byteBuffer = byteBuffer;
-    updateKnownMessageSize(byteBuffer.capacity());
-  }
 
   /**
    * Creates a new TByteBuffer wrapping a given NIO ByteBuffer.
    *
    * @param byteBuffer the NIO ByteBuffer to wrap.
-   * @throws TTransportException on error.
    */
-  public TByteBuffer(ByteBuffer byteBuffer) throws TTransportException {
-    this(new TConfiguration(), byteBuffer);
+  public TByteBuffer(ByteBuffer byteBuffer) {
+    this.byteBuffer = byteBuffer;
   }
 
   @Override
@@ -47,8 +31,6 @@ public final class TByteBuffer extends TEndpointTransport {
   @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     //
-    checkReadBytesAvailable(len);
-
     final int n = Math.min(byteBuffer.remaining(), len);
     if (n > 0) {
       try {

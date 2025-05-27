@@ -20,6 +20,7 @@ package org.apache.thrift.protocol;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.server.ServerTestBase;
+import org.apache.thrift.transport.TEndpointTransport;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.Test;
@@ -538,8 +540,37 @@ public abstract class ProtocolTestBase {
 
   private TProtocol initConfig(int maxSize) throws TException {
     TConfiguration config = TConfiguration.custom().setMaxMessageSize(maxSize).build();
-    TMemoryBuffer bufferTrans = new TMemoryBuffer(config, 0);
-    return getFactory().getProtocol(bufferTrans);
+    TMemoryBuffer bufferTrans = new TMemoryBuffer(0);
+    return getFactory()
+        .getProtocol(
+            new TEndpointTransport(config) {
+              @Override
+              public boolean isOpen() {
+                return true;
+              }
+
+              @Override
+              public void open() throws TTransportException {
+                bufferTrans.open();
+              }
+
+              @Override
+              public void close() {
+                bufferTrans.close();
+              }
+
+              @Override
+              public int read(byte[] buf, int off, int len) throws TTransportException {
+                int iBytesRead = bufferTrans.read(buf, off, len);
+                consumeReadMessageBytes(iBytesRead);
+                return iBytesRead;
+              }
+
+              @Override
+              public void write(byte[] buf, int off, int len) throws TTransportException {
+                bufferTrans.write(buf, off, len);
+              }
+            });
   }
 
   @Test
@@ -615,5 +646,26 @@ public abstract class ProtocolTestBase {
             },
             "Limitations not achieved as expected");
     assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
+  }
+
+  @Test
+  public void testConsumedMessageSize() throws Exception {
+    TProtocol clientOutProto = initConfig(1000);
+    TProtocol clientInProto = initConfig(1000);
+    ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    long consumedBytes = 0;
+    for (int i = 0; i < 100; i++) {
+      // The consumedBytes in the trans_ should be reset on the message beginning
+      assertTrue(
+          i == 0
+              || consumedBytes == ((TEndpointTransport) clientInProto.trans_).getConsumedMessage());
+      testClient.send_testSet(
+          Stream.of(234, 0, 987087, 45, 88888888, 9).collect(Collectors.toSet()));
+      testProcessor.process(clientOutProto, clientInProto);
+      testClient.recv_testSet();
+      consumedBytes = ((TEndpointTransport) clientInProto.trans_).getConsumedMessage();
+      assertTrue(consumedBytes > 0);
+    }
   }
 }

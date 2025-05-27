@@ -194,9 +194,23 @@ public abstract class TTransport implements Closeable {
    */
   public void consumeBuffer(int len) {}
 
-  public abstract TConfiguration getConfiguration();
+  public TConfiguration getConfiguration() {
+    return null;
+  }
 
-  public abstract void updateKnownMessageSize(long size) throws TTransportException;
+  public void updateKnownMessageSize(long size) throws TTransportException {
+    throw new UnsupportedOperationException(
+        "This method is deprecated and might be removed in the future");
+  }
 
-  public abstract void checkReadBytesAvailable(long numBytes) throws TTransportException;
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+    throw new UnsupportedOperationException(
+        "This method is deprecated and might be removed in the future");
+  }
+
+  /** Mark the beginning of the message in this transport */
+  public void readMessageBegin() {}
+
+  /** Mark the end of the message in this transport */
+  public void readMessageEnd() {}
 }
