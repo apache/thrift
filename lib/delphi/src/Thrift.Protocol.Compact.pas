@@ -1011,8 +1011,8 @@ function TCompactProtocolImpl.GetMinSerializedSize( const aType : TType) : Integ
 // Return the minimum number of bytes a type will consume on the wire
 begin
   case aType of
-    TType.Stop:    result := 0;
-    TType.Void:    result := 0;
+    TType.Stop:    result := 1;  // T_STOP needs to count itself
+    TType.Void:    result := 1;  // T_VOID needs to count itself
     TType.Bool_:   result := SizeOf(Byte);
     TType.Byte_:   result := SizeOf(Byte);
     TType.Double_: result := 8;  // uses fixedLongToBytes() which always writes 8 bytes
@@ -1020,7 +1020,7 @@ begin
     TType.I32:     result := SizeOf(Byte);
     TType.I64:     result := SizeOf(Byte);
     TType.String_: result := SizeOf(Byte);  // string length
-    TType.Struct:  result := 0;             // empty struct
+    TType.Struct:  result := 1;  // empty struct needs at least 1 byte for the T_STOP
     TType.Map:     result := SizeOf(Byte);  // element count
     TType.Set_:    result := SizeOf(Byte);  // element count
     TType.List:    result := SizeOf(Byte);  // element count
