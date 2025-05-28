@@ -837,8 +837,8 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop: return 0;
-                case TType.Void: return 0;
+                case TType.Stop: return 1;  // T_STOP needs to count itself
+                case TType.Void: return 1;  // T_VOID needs to count itself
                 case TType.Bool: return 1;  // written as int  
                 case TType.Byte: return 1;
                 case TType.Double: return 1;

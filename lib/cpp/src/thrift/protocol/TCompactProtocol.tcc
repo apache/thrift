@@ -859,8 +859,8 @@ int TCompactProtocolT<Transport_>::getMinSerializedSize(TType type)
 {
   switch (type)
   {
-    case T_STOP:    return 0;
-    case T_VOID:    return 0;
+    case T_STOP:    return 1;  // T_STOP needs to count itself
+    case T_VOID:    return 1;  // T_VOID needs to count itself
     case T_BOOL:   return sizeof(int8_t);
     case T_DOUBLE: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
     case T_BYTE: return sizeof(int8_t);
@@ -868,7 +868,7 @@ int TCompactProtocolT<Transport_>::getMinSerializedSize(TType type)
     case T_I32:     return sizeof(int8_t);  // zigzag
     case T_I64:     return sizeof(int8_t);  // zigzag
     case T_STRING: return sizeof(int8_t);  // string length
-    case T_STRUCT:  return 0;             // empty struct
+    case T_STRUCT:  return 1;  // empty struct needs at least 1 byte for the T_STOP
     case T_MAP:     return sizeof(int8_t);  // element count
     case T_SET:    return sizeof(int8_t);  // element count
     case T_LIST:    return sizeof(int8_t);  // element count

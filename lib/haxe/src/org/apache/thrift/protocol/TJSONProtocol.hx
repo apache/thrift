@@ -792,8 +792,8 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 	{
 		switch (type)
 		{
-			case TType.STOP: return 0;
-			case TType.VOID_: return 0;
+			case TType.STOP: return 1;  // T_STOP needs to count itself
+			case TType.VOID_: return 1;  // T_VOID needs to count itself
 			case TType.BOOL: return 1;  // written as int  
 			case TType.BYTE: return 1;
 			case TType.DOUBLE: return 1;
