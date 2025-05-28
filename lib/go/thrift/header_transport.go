@@ -166,7 +166,7 @@ func (tr *TransformReader) AddTransform(id THeaderTransformID) error {
 	case TransformNone:
 		// no-op
 	case TransformZlib:
-		readCloser, err := zlib.NewReader(tr.Reader)
+		readCloser, err := newZlibReader(tr.Reader)
 		if err != nil {
 			return err
 		}
@@ -211,25 +211,6 @@ func (tw *TransformWriter) Close() error {
 	return nil
 }
 
-var zlibDefaultLevelWriterPool = newPool(
-	func() *zlib.Writer {
-		return zlib.NewWriter(nil)
-	},
-	nil,
-)
-
-type zlibPoolCloser struct {
-	writer *zlib.Writer
-}
-
-func (z *zlibPoolCloser) Close() error {
-	defer func() {
-		z.writer.Reset(nil)
-		zlibDefaultLevelWriterPool.put(&z.writer)
-	}()
-	return z.writer.Close()
-}
-
 // AddTransform adds a transform.
 func (tw *TransformWriter) AddTransform(id THeaderTransformID) error {
 	switch id {
@@ -241,12 +222,12 @@ func (tw *TransformWriter) AddTransform(id THeaderTransformID) error {
 	case TransformNone:
 		// no-op
 	case TransformZlib:
-		writeCloser := zlibDefaultLevelWriterPool.get()
-		writeCloser.Reset(tw.Writer)
-		tw.Writer = writeCloser
-		tw.closers = append(tw.closers, &zlibPoolCloser{
-			writer: writeCloser,
-		})
+		writer, closer, err := newZlibWriterCloserLevel(tw.Writer, zlib.DefaultCompression)
+		if err != nil {
+			return err
+		}
+		tw.Writer = writer
+		tw.closers = append(tw.closers, closer)
 	}
 	return nil
 }
