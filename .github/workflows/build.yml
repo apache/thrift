@@ -619,13 +619,12 @@ jobs:
 
       - name: Set back executable flags
         run: |
-          chmod a+x \
-            lib/java/build/run* \
-            lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
-            lib/kotlin/cross-test-server/build/install/TestServer/bin/* \
-            # THRIFT-5864  test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/* \
-            test/rs/bin/* \
-            test/go/bin/*
+          chmod a+x lib/java/build/run*
+          chmod a+x lib/kotlin/cross-test-client/build/install/TestClient/bin/*
+          chmod a+x lib/kotlin/cross-test-server/build/install/TestServer/bin/*
+          # THRIFT-5864  chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
+          chmod a+x test/rs/bin/*
+          chmod a+x test/go/bin/*
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
