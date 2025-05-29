@@ -725,8 +725,8 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 	{
 		switch (type)
 		{
-			case TType.STOP:    return 0;
-			case TType.VOID_:    return 0;
+			case TType.STOP:    return 1;  // T_STOP needs to count itself
+			case TType.VOID_:    return 1;  // T_VOID needs to count itself
 			case TType.BOOL:   return 1;
 			case TType.DOUBLE: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
 			case TType.BYTE: return 1;
@@ -734,7 +734,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 			case TType.I32:     return 1;  // zigzag
 			case TType.I64:     return 1;  // zigzag
 			case TType.STRING: return 1;  // string length
-			case TType.STRUCT:  return 0;             // empty struct
+			case TType.STRUCT:  return 1;  // empty struct needs at least 1 byte for the T_STOP
 			case TType.MAP:     return 1;  // element count
 			case TType.SET:    return 1;  // element count
 			case TType.LIST:    return 1;  // element count

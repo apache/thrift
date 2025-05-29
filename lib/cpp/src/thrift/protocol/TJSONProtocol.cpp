@@ -1131,8 +1131,8 @@ int TJSONProtocol::getMinSerializedSize(TType type)
 {
   switch (type)
   {
-    case T_STOP: return 0;
-    case T_VOID: return 0;
+    case T_STOP: return 1;  // T_STOP needs to count itself
+    case T_VOID: return 1;  // T_VOID needs to count itself
     case T_BOOL: return 1;  // written as int
     case T_BYTE: return 1;
     case T_DOUBLE: return 1;

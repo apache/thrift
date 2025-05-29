@@ -52,6 +52,10 @@ typedef struct _ThriftBinaryProtocol ThriftBinaryProtocol;
 struct _ThriftBinaryProtocol
 {
   ThriftProtocol parent;
+
+  /* protected */
+  gint32 string_limit;
+  gint32 container_limit;
 };
 
 typedef struct _ThriftBinaryProtocolClass ThriftBinaryProtocolClass;

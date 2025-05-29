@@ -92,7 +92,7 @@ public abstract class TEndpointTransport extends TTransport {
    * @param numBytes
    */
   public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-    if (remainingMessageSize < numBytes)
+    if (remainingMessageSize < numBytes || numBytes < 0)
       throw new TTransportException(
           TTransportException.MESSAGE_SIZE_LIMIT,
           "Message size exceeds limit: " + getMaxMessageSize());

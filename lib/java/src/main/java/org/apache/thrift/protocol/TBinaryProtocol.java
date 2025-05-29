@@ -524,9 +524,9 @@ public class TBinaryProtocol extends TProtocol {
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:
-        return 0; // Stop
+        return 1; // Stop - T_STOP needs to count itself
       case 1:
-        return 0; // Void
+        return 1; // Void - T_VOID needs to count itself
       case 2:
         return 1; // Bool sizeof(byte)
       case 3:
@@ -542,7 +542,7 @@ public class TBinaryProtocol extends TProtocol {
       case 11:
         return 4; // string length sizeof(int)
       case 12:
-        return 0; // empty struct
+        return 1; // empty struct needs at least 1 byte for the T_STOP
       case 13:
         return 4; // element count Map sizeof(int)
       case 14:

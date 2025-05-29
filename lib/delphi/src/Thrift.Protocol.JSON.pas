@@ -1257,8 +1257,8 @@ function TJSONProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
 // Return the minimum number of bytes a type will consume on the wire
 begin
   case aType of
-    TType.Stop:    result := 0;
-    TType.Void:    result := 0;
+    TType.Stop:    result := 1;  // T_STOP needs to count itself
+    TType.Void:    result := 1;  // T_VOID needs to count itself
     TType.Bool_:   result := 1;
     TType.Byte_:   result := 1;
     TType.Double_: result := 1;

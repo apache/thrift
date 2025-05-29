@@ -78,7 +78,7 @@ class TEndpointTransport extends TTransport
 	// Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
 	public override function CheckReadBytesAvailable(numBytes : Int64) : Void
 	{
-		if (RemainingMessageSize < numBytes)
+		if (RemainingMessageSize < numBytes || numBytes < 0)
 			throw new TTransportException(TTransportException.END_OF_FILE, 'CheckReadBytesAvailable(${numBytes}): MaxMessageSize reached, only ${RemainingMessageSize} bytes available');
 	}
 
