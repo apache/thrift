@@ -43,7 +43,7 @@ class THttpClient(TTransportBase):
         Only the second supports https.  To properly authenticate against the server,
         provide the client's identity by specifying cert_file and key_file.  To properly
         authenticate the server, specify either cafile or ssl_context with a CA defined.
-        NOTE: if both cafile and ssl_context are defined, ssl_context will override cafile.
+        NOTE: if ssl_context is defined, it will override any provided cert_file, key_file, and cafile.
         """
         if port is not None:
             warnings.warn(
@@ -63,9 +63,11 @@ class THttpClient(TTransportBase):
                 self.port = parsed.port or http.client.HTTP_PORT
             elif self.scheme == 'https':
                 self.port = parsed.port or http.client.HTTPS_PORT
-                self.certfile = cert_file
-                self.keyfile = key_file
-                self.context = ssl.create_default_context(cafile=cafile) if (cafile and not ssl_context) else ssl_context
+                if (cafile or cert_file or key_file) and not ssl_context:
+                    self.context = ssl.create_default_context(cafile=cafile)
+                    self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+                else:
+                    self.context = ssl_context
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
