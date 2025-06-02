@@ -212,15 +212,12 @@ public class THttpClient extends TEndpointTransport {
       throw new TTransportException("Response buffer is empty, no request.");
     }
 
-    checkReadBytesAvailable(len);
-
     try {
       int ret = inputStream_.read(buf, off, len);
       if (ret == -1) {
         throw new TTransportException("No more data available.");
       }
-      countConsumedMessageBytes(ret);
-
+      consumeReadMessageBytes(ret);
       return ret;
     } catch (IOException iox) {
       throw new TTransportException(iox);
@@ -285,8 +282,6 @@ public class THttpClient extends TEndpointTransport {
       // Abort method so the connection gets released back to the connection manager
       post.abort();
       throw new TTransportException(ioe);
-    } finally {
-      resetConsumedMessageSize(-1);
     }
   }
 
@@ -337,8 +332,6 @@ public class THttpClient extends TEndpointTransport {
 
     } catch (IOException iox) {
       throw new TTransportException(iox);
-    } finally {
-      resetConsumedMessageSize(-1);
     }
   }
 }
