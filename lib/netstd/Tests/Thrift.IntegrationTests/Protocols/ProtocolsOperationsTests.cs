@@ -31,11 +31,8 @@ using Thrift.Transport.Client;
 namespace Thrift.IntegrationTests.Protocols
 {
     [TestClass]
-    public class ProtocolsOperationsTests
+    public class ProtocolsOperationsTests : TestBase
     {
-        private readonly CompareLogic _compareLogic = new();
-        private static readonly TConfiguration Configuration = new();
-
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Call)]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Exception)]
@@ -99,7 +96,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteStructEndAsync(default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadStructBeginAsync(default);
                     await protocol.ReadStructEndAsync(default);
@@ -135,7 +132,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteFieldEndAsync(default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadFieldBeginAsync(default);
                     await protocol.ReadFieldEndAsync(default);
@@ -169,7 +166,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteMapEndAsync(default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadMapBeginAsync(default);
                     await protocol.ReadMapEndAsync(default);
@@ -204,7 +201,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteListEndAsync(default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadListBeginAsync(default);
                     await protocol.ReadListEndAsync(default);
@@ -238,7 +235,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteSetEndAsync(default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadSetBeginAsync(default);
                     await protocol.ReadSetEndAsync(default);
@@ -271,7 +268,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteBoolAsync(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadBoolAsync(default);
 
@@ -303,7 +300,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteByteAsync(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadByteAsync(default);
 
@@ -335,7 +332,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteI16Async(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI16Async(default);
 
@@ -367,7 +364,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteI32Async(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI32Async(default);
 
@@ -399,7 +396,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteI64Async(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI64Async(default);
 
@@ -431,9 +428,41 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteDoubleAsync(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadDoubleAsync(default);
+
+                    var result = _compareLogic.Compare(expected, actual);
+                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+            }
+        }
+
+        [DataTestMethod]
+        [DataRow(typeof(TBinaryProtocol))]
+        [DataRow(typeof(TCompactProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
+        public async Task WriteReadUuid_Test(Type protocolType)
+        {
+            var expected = new Guid("{00112233-4455-6677-8899-aabbccddeeff}");
+
+            try
+            {
+                var tuple = GetProtocolInstance(protocolType);
+                using (var stream = tuple.Stream)
+                {
+                    var protocol = tuple.Protocol;
+
+                    await protocol.WriteUuidAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
+
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    var actual = await protocol.ReadUuidAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -463,7 +492,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteStringAsync(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadStringAsync(default);
 
@@ -495,7 +524,7 @@ namespace Thrift.IntegrationTests.Protocols
                     await protocol.WriteBinaryAsync(expected, default);
                     await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadBinaryAsync(default);
 
@@ -507,17 +536,6 @@ namespace Thrift.IntegrationTests.Protocols
             {
                 throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
             }
-        }
-
-        private record struct ProtocolTransportStack(Stream Stream, TTransport Transport, TProtocol Protocol);
-
-        private static ProtocolTransportStack GetProtocolInstance(Type protocolType)
-        {
-            var memoryStream = new MemoryStream();
-            var streamClientTransport = new TStreamTransport(memoryStream, memoryStream,Configuration);
-            if( Activator.CreateInstance(protocolType, streamClientTransport) is TProtocol protocol)
-                return new ProtocolTransportStack(memoryStream, streamClientTransport, protocol);
-            throw new Exception("Unexpected");
         }
     }
 }
