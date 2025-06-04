@@ -66,7 +66,7 @@ type
   public
     constructor Create( const aProtFact  : IProtocolFactory = nil;    // defaults to TBinaryProtocol
                         const aTransFact : ITransportFactory = nil;
-                        const aConfig   : IThriftConfiguration = nil);
+                        const aConfig    : IThriftConfiguration = nil);
 
     // DTOR
     destructor Destroy;  override;
@@ -74,6 +74,11 @@ type
     // Deserialize the Thrift object data.
     procedure Deserialize( const input : TBytes; const target : IBase);  overload;
     procedure Deserialize( const input : TStream; const target : IBase);  overload;
+
+    // helper
+    property  Protocol  : IProtocol read FProtocol;
+    property  Transport : ITransport read FTransport;
+    property  Stream    : TThriftMemoryStream read FStream;
   end;
 
 
@@ -164,14 +169,14 @@ end;
 
 constructor TDeserializer.Create( const aProtFact  : IProtocolFactory;
                                   const aTransFact : ITransportFactory;
-                                  const aConfig   : IThriftConfiguration);
+                                  const aConfig    : IThriftConfiguration);
 var adapter : IThriftStream;
     protfact : IProtocolFactory;
 begin
   inherited Create;
 
-  FStream    := TThriftMemoryStream.Create;
-  adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
+  FStream := TThriftMemoryStream.Create;
+  adapter := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
 
   FTransport := TStreamTransportImpl.Create( adapter, nil, aConfig);
   if aTransfact <> nil then FTransport := aTransfact.GetTransport( FTransport);
@@ -205,8 +210,11 @@ begin
   try
     iBytes := Length(input);
     FStream.Size := iBytes;
-    if iBytes > 0
-    then Move( input[0], FStream.Memory^, iBytes);
+    if iBytes > 0 then begin
+      Move( input[0], FStream.Memory^, iBytes);
+      Transport.ResetMessageSizeAndConsumedBytes();  // size has changed
+      Transport.UpdateKnownMessageSize(iBytes);
+    end;
 
     target.Read( FProtocol);
   finally
@@ -221,9 +229,15 @@ const COPY_ENTIRE_STREAM = 0;
 var before : Int64;
 begin
   try
-    before := FStream.Position;
-    FStream.CopyFrom( input, COPY_ENTIRE_STREAM);
-    FStream.Position := before;
+    if Assigned(input) then begin
+      before := FStream.Position;
+      ASSERT( before = 0);
+      FStream.CopyFrom( input, COPY_ENTIRE_STREAM);
+      FStream.Position := before;
+      Transport.ResetMessageSizeAndConsumedBytes();  // size has changed
+      Transport.UpdateKnownMessageSize(FStream.Size);
+    end;
+
     target.Read( FProtocol);
   finally
     FStream.Size := 0;  // free any allocated memory
