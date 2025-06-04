@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 
 #pragma warning disable IDE0079  // unneeded suppression -> all except net8
 #pragma warning disable IDE0301  // simplify collection init -> net8 only
+#pragma warning disable IDE0305  // simplify collection init -> net8 only
 
 namespace Thrift.Transport.Client
 {
