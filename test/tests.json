@@ -478,6 +478,7 @@
         "run",
         "--no-build",
         "--project=Server/Server.csproj",
+        "--configuration=Release",
         "server"
       ]
     },
@@ -488,6 +489,7 @@
         "run",
         "--no-build",
         "--project=Client/Client.csproj",
+        "--configuration=Release",
         "client"
       ]
     },
