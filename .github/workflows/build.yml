@@ -651,7 +651,11 @@ jobs:
       - name: Install openssl and certificates (for SSL tests)
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends openssl ca-certificates
+          sudo apt-get install -y --no-install-recommends \
+            openssl \
+            ca-certificates \
+            libboost-all-dev \
+            libevent-dev
 
       - name: Download java precross artifacts
         uses: actions/download-artifact@v4
