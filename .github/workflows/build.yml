@@ -562,7 +562,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS locales
+          sudo locale-gen en_US.UTF-8
+          sudo locale-gen de_DE.UTF-8
+          sudo update-locale
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -601,6 +604,14 @@ jobs:
           path: |
             test/cpp/TestClient
             test/cpp/TestServer
+          retention-days: 3
+
+      - name: Upload log files from failed test runs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: lib-cpp-test-log
+          path: lib/cpp/test/*.xml
           retention-days: 3
 
   cross-test:
