@@ -25,9 +25,9 @@
 -include("thrift_protocol.hrl").
 
 -record(thrift_processor, {
-    handler :: module(),
+    handler :: module() | thrift_multiplexed_map_wrapper:service_handler_map(),
     protocol :: term(),
-    service :: atom()
+    service :: atom() | thrift_multiplexed_map_wrapper:service_handler_map()
 }).
 
 init({_Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
