@@ -644,8 +644,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          # here we intentionally use an older version so that we also verify Java 17 compiles to it
-          java-version: 8
+          java-version: 17
           cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)
