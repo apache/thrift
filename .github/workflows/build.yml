@@ -601,9 +601,13 @@ jobs:
         with:
           name: cpp-precross
           if-no-files-found: error
+          include-hidden-files: true
           path: |
             test/cpp/TestClient
             test/cpp/TestServer
+            test/cpp/.libs/TestClient
+            test/cpp/.libs/TestServer
+            lib/cpp/.libs/*.so
           retention-days: 3
 
       - name: Upload log files from failed test runs
@@ -684,7 +688,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cpp-precross
-          path: test/cpp
+          path: .
 
       - name: Set back executable flags
         run: |
@@ -695,6 +699,8 @@ jobs:
           chmod a+x test/rs/bin/*
           chmod a+x test/go/bin/*
           chmod a+x test/cpp/*
+          chmod a+x test/cpp/.libs/*
+          chmod a+x lib/cpp/.libs/*.so
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
