@@ -139,11 +139,11 @@ shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.listen();
   int port = sock1.getPort();
   shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
+  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("127.0.0.1", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
@@ -159,11 +159,11 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.listen();
   int port = sock1.getPort();
   shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
+  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("127.0.0.1", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
@@ -180,12 +180,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
   sock1.listen();
   int port = sock1.getPort();
   shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
+  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("127.0.0.1", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_cannot_change_after_listen) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.listen();
   BOOST_CHECK_THROW(sock1.setInterruptableChildren(false), std::logic_error);
   sock1.close();
@@ -234,11 +234,11 @@ void peekerWorkerInterrupt(shared_ptr<TTransport> tt) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.listen();
   int port = sock1.getPort();
   shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
+  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("127.0.0.1", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   boost::thread peekThread(std::bind(peekerWorkerInterrupt, accepted));
@@ -255,12 +255,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
 
 BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   shared_ptr<TSSLSocketFactory> pServerSocketFactory = createServerSocketFactory();
-  TSSLServerSocket sock1("localhost", 0, pServerSocketFactory);
+  TSSLServerSocket sock1("127.0.0.1", 0, pServerSocketFactory);
   sock1.setInterruptableChildren(false); // returns to pre-THRIFT-2441 behavior
   sock1.listen();
   int port = sock1.getPort();
   shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
+  shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("127.0.0.1", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);

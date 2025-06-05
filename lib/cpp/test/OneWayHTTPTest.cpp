@@ -202,10 +202,10 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 #endif
 
   {
-    std::shared_ptr<TSocket> socket(new TSocket("localhost", port));
+    std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
     socket->setRecvTimeout(10000) ; // 1000msec should be enough
     std::shared_ptr<TBlockableBufferedTransport> blockable_transport(new TBlockableBufferedTransport(socket));
-    std::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "localhost", "/service"));
+    std::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "127.0.0.1", "/service"));
     std::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
     onewaytest::OneWayServiceClient client(protocol);
 

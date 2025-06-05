@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
-  string host = "localhost";
+  string host = "127.0.0.1";
   int port = 9090;
   int numTests = 1;
   bool ssl = false;

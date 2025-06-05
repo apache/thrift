@@ -158,7 +158,7 @@ protected:
   }
 
   bool canCommunicate(int serverPort) {
-    shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
+    shared_ptr<transport::TSocket> socket(new transport::TSocket("127.0.0.1", serverPort));
     socket->open();
     test::ParentServiceClient client(make_shared<protocol::TBinaryProtocol>(
         make_shared<transport::TFramedTransport>(socket)));
