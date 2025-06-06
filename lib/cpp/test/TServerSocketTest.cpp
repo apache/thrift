@@ -33,11 +33,11 @@ using std::shared_ptr;
 BOOST_AUTO_TEST_SUITE(TServerSocketTest)
 
 BOOST_AUTO_TEST_CASE(test_bind_to_address) {
-  TServerSocket sock1("localhost", 0);
+  TServerSocket sock1("127.0.0.1", 0);
   sock1.listen();
   BOOST_CHECK(sock1.isOpen());
   int port = sock1.getPort();
-  TSocket clientSock("localhost", port);
+  TSocket clientSock("127.0.0.1", port);
   clientSock.open();
   shared_ptr<TTransport> accepted = sock1.accept();
   accepted->close();
@@ -60,13 +60,13 @@ BOOST_AUTO_TEST_CASE(test_listen_invalid_port) {
 }
 
 BOOST_AUTO_TEST_CASE(test_close_before_listen) {
-  TServerSocket sock1("localhost", 0);
+  TServerSocket sock1("127.0.0.1", 0);
   sock1.close();
   BOOST_CHECK(!sock1.isOpen());
 }
 
 BOOST_AUTO_TEST_CASE(test_get_port) {
-  TServerSocket sock1("localHost", 888);
+  TServerSocket sock1("127.0.0.1", 888);
   BOOST_CHECK_EQUAL(888, sock1.getPort());
 }
 

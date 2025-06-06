@@ -153,7 +153,7 @@ public:
   TServerIntegrationTestFixture(const shared_ptr<TProcessorFactory>& _processorFactory)
     : pServer(new TServerType(_processorFactory,
                               shared_ptr<TServerTransport>(
-                                  new TServerSocket("localhost", 0)),
+                                  new TServerSocket("127.0.0.1", 0)),
                               shared_ptr<TTransportFactory>(new TTransportFactory),
                               shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
       pEventHandler(shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)),
@@ -166,7 +166,7 @@ public:
   TServerIntegrationTestFixture(const shared_ptr<TProcessor>& _processor)
     : pServer(
           new TServerType(_processor,
-                          shared_ptr<TServerTransport>(new TServerSocket("localhost", 0)),
+                          shared_ptr<TServerTransport>(new TServerSocket("127.0.0.1", 0)),
                           shared_ptr<TTransportFactory>(new TTransportFactory),
                           shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory))),
       pEventHandler(shared_ptr<TServerReadyEventHandler>(new TServerReadyEventHandler)),
@@ -227,7 +227,7 @@ public:
     std::vector<shared_ptr<boost::thread> > holdThreads;
 
     for (int64_t i = 0; i < numToMake; ++i) {
-      shared_ptr<TSocket> pClientSock(new TSocket("localhost", getServerPort()),
+      shared_ptr<TSocket> pClientSock(new TSocket("127.0.0.1", getServerPort()),
                                              autoSocketCloser);
       holdSockets.push_back(pClientSock);
       shared_ptr<TProtocol> pClientProtocol(new TBinaryProtocol(pClientSock));
@@ -306,7 +306,7 @@ public:
    */
   void stressor() {
   while (!bStressDone) {
-      shared_ptr<TSocket> pSocket(new TSocket("localhost", getServerPort()), autoSocketCloser);
+      shared_ptr<TSocket> pSocket(new TSocket("127.0.0.1", getServerPort()), autoSocketCloser);
       shared_ptr<TProtocol> pProtocol(new TBinaryProtocol(pSocket));
       ParentServiceClient client(pProtocol);
       pSocket->open();
@@ -437,11 +437,11 @@ BOOST_AUTO_TEST_CASE(test_stop_with_interruptable_clients_connected) {
 
   startServer();
 
-  shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock1(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock1->open();
 
-  shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock2(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock2->open();
 
@@ -468,11 +468,11 @@ BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected) {
 
   startServer();
 
-  shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock1(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock1->open();
 
-  shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock2(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock2->open();
 
@@ -504,13 +504,13 @@ BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
   BOOST_CHECK_EQUAL(0, pServer->getConcurrentClientCount());
   BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientLimit());
 
-  shared_ptr<TSocket> pClientSock1(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock1(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock1->open();
   blockUntilAccepted(1);
   BOOST_CHECK_EQUAL(1, pServer->getConcurrentClientCount());
 
-  shared_ptr<TSocket> pClientSock2(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock2(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock2->open();
   blockUntilAccepted(2);
@@ -521,7 +521,7 @@ BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
                                this,
                                pClientSock2,
                                milliseconds(250)));
-  shared_ptr<TSocket> pClientSock3(new TSocket("localhost", getServerPort()),
+  shared_ptr<TSocket> pClientSock3(new TSocket("127.0.0.1", getServerPort()),
                                           autoSocketCloser);
   pClientSock2->open();
   blockUntilAccepted(2);

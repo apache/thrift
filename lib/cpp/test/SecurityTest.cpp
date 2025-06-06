@@ -118,7 +118,7 @@ struct SecurityFixture
             pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
             pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
             pServerSocketFactory->server(true);
-            pServerSocket.reset(new TSSLServerSocket("localhost", 0, pServerSocketFactory));
+            pServerSocket.reset(new TSSLServerSocket("127.0.0.1", 0, pServerSocketFactory));
             shared_ptr<TTransport> connectedClient;
 
             try
@@ -176,7 +176,7 @@ struct SecurityFixture
                 pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
                 pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
                 pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
-                pClientSocket = pClientSocketFactory->createSocket("localhost", mPort);
+                pClientSocket = pClientSocketFactory->createSocket("127.0.0.1", mPort);
                 pClientSocket->open();
 
                 uint8_t buf[3];

@@ -119,7 +119,7 @@ struct SecurityFromBufferFixture {
       pServerSocketFactory->loadCertificateFromBuffer(certString("server.crt").c_str());
       pServerSocketFactory->loadPrivateKeyFromBuffer(certString("server.key").c_str());
       pServerSocketFactory->server(true);
-      pServerSocket.reset(new TSSLServerSocket("localhost", 0, pServerSocketFactory));
+      pServerSocket.reset(new TSSLServerSocket("127.0.0.1", 0, pServerSocketFactory));
       shared_ptr<TTransport> connectedClient;
 
       try {
@@ -169,7 +169,7 @@ struct SecurityFromBufferFixture {
         pClientSocketFactory->loadCertificateFromBuffer(certString("client.crt").c_str());
         pClientSocketFactory->loadPrivateKeyFromBuffer(certString("client.key").c_str());
         pClientSocketFactory->loadTrustedCertificatesFromBuffer(certString("CA.pem").c_str());
-        pClientSocket = pClientSocketFactory->createSocket("localhost", mPort);
+        pClientSocket = pClientSocketFactory->createSocket("127.0.0.1", mPort);
         pClientSocket->open();
 
         uint8_t buf[3];

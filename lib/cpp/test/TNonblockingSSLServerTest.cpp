@@ -232,7 +232,7 @@ protected:
 
   bool canCommunicate(int serverPort) {
     std::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-    std::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
+    std::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("127.0.0.1", serverPort);
     socket->open();
     test::ParentServiceClient client(std::make_shared<protocol::TBinaryProtocol>(
         std::make_shared<transport::TFramedTransport>(socket)));
