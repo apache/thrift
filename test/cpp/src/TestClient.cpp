@@ -22,6 +22,7 @@
 #include <ios>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
@@ -321,9 +322,15 @@ int main(int argc, char** argv) {
   std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
-    cout << "Client Certificate File: " << certPath << '\n';
-    cout << "Client Key         File: " << keyPath << '\n';
-    cout << "CA                 File: " << caPath << '\n';
+    auto fileExists = [](const std::string& path) {
+      std::ifstream f(path.c_str());
+      return f.good();
+    };
+
+    cout << "Client Path            : " << testDir  << '\n';
+    cout << "Client Certificate File: " << certPath << " (" << std::boolalpha << fileExists(certPath) << ")"<< '\n';
+    cout << "Client Key         File: " << keyPath  << " (" << std::boolalpha << fileExists(keyPath) << ")"<< '\n';
+    cout << "CA                 File: " << caPath   << " (" << std::boolalpha << fileExists(caPath) << ")"<< '\n';
 
     factory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
