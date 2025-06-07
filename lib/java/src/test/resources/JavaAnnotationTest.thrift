@@ -34,5 +34,5 @@ struct OneOfEachBeansWithAnnotations {
   10: list<i16> i16_list,
   11: list<i64> i64_list,
   // a is overridden to b
-  12: my_typedef typedef_meta (a = "b");
+  12: my_typedef typedef_meta (a = "b"),
 }
