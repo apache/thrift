@@ -152,6 +152,7 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
 	}
 	u, err := client.TestUuid(defaultCtx, uout)
+	t.Printf("TestUuid(%v)", uout)
 	if err != nil {
 		t.Fatalf("TestUuid failed with %v", err)
 	}
