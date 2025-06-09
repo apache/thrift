@@ -67,7 +67,9 @@ public class TestAnnotationMetadata {
     }
     {
       Map<String, String> metadata =
-              structMetaDataMap.get(OneOfEachBeansWithAnnotations._Fields.TYPEDEF_META).getFieldAnnotations();
+          structMetaDataMap
+              .get(OneOfEachBeansWithAnnotations._Fields.TYPEDEF_META)
+              .getFieldAnnotations();
       Map<String, String> expected = new HashMap<>();
       expected.put("a", "b");
       expected.put("c", "d");
