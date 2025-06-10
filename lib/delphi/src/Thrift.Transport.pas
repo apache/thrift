@@ -201,8 +201,8 @@ type
   end;
 
   TSecureProtocol = (
-    SSL_2, SSL_3, TLS_1,   // outdated, for compatibilty only
-    TLS_1_1, TLS_1_2       // secure (as of today)
+    SSL_2, SSL_3, TLS_1, TLS_1_1,   // outdated, for compatibility only
+    TLS_1_2, TLS_1_3 // secure (as of today)
   );
 
   TSecureProtocols = set of TSecureProtocol;
