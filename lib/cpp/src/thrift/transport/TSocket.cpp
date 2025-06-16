@@ -461,7 +461,9 @@ void TSocket::local_open() {
 #ifdef _WIN32
       error == WSANO_DATA
 #else
-      error == EAI_NODATA
+      // to support systems with no ipv4 addresses but using "127.0.0.1" as a hostname
+      // getaddrinfo() fails when AI_ADDRCONFIG is present in this situation...
+      error == EAI_NODATA || error == EAI_ADDRFAMILY
 #endif
     ) {
     hints.ai_flags &= ~AI_ADDRCONFIG;
