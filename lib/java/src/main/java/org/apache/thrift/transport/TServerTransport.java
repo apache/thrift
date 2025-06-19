@@ -32,6 +32,7 @@ public abstract class TServerTransport implements Closeable {
     int clientTimeout = 0;
     InetSocketAddress bindAddr;
     int maxFrameSize = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
+    int maxMessageSize = TConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
 
     public T backlog(int backlog) {
       this.backlog = backlog;
@@ -55,6 +56,11 @@ public abstract class TServerTransport implements Closeable {
 
     public T maxFrameSize(int maxFrameSize) {
       this.maxFrameSize = maxFrameSize;
+      return (T) this;
+    }
+
+    public T maxMessageSize(int maxMessageSize) {
+      this.maxMessageSize = maxMessageSize;
       return (T) this;
     }
   }
