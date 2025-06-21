@@ -65,6 +65,9 @@ public:
   struct Iter {
     using iterator_category = std::forward_iterator_tag;
     using value_type = const addrinfo*;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type*;
+    using reference = value_type&;
 
     value_type ptr = nullptr;
 

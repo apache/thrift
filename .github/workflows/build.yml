@@ -552,6 +552,71 @@ jobs:
       - name: Run ts tests
         run: make -C lib/nodets check
 
+  lib-cpp:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS locales
+          sudo locale-gen en_US.UTF-8
+          sudo locale-gen de_DE.UTF-8
+          sudo update-locale
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-cpp/with-cpp/g')
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for cpp
+        run: make -j$(nproc) -C lib/cpp
+
+      - name: Run make check for lib/cpp
+        run: make -j$(nproc) -C lib/cpp check
+
+      - name: Run make check for test/cpp
+        run: make -j$(nproc) -C test/cpp check
+
+      - name: Run make precross for cpp test
+        run: make -j$(nproc) -C test/cpp precross
+
+      - name: Upload cpp precross artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-precross
+          if-no-files-found: error
+          include-hidden-files: true
+          path: |
+            test/cpp/TestClient
+            test/cpp/TestServer
+            test/cpp/.libs/TestClient
+            test/cpp/.libs/TestServer
+            lib/cpp/.libs/*.so
+          retention-days: 3
+
+      - name: Upload log files from failed test runs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: lib-cpp-test-log
+          path: lib/cpp/test/*.xml
+          retention-days: 3
+
   cross-test:
     needs:
       - lib-java-kotlin
@@ -559,13 +624,14 @@ jobs:
       - lib-rust
       - lib-go
       - lib-python
+      - lib-cpp
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
-        server_lang: ['java', 'kotlin', 'go', 'rs']   # ['java', 'kotlin', 'go', 'rs', 'swift']
+        server_lang: ['java', 'kotlin', 'go', 'rs', 'cpp']   # ['java', 'kotlin', 'go', 'rs', 'swift']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs']    # ['java,kotlin', 'go,rs', 'swift']
+        client_lang: ['java,kotlin', 'go,rs,cpp']    # ['java,kotlin', 'go,rs', 'swift']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -584,7 +650,11 @@ jobs:
       - name: Install openssl and certificates (for SSL tests)
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends openssl ca-certificates
+          sudo apt-get install -y --no-install-recommends \
+            openssl \
+            ca-certificates \
+            libboost-all-dev \
+            libevent-dev
 
       - name: Download java precross artifacts
         uses: actions/download-artifact@v4
@@ -617,6 +687,12 @@ jobs:
           name: go-precross
           path: test/go/bin
 
+      - name: Download cpp precross artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cpp-precross
+          path: .
+
       - name: Set back executable flags
         run: |
           chmod a+x lib/java/build/run*
@@ -625,6 +701,9 @@ jobs:
           # THRIFT-5864  chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
           chmod a+x test/rs/bin/*
           chmod a+x test/go/bin/*
+          chmod a+x test/cpp/*
+          chmod a+x test/cpp/.libs/*
+          chmod a+x lib/cpp/.libs/*.so
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
