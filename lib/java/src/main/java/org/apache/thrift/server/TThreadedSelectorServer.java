@@ -213,7 +213,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   protected boolean startThreads() {
     try {
       for (int i = 0; i < args.selectorThreads; ++i) {
-        selectorThreads.add(new SelectorThread(args.acceptQueueSizePerThread));
+        selectorThreads.add(new SelectorThread(args.acceptQueueSizePerThread, i));
       }
       acceptThread =
           new AcceptThread(
@@ -333,7 +333,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
    * hand off to the IO selector threads
    */
   protected class AcceptThread extends Thread {
-
+    private static final String SELECT_THREAD_NAME_FORMAT = "thrift-select-thread";
     // The listen socket to accept on
     private final TNonblockingServerTransport serverTransport;
     private final Selector acceptSelector;
@@ -352,6 +352,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       this.threadChooser = threadChooser;
       this.acceptSelector = SelectorProvider.provider().openSelector();
       this.serverTransport.registerSelector(acceptSelector);
+      setName(SELECT_THREAD_NAME_FORMAT);
     }
 
     /**
@@ -468,6 +469,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     private final BlockingQueue<TNonblockingTransport> acceptedQueue;
     private static final int SELECTOR_AUTO_REBUILD_THRESHOLD = 512;
     private static final long MONITOR_PERIOD = 1000L;
+    private static final String SELECT_THREAD_NAME_FORMAT = "thrift-select-rw-thread-%d";
     private int jvmBug = 0;
 
     /**
@@ -489,6 +491,19 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
+     * Set up the SelectorThread with an bounded queue for incoming accepts.
+     *
+     * @param maxPendingAccepts The max number of pending accepts.
+     * @param id the thread id.
+     * @throws IOException
+     */
+    public SelectorThread(int maxPendingAccepts, int id) throws IOException {
+      this(
+          createDefaultAcceptQueue(maxPendingAccepts),
+          String.format(SELECT_THREAD_NAME_FORMAT, id));
+    }
+
+    /**
      * Set up the SelectorThread with a specified queue for connections.
      *
      * @param acceptedQueue The BlockingQueue implementation for holding incoming accepted
@@ -497,6 +512,19 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
      */
     public SelectorThread(BlockingQueue<TNonblockingTransport> acceptedQueue) throws IOException {
       this.acceptedQueue = acceptedQueue;
+    }
+
+    /**
+     * Set up the SelectorThread with a specified queue for connections.
+     *
+     * @param acceptedQueue The BlockingQueue implementation for holding incoming accepted
+     * @param name the thread name.
+     * @throws IOException if a selector cannot be created.
+     */
+    public SelectorThread(BlockingQueue<TNonblockingTransport> acceptedQueue, String name)
+        throws IOException {
+      this.acceptedQueue = acceptedQueue;
+      setName(name);
     }
 
     /**
