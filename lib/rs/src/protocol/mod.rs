@@ -209,6 +209,7 @@ pub trait TInputProtocol {
             TType::I64 => self.read_i64().map(|_| ()),
             TType::Double => self.read_double().map(|_| ()),
             TType::String => self.read_string().map(|_| ()),
+            TType::Uuid => self.read_uuid().map(|_| ()),
             TType::Struct => {
                 self.read_struct_begin()?;
                 loop {
