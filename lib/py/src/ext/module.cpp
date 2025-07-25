@@ -197,6 +197,10 @@ void initfastbinary() {
   if (module == nullptr)
     INITERROR;
 
+#ifdef Py_GIL_DISABLED
+  PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
+
 #if PY_MAJOR_VERSION >= 3
   return module;
 #endif
