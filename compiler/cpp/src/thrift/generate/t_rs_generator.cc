@@ -1840,9 +1840,19 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
   render_thrift_error("Protocol", "ProtocolError", "ProtocolErrorKind::InvalidData",
                       "\"received multiple fields for union from remote " + union_name + "\"");
   indent_down();
+  f_gen_ << indent() << "} else if let Some(ret) = ret {" << '\n';
+  indent_up();
+  f_gen_ << indent() << "Ok(ret)" << '\n';
+  indent_down();
   f_gen_ << indent() << "} else {" << '\n';
   indent_up();
-  f_gen_ << indent() << "Ok(ret.expect(\"return value should have been constructed\"))" << '\n';
+  f_gen_ << indent() << "Err(" << '\n';
+  indent_up();
+  f_gen_ << indent() << "thrift::Error::Protocol(" << '\n';
+  f_gen_ << indent() << "  ProtocolError::new(ProtocolErrorKind::InvalidData, \"return value should have been constructed\")" << '\n';
+  f_gen_ << indent() << ")" << '\n';
+  indent_down();
+  f_gen_ << indent() << ")" << '\n';
   indent_down();
   f_gen_ << indent() << "}" << '\n';
 
