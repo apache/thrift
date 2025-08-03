@@ -301,7 +301,11 @@ where
     }
 
     fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
-        uuid::Uuid::from_slice(&self.read_bytes()?).map_err(From::from)
+        let mut buf = [0u8; 16];
+        self.transport
+            .read_exact(&mut buf)
+            .map(|_| uuid::Uuid::from_bytes(buf))
+            .map_err(From::from)
     }
 
     fn read_string(&mut self) -> crate::Result<String> {
@@ -621,7 +625,9 @@ where
     }
 
     fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
-        self.write_bytes(uuid.as_bytes())
+        self.transport
+            .write_all(uuid.as_bytes())
+            .map_err(From::from)
     }
 
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
