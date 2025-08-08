@@ -347,8 +347,7 @@ void test_get_underlying_transport() {
   do {                                                                                             \
     ::std::ostringstream name_ss;                                                                  \
     name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
-    ::std::function<void ()> test_func =                                        \
-        ::std::bind(_FUNC, ##__VA_ARGS__);                                      \
+    ::std::function<void ()> test_func = ::std::bind(_FUNC, __VA_ARGS__);                          \
     ::boost::unit_test::test_case* tc                                                              \
         = ::boost::unit_test::make_test_case(test_func, name_ss.str(), __FILE__, __LINE__);        \
     (suite)->add(tc);                                                                              \
@@ -359,8 +358,7 @@ void test_get_underlying_transport() {
     ::std::ostringstream name_ss;                                                                  \
     name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
     ::boost::unit_test::test_case* tc                                                              \
-        = ::boost::unit_test::make_test_case(::std::bind(_FUNC,                 \
-                                                                            ##__VA_ARGS__),        \
+        = ::boost::unit_test::make_test_case(::std::bind(_FUNC, __VA_ARGS__),                      \
                                              name_ss.str());                                       \
     (suite)->add(tc);                                                                              \
   } while (0)
