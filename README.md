@@ -1,3 +1,24 @@
+COMPASS instructions
+=============
+
+This is the Compass fork of Apache Thrift.
+We have a few changes that we manage in the compass-master branch, and
+we produce our own releases that we tag as v0.X.Y+compass
+
+## Releasing python code from here
+
+In order to release the python code from here:
+1. update the release tag e.g. by doing
+   `LC_ALL=C find . -type f -exec sed -i "" "s/0.16.0\\+compass/0.16.1+compass/g" {} +`
+
+2. use `./compass.create_sdist.sh` to create an sdist package
+
+3. upload the sdist package to nexus using twine
+
+4. add the dependency on the sdist package in urbancompass to requirements.transitive.txt, send
+  that as a PR. wheelmaker will automatically build binary wheels for all supported environments.
+
+
 Apache Thrift
 =============
 
