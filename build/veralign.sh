@@ -1,4 +1,4 @@
-x#!/usr/bin/env bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -59,6 +59,7 @@ FILES[contrib/thrift.spec]=simpleReplace
 FILES[contrib/zeromq/csharp/AssemblyInfo.cs]=simpleReplace
 FILES[contrib/thrift-maven-plugin/pom.xml]=pomReplace
 FILES[doc/specs/idl.md]=simpleReplace
+FILES[lib/as3/gradle.properties]=simpleReplace
 FILES[lib/d/src/thrift/base.d]=simpleReplace
 FILES[lib/dart/pubspec.yaml]=pubspecReplace
 FILES[lib/delphi/src/Thrift.pas]=simpleReplace
