@@ -40,6 +40,13 @@ namespace transport {
 
 class TSocket;
 
+enum class SocketType {
+    NONE,
+    INET,
+    INET6,
+    UNIX
+};
+
 /**
  * Server socket implementation of TServerTransport. Wrapper around a unix
  * socket listen and accept calls.
@@ -81,6 +88,14 @@ public:
    * @param path Pathname for unix socket.
    */
   TServerSocket(const std::string& path);
+
+  /**
+   * Constructor used for to initialize from an already bound unix socket.
+   * Useful for socket activation on systemd.
+   *
+   * @param fd
+   */
+  TServerSocket(THRIFT_SOCKET sock,SocketType socketType);
 
   ~TServerSocket() override;
 
@@ -172,6 +187,7 @@ private:
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
+  SocketType boundSocketType_;
 };
 }
 }

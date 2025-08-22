@@ -404,13 +404,13 @@
       "buffered",
       "http",
       "framed",
-      "zlib",
-      "websocket"
+      "zlib"
     ],
     "sockets": [
       "ip",
       "ip-ssl",
-      "domain"
+      "domain",
+      "domain-socketactivated"
     ],
     "protocols": [
       "compact",
