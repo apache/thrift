@@ -29,10 +29,14 @@ import (
 
 	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/shared"
 	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/tutorial"
+	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/fuzztest"
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
 const nbFuzzedProtocols = 2
+
+// 10MB message size limit to prevent over-allocation during fuzzing
+const FUZZ_MAX_MESSAGE_SIZE = 10 * 1024 * 1024
 
 func fuzzChooseProtocol(d byte, t thrift.TTransport) thrift.TProtocol {
 	switch d % nbFuzzedProtocols {
@@ -42,10 +46,12 @@ func fuzzChooseProtocol(d byte, t thrift.TTransport) thrift.TProtocol {
 		return thrift.NewTBinaryProtocolFactoryConf(nil).GetProtocol(t)
 	case 1:
 		return thrift.NewTCompactProtocolFactoryConf(nil).GetProtocol(t)
+	case 2:
+		return thrift.NewTJSONProtocolFactory().GetProtocol(t)
 	}
 }
 
-func Fuzz(data []byte) int {
+func FuzzTutorial(data []byte) int {
 	if len(data) < 2 {
 		return 0
 	}
@@ -141,4 +147,243 @@ func (p *CalculatorHandler) GetStruct(ctx context.Context, key int32) (*shared.S
 func (p *CalculatorHandler) Zip(ctx context.Context) (err error) {
 	fmt.Print("zip()\n")
 	return nil
+}
+
+func FuzzParseBinary(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	// Create transport and protocol
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	defer func() {
+		transport.Close()
+		// Reset the buffer to release memory
+		transport.Buffer.Reset()
+	}()
+	transport.Write(data)
+	config := &thrift.TConfiguration{
+		MaxMessageSize: FUZZ_MAX_MESSAGE_SIZE,
+	}
+	protocol := thrift.NewTBinaryProtocolFactoryConf(config).GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	fuzzTest := fuzztest.NewFuzzTest()
+	err := fuzzTest.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Successfully parsed
+	return 1
+}
+
+func FuzzParseCompact(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	// Create transport and protocol
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	defer func() {
+		transport.Close()
+		// Reset the buffer to release memory
+		transport.Buffer.Reset()
+	}()
+	transport.Write(data)
+	config := &thrift.TConfiguration{
+		MaxMessageSize: FUZZ_MAX_MESSAGE_SIZE,
+	}
+	protocol := thrift.NewTCompactProtocolFactoryConf(config).GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	fuzzTest := fuzztest.NewFuzzTest()
+	err := fuzzTest.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Successfully parsed
+	return 1
+}
+
+func FuzzParseJson(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	// Create transport and protocol
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	defer func() {
+		transport.Close()
+		// Reset the buffer to release memory
+		transport.Buffer.Reset()
+	}()
+	transport.Write(data)
+	protocol := thrift.NewTJSONProtocolFactory().GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	fuzzTest := fuzztest.NewFuzzTest()
+	err := fuzzTest.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Successfully parsed
+	return 1
+}
+
+func FuzzRoundtripBinary(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	config := &thrift.TConfiguration{
+		MaxMessageSize: FUZZ_MAX_MESSAGE_SIZE,
+	}
+
+	// First parse
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	transport.Write(data)
+	protocol := thrift.NewTBinaryProtocolFactoryConf(config).GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	test1 := fuzztest.NewFuzzTest()
+	err := test1.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Serialize back
+	outTransport := thrift.NewTMemoryBuffer()
+	outProtocol := thrift.NewTBinaryProtocolFactoryConf(config).GetProtocol(outTransport)
+	err = test1.Write(context.Background(), outProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Get serialized data and deserialize again
+	serialized := outTransport.Bytes()
+	reTransport := thrift.NewTMemoryBufferLen(len(serialized))
+	reTransport.Write(serialized)
+	reProtocol := thrift.NewTBinaryProtocolFactoryConf(config).GetProtocol(reTransport)
+
+	test2 := fuzztest.NewFuzzTest()
+	err = test2.Read(context.Background(), reProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Verify equality
+	if !test1.Equals(test2) {
+		panic("Roundtrip failed: objects not equal after deserialization")
+	}
+
+	return 1
+}
+
+func FuzzRoundtripCompact(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	config := &thrift.TConfiguration{
+		MaxMessageSize: FUZZ_MAX_MESSAGE_SIZE,
+	}
+
+	// First parse
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	transport.Write(data)
+	protocol := thrift.NewTCompactProtocolFactoryConf(config).GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	test1 := fuzztest.NewFuzzTest()
+	err := test1.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Serialize back
+	outTransport := thrift.NewTMemoryBuffer()
+	outProtocol := thrift.NewTCompactProtocolFactoryConf(config).GetProtocol(outTransport)
+	err = test1.Write(context.Background(), outProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Get serialized data and deserialize again
+	serialized := outTransport.Bytes()
+	reTransport := thrift.NewTMemoryBufferLen(len(serialized))
+	reTransport.Write(serialized)
+	reProtocol := thrift.NewTCompactProtocolFactoryConf(config).GetProtocol(reTransport)
+
+	test2 := fuzztest.NewFuzzTest()
+	err = test2.Read(context.Background(), reProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Verify equality
+	if !test1.Equals(test2) {
+		panic("Roundtrip failed: objects not equal after deserialization")
+	}
+
+	return 1
+}
+
+func FuzzRoundtripJson(data []byte) int {
+	// Skip if input is too small
+	if len(data) < 1 {
+		return 0
+	}
+
+	// First parse
+	transport := thrift.NewTMemoryBufferLen(len(data))
+	transport.Write(data)
+	protocol := thrift.NewTJSONProtocolFactory().GetProtocol(transport)
+
+	// Try to read the FuzzTest structure
+	test1 := fuzztest.NewFuzzTest()
+	err := test1.Read(context.Background(), protocol)
+	if err != nil {
+		// Invalid input, but not a crash
+		return 0
+	}
+
+	// Serialize back
+	outTransport := thrift.NewTMemoryBuffer()
+	outProtocol := thrift.NewTJSONProtocolFactory().GetProtocol(outTransport)
+	err = test1.Write(context.Background(), outProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Get serialized data and deserialize again
+	serialized := outTransport.Bytes()
+	reTransport := thrift.NewTMemoryBufferLen(len(serialized))
+	reTransport.Write(serialized)
+	reProtocol := thrift.NewTJSONProtocolFactory().GetProtocol(reTransport)
+
+	test2 := fuzztest.NewFuzzTest()
+	err = test2.Read(context.Background(), reProtocol)
+	if err != nil {
+		return 0
+	}
+
+	// Verify equality
+	if !test1.Equals(test2) {
+		panic("Roundtrip failed: objects not equal after deserialization")
+	}
+
+	return 1
 }
