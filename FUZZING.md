@@ -19,13 +19,13 @@ We currently maintain fuzzers for the following languages:
 - c_glib (partially supported, needs round-trip support)
 - C++
 - Java/JVM (and other JVM languages)
+- JavaScript
 
 We are working on adding fuzzers for the following languages:
 
 - Rust  
 - Swift
 - Python
-- JavaScript
 - netstd
 
 ## Fuzzer Types
