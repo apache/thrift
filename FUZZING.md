@@ -15,7 +15,7 @@ With fuzzing, we are focusing on testing the following key aspects across suppor
 
 We currently maintain fuzzers for the following languages:
 
-- Go (needs improvement)
+- Go
 - c_glib (partially supported, needs round-trip support)
 - C++
 
