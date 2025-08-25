@@ -20,12 +20,12 @@ We currently maintain fuzzers for the following languages:
 - C++
 - Java/JVM (and other JVM languages)
 - JavaScript
+- Python
 
 We are working on adding fuzzers for the following languages:
 
 - Rust  
 - Swift
-- Python
 - netstd
 
 ## Fuzzer Types

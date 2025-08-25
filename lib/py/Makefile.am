@@ -39,6 +39,7 @@ endif
 all-local: py3-build
 	$(PYTHON) setup.py build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
+	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
