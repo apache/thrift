@@ -90,6 +90,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'VoidMethExceptionsTest.thrift')
     thriftCompile(it, 'JavaAnnotationTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
+    thriftCompile(it, 'FuzzTest.thrift')
 }
 
 task generateOptionalTypeJava(group: 'Build') {

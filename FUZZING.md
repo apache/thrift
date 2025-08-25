@@ -18,6 +18,7 @@ We currently maintain fuzzers for the following languages:
 - Go
 - c_glib (partially supported, needs round-trip support)
 - C++
+- Java/JVM (and other JVM languages)
 
 We are working on adding fuzzers for the following languages:
 
@@ -25,7 +26,6 @@ We are working on adding fuzzers for the following languages:
 - Swift
 - Python
 - JavaScript
-- Java/JVM (and other JVM languages)
 - netstd
 
 ## Fuzzer Types
