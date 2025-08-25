@@ -17,10 +17,10 @@ We currently maintain fuzzers for the following languages:
 
 - Go (needs improvement)
 - c_glib (partially supported, needs round-trip support)
+- C++
 
 We are working on adding fuzzers for the following languages:
 
-- C++
 - Rust  
 - Swift
 - Python
