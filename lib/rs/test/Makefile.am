@@ -17,6 +17,12 @@
 # under the License.
 #
 
+SUBDIRS = .
+
+if WITH_TESTS
+SUBDIRS += fuzz
+endif
+
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 stubs: thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift thrifts/Ultimate.thrift $(top_builddir)/test/Recursive.thrift $(THRIFT)

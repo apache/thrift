@@ -807,6 +807,7 @@ AC_CONFIG_FILES([
   lib/rb/Makefile
   lib/rs/Makefile
   lib/rs/test/Makefile
+  lib/rs/test/fuzz/Makefile
   lib/rs/test_recursive/Makefile
   lib/rs/test_recursive/src/Makefile
   lib/rs/test_recursive/src/maintenance/Makefile
