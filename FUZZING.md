@@ -22,10 +22,10 @@ We currently maintain fuzzers for the following languages:
 - JavaScript
 - Python
 - Rust
+- Swift
 
 We are working on adding fuzzers for the following languages:
 
-- Swift
 - netstd
 
 ## Fuzzer Types
