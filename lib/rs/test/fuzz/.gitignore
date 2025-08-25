@@ -1,0 +1,6 @@
+target
+corpus
+artifacts
+coverage
+lib/fuzz_test.rs
+Cargo.lock

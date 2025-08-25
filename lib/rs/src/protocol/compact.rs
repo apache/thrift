@@ -483,7 +483,7 @@ where
     ) -> crate::Result<()> {
         let elem_identifier = collection_type_to_u8(element_type);
         if element_count <= 14 {
-            let header = (element_count as u8) << 4 | elem_identifier;
+            let header = ((element_count as u8) << 4) | elem_identifier;
             self.write_byte(header)
         } else {
             let header = 0xF0 | elem_identifier;

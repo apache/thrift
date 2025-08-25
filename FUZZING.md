@@ -21,10 +21,10 @@ We currently maintain fuzzers for the following languages:
 - Java/JVM (and other JVM languages)
 - JavaScript
 - Python
+- Rust
 
 We are working on adding fuzzers for the following languages:
 
-- Rust  
 - Swift
 - netstd
 
