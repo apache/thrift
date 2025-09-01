@@ -105,7 +105,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-php/with-php/' | sed 's/without-php_extension/with-php_extension/' )
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -159,7 +159,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -237,7 +237,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -328,7 +328,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -377,7 +377,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -430,7 +430,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -501,7 +501,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -536,7 +536,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -573,7 +573,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-cpp/with-cpp/g')
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -657,38 +657,38 @@ jobs:
             libevent-dev
 
       - name: Download java precross artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: java-precross
           path: lib/java/build
 
       - name: Download kotlin precross artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: kotlin-precross
           path: lib/kotlin
 
       # swift is currently broken and no maintainers around -> see THRIFT-5864
       #- name: Download swift precross artifacts
-      #  uses: actions/download-artifact@v4
+      #  uses: actions/download-artifact@v5
       #  with:
       #    name: swift-precross
       #    path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: rs-precross
           path: test/rs/bin
 
       - name: Download go precross artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: go-precross
           path: test/go/bin
 
       - name: Download cpp precross artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: cpp-precross
           path: .
