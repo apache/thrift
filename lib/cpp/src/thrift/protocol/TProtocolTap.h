@@ -166,6 +166,12 @@ public:
     return rv;
   }
 
+  uint32_t readUUID(TUuid& uuid) {
+    uint32_t rv = source_->readUUID(uuid);
+    sink_->writeUUid(uuid);
+    return rv;
+  }
+
 private:
   std::shared_ptr<TProtocol> source_;
   std::shared_ptr<TProtocol> sink_;

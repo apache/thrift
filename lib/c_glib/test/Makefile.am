@@ -18,7 +18,7 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-SUBDIRS =
+SUBDIRS = fuzz
 
 BUILT_SOURCES = \
         gen-c_glib/t_test_container_test_types.c \

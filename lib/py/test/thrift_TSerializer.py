@@ -56,15 +56,11 @@ class TestSerializer(unittest.TestCase):
         self.assertRaises(EOFError, deserialize, Message(), b'', factory)
 
     def test_TBinaryProtocol(self):
-        buf = TTransport.TMemoryBuffer()
-        transport = TTransport.TBufferedTransportFactory().getTransport(buf)
-        factory = TBinaryProtocolFactory(transport)
+        factory = TBinaryProtocolFactory()
         self.verify(self.binary_serialized, factory)
 
     def test_TBinaryProtocolAccelerated(self):
-        buf = TTransport.TMemoryBuffer()
-        transport = TTransport.TBufferedTransportFactory().getTransport(buf)
-        factory = TBinaryProtocolAcceleratedFactory(transport)
+        factory = TBinaryProtocolAcceleratedFactory()
         self.verify(self.binary_serialized, factory)
 
     def test_TCompactProtocol(self):

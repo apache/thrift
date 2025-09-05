@@ -21,6 +21,7 @@ use std::io;
 use std::io::{Read, Write};
 
 use super::{TReadTransport, TReadTransportFactory, TWriteTransport, TWriteTransportFactory};
+use crate::TConfiguration;
 
 /// Default capacity of the read buffer in bytes.
 const READ_CAPACITY: usize = 4096;
@@ -61,6 +62,7 @@ where
     pos: usize,
     cap: usize,
     chan: C,
+    config: TConfiguration,
 }
 
 impl<C> TFramedReadTransport<C>
@@ -81,6 +83,7 @@ where
             pos: 0,
             cap: 0,
             chan: channel,
+            config: TConfiguration::default(),
         }
     }
 }
@@ -91,7 +94,28 @@ where
 {
     fn read(&mut self, b: &mut [u8]) -> io::Result<usize> {
         if self.cap - self.pos == 0 {
-            let message_size = self.chan.read_i32::<BigEndian>()? as usize;
+            let frame_size_bytes = self.chan.read_i32::<BigEndian>()?;
+
+            if frame_size_bytes < 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Negative frame size: {}", frame_size_bytes),
+                ));
+            }
+
+            let message_size = frame_size_bytes as usize;
+
+            if let Some(max_frame) = self.config.max_frame_size() {
+                if message_size > max_frame {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!(
+                            "Frame size {} exceeds maximum allowed size of {}",
+                            message_size, max_frame
+                        ),
+                    ));
+                }
+            }
 
             let buf_capacity = cmp::max(message_size, READ_CAPACITY);
             self.buf.resize(buf_capacity, 0);
@@ -125,7 +149,6 @@ impl TReadTransportFactory for TFramedReadTransportFactory {
         Box::new(TFramedReadTransport::new(channel))
     }
 }
-
 /// Transport that writes framed messages.
 ///
 /// A `TFramedWriteTransport` maintains a fixed-size internal write buffer. All

@@ -18,6 +18,9 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
+SUBDIRS = .
+SUBDIRS += fuzz
+
 BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/DebugProtoTest_types.h \
                 gen-cpp/EnumTest_types.h \
