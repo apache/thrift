@@ -199,7 +199,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -640,7 +640,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           # here we intentionally use an older version so that we also verify Java 17 compiles to it
