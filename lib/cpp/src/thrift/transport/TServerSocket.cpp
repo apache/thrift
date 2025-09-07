@@ -593,6 +593,7 @@ bool TServerSocket::isUnixDomainSocket() const {
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
+try_again:
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
@@ -654,8 +655,15 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   if (clientSocket == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
-    throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
+    // In case of an ECONNABORTED error or any other error with the accept
+    // call retry the accept again instead of raising the exception which
+    // might kill the thrift server and hence making the thrift server
+    // unresponsive. The error can happen when accept syscall call, waiting
+    // for an incoming connection, or receiving a connection that terminates
+    // before the accept process completes, hence killing the thrift serve
+    GlobalOutput.perror("TServerSocket::acceptImpl() ::accept() Retrying ",
+                        errno_copy);
+    goto try_again;
   }
 
   // Make sure client socket is blocking
