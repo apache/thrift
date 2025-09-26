@@ -588,18 +588,23 @@ func (p *TBinaryProtocol) getMinSerializedSize(ttype TType) int32 {
 	}
 }
 
-
-
 // This function is shared between TBinaryProtocol and TCompactProtocol.
 //
 // It tries to read size bytes from trans, in a way that prevents large
-// allocations when size is insanely large (mostly caused by malformed message).
+// allocations when size is insanely large (mostly caused by malformed message),
+// or smaller than bytes.MinRead.
 func safeReadBytes(size int32, trans io.Reader) ([]byte, error) {
 	if size < 0 {
 		return nil, nil
 	}
-
-	buf := new(bytes.Buffer)
-	_, err := io.CopyN(buf, trans, int64(size))
-	return buf.Bytes(), err
+	if size > bytes.MinRead {
+		// Use bytes.Buffer to prevent allocating size bytes when size is very large
+		buf := new(bytes.Buffer)
+		_, err := io.CopyN(buf, trans, int64(size))
+		return buf.Bytes(), err
+	}
+	// Allocate size bytes
+	b := make([]byte, size)
+	n, err := io.ReadFull(trans, b)
+	return b[:n], err
 }
