@@ -603,33 +603,8 @@ func safeReadBytes(size int32, trans io.Reader) ([]byte, error) {
 		_, err := io.CopyN(buf, trans, int64(size))
 		return buf.Bytes(), err
 	}
-	return readExactBytes(size, trans)
-}
-
-// readExactBytes reads a maximum of size bytes from r until an error or EOF
-// and returns the data it read.
-// The implementation is similar to io.ReadAll, but it uses a buffer of
-// exactly size bytes to prevent bloat when reading short sequences.
-// A successful call returns err == nil, not err == EOF. Because readExactBytes
-// is defined to read from src until EOF, it does not treat an EOF from Read
-// as an error to be reported.
-func readExactBytes(size int32, r io.Reader) ([]byte, error) {
 	// Allocate size bytes
-	b := make([]byte, 0, size)
-	for {
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
-		}
-
-		if len(b) == cap(b) {
-			break
-		}
-	}
-	return b, nil
-
+	b := make([]byte, size)
+	n, err := io.ReadFull(trans, b)
+	return b[:n], err
 }
