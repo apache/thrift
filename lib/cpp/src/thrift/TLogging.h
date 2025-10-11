@@ -55,7 +55,7 @@
 #if T_GLOBAL_DEBUGGING_LEVEL > 0
 #define T_DEBUG(format_string, ...)                                                                \
   if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                                              \
-    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, ##__VA_ARGS__);            \
+    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, __VA_ARGS__);              \
   }
 #else
 #define T_DEBUG(format_string, ...)
@@ -80,7 +80,7 @@
               __FILE__,                                                                            \
               __LINE__,                                                                            \
               dbgtime,                                                                             \
-              ##__VA_ARGS__);                                                                      \
+              __VA_ARGS__);                                                                        \
     }                                                                                              \
   }
 #else
@@ -96,7 +96,7 @@
  */
 #define T_DEBUG_L(level, format_string, ...)                                                       \
   if ((level) > 0) {                                                                               \
-    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, ##__VA_ARGS__);            \
+    fprintf(stderr, "[%s,%d] " format_string " \n", __FILE__, __LINE__, __VA_ARGS__);              \
   }
 
 /**
@@ -116,7 +116,7 @@
             __FILE__,                                                                              \
             __LINE__,                                                                              \
             dbgtime,                                                                               \
-            ##__VA_ARGS__);                                                                        \
+            __VA_ARGS__);                                                                          \
   }
 
 /**
@@ -137,7 +137,7 @@
             __FILE__,                                                                              \
             __LINE__,                                                                              \
             dbgtime,                                                                               \
-            ##__VA_ARGS__);                                                                        \
+            __VA_ARGS__);                                                                          \
     exit(1);                                                                                       \
   }
 
@@ -155,7 +155,7 @@
       time(&now);                                                                                  \
       THRIFT_CTIME_R(&now, dbgtime);                                                               \
       dbgtime[24] = '\0';                                                                          \
-      fprintf(stderr, "[%s] " format_string " \n", dbgtime, ##__VA_ARGS__);                        \
+      fprintf(stderr, "[%s] " format_string " \n", dbgtime, __VA_ARGS__);                          \
     }                                                                                              \
   }
 #else
