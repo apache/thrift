@@ -85,6 +85,8 @@ void TOutput::printf(const char* message, ...) {
     f_(heap_buf);
   }
   free(heap_buf);
+#else
+  THRIFT_UNUSED_VARIABLE(message);
 #endif
 }
 
@@ -96,6 +98,8 @@ void TOutput::errorTimeWrapper(const char* msg) {
   THRIFT_CTIME_R(&now, dbgtime);
   dbgtime[24] = 0;
   fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
+#else
+  THRIFT_UNUSED_VARIABLE(msg);
 #endif
 }
 
