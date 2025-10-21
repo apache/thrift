@@ -463,7 +463,7 @@ void TServerSocket::listen() {
   if (isUnixDomainSocket()) {
     // -- Unix Domain Socket -- //
 
-    if(serverSocket_!= THRIFT_INVALID_SOCKET)
+    if (serverSocket_ == THRIFT_INVALID_SOCKET)
       serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
 
     if (serverSocket_ == THRIFT_INVALID_SOCKET) {
