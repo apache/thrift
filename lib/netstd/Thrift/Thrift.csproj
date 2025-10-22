@@ -40,8 +40,8 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <Title>Apache Thrift 0.22.0</Title>
-    <Version>0.22.0.0</Version>
+    <Title>Apache Thrift 0.23.0</Title>
+    <Version>0.23.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
     <Authors>Apache Thrift Developers</Authors>
@@ -50,21 +50,21 @@
     <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC</PackageTags>
-    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.22.0/CHANGES.md</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.23.0/CHANGES.md</PackageReleaseNotes>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright 2024 The Apache Software Foundation</Copyright>
+    <Copyright>Copyright 2025 The Apache Software Foundation</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.6" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
     <!--
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
     <PackageReference Include="System.Net.Requests" Version="4.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
@@ -88,13 +88,13 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web">
-      <Version>8.0.11</Version> 
+      <Version>8.0.17</Version> 
 		</PackageReference>
 	</ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.AspNetCore.Components.Web">
-      <Version>9.0.0</Version>
+      <Version>9.0.6</Version>
     </PackageReference>
   </ItemGroup>
 

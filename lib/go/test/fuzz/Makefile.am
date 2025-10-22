@@ -19,6 +19,7 @@
 
 gopathfuzz: $(THRIFT) fuzz.go
 	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/fuzz/gen-go/$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
+	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/fuzz/gen-go/$(COMPILER_EXTRAFLAG) ../../../../test/FuzzTest.thrift
 	touch gopathfuzz
 
 check: gopathfuzz

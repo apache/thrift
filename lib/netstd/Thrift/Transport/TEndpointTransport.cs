@@ -56,7 +56,7 @@ namespace Thrift.Transport
             // update only: message size can shrink, but not grow
             Debug.Assert(KnownMessageSize <= MaxMessageSize);
             if (newSize > KnownMessageSize)
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
 
             KnownMessageSize = newSize;
             RemainingMessageSize = newSize;
@@ -81,7 +81,7 @@ namespace Thrift.Transport
         public override void CheckReadBytesAvailable(long numBytes)
         {
             if ((RemainingMessageSize < numBytes) || (numBytes < 0))
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace Thrift.Transport
             else
             {
                 RemainingMessageSize = 0;
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
             }
         }
     }

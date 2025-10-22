@@ -17,31 +17,12 @@
  * under the License.
  */
 
-package;
 
-import org.apache.thrift.*;
-import org.apache.thrift.protocol.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.server.*;
-import org.apache.thrift.meta_data.*;
+#include <thrift/protocol/TCompactProtocol.h>
+#include "FuzzCommon.tcc"
 
+using namespace apache::thrift::protocol;
 
-class TestBase {
-
-    private function new() {
-        // override, if necessary
-    }
-
-    public static function Run(server : Bool) : Void {
-          throw new AbstractMethodError();
-    }
-
-    public static function Expect( expr : Bool, info : String, ?pos : haxe.PosInfos) : Void {
-        if( ! expr) {
-            throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
-        }
-        trace('Test "$info" - OK');
-    }
-
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+  return apache::thrift::fuzzer::fuzz_parse<TCompactProtocol>(data, size);
 }
- 

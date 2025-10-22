@@ -50,9 +50,14 @@
 namespace apache {
 namespace thrift {
 
-class TEnumIterator
-    : public std::iterator<std::forward_iterator_tag, std::pair<int, const char*> > {
+class TEnumIterator {
 public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = std::pair<int, const char*>;
+  using difference_type = std::ptrdiff_t;
+  using pointer = value_type*;
+  using reference = value_type&;
+
   TEnumIterator(int n, int* enums, const char** names)
     : ii_(0), n_(n), enums_(enums), names_(names) {}
 

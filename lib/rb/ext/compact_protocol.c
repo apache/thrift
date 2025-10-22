@@ -315,7 +315,7 @@ VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
 VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
   buf = force_binary_encoding(buf);
   VALUE transport = GET_TRANSPORT(self);
-  write_varint32(transport, RSTRING_LEN(buf));
+  write_varint32(transport, (uint32_t)RSTRING_LEN(buf));
   WRITE(transport, StringValuePtr(buf), RSTRING_LEN(buf));
   return Qnil;
 }
@@ -452,7 +452,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
   }
   
   int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
-  int32_t seqid = read_varint64(self);
+  int32_t seqid = (int32_t)read_varint64(self);
   VALUE messageName = rb_thrift_compact_proto_read_string(self);
   return rb_ary_new3(3, messageName, INT2FIX(type), INT2NUM(seqid));
 }
@@ -490,7 +490,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_map_begin(VALUE self) {
-  int32_t size = read_varint64(self);
+  int32_t size = (int32_t)read_varint64(self);
   uint8_t key_and_value_type = size == 0 ? 0 : read_byte_direct(self);
   return rb_ary_new3(3, INT2FIX(get_ttype(key_and_value_type >> 4)), INT2FIX(get_ttype(key_and_value_type & 0xf)), INT2FIX(size));
 }
@@ -499,7 +499,7 @@ VALUE rb_thrift_compact_proto_read_list_begin(VALUE self) {
   uint8_t size_and_type = read_byte_direct(self);
   int32_t size = (size_and_type >> 4) & 0x0f;
   if (size == 15) {
-    size = read_varint64(self);
+    size = (int32_t)read_varint64(self);
   }
   uint8_t type = get_ttype(size_and_type & 0x0f);
   return rb_ary_new3(2, INT2FIX(type), INT2FIX(size));
@@ -528,7 +528,7 @@ VALUE rb_thrift_compact_proto_read_i16(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_i32(VALUE self) {
-  return INT2NUM(zig_zag_to_int(read_varint64(self)));
+  return INT2NUM(zig_zag_to_int((int32_t)read_varint64(self)));
 }
 
 VALUE rb_thrift_compact_proto_read_i64(VALUE self) {
@@ -569,10 +569,10 @@ static void Init_constants() {
   thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
   rb_global_variable(&thrift_compact_protocol_class);
 
-  VERSION = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
-  VERSION_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));
-  TYPE_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_MASK")));
-  TYPE_BITS = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_BITS")));
+  VERSION = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
+  VERSION_MASK = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));
+  TYPE_MASK = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_MASK")));
+  TYPE_BITS = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_BITS")));
   TYPE_SHIFT_AMOUNT = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_SHIFT_AMOUNT")));
   PROTOCOL_ID = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("PROTOCOL_ID")));
 

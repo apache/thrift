@@ -62,7 +62,7 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 
 use crate::transport::{TReadTransport, TWriteTransport};
-use crate::{ProtocolError, ProtocolErrorKind};
+use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
 
 #[cfg(test)]
 macro_rules! assert_eq_written_bytes {
@@ -209,6 +209,7 @@ pub trait TInputProtocol {
             TType::I64 => self.read_i64().map(|_| ()),
             TType::Double => self.read_double().map(|_| ()),
             TType::String => self.read_string().map(|_| ()),
+            TType::Uuid => self.read_uuid().map(|_| ()),
             TType::Struct => {
                 self.read_struct_begin()?;
                 loop {
@@ -262,6 +263,15 @@ pub trait TInputProtocol {
     ///
     /// This method should **never** be used in generated code.
     fn read_byte(&mut self) -> crate::Result<u8>;
+
+    /// Get the minimum number of bytes a type will consume on the wire.
+    /// This picks the minimum possible across all protocols (so currently matches the compact protocol).
+    ///
+    /// This is used for pre-allocation size checks.
+    /// The actual data may be larger (e.g., for strings, lists, etc.).
+    fn min_serialized_size(&self, field_type: TType) -> usize {
+        self::compact::compact_protocol_min_serialized_size(field_type)
+    }
 }
 
 /// Converts Thrift identifiers, primitives, containers or structs into a
@@ -444,6 +454,10 @@ where
     fn read_byte(&mut self) -> crate::Result<u8> {
         (**self).read_byte()
     }
+
+    fn min_serialized_size(&self, field_type: TType) -> usize {
+        (**self).min_serialized_size(field_type)
+    }
 }
 
 impl<P> TOutputProtocol for Box<P>
@@ -565,7 +579,7 @@ where
 /// let protocol = factory.create(Box::new(channel));
 /// ```
 pub trait TInputProtocolFactory {
-    // Create a `TInputProtocol` that reads bytes from `transport`.
+    /// Create a `TInputProtocol` that reads bytes from `transport`.
     fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send>;
 }
 
@@ -917,6 +931,69 @@ pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> c
             kind: crate::ProtocolErrorKind::Unknown,
             message: format!("missing required field {}", field_name),
         })),
+    }
+}
+
+/// Common container size validation used by all protocols.
+///
+/// Checks that:
+/// - Container size is not negative
+/// - Container size doesn't exceed configured maximum
+/// - Container size * element size doesn't overflow
+/// - Container memory requirements don't exceed message size limit
+pub(crate) fn check_container_size(
+    config: &TConfiguration,
+    container_size: i32,
+    element_size: usize,
+) -> crate::Result<()> {
+    // Check for negative size
+    if container_size < 0 {
+        return Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::NegativeSize,
+            format!("Negative container size: {}", container_size),
+        )));
+    }
+
+    let size_as_usize = container_size as usize;
+
+    // Check against configured max container size
+    if let Some(max_size) = config.max_container_size() {
+        if size_as_usize > max_size {
+            return Err(crate::Error::Protocol(ProtocolError::new(
+                ProtocolErrorKind::SizeLimit,
+                format!(
+                    "Container size {} exceeds maximum allowed size of {}",
+                    container_size, max_size
+                ),
+            )));
+        }
+    }
+
+    // Check for potential overflow
+    if let Some(min_bytes_needed) = size_as_usize.checked_mul(element_size) {
+        // TODO: When Rust trait specialization stabilizes, we can add more precise checks
+        // for transports that track exact remaining bytes. For now, we use the message
+        // size limit as a best-effort check.
+        if let Some(max_message_size) = config.max_message_size() {
+            if min_bytes_needed > max_message_size {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::SizeLimit,
+                    format!(
+                        "Container would require {} bytes, exceeding message size limit of {}",
+                        min_bytes_needed, max_message_size
+                    ),
+                )));
+            }
+        }
+        Ok(())
+    } else {
+        Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::SizeLimit,
+            format!(
+                "Container size {} with element size {} bytes would result in overflow",
+                container_size, element_size
+            ),
+        )))
     }
 }
 

@@ -20,7 +20,7 @@
 AC_PREREQ(2.65)
 AC_CONFIG_MACRO_DIR([./aclocal])
 
-AC_INIT([thrift], [0.22.0])
+AC_INIT([thrift], [0.23.0])
 
 AC_CONFIG_AUX_DIR([.])
 
@@ -94,6 +94,18 @@ AC_PROG_LN_S
 AC_PROG_MKDIR_P
 AC_PROG_AWK
 AC_PROG_RANLIB
+
+# Check if we're using Clang
+AC_MSG_CHECKING([whether we are using Clang])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([], [[
+    #ifndef __clang__
+      not clang
+    #endif
+  ]])],
+  [CLANG=yes], [CLANG=no])
+AC_MSG_RESULT([$CLANG])
+AM_CONDITIONAL([USING_CLANG], [test "x$CLANG" = "xyes"])
 
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
@@ -761,6 +773,7 @@ AC_CONFIG_FILES([
   lib/cl/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
+  lib/cpp/test/fuzz/Makefile
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
   lib/cpp/thrift-qt5.pc
@@ -768,6 +781,7 @@ AC_CONFIG_FILES([
   lib/c_glib/Makefile
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
+  lib/c_glib/test/fuzz/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -793,6 +807,7 @@ AC_CONFIG_FILES([
   lib/rb/Makefile
   lib/rs/Makefile
   lib/rs/test/Makefile
+  lib/rs/test/fuzz/Makefile
   lib/rs/test_recursive/Makefile
   lib/rs/test_recursive/src/Makefile
   lib/rs/test_recursive/src/maintenance/Makefile

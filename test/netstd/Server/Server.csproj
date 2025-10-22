@@ -24,7 +24,7 @@
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
-    <Version>0.22.0.0</Version>
+    <Version>0.23.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -36,9 +36,9 @@
 
   <ItemGroup>
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
     <PackageReference Include="System.Threading" Version="[4.3,)" />
   </ItemGroup>
 

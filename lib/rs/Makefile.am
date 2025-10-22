@@ -53,5 +53,7 @@ EXTRA_DIST = \
 	Cargo.toml \
 	README.md \
 	release.sh \
+	NOTICE \
+	LICENSE \
 	RELEASING.md
 

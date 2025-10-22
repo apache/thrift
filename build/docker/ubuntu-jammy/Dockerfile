@@ -51,12 +51,6 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
   /etc/apt/sources.list.d/dart_stable.list
 
-# dotnet (netcore)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/22.04/prod.list && \
-  chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  chown root:root /etc/apt/sources.list.d/microsoft-prod.list
-
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
   echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
@@ -159,9 +153,9 @@ RUN apt-get install -y --no-install-recommends \
   libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.21.7
+ENV GOLANG_VERSION 1.24.3
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 13b76a9b2a26823e53062fa841b07087d48ae2ef2936445dc34c4ae03293702c
+ENV GOLANG_DOWNLOAD_SHA256 3333f6ea53afa971e9078895eaa4ac7204a8c6b5c68c10e6bc9a33e8e391bdd8
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
   echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
   tar -C /usr/local -xzf golang.tar.gz && \

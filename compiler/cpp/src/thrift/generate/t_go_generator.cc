@@ -3747,8 +3747,8 @@ void t_go_generator::generate_serialize_container(ostream& out,
     out << indent() << "}(" << wrapped_prefix << "[i], " << wrapped_prefix << "[j]) {" << '\n';
     indent_up();
     out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
-                    << "fmt.Errorf(\"%T error writing set field: slice is not " "unique\", "
-                    << wrapped_prefix << "))" << '\n';
+                    << "fmt.Errorf(\"%T error writing set field %q: slice is not unique\", "
+                    << wrapped_prefix << ", \"" << escape_string(prefix) << "\"))" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
     indent_down();

@@ -469,6 +469,9 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, 
     return size;
   }
 
+  // Check against MaxMessageSize before alloc
+  trans_->checkReadBytesAvailable(size);
+
   str.resize(size);
   this->trans_->readAll(reinterpret_cast<uint8_t*>(&str[0]), size);
   return (uint32_t)size;
@@ -480,8 +483,8 @@ int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
 {
   switch (type)
   {
-      case T_STOP: return 0;
-      case T_VOID: return 0;
+      case T_STOP: return 1;  // T_STOP needs to count itself
+      case T_VOID: return 1;  // T_VOID needs to count itself
       case T_BOOL: return sizeof(int8_t);
       case T_BYTE: return sizeof(int8_t);
       case T_DOUBLE: return sizeof(double);
@@ -489,10 +492,11 @@ int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
       case T_I32: return sizeof(int);
       case T_I64: return sizeof(long);
       case T_STRING: return sizeof(int);  // string length
-      case T_STRUCT: return 0;  // empty struct
+      case T_STRUCT: return 1;  // empty struct needs at least 1 byte for the T_STOP
       case T_MAP: return sizeof(int);  // element count
       case T_SET: return sizeof(int);  // element count
       case T_LIST: return sizeof(int);  // element count
+      case T_UUID: return 16; // 16 bytes
       default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }

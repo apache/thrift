@@ -22,6 +22,7 @@ package org.apache.thrift.transport.sasl;
 import static org.apache.thrift.transport.sasl.NegotiationStatus.COMPLETE;
 import static org.apache.thrift.transport.sasl.NegotiationStatus.OK;
 
+import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
 import javax.security.sasl.SaslServer;
@@ -31,6 +32,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServerEventHandler;
+import org.apache.thrift.transport.SocketAddressProvider;
 import org.apache.thrift.transport.TMemoryTransport;
 import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -325,6 +327,11 @@ public class NonblockingSaslHandler {
       if (eventHandler != null) {
         if (!serverContextCreated) {
           serverContext = eventHandler.createContext(requestProtocol, responseProtocol);
+          SocketAddress remoteAddress =
+              underlyingTransport instanceof SocketAddressProvider
+                  ? ((SocketAddressProvider) underlyingTransport).getRemoteSocketAddress()
+                  : null;
+          serverContext.setRemoteAddress(remoteAddress);
           serverContextCreated = true;
         }
         eventHandler.processContext(serverContext, memoryTransport, memoryTransport);
@@ -409,20 +416,23 @@ public class NonblockingSaslHandler {
    * selector.
    */
   public void close() {
-    underlyingTransport.close();
-    selectionKey.cancel();
-    if (saslPeer != null) {
-      saslPeer.dispose();
+    try {
+      if (serverContextCreated) {
+        eventHandler.deleteContext(
+            serverContext,
+            inputProtocolFactory.getProtocol(underlyingTransport),
+            outputProtocolFactory.getProtocol(underlyingTransport));
+      }
+    } finally {
+      selectionKey.cancel();
+      if (saslPeer != null) {
+        saslPeer.dispose();
+      }
+      nextPhase = Phase.CLOSED;
+      currentPhase = Phase.CLOSED;
+      underlyingTransport.close();
+      LOGGER.trace("Connection closed: {}", underlyingTransport);
     }
-    if (serverContextCreated) {
-      eventHandler.deleteContext(
-          serverContext,
-          inputProtocolFactory.getProtocol(underlyingTransport),
-          outputProtocolFactory.getProtocol(underlyingTransport));
-    }
-    nextPhase = Phase.CLOSED;
-    currentPhase = Phase.CLOSED;
-    LOGGER.trace("Connection closed: {}", underlyingTransport);
   }
 
   public enum Phase {

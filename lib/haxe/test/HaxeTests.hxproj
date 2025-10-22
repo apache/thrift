@@ -63,7 +63,7 @@ thrift -r -gen haxe  ../../../lib/rb/benchmark/Benchmark.thrift</preBuildCommand
   <options>
     <option showHiddenPaths="False" />
     <option testMovie="Custom" />
-    <option testMovieCommand="bin/HaxeTests/Main.exe server multiplex" />
+    <option testMovieCommand="bin/HaxeTests/Main.exe server constants" />
   </options>
   <!-- Plugin storage -->
   <storage />

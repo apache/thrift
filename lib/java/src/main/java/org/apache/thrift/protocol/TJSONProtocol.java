@@ -972,9 +972,9 @@ public class TJSONProtocol extends TProtocol {
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:
-        return 0; // Stop
+        return 1; // Stop - T_STOP needs to count itself
       case 1:
-        return 0; // Void
+        return 1; // Void - T_VOID needs to count itself
       case 2:
         return 1; // Bool
       case 3:

@@ -18,7 +18,7 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-SUBDIRS =
+SUBDIRS = fuzz
 
 BUILT_SOURCES = \
         gen-c_glib/t_test_container_test_types.c \
@@ -34,7 +34,8 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_container_service.h \
         gen-c_glib/t_test_srv.h \
         gen-c_glib/t_test_thrift_test.h \
-        gen-c_glib/t_test_thrift_test_types.h
+        gen-c_glib/t_test_thrift_test_types.h \
+        gen-c_glib/t_test_enum_test_types.h
 
 AM_CPPFLAGS = -I../src -I./gen-c_glib -I$(top_builddir)/lib/c_glib/src/thrift
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) \

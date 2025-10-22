@@ -246,6 +246,50 @@ class TSocketTest extends TestCase
         $this->assertTrue($transport->isOpen());
     }
 
+    public function testOpenUnixSocket()
+    {
+        $host = 'unix:///tmp/ipc.sock';
+        $port = -1;
+        $persist = false;
+        $debugHandler = null;
+        $handle = fopen('php://memory', 'r+');
+
+        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
+             ->expects($this->once())
+             ->with(
+                 $host,
+                 $port,
+                 $this->anything(), #$errno,
+                 $this->anything(), #$errstr,
+                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+             )
+             ->willReturn($handle);
+
+        $this->getFunctionMock('Thrift\Transport', 'socket_import_stream')
+            ->expects($this->once())
+            ->with($handle)
+            ->willReturn(true);
+
+        $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
+            ->expects($this->once())
+            ->with(
+                $this->anything(), #$socket,
+                SOL_TCP, #$level
+                TCP_NODELAY, #$option
+                1 #$value
+            )
+            ->willReturn(true);
+
+        $transport = new TSocket(
+            $host,
+            $port,
+            $persist,
+            $debugHandler
+        );
+
+        $transport->open();
+    }
+
     /**
      * @dataProvider open_THRIFT_5132_DataProvider
      */

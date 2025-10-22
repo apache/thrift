@@ -17,7 +17,7 @@
 # under the License.
 #
 
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 project("thrift-compiler" VERSION ${PACKAGE_VERSION})
 
 # version.h now handled via veralign.sh

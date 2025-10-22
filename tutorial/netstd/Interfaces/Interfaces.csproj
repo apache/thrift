@@ -22,7 +22,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>Interfaces</AssemblyName>
     <PackageId>Interfaces</PackageId>
-    <Version>0.22.0.0</Version>
+    <Version>0.23.0.0</Version>
     <Nullable>enable</Nullable>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">

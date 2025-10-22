@@ -274,7 +274,7 @@ public:
    */
   void checkReadBytesAvailable(long int numBytes)
   {
-    if (remainingMessageSize_ < numBytes)
+    if (remainingMessageSize_ < numBytes || numBytes < 0)
       throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
   }
 
