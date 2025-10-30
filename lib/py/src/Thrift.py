@@ -36,6 +36,7 @@ class TType(object):
     LIST = 15
     UTF8 = 16
     UTF16 = 17
+    UUID = 18
 
     _VALUES_TO_NAMES = (
         'STOP',
@@ -56,6 +57,7 @@ class TType(object):
         'LIST',
         'UTF8',
         'UTF16',
+         'UUID',
     )
 
 
