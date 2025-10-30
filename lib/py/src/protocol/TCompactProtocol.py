@@ -19,6 +19,7 @@
 
 from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
+import uuid
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 
@@ -80,6 +81,7 @@ def readVarint(trans):
         shift += 7
 
 
+# As per TCompactProtocol.tcc
 class CompactType(object):
     STOP = 0x00
     TRUE = 0x01
@@ -94,6 +96,7 @@ class CompactType(object):
     SET = 0x0A
     MAP = 0x0B
     STRUCT = 0x0C
+    UUID = 0x0D
 
 
 CTYPES = {
@@ -109,6 +112,7 @@ CTYPES = {
     TType.LIST: CompactType.LIST,
     TType.SET: CompactType.SET,
     TType.MAP: CompactType.MAP,
+    TType.UUID: CompactType.UUID,
 }
 
 TTYPES = {}
@@ -276,6 +280,10 @@ class TCompactProtocol(TProtocolBase):
     def writeDouble(self, dub):
         self.trans.write(pack('<d', dub))
 
+    @writer
+    def writeUuid(self, uuid):
+        self.trans.write(uuid.bytes)
+
     def __writeBinary(self, s):
         self.__writeSize(len(s))
         self.trans.write(s)
@@ -414,6 +422,12 @@ class TCompactProtocol(TProtocolBase):
     def readDouble(self):
         buff = self.trans.readAll(8)
         val, = unpack('<d', buff)
+        return val
+
+    @reader
+    def readUuid(self):
+        buff = self.trans.readAll(16)
+        val = uuid.UUID(bytes=buff)
         return val
 
     def __readBinary(self):

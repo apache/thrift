@@ -88,6 +88,10 @@ public:
     return encodeValue(value, parsedspec.type, parsedspec.typeargs);
   }
 
+  void writeUuid(char* value) {
+    writeBuffer(value, 16);
+  }
+
   void writeFieldStop() { writeByte(static_cast<uint8_t>(T_STOP)); }
 
   bool readBool(bool& val) {
@@ -159,6 +163,13 @@ public:
     return len;
   }
 
+  int32_t readUuid(char** buf) {
+    if (!readBytes(buf, 16)) {
+      return -1;
+    }
+    return 16;
+  }
+
   int32_t readListBegin(TType& etype) {
     int32_t len;
     uint8_t b = 0;
@@ -206,6 +217,7 @@ public:
     }
     SKIPBYTES(len);
   }
+  bool skipUuid() { SKIPBYTES(16); }
 #undef SKIPBYTES
 
 private:

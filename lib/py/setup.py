@@ -85,6 +85,14 @@ def run_setup(with_binary):
                               'src/ext/binary.cpp',
                               'src/ext/compact.cpp',
                           ],
+                          depends=[
+                              'src/ext/binary.h',
+                              'src/ext/compact.h',
+                              'src/ext/endian.h',
+                              'src/ext/protocol.h',
+                              'src/ext/protocol.tcc',
+                              'src/ext/types.h',
+                          ],
                           include_dirs=include_dirs,
                           )
             ],
@@ -138,6 +146,8 @@ def run_setup(with_binary):
 try:
     with_binary = True
     run_setup(with_binary)
+    sys.exit(0)
+
 except BuildFailed:
     print()
     print('*' * 80)
@@ -146,4 +156,16 @@ except BuildFailed:
     print('*' * 80)
     print()
 
+# Retry but without the binary
+try:
     run_setup(False)
+    sys.exit(0)
+
+except BuildFailed:
+    print()
+    print('*' * 80)
+    print("An error occurred while trying to compile without the C extension enabled")
+    print("Build failed")
+    print('*' * 80)
+    print()
+    sys.exit(1)

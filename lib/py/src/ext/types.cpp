@@ -26,6 +26,7 @@ namespace thrift {
 namespace py {
 
 PyObject* ThriftModule = nullptr;
+PyObject* UuidModule = nullptr;
 
 #if PY_MAJOR_VERSION < 3
 char refill_signature[] = {'s', '#', 'i'};

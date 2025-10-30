@@ -104,6 +104,10 @@ public:
 
   void writeFieldStop() { writeByte(0); }
 
+  void writeUuid(char* value) {
+    writeBuffer(value, 16);
+  }
+
   bool readBool(bool& val) {
     if (readBool_.exists) {
       readBool_.exists = false;
@@ -231,6 +235,13 @@ public:
   }
   bool readFieldBegin(TType& type, int16_t& tag);
 
+  bool readUuid(char** buf) {
+    if (!readBytes(buf, 16)) {
+      return false;
+    }
+    return true;
+  }
+
   bool skipBool() {
     bool val;
     return readBool(val);
@@ -263,6 +274,9 @@ public:
     }
     SKIPBYTES(len);
   }
+  bool skipUuid() {
+    SKIPBYTES(16);
+  }
 #undef SKIPBYTES
 
 private:
@@ -279,7 +293,8 @@ private:
     CT_LIST = 0x09,
     CT_SET = 0x0A,
     CT_MAP = 0x0B,
-    CT_STRUCT = 0x0C
+    CT_STRUCT = 0x0C,
+    CT_UUID = 0x0D,
   };
 
   static const uint8_t TTypeToCType[];
@@ -288,7 +303,7 @@ private:
 
   int toCompactType(TType type) {
     int i = static_cast<int>(type);
-    return i < 16 ? TTypeToCType[i] : -1;
+    return i <= 16 ? TTypeToCType[i] : -1;
   }
 
   uint32_t toZigZag(int32_t val) { return (val >> 31) ^ (val << 1); }

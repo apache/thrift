@@ -21,6 +21,7 @@ import _import_local_thrift  # noqa
 from thrift.protocol import TCompactProtocol
 from thrift.transport import TTransport
 import unittest
+import uuid
 
 CLEAR = 0
 FIELD_WRITE = 1
@@ -70,6 +71,10 @@ def testNaked(type, data):
         protocol.state = CONTAINER_WRITE
         protocol.writeBool(True)
 
+    if type.capitalize() == 'Uuid':
+        protocol.state = CONTAINER_WRITE
+        protocol.writeUuid(data)
+
     transport.flush()
     data_r = buf.getvalue()
     buf = TTransport.TMemoryBuffer(data_r)
@@ -107,9 +112,13 @@ def testNaked(type, data):
         protocol.state = CONTAINER_READ
         return protocol.readBool()
 
+    if type.capitalize() == 'Uuid':
+        protocol.state = CONTAINER_READ
+        return protocol.readUuid()
+
 
 def testField(type, data):
-    TType = {"Bool": 2, "Byte": 3, "Binary": 5, "I16": 6, "I32": 8, "I64": 10, "Double": 11, "String": 12}
+    TType = {"Bool": 2, "Byte": 3, "Binary": 5, "I16": 6, "I32": 8, "I64": 10, "Double": 11, "String": 12, "Uuid": 13}
     buf = TTransport.TMemoryBuffer()
     transport = TTransport.TBufferedTransportFactory().getTransport(buf)
     protocol = TCompactProtocol.TCompactProtocol(transport)
@@ -138,6 +147,9 @@ def testField(type, data):
 
     elif type.capitalize() == 'Bool':
         protocol.writeBool(data)
+
+    if type.capitalize() == 'Uuid':
+        protocol.writeUuid(data)
 
     protocol.writeFieldEnd()
     protocol.writeStructEnd()
@@ -173,6 +185,9 @@ def testField(type, data):
 
     elif type.capitalize() == 'Bool':
         return protocol.readBool()
+
+    if type.capitalize() == 'Uuid':
+        return protocol.readUuid()
 
     protocol.readFieldEnd()
     protocol.readStructEnd()
@@ -268,6 +283,9 @@ class TestTCompactProtocol(unittest.TestCase):
             self.assertEqual(True, testField('Bool', True))
             self.assertEqual(3.14159261, testField('Double', 3.14159261))
             self.assertEqual("hello thrift", testField('String', "hello thrift"))
+            self.assertEqual(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'), testNaked("Uuid", uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}')))
+            self.assertEqual(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'), testField("Uuid", uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}')))
+
             TMessage = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}
             test_data = [("short message name", TMessage["T_CALL"], 0),
                          ("1", TMessage["T_REPLY"], 12345),

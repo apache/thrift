@@ -20,6 +20,7 @@
 from ThriftTest import ThriftTest
 from ThriftTest.ThriftTest import Client
 from ThriftTest.ttypes import Xtruct
+from uuid import UUID
 
 import unittest
 
@@ -66,3 +67,6 @@ class TypeAnnotationsTest(unittest.TestCase):
 
     def test_set(self):
         self.assertEqual(Client.testSet.__annotations__, {'return': set[int], 'thing': set[int]})
+
+    def test_uuid(self):
+        self.assertEqual(Client.testUuid.__annotations__, {'return': UUID, 'thing': UUID})
