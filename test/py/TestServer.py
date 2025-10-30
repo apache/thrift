@@ -82,6 +82,11 @@ class TestHandler(object):
             logging.info('testBinary()')  # TODO: hex output
         return thing
 
+    def testUuid(self, thing):
+        if options.verbose > 1:
+            logging.info('testUuid(%s)' % thing)
+        return thing
+
     def testStruct(self, thing):
         if self.options.verbose > 1:
             logging.info('testStruct({%s, %s, %s, %s})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))

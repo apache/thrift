@@ -18,6 +18,7 @@
 #
 
 import unittest
+import uuid
 
 import _import_local_thrift  # noqa
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
@@ -52,6 +53,9 @@ def testNaked(type, data):
     if type.capitalize() == 'Bool':
         protocol.writeBool(data)
 
+    if type.capitalize() == 'Uuid':
+        protocol.writeUuid(data)
+
     transport.flush()
     data_r = buf.getvalue()
     buf = TTransport.TMemoryBuffer(data_r)
@@ -81,9 +85,12 @@ def testNaked(type, data):
     if type.capitalize() == 'Bool':
         return protocol.readBool()
 
+    if type.capitalize() == 'Uuid':
+        return protocol.readUuid()
+
 
 def testField(type, data):
-    TType = {"Bool": 2, "Byte": 3, "Binary": 5, "I16": 6, "I32": 8, "I64": 10, "Double": 11, "String": 12}
+    TType = {"Bool": 2, "Byte": 3, "Binary": 5, "I16": 6, "I32": 8, "I64": 10, "Double": 11, "String": 12, "Uuid": 13}
     buf = TTransport.TMemoryBuffer()
     transport = TTransport.TBufferedTransportFactory().getTransport(buf)
     protocol = TBinaryProtocol(transport)
@@ -112,6 +119,9 @@ def testField(type, data):
 
     if type.capitalize() == 'Bool':
         protocol.writeBool(data)
+
+    if type.capitalize() == 'Uuid':
+        protocol.writeUuid(data)
 
     protocol.writeFieldEnd()
     protocol.writeStructEnd()
@@ -147,6 +157,9 @@ def testField(type, data):
 
     if type.capitalize() == 'Bool':
         return protocol.readBool()
+
+    if type.capitalize() == 'Uuid':
+        return protocol.readUuid()
 
     protocol.readFieldEnd()
     protocol.readStructEnd()
@@ -245,6 +258,8 @@ class TestTBinaryProtocol(unittest.TestCase):
             self.assertEqual(True, testField('Bool', True))
             self.assertEqual(3.1415926, testNaked("Double", 3.1415926))
             self.assertEqual("hello thrift", testNaked("String", "hello thrift"))
+            self.assertEqual(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'), testNaked("Uuid", uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}')))
+            self.assertEqual(uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}'), testField("Uuid", uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e0f}')))
 
             TMessageType = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}
             test_data = [("short message name", TMessageType['T_CALL'], 0),

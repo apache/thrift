@@ -24,6 +24,7 @@ import ssl
 import sys
 import time
 import unittest
+import uuid
 
 from optparse import OptionParser
 from util import local_libpath
@@ -159,6 +160,13 @@ class AbstractTest(unittest.TestCase):
         print('testBinary')
         val = bytearray([i for i in range(0, 256)])
         self.assertEqual(bytearray(self.client.testBinary(bytes(val))), val)
+
+    def testUuid(self):
+        print('testUuid')
+        val1 = uuid.UUID('00112233-4455-6677-8899-aabbccddeeff')
+        val2 = uuid.uuid4()
+        self.assertEqual(self.client.testUuid(val1), val1)
+        self.assertEqual(self.client.testUuid(val2), val2)
 
     def testStruct(self):
         print('testStruct')
