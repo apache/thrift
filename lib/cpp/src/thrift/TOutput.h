@@ -20,8 +20,6 @@
 #ifndef _THRIFT_OUTPUT_H_
 #define _THRIFT_OUTPUT_H_ 1
 
-//#include <thrift/thrift_export.h>
-
 namespace apache {
 namespace thrift {
 
@@ -49,11 +47,13 @@ public:
   /** Just like strerror_r but returns a C++ string object. */
   static std::string strerror_s(int errno_copy);
 
+  /** Get a singleton instance of the global TOutput object used by
+   * the library internally.  */
+  static TOutput& instance();
+
 private:
   void (*f_)(const char*);
 };
-
-/*THRIFT_EXPORT*/ extern TOutput GlobalOutput;   // if you need this exported, build your own wrapper lib around and export it yourself
 }
 } // namespace apache::thrift
 
