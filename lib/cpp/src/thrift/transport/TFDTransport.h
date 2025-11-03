@@ -50,7 +50,7 @@ public:
       try {
         close();
       } catch (TTransportException& ex) {
-        GlobalOutput.printf("~TFDTransport TTransportException: '%s'", ex.what());
+        TOutput::instance().printf("~TFDTransport TTransportException: '%s'", ex.what());
       }
     }
   }

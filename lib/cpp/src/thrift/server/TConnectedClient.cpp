@@ -75,14 +75,14 @@ void TConnectedClient::run() {
           // All other transport exceptions are logged.
           // State of connection is unknown.  Done.
           string errStr = string("TConnectedClient died: ") + ttx.what();
-          GlobalOutput(errStr.c_str());
+          TOutput::instance()(errStr.c_str());
           done = true;
           break;
         }
       }
     } catch (const TException& tex) {
       string errStr = string("TConnectedClient processing exception: ") + tex.what();
-      GlobalOutput(errStr.c_str());
+      TOutput::instance()(errStr.c_str());
       // Disconnect from client, because we could not process the message.
       done = true;
     }
@@ -100,21 +100,21 @@ void TConnectedClient::cleanup() {
     inputProtocol_->getTransport()->close();
   } catch (const TTransportException& ttx) {
     string errStr = string("TConnectedClient input close failed: ") + ttx.what();
-    GlobalOutput(errStr.c_str());
+    TOutput::instance()(errStr.c_str());
   }
 
   try {
     outputProtocol_->getTransport()->close();
   } catch (const TTransportException& ttx) {
     string errStr = string("TConnectedClient output close failed: ") + ttx.what();
-    GlobalOutput(errStr.c_str());
+    TOutput::instance()(errStr.c_str());
   }
 
   try {
     client_->close();
   } catch (const TTransportException& ttx) {
     string errStr = string("TConnectedClient client close failed: ") + ttx.what();
-    GlobalOutput(errStr.c_str());
+    TOutput::instance()(errStr.c_str());
   }
 }
 }

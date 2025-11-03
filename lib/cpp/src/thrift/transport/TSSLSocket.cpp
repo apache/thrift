@@ -386,14 +386,14 @@ void TSSLSocket::close() {
       if (rc < 0) {
         string errors;
         buildErrors(errors, errno_copy, error);
-        GlobalOutput(("SSL_shutdown: " + errors).c_str());
+        TOutput::instance()(("SSL_shutdown: " + errors).c_str());
       }
     } catch (TTransportException& te) {
       // Don't emit an exception because this method is called by the
       // destructor. There's also not much that a user can do to recover, so
       // just clean up as much as possible without throwing, similar to the rc
       // < 0 case above.
-      GlobalOutput.printf("SSL_shutdown: %s", te.what());
+      TOutput::instance().printf("SSL_shutdown: %s", te.what());
     }
     SSL_free(ssl_);
     ssl_ = nullptr;
@@ -609,7 +609,7 @@ void TSSLSocket::initializeHandshakeParams() {
   int flags;
   if ((flags = THRIFT_FCNTL(socket_, THRIFT_F_GETFL, 0)) < 0
       || THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK) < 0) {
-    GlobalOutput.perror("thriftServerEventHandler: set THRIFT_O_NONBLOCK (THRIFT_FCNTL) ",
+    TOutput::instance().perror("thriftServerEventHandler: set THRIFT_O_NONBLOCK (THRIFT_FCNTL) ",
                         THRIFT_GET_SOCKET_ERROR);
     ::THRIFT_CLOSESOCKET(socket_);
     return;
@@ -865,7 +865,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
       return TSSL_EINTR; // repeat operation
     }
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TSSLSocket::read THRIFT_POLL() ", errno_copy);
+    TOutput::instance().perror("TSSLSocket::read THRIFT_POLL() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
   } else if (ret > 0){
     if (fds[1].revents & THRIFT_POLLIN) {

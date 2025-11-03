@@ -31,8 +31,6 @@
 namespace apache {
 namespace thrift {
 
-/*THRIFT_EXPORT*/ TOutput GlobalOutput;   // if you need this exported, build your own wrapper lib around and export it yourself
-
 TOutput::TOutput() : f_(&errorTimeWrapper) {}
 
 void TOutput::printf(const char* message, ...) {
@@ -144,5 +142,11 @@ std::string TOutput::strerror_s(int errno_copy) {
   return std::string(b_error);
 #endif // __ZEPHYR__
 }
+
+TOutput& TOutput::instance() {
+  static TOutput instance;
+  return instance;
+}
+
 }
 } // apache::thrift

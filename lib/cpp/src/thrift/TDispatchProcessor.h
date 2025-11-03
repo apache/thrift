@@ -61,7 +61,7 @@ public:
     // (The old generated processor code used to try to skip a T_STRUCT and
     // continue.  However, that seems unsafe.)
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client", mtype);
+      TOutput::instance().printf("received invalid message type %d from client", mtype);
       return false;
     }
 
@@ -76,7 +76,7 @@ protected:
     in->readMessageBegin(fname, mtype, seqid);
 
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client", mtype);
+      TOutput::instance().printf("received invalid message type %d from client", mtype);
       return false;
     }
 
@@ -114,7 +114,7 @@ public:
     in->readMessageBegin(fname, mtype, seqid);
 
     if (mtype != protocol::T_CALL && mtype != protocol::T_ONEWAY) {
-      GlobalOutput.printf("received invalid message type %d from client", mtype);
+      TOutput::instance().printf("received invalid message type %d from client", mtype);
       return false;
     }
 

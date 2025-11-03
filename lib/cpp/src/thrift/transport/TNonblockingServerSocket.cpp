@@ -172,7 +172,7 @@ bool TNonblockingServerSocket::isOpen() const {
     if (::THRIFT_STAT(path_.c_str(), &path_info) < 0) {
 #endif
       const std::string vError = "TNonblockingServerSocket::isOpen(): The domain socket path '" + path_ + "' does not exist (yet).";
-      GlobalOutput.perror(vError.c_str(), THRIFT_GET_SOCKET_ERROR);
+      TOutput::instance().perror(vError.c_str(), THRIFT_GET_SOCKET_ERROR);
       return false;
     }
   }
@@ -224,7 +224,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
       // of the Administrators security group on Windows XP and earlier. But
       // we do not target WinXP anymore so no special checks required.
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
+      TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
                           errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
@@ -241,7 +241,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
                          cast_sockopt(&tcpSendBuffer_),
                          sizeof(tcpSendBuffer_))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_SNDBUF ", errno_copy);
+      TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_SNDBUF ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not set SO_SNDBUF",
@@ -256,7 +256,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
                          cast_sockopt(&tcpRecvBuffer_),
                          sizeof(tcpRecvBuffer_))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_RCVBUF ", errno_copy);
+      TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_RCVBUF ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not set SO_RCVBUF",
@@ -268,7 +268,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&ling), sizeof(ling))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
@@ -276,7 +276,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
   // Keepalive to ensure full result flushing
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&one), sizeof(one))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_KEEPALIVE ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_KEEPALIVE ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
       "Could not set TCP_NODELAY",
@@ -286,7 +286,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
 #ifdef SO_NOSIGPIPE
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_NOSIGPIPE", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_NOSIGPIPE", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not set SO_NOSIGPIPE",
@@ -298,7 +298,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
   int flags = THRIFT_FCNTL(serverSocket_, THRIFT_F_GETFL, 0);
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "THRIFT_FCNTL() THRIFT_F_GETFL failed",
@@ -307,7 +307,7 @@ void TNonblockingServerSocket::_setup_sockopts() {
 
   if (-1 == THRIFT_FCNTL(serverSocket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() THRIFT_FCNTL() THRIFT_O_NONBLOCK ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "THRIFT_FCNTL() THRIFT_F_SETFL THRIFT_O_NONBLOCK failed",
@@ -328,7 +328,7 @@ void TNonblockingServerSocket::_setup_tcp_sockopts() {
   if (-1
       == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY, cast_sockopt(&one), sizeof(one))) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not set TCP_NODELAY",
@@ -340,7 +340,7 @@ void TNonblockingServerSocket::_setup_tcp_sockopts() {
   if (TSocket::getUseLowMinRto()) {
     if (-1 == setsockopt(s, IPPROTO_TCP, TCP_LOW_MIN_RTO, const_cast_sockopt(&one), sizeof(one))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() TCP_LOW_MIN_RTO ", errno_copy);
+      TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() TCP_LOW_MIN_RTO ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
         "Could not set TCP_NODELAY",
@@ -373,7 +373,7 @@ void TNonblockingServerSocket::listen() {
                                  AI_PASSIVE | AI_V4MAPPED);
 #endif
     } catch (const std::system_error& e) {
-      GlobalOutput.printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
+      TOutput::instance().printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not resolve host for server socket.");
@@ -392,7 +392,7 @@ void TNonblockingServerSocket::listen() {
 
     if (serverSocket_ == THRIFT_INVALID_SOCKET) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TNonblockingServerSocket::listen() socket() ", errno_copy);
+      TOutput::instance().perror("TNonblockingServerSocket::listen() socket() ", errno_copy);
       close();
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Could not create server socket.",
@@ -416,7 +416,7 @@ void TNonblockingServerSocket::listen() {
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 #else
-    GlobalOutput.perror("TNonblockingServerSocket::open() Unix Domain socket path not supported on this version of Windows", -99);
+    TOutput::instance().perror("TNonblockingServerSocket::open() Unix Domain socket path not supported on this version of Windows", -99);
     throw TTransportException(TTransportException::NOT_OPEN,
                               " Unix Domain socket path not supported");
 #endif
@@ -452,7 +452,7 @@ void TNonblockingServerSocket::listen() {
                              IPV6_V6ONLY,
                              cast_sockopt(&zero),
                              sizeof(zero))) {
-          GlobalOutput.perror("TNonblockingServerSocket::listen() IPV6_V6ONLY ", THRIFT_GET_SOCKET_ERROR);
+          TOutput::instance().perror("TNonblockingServerSocket::listen() IPV6_V6ONLY ", THRIFT_GET_SOCKET_ERROR);
         }
       }
 #endif // #ifdef IPV6_V6ONLY
@@ -472,7 +472,7 @@ void TNonblockingServerSocket::listen() {
       std::memset(&sa, 0, len);
       if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
         errno_copy = THRIFT_GET_SOCKET_ERROR;
-        GlobalOutput.perror("TNonblockingServerSocket::getPort() getsockname() ", errno_copy);
+        TOutput::instance().perror("TNonblockingServerSocket::getPort() getsockname() ", errno_copy);
       } else {
         if (sa.ss_family == AF_INET6) {
           const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
@@ -487,7 +487,7 @@ void TNonblockingServerSocket::listen() {
 
   // throw error if socket still wasn't created successfully
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
-    GlobalOutput.perror("TNonblockingServerSocket::listen() socket() ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() socket() ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not create server socket.",
@@ -507,7 +507,7 @@ void TNonblockingServerSocket::listen() {
     } else {
       THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TNonblockingServerSocket::listen() Could not bind to port %d", port_);
     }
-    GlobalOutput(errbuf);
+    TOutput::instance()(errbuf);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not bind",
@@ -520,7 +520,7 @@ void TNonblockingServerSocket::listen() {
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::listen() listen() ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::listen() listen() ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not listen", errno_copy);
   }
@@ -558,7 +558,7 @@ shared_ptr<TSocket> TNonblockingServerSocket::acceptImpl() {
 
   if (clientSocket == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TNonblockingServerSocket::acceptImpl() ::accept() ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::acceptImpl() ::accept() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
   }
 
@@ -567,7 +567,7 @@ shared_ptr<TSocket> TNonblockingServerSocket::acceptImpl() {
   if (flags == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     ::THRIFT_CLOSESOCKET(clientSocket);
-    GlobalOutput.perror("TNonblockingServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
+    TOutput::instance().perror("TNonblockingServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_GETFL ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN,
                               "THRIFT_FCNTL(THRIFT_F_GETFL)",
                               errno_copy);
@@ -576,7 +576,7 @@ shared_ptr<TSocket> TNonblockingServerSocket::acceptImpl() {
   if (-1 == THRIFT_FCNTL(clientSocket, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     ::THRIFT_CLOSESOCKET(clientSocket);
-    GlobalOutput
+    TOutput::instance()
         .perror("TNonblockingServerSocket::acceptImpl() THRIFT_FCNTL() THRIFT_F_SETFL ~THRIFT_O_NONBLOCK ",
                 errno_copy);
     throw TTransportException(TTransportException::UNKNOWN,
