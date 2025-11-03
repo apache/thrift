@@ -52,7 +52,7 @@ uint32_t TOverlappedWorkItem::overlappedResults(bool signal_failure) {
   BOOL result = ::GetOverlappedResult(h, &overlap, &bytes, TRUE);
   if (signal_failure && !result) // get overlapped error case
   {
-    GlobalOutput.perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
+    TOutput::instance().perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
     throw TTransportException(TTransportException::UNKNOWN, "TPipe: GetOverlappedResult failed");
   }
   return bytes;
@@ -113,7 +113,7 @@ TOverlappedSubmissionThread::TOverlappedSubmissionThread() {
   InitializeSListHead(&workList_);
   thread_ = (HANDLE)_beginthreadex(NULL, 0, thread_proc, this, 0, NULL);
   if (thread_ == 0) {
-    GlobalOutput.perror("TOverlappedSubmissionThread unable to create thread, errno=", errno);
+    TOutput::instance().perror("TOverlappedSubmissionThread unable to create thread, errno=", errno);
     throw TTransportException(TTransportException::NOT_OPEN,
                               " TOverlappedSubmissionThread unable to create thread");
   }

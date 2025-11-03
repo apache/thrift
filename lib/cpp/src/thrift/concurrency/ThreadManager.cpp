@@ -309,9 +309,9 @@ public:
           try {
             task->run();
           } catch (const std::exception& e) {
-            GlobalOutput.printf("[ERROR] task->run() raised an exception: %s", e.what());
+            TOutput::instance().printf("[ERROR] task->run() raised an exception: %s", e.what());
           } catch (...) {
-            GlobalOutput.printf("[ERROR] task->run() raised an unknown exception");
+            TOutput::instance().printf("[ERROR] task->run() raised an unknown exception");
           }
 
           // Re-acquire the lock to proceed in the thread manager
