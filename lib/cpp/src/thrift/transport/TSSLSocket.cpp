@@ -1134,6 +1134,10 @@ int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* dat
   return length;
 }
 
+void TSSLSocketFactory::setManualOpenSSLInitialization(bool manualOpenSSLInitialization) {
+  manualOpenSSLInitialization_ = manualOpenSSLInitialization;
+}
+
 // extract error messages from error queue
 void buildErrors(string& errors, int errno_copy, int sslerrno) {
   unsigned long errorCode;
