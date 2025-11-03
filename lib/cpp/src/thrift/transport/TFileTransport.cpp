@@ -101,10 +101,10 @@ void TFileTransport::resetOutputFile(int fd, string filename, off_t offset) {
   if (fd_ > 0) {
     // flush any events in the queue
     flush();
-    GlobalOutput.printf("error, current file (%s) not closed", filename_.c_str());
+    TOutput::instance().printf("error, current file (%s) not closed", filename_.c_str());
     if (-1 == ::THRIFT_CLOSE(fd_)) {
       int errno_copy = THRIFT_ERRNO;
-      GlobalOutput.perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
+      TOutput::instance().perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
       throw TTransportException(TTransportException::UNKNOWN,
                                 "TFileTransport: error in file close",
                                 errno_copy);
@@ -159,7 +159,7 @@ TFileTransport::~TFileTransport() {
   // close logfile
   if (fd_ > 0) {
     if (-1 == ::THRIFT_CLOSE(fd_)) {
-      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", THRIFT_ERRNO);
+      TOutput::instance().perror("TFileTransport: ~TFileTransport() ::close() ", THRIFT_ERRNO);
     } else {
       // successfully closed fd
       fd_ = 0;
@@ -306,7 +306,7 @@ void TFileTransport::writerThread() {
       openLogFile();
     } catch (...) {
       int errno_copy = THRIFT_ERRNO;
-      GlobalOutput.perror("TFileTransport: writerThread() openLogFile() ", errno_copy);
+      TOutput::instance().perror("TFileTransport: writerThread() openLogFile() ", errno_copy);
       fd_ = 0;
       hasIOError = true;
     }
@@ -322,12 +322,12 @@ void TFileTransport::writerThread() {
         readState_.resetAllValues();
       } else {
         int errno_copy = THRIFT_ERRNO;
-        GlobalOutput.perror("TFileTransport: writerThread() truncate ", errno_copy);
+        TOutput::instance().perror("TFileTransport: writerThread() truncate ", errno_copy);
         hasIOError = true;
       }
     } catch (...) {
       int errno_copy = THRIFT_ERRNO;
-      GlobalOutput.perror("TFileTransport: writerThread() initialization ", errno_copy);
+      TOutput::instance().perror("TFileTransport: writerThread() initialization ", errno_copy);
       hasIOError = true;
     }
   }
@@ -348,7 +348,7 @@ void TFileTransport::writerThread() {
         ::THRIFT_FSYNC(fd_);
         if (-1 == ::THRIFT_CLOSE(fd_)) {
           int errno_copy = THRIFT_ERRNO;
-          GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
+          TOutput::instance().perror("TFileTransport: writerThread() ::close() ", errno_copy);
         } else {
           // fd successfully closed
           fd_ = 0;
@@ -426,7 +426,7 @@ void TFileTransport::writerThread() {
             std::unique_ptr<uint8_t[]> array(zeros);
             if (-1 == ::THRIFT_WRITE(fd_, zeros, padding)) {
               int errno_copy = THRIFT_ERRNO;
-              GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ",
+              TOutput::instance().perror("TFileTransport: writerThread() error while padding zeros ",
                                   errno_copy);
               hasIOError = true;
               continue;
@@ -440,7 +440,7 @@ void TFileTransport::writerThread() {
         if (outEvent->eventSize_ > 0) {
           if (-1 == ::THRIFT_WRITE(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
             int errno_copy = THRIFT_ERRNO;
-            GlobalOutput.perror("TFileTransport: error while writing event ", errno_copy);
+            TOutput::instance().perror("TFileTransport: error while writing event ", errno_copy);
             hasIOError = true;
             continue;
           }
@@ -620,7 +620,7 @@ eventInfo* TFileTransport::readEvent() {
       // read error
       if (readState_.bufferLen_ == -1) {
         readState_.resetAllValues();
-        GlobalOutput("TFileTransport: error while reading from file");
+        TOutput::instance()("TFileTransport: error while reading from file");
         throw TTransportException("TFileTransport: error while reading from file");
       } else if (readState_.bufferLen_ == 0) { // EOF
         // wait indefinitely if there is no timeout
@@ -784,7 +784,7 @@ void TFileTransport::performRecovery() {
               "TFileTransport: log file corrupted at offset: %lu",
               static_cast<unsigned long>(offset_ + readState_.lastDispatchPtr_));
 
-      GlobalOutput(errorMsg);
+      TOutput::instance()(errorMsg);
       throw TTransportException(errorMsg);
     }
   }
@@ -829,7 +829,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   readState_.resetAllValues();
   currentEvent_ = nullptr;
   if (offset_ == -1) {
-    GlobalOutput("TFileTransport: lseek error in seekToChunk");
+    TOutput::instance()("TFileTransport: lseek error in seekToChunk");
     throw TTransportException("TFileTransport: lseek error in seekToChunk");
   }
 
@@ -898,7 +898,7 @@ void TFileTransport::openLogFile() {
   // make sure open call was successful
   if (fd_ == -1) {
     int errno_copy = THRIFT_ERRNO;
-    GlobalOutput.perror("TFileTransport: openLogFile() ::open() file: " + filename_, errno_copy);
+    TOutput::instance().perror("TFileTransport: openLogFile() ::open() file: " + filename_, errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, filename_, errno_copy);
   }
 }
@@ -924,7 +924,7 @@ TFileTransportBuffer::~TFileTransportBuffer() {
 
 bool TFileTransportBuffer::addEvent(eventInfo* event) {
   if (bufferMode_ == READ) {
-    GlobalOutput("Trying to write to a buffer in read mode");
+    TOutput::instance()("Trying to write to a buffer in read mode");
   }
   if (writePoint_ < size_) {
     buffer_[writePoint_++] = event;

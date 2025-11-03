@@ -79,7 +79,7 @@ TSocketPool::TSocketPool(const vector<string>& hosts, const vector<int>& ports)
     randomize_(true),
     alwaysTryLast_(true) {
   if (hosts.size() != ports.size()) {
-    GlobalOutput("TSocketPool::TSocketPool: hosts.size != ports.size");
+    TOutput::instance()("TSocketPool::TSocketPool: hosts.size != ports.size");
     throw TTransportException(TTransportException::BAD_ARGS);
   }
 
@@ -229,7 +229,7 @@ void TSocketPool::open() {
           TSocket::open();
         } catch (const TException &e) {
           string errStr = "TSocketPool::open failed " + getSocketInfo() + ": " + e.what();
-          GlobalOutput(errStr.c_str());
+          TOutput::instance()(errStr.c_str());
           socket_ = THRIFT_INVALID_SOCKET;
           continue;
         }
@@ -251,7 +251,7 @@ void TSocketPool::open() {
     }
   }
 
-  GlobalOutput("TSocketPool::open: all connections failed");
+  TOutput::instance()("TSocketPool::open: all connections failed");
   throw TTransportException(TTransportException::NOT_OPEN);
 }
 
