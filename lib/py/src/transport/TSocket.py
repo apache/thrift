@@ -22,6 +22,7 @@ import logging
 import os
 import socket
 import sys
+import platform
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -234,7 +235,10 @@ class TServerSocket(TSocketBase, TServerTransportBase):
 
         self.handle = s = socket.socket(res[0], res[1])
         if s.family is socket.AF_INET6:
-            s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            if platform.system() == 'Windows' and sys.version_info < (3, 8):
+                logger.warning('Windows socket defaulting to IPv4 for Python < 3.8: See https://github.com/python/cpython/issues/73701')
+            else:
+                s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(s, 'settimeout'):
             s.settimeout(None)
