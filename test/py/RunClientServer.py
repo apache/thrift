@@ -277,6 +277,9 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
+        if gp_dir == 'type_hints' and (sys.version_info < (3,7)):
+            print('Skipping \'type_hints\' test since python 3.6 or later is required')
+            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
