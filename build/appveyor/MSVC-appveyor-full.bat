@@ -105,6 +105,7 @@ IF NOT "%QT_VERSION%" == "" (
 CALL win_showenv.bat || EXIT /B
 MKDIR "%WIN3P%" || EXIT /B
 
+@ECHO ON
 choco feature enable -n allowGlobalConfirmation || EXIT /B
 
 :: Things to install when NOT running in appveyor:
