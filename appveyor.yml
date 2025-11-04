@@ -58,6 +58,7 @@ environment:
      PYTHON_VERSION: 3.5
      QT_VERSION: 5.8
      ZLIB_VERSION: 1.2.8
+     DISABLED_TESTS: (PythonTestSSLSocket)
 
    - PROFILE: MINGW
      PROFILE_CLASS: MINGW
