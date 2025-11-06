@@ -244,7 +244,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMessageEnd() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStructBegin(std::string& name) {
-  name = "";
+  name.clear();
   return 0;
 }
 
