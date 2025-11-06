@@ -460,7 +460,7 @@ uint32_t TCompactProtocolT<Transport_>::readMessageBegin(
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readStructBegin(std::string& name) {
-  name = "";
+  name.clear();
   lastField_.push(lastFieldId_);
   lastFieldId_ = 0;
   return 0;
@@ -700,7 +700,7 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   rsize += readVarint32(size);
   // Catch empty string case
   if (size == 0) {
-    str = "";
+    str.clear();
     return rsize;
   }
 
