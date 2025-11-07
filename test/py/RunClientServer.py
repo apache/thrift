@@ -212,6 +212,9 @@ class TestCases(object):
         # skip any servers that don't work with SSL
         if with_ssl and try_server in SKIP_SSL:
             return False
+        if with_ssl and (sys.version_info < (3,7)):
+            print('Skipping \'with_ssl\' test since python 3.7 or later is required')
+            return False
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                   % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
@@ -242,6 +245,9 @@ class TestCases(object):
                         for with_ssl in (False, True):
                             # skip any servers that don't work with SSL
                             if with_ssl and try_server in SKIP_SSL:
+                                continue
+                            if with_ssl and (sys.version_info < (3,7)):
+                                print('Skipping \'with_ssl\' test since python 3.7 or later is required')
                                 continue
                             test_count += 1
                             if self.verbose > 0:
@@ -277,6 +283,12 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
+        if gp_dir == 'type_hints' and (sys.version_info < (3,7)):
+            print('Skipping \'type_hints\' test since python 3.7 or later is required')
+            continue
+        if gp_dir == 'enum' and (sys.version_info < (3,7)):
+            print('Skipping \'enum\' test since python 3.7 or later is required')
+            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
