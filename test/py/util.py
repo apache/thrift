@@ -27,6 +27,13 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
 
 def local_libpath():
     globdir = os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
+    # Consider MM.mm and MMmm as valid local lib paths.
+    # On Windows 11 with Python 3.13.9 the second option is required
+    version_formats = [
+        '-%d.%d' % (sys.version_info[0], sys.version_info[1]),
+        '-%d%d' % (sys.version_info[0], sys.version_info[1])
+    ]
     for libpath in glob.glob(globdir):
-        if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
-            return libpath
+        for fmt in version_formats:
+            if libpath.endswith(fmt):
+                return libpath
