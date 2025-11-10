@@ -25,7 +25,7 @@ from DebugProtoTest.ttypes import ExceptionWithAMap, MutableException, Exception
 from thrift.Thrift import TFrozenDict
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol
-import collections
+from collections.abc import Hashable
 import unittest
 
 
@@ -40,9 +40,9 @@ class TestFrozenBase(unittest.TestCase):
 
     def test_dict_is_hashable_only_after_frozen(self):
         d0 = {}
-        self.assertFalse(isinstance(d0, collections.Hashable))
+        self.assertFalse(isinstance(d0, Hashable))
         d1 = TFrozenDict(d0)
-        self.assertTrue(isinstance(d1, collections.Hashable))
+        self.assertTrue(isinstance(d1, Hashable))
 
     def test_struct_with_collection_fields(self):
         pass
