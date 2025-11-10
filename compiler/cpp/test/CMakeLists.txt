@@ -32,7 +32,7 @@ endforeach()
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
-  add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
+  add_test(NAME StalenessCheckTest COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
 else()
   message(WARNING "Skipping StalenessCheckTest as there is no python interpreter available.")
 endif()
