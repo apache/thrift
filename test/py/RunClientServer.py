@@ -289,10 +289,6 @@ def main():
             # Skip type hints tests -> See THRIFT-5885 (it might be related)
             print('Skipping \'type_hints\' tests')
             continue
-        if gp_dir == 'enum':
-            # Skip enum tests -> See THRIFT-5885
-            print('Skipping \'enum\' tests')
-            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
