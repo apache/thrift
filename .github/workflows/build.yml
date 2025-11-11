@@ -495,7 +495,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.x"
+          - "3.13" # Pin to 3.13 for now -> see THRIFT-5900
       fail-fast: false
     steps:
       - uses: actions/checkout@v5
@@ -520,8 +520,7 @@ jobs:
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure 3.x
-        if: matrix.python-version == '3.x'
+      - name: Run configure
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
