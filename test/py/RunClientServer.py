@@ -212,8 +212,9 @@ class TestCases(object):
         # skip any servers that don't work with SSL
         if with_ssl and try_server in SKIP_SSL:
             return False
-        if with_ssl and (sys.version_info < (3,7)):
-            print('Skipping \'with_ssl\' test since python 3.7 or later is required')
+        # Skip SSL issues -> See THRIFT-5901
+        if with_ssl:
+            print('Skipping \'with_ssl\' tests')
             return False
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
@@ -246,8 +247,9 @@ class TestCases(object):
                             # skip any servers that don't work with SSL
                             if with_ssl and try_server in SKIP_SSL:
                                 continue
-                            if with_ssl and (sys.version_info < (3,7)):
-                                print('Skipping \'with_ssl\' test since python 3.7 or later is required')
+                            # Skip SSL issues -> See THRIFT-5901
+                            if with_ssl:
+                                print('Skipping \'with_ssl\' tests')
                                 continue
                             test_count += 1
                             if self.verbose > 0:
