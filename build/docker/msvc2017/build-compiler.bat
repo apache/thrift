@@ -26,8 +26,8 @@ cd c:\build
 
 :: Generate the out-of-tree build files
 cmake^
-  -DBOOST_ROOT=C:\Libraries\boost_1_69_0^
-  -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_69_0\lib64-msvc-14.1^
+  -DBOOST_ROOT=C:\Libraries\boost_1_89_0^
+  -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_89_0\lib64-msvc-14.1^
   -DBUILD_LIBRARIES=OFF^
   -DCMAKE_BUILD_TYPE=Release^
   -DCMAKE_INSTALL_PREFIX=C:\install^
@@ -38,7 +38,7 @@ cmake^
 cmake --build . --target thrift-compiler --config Release || EXIT /B
 
 :: Test
-cmake --build . --target check || EXIT /B
+ctest -C Release || EXIT /B
 
 :: Install
 cmake --install .
