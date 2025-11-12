@@ -1,0 +1,129 @@
+name: MSVC Build 
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      THRIFT_BUILD_DIR: C:\thrift-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure expected workspace path
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'C:\src')) { New-Item -Path 'C:\src' -ItemType Directory | Out-Null }
+          if (Test-Path 'C:\src\thrift') { Remove-Item 'C:\src\thrift' -Recurse -Force }
+          cmd /c mklink /J C:\src\thrift $env:GITHUB_WORKSPACE
+
+      - name: Configure build output directory
+        shell: pwsh
+        run: |
+          New-Item -Path $env:THRIFT_BUILD_DIR -ItemType Directory -Force | Out-Null
+
+      - name: Set Docker image name
+        shell: pwsh
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          $image = "ghcr.io/{0}/thrift-build" -f $env:OWNER.ToLower()
+          "DOCKER_IMAGE=$image" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Compute Docker image tag
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 'build/docker/msvc2017/Dockerfile').Hash.ToLower().Substring(0, 12)
+          "IMAGE_TAG=msvc2017-$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull cached image
+        id: pull_cached
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $needBuild = $true
+
+          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+          docker pull "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" 2>&1 | Out-Host
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Successfully pulled cached image with hash tag"
+            $needBuild = $false
+          } else {
+            Write-Host "Hash tag not found, no fallback configured. Will build from scratch."
+            $needBuild = $true
+          }
+
+          Write-Host "Setting outputs: need_build=$needBuild"
+          "need_build=$needBuild" >> $env:GITHUB_OUTPUT
+
+      - name: Build Docker image
+        if: steps.pull_cached.outputs.need_build == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "Building with tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+          docker build -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" -f build\docker\msvc2017\Dockerfile 'build\'
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Docker build failed"
+            exit 1
+          }
+          Write-Host "Verifying tags were created:"
+          docker images "$($env:DOCKER_IMAGE)"
+
+      - name: Push Docker image
+        if: github.event_name != 'pull_request' && steps.pull_cached.outputs.need_build == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "Pushing hash-based tag only: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+          docker push "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to push hash-based tag"
+            exit 1
+          }
+          Write-Host "Successfully pushed hash-tagged image"
+
+      - name: Build and test inside container
+        shell: pwsh
+        run: |
+          docker run -v c:\src\thrift:C:\Thrift -v "${env:THRIFT_BUILD_DIR}:C:\build" --rm -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" c:\thrift\build\docker\msvc2017\build.bat
+
+      - name: Check test results
+        if: always()
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $env:THRIFT_BUILD_DIR 'Testing\Temporary\LastTest.log'
+          if (Test-Path $logPath) {
+            $content = Get-Content $logPath -Raw
+            if ($content -match 'Test Failed\.') {
+              Write-Error "Tests failed - check LastTest.log artifact for details"
+              exit 1
+            } else {
+              Write-Host "All tests passed"
+            }
+          } else {
+            Write-Warning "LastTest.log not found at $logPath"
+          }
+
+      - name: Upload LastTest log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msvc2017-LastTest-log
+          path: ${{ env.THRIFT_BUILD_DIR }}\Testing\Temporary\LastTest.log
+          if-no-files-found: warn

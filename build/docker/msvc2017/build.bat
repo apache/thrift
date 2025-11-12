@@ -26,12 +26,13 @@ cd c:\build
 
 :: Generate the out-of-tree build files
 cmake^
-  -DBOOST_ROOT=C:\Libraries\boost_1_69_0^
-  -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_69_0\lib64-msvc-14.1^
-  -DFLEX_HOME=C:\Adobe\Flex\SDK\4.6^
-  -DLIBEVENT_ROOT=C:\Libraries\libevent-2.1.8^
-  -DZLIB_ROOT=C:\Libraries\zlib-1.2.11^
+  -DCMAKE_GENERATOR_PLATFORM=x64^
+  -DBOOST_ROOT=%BOOST_ROOT%^
+  -DFLEX_HOME=%FLEX_HOME%^
+  -DLIBEVENT_ROOT=%LIBEVENT_ROOT%^
+  -DZLIB_ROOT=%ZLIB_ROOT%^
   -DCMAKE_BUILD_TYPE=Release^
+  -DBUILD_SHARED_LIBS=OFF^
   -DCMAKE_INSTALL_PREFIX=C:\install^
   c:\thrift || EXIT /B
 
@@ -39,7 +40,7 @@ cmake^
 cmake --build . --config Release || EXIT /B
 
 :: Test
-cmake --build . --target check || EXIT /B
+ctest -C Release || EXIT /B
 
 :: Install
 cmake --install .
