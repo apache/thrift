@@ -304,6 +304,9 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+    defaults:
+      run:
+        shell: bash  # required by net install script
     steps:
       - uses: actions/checkout@v5
 
@@ -313,12 +316,33 @@ jobs:
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
           sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
 
-#      the sdk is installed by default, but keep this step for reference
-#      caveat: net9 is (currently?) NOT installed, so manually again
-      - name: Set up .NET SDK
+# This whole setup is getting worse: https://github.com/dotnet/core/discussions/9258
+      - name: Set up .NET SDK (via install script)
         run: |
-          sudo add-apt-repository -y ppa:dotnet/backports
-          sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
+          # remove any existing install
+          sudo apt remove dotnet*    
+          # install key
+          sudo apt install gpg
+          wget https://dot.net/v1/dotnet-install.asc
+          gpg --import dotnet-install.asc          
+          # download and verify
+          wget https://dot.net/v1/dotnet-install.sh
+          wget https://dot.net/v1/dotnet-install.sig
+          gpg --verify dotnet-install.sig dotnet-install.sh          
+          # run install script
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --channel 10.0          
+          # export env vars
+          export DOTNET_ROOT=$HOME/.dotnet
+          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools          
+          dotnet --list-sdks
+
+#      the sdk is installed by default, but keep this step for reference
+#      especially newer versions are NOT always pre-installed, so manually again
+#      - name: Set up .NET SDK
+#        run: |
+#          sudo add-apt-repository -y ppa:dotnet/backports
+#          sudo apt-get install -y --no-install-recommends dotnet-sdk-10.0
 #      end
 
       - name: Run bootstrap
