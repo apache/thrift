@@ -74,6 +74,7 @@ FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
