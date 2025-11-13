@@ -67,6 +67,11 @@ set(testgencpp_cob_SOURCES
 )
 add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
 
+if (WIN32 AND MSVC)
+    add_library(testgencppCLI STATIC ${testgencpp_SOURCES})
+    set_target_properties(testgencppCLI PROPERTIES COMMON_LANGUAGE_RUNTIME "")
+endif()
+
 add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)
 target_link_libraries(Benchmark thrift)

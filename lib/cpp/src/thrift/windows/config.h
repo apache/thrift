@@ -52,7 +52,6 @@
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/windows/GetTimeOfDay.h>
 #include <thrift/windows/Operators.h>
-#include <thrift/windows/TWinsockSingleton.h>
 #include <thrift/windows/WinFcntl.h>
 #include <thrift/windows/SocketPair.h>
 
