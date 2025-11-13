@@ -374,16 +374,18 @@ class TestDispatcher(object):
             self._m = multiprocessing.managers.BaseManager()
             self._m.register('ports', PortAllocator)
             self._m.start()
-            self._pool = multiprocessing.Pool(concurrency, self._pool_init, (self._m.address,))
+            self._pool = multiprocessing.Pool(concurrency, TestDispatcher._pool_init, (self._m.address, self._stop))
         self._log.debug(
             'TestDispatcher started with %d concurrent jobs' % concurrency)
 
-    def _pool_init(self, address):
+    @staticmethod
+    def _pool_init(address, stop_event):
         global stop
         global m
         global ports
-        stop = self._stop
+        stop = stop_event
         m = multiprocessing.managers.BaseManager(address)
+        m.register('ports')
         m.connect()
         ports = m.ports()
 
