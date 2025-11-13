@@ -86,6 +86,7 @@ class TestHandler(object):
         return thing
 
     def testException(self, arg):
+        from ThriftTest.ttypes import Xception
         # if self.options.verbose > 1:
         logging.info('testException(%s)' % arg)
         if arg == 'Xception':
@@ -94,6 +95,8 @@ class TestHandler(object):
             raise TException(message='This is a TException')
 
     def testMultiException(self, arg0, arg1):
+        from ThriftTest.ttypes import Xtruct, Xception, Xception2
+
         if self.options.verbose > 1:
             logging.info('testMultiException(%s, %s)' % (arg0, arg1))
         if arg0 == 'Xception':
@@ -165,6 +168,8 @@ class TestHandler(object):
         }
 
     def testInsanity(self, argument):
+        from ThriftTest.ttypes import Insanity
+
         if self.options.verbose > 1:
             logging.info('testInsanity(%s)' % argument)
         return {
@@ -176,6 +181,8 @@ class TestHandler(object):
         }
 
     def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
+        from ThriftTest.ttypes import Xtruct
+
         if self.options.verbose > 1:
             logging.info('testMulti(%s, %s, %s, %s, %s, %s)' % (arg0, arg1, arg2, arg3, arg4, arg5))
         return Xtruct(string_thing='Hello2',
@@ -400,7 +407,6 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
 
     from ThriftTest import ThriftTest, SecondService
-    from ThriftTest.ttypes import Xtruct, Xception, Xception2, Insanity
     from thrift.Thrift import TException
     from thrift.TMultiplexedProcessor import TMultiplexedProcessor
     from thrift.transport import THeaderTransport
