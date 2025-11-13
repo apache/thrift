@@ -33,57 +33,60 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestHandler(object):
+    def __init__(self, options):
+        self.options = options
+
     def testVoid(self):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testVoid()')
 
     def testString(self, str):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testString(%s)' % str)
         return str
 
     def testBool(self, boolean):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testBool(%s)' % str(boolean).lower())
         return boolean
 
     def testByte(self, byte):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testByte(%d)' % byte)
         return byte
 
     def testI16(self, i16):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI16(%d)' % i16)
         return i16
 
     def testI32(self, i32):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI32(%d)' % i32)
         return i32
 
     def testI64(self, i64):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI64(%d)' % i64)
         return i64
 
     def testDouble(self, dub):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testDouble(%f)' % dub)
         return dub
 
     def testBinary(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testBinary()')  # TODO: hex output
         return thing
 
     def testStruct(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testStruct({%s, %s, %s, %s})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))
         return thing
 
     def testException(self, arg):
-        # if options.verbose > 1:
+        # if self.options.verbose > 1:
         logging.info('testException(%s)' % arg)
         if arg == 'Xception':
             raise Xception(errorCode=1001, message=arg)
@@ -91,7 +94,7 @@ class TestHandler(object):
             raise TException(message='This is a TException')
 
     def testMultiException(self, arg0, arg1):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMultiException(%s, %s)' % (arg0, arg1))
         if arg0 == 'Xception':
             raise Xception(errorCode=1001, message='This is an Xception')
@@ -102,49 +105,49 @@ class TestHandler(object):
         return Xtruct(string_thing=arg1)
 
     def testOneway(self, seconds):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testOneway(%d) => sleeping...' % seconds)
         time.sleep(seconds / 3)  # be quick
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('done sleeping')
 
     def testNest(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testNest(%s)' % thing)
         return thing
 
     def testMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMap(%s)' % thing)
         return thing
 
     def testStringMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testStringMap(%s)' % thing)
         return thing
 
     def testSet(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testSet(%s)' % thing)
         return thing
 
     def testList(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testList(%s)' % thing)
         return thing
 
     def testEnum(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testEnum(%s)' % thing)
         return thing
 
     def testTypedef(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testTypedef(%s)' % thing)
         return thing
 
     def testMapMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMapMap(%s)' % thing)
         return {
             -4: {
@@ -162,7 +165,7 @@ class TestHandler(object):
         }
 
     def testInsanity(self, argument):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testInsanity(%s)' % argument)
         return {
             1: {
@@ -173,7 +176,7 @@ class TestHandler(object):
         }
 
     def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMulti(%s, %s, %s, %s, %s, %s)' % (arg0, arg1, arg2, arg3, arg4, arg5))
         return Xtruct(string_thing='Hello2',
                       byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
@@ -271,7 +274,7 @@ def main(options):
         server_type = 'THttpServer'
 
     # Set up the handler and processor objects
-    handler = TestHandler()
+    handler = TestHandler(options)
     processor = ThriftTest.Processor(handler)
 
     if options.proto.startswith('multi'):
