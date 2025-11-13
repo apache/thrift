@@ -240,6 +240,19 @@ class SummaryReporter(TestReporter):
         self._expected_failure = []
         self._print_header()
 
+    def __getstate__(self):
+        """Prepare object for pickling - remove unpicklable file handle (Since Python 3.14)"""
+        state = self.__dict__.copy()
+        # Remove the unpicklable file handle
+        state['out'] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore object after unpickling - restore stdout"""
+        self.__dict__.update(state)
+        # Restore stdout (since that's what it was initialized to)
+        self.out = sys.stdout
+
     @property
     def testdir(self):
         return os.path.join(self._basedir, self._testdir_rel)
