@@ -30,6 +30,16 @@ from thrift.transport.TTransport import TTransportException
 
 
 class TSocketTest(unittest.TestCase):
+    def test_failed_connection_raises_exception(self):
+        sock = TSocket(host="localhost", port=60606) # unused port
+        with self.assertRaises(TTransportException) as ctx:
+            sock.open()
+        exc = ctx.exception
+        self.assertEqual(exc.type, TTransportException.NOT_OPEN)
+        self.assertIn("Could not connect to any of", exc.message)
+        self.assertIsNotNone(exc.inner)
+        self.assertIn("Connection refused", str(exc.inner))
+
     def test_socket_readtimeout_exception(self):
         acc = ServerAcceptor(TServerSocket(port=0))
         acc.start()
