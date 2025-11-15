@@ -984,8 +984,8 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
         t_type* type = (*m_iter)->get_type();
         if (type->is_enum()) {
           out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << '\n'
-              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') else "
-              << type_name(type) << ".__members__.get(value))" << '\n'
+              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') or value is None else "
+              << type_name(type) << "(value))" << '\n'
               << indent() << indent_str() << "return" << '\n';
         }
       }

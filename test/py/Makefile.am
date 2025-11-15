@@ -125,8 +125,8 @@ gen-py-enum/%/__init__.py: ../%.thrift $(THRIFT)
 
 gen-py-type_hints/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-type_hints || $(MKDIR_P) gen-py-type_hints
-	test ../$(notdir $<) \
-	&& $(THRIFT) --gen py:type_hints,enum -out gen-py-type_hints ../$(notdir $<) \
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:type_hints,enum -out gen-py-type_hints ../v0.16/$(notdir $<) \
 	|| $(THRIFT) --gen py:type_hints,enum -out gen-py-type_hints $<
 
 clean-local:

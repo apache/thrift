@@ -27,7 +27,7 @@ add_test(NAME python_test_generate
 )
 
 add_test(NAME python_test
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RunClientServer.py --gen-base=${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/RunClientServer.py --gen-base=${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS python_test_generate
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
