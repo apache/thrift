@@ -23,10 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
@@ -35,7 +37,20 @@ public class TestThreadPoolServer {
   /** Test server is shut down properly even with some open clients. */
   @Test
   public void testStopServerWithOpenClient() throws Exception {
-    TServerSocket serverSocket = new TServerSocket(0, 3000);
+    AtomicReference<TSocket> ref = new AtomicReference<>();
+    TServerSocket serverSocket =
+        new TServerSocket(
+            new TServerSocket.ServerSocketTransportArgs()
+                .port(0)
+                .clientTimeout(3000)
+                .maxMessageSize(51200)) {
+          @Override
+          public TSocket accept() throws TTransportException {
+            TSocket socket = super.accept();
+            ref.set(socket);
+            return socket;
+          }
+        };
     TThreadPoolServer server = buildServer(serverSocket);
     Thread serverThread = new Thread(server::serve);
     serverThread.start();
@@ -44,6 +59,7 @@ public class TestThreadPoolServer {
       Thread.sleep(1000);
       // There is a thread listening to the client
       assertEquals(1, ((ThreadPoolExecutor) server.getExecutorService()).getActiveCount());
+      assertEquals(51200, ref.get().getConfiguration().getMaxMessageSize());
 
       // Trigger the server to stop, but it does not wait
       server.stop();
