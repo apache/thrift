@@ -29,13 +29,14 @@ cmake^
   -DBOOST_ROOT=C:\Libraries\boost_1_89_0^
   -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_89_0\lib64-msvc-14.1^
   -DBUILD_LIBRARIES=OFF^
+  -DBUILD_TESTING=ON^
   -DCMAKE_BUILD_TYPE=Release^
   -DCMAKE_INSTALL_PREFIX=C:\install^
   -DWITH_MT=ON^
   c:\thrift || EXIT /B
 
 :: Build
-cmake --build . --target thrift-compiler --config Release || EXIT /B
+cmake --build . --target thrift-compiler thrift_compiler_tests --config Release || EXIT /B
 
 :: Test
 ctest -C Release || EXIT /B

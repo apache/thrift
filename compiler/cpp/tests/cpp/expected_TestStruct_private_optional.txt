@@ -1,0 +1,49 @@
+class TestStruct : public virtual ::apache::thrift::TBase {
+ public:
+
+  TestStruct(const TestStruct&);
+  TestStruct& operator=(const TestStruct&);
+  TestStruct() noexcept;
+
+  virtual ~TestStruct() noexcept;
+  int32_t required_field;
+  int32_t default_field;
+
+  _TestStruct__isset __isset;
+
+  void __set_required_field(const int32_t val);
+
+  void __set_optional_field(const int32_t val);
+
+  void __set_default_field(const int32_t val);
+
+  void __set_optional_string(const std::string& val);
+
+  const int32_t& __get_required_field() const { return required_field; }
+
+  const int32_t& __get_optional_field() const { return optional_field; }
+
+  const int32_t& __get_default_field() const { return default_field; }
+
+  const std::string& __get_optional_string() const { return optional_string; }
+
+  bool operator == (const TestStruct & rhs) const;
+  bool operator != (const TestStruct &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const TestStruct & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot) override;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const override;
+
+  virtual void printTo(std::ostream& out) const;
+
+ private:
+  int32_t optional_field;
+  std::string optional_string;
+
+  friend void swap(TestStruct &a, TestStruct &b) noexcept;
+
+  friend std::ostream& operator<<(std::ostream& out, const TestStruct& obj);
+};

@@ -83,7 +83,7 @@ TEST_CASE( "t_ocaml_generator - handle exception from different module", "[funct
     });
 
     {
-        #include "snapshot_exception_types_i.cc"
+        #include "snapshot_exception_types_i.hpp"
         REQUIRE( snapshot == errors_gen.types_i() );
     }
 
@@ -105,7 +105,7 @@ TEST_CASE( "t_ocaml_generator - handle exception from different module", "[funct
     });
 
     {
-        #include "snapshot_service_handle_ex.cc"
+        #include "snapshot_service_handle_ex.hpp"
         REQUIRE( snapshot == service_gen.service() );
     }
 }
