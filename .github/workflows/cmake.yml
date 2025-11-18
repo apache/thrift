@@ -38,3 +38,11 @@ jobs:
         run: |
           cd cmake_build
           ctest -j$(nproc)
+
+      - name: Upload LastTest log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-LastTest-log
+          path: cmake_build/Testing/Temporary/LastTest.log
+          if-no-files-found: warn
