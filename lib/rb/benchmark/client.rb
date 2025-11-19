@@ -23,17 +23,33 @@ $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'benchmark_service'
 
 class Client
-  def initialize(host, port, clients_per_process, calls_per_client, log_exceptions)
+  def initialize(host, port, clients_per_process, calls_per_client, log_exceptions, tls)
     @host = host
     @port = port
     @clients_per_process = clients_per_process
     @calls_per_client = calls_per_client
     @log_exceptions = log_exceptions
+    @tls = tls
   end
 
   def run
     @clients_per_process.times do
-      socket = Thrift::Socket.new(@host, @port)
+      socket = if @tls
+        ssl_context = OpenSSL::SSL::SSLContext.new.tap do |ctx|
+          ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+
+          # Load certificate chain and private key
+          certs = OpenSSL::X509::Certificate.load_file(File.expand_path("cert.pem", __dir__))
+          pkey = OpenSSL::PKey.read(File.binread(File.expand_path("key.pem", __dir__)))
+          ctx.add_certificate(certs.first, pkey, *certs[1..])
+
+          ctx
+        end
+        Thrift::SSLSocket.new(@host, @port, nil, ssl_context)
+      else
+        Thrift::Socket.new(@host, @port)
+      end
       transport = Thrift::FramedTransport.new(socket)
       protocol = Thrift::BinaryProtocol.new(transport)
       client = ThriftBenchmark::BenchmarkService::Client.new(protocol)
@@ -68,7 +84,8 @@ class Client
 end
 
 log_exceptions = true if ARGV[0] == '-log-exceptions' and ARGV.shift
+tls = true if ARGV[0] == '-tls' and ARGV.shift
 
 host, port, clients_per_process, calls_per_client = ARGV
 
-Client.new(host, port.to_i, clients_per_process.to_i, calls_per_client.to_i, log_exceptions).run
+Client.new(host, port.to_i, clients_per_process.to_i, calls_per_client.to_i, log_exceptions, tls).run

@@ -36,10 +36,24 @@ module Server
     end
   end
 
-  def self.start_server(host, port, serverClass)
+  def self.start_server(host, port, serverClass, tls)
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
-    transport = ServerSocket.new(host, port)
+    transport = if tls
+      ssl_context = OpenSSL::SSL::SSLContext.new.tap do |ctx|
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+
+        certs = OpenSSL::X509::Certificate.load_file(File.expand_path("cert.pem", __dir__))
+        pkey = OpenSSL::PKey.read(File.binread(File.expand_path("key.pem", __dir__)))
+        ctx.add_certificate(certs.first, pkey, *certs[1..])
+
+        ctx
+      end
+      Thrift::SSLServerSocket.new(host, port, ssl_context)
+    else
+      ServerSocket.new(host, port)
+    end
     transport_factory = FramedTransportFactory.new
     args = [processor, transport, transport_factory, nil, 20]
     if serverClass == NonblockingServer
@@ -68,9 +82,11 @@ def resolve_const(const)
   const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
 end
 
+tls = true if ARGV[0] == '-tls' and ARGV.shift
+
 host, port, serverklass = ARGV
 
-Server.start_server(host, port.to_i, resolve_const(serverklass))
+Server.start_server(host, port.to_i, resolve_const(serverklass), tls)
 
 # let our host know that the interpreter has started
 # ideally we'd wait until the server was serving, but we don't have a hook for that
