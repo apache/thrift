@@ -1,5 +1,8 @@
 source "https://rubygems.org"
 
+# Make sure all dependencies are in sync with the main library.
+gem 'thrift', path: '../../lib/rb'
+
 gem 'rack', '~> 2.0', '>= 2.0.4'
 gem 'thin', '~> 1.7', '>= 1.7.2'
 gem 'test-unit', '~> 3.2', '>= 3.2.7'

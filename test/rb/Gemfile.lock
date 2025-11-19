@@ -1,8 +1,15 @@
+PATH
+  remote: ../../lib/rb
+  specs:
+    thrift (0.23.0)
+      logger
+
 GEM
   remote: https://rubygems.org/
   specs:
     daemons (1.4.1)
     eventmachine (1.2.7)
+    logger (1.7.0)
     power_assert (3.0.1)
     rack (2.2.21)
     test-unit (3.7.3)
@@ -23,6 +30,7 @@ DEPENDENCIES
   rack (~> 2.0, >= 2.0.4)
   test-unit (~> 3.2, >= 3.2.7)
   thin (~> 1.7, >= 1.7.2)
+  thrift!
 
 BUNDLED WITH
    2.2.34
