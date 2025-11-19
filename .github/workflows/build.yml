@@ -320,21 +320,21 @@ jobs:
       - name: Set up .NET SDK (via install script)
         run: |
           # remove any existing install
-          sudo apt remove dotnet*    
+          sudo apt remove dotnet*
           # install key
           sudo apt install gpg
           wget https://dot.net/v1/dotnet-install.asc
-          gpg --import dotnet-install.asc          
+          gpg --import dotnet-install.asc
           # download and verify
           wget https://dot.net/v1/dotnet-install.sh
           wget https://dot.net/v1/dotnet-install.sig
-          gpg --verify dotnet-install.sig dotnet-install.sh          
+          gpg --verify dotnet-install.sig dotnet-install.sh
           # run install script
           chmod +x dotnet-install.sh
-          ./dotnet-install.sh --channel 10.0          
+          ./dotnet-install.sh --channel 10.0
           # export env vars
           export DOTNET_ROOT=$HOME/.dotnet
-          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools          
+          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
           dotnet --list-sdks
 
 #      the sdk is installed by default, but keep this step for reference
@@ -646,6 +646,46 @@ jobs:
           path: lib/cpp/test/*.xml
           retention-days: 3
 
+  lib-ruby:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        ruby-version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4", "4.0.0-preview2"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+          working-directory: lib/rb
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-ruby/with-ruby/')
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for ruby
+        run: make -C lib/rb
+
+      - name: Run make check for lib/rb
+        run: make -C lib/rb check
+
   cross-test:
     needs:
       - lib-java-kotlin
@@ -755,4 +795,3 @@ jobs:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
           path: test/log/
           retention-days: 3
-
