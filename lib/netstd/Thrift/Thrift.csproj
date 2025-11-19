@@ -60,11 +60,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>

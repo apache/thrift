@@ -35,8 +35,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="9.0.6" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
     <!--
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />

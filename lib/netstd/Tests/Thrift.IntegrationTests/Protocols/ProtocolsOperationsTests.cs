@@ -33,7 +33,7 @@ namespace Thrift.IntegrationTests.Protocols
     [TestClass]
     public class ProtocolsOperationsTests : TestBase
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Call)]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Exception)]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Oneway)]
@@ -76,78 +76,82 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
-        [ExpectedException(typeof(Exception))]
         public async Task WriteReadStruct_Test(Type protocolType)
         {
             var expected = new TStruct(nameof(TStruct));
 
-            try
+            await Assert.ThrowsAsync<Exception>(async () =>
             {
-                var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Stream)
+                try
                 {
-                    var protocol = tuple.Protocol;
+                    var tuple = GetProtocolInstance(protocolType);
+                    using (var stream = tuple.Stream)
+                    {
+                        var protocol = tuple.Protocol;
 
-                    await protocol.WriteStructBeginAsync(expected, default);
-                    await protocol.WriteStructEndAsync(default);
-                    await tuple.Transport.FlushAsync(default);
+                        await protocol.WriteStructBeginAsync(expected, default);
+                        await protocol.WriteStructEndAsync(default);
+                        await tuple.Transport.FlushAsync(default);
 
-                    stream.Seek(0, SeekOrigin.Begin);
+                        stream.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadStructBeginAsync(default);
-                    await protocol.ReadStructEndAsync(default);
+                        var actual = await protocol.ReadStructBeginAsync(default);
+                        await protocol.ReadStructEndAsync(default);
 
-                    var result = _compareLogic.Compare(expected, actual);
-                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                        var result = _compareLogic.Compare(expected, actual);
+                        Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                    }
+
                 }
-
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
-            }
+                catch (Exception e)
+                {
+                    throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+                }
+            });
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
-        [ExpectedException(typeof(Exception))]
         public async Task WriteReadField_Test(Type protocolType)
         {
             var expected = new TField(nameof(TField), TType.String, 1);
 
-            try
+            await Assert.ThrowsAsync<Exception>(async() =>
             {
-                var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Stream)
+                try
                 {
-                    var protocol = tuple.Protocol;
+                    var tuple = GetProtocolInstance(protocolType);
+                    using (var stream = tuple.Stream)
+                    {
+                        var protocol = tuple.Protocol;
 
-                    await protocol.WriteFieldBeginAsync(expected, default);
-                    await protocol.WriteFieldEndAsync(default);
-                    await tuple.Transport.FlushAsync(default);
+                        await protocol.WriteFieldBeginAsync(expected, default);
+                        await protocol.WriteFieldEndAsync(default);
+                        await tuple.Transport.FlushAsync(default);
 
-                    stream.Seek(0, SeekOrigin.Begin);
+                        stream.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadFieldBeginAsync(default);
-                    await protocol.ReadFieldEndAsync(default);
+                        var actual = await protocol.ReadFieldBeginAsync(default);
+                        await protocol.ReadFieldEndAsync(default);
 
-                    var result = _compareLogic.Compare(expected, actual);
-                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                        var result = _compareLogic.Compare(expected, actual);
+                        Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
-            }
+                catch (Exception e)
+                {
+                    throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+                }
+            });
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -182,7 +186,7 @@ namespace Thrift.IntegrationTests.Protocols
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -216,7 +220,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -250,7 +254,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -282,7 +286,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -314,7 +318,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -346,7 +350,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -378,7 +382,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -410,7 +414,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -442,7 +446,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -474,7 +478,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -506,7 +510,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
