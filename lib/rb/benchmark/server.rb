@@ -18,7 +18,9 @@
 #
 
 $:.unshift File.dirname(__FILE__) + '/../lib'
+$:.unshift File.dirname(__FILE__) + '/../ext'
 require 'thrift'
+require 'openssl'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'benchmark_service'
 
@@ -36,10 +38,26 @@ module Server
     end
   end
 
-  def self.start_server(host, port, serverClass)
+  def self.start_server(host, port, serverClass, tls)
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
-    transport = ServerSocket.new(host, port)
+    transport = if tls
+      ssl_context = OpenSSL::SSL::SSLContext.new.tap do |ctx|
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+
+        keys_dir = File.expand_path("../../../test/keys", __dir__)
+        ctx.ca_file = File.join(keys_dir, "CA.pem")
+        ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keys_dir, "server.crt")))
+        ctx.cert_store = OpenSSL::X509::Store.new
+        ctx.cert_store.add_file(File.join(keys_dir, 'client.pem'))
+        ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keys_dir, "server.key")))
+      end
+
+      Thrift::SSLServerSocket.new(host, port, ssl_context)
+    else
+      ServerSocket.new(host, port)
+    end
     transport_factory = FramedTransportFactory.new
     args = [processor, transport, transport_factory, nil, 20]
     if serverClass == NonblockingServer
@@ -68,9 +86,11 @@ def resolve_const(const)
   const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
 end
 
+tls = true if ARGV[0] == '-tls' and ARGV.shift
+
 host, port, serverklass = ARGV
 
-Server.start_server(host, port.to_i, resolve_const(serverklass))
+Server.start_server(host, port.to_i, resolve_const(serverklass), tls)
 
 # let our host know that the interpreter has started
 # ideally we'd wait until the server was serving, but we don't have a hook for that

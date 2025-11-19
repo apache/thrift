@@ -18,6 +18,7 @@
 #
 
 $:.unshift File.dirname(__FILE__) + '/../lib'
+$:.unshift File.dirname(__FILE__) + '/../ext'
 require 'thrift'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'benchmark_service'
