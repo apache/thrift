@@ -308,6 +308,8 @@ uint32_t TFramedTransport::readEnd() {
     setReadBuffer(rBuf_.get(), rBufSize_);
   }
 
+  resetConsumedMessageSize();
+
   return bytes_read;
 }
 
