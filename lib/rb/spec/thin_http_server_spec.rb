@@ -99,13 +99,13 @@ describe Thrift::ThinHTTPServer::RackApplication do
     it 'receives a non-POST' do
       header('Content-Type', "application/x-thrift")
       get "/"
-      expect(last_response.status).to be 404
+      expect(last_response.status).to eq 404
     end
 
     it 'receives a header other than application/x-thrift' do
       header('Content-Type', "application/json")
       post "/"
-      expect(last_response.status).to be 404
+      expect(last_response.status).to eq 404
     end
 
   end
@@ -132,10 +132,9 @@ describe Thrift::ThinHTTPServer::RackApplication do
     it 'status code 200' do
       header('Content-Type', "application/x-thrift")
       post "/"
-      expect(last_response.ok?).to be_truthy
+      expect(last_response.ok?).to be true
     end
 
   end
 
 end
-
