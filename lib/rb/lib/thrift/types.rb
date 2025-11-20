@@ -34,6 +34,7 @@ module Thrift
     MAP = 13
     SET = 14
     LIST = 15
+    UUID = 16
   end
 
   class << self
@@ -55,6 +56,8 @@ module Thrift
               when Types::DOUBLE
                 Float
               when Types::STRING
+                String
+              when Types::UUID
                 String
               when Types::STRUCT
                 [Struct, Union]

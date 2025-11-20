@@ -91,6 +91,24 @@ describe 'Union' do
       expect(union).not_to eq(other_union)
     end
 
+    it "should equate two unions with the same UUID value" do
+      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
+      other_union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
+      expect(union).to eq(other_union)
+    end
+
+    it "should not equate two unions with different UUID values" do
+      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
+      other_union = SpecNamespace::My_union.new(:unique_id, '6ba7b810-9dad-11d1-80b4-00c04fd430c8')
+      expect(union).not_to eq(other_union)
+    end
+
+    it "should not equate UUID union with different field type" do
+      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
+      other_union = SpecNamespace::My_union.new(:some_characters, '550e8400-e29b-41d4-a716-446655440000')
+      expect(union).not_to eq(other_union)
+    end
+
     it "should inspect properly" do
       union = SpecNamespace::My_union.new(:integer32, 25)
       expect(union.inspect).to eq("<SpecNamespace::My_union integer32: 25>")
@@ -192,23 +210,58 @@ describe 'Union' do
 
     it "should be comparable" do
       relationships = [
-        [0,   -1, -1, -1],
-        [1,   0,  -1, -1],
-        [1,   1,  0,  -1],
-        [1,   1,  1,  0]]
+        [0,   -1, -1, -1, -1, -1],
+        [1,   0,  -1, -1, -1, -1],
+        [1,   1,  0,  -1, -1, -1],
+        [1,   1,  1,  0,  -1, -1],
+        [1,   1,  1,  1,  0,  -1],
+        [1,   1,  1,  1,  1,  0]]
 
       objs = [
         SpecNamespace::TestUnion.new(:string_field, "blah"),
         SpecNamespace::TestUnion.new(:string_field, "blahblah"),
         SpecNamespace::TestUnion.new(:i32_field, 1),
+        SpecNamespace::TestUnion.new(:uuid_field, '550e8400-e29b-41d4-a716-446655440000'),
+        SpecNamespace::TestUnion.new(:uuid_field, '6ba7b810-9dad-11d1-80b4-00c04fd430c8'),
         SpecNamespace::TestUnion.new()]
 
-      for y in 0..3
-        for x in 0..3
+      objs.size.times do |y|
+        objs.size.times do |x|
           # puts "#{objs[y].inspect} <=> #{objs[x].inspect} should == #{relationships[y][x]}"
           expect(objs[y] <=> objs[x]).to eq(relationships[y][x])
         end
       end
+    end
+
+    it "should handle UUID as union value" do
+      union = SpecNamespace::My_union.new
+      union.unique_id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::CompactProtocol.new(trans)
+
+      union.write(prot)
+
+      result = SpecNamespace::My_union.new
+      result.read(prot)
+
+      expect(result.unique_id).to eq('ffffffff-ffff-ffff-ffff-ffffffffffff')
+      expect(result.get_set_field).to eq(:unique_id)
+    end
+
+    it "should normalize UUID case in union" do
+      union = SpecNamespace::My_union.new
+      union.unique_id = '550E8400-E29B-41D4-A716-446655440000'
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::BinaryProtocol.new(trans)
+
+      union.write(prot)
+
+      result = SpecNamespace::My_union.new
+      result.read(prot)
+
+      expect(result.unique_id).to eq('550e8400-e29b-41d4-a716-446655440000')
     end
   end
 end

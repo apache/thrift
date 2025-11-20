@@ -31,6 +31,7 @@ require 'thrift/client'
 require 'thrift/struct'
 require 'thrift/union'
 require 'thrift/struct_union'
+require 'thrift/uuid'
 
 # serializer
 require 'thrift/serializer/serializer'

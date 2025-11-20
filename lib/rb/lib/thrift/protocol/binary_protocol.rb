@@ -123,6 +123,11 @@ module Thrift
       trans.write(buf)
     end
 
+    def write_uuid(uuid)
+      UUID.validate_uuid!(uuid)
+      trans.write(UUID.uuid_bytes(uuid))
+    end
+
     def read_message_begin
       version = read_i32
       if version < 0
@@ -233,7 +238,11 @@ module Thrift
       size = read_i32
       trans.read_all(size)
     end
-    
+
+    def read_uuid
+      UUID.uuid_from_bytes(trans.read_all(16))
+    end
+
     def to_s
       "binary(#{super.to_s})"
     end

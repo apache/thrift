@@ -179,6 +179,8 @@ module Thrift
         "set"
       when Types::LIST
         "lst"
+      when Types::UUID
+        "uid"
       else
         raise NotImplementedError
       end
@@ -207,6 +209,8 @@ module Thrift
         result = Types::SET
       elsif (name == "lst")
         result = Types::LIST
+      elsif (name == "uid")
+        result = Types::UUID
       else
         result = Types::STOP
       end
@@ -473,6 +477,11 @@ module Thrift
 
     def write_binary(str)
       write_json_base64(str)
+    end
+
+    def write_uuid(uuid)
+      UUID.validate_uuid!(uuid)
+      write_json_string(uuid.downcase)
     end
 
     ##
@@ -765,6 +774,13 @@ module Thrift
 
     def read_binary
       read_json_base64
+    end
+
+    def read_uuid
+      uuid = read_json_string
+      raise EOFError.new if uuid.length < 36
+      UUID.validate_uuid!(uuid)
+      uuid.tap(&:downcase!)
     end
 
     def to_s
