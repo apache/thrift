@@ -189,7 +189,7 @@ where
                     self.last_read_field_id = self
                         .last_read_field_id
                         .checked_add(field_delta as i16)
-                        .ok_or(crate::Error::Protocol(crate::ProtocolError {
+                        .ok_or_else(|| crate::Error::Protocol(crate::ProtocolError {
                             kind: crate::ProtocolErrorKind::InvalidData,
                             message: format!(
                                 "invalid field delta {} for last field id {}",
