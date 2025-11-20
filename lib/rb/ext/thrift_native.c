@@ -43,6 +43,7 @@ int TTYPE_MAP;
 int TTYPE_SET;
 int TTYPE_LIST;
 int TTYPE_STRUCT;
+int TTYPE_UUID;
 
 // method ids
 ID validate_method_id;
@@ -57,6 +58,7 @@ ID write_i32_method_id;
 ID write_i64_method_id;
 ID write_double_method_id;
 ID write_string_method_id;
+ID write_uuid_method_id;
 ID write_binary_method_id;
 ID write_map_begin_method_id;
 ID write_map_end_method_id;
@@ -70,6 +72,7 @@ ID read_i16_method_id;
 ID read_i32_method_id;
 ID read_i64_method_id;
 ID read_string_method_id;
+ID read_uuid_method_id;
 ID read_binary_method_id;
 ID read_double_method_id;
 ID read_map_begin_method_id;
@@ -138,6 +141,7 @@ void Init_thrift_native() {
   TTYPE_SET = FIX2INT(rb_const_get(thrift_types_module, rb_intern("SET")));
   TTYPE_LIST = FIX2INT(rb_const_get(thrift_types_module, rb_intern("LIST")));
   TTYPE_STRUCT = FIX2INT(rb_const_get(thrift_types_module, rb_intern("STRUCT")));
+  TTYPE_UUID = FIX2INT(rb_const_get(thrift_types_module, rb_intern("UUID")));
 
   // method ids
   validate_method_id = rb_intern("validate");
@@ -152,6 +156,7 @@ void Init_thrift_native() {
   write_i64_method_id = rb_intern("write_i64");
   write_double_method_id = rb_intern("write_double");
   write_string_method_id = rb_intern("write_string");
+  write_uuid_method_id = rb_intern("write_uuid");
   write_binary_method_id = rb_intern("write_binary");
   write_map_begin_method_id = rb_intern("write_map_begin");
   write_map_end_method_id = rb_intern("write_map_end");
@@ -165,10 +170,11 @@ void Init_thrift_native() {
   read_i32_method_id = rb_intern("read_i32");
   read_i64_method_id = rb_intern("read_i64");
   read_string_method_id = rb_intern("read_string");
+  read_uuid_method_id = rb_intern("read_uuid");
   read_binary_method_id = rb_intern("read_binary");
   read_double_method_id = rb_intern("read_double");
   read_map_begin_method_id = rb_intern("read_map_begin");
-  read_map_end_method_id = rb_intern("read_map_end");  
+  read_map_end_method_id = rb_intern("read_map_end");
   read_list_begin_method_id = rb_intern("read_list_begin");
   read_list_end_method_id = rb_intern("read_list_end");
   read_set_begin_method_id = rb_intern("read_set_begin");
@@ -192,7 +198,7 @@ void Init_thrift_native() {
   fields_const_id = rb_intern("FIELDS");
   transport_ivar_id = rb_intern("@trans");
   strict_read_ivar_id = rb_intern("@strict_read");
-  strict_write_ivar_id = rb_intern("@strict_write");  
+  strict_write_ivar_id = rb_intern("@strict_write");
 
   // cached symbols
   type_sym = ID2SYM(rb_intern("type"));

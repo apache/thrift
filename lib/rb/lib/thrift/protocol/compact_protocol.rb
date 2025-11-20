@@ -45,7 +45,8 @@ module Thrift
       SET            = 0x0A
       MAP            = 0x0B
       STRUCT         = 0x0C
-      
+      UUID           = 0x0D
+
       def self.is_bool_type?(b)
         (b & 0x0f) == BOOLEAN_TRUE || (b & 0x0f) == BOOLEAN_FALSE
       end
@@ -63,7 +64,8 @@ module Thrift
         LIST          => Types::LIST,
         SET           => Types::SET,
         MAP           => Types::MAP,
-        STRUCT        => Types::STRUCT
+        STRUCT        => Types::STRUCT,
+        UUID          => Types::UUID
       }
 
       TTYPE_TO_COMPACT = {
@@ -78,7 +80,8 @@ module Thrift
         Types::LIST           => LIST,
         Types::SET            => SET,
         Types::MAP            => MAP,
-        Types::STRUCT         => STRUCT
+        Types::STRUCT         => STRUCT,
+        Types::UUID           => UUID
       }
       
       def self.get_ttype(compact_type)
@@ -220,6 +223,22 @@ module Thrift
       @trans.write(buf)
     end
 
+    def write_uuid(uuid)
+      # Validate UUID format: "550e8400-e29b-41d4-a716-446655440000"
+      unless uuid.is_a?(String) && uuid.length == 36 &&
+             uuid[8] == '-' && uuid[13] == '-' && uuid[18] == '-' && uuid[23] == '-'
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid UUID format')
+      end
+
+      # Pack hex directly without creating intermediate string
+      hex_str = uuid.delete('-')
+      unless hex_str =~ /\A[0-9a-fA-F]{32}\z/
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid hex characters in UUID')
+      end
+
+      @trans.write([hex_str].pack('H*'))
+    end
+
     def read_message_begin
       protocol_id = read_byte()
       if protocol_id != PROTOCOL_ID
@@ -345,17 +364,23 @@ module Thrift
       size = read_varint32()
       trans.read_all(size)
     end
-    
+
+    def read_uuid
+      bytes = trans.read_all(16)
+      hex = bytes.unpack('H*')[0]
+      "#{hex[0, 8]}-#{hex[8, 4]}-#{hex[12, 4]}-#{hex[16, 4]}-#{hex[20, 12]}"
+    end
+
     def to_s
       "compact(#{super.to_s})"
     end
 
     private
-    
-    # 
-    # Abstract method for writing the start of lists and sets. List and sets on 
+
+    #
+    # Abstract method for writing the start of lists and sets. List and sets on
     # the wire differ only by the type indicator.
-    # 
+    #
     def write_collection_begin(elem_type, size)
       if size <= 14
         write_byte(size << 4 | CompactTypes.get_compact_type(elem_type))

@@ -20,6 +20,7 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <constants.h>
 #include <struct.h>
 #include <macros.h>
@@ -84,6 +85,19 @@ static void write_string_direct(VALUE trans, VALUE str) {
   str = convert_to_utf8_byte_buffer(str);
   write_i32_direct(trans, (int32_t)RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
+}
+
+// Efficient hex character to integer conversion
+static inline int hex_char_to_int(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;  // invalid hex character
+}
+
+// Efficient integer to hex character conversion
+static inline char int_to_hex_char(int val) {
+  return val < 10 ? ('0' + val) : ('a' + val - 10);
 }
 
 //--------------------------------
@@ -225,6 +239,55 @@ VALUE rb_thrift_binary_proto_write_binary(VALUE self, VALUE buf) {
   buf = force_binary_encoding(buf);
   write_i32_direct(trans, (int32_t)RSTRING_LEN(buf));
   rb_funcall(trans, write_method_id, 1, buf);
+  return Qnil;
+}
+
+VALUE rb_thrift_binary_proto_write_uuid(VALUE self, VALUE uuid) {
+  CHECK_NIL(uuid);
+  
+  if (TYPE(uuid) != T_STRING) {
+    rb_raise(rb_eStandardError, "UUID must be a string");
+  }
+  
+  VALUE trans = GET_TRANSPORT(self);
+  char bytes[16];
+  const char* str = RSTRING_PTR(uuid);
+  long len = RSTRING_LEN(uuid);
+  
+  // Parse UUID string (format: "550e8400-e29b-41d4-a716-446655440000")
+  // Expected length: 36 characters (32 hex + 4 hyphens)
+  if (len != 36 || str[8] != '-' || str[13] != '-' || str[18] != '-' || str[23] != '-') {
+    VALUE exception_class = rb_const_get(thrift_module, rb_intern("ProtocolException"));
+    VALUE invalid_data = rb_const_get(exception_class, rb_intern("INVALID_DATA"));
+    VALUE args[2];
+    args[0] = invalid_data;
+    args[1] = rb_str_new2("Invalid UUID format");
+    rb_exc_raise(rb_class_new_instance(2, args, exception_class));
+  }
+
+  // Parse hex string to bytes using direct conversion, skipping hyphens
+  int byte_idx = 0;
+  for (int i = 0; i < len && byte_idx < 16; i++) {
+    if (str[i] == '-') continue;
+
+    // Convert two hex characters to one byte
+    int high = hex_char_to_int(str[i]);
+    int low = hex_char_to_int(str[i + 1]);
+
+    if (high < 0 || low < 0) {
+      VALUE exception_class = rb_const_get(thrift_module, rb_intern("ProtocolException"));
+      VALUE invalid_data = rb_const_get(exception_class, rb_intern("INVALID_DATA"));
+      VALUE args[2];
+      args[0] = invalid_data;
+      args[1] = rb_str_new2("Invalid hex character in UUID");
+      rb_exc_raise(rb_class_new_instance(2, args, exception_class));
+    }
+
+    bytes[byte_idx++] = (unsigned char)((high << 4) | low);
+    i++; // skip next char since we processed two
+  }
+
+  WRITE(trans, bytes, 16);
   return Qnil;
 }
 
@@ -400,6 +463,28 @@ VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
+VALUE rb_thrift_binary_proto_read_uuid(VALUE self) {
+  unsigned char bytes[16];
+  VALUE data = READ(self, 16);
+  memcpy(bytes, RSTRING_PTR(data), 16);
+
+  // Format as UUID string: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  char uuid_str[37];
+  char* p = uuid_str;
+
+  for (int i = 0; i < 16; i++) {
+    *p++ = int_to_hex_char((bytes[i] >> 4) & 0x0F);
+    *p++ = int_to_hex_char(bytes[i] & 0x0F);
+    if (i == 3 || i == 5 || i == 7 || i == 9) {
+      *p++ = '-';
+    }
+  }
+
+  *p = '\0';
+
+  return rb_str_new(uuid_str, 36);
+}
+
 void Init_binary_protocol_accelerated() {
   VALUE thrift_binary_protocol_class = rb_const_get(thrift_module, rb_intern("BinaryProtocol"));
 
@@ -425,6 +510,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "write_double",        rb_thrift_binary_proto_write_double, 1);
   rb_define_method(bpa_class, "write_string",        rb_thrift_binary_proto_write_string, 1);
   rb_define_method(bpa_class, "write_binary",        rb_thrift_binary_proto_write_binary, 1);
+  rb_define_method(bpa_class, "write_uuid",          rb_thrift_binary_proto_write_uuid, 1);
   // unused methods
   rb_define_method(bpa_class, "write_message_end", rb_thrift_binary_proto_write_message_end, 0);
   rb_define_method(bpa_class, "write_struct_begin", rb_thrift_binary_proto_write_struct_begin, 1);
@@ -447,6 +533,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_double",         rb_thrift_binary_proto_read_double, 0);
   rb_define_method(bpa_class, "read_string",         rb_thrift_binary_proto_read_string, 0);
   rb_define_method(bpa_class, "read_binary",         rb_thrift_binary_proto_read_binary, 0);
+  rb_define_method(bpa_class, "read_uuid",           rb_thrift_binary_proto_read_uuid, 0);
   // unused methods
   rb_define_method(bpa_class, "read_message_end", rb_thrift_binary_proto_read_message_end, 0);
   rb_define_method(bpa_class, "read_struct_begin", rb_thrift_binary_proto_read_struct_begin, 0);
