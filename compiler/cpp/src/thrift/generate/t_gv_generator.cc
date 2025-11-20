@@ -38,8 +38,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * Graphviz code generator
  */
@@ -110,10 +108,10 @@ void t_gv_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
   string fname = get_out_dir() + program_->get_name() + ".gv";
   f_out_.open(fname.c_str());
-  f_out_ << "digraph \"" << escape_string(program_name_) << "\" {" << endl;
-  f_out_ << "node [style=filled, shape=record];" << endl;
-  f_out_ << "edge [arrowsize=0.5];" << endl;
-  f_out_ << "rankdir=LR" << endl;
+  f_out_ << "digraph \"" << escape_string(program_name_) << "\" {" << '\n';
+  f_out_ << "node [style=filled, shape=record];" << '\n';
+  f_out_ << "edge [arrowsize=0.5];" << '\n';
+  f_out_ << "rankdir=LR" << '\n';
 }
 
 /**
@@ -126,29 +124,29 @@ void t_gv_generator::close_generator() {
   // Print edges
   std::list<string>::iterator iter = edges.begin();
   for (; iter != edges.end(); iter++) {
-    f_out_ << (*iter) << endl;
+    f_out_ << (*iter) << '\n';
   }
 
   // Print graph end } and close file
-  f_out_ << "}" << endl;
+  f_out_ << "}" << '\n';
   f_out_.close();
 }
 
 void t_gv_generator::generate_typedef(t_typedef* ttypedef) {
   string name = ttypedef->get_name();
-  f_out_ << "node [fillcolor=azure];" << endl;
+  f_out_ << "node [fillcolor=azure];" << '\n';
   f_out_ << name << " [label=\"";
 
   f_out_ << escape_string(name);
   f_out_ << " :: ";
   print_type(ttypedef->get_type(), name);
 
-  f_out_ << "\"];" << endl;
+  f_out_ << "\"];" << '\n';
 }
 
 void t_gv_generator::generate_enum(t_enum* tenum) {
   string name = tenum->get_name();
-  f_out_ << "node [fillcolor=white];" << endl;
+  f_out_ << "node [fillcolor=white];" << '\n';
   f_out_ << name << " [label=\"enum " << escape_string(name);
 
   vector<t_enum_value*> values = tenum->get_constants();
@@ -159,13 +157,13 @@ void t_gv_generator::generate_enum(t_enum* tenum) {
     f_out_ << (*val_iter)->get_value();
   }
 
-  f_out_ << "\"];" << endl;
+  f_out_ << "\"];" << '\n';
 }
 
 void t_gv_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
 
-  f_out_ << "node [fillcolor=aliceblue];" << endl;
+  f_out_ << "node [fillcolor=aliceblue];" << '\n';
   f_out_ << "const_" << name << " [label=\"";
 
   f_out_ << escape_string(name);
@@ -174,22 +172,22 @@ void t_gv_generator::generate_const(t_const* tconst) {
   f_out_ << " :: ";
   print_type(tconst->get_type(), "const_" + name);
 
-  f_out_ << "\"];" << endl;
+  f_out_ << "\"];" << '\n';
 }
 
 void t_gv_generator::generate_struct(t_struct* tstruct) {
   string name = tstruct->get_name();
 
   if (tstruct->is_xception()) {
-    f_out_ << "node [fillcolor=lightpink];" << endl;
+    f_out_ << "node [fillcolor=lightpink];" << '\n';
     f_out_ << name << " [label=\"";
     f_out_ << "exception " << escape_string(name);
   } else if (tstruct->is_union()) {
-    f_out_ << "node [fillcolor=lightcyan];" << endl;
+    f_out_ << "node [fillcolor=lightcyan];" << '\n';
     f_out_ << name << " [label=\"";
     f_out_ << "union " << escape_string(name);
   } else {
-    f_out_ << "node [fillcolor=beige];" << endl;
+    f_out_ << "node [fillcolor=beige];" << '\n';
     f_out_ << name << " [label=\"";
     f_out_ << "struct " << escape_string(name);
   }
@@ -208,7 +206,7 @@ void t_gv_generator::generate_struct(t_struct* tstruct) {
     print_type((*mem_iter)->get_type(), name + ":field_" + field_name);
   }
 
-  f_out_ << "\"];" << endl;
+  f_out_ << "\"];" << '\n';
 }
 
 void t_gv_generator::print_type(t_type* ttype, string struct_field_ref) {
@@ -296,10 +294,10 @@ void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
 
 void t_gv_generator::generate_service(t_service* tservice) {
   string service_name = get_service_name(tservice);
-  f_out_ << "subgraph cluster_" << service_name << " {" << endl;
-  f_out_ << "node [fillcolor=bisque];" << endl;
-  f_out_ << "style=dashed;" << endl;
-  f_out_ << "label = \"" << escape_string(service_name) << " service\";" << endl;
+  f_out_ << "subgraph cluster_" << service_name << " {" << '\n';
+  f_out_ << "node [fillcolor=bisque];" << '\n';
+  f_out_ << "style=dashed;" << '\n';
+  f_out_ << "label = \"" << escape_string(service_name) << " service\";" << '\n';
 
   // TODO: service extends
 
@@ -327,7 +325,7 @@ void t_gv_generator::generate_service(t_service* tservice) {
                  "function_" + service_name + fn_name + ":param_" + (*arg_iter)->get_name());
     }
     // end of node
-    f_out_ << "\"];" << endl;
+    f_out_ << "\"];" << '\n';
 
     // Exception edges
     if (exception_arrows) {
@@ -340,7 +338,7 @@ void t_gv_generator::generate_service(t_service* tservice) {
     }
   }
 
-  f_out_ << " }" << endl;	
+  f_out_ << " }" << '\n';
 }
 
 std::string t_gv_generator::display_name() const {

@@ -66,14 +66,14 @@ enum class ProtocolType(val key: String) {
     Json("json"),
     MultiJson("multij"),
     Compact("compact"),
-    MultiCompact("multic")
+    MultiCompact("multic"),
 }
 
 enum class TransportType(val key: String) {
     Buffered("buffered"),
     Framed("framed"),
     FastFramed("fastframed"),
-    Http("http")
+    Http("http"),
 }
 
 class TestClient : CliktCommand() {
@@ -438,7 +438,7 @@ class TestClient : CliktCommand() {
 
     private suspend fun exceptionTest(
         testClient: ThriftTestClient,
-        returnCode: Int
+        returnCode: Int,
     ): Pair<Int, ThriftTestClient> {
         var client = testClient
         var code = returnCode
@@ -473,7 +473,7 @@ class TestClient : CliktCommand() {
 
     private suspend fun multiExceptionTest(
         testClient: ThriftTestClient,
-        returnCode: Int
+        returnCode: Int,
     ): Pair<Int, ThriftTestClient> {
         var client = testClient
         var code = returnCode

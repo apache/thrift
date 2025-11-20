@@ -49,6 +49,7 @@
 #include <thrift/protocol/TList.h>
 #include <thrift/protocol/TSet.h>
 #include <thrift/protocol/TMap.h>
+#include <thrift/TUuid.h>
 
 #include <memory>
 
@@ -169,8 +170,8 @@ static inline To bitwise_cast(From from) {
       | (((n) & 0x0000ff00ul) << 8)  \
       | (((n) & 0x000000fful) << 24) )
 #  define bswap_16(n) \
-      ( (((n) & ((unsigned short)0xff00ul)) >> 8)  \
-      | (((n) & ((unsigned short)0x00fful)) << 8)  )
+      ( (((n) & static_cast<unsigned short>(0xff00ul)) >> 8)  \
+      | (((n) & static_cast<unsigned short>(0x00fful)) << 8)  )
 #  define THRIFT_htolell(n) bswap_64(n)
 #  define THRIFT_letohll(n) bswap_64(n)
 #  define THRIFT_htolel(n) bswap_32(n)
@@ -190,11 +191,11 @@ static inline To bitwise_cast(From from) {
 #  define THRIFT_ntohll(n) bswap_64(n)
 #  define THRIFT_htonll(n) bswap_64(n)
 # elif defined(_MSC_VER) /* Microsoft Visual C++ */
-#  define THRIFT_ntohll(n) ( _byteswap_uint64((uint64_t)n) )
-#  define THRIFT_htonll(n) ( _byteswap_uint64((uint64_t)n) )
+#  define THRIFT_ntohll(n) ( _byteswap_uint64(static_cast<uint64_t>(n)) )
+#  define THRIFT_htonll(n) ( _byteswap_uint64(static_cast<uint64_t>(n)) )
 # elif !defined(THRIFT_ntohll) /* Not GNUC/GLIBC or MSVC */
-#  define THRIFT_ntohll(n) ( (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl((uint32_t)(n >> 32)) )
-#  define THRIFT_htonll(n) ( (((uint64_t)htonl((uint32_t)n)) << 32) + htonl((uint32_t)(n >> 32)) )
+#  define THRIFT_ntohll(n) ( (static_cast<uint64_t>(ntohl(static_cast<uint32_t>(n))) << 32) + ntohl(static_cast<uint32_t>(n >> 32)) )
+#  define THRIFT_htonll(n) ( (static_cast<uint64_t>(htonl(static_cast<uint32_t>(n))) << 32) + htonl(static_cast<uint32_t>(n >> 32)) )
 # endif /* GNUC/GLIBC or MSVC or something else */
 #else /* __THRIFT_BYTE_ORDER */
 # error "Can't define THRIFT_htonll or THRIFT_ntohll!"
@@ -274,6 +275,8 @@ public:
   virtual uint32_t writeString_virt(const std::string& str) = 0;
 
   virtual uint32_t writeBinary_virt(const std::string& str) = 0;
+
+  virtual uint32_t writeUUID_virt(const TUuid& uuid) = 0;
 
   uint32_t writeMessageBegin(const std::string& name,
                              const TMessageType messageType,
@@ -382,6 +385,11 @@ public:
     return writeBinary_virt(str);
   }
 
+  uint32_t writeUUID(const TUuid& uuid) {
+    T_VIRTUAL_CALL();
+    return writeUUID_virt(uuid);
+  }
+
   /**
    * Reading functions
    */
@@ -429,6 +437,8 @@ public:
   virtual uint32_t readString_virt(std::string& str) = 0;
 
   virtual uint32_t readBinary_virt(std::string& str) = 0;
+
+  virtual uint32_t readUUID_virt(TUuid& uuid) = 0;
 
   uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
     T_VIRTUAL_CALL();
@@ -528,6 +538,11 @@ public:
   uint32_t readBinary(std::string& str) {
     T_VIRTUAL_CALL();
     return readBinary_virt(str);
+  }
+
+  uint32_t readUUID(TUuid& uuid) {
+    T_VIRTUAL_CALL();
+    return readUUID_virt(uuid);
   }
 
   /*

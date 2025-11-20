@@ -37,6 +37,9 @@ clean-local:
 	$(RM) -r gen-*/
 	$(RM) -r php_ext_dir
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -r $(distdir)/gen-*/
 	$(RM) -r $(distdir)/php_ext_dir/

@@ -37,13 +37,13 @@ namespace Thrift.Transport
             _configuration = config ?? new TConfiguration();
             Debug.Assert(Configuration != null);
 
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
         }
 
         /// <summary>
         /// Resets RemainingMessageSize to the configured maximum 
         /// </summary>
-        public override void ResetConsumedMessageSize(long newSize = -1)
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
         {
             // full reset 
             if (newSize < 0)
@@ -56,7 +56,7 @@ namespace Thrift.Transport
             // update only: message size can shrink, but not grow
             Debug.Assert(KnownMessageSize <= MaxMessageSize);
             if (newSize > KnownMessageSize)
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
 
             KnownMessageSize = newSize;
             RemainingMessageSize = newSize;
@@ -70,7 +70,7 @@ namespace Thrift.Transport
         public override void UpdateKnownMessageSize(long size)
         {
             var consumed = KnownMessageSize - RemainingMessageSize;
-            ResetConsumedMessageSize(size);
+            ResetMessageSizeAndConsumedBytes(size);
             CountConsumedMessageBytes(consumed);
         }
 
@@ -80,8 +80,8 @@ namespace Thrift.Transport
         /// <param name="numBytes"></param>
         public override void CheckReadBytesAvailable(long numBytes)
         {
-            if (RemainingMessageSize < numBytes)
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+            if ((RemainingMessageSize < numBytes) || (numBytes < 0))
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace Thrift.Transport
             else
             {
                 RemainingMessageSize = 0;
-                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+                throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "MaxMessageSize reached");
             }
         }
     }

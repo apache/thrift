@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -21,6 +21,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable CA1510  // net8 - use ThrowIfNull
+#pragma warning disable CA1513  // net8 - use ThrowIfNull
+
 namespace Thrift.Transport
 {
     //TODO: think about client info 
@@ -35,7 +39,7 @@ namespace Thrift.Transport
         public abstract TConfiguration Configuration { get; }
         public abstract void UpdateKnownMessageSize(long size);
         public abstract void CheckReadBytesAvailable(long numBytes);
-        public abstract void ResetConsumedMessageSize(long newSize = -1);
+        public abstract void ResetMessageSizeAndConsumedBytes(long newSize = -1);
         public void Dispose()
         {
             Dispose(true);

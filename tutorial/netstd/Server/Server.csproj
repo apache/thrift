@@ -19,12 +19,13 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
-    <Version>0.20.0.0</Version>
+    <Version>0.23.0.0</Version>
+    <Nullable>enable</Nullable>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>

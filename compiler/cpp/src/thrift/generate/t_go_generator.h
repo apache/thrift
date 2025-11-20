@@ -44,8 +44,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 const string DEFAULT_THRIFT_IMPORT = "github.com/apache/thrift/lib/go/thrift";
 static std::string package_flag;
 
@@ -268,6 +266,8 @@ public:
   std::string type_to_go_key_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
+  void generate_deprecation_comment(std::ostream& os, const std::map<std::string, std::vector<std::string>>& annotations);
+
   void indent_up() { t_generator::indent_up(); }
   void indent_down() { t_generator::indent_down(); }
   std::string indent() { return t_generator::indent(); }
@@ -287,6 +287,10 @@ public:
   }
 
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
+
+  std::string indent_str() const override {
+    return "\t";
+  }
 
 private:
   std::string gen_package_prefix_;

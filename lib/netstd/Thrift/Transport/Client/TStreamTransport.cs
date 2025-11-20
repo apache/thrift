@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,9 +47,27 @@ namespace Thrift.Transport.Client
             get => _InputStream;
             set {
                 _InputStream = value;
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes(-1);  // full reset to configured maximum
+                UpdateKnownMessageSize(-1);            // adjust to real stream size
             }
         }
+
+        public override void UpdateKnownMessageSize(long size)
+        {
+            long adjusted = 0;
+
+            if (InputStream != null)
+            {
+                adjusted = MaxMessageSize;
+                if (size > 0)
+                    adjusted = Math.Min(adjusted, size);
+                if( InputStream.CanSeek)
+                    adjusted = Math.Min(adjusted, InputStream.Length);
+            }
+
+            base.UpdateKnownMessageSize(adjusted);
+        }
+
 
         public override bool IsOpen => true;
 
@@ -106,7 +125,7 @@ namespace Thrift.Transport.Client
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             await OutputStream.FlushAsync(cancellationToken);
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
         }
 
 

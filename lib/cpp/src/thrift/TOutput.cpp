@@ -31,7 +31,7 @@
 namespace apache {
 namespace thrift {
 
-THRIFT_EXPORT TOutput GlobalOutput;
+/*THRIFT_EXPORT*/ TOutput GlobalOutput;   // if you need this exported, build your own wrapper lib around and export it yourself
 
 TOutput::TOutput() : f_(&errorTimeWrapper) {}
 
@@ -85,6 +85,8 @@ void TOutput::printf(const char* message, ...) {
     f_(heap_buf);
   }
   free(heap_buf);
+#else
+  THRIFT_UNUSED_VARIABLE(message);
 #endif
 }
 
@@ -96,6 +98,8 @@ void TOutput::errorTimeWrapper(const char* msg) {
   THRIFT_CTIME_R(&now, dbgtime);
   dbgtime[24] = 0;
   fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
+#else
+  THRIFT_UNUSED_VARIABLE(msg);
 #endif
 }
 

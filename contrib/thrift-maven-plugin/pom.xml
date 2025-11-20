@@ -29,7 +29,7 @@
   <artifactId>thrift-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>thrift-maven-plugin</name>
-  <version>0.20.0</version>
+  <version>0.23.0</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -99,7 +99,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.16</version>
+      <version>3.0.24</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,6 +24,17 @@ namespace Thrift\StringFunc;
 
 interface TStringFunc
 {
+    /**
+     * @param string $str
+     * @param int $start
+     * @param int|null $length
+     * @return false|string
+     */
     public function substr($str, $start, $length = null);
+
+    /**
+     * @param string $str
+     * @return int
+     */
     public function strlen($str);
 }

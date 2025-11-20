@@ -23,8 +23,9 @@ program server;
 
 uses
   SysUtils,
-  TestServer in 'TestServer.pas',
-  TestServerEvents in 'TestServerEvents.pas',
+  TestConstants in 'testsuite\TestConstants.pas',
+  TestServer in 'testsuite\server\TestServer.pas',
+  TestServerEvents in 'testsuite\server\TestServerEvents.pas',
   Thrift.Test in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',
   Thrift.Exception in '..\src\Thrift.Exception.pas',

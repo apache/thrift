@@ -4,6 +4,7 @@
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp">
       <Filter>transport</Filter>
     </ClCompile>
+    <ClCompile Include="src\thrift\TUuid.cpp" />
     <ClCompile Include="src\thrift\TOutput.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
     <ClCompile Include="src\thrift\transport\TTransportException.cpp">
@@ -106,6 +107,7 @@
     <ClInclude Include="src\thrift\protocol\TBinaryProtocol.h">
       <Filter>protocol</Filter>
     </ClInclude>
+    <ClInclude Include="src\thrift\TUuid.h" />
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />

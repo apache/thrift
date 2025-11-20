@@ -17,4 +17,7 @@
 # under the License.
 #
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = memory_buffer.t processor.t multiplex.t

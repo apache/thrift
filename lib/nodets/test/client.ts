@@ -25,29 +25,30 @@ import test_driver = require("./test_driver");
 import ThriftTestDriver = test_driver.ThriftTestDriver;
 import ThriftTestDriverPromise = test_driver.ThriftTestDriverPromise;
 
-// var program = require("commander");
-import * as program from "commander";
+import { program } from "commander";
 
 program
-  .option("--port <port>", "Set thrift server port number to connect", 9090)
+  .option("--port <port>", "Set thrift server port number to connect", Number.parseInt, 9090)
   .option("--promise", "test with promise style functions")
   .option("--protocol", "Set thrift protocol (binary) [protocol]")
   .parse(process.argv);
 
-var port: number = program.port;
-var promise = program.promise;
+
+var opts = program.opts();
+var port: number = opts.port;
+var promise = opts.promise;
 
 var options = {
   transport: Thrift.TBufferedTransport,
-  protocol: Thrift.TBinaryProtocol
+  protocol: Thrift.TBinaryProtocol,
 };
 
 var testDriver = promise ? ThriftTestDriverPromise : ThriftTestDriver;
 
 var connection = thrift.createConnection("localhost", port, options);
 
-connection.on("error", function(err: string) {
-    assert(false, err);
+connection.on("error", function (err: string) {
+  assert(false, err);
 });
 
 var client = thrift.createClient(ThriftTest.Client, connection);
@@ -60,4 +61,4 @@ function runTests() {
   });
 }
 
-exports.expressoTest = function() {};
+exports.expressoTest = function () {};

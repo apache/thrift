@@ -69,5 +69,6 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.slf4j:slf4j-log4j12:${slf4jVersion}"
 }

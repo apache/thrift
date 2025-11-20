@@ -27,6 +27,8 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0301 // net8 - simplified collection init 
 
 namespace Thrift.Protocol
 {
@@ -459,7 +461,7 @@ namespace Thrift.Protocol
         public override Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Transport.ResetConsumedMessageSize();
+            Transport.ResetMessageSizeAndConsumedBytes();
             return Task.CompletedTask;
         }
 
@@ -814,8 +816,8 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop: return 0;
-                case TType.Void: return 0;
+                case TType.Stop: return 1;  // T_STOP needs to count itself
+                case TType.Void: return 1;  // T_VOID needs to count itself
                 case TType.Bool: return sizeof(byte);
                 case TType.Double: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
                 case TType.Byte: return sizeof(byte);
@@ -823,7 +825,7 @@ namespace Thrift.Protocol
                 case TType.I32: return sizeof(byte);  // zigzag
                 case TType.I64: return sizeof(byte);  // zigzag
                 case TType.String: return sizeof(byte);  // string length
-                case TType.Struct: return 0;             // empty struct
+                case TType.Struct: return 1;             // empty struct needs at least 1 byte for the T_STOP
                 case TType.Map: return sizeof(byte);  // element count
                 case TType.Set: return sizeof(byte);  // element count
                 case TType.List: return sizeof(byte);  // element count

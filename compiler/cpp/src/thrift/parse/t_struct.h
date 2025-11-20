@@ -112,9 +112,8 @@ public:
   const members_type& get_sorted_members() const { return members_in_id_order_; }
 
   bool is_struct() const override { return !is_xception_; }
-
   bool is_xception() const override { return is_xception_; }
-
+  bool is_method_xcepts() const override { return is_method_xcepts_; }
   bool is_union() const { return is_union_; }
 
   t_field* get_field_by_name(std::string field_name) {
@@ -129,6 +128,30 @@ public:
       }
     }
     return nullptr;
+  }
+
+  void validate() const override {
+    std::string what = "struct";
+    if( is_union()) {
+      what = "union";
+    }
+    if( is_xception()) {
+      what = "exception";
+    }
+
+    std::vector<t_field*>::const_iterator it;
+    std::vector<t_field*> list = get_members();
+    for(it=list.begin(); it != list.end(); ++it) {
+      (*it)->get_type()->validate();
+
+#ifndef ALLOW_EXCEPTIONS_AS_TYPE
+      if (!is_method_xcepts_) {  // this is in fact the only legal usage for any exception type
+        if( (*it)->get_type()->get_true_type()->is_xception()) {
+          failure("%s %s: exception type \"%s\" cannot be used as member field type %s", what.c_str(), get_name().c_str(), (*it)->get_type()->get_name().c_str(), (*it)->get_name().c_str());
+        }
+      }
+#endif
+    }
   }
 
 private:

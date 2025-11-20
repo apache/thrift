@@ -42,7 +42,7 @@ The Thrift Java source is not build using the GNU tools, but rather uses
 the Gradle build system, which tends to be predominant amongst Java
 developers.
 
-Currently we use gradle 8.0 to build the Thrift Java source. The usual way to setup gradle
+Currently we use gradle 8 to build the Thrift Java source. The usual way to setup gradle
 project is to include the gradle-wrapper.jar in the project and then run the gradle wrapper to
 bootstrap setting up gradle binaries. However to avoid putting binary files into the source tree we
 have ignored the gradle wrapper files. You are expected to install it manually, as described in

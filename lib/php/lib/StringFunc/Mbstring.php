@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,6 +24,12 @@ namespace Thrift\StringFunc;
 
 class Mbstring implements TStringFunc
 {
+    /**
+     * @param string $str
+     * @param int $start
+     * @param int|null $length
+     * @return false|string
+     */
     public function substr($str, $start, $length = null)
     {
         /**
@@ -36,11 +43,15 @@ class Mbstring implements TStringFunc
             $length = $this->strlen($str) - $start;
         }
 
-        return mb_substr($str, $start, $length, '8bit');
+        return mb_substr((string) $str, $start, $length, '8bit');
     }
 
+    /**
+     * @param string $str
+     * @return int
+     */
     public function strlen($str)
     {
-        return mb_strlen($str, '8bit');
+        return mb_strlen((string) $str, '8bit');
     }
 }

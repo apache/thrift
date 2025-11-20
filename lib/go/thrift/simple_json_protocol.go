@@ -30,6 +30,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 )
 
 type _ParseContext int
@@ -922,15 +923,7 @@ func (p *TSimpleJSONProtocol) ParseStringBody() (string, error) {
 	if err != nil {
 		return "", NewTProtocolException(err)
 	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
-	i := 1
-	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
-			break
-		}
-	}
-	if i&0x01 == 1 {
+	if endsWithoutEscapedQuote(line) {
 		v, ok := jsonUnquote(string(JSON_QUOTE) + line)
 		if !ok {
 			return "", NewTProtocolException(err)
@@ -951,27 +944,29 @@ func (p *TSimpleJSONProtocol) ParseStringBody() (string, error) {
 }
 
 func (p *TSimpleJSONProtocol) ParseQuotedStringBody() (string, error) {
-	line, err := p.reader.ReadString(JSON_QUOTE)
-	if err != nil {
-		return "", NewTProtocolException(err)
+	var sb strings.Builder
+
+	for {
+		line, err := p.reader.ReadString(JSON_QUOTE)
+		if err != nil {
+			return "", NewTProtocolException(err)
+		}
+		sb.WriteString(line)
+		if endsWithoutEscapedQuote(line) {
+			return sb.String(), nil
+		}
 	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
+}
+
+func endsWithoutEscapedQuote(s string) bool {
+	l := len(s)
 	i := 1
 	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
+		if s[l-i-1] != '\\' {
 			break
 		}
 	}
-	if i&0x01 == 1 {
-		return line, nil
-	}
-	s, err := p.ParseQuotedStringBody()
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	v := line + s
-	return v, nil
+	return i&0x01 == 1
 }
 
 func (p *TSimpleJSONProtocol) ParseBase64EncodedBody() ([]byte, error) {
@@ -1200,7 +1195,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 	for continueFor {
 		c, err := p.reader.ReadByte()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return NUMERIC_NULL, NewTProtocolException(err)
@@ -1311,7 +1306,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 
 // Safely peeks into the buffer, reading only what is necessary
 func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
-	for i := 0; i < len(b); i++ {
+	for i := range b {
 		a, _ := p.reader.Peek(i + 1)
 		if len(a) < (i+1) || a[i] != b[i] {
 			return false

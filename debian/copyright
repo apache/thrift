@@ -72,9 +72,12 @@ under the Apache 2.0 License:
   lib/netstd/Thrift/Transport/TTransport.cs
   lib/netstd/Thrift/Transport/TTransportException.cs
   lib/netstd/Thrift/Transport/TTransportFactory.cs
-  lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs
-  lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj
-  lib/rb/lib/thrift.rb
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Properties/AssemblyInfo.cs
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Properties/AssemblyInfo.cs
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Properties/AssemblyInfo.cs
+  lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj
   lib/st/README.md
   lib/st/thrift.st
   lib/cpp/test/OptionalRequiredTest.cpp

@@ -19,6 +19,7 @@
 
 package org.apache.thrift.test;
 
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.Tomcat.FixContextListener;
@@ -30,8 +31,11 @@ public class TestTServletServer {
 
   public static void main(String[] args) throws Exception {
     Tomcat tomcat = new Tomcat();
-    tomcat.setPort(port);
     tomcat.setBaseDir(System.getProperty("user.dir") + "\\build");
+    // Add a connector for the tomcat so that it can accept the request
+    Connector connector = new Connector();
+    connector.setPort(port);
+    tomcat.getService().addConnector(connector);
     tomcat.getHost().setAutoDeploy(false);
 
     String contextPath = "/test";

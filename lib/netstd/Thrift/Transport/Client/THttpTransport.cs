@@ -25,6 +25,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079  // unneeded suppression -> all except net8
+#pragma warning disable IDE0301  // simplify collection init -> net8 only
+#pragma warning disable IDE0305  // simplify collection init -> net8 only
 
 namespace Thrift.Transport.Client
 {
@@ -165,7 +168,7 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
         }
 
@@ -258,21 +261,25 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
             catch (HttpRequestException wx)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown,
-                    "Couldn't connect to server: " + wx);
+                    "Couldn't connect to server: " + wx, wx);
+            }
+            catch (OperationCanceledException ocx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
             }
             catch (Exception ex)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message, ex);
             }
             finally
             {
                 _outputStream = new MemoryStream();
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes();
             }
         }
 

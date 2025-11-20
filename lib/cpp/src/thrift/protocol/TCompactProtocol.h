@@ -35,12 +35,12 @@ namespace protocol {
 template <class Transport_>
 class TCompactProtocolT : public TVirtualProtocol<TCompactProtocolT<Transport_> > {
 public:
-  static const int8_t PROTOCOL_ID = (int8_t)0x82u;
+  static const int8_t PROTOCOL_ID = static_cast<int8_t>(0x82u);
   static const int8_t VERSION_N = 1;
   static const int8_t VERSION_MASK = 0x1f;       // 0001 1111
 
 protected:
-  static const int8_t TYPE_MASK = (int8_t)0xE0u; // 1110 0000
+  static const int8_t TYPE_MASK = static_cast<int8_t>(0xE0u); // 1110 0000
   static const int8_t TYPE_BITS = 0x07;          // 0000 0111
   static const int32_t TYPE_SHIFT_AMOUNT = 5;
 
@@ -140,6 +140,8 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
+  uint32_t writeUUID(const TUuid& str);
+
   int getMinSerializedSize(TType type) override;
 
   void checkReadBytesAvailable(TSet& set) override
@@ -212,6 +214,8 @@ public:
   uint32_t readString(std::string& str);
 
   uint32_t readBinary(std::string& str);
+
+  uint32_t readUUID(TUuid& str);
 
   /*
    *These methods are here for the struct to call, but don't have any wire

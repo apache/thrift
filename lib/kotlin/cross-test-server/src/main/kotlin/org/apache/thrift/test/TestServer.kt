@@ -96,6 +96,7 @@ object TestServer {
 
     internal class TestServerEventHandler() : TServerEventHandler {
         private var nextConnectionId = 1
+
         override fun preServe() {
             println(
                 "TServerEventHandler.preServe - called only once before server starts accepting connections"
@@ -117,7 +118,7 @@ object TestServer {
         override fun deleteContext(
             serverContext: ServerContext,
             input: TProtocol,
-            output: TProtocol
+            output: TProtocol,
         ) {
             val ctx = serverContext.unwrap(TestServerContext::class.java)
             println(
@@ -130,7 +131,7 @@ object TestServer {
         override fun processContext(
             serverContext: ServerContext,
             inputTransport: TTransport,
-            outputTransport: TTransport
+            outputTransport: TTransport,
         ) {
             val ctx = serverContext.unwrap(TestServerContext::class.java)
             println(
@@ -146,7 +147,7 @@ enum class ServerType(val key: String) {
     Simple("simple"),
     ThreadPool("thread-pool"),
     NonBlocking("nonblocking"),
-    ThreadedSelector("threaded-selector")
+    ThreadedSelector("threaded-selector"),
 }
 
 enum class ProtocolType(val key: String) {
@@ -155,14 +156,14 @@ enum class ProtocolType(val key: String) {
     Json("json"),
     MultiJson("multij"),
     Compact("compact"),
-    MultiCompact("multic")
+    MultiCompact("multic"),
 }
 
 enum class TransportType(val key: String) {
     Buffered("buffered"),
     FastFramed("fastframed"),
     Framed("framed"),
-    Zlib("zlib")
+    Zlib("zlib"),
 }
 
 class TestServerCommand : CliktCommand() {
@@ -197,7 +198,7 @@ class TestServerCommand : CliktCommand() {
                 protocolType,
                 getProtocolFactory(),
                 getTransportFactory(),
-                useSSL
+                useSSL,
             )
         // Set server event handler
         serverEngine.setServerEventHandler(TestServer.TestServerEventHandler())
@@ -247,7 +248,7 @@ private fun getServerEngine(
     protocolType: ProtocolType,
     tProtocolFactory: TProtocolFactory,
     tTransportFactory: TTransportFactory,
-    ssl: Boolean
+    ssl: Boolean,
 ): TServer {
     val isMulti =
         protocolType == ProtocolType.Multi ||

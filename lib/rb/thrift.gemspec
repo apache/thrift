@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'thrift'
-  s.version     = '0.20.0'
+  s.version     = '0.23.0'
   s.authors     = ['Apache Thrift Developers']
   s.email       = ['dev@thrift.apache.org']
   s.homepage    = 'http://thrift.apache.org'
@@ -12,7 +12,6 @@ Gem::Specification.new do |s|
   s.license     = 'Apache-2.0'
   s.extensions  = ['ext/extconf.rb']
 
-  s.has_rdoc      = true
   s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
 
   s.rubyforge_project = 'thrift'

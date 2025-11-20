@@ -124,7 +124,7 @@ describe 'Thrift::HTTPClientTransport' do
           expect(http).to receive(:use_ssl=).with(true)
           expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
           expect(http).to receive(:post).with(@service_path, "test",
-              "Content-Type" => "application/x-thrift") do
+              {"Content-Type" => "application/x-thrift"}) do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
               expect(response).to receive(:code).and_return "200"
@@ -146,7 +146,7 @@ describe 'Thrift::HTTPClientTransport' do
           expect(http).to receive(:use_ssl=).with(true)
           expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
           expect(http).to receive(:post).with(@service_path, "test",
-              "Content-Type" => "application/x-thrift") do
+              {"Content-Type" => "application/x-thrift"}) do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
               expect(response).to receive(:code).and_return "200"

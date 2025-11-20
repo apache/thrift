@@ -28,6 +28,8 @@ install-exec-hook:
 clean-local:
 	swift package clean
 	rm -rf .build
+	rm -rf FuzzTesting/.build
+	rm -rf FuzzTesting/Sources/Fuzz/*
 
 precross:
 	swift build
@@ -35,10 +37,26 @@ precross:
 check-local:
 	swift test
 
+FuzzTesting/Sources/Fuzz:
+	mkdir -p FuzzTesting/Sources/Fuzz
+
+fuzz-gen: FuzzTesting/Sources/Fuzz
+	$(top_builddir)/compiler/cpp/thrift --gen swift -r -out FuzzTesting/Sources/Fuzz $(top_srcdir)/test/FuzzTest.thrift
+
+fuzz-local: fuzz-gen
+	cd FuzzTesting && swift build --configuration release ${SWIFTFLAGS}
+
+fuzz: all-local fuzz-local
+	@echo "Built fuzzers successfully"
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Package.swift \
 	Sources \
 	Tests \
+	FuzzTesting \
 	README.md
 
 MAINTAINERCLEANFILES = \

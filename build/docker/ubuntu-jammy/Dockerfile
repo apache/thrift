@@ -32,16 +32,24 @@ RUN apt-get update -yq && \
   software-properties-common \
   wget
 
+# Create a user
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ] && [ -z `cat /etc/group | grep ":${gid}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    if [ -z `cat /etc/passwd | grep "${user}:"` ] && [ -z `cat /etc/passwd | grep ":${uid}:"` ]; then adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos ""; fi && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /home/${user} && \
+    chown -R ${user}:${group} /home/${user}
+
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
   /etc/apt/sources.list.d/dart_stable.list
-
-# dotnet (netcore)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
-  chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
@@ -84,7 +92,6 @@ RUN apt-get install -y --no-install-recommends \
   libboost-all-dev \
   libevent-dev \
   libssl-dev \
-  qt5-default \
   qtbase5-dev \
   qtbase5-dev-tools
 
@@ -123,15 +130,16 @@ RUN apt-get install -y --no-install-recommends \
   dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
+RUN add-apt-repository ppa:dotnet/backports
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
-  dotnet-sdk-7.0 \
-  dotnet-runtime-7.0 \
-  aspnetcore-runtime-7.0 \
-  dotnet-apphost-pack-7.0
+  dotnet-sdk-10.0 \
+  dotnet-runtime-10.0 \
+  aspnetcore-runtime-10.0 \
+  dotnet-apphost-pack-10.0
 
 # Erlang dependencies
-ARG ERLANG_OTP_VERSION=23.3.4.11
+ARG ERLANG_OTP_VERSION=25.3.2.9
 ARG ERLANG_REBAR_VERSION=3.18.0
 RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev && \
   curl -ssLo /usr/local/bin/kerl https://raw.githubusercontent.com/kerl/kerl/master/kerl && chmod +x /usr/local/bin/kerl && \
@@ -145,22 +153,37 @@ RUN apt-get install -y --no-install-recommends \
   libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.20
+ENV GOLANG_VERSION 1.24.3
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 5a9ebcc65c1cce56e0d2dc616aff4c4cedcfbda8cc6f0288cc08cda3b18dcbf1
+ENV GOLANG_DOWNLOAD_SHA256 3333f6ea53afa971e9078895eaa4ac7204a8c6b5c68c10e6bc9a33e8e391bdd8
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
   echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
   tar -C /usr/local -xzf golang.tar.gz && \
   ln -s /usr/local/go/bin/go /usr/local/bin && \
   rm golang.tar.gz
 
-RUN apt-get install -y --no-install-recommends \
-  `# Haxe dependencies` \
-  haxe \
-  neko \
-  neko-dev && \
-  haxelib setup --always /usr/share/haxe/lib && \
-  haxelib install --always hxcpp 2>&1 > /dev/null
+# HAXE
+ARG HAXE_VERSION=4.2.1
+ARG NEKO_VERSION=2.3.0
+RUN cd $HOME && \
+    `# Haxe dependencies` && \
+    wget https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    tar xvf haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    rm haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    mv haxe_* /opt/haxe && \
+    wget https://github.com/HaxeFoundation/neko/releases/download/v`echo ${NEKO_VERSION} | sed "s/\./-/g"`/neko-${NEKO_VERSION}-linux64.tar.gz && \
+    tar xvf neko-${NEKO_VERSION}-linux64.tar.gz && \
+    rm neko-${NEKO_VERSION}-linux64.tar.gz && \
+    mv neko-* /opt/neko
+ENV PATH /opt/haxe:/opt/neko:$PATH
+RUN echo "/opt/neko" > /etc/ld.so.conf.d/neko.conf && \
+    ldconfig
+USER ${user}
+RUN mkdir -p $HOME/haxe/lib && \
+    haxelib setup --always $HOME/haxe/lib && \
+    haxelib install --always hxcpp 2>&1 > /dev/null && \
+    haxelib install --always uuid 2>&1 > /dev/null
+USER root
 
 ENV GRADLE_VERSION="8.4"
 RUN apt-get install -y --no-install-recommends \
@@ -168,7 +191,7 @@ RUN apt-get install -y --no-install-recommends \
   ant \
   ant-optional \
   maven \
-  openjdk-11-jdk-headless && \
+  openjdk-17-jdk-headless && \
   `# Gradle` \
   wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
   (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
@@ -178,8 +201,8 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
   `# Lua dependencies` \
-  lua5.2 \
-  lua5.2-dev
+  lua5.4 \
+  liblua5.4-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
 # lua5.3 does not install alternatives!
 # need to update our luasocket code, lua doesn't have luaL_openlib any more
@@ -213,10 +236,13 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
   `# Php dependencies` \
-  php \
-  php-cli \
-  php-dev \
-  php-json \
+  php8.1 \
+  php8.1-cli \
+  php8.1-dev \
+  php8.1-mbstring \
+  php8.1-xml \
+  php8.1-curl \
+  php8.1-xdebug \
   php-pear \
   re2c \
   composer
@@ -228,7 +254,6 @@ RUN apt-get install -y --no-install-recommends \
   python3-all-dev \
   python3-pip \
   python3-setuptools \
-  python3-six \
   python3-tornado \
   python3-twisted \
   python3-wheel \
@@ -240,9 +265,11 @@ RUN apt-get install -y --no-install-recommends \
   ruby-dev \
   ruby-bundler
 
-# Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
-ENV PATH /root/.cargo/bin:$PATH
+USER ${user}
+RUN `# Rust dependencies` \
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.83.0 -y
+ENV PATH /home/${user}/.cargo/bin:$PATH
+USER root
 
 # Swift on Linux for cross tests
 RUN apt-get install -yq \
@@ -281,6 +308,9 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /var/tmp/*
 
 ENV THRIFT_ROOT /thrift
-RUN mkdir -p $THRIFT_ROOT/src
+RUN mkdir -p $THRIFT_ROOT/src && \
+    chown -R ${uid}:${uid} $THRIFT_ROOT/
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+USER ${user}

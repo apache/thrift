@@ -97,7 +97,7 @@
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 		<PropertyGroup>
-			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi idl\skiptest_version_2.thrift]]></PreBuildEvent>
+			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi:rtti idl\skiptest_version_2.thrift]]></PreBuildEvent>
 		</PropertyGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>

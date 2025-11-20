@@ -131,16 +131,24 @@ skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	.asf.yaml \
 	.clang-format \
 	.dockerignore \
 	.editorconfig \
-	.eslintignore \
-	.eslintrc.json \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
+	.github/dependabot.yml \
+	.github/pull_request_template.md \
+	.github/stale.yml \
+	.github/workflows/build.yml \
+	.github/workflows/cmake.yml \
+	.github/workflows/pypi.yml \
+	.github/workflows/release_rust.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
@@ -156,6 +164,7 @@ EXTRA_DIST = \
 	doap.rdf \
 	doc \
 	dub.json \
+	eslint.config.mjs \
 	go.mod \
 	jitpack.yml \
 	LANGUAGES.md \
@@ -163,6 +172,7 @@ EXTRA_DIST = \
 	NOTICE \
 	package.json \
 	package-lock.json \
+	Package.swift \
 	phpcs.xml.dist \
 	README.md \
 	rust-toolchain \

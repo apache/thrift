@@ -120,6 +120,9 @@ dist-hook:
 	find $(distdir) -type d -name "__pycache__" | xargs rm -rf
 	find $(distdir) -type f -name "*.pyc" | xargs rm -f
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	audit \
 	c_glib \
@@ -144,6 +147,7 @@ EXTRA_DIST = \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
+	v0.16/ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
 	v0.16/DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
@@ -151,6 +155,7 @@ EXTRA_DIST = \
 	DoubleConstantsTest.thrift \
 	EnumContainersTest.thrift \
 	EnumTest.thrift \
+	ExceptionStruct.thrift \
 	FullCamelTest.thrift \
 	Include.thrift \
 	Identifiers.thrift \
@@ -159,6 +164,7 @@ EXTRA_DIST = \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
 	NameConflictTest.thrift \
+	v0.16/NameConflictTest.thrift \
 	OptionalRequiredTest.thrift \
 	Recursive.thrift \
 	ReuseObjects.thrift \

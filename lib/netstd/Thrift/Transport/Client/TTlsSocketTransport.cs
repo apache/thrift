@@ -25,6 +25,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+
 namespace Thrift.Transport.Client
 {
     //TODO: check for correct work
@@ -79,6 +82,10 @@ namespace Thrift.Transport.Client
             }
         }
 
+        #if NET9_0_OR_GREATER
+        [Obsolete("SYSLIB0057: X509Certificate2 and X509Certificate constructors for binary and file content are obsolete")]
+        #pragma warning disable SYSLIB0057
+        #endif
         public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
             string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
@@ -91,6 +98,7 @@ namespace Thrift.Transport.Client
                 sslProtocols)
         {
         }
+        #pragma warning restore SYSLIB0057
 
         public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
             X509Certificate2 certificate = null,
