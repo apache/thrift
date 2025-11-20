@@ -251,9 +251,9 @@ module Thrift
     #
     # Returns nothing.
     def write_type(field_info, value)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 
@@ -291,9 +291,9 @@ module Thrift
     #
     # Returns the value read; object type varies based on field_info[:type].
     def read_type(field_info)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 

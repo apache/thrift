@@ -312,7 +312,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/rb/README.md">Ruby</a></td>
 <!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<!-- Language Levels -------><td>2.3.1p112</td><td>2.5.1p57</td>
+<!-- Language Levels -------><td>2.4.0</td><td>2.5.1p57</td>
 <!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
