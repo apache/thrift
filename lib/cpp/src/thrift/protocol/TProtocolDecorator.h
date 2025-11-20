@@ -92,6 +92,7 @@ public:
   uint32_t writeDouble_virt(const double dub) override { return protocol->writeDouble(dub); }
   uint32_t writeString_virt(const std::string& str) override { return protocol->writeString(str); }
   uint32_t writeBinary_virt(const std::string& str) override { return protocol->writeBinary(str); }
+  uint32_t writeUUID_virt(const TUuid& uuid) override { return protocol->writeUUID(uuid); }
 
   uint32_t readMessageBegin_virt(std::string& name,
                                          TMessageType& messageType,
@@ -140,6 +141,7 @@ public:
 
   uint32_t readString_virt(std::string& str) override { return protocol->readString(str); }
   uint32_t readBinary_virt(std::string& str) override { return protocol->readBinary(str); }
+  uint32_t readUUID_virt(TUuid& uuid) override { return protocol->readUUID(uuid); }
 
 private:
   shared_ptr<TProtocol> protocol;

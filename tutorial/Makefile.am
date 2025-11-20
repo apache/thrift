@@ -50,10 +50,6 @@ if WITH_RUBY
 SUBDIRS += rb
 endif
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
 if WITH_HAXE
 SUBDIRS += haxe
 endif
@@ -90,8 +86,12 @@ if WITH_PHP
 SUBDIRS += php
 endif
 
+if WITH_SWIFT
+SUBDIRS += swift
+endif
+
 #
-# generate html for ThriftTest.thrift
+# generate html for tutorial.thrift
 #
 all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
@@ -101,14 +101,15 @@ clean-local:
 
 endif
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
-	as3 \
 	d \
 	delphi \
 	erl \
-	hs \
 	ocaml \
 	shared.thrift \
 	tutorial.thrift \

@@ -19,7 +19,10 @@
 
 package org.apache.thrift.transport;
 
-import haxe.remoting.SocketProtocol;
+#if (cs || neko || cpp || java || macro || lua || php || python || hl)
+import sys.net.Socket;
+#end
+
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesInput;
@@ -27,9 +30,9 @@ import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.Output;
 import haxe.io.Eof;
+import org.apache.thrift.TConfiguration;
 
-//import flash.net.ServerSocket; - not yet available on Haxe 3.1.3
-#if ! (flash || html5)
+#if ! (flash || html5 || js)
 
 import sys.net.Host;
 
@@ -46,8 +49,10 @@ class TServerSocket extends TServerTransport {
     private var _useBufferedSockets : Bool = false;
 
 
-    public function new(?address : String = 'localhost',  port : Int, clientTimeout : Float = 5, useBufferedSockets : Bool = false)
+    public function new(?address : String = 'localhost',  port : Int, clientTimeout : Float = 5, useBufferedSockets : Bool = false, config : TConfiguration = null)
     {
+		super(config);
+
         _clientTimeout = clientTimeout;
         _useBufferedSockets = useBufferedSockets;
 

@@ -23,6 +23,7 @@
 
 namespace Thrift\Protocol;
 
+use Thrift\Exception\TException;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\JSON\BaseContext;
@@ -108,7 +109,7 @@ class TJSONProtocol extends TProtocol
     {
         $result = TType::STOP;
 
-        if (strlen($name) > 1) {
+        if (strlen((string) $name) > 1) {
             switch (substr($name, 0, 1)) {
                 case 'd':
                     $result = TType::DOUBLE;
@@ -186,8 +187,6 @@ class TJSONProtocol extends TProtocol
         $this->reader_ = new LookaheadReader($this);
     }
 
-    private $tmpbuf_ = array(4);
-
     public function readJSONSyntaxChar($b)
     {
         $ch = $this->reader_->read();
@@ -195,68 +194,6 @@ class TJSONProtocol extends TProtocol
         if (substr($ch, 0, 1) != $b) {
             throw new TProtocolException("Unexpected character: " . $ch, TProtocolException::INVALID_DATA);
         }
-    }
-
-    private function hexVal($s)
-    {
-        for ($i = 0; $i < strlen($s); $i++) {
-            $ch = substr($s, $i, 1);
-
-            if (!($ch >= "a" && $ch <= "f") && !($ch >= "0" && $ch <= "9")) {
-                throw new TProtocolException("Expected hex character " . $ch, TProtocolException::INVALID_DATA);
-            }
-        }
-
-        return hexdec($s);
-    }
-
-    private function hexChar($val)
-    {
-        return dechex($val);
-    }
-
-    private function hasJSONUnescapedUnicode()
-    {
-        if (PHP_MAJOR_VERSION > 5 || (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private function unescapedUnicode($str)
-    {
-        if ($this->hasJSONUnescapedUnicode()) {
-            return json_encode($str, JSON_UNESCAPED_UNICODE);
-        }
-
-        $json = json_encode($str);
-
-        /*
-         * Unescaped character outside the Basic Multilingual Plane
-         * High surrogate: 0xD800 - 0xDBFF
-         * Low surrogate: 0xDC00 - 0xDFFF
-         */
-        $json = preg_replace_callback(
-            '/\\\\u(d[89ab][0-9a-f]{2})\\\\u(d[cdef][0-9a-f]{2})/i',
-            function ($matches) {
-                return mb_convert_encoding(pack('H*', $matches[1] . $matches[2]), 'UTF-8', 'UTF-16BE');
-            },
-            $json
-        );
-
-        /*
-         * Unescaped characters within the Basic Multilingual Plane
-         */
-        $json = preg_replace_callback(
-            '/\\\\u([0-9a-f]{4})/i',
-            function ($matches) {
-                return mb_convert_encoding(pack('H*', $matches[1]), 'UTF-8', 'UTF-16BE');
-            },
-            $json
-        );
-
-        return $json;
     }
 
     private function writeJSONString($b)
@@ -267,7 +204,7 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
-        $this->trans_->write($this->unescapedUnicode($b));
+        $this->trans_->write(json_encode($b, JSON_UNESCAPED_UNICODE));
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
@@ -297,19 +234,12 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
+        #TODO add compatibility with NAN and INF
         $this->trans_->write(json_encode($num));
 
         if ($this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
         }
-    }
-
-    private function writeJSONBase64($data)
-    {
-        $this->context_->write();
-        $this->trans_->write(self::QUOTE);
-        $this->trans_->write(json_encode(base64_encode($data)));
-        $this->trans_->write(self::QUOTE);
     }
 
     private function writeJSONObjectStart()
@@ -479,18 +409,6 @@ class TJSONProtocol extends TProtocol
 
             return floatval($this->readJSONNumericChars());
         }
-    }
-
-    private function readJSONBase64()
-    {
-        $arr = $this->readJSONString(false);
-        $data = base64_decode($arr, true);
-
-        if ($data === false) {
-            throw new TProtocolException("Invalid base64 data " . $arr, TProtocolException::INVALID_DATA);
-        }
-
-        return $data;
     }
 
     private function readJSONObjectStart()

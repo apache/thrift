@@ -24,6 +24,9 @@ clean-local:
 	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
 	$$ANT $(ANT_FLAGS) clean
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 check-local: all
 	$(ANT) $(ANT_FLAGS) test
 

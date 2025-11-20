@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -14,6 +14,9 @@
 // KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0300 // net8 - simplified collection init 
 
 namespace Thrift.Protocol.Utilities
 {
@@ -56,6 +59,7 @@ namespace Thrift.Protocol.Utilities
             public static readonly byte[] NameMap = { (byte)'m', (byte)'a', (byte)'p' };
             public static readonly byte[] NameList = { (byte)'l', (byte)'s', (byte)'t' };
             public static readonly byte[] NameSet = { (byte)'s', (byte)'e', (byte)'t' };
+            public static readonly byte[] NameUuid = { (byte)'u', (byte)'i', (byte)'d' };
         }
     }
 }

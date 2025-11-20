@@ -28,12 +28,12 @@ clean-local:
 
 check-local: all
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -r $(distdir)/.pub
 	find $(distdir) -type d -name ".dart_tool" | xargs $(RM) -r
 	find $(distdir) -type f -name ".packages" | xargs $(RM)
 	find $(distdir) -type d -name "packages" | xargs $(RM) -r
-
-EXTRA_DIST = \
-	.analysis_options
 

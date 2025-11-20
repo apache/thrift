@@ -32,6 +32,7 @@ uses
   Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
+  Thrift.Stream,
   Thrift.Utils;
 
 type
@@ -139,7 +140,7 @@ type
 
   public
     // TJSONProtocolImpl Constructor
-    constructor Create( const aTrans : ITransport);
+    constructor Create( const aTrans : ITransport);  override;
     destructor Destroy;   override;
 
   strict protected
@@ -197,6 +198,7 @@ type
     procedure WriteDouble( const d: Double); override;
     procedure WriteString( const s: string );   override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteUuid( const uuid: TGuid); override;
     //
     function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
@@ -218,6 +220,7 @@ type
     function ReadDouble:Double; override;
     function ReadString : string;  override;
     function ReadBinary: TBytes; override;
+    function ReadUuid: TGuid; override;
 
 
   strict private
@@ -287,6 +290,7 @@ const
   NAME_MAP    = 'map';
   NAME_LIST   = 'lst';
   NAME_SET    = 'set';
+  NAME_UUID   = 'uid';
 
   INVARIANT_CULTURE : TFormatSettings
                     = ( ThousandSeparator: ',';
@@ -316,6 +320,7 @@ begin
     TType.Map:      result := NAME_MAP;
     TType.Set_:     result := NAME_SET;
     TType.List:     result := NAME_LIST;
+    TType.Uuid:     result := NAME_UUID;
   else
     raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+IntToStr(Ord(typeID))+')');
   end;
@@ -335,6 +340,7 @@ begin
   else if name = NAME_MAP    then result := TType.Map
   else if name = NAME_LIST   then result := TType.List
   else if name = NAME_SET    then result := TType.Set_
+  else if name = NAME_UUID   then result := TType.Uuid
   else raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+name+')');
 end;
 
@@ -830,9 +836,14 @@ begin
   WriteJSONBase64( b);
 end;
 
+procedure TJSONProtocolImpl.WriteUuid( const uuid: TGuid);
+begin
+  WriteString( Copy( GuidToString(uuid), 2, 36));  // strip off the { braces }
+end;
+
 
 function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
-var buffer : TMemoryStream;
+var buffer : TThriftMemoryStream;
     ch  : Byte;
     wch : Word;
     highSurogate: Char;
@@ -841,7 +852,7 @@ var buffer : TMemoryStream;
     tmp : TBytes;
 begin
   highSurogate := #0;
-  buffer := TMemoryStream.Create;
+  buffer := TThriftMemoryStream.Create;
   try
     if not skipContext
     then FContext.Read;
@@ -1236,12 +1247,18 @@ begin
 end;
 
 
+function TJSONProtocolImpl.ReadUuid: TGuid;
+begin
+  result := StringToGUID( '{' + ReadString + '}');
+end;
+
+
 function TJSONProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
 // Return the minimum number of bytes a type will consume on the wire
 begin
   case aType of
-    TType.Stop:    result := 0;
-    TType.Void:    result := 0;
+    TType.Stop:    result := 1;  // T_STOP needs to count itself
+    TType.Void:    result := 1;  // T_VOID needs to count itself
     TType.Bool_:   result := 1;
     TType.Byte_:   result := 1;
     TType.Double_: result := 1;
@@ -1253,6 +1270,7 @@ begin
     TType.Map:     result := 2;  // empty map
     TType.Set_:    result := 2;  // empty set
     TType.List:    result := 2;  // empty list
+    TType.Uuid:    result := 36; // "E236974D-F0B0-4E05-8F29-0B455D41B1A1"
   else
     raise TTransportExceptionBadArgs.Create('Unhandled type code');
   end;

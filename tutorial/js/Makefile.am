@@ -33,7 +33,11 @@ check-local: all
 tutorialserver: all
 	$(ANT) $(ANT_FLAGS) tutorialserver
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
+	build.properties \
 	build.xml \
 	src \
 	tutorial.html

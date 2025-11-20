@@ -48,20 +48,26 @@ else()
         set(PRELEASE "false")
     endif ()
 
-    add_custom_target(ThriftJava ALL
-        COMMENT "Building Java library using Gradle Wrapper"
-        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} assemble
+    file(GLOB_RECURSE THRIFTJAVA_SOURCES LIST_DIRECTORIES false
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build/libs/libthrift.jar"
+        COMMENT "Building Java library using Gradle"
+        COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} assemble
             --console=plain --no-daemon
             -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
             "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
+        DEPENDS ${THRIFTJAVA_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
+    add_custom_target(ThriftJava ALL
+        DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/build/libs/libthrift.jar")
 
     # Enable publishing from CMake if the publishing information is provided
     add_custom_target(MavenPublish
         COMMENT "Publishing Java Library to Apache Maven staging"
-        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
+        DEPENDS ThriftJava
+        COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
             --console=plain --no-daemon
             -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
@@ -83,13 +89,13 @@ else()
 
     if(BUILD_TESTING)
         add_test(NAME JavaTest
-                COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} test
-                    --console=plain --no-daemon
-                    -Prelease=${PRELEASE}
-                    -Pthrift.version=${thrift_VERSION}
-                    "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
-                    "-Pthrift.compiler=${THRIFT_COMPILER}"
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} test
+                --console=plain --no-daemon
+                -Prelease=${PRELEASE}
+                -Pthrift.version=${thrift_VERSION}
+                "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
+                "-Pthrift.compiler=${THRIFT_COMPILER}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 
 endif()

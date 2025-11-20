@@ -28,71 +28,59 @@
 %% legacy api
 -export([new_transport_factory/1]).
 
-
 -record(t_buffered, {
-  wrapped,
-  write_buffer
+    wrapped :: thrift_transport:t_transport(),
+    write_buffer :: iodata()
 }).
 
--type state() :: #t_buffered{}.
-
-
--spec new(Transport::thrift_transport:t_transport()) ->
-  thrift_transport:t_transport().
+-spec new(Transport :: thrift_transport:t_transport()) -> {ok, thrift_transport:t_transport()}.
 
 new(Wrapped) ->
-  State = #t_buffered{
-    wrapped = Wrapped,
-    write_buffer = []
-  },
-  thrift_transport:new(?MODULE, State).
-
-
--include("thrift_transport_behaviour.hrl").
-
+    State = #t_buffered{
+        wrapped = Wrapped,
+        write_buffer = []
+    },
+    thrift_transport:new(?MODULE, State).
 
 %% reads data through from the wrapped transport
-read(State = #t_buffered{wrapped = Wrapped}, Len)
-when is_integer(Len), Len >= 0 ->
-  {NewState, Response} = thrift_transport:read(Wrapped, Len),
-  {State#t_buffered{wrapped = NewState}, Response}.
-
+read(State = #t_buffered{wrapped = Wrapped}, Len) when
+    is_integer(Len), Len >= 0
+->
+    {NewState, Response} = thrift_transport:read(Wrapped, Len),
+    {State#t_buffered{wrapped = NewState}, Response}.
 
 %% reads data through from the wrapped transport
-read_exact(State = #t_buffered{wrapped = Wrapped}, Len)
-when is_integer(Len), Len >= 0 ->
-  {NewState, Response} = thrift_transport:read_exact(Wrapped, Len),
-  {State#t_buffered{wrapped = NewState}, Response}.
-
+read_exact(State = #t_buffered{wrapped = Wrapped}, Len) when
+    is_integer(Len), Len >= 0
+->
+    {NewState, Response} = thrift_transport:read_exact(Wrapped, Len),
+    {State#t_buffered{wrapped = NewState}, Response}.
 
 write(State = #t_buffered{write_buffer = Buffer}, Data) ->
-  {State#t_buffered{write_buffer = [Buffer, Data]}, ok}.
-
+    {State#t_buffered{write_buffer = [Buffer, Data]}, ok}.
 
 flush(State = #t_buffered{wrapped = Wrapped, write_buffer = Buffer}) ->
-  case iolist_size(Buffer) of
-    %% if write buffer is empty, do nothing
-    0 -> {State, ok};
-    _ ->
-      {Written, Response} = thrift_transport:write(Wrapped, Buffer),
-      {Flushed, ok} = thrift_transport:flush(Written),
-      {State#t_buffered{wrapped = Flushed, write_buffer = []}, Response}
-  end.
-
+    case iolist_size(Buffer) of
+        %% if write buffer is empty, do nothing
+        0 ->
+            {State, ok};
+        _ ->
+            {Written, Response} = thrift_transport:write(Wrapped, Buffer),
+            {Flushed, ok} = thrift_transport:flush(Written),
+            {State#t_buffered{wrapped = Flushed, write_buffer = []}, Response}
+    end.
 
 close(State = #t_buffered{wrapped = Wrapped}) ->
-  {Closed, Result} = thrift_transport:close(Wrapped),
-  {State#t_buffered{wrapped = Closed}, Result}.
-
+    {Closed, Result} = thrift_transport:close(Wrapped),
+    {State#t_buffered{wrapped = Closed}, Result}.
 
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 new_transport_factory(WrapFactory) ->
-  F = fun() ->
-    {ok, Wrapped} = WrapFactory(),
-    new(Wrapped)
-  end,
-  {ok, F}.
-
+    F = fun() ->
+        {ok, Wrapped} = WrapFactory(),
+        new(Wrapped)
+    end,
+    {ok, F}.

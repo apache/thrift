@@ -38,13 +38,56 @@ public:
   void set_extends(t_service* extends) { extends_ = extends; }
 
   void add_function(t_function* func) {
-    std::vector<t_function*>::const_iterator iter;
-    for (iter = functions_.begin(); iter != functions_.end(); ++iter) {
-      if (func->get_name() == (*iter)->get_name()) {
-        throw "Function " + func->get_name() + " is already defined";
-      }
+    if (get_function_by_name(func->get_name()) != NULL) {
+      throw "Function " + func->get_name() + " is already defined";
     }
     functions_.push_back(func);
+  }
+
+  void validate_unique_members() {
+    std::vector<t_function*>::const_iterator iter;
+    for (iter = functions_.begin(); iter != functions_.end(); ++iter) {
+      // throw exception when there is a conflict of names with super class
+      if (extends_ != NULL) {
+        if (extends_->get_function_by_name((*iter)->get_name()) != NULL) {
+          throw "Function " + (*iter)->get_name() + " is already defined in service " + name_;
+        }
+      }
+    }
+  }
+
+  t_function* get_function_by_name(std::string func_name) {
+    if (extends_ != NULL) {
+      t_function* func = NULL;
+      if ((func = extends_->get_function_by_name(func_name)) != NULL) {
+        return func;
+      }
+    }
+
+    std::vector<t_function*>::const_iterator iter;
+    for (iter = functions_.begin(); iter != functions_.end(); ++iter) {
+      if ((*iter)->get_name() == func_name) {
+        return *iter;
+      }
+    }
+    return NULL;
+  }
+
+  const t_function* get_function_by_name(std::string func_name) const {
+    if (extends_ != NULL) {
+      t_function* func = NULL;
+      if ((func = extends_->get_function_by_name(func_name)) != NULL) {
+        return func;
+      }
+    }
+
+    std::vector<t_function*>::const_iterator iter;
+    for (iter = functions_.begin(); iter != functions_.end(); ++iter) {
+      if ((*iter)->get_name() == func_name) {
+        return *iter;
+      }
+    }
+    return NULL;
   }
 
   const std::vector<t_function*>& get_functions() const { return functions_; }

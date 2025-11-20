@@ -44,7 +44,7 @@ abstract class TTransport {
     while (got < length) {
       ret = read(buffer, offset + got, length - got);
       if (ret <= 0) {
-        throw new TTransportError(
+        throw TTransportError(
             TTransportErrorType.UNKNOWN,
             "Cannot read. Remote side has closed. Tried to read $length "
             "bytes, but only got $got bytes.");

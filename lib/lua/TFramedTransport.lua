@@ -18,7 +18,7 @@
 --
 
 require 'TTransport'
-require 'libluabpack'
+local libluabpack = require 'libluabpack'
 
 TFramedTransport = TTransportBase:new{
   __type = 'TFramedTransport',

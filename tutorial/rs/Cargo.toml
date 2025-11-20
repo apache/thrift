@@ -1,16 +1,15 @@
 [package]
 name = "thrift-tutorial"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 exclude = ["Makefile*", "shared.rs", "tutorial.rs"]
 publish = false
 
 [dependencies]
-clap = "2.33"
-ordered-float = "1.0"
-try_from = "0.3"
+clap = "~2.33"
+bitflags = "=1.2"
 
 [dependencies.thrift]
 path = "../../lib/rs"

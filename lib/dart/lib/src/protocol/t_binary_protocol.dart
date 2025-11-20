@@ -18,13 +18,14 @@
 part of thrift;
 
 class TBinaryProtocolFactory implements TProtocolFactory<TBinaryProtocol> {
-  TBinaryProtocolFactory({this.strictRead: false, this.strictWrite: true});
+  TBinaryProtocolFactory({this.strictRead = false, this.strictWrite = true});
 
   final bool strictRead;
   final bool strictWrite;
 
+  @override
   TBinaryProtocol getProtocol(TTransport transport) {
-    return new TBinaryProtocol(transport,
+    return TBinaryProtocol(transport,
         strictRead: strictRead, strictWrite: strictWrite);
   }
 }
@@ -36,16 +37,17 @@ class TBinaryProtocol extends TProtocol {
   static const int VERSION_MASK = 0xffff0000;
   static const int VERSION_1 = 0x80010000;
 
-  static const Utf8Codec _utf8Codec = const Utf8Codec();
+  static const Utf8Codec _utf8Codec = Utf8Codec();
 
   final bool strictRead;
   final bool strictWrite;
 
   TBinaryProtocol(TTransport transport,
-      {this.strictRead: false, this.strictWrite: true})
+      {this.strictRead = false, this.strictWrite = true})
       : super(transport);
 
   /// write
+  @override
   void writeMessageBegin(TMessage message) {
     if (strictWrite) {
       int version = VERSION_1 | message.type;
@@ -59,75 +61,96 @@ class TBinaryProtocol extends TProtocol {
     }
   }
 
+  @override
   void writeMessageEnd() {}
 
+  @override
   void writeStructBegin(TStruct struct) {}
 
+  @override
   void writeStructEnd() {}
 
+  @override
   void writeFieldBegin(TField field) {
     writeByte(field.type);
     writeI16(field.id);
   }
 
+  @override
   void writeFieldEnd() {}
 
+  @override
   void writeFieldStop() {
     writeByte(TType.STOP);
   }
 
+  @override
   void writeMapBegin(TMap map) {
     writeByte(map.keyType);
     writeByte(map.valueType);
     writeI32(map.length);
   }
 
+  @override
   void writeMapEnd() {}
 
+  @override
   void writeListBegin(TList list) {
     writeByte(list.elementType);
     writeI32(list.length);
   }
 
+  @override
   void writeListEnd() {}
 
+  @override
   void writeSetBegin(TSet set) {
     writeByte(set.elementType);
     writeI32(set.length);
   }
 
+  @override
   void writeSetEnd() {}
 
+  @override
   void writeBool(bool b) {
     if (b == null) b = false;
     writeByte(b ? 1 : 0);
   }
 
-  final ByteData _byteOut = new ByteData(1);
+  final ByteData _byteOut = ByteData(1);
+
+  @override
   void writeByte(int byte) {
     if (byte == null) byte = 0;
     _byteOut.setUint8(0, byte);
     transport.write(_byteOut.buffer.asUint8List(), 0, 1);
   }
 
-  final ByteData _i16Out = new ByteData(2);
+  final ByteData _i16Out = ByteData(2);
+
+  @override
   void writeI16(int i16) {
     if (i16 == null) i16 = 0;
     _i16Out.setInt16(0, i16);
     transport.write(_i16Out.buffer.asUint8List(), 0, 2);
   }
 
-  final ByteData _i32Out = new ByteData(4);
+  final ByteData _i32Out = ByteData(4);
+
+  @override
   void writeI32(int i32) {
     if (i32 == null) i32 = 0;
     _i32Out.setInt32(0, i32);
     transport.write(_i32Out.buffer.asUint8List(), 0, 4);
   }
 
-  final Uint8List _i64Out = new Uint8List(8);
+  final Uint8List _i64Out = Uint8List(8);
+
+  @override
   void writeI64(int i64) {
     if (i64 == null) i64 = 0;
-    var i = new Int64(i64);
+    var i = Int64(i64);
     var bts = i.toBytes();
     for (var j = 0; j < 8; j++) {
       _i64Out[j] = bts[8 - j - 1];
@@ -135,19 +158,23 @@ class TBinaryProtocol extends TProtocol {
     transport.write(_i64Out, 0, 8);
   }
 
+  @override
   void writeString(String s) {
-    var bytes = s != null ? _utf8Codec.encode(s) : new Uint8List.fromList([]);
+    var bytes = s != null ? _utf8Codec.encode(s) : Uint8List.fromList([]);
     writeI32(bytes.length);
     transport.write(bytes, 0, bytes.length);
   }
 
-  final ByteData _doubleOut = new ByteData(8);
+  final ByteData _doubleOut = ByteData(8);
+
+  @override
   void writeDouble(double d) {
     if (d == null) d = 0.0;
     _doubleOut.setFloat64(0, d);
     transport.write(_doubleOut.buffer.asUint8List(), 0, 8);
   }
 
+  @override
   void writeBinary(Uint8List bytes) {
     var length = bytes.length;
     writeI32(length);
@@ -155,6 +182,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   /// read
+  @override
   TMessage readMessageBegin() {
     String name;
     int type;
@@ -164,7 +192,7 @@ class TBinaryProtocol extends TProtocol {
     if (size < 0) {
       int version = size & VERSION_MASK;
       if (version != VERSION_1) {
-        throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+        throw TProtocolError(TProtocolErrorType.BAD_VERSION,
             "Bad version in readMessageBegin: $version");
       }
       type = size & 0x000000ff;
@@ -172,109 +200,133 @@ class TBinaryProtocol extends TProtocol {
       seqid = readI32();
     } else {
       if (strictRead) {
-        throw new TProtocolError(TProtocolErrorType.BAD_VERSION,
+        throw TProtocolError(TProtocolErrorType.BAD_VERSION,
             "Missing version in readMessageBegin");
       }
       name = _readString(size);
       type = readByte();
       seqid = readI32();
     }
-    return new TMessage(name, type, seqid);
+    return TMessage(name, type, seqid);
   }
 
+  @override
   void readMessageEnd() {}
 
+  @override
   TStruct readStructBegin() {
-    return new TStruct();
+    return TStruct();
   }
 
+  @override
   void readStructEnd() {}
 
+  @override
   TField readFieldBegin() {
     String name = "";
     int type = readByte();
     int id = type != TType.STOP ? readI16() : 0;
 
-    return new TField(name, type, id);
+    return TField(name, type, id);
   }
 
+  @override
   void readFieldEnd() {}
 
+  @override
   TMap readMapBegin() {
     int keyType = readByte();
     int valueType = readByte();
     int length = readI32();
 
-    return new TMap(keyType, valueType, length);
+    return TMap(keyType, valueType, length);
   }
 
+  @override
   void readMapEnd() {}
 
+  @override
   TList readListBegin() {
     int elementType = readByte();
     int length = readI32();
 
-    return new TList(elementType, length);
+    return TList(elementType, length);
   }
 
+  @override
   void readListEnd() {}
 
+  @override
   TSet readSetBegin() {
     int elementType = readByte();
     int length = readI32();
 
-    return new TSet(elementType, length);
+    return TSet(elementType, length);
   }
 
+  @override
   void readSetEnd() {}
 
+  @override
   bool readBool() => readByte() == 1;
 
-  final Uint8List _byteIn = new Uint8List(1);
+  final Uint8List _byteIn = Uint8List(1);
+
+  @override
   int readByte() {
     transport.readAll(_byteIn, 0, 1);
     return _byteIn.buffer.asByteData().getUint8(0);
   }
 
-  final Uint8List _i16In = new Uint8List(2);
+  final Uint8List _i16In = Uint8List(2);
+
+  @override
   int readI16() {
     transport.readAll(_i16In, 0, 2);
     return _i16In.buffer.asByteData().getInt16(0);
   }
 
-  final Uint8List _i32In = new Uint8List(4);
+  final Uint8List _i32In = Uint8List(4);
+
+  @override
   int readI32() {
     transport.readAll(_i32In, 0, 4);
     return _i32In.buffer.asByteData().getInt32(0);
   }
 
-  final Uint8List _i64In = new Uint8List(8);
+  final Uint8List _i64In = Uint8List(8);
+
+  @override
   int readI64() {
     transport.readAll(_i64In, 0, 8);
-    var i = new Int64.fromBytesBigEndian(_i64In);
+    var i = Int64.fromBytesBigEndian(_i64In);
     return i.toInt();
   }
 
-  final Uint8List _doubleIn = new Uint8List(8);
+  final Uint8List _doubleIn = Uint8List(8);
+
+  @override
   double readDouble() {
     transport.readAll(_doubleIn, 0, 8);
     return _doubleIn.buffer.asByteData().getFloat64(0);
   }
 
+  @override
   String readString() {
     int size = readI32();
     return _readString(size);
   }
 
   String _readString(int size) {
-    Uint8List stringIn = new Uint8List(size);
+    Uint8List stringIn = Uint8List(size);
     transport.readAll(stringIn, 0, size);
     return _utf8Codec.decode(stringIn);
   }
 
+  @override
   Uint8List readBinary() {
     int length = readI32();
-    Uint8List binaryIn = new Uint8List(length);
+    Uint8List binaryIn = Uint8List(length);
     transport.readAll(binaryIn, 0, length);
     return binaryIn;
   }

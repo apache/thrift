@@ -25,10 +25,18 @@ namespace Thrift.Server
     //TODO: replacement by event?
 
     /// <summary>
-    ///     Interface implemented by server users to handle events from the server
+    /// Interface implemented by server users to handle events from the server
     /// </summary>
+    /// <remarks>Replaced by ITServerEventHandler</remarks>
     // ReSharper disable once InconsistentNaming
-    public interface TServerEventHandler
+    #pragma warning disable IDE1006
+    public interface TServerEventHandler : ITServerEventHandler { }
+    #pragma warning restore IDE1006
+
+    /// <summary>
+    /// Interface implemented by server users to handle events from the server
+    /// </summary>
+    public interface ITServerEventHandler
     {
         /// <summary>
         ///     Called before the server begins */

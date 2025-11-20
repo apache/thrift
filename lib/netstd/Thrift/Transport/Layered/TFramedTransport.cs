@@ -21,6 +21,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable CA1510  // net8 - use ThrowIfNull
+#pragma warning disable CA1513  // net8 - use ThrowIfNull
+
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
@@ -86,6 +90,7 @@ namespace Thrift.Transport
 
         private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
         {
+            UpdateKnownMessageSize(-1);
             await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken);
             int size = BinaryPrimitives.ReadInt32BigEndian(HeaderBuf);
 
@@ -96,8 +101,7 @@ namespace Thrift.Transport
             ReadBuffer.SetLength(size);
             ReadBuffer.Seek(0, SeekOrigin.Begin);
 
-            ArraySegment<byte> bufSegment;
-            ReadBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
             await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken);
         }
 
@@ -128,8 +132,7 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            ArraySegment<byte> bufSegment;
-            WriteBuffer.TryGetBuffer(out bufSegment);
+            WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
 
             int dataLen = bufSegment.Count - HeaderSize;
             if (dataLen < 0)
@@ -186,6 +189,12 @@ namespace Thrift.Transport
                 }
             }
             IsDisposed = true;
+        }
+
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
+        {
+            base.ResetMessageSizeAndConsumedBytes(newSize);
+            ReadBuffer.ResetMessageSizeAndConsumedBytes(newSize);
         }
     }
 }

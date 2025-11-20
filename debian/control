@@ -1,12 +1,12 @@
 Source: thrift
 Section: devel
 Priority: extra
-Build-Depends: dotnet-runtime-3.1, dotnet-sdk-3.1, debhelper (>= 9), build-essential, python-dev, ant,
-    erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+Build-Depends: dotnet-runtime-6.0, dotnet-sdk-6.0, debhelper (>= 9), build-essential, python-dev, ant,
+    ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.56-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
-    openjdk-8-jdk | openjdk-8-jdk-headless | openjdk-11-jdk | openjdk-11-jdk-headless | default-jdk,
+    openjdk-17-jdk | openjdk-17-jdk-headless | default-jdk,
     libboost-test-dev | libboost-test1.56-dev | libboost-test1.63-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
     php (>= 5), php-dev (>= 5), libglib2.0-dev, qtchooser, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
@@ -32,7 +32,7 @@ Description: Compiler for Thrift definition files
 Package: python-thrift
 Architecture: any
 Section: python
-Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-six
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: python-twisted-web, python-backports.ssl-match-hostname, python-ipaddress
 Provides: ${python:Provides}
 Description: Python bindings for Thrift (Python 2)
@@ -65,7 +65,7 @@ Description: Python bindings for Thrift (debug version)
 Package: python3-thrift
 Architecture: any
 Section: python
-Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}, python3-six
+Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: python3-twisted-web
 Provides: ${python:Provides}
 Description: Python bindings for Thrift (Python 3)
@@ -129,7 +129,7 @@ Description: Java bindings for Thrift
 Package: libthrift-netstd
 Architecture: all
 Section: netstd
-Depends: dotnet-runtime-3.1, ${misc:Depends}
+Depends: dotnet-runtime-6.0, ${misc:Depends}
 Description: NET Standard bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to

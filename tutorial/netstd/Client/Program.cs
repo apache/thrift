@@ -15,8 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -24,23 +25,36 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 using tutorial;
-using shared;
-using Microsoft.Extensions.DependencyInjection;
-using System.Diagnostics;
+
+#pragma warning disable IDE0057  // substr
 
 namespace Client
 {
+    public static class LoggingHelper
+    {
+        public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create(builder => {
+            ConfigureLogging(builder);
+        });
+
+        public static void ConfigureLogging(ILoggingBuilder logging)
+        {
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+            logging.AddDebug();
+        }
+
+        public static ILogger<T> CreateLogger<T>() => LogFactory.CreateLogger<T>();
+    }
+
     public class Program
     {
-        private static ServiceCollection ServiceCollection = new ServiceCollection();
-        private static ILogger Logger;
-        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
+        private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
+        private static readonly TConfiguration Configuration = new();
 
         private static void DisplayHelp()
         {
@@ -49,26 +63,27 @@ Usage:
     Client -help
         will diplay help information 
 
-    Client -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
+    Client -tr:<transport> -bf:<buffering> -pr:<protocol> [-mc:<numClients>]  [-multiplex]
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
     -tr (transport): 
-        tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        namedpipe - namedpipe transport will be used (pipe address - "".test"")
-        http - http transport will be used (address - ""http://localhost:9090"")        
-        tcptls - tcp tls transport will be used (host - ""localhost"", port - 9090)
+        tcp - (default) tcp transport  (localhost:9090)
+        tcptls - tcp tls transport  (localhost:9090)
+        namedpipe - namedpipe transport  (pipe "".test"")
+        http - http transport  (http://localhost:9090)
 
     -bf (buffering): 
-        none - (default) no buffering will be used
-        buffered - buffered transport will be used
-        framed - framed transport will be used
+        none - (default) no buffering 
+        buffered - buffered transport 
+        framed - framed transport 
 
     -pr (protocol): 
-        binary - (default) binary protocol will be used
-        compact - compact protocol will be used
-        json - json protocol will be used
-        multiplexed - multiplexed protocol will be used
+        binary - (default) binary protocol 
+        compact - compact protocol 
+        json - json protocol 
+
+    -multiplex - adds multiplexed protocol
 
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
@@ -78,80 +93,104 @@ Sample:
 ");
         }
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            args = args ?? new string[0];
+            args ??= [];
 
-            ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
+            // -help is rather unusual but we leave it for compatibility
+            if (args.Any(x => x.Equals("-help") || x.Equals("--help") || x.Equals("-h") || x.Equals("-?")))
             {
-                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Client));
-
-                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
-                {
-                    DisplayHelp();
-                    return;
-                }
-
-                Logger.LogInformation("Starting client...");
-
-                using (var source = new CancellationTokenSource())
-                {
-                    RunAsync(args, source.Token).GetAwaiter().GetResult();
-                }
+                DisplayHelp();
+                return;
             }
+
+            Logger.LogInformation("Starting client...");
+
+            using var source = new CancellationTokenSource();
+            await RunAsync(args, source.Token);
         }
 
-        private static void ConfigureLogging(ILoggingBuilder logging)
-        {
-            logging.SetMinimumLevel(LogLevel.Trace);
-            logging.AddConsole();
-            logging.AddDebug();
-        }
-
+        
         private static async Task RunAsync(string[] args, CancellationToken cancellationToken)
         {
             var numClients = GetNumberOfClients(args);
 
-            Logger.LogInformation($"Selected # of clients: {numClients}");
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
-            var transports = new TTransport[numClients];
-            for (int i = 0; i < numClients; i++)
-            {
-                var t = GetTransport(args);
-                transports[i] = t;
-            }
-            
-            Logger.LogInformation($"Selected client transport: {transports[0]}");
+            var transport = GetTransport(args);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client transport: {transport}", transport);
 
-            var protocols = new Tuple<Protocol, TProtocol>[numClients];
-            for (int i = 0; i < numClients; i++)
-            {
-                var p = GetProtocol(args, transports[i]);
-                protocols[i] = p;
-            }
+            var protocol = MakeProtocol( args, MakeTransport(args));
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
 
-            Logger.LogInformation($"Selected client protocol: {protocols[0].Item1}");
+            var mplex = GetMultiplex(args);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Multiplex {mplex}", mplex);
 
             var tasks = new Task[numClients];
             for (int i = 0; i < numClients; i++)
             {
-                var task = RunClientAsync(protocols[i], cancellationToken);
+                var task = RunClientAsync(protocol, mplex, cancellationToken);
                 tasks[i] = task;
             }
 
-            Task.WaitAll(tasks);
-
-            await Task.CompletedTask;
+            Task.WaitAll(tasks, cancellationToken);
         }
 
-        private static TTransport GetTransport(string[] args)
+        private static bool GetMultiplex(string[] args)
         {
-            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090, Configuration);
+            var mplex = args.FirstOrDefault(x => x.StartsWith("-multiplex"));
+            return !string.IsNullOrEmpty(mplex);
+        }
 
+        private static Protocol GetProtocol(string[] args)
+        {
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
+            if (string.IsNullOrEmpty(protocol))
+                return Protocol.Binary;
+
+            protocol = protocol.Substring(0, 1).ToUpperInvariant() + protocol.Substring(1).ToLowerInvariant();
+            if (Enum.TryParse(protocol, true, out Protocol selectedProtocol))
+                return selectedProtocol;
+            else
+                return Protocol.Binary;
+        }
+
+        private static Buffering GetBuffering(string[] args)
+        {
+            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
+            if (string.IsNullOrEmpty(buffering))
+                return Buffering.None;
+
+            buffering = buffering.Substring(0, 1).ToUpperInvariant() + buffering.Substring(1).ToLowerInvariant();
+            if (Enum.TryParse<Buffering>(buffering, out var selectedBuffering))
+                return selectedBuffering;
+            else
+                return Buffering.None;
+        }
+
+        private static Transport GetTransport(string[] args)
+        {
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
+            if (string.IsNullOrEmpty(transport))
+                return Transport.Tcp;
+
+            transport = transport.Substring(0, 1).ToUpperInvariant() + transport.Substring(1).ToLowerInvariant();
+            if (Enum.TryParse(transport, true, out Transport selectedTransport))
+                return selectedTransport;
+            else
+                return Transport.Tcp;
+        }
+
+
+        private static TTransport MakeTransport(string[] args)
+        {
             // construct endpoint transport
-            var transportArg = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
-            if (Enum.TryParse(transportArg, true, out Transport selectedTransport))
+            TTransport? transport = null;
+            Transport selectedTransport = GetTransport(args);
             {
                 switch (selectedTransport)
                 {
@@ -179,23 +218,20 @@ Sample:
             }
 
             // optionally add layered transport(s)
-            var bufferingArg = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':')?[1];
-            if (Enum.TryParse<Buffering>(bufferingArg, out var selectedBuffering))
+            Buffering selectedBuffering = GetBuffering(args);
+            switch (selectedBuffering)
             {
-                switch (selectedBuffering)
-                {
-                    case Buffering.Buffered:
-                        transport = new TBufferedTransport(transport);
-                        break;
+                case Buffering.Buffered:
+                    transport = new TBufferedTransport(transport);
+                    break;
 
-                    case Buffering.Framed:
-                        transport = new TFramedTransport(transport);
-                        break;
+                case Buffering.Framed:
+                    transport = new TFramedTransport(transport);
+                    break;
 
-                    default: // layered transport(s) are optional
-                        Debug.Assert(selectedBuffering == Buffering.None, "unhandled case");
-                        break;
-                }
+                default: // layered transport(s) are optional
+                    Debug.Assert(selectedBuffering == Buffering.None, "unhandled case");
+                    break;
             }
 
             return transport;
@@ -203,112 +239,89 @@ Sample:
 
         private static int GetNumberOfClients(string[] args)
         {
-            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':')?[1];
+            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
 
-            Logger.LogInformation($"Selected # of clients: {numClients}");
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
-            int c;
-            if( int.TryParse(numClients, out c) && (0 < c) && (c <= 100))
-				return c;
-			else
-				return 1;
+            if (int.TryParse(numClients, out int c) && (0 < c) && (c <= 100))
+                return c;
+            else
+                return 1;
         }
 
         private static X509Certificate2 GetCertificate()
         {
             // due to files location in net core better to take certs from top folder
-            var certFile = GetCertPath(Directory.GetParent(Directory.GetCurrentDirectory()));
-            return new X509Certificate2(certFile, "ThriftTest");
+            var dir = Directory.GetParent(Directory.GetCurrentDirectory());
+            if (dir != null)
+            {
+                var certFile = GetCertPath(dir);
+                //return new X509Certificate2(certFile, "ThriftTest");
+                return X509CertificateLoader.LoadPkcs12FromFile(certFile, "ThriftTest");
+            }
+            else
+            {
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("Root path of {path} not found", Directory.GetCurrentDirectory());
+                throw new Exception($"Root path of {Directory.GetCurrentDirectory()} not found");
+            }
         }
 
-        private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
+        private static string GetCertPath(DirectoryInfo? di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile =
-                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
-                    .FirstOrDefault();
+            var certFile = topDir?.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
             if (certFile == null)
             {
                 if (maxCount == 0)
                     throw new FileNotFoundException("Cannot find file in directories");
-                return GetCertPath(di.Parent, maxCount - 1);
+                return GetCertPath(di?.Parent, --maxCount);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+        private static X509Certificate2 LocalCertificateSelectionCallback(object sender,
             string targetHost, X509CertificateCollection localCertificates,
-            X509Certificate remoteCertificate, string[] acceptableIssuers)
+            X509Certificate? remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool CertValidator(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool CertValidator(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
 
-        private static Tuple<Protocol, TProtocol> GetProtocol(string[] args, TTransport transport)
+        private static TProtocol MakeProtocol(string[] args, TTransport transport)
         {
-            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
-
-            Protocol selectedProtocol;
-            if (Enum.TryParse(protocol, true, out selectedProtocol))
+            Protocol selectedProtocol = GetProtocol(args);
+            return selectedProtocol switch
             {
-                switch (selectedProtocol)
-                {
-                    case Protocol.Binary:
-                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
-                    case Protocol.Compact:
-                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TCompactProtocol(transport));
-                    case Protocol.Json:
-                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TJsonProtocol(transport));
-                    case Protocol.Multiplexed:
-                        // it returns BinaryProtocol to avoid making wrapped protocol as public in TProtocolDecorator (in RunClientAsync it will be wrapped into Multiplexed protocol)
-                        return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
-                    default:
-                        Debug.Assert(false, "unhandled case");
-                        break;
-                }
-            }
-
-            return new Tuple<Protocol, TProtocol>(selectedProtocol, new TBinaryProtocol(transport));
+                Protocol.Binary => new TBinaryProtocol(transport),
+                Protocol.Compact => new TCompactProtocol(transport),
+                Protocol.Json => new TJsonProtocol(transport),
+                _ => throw new Exception("unhandled protocol"),
+            };
         }
 
-        private static async Task RunClientAsync(Tuple<Protocol, TProtocol> protocolTuple, CancellationToken cancellationToken)
+        private static async Task RunClientAsync(TProtocol protocol, bool multiplex, CancellationToken cancellationToken)
         {
             try
             {
-                var protocol = protocolTuple.Item2;
-                var protocolType = protocolTuple.Item1;
-
-                TBaseClient client = null;
-
                 try
                 {
-                    if (protocolType != Protocol.Multiplexed)
-                    {
+                    if( multiplex)
+                        protocol = new TMultiplexedProtocol(protocol, nameof(Calculator));
 
-                        client = new Calculator.Client(protocol);
-                        await ExecuteCalculatorClientOperations(cancellationToken, (Calculator.Client)client);
-                    }
-                    else
-                    {
-                        // it uses binary protocol there  to create Multiplexed protocols
-                        var multiplex = new TMultiplexedProtocol(protocol, nameof(Calculator));
-                        client = new Calculator.Client(multiplex);
-                        await ExecuteCalculatorClientOperations(cancellationToken, (Calculator.Client)client);
-
-                        multiplex = new TMultiplexedProtocol(protocol, nameof(SharedService));
-                        client = new SharedService.Client(multiplex);
-                        await ExecuteSharedServiceClientOperations(cancellationToken, (SharedService.Client)client);
-                    }
+                    var client = new Calculator.Client(protocol);
+                    await ExecuteCalculatorClientOperations(client, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"{client?.ClientId} " + ex);
+                    if (Logger.IsEnabled(LogLevel.Error))
+                        Logger.LogError("{ex}",ex);
                 }
                 finally
                 {
@@ -317,22 +330,27 @@ Sample:
             }
             catch (TApplicationException x)
             {
-                Logger.LogError(x.ToString());
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("{x}",x);
             }
         }
 
-        private static async Task ExecuteCalculatorClientOperations(CancellationToken cancellationToken, Calculator.Client client)
+        private static async Task ExecuteCalculatorClientOperations( Calculator.Client client, CancellationToken cancellationToken)
         {
             await client.OpenTransportAsync(cancellationToken);
 
-            // Async version
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
 
-            Logger.LogInformation($"{client.ClientId} PingAsync()");
-            await client.pingAsync(cancellationToken);
+            await client.ping(cancellationToken);
 
-            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)");
-            var sum = await client.addAsync(1, 1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)={sum}");
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
+
+            var sum = await client.add(1, 1, cancellationToken);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
 
             var work = new Work
             {
@@ -343,13 +361,18 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                await client.calculateAsync(1, work, cancellationToken);
-                Logger.LogInformation($"{client.ClientId} Whoa we can divide by 0");
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
+                await client.calculate(1, work, cancellationToken);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
             work.Op = Operation.SUBTRACT;
@@ -358,31 +381,32 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                var diff = await client.calculateAsync(1, work, cancellationToken);
-                Logger.LogInformation($"{client.ClientId} 15-10={diff}");
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
+                var diff = await client.calculate(1, work, cancellationToken);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
-            Logger.LogInformation($"{client.ClientId} GetStructAsync(1)");
-            var log = await client.getStructAsync(1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} Check log: {log.Value}");
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
 
-            Logger.LogInformation($"{client.ClientId} ZipAsync() with delay 100mc on server side");
-            await client.zipAsync(cancellationToken);
-        }
-        private static async Task ExecuteSharedServiceClientOperations(CancellationToken cancellationToken, SharedService.Client client)
-        {
-            await client.OpenTransportAsync(cancellationToken);
+            var log = await client.getStruct(1, cancellationToken);
 
-            // Async version
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
 
-            Logger.LogInformation($"{client.ClientId} SharedService GetStructAsync(1)");
-            var log = await client.getStructAsync(1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} SharedService Value: {log.Value}");
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
+
+            await client.zip(cancellationToken);
         }
 
 
@@ -401,7 +425,6 @@ Sample:
             Binary,
             Compact,
             Json,
-            Multiplexed
         }
 
         private enum Buffering

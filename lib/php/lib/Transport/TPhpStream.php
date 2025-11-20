@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -53,7 +54,7 @@ class TPhpStream extends TTransport
     public function open()
     {
         if ($this->read_) {
-            $this->inStream_ = @fopen(self::inStreamName(), 'r');
+            $this->inStream_ = @fopen($this->inStreamName(), 'r');
             if (!is_resource($this->inStream_)) {
                 throw new TException('TPhpStream: Could not open php://input');
             }
@@ -113,7 +114,7 @@ class TPhpStream extends TTransport
         @fflush($this->outStream_);
     }
 
-    private static function inStreamName()
+    private function inStreamName()
     {
         if (php_sapi_name() == 'cli') {
             return 'php://stdin';

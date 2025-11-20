@@ -24,6 +24,7 @@ import unittest
 import time
 import socket
 import random
+import sys
 
 
 class TimeoutTest(unittest.TestCase):
@@ -51,7 +52,7 @@ class TimeoutTest(unittest.TestCase):
                 socket.open()
                 leaky.append(socket)
         except Exception:
-            self.assert_(time.time() - starttime < 5.0)
+            self.assertTrue(time.time() - starttime < 5.0)
 
     def testWriteTimeout(self):
         starttime = time.time()
@@ -65,7 +66,7 @@ class TimeoutTest(unittest.TestCase):
                 lsock.write("hi" * 100)
 
         except Exception:
-            self.assert_(time.time() - starttime < 5.0)
+            self.assertTrue(time.time() - starttime < 5.0)
 
 
 if __name__ == '__main__':
@@ -75,4 +76,10 @@ if __name__ == '__main__':
     suite.addTest(loader.loadTestsFromTestCase(TimeoutTest))
 
     testRunner = unittest.TextTestRunner(verbosity=2)
-    testRunner.run(suite)
+    result = testRunner.run(suite)
+
+    # Exit with non-zero code if tests failed
+    if result.failures or result.errors:
+        sys.exit(1)
+    else:
+        sys.exit(0)

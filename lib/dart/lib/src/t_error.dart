@@ -23,5 +23,6 @@ class TError extends Error {
 
   TError(this.type, this.message);
 
+  @override
   String toString() => "<TError type: $type message: '$message'>";
 }

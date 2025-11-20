@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -106,7 +107,7 @@ class THttpClient extends TTransport
      */
     public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = array())
     {
-        if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri{0} != '/')) {
+        if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
         $this->scheme_ = $scheme;
@@ -212,11 +213,14 @@ class THttpClient extends TTransport
         $host = $this->host_ . ($this->port_ != 80 ? ':' . $this->port_ : '');
 
         $headers = array();
-        $defaultHeaders = array('Host' => $host,
+        $defaultHeaders = array(
+            'Host' => $host,
             'Accept' => 'application/x-thrift',
             'User-Agent' => 'PHP/THttpClient',
             'Content-Type' => 'application/x-thrift',
-            'Content-Length' => TStringFuncFactory::create()->strlen($this->buf_));
+            'Content-Length' => TStringFuncFactory::create()->strlen($this->buf_)
+        );
+
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
             $headers[] = "$key: $value";
         }
@@ -225,10 +229,12 @@ class THttpClient extends TTransport
 
         $baseHttpOptions = isset($options["http"]) ? $options["http"] : array();
 
-        $httpOptions = $baseHttpOptions + array('method' => 'POST',
+        $httpOptions = $baseHttpOptions + array(
+            'method' => 'POST',
             'header' => implode("\r\n", $headers),
             'max_redirects' => 1,
-            'content' => $this->buf_);
+            'content' => $this->buf_
+        );
         if ($this->timeout_ > 0) {
             $httpOptions['timeout'] = $this->timeout_;
         }

@@ -18,9 +18,9 @@
 --
 
 require 'TProtocol'
-require 'libluabpack'
-require 'libluabitwise'
-require 'liblualongnumber'
+local libluabpack = require 'libluabpack'
+local libluabitwise = require 'libluabitwise'
+local liblualongnumber = require 'liblualongnumber'
 
 TCompactProtocol = __TObject.new(TProtocolBase, {
   __type = 'TCompactProtocol',
@@ -61,7 +61,8 @@ TCompactType = {
   COMPACT_LIST          = 0x09,
   COMPACT_SET           = 0x0A,
   COMPACT_MAP           = 0x0B,
-  COMPACT_STRUCT        = 0x0C
+  COMPACT_STRUCT        = 0x0C,
+  COMPACT_UUID          = 0x0D,
 }
 
 TTypeToCompactType = {}
@@ -77,21 +78,23 @@ TTypeToCompactType[TType.LIST]   = TCompactType.COMPACT_LIST
 TTypeToCompactType[TType.SET]    = TCompactType.COMPACT_SET
 TTypeToCompactType[TType.MAP]    = TCompactType.COMPACT_MAP
 TTypeToCompactType[TType.STRUCT] = TCompactType.COMPACT_STRUCT
+TTypeToCompactType[TType.UUID]   = TCompactType.COMPACT_UUID
 
 CompactTypeToTType = {}
-CompactTypeToTType[TType.STOP]                        = TType.STOP
-CompactTypeToTType[TCompactType.COMPACT_BOOLEAN_TRUE] = TType.BOOL
+CompactTypeToTType[TType.STOP]                         = TType.STOP
+CompactTypeToTType[TCompactType.COMPACT_BOOLEAN_TRUE]  = TType.BOOL
 CompactTypeToTType[TCompactType.COMPACT_BOOLEAN_FALSE] = TType.BOOL
-CompactTypeToTType[TCompactType.COMPACT_BYTE]         = TType.BYTE
-CompactTypeToTType[TCompactType.COMPACT_I16]          = TType.I16
-CompactTypeToTType[TCompactType.COMPACT_I32]          = TType.I32
-CompactTypeToTType[TCompactType.COMPACT_I64]          = TType.I64
-CompactTypeToTType[TCompactType.COMPACT_DOUBLE]       = TType.DOUBLE
-CompactTypeToTType[TCompactType.COMPACT_BINARY]       = TType.STRING
-CompactTypeToTType[TCompactType.COMPACT_LIST]         = TType.LIST
-CompactTypeToTType[TCompactType.COMPACT_SET]          = TType.SET
-CompactTypeToTType[TCompactType.COMPACT_MAP]          = TType.MAP
-CompactTypeToTType[TCompactType.COMPACT_STRUCT]       = TType.STRUCT
+CompactTypeToTType[TCompactType.COMPACT_BYTE]          = TType.BYTE
+CompactTypeToTType[TCompactType.COMPACT_I16]           = TType.I16
+CompactTypeToTType[TCompactType.COMPACT_I32]           = TType.I32
+CompactTypeToTType[TCompactType.COMPACT_I64]           = TType.I64
+CompactTypeToTType[TCompactType.COMPACT_DOUBLE]        = TType.DOUBLE
+CompactTypeToTType[TCompactType.COMPACT_BINARY]        = TType.STRING
+CompactTypeToTType[TCompactType.COMPACT_LIST]          = TType.LIST
+CompactTypeToTType[TCompactType.COMPACT_SET]           = TType.SET
+CompactTypeToTType[TCompactType.COMPACT_MAP]           = TType.MAP
+CompactTypeToTType[TCompactType.COMPACT_STRUCT]        = TType.STRUCT
+CompactTypeToTType[TCompactType.COMPACT_UUID]          = TType.UUID
 
 function TCompactProtocol:resetLastField()
   self.lastField = {}
@@ -124,8 +127,8 @@ function TCompactProtocol:writeStructBegin(name)
 end
 
 function TCompactProtocol:writeStructEnd()
-  self.lastFieldId = self.lastField[self.lastFieldIndex]
   self.lastFieldIndex = self.lastFieldIndex - 1
+  self.lastFieldId = self.lastField[self.lastFieldIndex]
 end
 
 function TCompactProtocol:writeFieldBegin(name, ttype, id)
@@ -176,7 +179,6 @@ function TCompactProtocol:writeBool(bool)
   if bool then
     value = TCompactType.COMPACT_BOOLEAN_TRUE
   end
-  print(value,self.booleanFieldPending,self.booleanFieldId)
   if self.booleanFieldPending then
     self:writeFieldBeginInternal(self.booleanFieldName, TType.BOOL, self.booleanFieldId, value)
     self.booleanFieldPending = false
@@ -198,6 +200,11 @@ function TCompactProtocol:writeI32(i32)
   self:writeVarint32(libluabpack.i32ToZigzag(i32))
 end
 
+function TCompactProtocol:writeUI32(i32)
+  local buff = libluabpack.bpack('I', i32)
+  self.trans:write(buff)
+end
+
 function TCompactProtocol:writeI64(i64)
   self:writeVarint64(libluabpack.i64ToZigzag(i64))
 end
@@ -210,6 +217,13 @@ end
 function TCompactProtocol:writeString(str)
   -- Should be utf-8
   self:writeBinary(str)
+end
+
+function TCompactProtocol:writeUuid(uuid)
+  self:writeUI32(uuid.two)
+  self:writeUI32(uuid.three)
+  self:writeUI32(uuid.zero)
+  self:writeUI32(uuid.one)
 end
 
 function TCompactProtocol:writeBinary(str)
@@ -293,17 +307,20 @@ function TCompactProtocol:readFieldBegin()
   if ttype == TType.STOP then
     return nil, ttype, 0
   end
-  -- mask off the 4 MSB of the type header. it could contain a field id delta.
-  local modifier = libluabitwise.shiftr(libluabitwise.band(field_and_ttype, 0xf0), 4)
+  local modifier = libluabitwise.shiftr(field_and_ttype, 4)
   local id = 0
   if modifier == 0 then
     id = self:readI16()
   else
     id = self.lastFieldId + modifier
   end
-  if ttype == TType.BOOL then
-    boolValue = libluabitwise.band(field_and_ttype, 0x0f) == TCompactType.COMPACT_BOOLEAN_TRUE
-    boolValueIsNotNull = true
+  local type = libluabitwise.band(field_and_ttype, 0x0f)
+  if type == TCompactType.COMPACT_BOOLEAN_TRUE then
+    self.boolValue = true
+    self.boolValueIsNotNull = true
+  elseif type == TCompactType.COMPACT_BOOLEAN_FALSE then
+    self.boolValue = false
+    self.boolValueIsNotNull = true
   end
   self.lastFieldId = id
   return nil, ttype, id
@@ -350,9 +367,9 @@ function TCompactProtocol:readSetEnd()
 end
 
 function TCompactProtocol:readBool()
-  if boolValueIsNotNull then
-    boolValueIsNotNull = true
-    return boolValue
+  if self.boolValueIsNotNull then
+    self.boolValueIsNotNull = false
+    return self.boolValue
   end
   local val = self:readSignByte()
   if val == TCompactType.COMPACT_BOOLEAN_TRUE then
@@ -383,6 +400,12 @@ function TCompactProtocol:readI32()
   return value
 end
 
+function TCompactProtocol:readUI32()
+  local buff = self.trans:readAll(4)
+  local val = libluabpack.bunpack('I', buff)
+  return val
+end
+
 function TCompactProtocol:readI64()
   local value = self:readVarint64()
   return value
@@ -396,6 +419,19 @@ end
 
 function TCompactProtocol:readString()
   return self:readBinary()
+end
+
+function TCompactProtocol:readUuid()
+  local a = self:readUI32()
+  local b = self:readUI32()
+  local c = self:readUI32()
+  local d = self:readUI32()
+  return TUUID:new {
+    zero = c,
+    one = d,
+    two = a,
+    three = b
+  }
 end
 
 function TCompactProtocol:readBinary()

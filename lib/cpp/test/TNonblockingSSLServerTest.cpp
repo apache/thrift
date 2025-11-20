@@ -29,6 +29,9 @@
 #include "gen-cpp/ParentService.h"
 
 #include <event.h>
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 using namespace apache::thrift;
 using apache::thrift::concurrency::Guard;
@@ -158,7 +161,7 @@ private:
     void run() override {
       // When binding to explicit port, allow retrying to workaround bind failures on ports in use
       int retryCount = port ? 10 : 0;
-      pServerSocketFactory = createServerSocketFactory();  
+      pServerSocketFactory = createServerSocketFactory();
       startServer(retryCount);
     }
 

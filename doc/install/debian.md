@@ -18,7 +18,7 @@ Debian 7/Ubuntu 12 users need to manually install a more recent version of autom
 If you would like to build Apache Thrift libraries for other programming languages you may need to install additional packages. The following languages require the specified additional packages:
 
  * Java
-	* packages: gradle 
+	* packages: gradle (version 8.4)
 	* You will also need Java JDK v1.8 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. default-jdk).
  * Ruby
 	* ruby-full ruby-dev ruby-rspec rake rubygems bundler
@@ -33,9 +33,7 @@ If you would like to build Apache Thrift libraries for other programming languag
  * Erlang
 	* erlang-base erlang-eunit erlang-dev rebar
  * NetStd
-	* apt-transport-https dotnet-sdk-3.1 aspnetcore-runtime-3.1
- * Haskell
-	* ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev
+	* apt-transport-https dotnet-sdk-6.0 aspnetcore-runtime-6.0
  * Thrift Compiler for Windows
 	* mingw-w64 mingw-w64-x86-64-dev nsis
  * Rust
@@ -53,7 +51,7 @@ If you would like to build Apache Thrift libraries for other programming languag
  * dart & pub
     * https://www.dartlang.org/install/linux
     * https://www.dartlang.org/tools/pub/installing
-	
+
 
 ## Additional reading
 

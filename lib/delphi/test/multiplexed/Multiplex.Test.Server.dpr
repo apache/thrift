@@ -24,6 +24,8 @@ program Multiplex.Test.Server;
 uses
   SysUtils,
   Multiplex.Server.Main in 'Multiplex.Server.Main.pas',
+  Benchmark in 'gen-delphi\Benchmark.pas',
+  Aggr in 'gen-delphi\Aggr.pas',
   ConsoleHelper in '..\ConsoleHelper.pas',
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Exception in '..\..\src\Thrift.Exception.pas',

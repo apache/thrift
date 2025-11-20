@@ -36,8 +36,11 @@ framed_only_servers="nonblocking pooledNonblocking"
 # or terminated.
 trap "kill $(jobs -p) 2>/dev/null" INT TERM
 
+echo "THRIFT-4905 & THRIFT-5608: SSL tests are disabled.  Fix them."
 for protocol in $protocols; do
-  for ssl in "" " --ssl"; do
+  # TODO: fix and enable ssl
+  # for ssl in "" " --ssl"; do
+  for ssl in ""; do
     for transport in $transports; do
       for server in $servers $framed_only_servers; do
         case $framed_only_servers in

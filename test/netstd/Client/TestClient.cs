@@ -15,6 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#pragma warning disable IDE0066 // switch expression
+#pragma warning disable IDE0057 // substring
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -51,7 +54,6 @@ namespace ThriftTest
         Framed
     }
 
-
     internal enum TransportChoice
     {
         Socket,
@@ -68,12 +70,12 @@ namespace ThriftTest
             public string host = "localhost";
             public int port = 9090;
             public int numThreads = 1;
-            public string url;
-            public string pipe;
+            public string url = string.Empty;
+            public string pipe = string.Empty;
             public LayeredChoice layered = LayeredChoice.None;
             public ProtocolChoice protocol = ProtocolChoice.Binary;
             public TransportChoice transport = TransportChoice.Socket;
-            private readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+            private readonly TConfiguration Configuration = new();
 
             internal void Parse(List<string> args)
             {
@@ -90,19 +92,19 @@ namespace ThriftTest
                     }
                     else if (args[i].StartsWith("--pipe="))
                     {
-                        pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                        pipe = args[i].Substring(args[i].IndexOf('=') + 1);
                         transport = TransportChoice.NamedPipe;
                     }
                     else if (args[i].StartsWith("--host="))
                     {
                         // check there for ipaddress
-                        host = args[i].Substring(args[i].IndexOf("=") + 1);
+                        host = args[i].Substring(args[i].IndexOf('=') + 1);
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
                     else if (args[i].StartsWith("--port="))
                     {
-                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                        port = int.Parse(args[i].Substring(args[i].IndexOf('=') + 1));
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
@@ -207,7 +209,7 @@ namespace ThriftTest
                     "keys/",
                 };
 
-                string existingPath = null;
+                var existingPath = string.Empty;
                 foreach (var possiblePath in possiblePaths)
                 {
                     var path = Path.GetFullPath(possiblePath + clientCertName);
@@ -223,7 +225,8 @@ namespace ThriftTest
                     throw new FileNotFoundException($"Cannot find file: {clientCertName}");
                 }
 
-                var cert = new X509Certificate2(existingPath, "thrift");
+                //var cert = new X509Certificate2(existingPath, "thrift");
+                var cert = X509CertificateLoader.LoadPkcs12FromFile(existingPath, "thrift");
 
                 return cert;
             }
@@ -231,8 +234,7 @@ namespace ThriftTest
             public TTransport CreateTransport()
             {
                 // endpoint transport
-                TTransport trans = null;
-
+                TTransport trans;
                 switch (transport)
                 {
                     case TransportChoice.Http:
@@ -255,7 +257,7 @@ namespace ThriftTest
                         trans = new TTlsSocketTransport(host, port, Configuration, 0,
                             cert,
                             (sender, certificate, chain, errors) => true,
-                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                            null);
                         break;
 
                     case TransportChoice.Socket:
@@ -320,7 +322,7 @@ namespace ThriftTest
                 numIterations = param.numIterations;
             }
 
-            public void Execute()
+            public async Task Execute()
             {
                 if (done)
                 {
@@ -333,14 +335,14 @@ namespace ThriftTest
                     try
                     {
                         if (!transport.IsOpen)
-                            transport.OpenAsync(MakeTimeoutToken()).GetAwaiter().GetResult();
+                            await transport.OpenAsync(MakeTimeoutToken());
                     }
                     catch (TTransportException ex)
                     {
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);
                         ReturnCode |= ErrorUnknown;
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         continue;
                     }
                     catch (Exception ex)
@@ -348,18 +350,18 @@ namespace ThriftTest
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);
                         ReturnCode |= ErrorUnknown;
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         continue;
                     }
 
                     try
                     {
-                        ReturnCode |= ExecuteClientTestAsync(client).GetAwaiter().GetResult(); ;
+                        ReturnCode |= await ExecuteClientTest(client);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("*** FAILED ***");
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         ReturnCode |= ErrorUnknown;
                     }
                 }
@@ -370,7 +372,7 @@ namespace ThriftTest
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error while closing transport");
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                 }
                 done = true;
             }
@@ -391,7 +393,7 @@ namespace ThriftTest
             Console.WriteLine();
         }
 
-        public static int Execute(List<string> args)
+        public static Task<int> Execute(List<string> args)
         {
             try
             {
@@ -404,39 +406,46 @@ namespace ThriftTest
                 catch (Exception ex)
                 {
                     Console.WriteLine("*** FAILED ***");
-                    Console.WriteLine("Error while  parsing arguments");
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
-                    return ErrorUnknown;
+                    Console.WriteLine("Error while parsing arguments");
+                    Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+                    return Task.FromResult(ErrorUnknown);
                 }
-
-                var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
 
                 //issue tests on separate threads simultaneously
-                var threads = tests.Select(test => new Task(test.Execute)).ToArray();
+                var nThreads = Math.Max(param.numThreads, 1);
+                Console.Write("Starting {0} test thread(s) ", nThreads);
+                var tasks = new Task[nThreads];
                 var start = DateTime.Now;
-                foreach (var t in threads)
+                var retcode = 0;
+                for (var i = 0; i < tasks.Length; ++i)
                 {
-                    t.Start();
+                    Console.Write('.');
+                    tasks[i] = Task.Run(async () =>
+                    {
+                        var test = new ClientTest(param);
+                        await test.Execute();
+                        lock (tasks)
+                            retcode |= test.ReturnCode;
+                    });
                 }
-
-                Task.WaitAll(threads);
-
+                Console.WriteLine(" OK");
+                Task.WaitAll(tasks);
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();
-                return tests.Select(t => t.ReturnCode).Aggregate((r1, r2) => r1 | r2);
+                return Task.FromResult(retcode);
             }
             catch (Exception outerEx)
             {
                 Console.WriteLine("*** FAILED ***");
                 Console.WriteLine("Unexpected error");
-                Console.WriteLine(outerEx.Message + " ST: " + outerEx.StackTrace);
-                return ErrorUnknown;
+                Console.WriteLine(outerEx.Message + "\n" + outerEx.StackTrace);
+                return Task.FromResult(ErrorUnknown);
             }
         }
 
         public static string BytesToHex(byte[] data)
         {
-            return BitConverter.ToString(data).Replace("-", string.Empty);
+            return Convert.ToHexString(data);
         }
 
 
@@ -470,7 +479,7 @@ namespace ThriftTest
                     amount = 15 * 1024 * 1024;
                     break;
                 default:
-                    throw new ArgumentException(nameof(testcase));
+                    throw new ArgumentException("invalid argument",nameof(testcase));
             }
 
             var retval = new byte[amount];
@@ -494,22 +503,22 @@ namespace ThriftTest
             return retval;
         }
 
-        private static CancellationToken MakeTimeoutToken(int msec = 5000)
+        private static CancellationToken MakeTimeoutToken(int msec = 15_000)
         {
             var token = new CancellationTokenSource(msec);
             return token.Token;
         }
 
-        public static async Task<int> ExecuteClientTestAsync(ThriftTest.Client client)
+        public static async Task<int> ExecuteClientTest(ThriftTest.Client client)
         {
             var returnCode = 0;
 
             Console.Write("testVoid()");
-            await client.testVoidAsync(MakeTimeoutToken());
+            await client.testVoid(MakeTimeoutToken());
             Console.WriteLine(" = void");
 
             Console.Write("testString(\"Test\")");
-            var s = await client.testStringAsync("Test", MakeTimeoutToken());
+            var s = await client.testString("Test", MakeTimeoutToken());
             Console.WriteLine(" = \"" + s + "\"");
             if ("Test" != s)
             {
@@ -518,7 +527,7 @@ namespace ThriftTest
             }
 
             Console.Write("testBool(true)");
-            var t = await client.testBoolAsync((bool)true, MakeTimeoutToken());
+            var t = await client.testBool((bool)true, MakeTimeoutToken());
             Console.WriteLine(" = " + t);
             if (!t)
             {
@@ -526,7 +535,7 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
             Console.Write("testBool(false)");
-            var f = await client.testBoolAsync((bool)false, MakeTimeoutToken());
+            var f = await client.testBool((bool)false, MakeTimeoutToken());
             Console.WriteLine(" = " + f);
             if (f)
             {
@@ -535,7 +544,7 @@ namespace ThriftTest
             }
 
             Console.Write("testByte(1)");
-            var i8 = await client.testByteAsync((sbyte)1, MakeTimeoutToken());
+            var i8 = await client.testByte((sbyte)1, MakeTimeoutToken());
             Console.WriteLine(" = " + i8);
             if (1 != i8)
             {
@@ -544,7 +553,7 @@ namespace ThriftTest
             }
 
             Console.Write("testI32(-1)");
-            var i32 = await client.testI32Async(-1, MakeTimeoutToken());
+            var i32 = await client.testI32(-1, MakeTimeoutToken());
             Console.WriteLine(" = " + i32);
             if (-1 != i32)
             {
@@ -553,7 +562,7 @@ namespace ThriftTest
             }
 
             Console.Write("testI64(-34359738368)");
-            var i64 = await client.testI64Async(-34359738368, MakeTimeoutToken());
+            var i64 = await client.testI64(-34359738368, MakeTimeoutToken());
             Console.WriteLine(" = " + i64);
             if (-34359738368 != i64)
             {
@@ -563,7 +572,7 @@ namespace ThriftTest
 
             // TODO: Validate received message
             Console.Write("testDouble(5.325098235)");
-            var dub = await client.testDoubleAsync(5.325098235, MakeTimeoutToken());
+            var dub = await client.testDouble(5.325098235, MakeTimeoutToken());
             Console.WriteLine(" = " + dub);
             if (5.325098235 != dub)
             {
@@ -571,7 +580,7 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
             Console.Write("testDouble(-0.000341012439638598279)");
-            dub = await client.testDoubleAsync(-0.000341012439638598279, MakeTimeoutToken());
+            dub = await client.testDouble(-0.000341012439638598279, MakeTimeoutToken());
             Console.WriteLine(" = " + dub);
             if (-0.000341012439638598279 != dub)
             {
@@ -579,15 +588,35 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
 
+            // testUuid()
+            var uuidOut = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+            Console.Write("testUuid({0})", uuidOut);
+            try
+            {
+                var uuidIn = await client.testUuid(uuidOut, MakeTimeoutToken());
+                Console.WriteLine(" = {0}", uuidIn);
+                if (!uuidIn.Equals(uuidOut))
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                }
+            }
+            catch (Thrift.TApplicationException ex)
+            {
+                Console.WriteLine("*** FAILED ***");
+                returnCode |= ErrorBaseTypes;
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+            }
+
             // testBinary()
-            foreach(BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
+            foreach (BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
             {
                 var binOut = PrepareTestData(true, binTestCase);
 
                 Console.Write("testBinary({0} bytes)", binOut.Length);
                 try
                 {
-                    var binIn = await client.testBinaryAsync(binOut, MakeTimeoutToken());
+                    var binIn = await client.testBinary(binOut, MakeTimeoutToken());
                     Console.WriteLine(" = {0} bytes", binIn.Length);
                     if (binIn.Length != binOut.Length)
                     {
@@ -607,18 +636,18 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorBaseTypes;
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                 }
             }
 
-            // CrazyNesting 
+            // CrazyNesting
             Console.WriteLine("Test CrazyNesting");
             var one = new CrazyNesting();
             var two = new CrazyNesting();
             one.String_field = "crazy";
             two.String_field = "crazy";
-            one.Binary_field = new byte[] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
-            two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+            one.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
+            two.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
             if (typeof(CrazyNesting).GetMethod("Equals")?.DeclaringType == typeof(CrazyNesting))
             {
                 if (!one.Equals(two))
@@ -637,7 +666,7 @@ namespace ThriftTest
                 I32_thing = -3,
                 I64_thing = -5
             };
-            var i = await client.testStructAsync(o, MakeTimeoutToken());
+            var i = await client.testStruct(o, MakeTimeoutToken());
             Console.WriteLine(" = {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}");
 
             // TODO: Validate received message
@@ -648,9 +677,14 @@ namespace ThriftTest
                 Struct_thing = o,
                 I32_thing = 5
             };
-            var i2 = await client.testNestAsync(o2, MakeTimeoutToken());
+            Xtruct2 i2 = await client.testNest(o2, MakeTimeoutToken());
             i = i2.Struct_thing;
-            Console.WriteLine(" = {" + i2.Byte_thing + ", {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}, " + i2.I32_thing + "}");
+            Console.WriteLine(" = {" + i2.Byte_thing + ", {\""
+                            + (i?.String_thing ?? "<null>") + "\", "
+                            + (i?.Byte_thing ?? 0) + ", "
+                            + (i?.I32_thing ?? 0) + ", "
+                            + (i?.I64_thing ?? 0) + "}, "
+                            + i2.I32_thing + "}");
 
             var mapout = new Dictionary<int, int>();
             for (var j = 0; j < 5; j++)
@@ -658,37 +692,13 @@ namespace ThriftTest
                 mapout[j] = j - 10;
             }
             Console.Write("testMap({");
-            var first = true;
-            foreach (var key in mapout.Keys)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(key + " => " + mapout[key]);
-            }
+            Console.Write(string.Join(", ", mapout.Select((pair) => { return pair.Key + " => " + pair.Value; })));
             Console.Write("})");
 
-            var mapin = await client.testMapAsync(mapout, MakeTimeoutToken());
+            var mapin = await client.testMap(mapout, MakeTimeoutToken());
 
             Console.Write(" = {");
-            first = true;
-            foreach (var key in mapin.Keys)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(key + " => " + mapin[key]);
-            }
+            Console.Write(string.Join(", ", mapin.Select((pair) => { return pair.Key + " => " + pair.Value; })));
             Console.WriteLine("}");
 
             // TODO: Validate received message
@@ -698,83 +708,35 @@ namespace ThriftTest
                 listout.Add(j);
             }
             Console.Write("testList({");
-            first = true;
-            foreach (var j in listout)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(j);
-            }
+            Console.Write(string.Join(", ", listout));
             Console.Write("})");
 
-            var listin = await client.testListAsync(listout, MakeTimeoutToken());
+            var listin = await client.testList(listout, MakeTimeoutToken());
 
             Console.Write(" = {");
-            first = true;
-            foreach (var j in listin)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(j);
-            }
+            Console.Write(string.Join(", ", listin));
             Console.WriteLine("}");
 
             //set
             // TODO: Validate received message
-            var setout = new THashSet<int>();
+            var setout = new HashSet<int>();
             for (var j = -2; j < 3; j++)
             {
                 setout.Add(j);
             }
             Console.Write("testSet({");
-            first = true;
-            foreach (int j in setout)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(j);
-            }
+            Console.Write(string.Join(", ", setout));
             Console.Write("})");
 
-            var setin = await client.testSetAsync(setout, MakeTimeoutToken());
+            var setin = await client.testSet(setout, MakeTimeoutToken());
 
             Console.Write(" = {");
-            first = true;
-            foreach (int j in setin)
-            {
-                if (first)
-                {
-                    first = false;
-                }
-                else
-                {
-                    Console.Write(", ");
-                }
-                Console.Write(j);
-            }
+            Console.Write(string.Join(", ", setin));
             Console.WriteLine("}");
 
 
             Console.Write("testEnum(ONE)");
-            var ret = await client.testEnumAsync(Numberz.ONE, MakeTimeoutToken());
+            var ret = await client.testEnum(Numberz.ONE, MakeTimeoutToken());
             Console.WriteLine(" = " + ret);
             if (Numberz.ONE != ret)
             {
@@ -783,7 +745,7 @@ namespace ThriftTest
             }
 
             Console.Write("testEnum(TWO)");
-            ret = await client.testEnumAsync(Numberz.TWO, MakeTimeoutToken());
+            ret = await client.testEnum(Numberz.TWO, MakeTimeoutToken());
             Console.WriteLine(" = " + ret);
             if (Numberz.TWO != ret)
             {
@@ -792,7 +754,7 @@ namespace ThriftTest
             }
 
             Console.Write("testEnum(THREE)");
-            ret = await client.testEnumAsync(Numberz.THREE, MakeTimeoutToken());
+            ret = await client.testEnum(Numberz.THREE, MakeTimeoutToken());
             Console.WriteLine(" = " + ret);
             if (Numberz.THREE != ret)
             {
@@ -801,7 +763,7 @@ namespace ThriftTest
             }
 
             Console.Write("testEnum(FIVE)");
-            ret = await client.testEnumAsync(Numberz.FIVE, MakeTimeoutToken());
+            ret = await client.testEnum(Numberz.FIVE, MakeTimeoutToken());
             Console.WriteLine(" = " + ret);
             if (Numberz.FIVE != ret)
             {
@@ -810,7 +772,7 @@ namespace ThriftTest
             }
 
             Console.Write("testEnum(EIGHT)");
-            ret = await client.testEnumAsync(Numberz.EIGHT, MakeTimeoutToken());
+            ret = await client.testEnum(Numberz.EIGHT, MakeTimeoutToken());
             Console.WriteLine(" = " + ret);
             if (Numberz.EIGHT != ret)
             {
@@ -819,7 +781,7 @@ namespace ThriftTest
             }
 
             Console.Write("testTypedef(309858235082523)");
-            var uid = await client.testTypedefAsync(309858235082523L, MakeTimeoutToken());
+            var uid = await client.testTypedef(309858235082523L, MakeTimeoutToken());
             Console.WriteLine(" = " + uid);
             if (309858235082523L != uid)
             {
@@ -829,7 +791,7 @@ namespace ThriftTest
 
             // TODO: Validate received message
             Console.Write("testMapMap(1)");
-            var mm = await client.testMapMapAsync(1, MakeTimeoutToken());
+            var mm = await client.testMapMap(1, MakeTimeoutToken());
             Console.Write(" = {");
             foreach (var key in mm.Keys)
             {
@@ -858,12 +820,9 @@ namespace ThriftTest
                 I32_thing = 8,
                 I64_thing = 8
             };
-            insane.Xtructs = new List<Xtruct>
-            {
-                truck
-            };
+            insane.Xtructs = [ truck ];
             Console.Write("testInsanity()");
-            var whoa = await client.testInsanityAsync(insane, MakeTimeoutToken());
+            var whoa = await client.testInsanity(insane, MakeTimeoutToken());
             Console.Write(" = {");
             foreach (var key in whoa.Keys)
             {
@@ -928,14 +887,14 @@ namespace ThriftTest
             var arg4 = Numberz.FIVE;
             long arg5 = 5000000;
             Console.Write("Test Multi(" + arg0 + "," + arg1 + "," + arg2 + ",{" + string.Join(",", tmpMultiDict) + "}," + arg4 + "," + arg5 + ")");
-            var multiResponse = await client.testMultiAsync(arg0, arg1, arg2, multiDict, arg4, arg5, MakeTimeoutToken());
+            var multiResponse = await client.testMulti(arg0, arg1, arg2, multiDict, arg4, arg5, MakeTimeoutToken());
             Console.Write(" = Xtruct(byte_thing:" + multiResponse.Byte_thing + ",String_thing:" + multiResponse.String_thing
                           + ",i32_thing:" + multiResponse.I32_thing + ",i64_thing:" + multiResponse.I64_thing + ")\n");
 
             try
             {
                 Console.WriteLine("testException(\"Xception\")");
-                await client.testExceptionAsync("Xception", MakeTimeoutToken());
+                await client.testException("Xception", MakeTimeoutToken());
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
             }
@@ -951,12 +910,12 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
                 Console.WriteLine("testException(\"TException\")");
-                await client.testExceptionAsync("TException", MakeTimeoutToken());
+                await client.testException("TException", MakeTimeoutToken());
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
             }
@@ -968,25 +927,25 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
                 Console.WriteLine("testException(\"ok\")");
-                await client.testExceptionAsync("ok", MakeTimeoutToken());
+                await client.testException("ok", MakeTimeoutToken());
                 // OK
             }
             catch (Exception ex)
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
 
             try
             {
                 Console.WriteLine("testMultiException(\"Xception\", ...)");
-                await client.testMultiExceptionAsync("Xception", "ignore", MakeTimeoutToken());
+                await client.testMultiException("Xception", "ignore", MakeTimeoutToken());
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
             }
@@ -1002,18 +961,18 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
                 Console.WriteLine("testMultiException(\"Xception2\", ...)");
-                await client.testMultiExceptionAsync("Xception2", "ignore", MakeTimeoutToken());
+                await client.testMultiException("Xception2", "ignore", MakeTimeoutToken());
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
             }
             catch (Xception2 ex)
             {
-                if (ex.ErrorCode != 2002 || ex.Struct_thing.String_thing != "This is an Xception2")
+                if (ex.ErrorCode != 2002 || ex.Struct_thing?.String_thing != "This is an Xception2")
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorExceptions;
@@ -1023,12 +982,12 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
                 Console.WriteLine("testMultiException(\"success\", \"OK\")");
-                if ("OK" != (await client.testMultiExceptionAsync("success", "OK", MakeTimeoutToken())).String_thing)
+                if ("OK" != (await client.testMultiException("success", "OK", MakeTimeoutToken())).String_thing)
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorExceptions;
@@ -1038,13 +997,13 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
 
             Console.WriteLine("Test Oneway(1)");
             var sw = new Stopwatch();
             sw.Start();
-            await client.testOnewayAsync(1, MakeTimeoutToken());
+            await client.testOneway(1, MakeTimeoutToken());
             sw.Stop();
             if (sw.ElapsedMilliseconds > 1000)
             {
@@ -1058,7 +1017,7 @@ namespace ThriftTest
             sw.Start();
             var token = MakeTimeoutToken(20000);
             for (var k = 0; k < times; ++k)
-                await client.testVoidAsync(token);
+                await client.testVoid(token);
             sw.Stop();
             Console.WriteLine(" = {0} ms a testVoid() call", sw.ElapsedMilliseconds / times);
             return returnCode;

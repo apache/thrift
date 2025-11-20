@@ -53,6 +53,7 @@ struct _ThriftFramedTransport
   ThriftTransport *transport;
 
   /* private */
+  guint32 max_frame_size;
   GByteArray *r_buf;
   GByteArray *w_buf;
   guint32 r_buf_size;

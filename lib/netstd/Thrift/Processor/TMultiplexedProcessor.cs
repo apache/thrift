@@ -23,6 +23,11 @@ using System.Threading.Tasks;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+#pragma warning disable IDE0290 // net8 - primary CTOR
+
 namespace Thrift.Processor
 {
     // ReSharper disable once InconsistentNaming
@@ -30,8 +35,7 @@ namespace Thrift.Processor
     {
         //TODO: Localization
 
-        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap =
-            new Dictionary<string, ITAsyncProcessor>();
+        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap = new Dictionary<string, ITAsyncProcessor>();
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)
         {
@@ -65,8 +69,7 @@ namespace Thrift.Processor
 
                 // Create a new TMessage, something that can be consumed by any TProtocol
                 var serviceName = message.Name.Substring(0, index);
-                ITAsyncProcessor actualProcessor;
-                if (!_serviceProcessorMap.TryGetValue(serviceName, out actualProcessor))
+                if (!_serviceProcessorMap.TryGetValue(serviceName, out ITAsyncProcessor actualProcessor))
                 {
                     await FailAsync(oprot, message, TApplicationException.ExceptionType.InternalError,
                         $"Service name not found: {serviceName}. Did you forget to call RegisterProcessor()?",
@@ -103,7 +106,7 @@ namespace Thrift.Processor
             _serviceProcessorMap.Add(serviceName, processor);
         }
 
-        private async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
+        private static async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
             string etxt, CancellationToken cancellationToken)
         {
             var appex = new TApplicationException(extype, etxt);

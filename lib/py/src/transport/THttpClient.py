@@ -24,11 +24,11 @@ import sys
 import warnings
 import base64
 
-from six.moves import urllib
-from six.moves import http_client
+import urllib.parse
+import urllib.request
+import http.client
 
 from .TTransport import TTransportBase
-import six
 
 
 class THttpClient(TTransportBase):
@@ -43,7 +43,7 @@ class THttpClient(TTransportBase):
         Only the second supports https.  To properly authenticate against the server,
         provide the client's identity by specifying cert_file and key_file.  To properly
         authenticate the server, specify either cafile or ssl_context with a CA defined.
-        NOTE: if both cafile and ssl_context are defined, ssl_context will override cafile.
+        NOTE: if ssl_context is defined, it will override any provided cert_file, key_file, and cafile.
         """
         if port is not None:
             warnings.warn(
@@ -60,12 +60,14 @@ class THttpClient(TTransportBase):
             self.scheme = parsed.scheme
             assert self.scheme in ('http', 'https')
             if self.scheme == 'http':
-                self.port = parsed.port or http_client.HTTP_PORT
+                self.port = parsed.port or http.client.HTTP_PORT
             elif self.scheme == 'https':
-                self.port = parsed.port or http_client.HTTPS_PORT
-                self.certfile = cert_file
-                self.keyfile = key_file
-                self.context = ssl.create_default_context(cafile=cafile) if (cafile and not ssl_context) else ssl_context
+                self.port = parsed.port or http.client.HTTPS_PORT
+                if (cafile or cert_file or key_file) and not ssl_context:
+                    self.context = ssl.create_default_context(cafile=cafile)
+                    self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+                else:
+                    self.context = ssl_context
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
@@ -91,6 +93,7 @@ class THttpClient(TTransportBase):
         self.__http_response = None
         self.__timeout = None
         self.__custom_headers = None
+        self.headers = None
 
     @staticmethod
     def basic_proxy_auth_header(proxy):
@@ -98,7 +101,7 @@ class THttpClient(TTransportBase):
             return None
         ap = "%s:%s" % (urllib.parse.unquote(proxy.username),
                         urllib.parse.unquote(proxy.password))
-        cr = base64.b64encode(ap).strip()
+        cr = base64.b64encode(ap.encode()).strip()
         return "Basic " + cr
 
     def using_proxy(self):
@@ -106,12 +109,10 @@ class THttpClient(TTransportBase):
 
     def open(self):
         if self.scheme == 'http':
-            self.__http = http_client.HTTPConnection(self.host, self.port,
+            self.__http = http.client.HTTPConnection(self.host, self.port,
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http_client.HTTPSConnection(self.host, self.port,
-                                                      key_file=self.keyfile,
-                                                      cert_file=self.certfile,
+            self.__http = http.client.HTTPSConnection(self.host, self.port,
                                                       timeout=self.__timeout,
                                                       context=self.context)
         if self.using_proxy():
@@ -172,8 +173,14 @@ class THttpClient(TTransportBase):
             self.__http.putheader('User-Agent', user_agent)
 
         if self.__custom_headers:
-            for key, val in six.iteritems(self.__custom_headers):
+            for key, val in self.__custom_headers.items():
                 self.__http.putheader(key, val)
+
+        # Saves the cookie sent by the server in the previous response.
+        # HTTPConnection.putheader can only be called after a request has been
+        # started, and before it's been sent.
+        if self.headers and 'Set-Cookie' in self.headers:
+            self.__http.putheader('Cookie', self.headers['Set-Cookie'])
 
         self.__http.endheaders()
 
@@ -185,7 +192,3 @@ class THttpClient(TTransportBase):
         self.code = self.__http_response.status
         self.message = self.__http_response.reason
         self.headers = self.__http_response.msg
-
-        # Saves the cookie sent by the server response
-        if 'Set-Cookie' in self.headers:
-            self.__http.putheader('Cookie', self.headers['Set-Cookie'])

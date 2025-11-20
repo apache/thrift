@@ -22,7 +22,9 @@
         "map",
         "union",
         "struct",
-        "binary"
+        "binary",
+        "uuid",
+        "enum"
       ]
     },
     "base-type": {
@@ -30,7 +32,7 @@
       "type": "object",
       "properties": {
         "typeId": {
-          "enum": ["void", "string", "bool", "byte", "i8", "i16", "i32", "i64", "double", "binary" ]
+          "enum": ["void", "string", "bool", "byte", "i8", "i16", "i32", "i64", "double", "binary", "uuid" ]
         }
       },
       "required": [ "typeId" ]
@@ -62,11 +64,11 @@
       "required": [ "typeId", "keyTypeId", "valueTypeId" ]
     },
     "struct-type": {
-      "title": "Struct, union and exception schema",
+      "title": "Struct, union, enum and exception schema",
       "type": "object",
       "properties": {
         "typeId": {
-          "enum": [ "union", "struct", "exception" ]
+          "enum": [ "union", "struct", "exception", "enum" ]
         }
       },
       "required": [ "typeId", "class" ]
@@ -143,9 +145,9 @@
       "type": "object",
       "allOf": [
         { "$ref": "#/definitions/name-and-doc" },
-        { "$ref": "#/definitions/type-desc" },
         {
           "properties": {
+            "type": { "$ref": "#/definitions/type-desc" },
             "value": {
               "oneOf": [
                 { "type": "string" },

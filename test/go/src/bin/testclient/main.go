@@ -20,38 +20,45 @@
 package main
 
 import (
-	"common"
+	"bytes"
 	"context"
 	"flag"
-	"gen/thrifttest"
+	"fmt"
 	t "log"
 	"reflect"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/common"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")
 var port = flag.Int64("port", 9090, "Port number to connect")
 var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/thrifttest.thrift), instead of host and port")
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
+var _ = flag.Bool("zlib", false, "For compatibility. Ignored.")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
-var zlib = flag.Bool("zlib", false, "Wrapped Transport using Zlib")
 var testloops = flag.Int("testloops", 1, "Number of Tests")
 
 func main() {
 	flag.Parse()
-	client, _, err := common.StartClient(*host, *port, *domain_socket, *transport, *protocol, *ssl)
+	addr := *domain_socket
+	if addr == "" {
+		addr = fmt.Sprintf("%s:%d", *host, *port)
+	}
+	client, _, err := common.StartClient(addr, *transport, *protocol, *ssl)
 	if err != nil {
 		t.Fatalf("Unable to start client: ", err)
 	}
-	for i := 0; i < *testloops; i++ {
+	for range *testloops {
 		callEverything(client)
 	}
 }
 
 var rmapmap = map[int32]map[int32]int32{
-	-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+	-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+	4:  {4: 4, 3: 3, 2: 2, 1: 1},
 }
 
 var xxs = &thrifttest.Xtruct{
@@ -126,14 +133,30 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 	}
 
 	binout := make([]byte, 256)
-	for i := 0; i < 256; i++ {
+	for i := range binout {
 		binout[i] = byte(i)
 	}
 	bin, err := client.TestBinary(defaultCtx, binout)
-	for i := 0; i < 256; i++ {
-		if binout[i] != bin[i] {
-			t.Fatalf("Unexpected TestBinary() result expected %d, got %d ", binout[i], bin[i])
-		}
+	if err != nil {
+		t.Fatalf("TestBinary failed with %v", err)
+	}
+	if !bytes.Equal(binout, bin) {
+		t.Fatalf("Unexpected TestBinary() result expected % 02x, got % 02x ", binout, bin)
+	}
+
+	uout := thrift.Tuuid{
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55,
+		0x66, 0x77,
+		0x88, 0x99,
+		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	}
+	u, err := client.TestUuid(defaultCtx, uout)
+	if err != nil {
+		t.Fatalf("TestUuid failed with %v", err)
+	}
+	if u != uout {
+		t.Fatalf("Unexpected TestUuid() result expected %v, got %v", uout, u)
 	}
 
 	xs := thrifttest.NewXtruct()

@@ -705,7 +705,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
       return nullptr;
     }
     if (isUtf8(typeargs)) {
-      return PyUnicode_DecodeUTF8(buf, len, 0);
+      return PyUnicode_DecodeUTF8(buf, len, "replace");
     } else {
       return PyBytes_FromStringAndSize(buf, len);
     }

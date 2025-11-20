@@ -2,7 +2,7 @@
 #
 # This script is intended to be used after tagging the repository and updating
 # the version files for a release.  It will create a CPAN archive.  Run this
-# from inside a docker image like ubuntu-xenial.
+# from inside a docker image like ubuntu-focal.
 #
 
 set -e
@@ -52,5 +52,5 @@ cp -pr ../gen-perl .
 cp -pr ../gen-perl2 .
 perl ../tools/FixupDist.pl
 cd ..
-tar cvzf --hard-dereference $DISTFILE $DISTDIR
+tar cvzf $DISTFILE $DISTDIR
 rm -r $DISTDIR

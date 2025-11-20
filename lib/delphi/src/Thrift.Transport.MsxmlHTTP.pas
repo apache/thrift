@@ -53,6 +53,8 @@ type
     FCustomHeaders : IThriftDictionary<string,string>;
 
     function CreateRequest: IXMLHTTPRequest;
+    class procedure EnsureSuccessHttpStatus( const aRequest : IXMLHTTPRequest);
+
   strict protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
@@ -106,7 +108,7 @@ begin
   FReadTimeout       := XMLHTTP_SENDRECV_TIMEOUT;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 function TMsxmlHTTPClientImpl.CreateRequest: IXMLHTTPRequest;
@@ -127,7 +129,7 @@ begin
   Result.open('POST', FUri, False, '', '');
   Result.setRequestHeader( 'Content-Type', THRIFT_MIMETYPE);
   Result.setRequestHeader( 'Accept', THRIFT_MIMETYPE);
-  Result.setRequestHeader( 'User-Agent', 'Delphi/IHTTPClient');
+  Result.setRequestHeader( 'User-Agent', 'ApacheThriftDelphi/msxml');
 
   for pair in FCustomHeaders do begin
     Result.setRequestHeader( pair.Key, pair.Value );
@@ -197,12 +199,12 @@ end;
 
 function TMsxmlHTTPClientImpl.GetIsOpen: Boolean;
 begin
-  Result := True;
+  Result := Assigned(FOutputStream);
 end;
 
 procedure TMsxmlHTTPClientImpl.Open;
 begin
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 procedure TMsxmlHTTPClientImpl.Close;
@@ -217,7 +219,7 @@ begin
     SendRequest;
   finally
     FOutputStream := nil;
-    FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+    FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
     ASSERT( FOutputStream <> nil);
   end;
 end;
@@ -239,13 +241,13 @@ end;
 procedure TMsxmlHTTPClientImpl.SendRequest;
 var
   xmlhttp : IXMLHTTPRequest;
-  ms : TMemoryStream;
+  ms : TThriftMemoryStream;
   a : TBytes;
   len : Integer;
 begin
   xmlhttp := CreateRequest;
 
-  ms := TMemoryStream.Create;
+  ms := TThriftMemoryStream.Create;
   try
     a := FOutputStream.ToArray;
     len := Length(a);
@@ -255,7 +257,9 @@ begin
     ms.Position := 0;
     xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
     FInputStream := nil;
+    EnsureSuccessHttpStatus(xmlhttp);  // throws if not
     FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
+    ResetMessageSizeAndConsumedBytes;
     UpdateKnownMessageSize( FInputStream.Size);
   finally
     ms.Free;
@@ -264,9 +268,25 @@ end;
 
 procedure TMsxmlHTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
-  FOutputStream.Write( pBuf, off, len);
+  if FOutputStream <> nil
+  then FOutputStream.Write( pBuf, off, len)
+  else raise TTransportExceptionNotOpen.Create('Transport closed');
 end;
 
+
+class procedure TMsxmlHTTPClientImpl.EnsureSuccessHttpStatus( const aRequest : IXMLHTTPRequest);
+var iStatus : Integer;
+    sText : string;
+begin
+  if aRequest = nil
+  then raise TTransportExceptionNotOpen.Create('Invalid HTTP request data');
+
+  iStatus := aRequest.status;
+  sText   := aRequest.statusText;
+
+  if (200 > iStatus) or (iStatus > 299)
+  then raise TTransportExceptionEndOfFile.Create('HTTP '+IntToStr(iStatus)+' '+sText);
+end;
 
 
 end.

@@ -99,8 +99,7 @@ namespace Thrift.Collections
 
             foreach (var obj in enumerable)
             {
-                var enum2 = obj as IEnumerable;
-                var objHash = enum2 == null ? obj.GetHashCode() : GetHashCode(enum2);
+                var objHash = (obj is IEnumerable enum2) ? GetHashCode(enum2) : obj.GetHashCode();
 
                 unchecked
                 {

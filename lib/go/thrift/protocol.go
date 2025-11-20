@@ -52,6 +52,7 @@ type TProtocol interface {
 	WriteDouble(ctx context.Context, value float64) error
 	WriteString(ctx context.Context, value string) error
 	WriteBinary(ctx context.Context, value []byte) error
+	WriteUUID(ctx context.Context, value Tuuid) error
 
 	ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqid int32, err error)
 	ReadMessageEnd(ctx context.Context) error
@@ -73,6 +74,7 @@ type TProtocol interface {
 	ReadDouble(ctx context.Context) (value float64, err error)
 	ReadString(ctx context.Context) (value string, err error)
 	ReadBinary(ctx context.Context) (value []byte, err error)
+	ReadUUID(ctx context.Context) (value Tuuid, err error)
 
 	Skip(ctx context.Context, fieldType TType) (err error)
 	Flush(ctx context.Context) (err error)
@@ -117,16 +119,22 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 	case STRING:
 		_, err = self.ReadString(ctx)
 		return
+	case UUID:
+		_, err = self.ReadUUID(ctx)
+		return
 	case STRUCT:
 		if _, err = self.ReadStructBegin(ctx); err != nil {
 			return err
 		}
 		for {
-			_, typeId, _, _ := self.ReadFieldBegin(ctx)
+			_, typeId, _, err := self.ReadFieldBegin(ctx)
+			if err != nil {
+				return err
+			}
 			if typeId == STOP {
 				break
 			}
-			err := Skip(ctx, self, typeId, maxDepth-1)
+			err = Skip(ctx, self, typeId, maxDepth-1)
 			if err != nil {
 				return err
 			}
@@ -138,12 +146,16 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, keyType, maxDepth-1)
 			if err != nil {
 				return err
 			}
-			self.Skip(ctx, valueType)
+
+			err = Skip(ctx, self, valueType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 		}
 		return self.ReadMapEnd(ctx)
 	case SET:
@@ -151,7 +163,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, elemType, maxDepth-1)
 			if err != nil {
 				return err
@@ -163,7 +175,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		if err != nil {
 			return err
 		}
-		for i := 0; i < size; i++ {
+		for range size {
 			err := Skip(ctx, self, elemType, maxDepth-1)
 			if err != nil {
 				return err
@@ -171,7 +183,6 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		}
 		return self.ReadListEnd(ctx)
 	default:
-		return NewTProtocolExceptionWithType(INVALID_DATA, errors.New(fmt.Sprintf("Unknown data type %d", fieldType)))
+		return NewTProtocolExceptionWithType(INVALID_DATA, fmt.Errorf("Unknown data type %d", fieldType))
 	}
-	return nil
 }

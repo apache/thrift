@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include "ext/binary.h"
 namespace apache {
 namespace thrift {

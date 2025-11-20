@@ -45,6 +45,9 @@ endif
 dist-hook:
 	$(RM) -r $(distdir)/spec/gen-rb/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	coding_standards.md \
 	Rakefile \

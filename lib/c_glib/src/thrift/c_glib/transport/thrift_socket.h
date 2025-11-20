@@ -68,6 +68,32 @@ struct _ThriftSocketClass
 /* used by THRIFT_TYPE_SOCKET */
 GType thrift_socket_get_type (void);
 
+/**
+ * Check if the socket is open and ready to send and receive
+ * @param transport
+ * @return true if open
+ */
+gboolean
+thrift_socket_is_open (ThriftTransport *transport);
+
+/**
+ * Open connection if required and set the socket to be ready to send and receive
+ * @param transport
+ * @param error
+ * @return true if operation was correct
+ */
+gboolean
+thrift_socket_open (ThriftTransport *transport, GError **error);
+
+/**
+ * Close connection if required
+ * @param transport
+ * @param error
+ * @return true if operation was correct
+ */
+gboolean
+thrift_socket_close (ThriftTransport *transport, GError **error);
+
 G_END_DECLS
 
 #endif

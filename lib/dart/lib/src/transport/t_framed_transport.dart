@@ -25,33 +25,37 @@ class TFramedTransport extends TBufferedTransport {
 
   final TTransport _transport;
 
-  final Uint8List _headerBytes = new Uint8List(headerByteCount);
+  final Uint8List _headerBytes = Uint8List(headerByteCount);
   int _receivedHeaderBytes = 0;
 
   int _bodySize = 0;
-  Uint8List _body = null;
+  Uint8List _body;
   int _receivedBodyBytes = 0;
 
-  Completer<Uint8List> _frameCompleter = null;
+  Completer<Uint8List> _frameCompleter;
 
   TFramedTransport(TTransport transport) : _transport = transport {
     if (transport == null) {
-      throw new ArgumentError.notNull("transport");
+      throw ArgumentError.notNull("transport");
     }
   }
 
+  @override
   bool get isOpen => _transport.isOpen;
 
+  @override
   Future open() {
     _reset(isOpen: true);
     return _transport.open();
   }
 
+  @override
   Future close() {
     _reset(isOpen: false);
     return _transport.close();
   }
 
+  @override
   int read(Uint8List buffer, int offset, int length) {
     if (hasReadData) {
       int got = super.read(buffer, offset, length);
@@ -78,10 +82,11 @@ class TFramedTransport extends TBufferedTransport {
   bool _readFrameHeader() {
     var remainingHeaderBytes = headerByteCount - _receivedHeaderBytes;
 
-    int got = _transport.read(_headerBytes, _receivedHeaderBytes, remainingHeaderBytes);
+    int got = _transport.read(
+        _headerBytes, _receivedHeaderBytes, remainingHeaderBytes);
     if (got < 0) {
-      throw new TTransportError(
-          TTransportErrorType.UNKNOWN, "Socket closed during frame header read");
+      throw TTransportError(TTransportErrorType.UNKNOWN,
+          "Socket closed during frame header read");
     }
 
     _receivedHeaderBytes += got;
@@ -92,12 +97,12 @@ class TFramedTransport extends TBufferedTransport {
       _receivedHeaderBytes = 0;
 
       if (size < 0) {
-        throw new TTransportError(
+        throw TTransportError(
             TTransportErrorType.UNKNOWN, "Read a negative frame size: $size");
       }
 
       _bodySize = size;
-      _body = new Uint8List(_bodySize);
+      _body = Uint8List(_bodySize);
       _receivedBodyBytes = 0;
 
       return true;
@@ -112,7 +117,7 @@ class TFramedTransport extends TBufferedTransport {
 
     int got = _transport.read(_body, _receivedBodyBytes, remainingBodyBytes);
     if (got < 0) {
-      throw new TTransportError(
+      throw TTransportError(
           TTransportErrorType.UNKNOWN, "Socket closed during frame body read");
     }
 
@@ -129,12 +134,13 @@ class TFramedTransport extends TBufferedTransport {
 
       var completer = _frameCompleter;
       _frameCompleter = null;
-      completer.complete(new Uint8List(0));
+      completer.complete(Uint8List(0));
     } else {
       _registerForReadableBytes();
     }
   }
 
+  @override
   Future flush() {
     if (_frameCompleter == null) {
       Uint8List buffer = consumeWriteBuffer();
@@ -144,7 +150,7 @@ class TFramedTransport extends TBufferedTransport {
       _transport.write(_headerBytes, 0, headerByteCount);
       _transport.write(buffer, 0, length);
 
-      _frameCompleter  = new Completer<Uint8List>();
+      _frameCompleter = Completer<Uint8List>();
       _registerForReadableBytes();
     }
 

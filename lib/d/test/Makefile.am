@@ -23,7 +23,7 @@ AUTOMAKE_OPTIONS = serial-tests
 
 debug_proto_gen = $(addprefix gen-d/, DebugProtoTest_types.d)
 
-$(debug_proto_gen): $(top_srcdir)/test/DebugProtoTest.thrift
+$(debug_proto_gen): $(top_srcdir)/test/v0.16/DebugProtoTest.thrift
 	$(THRIFT) --gen d -nowarn $<
 
 stress_test_gen = $(addprefix gen-d/thrift/test/stress/, Service.d \
@@ -35,9 +35,11 @@ $(stress_test_gen): $(top_srcdir)/test/StressTest.thrift
 thrift_test_gen = $(addprefix gen-d/thrift/test/, SecondService.d \
 	ThriftTest.d ThriftTest_constants.d ThriftTest_types.d)
 
-$(thrift_test_gen): $(top_srcdir)/test/ThriftTest.thrift
+$(thrift_test_gen): $(top_srcdir)/test/v0.16/ThriftTest.thrift
 	$(THRIFT) --gen d $<
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 # The actual test targets.
 # There just must be some way to reassign a variable without warnings in

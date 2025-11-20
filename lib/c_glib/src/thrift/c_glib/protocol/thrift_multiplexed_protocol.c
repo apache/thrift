@@ -40,7 +40,7 @@ G_DEFINE_TYPE(ThriftMultiplexedProtocol, thrift_multiplexed_protocol, THRIFT_TYP
 static GParamSpec *thrift_multiplexed_protocol_obj_properties[PROP_THRIFT_MULTIPLEXED_PROTOCOL_END] = { NULL, };
 
 gint32
-thrift_multiplexed_protocol_write_message_begin (ThriftMultiplexedProtocol *protocol,
+thrift_multiplexed_protocol_write_message_begin (ThriftProtocol *protocol,
     const gchar *name, const ThriftMessageType message_type,
     const gint32 seqid, GError **error)
 {

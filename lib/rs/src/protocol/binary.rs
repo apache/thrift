@@ -24,9 +24,9 @@ use super::{
 };
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 use crate::transport::{TReadTransport, TWriteTransport};
-use crate::{ProtocolError, ProtocolErrorKind};
+use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
 
-const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
+const BINARY_PROTOCOL_VERSION_1: u32 = 0x8001_0000;
 
 /// Read messages encoded in the Thrift simple binary encoding.
 ///
@@ -57,9 +57,11 @@ where
 {
     strict: bool,
     pub transport: T, // FIXME: shouldn't be public
+    config: TConfiguration,
+    recursion_depth: usize,
 }
 
-impl<'a, T> TBinaryInputProtocol<T>
+impl<T> TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {
@@ -67,11 +69,29 @@ where
     ///
     /// Set `strict` to `true` if all incoming messages contain the protocol
     /// version number in the protocol header.
-    pub fn new(transport: T, strict: bool) -> TBinaryInputProtocol<T> {
+    pub fn new(transport: T, strict: bool) -> Self {
+        Self::with_config(transport, strict, TConfiguration::default())
+    }
+
+    pub fn with_config(transport: T, strict: bool, config: TConfiguration) -> Self {
         TBinaryInputProtocol {
-            strict: strict,
-            transport: transport,
+            strict,
+            transport,
+            config,
+            recursion_depth: 0,
         }
+    }
+
+    fn check_recursion_depth(&self) -> crate::Result<()> {
+        if let Some(limit) = self.config.max_recursion_depth() {
+            if self.recursion_depth >= limit {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::DepthLimit,
+                    format!("Maximum recursion depth {} exceeded", limit),
+                )));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -79,15 +99,16 @@ impl<T> TInputProtocol for TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {
-    #[cfg_attr(feature = "cargo-clippy", allow(collapsible_if))]
+    #[allow(clippy::collapsible_if)]
     fn read_message_begin(&mut self) -> crate::Result<TMessageIdentifier> {
+        // TODO: Once specialization is stable, call the message size tracking here
         let mut first_bytes = vec![0; 4];
         self.transport.read_exact(&mut first_bytes[..])?;
 
         // the thrift version header is intentionally negative
         // so the first check we'll do is see if the sign bit is set
         // and if so - assume it's the protocol-version header
-        if first_bytes[0] >= 8 {
+        if (first_bytes[0] & 0x80) != 0 {
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
             if first_bytes[0..2] != [0x80, 0x01] {
@@ -133,10 +154,13 @@ where
     }
 
     fn read_struct_begin(&mut self) -> crate::Result<Option<TStructIdentifier>> {
+        self.check_recursion_depth()?;
+        self.recursion_depth += 1;
         Ok(None)
     }
 
     fn read_struct_end(&mut self) -> crate::Result<()> {
+        self.recursion_depth -= 1;
         Ok(())
     }
 
@@ -157,8 +181,28 @@ where
     }
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
-        let num_bytes = self.transport.read_i32::<BigEndian>()? as usize;
-        let mut buf = vec![0u8; num_bytes];
+        let num_bytes = self.transport.read_i32::<BigEndian>()?;
+
+        if num_bytes < 0 {
+            return Err(crate::Error::Protocol(ProtocolError::new(
+                ProtocolErrorKind::NegativeSize,
+                format!("Negative byte array size: {}", num_bytes),
+            )));
+        }
+
+        if let Some(max_size) = self.config.max_string_size() {
+            if num_bytes as usize > max_size {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::SizeLimit,
+                    format!(
+                        "Byte array size {} exceeds maximum allowed size of {}",
+                        num_bytes, max_size
+                    ),
+                )));
+            }
+        }
+
+        let mut buf = vec![0u8; num_bytes as usize];
         self.transport
             .read_exact(&mut buf)
             .map(|_| buf)
@@ -193,6 +237,14 @@ where
         self.transport.read_f64::<BigEndian>().map_err(From::from)
     }
 
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        let mut buf = [0u8; 16];
+        self.transport
+            .read_exact(&mut buf)
+            .map(|_| uuid::Uuid::from_bytes(buf))
+            .map_err(From::from)
+    }
+
     fn read_string(&mut self) -> crate::Result<String> {
         let bytes = self.read_bytes()?;
         String::from_utf8(bytes).map_err(From::from)
@@ -201,6 +253,8 @@ where
     fn read_list_begin(&mut self) -> crate::Result<TListIdentifier> {
         let element_type: TType = self.read_byte().and_then(field_type_from_u8)?;
         let size = self.read_i32()?;
+        let min_element_size = self.min_serialized_size(element_type);
+        super::check_container_size(&self.config, size, min_element_size)?;
         Ok(TListIdentifier::new(element_type, size))
     }
 
@@ -211,6 +265,8 @@ where
     fn read_set_begin(&mut self) -> crate::Result<TSetIdentifier> {
         let element_type: TType = self.read_byte().and_then(field_type_from_u8)?;
         let size = self.read_i32()?;
+        let min_element_size = self.min_serialized_size(element_type);
+        super::check_container_size(&self.config, size, min_element_size)?;
         Ok(TSetIdentifier::new(element_type, size))
     }
 
@@ -222,6 +278,12 @@ where
         let key_type: TType = self.read_byte().and_then(field_type_from_u8)?;
         let value_type: TType = self.read_byte().and_then(field_type_from_u8)?;
         let size = self.read_i32()?;
+
+        let key_min_size = self.min_serialized_size(key_type);
+        let value_min_size = self.min_serialized_size(value_type);
+        let element_size = key_min_size + value_min_size;
+        super::check_container_size(&self.config, size, element_size)?;
+
         Ok(TMapIdentifier::new(key_type, value_type, size))
     }
 
@@ -234,6 +296,26 @@ where
 
     fn read_byte(&mut self) -> crate::Result<u8> {
         self.transport.read_u8().map_err(From::from)
+    }
+
+    fn min_serialized_size(&self, field_type: TType) -> usize {
+        match field_type {
+            TType::Stop => 1,   // 1 byte minimum
+            TType::Void => 1,   // 1 byte minimum
+            TType::Bool => 1,   // 1 byte
+            TType::I08 => 1,    // 1 byte
+            TType::Double => 8, // 8 bytes
+            TType::I16 => 2,    // 2 bytes
+            TType::I32 => 4,    // 4 bytes
+            TType::I64 => 8,    // 8 bytes
+            TType::String => 4, // 4 bytes for length prefix
+            TType::Struct => 1, // 1 byte minimum (stop field)
+            TType::Map => 4,    // 4 bytes size
+            TType::Set => 4,    // 4 bytes size
+            TType::List => 4,   // 4 bytes size
+            TType::Uuid => 16,  // 16 bytes
+            TType::Utf7 => 1,   // 1 byte
+        }
     }
 }
 
@@ -294,10 +376,7 @@ where
     /// Set `strict` to `true` if all outgoing messages should contain the
     /// protocol version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryOutputProtocol<T> {
-        TBinaryOutputProtocol {
-            strict: strict,
-            transport: transport,
-        }
+        TBinaryOutputProtocol { strict, transport }
     }
 }
 
@@ -395,6 +474,12 @@ where
         self.write_bytes(s.as_bytes())
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.transport
+            .write_all(uuid.as_bytes())
+            .map_err(From::from)
+    }
+
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> crate::Result<()> {
         self.write_byte(field_type_to_u8(identifier.element_type))?;
         self.write_i32(identifier.size)
@@ -453,7 +538,10 @@ impl TBinaryOutputProtocolFactory {
 }
 
 impl TOutputProtocolFactory for TBinaryOutputProtocolFactory {
-    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
+    fn create(
+        &self,
+        transport: Box<dyn TWriteTransport + Send>,
+    ) -> Box<dyn TOutputProtocol + Send> {
         Box::new(TBinaryOutputProtocol::new(transport, true))
     }
 }
@@ -473,8 +561,7 @@ fn field_type_to_u8(field_type: TType) -> u8 {
         TType::Map => 0x0D,
         TType::Set => 0x0E,
         TType::List => 0x0F,
-        TType::Utf8 => 0x10,
-        TType::Utf16 => 0x11,
+        TType::Uuid => 0x10,
     }
 }
 
@@ -493,8 +580,7 @@ fn field_type_from_u8(b: u8) -> crate::Result<TType> {
         0x0D => Ok(TType::Map),
         0x0E => Ok(TType::Set),
         0x0F => Ok(TType::List),
-        0x10 => Ok(TType::Utf8),
-        0x11 => Ok(TType::Utf16),
+        0x10 => Ok(TType::Uuid),
         unkn => Err(crate::Error::Protocol(ProtocolError {
             kind: ProtocolErrorKind::InvalidData,
             message: format!("cannot convert {} to TType", unkn),
@@ -505,13 +591,12 @@ fn field_type_from_u8(b: u8) -> crate::Result<TType> {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     use crate::protocol::{
         TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
         TMessageType, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType,
     };
     use crate::transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
-
-    use super::*;
 
     #[test]
     fn must_write_strict_message_call_begin() {
@@ -520,7 +605,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -550,7 +635,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -577,7 +662,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -607,7 +692,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -750,13 +835,26 @@ mod tests {
     fn must_round_trip_list_begin() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
-        let ident = TListIdentifier::new(TType::List, 900);
+        let ident = TListIdentifier::new(TType::I32, 4);
         assert!(o_prot.write_list_begin(&ident).is_ok());
+        assert!(o_prot.write_i32(10).is_ok());
+        assert!(o_prot.write_i32(20).is_ok());
+        assert!(o_prot.write_i32(30).is_ok());
+        assert!(o_prot.write_i32(40).is_ok());
+
+        assert!(o_prot.write_list_end().is_ok());
 
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let received_ident = assert_success!(i_prot.read_list_begin());
         assert_eq!(&received_ident, &ident);
+
+        assert_eq!(i_prot.read_i32().unwrap(), 10);
+        assert_eq!(i_prot.read_i32().unwrap(), 20);
+        assert_eq!(i_prot.read_i32().unwrap(), 30);
+        assert_eq!(i_prot.read_i32().unwrap(), 40);
+
+        assert!(i_prot.read_list_end().is_ok());
     }
 
     #[test]
@@ -780,14 +878,25 @@ mod tests {
     fn must_round_trip_set_begin() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
-        let ident = TSetIdentifier::new(TType::I64, 2000);
+        let ident = TSetIdentifier::new(TType::I64, 3);
         assert!(o_prot.write_set_begin(&ident).is_ok());
+        assert!(o_prot.write_i64(123).is_ok());
+        assert!(o_prot.write_i64(456).is_ok());
+        assert!(o_prot.write_i64(789).is_ok());
+
+        assert!(o_prot.write_set_end().is_ok());
 
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let received_ident_result = i_prot.read_set_begin();
         assert!(received_ident_result.is_ok());
         assert_eq!(&received_ident_result.unwrap(), &ident);
+
+        assert_eq!(i_prot.read_i64().unwrap(), 123);
+        assert_eq!(i_prot.read_i64().unwrap(), 456);
+        assert_eq!(i_prot.read_i64().unwrap(), 789);
+
+        assert!(i_prot.read_set_end().is_ok());
     }
 
     #[test]
@@ -811,13 +920,26 @@ mod tests {
     fn must_round_trip_map_begin() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
-        let ident = TMapIdentifier::new(TType::Map, TType::Set, 100);
+        let ident = TMapIdentifier::new(TType::String, TType::I32, 2);
         assert!(o_prot.write_map_begin(&ident).is_ok());
+        assert!(o_prot.write_string("key1").is_ok());
+        assert!(o_prot.write_i32(100).is_ok());
+        assert!(o_prot.write_string("key2").is_ok());
+        assert!(o_prot.write_i32(200).is_ok());
+
+        assert!(o_prot.write_map_end().is_ok());
 
         copy_write_buffer_to_read_buffer!(o_prot);
 
         let received_ident = assert_success!(i_prot.read_map_begin());
         assert_eq!(&received_ident, &ident);
+
+        assert_eq!(i_prot.read_string().unwrap(), "key1");
+        assert_eq!(i_prot.read_i32().unwrap(), 100);
+        assert_eq!(i_prot.read_string().unwrap(), "key2");
+        assert_eq!(i_prot.read_i32().unwrap(), 200);
+
+        assert!(i_prot.read_map_end().is_ok());
     }
 
     #[test]
@@ -852,7 +974,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x01]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
@@ -862,7 +984,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x00]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, false);
+        assert!(!read_bool);
     }
 
     #[test]
@@ -872,7 +994,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0xAC]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
@@ -889,10 +1011,29 @@ mod tests {
     }
 
     #[test]
+    fn must_write_uuid() {
+        let (_, mut o_prot) = test_objects(true);
+        let uuid = uuid::Uuid::new_v4();
+        assert!(o_prot.write_uuid(&uuid).is_ok());
+        let buf = o_prot.transport.write_bytes();
+        assert_eq!(&buf, uuid.as_bytes());
+    }
+
+    #[test]
+    fn must_round_trip_uuid() {
+        let (mut i_prot, mut o_prot) = test_objects(true);
+        let uuid = uuid::uuid!("F9168C5E-CEB2-4faa-B6BF-329BF39FA1E4");
+        assert!(o_prot.write_uuid(&uuid).is_ok());
+        copy_write_buffer_to_read_buffer!(o_prot);
+        let received_uuid = assert_success!(i_prot.read_uuid());
+        assert_eq!(&received_uuid, &uuid);
+    }
+
+    #[test]
     fn must_round_trip_bytes() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let bytes: [u8; 25] = [
             0x20,
             0xFD,
@@ -935,7 +1076,7 @@ mod tests {
         TBinaryInputProtocol<ReadHalf<TBufferChannel>>,
         TBinaryOutputProtocol<WriteHalf<TBufferChannel>>,
     ) {
-        let mem = TBufferChannel::with_capacity(40, 40);
+        let mem = TBufferChannel::with_capacity(200, 200);
 
         let (r_mem, w_mem) = mem.split().unwrap();
 
@@ -952,5 +1093,155 @@ mod tests {
         let (_, mut o_prot) = test_objects(strict);
         assert!(write_fn(&mut o_prot).is_ok());
         assert_eq!(o_prot.transport.write_bytes().len(), 0);
+    }
+
+    #[test]
+    fn must_enforce_recursion_depth_limit() {
+        let mem = TBufferChannel::with_capacity(40, 40);
+        let (r_mem, _) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_recursion_depth(Some(2))
+            .build()
+            .unwrap();
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, true, config);
+
+        assert!(i_prot.read_struct_begin().is_ok());
+        assert_eq!(i_prot.recursion_depth, 1);
+
+        assert!(i_prot.read_struct_begin().is_ok());
+        assert_eq!(i_prot.recursion_depth, 2);
+
+        let result = i_prot.read_struct_begin();
+        assert!(result.is_err());
+        match result {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::DepthLimit);
+            }
+            _ => panic!("Expected protocol error with DepthLimit"),
+        }
+
+        assert!(i_prot.read_struct_end().is_ok());
+        assert_eq!(i_prot.recursion_depth, 1);
+        assert!(i_prot.read_struct_end().is_ok());
+        assert_eq!(i_prot.recursion_depth, 0);
+    }
+
+    #[test]
+    fn must_reject_negative_container_sizes() {
+        let mem = TBufferChannel::with_capacity(40, 40);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let mut i_prot = TBinaryInputProtocol::new(r_mem, true);
+
+        w_mem.set_readable_bytes(&[0x0F, 0xFF, 0xFF, 0xFF, 0xFF]);
+
+        let result = i_prot.read_list_begin();
+        assert!(result.is_err());
+        match result {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::NegativeSize);
+            }
+            _ => panic!("Expected protocol error with NegativeSize"),
+        }
+    }
+
+    #[test]
+    fn must_enforce_container_size_limit() {
+        let mem = TBufferChannel::with_capacity(40, 40);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_container_size(Some(100))
+            .build()
+            .unwrap();
+
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, true, config);
+
+        w_mem.set_readable_bytes(&[0x0F, 0x00, 0x00, 0x00, 0xC8]);
+
+        let result = i_prot.read_list_begin();
+        assert!(result.is_err());
+        match result {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
+                assert!(e
+                    .message
+                    .contains("Container size 200 exceeds maximum allowed size of 100"));
+            }
+            _ => panic!("Expected protocol error with SizeLimit"),
+        }
+    }
+
+    #[test]
+    fn must_allow_containers_within_limit() {
+        let mem = TBufferChannel::with_capacity(200, 200);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        // Create protocol with container limit of 100
+        let config = TConfiguration::builder()
+            .max_container_size(Some(100))
+            .build()
+            .unwrap();
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, true, config);
+
+        let mut data = vec![0x08]; // TType::I32
+        data.extend_from_slice(&5i32.to_be_bytes()); // size = 5
+
+        for i in 1i32..=5i32 {
+            data.extend_from_slice(&(i * 10).to_be_bytes());
+        }
+
+        w_mem.set_readable_bytes(&data);
+
+        let result = i_prot.read_list_begin();
+        assert!(result.is_ok());
+        let list_ident = result.unwrap();
+        assert_eq!(list_ident.size, 5);
+        assert_eq!(list_ident.element_type, TType::I32);
+    }
+
+    #[test]
+    fn must_enforce_string_size_limit() {
+        let mem = TBufferChannel::with_capacity(100, 100);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_string_size(Some(1000))
+            .build()
+            .unwrap();
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, true, config);
+
+        w_mem.set_readable_bytes(&[0x00, 0x00, 0x07, 0xD0]);
+
+        let result = i_prot.read_string();
+        assert!(result.is_err());
+        match result {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
+                assert!(e
+                    .message
+                    .contains("Byte array size 2000 exceeds maximum allowed size of 1000"));
+            }
+            _ => panic!("Expected protocol error with SizeLimit"),
+        }
+    }
+
+    #[test]
+    fn must_allow_strings_within_limit() {
+        let mem = TBufferChannel::with_capacity(100, 100);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_string_size(Some(1000))
+            .build()
+            .unwrap();
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, true, config);
+
+        w_mem.set_readable_bytes(&[0x00, 0x00, 0x00, 0x05, b'h', b'e', b'l', b'l', b'o']);
+
+        let result = i_prot.read_string();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "hello");
     }
 }

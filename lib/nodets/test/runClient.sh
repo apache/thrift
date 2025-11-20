@@ -10,8 +10,8 @@ export NODE_PATH="${DIR}:${DIR}/../../nodejs/lib:${NODE_PATH}"
 compile()
 {
   #generating thrift code
-  ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node,ts ${DIR}/../../../test/ThriftTest.thrift
-  ${DIR}/../../../compiler/cpp/thrift -o ${COMPILEDDIR} --gen js:node,ts ${DIR}/../../../test/ThriftTest.thrift
+  ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node,ts ${DIR}/../../../test/v0.16/ThriftTest.thrift
+  ${DIR}/../../../compiler/cpp/thrift -o ${COMPILEDDIR} --gen js:node,ts ${DIR}/../../../test/v0.16/ThriftTest.thrift
 }
 compile
 

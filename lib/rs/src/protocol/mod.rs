@@ -62,7 +62,7 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 
 use crate::transport::{TReadTransport, TWriteTransport};
-use crate::{ProtocolError, ProtocolErrorKind};
+use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
 
 #[cfg(test)]
 macro_rules! assert_eq_written_bytes {
@@ -101,6 +101,14 @@ pub use self::compact::{
 };
 pub use self::multiplexed::TMultiplexedOutputProtocol;
 pub use self::stored::TStoredInputProtocol;
+
+/// Reads and writes the struct to Thrift protocols.
+///
+/// It is implemented in generated code for Thrift `struct`, `union`, and `enum` types.
+pub trait TSerializable: Sized {
+    fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> crate::Result<Self>;
+    fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> crate::Result<()>;
+}
 
 // Default maximum depth to which `TInputProtocol::skip` will skip a Thrift
 // field. A default is necessary because Thrift structs or collections may
@@ -163,6 +171,8 @@ pub trait TInputProtocol {
     fn read_i64(&mut self) -> crate::Result<i64>;
     /// Read a 64-bit float.
     fn read_double(&mut self) -> crate::Result<f64>;
+    /// Read a UUID.
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid>;
     /// Read a fixed-length string (not null terminated).
     fn read_string(&mut self) -> crate::Result<String>;
     /// Read the beginning of a list.
@@ -199,6 +209,7 @@ pub trait TInputProtocol {
             TType::I64 => self.read_i64().map(|_| ()),
             TType::Double => self.read_double().map(|_| ()),
             TType::String => self.read_string().map(|_| ()),
+            TType::Uuid => self.read_uuid().map(|_| ()),
             TType::Struct => {
                 self.read_struct_begin()?;
                 loop {
@@ -252,6 +263,15 @@ pub trait TInputProtocol {
     ///
     /// This method should **never** be used in generated code.
     fn read_byte(&mut self) -> crate::Result<u8>;
+
+    /// Get the minimum number of bytes a type will consume on the wire.
+    /// This picks the minimum possible across all protocols (so currently matches the compact protocol).
+    ///
+    /// This is used for pre-allocation size checks.
+    /// The actual data may be larger (e.g., for strings, lists, etc.).
+    fn min_serialized_size(&self, field_type: TType) -> usize {
+        self::compact::compact_protocol_min_serialized_size(field_type)
+    }
 }
 
 /// Converts Thrift identifiers, primitives, containers or structs into a
@@ -315,6 +335,8 @@ pub trait TOutputProtocol {
     fn write_i64(&mut self, i: i64) -> crate::Result<()>;
     /// Write a 64-bit float.
     fn write_double(&mut self, d: f64) -> crate::Result<()>;
+    /// Write a UUID
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()>;
     /// Write a fixed-length string.
     fn write_string(&mut self, s: &str) -> crate::Result<()>;
     /// Write the beginning of a list.
@@ -397,6 +419,10 @@ where
         (**self).read_double()
     }
 
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        (**self).read_uuid()
+    }
+
     fn read_string(&mut self) -> crate::Result<String> {
         (**self).read_string()
     }
@@ -427,6 +453,10 @@ where
 
     fn read_byte(&mut self) -> crate::Result<u8> {
         (**self).read_byte()
+    }
+
+    fn min_serialized_size(&self, field_type: TType) -> usize {
+        (**self).min_serialized_size(field_type)
     }
 }
 
@@ -490,6 +520,10 @@ where
         (**self).write_double(d)
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        (**self).write_uuid(uuid)
+    }
+
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
         (**self).write_string(s)
     }
@@ -545,7 +579,7 @@ where
 /// let protocol = factory.create(Box::new(channel));
 /// ```
 pub trait TInputProtocolFactory {
-    // Create a `TInputProtocol` that reads bytes from `transport`.
+    /// Create a `TInputProtocol` that reads bytes from `transport`.
     fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send>;
 }
 
@@ -577,14 +611,18 @@ where
 /// ```
 pub trait TOutputProtocolFactory {
     /// Create a `TOutputProtocol` that writes bytes to `transport`.
-    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send>;
+    fn create(&self, transport: Box<dyn TWriteTransport + Send>)
+        -> Box<dyn TOutputProtocol + Send>;
 }
 
 impl<T> TOutputProtocolFactory for Box<T>
 where
     T: TOutputProtocolFactory + ?Sized,
 {
-    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
+    fn create(
+        &self,
+        transport: Box<dyn TWriteTransport + Send>,
+    ) -> Box<dyn TOutputProtocol + Send> {
         (**self).create(transport)
     }
 }
@@ -610,8 +648,8 @@ impl TMessageIdentifier {
     ) -> TMessageIdentifier {
         TMessageIdentifier {
             name: name.into(),
-            message_type: message_type,
-            sequence_number: sequence_number,
+            message_type,
+            sequence_number,
         }
     }
 }
@@ -660,7 +698,7 @@ impl TFieldIdentifier {
     {
         TFieldIdentifier {
             name: name.into().map(|n| n.into()),
-            field_type: field_type,
+            field_type,
             id: id.into(),
         }
     }
@@ -679,10 +717,7 @@ impl TListIdentifier {
     /// Create a `TListIdentifier` for a list with `size` elements of type
     /// `element_type`.
     pub fn new(element_type: TType, size: i32) -> TListIdentifier {
-        TListIdentifier {
-            element_type: element_type,
-            size: size,
-        }
+        TListIdentifier { element_type, size }
     }
 }
 
@@ -699,10 +734,7 @@ impl TSetIdentifier {
     /// Create a `TSetIdentifier` for a set with `size` elements of type
     /// `element_type`.
     pub fn new(element_type: TType, size: i32) -> TSetIdentifier {
-        TSetIdentifier {
-            element_type: element_type,
-            size: size,
-        }
+        TSetIdentifier { element_type, size }
     }
 }
 
@@ -728,7 +760,7 @@ impl TMapIdentifier {
         TMapIdentifier {
             key_type: key_type.into(),
             value_type: value_type.into(),
-            size: size,
+            size,
         }
     }
 }
@@ -747,7 +779,7 @@ pub enum TMessageType {
 }
 
 impl Display for TMessageType {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             TMessageType::Call => write!(f, "Call"),
             TMessageType::Reply => write!(f, "Reply"),
@@ -815,14 +847,12 @@ pub enum TType {
     Set,
     /// List.
     List,
-    /// UTF-8 string.
-    Utf8,
-    /// UTF-16 string. *Unsupported*.
-    Utf16,
+    /// Uuid.
+    Uuid,
 }
 
 impl Display for TType {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             TType::Stop => write!(f, "STOP"),
             TType::Void => write!(f, "void"),
@@ -838,8 +868,7 @@ impl Display for TType {
             TType::Map => write!(f, "map"),
             TType::Set => write!(f, "set"),
             TType::List => write!(f, "list"),
-            TType::Utf8 => write!(f, "UTF8"),
-            TType::Utf16 => write!(f, "UTF16"),
+            TType::Uuid => write!(f, "UUID"),
         }
     }
 }
@@ -878,7 +907,10 @@ pub fn verify_expected_service_call(expected: &str, actual: &str) -> crate::Resu
 /// `actual`.
 ///
 /// Return `()` if `actual == expected`, `Err` otherwise.
-pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType) -> crate::Result<()> {
+pub fn verify_expected_message_type(
+    expected: TMessageType,
+    actual: TMessageType,
+) -> crate::Result<()> {
     if expected == actual {
         Ok(())
     } else {
@@ -902,6 +934,69 @@ pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> c
     }
 }
 
+/// Common container size validation used by all protocols.
+///
+/// Checks that:
+/// - Container size is not negative
+/// - Container size doesn't exceed configured maximum
+/// - Container size * element size doesn't overflow
+/// - Container memory requirements don't exceed message size limit
+pub(crate) fn check_container_size(
+    config: &TConfiguration,
+    container_size: i32,
+    element_size: usize,
+) -> crate::Result<()> {
+    // Check for negative size
+    if container_size < 0 {
+        return Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::NegativeSize,
+            format!("Negative container size: {}", container_size),
+        )));
+    }
+
+    let size_as_usize = container_size as usize;
+
+    // Check against configured max container size
+    if let Some(max_size) = config.max_container_size() {
+        if size_as_usize > max_size {
+            return Err(crate::Error::Protocol(ProtocolError::new(
+                ProtocolErrorKind::SizeLimit,
+                format!(
+                    "Container size {} exceeds maximum allowed size of {}",
+                    container_size, max_size
+                ),
+            )));
+        }
+    }
+
+    // Check for potential overflow
+    if let Some(min_bytes_needed) = size_as_usize.checked_mul(element_size) {
+        // TODO: When Rust trait specialization stabilizes, we can add more precise checks
+        // for transports that track exact remaining bytes. For now, we use the message
+        // size limit as a best-effort check.
+        if let Some(max_message_size) = config.max_message_size() {
+            if min_bytes_needed > max_message_size {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::SizeLimit,
+                    format!(
+                        "Container would require {} bytes, exceeding message size limit of {}",
+                        min_bytes_needed, max_message_size
+                    ),
+                )));
+            }
+        }
+        Ok(())
+    } else {
+        Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::SizeLimit,
+            format!(
+                "Container size {} with element size {} bytes would result in overflow",
+                container_size, element_size
+            ),
+        )))
+    }
+}
+
 /// Extract the field id from a Thrift field identifier.
 ///
 /// `field_ident` must *not* have `TFieldIdentifier.field_type` of type `TType::Stop`.
@@ -911,7 +1006,7 @@ pub fn field_id(field_ident: &TFieldIdentifier) -> crate::Result<i16> {
     field_ident.id.ok_or_else(|| {
         crate::Error::Protocol(crate::ProtocolError {
             kind: crate::ProtocolErrorKind::Unknown,
-            message: format!("missing field in in {:?}", field_ident),
+            message: format!("missing field id in {:?}", field_ident),
         })
     })
 }

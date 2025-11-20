@@ -17,7 +17,7 @@
 # under the License.
 #
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.16)
 
 if(POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)  # package version behavior added in cmake 3.0
@@ -28,14 +28,14 @@ endif()
 
 # PACKAGE_VERSION is used by cpack scripts currently
 # Both thrift_VERSION and PACKAGE_VERSION should be the same for now
-set(thrift_VERSION "0.14.0")
+set(thrift_VERSION "0.23.0")
 set(PACKAGE_VERSION ${thrift_VERSION})
 
 project("thrift" VERSION ${PACKAGE_VERSION})
 message(STATUS "Configuring ${CMAKE_PROJECT_NAME} ${thrift_VERSION}")
 
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
 
 # Some default settings
 include(DefineCMakeDefaults)
@@ -98,10 +98,6 @@ if(BUILD_CPP)
     endif()
 endif()
 
-if(BUILD_AS3)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/as3)
-endif()
-
 if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
     if(BUILD_TESTING)
@@ -117,6 +113,10 @@ if(BUILD_JAVASCRIPT)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/js)
 endif()
 
+if(BUILD_KOTLIN)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/kotlin)
+endif()
+
 if(BUILD_NODEJS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/nodejs)
 endif()
@@ -125,13 +125,6 @@ if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
     if(BUILD_TESTING)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/py)
-    endif()
-endif()
-
-if(BUILD_HASKELL)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/hs)
-    if(BUILD_TESTING)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/hs)
     endif()
 endif()
 

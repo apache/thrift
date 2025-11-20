@@ -21,21 +21,14 @@ THRIFT = ../../compiler/cpp/thrift
 THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
 		  $(THRIFT_OMIT_FILE) \
-		  ../../test/ConstantsDemo.thrift \
-		  ../../test/NameConflictTest.thrift \
+		  ../../test/v0.16/ConstantsDemo.thrift \
+		  ../../test/v0.16/NameConflictTest.thrift \
 		  ../../test/DoubleConstantsTest.thrift \
-		  ../../test/ThriftTest.thrift
+		  ../../test/v0.16/ThriftTest.thrift
 
-if ERLANG_OTP16
-ERL_FLAG = erl:otp16
-ERL_FLAG_LEGACY = erl:otp16,legacynames
-# otp16 + maps does not make sense. We need to generate it anyway to avoid include error.
-ERL_FLAG_MAPS = erl:otp16
-else
 ERL_FLAG = erl
 ERL_FLAG_LEGACY = erl:legacynames
 ERL_FLAG_MAPS = erl:maps
-endif
 
 $(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
 	grep -v omit $< >$@
@@ -84,6 +77,9 @@ dist-hook:
 	$(RM) -r $(distdir)/ebin/
 	$(RM) -r $(distdir)/test/gen-erl/
 	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	include \

@@ -25,21 +25,24 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"strconv"
+	"strings"
 )
 
 type _ParseContext int
 
 const (
-	_CONTEXT_IN_TOPLEVEL          _ParseContext = 1
-	_CONTEXT_IN_LIST_FIRST        _ParseContext = 2
-	_CONTEXT_IN_LIST              _ParseContext = 3
-	_CONTEXT_IN_OBJECT_FIRST      _ParseContext = 4
-	_CONTEXT_IN_OBJECT_NEXT_KEY   _ParseContext = 5
-	_CONTEXT_IN_OBJECT_NEXT_VALUE _ParseContext = 6
+	_CONTEXT_INVALID              _ParseContext = iota
+	_CONTEXT_IN_TOPLEVEL                        // 1
+	_CONTEXT_IN_LIST_FIRST                      // 2
+	_CONTEXT_IN_LIST                            // 3
+	_CONTEXT_IN_OBJECT_FIRST                    // 4
+	_CONTEXT_IN_OBJECT_NEXT_KEY                 // 5
+	_CONTEXT_IN_OBJECT_NEXT_VALUE               // 6
 )
 
 func (p _ParseContext) String() string {
@@ -60,42 +63,95 @@ func (p _ParseContext) String() string {
 	return "UNKNOWN-PARSE-CONTEXT"
 }
 
+type jsonContextStack []_ParseContext
+
+func (s *jsonContextStack) push(v _ParseContext) {
+	*s = append(*s, v)
+}
+
+func (s jsonContextStack) peek() (v _ParseContext, ok bool) {
+	l := len(s)
+	if l <= 0 {
+		return
+	}
+	return s[l-1], true
+}
+
+func (s *jsonContextStack) pop() (v _ParseContext, ok bool) {
+	l := len(*s)
+	if l <= 0 {
+		return
+	}
+	v = (*s)[l-1]
+	*s = (*s)[0 : l-1]
+	return v, true
+}
+
+var errEmptyJSONContextStack = NewTProtocolExceptionWithType(INVALID_DATA, errors.New("Unexpected empty json protocol context stack"))
+
 // Simple JSON protocol implementation for thrift.
 //
 // This protocol produces/consumes a simple output format
 // suitable for parsing by scripting languages.  It should not be
 // confused with the full-featured TJSONProtocol.
-//
 type TSimpleJSONProtocol struct {
 	trans TTransport
 
-	parseContextStack []int
-	dumpContext       []int
+	cfg *TConfiguration
+
+	parseContextStack jsonContextStack
+	dumpContext       jsonContextStack
 
 	writer *bufio.Writer
 	reader *bufio.Reader
 }
 
-// Constructor
+// Deprecated: Use NewTSimpleJSONProtocolConf instead.:
 func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
-	v := &TSimpleJSONProtocol{trans: t,
+	return NewTSimpleJSONProtocolConf(t, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+func NewTSimpleJSONProtocolConf(t TTransport, conf *TConfiguration) *TSimpleJSONProtocol {
+	PropagateTConfiguration(t, conf)
+	v := &TSimpleJSONProtocol{
+		trans:  t,
+		cfg:    conf,
 		writer: bufio.NewWriter(t),
 		reader: bufio.NewReader(t),
 	}
-	v.parseContextStack = append(v.parseContextStack, int(_CONTEXT_IN_TOPLEVEL))
-	v.dumpContext = append(v.dumpContext, int(_CONTEXT_IN_TOPLEVEL))
+	v.resetContextStack()
 	return v
 }
 
 // Factory
-type TSimpleJSONProtocolFactory struct{}
-
-func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTSimpleJSONProtocol(trans)
+type TSimpleJSONProtocolFactory struct {
+	cfg *TConfiguration
 }
 
+func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	return NewTSimpleJSONProtocolConf(trans, p.cfg)
+}
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
+}
+
+// Deprecated: Use NewTSimpleJSONProtocolFactoryConf instead.
 func NewTSimpleJSONProtocolFactory() *TSimpleJSONProtocolFactory {
-	return &TSimpleJSONProtocolFactory{}
+	return &TSimpleJSONProtocolFactory{
+		cfg: &TConfiguration{
+			noPropagation: true,
+		},
+	}
+}
+
+func NewTSimpleJSONProtocolFactoryConf(conf *TConfiguration) *TSimpleJSONProtocolFactory {
+	return &TSimpleJSONProtocolFactory{
+		cfg: conf,
+	}
 }
 
 var (
@@ -116,7 +172,6 @@ var (
 	JSON_INFINITY_BYTES          []byte
 	JSON_NEGATIVE_INFINITY_BYTES []byte
 	JSON_NAN_BYTES               []byte
-	json_nonbase_map_elem_bytes  []byte
 )
 
 func init() {
@@ -137,7 +192,6 @@ func init() {
 	JSON_INFINITY_BYTES = []byte{'I', 'n', 'f', 'i', 'n', 'i', 't', 'y'}
 	JSON_NEGATIVE_INFINITY_BYTES = []byte{'-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y'}
 	JSON_NAN_BYTES = []byte{'N', 'a', 'N'}
-	json_nonbase_map_elem_bytes = []byte{']', ',', '['}
 }
 
 func jsonQuote(s string) string {
@@ -287,6 +341,10 @@ func (p *TSimpleJSONProtocol) WriteBinary(ctx context.Context, v []byte) error {
 	return p.OutputPostValue()
 }
 
+func (p *TSimpleJSONProtocol) WriteUUID(ctx context.Context, v Tuuid) error {
+	return p.OutputString(v.String())
+}
+
 // Reading methods.
 func (p *TSimpleJSONProtocol) ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqId int32, err error) {
 	p.resetContextStack() // THRIFT-3735
@@ -371,6 +429,13 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 
 	// read size
 	iSize, err := p.ReadI64(ctx)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
+	err = checkSizeForProtocol(int32(size), p.cfg)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
 	size = int(iSize)
 	return keyType, valueType, size, err
 }
@@ -416,7 +481,6 @@ func (p *TSimpleJSONProtocol) ReadBool(ctx context.Context) (bool, error) {
 				e := fmt.Errorf("Expected \"true\" but found: %s", string(b))
 				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
-			break
 		case JSON_FALSE[0]:
 			b := make([]byte, len(JSON_FALSE))
 			_, err := p.reader.Read(b)
@@ -429,7 +493,6 @@ func (p *TSimpleJSONProtocol) ReadBool(ctx context.Context) (bool, error) {
 				e := fmt.Errorf("Expected \"false\" but found: %s", string(b))
 				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
-			break
 		case JSON_NULL[0]:
 			b := make([]byte, len(JSON_NULL))
 			_, err := p.reader.Read(b)
@@ -536,6 +599,16 @@ func (p *TSimpleJSONProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
 	return v, p.ParsePostValue()
 }
 
+func (p *TSimpleJSONProtocol) ReadUUID(ctx context.Context) (v Tuuid, err error) {
+	var s string
+	s, err = p.ReadString(ctx)
+	if err != nil {
+		return v, err
+	}
+	v, err = ParseTuuid(s)
+	return v, NewTProtocolExceptionWithType(INVALID_DATA, err)
+}
+
 func (p *TSimpleJSONProtocol) Flush(ctx context.Context) (err error) {
 	return NewTProtocolException(p.writer.Flush())
 }
@@ -549,41 +622,41 @@ func (p *TSimpleJSONProtocol) Transport() TTransport {
 }
 
 func (p *TSimpleJSONProtocol) OutputPreValue() error {
-	cxt := _ParseContext(p.dumpContext[len(p.dumpContext)-1])
+	cxt, ok := p.dumpContext.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	switch cxt {
 	case _CONTEXT_IN_LIST, _CONTEXT_IN_OBJECT_NEXT_KEY:
 		if _, e := p.write(JSON_COMMA); e != nil {
 			return NewTProtocolException(e)
 		}
-		break
 	case _CONTEXT_IN_OBJECT_NEXT_VALUE:
 		if _, e := p.write(JSON_COLON); e != nil {
 			return NewTProtocolException(e)
 		}
-		break
 	}
 	return nil
 }
 
 func (p *TSimpleJSONProtocol) OutputPostValue() error {
-	cxt := _ParseContext(p.dumpContext[len(p.dumpContext)-1])
+	cxt, ok := p.dumpContext.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	switch cxt {
 	case _CONTEXT_IN_LIST_FIRST:
-		p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
-		p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_LIST))
-		break
+		p.dumpContext.pop()
+		p.dumpContext.push(_CONTEXT_IN_LIST)
 	case _CONTEXT_IN_OBJECT_FIRST:
-		p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
-		p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_OBJECT_NEXT_VALUE))
-		break
+		p.dumpContext.pop()
+		p.dumpContext.push(_CONTEXT_IN_OBJECT_NEXT_VALUE)
 	case _CONTEXT_IN_OBJECT_NEXT_KEY:
-		p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
-		p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_OBJECT_NEXT_VALUE))
-		break
+		p.dumpContext.pop()
+		p.dumpContext.push(_CONTEXT_IN_OBJECT_NEXT_VALUE)
 	case _CONTEXT_IN_OBJECT_NEXT_VALUE:
-		p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
-		p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_OBJECT_NEXT_KEY))
-		break
+		p.dumpContext.pop()
+		p.dumpContext.push(_CONTEXT_IN_OBJECT_NEXT_KEY)
 	}
 	return nil
 }
@@ -598,10 +671,13 @@ func (p *TSimpleJSONProtocol) OutputBool(value bool) error {
 	} else {
 		v = string(JSON_FALSE)
 	}
-	switch _ParseContext(p.dumpContext[len(p.dumpContext)-1]) {
+	cxt, ok := p.dumpContext.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
+	switch cxt {
 	case _CONTEXT_IN_OBJECT_FIRST, _CONTEXT_IN_OBJECT_NEXT_KEY:
 		v = jsonQuote(v)
-	default:
 	}
 	if e := p.OutputStringData(v); e != nil {
 		return e
@@ -631,11 +707,14 @@ func (p *TSimpleJSONProtocol) OutputF64(value float64) error {
 	} else if math.IsInf(value, -1) {
 		v = string(JSON_QUOTE) + JSON_NEGATIVE_INFINITY + string(JSON_QUOTE)
 	} else {
+		cxt, ok := p.dumpContext.peek()
+		if !ok {
+			return errEmptyJSONContextStack
+		}
 		v = strconv.FormatFloat(value, 'g', -1, 64)
-		switch _ParseContext(p.dumpContext[len(p.dumpContext)-1]) {
+		switch cxt {
 		case _CONTEXT_IN_OBJECT_FIRST, _CONTEXT_IN_OBJECT_NEXT_KEY:
 			v = string(JSON_QUOTE) + v + string(JSON_QUOTE)
-		default:
 		}
 	}
 	if e := p.OutputStringData(v); e != nil {
@@ -648,11 +727,14 @@ func (p *TSimpleJSONProtocol) OutputI64(value int64) error {
 	if e := p.OutputPreValue(); e != nil {
 		return e
 	}
+	cxt, ok := p.dumpContext.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	v := strconv.FormatInt(value, 10)
-	switch _ParseContext(p.dumpContext[len(p.dumpContext)-1]) {
+	switch cxt {
 	case _CONTEXT_IN_OBJECT_FIRST, _CONTEXT_IN_OBJECT_NEXT_KEY:
 		v = jsonQuote(v)
-	default:
 	}
 	if e := p.OutputStringData(v); e != nil {
 		return e
@@ -682,7 +764,7 @@ func (p *TSimpleJSONProtocol) OutputObjectBegin() error {
 	if _, e := p.write(JSON_LBRACE); e != nil {
 		return NewTProtocolException(e)
 	}
-	p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_OBJECT_FIRST))
+	p.dumpContext.push(_CONTEXT_IN_OBJECT_FIRST)
 	return nil
 }
 
@@ -690,7 +772,10 @@ func (p *TSimpleJSONProtocol) OutputObjectEnd() error {
 	if _, e := p.write(JSON_RBRACE); e != nil {
 		return NewTProtocolException(e)
 	}
-	p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
+	_, ok := p.dumpContext.pop()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	if e := p.OutputPostValue(); e != nil {
 		return e
 	}
@@ -704,7 +789,7 @@ func (p *TSimpleJSONProtocol) OutputListBegin() error {
 	if _, e := p.write(JSON_LBRACKET); e != nil {
 		return NewTProtocolException(e)
 	}
-	p.dumpContext = append(p.dumpContext, int(_CONTEXT_IN_LIST_FIRST))
+	p.dumpContext.push(_CONTEXT_IN_LIST_FIRST)
 	return nil
 }
 
@@ -712,7 +797,10 @@ func (p *TSimpleJSONProtocol) OutputListEnd() error {
 	if _, e := p.write(JSON_RBRACKET); e != nil {
 		return NewTProtocolException(e)
 	}
-	p.dumpContext = p.dumpContext[:len(p.dumpContext)-1]
+	_, ok := p.dumpContext.pop()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	if e := p.OutputPostValue(); e != nil {
 		return e
 	}
@@ -736,7 +824,10 @@ func (p *TSimpleJSONProtocol) ParsePreValue() error {
 	if e := p.readNonSignificantWhitespace(); e != nil {
 		return NewTProtocolException(e)
 	}
-	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
+	cxt, ok := p.parseContextStack.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	b, _ := p.reader.Peek(1)
 	switch cxt {
 	case _CONTEXT_IN_LIST:
@@ -755,7 +846,6 @@ func (p *TSimpleJSONProtocol) ParsePreValue() error {
 				return NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
 		}
-		break
 	case _CONTEXT_IN_OBJECT_NEXT_KEY:
 		if len(b) > 0 {
 			switch b[0] {
@@ -772,7 +862,6 @@ func (p *TSimpleJSONProtocol) ParsePreValue() error {
 				return NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
 		}
-		break
 	case _CONTEXT_IN_OBJECT_NEXT_VALUE:
 		if len(b) > 0 {
 			switch b[0] {
@@ -787,7 +876,6 @@ func (p *TSimpleJSONProtocol) ParsePreValue() error {
 				return NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
 		}
-		break
 	}
 	return nil
 }
@@ -796,20 +884,20 @@ func (p *TSimpleJSONProtocol) ParsePostValue() error {
 	if e := p.readNonSignificantWhitespace(); e != nil {
 		return NewTProtocolException(e)
 	}
-	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
+	cxt, ok := p.parseContextStack.peek()
+	if !ok {
+		return errEmptyJSONContextStack
+	}
 	switch cxt {
 	case _CONTEXT_IN_LIST_FIRST:
-		p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
-		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_LIST))
-		break
+		p.parseContextStack.pop()
+		p.parseContextStack.push(_CONTEXT_IN_LIST)
 	case _CONTEXT_IN_OBJECT_FIRST, _CONTEXT_IN_OBJECT_NEXT_KEY:
-		p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
-		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_OBJECT_NEXT_VALUE))
-		break
+		p.parseContextStack.pop()
+		p.parseContextStack.push(_CONTEXT_IN_OBJECT_NEXT_VALUE)
 	case _CONTEXT_IN_OBJECT_NEXT_VALUE:
-		p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
-		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_OBJECT_NEXT_KEY))
-		break
+		p.parseContextStack.pop()
+		p.parseContextStack.push(_CONTEXT_IN_OBJECT_NEXT_KEY)
 	}
 	return nil
 }
@@ -824,8 +912,6 @@ func (p *TSimpleJSONProtocol) readNonSignificantWhitespace() error {
 		case ' ', '\r', '\n', '\t':
 			p.reader.ReadByte()
 			continue
-		default:
-			break
 		}
 		break
 	}
@@ -837,15 +923,7 @@ func (p *TSimpleJSONProtocol) ParseStringBody() (string, error) {
 	if err != nil {
 		return "", NewTProtocolException(err)
 	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
-	i := 1
-	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
-			break
-		}
-	}
-	if i&0x01 == 1 {
+	if endsWithoutEscapedQuote(line) {
 		v, ok := jsonUnquote(string(JSON_QUOTE) + line)
 		if !ok {
 			return "", NewTProtocolException(err)
@@ -866,27 +944,29 @@ func (p *TSimpleJSONProtocol) ParseStringBody() (string, error) {
 }
 
 func (p *TSimpleJSONProtocol) ParseQuotedStringBody() (string, error) {
-	line, err := p.reader.ReadString(JSON_QUOTE)
-	if err != nil {
-		return "", NewTProtocolException(err)
+	var sb strings.Builder
+
+	for {
+		line, err := p.reader.ReadString(JSON_QUOTE)
+		if err != nil {
+			return "", NewTProtocolException(err)
+		}
+		sb.WriteString(line)
+		if endsWithoutEscapedQuote(line) {
+			return sb.String(), nil
+		}
 	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
+}
+
+func endsWithoutEscapedQuote(s string) bool {
+	l := len(s)
 	i := 1
 	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
+		if s[l-i-1] != '\\' {
 			break
 		}
 	}
-	if i&0x01 == 1 {
-		return line, nil
-	}
-	s, err := p.ParseQuotedStringBody()
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	v := line + s
-	return v, nil
+	return i&0x01 == 1
 }
 
 func (p *TSimpleJSONProtocol) ParseBase64EncodedBody() ([]byte, error) {
@@ -962,7 +1042,7 @@ func (p *TSimpleJSONProtocol) ParseObjectStart() (bool, error) {
 	}
 	if len(b) > 0 && b[0] == JSON_LBRACE[0] {
 		p.reader.ReadByte()
-		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_OBJECT_FIRST))
+		p.parseContextStack.push(_CONTEXT_IN_OBJECT_FIRST)
 		return false, nil
 	} else if p.safePeekContains(JSON_NULL) {
 		return true, nil
@@ -975,7 +1055,7 @@ func (p *TSimpleJSONProtocol) ParseObjectEnd() error {
 	if isNull, err := p.readIfNull(); isNull || err != nil {
 		return err
 	}
-	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
+	cxt, _ := p.parseContextStack.peek()
 	if (cxt != _CONTEXT_IN_OBJECT_FIRST) && (cxt != _CONTEXT_IN_OBJECT_NEXT_KEY) {
 		e := fmt.Errorf("Expected to be in the Object Context, but not in Object Context (%d)", cxt)
 		return NewTProtocolExceptionWithType(INVALID_DATA, e)
@@ -990,10 +1070,10 @@ func (p *TSimpleJSONProtocol) ParseObjectEnd() error {
 			e := fmt.Errorf("Expecting end of object \"}\", but found: \"%s\"", line)
 			return NewTProtocolExceptionWithType(INVALID_DATA, e)
 		case ' ', '\n', '\r', '\t', '}':
-			break
+			// do nothing
 		}
 	}
-	p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
+	p.parseContextStack.pop()
 	return p.ParsePostValue()
 }
 
@@ -1007,7 +1087,7 @@ func (p *TSimpleJSONProtocol) ParseListBegin() (isNull bool, err error) {
 		return false, err
 	}
 	if len(b) >= 1 && b[0] == JSON_LBRACKET[0] {
-		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_LIST_FIRST))
+		p.parseContextStack.push(_CONTEXT_IN_LIST_FIRST)
 		p.reader.ReadByte()
 		isNull = false
 	} else if p.safePeekContains(JSON_NULL) {
@@ -1027,16 +1107,23 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 	if err != nil {
 		return elemType, size, err
 	}
-	nSize, _, err2 := p.ParseI64()
+	nSize, _, err := p.ParseI64()
+	if err != nil {
+		return elemType, 0, err
+	}
+	err = checkSizeForProtocol(int32(nSize), p.cfg)
+	if err != nil {
+		return elemType, 0, err
+	}
 	size = int(nSize)
-	return elemType, size, err2
+	return elemType, size, nil
 }
 
 func (p *TSimpleJSONProtocol) ParseListEnd() error {
 	if isNull, err := p.readIfNull(); isNull || err != nil {
 		return err
 	}
-	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
+	cxt, _ := p.parseContextStack.peek()
 	if cxt != _CONTEXT_IN_LIST {
 		e := fmt.Errorf("Expected to be in the List Context, but not in List Context (%d)", cxt)
 		return NewTProtocolExceptionWithType(INVALID_DATA, e)
@@ -1051,90 +1138,16 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 			e := fmt.Errorf("Expecting end of list \"]\", but found: \"%v\"", line)
 			return NewTProtocolExceptionWithType(INVALID_DATA, e)
 		case ' ', '\n', '\r', '\t', rune(JSON_RBRACKET[0]):
-			break
+			// do nothing
 		}
 	}
-	p.parseContextStack = p.parseContextStack[:len(p.parseContextStack)-1]
-	if _ParseContext(p.parseContextStack[len(p.parseContextStack)-1]) == _CONTEXT_IN_TOPLEVEL {
+	p.parseContextStack.pop()
+	if cxt, ok := p.parseContextStack.peek(); !ok {
+		return errEmptyJSONContextStack
+	} else if cxt == _CONTEXT_IN_TOPLEVEL {
 		return nil
 	}
 	return p.ParsePostValue()
-}
-
-func (p *TSimpleJSONProtocol) readSingleValue() (interface{}, TType, error) {
-	e := p.readNonSignificantWhitespace()
-	if e != nil {
-		return nil, VOID, NewTProtocolException(e)
-	}
-	b, e := p.reader.Peek(1)
-	if len(b) > 0 {
-		c := b[0]
-		switch c {
-		case JSON_NULL[0]:
-			buf := make([]byte, len(JSON_NULL))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return nil, VOID, NewTProtocolException(e)
-			}
-			if string(JSON_NULL) != string(buf) {
-				e = mismatch(string(JSON_NULL), string(buf))
-				return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return nil, VOID, nil
-		case JSON_QUOTE:
-			p.reader.ReadByte()
-			v, e := p.ParseStringBody()
-			if e != nil {
-				return v, UTF8, NewTProtocolException(e)
-			}
-			if v == JSON_INFINITY {
-				return INFINITY, DOUBLE, nil
-			} else if v == JSON_NEGATIVE_INFINITY {
-				return NEGATIVE_INFINITY, DOUBLE, nil
-			} else if v == JSON_NAN {
-				return NAN, DOUBLE, nil
-			}
-			return v, UTF8, nil
-		case JSON_TRUE[0]:
-			buf := make([]byte, len(JSON_TRUE))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return true, BOOL, NewTProtocolException(e)
-			}
-			if string(JSON_TRUE) != string(buf) {
-				e := mismatch(string(JSON_TRUE), string(buf))
-				return true, BOOL, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return true, BOOL, nil
-		case JSON_FALSE[0]:
-			buf := make([]byte, len(JSON_FALSE))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return false, BOOL, NewTProtocolException(e)
-			}
-			if string(JSON_FALSE) != string(buf) {
-				e := mismatch(string(JSON_FALSE), string(buf))
-				return false, BOOL, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return false, BOOL, nil
-		case JSON_LBRACKET[0]:
-			_, e := p.reader.ReadByte()
-			return make([]interface{}, 0), LIST, NewTProtocolException(e)
-		case JSON_LBRACE[0]:
-			_, e := p.reader.ReadByte()
-			return make(map[string]interface{}), STRUCT, NewTProtocolException(e)
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'e', 'E', '.', '+', '-', JSON_INFINITY[0], JSON_NAN[0]:
-			// assume numeric
-			v, e := p.readNumeric()
-			return v, DOUBLE, e
-		default:
-			e := fmt.Errorf("Expected element in list but found '%s' while parsing JSON.", string(c))
-			return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-		}
-	}
-	e = fmt.Errorf("Cannot read a single element while parsing JSON.")
-	return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-
 }
 
 func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
@@ -1149,10 +1162,8 @@ func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 			return false, nil
 		case JSON_NULL[0]:
 			cont = false
-			break
 		case ' ', '\n', '\r', '\t':
 			p.reader.ReadByte()
-			break
 		}
 	}
 	if p.safePeekContains(JSON_NULL) {
@@ -1184,7 +1195,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 	for continueFor {
 		c, err := p.reader.ReadByte()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return NUMERIC_NULL, NewTProtocolException(err)
@@ -1280,8 +1291,6 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 		case JSON_QUOTE:
 			if !inQuotes {
 				inQuotes = true
-			} else {
-				break
 			}
 		default:
 			e := fmt.Errorf("Unable to parse number starting with character '%c'", c)
@@ -1297,7 +1306,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 
 // Safely peeks into the buffer, reading only what is necessary
 func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
-	for i := 0; i < len(b); i++ {
+	for i := range b {
 		a, _ := p.reader.Peek(i + 1)
 		if len(a) < (i+1) || a[i] != b[i] {
 			return false
@@ -1308,8 +1317,8 @@ func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
 
 // Reset the context stack to its initial state.
 func (p *TSimpleJSONProtocol) resetContextStack() {
-	p.parseContextStack = []int{int(_CONTEXT_IN_TOPLEVEL)}
-	p.dumpContext = []int{int(_CONTEXT_IN_TOPLEVEL)}
+	p.parseContextStack = jsonContextStack{_CONTEXT_IN_TOPLEVEL}
+	p.dumpContext = jsonContextStack{_CONTEXT_IN_TOPLEVEL}
 }
 
 func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
@@ -1319,3 +1328,25 @@ func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
 	}
 	return n, err
 }
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.trans, conf)
+	p.cfg = conf
+}
+
+// Reset resets this protocol's internal state.
+//
+// It's useful when a single protocol instance is reused after errors, to make
+// sure the next use will not be in a bad state to begin with. An example is
+// when it's used in serializer/deserializer pools.
+func (p *TSimpleJSONProtocol) Reset() {
+	p.resetContextStack()
+	p.writer.Reset(p.trans)
+	p.reader.Reset(p.trans)
+}
+
+var (
+	_ TConfigurationSetter = (*TSimpleJSONProtocol)(nil)
+	_ TConfigurationSetter = (*TSimpleJSONProtocolFactory)(nil)
+)

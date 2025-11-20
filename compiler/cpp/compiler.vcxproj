@@ -53,7 +53,6 @@
   <ItemGroup>
     <ClCompile Include="src\thrift\audit\t_audit.cpp" />
     <ClCompile Include="src\thrift\common.cc" />
-    <ClCompile Include="src\thrift\generate\t_as3_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_c_glib_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cl_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cpp_generator.cc" />
@@ -65,12 +64,13 @@
     <ClCompile Include="src\thrift\generate\t_go_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_gv_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_haxe_generator.cc" />
-    <ClCompile Include="src\thrift\generate\t_hs_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_html_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_markdown_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_java_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_javame_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_js_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_json_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_kotlin_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_lua_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_netstd_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_ocaml_generator.cc" />
@@ -83,6 +83,8 @@
     <ClCompile Include="src\thrift\generate\t_swift_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_xml_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_xsd_generator.cc" />
+    <ClCompile Include="src\thrift\generate\go_validator_generator.cc" />
+    <ClCompile Include="src\thrift\generate\validator_parser.cc" />
     <ClCompile Include="src\thrift\main.cc" />
     <ClCompile Include="src\thrift\parse\parse.cc" />
     <ClCompile Include="src\thrift\parse\t_typedef.cc" />
@@ -103,23 +105,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -170,6 +176,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -188,6 +195,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -208,7 +216,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -231,7 +239,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

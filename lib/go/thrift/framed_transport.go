@@ -28,47 +28,92 @@ import (
 	"io"
 )
 
+// Deprecated: Use DEFAULT_MAX_FRAME_SIZE instead.
 const DEFAULT_MAX_LENGTH = 16384000
 
 type TFramedTransport struct {
 	transport TTransport
-	maxLength uint32
 
-	writeBuf bytes.Buffer
+	cfg *TConfiguration
+
+	writeBuf *bytes.Buffer
 
 	reader  *bufio.Reader
-	readBuf bytes.Buffer
+	readBuf *bytes.Buffer
 
 	buffer [4]byte
 }
 
 type tFramedTransportFactory struct {
-	factory   TTransportFactory
-	maxLength uint32
+	factory TTransportFactory
+	cfg     *TConfiguration
 }
 
+// Deprecated: Use NewTFramedTransportFactoryConf instead.
 func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
-	return &tFramedTransportFactory{factory: factory, maxLength: DEFAULT_MAX_LENGTH}
+	return NewTFramedTransportFactoryConf(factory, &TConfiguration{
+		MaxFrameSize: DEFAULT_MAX_LENGTH,
+
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTFramedTransportFactoryConf instead.
 func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength uint32) TTransportFactory {
-	return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
+	return NewTFramedTransportFactoryConf(factory, &TConfiguration{
+		MaxFrameSize: int32(maxLength),
+
+		noPropagation: true,
+	})
+}
+
+func NewTFramedTransportFactoryConf(factory TTransportFactory, conf *TConfiguration) TTransportFactory {
+	PropagateTConfiguration(factory, conf)
+	return &tFramedTransportFactory{
+		factory: factory,
+		cfg:     conf,
+	}
 }
 
 func (p *tFramedTransportFactory) GetTransport(base TTransport) (TTransport, error) {
+	PropagateTConfiguration(base, p.cfg)
 	tt, err := p.factory.GetTransport(base)
 	if err != nil {
 		return nil, err
 	}
-	return NewTFramedTransportMaxLength(tt, p.maxLength), nil
+	return NewTFramedTransportConf(tt, p.cfg), nil
 }
 
+func (p *tFramedTransportFactory) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(p.factory, cfg)
+	p.cfg = cfg
+}
+
+// Deprecated: Use NewTFramedTransportConf instead.
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
-	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: DEFAULT_MAX_LENGTH}
+	return NewTFramedTransportConf(transport, &TConfiguration{
+		MaxFrameSize: DEFAULT_MAX_LENGTH,
+
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTFramedTransportConf instead.
 func NewTFramedTransportMaxLength(transport TTransport, maxLength uint32) *TFramedTransport {
-	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: maxLength}
+	return NewTFramedTransportConf(transport, &TConfiguration{
+		MaxFrameSize: int32(maxLength),
+
+		noPropagation: true,
+	})
+}
+
+func NewTFramedTransportConf(transport TTransport, conf *TConfiguration) *TFramedTransport {
+	PropagateTConfiguration(transport, conf)
+	return &TFramedTransport{
+		transport: transport,
+		reader:    bufio.NewReader(transport),
+		cfg:       conf,
+	}
 }
 
 func (p *TFramedTransport) Open() error {
@@ -84,18 +129,29 @@ func (p *TFramedTransport) Close() error {
 }
 
 func (p *TFramedTransport) Read(buf []byte) (read int, err error) {
-	read, err = p.readBuf.Read(buf)
-	if err != io.EOF {
-		return
-	}
+	defer func() {
+		// Make sure we return the read buffer back to pool
+		// after we finished reading from it.
+		if p.readBuf != nil && p.readBuf.Len() == 0 {
+			bufPool.put(&p.readBuf)
+		}
+	}()
 
-	// For bytes.Buffer.Read, EOF would only happen when read is zero,
-	// but still, do a sanity check,
-	// in case that behavior is changed in a future version of go stdlib.
-	// When that happens, just return nil error,
-	// and let the caller call Read again to read the next frame.
-	if read > 0 {
-		return read, nil
+	if p.readBuf != nil {
+
+		read, err = p.readBuf.Read(buf)
+		if err != io.EOF {
+			return
+		}
+
+		// For bytes.Buffer.Read, EOF would only happen when read is zero,
+		// but still, do a sanity check,
+		// in case that behavior is changed in a future version of go stdlib.
+		// When that happens, just return nil error,
+		// and let the caller call Read again to read the next frame.
+		if read > 0 {
+			return read, nil
+		}
 	}
 
 	// Reaching here means that the last Read finished the last frame,
@@ -117,31 +173,39 @@ func (p *TFramedTransport) ReadByte() (c byte, err error) {
 	return
 }
 
+func (p *TFramedTransport) ensureWriteBufferBeforeWrite() {
+	if p.writeBuf == nil {
+		p.writeBuf = bufPool.get()
+	}
+}
+
 func (p *TFramedTransport) Write(buf []byte) (int, error) {
+	p.ensureWriteBufferBeforeWrite()
 	n, err := p.writeBuf.Write(buf)
 	return n, NewTTransportExceptionFromError(err)
 }
 
 func (p *TFramedTransport) WriteByte(c byte) error {
+	p.ensureWriteBufferBeforeWrite()
 	return p.writeBuf.WriteByte(c)
 }
 
 func (p *TFramedTransport) WriteString(s string) (n int, err error) {
+	p.ensureWriteBufferBeforeWrite()
 	return p.writeBuf.WriteString(s)
 }
 
 func (p *TFramedTransport) Flush(ctx context.Context) error {
+	defer bufPool.put(&p.writeBuf)
 	size := p.writeBuf.Len()
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
 	if err != nil {
-		p.writeBuf.Reset()
 		return NewTTransportExceptionFromError(err)
 	}
 	if size > 0 {
-		if _, err := io.Copy(p.transport, &p.writeBuf); err != nil {
-			p.writeBuf.Reset()
+		if _, err := io.Copy(p.transport, p.writeBuf); err != nil {
 			return NewTTransportExceptionFromError(err)
 		}
 	}
@@ -150,18 +214,37 @@ func (p *TFramedTransport) Flush(ctx context.Context) error {
 }
 
 func (p *TFramedTransport) readFrame() error {
+	if p.readBuf != nil {
+		bufPool.put(&p.readBuf)
+	}
+	p.readBuf = bufPool.get()
+
 	buf := p.buffer[:4]
 	if _, err := io.ReadFull(p.reader, buf); err != nil {
 		return err
 	}
 	size := binary.BigEndian.Uint32(buf)
-	if size < 0 || size > p.maxLength {
+	if size > uint32(p.cfg.GetMaxFrameSize()) {
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
-	_, err := io.CopyN(&p.readBuf, p.reader, int64(size))
+	_, err := io.CopyN(p.readBuf, p.reader, int64(size))
 	return NewTTransportExceptionFromError(err)
 }
 
 func (p *TFramedTransport) RemainingBytes() (num_bytes uint64) {
+	if p.readBuf == nil {
+		return 0
+	}
 	return uint64(p.readBuf.Len())
 }
+
+// SetTConfiguration implements TConfigurationSetter.
+func (p *TFramedTransport) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(p.transport, cfg)
+	p.cfg = cfg
+}
+
+var (
+	_ TConfigurationSetter = (*tFramedTransportFactory)(nil)
+	_ TConfigurationSetter = (*TFramedTransport)(nil)
+)

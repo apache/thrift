@@ -24,9 +24,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"gen/thrifttest"
 	"net/http"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var debugClientProtocol bool
@@ -36,41 +37,39 @@ func init() {
 }
 
 func StartClient(
-	host string,
-	port int64,
-	domain_socket string,
+	addr string,
 	transport string,
 	protocol string,
-	ssl bool) (client *thrifttest.ThriftTestClient, trans thrift.TTransport, err error) {
-
-	hostPort := fmt.Sprintf("%s:%d", host, port)
+	ssl bool,
+) (client *thrifttest.ThriftTestClient, trans thrift.TTransport, err error) {
+	cfg := &thrift.TConfiguration{
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
 
 	var protocolFactory thrift.TProtocolFactory
 	switch protocol {
 	case "compact":
-		protocolFactory = thrift.NewTCompactProtocolFactory()
+		protocolFactory = thrift.NewTCompactProtocolFactoryConf(cfg)
 	case "simplejson":
-		protocolFactory = thrift.NewTSimpleJSONProtocolFactory()
+		protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(cfg)
 	case "json":
 		protocolFactory = thrift.NewTJSONProtocolFactory()
 	case "binary":
-		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+		protocolFactory = thrift.NewTBinaryProtocolFactoryConf(cfg)
 	case "header":
-		protocolFactory = thrift.NewTHeaderProtocolFactory()
+		protocolFactory = thrift.NewTHeaderProtocolFactoryConf(cfg)
 	default:
-		return nil, nil, fmt.Errorf("Invalid protocol specified %s", protocol)
+		return nil, nil, fmt.Errorf("invalid protocol specified %s", protocol)
 	}
 	if debugClientProtocol {
-		protocolFactory = thrift.NewTDebugProtocolFactory(protocolFactory, "client:")
+		protocolFactory = thrift.NewTDebugProtocolFactoryWithLogger(protocolFactory, "client:", thrift.StdLogger(nil))
 	}
 	if ssl {
-		trans, err = thrift.NewTSSLSocket(hostPort, &tls.Config{InsecureSkipVerify: true})
+		trans = thrift.NewTSSLSocketConf(addr, cfg)
 	} else {
-		if domain_socket != "" {
-			trans, err = thrift.NewTSocket(domain_socket)
-		} else {
-			trans, err = thrift.NewTSocket(hostPort)
-		}
+		trans = thrift.NewTSocketConf(addr, nil)
 	}
 	if err != nil {
 		return nil, nil, err
@@ -82,21 +81,20 @@ func StartClient(
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
 			client := &http.Client{Transport: tr}
-			trans, err = thrift.NewTHttpPostClientWithOptions(fmt.Sprintf("https://%s/", hostPort), thrift.THttpClientOptions{Client: client})
-			fmt.Println(hostPort)
+			trans, err = thrift.NewTHttpClientWithOptions(fmt.Sprintf("https://%s/", addr), thrift.THttpClientOptions{Client: client})
 		} else {
-			trans, err = thrift.NewTHttpPostClient(fmt.Sprintf("http://%s/", hostPort))
+			trans, err = thrift.NewTHttpClient(fmt.Sprintf("http://%s/", addr))
 		}
 	case "framed":
-		trans = thrift.NewTFramedTransport(trans)
+		trans = thrift.NewTFramedTransportConf(trans, cfg)
 	case "buffered":
 		trans = thrift.NewTBufferedTransport(trans, 8192)
 	case "zlib":
 		trans, err = thrift.NewTZlibTransport(trans, zlib.BestCompression)
 	case "":
-		trans = trans
+		// Do nothing
 	default:
-		return nil, nil, fmt.Errorf("Invalid transport specified %s", transport)
+		return nil, nil, fmt.Errorf("invalid transport specified %s", transport)
 	}
 	if err != nil {
 		return nil, nil, err

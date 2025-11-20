@@ -30,23 +30,31 @@
 sourceSets {
     crossTest {
         java {
-            srcDir 'test'
-            include '**/test/TestClient.java'
-            include '**/test/TestServer.java'
-            include '**/test/TestNonblockingServer.java'
-            include '**/test/TestTServletServer.java'
         }
     }
 }
 
+// see https://docs.gradle.org/current/userguide/java_library_plugin.html
+// 1. defines cross test implementation that includes all test implementation, which in turn
+//    contains all implementation dependencies
+// 2. defines cross test runtime that further includes test runtime only dependencies
+// 3. the cross test implementation will need to depends on main and test output
+// 4. shadow jar will package both main and test source set, along with cross test runtime dependencies
 configurations {
-    crossTestCompile { extendsFrom testCompile }
-    crossTestRuntime { extendsFrom crossTestCompile, testRuntime }
+    crossTestImplementation {
+        description "implementation for cross test"
+        extendsFrom testImplementation
+    }
+    crossTestRuntime {
+        description "runtime dependencies for cross test"
+        extendsFrom crossTestImplementation, testRuntimeOnly
+    }
 }
 
 dependencies {
-    crossTestCompile sourceSets.main.output
-    crossTestCompile sourceSets.test.output
+    crossTestImplementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}"
+    crossTestImplementation sourceSets.main.output
+    crossTestImplementation sourceSets.test.output
 }
 
 // I am using shadow plugin to make a self contained functional test Uber JAR that
@@ -57,19 +65,16 @@ shadowJar {
     description = 'Assemble a test JAR file for cross-check execution'
     // make sure the runners are created when this runs
     dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer', 'generateRunnerScriptForTServletServer'
-
-    baseName = 'functionalTest'
-    destinationDir = file("$buildDir/functionalTestJar")
-    classifier = null
-
+    archiveBaseName.set('functionalTest')
+    destinationDirectory = file("$buildDir/functionalTestJar")
     // We do not need a version number for this internal jar
-    version = null
-
+    archiveVersion.set(null)
     // Bundle the complete set of unit test classes including generated code
     // and the runtime dependencies in one JAR to expedite execution.
+    // see https://imperceptiblethoughts.com/shadow/custom-tasks/
     from sourceSets.test.output
     from sourceSets.crossTest.output
-    configurations = [project.configurations.testRuntime]
+    configurations = [project.configurations.crossTestRuntime]
 }
 
 // Common script runner configuration elements
@@ -89,9 +94,9 @@ if (org.gradle.internal.os.OperatingSystem.current().windows) {
 // The Java executable to use with the runner scripts
 def javaExe = file("${System.getProperty('java.home')}/bin/java${execExt}").canonicalPath
 // The common Uber jar path
-def jarPath = shadowJar.archivePath.canonicalPath
-def trustStore = file('test/.truststore').canonicalPath
-def keyStore = file('test/.keystore').canonicalPath
+def jarPath = shadowJar.archiveFile.get().asFile.canonicalPath
+def trustStore = file("${projectDir}/src/crossTest/resources/.truststore").canonicalPath
+def keyStore = file("${projectDir}/src/crossTest/resources/.keystore").canonicalPath
 
 task generateRunnerScriptForClient(group: 'Build') {
     description = 'Generate a runner script for cross-check tests with TestClient'

@@ -123,7 +123,7 @@ typedef struct readState {
 class TFileTransportBuffer {
 public:
   TFileTransportBuffer(uint32_t size);
-  ~TFileTransportBuffer();
+  virtual ~TFileTransportBuffer();
 
   bool addEvent(eventInfo* event);
   eventInfo* getNext();

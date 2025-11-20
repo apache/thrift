@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -43,11 +46,15 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TSocketUtils.h>
+#include <thrift/transport/SocketCommon.h>
 
 #ifndef AF_LOCAL
 #define AF_LOCAL AF_UNIX
@@ -59,6 +66,16 @@
 #else
 #define SOCKOPT_CAST_T char
 #endif // _WIN32
+#endif
+
+#ifdef _WIN32
+// Including Windows.h can conflict with Winsock2 usage, and also
+// adds problematic macros like min() and max(). Try to work around:
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef NOMINMAX
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 template <class T>
@@ -76,13 +93,13 @@ void destroyer_of_fine_sockets(THRIFT_SOCKET* ssock) {
   delete ssock;
 }
 
+using std::shared_ptr;
 using std::string;
 
 namespace apache {
 namespace thrift {
 namespace transport {
 
-using std::shared_ptr;
 
 TServerSocket::TServerSocket(int port)
   : interruptableChildren_(true),
@@ -100,7 +117,8 @@ TServerSocket::TServerSocket(int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
@@ -119,7 +137,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(const string& address, int port)
@@ -139,7 +158,8 @@ TServerSocket::TServerSocket(const string& address, int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(const string& path)
@@ -159,7 +179,28 @@ TServerSocket::TServerSocket(const string& path)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
+}
+TServerSocket::TServerSocket(THRIFT_SOCKET sock,SocketType socketType)
+  : interruptableChildren_(true),
+    port_(0),
+    path_(),
+    serverSocket_(sock),
+    acceptBacklog_(DEFAULT_BACKLOG),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    accTimeout_(-1),
+    retryLimit_(0),
+    retryDelay_(0),
+    tcpSendBuffer_(0),
+    tcpRecvBuffer_(0),
+    keepAlive_(false),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(socketType) {
 }
 
 TServerSocket::~TServerSocket() {
@@ -167,7 +208,32 @@ TServerSocket::~TServerSocket() {
 }
 
 bool TServerSocket::isOpen() const {
-  return (serverSocket_ != THRIFT_INVALID_SOCKET);
+  if (serverSocket_ == THRIFT_INVALID_SOCKET)
+    return false;
+
+  if (!listening_)
+    return false;
+
+  if (isUnixDomainSocket() && (path_[0] != '\0')) {
+    // On some platforms the domain socket file may not be instantly
+    // available yet, i.e. the Windows file system can be slow. Therefore
+    // we should check that the domain socket file actually exists.
+#ifdef _MSC_VER
+    // Currently there is a bug in ClangCl on Windows so the stat() call
+    // does not work. Workaround is a Windows-specific call if file exists:
+    DWORD const f_attrib = GetFileAttributesA(path_.c_str());
+    if (f_attrib == INVALID_FILE_ATTRIBUTES) {
+#else
+    struct THRIFT_STAT path_info;
+    if (::THRIFT_STAT(path_.c_str(), &path_info) < 0) {
+#endif
+      const std::string vError = "TServerSocket::isOpen(): The domain socket path '" + path_ + "' does not exist (yet).";
+      GlobalOutput.perror(vError.c_str(), THRIFT_GET_SOCKET_ERROR);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 void TServerSocket::setSendTimeout(int sendTimeout) {
@@ -210,26 +276,28 @@ void TServerSocket::setInterruptableChildren(bool enable) {
 }
 
 void TServerSocket::_setup_sockopts() {
-
-  // Set THRIFT_NO_SOCKET_CACHING to prevent 2MSL delay on accept
   int one = 1;
-  if (-1 == setsockopt(serverSocket_,
-                       SOL_SOCKET,
-                       THRIFT_NO_SOCKET_CACHING,
-                       cast_sockopt(&one),
-                       sizeof(one))) {
-// ignore errors coming out of this setsockopt on Windows.  This is because
-// SO_EXCLUSIVEADDRUSE requires admin privileges on WinXP, but we don't
-// want to force servers to be an admin.
-#ifndef _WIN32
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
-                        errno_copy);
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN,
-                              "Could not set THRIFT_NO_SOCKET_CACHING",
-                              errno_copy);
-#endif
+  if (!isUnixDomainSocket()) {
+    // Set THRIFT_NO_SOCKET_CACHING to prevent 2MSL delay on accept.
+    // This does not work with Domain sockets on most platforms. And
+    // on Windows it completely breaks the socket. Therefore do not
+    // use this on Domain sockets.
+    if (-1 == setsockopt(serverSocket_,
+                        SOL_SOCKET,
+                        THRIFT_NO_SOCKET_CACHING,
+                        cast_sockopt(&one),
+                        sizeof(one))) {
+      // NOTE: SO_EXCLUSIVEADDRUSE socket option can only be used by members
+      // of the Administrators security group on Windows XP and earlier. But
+      // we do not target WinXP anymore so no special checks required.
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      GlobalOutput.perror("TServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
+                          errno_copy);
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN,
+                                "Could not set THRIFT_NO_SOCKET_CACHING",
+                                errno_copy);
+    }
   }
 
   // Set TCP buffer sizes
@@ -272,6 +340,17 @@ void TServerSocket::_setup_sockopts() {
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
 
+#ifdef SO_NOSIGPIPE
+  if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one))) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_NOSIGPIPE", errno_copy);
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Could not set SO_NOSIGPIPE",
+                              errno_copy);
+  }
+#endif
+
   // Set NONBLOCK on the accept socket
   int flags = THRIFT_FCNTL(serverSocket_, THRIFT_F_GETFL, 0);
   if (flags == -1) {
@@ -300,7 +379,7 @@ void TServerSocket::_setup_tcp_sockopts() {
 
   // Defer accept
 #ifdef TCP_DEFER_ACCEPT
-  if (path_.empty()) {
+  if (!isUnixDomainSocket()) {
     if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_DEFER_ACCEPT, &one, sizeof(one))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_DEFER_ACCEPT ", errno_copy);
@@ -324,7 +403,6 @@ void TServerSocket::_setup_tcp_sockopts() {
 }
 
 void TServerSocket::listen() {
-  listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
@@ -353,8 +431,6 @@ void TServerSocket::listen() {
         = std::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
   }
 
-  // tcp == false means Unix Domain socket
-  bool tcp = (path_.empty());
 
   // Validate port number
   if (port_ < 0 || port_ > 0xFFFF) {
@@ -363,10 +439,14 @@ void TServerSocket::listen() {
 
   // Resolve host:port strings into an iterable of struct addrinfo*
   AddressResolutionHelper resolved_addresses;
-  if (tcp) {
+  if (!isUnixDomainSocket()) {
     try {
       resolved_addresses.resolve(address_, std::to_string(port_), SOCK_STREAM,
+#ifdef ANDROID
+                                 AI_PASSIVE | AI_ADDRCONFIG);
+#else
                                  AI_PASSIVE | AI_V4MAPPED);
+#endif
     } catch (const std::system_error& e) {
       GlobalOutput.printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
       close();
@@ -380,10 +460,11 @@ void TServerSocket::listen() {
   int retries = 0;
   int errno_copy = 0;
 
-  if (!tcp) {
+  if (isUnixDomainSocket()) {
     // -- Unix Domain Socket -- //
 
-    serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
+    if (serverSocket_ == THRIFT_INVALID_SOCKET)
+      serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
 
     if (serverSocket_ == THRIFT_INVALID_SOCKET) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -397,32 +478,11 @@ void TServerSocket::listen() {
     _setup_sockopts();
     _setup_unixdomain_sockopts();
 
-#ifndef _WIN32
-    size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
-      errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                "Unix Domain socket path too long",
-                                errno_copy);
-    }
-
+    // Windows supports Unix domain sockets since it ships the header
+    // HAVE_AF_UNIX_H (see https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/)
+#if (!defined(_WIN32) || defined(HAVE_AF_UNIX_H))
     struct sockaddr_un address;
-    address.sun_family = AF_UNIX;
-    memcpy(address.sun_path, path_.c_str(), len);
-
-    auto structlen = static_cast<socklen_t>(sizeof(address));
-
-    if (!address.sun_path[0]) { // abstract namespace socket
-#ifdef __linux__
-      // sun_path is not null-terminated in this case and structlen determines its length
-      structlen -= sizeof(address.sun_path) - len;
-#else
-      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                " Abstract Namespace Domain socket path not supported");
-#endif
-    }
+    socklen_t structlen = fillUnixSocketAddr(address, path_);
 
     do {
       if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, structlen)) {
@@ -432,12 +492,13 @@ void TServerSocket::listen() {
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 #else
-    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
+    GlobalOutput.perror("TServerSocket::open() Unix Domain socket path not supported on this version of Windows", -99);
     throw TTransportException(TTransportException::NOT_OPEN,
                               " Unix Domain socket path not supported");
 #endif
+  } else if( boundSocketType_ != SocketType::NONE){
+    // -- Socket is already bound
   } else {
-
     // -- TCP socket -- //
 
     auto addr_iter = AddressResolutionHelper::Iter{};
@@ -482,25 +543,31 @@ void TServerSocket::listen() {
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 
-    // retrieve bind info
-    if (port_ == 0 && retries <= retryLimit_) {
-      struct sockaddr_storage sa;
-      socklen_t len = sizeof(sa);
-      std::memset(&sa, 0, len);
-      if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
-        errno_copy = THRIFT_GET_SOCKET_ERROR;
-        GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+  } // TCP socket //
+
+  // retrieve bind info
+  if ((port_ == 0 || path_.empty() ) && retries <= retryLimit_) {
+    struct sockaddr_storage sa;
+    socklen_t len = sizeof(sa);
+    std::memset(&sa, 0, len);
+    if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
+      errno_copy = THRIFT_GET_SOCKET_ERROR;
+      GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+    } else {
+      if (sa.ss_family == AF_INET6) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
+        port_ = ntohs(sin->sin6_port);
+      } else if (sa.ss_family == AF_INET) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
+        port_ = ntohs(sin->sin_port);
+      } else if (sa.ss_family == AF_UNIX) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_un*>(&sa);
+        path_ = sin->sun_path;
       } else {
-        if (sa.ss_family == AF_INET6) {
-          const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
-          port_ = ntohs(sin->sin6_port);
-        } else {
-          const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
-          port_ = ntohs(sin->sin_port);
-        }
+        GlobalOutput.perror("TServerSocket::getPort() getsockname() unhandled socket type",EINVAL);
       }
     }
-  } // TCP socket //
+  }
 
   // throw error if socket still wasn't created successfully
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
@@ -514,10 +581,15 @@ void TServerSocket::listen() {
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
-    if (!tcp) {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+    if (isUnixDomainSocket()) {
+#ifdef _WIN32
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to domain socket path %s, error %d", path_.c_str(), WSAGetLastError());
+#else
+      // Fixme: This does not currently handle abstract domain sockets:
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to domain socket path %s", path_.c_str());
+#endif
     } else {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to port %d", port_);
     }
     GlobalOutput(errbuf);
     close();
@@ -530,7 +602,7 @@ void TServerSocket::listen() {
     listenCallback_(serverSocket_);
 
   // Call listen
-  if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
+  if (boundSocketType_ == SocketType::NONE && -1 == ::listen(serverSocket_, acceptBacklog_)) {
     errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() listen() ", errno_copy);
     close();
@@ -538,10 +610,19 @@ void TServerSocket::listen() {
   }
 
   // The socket is now listening!
+  listening_ = true;
 }
 
-int TServerSocket::getPort() {
+int TServerSocket::getPort() const {
   return port_;
+}
+
+std::string TServerSocket::getPath() const {
+    return path_;
+}
+
+bool TServerSocket::isUnixDomainSocket() const {
+    return !path_.empty();
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
@@ -633,6 +714,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   }
 
   shared_ptr<TSocket> client = createSocket(clientSocket);
+  client->setPath(path_);
   if (sendTimeout_ > 0) {
     client->setSendTimeout(sendTimeout_);
   }
@@ -685,7 +767,8 @@ void TServerSocket::close() {
   concurrency::Guard g(rwMutex_);
   if (serverSocket_ != THRIFT_INVALID_SOCKET) {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
-    ::THRIFT_CLOSESOCKET(serverSocket_);
+    if( boundSocketType_ == SocketType::NONE) //Do not close the server socket if it owned by systemd
+      ::THRIFT_CLOSESOCKET(serverSocket_);
   }
   if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
     ::THRIFT_CLOSESOCKET(interruptSockWriter_);

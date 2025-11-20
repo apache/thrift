@@ -497,7 +497,7 @@ func TestReadSimpleJSONProtocolBinary(t *testing.T) {
 	if len(v) != len(value) {
 		t.Fatalf("Bad value for %s value length %v, wrote: %v, received length: %v", thetype, len(value), s, len(v))
 	}
-	for i := 0; i < len(v); i++ {
+	for i := range v {
 		if v[i] != value[i] {
 			t.Fatalf("Bad value for %s at index %d value %v, wrote: %v, received: %v", thetype, i, value[i], s, v[i])
 		}
@@ -735,4 +735,59 @@ func TestWriteSimpleJSONProtocolSafePeek(t *testing.T) {
 	if test3 {
 		t.Fatalf("Should not match at test 3")
 	}
+}
+
+func TestJSONContextStack(t *testing.T) {
+	var stack jsonContextStack
+	t.Run("empty-peek", func(t *testing.T) {
+		v, ok := stack.peek()
+		if ok {
+			t.Error("peek() on empty should return ok: false")
+		}
+		expected := _CONTEXT_INVALID
+		if v != expected {
+			t.Errorf("Expected value from peek() to be %v(%d), got %v(%d)", expected, expected, v, v)
+		}
+	})
+	t.Run("empty-pop", func(t *testing.T) {
+		v, ok := stack.pop()
+		if ok {
+			t.Error("pop() on empty should return ok: false")
+		}
+		expected := _CONTEXT_INVALID
+		if v != expected {
+			t.Errorf("Expected value from pop() to be %v(%d), got %v(%d)", expected, expected, v, v)
+		}
+	})
+	t.Run("push-peek-pop", func(t *testing.T) {
+		expected := _CONTEXT_INVALID
+		stack.push(expected)
+		if len(stack) != 1 {
+			t.Errorf("Expected stack to be as size 1 after push, got %#v", stack)
+		}
+		v, ok := stack.peek()
+		if !ok {
+			t.Error("peek() on non-empty should return ok: true")
+		}
+		if v != expected {
+			t.Errorf("Expected value from peek() to be %v(%d), got %v(%d)", expected, expected, v, v)
+		}
+		if len(stack) != 1 {
+			t.Errorf("Expected peek() to be read-only, got %#v", stack)
+		}
+		v, ok = stack.pop()
+		if !ok {
+			t.Error("pop() on non-empty should return ok: true")
+		}
+		if v != expected {
+			t.Errorf("Expected value from pop() to be %v(%d), got %v(%d)", expected, expected, v, v)
+		}
+		if len(stack) != 0 {
+			t.Errorf("Expected pop() to empty the stack, got %#v", stack)
+		}
+	})
+}
+
+func TestTSimpleJSONProtocolUnmatchedBeginEnd(t *testing.T) {
+	UnmatchedBeginEndProtocolTest(t, NewTSimpleJSONProtocolFactory())
 }

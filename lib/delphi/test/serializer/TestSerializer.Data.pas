@@ -23,7 +23,12 @@ interface
 
 uses
   SysUtils,
+  ActiveX,
+  ComObj,
+  Thrift.Protocol,
   Thrift.Collections,
+  test.ExceptionStruct,
+  test.SimpleException,
   DebugProtoTest;
 
 
@@ -34,6 +39,8 @@ type
     class function CreateNesting : INesting;
     class function CreateHolyMoley : IHolyMoley;
     class function CreateCompactProtoTestStruct : ICompactProtoTestStruct;
+    class function CreateBatchGetResponse : IBatchGetResponse;
+    class function CreateSimpleException : IError;
 
   // These byte arrays are serialized versions of the above structs.
   // They were serialized in binary protocol using thrift 0.6.x and are used to
@@ -192,8 +199,12 @@ begin
   // !!
   result.setZomg_unicode( UnicodeString( us));
 
+  result.Rfc4122_uuid := TGuid.Create('{00112233-4455-6677-8899-aabbccddeeff}');
+
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.SetBase64( TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes('base64')));
   {$ELSE}
   result.SetBase64( TEncoding.UTF8.GetBytes('base64'));
   {$IFEND}
@@ -206,7 +217,7 @@ class function Fixtures.CreateNesting : INesting;
 var bonk : IBonk;
 begin
   bonk := TBonkImpl.Create;
-  bonk.Type_   := 31337;
+  bonk.&Type   := 31337;
   bonk.Message := 'I am a bonk... xor!';
 
   result := TNestingImpl.Create;
@@ -216,8 +227,10 @@ end;
 
 
 class function Fixtures.CreateHolyMoley : IHolyMoley;
+type
+  TStringType = {$IF cDebugProtoTest_Option_COM_Types} WideString {$ELSE} String {$IFEND};
 var big : IThriftList<IOneOfEach>;
-    stage1 : IThriftList<String>;
+    stage1 : IThriftList<TStringType>;
     stage2 : IThriftList<IBonk>;
     b      : IBonk;
 begin
@@ -230,34 +243,34 @@ begin
   result.Big[0].setA_bite( $22);
   result.Big[0].setA_bite( $23);
 
-  result.Contain := THashSetImpl< IThriftList<string>>.Create;
-  stage1 := TThriftListImpl<String>.Create;
+  result.Contain := TThriftHashSetImpl< IThriftList<TStringType>>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'and a one');
   stage1.add( 'and a two');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'then a one, two');
   stage1.add( 'three!');
   stage1.add( 'FOUR!!');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   result.Contain.add( stage1);
 
   stage2 := TThriftListImpl<IBonk>.Create;
-  result.Bonks := TThriftDictionaryImpl< String, IThriftList< IBonk>>.Create;
+  result.Bonks := TThriftDictionaryImpl< TStringType, IThriftList< IBonk>>.Create;
   // one empty
   result.Bonks.Add( 'zero', stage2);
 
   // one with two
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 1;
+  b.&type := 1;
   b.message := 'Wait.';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 2;
+  b.&type := 2;
   b.message := 'What?';
   stage2.Add( b);
   result.Bonks.Add( 'two', stage2);
@@ -265,15 +278,15 @@ begin
   // one with three
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 3;
+  b.&type := 3;
   b.message := 'quoth';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 4;
+  b.&type := 4;
   b.message := 'the raven';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 5;
+  b.&type := 5;
   b.message := 'nevermore';
   stage2.Add( b);
   result.bonks.Add( 'three', stage2);
@@ -284,57 +297,57 @@ class function Fixtures.CreateCompactProtoTestStruct : ICompactProtoTestStruct;
 // superhuge compact proto test struct
 begin
   result := TCompactProtoTestStructImpl.Create;
-  result.A_byte := TDebugProtoTestConstants.COMPACT_TEST.A_byte;
-  result.A_i16 := TDebugProtoTestConstants.COMPACT_TEST.A_i16;
-  result.A_i32 := TDebugProtoTestConstants.COMPACT_TEST.A_i32;
-  result.A_i64 := TDebugProtoTestConstants.COMPACT_TEST.A_i64;
-  result.A_double := TDebugProtoTestConstants.COMPACT_TEST.A_double;
-  result.A_string := TDebugProtoTestConstants.COMPACT_TEST.A_string;
-  result.A_binary := TDebugProtoTestConstants.COMPACT_TEST.A_binary;
-  result.True_field := TDebugProtoTestConstants.COMPACT_TEST.True_field;
-  result.False_field := TDebugProtoTestConstants.COMPACT_TEST.False_field;
-  result.Empty_struct_field := TDebugProtoTestConstants.COMPACT_TEST.Empty_struct_field;
-  result.Byte_list := TDebugProtoTestConstants.COMPACT_TEST.Byte_list;
-  result.I16_list := TDebugProtoTestConstants.COMPACT_TEST.I16_list;
-  result.I32_list := TDebugProtoTestConstants.COMPACT_TEST.I32_list;
-  result.I64_list := TDebugProtoTestConstants.COMPACT_TEST.I64_list;
-  result.Double_list := TDebugProtoTestConstants.COMPACT_TEST.Double_list;
-  result.String_list := TDebugProtoTestConstants.COMPACT_TEST.String_list;
-  result.Binary_list := TDebugProtoTestConstants.COMPACT_TEST.Binary_list;
-  result.Boolean_list := TDebugProtoTestConstants.COMPACT_TEST.Boolean_list;
-  result.Struct_list := TDebugProtoTestConstants.COMPACT_TEST.Struct_list;
-  result.Byte_set := TDebugProtoTestConstants.COMPACT_TEST.Byte_set;
-  result.I16_set := TDebugProtoTestConstants.COMPACT_TEST.I16_set;
-  result.I32_set := TDebugProtoTestConstants.COMPACT_TEST.I32_set;
-  result.I64_set := TDebugProtoTestConstants.COMPACT_TEST.I64_set;
-  result.Double_set := TDebugProtoTestConstants.COMPACT_TEST.Double_set;
-  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
-  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
-  result.String_set := TDebugProtoTestConstants.COMPACT_TEST.String_set;
-  result.Binary_set := TDebugProtoTestConstants.COMPACT_TEST.Binary_set;
-  result.Boolean_set := TDebugProtoTestConstants.COMPACT_TEST.Boolean_set;
-  result.Struct_set := TDebugProtoTestConstants.COMPACT_TEST.Struct_set;
-  result.Byte_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_byte_map;
-  result.I16_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I16_byte_map;
-  result.I32_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I32_byte_map;
-  result.I64_byte_map := TDebugProtoTestConstants.COMPACT_TEST.I64_byte_map;
-  result.Double_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Double_byte_map;
-  result.String_byte_map := TDebugProtoTestConstants.COMPACT_TEST.String_byte_map;
-  result.Binary_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Binary_byte_map;
-  result.Boolean_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Boolean_byte_map;
-  result.Byte_i16_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i16_map;
-  result.Byte_i32_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i32_map;
-  result.Byte_i64_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_i64_map;
-  result.Byte_double_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_double_map;
-  result.Byte_string_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_string_map;
-  result.Byte_binary_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_binary_map;
-  result.Byte_boolean_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_boolean_map;
-  result.List_byte_map := TDebugProtoTestConstants.COMPACT_TEST.List_byte_map;
-  result.Set_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Set_byte_map;
-  result.Map_byte_map := TDebugProtoTestConstants.COMPACT_TEST.Map_byte_map;
-  result.Byte_map_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_map_map;
-  result.Byte_set_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_set_map;
-  result.Byte_list_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_list_map;
+  result.A_byte := DebugProtoTest.TConstants.COMPACT_TEST.A_byte;
+  result.A_i16 := DebugProtoTest.TConstants.COMPACT_TEST.A_i16;
+  result.A_i32 := DebugProtoTest.TConstants.COMPACT_TEST.A_i32;
+  result.A_i64 := DebugProtoTest.TConstants.COMPACT_TEST.A_i64;
+  result.A_double := DebugProtoTest.TConstants.COMPACT_TEST.A_double;
+  result.A_string := DebugProtoTest.TConstants.COMPACT_TEST.A_string;
+  result.A_binary := DebugProtoTest.TConstants.COMPACT_TEST.A_binary;
+  result.True_field := DebugProtoTest.TConstants.COMPACT_TEST.True_field;
+  result.False_field := DebugProtoTest.TConstants.COMPACT_TEST.False_field;
+  result.Empty_struct_field := DebugProtoTest.TConstants.COMPACT_TEST.Empty_struct_field;
+  result.Byte_list := DebugProtoTest.TConstants.COMPACT_TEST.Byte_list;
+  result.I16_list := DebugProtoTest.TConstants.COMPACT_TEST.I16_list;
+  result.I32_list := DebugProtoTest.TConstants.COMPACT_TEST.I32_list;
+  result.I64_list := DebugProtoTest.TConstants.COMPACT_TEST.I64_list;
+  result.Double_list := DebugProtoTest.TConstants.COMPACT_TEST.Double_list;
+  result.String_list := DebugProtoTest.TConstants.COMPACT_TEST.String_list;
+  result.Binary_list := DebugProtoTest.TConstants.COMPACT_TEST.Binary_list;
+  result.Boolean_list := DebugProtoTest.TConstants.COMPACT_TEST.Boolean_list;
+  result.Struct_list := DebugProtoTest.TConstants.COMPACT_TEST.Struct_list;
+  result.Byte_set := DebugProtoTest.TConstants.COMPACT_TEST.Byte_set;
+  result.I16_set := DebugProtoTest.TConstants.COMPACT_TEST.I16_set;
+  result.I32_set := DebugProtoTest.TConstants.COMPACT_TEST.I32_set;
+  result.I64_set := DebugProtoTest.TConstants.COMPACT_TEST.I64_set;
+  result.Double_set := DebugProtoTest.TConstants.COMPACT_TEST.Double_set;
+  result.String_set := DebugProtoTest.TConstants.COMPACT_TEST.String_set;
+  result.String_set := DebugProtoTest.TConstants.COMPACT_TEST.String_set;
+  result.String_set := DebugProtoTest.TConstants.COMPACT_TEST.String_set;
+  result.Binary_set := DebugProtoTest.TConstants.COMPACT_TEST.Binary_set;
+  result.Boolean_set := DebugProtoTest.TConstants.COMPACT_TEST.Boolean_set;
+  result.Struct_set := DebugProtoTest.TConstants.COMPACT_TEST.Struct_set;
+  result.Byte_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_byte_map;
+  result.I16_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.I16_byte_map;
+  result.I32_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.I32_byte_map;
+  result.I64_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.I64_byte_map;
+  result.Double_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Double_byte_map;
+  result.String_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.String_byte_map;
+  result.Binary_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Binary_byte_map;
+  result.Boolean_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Boolean_byte_map;
+  result.Byte_i16_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_i16_map;
+  result.Byte_i32_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_i32_map;
+  result.Byte_i64_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_i64_map;
+  result.Byte_double_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_double_map;
+  result.Byte_string_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_string_map;
+  result.Byte_binary_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_binary_map;
+  result.Byte_boolean_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_boolean_map;
+  result.List_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.List_byte_map;
+  result.Set_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Set_byte_map;
+  result.Map_byte_map := DebugProtoTest.TConstants.COMPACT_TEST.Map_byte_map;
+  result.Byte_map_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_map_map;
+  result.Byte_set_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_set_map;
+  result.Byte_list_map := DebugProtoTest.TConstants.COMPACT_TEST.Byte_list_map;
 
   result.Field500 := 500;
   result.Field5000 := 5000;
@@ -342,12 +355,59 @@ begin
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.A_binary := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8));
   {$ELSE}
   result.A_binary := TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8);
   {$IFEND}
 end;
 
 
+class function Fixtures.CreateBatchGetResponse : IBatchGetResponse;
+var
+  data : IGetRequest;
+  error : ISomeException;
+const
+  REQUEST_ID = '123';
+begin
+  data := TGetRequestImpl.Create;
+  data.Id := REQUEST_ID;
+  data.Data := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8));
+
+  error := TSomeExceptionImpl.Create;
+  error.Error := TErrorCode.GenericError;
+
+  result := TBatchGetResponseImpl.Create;
+  result.Responses := TThriftDictionaryImpl<WideString, IGetRequest>.Create;
+  result.Responses.Add( REQUEST_ID, data);
+  result.Errors := TThriftDictionaryImpl<WideString, ISomeException>.Create;
+  result.Errors.Add( REQUEST_ID, error);
+end;
+
+
+class function Fixtures.CreateSimpleException : IError;
+var i : Integer;
+    inner : IError;
+    guid : TGuid;
+const
+  IDL_GUID_VALUE : TGuid = '{00000000-4444-CCCC-ffff-0123456789ab}';
+begin
+  result := nil;
+  for i := 0 to 4 do begin
+    inner := result;
+    result := TErrorImpl.Create;
+
+    // validate const values set in IDL
+    ASSERT( result.ErrorCode = 42);  // IDL default value
+    ASSERT( IsEqualGUID( result.ExceptionData, IDL_GUID_VALUE));
+
+    // set fresh, but reproducible values
+    FillChar( guid, SizeOf(guid), i);
+    result.ErrorCode := i;
+    result.ExceptionData := guid;
+    result.InnerException := inner;
+  end;
+end;
 
 
 end.

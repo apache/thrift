@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     Licensed to the Apache Software Foundation(ASF) under one
     or more contributor license agreements.See the NOTICE file
@@ -20,16 +20,24 @@
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;net48</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <Version>0.23.0</Version>
+    <LangVersion>latestMajor</LangVersion>
     <TieredCompilation>false</TieredCompilation>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Thrift\Thrift.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
 
 </Project>

@@ -22,6 +22,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Transport.Client;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
+
 namespace Thrift.Transport.Server
 {
 
@@ -44,13 +47,14 @@ namespace Thrift.Transport.Server
             try
             {
                 // Make server socket
-                _server = new TcpListener(IPAddress.Any, port);
+		_server = new TcpListener(IPAddress.IPv6Any, port);
+                _server.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
                 _server.Server.NoDelay = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _server = null;
-                throw new TTransportException("Could not create ServerSocket on port " + port + ".");
+                throw new TTransportException("Could not create ServerSocket on port " + port + ".", ex);
             }
         }
 
@@ -91,7 +95,7 @@ namespace Thrift.Transport.Server
                 }
                 catch (SocketException sx)
                 {
-                    throw new TTransportException("Could not accept on listening socket: " + sx.Message);
+                    throw new TTransportException("Could not accept on listening socket: " + sx.Message, sx);
                 }
             }
         }
@@ -113,8 +117,11 @@ namespace Thrift.Transport.Server
             try
             {
                 TTransport tSocketTransport = null;
+                #if NET6_0_OR_GREATER
+                var tcpClient = await _server.AcceptTcpClientAsync(cancellationToken);
+                #else
                 var tcpClient = await _server.AcceptTcpClientAsync();
-
+                #endif
                 try
                 {
                     tSocketTransport = new TSocketTransport(tcpClient, Configuration)
@@ -140,7 +147,7 @@ namespace Thrift.Transport.Server
             }
             catch (Exception ex)
             {
-                throw new TTransportException(ex.ToString());
+                throw new TTransportException(ex.ToString(), ex);
             }
         }
 
@@ -154,7 +161,7 @@ namespace Thrift.Transport.Server
                 }
                 catch (Exception ex)
                 {
-                    throw new TTransportException("WARNING: Could not close server socket: " + ex);
+                    throw new TTransportException("WARNING: Could not close server socket: " + ex, ex);
                 }
                 _server = null;
             }

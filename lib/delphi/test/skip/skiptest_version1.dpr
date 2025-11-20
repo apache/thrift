@@ -23,7 +23,7 @@ program skiptest_version1;
 
 uses
   Classes, Windows, SysUtils,
-  Skiptest.One,
+  Skiptest.One in 'gen-delphi\Skiptest.One.pas',
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
@@ -47,7 +47,7 @@ const
 function CreatePing : IPing;
 begin
   result := TPingImpl.Create;
-  result.Version1  := Tskiptest_version_1Constants.SKIPTESTSERVICE_VERSION;
+  result.Version1  := TConstants.SKIPTESTSERVICE_VERSION;
   result.EnumTest  := TPingPongEnum.PingOne;
 end;
 
@@ -189,7 +189,7 @@ const
   FILE_COMPACT = 'pingpong.compact';
 begin
   try
-    Writeln( 'Delphi SkipTest '+IntToStr(Tskiptest_version_1Constants.SKIPTESTSERVICE_VERSION)+' using '+Thrift.Version);
+    Writeln( 'Delphi SkipTest '+IntToStr(TConstants.SKIPTESTSERVICE_VERSION)+' using '+Thrift.Version);
 
     Writeln;
     Writeln('Binary protocol');

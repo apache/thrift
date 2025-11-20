@@ -17,7 +17,7 @@
 # under the License.
 #
 
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 project("thrift-compiler" VERSION ${PACKAGE_VERSION})
 
 # version.h now handled via veralign.sh
@@ -46,6 +46,8 @@ add_library(parse STATIC ${parse_SOURCES})
 set(compiler_core
     src/thrift/common.cc
     src/thrift/generate/t_generator.cc
+    src/thrift/generate/validator_parser.cc
+    src/thrift/generate/validator_parser.h
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
     src/thrift/version.h
@@ -71,36 +73,51 @@ macro(THRIFT_ADD_COMPILER name description initial)
     endif()
 endmacro()
 
+# This macro adds an option THRIFT_VALIDATOR_COMPILER_${NAME}
+# that allows enabling or disabling certain languages' validator
+macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
+    string(TOUPPER "THRIFT_COMPILER_${name}" enabler)
+    set(src "src/thrift/generate/${name}_validator_generator.cc")
+    list(APPEND "src/thrift/generate/${name}_validator_generator.h")
+    option(${enabler} ${description} ${initial})
+    if(${enabler})
+        list(APPEND thrift-compiler_SOURCES ${src})
+    endif()
+endmacro()
+
 # The following compiler can be enabled or disabled
-THRIFT_ADD_COMPILER(as3     "Enable compiler for ActionScript 3" ON)
-THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" ON)
-THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" ON)
-THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
-THRIFT_ADD_COMPILER(d       "Enable compiler for D" ON)
-THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" ON)
-THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" ON)
-THRIFT_ADD_COMPILER(erl     "Enable compiler for Erlang" ON)
-THRIFT_ADD_COMPILER(go      "Enable compiler for Go" ON)
-THRIFT_ADD_COMPILER(gv      "Enable compiler for GraphViz" ON)
-THRIFT_ADD_COMPILER(haxe    "Enable compiler for Haxe" ON)
-THRIFT_ADD_COMPILER(hs      "Enable compiler for Haskell" ON)
-THRIFT_ADD_COMPILER(html    "Enable compiler for HTML Documentation" ON)
-THRIFT_ADD_COMPILER(java    "Enable compiler for Java"   ON)
-THRIFT_ADD_COMPILER(javame  "Enable compiler for Java ME" ON)
-THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" ON)
-THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" ON)
-THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" ON)
-THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
-THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" ON)
-THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" ON)
-THRIFT_ADD_COMPILER(php     "Enable compiler for PHP" ON)
-THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" ON)
-THRIFT_ADD_COMPILER(rb      "Enable compiler for Ruby" ON)
-THRIFT_ADD_COMPILER(rs      "Enable compiler for Rust" ON)
-THRIFT_ADD_COMPILER(st      "Enable compiler for Smalltalk" ON)
-THRIFT_ADD_COMPILER(swift   "Enable compiler for Cocoa Swift" ON)
-THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" ON)
-THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" ON)
+THRIFT_ADD_COMPILER(c_glib        "Enable compiler for C with Glib" ON)
+THRIFT_ADD_COMPILER(cl            "Enable compiler for Common LISP" ON)
+THRIFT_ADD_COMPILER(cpp           "Enable compiler for C++" ON)
+THRIFT_ADD_COMPILER(d             "Enable compiler for D" ON)
+THRIFT_ADD_COMPILER(dart          "Enable compiler for Dart" ON)
+THRIFT_ADD_COMPILER(delphi        "Enable compiler for Delphi" ON)
+THRIFT_ADD_COMPILER(erl           "Enable compiler for Erlang" ON)
+THRIFT_ADD_COMPILER(go            "Enable compiler for Go" ON)
+THRIFT_ADD_COMPILER(gv            "Enable compiler for GraphViz" ON)
+THRIFT_ADD_COMPILER(haxe          "Enable compiler for Haxe" ON)
+THRIFT_ADD_COMPILER(html          "Enable compiler for HTML Documentation" ON)
+THRIFT_ADD_COMPILER(markdown      "Enable compiler for Markdown Documentation" ON)
+THRIFT_ADD_COMPILER(java          "Enable compiler for Java"   ON)
+THRIFT_ADD_COMPILER(javame        "Enable compiler for Java ME" ON)
+THRIFT_ADD_COMPILER(js            "Enable compiler for JavaScript" ON)
+THRIFT_ADD_COMPILER(json          "Enable compiler for JSON" ON)
+THRIFT_ADD_COMPILER(kotlin        "Enable compiler for Kotlin" ON)
+THRIFT_ADD_COMPILER(lua           "Enable compiler for Lua" ON)
+THRIFT_ADD_COMPILER(netstd        "Enable compiler for .NET Standard" ON)
+THRIFT_ADD_COMPILER(ocaml         "Enable compiler for OCaml" ON)
+THRIFT_ADD_COMPILER(perl          "Enable compiler for Perl" ON)
+THRIFT_ADD_COMPILER(php           "Enable compiler for PHP" ON)
+THRIFT_ADD_COMPILER(py            "Enable compiler for Python 2.0" ON)
+THRIFT_ADD_COMPILER(rb            "Enable compiler for Ruby" ON)
+THRIFT_ADD_COMPILER(rs            "Enable compiler for Rust" ON)
+THRIFT_ADD_COMPILER(st            "Enable compiler for Smalltalk" ON)
+THRIFT_ADD_COMPILER(swift         "Enable compiler for Cocoa Swift" ON)
+THRIFT_ADD_COMPILER(xml           "Enable compiler for XML" ON)
+THRIFT_ADD_COMPILER(xsd           "Enable compiler for XSD" ON)
+
+# The following compiler can be enabled or disabled by enabling or disabling certain languages
+THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)
 
 # Thrift is looking for include files in the src directory
 # we also add the current binary directory for generated files

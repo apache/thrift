@@ -20,6 +20,8 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
+#include <functional>
+
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerTransport.h>
@@ -37,6 +39,13 @@ namespace thrift {
 namespace transport {
 
 class TSocket;
+
+enum class SocketType {
+    NONE,
+    INET,
+    INET6,
+    UNIX
+};
 
 /**
  * Server socket implementation of TServerTransport. Wrapper around a unix
@@ -79,6 +88,14 @@ public:
    * @param path Pathname for unix socket.
    */
   TServerSocket(const std::string& path);
+
+  /**
+   * Constructor used for to initialize from an already bound unix socket.
+   * Useful for socket activation on systemd.
+   *
+   * @param fd
+   */
+  TServerSocket(THRIFT_SOCKET sock,SocketType socketType);
 
   ~TServerSocket() override;
 
@@ -125,7 +142,11 @@ public:
 
   THRIFT_SOCKET getSocketFD() override { return serverSocket_; }
 
-  int getPort();
+  int getPort() const;
+
+  std::string getPath() const;
+
+  bool isUnixDomainSocket() const;
 
   void listen() override;
   void interrupt() override;
@@ -166,6 +187,7 @@ private:
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
+  SocketType boundSocketType_;
 };
 }
 }

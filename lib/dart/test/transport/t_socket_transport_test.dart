@@ -18,24 +18,22 @@
 library thrift.test.transport.t_socket_transport_test;
 
 import 'dart:async';
-import 'dart:convert' show Utf8Codec;
+import 'dart:convert' show Utf8Codec, base64;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:dart2_constant/convert.dart' show base64;
-import 'package:dart2_constant/core.dart' as core;
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
 void main() {
-  const utf8Codec = const Utf8Codec();
+  const utf8Codec = Utf8Codec();
 
   final requestText = 'my test request';
-  final requestBytes = new Uint8List.fromList(utf8Codec.encode(requestText));
+  final requestBytes = Uint8List.fromList(utf8Codec.encode(requestText));
   final requestBase64 = base64.encode(requestBytes);
 
   final responseText = 'response 1';
-  final responseBytes = new Uint8List.fromList(utf8Codec.encode(responseText));
+  final responseBytes = Uint8List.fromList(utf8Codec.encode(responseText));
   final responseBase64 = base64.encode(responseBytes);
 
   final framedResponseBase64 = base64.encode(_getFramedResponse(responseBytes));
@@ -45,9 +43,9 @@ void main() {
     TTransport transport;
 
     setUp(() async {
-      socket = new FakeSocket(sync: false);
+      socket = FakeSocket(sync: false);
       await socket.open();
-      transport = new TClientSocketTransport(socket);
+      transport = TClientSocketTransport(socket);
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -58,7 +56,7 @@ void main() {
       Future responseReady = transport.flush();
 
       // allow microtask events to finish
-      await new Future.value();
+      await Future.value();
 
       expect(socket.sendPayload, isNotNull);
       expect(socket.sendPayload, requestBytes);
@@ -67,23 +65,23 @@ void main() {
       socket.receiveFakeMessage(responseBase64);
 
       await responseReady;
-      var buffer = new Uint8List(responseBytes.length);
+      var buffer = Uint8List(responseBytes.length);
       transport.readAll(buffer, 0, responseBytes.length);
       var bufferText = utf8Codec.decode(buffer);
 
       expect(bufferText, responseText);
     });
-  }, timeout: new Timeout(new Duration(seconds: 1)));
+  }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TClientSocketTransport with FramedTransport', () {
     FakeSocket socket;
     TTransport transport;
 
     setUp(() async {
-      socket = new FakeSocket(sync: true);
+      socket = FakeSocket(sync: true);
       await socket.open();
 
-      transport = new TFramedTransport(new TClientSocketTransport(socket));
+      transport = TFramedTransport(TClientSocketTransport(socket));
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -92,7 +90,7 @@ void main() {
       String bufferText;
 
       Future responseReady = transport.flush().then((_) {
-        var buffer = new Uint8List(responseBytes.length);
+        var buffer = Uint8List(responseBytes.length);
         transport.readAll(buffer, 0, responseBytes.length);
         bufferText = utf8Codec.decode(buffer);
       });
@@ -103,7 +101,7 @@ void main() {
       await responseReady;
       expect(bufferText, responseText);
     });
-  }, timeout: new Timeout(new Duration(seconds: 1)));
+  }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TAsyncClientSocketTransport', () {
     FakeSocket socket;
@@ -111,14 +109,14 @@ void main() {
     TTransport transport;
 
     setUp(() async {
-      socket = new FakeSocket(sync: true);
+      socket = FakeSocket(sync: true);
       await socket.open();
 
-      protocolFactory = new FakeProtocolFactory();
-      protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
-      transport = new TAsyncClientSocketTransport(
-          socket, new TMessageReader(protocolFactory),
-          responseTimeout: core.Duration.zero);
+      protocolFactory = FakeProtocolFactory();
+      protocolFactory.message = TMessage('foo', TMessageType.CALL, 123);
+      transport = TAsyncClientSocketTransport(
+          socket, TMessageReader(protocolFactory),
+          responseTimeout: Duration.zero);
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -127,21 +125,20 @@ void main() {
       String bufferText;
 
       Future responseReady = transport.flush().then((_) {
-        var buffer = new Uint8List(responseBytes.length);
+        var buffer = Uint8List(responseBytes.length);
         transport.readAll(buffer, 0, responseBytes.length);
         bufferText = utf8Codec.decode(buffer);
       });
 
       // simulate a response
-      protocolFactory.message = new TMessage('foo', TMessageType.REPLY, 123);
+      protocolFactory.message = TMessage('foo', TMessageType.REPLY, 123);
       socket.receiveFakeMessage(responseBase64);
 
       // simulate a second response
       var response2Text = 'response 2';
-      var response2Bytes =
-          new Uint8List.fromList(utf8Codec.encode(response2Text));
+      var response2Bytes = Uint8List.fromList(utf8Codec.encode(response2Text));
       var response2Base64 = base64.encode(response2Bytes);
-      protocolFactory.message = new TMessage('foo2', TMessageType.REPLY, 124);
+      protocolFactory.message = TMessage('foo2', TMessageType.REPLY, 124);
       socket.receiveFakeMessage(response2Base64);
 
       await responseReady;
@@ -150,9 +147,9 @@ void main() {
 
     test('Test response timeout', () async {
       Future responseReady = transport.flush();
-      expect(responseReady, throwsA(new isInstanceOf<TimeoutException>()));
+      expect(responseReady, throwsA(isA<TimeoutException>()));
     });
-  }, timeout: new Timeout(new Duration(seconds: 1)));
+  }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TAsyncClientSocketTransport with TFramedTransport', () {
     FakeSocket socket;
@@ -160,17 +157,17 @@ void main() {
     TTransport transport;
 
     setUp(() async {
-      socket = new FakeSocket(sync: true);
+      socket = FakeSocket(sync: true);
       await socket.open();
 
-      protocolFactory = new FakeProtocolFactory();
-      protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
-      var messageReader = new TMessageReader(protocolFactory,
+      protocolFactory = FakeProtocolFactory();
+      protocolFactory.message = TMessage('foo', TMessageType.CALL, 123);
+      var messageReader = TMessageReader(protocolFactory,
           byteOffset: TFramedTransport.headerByteCount);
 
-      transport = new TFramedTransport(new TAsyncClientSocketTransport(
+      transport = TFramedTransport(TAsyncClientSocketTransport(
           socket, messageReader,
-          responseTimeout: core.Duration.zero));
+          responseTimeout: Duration.zero));
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -179,37 +176,37 @@ void main() {
       String bufferText;
 
       Future responseReady = transport.flush().then((_) {
-        var buffer = new Uint8List(responseBytes.length);
+        var buffer = Uint8List(responseBytes.length);
         transport.readAll(buffer, 0, responseBytes.length);
         bufferText = utf8Codec.decode(buffer);
       });
 
       // simulate a response
-      protocolFactory.message = new TMessage('foo', TMessageType.REPLY, 123);
+      protocolFactory.message = TMessage('foo', TMessageType.REPLY, 123);
       socket.receiveFakeMessage(framedResponseBase64);
 
       await responseReady;
       expect(bufferText, responseText);
     });
-  }, timeout: new Timeout(new Duration(seconds: 1)));
+  }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TServerTransport', () {
     test('Test server transport listens to socket', () async {
-      var socket = new FakeSocket();
+      var socket = FakeSocket();
       await socket.open();
       expect(socket.isOpen, isTrue);
 
-      var transport = new TServerSocketTransport(socket);
+      var transport = TServerSocketTransport(socket);
       expect(transport.hasReadData, isFalse);
 
       socket.receiveFakeMessage(requestBase64);
 
       // allow microtask events to finish
-      await new Future.value();
+      await Future.value();
 
       expect(transport.hasReadData, isTrue);
 
-      var buffer = new Uint8List(requestBytes.length);
+      var buffer = Uint8List(requestBytes.length);
       transport.readAll(buffer, 0, requestBytes.length);
 
       var bufferText = utf8Codec.decode(buffer);
@@ -217,10 +214,10 @@ void main() {
     });
 
     test('Test server sending data over transport', () async {
-      var socket = new FakeSocket();
+      var socket = FakeSocket();
       await socket.open();
 
-      var transport = new TServerSocketTransport(socket);
+      var transport = TServerSocketTransport(socket);
 
       transport.writeAll(responseBytes);
       expect(socket.sendPayload, isNull);
@@ -228,40 +225,47 @@ void main() {
       transport.flush();
 
       // allow microtask events to finish
-      await new Future.value();
+      await Future.value();
 
       expect(socket.sendPayload, isNotNull);
       expect(socket.sendPayload, responseBytes);
     });
-  }, timeout: new Timeout(new Duration(seconds: 1)));
+  }, timeout: Timeout(Duration(seconds: 1)));
 }
 
 class FakeSocket extends TSocket {
   final StreamController<TSocketState> _onStateController;
+  @override
   Stream<TSocketState> get onState => _onStateController.stream;
 
   final StreamController<Object> _onErrorController;
+  @override
   Stream<Object> get onError => _onErrorController.stream;
 
   final StreamController<Uint8List> _onMessageController;
+  @override
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  FakeSocket({bool sync: false})
-      : _onStateController = new StreamController.broadcast(sync: sync),
-        _onErrorController = new StreamController.broadcast(sync: sync),
-        _onMessageController = new StreamController.broadcast(sync: sync);
+  FakeSocket({bool sync =  false})
+      : _onStateController = StreamController.broadcast(sync: sync),
+        _onErrorController = StreamController.broadcast(sync: sync),
+        _onMessageController = StreamController.broadcast(sync: sync);
 
   bool _isOpen;
 
+  @override
   bool get isOpen => _isOpen;
 
+  @override
   bool get isClosed => !isOpen;
 
+  @override
   Future open() async {
     _isOpen = true;
     _onStateController.add(TSocketState.OPEN);
   }
 
+  @override
   Future close() async {
     _isOpen = false;
     _onStateController.add(TSocketState.CLOSED);
@@ -270,16 +274,17 @@ class FakeSocket extends TSocket {
   Uint8List _sendPayload;
   Uint8List get sendPayload => _sendPayload;
 
+  @override
   void send(Uint8List data) {
-    if (!isOpen) throw new StateError('The socket is not open');
+    if (!isOpen) throw StateError('The socket is not open');
 
     _sendPayload = data;
   }
 
   void receiveFakeMessage(String base64text) {
-    if (!isOpen) throw new StateError('The socket is not open');
+    if (!isOpen) throw StateError('The socket is not open');
 
-    var message = new Uint8List.fromList(base64.decode(base64text));
+    var message = Uint8List.fromList(base64.decode(base64text));
     _onMessageController.add(message);
   }
 }
@@ -289,7 +294,8 @@ class FakeProtocolFactory implements TProtocolFactory {
 
   TMessage message;
 
-  getProtocol(TTransport transport) => new FakeProtocol(message);
+  @override
+  getProtocol(TTransport transport) => FakeProtocol(message);
 }
 
 class FakeProtocol extends Mock implements TProtocol {
@@ -297,12 +303,13 @@ class FakeProtocol extends Mock implements TProtocol {
 
   TMessage _message;
 
+  @override
   readMessageBegin() => _message;
 }
 
 Uint8List _getFramedResponse(Uint8List responseBytes) {
   var byteOffset = TFramedTransport.headerByteCount;
-  var response = new Uint8List(byteOffset + responseBytes.length);
+  var response = Uint8List(byteOffset + responseBytes.length);
 
   response.buffer.asByteData().setInt32(0, responseBytes.length);
   response.setAll(byteOffset, responseBytes);

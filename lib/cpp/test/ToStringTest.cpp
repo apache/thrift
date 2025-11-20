@@ -19,8 +19,9 @@
 
 #include <vector>
 #include <map>
+#include <locale>
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <thrift/TToString.h>
 
@@ -39,6 +40,31 @@ BOOST_AUTO_TEST_CASE(base_types_to_string) {
   BOOST_CHECK_EQUAL(to_string(1.2), "1.2");
   BOOST_CHECK_EQUAL(to_string("abc"), "abc");
 }
+
+// NOTE: Currently (as of 2021.08.12) the locale-based tests do not work on
+// Windows in the AppVeyor Thrift CI build correctly. Therefore disabled on
+// Windows:
+#ifndef _WIN32
+BOOST_AUTO_TEST_CASE(locale_en_US_int_to_string) {
+#ifdef _WIN32
+  std::locale::global(std::locale("en-US.UTF-8"));
+#else
+  std::locale::global(std::locale("en_US.UTF-8"));
+#endif
+  BOOST_CHECK_EQUAL(to_string(1000000), "1000000");
+}
+
+BOOST_AUTO_TEST_CASE(locale_de_DE_floating_point_to_string) {
+#ifdef _WIN32
+  std::locale::global(std::locale("de-DE.UTF-8"));
+#else
+  std::locale::global(std::locale("de_DE.UTF-8"));
+#endif
+  BOOST_CHECK_EQUAL(to_string(1.5), "1.5");
+  BOOST_CHECK_EQUAL(to_string(1.5f), "1.5");
+  BOOST_CHECK_EQUAL(to_string(1.5L), "1.5");
+}
+#endif
 
 BOOST_AUTO_TEST_CASE(empty_vector_to_string) {
   std::vector<int> l;
@@ -132,6 +158,15 @@ BOOST_AUTO_TEST_CASE(generated_nested_list_object_to_string) {
 
   BOOST_CHECK_EQUAL(to_string(l),
                     "ListBonks(bonk=[Bonk(message=a, type=0), Bonk(message=b, type=0)])");
+}
+
+BOOST_AUTO_TEST_CASE(generated_uuid_to_string) {
+  thrift::test::CrazyNesting l;
+  l.uuid_field = apache::thrift::TUuid{"{4b686716-5f20-4deb-8ce0-9eaf379e8a3d}"};
+
+  BOOST_CHECK_EQUAL(to_string(l),
+                    "CrazyNesting(string_field=, set_field=<null>, list_field=[], binary_field=, "
+                    "uuid_field=4b686716-5f20-4deb-8ce0-9eaf379e8a3d)");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

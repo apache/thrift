@@ -41,7 +41,7 @@ type
   strict private
     FUri : string;
     FInputStream : IThriftStream;
-    FOutputMemoryStream : TMemoryStream;
+    FOutputMemoryStream : TThriftMemoryStream;
     FDnsResolveTimeout : Integer;
     FConnectionTimeout : Integer;
     FSendTimeout : Integer;
@@ -51,6 +51,7 @@ type
 
     function CreateRequest: IWinHTTPRequest;
     function SecureProtocolsAsWinHTTPFlags : Cardinal;
+    class procedure EnsureSuccessHttpStatus( const aRequest : IWinHTTPRequest);
 
   strict private
     type
@@ -127,7 +128,7 @@ begin
   FSecureProtocols := DEFAULT_THRIFT_SECUREPROTOCOLS;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputMemoryStream := TMemoryStream.Create;
+  FOutputMemoryStream := TThriftMemoryStream.Create;
 end;
 
 destructor TWinHTTPClientImpl.Destroy;
@@ -151,7 +152,7 @@ begin
     url := TWinHTTPUrlImpl.Create( FUri);
 
     info := TErrorInfo.WinHTTPSession;
-    session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi WinHTTP');
+    session := TWinHTTPSessionImpl.Create('ApacheThriftDelphi/WinHTTP');
     session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
 
     info := TErrorInfo.WinHTTPConnection;
@@ -191,7 +192,8 @@ const
     WINHTTP_FLAG_SECURE_PROTOCOL_SSL3,
     WINHTTP_FLAG_SECURE_PROTOCOL_TLS1,
     WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1,
-    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2
+    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2,
+    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_3
   );
 var
   prot : TSecureProtocol;
@@ -269,7 +271,7 @@ end;
 procedure TWinHTTPClientImpl.Open;
 begin
   FreeAndNil( FOutputMemoryStream);
-  FOutputMemoryStream := TMemoryStream.Create;
+  FOutputMemoryStream := TThriftMemoryStream.Create;
 end;
 
 procedure TWinHTTPClientImpl.Close;
@@ -284,7 +286,7 @@ begin
     SendRequest;
   finally
     FreeAndNil( FOutputMemoryStream);
-    FOutputMemoryStream := TMemoryStream.Create;
+    FOutputMemoryStream := TThriftMemoryStream.Create;
     ASSERT( FOutputMemoryStream <> nil);
   end;
 end;
@@ -333,6 +335,9 @@ begin
     else raise TTransportExceptionInterrupted.Create( sMsg);
   end;
 
+  // we're about to receive a new message, so reset everyting
+  ResetMessageSizeAndConsumedBytes(-1);
+  EnsureSuccessHttpStatus(http);  // throws if not
   FInputStream := THTTPResponseStream.Create( http);
   if http.QueryTotalResponseSize( dwSize)  // FALSE indicates "no info available"
   then UpdateKnownMessageSize( dwSize);
@@ -346,6 +351,18 @@ begin
   FOutputMemoryStream.Write( pTmp^, len);
 end;
 
+
+class procedure TWinHTTPClientImpl.EnsureSuccessHttpStatus( const aRequest : IWinHTTPRequest);
+var dwStatus : Cardinal;
+    sText : string;
+begin
+  if (aRequest <> nil)
+  then aRequest.QueryHttpStatus( dwStatus, sText)
+  else raise TTransportExceptionNotOpen.Create('Invalid HTTP request data');
+
+  if (200 > dwStatus) or (dwStatus > 299)
+  then raise TTransportExceptionEndOfFile.Create('HTTP '+UIntToStr(dwStatus)+' '+sText);
+end;
 
 { TWinHTTPClientImpl.THTTPResponseStream }
 

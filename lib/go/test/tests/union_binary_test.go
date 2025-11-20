@@ -21,9 +21,9 @@ package tests
 
 import (
 	"testing"
-	"unionbinarytest"
-)
 
+	"github.com/apache/thrift/lib/go/test/gopath/src/unionbinarytest"
+)
 
 // See https://issues.apache.org/jira/browse/THRIFT-4573
 func TestUnionBinary(t *testing.T) {

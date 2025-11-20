@@ -27,8 +27,8 @@ class TMessageReader {
 
   /// Construct a [MessageReader].  The optional [byteOffset] specifies the
   /// number of bytes to skip before reading the [TMessage].
-  TMessageReader(this.protocolFactory, {int byteOffset: 0})
-      : _transport = new _TMessageReaderTransport(),
+  TMessageReader(this.protocolFactory, {int byteOffset = 0})
+      : _transport = _TMessageReaderTransport(),
         this.byteOffset = byteOffset;
 
   TMessage readMessage(Uint8List bytes) {
@@ -54,7 +54,7 @@ class _TMessageReaderTransport extends TTransport {
     }
 
     if (offset > bytes.length) {
-      throw new ArgumentError("The offset exceeds the bytes length");
+      throw ArgumentError("The offset exceeds the bytes length");
     }
 
     _readIterator = bytes.iterator;
@@ -64,19 +64,23 @@ class _TMessageReaderTransport extends TTransport {
     }
   }
 
+  @override
   get isOpen => true;
 
-  Future open() => throw new UnsupportedError("Unsupported in MessageReader");
+  @override
+  Future open() => throw UnsupportedError("Unsupported in MessageReader");
 
-  Future close() => throw new UnsupportedError("Unsupported in MessageReader");
+  @override
+  Future close() => throw UnsupportedError("Unsupported in MessageReader");
 
+  @override
   int read(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
-      throw new ArgumentError.notNull("buffer");
+      throw ArgumentError.notNull("buffer");
     }
 
     if (offset + length > buffer.length) {
-      throw new ArgumentError("The range exceeds the buffer length");
+      throw ArgumentError("The range exceeds the buffer length");
     }
 
     if (_readIterator == null || length <= 0) {
@@ -92,8 +96,10 @@ class _TMessageReaderTransport extends TTransport {
     return i;
   }
 
+  @override
   void write(Uint8List buffer, int offset, int length) =>
-      throw new UnsupportedError("Unsupported in MessageReader");
+      throw UnsupportedError("Unsupported in MessageReader");
 
-  Future flush() => throw new UnsupportedError("Unsupported in MessageReader");
+  @override
+  Future flush() => throw UnsupportedError("Unsupported in MessageReader");
 }

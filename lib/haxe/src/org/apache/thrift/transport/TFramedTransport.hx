@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 
 import org.apache.thrift.transport.*;
 
+import haxe.Int64;
 import haxe.io.Eof;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
@@ -32,16 +33,9 @@ import haxe.io.BytesInput;
  * TFramedTransport is a buffered TTransport that ensures a fully read message
  * every time by preceding messages with a 4-byte frame size.
  */
-class TFramedTransport extends TTransport
+class TFramedTransport extends TLayeredTransport
 {
-    public static inline var DEFAULT_MAX_LENGTH = 16384000;
-
-    var maxLength_ :  Int;
-
-    /**
-     * Underlying transport
-     */
-    var transport_ :  TTransport = null;
+	private static inline var HEADER_SIZE = 4;
 
     /**
      * Buffer for output
@@ -56,21 +50,20 @@ class TFramedTransport extends TTransport
     /**
      * Constructor wraps around another transport
      */
-    public function new( transport : TTransport, maxLength : Int = DEFAULT_MAX_LENGTH) {
-        transport_ = transport;
-        maxLength_ = maxLength;
+    public function new( transport : TTransport) {
+		super(transport);
     }
 
     public override function open() : Void {
-        transport_.open();
+        InnerTransport.open();
     }
 
     public override function isOpen() : Bool {
-        return transport_.isOpen();
+        return InnerTransport.isOpen();
     }
 
     public override function close() : Void {
-        transport_.close();
+        InnerTransport.close();
     }
 
     public override function read(buf : BytesBuffer, off : Int, len : Int) : Int {
@@ -101,13 +94,13 @@ class TFramedTransport extends TTransport
     function readFrameSize() : Int {
         try {
             var buffer = new BytesBuffer();
-            var len = transport_.readAll( buffer, 0, 4);
-            var inp = new BytesInput( buffer.getBytes(), 0, 4);
+            var len = InnerTransport.readAll( buffer, 0, HEADER_SIZE);
+            var inp = new BytesInput( buffer.getBytes(), 0, HEADER_SIZE);
             inp.bigEndian = true;
             return inp.readInt32();
         }
         catch(eof : Eof) {
-            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read 4 bytes!');
+            throw new TTransportException(TTransportException.END_OF_FILE, 'Can\'t read ${HEADER_SIZE} bytes!');
         }
     }
 
@@ -118,13 +111,14 @@ class TFramedTransport extends TTransport
         if (size < 0) {
             throw new TTransportException(TTransportException.UNKNOWN, 'Read a negative frame size ($size)!');
         };
-        if (size > maxLength_) {
-            throw new TTransportException(TTransportException.UNKNOWN, 'Frame size ($size) larger than max length ($maxLength_)!');
+        if (size > Configuration.MaxFrameSize) {
+            throw new TTransportException(TTransportException.UNKNOWN, 'Frame size ($size) larger than max length ($Configuration.MaxFrameSize)!');
         };
 
+		UpdateKnownMessageSize(size + HEADER_SIZE);
         try {
             var buffer = new BytesBuffer();
-            size = transport_.readAll( buffer, 0, size);
+            size = InnerTransport.readAll( buffer, 0, size);
             readBuffer_ = new BytesInput( buffer.getBytes(), 0, size);
             readBuffer_.bigEndian = true;
         }
@@ -141,18 +135,31 @@ class TFramedTransport extends TTransport
         var out = new BytesOutput();
         out.bigEndian = true;
         out.writeInt32(len);
-        transport_.write(out.getBytes(), 0, 4);
+        InnerTransport.write(out.getBytes(), 0, HEADER_SIZE);
     }
 
     public override function flush( callback : Dynamic->Void =null) : Void {
         var buf : Bytes = writeBuffer_.getBytes();
         var len : Int = buf.length;
         writeBuffer_ = new BytesOutput();
+		readBuffer_ = null;
 
         writeFrameSize(len);
-        transport_.write(buf, 0, len);
-        transport_.flush(callback);
+        InnerTransport.write(buf, 0, len);
+        InnerTransport.flush(callback);
     }
+	
+	
+	public override function CheckReadBytesAvailable(numBytes : Int64) : Void
+	{
+		var buffered = readBuffer_.length - readBuffer_.position;
+		if (buffered < numBytes)
+		{
+			numBytes -= buffered;
+			InnerTransport.CheckReadBytesAvailable(numBytes);
+		}
+	}
+	
 }
 
 

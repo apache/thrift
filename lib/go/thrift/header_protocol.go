@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"errors"
 )
 
 // THeaderProtocol is a thrift protocol that implements THeader:
@@ -34,34 +35,65 @@ type THeaderProtocol struct {
 
 	// Will be initialized on first read/write.
 	protocol TProtocol
+
+	cfg *TConfiguration
 }
 
-// NewTHeaderProtocol creates a new THeaderProtocol from the underlying
-// transport. The passed in transport will be wrapped with THeaderTransport.
+// Deprecated: Use NewTHeaderProtocolConf instead.
+func NewTHeaderProtocol(trans TTransport) *THeaderProtocol {
+	return newTHeaderProtocolConf(trans, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+// NewTHeaderProtocolConf creates a new THeaderProtocol from the underlying
+// transport with given TConfiguration.
+//
+// The passed in transport will be wrapped with THeaderTransport.
 //
 // Note that THeaderTransport handles frame and zlib by itself,
 // so the underlying transport should be a raw socket transports (TSocket or TSSLSocket),
 // instead of rich transports like TZlibTransport or TFramedTransport.
-func NewTHeaderProtocol(trans TTransport) *THeaderProtocol {
-	t := NewTHeaderTransport(trans)
-	p, _ := THeaderProtocolDefault.GetProtocol(t)
+func NewTHeaderProtocolConf(trans TTransport, conf *TConfiguration) *THeaderProtocol {
+	return newTHeaderProtocolConf(trans, conf)
+}
+
+func newTHeaderProtocolConf(trans TTransport, cfg *TConfiguration) *THeaderProtocol {
+	t := NewTHeaderTransportConf(trans, cfg)
+	p, _ := t.cfg.GetTHeaderProtocolID().GetProtocol(t)
+	PropagateTConfiguration(p, cfg)
 	return &THeaderProtocol{
 		transport: t,
 		protocol:  p,
+		cfg:       cfg,
 	}
 }
 
-type tHeaderProtocolFactory struct{}
-
-func (tHeaderProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTHeaderProtocol(trans)
+type tHeaderProtocolFactory struct {
+	cfg *TConfiguration
 }
 
-// NewTHeaderProtocolFactory creates a factory for THeader.
-//
-// It's a wrapper for NewTHeaderProtocol
+func (f tHeaderProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	return newTHeaderProtocolConf(trans, f.cfg)
+}
+
+func (f *tHeaderProtocolFactory) SetTConfiguration(cfg *TConfiguration) {
+	f.cfg = cfg
+}
+
+// Deprecated: Use NewTHeaderProtocolFactoryConf instead.
 func NewTHeaderProtocolFactory() TProtocolFactory {
-	return tHeaderProtocolFactory{}
+	return NewTHeaderProtocolFactoryConf(&TConfiguration{
+		noPropagation: true,
+	})
+}
+
+// NewTHeaderProtocolFactoryConf creates a factory for THeader with given
+// TConfiguration.
+func NewTHeaderProtocolFactoryConf(conf *TConfiguration) TProtocolFactory {
+	return tHeaderProtocolFactory{
+		cfg: conf,
+	}
 }
 
 // Transport returns the underlying transport.
@@ -87,6 +119,11 @@ func (p *THeaderProtocol) ClearWriteHeaders() {
 }
 
 // AddTransform add a transform for writing.
+//
+// Deprecated: This only applies to the next message written, and the next read
+// message will cause write transforms to be reset from what's configured in
+// TConfiguration. For sticky transforms, use TConfiguration.THeaderTransforms
+// instead.
 func (p *THeaderProtocol) AddTransform(transform THeaderTransformID) error {
 	return p.transport.AddTransform(transform)
 }
@@ -100,6 +137,7 @@ func (p *THeaderProtocol) WriteMessageBegin(ctx context.Context, name string, ty
 	if err != nil {
 		return err
 	}
+	PropagateTConfiguration(newProto, p.cfg)
 	p.protocol = newProto
 	p.transport.SequenceID = seqID
 	return p.protocol.WriteMessageBegin(ctx, name, typeID, seqID)
@@ -188,6 +226,10 @@ func (p *THeaderProtocol) WriteBinary(ctx context.Context, value []byte) error {
 	return p.protocol.WriteBinary(ctx, value)
 }
 
+func (p *THeaderProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	return p.protocol.WriteUUID(ctx, value)
+}
+
 // ReadFrame calls underlying THeaderTransport's ReadFrame function.
 func (p *THeaderProtocol) ReadFrame(ctx context.Context) error {
 	return p.transport.ReadFrame(ctx)
@@ -201,8 +243,8 @@ func (p *THeaderProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 	var newProto TProtocol
 	newProto, err = p.transport.Protocol().GetProtocol(p.transport)
 	if err != nil {
-		tAppExc, ok := err.(TApplicationException)
-		if !ok {
+		var tAppExc TApplicationException
+		if !errors.As(err, &tAppExc) {
 			return
 		}
 		if e := p.protocol.WriteMessageBegin(ctx, "", EXCEPTION, seqID); e != nil {
@@ -219,6 +261,7 @@ func (p *THeaderProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 		}
 		return
 	}
+	PropagateTConfiguration(newProto, p.cfg)
 	p.protocol = newProto
 
 	return p.protocol.ReadMessageBegin(ctx)
@@ -300,20 +343,22 @@ func (p *THeaderProtocol) ReadBinary(ctx context.Context) (value []byte, err err
 	return p.protocol.ReadBinary(ctx)
 }
 
+func (p *THeaderProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	return p.protocol.ReadUUID(ctx)
+}
+
 func (p *THeaderProtocol) Skip(ctx context.Context, fieldType TType) error {
 	return p.protocol.Skip(ctx, fieldType)
 }
 
-// GetResponseHeadersFromClient is a helper function to get the read THeaderMap
-// from the last response received from the given client.
-//
-// If the last response was not sent over THeader protocol,
-// a nil map will be returned.
-func GetResponseHeadersFromClient(c TClient) THeaderMap {
-	if sc, ok := c.(*TStandardClient); ok {
-		if hp, ok := sc.iprot.(*THeaderProtocol); ok {
-			return hp.transport.readHeaders
-		}
-	}
-	return nil
+// SetTConfiguration implements TConfigurationSetter.
+func (p *THeaderProtocol) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(p.transport, cfg)
+	PropagateTConfiguration(p.protocol, cfg)
+	p.cfg = cfg
 }
+
+var (
+	_ TConfigurationSetter = (*tHeaderProtocolFactory)(nil)
+	_ TConfigurationSetter = (*THeaderProtocol)(nil)
+)

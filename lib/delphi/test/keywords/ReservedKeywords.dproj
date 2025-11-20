@@ -1,4 +1,22 @@
-﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements. See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership. The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License. You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied. See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-->
+	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
 			<ProjectGuid>{F2E9B6FC-A931-4271-8E30-5A4E402481B4}</ProjectGuid>
 			<MainSource>ReservedKeywords.dpr</MainSource>
@@ -24,11 +42,11 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_ExeOutput>bin\$(Config)\$(Platform)</DCC_ExeOutput>
+			<DCC_DcuOutput>dcu\$(Project)\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_UnitSearchPath>gen-delphi;..\..\src;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 			<DCC_N>false</DCC_N>
 			<DCC_S>false</DCC_S>
 			<DCC_K>false</DCC_K>

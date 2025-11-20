@@ -31,6 +31,10 @@ tutorialclient: all
 clean-local:
 	$(RM) -r gen-*
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	PhpServer.php \
-	PhpClient.php
+	PhpClient.php \
+	runserver.py

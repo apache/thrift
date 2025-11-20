@@ -24,11 +24,12 @@
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
 #include <memory>
+#include <openssl/opensslv.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
 #include <vector>
-#ifdef __linux__
+#ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 
@@ -107,7 +108,13 @@ struct SecurityFixture
             shared_ptr<TSSLServerSocket> pServerSocket;
 
             pServerSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
-            pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+            #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                // OpenSSL 1.1.0 introduced @SECLEVEL. Modern distributions limit TLS 1.0/1.1
+                // to @SECLEVEL=0 or 1, so specify it to test all combinations.
+                pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@SECLEVEL=0:@STRENGTH");
+            #else
+                pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+            #endif
             pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
             pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
             pServerSocketFactory->server(true);
@@ -161,6 +168,11 @@ struct SecurityFixture
             {
                 pClientSocketFactory.reset(new TSSLSocketFactory(static_cast<apache::thrift::transport::SSLProtocol>(protocol)));
                 pClientSocketFactory->authenticate(true);
+                #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                    // OpenSSL 1.1.0 introduced @SECLEVEL. Modern distributions limit TLS 1.0/1.1
+                    // to @SECLEVEL=0 or 1, so specify it to test all combinations.
+                    pClientSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@SECLEVEL=0");
+                #endif
                 pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
                 pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
                 pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
@@ -219,6 +231,7 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
     try
     {
         // matrix of connection success between client and server with different SSLProtocol selections
+        static_assert(apache::thrift::transport::LATEST == 5, "Mismatch in assumed number of ssl protocols");
         bool matrix[apache::thrift::transport::LATEST + 1][apache::thrift::transport::LATEST + 1] =
         {
     //   server    = SSLTLS   SSLv2    SSLv3    TLSv1_0  TLSv1_1  TLSv1_2

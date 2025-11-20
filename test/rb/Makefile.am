@@ -17,8 +17,8 @@
 # under the License.
 #
 
-stubs: $(THRIFT) ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen rb ../ThriftTest.thrift
+stubs: $(THRIFT) ../v0.16/ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen rb ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
 	$(THRIFT) --gen rb ../Recursive.thrift
 
@@ -32,6 +32,9 @@ endif
 
 clean-local:
 	$(RM) -r gen-rb/
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 dist-hook:
 	$(RM) -r $(distdir)/gen-rb/

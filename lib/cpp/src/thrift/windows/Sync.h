@@ -25,8 +25,27 @@
 #endif
 
 #include <thrift/concurrency/Exception.h>
-#include <boost/noncopyable.hpp>
-#include <Windows.h>
+#include <thrift/TNonCopyable.h>
+
+// Including Windows.h can conflict with Winsock2 usage, and also
+// adds problematic macros like min() and max(). Try to work around:
+#ifndef NOMINMAX
+#define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
+#undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 
 /*
   Lightweight synchronization objects that only make sense on Windows.  For cross-platform
@@ -36,22 +55,22 @@
 namespace apache {
 namespace thrift {
 
-struct TCriticalSection : boost::noncopyable {
+struct TCriticalSection : apache::thrift::TNonCopyable {
   CRITICAL_SECTION cs;
   TCriticalSection() { InitializeCriticalSection(&cs); }
-  ~TCriticalSection() { DeleteCriticalSection(&cs); }
+  virtual ~TCriticalSection() { DeleteCriticalSection(&cs); }
 };
 
-class TAutoCrit : boost::noncopyable {
+class TAutoCrit : apache::thrift::TNonCopyable {
 private:
   CRITICAL_SECTION* cs_;
 
 public:
   explicit TAutoCrit(TCriticalSection& cs) : cs_(&cs.cs) { EnterCriticalSection(cs_); }
-  ~TAutoCrit() { LeaveCriticalSection(cs_); }
+  virtual ~TAutoCrit() { LeaveCriticalSection(cs_); }
 };
 
-struct TAutoResetEvent : boost::noncopyable {
+struct TAutoResetEvent : apache::thrift::TNonCopyable {
   HANDLE h;
 
   TAutoResetEvent() {
@@ -61,10 +80,10 @@ struct TAutoResetEvent : boost::noncopyable {
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TAutoResetEvent() { CloseHandle(h); }
+  virtual ~TAutoResetEvent() { CloseHandle(h); }
 };
 
-struct TManualResetEvent : boost::noncopyable {
+struct TManualResetEvent : apache::thrift::TNonCopyable {
   HANDLE h;
 
   TManualResetEvent() {
@@ -74,10 +93,10 @@ struct TManualResetEvent : boost::noncopyable {
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TManualResetEvent() { CloseHandle(h); }
+  virtual ~TManualResetEvent() { CloseHandle(h); }
 };
 
-struct TAutoHandle : boost::noncopyable {
+struct TAutoHandle : apache::thrift::TNonCopyable {
   HANDLE h;
   explicit TAutoHandle(HANDLE h_ = INVALID_HANDLE_VALUE) : h(h_) {}
   ~TAutoHandle() {

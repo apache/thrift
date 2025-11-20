@@ -15,8 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#[macro_use]
-extern crate clap;
+use clap::{clap_app, value_t};
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
 use thrift::transport::{
@@ -68,7 +67,7 @@ fn run() -> thrift::Result<()> {
     let logid = 32;
 
     // let's do...a multiply!
-    let res = client.calculate(logid, Work::new(7, 8, Operation::Multiply, None))?;
+    let res = client.calculate(logid, Work::new(7, 8, Operation::MULTIPLY, None))?;
     println!("multiplied 7 and 8 and got {}", res);
 
     // let's get the log for it
@@ -78,7 +77,7 @@ fn run() -> thrift::Result<()> {
     // ok - let's be bad :(
     // do a divide by 0
     // logid doesn't matter; won't be recorded
-    let res = client.calculate(77, Work::new(2, 0, Operation::Divide, "we bad".to_owned()));
+    let res = client.calculate(77, Work::new(2, 0, Operation::DIVIDE, "we bad".to_owned()));
 
     // we should have gotten an exception back
     match res {
@@ -108,7 +107,7 @@ fn new_client(
 
     // open the underlying TCP stream
     println!("connecting to tutorial server on {}:{}", host, port);
-    c.open(&format!("{}:{}", host, port))?;
+    c.open(format!("{}:{}", host, port))?;
 
     // clone the TCP channel into two halves, one which
     // we'll use for reading, the other for writing

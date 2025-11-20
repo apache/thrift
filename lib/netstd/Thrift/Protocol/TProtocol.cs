@@ -50,6 +50,7 @@ namespace Thrift.Protocol
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public void IncrementRecursionDepth()
@@ -147,6 +148,7 @@ namespace Thrift.Protocol
         }
 
         public abstract Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken = default);
+        public abstract Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken = default);
 
         public abstract ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken = default);
 
@@ -191,5 +193,7 @@ namespace Thrift.Protocol
         }
 
         public abstract ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken = default);
+
+        public abstract ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken = default);
     }
 }

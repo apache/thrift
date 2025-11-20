@@ -21,6 +21,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
@@ -89,7 +90,7 @@ namespace Thrift.Transport.Client
 
         public override void Close()
         {
-            /** do nothing **/
+            /* do nothing */
         }
 
         public void Seek(int delta, SeekOrigin origin)
@@ -107,14 +108,14 @@ namespace Thrift.Transport.Client
                     newPos = _bytesUsed + delta;
                     break;
                 default:
-                    throw new ArgumentException(nameof(origin));
+                    throw new ArgumentException("Unrecognized value",nameof(origin));
             }
 
             if ((0 > newPos) || (newPos > _bytesUsed))
-                throw new ArgumentException(nameof(origin));
+                throw new ArgumentException("Cannot seek outside of the valid range",nameof(origin));
             Position = newPos;
 
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
             CountConsumedMessageBytes(Position);
         }
 
@@ -144,7 +145,7 @@ namespace Thrift.Transport.Client
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
             return Task.CompletedTask;
         }
 

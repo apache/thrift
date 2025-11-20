@@ -21,23 +21,75 @@ set(THRIFT_VERSION @thrift_VERSION@)
 
 @PACKAGE_INIT@
 
-set_and_check(THRIFT_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
-set_and_check(THRIFT_CMAKE_DIR "@PACKAGE_CMAKE_INSTALL_DIR@")
-set_and_check(THRIFT_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
-set(THRIFT_COMPILER "${THRIFT_BIN_DIR}/thrift@CMAKE_EXECUTABLE_SUFFIX@")
+set_and_check(THRIFT_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
+set_and_check(THRIFT_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@/thrift")
+
+if(@BUILD_COMPILER@)
+    set_and_check(THRIFT_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
+    if(NOT DEFINED THRIFT_COMPILER)
+        set(THRIFT_COMPILER "${THRIFT_BIN_DIR}/thrift@CMAKE_EXECUTABLE_SUFFIX@")
+    endif()
+endif()
 
 if (NOT TARGET thrift::thrift)
-  include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
+    include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
 endif()
-
 set(THRIFT_LIBRARIES thrift::thrift)
 
-if ("${THRIFT_LIBRARIES}" STREQUAL "")
-	message(FATAL_ERROR "thrift libraries were not found")
+if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
+    if (NOT TARGET thriftz::thriftz)
+        include("${THRIFT_CMAKE_DIR}/thriftzTargets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftz::thriftz)
 endif()
 
+if(@Qt5_FOUND@ AND @WITH_QT5@)
+    if (NOT TARGET thriftqt5::thriftqt5)
+        include("${THRIFT_CMAKE_DIR}/thriftqt5Targets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftqt5::thriftqt5)
+endif()
+
+if(@Libevent_FOUND@ AND @WITH_LIBEVENT@)
+    if (NOT TARGET thriftnb::thriftnb)
+        include("${THRIFT_CMAKE_DIR}/thriftnbTargets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftnb::thriftnb)
+endif()
+
+if ("${THRIFT_LIBRARIES}" STREQUAL "")
+    message(FATAL_ERROR "thrift libraries were not found")
+endif()
 if (NOT Thrift_FIND_QUIETLY)
-  message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
+    message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
+endif()
+
+
+include(CMakeFindDependencyMacro)
+
+if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
+    find_dependency(ZLIB)
+endif()
+
+if(@OPENSSL_FOUND@ AND @WITH_OPENSSL@)
+    find_dependency(OpenSSL)
+endif()
+
+if(@Libevent_FOUND@ AND @WITH_LIBEVENT@)
+    if(DEFINED CMAKE_MODULE_PATH)
+        set(THRIFT_CMAKE_MODULE_PATH_OLD ${CMAKE_MODULE_PATH})
+    else()
+        unset(THRIFT_CMAKE_MODULE_PATH_OLD)
+    endif()
+    set(CMAKE_MODULE_PATH "${THRIFT_CMAKE_DIR}")
+    find_dependency(Libevent)
+    if(DEFINED THRIFT_CMAKE_MODULE_PATH_OLD)
+        set(CMAKE_MODULE_PATH ${THRIFT_CMAKE_MODULE_PATH_OLD})
+        unset(THRIFT_CMAKE_MODULE_PATH_OLD)
+    else()
+        unset(CMAKE_MODULE_PATH)
+    endif()
 endif()
 
 check_required_components(Thrift)

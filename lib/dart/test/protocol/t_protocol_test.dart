@@ -18,42 +18,42 @@
 library thrift.test.transport.t_json_protocol_test;
 
 import 'dart:async';
+import 'dart:convert' show utf8;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:dart2_constant/convert.dart' show utf8;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
 void main() {
-  final message = new TMessage('my message', TMessageType.ONEWAY, 123);
+  final message = TMessage('my message', TMessageType.ONEWAY, 123);
 
   TProtocol protocol;
 
   Primitive getPrimitive(int tType) {
     switch (tType) {
       case TType.BOOL:
-        return new Primitive(protocol.readBool, protocol.writeBool, false);
+        return Primitive(protocol.readBool, protocol.writeBool, false);
 
       case TType.BYTE:
-        return new Primitive(protocol.readByte, protocol.writeByte, 0);
+        return Primitive(protocol.readByte, protocol.writeByte, 0);
 
       case TType.I16:
-        return new Primitive(protocol.readI16, protocol.writeI16, 0);
+        return Primitive(protocol.readI16, protocol.writeI16, 0);
 
       case TType.I32:
-        return new Primitive(protocol.readI32, protocol.writeI32, 0);
+        return Primitive(protocol.readI32, protocol.writeI32, 0);
 
       case TType.I64:
-        return new Primitive(protocol.readI64, protocol.writeI64, 0);
+        return Primitive(protocol.readI64, protocol.writeI64, 0);
 
       case TType.DOUBLE:
-        return new Primitive(protocol.readDouble, protocol.writeDouble, 0);
+        return Primitive(protocol.readDouble, protocol.writeDouble, 0);
 
       case TType.STRING:
-        return new Primitive(protocol.readString, protocol.writeString, '');
+        return Primitive(protocol.readString, protocol.writeString, '');
 
       default:
-        throw new UnsupportedError("Unsupported TType $tType");
+        throw UnsupportedError("Unsupported TType $tType");
     }
   }
 
@@ -95,7 +95,7 @@ void main() {
     });
 
     test('Test struct', () async {
-      var input = new TStruct();
+      var input = TStruct();
 
       protocol.writeStructBegin(input);
       protocol.writeStructEnd();
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('Test field', () async {
-      var input = new TField('my field', TType.MAP, 123);
+      var input = TField('my field', TType.MAP, 123);
 
       protocol.writeFieldBegin(input);
       protocol.writeFieldEnd();
@@ -128,7 +128,7 @@ void main() {
     });
 
     test('Test map', () async {
-      var input = new TMap(TType.STRING, TType.STRUCT, 123);
+      var input = TMap(TType.STRING, TType.STRUCT, 123);
 
       protocol.writeMapBegin(input);
       protocol.writeMapEnd();
@@ -145,7 +145,7 @@ void main() {
     });
 
     test('Test list', () async {
-      var input = new TList(TType.STRING, 123);
+      var input = TList(TType.STRING, 123);
 
       protocol.writeListBegin(input);
       protocol.writeListEnd();
@@ -161,7 +161,7 @@ void main() {
     });
 
     test('Test set', () async {
-      var input = new TSet(TType.STRING, 123);
+      var input = TSet(TType.STRING, 123);
 
       protocol.writeSetBegin(input);
       protocol.writeSetEnd();
@@ -235,7 +235,7 @@ void main() {
     });
 
     test('Test binary', () async {
-      var input = new Uint8List.fromList(new List.filled(100, 123));
+      var input = Uint8List.fromList(List.filled(100, 123));
 
       protocol.writeBinary(input);
       protocol.writeMessageEnd();
@@ -251,18 +251,18 @@ void main() {
 
     test('Test complex struct', () async {
       // {1: {10: 20}, 2: {30: 40}}
-      protocol.writeStructBegin(new TStruct());
-      protocol.writeFieldBegin(new TField('success', TType.MAP, 0));
-      protocol.writeMapBegin(new TMap(TType.I32, TType.MAP, 2));
+      protocol.writeStructBegin(TStruct());
+      protocol.writeFieldBegin(TField('success', TType.MAP, 0));
+      protocol.writeMapBegin(TMap(TType.I32, TType.MAP, 2));
 
       protocol.writeI32(1); // key
-      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeMapBegin(TMap(TType.I32, TType.I32, 1));
       protocol.writeI32(10); // key
       protocol.writeI32(20); // value
       protocol.writeMapEnd();
 
       protocol.writeI32(2); // key
-      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeMapBegin(TMap(TType.I32, TType.I32, 1));
       protocol.writeI32(30); // key
       protocol.writeI32(40); // value
       protocol.writeMapEnd();
@@ -300,19 +300,19 @@ void main() {
 
     test('Test nested maps and lists', () async {
       // {1: [{10: 20}], 2: [{30: 40}]}
-      protocol.writeMapBegin(new TMap(TType.I32, TType.LIST, 2));
+      protocol.writeMapBegin(TMap(TType.I32, TType.LIST, 2));
 
       protocol.writeI32(1); // key
-      protocol.writeListBegin(new TList(TType.MAP, 1));
-      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeListBegin(TList(TType.MAP, 1));
+      protocol.writeMapBegin(TMap(TType.I32, TType.I32, 1));
       protocol.writeI32(10); // key
       protocol.writeI32(20); // value
       protocol.writeMapEnd();
       protocol.writeListEnd();
 
       protocol.writeI32(2); // key
-      protocol.writeListBegin(new TList(TType.MAP, 1));
-      protocol.writeMapBegin(new TMap(TType.I32, TType.I32, 1));
+      protocol.writeListBegin(TList(TType.MAP, 1));
+      protocol.writeMapBegin(TMap(TType.I32, TType.I32, 1));
       protocol.writeI32(30); // key
       protocol.writeI32(40); // value
       protocol.writeMapEnd();
@@ -349,7 +349,7 @@ void main() {
 
   group('JSON', () {
     setUp(() {
-      protocol = new TJsonProtocol(new TBufferedTransport());
+      protocol = TJsonProtocol(TBufferedTransport());
       protocol.writeMessageBegin(message);
     });
 
@@ -363,10 +363,10 @@ void main() {
            UTF-16: 0xD834 0xDD1E
        */
       var buffer = utf8.encode(r'"\u0001\u0e01 \ud834\udd1e"');
-      var transport = new TBufferedTransport();
+      var transport = TBufferedTransport();
       transport.writeAll(buffer);
 
-      var protocol = new TJsonProtocol(transport);
+      var protocol = TJsonProtocol(transport);
 
       await protocol.transport.flush();
 
@@ -380,7 +380,7 @@ void main() {
 
   group('binary', () {
     setUp(() {
-      protocol = new TBinaryProtocol(new TBufferedTransport());
+      protocol = TBinaryProtocol(TBufferedTransport());
       protocol.writeMessageBegin(message);
     });
 
@@ -389,7 +389,7 @@ void main() {
 
   group('compact', () {
     setUp(() {
-      protocol = new TCompactProtocol(new TBufferedTransport());
+      protocol = TCompactProtocol(TBufferedTransport());
       protocol.writeMessageBegin(message);
     });
 

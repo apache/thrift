@@ -36,7 +36,7 @@ gboolean
 thrift_server_transport_updateKnownMessageSize(ThriftServerTransport *transport, glong size, GError **error)
 {
   gboolean boolean = TRUE;
-  ThriftServerTransport *tst = THRIFT_TRANSPORT (transport);
+  ThriftServerTransport *tst = THRIFT_SERVER_TRANSPORT (transport);
   ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_GET_CLASS (transport);
   glong consumed = tst->knowMessageSize_ - tst->remainingMessageSize_;
   if(!tstc->resetConsumedMessageSize (transport, size, error))
@@ -176,6 +176,7 @@ static void
 thrift_server_transport_class_init (ThriftServerTransportClass *c)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (c);
+  ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_CLASS (c);
   GParamSpec *param_spec = NULL;
   
   /* setup accessors and mutators */
@@ -216,10 +217,10 @@ thrift_server_transport_class_init (ThriftServerTransportClass *c)
   c->listen = thrift_server_transport_listen;
   c->accept = thrift_server_transport_accept;
   c->close = thrift_server_transport_close;
-  c->updateKnownMessageSize = thrift_server_transport_updateKnownMessageSize;
-  c->checkReadBytesAvailable = thrift_server_transport_checkReadBytesAvailable;
-  c->resetConsumedMessageSize = thrift_server_transport_resetConsumedMessageSize;
-  c->countConsumedMessageBytes = thrift_server_transport_countConsumedMessageBytes;
+  tstc->updateKnownMessageSize = thrift_server_transport_updateKnownMessageSize;
+  tstc->checkReadBytesAvailable = thrift_server_transport_checkReadBytesAvailable;
+  tstc->resetConsumedMessageSize = thrift_server_transport_resetConsumedMessageSize;
+  tstc->countConsumedMessageBytes = thrift_server_transport_countConsumedMessageBytes;
 }
 
 static void

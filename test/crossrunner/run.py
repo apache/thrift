@@ -28,7 +28,6 @@ import subprocess
 import sys
 import time
 
-from .compat import str_join
 from .report import ExecReporter, SummaryReporter
 from .test import TestEntry
 from .util import domain_socket_path
@@ -72,7 +71,7 @@ class ExecutionContext(object):
         return args
 
     def start(self):
-        joined = str_join(' ', self.cmd)
+        joined = ' '.join(self.cmd)
         self._log.debug('COMMAND: %s', joined)
         self._log.debug('WORKDIR: %s', self.cwd)
         self._log.debug('LOGFILE: %s', self.report.logpath)
@@ -243,7 +242,11 @@ def run_test(testdir, logdir, test_dict, max_retry, async_mode=True):
                 # kill them off; if we didn't kill them off, something else
                 # happened (crashed?)
                 if test.server.stop_signal != 0:
-                    if sv.killed or sv.returncode > 0:
+                    # for bash scripts, 128+N is the exit code for signal N, since we are sending
+                    # DEFAULT_SIGNAL=1, 128 + 1 is the expected err code
+                    # http://www.gnu.org/software/bash/manual/html_node/Exit-Status.html
+                    allowed_return_code = set([-1, 0, 128 + 1])
+                    if sv.killed or sv.returncode not in allowed_return_code:
                         result |= RESULT_ERROR
                 else:
                     if not sv.killed:
@@ -303,7 +306,7 @@ class PortAllocator(object):
         return port if ok else self._get_domain_port()
 
     def alloc_port(self, socket_type):
-        if socket_type in ('domain', 'abstract'):
+        if socket_type in ('domain', 'abstract','domain-socketactivated'):
             return self._get_domain_port()
         else:
             return self._get_tcp_port()
@@ -320,7 +323,7 @@ class PortAllocator(object):
         self._log.debug('free_port')
         self._lock.acquire()
         try:
-            if socket_type == 'domain':
+            if socket_type in ['domain','domain-socketactivated']:
                 self._dom_ports.remove(port)
                 path = domain_socket_path(port)
                 if os.path.exists(path):

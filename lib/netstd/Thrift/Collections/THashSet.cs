@@ -15,64 +15,37 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Thrift.Collections
 {
     // ReSharper disable once InconsistentNaming
-    public class THashSet<T> : ICollection<T>
+	[Obsolete("deprecated, use HashSet<T> instead")]
+    public class THashSet<T> : System.Collections.Generic.HashSet<T>
     {
-        private readonly HashSet<T> Items;
-
         public THashSet()
+            : base()
         {
-            Items = new HashSet<T>();
         }
 
         public THashSet(int capacity)
+#if NET5_0_OR_GREATER
+            : base(capacity)
+#elif NETFRAMEWORK || NETSTANDARD
+            : base(/*capacity not supported*/)
+#else
+#error Unknown platform
+#endif
         {
-            // TODO: uncomment capacity when NET Standard also implements it
-            Items = new HashSet<T>(/*capacity*/);
         }
 
-        public int Count => Items.Count;
-
-        public bool IsReadOnly => false;
-
-        public void Add(T item)
+        public THashSet(IEnumerable<T> collection)
+            : base(collection)
         {
-            Items.Add(item);
         }
 
-        public void Clear()
-        {
-            Items.Clear();
-        }
-
-        public bool Contains(T item)
-        {
-            return Items.Contains(item);
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            Items.CopyTo(array, arrayIndex);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Items.GetEnumerator();
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return ((IEnumerable<T>) Items).GetEnumerator();
-        }
-
-        public bool Remove(T item)
-        {
-            return Items.Remove(item);
-        }
     }
 }
+

@@ -39,9 +39,6 @@ using std::vector;
 using std::stack;
 using std::set;
 
-static const string endl = "\n";
-static const string quot = "\"";
-
 static const string default_ns_prefix = "http://thrift.apache.org/xml/ns/";
 
 /**
@@ -83,6 +80,8 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
+
   void generate_program() override;
 
   void iterate_program(t_program* program);
@@ -94,7 +93,7 @@ public:
   void generate_service(t_service* tservice) override;
   void generate_struct(t_struct* tstruct) override;
 
-  void generate_annotations(std::map<std::string, std::string> annotations);
+  void generate_annotations(std::map<std::string, std::vector<std::string>> annotations);
 
 private:
   bool should_merge_includes_;
@@ -165,17 +164,23 @@ void t_xml_generator::init_generator() {
 string t_xml_generator::target_namespace(t_program* program) {
   std::map<std::string, std::string> map;
   std::map<std::string, std::string>::iterator iter;
-  map = program->get_namespace_annotations("xml");
-  if ((iter = map.find("targetNamespace")) != map.end()) {
-    return iter->second;
+  std::map<std::string, std::vector<std::string>> annotations;
+  std::map<std::string, std::vector<std::string>>::iterator annotations_iter;
+  annotations = program->get_namespace_annotations("xml");
+  if ((annotations_iter = annotations.find("targetNamespace")) != annotations.end()) {
+    if (!annotations_iter->second.empty()) {
+      return annotations_iter->second.back();
+    }
   }
   map = program->get_namespaces();
   if ((iter = map.find("xml")) != map.end()) {
     return default_ns_prefix + iter->second;
   }
-  map = program->get_namespace_annotations("*");
-  if ((iter = map.find("xml.targetNamespace")) != map.end()) {
-    return iter->second;
+  annotations = program->get_namespace_annotations("*");
+  if ((annotations_iter = annotations.find("xml.targetNamespace")) != annotations.end()) {
+    if (!annotations_iter->second.empty()) {
+      return annotations_iter->second.back();
+    }
   }
   map = program->get_namespaces();
   if ((iter = map.find("*")) != map.end()) {
@@ -188,7 +193,7 @@ void t_xml_generator::write_xml_comment(string msg) {
   close_top_element();
   // TODO: indent any EOLs that may occur with msg
   // TODO: proper msg escaping needed?
-  f_xml_ << indent() << "<!-- " << msg << " -->"  << endl;
+  f_xml_ << indent() << "<!-- " << msg << " -->"  << '\n';
   top_element_is_empty = false;
 }
 
@@ -196,7 +201,7 @@ void t_xml_generator::close_top_element() {
   if( top_element_is_open) {
     top_element_is_open = false;
     if (elements_.size() > 0 && top_element_is_empty) {
-      f_xml_ << ">" << endl;
+      f_xml_ << ">" << '\n';
     }
   }
 }
@@ -216,9 +221,9 @@ void t_xml_generator::write_element_start(string name) {
 void t_xml_generator::write_element_end() {
   indent_down();
   if (top_element_is_empty && top_element_is_open) {
-    f_xml_ << " />" << endl;
+    f_xml_ << " />" << '\n';
   } else {
-    f_xml_ << indent() << "</" << elements_.top() << ">" << endl;
+    f_xml_ << indent() << "</" << elements_.top() << ">" << '\n';
   }
   top_element_is_empty = false;
   elements_.pop();
@@ -240,7 +245,7 @@ void t_xml_generator::write_element_string(string name, string val) {
   top_element_is_empty = false;
   f_xml_ << indent()
     << "<" << name << ">" << escape_xml_string(val) << "</" << name << ">"
-    << endl;
+    << '\n';
 }
 
 string t_xml_generator::escape_xml_string(const string& input) {
@@ -432,13 +437,15 @@ void t_xml_generator::write_doc(t_doc* tdoc) {
 }
 
 void t_xml_generator::generate_annotations(
-    std::map<std::string, std::string> annotations) {
-  std::map<std::string, std::string>::iterator iter;
+    std::map<std::string, std::vector<std::string>> annotations) {
+  std::map<std::string, std::vector<std::string>>::iterator iter;
   for (iter = annotations.begin(); iter != annotations.end(); ++iter) {
-    write_element_start("annotation");
-    write_attribute("key", iter->first);
-    write_attribute("value", iter->second);
-    write_element_end();
+    for (auto& annotations_value : iter->second) {
+      write_element_start("annotation");
+      write_attribute("key", iter->first);
+      write_attribute("value", annotations_value);
+      write_element_end();
+    }
   }
 }
 
@@ -501,7 +508,7 @@ void t_xml_generator::write_const_value(t_const_value* value) {
 
   default:
     indent_up();
-    f_xml_ << indent() << "<null />" << endl;
+    f_xml_ << indent() << "<null />" << '\n';
     indent_down();
     break;
   }
@@ -683,6 +690,11 @@ string t_xml_generator::get_type_name(t_type* ttype) {
   }
   return "(unknown)";
 }
+
+std::string t_xml_generator::display_name() const {
+  return "XML";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
   xml,

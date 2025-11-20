@@ -33,7 +33,6 @@ const (
 
 // JSON protocol implementation for thrift.
 // Utilizes Simple JSON protocol
-//
 type TJSONProtocol struct {
 	*TSimpleJSONProtocol
 }
@@ -41,8 +40,8 @@ type TJSONProtocol struct {
 // Constructor
 func NewTJSONProtocol(t TTransport) *TJSONProtocol {
 	v := &TJSONProtocol{TSimpleJSONProtocol: NewTSimpleJSONProtocol(t)}
-	v.parseContextStack = append(v.parseContextStack, int(_CONTEXT_IN_TOPLEVEL))
-	v.dumpContext = append(v.dumpContext, int(_CONTEXT_IN_TOPLEVEL))
+	v.parseContextStack.push(_CONTEXT_IN_TOPLEVEL)
+	v.dumpContext.push(_CONTEXT_IN_TOPLEVEL)
 	return v
 }
 
@@ -311,11 +310,18 @@ func (p *TJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, valueT
 	}
 
 	// read size
-	iSize, e := p.ReadI64(ctx)
-	if e != nil {
-		return keyType, valueType, size, e
+	iSize, err := p.ReadI64(ctx)
+	if err != nil {
+		return keyType, valueType, size, err
 	}
 	size = int(iSize)
+
+	minElemSize := p.getMinSerializedSize(keyType) + p.getMinSerializedSize(valueType)
+	totalMinSize := int32(iSize) * minElemSize
+	err = checkSizeForProtocol(totalMinSize, p.cfg)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
 
 	_, e = p.ParseObjectStart()
 	return keyType, valueType, size, e
@@ -485,47 +491,19 @@ func (p *TJSONProtocol) ParseElemListBegin() (elemType TType, size int, e error)
 	if err != nil {
 		return elemType, size, err
 	}
-	nSize, _, err2 := p.ParseI64()
-	size = int(nSize)
-	return elemType, size, err2
-}
-
-func (p *TJSONProtocol) readElemListBegin() (elemType TType, size int, e error) {
-	if isNull, e := p.ParseListBegin(); isNull || e != nil {
-		return VOID, 0, e
-	}
-	// We don't really use the ctx in ReadString implementation,
-	// so this is safe for now.
-	// We might want to add context to ParseElemListBegin if we start to use
-	// ctx in ReadString implementation in the future.
-	sElemType, err := p.ReadString(context.Background())
+	nSize, _, err := p.ParseI64()
 	if err != nil {
-		return VOID, size, err
+		return elemType, 0, err
 	}
-	elemType, err = p.StringToTypeId(sElemType)
-	if err != nil {
-		return elemType, size, err
-	}
-	nSize, _, err2 := p.ParseI64()
 	size = int(nSize)
-	return elemType, size, err2
-}
 
-func (p *TJSONProtocol) writeElemListBegin(elemType TType, size int) error {
-	if e := p.OutputListBegin(); e != nil {
-		return e
+	minElemSize := p.getMinSerializedSize(elemType)
+	totalMinSize := int32(nSize) * minElemSize
+	err = checkSizeForProtocol(totalMinSize, p.cfg)
+	if err != nil {
+		return elemType, 0, err
 	}
-	s, e1 := p.TypeIdToString(elemType)
-	if e1 != nil {
-		return e1
-	}
-	if e := p.OutputString(s); e != nil {
-		return e
-	}
-	if e := p.OutputI64(int64(size)); e != nil {
-		return e
-	}
-	return nil
+	return elemType, size, nil
 }
 
 func (p *TJSONProtocol) TypeIdToString(fieldType TType) (string, error) {
@@ -552,6 +530,8 @@ func (p *TJSONProtocol) TypeIdToString(fieldType TType) (string, error) {
 		return "set", nil
 	case LIST:
 		return "lst", nil
+	case UUID:
+		return "uid", nil
 	}
 
 	e := fmt.Errorf("Unknown fieldType: %d", int(fieldType))
@@ -582,8 +562,48 @@ func (p *TJSONProtocol) StringToTypeId(fieldType string) (TType, error) {
 		return TType(SET), nil
 	case "lst":
 		return TType(LIST), nil
+	case "uid":
+		return TType(UUID), nil
 	}
 
 	e := fmt.Errorf("Unknown type identifier: %s", fieldType)
 	return TType(STOP), NewTProtocolExceptionWithType(INVALID_DATA, e)
 }
+
+// Return the minimum number of bytes a type will consume on the wire
+func (p *TJSONProtocol) getMinSerializedSize(ttype TType) int32 {
+	switch ttype {
+	case STOP:
+		return 1 // T_STOP needs to count itself
+	case VOID:
+		return 1 // T_VOID needs to count itself
+	case BOOL:
+		return 1 // written as int
+	case BYTE:
+		return 1
+	case DOUBLE:
+		return 1
+	case I16:
+		return 1
+	case I32:
+		return 1
+	case I64:
+		return 1
+	case STRING:
+		return 2 // empty string
+	case STRUCT:
+		return 2 // empty struct
+	case MAP:
+		return 2 // empty map
+	case SET:
+		return 2 // empty set
+	case LIST:
+		return 2 // empty list
+	case UUID:
+		return 16 // empty UUID
+	default:
+		return 1 // unknown type
+	}
+}
+
+var _ TConfigurationSetter = (*TJSONProtocol)(nil)

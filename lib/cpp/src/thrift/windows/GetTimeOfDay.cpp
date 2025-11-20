@@ -38,7 +38,7 @@ int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
 }
 #else
 #define WIN32_LEAN_AND_MEAN
-#include <Winsock2.h>
+#include <winsock2.h>
 #include <cstdint>
 #include <sstream>
 #include <thrift/transport/TTransportException.h>

@@ -18,21 +18,26 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ThriftTest;
+using System.Threading.Tasks;
 
 namespace Server
 {
     public class Program
     {
-        public static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
-            try
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Console.SetBufferSize(Console.BufferWidth, 4096);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to grow scroll-back buffer");
+                try
+                {
+                    Console.SetBufferSize(Console.BufferWidth, 4096);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to grow scroll-back buffer");
+                }
             }
 
             // run whatever mode is choosen, default to test impl
@@ -42,12 +47,12 @@ namespace Server
                 case "server":  // crosstest wants to pass this, so just emit a hint and ignore
                     Console.WriteLine("Hint: The 'server' argument is no longer required.");
                     argslist.RemoveAt(0);
-                    return TestServer.Execute(argslist);
+                    return await TestServer.Execute(argslist);
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    return TestServer.Execute(argslist);
+                    return await TestServer.Execute(argslist);
             }
         }
 
@@ -62,5 +67,3 @@ namespace Server
         }
     }
 }
-
-

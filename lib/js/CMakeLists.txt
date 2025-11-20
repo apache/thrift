@@ -38,12 +38,17 @@ add_custom_target(ThriftJavascriptPreDeps ALL
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-add_custom_target(ThriftJavascript ALL
+file(GLOB_RECURSE THRIFTJAVASCRIPT_SOURCES LIST_DIRECTORIES false
+    "${CMAKE_CURRENT_SOURCE_DIR}/*")
+list(FILTER THRIFTJAVASCRIPT_SOURCES EXCLUDE REGEX ".*/(dist|doc)/.*")
+add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/dist/thrift.js"
     COMMENT "Building Javascript library using npx Grunt wrapper"
-    DEPENDS ThriftJavascriptPreDeps
+    DEPENDS ThriftJavascriptPreDeps ${THRIFTJAVASCRIPT_SOURCES}
     COMMAND npx grunt
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
+add_custom_target(ThriftJavascript ALL
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/dist/thrift.js")
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/dist/"
         DESTINATION "${JAVASCRIPT_INSTALL_DIR}"

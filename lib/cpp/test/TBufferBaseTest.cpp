@@ -18,7 +18,7 @@
  */
 
 #include <algorithm>
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TShortReadTransport.h>
 #include <memory>

@@ -21,6 +21,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable CA1510  // net8 - use ThrowIfNull
+#pragma warning disable CA1513  // net8 - use ThrowIfNull
+
 namespace Thrift.Transport
 {
     //TODO: think about client info 
@@ -35,6 +39,7 @@ namespace Thrift.Transport
         public abstract TConfiguration Configuration { get; }
         public abstract void UpdateKnownMessageSize(long size);
         public abstract void CheckReadBytesAvailable(long numBytes);
+        public abstract void ResetMessageSizeAndConsumedBytes(long newSize = -1);
         public void Dispose()
         {
             Dispose(true);

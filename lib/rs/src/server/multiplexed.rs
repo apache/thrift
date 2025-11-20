@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use log::debug;
+
 use std::collections::HashMap;
 use std::convert::Into;
 use std::fmt;
@@ -25,7 +27,7 @@ use crate::protocol::{TInputProtocol, TMessageIdentifier, TOutputProtocol, TStor
 
 use super::{handle_process_result, TProcessor};
 
-const MISSING_SEPARATOR_AND_NO_DEFAULT: &'static str =
+const MISSING_SEPARATOR_AND_NO_DEFAULT: &str =
     "missing service separator and no default processor set";
 type ThreadSafeProcessor = Box<dyn TProcessor + Send + Sync>;
 
@@ -70,7 +72,7 @@ impl TMultiplexedProcessor {
     /// Returns success if a new entry was inserted. Returns an error if:
     /// * A processor exists for `service_name`
     /// * You attempt to register a processor as default, and an existing default exists
-    #[cfg_attr(feature = "cargo-clippy", allow(map_entry))]
+    #[allow(clippy::map_entry)]
     pub fn register<S: Into<String>>(
         &mut self,
         service_name: S,
@@ -134,7 +136,11 @@ impl TMultiplexedProcessor {
 }
 
 impl TProcessor for TMultiplexedProcessor {
-    fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> crate::Result<()> {
+    fn process(
+        &self,
+        i_prot: &mut dyn TInputProtocol,
+        o_prot: &mut dyn TOutputProtocol,
+    ) -> crate::Result<()> {
         let msg_ident = i_prot.read_message_begin()?;
 
         debug!("process incoming msg id:{:?}", &msg_ident);
@@ -145,7 +151,7 @@ impl TProcessor for TMultiplexedProcessor {
 }
 
 impl Debug for TMultiplexedProcessor {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let stored = self.stored.lock().unwrap();
         write!(
             f,
@@ -164,8 +170,7 @@ fn split_ident_name(ident_name: &str) -> (Option<&str>, &str) {
             let (_, svc_call) = svc_call.split_at(1); // remove colon from service call name
             (Some(svc_name), svc_call)
         })
-        .or_else(|| Some((None, ident_name)))
-        .unwrap()
+        .unwrap_or((None, ident_name))
 }
 
 fn missing_processor_message(svc_name: Option<&str>) -> String {
@@ -181,7 +186,9 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
 
-    use crate::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType};
+    use crate::protocol::{
+        TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType,
+    };
     use crate::transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
     use crate::{ApplicationError, ApplicationErrorKind};
 
@@ -190,7 +197,7 @@ mod tests {
     #[test]
     fn should_split_name_into_proper_separator_and_service_call() {
         let ident_name = "foo:bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, Some("foo"));
         assert_eq!(call, "bar_call");
     }
@@ -198,7 +205,7 @@ mod tests {
     #[test]
     fn should_return_full_ident_if_no_separator_exists() {
         let ident_name = "bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, None);
         assert_eq!(call, "bar_call");
     }
@@ -259,11 +266,15 @@ mod tests {
     }
 
     impl TProcessor for Service {
-        fn process(&self, _: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> crate::Result<()> {
-            let res = self
-                .invoked
-                .compare_and_swap(false, true, Ordering::Relaxed);
-            if res {
+        fn process(
+            &self,
+            _: &mut dyn TInputProtocol,
+            _: &mut dyn TOutputProtocol,
+        ) -> crate::Result<()> {
+            let res =
+                self.invoked
+                    .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed);
+            if res.is_ok() {
                 Ok(())
             } else {
                 Err("failed swap".into())
@@ -300,8 +311,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 1 should have been invoked, not service 2
-        assert_eq!(atm_1.load(Ordering::Relaxed), true);
-        assert_eq!(atm_2.load(Ordering::Relaxed), false);
+        assert!(atm_1.load(Ordering::Relaxed));
+        assert!(!atm_2.load(Ordering::Relaxed));
     }
 
     #[test]
@@ -333,8 +344,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 2 should have been invoked, not service 1
-        assert_eq!(atm_1.load(Ordering::Relaxed), false);
-        assert_eq!(atm_2.load(Ordering::Relaxed), true);
+        assert!(!atm_1.load(Ordering::Relaxed));
+        assert!(atm_2.load(Ordering::Relaxed));
     }
 
     fn build_objects() -> (

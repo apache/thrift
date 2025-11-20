@@ -22,7 +22,7 @@ package thrift
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"math"
 	"net"
 	"net/http"
@@ -40,11 +40,12 @@ var (
 	INT64_VALUES   []int64
 	DOUBLE_VALUES  []float64
 	STRING_VALUES  []string
+	UUID_VALUES    []Tuuid
 )
 
 func init() {
 	protocol_bdata = make([]byte, PROTOCOL_BINARY_DATA_SIZE)
-	for i := 0; i < PROTOCOL_BINARY_DATA_SIZE; i++ {
+	for i := range PROTOCOL_BINARY_DATA_SIZE {
 		protocol_bdata[i] = byte((i + 'a') % 255)
 	}
 	BOOL_VALUES = []bool{false, true, false, false, true}
@@ -54,13 +55,20 @@ func init() {
 	INT64_VALUES = []int64{459, 0, 1, -1, -128, 127, 32767, 2147483647, -2147483535, 34359738481, -35184372088719, -9223372036854775808, 9223372036854775807}
 	DOUBLE_VALUES = []float64{459.3, 0.0, -1.0, 1.0, 0.5, 0.3333, 3.14159, 1.537e-38, 1.673e25, 6.02214179e23, -6.02214179e23, INFINITY.Float64(), NEGATIVE_INFINITY.Float64(), NAN.Float64()}
 	STRING_VALUES = []string{"", "a", "st[uf]f", "st,u:ff with spaces", "stuff\twith\nescape\\characters'...\"lots{of}fun</xml>"}
+	UUID_VALUES = []Tuuid{
+		{},
+		Must(ParseTuuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8")),
+	}
 }
 
 type HTTPEchoServer struct{}
 type HTTPHeaderEchoServer struct{}
 
 func (p *HTTPEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	buf, err := ioutil.ReadAll(req.Body)
+	buf, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(buf)
@@ -71,7 +79,7 @@ func (p *HTTPEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (p *HTTPHeaderEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	buf, err := ioutil.ReadAll(req.Body)
+	buf, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(buf)
@@ -211,12 +219,27 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 			continue
 		}
 		p := protocolFactory.GetProtocol(trans)
+		ReadWriteUUID(t, p, trans)
+		trans.Close()
+	}
+	for _, tf := range transports {
+		trans, err := tf.GetTransport(nil)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		p := protocolFactory.GetProtocol(trans)
 		ReadWriteI64(t, p, trans)
 		ReadWriteDouble(t, p, trans)
 		ReadWriteBinary(t, p, trans)
 		ReadWriteByte(t, p, trans)
+		ReadWriteUUID(t, p, trans)
 		trans.Close()
 	}
+
+	t.Run("UnmatchedBeginEnd", func(t *testing.T) {
+		UnmatchedBeginEndProtocolTest(t, protocolFactory)
+	})
 }
 
 func ReadWriteBool(t testing.TB, p TProtocol, trans TTransport) {
@@ -508,10 +531,132 @@ func ReadWriteBinary(t testing.TB, p TProtocol, trans TTransport) {
 	if len(v) != len(value) {
 		t.Errorf("%s: %T %T len(v) != len(value)... %d != %d", "ReadWriteBinary", p, trans, len(v), len(value))
 	} else {
-		for i := 0; i < len(v); i++ {
+		for i := range v {
 			if v[i] != value[i] {
 				t.Errorf("%s: %T %T %s != %s", "ReadWriteBinary", p, trans, v, value)
 			}
 		}
 	}
+}
+
+func ReadWriteUUID(t testing.TB, p TProtocol, trans TTransport) {
+	ctx := context.Background()
+	thetype := TType(UUID)
+	thelen := len(UUID_VALUES)
+	p.WriteListBegin(ctx, thetype, thelen)
+	for _, v := range UUID_VALUES {
+		p.WriteUUID(ctx, v)
+	}
+	p.WriteListEnd(ctx)
+	p.Flush(ctx)
+	thetype2, thelen2, err := p.ReadListBegin(ctx)
+	if err != nil {
+		t.Errorf("%s: %T %T %q Error reading list: %q", "ReadWriteUUID", p, trans, err, STRING_VALUES)
+	}
+	_, ok := p.(*TSimpleJSONProtocol)
+	if !ok {
+		if thetype != thetype2 {
+			t.Errorf("%s: %T %T type %s != type %s", "ReadWriteUUID", p, trans, thetype, thetype2)
+		}
+		if thelen != thelen2 {
+			t.Errorf("%s: %T %T len %v != len %v", "ReadWriteUUID", p, trans, thelen, thelen2)
+		}
+	}
+	for k, v := range UUID_VALUES {
+		value, err := p.ReadUUID(ctx)
+		if err != nil {
+			t.Errorf("%s: %T %T %q Error reading UUID at index %d: %q", "ReadWriteUUID", p, trans, err, k, v)
+		}
+		if v != value {
+			t.Errorf("%s: %T %T %v != %v", "ReadWriteUUID", p, trans, v, value)
+		}
+	}
+	if err != nil {
+		t.Errorf("%s: %T %T Unable to read list end: %q", "ReadWriteUUID", p, trans, err)
+	}
+}
+
+func UnmatchedBeginEndProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
+	// NOTE: not all protocol implementations do strict state check to
+	// return an error on unmatched Begin/End calls.
+	// This test is only meant to make sure that those unmatched Begin/End
+	// calls won't cause panic. There's no real "test" here.
+	trans := NewTMemoryBuffer()
+	t.Run("Read", func(t *testing.T) {
+		t.Run("Message", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadMessageEnd(context.Background())
+			p.ReadMessageEnd(context.Background())
+		})
+		t.Run("Struct", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadStructEnd(context.Background())
+			p.ReadStructEnd(context.Background())
+		})
+		t.Run("Field", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadFieldEnd(context.Background())
+			p.ReadFieldEnd(context.Background())
+		})
+		t.Run("Map", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadMapEnd(context.Background())
+			p.ReadMapEnd(context.Background())
+		})
+		t.Run("List", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadListEnd(context.Background())
+			p.ReadListEnd(context.Background())
+		})
+		t.Run("Set", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.ReadSetEnd(context.Background())
+			p.ReadSetEnd(context.Background())
+		})
+	})
+	t.Run("Write", func(t *testing.T) {
+		t.Run("Message", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteMessageEnd(context.Background())
+			p.WriteMessageEnd(context.Background())
+		})
+		t.Run("Struct", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteStructEnd(context.Background())
+			p.WriteStructEnd(context.Background())
+		})
+		t.Run("Field", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteFieldEnd(context.Background())
+			p.WriteFieldEnd(context.Background())
+		})
+		t.Run("Map", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteMapEnd(context.Background())
+			p.WriteMapEnd(context.Background())
+		})
+		t.Run("List", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteListEnd(context.Background())
+			p.WriteListEnd(context.Background())
+		})
+		t.Run("Set", func(t *testing.T) {
+			trans.Reset()
+			p := protocolFactory.GetProtocol(trans)
+			p.WriteSetEnd(context.Background())
+			p.WriteSetEnd(context.Background())
+		})
+	})
+	trans.Close()
 }

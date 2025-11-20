@@ -25,6 +25,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079  // unneeded suppression -> all except net8
+#pragma warning disable IDE0301  // simplify collection init -> net8 only
+#pragma warning disable IDE0305  // simplify collection init -> net8 only
+
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
@@ -89,6 +93,22 @@ namespace Thrift.Transport.Client
         // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
         public readonly string UserAgent = "Thrift netstd THttpClient";
 
+        public int ConnectTimeout
+        {
+            set
+            {
+                _connectTimeout = value;
+                if(_httpClient != null)
+                    _httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
+            }
+            get
+            {
+                if (_httpClient == null)
+                    return _connectTimeout;
+                return (int)_httpClient.Timeout.TotalMilliseconds;
+            }
+        }
+
         public override bool IsOpen => true;
 
         public HttpRequestHeaders RequestHeaders => _httpClient.DefaultRequestHeaders;
@@ -133,7 +153,7 @@ namespace Thrift.Transport.Client
 
             try
             {
-#if NETSTANDARD2_1
+#if NET5_0_OR_GREATER
                 var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
 #else
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
@@ -148,7 +168,7 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
         }
 
@@ -156,7 +176,11 @@ namespace Thrift.Transport.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+#if NET5_0_OR_GREATER
+            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#endif
         }
 
         /// <summary>
@@ -224,7 +248,11 @@ namespace Thrift.Transport.Client
                     var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
 
                     _inputStream?.Dispose();
+#if NET5_0_OR_GREATER
+                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+#else
                     _inputStream = await response.Content.ReadAsStreamAsync();
+#endif
                     if (_inputStream.CanSeek)
                     {
                         _inputStream.Seek(0, SeekOrigin.Begin);
@@ -233,21 +261,25 @@ namespace Thrift.Transport.Client
             }
             catch (IOException iox)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
             }
             catch (HttpRequestException wx)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown,
-                    "Couldn't connect to server: " + wx);
+                    "Couldn't connect to server: " + wx, wx);
+            }
+            catch (OperationCanceledException ocx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
             }
             catch (Exception ex)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message, ex);
             }
             finally
             {
                 _outputStream = new MemoryStream();
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes();
             }
         }
 

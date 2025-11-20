@@ -22,9 +22,10 @@ package tests
 import (
 	"context"
 	"errors"
-	"thrift"
-	"thrifttest"
 	"time"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 type SecondServiceHandler struct {
@@ -78,6 +79,10 @@ func (p *ThriftTestHandler) TestDouble(ctx context.Context, thing float64) (r fl
 }
 
 func (p *ThriftTestHandler) TestBinary(ctx context.Context, thing []byte) (r []byte, err error) {
+	return thing, nil
+}
+
+func (p *ThriftTestHandler) TestUuid(ctx context.Context, thing thrift.Tuuid) (r thrift.Tuuid, err error) {
 	return thing, nil
 }
 
@@ -179,7 +184,7 @@ func (p *ThriftTestHandler) TestException(ctx context.Context, arg string) (err 
 		x.Message = arg
 		return x
 	} else if arg == "TException" {
-		return thrift.TException(errors.New(arg))
+		return thrift.WrapTException(errors.New(arg))
 	} else {
 		return nil
 	}

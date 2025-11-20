@@ -47,7 +47,7 @@ public class JavaServer {
         public void run() {
           simple(processor);
         }
-      };      
+      };
       Runnable secure = new Runnable() {
         public void run() {
           secure(processor);
@@ -81,19 +81,19 @@ public class JavaServer {
       /*
        * Use TSSLTransportParameters to setup the required SSL parameters. In this example
        * we are setting the keystore and the keystore password. Other things like algorithms,
-       * cipher suites, client auth etc can be set. 
+       * cipher suites, client auth etc can be set.
        */
       TSSLTransportParameters params = new TSSLTransportParameters();
       // The Keystore contains the private key
-      params.setKeyStore("../../lib/java/test/.keystore", "thrift", null, null);
+      params.setKeyStore("../../lib/java/test/resources/.keystore", "thrift", null, null);
 
       /*
        * Use any of the TSSLTransportFactory to get a server transport with the appropriate
        * SSL configuration. You can use the default settings if properties are set in the command line.
        * Ex: -Djavax.net.ssl.keyStore=.keystore and -Djavax.net.ssl.keyStorePassword=thrift
-       * 
+       *
        * Note: You need not explicitly call open(). The underlying server socket is bound on return
-       * from the factory class. 
+       * from the factory class.
        */
       TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(9091, 0, null, params);
       TServer server = new TSimpleServer(new Args(serverTransport).processor(processor));

@@ -213,20 +213,18 @@ func ProtocolTest2(t *testing.T, pf ProtocolFactory) {
 }
 
 func TestSerializer(t *testing.T) {
-
-	var protocol_factories map[string]ProtocolFactory
-	protocol_factories = make(map[string]ProtocolFactory)
-	protocol_factories["Binary"] = NewTBinaryProtocolFactoryDefault()
-	protocol_factories["Compact"] = NewTCompactProtocolFactory()
-	//protocol_factories["SimpleJSON"] = NewTSimpleJSONProtocolFactory() - write only, can't be read back by design
-	protocol_factories["JSON"] = NewTJSONProtocolFactory()
+	protocolFactories := make(map[string]ProtocolFactory)
+	protocolFactories["Binary"] = NewTBinaryProtocolFactoryDefault()
+	protocolFactories["Compact"] = NewTCompactProtocolFactory()
+	//protocolFactories["SimpleJSON"] = NewTSimpleJSONProtocolFactory() - write only, can't be read back by design
+	protocolFactories["JSON"] = NewTJSONProtocolFactory()
 
 	tests := make(map[string]func(*testing.T, ProtocolFactory))
 	tests["Test 1"] = ProtocolTest1
 	tests["Test 2"] = ProtocolTest2
 	//tests["Test 3"] = ProtocolTest3 // Example of how to add additional tests
 
-	for name, pf := range protocol_factories {
+	for name, pf := range protocolFactories {
 		t.Run(
 			name,
 			func(t *testing.T) {
@@ -241,12 +239,11 @@ func TestSerializer(t *testing.T) {
 			},
 		)
 	}
-
 }
 
 func TestSerializerPoolAsync(t *testing.T) {
 	var wg sync.WaitGroup
-	var counter int64
+	var counter atomic.Int64
 	s := NewTSerializerPool(NewTSerializer)
 	d := NewTDeserializerPool(NewTDeserializer)
 	f := func(i int64) bool {
@@ -254,18 +251,20 @@ func TestSerializerPoolAsync(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			t.Run(
-				fmt.Sprintf("#%d-%d", atomic.AddInt64(&counter, 1), i),
+				fmt.Sprintf("#%d-%d", counter.Add(1), i),
 				func(t *testing.T) {
 					m := MyTestStruct{
 						Int64: i,
 					}
 					str, err := s.WriteString(context.Background(), &m)
 					if err != nil {
-						t.Fatal("serialize:", err)
+						t.Error("serialize:", err)
+						return
 					}
 					var m1 MyTestStruct
 					if err = d.ReadString(context.Background(), &m1, str); err != nil {
-						t.Fatal("deserialize:", err)
+						t.Error("deserialize:", err)
+						return
 
 					}
 
@@ -329,7 +328,7 @@ func BenchmarkSerializer(b *testing.B) {
 		b.Run(
 			c.Label,
 			func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					s := c.Serializer()
 					m := MyTestStruct{}
 					str, _ := s.WriteString(context.Background(), &m)

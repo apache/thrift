@@ -20,27 +20,28 @@
 package main
 
 import (
-	"common"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/common"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")
 var port = flag.Int64("port", 9090, "Port number to connect")
 var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
+var _ = flag.Bool("zlib", false, "For compatibility. Ignored.")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json, header")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
-var zlib = flag.Bool("zlib", false, "Wrapped Transport using Zlib")
 var certPath = flag.String("certPath", "keys", "Directory that contains SSL certificates")
 
 func main() {
 	flag.Parse()
 
-	processor, serverTransport, transportFactory, protocolFactory, err := common.GetServerParams(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
+	processor, serverTransport, transportFactory, protocolFactory, _, err := common.GetServerParams(*host, *port, *domain_socket, *transport, *protocol, *ssl, *certPath, common.PrintingHandler)
 
 	if err != nil {
 		log.Fatalf("Unable to process server params: %v", err)
@@ -58,7 +59,10 @@ func main() {
 				return
 			}
 		} else {
-			http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
+				fmt.Println(err)
+				return
+			}
 		}
 	} else {
 		server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)

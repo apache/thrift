@@ -19,17 +19,10 @@
 
 set(BOOST_MINREV 1.56)
 
-# we are not ready for the new style link targets introduced in
-# boost 1.70.0 and cmake 3.14.2 which showed up on appveyor in
-# mingw builds
-set(Boost_NO_BOOST_CMAKE ON)
-
 macro(REQUIRE_BOOST_HEADERS)
   find_package(Boost ${BOOST_MINREV} QUIET REQUIRED)
   if (NOT Boost_FOUND)
-    string(CONCAT fatal_message
-        "Boost ${BOOST_MINREV} or later is required to build sources in ${CMAKE_CURRENT_SOURCE_DIR}")
-    message(FATAL_ERROR, ${fatal_message})
+    message(FATAL_ERROR "Boost ${BOOST_MINREV} or later is required to build sources in ${CMAKE_CURRENT_SOURCE_DIR}")
   endif()
   if (DEFINED Boost_INCLUDE_DIRS)
     # pre-boost 1.70.0 aware cmake, otherwise it is using targets
@@ -41,9 +34,6 @@ macro(REQUIRE_BOOST_LIBRARIES libs)
   message(STATUS "Locating boost libraries required by sources in ${CMAKE_CURRENT_SOURCE_DIR}")
   find_package(Boost ${BOOST_MINREV} REQUIRED COMPONENTS ${${libs}})
   if (NOT Boost_FOUND)
-    string(CONCAT fatal_message
-        "Boost ${BOOST_MINREV} or later is required to build sources in ${CMAKE_CURRENT_SOURCE_DIR}, "
-	    "or use -DBUILD_TESTING=OFF")
-    message(FATAL_ERROR, ${fatal_message})
+    message(FATAL_ERROR "Boost ${BOOST_MINREV} or later is required to build sources in ${CMAKE_CURRENT_SOURCE_DIR}, or use -DBUILD_TESTING=OFF")
   endif()
 endmacro()

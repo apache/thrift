@@ -33,33 +33,36 @@ const
 
 type
   IThriftConfiguration = interface
-    ['{ADD75449-1A67-4B78-9B75-502A1E338CFC}']
-    function  GetRecursionLimit : Cardinal;
-    procedure SetRecursionLimit( const value : Cardinal);
-    function  GetMaxFrameSize : Cardinal;
-    procedure SetMaxFrameSize( const value : Cardinal);
-    function  GetMaxMessageSize : Cardinal;
-    procedure SetMaxMessageSize( const value : Cardinal);
+    ['{666F7848-744A-4746-BDD5-43DC9B1D5520}']
+    function  GetRecursionLimit : Integer;
+    procedure SetRecursionLimit( const value : Integer);
+    function  GetMaxFrameSize : Integer;
+    procedure SetMaxFrameSize( const value : Integer);
+    function  GetMaxMessageSize : Integer;
+    procedure SetMaxMessageSize( const value : Integer);
 
-    property  RecursionLimit : Cardinal read GetRecursionLimit write SetRecursionLimit;
-    property  MaxFrameSize : Cardinal   read GetMaxFrameSize   write SetMaxFrameSize;
-    property  MaxMessageSize : Cardinal read GetMaxMessageSize write SetMaxMessageSize;
+    property  RecursionLimit : Integer read GetRecursionLimit write SetRecursionLimit;
+    property  MaxFrameSize : Integer   read GetMaxFrameSize   write SetMaxFrameSize;
+    property  MaxMessageSize : Integer read GetMaxMessageSize write SetMaxMessageSize;
   end;
 
 
   TThriftConfigurationImpl = class( TInterfacedObject, IThriftConfiguration)
+  strict private
+    class procedure ValidateLimitArgument( const value : Integer); inline;
+
   strict protected
     FRecursionLimit : Cardinal;
     FMaxFrameSize   : Cardinal;
     FMaxMessageSize : Cardinal;
 
     // IThriftConfiguration
-    function  GetRecursionLimit : Cardinal;
-    procedure SetRecursionLimit( const value : Cardinal);
-    function  GetMaxFrameSize : Cardinal;
-    procedure SetMaxFrameSize( const value : Cardinal);
-    function  GetMaxMessageSize : Cardinal;
-    procedure SetMaxMessageSize( const value : Cardinal);
+    function  GetRecursionLimit : Integer;
+    procedure SetRecursionLimit( const value : Integer);
+    function  GetMaxFrameSize : Integer;
+    procedure SetMaxFrameSize( const value : Integer);
+    function  GetMaxMessageSize : Integer;
+    procedure SetMaxMessageSize( const value : Integer);
 
   public
     constructor Create;
@@ -82,39 +85,55 @@ begin
 end;
 
 
-function TThriftConfigurationImpl.GetRecursionLimit: Cardinal;
+class procedure TThriftConfigurationImpl.ValidateLimitArgument( const value : Integer);
 begin
-  result := FRecursionLimit;
+  if value <= 0  // zero makes not much sense either
+  then raise EArgumentOutOfRangeException.Create('Value must be positive');
 end;
 
 
-procedure TThriftConfigurationImpl.SetRecursionLimit(const value: Cardinal);
+function TThriftConfigurationImpl.GetRecursionLimit: Integer;
 begin
-  FRecursionLimit := value;
+  result := FRecursionLimit and MAXINT;
+  ASSERT( result > 0);
 end;
 
 
-function TThriftConfigurationImpl.GetMaxFrameSize: Cardinal;
+procedure TThriftConfigurationImpl.SetRecursionLimit(const value: Integer);
 begin
-  result := FMaxFrameSize;
+  ValidateLimitArgument( value);
+  ASSERT( value > 0);
+  FRecursionLimit := value and MAXINT;
 end;
 
 
-procedure TThriftConfigurationImpl.SetMaxFrameSize(const value: Cardinal);
+function TThriftConfigurationImpl.GetMaxFrameSize: Integer;
 begin
-  FMaxFrameSize := value;
+  result := FMaxFrameSize and MAXINT;
+  ASSERT( result > 0);
 end;
 
 
-function TThriftConfigurationImpl.GetMaxMessageSize: Cardinal;
+procedure TThriftConfigurationImpl.SetMaxFrameSize(const value: Integer);
 begin
-  result := FMaxMessageSize;
+  ValidateLimitArgument( value);
+  ASSERT( value > 0);
+  FMaxFrameSize := value and MAXINT;
 end;
 
 
-procedure TThriftConfigurationImpl.SetMaxMessageSize(const value: Cardinal);
+function TThriftConfigurationImpl.GetMaxMessageSize: Integer;
 begin
-  FMaxMessageSize := value;
+  result := FMaxMessageSize and MAXINT;
+  ASSERT( result > 0);
+end;
+
+
+procedure TThriftConfigurationImpl.SetMaxMessageSize(const value: Integer);
+begin
+  ValidateLimitArgument( value);
+  ASSERT( value > 0);
+  FMaxMessageSize := value and MAXINT;
 end;
 
 

@@ -135,6 +135,10 @@ class TProtocolDecorator implements TProtocol
         wrapped.writeBinary( value);
     }
 
+    public function writeUuid(value : String ) : Void {
+        wrapped.writeUuid( value);
+    }
+
     public function readMessageBegin() : TMessage {
         return wrapped.readMessageBegin();
     }
@@ -216,6 +220,10 @@ class TProtocolDecorator implements TProtocol
         return wrapped.readBinary();
     }
 
+    public function readUuid() : String {
+        return wrapped.readUuid();
+    }
+
     public function IncrementRecursionDepth() : Void {
         return wrapped.IncrementRecursionDepth();
     }
@@ -223,4 +231,10 @@ class TProtocolDecorator implements TProtocol
     public function DecrementRecursionDepth() : Void {
         return wrapped.DecrementRecursionDepth();
     }
+	
+	// Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+	public function GetMinSerializedSize(type : TType) : Int
+	{
+		return wrapped.GetMinSerializedSize(type);
+	}
 }

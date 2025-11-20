@@ -21,7 +21,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
+using Thrift.Protocol.Utilities;
 using Thrift.Transport;
+
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Protocol
 {
@@ -31,12 +35,12 @@ namespace Thrift.Protocol
         protected const uint VersionMask = 0xffff0000;
         protected const uint Version1 = 0x80010000;
 
-        protected bool StrictRead;
-        protected bool StrictWrite;
+        protected readonly bool StrictRead;
+        protected readonly bool StrictWrite;
 
         // minimize memory allocations by means of an preallocated bytes buffer
         // The value of 128 is arbitrarily chosen, the required minimum size must be sizeof(long)
-        private byte[] PreAllocatedBuffer = new byte[128];
+        private readonly byte[] PreAllocatedBuffer = new byte[128];
 
         public TBinaryProtocol(TTransport trans)
             : this(trans, false, true)
@@ -208,6 +212,14 @@ namespace Thrift.Protocol
             await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var bytes = uuid.SwapByteOrder().ToByteArray();
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+        }
+
         public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -243,6 +255,7 @@ namespace Thrift.Protocol
         public override Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Transport.ResetMessageSizeAndConsumedBytes();
             return Task.CompletedTask;
         }
 
@@ -400,6 +413,16 @@ namespace Thrift.Protocol
             return buf;
         }
 
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            Transport.CheckReadBytesAvailable(16);  // = sizeof(uuid)
+            var buf = new byte[16];
+            await Trans.ReadAllAsync(buf, 0, 16, cancellationToken);
+            return new Guid(buf).SwapByteOrder();
+        }
+
         public override async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -429,8 +452,8 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop: return 0;
-                case TType.Void: return 0;
+                case TType.Stop: return 1;  // T_STOP needs to count itself
+                case TType.Void: return 1;  // T_VOID needs to count itself
                 case TType.Bool: return sizeof(byte);
                 case TType.Byte: return sizeof(byte);
                 case TType.Double: return sizeof(double);
@@ -438,19 +461,21 @@ namespace Thrift.Protocol
                 case TType.I32: return sizeof(int);
                 case TType.I64: return sizeof(long);
                 case TType.String: return sizeof(int);  // string length
-                case TType.Struct: return 0;  // empty struct
+                case TType.Struct: return 1;  // empty struct needs at least 1 byte for the T_STOP
                 case TType.Map: return sizeof(int);  // element count
                 case TType.Set: return sizeof(int);  // element count
                 case TType.List: return sizeof(int);  // element count
-                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+                case TType.Uuid: return 16;  // uuid bytes
+                default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }
 
         public class Factory : TProtocolFactory
         {
-            protected bool StrictRead;
-            protected bool StrictWrite;
+            protected readonly bool StrictRead;
+            protected readonly bool StrictWrite;
 
+            // emtpy default CTOR required
             public Factory()
                 : this(false, true)
             {

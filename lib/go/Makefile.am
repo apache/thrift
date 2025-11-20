@@ -20,7 +20,13 @@
 SUBDIRS = .
 
 if WITH_TESTS
-SUBDIRS += test
+SUBDIRS += test test/fuzz
+endif
+
+if GOVERSION_GE_118
+GOBUILDEXTRA = -buildvcs=false
+else
+GOBUILDEXTRA =
 endif
 
 install:
@@ -30,14 +36,20 @@ install:
 	@echo '##############################################################'
 	@echo '##############################################################'
 
+# NOTE: We have to disable stdmethods in go vet until
+# https://github.com/golang/go/issues/52445 is fixed.
 check-local:
-	GOPATH=`pwd` $(GO) test -race ./thrift
+	$(GO) vet -stdmethods=false github.com/apache/thrift/lib/go/thrift
+	$(GO) test -race ./thrift
 
 clean-local:
 	$(RM) -rf pkg
 
 all-local:
-	GOPATH=`pwd` $(GO) build ./thrift
+	$(GO) build $(GOBUILDEXTRA) ./thrift
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	thrift \

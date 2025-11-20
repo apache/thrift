@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerTransport.h>
 #include <memory>

@@ -18,6 +18,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE1006   // some interfaces here are intentionally not I-prefixed 
+
 namespace Thrift.Protocol
 {
     public interface TUnionBase

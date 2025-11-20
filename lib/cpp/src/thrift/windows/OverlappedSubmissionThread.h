@@ -25,8 +25,7 @@
 #endif
 
 #include <thrift/windows/Sync.h>
-#include <boost/noncopyable.hpp>
-#include <Windows.h>
+#include <thrift/TNonCopyable.h>
 
 /*
   *** Why does this class exist?
@@ -89,7 +88,7 @@ struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) TOverlappedWorkItem : public 
   bool process();
 };
 
-class TOverlappedSubmissionThread : boost::noncopyable {
+class TOverlappedSubmissionThread : apache::thrift::TNonCopyable {
 public:
   void addWorkItem(TOverlappedWorkItem* item);
 
@@ -106,7 +105,7 @@ private:
   // thread details
 private:
   TOverlappedSubmissionThread();
-  ~TOverlappedSubmissionThread();
+  virtual ~TOverlappedSubmissionThread();
   void run();
   static unsigned __stdcall thread_proc(void* addr);
 
@@ -117,13 +116,13 @@ private:
   HANDLE thread_;
 };
 
-class TAutoOverlapThread : boost::noncopyable {
+class TAutoOverlapThread : apache::thrift::TNonCopyable {
 private:
   TOverlappedSubmissionThread* p;
 
 public:
   TAutoOverlapThread() : p(TOverlappedSubmissionThread::acquire_instance()) {}
-  ~TAutoOverlapThread() { TOverlappedSubmissionThread::release_instance(); }
+  virtual ~TAutoOverlapThread() { TOverlappedSubmissionThread::release_instance(); }
   TOverlappedSubmissionThread* operator->() { return p; }
 };
 }

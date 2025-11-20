@@ -217,7 +217,7 @@ thrift_server_complex_types (const int port)
   ThriftTransport *client = NULL;
   ThriftCompactProtocol *tc = NULL;
   ThriftProtocol *protocol = NULL;
-  ThriftType element_type, key_type, value_type, field_type;
+  ThriftType element_type, key_type, value_type;
   guint32 size = 0;
 
   ThriftConfiguration *tconfiguration = g_object_new (THRIFT_TYPE_CONFIGURATION, "max_message_size", MAX_MESSAGE_SIZE,

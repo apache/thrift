@@ -17,6 +17,12 @@
 
 using System;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+#pragma warning disable CA1510  // net8 - use ThrowIfNull
+#pragma warning disable CA1513  // net8 - use ThrowIfNull
+
 namespace Thrift.Protocol.Utilities
 {
     // ReSharper disable once InconsistentNaming

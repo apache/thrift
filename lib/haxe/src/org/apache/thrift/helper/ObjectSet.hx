@@ -22,7 +22,7 @@ package org.apache.thrift.helper;
 import Map;
 
 
-class ObjectSet<K> {
+class ObjectSet<K:{}> {
 
     private var _elements = new haxe.ds.ObjectMap<K,Int>();
     private var _size : Int = 0;
@@ -30,9 +30,7 @@ class ObjectSet<K> {
 
     public function new( values : Array<K> = null) {
         if ( values != null) {
-            for ( value in values) {
-                 add(value);
-            }
+            addRange(values.iterator());
         }
     }
 
@@ -55,6 +53,14 @@ class ObjectSet<K> {
         _size++;
         _elements.set(o,_size);
         return true;
+    }
+
+    public function addRange( values : Iterator<K>) {
+        if ( values != null) {
+            for ( value in values) {
+                 add(value);
+            }
+        }
     }
 
     public function clear() : Void {

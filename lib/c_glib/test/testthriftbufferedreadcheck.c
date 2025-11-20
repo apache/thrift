@@ -38,7 +38,6 @@ static void thrift_socket_server_open (const int port, int times);
 static void
 test_open_and_close(void)
 {
-  ThriftConfiguration *tconfiguration = NULL;
   ThriftSocket *tsocket = NULL;
   ThriftTransport *transport = NULL;
   GError *err = NULL;

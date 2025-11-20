@@ -23,10 +23,12 @@ import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.BytesBuffer;
+import haxe.io.Encoding;
 import haxe.ds.GenericStack;
-import haxe.Utf8;
 import haxe.crypto.Base64;
 import haxe.Int64;
+
+import uuid.Uuid;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TMessage;
@@ -35,6 +37,7 @@ import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TList;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.helper.UuidHelper;
 
 
 
@@ -45,9 +48,7 @@ import org.apache.thrift.transport.TTransport;
 *
 *  Adapted from the Java version.
 */
-class TJSONProtocol extends TRecursionTracker implements TProtocol {
-
-    public var trans(default,null) : TTransport;
+class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 
     // Stack of nested contexts that we may be in
     private var contextStack : GenericStack<JSONBaseContext> = new GenericStack<JSONBaseContext>();
@@ -58,20 +59,12 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
     // Reader that manages a 1-byte buffer
     private var reader : LookaheadReader;
 
-    // whether the underlying system holds Strings as UTF-8
-    // http://old.haxe.org/manual/encoding
-    private static var utf8Strings = haxe.Utf8.validate("Ç-ß-Æ-Ю-Ш");
-
     // TJSONProtocol Constructor
-    public function new( trans : TTransport)
+    public function new( transport : TTransport)
     {
-        this.trans = trans;
+		super(transport);
         this.context = new JSONBaseContext(this);
         this.reader = new LookaheadReader(this);
-    }
-
-    public function getTransport() : TTransport {
-      return trans;
     }
 
     public function writeMessageBegin(message:TMessage) : Void {
@@ -174,6 +167,10 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         WriteJSONBase64(bin);
     }
 
+    public function writeUuid(uuid : String) : Void {
+		writeString( UuidHelper.CanonicalUuid(uuid)); 
+    }
+
     public function readMessageBegin():TMessage {
         var message : TMessage = new TMessage();
         ReadJSONArrayStart();
@@ -230,7 +227,8 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         ReadJSONObjectStart();
 
         var map = new TMap( KeyType, ValueType, Count);
-        return map;
+		CheckReadBytesAvailableMap(map);
+		return map;
     }
 
     public function readMapEnd() : Void {
@@ -244,6 +242,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         var Count : Int = ReadJSONInteger();
 
         var list = new TList( ElementType, Count);
+		CheckReadBytesAvailableList(list);
         return list;
     }
 
@@ -257,6 +256,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         var Count : Int = ReadJSONInteger();
 
         var set = new TSet( ElementType, Count);
+		CheckReadBytesAvailableSet(set);
         return set;
     }
 
@@ -296,6 +296,10 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         return ReadJSONBase64();
     }
 
+    public function readUuid() : String {
+        return UuidHelper.CanonicalUuid( readString()); 
+    }
+
     // Push a new JSON context onto the stack.
     private function  PushContext(c : JSONBaseContext) : Void {
         contextStack.add(context);
@@ -313,7 +317,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         context.Write();
 
         var tmp = BytesFromString( JSONConstants.QUOTE);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
 
         for (i in 0 ... b.length) {
             var value = b.get(i);
@@ -323,11 +327,11 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
                 if (String.fromCharCode(value) == JSONConstants.BACKSLASH.charAt(0))
                 {
                     tmp = BytesFromString( JSONConstants.BACKSLASH + JSONConstants.BACKSLASH);
-                    trans.write( tmp, 0, tmp.length);
+                    Transport.write( tmp, 0, tmp.length);
                 }
                 else
                 {
-                    trans.write( b, i, 1);
+                    Transport.write( b, i, 1);
                 }
             }
             else
@@ -335,7 +339,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
                 var num = JSONConstants.JSON_CHAR_TABLE[value];
                 if (num == 1)
                 {
-                    trans.write( b, i, 1);
+                    Transport.write( b, i, 1);
                 }
                 else if (num > 1)
                 {
@@ -343,7 +347,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
                     buf.addString( JSONConstants.BACKSLASH);
                     buf.addByte( num);
                     tmp = buf.getBytes();
-                    trans.write( tmp, 0, tmp.length);
+                    Transport.write( tmp, 0, tmp.length);
                 }
                 else
                 {
@@ -354,13 +358,13 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
                     buf.addString( HexChar( (value & 0x0000FF00) >> 4));
                     buf.addString( HexChar( value & 0x000000FF));
                     tmp = buf.getBytes();
-                    trans.write( tmp, 0, tmp.length);
+                    Transport.write( tmp, 0, tmp.length);
                 }
             }
         }
 
         tmp = BytesFromString( JSONConstants.QUOTE);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     // Write out number as a JSON value. If the context dictates so,
@@ -382,7 +386,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var tmp = BytesFromString( str);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     // Write out number as a JSON value. If the context dictates so,
@@ -404,7 +408,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var tmp = BytesFromString( str);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     // Write out a double as a JSON value. If it is NaN or infinity or if the
@@ -441,7 +445,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var tmp = BytesFromString( str);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     // Write out contents of byte array b as a JSON string with base-64 encoded data
@@ -454,33 +458,33 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         buf.addString( JSONConstants.QUOTE);
 
         var tmp = buf.getBytes();
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     private function WriteJSONObjectStart() : Void {
         context.Write();
         var tmp = BytesFromString( JSONConstants.LBRACE);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
         PushContext( new JSONPairContext(this));
     }
 
     private function WriteJSONObjectEnd() : Void {
         PopContext();
         var tmp = BytesFromString( JSONConstants.RBRACE);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     private function WriteJSONArrayStart() : Void {
         context.Write();
         var tmp = BytesFromString( JSONConstants.LBRACKET);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
         PushContext( new JSONListContext(this));
     }
 
     private function WriteJSONArrayEnd() : Void {
         PopContext();
         var tmp = BytesFromString( JSONConstants.RBRACKET);
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
 
@@ -545,7 +549,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
 
             // it's \uXXXX
             var hexbuf = new BytesBuffer();
-            var hexlen = trans.readAll( hexbuf, 0, 4);
+            var hexlen = Transport.readAll( hexbuf, 0, 4);
             if( hexlen != 4)
             {
                 throw new TProtocolException( TProtocolException.INVALID_DATA, "Not enough data for \\uNNNN sequence");
@@ -756,10 +760,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
 
     public static function BytesFromString( str : String) : Bytes {
         var buf = new BytesBuffer();
-        if( utf8Strings)
-            buf.addString( str);  // no need to encode on UTF8 targets, the string is just fine
-        else
-            buf.addString( Utf8.encode( str));
+        buf.addString( str, Encoding.UTF8);
         return buf.getBytes();
     }
 
@@ -767,11 +768,7 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         var inp = new BytesInput( buf);
         if( buf.length == 0)
             return "";  // readString() would return null in that case, which is wrong
-        var str = inp.readString( buf.length);
-        if( utf8Strings)
-            return str;  // no need to decode on UTF8 targets, the string is just fine
-        else
-            return Utf8.decode( str);
+        return inp.readString( buf.length, Encoding.UTF8);
     }
 
     // Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its corresponding hex value
@@ -789,6 +786,29 @@ class TJSONProtocol extends TRecursionTracker implements TProtocol {
         return "0123456789abcdef".charAt(nibble & 0x0F);
     }
 
+
+	// Return the minimum number of bytes a type will consume on the wire
+	public override function GetMinSerializedSize(type : TType) : Int
+	{
+		switch (type)
+		{
+			case TType.STOP: return 1;  // T_STOP needs to count itself
+			case TType.VOID_: return 1;  // T_VOID needs to count itself
+			case TType.BOOL: return 1;  // written as int  
+			case TType.BYTE: return 1;
+			case TType.DOUBLE: return 1;
+			case TType.I16: return 1;
+			case TType.I32: return 1;
+			case TType.I64: return 1;
+			case TType.STRING: return 2;  // empty string
+			case TType.STRUCT: return 2;  // empty struct
+			case TType.MAP: return 2;  // empty map
+			case TType.SET: return 2;  // empty set
+			case TType.LIST: return 2;  // empty list
+			case TType.UUID: return 36;  // "E236974D-F0B0-4E05-8F29-0B455D41B1A1"
+			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
+		}
+	}
 
 }
 
@@ -884,6 +904,7 @@ class JSONConstants {
     public static var NAME_MAP    = 'map';
     public static var NAME_LIST   = 'lst';
     public static var NAME_SET    = 'set';
+	public static var NAME_UUID   = 'uid';
 
     public static function GetTypeNameForTypeID(typeID : Int) : String {
         switch (typeID)
@@ -899,6 +920,7 @@ class JSONConstants {
             case TType.MAP:         return NAME_MAP;
             case TType.SET:         return NAME_SET;
             case TType.LIST:     return NAME_LIST;
+            case TType.UUID:     return NAME_UUID;
         }
         throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
     }
@@ -914,7 +936,8 @@ class JSONConstants {
         NAME_STRUCT => TType.STRUCT,
         NAME_MAP    => TType.MAP,
         NAME_SET    => TType.SET,
-        NAME_LIST   => TType.LIST
+        NAME_LIST   => TType.LIST,
+		NAME_UUID   => TType.UUID
     ];
 
     public static function GetTypeIDForTypeName(name : String) : Int
@@ -971,7 +994,7 @@ class JSONListContext extends JSONBaseContext
             var buf = new BytesBuffer();
             buf.addString( JSONConstants.COMMA);
             var tmp = buf.getBytes();
-            proto.trans.write( tmp, 0, tmp.length);
+            proto.Transport.write( tmp, 0, tmp.length);
         }
     }
 
@@ -1014,7 +1037,7 @@ class JSONPairContext extends JSONBaseContext
             var buf = new BytesBuffer();
             buf.addString( colon ? JSONConstants.COLON : JSONConstants.COMMA);
             var tmp = buf.getBytes();
-            proto.trans.write( tmp, 0, tmp.length);
+            proto.Transport.write( tmp, 0, tmp.length);
             colon = !colon;
         }
     }
@@ -1064,7 +1087,7 @@ class LookaheadReader {
     public function Peek() : Bytes {
         if (data == null) {
             var buf = new BytesBuffer();
-            proto.trans.readAll(buf, 0, 1);
+            proto.Transport.readAll(buf, 0, 1);
             data = buf.getBytes();
         }
         return data;

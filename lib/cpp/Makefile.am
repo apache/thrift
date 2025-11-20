@@ -57,6 +57,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FOR
 
 libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
+                       src/thrift/TUuid.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
                        src/thrift/async/TAsyncProtocolProcessor.cpp \
@@ -88,6 +89,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/transport/TTransportUtils.cpp \
                        src/thrift/transport/TBufferTransports.cpp \
                        src/thrift/transport/TWebSocketServer.cpp \
+                       src/thrift/transport/SocketCommon.cpp \
                        src/thrift/server/TConnectedClient.cpp \
                        src/thrift/server/TServer.cpp \
                        src/thrift/server/TServerFramework.cpp \
@@ -135,6 +137,7 @@ include_thrift_HEADERS = \
                          src/thrift/thrift-config.h \
                          src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
+                         src/thrift/TUuid.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
                          src/thrift/TProcessor.h \
@@ -142,7 +145,8 @@ include_thrift_HEADERS = \
                          src/thrift/TLogging.h \
                          src/thrift/TToString.h \
                          src/thrift/TBase.h \
-                         src/thrift/TConfiguration.h
+                         src/thrift/TConfiguration.h \
+                         src/thrift/TNonCopyable.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
@@ -206,7 +210,8 @@ include_transport_HEADERS = \
                          src/thrift/transport/TBufferTransports.h \
                          src/thrift/transport/TShortReadTransport.h \
                          src/thrift/transport/TZlibTransport.h \
-                         src/thrift/transport/TWebSocketServer.h
+                         src/thrift/transport/TWebSocketServer.h \
+                         src/thrift/transport/SocketCommon.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
@@ -248,6 +253,9 @@ WINDOWS_DIST = \
              libthriftnb.vcxproj \
              libthriftnb.vcxproj.filters \
              3rdparty.props
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
              CMakeLists.txt \

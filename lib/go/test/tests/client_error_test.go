@@ -22,16 +22,34 @@ package tests
 import (
 	"context"
 	"errors"
-	"errortest"
 	"testing"
-	"thrift"
 
 	"github.com/golang/mock/gomock"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/errortest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 // TestCase: Comprehensive call and reply workflow in the client.
 // Setup mock to fail at a certain position. Return true if position exists otherwise false.
 func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error) bool {
+	// NOTE: here the number 50 is the same as the last number at the end of
+	// this function. If more function calls are added in the future, this
+	// number needs to be increased accordingly.
+	//
+	// It's needed for go 1.14+. Before go 1.14 we only call gomock
+	// controller's Finish function when this function returns true.
+	// Starting from go 1.14 the gomock will take advantage of
+	// testing.T.Cleanup interface, which means the Finish function will
+	// always be called by t.Cleanup, even if we return false here.
+	// As a result, in the case we need to return false by this function,
+	// we must return before calling any of the
+	// protocol.EXPECT().* functions.
+	const lastFailAt = 50
+	if failAt > lastFailAt {
+		return false
+	}
+
 	var err error = nil
 
 	if failAt == 0 {
@@ -388,7 +406,9 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 	if failAt == 50 {
 		err = failWith
 	}
+	//lint:ignore SA4006 to keep it consistent with other checks above
 	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 50 {
 		return true
 	}
@@ -613,7 +633,9 @@ func prepareClientCallException(protocol *MockTProtocol, failAt int, failWith er
 	if failAt == 10 {
 		err = failWith
 	}
+	//lint:ignore SA4006 to keep it consistent with other checks above
 	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 10 {
 		return true
 	}

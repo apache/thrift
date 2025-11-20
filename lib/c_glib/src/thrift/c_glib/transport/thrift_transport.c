@@ -164,7 +164,7 @@ thrift_transport_checkReadBytesAvailable(ThriftTransport *transport, glong numBy
 {
   gboolean boolean = TRUE;
   ThriftTransport *tt = THRIFT_TRANSPORT (transport);
-  if(tt->remainingMessageSize_ < numBytes)
+  if(tt->remainingMessageSize_ < numBytes || numBytes < 0)
   {
     g_set_error(error,
                 THRIFT_TRANSPORT_ERROR,
@@ -309,6 +309,7 @@ thrift_transport_class_init (ThriftTransportClass *cls)
   /* setup accessors and mutators */
   gobject_class->get_property = thrift_transport_get_property;
   gobject_class->set_property = thrift_transport_set_property;
+  gobject_class->dispose = thrift_transport_dispose;
   
   param_spec = g_param_spec_object ("configuration",
                                     "configuration (construct)",

@@ -171,6 +171,43 @@
     "workdir": "../lib/java"
   },
   {
+    "name": "kotlin",
+    "join_args": false,
+    "server": {
+      "delay": 15,
+      "command": [
+        "cross-test-server/build/install/TestServer/bin/TestServer"
+      ],
+      "protocols": [
+        "binary"
+      ]
+    },
+    "client": {
+      "timeout": 13,
+      "command": [
+        "cross-test-client/build/install/TestClient/bin/TestClient"
+      ],
+      "transports": [
+        "framed"
+      ],
+      "protocols": [
+        "binary"
+      ]
+    },
+    "transports": [
+      "framed"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
+    "workdir": "../lib/kotlin"
+  },
+  {
     "name": "nodejs",
     "env": {
       "NODE_PATH": "../lib"
@@ -367,13 +404,13 @@
       "buffered",
       "http",
       "framed",
-      "zlib",
-      "websocket"
+      "zlib"
     ],
     "sockets": [
       "ip",
       "ip-ssl",
-      "domain"
+      "domain",
+      "domain-socketactivated"
     ],
     "protocols": [
       "compact",
@@ -441,6 +478,7 @@
         "run",
         "--no-build",
         "--project=Server/Server.csproj",
+        "--configuration=Release",
         "server"
       ]
     },
@@ -451,6 +489,7 @@
         "run",
         "--no-build",
         "--project=Client/Client.csproj",
+        "--configuration=Release",
         "client"
       ]
     },
@@ -502,6 +541,31 @@
   },
   {
     "name": "php",
+    "server": {
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip"
+      ],
+      "protocols": [
+        "binary",
+        "binary:accel",
+        "compact",
+        "json"
+      ],
+      "command": [
+        "php",
+        "-dextension_dir=php_ext_dir",
+        "--php-ini=test_php.ini",
+        "--no-php-ini",
+        "-ddisplay_errors=stderr",
+        "-dlog_errors=0",
+        "-derror_reporting=E_ALL",
+        "TestServer.php"
+      ]
+    },
     "client": {
       "timeout": 6,
       "transports": [
@@ -633,24 +697,31 @@
     },
     "client": {
       "timeout": 5,
-      "transports": [
-        "buffered",
-        "framed",
-        "http"
-      ],
-      "sockets": [
-        "ip"
-      ],
-      "protocols": [
-        "binary",
-        "compact",
-        "json"
-      ],
       "command": [
         "lua",
         "test_basic_client.lua"
       ]
     },
+    "server": {
+      "delay": 5,
+      "command": [
+        "lua",
+        "test_basic_server.lua"
+      ]
+    },
+    "transports": [
+      "buffered",
+      "framed",
+      "http"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "json"
+    ],
     "workdir": "lua"
   },
   {
@@ -679,7 +750,8 @@
       ]
     },
     "sockets": [
-      "ip"
+      "ip",
+      "domain"
     ],
     "transports": [
       "buffered",
@@ -719,5 +791,22 @@
       "buffered"
     ],
     "workdir": "../lib/nodets/test"
+  },
+  {
+    "name": "swift",
+    "server": {
+      "command": ["TestServer"],
+      "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
+      "protocols": ["binary", "compact"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip", "domain"]
+    },
+    "client": {
+      "command": ["TestClient"],
+      "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
+      "protocols": ["binary", "compact"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip", "domain"]
+    }
   }
 ]

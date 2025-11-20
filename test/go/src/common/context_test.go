@@ -28,8 +28,9 @@ import (
 	"os"
 	"syscall"
 	"testing"
-	"thrift"
 	"time"
+
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 type slowHttpHandler struct{}
@@ -39,14 +40,17 @@ func (slowHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestHttpContextTimeout(t *testing.T) {
-	certPath = "../../../keys"
+	const (
+		host = "127.0.0.1"
+		port = 9096
+	)
+	addr := fmt.Sprintf("%s:%d", host, port)
+	unit := test_unit{host, port, "", "http", "binary", false}
 
-	unit := test_unit{"127.0.0.1", 9096, "", "http", "binary", false}
-
-	server := &http.Server{Addr: unit.host + fmt.Sprintf(":%d", unit.port), Handler: slowHttpHandler{}}
+	server := &http.Server{Addr: addr, Handler: slowHttpHandler{}}
 	go server.ListenAndServe()
 
-	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
+	client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {
 		t.Errorf("Unable to start client: %v", err)
 		return
@@ -55,6 +59,7 @@ func TestHttpContextTimeout(t *testing.T) {
 
 	unwrapErr := func(err error) error {
 		for {
+			//lint:ignore S1034 type switch is more appropriate here.
 			switch err.(type) {
 			case thrift.TTransportException:
 				err = err.(thrift.TTransportException).Err()

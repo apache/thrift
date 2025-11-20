@@ -54,7 +54,7 @@ func testProcessorMiddleware(c *counter) ProcessorMiddleware {
 func testClientMiddleware(c *counter) ClientMiddleware {
 	return func(next TClient) TClient {
 		return WrappedTClient{
-			Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
+			Wrapped: func(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error) {
 				c.incr()
 				return next.Call(ctx, method, args, result)
 			},
@@ -122,8 +122,8 @@ func TestWrapTMultiplexedProcessor(t *testing.T) {
 
 func TestWrapClient(t *testing.T) {
 	client := WrappedTClient{
-		Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
-			return nil
+		Wrapped: func(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error) {
+			return ResponseMeta{}, nil
 		},
 	}
 	c := newCounter(t)

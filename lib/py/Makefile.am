@@ -30,6 +30,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TZlibTransport.py
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
+	$(PYTHON3) test/thrift_TSerializer.py
 else
 py3-build:
 py3-test:
@@ -38,13 +39,14 @@ endif
 all-local: py3-build
 	$(PYTHON) setup.py build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
+	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
 # Old version (can't put inline because it's not portable).
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
-	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
+	$(PYTHON) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
 check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
@@ -55,6 +57,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TZlibTransport.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
+	$(PYTHON) test/thrift_TSerializer.py
 
 
 clean-local:
@@ -66,6 +69,9 @@ clean-local:
 dist-hook:
 	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f
 	find $(distdir) -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	CMakeLists.txt \

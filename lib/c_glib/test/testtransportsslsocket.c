@@ -103,7 +103,7 @@ test_ssl_create_and_set_properties(void)
   GError *error=NULL;
 
   GObject *object = NULL;
-  object = thrift_ssl_socket_new(SSLTLS, &error);
+  object = (GObject *)thrift_ssl_socket_new(SSLTLS, &error);
   g_object_get (G_OBJECT(object), "hostname", &hostname, "port", &port, "ssl_context", &ssl_ctx, NULL);
   g_assert (ssl_ctx!=NULL);
 
@@ -180,7 +180,6 @@ test_ssl_write_invalid_socket(void)
   ThriftSSLSocket *tSSLSocket = NULL;
   ThriftTransport *transport = NULL;
   GError *error=NULL;
-  char buffer[] = "this must not break";
 
   /* open a connection and close it */
   tSSLSocket = thrift_ssl_socket_new_with_host(SSLTLS, "localhost", 51188+1, &error);
@@ -267,13 +266,13 @@ int verify_ip(char * hostname, struct sockaddr_storage *addr)
   /* loop through all the results and connect to the first we can */
   char dnshost[INET6_ADDRSTRLEN]; /* bigger addr supported IPV6 */
   char socket_ip[INET6_ADDRSTRLEN];
-  if(inet_ntop(addr->ss_family, get_in_addr(addr), socket_ip, INET6_ADDRSTRLEN)==socket_ip){
+  if(inet_ntop(addr->ss_family, get_in_addr((struct sockaddr*)addr), socket_ip, INET6_ADDRSTRLEN)==socket_ip){
       g_debug("We are connected to host %s checking against certificate...", socket_ip);
       int sizeip = socket_ip!=NULL ? strlen(socket_ip) : 0;
       for(p = addr_info; p != NULL; p = p->ai_next) {
 	  if(inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), dnshost, INET6_ADDRSTRLEN)==dnshost){
 	      if(dnshost!=NULL){
-		  g_info("DNS address [%i -> %s]", p->ai_addr, dnshost);
+		  g_info("DNS address [%i -> %s]", ((guint32)(p->ai_addrlen)), dnshost);
 		  if(!strncmp(dnshost, socket_ip, sizeip)){
 		      retval=1;
 		      break; /* if we get here, we must have connected successfully */
@@ -289,7 +288,7 @@ int verify_ip(char * hostname, struct sockaddr_storage *addr)
   return retval;
 }
 
-static void
+static void 
 read_from_file(char *buffer, long size, const char *file_name)
 {
   char ch;
@@ -330,7 +329,7 @@ gboolean verify_certificate_sn(X509 *cert, const unsigned char *serial_number)
   }
   char *tmp = BN_bn2dec(bn);
   if (!tmp) {
-      g_warning(stderr, "unable to convert BN to decimal string.\n");
+      g_warning((const char*)stderr, "unable to convert BN to decimal string.\n");
       BN_free(bn);
       return EXIT_FAILURE;
   }
@@ -342,7 +341,7 @@ gboolean verify_certificate_sn(X509 *cert, const unsigned char *serial_number)
       return EXIT_FAILURE;
     }
   */
-  if(!strncmp(serial_number, tmp, strlen(serial_number))){
+  if(!strncmp((const char*)serial_number, tmp, strlen((const char*)serial_number))){
       retval=TRUE;
   }else{
       g_warning("Serial number is not valid");
@@ -356,6 +355,8 @@ gboolean verify_certificate_sn(X509 *cert, const unsigned char *serial_number)
 gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct sockaddr_storage *addr, GError **error)
 {
   ThriftSSLSocket *sslSocket = THRIFT_SSL_SOCKET (transport);
+  THRIFT_UNUSED_VAR (error);
+  THRIFT_UNUSED_VAR (sslSocket);
 
   g_info("Processing access to the server");
   X509_NAME* iname = cert ? X509_get_issuer_name(cert) : NULL;
@@ -368,11 +369,11 @@ gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct socka
       g_info("Issuer (cn) %s", issuer);
 
       /* Issuer pinning */
-      if(strncmp(ISSUER_CN_PINNING, issuer, strlen(ISSUER_CN_PINNING))){
+      if(strncmp(ISSUER_CN_PINNING, (const char*)issuer, strlen(ISSUER_CN_PINNING))){
 	  g_warning("The Issuer of the certificate is not valid");
 	  valid=FALSE;
       }
-      OPENSSL_free(issuer);
+      OPENSSL_free((void*)issuer);
       if(!valid)
 	return valid;
   }
@@ -385,7 +386,7 @@ gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct socka
       gboolean valid = TRUE;
 
       /* Subject pinning */
-      if(strncmp(SUBJECT_CN_PINNING, subject, strlen(SUBJECT_CN_PINNING))){
+      if(strncmp(SUBJECT_CN_PINNING, (const char*)subject, strlen(SUBJECT_CN_PINNING))){
 	  g_warning("The subject of the certificate is not valid");
 	  valid=FALSE;
       }
@@ -394,19 +395,19 @@ gboolean my_access_manager(ThriftTransport * transport, X509 *cert, struct socka
 	return valid;
 
       /* Host pinning       */
-      if(verify_ip(subject, addr)){
+      if(verify_ip((char*)subject, addr)){
 	  g_info("Verified subject");
       }else{
 	  g_info("Cannot verify subject");
 	  valid=FALSE;
       }
-      OPENSSL_free(subject);
+      OPENSSL_free((void*)subject);
 
       if(!valid)
 	return valid;
   }
 
-  if(!verify_certificate_sn(cert, CERT_SERIAL_NUMBER)){
+  if(!verify_certificate_sn(cert, (const unsigned char*)CERT_SERIAL_NUMBER)){
       return FALSE;
   }else{
       g_info("Verified serial number");
@@ -487,7 +488,7 @@ thrift_socket_server (const int port)
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
   guchar buf[10]; /* a buffer */
-  guchar match[10] = TEST_DATA;
+  guchar match[] = TEST_DATA;
 
   ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
 					      "port", port, NULL);

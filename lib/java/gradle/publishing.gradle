@@ -27,7 +27,7 @@ task installDist(type: Copy, group: 'Install') {
     destinationDir = file(installPath)
 
     from jar
-    from configurations.compile
+    from configurations.implementation
 }
 
 task installJavadoc(type: Copy, group: 'Install', dependsOn: javadoc) {
@@ -38,82 +38,68 @@ task installJavadoc(type: Copy, group: 'Install', dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-// This is not needed by Gradle builds but the remaining Ant builds seem to
-// need access to the generated test classes for Thrift unit tests so we
-// assist them to use it this way.
-task copyDependencies(type: Copy, group: 'Build') {
-    description = 'Copy runtime dependencies in a common location for other Ant based projects'
-    project.assemble.dependsOn it
-
-    destinationDir = file("$buildDir/deps")
-    from configurations.testRuntime
-    // exclude some very specific unit test dependencies
-    exclude '**/junit*.jar', '**/mockito*.jar', '**/hamcrest*.jar'
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
-// ----------------------------------------------------------------------------
-// Allow this configuration to be shared between install and uploadArchives tasks
-def configurePom(pom) {
-    pom.project {
-        name 'Apache Thrift'
-        description 'Thrift is a software framework for scalable cross-language services development.'
-        packaging 'jar'
-        url 'http://thrift.apache.org'
+// skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
 
-        scm {
-            url 'https://github.com/apache/thrift'
-            connection 'scm:git:https://github.com/apache/thrift.git'
-            developerConnection 'scm:git:git@github.com:apache/thrift.git'
-        }
-
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url "${project.license}"
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                id 'dev'
-                name 'Apache Thrift Developers'
-                email 'dev@thrift.apache.org'
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = "libthrift"
+            from components.java
+            pom {
+                name = 'Apache Thrift'
+                description = 'Thrift is a software framework for scalable cross-language services development.'
+                url = 'http://thrift.apache.org'
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = "${project.license}"
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'dev'
+                        name = 'Apache Thrift Developers'
+                        email = 'dev@thrift.apache.org'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/apache/thrift'
+                    connection = 'scm:git:https://github.com/apache/thrift.git'
+                    developerConnection = 'scm:git:git@github.com:apache/thrift.git'
+                }
             }
         }
     }
-
-    pom.whenConfigured {
-        // Fixup the scope for servlet-api to be 'provided' instead of 'compile'
-        dependencies.find { dep -> dep.groupId == 'javax.servlet' && dep.artifactId == 'servlet-api' }.with {
-            // it.optional = true
-            it.scope = 'provided'
-        }
-    }
-}
-
-install {
-    repositories.mavenInstaller {
-        configurePom(pom)
-    }
-}
-
-uploadArchives {
-    dependsOn test // make sure we run unit tests when publishing
-    repositories.mavenDeployer {
-        // signPom will silently do nothing when no signing information is provided
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-        repository(url: project.mavenRepositoryUrl) {
-            if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-                authentication(userName: mavenUser, password: mavenPassword)
+    repositories {
+        maven {
+            url = mavenRepositoryUrl
+            if (project.hasProperty("mavenUser") && project.hasProperty("mavenPassword")) {
+                credentials {
+                    username = mavenUser
+                    password = mavenPassword
+                }
             }
         }
-        configurePom(pom)
     }
 }
 
-// Signing configuration, optional, only when release and uploadArchives is activated
+// Signing configuration, optional, only when release and publish is activated
 signing {
-    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
+    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
+    sign publishing.publications.mavenJava
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
 }

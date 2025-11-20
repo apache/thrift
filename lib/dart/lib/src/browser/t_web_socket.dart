@@ -18,7 +18,7 @@
 library thrift.src.browser;
 
 import 'dart:async';
-import 'package:dart2_constant/convert.dart' show base64;
+import 'dart:convert' show base64;
 import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
@@ -32,39 +32,45 @@ class TWebSocket implements TSocket {
   final Uri url;
 
   final StreamController<TSocketState> _onStateController;
+  @override
   Stream<TSocketState> get onState => _onStateController.stream;
 
   final StreamController<Object> _onErrorController;
+  @override
   Stream<Object> get onError => _onErrorController.stream;
 
   final StreamController<Uint8List> _onMessageController;
+  @override
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
   final List<Uint8List> _requests = [];
 
   TWebSocket(this.url)
-      : _onStateController = new StreamController.broadcast(),
-        _onErrorController = new StreamController.broadcast(),
-        _onMessageController = new StreamController.broadcast() {
+      : _onStateController = StreamController.broadcast(),
+        _onErrorController = StreamController.broadcast(),
+        _onMessageController = StreamController.broadcast() {
     if (url == null || !url.hasAuthority || !url.hasPort) {
-      throw new ArgumentError('Invalid url');
+      throw ArgumentError('Invalid url');
     }
   }
 
   WebSocket _socket;
 
+  @override
   bool get isOpen => _socket != null && _socket.readyState == WebSocket.OPEN;
 
+  @override
   bool get isClosed =>
       _socket == null || _socket.readyState == WebSocket.CLOSED;
 
+  @override
   Future open() {
     if (!isClosed) {
-      throw new TTransportError(
+      throw TTransportError(
           TTransportErrorType.ALREADY_OPEN, 'Socket already connected');
     }
 
-    _socket = new WebSocket(url.toString());
+    _socket = WebSocket(url.toString());
     _socket.onError.listen(_onError);
     _socket.onOpen.listen(_onOpen);
     _socket.onClose.listen(_onClose);
@@ -73,15 +79,17 @@ class TWebSocket implements TSocket {
     return _socket.onOpen.first;
   }
 
+  @override
   Future close() {
     if (_socket != null) {
       _socket.close();
       return _socket.onClose.first;
     } else {
-      return new Future.value();
+      return Future.value();
     }
   }
 
+  @override
   void send(Uint8List data) {
     _requests.add(data);
     _sendRequests();
@@ -104,7 +112,7 @@ class TWebSocket implements TSocket {
 
     if (_requests.isNotEmpty) {
       _onErrorController
-          .add(new StateError('Socket was closed with pending requests'));
+          .add(StateError('Socket was closed with pending requests'));
     }
     _requests.clear();
 
@@ -113,10 +121,10 @@ class TWebSocket implements TSocket {
 
   void _onMessage(MessageEvent message) {
     try {
-      Uint8List data = new Uint8List.fromList(base64.decode(message.data));
+      Uint8List data = Uint8List.fromList(base64.decode(message.data));
       _onMessageController.add(data);
     } on FormatException catch (_) {
-      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+      var error = TProtocolError(TProtocolErrorType.INVALID_DATA,
           "Expected a Base 64 encoded string.");
       _onErrorController.add(error);
     }

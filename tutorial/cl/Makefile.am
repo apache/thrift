@@ -16,8 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-setup-local-lisp-env: ensure-externals.sh
-	bash ensure-externals.sh
+setup-local-lisp-env: ../../lib/cl/ensure-externals.sh
+	bash ../../lib/cl/ensure-externals.sh
 
 gen-cl: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen cl -r $<
@@ -57,9 +57,13 @@ clean-local:
 	-$(RM) TutorialServer
 	-$(RM) TutorialClient
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	tutorial-implementation.lisp \
 	shared-implementation.lisp \
 	thrift-tutorial.asd \
 	make-tutorial-server.lisp \
-	make-tutorial-client.lisp
+	make-tutorial-client.lisp \
+	load-locally.lisp

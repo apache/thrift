@@ -19,12 +19,9 @@
 
 from thrift.Thrift import TException, TType, TFrozenDict
 from thrift.transport.TTransport import TTransportException
-from ..compat import binary_to_str, str_to_binary
 
-import six
 import sys
 from itertools import islice
-from six.moves import zip
 
 
 class TProtocolException(TException):
@@ -119,13 +116,10 @@ class TProtocolBase(object):
         pass
 
     def writeString(self, str_val):
-        self.writeBinary(str_to_binary(str_val))
+        self.writeBinary(bytes(str_val, 'utf-8'))
 
     def writeBinary(self, str_val):
         pass
-
-    def writeUtf8(self, str_val):
-        self.writeString(str_val.encode('utf8'))
 
     def readMessageBegin(self):
         pass
@@ -182,13 +176,10 @@ class TProtocolBase(object):
         pass
 
     def readString(self):
-        return binary_to_str(self.readBinary())
+        return self.readBinary().decode('utf-8')
 
     def readBinary(self):
         pass
-
-    def readUtf8(self):
-        return self.readString().decode('utf8')
 
     def skip(self, ttype):
         if ttype == TType.BOOL:
@@ -263,11 +254,6 @@ class TProtocolBase(object):
                 raise TProtocolException(type=TProtocolException.INVALID_DATA,
                                          message='Invalid binary field type %d' % ttype)
             return ('readBinary', 'writeBinary', False)
-        if sys.version_info[0] == 2 and spec == 'UTF8':
-            if ttype != TType.STRING:
-                raise TProtocolException(type=TProtocolException.INVALID_DATA,
-                                         message='Invalid string field type %d' % ttype)
-            return ('readUtf8', 'writeUtf8', False)
         return self._TTYPE_HANDLERS[ttype] if ttype < len(self._TTYPE_HANDLERS) else (None, None, False)
 
     def _read_by_ttype(self, ttype, spec, espec):
@@ -373,8 +359,8 @@ class TProtocolBase(object):
     def writeContainerMap(self, val, spec):
         ktype, kspec, vtype, vspec, _ = spec
         self.writeMapBegin(ktype, vtype, len(val))
-        for _ in zip(self._write_by_ttype(ktype, six.iterkeys(val), spec, kspec),
-                     self._write_by_ttype(vtype, six.itervalues(val), spec, vspec)):
+        for _ in zip(self._write_by_ttype(ktype, val.keys(), spec, kspec),
+                     self._write_by_ttype(vtype, val.values(), spec, vspec)):
             pass
         self.writeMapEnd()
 
