@@ -430,6 +430,9 @@ t_rb_ofstream& t_rb_generator::render_const_value(t_rb_ofstream& out,
     case t_base_type::TYPE_STRING:
       out << "%q\"" << get_escaped_string(value) << '"';
       break;
+    case t_base_type::TYPE_UUID:
+      out << "%q\"" << get_escaped_string(value) << '"';
+      break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
       break;
@@ -1175,6 +1178,8 @@ string t_rb_generator::type_to_enum(t_type* type) {
       return "::Thrift::Types::I64";
     case t_base_type::TYPE_DOUBLE:
       return "::Thrift::Types::DOUBLE";
+    case t_base_type::TYPE_UUID:
+      return "::Thrift::Types::UUID";
     default:
       throw "compiler error: unhandled type";
     }

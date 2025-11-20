@@ -289,5 +289,82 @@ describe 'Struct' do
         e.write(prot)
       end
     end
+
+    it "should handle UUID fields in structs" do
+      struct = SpecNamespace::Foo.new(
+        simple: 42,
+        words: 'test',
+        opt_uuid: '550e8400-e29b-41d4-a716-446655440000'
+      )
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::BinaryProtocol.new(trans)
+
+      struct.write(prot)
+
+      result = SpecNamespace::Foo.new
+      result.read(prot)
+
+      expect(result.simple).to eq(42)
+      expect(result.words).to eq('test')
+      expect(result.opt_uuid).to eq('550e8400-e29b-41d4-a716-446655440000')
+    end
+
+    it "should handle optional UUID fields when unset" do
+      struct = SpecNamespace::Foo.new(simple: 42, words: 'test')
+      expect(struct.opt_uuid).to be_nil
+      expect(struct.opt_uuid?).to be_falsey
+    end
+
+    it "should handle list of UUIDs in SimpleList" do
+      uuids = ['550e8400-e29b-41d4-a716-446655440000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8']
+      struct = SpecNamespace::SimpleList.new(uuids: uuids)
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::CompactProtocol.new(trans)
+
+      struct.write(prot)
+
+      result = SpecNamespace::SimpleList.new
+      result.read(prot)
+
+      expect(result.uuids).to eq(uuids)
+    end
+
+    it "should normalize UUID case to lowercase" do
+      struct = SpecNamespace::Foo.new(opt_uuid: '550E8400-E29B-41D4-A716-446655440000')
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::BinaryProtocol.new(trans)
+
+      struct.write(prot)
+
+      result = SpecNamespace::Foo.new
+      result.read(prot)
+
+      expect(result.opt_uuid).to eq('550e8400-e29b-41d4-a716-446655440000')
+    end
+
+    it "should handle UUID alongside other types in SimpleList" do
+      struct = SpecNamespace::SimpleList.new(
+        bools: [true, false],
+        i32s: [1, 2, 3],
+        strings: ['hello', 'world'],
+        uuids: ['550e8400-e29b-41d4-a716-446655440000', '00000000-0000-0000-0000-000000000000']
+      )
+
+      trans = Thrift::MemoryBufferTransport.new
+      prot = Thrift::BinaryProtocol.new(trans)
+
+      struct.write(prot)
+
+      result = SpecNamespace::SimpleList.new
+      result.read(prot)
+
+      expect(result.bools).to eq([true, false])
+      expect(result.i32s).to eq([1, 2, 3])
+      expect(result.strings).to eq(['hello', 'world'])
+      expect(result.uuids).to eq(['550e8400-e29b-41d4-a716-446655440000', '00000000-0000-0000-0000-000000000000'])
+    end
   end
 end

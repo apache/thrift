@@ -45,7 +45,8 @@ module Thrift
       SET            = 0x0A
       MAP            = 0x0B
       STRUCT         = 0x0C
-      
+      UUID           = 0x0D
+
       def self.is_bool_type?(b)
         (b & 0x0f) == BOOLEAN_TRUE || (b & 0x0f) == BOOLEAN_FALSE
       end
@@ -63,7 +64,8 @@ module Thrift
         LIST          => Types::LIST,
         SET           => Types::SET,
         MAP           => Types::MAP,
-        STRUCT        => Types::STRUCT
+        STRUCT        => Types::STRUCT,
+        UUID          => Types::UUID
       }
 
       TTYPE_TO_COMPACT = {
@@ -78,7 +80,8 @@ module Thrift
         Types::LIST           => LIST,
         Types::SET            => SET,
         Types::MAP            => MAP,
-        Types::STRUCT         => STRUCT
+        Types::STRUCT         => STRUCT,
+        Types::UUID           => UUID
       }
       
       def self.get_ttype(compact_type)
@@ -220,18 +223,23 @@ module Thrift
       @trans.write(buf)
     end
 
+    def write_uuid(uuid)
+      UUID.validate_uuid!(uuid)
+      trans.write(UUID.uuid_bytes(uuid))
+    end
+
     def read_message_begin
       protocol_id = read_byte()
       if protocol_id != PROTOCOL_ID
         raise ProtocolException.new("Expected protocol id #{PROTOCOL_ID} but got #{protocol_id}")
       end
-      
+
       version_and_type = read_byte()
       version = version_and_type & VERSION_MASK
       if (version != VERSION)
         raise ProtocolException.new("Expected version #{VERSION} but got #{version}");
       end
-      
+
       type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS
       seqid = read_varint32()
       messageName = read_string()
@@ -345,17 +353,21 @@ module Thrift
       size = read_varint32()
       trans.read_all(size)
     end
-    
+
+    def read_uuid
+      UUID.uuid_from_bytes(trans.read_all(16))
+    end
+
     def to_s
       "compact(#{super.to_s})"
     end
 
     private
-    
-    # 
-    # Abstract method for writing the start of lists and sets. List and sets on 
+
+    #
+    # Abstract method for writing the start of lists and sets. List and sets on
     # the wire differ only by the type indicator.
-    # 
+    #
     def write_collection_begin(elem_type, size)
       if size <= 14
         write_byte(size << 4 | CompactTypes.get_compact_type(elem_type))

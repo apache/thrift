@@ -20,10 +20,12 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <constants.h>
 #include <struct.h>
 #include <macros.h>
 #include <bytes.h>
+#include <protocol.h>
 
 #define LAST_ID(obj) FIX2INT(rb_ary_pop(rb_ivar_get(obj, last_field_id)))
 #define SET_LAST_ID(obj, val) rb_ary_push(rb_ivar_get(obj, last_field_id), val)
@@ -58,6 +60,7 @@ static int CTYPE_LIST           = 0x09;
 static int CTYPE_SET            = 0x0A;
 static int CTYPE_MAP            = 0x0B;
 static int CTYPE_STRUCT         = 0x0C;
+static int CTYPE_UUID           = 0x0D;
 
 VALUE rb_thrift_compact_proto_write_i16(VALUE self, VALUE i16);
 
@@ -86,6 +89,8 @@ static int get_compact_type(VALUE type_value) {
     return CTYPE_MAP;
   } else if (type == TTYPE_STRUCT) {
     return CTYPE_STRUCT;
+  } else if (type == TTYPE_UUID) {
+    return CTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", type);
@@ -169,6 +174,7 @@ static void write_collection_begin(VALUE transport, VALUE elem_type, VALUE size_
 VALUE rb_thrift_compact_proto_write_i32(VALUE self, VALUE i32);
 VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str);
 VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf);
+VALUE rb_thrift_compact_proto_write_uuid(VALUE self, VALUE uuid);
 
 VALUE rb_thrift_compact_proto_write_message_end(VALUE self) {
   return Qnil;
@@ -320,6 +326,46 @@ VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
   return Qnil;
 }
 
+VALUE rb_thrift_compact_proto_write_uuid(VALUE self, VALUE uuid) {
+  if (NIL_P(uuid) || TYPE(uuid) != T_STRING) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("UUID must be a string")));
+  }
+
+  VALUE transport = GET_TRANSPORT(self);
+  char bytes[16];
+  const char* str = RSTRING_PTR(uuid);
+  long len = RSTRING_LEN(uuid);
+
+  // Parse UUID string (format: "550e8400-e29b-41d4-a716-446655440000")
+  // Expected length: 36 characters (32 hex + 4 hyphens)
+  if (len != 36 || str[8] != '-' || str[13] != '-' || str[18] != '-' || str[23] != '-') {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  // Parse hex string to bytes using direct conversion, skipping hyphens
+  int byte_idx = 0;
+  for (int i = 0; i < len && byte_idx < 16; i++) {
+    if (str[i] == '-') continue;
+    if (i + 1 >= len || str[i + 1] == '-') break;
+
+    // Convert two hex characters to one byte
+    int high = hex_char_to_int(str[i]);
+    int low = hex_char_to_int(str[i + 1]);
+
+    if (high < 0 || low < 0) break;
+
+    bytes[byte_idx++] = (unsigned char)((high << 4) | low);
+    i++; // skip next char since we processed two
+  }
+
+  if (byte_idx != 16) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  WRITE(transport, bytes, 16);
+  return Qnil;
+}
+
 //---------------------------------------
 // interface reading methods
 //---------------------------------------
@@ -331,6 +377,7 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self);
 VALUE rb_thrift_compact_proto_read_byte(VALUE self);
 VALUE rb_thrift_compact_proto_read_i32(VALUE self);
 VALUE rb_thrift_compact_proto_read_i16(VALUE self);
+VALUE rb_thrift_compact_proto_read_uuid(VALUE self);
 
 static int8_t get_ttype(int8_t ctype) {
   if (ctype == TTYPE_STOP) {
@@ -357,6 +404,8 @@ static int8_t get_ttype(int8_t ctype) {
     return TTYPE_MAP;
   } else if (ctype == CTYPE_STRUCT) {
     return TTYPE_STRUCT;
+  } else if (ctype == CTYPE_UUID) {
+    return TTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", ctype);
@@ -394,13 +443,6 @@ static int64_t read_varint64(VALUE self) {
 
 static int16_t read_i16(VALUE self) {
   return zig_zag_to_int((int32_t)read_varint64(self));
-}
-
-static VALUE get_protocol_exception(VALUE code, VALUE message) {
-  VALUE args[2];
-  args[0] = code;
-  args[1] = message;
-  return rb_class_new_instance(2, (VALUE*)&args, protocol_exception_class);
 }
 
 VALUE rb_thrift_compact_proto_read_message_end(VALUE self) {
@@ -565,6 +607,27 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
+VALUE rb_thrift_compact_proto_read_uuid(VALUE self) {
+  VALUE data = READ(self, 16);
+  const unsigned char* bytes = (const unsigned char*)RSTRING_PTR(data);
+
+  // Format as UUID string: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  char uuid_str[37];
+  char* p = uuid_str;
+
+  for (int i = 0; i < 16; i++) {
+    *p++ = int_to_hex_char((bytes[i] >> 4) & 0x0F);
+    *p++ = int_to_hex_char(bytes[i] & 0x0F);
+    if (i == 3 || i == 5 || i == 7 || i == 9) {
+      *p++ = '-';
+    }
+  }
+
+  *p = '\0';
+
+  return rb_str_new(uuid_str, 36);
+}
+
 static void Init_constants(void) {
   thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
   rb_global_variable(&thrift_compact_protocol_class);
@@ -599,6 +662,7 @@ static void Init_rb_methods(void) {
   rb_define_method(thrift_compact_protocol_class, "write_double",        rb_thrift_compact_proto_write_double, 1);
   rb_define_method(thrift_compact_protocol_class, "write_string",        rb_thrift_compact_proto_write_string, 1);
   rb_define_method(thrift_compact_protocol_class, "write_binary",        rb_thrift_compact_proto_write_binary, 1);
+  rb_define_method(thrift_compact_protocol_class, "write_uuid",          rb_thrift_compact_proto_write_uuid, 1);
 
   rb_define_method(thrift_compact_protocol_class, "write_message_end", rb_thrift_compact_proto_write_message_end, 0);
   rb_define_method(thrift_compact_protocol_class, "write_struct_begin", rb_thrift_compact_proto_write_struct_begin, 1);
@@ -622,6 +686,7 @@ static void Init_rb_methods(void) {
   rb_define_method(thrift_compact_protocol_class, "read_double",         rb_thrift_compact_proto_read_double, 0);
   rb_define_method(thrift_compact_protocol_class, "read_string",         rb_thrift_compact_proto_read_string, 0);
   rb_define_method(thrift_compact_protocol_class, "read_binary",         rb_thrift_compact_proto_read_binary, 0);
+  rb_define_method(thrift_compact_protocol_class, "read_uuid",           rb_thrift_compact_proto_read_uuid, 0);
 
   rb_define_method(thrift_compact_protocol_class, "read_message_end", rb_thrift_compact_proto_read_message_end, 0);
   rb_define_method(thrift_compact_protocol_class, "read_struct_begin",  rb_thrift_compact_proto_read_struct_begin, 0);
