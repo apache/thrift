@@ -247,6 +247,14 @@ class SimpleClientTest < Test::Unit::TestCase
     Thrift::Test::Xtruct.new({'string_thing' => 'hi!', 'i32_thing' => 4 })
   end
 
+  def test_uuid
+    p 'test_uuid'
+    val = '00112233-4455-6677-8899-aabbccddeeff'
+    ret = @client.testUuid(val)
+    assert_equal(ret, val)
+    assert_kind_of(String, ret)
+  end
+
   def test_struct
     p 'test_struct'
     ret = @client.testStruct(get_struct)

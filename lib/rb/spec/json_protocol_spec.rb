@@ -252,6 +252,11 @@ describe 'JsonProtocol' do
       expect(@trans.read(@trans.available)).to eq("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
     end
 
+    it "should write a uuid" do
+      @prot.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
+      expect(@trans.read(@trans.available)).to eq("\"00112233-4455-6677-8899-aabbccddeeff\"")
+    end
+
     it "should get type name for type id" do
       expect {@prot.get_type_name_for_type_id(Thrift::Types::STOP)}.to raise_error(NotImplementedError)
       expect {@prot.get_type_name_for_type_id(Thrift::Types::VOID)}.to raise_error(NotImplementedError)
@@ -534,7 +539,12 @@ describe 'JsonProtocol' do
       @trans.write("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
       expect(@prot.read_binary.bytes.to_a).to eq((0...256).to_a)
     end
-  
+
+    it "should read a uuid" do
+      @trans.write("\"00112233-4455-6677-8899-aabbccddeeff\"")
+      expect(@prot.read_uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
+    end
+
     it "should provide a reasonable to_s" do
       expect(@prot.to_s).to eq("json(memory)")
     end

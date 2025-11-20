@@ -116,6 +116,24 @@ module Thrift
       trans.write(buf)
     end
 
+    def write_uuid(uuid)
+      # Validate UUID format: "550e8400-e29b-41d4-a716-446655440000"
+      # Expected length: 36 characters (32 hex + 4 hyphens)
+      unless uuid.is_a?(String) && uuid.length == 36 &&
+             uuid[8] == '-' && uuid[13] == '-' && uuid[18] == '-' && uuid[23] == '-'
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid UUID format')
+      end
+
+      # Pack hex directly without creating intermediate string
+      # Check for valid hex characters during packing
+      hex_str = uuid.delete('-')
+      unless hex_str =~ /\A[0-9a-fA-F]{32}\z/
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid hex characters in UUID')
+      end
+
+      trans.write([hex_str].pack('H*'))
+    end
+
     def read_message_begin
       version = read_i32
       if version < 0
@@ -226,7 +244,13 @@ module Thrift
       size = read_i32
       trans.read_all(size)
     end
-    
+
+    def read_uuid
+      bytes = trans.read_all(16)
+      hex = bytes.unpack('H*')[0]
+      "#{hex[0, 8]}-#{hex[8, 4]}-#{hex[12, 4]}-#{hex[16, 4]}-#{hex[20, 12]}"
+    end
+
     def to_s
       "binary(#{super.to_s})"
     end
