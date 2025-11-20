@@ -809,6 +809,21 @@ jobs:
       - name: Run make check for test/rb
         run: make -C test/rb check
 
+      - name: Run make precross for ruby test
+        run: make -C test/rb precross
+
+      - name: Upload ruby precross artifacts
+        # has to match the version used in cross-test
+        if: matrix.ruby-version == '2.7' && matrix.skip-build-ext == false
+        uses: actions/upload-artifact@v5
+        with:
+          name: rb-precross
+          if-no-files-found: error
+          path: |
+            test/rb/gen-rb/*
+            lib/rb/ext/*.so
+          retention-days: 3
+
   cross-test:
     needs:
       - lib-java-kotlin
@@ -817,14 +832,15 @@ jobs:
       - lib-go
       - lib-python
       - lib-cpp
+      - lib-ruby
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp', 'py']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp', 'py']
+        client_lang: ['java,kotlin', 'go,rs,cpp', 'py', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -844,6 +860,12 @@ jobs:
           # here we intentionally use an older version so that we also verify Java 17 compiles to it
           java-version: 8
           cache: "gradle"
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7"
+          bundler-cache: true
+          working-directory: test/rb
 
       - name: Install openssl and certificates (for SSL tests)
         run: |
@@ -897,6 +919,12 @@ jobs:
           name: py-precross
           path: .
 
+      - name: Download ruby precross artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: rb-precross
+          path: .
+
       - name: Set back executable flags
         run: |
           chmod a+x lib/java/build/run*
@@ -909,6 +937,7 @@ jobs:
           chmod a+x test/cpp/.libs/*
           chmod a+x lib/cpp/.libs/*.so
           chmod a+x test/py/*.py
+          chmod a+x lib/rb/ext/*.so
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
