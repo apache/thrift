@@ -225,14 +225,14 @@ class SimpleClientTest < Test::Unit::TestCase
     ret = @client.testEnum(val)
 
     assert_equal(ret, 6)
-    assert_kind_of(Fixnum, ret)
+    assert_kind_of(Integer, ret)
   end
 
   def test_typedef
     p 'test_typedef'
     #UserId  testTypedef(1: UserId thing),
     assert_equal(@client.testTypedef(309858235082523), 309858235082523)
-    assert_kind_of(Fixnum, @client.testTypedef(309858235082523))
+    assert_kind_of(Integer, @client.testTypedef(309858235082523))
     true
   end
 

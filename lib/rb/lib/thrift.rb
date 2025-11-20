@@ -23,7 +23,6 @@
 $:.unshift File.dirname(__FILE__)
 
 require 'thrift/bytes'
-require 'thrift/core_ext'
 require 'thrift/exceptions'
 require 'thrift/types'
 require 'thrift/processor'

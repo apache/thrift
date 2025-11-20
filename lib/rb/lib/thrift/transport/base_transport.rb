@@ -62,7 +62,7 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Returns an unsigned byte as a Fixnum in the range (0..255).
+    # Returns an unsigned byte as a Integer in the range (0..255).
     def read_byte
       buf = read_all(1)
       return Bytes.get_string_byte(buf, 0)
