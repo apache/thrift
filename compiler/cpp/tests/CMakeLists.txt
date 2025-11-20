@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(thrift_compiler_tests)
 
@@ -76,9 +76,11 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/audit/t_audit.cpp
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/common.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.h
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
-    ${THRIFT_COMPILER_SOURCE_DIR}/thrift/version.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -96,8 +98,21 @@ macro(THRIFT_ADD_COMPILER name description initial)
     endif()
 endmacro()
 
+# This macro adds an option THRIFT_VALIDATOR_COMPILER_${NAME}
+# that allows enabling or disabling certain languages
+macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
+    string(TOUPPER "THRIFT_VALIDATOR_COMPILER_${name}" enabler)
+    set(src "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.cc")
+    list(APPEND "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.h")
+    option(${enabler} ${description} ${initial})
+    if(${enabler})
+        list(APPEND thrift-compiler_SOURCES ${src})
+    endif()
+endmacro()
+
 # The following compiler with unit tests can be enabled or disabled
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" OFF)
+THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" OFF)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
@@ -113,7 +128,7 @@ THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" OFF)
 THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" OFF)
 THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" OFF)
 THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
-THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" OFF)
+THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" ON)
 THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" OFF)
 THRIFT_ADD_COMPILER(php     "Enable compiler for PHP" OFF)
 THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" OFF)
@@ -123,6 +138,9 @@ THRIFT_ADD_COMPILER(st      "Enable compiler for Smalltalk" OFF)
 THRIFT_ADD_COMPILER(swift   "Enable compiler for Swift" OFF)
 THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" OFF)
 THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" OFF)
+
+# The following compiler can be enabled or disabled by enabling or disabling certain languages
+THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)
 
 # Thrift is looking for include files in the src directory
 # we also add the current binary directory for generated files

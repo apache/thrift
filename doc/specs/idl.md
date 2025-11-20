@@ -1,6 +1,6 @@
 ## Thrift interface description language
 
-For Thrift version 0.17.0.
+For Thrift version 0.23.0.
 
 The Thrift interface definition language (IDL) allows for the definition of [Thrift Types](/docs/types). A Thrift IDL file is processed by the Thrift code generator to produce code for the various target languages to support the defined structs and services in the IDL file.
 
@@ -166,7 +166,7 @@ N.B.: These have some internal purpose at Facebook but serve no current purpose 
 
     [28] SetType         ::=  'set' CppType? '<' FieldType '>'
 
-    [29] ListType        ::=  'list' '<' FieldType '>' CppType?
+    [29] ListType        ::=  'list' CppType? '<' FieldType '>' 
 
     [30] CppType         ::=  'cpp_type' Literal
 

@@ -37,8 +37,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
 /**
  * Haxe code generator.
  *
@@ -75,6 +73,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -98,16 +97,16 @@ public:
                           t_const_value* value);
 
   void render_struct_initializer(std::ostream& out,
-						         t_struct* type,
+                                 t_struct* type,
                                  t_const_value* value);
   void render_map_initializer(std::ostream& out,
-						      t_map* type,
+                              t_map* type,
                               t_const_value* value);
   void render_list_initializer(std::ostream& out,
-						       t_list* type,
+                               t_list* type,
                                t_const_value* value);
   void render_set_initializer(std::ostream& out,
-						      t_set* type,
+                              t_set* type,
                               t_const_value* value);
 
   // helper
@@ -200,6 +199,7 @@ public:
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
   std::string base_type_name(t_base_type* tbase, bool in_container = false);
   std::string declare_field(t_field* tfield, bool init = false);
+  std::string render_default_value_for_type(t_type* type, bool allow_null);
   std::string function_signature_combined(t_function* tfunction);
   std::string function_signature_normal(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
@@ -208,6 +208,8 @@ public:
   string generate_service_method_onsuccess(t_function* tfunction, bool as_type, bool omit_name);
   void generate_service_method_signature_combined(t_function* tfunction, bool is_interface);
   void generate_service_method_signature_normal(t_function* tfunction, bool is_interface);
+  void generate_deprecation_attribute(ostream& out, t_function* func, bool as_comment);
+  string make_haxe_string_literal( string const& value);
 
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
@@ -354,7 +356,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& impo
       string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*m_iter)->get_type()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + (*m_iter)->get_type()->get_name() + ";\n");
+          imports.append("import " + package + "." + get_cap_name((*m_iter)->get_type()->get_name()) + ";\n");
         }
       }
     }
@@ -379,7 +381,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice) {
       string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + (*f_iter)->get_returntype()->get_name()+ ";\n");
+          imports.append("import " + package + "." + get_cap_name((*f_iter)->get_returntype()->get_name())+ ";\n");
         }
       }
     }
@@ -420,10 +422,10 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   f_enum.open(f_enum_name.c_str());
 
   // Comment and package it
-  f_enum << autogen_comment() << haxe_package() << ";" << endl << endl;
+  f_enum << autogen_comment() << haxe_package() << ";" << '\n' << '\n';
 
   // Add haxe imports
-  f_enum << string() + "import org.apache.thrift.helper.*;" << endl << endl;
+  f_enum << string() + "import org.apache.thrift.helper.*;" << '\n' << '\n';
 
   generate_rtti_decoration(f_enum);
   generate_macro_decoration(f_enum);
@@ -435,11 +437,11 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     indent(f_enum) << "public static inline var " << (*c_iter)->get_name() << " : Int = " << value
-                   << ";" << endl;
+                   << ";" << '\n';
   }
 
   // Create a static Set with all valid values for this enum
-  f_enum << endl;
+  f_enum << '\n';
 
   indent(f_enum) << "public static var VALID_VALUES = { new IntSet( [";
   indent_up();
@@ -450,19 +452,19 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
     firstValue = false;
   }
   indent_down();
-  f_enum << "]); };" << endl;
+  f_enum << "]); };" << '\n';
 
   indent(f_enum) << "public static var VALUES_TO_NAMES = { [";
   indent_up();
   firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    f_enum << (firstValue ? "" : ",") << endl;
+    f_enum << (firstValue ? "" : ",") << '\n';
     indent(f_enum) << (*c_iter)->get_name() << " => \"" << (*c_iter)->get_name() << "\"";
     firstValue = false;
   }
-  f_enum << endl;
+  f_enum << '\n';
   indent_down();
-  indent(f_enum) << "]; };" << endl;
+  indent(f_enum) << "]; };" << '\n';
 
   scope_down(f_enum); // end class
 
@@ -482,15 +484,15 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts.open(f_consts_name.c_str());
 
   // Print header
-  f_consts << autogen_comment() << haxe_package() << ";" << endl << endl;
+  f_consts << autogen_comment() << haxe_package() << ";" << '\n' << '\n';
 
-  f_consts << endl;
+  f_consts << '\n';
 
   f_consts << haxe_type_imports();
 
   generate_rtti_decoration(f_consts);
   generate_macro_decoration(f_consts);
-  indent(f_consts) << "class " << get_cap_name(program_name_) << "Constants {" << endl << endl;
+  indent(f_consts) << "class " << get_cap_name(program_name_) << "Constants {" << '\n' << '\n';
   indent_up();
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -500,7 +502,7 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
                       (*c_iter)->get_value());
   }
   indent_down();
-  indent(f_consts) << "}" << endl;
+  indent(f_consts) << "}" << '\n';
   f_consts.close();
 }
 
@@ -523,7 +525,7 @@ void t_haxe_generator::print_const_value(std::ostream& out,
   }
   out << " : " << get_cap_name(type_name(type)) << " = ";
   render_const_value(out, type, value);
-  out << ";" << endl << endl;
+  out << ";" << '\n' << '\n';
 }
 
 std::string t_haxe_generator::render_const_value_str( t_type* type, t_const_value* value) {
@@ -542,6 +544,9 @@ void t_haxe_generator::render_const_value(std::ostream& out,
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
+      out << '"' << get_escaped_string(value) << '"';
+      break;
+    case t_base_type::TYPE_UUID:
       out << '"' << get_escaped_string(value) << '"';
       break;
     case t_base_type::TYPE_BOOL:
@@ -587,9 +592,9 @@ void t_haxe_generator::render_const_value(std::ostream& out,
 void t_haxe_generator::render_struct_initializer(std::ostream& out,
                                                  t_struct* type,
                                                  t_const_value* value) {
-  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << '\n';
   indent_up();
-  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << '\n';
 
   const vector<t_field*>& fields = ((t_struct*)type)->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -608,24 +613,24 @@ void t_haxe_generator::render_struct_initializer(std::ostream& out,
     }
     indent(out) << "tmp." << v_iter->first->get_string() << " = ";
     render_const_value(out, field_type, v_iter->second);
-    out << ";" << endl;
+    out << ";" << '\n';
   }
 
-  indent(out) << "return tmp;" << endl; 
+  indent(out) << "return tmp;" << '\n';
   indent_down();
-  indent(out) << "})()";  // no endl
+  indent(out) << "})()";  // no line break
 }
 
 void t_haxe_generator::render_map_initializer(std::ostream& out,
                                               t_map* type,
                                               t_const_value* value) {
-  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << '\n';
   indent_up();
-  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << '\n';
 
   t_type* key_type = ((t_map*)type)->get_key_type();
   t_type* val_type = ((t_map*)type)->get_val_type();
-  
+
   const map<t_const_value*, t_const_value*, t_const_value::value_compare>& values = value->get_map();
   map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
   for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
@@ -633,56 +638,56 @@ void t_haxe_generator::render_map_initializer(std::ostream& out,
     render_const_value(out, key_type, v_iter->first);
     out << ", ";
     render_const_value(out, val_type, v_iter->second);
-    out << ");" << endl;
+    out << ");" << '\n';
   }
- 
-  indent(out) << "return tmp;" << endl; 
+
+  indent(out) << "return tmp;" << '\n';
   indent_down();
-  indent(out) << "})()";  // no endl
+  indent(out) << "})()";  // no line break
 }
 
 void t_haxe_generator::render_list_initializer(std::ostream& out,
                                                t_list* type,
                                                t_const_value* value) {
-  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << '\n';
   indent_up();
-  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << '\n';
 
   t_type* elm_type = type->get_elem_type();
-  
+
   const vector<t_const_value*>& values = value->get_list();
   vector<t_const_value*>::const_iterator v_iter;
   for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
     indent(out) << "tmp.add(";
     render_const_value(out, elm_type, *v_iter);
-    out << ");" << endl;
+    out << ");" << '\n';
   }
- 
-  indent(out) << "return tmp;" << endl; 
+
+  indent(out) << "return tmp;" << '\n';
   indent_down();
-  indent(out) << "})()";  // no endl
+  indent(out) << "})()";  // no line break
 }
 
 void t_haxe_generator::render_set_initializer(std::ostream& out,
                                               t_set* type,
                                               t_const_value* value) {
-  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << '\n';
   indent_up();
-  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << '\n';
 
   t_type* elm_type = type->get_elem_type();
-  
+
   const vector<t_const_value*>& values = value->get_list();
   vector<t_const_value*>::const_iterator v_iter;
   for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
     indent(out) << "tmp.add(";
     render_const_value(out, elm_type, *v_iter);
-    out << ");" << endl;
+    out << ");" << '\n';
   }
-  
-  indent(out) << "return tmp;" << endl; 
+
+  indent(out) << "return tmp;" << '\n';
   indent_down();
-  indent(out) << "})()";  // no endl
+  indent(out) << "})()";  // no line break
 }
 
 
@@ -716,14 +721,14 @@ void t_haxe_generator::generate_haxe_struct(t_struct* tstruct, bool is_exception
   ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
-  f_struct << autogen_comment() << haxe_package() << ";" << endl;
+  f_struct << autogen_comment() << haxe_package() << ";" << '\n';
 
-  f_struct << endl;
+  f_struct << '\n';
 
   string imports;
 
   f_struct << haxe_type_imports() << haxe_thrift_imports()
-           << haxe_thrift_gen_imports(tstruct, imports) << endl;
+           << haxe_thrift_gen_imports(tstruct, imports) << '\n';
 
   generate_haxe_struct_definition(f_struct, tstruct, is_exception, is_result);
 
@@ -755,11 +760,11 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   if (is_exception) {
     out << "extends TException ";
   }
-  out << "implements TBase {" << endl << endl;
+  out << "implements TBase {" << '\n' << '\n';
   indent_up();
 
   indent(out) << "static var STRUCT_DESC = { new TStruct(\"" << tstruct->get_name() << "\"); };"
-              << endl;
+              << '\n';
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
@@ -768,69 +773,69 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
     indent(out) << "static var " << constant_name((*m_iter)->get_name())
                 << "_FIELD_DESC = { new TField(\"" << (*m_iter)->get_name() << "\", "
                 << type_to_enum((*m_iter)->get_type()) << ", " << (*m_iter)->get_key() << "); };"
-                << endl;
+                << '\n';
   }
-  out << endl;
+  out << '\n';
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_haxe_doc(out, *m_iter);
     // indent(out) << "private var _" << (*m_iter)->get_name() + " : " +
-    // type_name((*m_iter)->get_type()) << ";" << endl;
-    indent(out) << "@:isVar" << endl;
+    // type_name((*m_iter)->get_type()) << ";" << '\n';
+    indent(out) << "@:isVar" << '\n';
     indent(out) << "public var "
                 << (*m_iter)->get_name() + "(get,set) : "
-                   + get_cap_name(type_name((*m_iter)->get_type())) << ";" << endl;
+                   + get_cap_name(type_name((*m_iter)->get_type())) << ";" << '\n';
   }
 
-  out << endl;
+  out << '\n';
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) << "inline static var " << upcase_string((*m_iter)->get_name())
-                << "_FIELD_ID : Int = " << (*m_iter)->get_key() << ";" << endl;
+                << "_FIELD_ID : Int = " << (*m_iter)->get_key() << ";" << '\n';
   }
 
-  out << endl;
+  out << '\n';
 
   // Inner Isset class
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (!type_can_be_null((*m_iter)->get_type())) {
         indent(out) << "private var __isset_" << (*m_iter)->get_name() << " : Bool = false;"
-                    << endl;
+                    << '\n';
       }
     }
   }
 
-  out << endl;
+  out << '\n';
 
   // Static initializer to populate global class to struct metadata map
   if (false) {
     // TODO: reactivate when needed
     generate_haxe_meta_data_map(out, tstruct);
-    indent(out) << "{" << endl;
+    indent(out) << "{" << '\n';
     indent_up();
     indent(out) << "FieldMetaData.addStructMetaDataMap(" << type_name(tstruct) << ", metaDataMap);"
-                << endl;
+                << '\n';
     indent_down();
-    indent(out) << "}" << endl;
-    indent(out) << "}" << endl;
+    indent(out) << "}" << '\n';
+    indent(out) << "}" << '\n';
   }
 
   // Default constructor
-  indent(out) << "public function new() {" << endl;
+  indent(out) << "public function new() {" << '\n';
   indent_up();
   if (is_exception) {
-    indent(out) << "super();" << endl;
+    indent(out) << "super();" << '\n';
   }
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if ((*m_iter)->get_value() != nullptr) {
       indent(out) << "this." << (*m_iter)->get_name() << " = ";
       render_const_value( out, (*m_iter)->get_type(), (*m_iter)->get_value());
-      out << ";" << endl;
+      out << ";" << '\n';
     }
   }
   indent_down();
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 
   generate_property_getters_setters(out, tstruct);
   generate_generic_field_getters_setters(out, tstruct);
@@ -845,7 +850,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   generate_haxe_struct_tostring(out, tstruct, is_exception);
   generate_haxe_validator(out, tstruct);
   scope_down(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -854,123 +859,123 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
  * @param tstruct The struct definition
  */
 void t_haxe_generator::generate_haxe_struct_reader(ostream& out, t_struct* tstruct) {
-  out << indent() << "public function read( iprot : TProtocol) : Void {" << endl;
+  out << indent() << "public function read( iprot : TProtocol) : Void {" << '\n';
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "iprot.IncrementRecursionDepth();" << endl;
-  indent(out) << "try" << endl;
+  indent(out) << "iprot.IncrementRecursionDepth();" << '\n';
+  indent(out) << "try" << '\n';
   scope_up(out);
 
   // Declare stack tmp variables and read struct header
-  out << indent() << "var field : TField;" << endl << indent() << "iprot.readStructBegin();"
-      << endl;
+  out << indent() << "var field : TField;" << '\n' << indent() << "iprot.readStructBegin();"
+      << '\n';
 
   // Loop over reading in fields
-  indent(out) << "while (true)" << endl;
+  indent(out) << "while (true)" << '\n';
   scope_up(out);
 
   // Read beginning field marker
-  indent(out) << "field = iprot.readFieldBegin();" << endl;
+  indent(out) << "field = iprot.readFieldBegin();" << '\n';
 
   // Check for field STOP marker and break
-  indent(out) << "if (field.type == TType.STOP) { " << endl;
+  indent(out) << "if (field.type == TType.STOP) { " << '\n';
   indent_up();
-  indent(out) << "break;" << endl;
+  indent(out) << "break;" << '\n';
   indent_down();
-  indent(out) << "}" << endl;
+  indent(out) << "}" << '\n';
 
   // Switch statement on the field we are reading
-  indent(out) << "switch (field.id)" << endl;
+  indent(out) << "switch (field.id)" << '\n';
 
   scope_up(out);
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    indent(out) << "case " << upcase_string((*f_iter)->get_name()) << "_FIELD_ID:" << endl;
+    indent(out) << "case " << upcase_string((*f_iter)->get_name()) << "_FIELD_ID:" << '\n';
     indent_up();
-    indent(out) << "if (field.type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+    indent(out) << "if (field.type == " << type_to_enum((*f_iter)->get_type()) << ") {" << '\n';
     indent_up();
 
     generate_deserialize_field(out, *f_iter, "this.");
     generate_isset_set(out, *f_iter);
     indent_down();
-    out << indent() << "} else { " << endl << indent() << "  TProtocolUtil.skip(iprot, field.type);"
-        << endl << indent() << "}" << endl;
+    out << indent() << "} else { " << '\n' << indent() << "  TProtocolUtil.skip(iprot, field.type);"
+        << '\n' << indent() << "}" << '\n';
     indent_down();
   }
 
   // In the default case we skip the field
-  out << indent() << "default:" << endl << indent() << "  TProtocolUtil.skip(iprot, field.type);"
-      << endl;
+  out << indent() << "default:" << '\n' << indent() << "  TProtocolUtil.skip(iprot, field.type);"
+      << '\n';
 
   scope_down(out);
 
   // Read field end marker
-  indent(out) << "iprot.readFieldEnd();" << endl;
+  indent(out) << "iprot.readFieldEnd();" << '\n';
 
   scope_down(out);
 
-  out << indent() << "iprot.readStructEnd();" << endl << endl;
+  out << indent() << "iprot.readStructEnd();" << '\n' << '\n';
 
-  indent(out) << "iprot.DecrementRecursionDepth();" << endl;
+  indent(out) << "iprot.DecrementRecursionDepth();" << '\n';
   scope_down(out);
-  indent(out) << "catch(e:Dynamic)" << endl;
+  indent(out) << "catch(e:Dynamic)" << '\n';
   scope_up(out);
-  indent(out) << "iprot.DecrementRecursionDepth();" << endl;
-  indent(out) << "throw e;" << endl;
+  indent(out) << "iprot.DecrementRecursionDepth();" << '\n';
+  indent(out) << "throw e;" << '\n';
   scope_down(out);
 
   // check for required fields of primitive type
   // (which can be checked here but not in the general validate method)
-  out << endl << indent() << "// check for required fields of primitive type, which can't be "
-                             "checked in the validate method" << endl;
+  out << '\n' << indent() << "// check for required fields of primitive type, which can't be "
+                             "checked in the validate method" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
-      out << indent() << "if (!__isset_" << (*f_iter)->get_name() << ") {" << endl << indent()
+      out << indent() << "if (!__isset_" << (*f_iter)->get_name() << ") {" << '\n' << indent()
           << "  throw new TProtocolException(TProtocolException.UNKNOWN, \"Required field '"
           << (*f_iter)->get_name()
-          << "' was not found in serialized data! Struct: \" + toString());" << endl << indent()
-          << "}" << endl;
+          << "' was not found in serialized data! Struct: \" + toString());" << '\n' << indent()
+          << "}" << '\n';
     }
   }
 
   // performs various checks (e.g. check that all required fields are set)
-  indent(out) << "validate();" << endl;
+  indent(out) << "validate();" << '\n';
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "}" << '\n' << '\n';
 }
 
 // generates haxe method to perform various checks
 // (e.g. check that all required fields are set)
 void t_haxe_generator::generate_haxe_validator(ostream& out, t_struct* tstruct) {
-  indent(out) << "public function validate() : Void {" << endl;
+  indent(out) << "public function validate() : Void {" << '\n';
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << indent() << "// check for required fields" << endl;
+  out << indent() << "// check for required fields" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       if (type_can_be_null((*f_iter)->get_type())) {
-        indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << endl;
+        indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << '\n';
         indent(out)
             << "  throw new TProtocolException(TProtocolException.UNKNOWN, \"Required field '"
-            << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
-        indent(out) << "}" << endl;
+            << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << '\n';
+        indent(out) << "}" << '\n';
       } else {
         indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name()
-                    << "' because it's a primitive." << endl;
+                    << "' because it's a primitive." << '\n';
       }
     }
   }
 
   // check that fields of type enum have valid values
-  out << indent() << "// check that fields of type enum have valid values" << endl;
+  out << indent() << "// check that fields of type enum have valid values" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
     t_type* type = field->get_type();
@@ -978,18 +983,18 @@ void t_haxe_generator::generate_haxe_validator(ostream& out, t_struct* tstruct) 
     if (type->is_enum()) {
       indent(out) << "if (" << generate_isset_check(field) << " && !"
                   << get_cap_name(get_enum_class_name(type)) << ".VALID_VALUES.contains("
-                  << field->get_name() << ")){" << endl;
+                  << field->get_name() << ")){" << '\n';
       indent_up();
       indent(out) << "throw new TProtocolException(TProtocolException.UNKNOWN, \"The field '"
                   << field->get_name() << "' has been assigned the invalid value \" + "
-                  << field->get_name() << ");" << endl;
+                  << field->get_name() << ");" << '\n';
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
   }
 
   indent_down();
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 }
 
 /**
@@ -998,7 +1003,7 @@ void t_haxe_generator::generate_haxe_validator(ostream& out, t_struct* tstruct) 
  * @param tstruct The struct definition
  */
 void t_haxe_generator::generate_haxe_struct_writer(ostream& out, t_struct* tstruct) {
-  out << indent() << "public function write(oprot:TProtocol) : Void {" << endl;
+  out << indent() << "public function write(oprot:TProtocol) : Void {" << '\n';
   indent_up();
 
   string name = tstruct->get_name();
@@ -1006,57 +1011,57 @@ void t_haxe_generator::generate_haxe_struct_writer(ostream& out, t_struct* tstru
   vector<t_field*>::const_iterator f_iter;
 
   // performs various checks (e.g. check that all required fields are set)
-  indent(out) << "validate();" << endl;
-  indent(out) << "oprot.IncrementRecursionDepth();" << endl;
-  indent(out) << "try" << endl;
+  indent(out) << "validate();" << '\n';
+  indent(out) << "oprot.IncrementRecursionDepth();" << '\n';
+  indent(out) << "try" << '\n';
   scope_up(out);
 
-  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;
+  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool could_be_unset = (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (could_be_unset) {
-      indent(out) << "if (" << generate_isset_check(*f_iter) << ") {" << endl;
+      indent(out) << "if (" << generate_isset_check(*f_iter) << ") {" << '\n';
       indent_up();
     }
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
-      out << indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+      out << indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << '\n';
       indent_up();
     }
 
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name())
-                << "_FIELD_DESC);" << endl;
+                << "_FIELD_DESC);" << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
 
     // Write field closer
-    indent(out) << "oprot.writeFieldEnd();" << endl;
+    indent(out) << "oprot.writeFieldEnd();" << '\n';
 
     if (null_allowed) {
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
     if (could_be_unset) {
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
   }
 
-  indent(out) << "oprot.writeFieldStop();" << endl;
-  indent(out) << "oprot.writeStructEnd();" << endl;
+  indent(out) << "oprot.writeFieldStop();" << '\n';
+  indent(out) << "oprot.writeStructEnd();" << '\n';
 
-  indent(out) << "oprot.DecrementRecursionDepth();" << endl;
+  indent(out) << "oprot.DecrementRecursionDepth();" << '\n';
   scope_down(out);
-  indent(out) << "catch(e:Dynamic)" << endl;
+  indent(out) << "catch(e:Dynamic)" << '\n';
   scope_up(out);
-  indent(out) << "oprot.DecrementRecursionDepth();" << endl;
-  indent(out) << "throw e;" << endl;
+  indent(out) << "oprot.DecrementRecursionDepth();" << '\n';
+  indent(out) << "throw e;" << '\n';
   scope_down(out);
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "}" << '\n' << '\n';
 }
 
 /**
@@ -1068,59 +1073,59 @@ void t_haxe_generator::generate_haxe_struct_writer(ostream& out, t_struct* tstru
  * @param tstruct The struct definition
  */
 void t_haxe_generator::generate_haxe_struct_result_writer(ostream& out, t_struct* tstruct) {
-  out << indent() << "public function write(oprot:TProtocol) : Void {" << endl;
+  out << indent() << "public function write(oprot:TProtocol) : Void {" << '\n';
   indent_up();
 
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "oprot.IncrementRecursionDepth();" << endl;
-  indent(out) << "try" << endl;
+  indent(out) << "oprot.IncrementRecursionDepth();" << '\n';
+  indent(out) << "try" << '\n';
   scope_up(out);
 
-  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;
+  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << '\n';
 
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
-      out << endl << indent() << "if ";
+      out << '\n' << indent() << "if ";
     } else {
       out << " else if ";
     }
 
-    out << "(this." << generate_isset_check(*f_iter) << ") {" << endl;
+    out << "(this." << generate_isset_check(*f_iter) << ") {" << '\n';
 
     indent_up();
 
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name())
-                << "_FIELD_DESC);" << endl;
+                << "_FIELD_DESC);" << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
 
     // Write field closer
-    indent(out) << "oprot.writeFieldEnd();" << endl;
+    indent(out) << "oprot.writeFieldEnd();" << '\n';
 
     indent_down();
     indent(out) << "}";
   }
 
-  indent(out) << endl;
-  indent(out) << "oprot.writeFieldStop();" << endl;
-  indent(out) << "oprot.writeStructEnd();" << endl;
+  indent(out) << '\n';
+  indent(out) << "oprot.writeFieldStop();" << '\n';
+  indent(out) << "oprot.writeStructEnd();" << '\n';
 
-  indent(out) << "oprot.DecrementRecursionDepth();" << endl;
+  indent(out) << "oprot.DecrementRecursionDepth();" << '\n';
   scope_down(out);
-  indent(out) << "catch(e:Dynamic)" << endl;
+  indent(out) << "catch(e:Dynamic)" << '\n';
   scope_up(out);
-  indent(out) << "oprot.DecrementRecursionDepth();" << endl;
-  indent(out) << "throw e;" << endl;
+  indent(out) << "oprot.DecrementRecursionDepth();" << '\n';
+  indent(out) << "throw e;" << '\n';
   scope_down(out);
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "}" << '\n' << '\n';
 }
 
 void t_haxe_generator::generate_reflection_getters(ostringstream& out,
@@ -1129,9 +1134,9 @@ void t_haxe_generator::generate_reflection_getters(ostringstream& out,
                                                    string cap_name) {
   (void)type;
   (void)cap_name;
-  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << endl;
+  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << '\n';
   indent_up();
-  indent(out) << "return this." << field_name << ";" << endl;
+  indent(out) << "return this." << field_name << ";" << '\n';
   indent_down();
 }
 
@@ -1141,13 +1146,13 @@ void t_haxe_generator::generate_reflection_setters(ostringstream& out,
                                                    string cap_name) {
   (void)type;
   (void)cap_name;
-  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << endl;
+  indent(out) << "case " << upcase_string(field_name) << "_FIELD_ID:" << '\n';
   indent_up();
-  indent(out) << "if (value == null) {" << endl;
-  indent(out) << "  unset" << get_cap_name(field_name) << "();" << endl;
-  indent(out) << "} else {" << endl;
-  indent(out) << "  this." << field_name << " = value;" << endl;
-  indent(out) << "}" << endl << endl;
+  indent(out) << "if (value == null) {" << '\n';
+  indent(out) << "  unset" << get_cap_name(field_name) << "();" << '\n';
+  indent(out) << "} else {" << '\n';
+  indent(out) << "  this." << field_name << " = value;" << '\n';
+  indent(out) << "}" << '\n' << '\n';
 
   indent_down();
 }
@@ -1174,39 +1179,39 @@ void t_haxe_generator::generate_generic_field_getters_setters(std::ostream& out,
   }
 
   // create the setter
-  indent(out) << "public function setFieldValue(fieldID : Int, value : Dynamic) : Void {" << endl;
+  indent(out) << "public function setFieldValue(fieldID : Int, value : Dynamic) : Void {" << '\n';
   indent_up();
 
   if (fields.size() > 0) {
-    indent(out) << "switch (fieldID) {" << endl;
+    indent(out) << "switch (fieldID) {" << '\n';
     out << setter_stream.str();
-    indent(out) << "default:" << endl;
-    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
-    indent(out) << "}" << endl;
+    indent(out) << "default:" << '\n';
+    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
+    indent(out) << "}" << '\n';
   } else {
-    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
+    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
   }
 
   indent_down();
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 
   // create the getter
-  indent(out) << "public function getFieldValue(fieldID : Int) : Dynamic {" << endl;
+  indent(out) << "public function getFieldValue(fieldID : Int) : Dynamic {" << '\n';
   indent_up();
 
   if (fields.size() > 0) {
-    indent(out) << "switch (fieldID) {" << endl;
+    indent(out) << "switch (fieldID) {" << '\n';
     out << getter_stream.str();
-    indent(out) << "default:" << endl;
-    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
-    indent(out) << "}" << endl;
+    indent(out) << "default:" << '\n';
+    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
+    indent(out) << "}" << '\n';
   } else {
-    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
+    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
   }
 
   indent_down();
 
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 }
 
 // Creates a generic isSet method that takes the field number as argument
@@ -1216,29 +1221,29 @@ void t_haxe_generator::generate_generic_isset_method(std::ostream& out, t_struct
 
   // create the isSet method
   indent(out) << "// Returns true if field corresponding to fieldID is set (has been assigned a "
-                 "value) and false otherwise" << endl;
-  indent(out) << "public function isSet(fieldID : Int) : Bool {" << endl;
+                 "value) and false otherwise" << '\n';
+  indent(out) << "public function isSet(fieldID : Int) : Bool {" << '\n';
   indent_up();
   if (fields.size() > 0) {
-    indent(out) << "switch (fieldID) {" << endl;
+    indent(out) << "switch (fieldID) {" << '\n';
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* field = *f_iter;
-      indent(out) << "case " << upcase_string(field->get_name()) << "_FIELD_ID:" << endl;
+      indent(out) << "case " << upcase_string(field->get_name()) << "_FIELD_ID:" << '\n';
       indent_up();
-      indent(out) << "return " << generate_isset_check(field) << ";" << endl;
+      indent(out) << "return " << generate_isset_check(field) << ";" << '\n';
       indent_down();
     }
 
-    indent(out) << "default:" << endl;
-    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
-    indent(out) << "}" << endl;
+    indent(out) << "default:" << '\n';
+    indent(out) << "  throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
+    indent(out) << "}" << '\n';
   } else {
-    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
+    indent(out) << "throw new ArgumentError(\"Field \" + fieldID + \" doesn't exist!\");" << '\n';
   }
 
   indent_down();
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 }
 
 /**
@@ -1258,48 +1263,48 @@ void t_haxe_generator::generate_property_getters_setters(ostream& out, t_struct*
     // Simple getter
     generate_haxe_doc(out, field);
     indent(out) << "public function get_" << field_name << "() : " << get_cap_name(type_name(type))
-                << " {" << endl;
+                << " {" << '\n';
     indent_up();
-    indent(out) << "return this." << field_name << ";" << endl;
+    indent(out) << "return this." << field_name << ";" << '\n';
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) << "}" << '\n' << '\n';
 
     // Simple setter
     generate_haxe_doc(out, field);
     indent(out) << "public function set_" << field_name << "(" << field_name << ":"
                 << get_cap_name(type_name(type)) << ") : " << get_cap_name(type_name(type)) << " {"
-                << endl;
+                << '\n';
     indent_up();
-    indent(out) << "this." << field_name << " = " << field_name << ";" << endl;
+    indent(out) << "this." << field_name << " = " << field_name << ";" << '\n';
     generate_isset_set(out, field);
-    indent(out) << "return this." << field_name << ";" << endl;
+    indent(out) << "return this." << field_name << ";" << '\n';
 
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) << "}" << '\n' << '\n';
 
     // Unsetter
-    indent(out) << "public function unset" << cap_name << "() : Void {" << endl;
+    indent(out) << "public function unset" << cap_name << "() : Void {" << '\n';
     indent_up();
     if (type_can_be_null(type)) {
-      indent(out) << "this." << field_name << " = null;" << endl;
+      indent(out) << "this." << field_name << " = null;" << '\n';
     } else {
-      indent(out) << "this.__isset_" << field_name << " = false;" << endl;
+      indent(out) << "this.__isset_" << field_name << " = false;" << '\n';
     }
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) << "}" << '\n' << '\n';
 
     // isSet method
     indent(out) << "// Returns true if field " << field_name
-                << " is set (has been assigned a value) and false otherwise" << endl;
-    indent(out) << "public function is" << get_cap_name("set") << cap_name << "() : Bool {" << endl;
+                << " is set (has been assigned a value) and false otherwise" << '\n';
+    indent(out) << "public function is" << get_cap_name("set") << cap_name << "() : Bool {" << '\n';
     indent_up();
     if (type_can_be_null(type)) {
-      indent(out) << "return this." << field_name << " != null;" << endl;
+      indent(out) << "return this." << field_name << " != null;" << '\n';
     } else {
-      indent(out) << "return this.__isset_" << field_name << ";" << endl;
+      indent(out) << "return this.__isset_" << field_name << ";" << '\n';
     }
     indent_down();
-    indent(out) << "}" << endl << endl;
+    indent(out) << "}" << '\n' << '\n';
   }
 }
 
@@ -1313,11 +1318,11 @@ void t_haxe_generator::generate_haxe_struct_tostring(ostream& out, t_struct* tst
   if( is_override) {
     out << "override ";
   }
-  out << "function toString() : String {" << endl;
+  out << "function toString() : String {" << '\n';
   indent_up();
 
-  out << indent() << "var ret : String = \"" << tstruct->get_name() << "(\";" << endl;
-  out << indent() << "var first : Bool = true;" << endl << endl;
+  out << indent() << "var ret : String = \"" << tstruct->get_name() << "(\";" << '\n';
+  out << indent() << "var first : Bool = true;" << '\n' << '\n';
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1325,58 +1330,58 @@ void t_haxe_generator::generate_haxe_struct_tostring(ostream& out, t_struct* tst
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool could_be_unset = (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (could_be_unset) {
-      indent(out) << "if (" << generate_isset_check(*f_iter) << ") {" << endl;
+      indent(out) << "if (" << generate_isset_check(*f_iter) << ") {" << '\n';
       indent_up();
     }
 
     t_field* field = (*f_iter);
 
     if (!first) {
-      indent(out) << "if (!first) ret +=  \", \";" << endl;
+      indent(out) << "if (!first) ret +=  \", \";" << '\n';
     }
-    indent(out) << "ret += \"" << (*f_iter)->get_name() << ":\";" << endl;
+    indent(out) << "ret += \"" << (*f_iter)->get_name() << ":\";" << '\n';
     bool can_be_null = type_can_be_null(field->get_type());
     if (can_be_null) {
-      indent(out) << "if (this." << (*f_iter)->get_name() << " == null) {" << endl;
-      indent(out) << "  ret += \"null\";" << endl;
-      indent(out) << "} else {" << endl;
+      indent(out) << "if (this." << (*f_iter)->get_name() << " == null) {" << '\n';
+      indent(out) << "  ret += \"null\";" << '\n';
+      indent(out) << "} else {" << '\n';
       indent_up();
     }
 
     if (field->get_type()->is_binary()) {
-      indent(out) << "  ret += \"BINARY\";" << endl;
+      indent(out) << "  ret += \"BINARY\";" << '\n';
     } else if (field->get_type()->is_enum()) {
       indent(out) << "var " << field->get_name()
                   << "_name : String = " << get_cap_name(get_enum_class_name(field->get_type()))
-                  << ".VALUES_TO_NAMES[this." << (*f_iter)->get_name() << "];" << endl;
-      indent(out) << "if (" << field->get_name() << "_name != null) {" << endl;
-      indent(out) << "  ret += " << field->get_name() << "_name;" << endl;
-      indent(out) << "  ret += \" (\";" << endl;
-      indent(out) << "}" << endl;
-      indent(out) << "ret += this." << field->get_name() << ";" << endl;
-      indent(out) << "if (" << field->get_name() << "_name != null) {" << endl;
-      indent(out) << "  ret += \")\";" << endl;
-      indent(out) << "}" << endl;
+                  << ".VALUES_TO_NAMES[this." << (*f_iter)->get_name() << "];" << '\n';
+      indent(out) << "if (" << field->get_name() << "_name != null) {" << '\n';
+      indent(out) << "  ret += " << field->get_name() << "_name;" << '\n';
+      indent(out) << "  ret += \" (\";" << '\n';
+      indent(out) << "}" << '\n';
+      indent(out) << "ret += this." << field->get_name() << ";" << '\n';
+      indent(out) << "if (" << field->get_name() << "_name != null) {" << '\n';
+      indent(out) << "  ret += \")\";" << '\n';
+      indent(out) << "}" << '\n';
     } else {
-      indent(out) << "ret += this." << (*f_iter)->get_name() << ";" << endl;
+      indent(out) << "ret += this." << (*f_iter)->get_name() << ";" << '\n';
     }
 
     if (can_be_null) {
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
-    indent(out) << "first = false;" << endl;
+    indent(out) << "first = false;" << '\n';
 
     if (could_be_unset) {
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}" << '\n';
     }
     first = false;
   }
-  out << indent() << "ret += \")\";" << endl << indent() << "return ret;" << endl;
+  out << indent() << "ret += \")\";" << '\n' << indent() << "return ret;" << '\n';
 
   indent_down();
-  indent(out) << "}" << endl << endl;
+  indent(out) << "}" << '\n' << '\n';
 }
 
 /**
@@ -1390,7 +1395,7 @@ void t_haxe_generator::generate_haxe_meta_data_map(ostream& out, t_struct* tstru
   vector<t_field*>::const_iterator f_iter;
 
   // Static Map with fieldID -> FieldMetaData mappings
-  indent(out) << "inline static var metaDataMap : IntMap = new IntMap();" << endl;
+  indent(out) << "inline static var metaDataMap : IntMap = new IntMap();" << '\n';
 
   if (fields.size() > 0) {
     // Populate map
@@ -1412,7 +1417,7 @@ void t_haxe_generator::generate_haxe_meta_data_map(ostream& out, t_struct* tstru
 
       // Create value meta data
       generate_field_value_meta_data(out, field->get_type());
-      out << ");" << endl;
+      out << ");" << '\n';
     }
     scope_down(out);
   }
@@ -1442,6 +1447,9 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
       break;
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
+      break;
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
       break;
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
@@ -1474,7 +1482,7 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
 }
 
 void t_haxe_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
-  out << endl;
+  out << '\n';
   indent_up();
   indent_up();
   if (type->is_struct()) {
@@ -1517,20 +1525,20 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   string f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "_service.hx";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << haxe_package() << ";" << endl;
+  f_service_ << autogen_comment() << haxe_package() << ";" << '\n';
 
-  f_service_ << endl << haxe_type_imports() << haxe_thrift_imports()
+  f_service_ << '\n' << haxe_type_imports() << haxe_thrift_imports()
              << haxe_thrift_gen_imports(tservice);
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << "_service;" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << "_service;" << '\n';
     }
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   generate_service_interface(tservice,false);
   f_service_.close();
@@ -1539,20 +1547,20 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + ".hx";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << haxe_package() << ";" << endl;
+  f_service_ << autogen_comment() << haxe_package() << ";" << '\n';
 
-  f_service_ << endl << haxe_type_imports() << haxe_thrift_imports()
+  f_service_ << '\n' << haxe_type_imports() << haxe_thrift_imports()
              << haxe_thrift_gen_imports(tservice);
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << ";" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << ";" << '\n';
     }
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   generate_service_interface(tservice,true);
   f_service_.close();
@@ -1561,18 +1569,18 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "Impl.hx";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << haxe_package() << ";" << endl << endl << haxe_type_imports()
-             << haxe_thrift_imports() << haxe_thrift_gen_imports(tservice) << endl;
+  f_service_ << autogen_comment() << haxe_package() << ";" << '\n' << '\n' << haxe_type_imports()
+             << haxe_thrift_imports() << haxe_thrift_gen_imports(tservice) << '\n';
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << "Impl;" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << "Impl;" << '\n';
     }
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   generate_service_client(tservice);
   f_service_.close();
@@ -1584,17 +1592,17 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "Processor.hx";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << haxe_package() << ";" << endl 
-             << endl 
+  f_service_ << autogen_comment() << haxe_package() << ";" << '\n'
+             << '\n'
              << haxe_type_imports()
-             << haxe_thrift_imports() 
-             << haxe_thrift_gen_imports(tservice) 
-             << endl;
+             << haxe_thrift_imports()
+             << haxe_thrift_gen_imports(tservice)
+             << '\n';
 
   if (!package_name_.empty()) {
-    f_service_ << "import " << package_name_ << ".*;" << endl;
-    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str() << "Impl;" << endl;
-    f_service_ << endl;
+    f_service_ << "import " << package_name_ << ".*;" << '\n';
+    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str() << "Impl;" << '\n';
+    f_service_ << '\n';
   }
 
   generate_service_server(tservice);
@@ -1657,9 +1665,10 @@ void t_haxe_generator::generate_service_method_signature(t_function* tfunction, 
 void t_haxe_generator::generate_service_method_signature_normal(t_function* tfunction,
                                                                 bool is_interface) {
   if (is_interface) {
-    indent(f_service_) << function_signature_normal(tfunction) << ";" << endl << endl;
+    generate_deprecation_attribute(f_service_, tfunction, true);
+    indent(f_service_) << function_signature_normal(tfunction) << ";" << '\n' << '\n';
   } else {
-    indent(f_service_) << "public " << function_signature_normal(tfunction) << " {" << endl;
+    indent(f_service_) << "public " << function_signature_normal(tfunction) << " {" << '\n';
   }
 }
 
@@ -1672,14 +1681,62 @@ void t_haxe_generator::generate_service_method_signature_combined(t_function* tf
                                                                   bool is_interface) {
   if (!tfunction->is_oneway()) {
     std::string on_success_impl = generate_service_method_onsuccess(tfunction, false, false);
-    indent(f_service_) << "// function onError(Dynamic) : Void;" << endl;
-    indent(f_service_) << "// function " << on_success_impl.c_str() << ";" << endl;
+    indent(f_service_) << "// function onError(Dynamic) : Void;" << '\n';
+    indent(f_service_) << "// function " << on_success_impl.c_str() << ";" << '\n';
   }
 
   if (is_interface) {
-    indent(f_service_) << function_signature_combined(tfunction) << ";" << endl << endl;
+    generate_deprecation_attribute(f_service_, tfunction, false);
+    indent(f_service_) << function_signature_combined(tfunction) << ";" << '\n' << '\n';
   } else {
-    indent(f_service_) << "public " << function_signature_combined(tfunction) << " {" << endl;
+    indent(f_service_) << "public " << function_signature_combined(tfunction) << " {" << '\n';
+  }
+}
+
+string t_haxe_generator::make_haxe_string_literal( string const& value)
+{
+  if (value.length() == 0) {
+    return "";
+  }
+
+  std::stringstream result;
+  result << "\"";
+  for (signed char const c: value) {
+    if( (c >= 0) && (c < 32)) {  // convert ctrl chars, but leave UTF-8 alone
+      int width = std::min( (int)sizeof(c), 6);
+      result << "\\u{" << std::hex << std::setw(width) << std::setfill('0') << (int)c << '}';
+    } else if ((c == '\\') || (c == '"')) {
+      result << "\\" << c;
+    } else {
+      result << c;   // anything else "as is"
+    }
+  }
+  result << "\"";
+
+  return result.str();
+}
+
+void t_haxe_generator::generate_deprecation_attribute(ostream& out, t_function* func, bool as_comment)
+{
+  auto iter = func->annotations_.find("deprecated");
+  if( func->annotations_.end() != iter) {
+    if( as_comment) {
+      out << indent() << "// DEPRECATED";
+    } else {
+      out << indent() << "@:deprecated";
+    }
+
+    // empty annotation values end up with "1" somewhere, ignore these as well
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      string text = make_haxe_string_literal(iter->second.back());
+      if( as_comment) {
+        out << ": " << text;
+      } else {
+        out << "(" << text << ")";
+      }
+    }
+
+    out << '\n';
   }
 }
 
@@ -1693,7 +1750,7 @@ void t_haxe_generator::generate_service_interface(t_service* tservice, bool comb
 
   string extends_iface = "";
   if (tservice->get_extends() != nullptr) {
-    extends_iface = " extends " + tservice->get_extends()->get_name() + cbk_postfix;
+    extends_iface = " extends " + get_cap_name(type_name(tservice->get_extends())) + cbk_postfix;
   }
 
   vector<t_function*> functions = tservice->get_functions();
@@ -1703,14 +1760,14 @@ void t_haxe_generator::generate_service_interface(t_service* tservice, bool comb
   generate_rtti_decoration(f_service_);
   generate_macro_decoration(f_service_);
   f_service_ << indent() << "interface " << get_cap_name(service_name_) << cbk_postfix << extends_iface << " {"
-             << endl << endl;
+             << '\n' << '\n';
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_haxe_doc(f_service_, *f_iter);
     generate_service_method_signature(*f_iter, true, combined);
   }
   indent_down();
-  f_service_ << indent() << "}" << endl << endl;
+  f_service_ << indent() << "}" << '\n' << '\n';
 }
 
 /**
@@ -1719,7 +1776,7 @@ void t_haxe_generator::generate_service_interface(t_service* tservice, bool comb
  * @param tservice The service
  */
 void t_haxe_generator::generate_service_helpers(t_service* tservice) {
-  f_service_ << endl << endl;
+  f_service_ << '\n' << '\n';
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1738,51 +1795,51 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != nullptr) {
-    extends = get_cap_name(tservice->get_extends()->get_name());
+    extends = get_cap_name(type_name(tservice->get_extends()));
     extends_client = " extends " + extends + "Impl";
   }
 
   generate_rtti_decoration(f_service_);
   // build macro is inherited from interface
   indent(f_service_) << "class " << get_cap_name(service_name_) << "Impl" << extends_client
-                     << " implements " << get_cap_name(service_name_) << " {" << endl << endl;
+                     << " implements " << get_cap_name(service_name_) << " {" << '\n' << '\n';
   indent_up();
 
-  indent(f_service_) << "public function new( iprot : TProtocol, oprot : TProtocol = null)" << endl;
+  indent(f_service_) << "public function new( iprot : TProtocol, oprot : TProtocol = null)" << '\n';
   scope_up(f_service_);
   if (extends.empty()) {
-    f_service_ << indent() << "iprot_ = iprot;" << endl;
-    f_service_ << indent() << "if (oprot == null) {" << endl;
+    f_service_ << indent() << "iprot_ = iprot;" << '\n';
+    f_service_ << indent() << "if (oprot == null) {" << '\n';
     indent_up();
-    f_service_ << indent() << "oprot_ = iprot;" << endl;
+    f_service_ << indent() << "oprot_ = iprot;" << '\n';
     indent_down();
-    f_service_ << indent() << "} else {" << endl;
+    f_service_ << indent() << "} else {" << '\n';
     indent_up();
-    f_service_ << indent() << "oprot_ = oprot;" << endl;
+    f_service_ << indent() << "oprot_ = oprot;" << '\n';
     indent_down();
-    f_service_ << indent() << "}" << endl;
+    f_service_ << indent() << "}" << '\n';
   } else {
-    f_service_ << indent() << "super(iprot, oprot);" << endl;
+    f_service_ << indent() << "super(iprot, oprot);" << '\n';
   }
   scope_down(f_service_);
-  f_service_ << endl;
+  f_service_ << '\n';
 
   if (extends.empty()) {
-    f_service_ << indent() << "private var iprot_ : TProtocol;" << endl << indent()
-               << "private var oprot_ : TProtocol;" << endl << indent()
-               << "private var seqid_ : Int;" << endl << endl;
+    f_service_ << indent() << "private var iprot_ : TProtocol;" << '\n' << indent()
+               << "private var oprot_ : TProtocol;" << '\n' << indent()
+               << "private var seqid_ : Int;" << '\n' << '\n';
 
-    indent(f_service_) << "public function getInputProtocol() : TProtocol" << endl;
+    indent(f_service_) << "public function getInputProtocol() : TProtocol" << '\n';
     scope_up(f_service_);
-    indent(f_service_) << "return this.iprot_;" << endl;
+    indent(f_service_) << "return this.iprot_;" << '\n';
     scope_down(f_service_);
-    f_service_ << endl;
+    f_service_ << '\n';
 
-    indent(f_service_) << "public function getOutputProtocol() : TProtocol" << endl;
+    indent(f_service_) << "public function getOutputProtocol() : TProtocol" << '\n';
     scope_up(f_service_);
-    indent(f_service_) << "return this.oprot_;" << endl;
+    indent(f_service_) << "return this.oprot_;" << '\n';
     scope_down(f_service_);
-    f_service_ << endl;
+    f_service_ << '\n';
   }
 
   // Generate client method implementations
@@ -1807,139 +1864,140 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     string args = tmp("args");
     string calltype = (*f_iter)->is_oneway() ? "ONEWAY" : "CALL";
     f_service_ << indent() << "oprot_.writeMessageBegin(new TMessage(\"" << funname
-               << "\", TMessageType." << calltype << ", seqid_));" << endl << indent()
-               << "var " << args << " : " << argsname << " = new " << argsname << "();" << endl;
+               << "\", TMessageType." << calltype << ", seqid_));" << '\n' << indent()
+               << "var " << args << " : " << argsname << " = new " << argsname << "();" << '\n';
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << indent() << args << "." << (*fld_iter)->get_name() << " = "
-                 << (*fld_iter)->get_name() << ";" << endl;
+                 << (*fld_iter)->get_name() << ";" << '\n';
     }
 
-    f_service_ << indent() << args << ".write(oprot_);" << endl << indent()
-               << "oprot_.writeMessageEnd();" << endl;
+    f_service_ << indent() << args << ".write(oprot_);" << '\n' << indent()
+               << "oprot_.writeMessageEnd();" << '\n';
 
     string retval = tmp("retval");
     if (!((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void())) {
-      f_service_ << indent() << "var " << retval << " : " << type_name((*f_iter)->get_returntype()) << ";"
-                 << endl;
+      f_service_ << indent() << "var " << retval << " : " << type_name((*f_iter)->get_returntype())
+                 << " = " << render_default_value_for_type((*f_iter)->get_returntype(),true)
+                 << ";" << '\n';
     }
 
     if ((*f_iter)->is_oneway()) {
-      f_service_ << indent() << "oprot_.getTransport().flush();" << endl;
+      f_service_ << indent() << "oprot_.getTransport().flush();" << '\n';
     } else {
-      indent(f_service_) << "oprot_.getTransport().flush(function(error:Dynamic) : Void {" << endl;
+      indent(f_service_) << "oprot_.getTransport().flush(function(error:Dynamic) : Void {" << '\n';
       indent_up();
-      indent(f_service_) << "try {" << endl;
+      indent(f_service_) << "try {" << '\n';
       indent_up();
       string appex = tmp("appex");
-      indent(f_service_) << "var " << appex << " : TApplicationException;" << endl;
+      indent(f_service_) << "var " << appex << " : TApplicationException;" << '\n';
       string resultname = get_cap_name((*f_iter)->get_name() + "_result");
-      indent(f_service_) << "if (error != null) {" << endl;
+      indent(f_service_) << "if (error != null) {" << '\n';
       indent_up();
-      indent(f_service_) << "if (onError == null)" << endl;
+      indent(f_service_) << "if (onError == null)" << '\n';
       indent_up();
-      indent(f_service_) << "throw error;" << endl;
+      indent(f_service_) << "throw error;" << '\n';
       indent_down();
-      indent(f_service_) << "onError(error);" << endl;
-      indent(f_service_) << "return;" << endl;
+      indent(f_service_) << "onError(error);" << '\n';
+      indent(f_service_) << "return;" << '\n';
       indent_down();
-      indent(f_service_) << "}" << endl << endl;
+      indent(f_service_) << "}" << '\n' << '\n';
       string msg = tmp("msg");
-      indent(f_service_) << "var " << msg << " : TMessage = iprot_.readMessageBegin();" << endl;
-      indent(f_service_) << "if (" << msg << ".type == TMessageType.EXCEPTION) {" << endl;
+      indent(f_service_) << "var " << msg << " : TMessage = iprot_.readMessageBegin();" << '\n';
+      indent(f_service_) << "if (" << msg << ".type == TMessageType.EXCEPTION) {" << '\n';
       indent_up();
-      indent(f_service_) << appex << " = TApplicationException.read(iprot_);" << endl;
-      indent(f_service_) << "iprot_.readMessageEnd();" << endl;
-      indent(f_service_) << "if (onError == null)" << endl;
+      indent(f_service_) << appex << " = TApplicationException.read(iprot_);" << '\n';
+      indent(f_service_) << "iprot_.readMessageEnd();" << '\n';
+      indent(f_service_) << "if (onError == null)" << '\n';
       indent_up();
-      indent(f_service_) << "throw " << appex << ";" << endl;
+      indent(f_service_) << "throw " << appex << ";" << '\n';
       indent_down();
-      indent(f_service_) << "onError(" << appex << ");" << endl;
-      indent(f_service_) << "return;" << endl;
+      indent(f_service_) << "onError(" << appex << ");" << '\n';
+      indent(f_service_) << "return;" << '\n';
       indent_down();
-      indent(f_service_) << "}" << endl << endl;
+      indent(f_service_) << "}" << '\n' << '\n';
       string result = tmp("result");
-      indent(f_service_) << "var " << result << " : " << resultname << " = new " << resultname << "();" << endl;
-      indent(f_service_) << "" << result << ".read(iprot_);" << endl;
-      indent(f_service_) << "iprot_.readMessageEnd();" << endl;
+      indent(f_service_) << "var " << result << " : " << resultname << " = new " << resultname << "();" << '\n';
+      indent(f_service_) << "" << result << ".read(iprot_);" << '\n';
+      indent(f_service_) << "iprot_.readMessageEnd();" << '\n';
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "if (" << result << "." << generate_isset_check("success") << ") {" << endl;
+        indent(f_service_) << "if (" << result << "." << generate_isset_check("success") << ") {" << '\n';
         indent_up();
-        indent(f_service_) << "if (onSuccess != null)" << endl;
+        indent(f_service_) << "if (onSuccess != null)" << '\n';
         indent_up();
-        indent(f_service_) << "onSuccess(" << result << ".success);" << endl;
+        indent(f_service_) << "onSuccess(" << result << ".success);" << '\n';
         indent_down();
-        indent(f_service_) << retval << " = " << result << ".success;" << endl;
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << retval << " = " << result << ".success;" << '\n';
+        indent(f_service_) << "return;" << '\n';
         indent_down();
-        indent(f_service_) << "}" << endl << endl;
+        indent(f_service_) << "}" << '\n' << '\n';
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        indent(f_service_) << "if (" << result << "." << (*x_iter)->get_name() << " != null) {" << endl;
+        indent(f_service_) << "if (" << result << "." << (*x_iter)->get_name() << " != null) {" << '\n';
         indent_up();
-        indent(f_service_) << "if (onError == null)" << endl;
+        indent(f_service_) << "if (onError == null)" << '\n';
         indent_up();
-        indent(f_service_) << "throw " << result << "." << (*x_iter)->get_name() << ";" << endl;
+        indent(f_service_) << "throw " << result << "." << (*x_iter)->get_name() << ";" << '\n';
         indent_down();
-        indent(f_service_) << "onError(" << result << "." << (*x_iter)->get_name() << ");" << endl;
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << "onError(" << result << "." << (*x_iter)->get_name() << ");" << '\n';
+        indent(f_service_) << "return;" << '\n';
         indent_down();
-        indent(f_service_) << "}" << endl << endl;
+        indent(f_service_) << "}" << '\n' << '\n';
       }
 
       // If you get here it's an exception, unless a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "if (onSuccess != null)" << endl;
+        indent(f_service_) << "if (onSuccess != null)" << '\n';
         indent_up();
-        indent(f_service_) << "onSuccess();" << endl;
+        indent(f_service_) << "onSuccess();" << '\n';
         indent_down();
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << "return;" << '\n';
       } else {
         indent(f_service_) << appex << " = new TApplicationException("
                            << "TApplicationException.MISSING_RESULT,"
-                           << "\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
-        indent(f_service_) << "if (onError == null)" << endl;
+                           << "\"" << (*f_iter)->get_name() << " failed: unknown result\");" << '\n';
+        indent(f_service_) << "if (onError == null)" << '\n';
         indent_up();
-        indent(f_service_) << "throw " << appex << ";" << endl;
+        indent(f_service_) << "throw " << appex << ";" << '\n';
         indent_down();
-        indent(f_service_) << "onError(" << appex << ");" << endl;
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << "onError(" << appex << ");" << '\n';
+        indent(f_service_) << "return;" << '\n';
       }
 
       indent_down();
-      indent(f_service_) << endl;
-      indent(f_service_) << "} catch( e : TException) {" << endl;
+      indent(f_service_) << '\n';
+      indent(f_service_) << "} catch( e : TException) {" << '\n';
       indent_up();
-      indent(f_service_) << "if (onError == null)" << endl;
+      indent(f_service_) << "if (onError == null)" << '\n';
       indent_up();
-      indent(f_service_) << "throw e;" << endl;
+      indent(f_service_) << "throw e;" << '\n';
       indent_down();
-      indent(f_service_) << "onError(e);" << endl;
-      indent(f_service_) << "return;" << endl;
+      indent(f_service_) << "onError(e);" << '\n';
+      indent(f_service_) << "return;" << '\n';
       indent_down();
-      indent(f_service_) << "}" << endl;
+      indent(f_service_) << "}" << '\n';
 
       indent_down();
-      indent(f_service_) << "});" << endl << endl;
+      indent(f_service_) << "});" << '\n' << '\n';
     }
 
     if (!((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void())) {
-      f_service_ << indent() << "return " << retval << ";" << endl;
+      f_service_ << indent() << "return " << retval << ";" << '\n';
     }
 
     // Close function
     scope_down(f_service_);
-    f_service_ << endl;
+    f_service_ << '\n';
   }
 
   indent_down();
-  indent(f_service_) << "}" << endl;
+  indent(f_service_) << "}" << '\n';
 }
 
 /**
@@ -1964,35 +2022,35 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   generate_rtti_decoration(f_service_);
   generate_macro_decoration(f_service_);
   indent(f_service_) << "class " << get_cap_name(service_name_) << "Processor" << extends_processor
-                     << " implements TProcessor {" << endl << endl;
+                     << " implements TProcessor {" << '\n' << '\n';
   indent_up();
 
   f_service_ << indent() << "private var " << get_cap_name(service_name_)
-             << "_iface_ : " << get_cap_name(service_name_) << "_service;" << endl;
+             << "_iface_ : " << get_cap_name(service_name_) << "_service;" << '\n';
 
   if (extends.empty()) {
     f_service_ << indent()
                << "private var PROCESS_MAP = new StringMap< Int->TProtocol->TProtocol->Void >();"
-               << endl;
+               << '\n';
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   indent(f_service_) << "public function new( iface : " << get_cap_name(service_name_) << "_service)"
-                     << endl;
+                     << '\n';
   scope_up(f_service_);
   if (!extends.empty()) {
-    f_service_ << indent() << "super(iface);" << endl;
+    f_service_ << indent() << "super(iface);" << '\n';
   }
-  f_service_ << indent() << get_cap_name(service_name_) << "_iface_ = iface;" << endl;
+  f_service_ << indent() << get_cap_name(service_name_) << "_iface_ = iface;" << '\n';
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ << indent() << "PROCESS_MAP.set(\"" << (*f_iter)->get_name() << "\", "
-               << (*f_iter)->get_name() << "());" << endl;
+               << (*f_iter)->get_name() << "());" << '\n';
   }
 
   scope_down(f_service_);
-  f_service_ << endl;
+  f_service_ << '\n';
 
   // Generate the server implementation
   string override = "";
@@ -2001,31 +2059,31 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   }
   indent(f_service_) << override
                      << "public function process( iprot : TProtocol, oprot : TProtocol) : Bool"
-                     << endl;
+                     << '\n';
   scope_up(f_service_);
 
-  f_service_ << indent() << "var msg : TMessage = iprot.readMessageBegin();" << endl;
+  f_service_ << indent() << "var msg : TMessage = iprot.readMessageBegin();" << '\n';
 
   // TODO(mcslee): validate message, was the seqid etc. legit?
 
   f_service_
-      << indent() << "var fn  = PROCESS_MAP.get(msg.name);" << endl
-      << indent() << "if (fn == null) {" << endl
-      << indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);" << endl
-      << indent() << "  iprot.readMessageEnd();" << endl
+      << indent() << "var fn  = PROCESS_MAP.get(msg.name);" << '\n'
+      << indent() << "if (fn == null) {" << '\n'
+      << indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);" << '\n'
+      << indent() << "  iprot.readMessageEnd();" << '\n'
       << indent() << "  var appex = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "
-                  << "\"Invalid method name: '\"+msg.name+\"'\");" << endl
-      << indent() << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl
-      << indent() << "  appex.write(oprot);" << endl << indent() << "  oprot.writeMessageEnd();" << endl
-      << indent() << "  oprot.getTransport().flush();" << endl
-      << indent() << "  return true;" << endl << indent() << "}" << endl
-      << indent() << "fn( msg.seqid, iprot, oprot);" << endl
+                  << "\"Invalid method name: '\"+msg.name+\"'\");" << '\n'
+      << indent() << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << '\n'
+      << indent() << "  appex.write(oprot);" << '\n' << indent() << "  oprot.writeMessageEnd();" << '\n'
+      << indent() << "  oprot.getTransport().flush();" << '\n'
+      << indent() << "  return true;" << '\n' << indent() << "}" << '\n'
+      << indent() << "fn( msg.seqid, iprot, oprot);" << '\n'
       ;
 
-  f_service_ << indent() << "return true;" << endl;
+  f_service_ << indent() << "return true;" << '\n';
 
   scope_down(f_service_);
-  f_service_ << endl;
+  f_service_ << '\n';
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -2033,7 +2091,7 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   }
 
   indent_down();
-  indent(f_service_) << "}" << endl << endl;
+  indent(f_service_) << "}" << '\n' << '\n';
 }
 
 /**
@@ -2072,20 +2130,20 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
   (void)tservice;
   // Open class
   indent(f_service_) << "private function " << tfunction->get_name()
-                     << "() : Int->TProtocol->TProtocol->Void {" << endl;
+                     << "() : Int->TProtocol->TProtocol->Void {" << '\n';
   indent_up();
 
   // Open function
   indent(f_service_) << "return function( seqid : Int, iprot : TProtocol, oprot : TProtocol) : Void"
-                     << endl;
+                     << '\n';
   scope_up(f_service_);
 
   string argsname = get_cap_name(tfunction->get_name() + "_args");
   string resultname = get_cap_name(tfunction->get_name() + "_result");
 
-  f_service_ << indent() << "var args : " << argsname << " = new " << argsname << "();" << endl
-             << indent() << "args.read(iprot);" << endl << indent() << "iprot.readMessageEnd();"
-             << endl;
+  f_service_ << indent() << "var args : " << argsname << " = new " << argsname << "();" << '\n'
+             << indent() << "args.read(iprot);" << '\n' << indent() << "iprot.readMessageEnd();"
+             << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -2093,11 +2151,11 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "var result : " << resultname << " = new " << resultname << "();" << endl;
+    f_service_ << indent() << "var result : " << resultname << " = new " << resultname << "();" << '\n';
   }
 
   // Try block for any  function to catch (defined or undefined) exceptions
-  f_service_ << indent() << "try {" << endl;
+  f_service_ << indent() << "try {" << '\n';
   indent_up();
 
 
@@ -2122,7 +2180,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
     }
     f_service_ << "args." << (*f_iter)->get_name();
   }
-  f_service_ << ");" << endl;
+  f_service_ << ");" << '\n';
 
   indent_down();
   f_service_ << indent() << "}";
@@ -2130,11 +2188,11 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
     // catch exceptions defined in the IDL
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << (*x_iter)->get_name() << ":"
-                 << get_cap_name(type_name((*x_iter)->get_type(), false, false)) << ") {" << endl;
+                 << get_cap_name(type_name((*x_iter)->get_type(), false, false)) << ") {" << '\n';
       if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
-                   << (*x_iter)->get_name() << ";" << endl;
+                   << (*x_iter)->get_name() << ";" << '\n';
         indent_down();
         f_service_ << indent() << "}";
       } else {
@@ -2145,45 +2203,45 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
 
   // always catch all exceptions to prevent from service denial
   string appex = tmp("appex");
-  f_service_ << " catch (th : Dynamic) {" << endl;
+  f_service_ << " catch (th : Dynamic) {" << '\n';
   indent_up();
-  indent(f_service_) << "trace(\"Internal error processing " << tfunction->get_name() << "\", th);" << endl;
+  indent(f_service_) << "trace(\"Internal error processing " << tfunction->get_name() << "\", th);" << '\n';
   if (!tfunction->is_oneway()) {
     indent(f_service_) << "var appex = new TApplicationException(TApplicationException.INTERNAL_ERROR, "
-                          "\"Internal error processing " << tfunction->get_name() << "\");" << endl;
+                          "\"Internal error processing " << tfunction->get_name() << "\");" << '\n';
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
-                       << "\", TMessageType.EXCEPTION, seqid));" << endl;
-    indent(f_service_) << "appex.write(oprot);" << endl;
-    indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-    indent(f_service_) << "oprot.getTransport().flush();" << endl;
+                       << "\", TMessageType.EXCEPTION, seqid));" << '\n';
+    indent(f_service_) << "appex.write(oprot);" << '\n';
+    indent(f_service_) << "oprot.writeMessageEnd();" << '\n';
+    indent(f_service_) << "oprot.getTransport().flush();" << '\n';
   }
-  indent(f_service_) << "return;" << endl;
+  indent(f_service_) << "return;" << '\n';
   indent_down();
-  f_service_ << indent() << "}" << endl;
+  f_service_ << indent() << "}" << '\n';
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    f_service_ << indent() << "return;" << endl;
+    f_service_ << indent() << "return;" << '\n';
     scope_down(f_service_);
 
     // Close class
     indent_down();
-    f_service_ << indent() << "}" << endl << endl;
+    f_service_ << indent() << "}" << '\n' << '\n';
     return;
   }
 
   f_service_ << indent() << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
-             << "\", TMessageType.REPLY, seqid));" << endl << indent() << "result.write(oprot);"
-             << endl << indent() << "oprot.writeMessageEnd();" << endl << indent()
-             << "oprot.getTransport().flush();" << endl;
+             << "\", TMessageType.REPLY, seqid));" << '\n' << indent() << "result.write(oprot);"
+             << '\n' << indent() << "oprot.writeMessageEnd();" << '\n' << indent()
+             << "oprot.getTransport().flush();" << '\n';
 
   // Close function
   scope_down(f_service_);
-  f_service_ << endl;
+  f_service_ << '\n';
 
   // Close class
   indent_down();
-  f_service_ << indent() << "}" << endl << endl;
+  f_service_ << indent() << "}" << '\n' << '\n';
 }
 
 /**
@@ -2222,6 +2280,9 @@ void t_haxe_generator::generate_deserialize_field(ostream& out, t_field* tfield,
           out << "readString();";
         }
         break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid();";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
         break;
@@ -2246,7 +2307,7 @@ void t_haxe_generator::generate_deserialize_field(ostream& out, t_field* tfield,
     } else if (type->is_enum()) {
       out << "readI32();";
     }
-    out << endl;
+    out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(),
@@ -2260,8 +2321,8 @@ void t_haxe_generator::generate_deserialize_field(ostream& out, t_field* tfield,
 void t_haxe_generator::generate_deserialize_struct(ostream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
-  out << indent() << prefix << " = new " << get_cap_name(type_name(tstruct)) << "();" << endl
-      << indent() << prefix << ".read(iprot);" << endl;
+  out << indent() << prefix << " = new " << get_cap_name(type_name(tstruct)) << "();" << '\n'
+      << indent() << prefix << ".read(iprot);" << '\n';
 }
 
 /**
@@ -2282,21 +2343,21 @@ void t_haxe_generator::generate_deserialize_container(ostream& out, t_type* ttyp
 
   // Declare variables, read header
   if (ttype->is_map()) {
-    indent(out) << "var " << obj << " = iprot.readMapBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readMapBegin();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "var " << obj << " = iprot.readSetBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readSetBegin();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "var " << obj << " = iprot.readListBegin();" << endl;
+    indent(out) << "var " << obj << " = iprot.readListBegin();" << '\n';
   }
 
   indent(out) << prefix << " = new " << type_name(ttype, false, true)
               // size the collection correctly
               << "("
-              << ");" << endl;
+              << ");" << '\n';
 
   // For loop iterates over elements
   string i = tmp("_i");
-  indent(out) << "for( " << i << " in 0 ... " << obj << ".size)" << endl;
+  indent(out) << "for( " << i << " in 0 ... " << obj << ".size)" << '\n';
 
   scope_up(out);
 
@@ -2312,11 +2373,11 @@ void t_haxe_generator::generate_deserialize_container(ostream& out, t_type* ttyp
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "iprot.readMapEnd();" << endl;
+    indent(out) << "iprot.readMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "iprot.readSetEnd();" << endl;
+    indent(out) << "iprot.readSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "iprot.readListEnd();" << endl;
+    indent(out) << "iprot.readListEnd();" << '\n';
   }
 
   scope_down(out);
@@ -2331,13 +2392,13 @@ void t_haxe_generator::generate_deserialize_map_element(ostream& out, t_map* tma
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(out) << declare_field(&fkey) << endl;
-  indent(out) << declare_field(&fval) << endl;
+  indent(out) << declare_field(&fkey) << '\n';
+  indent(out) << declare_field(&fval) << '\n';
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) << prefix << ".set( " << key << ", " << val << ");" << endl;
+  indent(out) << prefix << ".set( " << key << ", " << val << ");" << '\n';
 }
 
 /**
@@ -2347,11 +2408,11 @@ void t_haxe_generator::generate_deserialize_set_element(ostream& out, t_set* tse
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem) << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << prefix << ".add(" << elem << ");" << endl;
+  indent(out) << prefix << ".add(" << elem << ");" << '\n';
 }
 
 /**
@@ -2363,11 +2424,11 @@ void t_haxe_generator::generate_deserialize_list_element(ostream& out,
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem) << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << prefix << ".add(" << elem << ");" << endl;
+  indent(out) << prefix << ".add(" << elem << ");" << '\n';
 }
 
 /**
@@ -2406,6 +2467,9 @@ void t_haxe_generator::generate_serialize_field(ostream& out, t_field* tfield, s
           out << "writeString(" << name << ");";
         }
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ");";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
         break;
@@ -2430,7 +2494,7 @@ void t_haxe_generator::generate_serialize_field(ostream& out, t_field* tfield, s
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ");";
     }
-    out << endl;
+    out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
            prefix.c_str(),
@@ -2447,7 +2511,7 @@ void t_haxe_generator::generate_serialize_field(ostream& out, t_field* tfield, s
  */
 void t_haxe_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  out << indent() << prefix << ".write(oprot);" << endl;
+  out << indent() << prefix << ".write(oprot);" << '\n';
 }
 
 /**
@@ -2457,35 +2521,34 @@ void t_haxe_generator::generate_serialize_struct(ostream& out, t_struct* tstruct
  * @param prefix String prefix for fields
  */
 void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
-  scope_up(out);
 
   if (ttype->is_map()) {
     string iter = tmp("_key");
     string counter = tmp("_sizeCounter");
-    indent(out) << "var " << counter << " : Int = 0;" << endl;
-    indent(out) << "for( " << iter << " in " << prefix << ") {" << endl;
-    indent(out) << "  " << counter << +"++;" << endl;
-    indent(out) << "}" << endl;
+    indent(out) << "var " << counter << " : Int = 0;" << '\n';
+    indent(out) << "for( " << iter << " in " << prefix << ") {" << '\n';
+    indent(out) << "  " << counter << +"++;" << '\n';
+    indent(out) << "}" << '\n';
 
     indent(out) << "oprot.writeMapBegin(new TMap(" << type_to_enum(((t_map*)ttype)->get_key_type())
                 << ", " << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << counter << "));"
-                << endl;
+                << '\n';
   } else if (ttype->is_set()) {
     indent(out) << "oprot.writeSetBegin(new TSet(" << type_to_enum(((t_set*)ttype)->get_elem_type())
-                << ", " << prefix << ".size));" << endl;
+                << ", " << prefix << ".size));" << '\n';
   } else if (ttype->is_list()) {
     indent(out) << "oprot.writeListBegin(new TList("
                 << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " << prefix << ".length));"
-                << endl;
+                << '\n';
   }
 
   string iter = tmp("elem");
   if (ttype->is_map()) {
-    indent(out) << "for( " << iter << " in " << prefix << ".keys())" << endl;
+    indent(out) << "for( " << iter << " in " << prefix << ".keys())" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "for( " << iter << " in " << prefix << ".toArray())" << endl;
+    indent(out) << "for( " << iter << " in " << prefix << ".toArray())" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "for( " << iter << " in " << prefix << ")" << endl;
+    indent(out) << "for( " << iter << " in " << prefix << ")" << '\n';
   }
 
   scope_up(out);
@@ -2501,14 +2564,13 @@ void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype,
   scope_down(out);
 
   if (ttype->is_map()) {
-    indent(out) << "oprot.writeMapEnd();" << endl;
+    indent(out) << "oprot.writeMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "oprot.writeSetEnd();" << endl;
+    indent(out) << "oprot.writeSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "oprot.writeListEnd();" << endl;
+    indent(out) << "oprot.writeListEnd();" << '\n';
   }
 
-  scope_down(out);
 }
 
 /**
@@ -2573,6 +2635,8 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
           return "StringMap< " + type_name(tval) + ">";
         }
         break; // default to ObjectMap<>
+      case t_base_type::TYPE_UUID:
+        return "StringMap< " + type_name(tval) + ">";  // uuids are stored as strings
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
@@ -2599,6 +2663,8 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
           return "StringSet";
         }
         break; // default to ObjectSet
+      case t_base_type::TYPE_UUID:
+        return "StringSet";  // uuids are stored as strings
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
@@ -2651,6 +2717,8 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
     } else {
       return "String";
     }
+  case t_base_type::TYPE_UUID:
+    return "String";
   case t_base_type::TYPE_BOOL:
     return "Bool";
   case t_base_type::TYPE_I8:
@@ -2672,43 +2740,49 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
  * @param ttype The type
  */
 string t_haxe_generator::declare_field(t_field* tfield, bool init) {
-  // TODO(mcslee): do we ever need to initialize the field?
   string result = "var " + tfield->get_name() + " : " + type_name(tfield->get_type());
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
       result += " = " + render_const_value_str( ttype, tfield->get_value());
-    } else if (ttype->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw "NO T_VOID CONSTRUCT";
-      case t_base_type::TYPE_STRING:
-        result += " = null";
-        break;
-      case t_base_type::TYPE_BOOL:
-        result += " = false";
-        break;
-      case t_base_type::TYPE_I8:
-      case t_base_type::TYPE_I16:
-      case t_base_type::TYPE_I32:
-      case t_base_type::TYPE_I64:
-        result += " = 0";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        result += " = (double)0";
-        break;
-      }
-
-    } else if (ttype->is_enum()) {
-      result += " = 0";
-    } else if (ttype->is_container()) {
-      result += " = new " + type_name(ttype, false, true) + "()";
     } else {
-      result += " = new " + type_name(ttype, false, true) + "()";
+      result += " = " + render_default_value_for_type( ttype, false);
     }
   }
   return result + ";";
+}
+
+string t_haxe_generator::render_default_value_for_type( t_type* type, bool allow_null) {
+  t_type* ttype = get_true_type(type);
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "NO T_VOID CONSTRUCT";
+    case t_base_type::TYPE_STRING:
+      return "null";
+    case t_base_type::TYPE_UUID:
+      return "uuid.Uuid.NIL";
+    case t_base_type::TYPE_BOOL:
+      return "false";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "0";
+    case t_base_type::TYPE_DOUBLE:
+      return "0.0";
+    default:
+      throw "unhandled type";
+    }
+  } else if (ttype->is_enum()) {
+    return "0";
+  } else if (ttype->is_container()) {
+    return allow_null ? "null" : "new " + type_name(ttype, false, true) + "()";
+  } else {
+    return allow_null ? "null" : "new " + type_name(ttype, false, true) + "()";
+  }
 }
 
 /**
@@ -2793,6 +2867,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
     case t_base_type::TYPE_I8:
@@ -2805,6 +2881,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "TType.I32";
@@ -2926,7 +3004,7 @@ string t_haxe_generator::constant_name(string name) {
  */
 void t_haxe_generator::generate_rtti_decoration(ostream& out) {
   if (rtti_) {
-    out << "@:rtti" << endl;
+    out << "@:rtti" << '\n';
   }
 }
 
@@ -2935,10 +3013,10 @@ void t_haxe_generator::generate_rtti_decoration(ostream& out) {
  */
 void t_haxe_generator::generate_macro_decoration(ostream& out) {
   if (!buildmacro_.empty()) {
-    out << "#if ! macro" << endl;
-    out << "@:build( " << buildmacro_ << ")" << endl;     // current class/interface
-    out << "@:autoBuild( " << buildmacro_ << ")" << endl; // inherited classes/interfaces
-    out << "#end" << endl;
+    out << "#if ! macro" << '\n';
+    out << "@:build( " << buildmacro_ << ")" << '\n';     // current class/interface
+    out << "@:autoBuild( " << buildmacro_ << ")" << '\n'; // inherited classes/interfaces
+    out << "#end" << '\n';
   }
 }
 
@@ -2981,7 +3059,7 @@ std::string t_haxe_generator::generate_isset_check(std::string field_name) {
 
 void t_haxe_generator::generate_isset_set(ostream& out, t_field* field) {
   if (!type_can_be_null(field->get_type())) {
-    indent(out) << "this.__isset_" << field->get_name() << " = true;" << endl;
+    indent(out) << "this.__isset_" << field->get_name() << " = true;" << '\n';
   }
 }
 
@@ -2993,6 +3071,11 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
   }
   return package + type->get_name();
 }
+
+std::string t_haxe_generator::display_name() const {
+  return "Haxe";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     haxe,

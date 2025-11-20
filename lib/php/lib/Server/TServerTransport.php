@@ -3,6 +3,7 @@
 namespace Thrift\Server;
 
 use Thrift\Exception\TTransportException;
+use Thrift\Transport\TTransport;
 
 /**
  * Generic class for Server agent.

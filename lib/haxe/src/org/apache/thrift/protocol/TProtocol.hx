@@ -20,7 +20,6 @@
 package org.apache.thrift.protocol;
 
 import haxe.io.Bytes;
-import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -54,6 +53,7 @@ interface TProtocol {
     function writeDouble(dub : Float) : Void;
     function writeString(str : String) : Void;
     function writeBinary(bin : Bytes) : Void;
+	function writeUuid(uuid : String) : Void;
 
     /**
      * Reading methods.
@@ -78,6 +78,7 @@ interface TProtocol {
     function readDouble() : Float;
     function readString() : String;
     function readBinary() : Bytes;
+	function readUuid() : String;
 
     // recursion tracking
     function IncrementRecursionDepth() : Void;

@@ -22,6 +22,7 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -42,10 +43,10 @@ type test_unit struct {
 }
 
 var units = []test_unit{
-	{"127.0.0.1", 9095, "", "", "binary", false},
-	{"127.0.0.1", 9091, "", "", "compact", false},
-	{"127.0.0.1", 9092, "", "", "binary", true},
-	{"127.0.0.1", 9093, "", "", "compact", true},
+	{"127.0.0.1", 0, "", "", "binary", false},
+	{"127.0.0.1", 0, "", "", "compact", false},
+	{"127.0.0.1", 0, "", "", "binary", true},
+	{"127.0.0.1", 0, "", "", "compact", true},
 }
 
 func TestAllConnection(t *testing.T) {
@@ -61,29 +62,31 @@ func TestAllConnection(t *testing.T) {
 }
 
 func doUnit(t *testing.T, unit *test_unit) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	handler := NewMockThriftTest(ctrl)
+	t.Run(fmt.Sprintf("%v", *unit), func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		handler := NewMockThriftTest(ctrl)
 
-	processor, serverTransport, transportFactory, protocolFactory, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
-	if err != nil {
-		t.Errorf("GetServerParams failed: %v", err)
-	}
+		processor, serverTransport, transportFactory, protocolFactory, addr, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+		if err != nil {
+			t.Errorf("GetServerParams failed: %v", err)
+		}
 
-	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
-	if err = server.Listen(); err != nil {
-		t.Errorf("Unable to start server: %v", err)
-		return
-	}
-	go server.Serve()
-	defer server.Stop()
-	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
-	if err != nil {
-		t.Errorf("Unable to start client: %v", err)
-		return
-	}
-	defer trans.Close()
-	callEverythingWithMock(t, client, handler)
+		server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
+		if err = server.Listen(); err != nil {
+			t.Errorf("Unable to start server: %v", err)
+			return
+		}
+		go server.Serve()
+		defer server.Stop()
+		client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
+		if err != nil {
+			t.Errorf("Unable to start client: %v", err)
+			return
+		}
+		defer trans.Close()
+		callEverythingWithMock(t, client, handler)
+	})
 }
 
 var rmapmap = map[int32]map[int32]int32{
@@ -102,6 +105,13 @@ var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "some"}
 var defaultCtx = context.Background()
 
 func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, handler *MockThriftTest) {
+	u := thrift.Tuuid{
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55,
+		0x66, 0x77,
+		0x88, 0x99,
+		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	}
 	gomock.InOrder(
 		handler.EXPECT().TestVoid(gomock.Any()),
 		handler.EXPECT().TestString(gomock.Any(), "thing").Return("thing", nil),
@@ -111,6 +121,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestI32(gomock.Any(), int32(4242)).Return(int32(4242), nil),
 		handler.EXPECT().TestI64(gomock.Any(), int64(424242)).Return(int64(424242), nil),
 		// TODO: add TestBinary()
+		handler.EXPECT().TestUuid(gomock.Any(), u).Return(u, nil),
 		handler.EXPECT().TestDouble(gomock.Any(), float64(42.42)).Return(float64(42.42), nil),
 		handler.EXPECT().TestStruct(gomock.Any(), &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}).Return(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}, nil),
 		handler.EXPECT().TestNest(gomock.Any(), &thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
@@ -182,6 +193,16 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected TestI64() result expected 424242, got %d ", i64)
 	}
 
+	// TODO: add TestBinary() call
+
+	uret, err := client.TestUuid(defaultCtx, u)
+	if err != nil {
+		t.Errorf("Unexpected error in TestUuid() call: %s", err)
+	}
+	if uret != u {
+		t.Errorf("Unexpected TestUuid() result expected %v, got %v ", uret, u)
+	}
+
 	d, err := client.TestDouble(defaultCtx, 42.42)
 	if err != nil {
 		t.Errorf("Unexpected error in TestDouble() call: %s", err)
@@ -189,8 +210,6 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 	if d != 42.42 {
 		t.Errorf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
-
-	// TODO: add TestBinary() call
 
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"

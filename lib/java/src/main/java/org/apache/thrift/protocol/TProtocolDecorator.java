@@ -20,6 +20,7 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.apache.thrift.TException;
 
 /**
@@ -59,6 +60,16 @@ public abstract class TProtocolDecorator extends TProtocol {
   @Override
   public void writeStructBegin(TStruct tStruct) throws TException {
     concreteProtocol.writeStructBegin(tStruct);
+  }
+
+  @Override
+  public UUID readUuid() throws TException {
+    return concreteProtocol.readUuid();
+  }
+
+  @Override
+  public void writeUuid(UUID uuid) throws TException {
+    concreteProtocol.writeUuid(uuid);
   }
 
   @Override
@@ -251,14 +262,59 @@ public abstract class TProtocolDecorator extends TProtocol {
     return concreteProtocol.readBinary();
   }
 
+  @Override
+  public int readFieldBeginData() throws TException {
+    return concreteProtocol.readFieldBeginData();
+  }
+
+  @Override
+  protected void skipBool() throws TException {
+    concreteProtocol.skipBool();
+  }
+
+  @Override
+  protected void skipByte() throws TException {
+    concreteProtocol.skipByte();
+  }
+
+  @Override
+  protected void skipI16() throws TException {
+    concreteProtocol.skipI16();
+  }
+
+  @Override
+  protected void skipI32() throws TException {
+    concreteProtocol.skipI32();
+  }
+
+  @Override
+  protected void skipI64() throws TException {
+    concreteProtocol.skipI64();
+  }
+
+  @Override
+  protected void skipDouble() throws TException {
+    concreteProtocol.skipDouble();
+  }
+
+  @Override
+  protected void skipBinary() throws TException {
+    concreteProtocol.skipBinary();
+  }
+
   /**
    * @param type Returns the minimum amount of bytes needed to store the smallest possible instance
    *     of TType.
-   * @return
-   * @throws TException
+   * @return size
+   * @throws TException if underlying protocol throws
    */
   @Override
   public int getMinSerializedSize(byte type) throws TException {
     return concreteProtocol.getMinSerializedSize(type);
+  }
+
+  @Override
+  public void reset() {
+    concreteProtocol.reset();
   }
 }

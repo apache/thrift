@@ -40,12 +40,17 @@ func (slowHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestHttpContextTimeout(t *testing.T) {
-	unit := test_unit{"127.0.0.1", 9096, "", "http", "binary", false}
+	const (
+		host = "127.0.0.1"
+		port = 9096
+	)
+	addr := fmt.Sprintf("%s:%d", host, port)
+	unit := test_unit{host, port, "", "http", "binary", false}
 
-	server := &http.Server{Addr: unit.host + fmt.Sprintf(":%d", unit.port), Handler: slowHttpHandler{}}
+	server := &http.Server{Addr: addr, Handler: slowHttpHandler{}}
 	go server.ListenAndServe()
 
-	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
+	client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {
 		t.Errorf("Unable to start client: %v", err)
 		return

@@ -24,9 +24,13 @@ program client;
 
 uses
   SysUtils,
-  DataFactory in 'Performance\DataFactory.pas',
-  PerfTests in 'Performance\PerfTests.pas',
-  TestClient in 'TestClient.pas',
+  ConsoleHelper in 'ConsoleHelper.pas',
+  TestConstants in 'testsuite\TestConstants.pas',
+  TestClient in 'testsuite\client\TestClient.pas',
+  TestLogger in 'testsuite\client\TestLogger.pas',
+  UnitTests in 'testsuite\client\UnitTests.pas',
+  PerfTests in 'testsuite\client\Performance\PerfTests.pas',
+  DataFactory in 'testsuite\client\Performance\DataFactory.pas',
   Thrift.Test in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',

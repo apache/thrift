@@ -43,14 +43,16 @@ java {
     withSourcesJar()
 }
 
+// skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = "libthrift"
-            // explicitly set 3 jars because calling "from components.java" will include shadow jar which isn't what we want
-            artifact jar
-            artifact sourcesJar
-            artifact javadocJar
+            from components.java
             pom {
                 name = 'Apache Thrift'
                 description = 'Thrift is a software framework for scalable cross-language services development.'

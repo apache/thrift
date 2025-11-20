@@ -46,7 +46,7 @@ public:
         _success(false),
         _done(false) {}
 
-    ~Task() override { std::cerr << this << std::endl; }
+    ~Task() override { std::cerr << this << '\n'; }
 
     void run() override {
 
@@ -84,7 +84,7 @@ public:
       timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
       timerManager.start();
       if (timerManager.state() != TimerManager::STARTED) {
-        std::cerr << "timerManager is not in the STARTED state, but should be" << std::endl;
+        std::cerr << "timerManager is not in the STARTED state, but should be" << '\n';
         return false;
       }
 
@@ -104,15 +104,15 @@ public:
       }
 
       if (!task->_done) {
-        std::cerr << "task is not done, but it should have executed" << std::endl;
+        std::cerr << "task is not done, but it should have executed" << '\n';
         return false;
       }
 
-      std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
+      std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << '\n';
     }
 
     if (orphanTask->_done) {
-      std::cerr << "orphan task is done, but it should not have executed" << std::endl;
+      std::cerr << "orphan task is done, but it should not have executed" << '\n';
       return false;
     }
 

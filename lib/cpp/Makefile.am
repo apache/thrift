@@ -57,6 +57,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FOR
 
 libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
+                       src/thrift/TUuid.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
                        src/thrift/async/TAsyncProtocolProcessor.cpp \
@@ -136,6 +137,7 @@ include_thrift_HEADERS = \
                          src/thrift/thrift-config.h \
                          src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
+                         src/thrift/TUuid.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
                          src/thrift/TProcessor.h \
@@ -251,6 +253,9 @@ WINDOWS_DIST = \
              libthriftnb.vcxproj \
              libthriftnb.vcxproj.filters \
              3rdparty.props
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
              CMakeLists.txt \

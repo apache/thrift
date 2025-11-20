@@ -50,10 +50,10 @@ import org.slf4j.LoggerFactory;
  * reading and writing of client connections. A synchronous worker thread pool handles processing of
  * requests.
  *
- * <p>Performs better than TNonblockingServer/THsHaServer in multi-core environments when the the
+ * <p>Performs better than TNonblockingServer/THsHaServer in multi-core environments when the
  * bottleneck is CPU on the single selector thread handling I/O. In addition, because the accept
  * handling is decoupled from reads/writes and invocation, the server has better ability to handle
- * back- pressure from new connections (e.g. stop accepting when busy).
+ * back-pressure from new connections (e.g. stop accepting when busy).
  *
  * <p>Like TNonblockingServer, it relies on the use of TFramedTransport.
  */
@@ -65,18 +65,22 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
     /** The number of threads for selecting on already-accepted connections */
     public int selectorThreads = 2;
+
     /**
      * The size of the executor service (if none is specified) that will handle invocations. This
      * may be set to 0, in which case invocations will be handled directly on the selector threads
      * (as is in TNonblockingServer)
      */
     private int workerThreads = 5;
+
     /** Time to wait for server to stop gracefully */
     private int stopTimeoutVal = 60;
 
     private TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
+
     /** The ExecutorService for handling dispatched requests */
     private ExecutorService executorService = null;
+
     /**
      * The size of the blocking queue per selector thread for passing accepted connections to the
      * selector thread
@@ -183,7 +187,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   private AcceptThread acceptThread;
 
   // Threads handling events on client transports
-  private final Set<SelectorThread> selectorThreads = new HashSet<SelectorThread>();
+  private final Set<SelectorThread> selectorThreads = new HashSet<>();
 
   // This wraps all the functionality of queueing and thread pool management
   // for the passing of Invocations from the selector thread(s) to the workers
@@ -257,10 +261,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     if (acceptThread != null) {
       acceptThread.wakeupSelector();
     }
-    if (selectorThreads != null) {
-      for (SelectorThread thread : selectorThreads) {
-        if (thread != null) thread.wakeupSelector();
-      }
+    for (SelectorThread thread : selectorThreads) {
+      if (thread != null) thread.wakeupSelector();
     }
   }
 
@@ -341,7 +343,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     /**
      * Set up the AcceptThead
      *
-     * @throws IOException
+     * @throws IOException if failed to register selector
      */
     public AcceptThread(
         TNonblockingServerTransport serverTransport, SelectorThreadLoadBalancer threadChooser)
@@ -464,8 +466,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
     // Accepted connections added by the accept thread.
     private final BlockingQueue<TNonblockingTransport> acceptedQueue;
-    private int SELECTOR_AUTO_REBUILD_THRESHOLD = 512;
-    private long MONITOR_PERIOD = 1000L;
+    private static final int SELECTOR_AUTO_REBUILD_THRESHOLD = 512;
+    private static final long MONITOR_PERIOD = 1000L;
     private int jvmBug = 0;
 
     /**
@@ -581,7 +583,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
-     * Do select and judge epoll bug happen. See : https://issues.apache.org/jira/browse/THRIFT-4251
+     * Do select and judge epoll bug happen. See <a
+     * href="https://issues.apache.org/jira/browse/THRIFT-4251">THRIFT-4251</a>
      */
     private void doSelect() throws IOException {
       long beforeSelect = System.currentTimeMillis();
@@ -623,16 +626,23 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         LOGGER.error("Create new Selector error.", e);
       }
 
-      for (SelectionKey key : oldSelector.selectedKeys()) {
-        if (!key.isValid() && key.readyOps() == 0) continue;
+      for (SelectionKey key : oldSelector.keys()) {
+        if (!key.isValid() || key.interestOps() == 0 || key.channel().keyFor(newSelector) != null) {
+          continue;
+        }
         SelectableChannel channel = key.channel();
         Object attachment = key.attachment();
 
+        int interestOps = key.interestOps();
+        SelectionKey newKey;
         try {
           if (attachment == null) {
-            channel.register(newSelector, key.readyOps());
+            newKey = channel.register(newSelector, interestOps);
           } else {
-            channel.register(newSelector, key.readyOps(), attachment);
+            newKey = channel.register(newSelector, interestOps, attachment);
+            if (attachment instanceof FrameBuffer) {
+              ((FrameBuffer) attachment).setSelectionKey(newKey);
+            }
           }
         } catch (ClosedChannelException e) {
           LOGGER.error("Register new selector key error.", e);

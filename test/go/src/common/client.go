@@ -37,14 +37,11 @@ func init() {
 }
 
 func StartClient(
-	host string,
-	port int64,
-	domain_socket string,
+	addr string,
 	transport string,
 	protocol string,
 	ssl bool,
 ) (client *thrifttest.ThriftTestClient, trans thrift.TTransport, err error) {
-	hostPort := fmt.Sprintf("%s:%d", host, port)
 	cfg := &thrift.TConfiguration{
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -70,13 +67,9 @@ func StartClient(
 		protocolFactory = thrift.NewTDebugProtocolFactoryWithLogger(protocolFactory, "client:", thrift.StdLogger(nil))
 	}
 	if ssl {
-		trans = thrift.NewTSSLSocketConf(hostPort, cfg)
+		trans = thrift.NewTSSLSocketConf(addr, cfg)
 	} else {
-		if domain_socket != "" {
-			trans = thrift.NewTSocketConf(domain_socket, nil)
-		} else {
-			trans = thrift.NewTSocketConf(hostPort, nil)
-		}
+		trans = thrift.NewTSocketConf(addr, nil)
 	}
 	if err != nil {
 		return nil, nil, err
@@ -88,10 +81,9 @@ func StartClient(
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
 			client := &http.Client{Transport: tr}
-			trans, err = thrift.NewTHttpClientWithOptions(fmt.Sprintf("https://%s/", hostPort), thrift.THttpClientOptions{Client: client})
-			fmt.Println(hostPort)
+			trans, err = thrift.NewTHttpClientWithOptions(fmt.Sprintf("https://%s/", addr), thrift.THttpClientOptions{Client: client})
 		} else {
-			trans, err = thrift.NewTHttpClient(fmt.Sprintf("http://%s/", hostPort))
+			trans, err = thrift.NewTHttpClient(fmt.Sprintf("http://%s/", addr))
 		}
 	case "framed":
 		trans = thrift.NewTFramedTransportConf(trans, cfg)

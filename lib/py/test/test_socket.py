@@ -1,3 +1,22 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
 import errno
 import unittest
 
@@ -11,6 +30,34 @@ from thrift.transport.TTransport import TTransportException
 
 
 class TSocketTest(unittest.TestCase):
+    def test_failed_connection_raises_exception(self):
+        sock = TSocket(host="localhost", port=60606) # unused port
+        with self.assertRaises(TTransportException) as ctx:
+            sock.open()
+        exc = ctx.exception
+        self.assertEqual(exc.type, TTransportException.NOT_OPEN)
+        self.assertIn("Could not connect to any of", exc.message)
+        self.assertIsNotNone(exc.inner)
+        self.assertIn("Connection refused", str(exc.inner))
+
+    def test_socket_readtimeout_exception(self):
+        acc = ServerAcceptor(TServerSocket(port=0))
+        acc.start()
+
+        sock = TSocket(host="localhost", port=acc.port)
+        sock.open()
+        sock.setTimeout(1)
+        sock.write(b"sleep")
+
+        with self.assertRaises(TTransportException) as ctx:
+            sock.read(5)
+        exc = ctx.exception
+        self.assertEqual(exc.message, "read timeout")
+
+        acc.client.close() # this also blocks until the other thread is done
+        acc.close()
+        sock.close()
+
     def test_isOpen_checks_for_readability(self):
         # https://docs.python.org/3/library/socket.html#notes-on-socket-timeouts
         # https://docs.python.org/3/library/socket.html#socket.socket.settimeout
@@ -49,9 +96,11 @@ class TSocketTest(unittest.TestCase):
             # once the server side closes, it no longer shows open
             acc.client.close()  # this also blocks until the other thread is done
             acc.close()
-            self.assertFalse(sock.isOpen())
 
-            sock.close()
+            self.assertIsNotNone(sock.handle)
+            self.assertFalse(sock.isOpen())
+            # after isOpen() returned False the socket should be closed (THRIFT-5813)
+            self.assertIsNone(sock.handle)
 
 
 if __name__ == "__main__":

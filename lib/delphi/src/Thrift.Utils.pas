@@ -84,10 +84,36 @@ type
     class function IsHtmlDoctype( const fourBytes : Integer) : Boolean; static;
   end;
 
+
+  IntegerUtils = class sealed
+  strict private
+    class procedure SwapBytes( var one, two : Byte); static; inline;
+    class procedure Swap2( const pValue : Pointer); static;
+    class procedure Swap4( const pValue : Pointer); static;
+    class procedure Swap8( const pValue : Pointer); static;
+  public
+    class procedure SwapByteOrder( const pValue : Pointer; const size : Integer); overload; static;
+  end;
+
+
+  // problem: inheritance possible for class helpers ONLY but not with record helpers
+  // workaround: use static class method instead of record helper :-(
+  GuidUtils = class sealed
+  public
+    // new stuff
+    class function SwapByteOrder( const aGuid : TGuid) : TGuid; static;
+
+    {$IFDEF Debug}
+    class procedure SelfTest; static;
+    {$ENDIF}
+  end;
+
+
   EnumUtils<T> = class sealed
   public
     class function ToString(const value : Integer) : string;  reintroduce; static; inline;
   end;
+
 
   StringUtils<T> = class sealed
   public
@@ -283,6 +309,100 @@ begin
   result := (UpCase(pc^) = HTML_BEGIN[3]);
 end;
 
+{ IntegerUtils }
+
+
+class procedure IntegerUtils.SwapBytes( var one, two : Byte);
+var tmp : Byte;
+begin
+  tmp := one;
+  one := two;
+  two := tmp;
+end;
+
+
+class procedure IntegerUtils.Swap2( const pValue : Pointer);
+var pData : PByteArray absolute pValue;
+begin
+  SwapBytes( pData^[0], pData^[1]);
+end;
+
+
+class procedure IntegerUtils.Swap4( const pValue : Pointer);
+var pData : PByteArray absolute pValue;
+begin
+  SwapBytes( pData^[0], pData^[3]);
+  SwapBytes( pData^[1], pData^[2]);
+end;
+
+
+class procedure IntegerUtils.Swap8( const pValue : Pointer);
+var pData : PByteArray absolute pValue;
+begin
+  SwapBytes( pData^[0], pData^[7]);
+  SwapBytes( pData^[1], pData^[6]);
+  SwapBytes( pData^[2], pData^[5]);
+  SwapBytes( pData^[3], pData^[4]);
+end;
+
+
+class procedure IntegerUtils.SwapByteOrder( const pValue : Pointer; const size : Integer);
+begin
+  case size of
+    2 : Swap2( pValue);
+    4 : Swap4( pValue);
+    8 : Swap8( pValue);
+  else
+    raise EArgumentException.Create('Unexpected size');
+  end;
+end;
+
+
+{ GuidUtils }
+
+
+class function GuidUtils.SwapByteOrder( const aGuid : TGuid) : TGuid;
+// convert to/from network byte order
+// - https://www.ietf.org/rfc/rfc4122.txt
+// - https://stackoverflow.com/questions/10850075/guid-uuid-compatibility-issue-between-net-and-linux
+// - https://lists.gnu.org/archive/html/bug-parted/2002-01/msg00099.html
+begin
+  result := aGuid;
+
+  IntegerUtils.SwapByteOrder( @result.D1, SizeOf(result.D1));
+  IntegerUtils.SwapByteOrder( @result.D2, SizeOf(result.D2));
+  IntegerUtils.SwapByteOrder( @result.D3, SizeOf(result.D3));
+  //result.D4 = array of byte -> implicitly correct
+end;
+
+
+{$IFDEF Debug}
+class procedure GuidUtils.SelfTest;
+var guid   : TGuid;
+    pBytes : PByteArray;
+    i, expected : Integer;
+const TEST_GUID : TGuid = '{00112233-4455-6677-8899-aabbccddeeff}';
+begin
+  // host to network
+  guid := TEST_GUID;
+  guid := GuidUtils.SwapByteOrder(guid);
+
+  // validate network order
+  pBytes := @guid;
+  for i := 0 to $F do begin
+    expected := i * $11;
+    ASSERT( pBytes^[i] = expected);
+  end;
+
+  // network to host and final validation
+  guid := GuidUtils.SwapByteOrder(guid);
+  ASSERT( IsEqualGuid( guid, TEST_GUID));
+
+  // prevent collisions with SysUtils.TGuidHelper
+  guid := TGuid.NewGuid;
+end;
+{$ENDIF}
+
 
 
 {$IFDEF Win64}
@@ -378,4 +498,8 @@ begin
 end;
 
 
+begin
+  {$IFDEF Debug}
+  GuidUtils.SelfTest;
+  {$ENDIF}
 end.

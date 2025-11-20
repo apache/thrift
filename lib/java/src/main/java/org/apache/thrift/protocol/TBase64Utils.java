@@ -47,7 +47,7 @@ class TBase64Utils {
    * @param dst the destination for the encoding
    * @param dstOff the offset into the destination to place the encoded bytes
    */
-  static final void encode(byte[] src, int srcOff, int len, byte[] dst, int dstOff) {
+  static void encode(byte[] src, int srcOff, int len, byte[] dst, int dstOff) {
     dst[dstOff] = (byte) ENCODE_TABLE.charAt((src[srcOff] >> 2) & 0x3F);
     if (len == 3) {
       dst[dstOff + 1] =
@@ -97,7 +97,7 @@ class TBase64Utils {
    * @param dst the destination for the decoding
    * @param dstOff the offset into the destination to place the decoded bytes
    */
-  static final void decode(byte[] src, int srcOff, int len, byte[] dst, int dstOff) {
+  static void decode(byte[] src, int srcOff, int len, byte[] dst, int dstOff) {
     dst[dstOff] =
         (byte)
             ((DECODE_TABLE[src[srcOff] & 0x0FF] << 2)

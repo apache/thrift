@@ -24,7 +24,7 @@ require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
 require('TServer')
-require('liblualongnumber')
+local liblualongnumber = require('liblualongnumber')
 
 --------------------------------------------------------------------------------
 -- Handler
@@ -62,8 +62,111 @@ function TestHandler:testBinary(by)
   return by
 end
 
+function TestHandler:testUuid(uuid)
+  return uuid
+end
+
+function TestHandler:testNest(thing)
+  return thing
+end
+
 function TestHandler:testStruct(thing)
   return thing
+end
+
+function TestHandler:testMap(thing)
+  return thing
+end
+
+function TestHandler:testStringMap(thing)
+  return thing
+end
+
+function TestHandler:testSet(thing)
+  return thing
+end
+
+function TestHandler:testList(thing)
+  return thing
+end
+
+function TestHandler:testEnum(thing)
+  return thing
+end
+
+function TestHandler:testTypedef(thing)
+  return thing
+end
+
+function TestHandler:testMapMap(hello)
+  return {
+    ["-4"] = {
+      ["-4"] = -4,
+      ["-3"] = -3,
+      ["-2"] = -2,
+      ["-1"] = -1
+    },
+    ["4"] = {
+      ["1"] = 1,
+      ["2"] = 2,
+      ["3"] = 3,
+      ["4"] = 4
+    }
+  }
+end
+
+function TestHandler:testInsanity(argument)
+  local first_map = {
+    [Numberz.TWO] = argument,
+    [Numberz.THREE] = argument
+  };
+  local second_map = {
+    [Numberz.SIX] = Insanity:new {
+      userMap = {},
+      xtructs = {}
+    }
+  }
+
+  return {
+    ["1"] = first_map,
+    ["2"] = second_map
+  };
+end
+
+function TestHandler:testMulti(arg0, arg1, arg2, arg3, arg4, arg5)
+  return Xtruct:new {}
+end
+
+function TestHandler:testException(arg)
+  if arg == "Xception" then
+    return Xception:new {
+      errorCode = 1001,
+      message = arg
+    }
+  elseif arg == "TException" then
+    error("")
+  end
+end
+
+function TestHandler:testMultiException(arg0, arg1)
+  if arg0 == "Xception" then
+    return Xception:new {
+      errorCode = 1001,
+      message = "This is an Xception"
+    }
+  elseif arg0 == "Xception2" then
+    return Xception2:new {
+      errorCode = 2002,
+      struct_thing = Xtruct:new {
+        string_thing = "This is an Xception2"
+      }
+    }
+  elseif arg0 == "TException" then
+    error("")
+  end
+  return Xtruct:new {
+    string_thing = arg1
+  }
 end
 
 function TestHandler:testOneway(secondsToSleep)

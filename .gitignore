@@ -49,6 +49,7 @@ test-driver
 erl_crash.dump
 project.lock.json
 
+.Dockerfile.sha512
 .sonar
 .DS_Store
 .svn
@@ -74,6 +75,8 @@ project.lock.json
 /compiler/cpp/src/thrift/plugin/gen.stamp
 /compiler/cpp/Debug
 /compiler/cpp/Release
+/compiler/cpp/compiler/Debug
+/compiler/cpp/compiler/Release
 /compiler/cpp/src/thrift/libparse.a
 /compiler/cpp/src/thrift/thriftl.cc
 /compiler/cpp/src/thrift/thrifty.cc
@@ -201,15 +204,13 @@ project.lock.json
 /lib/delphi/*.local
 /lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
-/lib/delphi/test/serializer/*.dat
+/lib/delphi/test/serializer/**/*.dat
 /lib/delphi/test/serializer/bin
-/lib/delphi/test/thrift-testing
+/lib/delphi/test/thrift-testing/*.thrift
 /lib/delphi/**/*.identcache
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
 /lib/delphi/**/*.2007
-/lib/delphi/**/codegen/*.bat
-/lib/erl/_build/
 /lib/erl/.eunit
 /lib/erl/.generated
 /lib/erl/.rebar/
@@ -224,6 +225,9 @@ project.lock.json
 /lib/haxe/test/data.tmp
 /lib/hs/dist
 /lib/java/.gradle
+/lib/java/gradle/wrapper
+/lib/java/gradlew
+/lib/java/gradlew.bat
 /lib/java/android/.gradle
 /lib/java/build
 /lib/java/out
@@ -276,16 +280,15 @@ project.lock.json
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
-/lib/php/src/packages/
-/lib/php/test/TEST-*.xml
-/lib/php/test/packages/
+/lib/php/tests/Resources/packages/
+/lib/php/test/test-log-junit.xml
 /lib/py/dist/
 /lib/erl/logs/
 /lib/go/pkg
 /lib/go/src
 /lib/go/test/fuzz/gopathfuzz
 /lib/go/test/gopath/
-/lib/go/test/ThriftTest.thrift
+/lib/go/test/ThriftTest*.thrift
 /lib/nodets/test-compiled/
 /lib/ocaml/_build/
 /lib/ocaml/_tags
@@ -355,7 +358,7 @@ project.lock.json
 /test/erl/_build/
 /test/erl/rebar.lock
 /test/go/bin/
-/test/go/ThriftTest.thrift
+/test/go/ThriftTest*.thrift
 /test/go/gopath
 /test/go/pkg/
 /test/go/src/code.google.com/
@@ -388,6 +391,7 @@ project.lock.json
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
+/test/swift/CrossTests/.build
 /lib/cl/backport-update.zip
 /lib/cl/lib
 /tutorial/cl/quicklisp.lisp
@@ -442,3 +446,11 @@ project.lock.json
 /tutorial/netstd/Client/Properties/launchSettings.json
 /ylwrap
 
+# Unit test generated artifacts
+
+CMakeCache.txt
+CMakeFiles
+compiler/cpp/tests/*.cmake
+compiler/cpp/tests/Testing/
+compiler/cpp/tests/bin/
+compiler/cpp/tests/*.a

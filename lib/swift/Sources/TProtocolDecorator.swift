@@ -92,6 +92,10 @@ class TProtocolDecorator: TProtocol {
   func read() throws -> UInt8 {
     return try proto.read()
   }
+    
+  func read() throws -> Int8 {
+    return try proto.read()
+  }
 
   func read() throws -> Int16 {
     return try proto.read()
@@ -110,6 +114,10 @@ class TProtocolDecorator: TProtocol {
   }
 
   func read() throws -> Data {
+    return try proto.read()
+  }
+    
+  func read() throws -> UUID {
     return try proto.read()
   }
 
@@ -176,6 +184,10 @@ class TProtocolDecorator: TProtocol {
   func write(_ value: UInt8) throws {
     try proto.write(value)
   }
+    
+  func write(_ value: Int8) throws {
+    try proto.write(value)
+  }
 
   func write(_ value: Int16) throws {
     try proto.write(value)
@@ -194,6 +206,10 @@ class TProtocolDecorator: TProtocol {
   }
 
   func write(_ value: Data) throws {
+    try proto.write(value)
+  }
+    
+  func write(_ value: UUID) throws {
     try proto.write(value)
   }
 }

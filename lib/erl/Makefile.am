@@ -21,10 +21,10 @@ THRIFT = ../../compiler/cpp/thrift
 THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
 		  $(THRIFT_OMIT_FILE) \
-		  ../../test/ConstantsDemo.thrift \
-		  ../../test/NameConflictTest.thrift \
+		  ../../test/v0.16/ConstantsDemo.thrift \
+		  ../../test/v0.16/NameConflictTest.thrift \
 		  ../../test/DoubleConstantsTest.thrift \
-		  ../../test/ThriftTest.thrift
+		  ../../test/v0.16/ThriftTest.thrift
 
 ERL_FLAG = erl
 ERL_FLAG_LEGACY = erl:legacynames
@@ -77,6 +77,9 @@ dist-hook:
 	$(RM) -r $(distdir)/ebin/
 	$(RM) -r $(distdir)/test/gen-erl/
 	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	include \

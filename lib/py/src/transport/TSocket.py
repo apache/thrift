@@ -22,6 +22,7 @@ import logging
 import os
 import socket
 import sys
+import platform
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -90,18 +91,22 @@ class TSocket(TSocketBase):
             self.handle.settimeout(0)
             try:
                 peeked_bytes = self.handle.recv(1, socket.MSG_PEEK)
+                # the length will be zero if we got EOF (indicating connection closed)
+                if len(peeked_bytes) == 1:
+                    return True
             except (socket.error, OSError) as exc:  # on modern python this is just BlockingIOError
                 if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
                     return True
-                return False
             except ValueError:
                 # SSLSocket fails on recv with non-zero flags; fallback to the old behavior
                 return True
         finally:
             self.handle.settimeout(original_timeout)
 
-        # the length will be zero if we got EOF (indicating connection closed)
-        return len(peeked_bytes) == 1
+        # The caller may assume that after isOpen() returns False, calling close()
+        # is not needed, so it is safer to close the socket here.
+        self.close()
+        return False
 
     def setTimeout(self, ms):
         if ms is None:
@@ -128,29 +133,35 @@ class TSocket(TSocketBase):
             msg = 'failed to resolve sockaddr for ' + str(self._address)
             logger.exception(msg)
             raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=gai)
+        # Preserve the last exception to report if all addresses fail.
+        last_exc = None
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
-            # TCP_KEEPALIVE
+            # TCP keep-alive
             if self._socket_keepalive:
-                handle.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+                handle.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
             handle.settimeout(self._timeout)
             try:
                 handle.connect(sockaddr)
                 self.handle = handle
                 return
-            except socket.error:
+            except socket.error as e:
                 handle.close()
                 logger.info('Could not connect to %s', sockaddr, exc_info=True)
+                last_exc = e
         msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
                                                           addrs))
         logger.error(msg)
-        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg)
+        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=last_exc)
 
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
+        # TODO: remove socket.timeout when 3.10 becomes the earliest version of python supported.
+        except (socket.timeout, TimeoutError) as e:
+            raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
                     (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
@@ -161,8 +172,6 @@ class TSocket(TSocketBase):
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
                 buff = ''
-            elif e.args[0] == errno.ETIMEDOUT:
-                raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
@@ -208,7 +217,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         else:
             # We cann't update backlog when it is already listening, since the
             # handle has been created.
-            logger.warn('You have to set backlog before listen.')
+            logger.warning('You have to set backlog before listen.')
 
     def listen(self):
         res0 = self._resolveAddr()
@@ -228,12 +237,17 @@ class TServerSocket(TSocketBase, TServerTransportBase):
                 if eno == errno.ECONNREFUSED:
                     os.unlink(res[4])
 
-        self.handle = socket.socket(res[0], res[1])
-        self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if hasattr(self.handle, 'settimeout'):
-            self.handle.settimeout(None)
-        self.handle.bind(res[4])
-        self.handle.listen(self._backlog)
+        self.handle = s = socket.socket(res[0], res[1])
+        if s.family is socket.AF_INET6:
+            if platform.system() == 'Windows' and sys.version_info < (3, 8):
+                logger.warning('Windows socket defaulting to IPv4 for Python < 3.8: See https://github.com/python/cpython/issues/73701')
+            else:
+                s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(s, 'settimeout'):
+            s.settimeout(None)
+        s.bind(res[4])
+        s.listen(self._backlog)
 
     def accept(self):
         client, addr = self.handle.accept()

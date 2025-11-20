@@ -19,8 +19,7 @@
 
 package org.apache.thrift.protocol;
 
-@:enum
-abstract TType(Int)  from Int to Int  {
+enum abstract TType(Int)  from Int to Int  {
     public static inline var STOP : Int   = 0;
     public static inline var VOID_ : Int  = 1;  // VOID produces collisions with cpp targets in some cases
     public static inline var BOOL : Int   = 2;
@@ -34,4 +33,5 @@ abstract TType(Int)  from Int to Int  {
     public static inline var MAP : Int    = 13;
     public static inline var SET : Int    = 14;
     public static inline var LIST : Int   = 15;
+	public static inline var UUID : Int   = 16;
 }

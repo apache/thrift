@@ -24,7 +24,7 @@ require('TCompactProtocol')
 require('TJsonProtocol')
 require('TBinaryProtocol')
 require('ThriftTest_ThriftTest')
-require('liblualongnumber')
+local liblualongnumber = require('liblualongnumber')
 
 local client
 
@@ -97,6 +97,9 @@ function testBasicClient(rawArgs)
   -- String
   assertEqual(client:testString('lala'),  'lala',  'Failed testString')
   assertEqual(client:testString('wahoo'), 'wahoo', 'Failed testString')
+
+  -- UUID
+  assertEqual(client:testUuid(TUUIDfromString('00112233-4455-6677-8899-aabbccddeeff')):getString(),  '00112233-4455-6677-8899-aabbccddeeff',  'Failed testUuid')
 
   -- Bool
   assertEqual(client:testBool(true), true, 'Failed testBool true')

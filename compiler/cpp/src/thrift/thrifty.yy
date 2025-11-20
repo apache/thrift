@@ -97,6 +97,7 @@ const int struct_is_union = 1;
   t_function*    tfunction;
   t_field*       tfield;
   char*          dtext;
+  char*          keyword;
   t_field::e_req ereq;
   t_annotation*  tannot;
   t_field_id     tfieldid;
@@ -118,55 +119,58 @@ const int struct_is_union = 1;
 /**
  * Header keywords
  */
-%token tok_include
-%token tok_namespace
-%token tok_cpp_include
-%token tok_cpp_type
-%token tok_xsd_all
-%token tok_xsd_optional
-%token tok_xsd_nillable
-%token tok_xsd_attrs
+%token<keyword> tok_include
+%token<keyword> tok_namespace
+%token<keyword> tok_cpp_include
+%token<keyword> tok_cpp_type
+%token<keyword> tok_xsd_all
+%token<keyword> tok_xsd_optional
+%token<keyword> tok_xsd_nillable
+%token<keyword> tok_xsd_attrs
 
 /**
  * Base datatype keywords
  */
-%token tok_void
-%token tok_bool
-%token tok_string
-%token tok_binary
-%token tok_i8
-%token tok_i16
-%token tok_i32
-%token tok_i64
-%token tok_double
+%token<keyword> tok_void
+%token<keyword> tok_bool
+%token<keyword> tok_string
+%token<keyword> tok_binary
+%token<keyword> tok_uuid
+%token<keyword> tok_byte
+%token<keyword> tok_i8
+%token<keyword> tok_i16
+%token<keyword> tok_i32
+%token<keyword> tok_i64
+%token<keyword> tok_double
 
 /**
  * Complex type keywords
  */
-%token tok_map
-%token tok_list
-%token tok_set
+%token<keyword> tok_map
+%token<keyword> tok_list
+%token<keyword> tok_set
 
 /**
  * Function modifiers
  */
-%token tok_oneway
+%token<keyword> tok_oneway
+%token<keyword> tok_async
 
 /**
  * Thrift language keywords
  */
-%token tok_typedef
-%token tok_struct
-%token tok_xception
-%token tok_throws
-%token tok_extends
-%token tok_service
-%token tok_enum
-%token tok_const
-%token tok_required
-%token tok_optional
-%token tok_union
-%token tok_reference
+%token<keyword> tok_typedef
+%token<keyword> tok_struct
+%token<keyword> tok_xception
+%token<keyword> tok_throws
+%token<keyword> tok_extends
+%token<keyword> tok_service
+%token<keyword> tok_enum
+%token<keyword> tok_const
+%token<keyword> tok_required
+%token<keyword> tok_optional
+%token<keyword> tok_union
+%token<keyword> tok_reference
 
 /**
  * Grammar nodes
@@ -192,6 +196,7 @@ const int struct_is_union = 1;
 
 %type<tfield>    Field
 %type<tfieldid>  FieldIdentifier
+%type<id>        FieldName
 %type<ereq>      FieldRequiredness
 %type<ttype>     FieldType
 %type<tconstv>   FieldValue
@@ -770,6 +775,10 @@ Oneway:
     {
       $$ = true;
     }
+|  tok_async  // deprecated
+    {
+      $$ = true;
+    }
 |
     {
       $$ = false;
@@ -808,9 +817,9 @@ FieldList:
     }
 
 Field:
-  CaptureDocText FieldIdentifier FieldRequiredness FieldType FieldReference tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
+  CaptureDocText FieldIdentifier FieldRequiredness FieldType FieldReference FieldName FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
     {
-      pdebug("tok_int_constant : Field -> FieldType tok_identifier");
+      pdebug("tok_int_constant : Field -> FieldType FieldName");
       if ($2.auto_assigned) {
         pwarning(1, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $6);
         if (g_strict >= 192) {
@@ -841,6 +850,171 @@ Field:
       }
     }
 
+FieldName:  // identifiers and everything that could be one if it would not be identified as a different token already and excluding the "xsd*" keywords to follow a FieldName
+  tok_identifier
+    {
+      pdebug("FieldName -> tok_identifier");
+      $$ = $1;
+    }
+| tok_namespace
+    {
+      pdebug("FieldName -> tok_namespace");
+      $$ = strdup("namespace");
+    }
+| tok_cpp_include
+    {
+      pdebug("FieldName -> tok_cpp_include");
+      $$ = strdup("cpp_include");
+    }
+/* see THRIFT-5627 "More consistent syntax for cpp_type" -> activate when this issue is resolved
+| tok_cpp_type
+    {
+      pdebug("FieldName -> tok_cpp_type");
+      $$ = $strdup("cpp_type");
+    }
+*/
+| tok_include
+    {
+      pdebug("FieldName -> tok_include");
+      $$ = strdup("include");
+    }
+| tok_void
+    {
+      pdebug("FieldName -> tok_void");
+      $$ = strdup("void");
+    }
+| tok_bool
+    {
+      pdebug("FieldName -> tok_bool");
+      $$ = strdup("bool");
+    }
+| tok_byte
+    {
+      pdebug("FieldName -> tok_byte");
+      $$ = strdup("byte");
+    }
+| tok_i8
+    {
+      pdebug("FieldName -> tok_i8");
+      $$ = strdup("i8");
+    }
+| tok_i16
+    {
+      pdebug("FieldName -> tok_i16");
+      $$ = strdup("i16");
+    }
+| tok_i32
+    {
+      pdebug("FieldName -> tok_i32");
+      $$ = strdup("i32");
+    }
+| tok_i64
+    {
+      pdebug("FieldName -> tok_i64");
+      $$ = strdup("i64");
+    }
+| tok_double
+    {
+      pdebug("FieldName -> tok_double");
+      $$ = strdup("double");
+    }
+| tok_string
+    {
+      pdebug("FieldName -> tok_string");
+      $$ = strdup("string");
+    }
+| tok_binary
+    {
+      pdebug("FieldName -> tok_binary");
+      $$ = strdup("binary");
+    }
+| tok_uuid
+    {
+      pdebug("FieldName -> tok_uuid");
+      $$ = strdup("uuid");
+    }
+| tok_map
+    {
+      pdebug("FieldName -> tok_map");
+      $$ = strdup("map");
+    }
+| tok_list
+    {
+      pdebug("FieldName -> tok_list");
+      $$ = strdup("list");
+    }
+| tok_set
+    {
+      pdebug("FieldName -> tok_set");
+      $$ = strdup("set");
+    }
+| tok_oneway
+    {
+      pdebug("FieldName -> tok_oneway");
+      $$ = strdup("oneway");
+    }
+| tok_async
+    {
+      pdebug("FieldName -> tok_async");
+      $$ = strdup("async");
+    }
+| tok_typedef
+    {
+      pdebug("FieldName -> tok_typedef");
+      $$ = strdup("typedef");
+    }
+| tok_struct
+    {
+      pdebug("FieldName -> tok_struct");
+      $$ = strdup("struct");
+    }
+| tok_union
+    {
+      pdebug("FieldName -> tok_union");
+      $$ = strdup("union");
+    }
+| tok_xception
+    {
+      pdebug("FieldName -> tok_xception");
+      $$ = strdup("exception");
+    }
+| tok_extends
+    {
+      pdebug("FieldName -> tok_extends");
+      $$ = strdup("extends");
+    }
+| tok_throws
+    {
+      pdebug("FieldName -> tok_throws");
+      $$ = strdup("throws");
+    }
+| tok_service
+    {
+      pdebug("FieldName -> tok_service");
+      $$ = strdup("service");
+    }
+| tok_enum
+    {
+      pdebug("FieldName -> tok_enum");
+      $$ = strdup("enum");
+    }
+| tok_const
+    {
+      pdebug("FieldName -> tok_const");
+      $$ = strdup("const");
+    }
+| tok_required
+    {
+      pdebug("FieldName -> tok_required");
+      $$ = strdup("required");
+    }
+| tok_optional
+    {
+      pdebug("FieldName -> tok_optional");
+      $$ = strdup("optional");
+    }
+  
+  
 FieldIdentifier:
   tok_int_constant ':'
     {
@@ -1002,10 +1176,20 @@ SimpleBaseType:
       pdebug("BaseType -> tok_binary");
       $$ = g_type_binary;
     }
+| tok_uuid
+    {
+      pdebug("BaseType -> tok_uuid");
+      $$ = g_type_uuid;
+    }
 | tok_bool
     {
       pdebug("BaseType -> tok_bool");
       $$ = g_type_bool;
+    }
+| tok_byte
+    {
+      pdebug("BaseType -> tok_byte");
+      $$ = g_type_i8;  // byte is signed in Thrift, just an alias for i8
     }
 | tok_i8
     {
@@ -1081,13 +1265,20 @@ SetType:
     }
 
 ListType:
-  tok_list '<' FieldType '>' CppType
+  tok_list CppType '<' FieldType '>' CppType   // the second CppType is for compatibility reasons = deprecated
     {
       pdebug("ListType -> tok_list<FieldType>");
-      check_for_list_of_bytes($3);
-      $$ = new t_list($3);
-      if ($5 != nullptr) {
-        ((t_container*)$$)->set_cpp_name(std::string($5));
+      check_for_list_of_bytes($4);
+      $$ = new t_list($4);
+      if ($2 != nullptr) {
+        ((t_container*)$$)->set_cpp_name(std::string($2));
+      }
+      if ($6 != nullptr) {
+        ((t_container*)$$)->set_cpp_name(std::string($6));
+        pwarning(1, "The syntax 'list<type> cpp_type \"c++ type\"' is deprecated. Use 'list cpp_type \"c++ type\" <type>' instead.\n");
+      }
+      if (($2 != nullptr) && ($6 != nullptr)) {
+        pwarning(1, "Two cpp_types clauses at list<%>\n", $2);
       }
     }
 
@@ -1117,7 +1308,7 @@ TypeAnnotationList:
     {
       pdebug("TypeAnnotationList -> TypeAnnotationList , TypeAnnotation");
       $$ = $1;
-      $$->annotations_[$2->key] = $2->val;
+      $$->annotations_[$2->key].push_back($2->val);
       delete $2;
     }
 |

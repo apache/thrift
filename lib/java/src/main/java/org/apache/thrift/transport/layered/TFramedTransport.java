@@ -40,7 +40,7 @@ public class TFramedTransport extends TLayeredTransport {
   private final TMemoryInputTransport readBuffer_;
 
   public static class Factory extends TTransportFactory {
-    private int maxLength_;
+    private final int maxLength_;
 
     public Factory() {
       maxLength_ = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
@@ -170,14 +170,14 @@ public class TFramedTransport extends TLayeredTransport {
     getInnerTransport().flush();
   }
 
-  public static final void encodeFrameSize(final int frameSize, final byte[] buf) {
+  public static void encodeFrameSize(final int frameSize, final byte[] buf) {
     buf[0] = (byte) (0xff & (frameSize >> 24));
     buf[1] = (byte) (0xff & (frameSize >> 16));
     buf[2] = (byte) (0xff & (frameSize >> 8));
     buf[3] = (byte) (0xff & (frameSize));
   }
 
-  public static final int decodeFrameSize(final byte[] buf) {
+  public static int decodeFrameSize(final byte[] buf) {
     return ((buf[0] & 0xff) << 24)
         | ((buf[1] & 0xff) << 16)
         | ((buf[2] & 0xff) << 8)

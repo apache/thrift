@@ -28,7 +28,7 @@ public class TNonblockingMultiFetchStats {
   private int numOverflowedRecvBuf;
   private int numInvalidFrameSize;
   // time from the beginning of fetch() function to the reading finish
-  // time of the last socket (in milli-second)
+  // time of the last socket (in millisecond)
   private long readTime;
 
   public TNonblockingMultiFetchStats() {

@@ -1,6 +1,7 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.apache.thrift.TException;
 
 public interface TReadProtocol {
@@ -38,6 +39,8 @@ public interface TReadProtocol {
   int readI32() throws TException;
 
   long readI64() throws TException;
+
+  UUID readUuid() throws TException;
 
   double readDouble() throws TException;
 

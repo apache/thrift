@@ -1,7 +1,7 @@
 #!/bin/sh
 set -ev
 
-mkdir ~/.m2
+mkdir -p ~/.m2
 tee >~/.m2/settings.xml <<EOF
 <settings xmlns='http://maven.apache.org/SETTINGS/1.0.0'>
   <mirrors>

@@ -31,7 +31,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.bmuschko:gradle-clover-plugin:2.2.1'
+        classpath 'com.bmuschko:gradle-clover-plugin:3.0.7'
     }
 }
 
@@ -40,9 +40,9 @@ plugins {
     id 'maven-publish'
     id 'signing'
     id 'pmd'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id "com.github.spotbugs" version "4.7.1"
-    id "com.diffplug.spotless" version "6.5.2"
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id "com.github.spotbugs" version "5.2.5"
+    id "com.diffplug.spotless" version "8.0.0"
 }
 
 description = 'Apache Thrift Java Library'

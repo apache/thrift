@@ -21,8 +21,26 @@
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
 #ifdef _WIN32
+// Including Winsock2.h adds problematic macros like min() and max().
+// Try to work around:
+#ifndef NOMINMAX
+#define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 // Need to come before any Windows.h includes
 #include <winsock2.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
+#undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 #endif
 
 #include <thrift/transport/TTransport.h>
@@ -31,6 +49,7 @@
 #include <thrift/protocol/TList.h>
 #include <thrift/protocol/TSet.h>
 #include <thrift/protocol/TMap.h>
+#include <thrift/TUuid.h>
 
 #include <memory>
 
@@ -86,6 +105,20 @@ static inline To bitwise_cast(From from) {
 #include <sys/param.h>
 #endif
 
+#ifdef __ZEPHYR__
+#  include <zephyr/sys/byteorder.h>
+
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER__
+#  define __THRIFT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#  define __THRIFT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+
+#  if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
+#    undef bswap_64
+#    undef bswap_32
+#    undef bswap_16
+#  endif
+#endif
+
 #ifndef __THRIFT_BYTE_ORDER
 # if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
 #  define __THRIFT_BYTE_ORDER BYTE_ORDER
@@ -137,8 +170,8 @@ static inline To bitwise_cast(From from) {
       | (((n) & 0x0000ff00ul) << 8)  \
       | (((n) & 0x000000fful) << 24) )
 #  define bswap_16(n) \
-      ( (((n) & ((unsigned short)0xff00ul)) >> 8)  \
-      | (((n) & ((unsigned short)0x00fful)) << 8)  )
+      ( (((n) & static_cast<unsigned short>(0xff00ul)) >> 8)  \
+      | (((n) & static_cast<unsigned short>(0x00fful)) << 8)  )
 #  define THRIFT_htolell(n) bswap_64(n)
 #  define THRIFT_letohll(n) bswap_64(n)
 #  define THRIFT_htolel(n) bswap_32(n)
@@ -158,11 +191,11 @@ static inline To bitwise_cast(From from) {
 #  define THRIFT_ntohll(n) bswap_64(n)
 #  define THRIFT_htonll(n) bswap_64(n)
 # elif defined(_MSC_VER) /* Microsoft Visual C++ */
-#  define THRIFT_ntohll(n) ( _byteswap_uint64((uint64_t)n) )
-#  define THRIFT_htonll(n) ( _byteswap_uint64((uint64_t)n) )
+#  define THRIFT_ntohll(n) ( _byteswap_uint64(static_cast<uint64_t>(n)) )
+#  define THRIFT_htonll(n) ( _byteswap_uint64(static_cast<uint64_t>(n)) )
 # elif !defined(THRIFT_ntohll) /* Not GNUC/GLIBC or MSVC */
-#  define THRIFT_ntohll(n) ( (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl((uint32_t)(n >> 32)) )
-#  define THRIFT_htonll(n) ( (((uint64_t)htonl((uint32_t)n)) << 32) + htonl((uint32_t)(n >> 32)) )
+#  define THRIFT_ntohll(n) ( (static_cast<uint64_t>(ntohl(static_cast<uint32_t>(n))) << 32) + ntohl(static_cast<uint32_t>(n >> 32)) )
+#  define THRIFT_htonll(n) ( (static_cast<uint64_t>(htonl(static_cast<uint32_t>(n))) << 32) + htonl(static_cast<uint32_t>(n >> 32)) )
 # endif /* GNUC/GLIBC or MSVC or something else */
 #else /* __THRIFT_BYTE_ORDER */
 # error "Can't define THRIFT_htonll or THRIFT_ntohll!"
@@ -242,6 +275,8 @@ public:
   virtual uint32_t writeString_virt(const std::string& str) = 0;
 
   virtual uint32_t writeBinary_virt(const std::string& str) = 0;
+
+  virtual uint32_t writeUUID_virt(const TUuid& uuid) = 0;
 
   uint32_t writeMessageBegin(const std::string& name,
                              const TMessageType messageType,
@@ -350,6 +385,11 @@ public:
     return writeBinary_virt(str);
   }
 
+  uint32_t writeUUID(const TUuid& uuid) {
+    T_VIRTUAL_CALL();
+    return writeUUID_virt(uuid);
+  }
+
   /**
    * Reading functions
    */
@@ -397,6 +437,8 @@ public:
   virtual uint32_t readString_virt(std::string& str) = 0;
 
   virtual uint32_t readBinary_virt(std::string& str) = 0;
+
+  virtual uint32_t readUUID_virt(TUuid& uuid) = 0;
 
   uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
     T_VIRTUAL_CALL();
@@ -498,6 +540,11 @@ public:
     return readBinary_virt(str);
   }
 
+  uint32_t readUUID(TUuid& uuid) {
+    T_VIRTUAL_CALL();
+    return readUUID_virt(uuid);
+  }
+
   /*
    * std::vector is specialized for bool, and its elements are individual bits
    * rather than bools.   We need to define a different version of readBool()
@@ -544,14 +591,14 @@ public:
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
   // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
-  virtual int getMinSerializedSize(TType type) { 
+  virtual int getMinSerializedSize(TType type) {
     THRIFT_UNUSED_VARIABLE(type);
     return 0;
   }
 
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), 
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0),
       recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
 

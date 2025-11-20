@@ -447,12 +447,11 @@ public class TFileTransport extends TTransport {
     if (!isOpen())
       throw new TTransportException(TTransportException.NOT_OPEN, "Must open before reading");
 
-    if (currentEvent_.getRemaining() == 0) {
-      if (!readEvent()) return (0);
+    if (currentEvent_.getRemaining() == 0 && !readEvent()) {
+      return 0;
     }
 
-    int nread = currentEvent_.emit(buf, off, len);
-    return nread;
+    return currentEvent_.emit(buf, off, len);
   }
 
   public int getNumChunks() throws TTransportException {

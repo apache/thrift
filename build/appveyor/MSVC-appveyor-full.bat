@@ -55,6 +55,8 @@ IF "%PROFILE%" == "MSVC2015" (
   EXIT /B 1
 )
 
+:: Put back the @ECHO since vcvars*.bat above disables it
+@ECHO ON
 
 :: compiler and generator detection
 IF /i "%PLATFORM%" == "x64" SET GENARCH= Win64
@@ -88,10 +90,13 @@ SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
 
 IF "%PYTHON_VERSION%" == "" (
   SET WITH_PYTHON=OFF
+  SET CMAKE_PYTHON_OPTS=""
 ) ELSE (
   SET WITH_PYTHON=ON
   IF /i "%PLATFORM%" == "x64" (SET PTEXT=-x64)
-  SET PATH=C:\Python%PYTHON_VERSION:.=%!PTEXT!\scripts;C:\Python%PYTHON_VERSION:.=%!PTEXT!;!PATH!
+  SET PYTHON_ROOT=C:\Python%PYTHON_VERSION:.=%!PTEXT!
+  SET PATH=!PYTHON_ROOT!\scripts;!PYTHON_ROOT!;!PATH!
+  SET CMAKE_PYTHON_OPTS=-DPython3_FIND_STRATEGY=LOCATION -DPython3_ROOT=!PYTHON_ROOT!
 )
 
 IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
@@ -101,9 +106,10 @@ IF NOT "%QT_VERSION%" == "" (
   SET PATH=C:\Qt\%QT_VERSION%\%PROFILE%!QTEXT!\bin;!PATH!
 )
 
-
+@ECHO OFF
 CALL win_showenv.bat || EXIT /B
 MKDIR "%WIN3P%" || EXIT /B
+@ECHO ON
 
 choco feature enable -n allowGlobalConfirmation || EXIT /B
 
@@ -131,13 +137,12 @@ call build-libevent.bat || EXIT /B
 pip.exe ^
     install backports.ssl_match_hostname ^
             ipaddress ^
-            six ^
             tornado ^
             twisted || EXIT /B
 
 :: Adobe Flex SDK 4.6 for ActionScript
 MKDIR "C:\Adobe\Flex\SDK\4.6" || EXIT /B
-appveyor DownloadFile http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip -FileName C:\Adobe\Flex\SDK\4.6\SDK.zip || EXIT /B
+appveyor DownloadFile https://fpdownload.adobe.com/pub/flex/sdk/builds/flex4.6/flex_sdk_4.6.0.23201B.zip -FileName C:\Adobe\Flex\SDK\4.6\SDK.zip || EXIT /B
 CD "C:\Adobe\Flex\SDK\4.6" || EXIT /B
 7z x SDK.zip || EXIT /B
 SETX FLEX_HOME "C:\Adobe\Flex\SDK\4.6"
@@ -179,7 +184,7 @@ cmake.exe "%SRCDIR%" ^
   -DOPENSSL_USE_STATIC_LIBS=OFF ^
   -DZLIB_LIBRARY="%WIN3P%\zlib-inst\lib\zlib%ZLIB_LIB_SUFFIX%.lib" ^
   -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
-  -DWITH_PYTHON=%WITH_PYTHON% || EXIT /B
+  -DWITH_PYTHON=%WITH_PYTHON% %CMAKE_PYTHON_OPTS% || EXIT /B
 
 cmake.exe --build . --config "%CONFIGURATION%" || EXIT /B
 

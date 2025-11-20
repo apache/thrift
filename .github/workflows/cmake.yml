@@ -9,11 +9,14 @@ on:
 env:
   BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
 
+permissions:
+  contents: read
+
 jobs:
   compiler:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |

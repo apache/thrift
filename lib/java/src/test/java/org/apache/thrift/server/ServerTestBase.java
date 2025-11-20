@@ -19,6 +19,7 @@
 package org.apache.thrift.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
@@ -29,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -111,6 +113,12 @@ public abstract class ServerTestBase {
       }
       System.out.print("testBinary(" + sb + ")\n");
       thing.reset();
+      return thing;
+    }
+
+    @Override
+    public UUID testUuid(UUID thing) throws TException {
+      System.out.println("testUuid(" + thing + ")");
       return thing;
     }
 
@@ -239,7 +247,7 @@ public abstract class ServerTestBase {
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
 
-      Insanity looney = new Insanity();
+      Insanity looney = new Insanity(new HashMap<>(), Arrays.asList());
       second_map.put(Numberz.SIX, looney);
 
       Map<Long, Map<Numberz, Insanity>> insane = new HashMap<>();
@@ -337,14 +345,20 @@ public abstract class ServerTestBase {
 
   private void testBool(ThriftTest.Client testClient) throws TException {
     boolean t = testClient.testBool(true);
-    assertEquals(true, t);
+    assertTrue(t);
     boolean f = testClient.testBool(false);
-    assertEquals(false, f);
+    assertFalse(f);
   }
 
   private void testByte(ThriftTest.Client testClient) throws TException {
     byte i8 = testClient.testByte((byte) 1);
     assertEquals(1, i8);
+  }
+
+  private void testUuid(ThriftTest.Client testClient) throws TException {
+    UUID uuid = UUID.fromString("00112233-4455-6677-8899-aabbccddeeff");
+    UUID got = testClient.testUuid(uuid);
+    assertEquals(uuid, got);
   }
 
   private void testDouble(ThriftTest.Client testClient) throws TException {
@@ -462,6 +476,7 @@ public abstract class ServerTestBase {
       testStruct(testClient);
       testNestedStruct(testClient);
       testMap(testClient);
+      testUuid(testClient);
       testStringMap(testClient);
       testSet(testClient);
       testList(testClient);
@@ -672,6 +687,11 @@ public abstract class ServerTestBase {
     public void testBinary(ByteBuffer thing, AsyncMethodCallback<ByteBuffer> resultHandler)
         throws TException {
       resultHandler.onComplete(handler.testBinary(thing));
+    }
+
+    @Override
+    public void testUuid(UUID thing, AsyncMethodCallback<UUID> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testUuid(thing));
     }
 
     @Override

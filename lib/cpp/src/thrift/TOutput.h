@@ -20,7 +20,7 @@
 #ifndef _THRIFT_OUTPUT_H_
 #define _THRIFT_OUTPUT_H_ 1
 
-#include <thrift/thrift_export.h>
+//#include <thrift/thrift_export.h>
 
 namespace apache {
 namespace thrift {
@@ -53,7 +53,7 @@ private:
   void (*f_)(const char*);
 };
 
-THRIFT_EXPORT extern TOutput GlobalOutput;
+/*THRIFT_EXPORT*/ extern TOutput GlobalOutput;   // if you need this exported, build your own wrapper lib around and export it yourself
 }
 } // namespace apache::thrift
 

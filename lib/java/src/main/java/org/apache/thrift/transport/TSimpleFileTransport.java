@@ -26,9 +26,9 @@ import org.apache.thrift.TConfiguration;
 public final class TSimpleFileTransport extends TEndpointTransport {
 
   private RandomAccessFile file = null;
-  private boolean readable;
-  private boolean writable;
-  private String path_;
+  private final boolean readable;
+  private final boolean writable;
+  private final String path_;
 
   /**
    * Create a transport backed by a simple file

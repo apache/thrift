@@ -53,6 +53,8 @@ type
     FCustomHeaders : IThriftDictionary<string,string>;
 
     function CreateRequest: IXMLHTTPRequest;
+    class procedure EnsureSuccessHttpStatus( const aRequest : IXMLHTTPRequest);
+
   strict protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
@@ -255,8 +257,9 @@ begin
     ms.Position := 0;
     xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
     FInputStream := nil;
+    EnsureSuccessHttpStatus(xmlhttp);  // throws if not
     FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
-    ResetConsumedMessageSize;
+    ResetMessageSizeAndConsumedBytes;
     UpdateKnownMessageSize( FInputStream.Size);
   finally
     ms.Free;
@@ -270,6 +273,20 @@ begin
   else raise TTransportExceptionNotOpen.Create('Transport closed');
 end;
 
+
+class procedure TMsxmlHTTPClientImpl.EnsureSuccessHttpStatus( const aRequest : IXMLHTTPRequest);
+var iStatus : Integer;
+    sText : string;
+begin
+  if aRequest = nil
+  then raise TTransportExceptionNotOpen.Create('Invalid HTTP request data');
+
+  iStatus := aRequest.status;
+  sText   := aRequest.statusText;
+
+  if (200 > iStatus) or (iStatus > 299)
+  then raise TTransportExceptionEndOfFile.Create('HTTP '+IntToStr(iStatus)+' '+sText);
+end;
 
 
 end.

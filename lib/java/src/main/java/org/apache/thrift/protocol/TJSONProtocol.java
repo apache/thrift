@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.UUID;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -61,7 +62,6 @@ public class TJSONProtocol extends TProtocol {
   private static final byte[] RBRACKET = new byte[] {']'};
   private static final byte[] QUOTE = new byte[] {'"'};
   private static final byte[] BACKSLASH = new byte[] {'\\'};
-  private static final byte[] ZERO = new byte[] {'0'};
 
   private static final byte[] ESCSEQ = new byte[] {'\\', 'u', '0', '0'};
 
@@ -87,6 +87,7 @@ public class TJSONProtocol extends TProtocol {
   private static final byte[] NAME_I16 = new byte[] {'i', '1', '6'};
   private static final byte[] NAME_I32 = new byte[] {'i', '3', '2'};
   private static final byte[] NAME_I64 = new byte[] {'i', '6', '4'};
+  private static final byte[] NAME_UUID = new byte[] {'u', 'i', 'd'};
   private static final byte[] NAME_DOUBLE = new byte[] {'d', 'b', 'l'};
   private static final byte[] NAME_STRUCT = new byte[] {'r', 'e', 'c'};
   private static final byte[] NAME_STRING = new byte[] {'s', 't', 'r'};
@@ -96,7 +97,7 @@ public class TJSONProtocol extends TProtocol {
 
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
 
-  private static final byte[] getTypeNameForTypeID(byte typeID) throws TException {
+  private static byte[] getTypeNameForTypeID(byte typeID) throws TException {
     switch (typeID) {
       case TType.BOOL:
         return NAME_BOOL;
@@ -108,6 +109,8 @@ public class TJSONProtocol extends TProtocol {
         return NAME_I32;
       case TType.I64:
         return NAME_I64;
+      case TType.UUID:
+        return NAME_UUID;
       case TType.DOUBLE:
         return NAME_DOUBLE;
       case TType.STRING:
@@ -125,7 +128,7 @@ public class TJSONProtocol extends TProtocol {
     }
   }
 
-  private static final byte getTypeIDForTypeName(byte[] name) throws TException {
+  private static byte getTypeIDForTypeName(byte[] name) throws TException {
     byte result = TType.STOP;
     if (name.length > 1) {
       switch (name[0]) {
@@ -164,6 +167,9 @@ public class TJSONProtocol extends TProtocol {
             result = TType.SET;
           }
           break;
+        case 'u':
+          result = TType.UUID;
+          break;
         case 't':
           result = TType.BOOL;
           break;
@@ -178,7 +184,7 @@ public class TJSONProtocol extends TProtocol {
   // Base class for tracking JSON contexts that may require inserting/reading
   // additional JSON syntax characters
   // This base context does nothing.
-  protected class JSONBaseContext {
+  protected static class JSONBaseContext {
     protected void write() throws TException {}
 
     protected void read() throws TException {}
@@ -252,7 +258,7 @@ public class TJSONProtocol extends TProtocol {
   protected class LookaheadReader {
 
     private boolean hasData_;
-    private byte[] data_ = new byte[1];
+    private final byte[] data_ = new byte[1];
 
     // Return and consume the next byte to be read, either taking it from the
     // data buffer if present or getting it from the transport otherwise.
@@ -277,7 +283,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Stack of nested contexts that we may be in
-  private Stack<JSONBaseContext> contextStack_ = new Stack<JSONBaseContext>();
+  private final Stack<JSONBaseContext> contextStack_ = new Stack<>();
 
   // Current context that we are in
   private JSONBaseContext context_ = new JSONBaseContext();
@@ -324,7 +330,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Temporary buffer used by several methods
-  private byte[] tmpbuf_ = new byte[4];
+  private final byte[] tmpbuf_ = new byte[4];
 
   // Read a byte that must match b[0]; otherwise an exception is thrown.
   // Marked protected to avoid synthetic accessor in JSONListContext.read
@@ -339,7 +345,7 @@ public class TJSONProtocol extends TProtocol {
 
   // Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its
   // corresponding hex value
-  private static final byte hexVal(byte ch) throws TException {
+  private static byte hexVal(byte ch) throws TException {
     if ((ch >= '0') && (ch <= '9')) {
       return (byte) ((char) ch - '0');
     } else if ((ch >= 'a') && (ch <= 'f')) {
@@ -350,7 +356,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Convert a byte containing a hex value to its corresponding hex character
-  private static final byte hexChar(byte val) {
+  private static byte hexChar(byte val) {
     val &= 0x0F;
     if (val < 10) {
       return (byte) ((char) val + '0');
@@ -591,6 +597,11 @@ public class TJSONProtocol extends TProtocol {
   }
 
   @Override
+  public void writeUuid(UUID uuid) throws TException {
+    writeJSONString(uuid.toString().getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Override
   public void writeDouble(double dub) throws TException {
     writeJSONDouble(dub);
   }
@@ -722,7 +733,7 @@ public class TJSONProtocol extends TProtocol {
       readJSONSyntaxChar(QUOTE);
     }
     try {
-      return Long.valueOf(str);
+      return Long.parseLong(str);
     } catch (NumberFormatException ex) {
       throw new TProtocolException(
           TProtocolException.INVALID_DATA, "Bad data encounted in numeric data");
@@ -735,7 +746,7 @@ public class TJSONProtocol extends TProtocol {
     context_.read();
     if (reader_.peek() == QUOTE[0]) {
       TByteArrayOutputStream arr = readJSONString(true);
-      double dub = Double.valueOf(arr.toString(StandardCharsets.UTF_8));
+      double dub = Double.parseDouble(arr.toString(StandardCharsets.UTF_8));
       if (!context_.escapeNum() && !Double.isNaN(dub) && !Double.isInfinite(dub)) {
         // Throw exception -- we should not be in a string in this case
         throw new TProtocolException(
@@ -748,7 +759,7 @@ public class TJSONProtocol extends TProtocol {
         readJSONSyntaxChar(QUOTE);
       }
       try {
-        return Double.valueOf(readJSONNumericChars());
+        return Double.parseDouble(readJSONNumericChars());
       } catch (NumberFormatException ex) {
         throw new TProtocolException(
             TProtocolException.INVALID_DATA, "Bad data encounted in numeric data");
@@ -937,6 +948,11 @@ public class TJSONProtocol extends TProtocol {
   }
 
   @Override
+  public UUID readUuid() throws TException {
+    return UUID.fromString(readString());
+  }
+
+  @Override
   public double readDouble() throws TException {
     return readJSONDouble();
   }
@@ -956,9 +972,9 @@ public class TJSONProtocol extends TProtocol {
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:
-        return 0; // Stop
+        return 1; // Stop - T_STOP needs to count itself
       case 1:
-        return 0; // Void
+        return 1; // Void - T_VOID needs to count itself
       case 2:
         return 1; // Bool
       case 3:

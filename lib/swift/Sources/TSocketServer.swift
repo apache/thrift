@@ -96,26 +96,65 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
 
     // throw away our socket
     CFSocketInvalidate(sock)
-
-    // register for notifications of accepted incoming connections
-    _ = NotificationCenter.default.addObserver(forName: .NSFileHandleConnectionAccepted,
-                                               object: nil, queue: nil) {
-                                                [weak self] notification in
-                                                guard let strongSelf = self else { return }
-                                                guard let clientSocket = notification.userInfo?[NSFileHandleNotificationFileHandleItem] as? FileHandle else { return }
-                                                strongSelf.connectionAccepted(clientSocket)
-    }
-
-    // tell socket to listen
-    socketFileHandle.acceptConnectionInBackgroundAndNotify()
-
+    
     print("TSocketServer: Listening on TCP port \(port)")
+    
+    // tell socket to listen
+    acceptConnectionInBackgroundAndNotify(handle: socketFileHandle)
   }
 
-  deinit {
-    NotificationCenter.default.removeObserver(self)
-  }
+  public init(path: String,
+              inProtocol: InProtocol.Type,
+              outProtocol: OutProtocol.Type,
+              processor: Processor) throws {
+      self.processor = processor
+      // create a socket
+      let socket = UnixSocket(path: path)
+      let fd = socket.fd
 
+      if fd == -1 {
+          print("TSocketServer: No server socket")
+          throw TTransportError(error: .notOpen, message: "Could not create socket")
+      }
+
+      // wrap it in a file handle so we can get messages from it
+      socketFileHandle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+
+      // register for notifications of accepted incoming connections
+      _ = NotificationCenter.default.addObserver(forName: .NSFileHandleConnectionAccepted,
+                                                 object: nil, queue: nil) {
+          [weak self] notification in
+          guard let strongSelf = self else { return }
+          guard let clientSocket = notification.userInfo?[NSFileHandleNotificationFileHandleItem] as? FileHandle else { return }
+          strongSelf.connectionAccepted(clientSocket)
+      }
+
+      let bindRes = socket.bind()
+      guard bindRes == 0 else {
+          print("TServerSocket: bind failed")
+          throw TTransportError(error: .notOpen, message: "Could not create socket")
+      }
+      let listenRes = listen(fd, 1024)
+      guard listenRes == 0 else {
+          print("TServerSocket: listen failed")
+          throw TTransportError(error: .notOpen, message: "Could not create socket")
+      }
+
+      // tell socket to listen
+      acceptConnectionInBackgroundAndNotify(handle: socketFileHandle)
+
+      print("TSocketServer: Listening on unix path \(path)")
+  }
+  
+  private func acceptConnectionInBackgroundAndNotify(handle: FileHandle) {
+    DispatchQueue(label: "TSocketServer.connectionAccept").async {
+      let acceptedFD = accept(handle.fileDescriptor, nil, nil)
+      DispatchQueue.main.async {
+        self.connectionAccepted(FileHandle(fileDescriptor: acceptedFD))
+      }
+    }
+  }
+  
   func connectionAccepted(_ clientSocket: FileHandle) {
     // Now that we have a client connected, handle the request on queue
     processingQueue.async {
@@ -123,7 +162,7 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
     }
 
     // continue accepting connections
-    socketFileHandle.acceptConnectionInBackgroundAndNotify()
+    acceptConnectionInBackgroundAndNotify(handle: socketFileHandle)
   }
 
   open func createTransport(fileHandle: FileHandle) -> TTransport {
@@ -145,7 +184,7 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
     DispatchQueue.main.async {
       NotificationCenter.default
         .post(name: Notification.Name(rawValue: TSocketServerClientConnectionFinished),
-              object: self,
+              object: nil,
               userInfo: [TSocketServerProcessorKey: self.processor,
                          TSocketServerTransportKey: transport])
     }

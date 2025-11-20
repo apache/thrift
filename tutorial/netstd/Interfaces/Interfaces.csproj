@@ -19,10 +19,11 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Interfaces</AssemblyName>
     <PackageId>Interfaces</PackageId>
-    <Version>0.17.0.0</Version>
+    <Version>0.23.0.0</Version>
+    <Nullable>enable</Nullable>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -34,15 +35,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="10.0.652802" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../tutorial.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../tutorial.thrift" />
-    <Exec Condition="Exists('./../../../compiler/cpp/thrift')" Command="./../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../tutorial.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -out $(ProjectDir) -gen netstd:wcf,union,serial,net10 -r ./../../tutorial.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net10 -r ./../../tutorial.thrift" />
+    <Exec Condition="Exists('./../../../compiler/cpp/thrift')" Command="./../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net10 -r ./../../tutorial.thrift" />
   </Target>
 </Project>

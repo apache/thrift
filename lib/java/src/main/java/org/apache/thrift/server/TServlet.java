@@ -1,15 +1,15 @@
 package org.apache.thrift.server;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
@@ -87,6 +87,7 @@ public class TServlet extends HttpServlet {
   /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     doPost(request, response);
@@ -95,14 +96,17 @@ public class TServlet extends HttpServlet {
   public void addCustomHeader(final String key, final String value) {
     this.customHeaders.add(
         new Map.Entry<String, String>() {
+          @Override
           public String getKey() {
             return key;
           }
 
+          @Override
           public String getValue() {
             return value;
           }
 
+          @Override
           public String setValue(String value) {
             return null;
           }

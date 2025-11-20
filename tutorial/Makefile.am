@@ -74,6 +74,10 @@ if WITH_RS
 SUBDIRS += rs
 endif
 
+if WITH_CL
+SUBDIRS += cl
+endif
+
 if WITH_PERL
 SUBDIRS += perl
 endif
@@ -82,8 +86,12 @@ if WITH_PHP
 SUBDIRS += php
 endif
 
+if WITH_SWIFT
+SUBDIRS += swift
+endif
+
 #
-# generate html for ThriftTest.thrift
+# generate html for tutorial.thrift
 #
 all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
@@ -92,6 +100,9 @@ clean-local:
 	rm -rf $(top_srcdir)/tutorial/gen-html
 
 endif
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release

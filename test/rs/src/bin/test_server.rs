@@ -16,14 +16,12 @@
 // under the License.
 
 use clap::{clap_app, value_t};
-use env_logger;
 use log::*;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::thread;
 use std::time::Duration;
 
-use thrift;
 use thrift::protocol::{
     TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
     TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
@@ -83,7 +81,7 @@ fn run() -> thrift::Result<()> {
     let (i_transport_factory, o_transport_factory): (
         Box<dyn TReadTransportFactory>,
         Box<dyn TWriteTransportFactory>,
-    ) = match &*transport {
+    ) = match transport {
         "buffered" => (
             Box::new(TBufferedReadTransportFactory::new()),
             Box::new(TBufferedWriteTransportFactory::new()),
@@ -100,7 +98,7 @@ fn run() -> thrift::Result<()> {
     let (i_protocol_factory, o_protocol_factory): (
         Box<dyn TInputProtocolFactory>,
         Box<dyn TOutputProtocolFactory>,
-    ) = match &*protocol {
+    ) = match protocol {
         "binary" | "multi" | "multi:binary" => (
             Box::new(TBinaryInputProtocolFactory::new()),
             Box::new(TBinaryOutputProtocolFactory::new()),
@@ -116,7 +114,7 @@ fn run() -> thrift::Result<()> {
 
     let test_processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
-    match &*server_type {
+    match server_type {
         "simple" | "thread-pool" => {
             if protocol == "multi" || protocol == "multic" {
                 let second_service_processor =
@@ -173,6 +171,11 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
 
     fn handle_test_string(&self, thing: String) -> thrift::Result<String> {
         info!("testString({})", &thing);
+        Ok(thing)
+    }
+
+    fn handle_test_uuid(&self, thing: uuid::Uuid) -> thrift::Result<uuid::Uuid> {
+        info!("testUUID({})", &thing);
         Ok(thing)
     }
 
@@ -256,7 +259,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         info!("testMapMap({})", hello);
 
         let mut inner_map_0: BTreeMap<i32, i32> = BTreeMap::new();
-        for i in -4..(0 as i32) {
+        for i in -4..0_i32 {
             inner_map_0.insert(i, i);
         }
 

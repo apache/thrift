@@ -22,8 +22,9 @@ package thrift
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
+	"log/slog"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -54,7 +55,7 @@ var ServerStopTimeout = time.Duration(0)
  * This will work if golang user implements a conn-pool like thing in client side.
  */
 type TSimpleServer struct {
-	closed   int32
+	closed   atomic.Int32
 	wg       sync.WaitGroup
 	mu       sync.Mutex
 	stopChan chan struct{}
@@ -69,7 +70,7 @@ type TSimpleServer struct {
 	// Headers to auto forward in THeaderProtocol
 	forwardHeaders []string
 
-	logger Logger
+	logContext atomic.Pointer[context.Context]
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -178,15 +179,25 @@ func (p *TSimpleServer) SetForwardHeaders(headers []string) {
 //
 // If no logger was set before Serve is called, a default logger using standard
 // log library will be used.
-func (p *TSimpleServer) SetLogger(logger Logger) {
-	p.logger = logger
+//
+// Deprecated: The logging inside TSimpleServer is now done via slog on error
+// level, this does nothing now. It will be removed in a future version.
+func (p *TSimpleServer) SetLogger(_ Logger) {}
+
+// SetLogContext sets the context to be used when logging errors inside
+// TSimpleServer.
+//
+// If this is not called before calling Serve, context.Background() will be
+// used.
+func (p *TSimpleServer) SetLogContext(ctx context.Context) {
+	p.logContext.Store(&ctx)
 }
 
 func (p *TSimpleServer) innerAccept() (int32, error) {
 	client, err := p.serverTransport.Accept()
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	closed := atomic.LoadInt32(&p.closed)
+	closed := p.closed.Load()
 	if closed != 0 {
 		return closed, nil
 	}
@@ -201,7 +212,8 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 			defer p.wg.Done()
 			defer cancel()
 			if err := p.processRequests(client); err != nil {
-				p.logger(fmt.Sprintf("error processing request: %v", err))
+				ctx := p.logContext.Load()
+				slog.ErrorContext(*ctx, "error processing request", "err", err)
 			}
 		}()
 
@@ -232,7 +244,7 @@ func (p *TSimpleServer) AcceptLoop() error {
 }
 
 func (p *TSimpleServer) Serve() error {
-	p.logger = fallbackLogger(p.logger)
+	p.logContext.CompareAndSwap(nil, Pointer(context.Background()))
 
 	err := p.Listen()
 	if err != nil {
@@ -246,10 +258,10 @@ func (p *TSimpleServer) Stop() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if atomic.LoadInt32(&p.closed) != 0 {
+	if !p.closed.CompareAndSwap(0, 1) {
+		// Already closed
 		return nil
 	}
-	atomic.StoreInt32(&p.closed, 1)
 	p.serverTransport.Interrupt()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -328,7 +340,7 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		defer outputTransport.Close()
 	}
 	for {
-		if atomic.LoadInt32(&p.closed) != 0 {
+		if p.closed.Load() != 0 {
 			return nil
 		}
 
@@ -354,7 +366,13 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
 		if errors.Is(err, ErrAbandonRequest) {
-			return client.Close()
+			err := client.Close()
+			if errors.Is(err, net.ErrClosed) {
+				// In this case, it's kinda expected to get
+				// net.ErrClosed, treat that as no-error
+				return nil
+			}
+			return err
 		}
 		if errors.As(err, new(TTransportException)) && err != nil {
 			return err

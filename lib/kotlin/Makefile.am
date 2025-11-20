@@ -40,5 +40,15 @@ check-local: $(THRIFT)
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
-	README.md
+	build.gradle.kts \
+	CMakeLists.txt \
+	cross-test-client \
+	cross-test-server \
+	gradle.properties \
+	README.md \
+	settings.gradle.kts \
+	src 

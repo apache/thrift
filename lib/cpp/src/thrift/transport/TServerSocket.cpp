@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -70,7 +73,7 @@
 // adds problematic macros like min() and max(). Try to work around:
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <windows.h>
 #undef NOMINMAX
 #undef WIN32_LEAN_AND_MEAN
 #endif
@@ -114,7 +117,8 @@ TServerSocket::TServerSocket(int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
@@ -133,7 +137,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(const string& address, int port)
@@ -153,7 +158,8 @@ TServerSocket::TServerSocket(const string& address, int port)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
 }
 
 TServerSocket::TServerSocket(const string& path)
@@ -173,7 +179,28 @@ TServerSocket::TServerSocket(const string& path)
     listening_(false),
     interruptSockWriter_(THRIFT_INVALID_SOCKET),
     interruptSockReader_(THRIFT_INVALID_SOCKET),
-    childInterruptSockWriter_(THRIFT_INVALID_SOCKET) {
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(SocketType::NONE) {
+}
+TServerSocket::TServerSocket(THRIFT_SOCKET sock,SocketType socketType)
+  : interruptableChildren_(true),
+    port_(0),
+    path_(),
+    serverSocket_(sock),
+    acceptBacklog_(DEFAULT_BACKLOG),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    accTimeout_(-1),
+    retryLimit_(0),
+    retryDelay_(0),
+    tcpSendBuffer_(0),
+    tcpRecvBuffer_(0),
+    keepAlive_(false),
+    listening_(false),
+    interruptSockWriter_(THRIFT_INVALID_SOCKET),
+    interruptSockReader_(THRIFT_INVALID_SOCKET),
+    childInterruptSockWriter_(THRIFT_INVALID_SOCKET),
+    boundSocketType_(socketType) {
 }
 
 TServerSocket::~TServerSocket() {
@@ -436,7 +463,8 @@ void TServerSocket::listen() {
   if (isUnixDomainSocket()) {
     // -- Unix Domain Socket -- //
 
-    serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
+    if (serverSocket_ == THRIFT_INVALID_SOCKET)
+      serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
 
     if (serverSocket_ == THRIFT_INVALID_SOCKET) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -468,6 +496,8 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::NOT_OPEN,
                               " Unix Domain socket path not supported");
 #endif
+  } else if( boundSocketType_ != SocketType::NONE){
+    // -- Socket is already bound
   } else {
     // -- TCP socket -- //
 
@@ -513,25 +543,31 @@ void TServerSocket::listen() {
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 
-    // retrieve bind info
-    if (port_ == 0 && retries <= retryLimit_) {
-      struct sockaddr_storage sa;
-      socklen_t len = sizeof(sa);
-      std::memset(&sa, 0, len);
-      if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
-        errno_copy = THRIFT_GET_SOCKET_ERROR;
-        GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+  } // TCP socket //
+
+  // retrieve bind info
+  if ((port_ == 0 || path_.empty() ) && retries <= retryLimit_) {
+    struct sockaddr_storage sa;
+    socklen_t len = sizeof(sa);
+    std::memset(&sa, 0, len);
+    if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
+      errno_copy = THRIFT_GET_SOCKET_ERROR;
+      GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+    } else {
+      if (sa.ss_family == AF_INET6) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
+        port_ = ntohs(sin->sin6_port);
+      } else if (sa.ss_family == AF_INET) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
+        port_ = ntohs(sin->sin_port);
+      } else if (sa.ss_family == AF_UNIX) {
+        const auto* sin = reinterpret_cast<const struct sockaddr_un*>(&sa);
+        path_ = sin->sun_path;
       } else {
-        if (sa.ss_family == AF_INET6) {
-          const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
-          port_ = ntohs(sin->sin6_port);
-        } else {
-          const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
-          port_ = ntohs(sin->sin_port);
-        }
+        GlobalOutput.perror("TServerSocket::getPort() getsockname() unhandled socket type",EINVAL);
       }
     }
-  } // TCP socket //
+  }
 
   // throw error if socket still wasn't created successfully
   if (serverSocket_ == THRIFT_INVALID_SOCKET) {
@@ -566,7 +602,7 @@ void TServerSocket::listen() {
     listenCallback_(serverSocket_);
 
   // Call listen
-  if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
+  if (boundSocketType_ == SocketType::NONE && -1 == ::listen(serverSocket_, acceptBacklog_)) {
     errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() listen() ", errno_copy);
     close();
@@ -731,7 +767,8 @@ void TServerSocket::close() {
   concurrency::Guard g(rwMutex_);
   if (serverSocket_ != THRIFT_INVALID_SOCKET) {
     shutdown(serverSocket_, THRIFT_SHUT_RDWR);
-    ::THRIFT_CLOSESOCKET(serverSocket_);
+    if( boundSocketType_ == SocketType::NONE) //Do not close the server socket if it owned by systemd
+      ::THRIFT_CLOSESOCKET(serverSocket_);
   }
   if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
     ::THRIFT_CLOSESOCKET(interruptSockWriter_);

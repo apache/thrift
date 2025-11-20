@@ -886,8 +886,8 @@ void TNonblockingServer::TConnection::checkIdleBufferMemLimit(size_t readLimit, 
 
 TNonblockingServer::~TNonblockingServer() {
   // Close any active connections (moves them to the idle connection stack)
-  while (activeConnections_.size()) {
-    activeConnections_.front()->close();
+  while (!activeConnections_.empty()) {
+    (*activeConnections_.begin())->close();
   }
   // Clean up unused TConnection objects in connectionStack_
   while (!connectionStack_.empty()) {
@@ -931,7 +931,8 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(std::share
     result->setSocket(socket);
     result->init(ioThread);
   }
-  activeConnections_.push_back(result);
+
+  activeConnections_.insert(result);
   return result;
 }
 
@@ -941,11 +942,7 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(std::share
 void TNonblockingServer::returnConnection(TConnection* connection) {
   Guard g(connMutex_);
 
-  activeConnections_.erase(std::remove(activeConnections_.begin(),
-                                       activeConnections_.end(),
-                                       connection),
-                           activeConnections_.end());
-
+  activeConnections_.erase(connection);
   if (connectionStackLimit_ && (connectionStack_.size() >= connectionStackLimit_)) {
     delete connection;
     --numTConnections_;
