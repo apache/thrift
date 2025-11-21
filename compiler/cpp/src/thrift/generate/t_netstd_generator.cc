@@ -82,6 +82,9 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
         else if (iter->first.compare("no_deepcopy") == 0) {
           suppress_deepcopy = true;
         }
+        else if (iter->first.compare("net10") == 0) {
+          target_net_version = 10;
+        }
         else if (iter->first.compare("net9") == 0) {
           target_net_version = 9;
         }
@@ -202,9 +205,12 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
-    if( target_net_version >= 9) {
+    if( target_net_version >= 10) {
+        out << "// targeting net 10" << '\n';
+        out << "#if( !NET10_0_OR_GREATER)" << '\n';
+    } else if( target_net_version >= 9) {
         out << "// targeting net 9" << '\n';
-        out << "#if( !NET9_0_OR_GREATER)" << '\n';
+        out << "#if( NET10_0_OR_GREATER || !NET9_0_OR_GREATER)" << '\n';
     } else if( target_net_version >= 8) {
         out << "// targeting net 8" << '\n';
         out << "#if( NET9_0_OR_GREATER || !NET8_0_OR_GREATER)" << '\n';
@@ -2651,7 +2657,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
     string tmpvar = tmp("tmp");
     out << indent() << "var " << tmpvar << " = $\"Error occurred in {GetType().FullName}: {" << tmpex << ".Message}\";" << '\n';
-    out << indent() << "if(_logger != null)" << '\n';
+    out << indent() << "if ((_logger != null) && _logger.IsEnabled(LogLevel.Error))" << '\n';
     indent_up();
     out << indent() << "_logger.LogError(\"{Exception}, {Message}\", " << tmpex << ", " << tmpvar << ");" << '\n';
     indent_down();
@@ -4002,6 +4008,7 @@ THRIFT_REGISTER_GENERATOR(
     "    pascal:          Generate Pascal Case property names according to Microsoft naming convention.\n"
     "    net8:            Enable features that require net8 and C# 12 or higher.\n"
     "    net9:            Enable features that require net9 and C# 13 or higher.\n"
+    "    net10:           Enable features that require net10 and C# 14 or higher.\n"
     "    no_deepcopy:     Suppress generation of " + DEEP_COPY_METHOD_NAME + "() method.\n"
     "    async_postfix:   Append \"Async\" to all service methods (maintains compatibility with existing code).\n"
 )

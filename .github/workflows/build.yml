@@ -72,7 +72,7 @@ jobs:
       # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -105,7 +105,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-php/with-php/' | sed 's/without-php_extension/with-php_extension/' )
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -159,7 +159,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.25'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: go-precross
           if-no-files-found: error
@@ -237,7 +237,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -255,7 +255,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: libthrift
           if-no-files-found: error
@@ -268,7 +268,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: java-precross
           if-no-files-found: error
@@ -290,7 +290,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -304,6 +304,9 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+    defaults:
+      run:
+        shell: bash  # required by net install script
     steps:
       - uses: actions/checkout@v5
 
@@ -313,12 +316,33 @@ jobs:
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
           sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
 
-#      the sdk is installed by default, but keep this step for reference
-#      caveat: net9 is (currently?) NOT installed, so manually again
-      - name: Set up .NET SDK
+# This whole setup is getting worse: https://github.com/dotnet/core/discussions/9258
+      - name: Set up .NET SDK (via install script)
         run: |
-          sudo add-apt-repository -y ppa:dotnet/backports
-          sudo apt-get install -y --no-install-recommends dotnet-sdk-9.0
+          # remove any existing install
+          sudo apt remove dotnet*    
+          # install key
+          sudo apt install gpg
+          wget https://dot.net/v1/dotnet-install.asc
+          gpg --import dotnet-install.asc          
+          # download and verify
+          wget https://dot.net/v1/dotnet-install.sh
+          wget https://dot.net/v1/dotnet-install.sig
+          gpg --verify dotnet-install.sig dotnet-install.sh          
+          # run install script
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --channel 10.0          
+          # export env vars
+          export DOTNET_ROOT=$HOME/.dotnet
+          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools          
+          dotnet --list-sdks
+
+#      the sdk is installed by default, but keep this step for reference
+#      especially newer versions are NOT always pre-installed, so manually again
+#      - name: Set up .NET SDK
+#        run: |
+#          sudo add-apt-repository -y ppa:dotnet/backports
+#          sudo apt-get install -y --no-install-recommends dotnet-sdk-10.0
 #      end
 
       - name: Run bootstrap
@@ -328,7 +352,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -354,7 +378,7 @@ jobs:
         run: make -C test/netstd precross
 
       - name: Upload netstd precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: netstd-precross
           if-no-files-found: error
@@ -377,7 +401,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -391,7 +415,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: swift-precross
           if-no-files-found: error
@@ -430,7 +454,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -453,7 +477,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: rs-precross
           if-no-files-found: error
@@ -471,7 +495,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.x"
+          - "3.13" # Pin to 3.13 for now -> see THRIFT-5900
       fail-fast: false
     steps:
       - uses: actions/checkout@v5
@@ -496,12 +520,11 @@ jobs:
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure 3.x
-        if: matrix.python-version == '3.x'
+      - name: Run configure
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -520,8 +543,14 @@ jobs:
       # - name: Run make install-exec-hook for python
       #   run: sudo make -C lib/py install-exec-hook
 
-      - name: Run make check for python
+      - name: Run make for python libs
+        run: make -C lib/py
+
+      - name: Run make check for python libs
         run: make -C lib/py check
+
+      - name: Run make check for python code
+        run: make -C test/py check
 
   lib-nodejs:
     needs: compiler
@@ -536,7 +565,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -573,7 +602,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-cpp/with-cpp/g')
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -596,7 +625,7 @@ jobs:
         run: make -j$(nproc) -C test/cpp precross
 
       - name: Upload cpp precross artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cpp-precross
           if-no-files-found: error
@@ -610,7 +639,7 @@ jobs:
           retention-days: 3
 
       - name: Upload log files from failed test runs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: lib-cpp-test-log
@@ -629,16 +658,17 @@ jobs:
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
-        server_lang: ['java', 'kotlin', 'go', 'rs', 'cpp']   # ['java', 'kotlin', 'go', 'rs', 'swift']
+        # kotlin cross test are failing -> see THRIFT-5879
+        server_lang: ['java', 'go', 'rs', 'cpp']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp']    # ['java,kotlin', 'go,rs', 'swift']
+        client_lang: ['java', 'go,rs,cpp']
       fail-fast: false
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.13" # Pin to 3.13 for now -> see THRIFT-5900
+          python-version: "3.x"
 
       - uses: actions/setup-java@v5
         with:
@@ -657,38 +687,38 @@ jobs:
             libevent-dev
 
       - name: Download java precross artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: java-precross
           path: lib/java/build
 
       - name: Download kotlin precross artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: kotlin-precross
           path: lib/kotlin
 
       # swift is currently broken and no maintainers around -> see THRIFT-5864
       #- name: Download swift precross artifacts
-      #  uses: actions/download-artifact@v5
+      #  uses: actions/download-artifact@v6
       #  with:
       #    name: swift-precross
       #    path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: rs-precross
           path: test/rs/bin
 
       - name: Download go precross artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: go-precross
           path: test/go/bin
 
       - name: Download cpp precross artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: cpp-precross
           path: .
@@ -719,7 +749,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}

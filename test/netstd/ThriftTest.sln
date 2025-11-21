@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32112.339
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift", "..\..\lib\netstd\Thrift\Thrift.csproj", "{C20EA2A9-7660-47DE-9A49-D1EF12FB2895}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Compile.netstd2", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.netstd2\Thrift.Compile.netstd2.csproj", "{F27E60D2-23D3-4946-BB6C-A809EDBEFE2C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.Compile.net9", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.net9\Thrift.Compile.net9.csproj", "{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.Compile.net10", "..\..\lib\netstd\Tests\Thrift.Compile.Tests\Thrift.Compile.net10\Thrift.Compile.net10.csproj", "{62BFDEC2-D23A-8800-09F5-B2467B2006A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,6 +141,18 @@ Global
 		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x64.Build.0 = Release|Any CPU
 		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x86.ActiveCfg = Release|Any CPU
 		{BB512CA7-D013-4CDC-AD2B-1E5EA121ED59}.Release|x86.Build.0 = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|x64.Build.0 = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Debug|x86.Build.0 = Debug|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|x64.ActiveCfg = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|x64.Build.0 = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|x86.ActiveCfg = Release|Any CPU
+		{62BFDEC2-D23A-8800-09F5-B2467B2006A3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

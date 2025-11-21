@@ -137,7 +137,7 @@ RUN apt-get install -y --no-install-recommends \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
-# Because Ubuntu 20.04 reaches end of life in April [actually May] 2025, Microsoft has decided not to support .NET 9 on Ubuntu 20.04.
+# Because Ubuntu 20.04 turned EOL in April/May 2025, Microsoft does not support .NET 9 or higher on that platform
 RUN apt-get install -y --no-install-recommends \
       `# dotnet core dependencies` \
       dotnet-sdk-8.0 \
