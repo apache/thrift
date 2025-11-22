@@ -6,15 +6,13 @@ Gem::Specification.new do |s|
   s.version     = '0.23.0'
   s.authors     = ['Apache Thrift Developers']
   s.email       = ['dev@thrift.apache.org']
-  s.homepage    = 'http://thrift.apache.org'
+  s.homepage    = 'https://thrift.apache.org'
   s.summary     = %q{Ruby bindings for Apache Thrift}
   s.description = %q{Ruby bindings for the Apache Thrift RPC system}
   s.license     = 'Apache-2.0'
   s.extensions  = ['ext/extconf.rb']
 
   s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
-
-  s.rubyforge_project = 'thrift'
 
   dir = File.expand_path(File.dirname(__FILE__))
 
@@ -36,4 +34,13 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec',              '~> 3.7'
   s.add_development_dependency 'srv',                '~> 1.0'
   s.add_development_dependency 'thin',               '~> 1.7'
+
+  s.metadata = {
+    'bug_tracker_uri' => 'https://issues.apache.org/jira/browse/THRIFT',
+    'changelog_uri' => 'https://github.com/apache/thrift/blob/master/CHANGES.md',
+    'documentation_uri' => 'https://thrift.apache.org/docs/',
+    'homepage_uri' => 'https://thrift.apache.org',
+    'mailing_list_uri' => 'https://thrift.apache.org/mailing',
+    'source_code_uri' => 'https://github.com/apache/thrift/'
+  }
 end
