@@ -285,13 +285,8 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
-        if gp_dir == 'type_hints':
-            # Skip type hints tests -> See THRIFT-5885 (it might be related)
-            print('Skipping \'type_hints\' tests')
-            continue
-        if gp_dir == 'enum':
-            # Skip enum tests -> See THRIFT-5885
-            print('Skipping \'enum\' tests')
+        if gp_dir == 'type_hints' and (sys.version_info < (3,7)):
+            print('Skipping \'type_hints\' test since python 3.7 or later is required')
             continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
