@@ -245,7 +245,7 @@ describe 'NonblockingServer' do
     it "should kill active messages when they don't expire while shutting down" do
       result = Queue.new
       client = setup_client_thread(result)
-      client << [:sleep, 10]
+      client << [:sleep, 10.0]
       sleep 0.1 # start processing the client's message
       @server.shutdown(1)
       @catch_exceptions = true
