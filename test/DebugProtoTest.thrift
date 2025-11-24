@@ -20,7 +20,7 @@
 namespace c_glib TTest
 namespace cpp thrift.test.debug
 namespace java thrift.test
-namespace rb thrift.test
+namespace rb Thrift.Test
 
 struct Doubles {
  1: double nan,

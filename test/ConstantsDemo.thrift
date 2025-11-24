@@ -21,6 +21,7 @@ namespace cpp yozone
 namespace erl consts_
 namespace haxe constantsDemo
 namespace go constantsdemo
+namespace rb ConstantsDemo
 
 typedef uuid myUUID
 
