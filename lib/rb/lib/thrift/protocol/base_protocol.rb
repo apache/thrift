@@ -137,6 +137,15 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Writes a UUID as 16 bytes.
+    #
+    # uuid - The UUID string to write (e.g. "550e8400-e29b-41d4-a716-446655440000").
+    #
+    # Returns nothing.
+    def write_uuid(uuid)
+      raise NotImplementedError
+    end
+
     def read_message_begin
       raise NotImplementedError
     end
@@ -212,6 +221,13 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Reads a UUID as 16 bytes and returns it as a string.
+    #
+    # Returns a String (e.g. "550e8400-e29b-41d4-a716-446655440000").
+    def read_uuid
+      raise NotImplementedError
+    end
+
     # Writes a field based on the field information, field ID and value.
     #
     # field_info - A Hash containing the definition of the field:
@@ -251,9 +267,9 @@ module Thrift
     #
     # Returns nothing.
     def write_type(field_info, value)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 
@@ -276,6 +292,8 @@ module Thrift
         else
           write_string(value)
         end
+      when Types::UUID
+        write_uuid(value)
       when Types::STRUCT
         value.write(self)
       else
@@ -291,9 +309,9 @@ module Thrift
     #
     # Returns the value read; object type varies based on field_info[:type].
     def read_type(field_info)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 
@@ -316,6 +334,8 @@ module Thrift
         else
           read_string
         end
+      when Types::UUID
+        read_uuid
       else
         raise NotImplementedError
       end
@@ -337,6 +357,8 @@ module Thrift
         read_double
       when Types::STRING
         read_string
+      when Types::UUID
+        read_uuid
       when Types::STRUCT
         read_struct_begin
         while true

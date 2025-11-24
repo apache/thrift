@@ -58,6 +58,7 @@ static int CTYPE_LIST           = 0x09;
 static int CTYPE_SET            = 0x0A;
 static int CTYPE_MAP            = 0x0B;
 static int CTYPE_STRUCT         = 0x0C;
+static int CTYPE_UUID           = 0x0D;
 
 VALUE rb_thrift_compact_proto_write_i16(VALUE self, VALUE i16);
 
@@ -86,6 +87,8 @@ static int get_compact_type(VALUE type_value) {
     return CTYPE_MAP;
   } else if (type == TTYPE_STRUCT) {
     return CTYPE_STRUCT;
+  } else if (type == TTYPE_UUID) {
+    return CTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", type);
@@ -357,6 +360,8 @@ static int8_t get_ttype(int8_t ctype) {
     return TTYPE_MAP;
   } else if (ctype == CTYPE_STRUCT) {
     return TTYPE_STRUCT;
+  } else if (ctype == CTYPE_UUID) {
+    return TTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", ctype);

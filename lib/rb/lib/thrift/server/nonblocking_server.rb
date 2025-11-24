@@ -46,6 +46,10 @@ module Thrift
           break if @server_transport.closed?
           begin
             rd, = select([@server_transport], nil, nil, 0.1)
+          rescue ::TypeError => e
+            # When select() is called with a closed transport with handler set to nil in
+            # shutdown paths, Ruby raises a TypeError ("#to_io gives NilClass").
+            break
           rescue Errno::EBADF => e
             # In Ruby 1.9, calling @server_transport.close in shutdown paths causes the select() to raise an
             # Errno::EBADF. If this happens, ignore it and retry the loop.

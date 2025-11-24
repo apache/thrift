@@ -157,7 +157,7 @@ describe 'NonblockingServer' do
             when :hello
               result << client.greeting(true) # ignore result
             when :sleep
-              client.sleep(args[0] || 0.5)
+              client.sleep((args[0] || 0.5).to_f)
               result << :slept
             when :shutdown
               client.shutdown
