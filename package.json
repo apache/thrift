@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/apache/thrift.git"
   },
-  "version": "0.18.0",
+  "version": "0.23.0",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org",
@@ -43,30 +43,32 @@
     "ws": "^5.2.3"
   },
   "devDependencies": {
-    "@types/node": "^10.12.6",
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.5",
     "@types/node-int64": "^0.4.29",
     "@types/q": "^1.5.1",
     "buffer-equals": "^1.0.4",
-    "commander": "^2.14.1",
+    "commander": "^13.0.0",
     "connect": "^3.6.6",
-    "eslint": "^5.7.0",
-    "eslint-config-prettier": "^3.1.0",
-    "eslint-plugin-prettier": "^3.0.0",
-    "html-validator-cli": "^4.1.4",
-    "jsdoc": "^3.6.7",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.14.0",
+    "html-validator-cli": "^2.0.0",
+    "jsdoc": "^4.0.2",
     "json-int64": "^1.0.2",
     "nyc": "^15.0.0",
-    "prettier": "^1.14.3",
+    "prettier": "^3.4.2",
     "tape": "^4.9.0",
-    "typescript": "^3.1.6",
+    "typescript": "^5.7.2",
     "utf-8-validate": "^5.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
     "test": "lib/nodejs/test/testAll.sh",
     "test-ts": "lib/nodets/test/testAll.sh",
-    "prettier": "prettier --write '**/*.js'",
-    "lint": "eslint lib/nodejs/. --ext .js",
-    "lint-tests": "eslint lib/nodejs/test/. --ext .js"
+    "prettier": "prettier --write '**/*.{js,mjs,ts}'",
+    "lint": "eslint lib/nodejs",
+    "lint-tests": "eslint lib/nodejs/test"
   }
 }

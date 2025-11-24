@@ -20,83 +20,92 @@
 package;
 
 import org.apache.thrift.*;
-import org.apache.thrift.protocol.*;
-import org.apache.thrift.transport.*;
-import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.server.*;
+import org.apache.thrift.transport.*;
+import tests.ConstantsTest;
+import tests.MultiplexTest;
+import tests.StreamTest;
+import thrift.test.*;
 
-import thrift.test.*;  // generated code
-
-
-enum WhatTests {
-    Normal;
-    Multiplex;
-    Constants;
+enum WhatTests
+{
+	Normal;
+	Multiplex;
+	Constants;
 }
 
 class Main
 {
-    static private var tests : WhatTests = Normal;
-    static private var server : Bool = false;
+	static private var what : WhatTests = Normal;
+	static private var server : Bool = false;
 
-    static private inline var CMDLINEHELP : String
-        = "\nHaxeTests  [client|server]  [multiplex]\n"
-        + "  client|server  ... determines run mode for some tests, default is client\n"
-        + "  multiplex ........ run multiplex test server or client\n";
+	static private inline var CMDLINEHELP : String
+		= "\nHaxeTests  [client|server]  [multiplex]\n"
+		  + "  client|server  ... determines run mode for some tests, default is client\n"
+		  + "  multiplex ........ run multiplex test server or client\n"
+		  + "  constants ........ run constants and conformity tests\n"
+		  ;
 
-    static private function ParseArgs() {
-        #if sys
+	static private function ParseArgs()
+	{
+		#if sys
 
-        var args = Sys.args();
-        if ( args != null) {
-            for ( arg in args) {
-                switch(arg.toLowerCase()) {
-                    case "client":
-                        server = false;
-                    case "server" :
-                        server = true;
-                    case "multiplex" :
-                        tests = Multiplex;
-                    case "constants" :
-                        tests = Constants;
-                    default:
-                throw 'Invalid argument "$arg"\n'+CMDLINEHELP;
-                }
-            }
-        }
+		var args = Sys.args();
+		if ( args != null)
+		{
+			for ( arg in args)
+			{
+				switch (arg.toLowerCase())
+				{
+					case "client":
+						server = false;
+					case "server" :
+						server = true;
+					case "multiplex" :
+						what = Multiplex;
+					case "constants" :
+						what = Constants;
+					default:
+						throw 'Invalid argument "$arg"\n'+CMDLINEHELP;
+				}
+			}
+		}
 
-        #end
-    }
+		#end
+	}
 
-    static public function main()
-    {
-        try
-        {
-            ParseArgs();
+	static public function main()
+	{
+		try
+		{
+			ParseArgs();
 
-            switch( tests) {
-                case Normal:
-                    #if sys
-                    StreamTest.Run(server);
-                    #end
-                case Multiplex:
-                    #if ! (flash || html5 || js)
-                    MultiplexTest.Run(server);
-                    #end
-                case Constants:
-                    ConstantsTest.Run(server);
-                default:
-                    throw "Unhandled test mode $tests";
-            }
+			switch ( what)
+			{
+				case Normal:
+					#if sys
+					tests.StreamTest.Run(server);
+					#end
+				case Multiplex:
+					#if ! (flash || html5 || js)
+					tests.MultiplexTest.Run(server);
+					#end
+				case Constants:
+					tests.ConstantsTest.Run(server);
+				default:
+					throw 'Unhandled test mode $what';
+			}
 
-            trace("All tests completed.");
-        }
-        catch( e: Dynamic)
-        {
-            trace('$e');
-            #if sys
-            Sys.exit(1);  // indicate error
-            #end
-        }
-    }
+			trace("All tests completed.");
+		}
+		catch ( e: Dynamic)
+		{
+			trace('$e');
+			#if sys
+			Sys.exit(1);  // indicate error
+			#end
+		}
+	}
 }

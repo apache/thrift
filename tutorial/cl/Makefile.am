@@ -57,6 +57,9 @@ clean-local:
 	-$(RM) TutorialServer
 	-$(RM) TutorialClient
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	tutorial-implementation.lisp \
 	shared-implementation.lisp \

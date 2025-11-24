@@ -29,5 +29,5 @@ public interface TAsyncProcessor {
    * @param fb the frame buffer to process.
    * @throws TException if the frame cannot be processed
    */
-  public void process(final AsyncFrameBuffer fb) throws TException;
+  void process(final AsyncFrameBuffer fb) throws TException;
 }

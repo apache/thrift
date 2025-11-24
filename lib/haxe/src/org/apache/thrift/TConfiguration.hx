@@ -25,9 +25,9 @@ class TConfiguration
 	public static inline var DEFAULT_MAX_FRAME_SIZE = 16384000;      // this value is used consistently across all Thrift libraries
 	public static inline var DEFAULT_RECURSION_DEPTH = 64;
 
-	public var MaxMessageSize(default,null) : Int = DEFAULT_MAX_MESSAGE_SIZE;
-	public var MaxFrameSize(default,null) : Int = DEFAULT_MAX_FRAME_SIZE;
-	public var RecursionLimit(default,null) : Int = DEFAULT_RECURSION_DEPTH;
+	public var MaxMessageSize(default,default) : Int = DEFAULT_MAX_MESSAGE_SIZE;
+	public var MaxFrameSize(default,default) : Int = DEFAULT_MAX_FRAME_SIZE;
+	public var RecursionLimit(default,default) : Int = DEFAULT_RECURSION_DEPTH;
 
 	// TODO(JensG): add connection and i/o timeouts
 	

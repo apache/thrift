@@ -28,17 +28,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+#pragma warning disable IDE0290 // net8 - primary CTOR
+#pragma warning disable SYSLIB1054 // net8 - use LibraryImport attribute
 #pragma warning disable CS1998  // async no await
 
 namespace Thrift.Transport.Server
 {
-    [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
-    [Flags]
-    public enum NamedPipeClientFlags {  // bad name
-        None = 0x00,
-        OnlyLocalClients = 0x01
-    };
-
     [Flags]
     public enum NamedPipeServerFlags
     {
@@ -53,7 +51,7 @@ namespace Thrift.Transport.Server
         // to manage incoming connections, we set up a task for each stream to listen on
         private struct TaskStreamPair
         {
-            public NamedPipeServerStream Stream;
+            public readonly NamedPipeServerStream Stream;
             public Task Task;
 
             public TaskStreamPair(NamedPipeServerStream stream, Task task)
@@ -81,18 +79,6 @@ namespace Thrift.Transport.Server
 
             _pipeAddress = pipeAddress;
             _onlyLocalClients = flags.HasFlag(NamedPipeServerFlags.OnlyLocalClients);
-            _numListenPipes = (byte)numListenPipes;
-        }
-
-        [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
-        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeClientFlags flags, int numListenPipes = 1)
-            : base(config)
-        {
-            if ((numListenPipes < 1) || (numListenPipes > 254))
-                throw new ArgumentOutOfRangeException(nameof(numListenPipes), "Value must be in the range of [1..254]");
-
-            _pipeAddress = pipeAddress;
-            _onlyLocalClients = flags.HasFlag(NamedPipeClientFlags.OnlyLocalClients);
             _numListenPipes = (byte)numListenPipes;
         }
 
@@ -340,8 +326,9 @@ namespace Thrift.Transport.Server
 
                 // there must be an exact mapping between task index and stream index
                 Debug.Assert(_streams.Count == tasks.Count);
+                #pragma warning disable IDE0305  // see https://github.com/dotnet/roslyn/issues/70656 - yet unsolved
                 var index = Task.WaitAny(tasks.ToArray(), cancellationToken);
-
+                #pragma warning restore IDE0305 
                 var trans = new ServerTransport(_streams[index].Stream, Configuration);
                 _streams.RemoveAt(index); // pass stream ownership to ServerTransport
 
@@ -360,7 +347,7 @@ namespace Thrift.Transport.Server
             catch (Exception e)
             {
                 Close();
-                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message);
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message, e);
             }
         }
 
@@ -401,10 +388,10 @@ namespace Thrift.Transport.Server
                 }
 
                 CheckReadBytesAvailable(length);
-#if NETSTANDARD2_0
-                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                 var numBytes = await PipeStream.ReadAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
+                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
 #endif
                 CountConsumedMessageBytes(numBytes);
                 return numBytes;
@@ -437,7 +424,7 @@ namespace Thrift.Transport.Server
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
                 await PipeStream.FlushAsync(cancellationToken);
-                ResetConsumedMessageSize();
+                ResetMessageSizeAndConsumedBytes();
             }
 
             protected override void Dispose(bool disposing)

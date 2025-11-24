@@ -48,15 +48,15 @@ class CalculatorHandler : public CalculatorIf {
 public:
   CalculatorHandler() = default;
 
-  void ping() override { cout << "ping()" << endl; }
+  void ping() override { cout << "ping()" << '\n'; }
 
   int32_t add(const int32_t n1, const int32_t n2) override {
-    cout << "add(" << n1 << ", " << n2 << ")" << endl;
+    cout << "add(" << n1 << ", " << n2 << ")" << '\n';
     return n1 + n2;
   }
 
   int32_t calculate(const int32_t logid, const Work& work) override {
-    cout << "calculate(" << logid << ", " << work << ")" << endl;
+    cout << "calculate(" << logid << ", " << work << ")" << '\n';
     int32_t val;
 
     switch (work.op) {
@@ -95,11 +95,11 @@ public:
   }
 
   void getStruct(SharedStruct& ret, const int32_t logid) override {
-    cout << "getStruct(" << logid << ")" << endl;
+    cout << "getStruct(" << logid << ")" << '\n';
     ret = log[logid];
   }
 
-  void zip() override { cout << "zip()" << endl; }
+  void zip() override { cout << "zip()" << '\n'; }
 
 protected:
   map<int32_t, SharedStruct> log;
@@ -172,8 +172,8 @@ int main() {
     threadManager);
   */
 
-  cout << "Starting the server..." << endl;
+  cout << "Starting the server..." << '\n';
   server.serve();
-  cout << "Done." << endl;
+  cout << "Done." << '\n';
   return 0;
 }

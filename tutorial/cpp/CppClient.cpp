@@ -43,9 +43,9 @@ int main() {
     transport->open();
 
     client.ping();
-    cout << "ping()" << endl;
+    cout << "ping()" << '\n';
 
-    cout << "1 + 1 = " << client.add(1, 1) << endl;
+    cout << "1 + 1 = " << client.add(1, 1) << '\n';
 
     Work work;
     work.op = Operation::DIVIDE;
@@ -54,27 +54,27 @@ int main() {
 
     try {
       client.calculate(1, work);
-      cout << "Whoa? We can divide by zero!" << endl;
+      cout << "Whoa? We can divide by zero!" << '\n';
     } catch (InvalidOperation& io) {
-      cout << "InvalidOperation: " << io.why << endl;
-      // or using generated operator<<: cout << io << endl;
-      // or by using std::exception native method what(): cout << io.what() << endl;
+      cout << "InvalidOperation: " << io.why << '\n';
+      // or using generated operator<<: cout << io << '\n';
+      // or by using std::exception native method what(): cout << io.what() << '\n';
     }
 
     work.op = Operation::SUBTRACT;
     work.num1 = 15;
     work.num2 = 10;
     int32_t diff = client.calculate(1, work);
-    cout << "15 - 10 = " << diff << endl;
+    cout << "15 - 10 = " << diff << '\n';
 
     // Note that C++ uses return by reference for complex types to avoid
     // costly copy construction
     SharedStruct ss;
     client.getStruct(ss, 1);
-    cout << "Received log: " << ss << endl;
+    cout << "Received log: " << ss << '\n';
 
     transport->close();
   } catch (TException& tx) {
-    cout << "ERROR: " << tx.what() << endl;
+    cout << "ERROR: " << tx.what() << '\n';
   }
 }

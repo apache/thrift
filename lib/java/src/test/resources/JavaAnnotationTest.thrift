@@ -19,6 +19,8 @@
 
 namespace java thrift.test.annotations
 
+typedef string my_typedef (a = "a", c = "d")
+
 struct OneOfEachBeansWithAnnotations {
   1: bool boolean_field,
   2: byte a_bite (compression = "false"),
@@ -30,5 +32,7 @@ struct OneOfEachBeansWithAnnotations {
   8: binary base64,
   9: list<byte> byte_list (non_empty = "true"),
   10: list<i16> i16_list,
-  11: list<i64> i64_list
+  11: list<i64> i64_list,
+  // a is overridden to b
+  12: my_typedef typedef_meta (a = "b"),
 }

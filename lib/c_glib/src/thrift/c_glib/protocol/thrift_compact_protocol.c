@@ -1414,6 +1414,13 @@ thrift_compact_protocol_read_string (ThriftProtocol *protocol,
     return -1;
   }
 
+  ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
+  if (read_len > 0 && !ttc->checkReadBytesAvailable (THRIFT_TRANSPORT (tp->transport), read_len, error)) {
+    *str = NULL;
+    return -1;
+  }
+
   /* allocate the memory as an array of unsigned char for binary data */
   *str = g_new0 (gchar, read_len + 1);
   if (read_len > 0) {
@@ -1468,6 +1475,14 @@ thrift_compact_protocol_read_binary (ThriftProtocol *protocol,
   }
 
   if (read_len > 0) {
+    ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+    ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
+    if (!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT (tp->transport), read_len, error)) {
+      *buf = NULL;
+      *len = 0;
+      return -1;
+    }
+
     /* allocate the memory as an array of unsigned char for binary data */
     *len = (guint32) read_len;
     *buf = g_new (guchar, *len);
@@ -1505,9 +1520,9 @@ thrift_compact_protocol_get_min_serialized_size (ThriftProtocol *protocol, Thrif
   switch (type)
   {
     case T_STOP:
-         return 0;
+         return 1;  /* T_STOP needs to count itself */
     case T_VOID:
-         return 0;
+         return 1;  /* T_VOID needs to count itself */
     case T_BOOL:
          return sizeof(gint8);
     case T_DOUBLE:
@@ -1523,7 +1538,7 @@ thrift_compact_protocol_get_min_serialized_size (ThriftProtocol *protocol, Thrif
     case T_STRING:
          return sizeof(gint8);
     case T_STRUCT:
-         return 0;
+         return 1;  /* empty struct needs at least 1 byte for the T_STOP */
     case T_MAP:
          return sizeof(gint8);
     case T_SET:

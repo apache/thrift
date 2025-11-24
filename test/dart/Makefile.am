@@ -48,5 +48,8 @@ dist-hook:
 client: stubs
 	${DART} test_client/bin/main.dart
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	test_client

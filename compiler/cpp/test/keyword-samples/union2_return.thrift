@@ -17,6 +17,10 @@
  * under the License.
  */
 
+
+
+namespace * keyword_test_006
+
 union union_name {
   1: optional bool return=1
 }

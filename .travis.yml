@@ -17,7 +17,7 @@
 # under the License.
 #
 
-# build Apache Thrift on Travis CI - https://travis-ci.org/
+# build Apache Thrift on Travis CI - https://travis-ci.com/
 
 #
 # Docker Integration
@@ -58,21 +58,20 @@ env:
 jobs:
   include:
     # ========================= stage: docker =========================
-    - stage: docker
-      script: true
-      env:
-        - JOB="Docker Build ubuntu-xenial 16.04 LTS"
-        - DISTRO=ubuntu-xenial
-        - TRAVIS_BUILD_STAGE=docker
-    - script: true
-      env:
-        - JOB="Docker Build ubuntu-bionic 18.04 LTS"
-        - DISTRO=ubuntu-bionic
-        - TRAVIS_BUILD_STAGE=docker
     - script: true
       env:
         - JOB="Docker Build ubuntu-focal 20.04 LTS"
         - DISTRO=ubuntu-focal
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-jammy 22.04 LTS"
+        - DISTRO=ubuntu-jammy
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-noble 24.04 LTS"
+        - DISTRO=ubuntu-noble
         - TRAVIS_BUILD_STAGE=docker
 
     # ========================= stage: thrift =======================
@@ -117,16 +116,13 @@ jobs:
 
     # ------------------------- phase: autotools --------------------
     # TODO: Remove them once migrated to CMake
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Bionic)"
-        - SCRIPT="autotools.sh"
 
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Xenial)"
-        - DISTRO=ubuntu-xenial
-        - SCRIPT="autotools.sh"
+    # TODO fix the missing python2 deps or get rid of python2
+    # - script: build/docker/run.sh
+    #   env:
+    #     - JOB="Autotools (Ubuntu Jammy)"
+    #     - DISTRO=ubuntu-jammy
+    #     - SCRIPT="autotools.sh"
 
     - script: build/docker/run.sh
       env:

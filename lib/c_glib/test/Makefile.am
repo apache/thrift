@@ -18,7 +18,7 @@
 #
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-SUBDIRS =
+SUBDIRS = fuzz
 
 BUILT_SOURCES = \
         gen-c_glib/t_test_container_test_types.c \
@@ -34,7 +34,8 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_container_service.h \
         gen-c_glib/t_test_srv.h \
         gen-c_glib/t_test_thrift_test.h \
-        gen-c_glib/t_test_thrift_test_types.h
+        gen-c_glib/t_test_thrift_test_types.h \
+        gen-c_glib/t_test_enum_test_types.h
 
 AM_CPPFLAGS = -I../src -I./gen-c_glib -I$(top_builddir)/lib/c_glib/src/thrift
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) \
@@ -335,7 +336,7 @@ gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_requ
 gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/v0.16/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/v0.16/ThriftTest.thrift $(THRIFT)
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest_types.cpp: ../../../test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
 TESTS = \
@@ -400,6 +401,9 @@ CLEANFILES =                            \
     *.gcno                              \
     *.gcda                              \
     *.gcov
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
              CMakeLists.txt \

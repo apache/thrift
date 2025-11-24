@@ -18,7 +18,7 @@ Debian 7/Ubuntu 12 users need to manually install a more recent version of autom
 If you would like to build Apache Thrift libraries for other programming languages you may need to install additional packages. The following languages require the specified additional packages:
 
  * Java
-	* packages: gradle (version 7.5.1)
+	* packages: gradle (version 8.4)
 	* You will also need Java JDK v1.8 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. default-jdk).
  * Ruby
 	* ruby-full ruby-dev ruby-rspec rake rubygems bundler

@@ -20,6 +20,8 @@
 /** Interface for storing server's connection context. */
 package org.apache.thrift.server;
 
+import java.net.SocketAddress;
+
 public interface ServerContext {
 
   /**
@@ -42,4 +44,12 @@ public interface ServerContext {
    *     unwrapped from this context.
    */
   boolean isWrapperFor(Class<?> iface);
+
+  /**
+   * Set the remote socket address for this ServerContext. The remoteAddress is null when transport
+   * is not socket based
+   *
+   * @param remoteAddress The remote socket address, may be null.
+   */
+  default void setRemoteAddress(SocketAddress remoteAddress) {}
 }

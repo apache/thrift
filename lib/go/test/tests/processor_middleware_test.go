@@ -32,9 +32,12 @@ import (
 
 const errorMessage = "foo error"
 
-type serviceImpl struct{}
+type serviceImpl struct {
+	sleepTime time.Duration
+}
 
-func (serviceImpl) Ping(_ context.Context) (err error) {
+func (s serviceImpl) Ping(_ context.Context) (err error) {
+	time.Sleep(s.sleepTime)
 	return &processormiddlewaretest.Error{
 		Foo: thrift.StringPtr(errorMessage),
 	}
@@ -67,9 +70,14 @@ func checkError(tb testing.TB, err error) {
 }
 
 func TestProcessorMiddleware(t *testing.T) {
-	const timeout = time.Second
+	const (
+		sleepTime = 10 * time.Millisecond
+		timeout   = sleepTime / 5
+	)
 
-	processor := processormiddlewaretest.NewServiceProcessor(&serviceImpl{})
+	processor := processormiddlewaretest.NewServiceProcessor(&serviceImpl{
+		sleepTime: sleepTime,
+	})
 	serverTransport, err := thrift.NewTServerSocket("127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("Could not find available server port: %v", err)
@@ -80,7 +88,9 @@ func TestProcessorMiddleware(t *testing.T) {
 		thrift.NewTHeaderTransportFactoryConf(nil, nil),
 		thrift.NewTHeaderProtocolFactoryConf(nil),
 	)
-	defer server.Stop()
+	t.Cleanup(func() {
+		server.Stop()
+	})
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -103,6 +113,14 @@ func TestProcessorMiddleware(t *testing.T) {
 
 	client := processormiddlewaretest.NewServiceClient(thrift.NewTStandardClient(protocol, protocol))
 
-	err = client.Ping(context.Background())
-	checkError(t, err)
+	for label, timeout := range map[string]time.Duration{
+		"enough-time":     sleepTime * 10,
+		"not-enough-time": sleepTime / 2,
+	} {
+		t.Run(label, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			t.Cleanup(cancel)
+			client.Ping(ctx)
+		})
+	}
 }

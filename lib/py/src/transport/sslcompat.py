@@ -70,7 +70,7 @@ def _optional_dependencies():
         logger.debug('ipaddress module is available')
         ipaddr = True
     except ImportError:
-        logger.warn('ipaddress module is unavailable')
+        logger.warning('ipaddress module is unavailable')
         ipaddr = False
 
     if sys.hexversion < 0x030500F0:
@@ -82,18 +82,25 @@ def _optional_dependencies():
             if ver[0] * 10 + ver[1] >= 35:
                 return ipaddr, match
             else:
-                logger.warn('backports.ssl_match_hostname module is too old')
+                logger.warning('backports.ssl_match_hostname module is too old')
                 ipaddr = False
         except ImportError:
-            logger.warn('backports.ssl_match_hostname is unavailable')
+            logger.warning('backports.ssl_match_hostname is unavailable')
             ipaddr = False
     try:
         from ssl import match_hostname
         logger.debug('ssl.match_hostname is available')
         match = match_hostname
     except ImportError:
-        logger.warn('using legacy validation callback')
-        match = legacy_validate_callback
+        # https://docs.python.org/3/whatsnew/3.12.html:
+        # "Remove the ssl.match_hostname() function. It was deprecated in Python
+        # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
+        # longer uses the ssl.match_hostname() function.""
+        if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
+            match = lambda cert, hostname: True
+        else:
+            logger.warning('using legacy validation callback')
+            match = legacy_validate_callback
     return ipaddr, match
 
 

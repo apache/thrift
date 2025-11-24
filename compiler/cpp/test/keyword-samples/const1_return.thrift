@@ -17,4 +17,7 @@
  * under the License.
  */
 
+
+namespace * keyword_test_007
+
 const bool return = 0

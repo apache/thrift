@@ -62,7 +62,6 @@ public class TJSONProtocol extends TProtocol {
   private static final byte[] RBRACKET = new byte[] {']'};
   private static final byte[] QUOTE = new byte[] {'"'};
   private static final byte[] BACKSLASH = new byte[] {'\\'};
-  private static final byte[] ZERO = new byte[] {'0'};
 
   private static final byte[] ESCSEQ = new byte[] {'\\', 'u', '0', '0'};
 
@@ -185,7 +184,7 @@ public class TJSONProtocol extends TProtocol {
   // Base class for tracking JSON contexts that may require inserting/reading
   // additional JSON syntax characters
   // This base context does nothing.
-  protected class JSONBaseContext {
+  protected static class JSONBaseContext {
     protected void write() throws TException {}
 
     protected void read() throws TException {}
@@ -259,7 +258,7 @@ public class TJSONProtocol extends TProtocol {
   protected class LookaheadReader {
 
     private boolean hasData_;
-    private byte[] data_ = new byte[1];
+    private final byte[] data_ = new byte[1];
 
     // Return and consume the next byte to be read, either taking it from the
     // data buffer if present or getting it from the transport otherwise.
@@ -284,7 +283,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Stack of nested contexts that we may be in
-  private Stack<JSONBaseContext> contextStack_ = new Stack<JSONBaseContext>();
+  private final Stack<JSONBaseContext> contextStack_ = new Stack<>();
 
   // Current context that we are in
   private JSONBaseContext context_ = new JSONBaseContext();
@@ -331,7 +330,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Temporary buffer used by several methods
-  private byte[] tmpbuf_ = new byte[4];
+  private final byte[] tmpbuf_ = new byte[4];
 
   // Read a byte that must match b[0]; otherwise an exception is thrown.
   // Marked protected to avoid synthetic accessor in JSONListContext.read
@@ -346,7 +345,7 @@ public class TJSONProtocol extends TProtocol {
 
   // Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its
   // corresponding hex value
-  private static final byte hexVal(byte ch) throws TException {
+  private static byte hexVal(byte ch) throws TException {
     if ((ch >= '0') && (ch <= '9')) {
       return (byte) ((char) ch - '0');
     } else if ((ch >= 'a') && (ch <= 'f')) {
@@ -357,7 +356,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   // Convert a byte containing a hex value to its corresponding hex character
-  private static final byte hexChar(byte val) {
+  private static byte hexChar(byte val) {
     val &= 0x0F;
     if (val < 10) {
       return (byte) ((char) val + '0');
@@ -734,7 +733,7 @@ public class TJSONProtocol extends TProtocol {
       readJSONSyntaxChar(QUOTE);
     }
     try {
-      return Long.valueOf(str);
+      return Long.parseLong(str);
     } catch (NumberFormatException ex) {
       throw new TProtocolException(
           TProtocolException.INVALID_DATA, "Bad data encounted in numeric data");
@@ -747,7 +746,7 @@ public class TJSONProtocol extends TProtocol {
     context_.read();
     if (reader_.peek() == QUOTE[0]) {
       TByteArrayOutputStream arr = readJSONString(true);
-      double dub = Double.valueOf(arr.toString(StandardCharsets.UTF_8));
+      double dub = Double.parseDouble(arr.toString(StandardCharsets.UTF_8));
       if (!context_.escapeNum() && !Double.isNaN(dub) && !Double.isInfinite(dub)) {
         // Throw exception -- we should not be in a string in this case
         throw new TProtocolException(
@@ -760,7 +759,7 @@ public class TJSONProtocol extends TProtocol {
         readJSONSyntaxChar(QUOTE);
       }
       try {
-        return Double.valueOf(readJSONNumericChars());
+        return Double.parseDouble(readJSONNumericChars());
       } catch (NumberFormatException ex) {
         throw new TProtocolException(
             TProtocolException.INVALID_DATA, "Bad data encounted in numeric data");
@@ -973,9 +972,9 @@ public class TJSONProtocol extends TProtocol {
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:
-        return 0; // Stop
+        return 1; // Stop - T_STOP needs to count itself
       case 1:
-        return 0; // Void
+        return 1; // Void - T_VOID needs to count itself
       case 2:
         return 1; // Bool
       case 3:

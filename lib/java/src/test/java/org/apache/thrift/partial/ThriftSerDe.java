@@ -62,9 +62,9 @@ public class ThriftSerDe {
   private <T extends TBase> T newInstance(Class<T> clazz) {
     T instance = null;
     try {
-      instance = clazz.newInstance();
-    } catch (InstantiationException e) {
-    } catch (IllegalAccessException e) {
+      instance = clazz.getDeclaredConstructor().newInstance();
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
     }
     return clazz.cast(instance);
   }

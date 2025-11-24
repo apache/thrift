@@ -85,6 +85,8 @@
 			<DCCReference Include="..\..\src\Thrift.TypeRegistry.pas"/>
 			<DCCReference Include="gen-delphi\System_.pas"/>
 			<DCCReference Include="gen-delphi\SysUtils_.pas"/>
+			<DCCReference Include="gen-delphi\test.ExceptionStruct.pas"/>
+			<DCCReference Include="gen-delphi\test.SimpleException.pas"/>
 			<DCCReference Include="gen-delphi\DebugProtoTest.pas"/>
 			<DCCReference Include="TestSerializer.Data.pas"/>
 			<BuildConfiguration Include="Release">
@@ -100,10 +102,12 @@
 			</BuildConfiguration>
 		</ItemGroup>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
-		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
+		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\8.0\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\8.0\UserTools.proj"/>
 		<PropertyGroup>
-			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi:com_types ..\keywords\ReservedKeywords.thrift
-thrift.exe -r -gen delphi:com_types ..\..\..\..\test\DebugProtoTest.thrift]]></PreBuildEvent>
+			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi:com_types,rtti ..\keywords\ReservedKeywords.thrift
+thrift.exe -r -gen delphi:com_types ..\..\..\..\test\DebugProtoTest.thrift
+thrift.exe -r -gen delphi:com_types ..\..\..\..\test\ExceptionStruct.thrift
+thrift.exe -r -gen delphi:com_types SimpleException.thrift]]></PreBuildEvent>
 		</PropertyGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
@@ -140,6 +144,9 @@ thrift.exe -r -gen delphi:com_types ..\..\..\..\test\DebugProtoTest.thrift]]></P
 					<Source>
 						<Source Name="MainSource">SerializerData.dpr</Source>
 					</Source>
+					<Parameters>
+						<Parameters Name="HostApplication">bin\Debug\Win32\TestSerializer.exe</Parameters>
+					</Parameters>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>

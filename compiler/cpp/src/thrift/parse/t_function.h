@@ -40,6 +40,7 @@ public:
       xceptions_(new t_struct(nullptr)),
       own_xceptions_(true),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
@@ -56,6 +57,7 @@ public:
       xceptions_(xceptions),
       own_xceptions_(false),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
     }
@@ -80,6 +82,28 @@ public:
   bool is_oneway() const { return oneway_; }
 
   std::map<std::string, std::vector<std::string>> annotations_;
+
+  void validate() const override {
+    get_returntype()->validate();
+
+#ifndef ALLOW_EXCEPTIONS_AS_TYPE
+    if (get_returntype()->get_true_type()->is_xception()) {
+      failure("method %s(): exception type \"%s\" cannot be used as function return", get_name().c_str(), get_returntype()->get_name().c_str());
+    }
+#endif
+
+    std::vector<t_field*>::const_iterator it;
+    std::vector<t_field*> list = get_arglist()->get_members();
+    for(it=list.begin(); it != list.end(); ++it) {
+      (*it)->get_type()->validate();
+
+#ifndef ALLOW_EXCEPTIONS_AS_TYPE
+      if( (*it)->get_type()->get_true_type()->is_xception()) {
+        failure("method %s(): exception type \"%s\" cannot be used as function argument %s", get_name().c_str(), (*it)->get_type()->get_name().c_str(), (*it)->get_name().c_str());
+      }
+#endif
+    }
+  }
 
 private:
   t_type* returntype_;

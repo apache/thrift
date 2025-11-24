@@ -17,16 +17,12 @@
 # under the License.
 #
 
-if GOVERSION_GE_118
 GOBUILDEXTRA = -buildvcs=false
-else
-GOBUILDEXTRA =
-endif
 
 THRIFT_GO_ARGS_BASE = thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/
 
 THRIFTARGS = -out gopath/src/ --gen go:$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
-THRIFTTEST = $(top_srcdir)/test/v0.16/ThriftTest.thrift
+THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
@@ -65,7 +61,9 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConstOptionalField.thrift \
 				ProcessorMiddlewareTest.thrift \
 				ClientMiddlewareExceptionTest.thrift \
-				ValidateTest.thrift
+				ValidateTest.thrift \
+				ForwardType.thrift \
+				StringParseAllocationTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -100,12 +98,14 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS_SKIP_REMOTE) ProcessorMiddlewareTest.thrift
 	$(THRIFT) $(THRIFTARGS) ClientMiddlewareExceptionTest.thrift
 	$(THRIFT) $(THRIFTARGS) ValidateTest.thrift
+	$(THRIFT) $(THRIFTARGS) ForwardType.thrift
+	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
 
 check: gopath
-	$(GO) build $(GOBUILDEXTRA) -mod=mod \
+	$(GO) build $(GOBUILDEXTRA) \
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
 				./gopath/src/servicestest \
@@ -125,20 +125,26 @@ check: gopath
 				./gopath/src/conflictargnamestest \
 				./gopath/src/processormiddlewaretest \
 				./gopath/src/clientmiddlewareexceptiontest \
-				./gopath/src/validatetest
-	$(GO) test -mod=mod github.com/apache/thrift/lib/go/thrift
-	$(GO) test -mod=mod ./gopath/src/tests ./gopath/src/dontexportrwtest
+				./gopath/src/validatetest \
+				./gopath/src/forwardtypetest
+	$(GO) test github.com/apache/thrift/lib/go/thrift
+	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
 clean-local:
 	$(RM) -r gopath ThriftTest.thrift gen-go
 
 client: stubs
-	$(GO) run -mod=mod TestClient.go
+	$(GO) run TestClient.go
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	dontexportrwtest \
 	tests \
 	common \
+	go.mod \
+	go.sum \
 	BinaryKeyTest.thrift \
 	ClientMiddlewareExceptionTest.thrift \
 	ConflictArgNamesTest.thrift \
@@ -156,6 +162,7 @@ EXTRA_DIST = \
 	DuplicateImportsTest.thrift \
 	ErrorTest.thrift \
 	EqualsTest.thrift \
+	ForwardType.thrift \
 	GoTagTest.thrift \
 	IgnoreInitialismsTest.thrift \
 	IncludesTest.thrift \
@@ -169,6 +176,7 @@ EXTRA_DIST = \
 	RefAnnotationFieldsTest.thrift \
 	RequiredFieldTest.thrift \
 	ServicesTest.thrift \
+	StringParseAllocationTest.thrift \
 	TypedefFieldTest.thrift \
 	UnionBinaryTest.thrift \
 	UnionDefaultValueTest.thrift \

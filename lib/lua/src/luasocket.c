@@ -185,8 +185,12 @@ int luaopen_libluasocket(lua_State *L) {
   set_methods(L, SOCKET_GENERIC, methods_generic);
   set_methods(L, SOCKET_CLIENT, methods_client);
   set_methods(L, SOCKET_SERVER, methods_server);
-
+#if LUA_VERSION_NUM >= 502
+    lua_newtable(L);
+    luaL_setfuncs(L, funcs_luasocket, 0);
+#else
   luaL_register(L, "luasocket", funcs_luasocket);
+#endif
   return 1;
 }
 

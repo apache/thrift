@@ -40,7 +40,8 @@ public class ReadStruct {
     TTransport trans =
         new TIOStreamTransport(new BufferedInputStream(new FileInputStream(args[0])));
 
-    TProtocolFactory factory = (TProtocolFactory) Class.forName(args[1]).newInstance();
+    TProtocolFactory factory =
+        (TProtocolFactory) Class.forName(args[1]).getDeclaredConstructor().newInstance();
 
     TProtocol proto = factory.getProtocol(trans);
 

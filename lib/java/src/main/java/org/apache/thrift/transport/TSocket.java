@@ -24,13 +24,14 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Socket implementation of the TTransport interface. To be commented soon! */
-public class TSocket extends TIOStreamTransport {
+public class TSocket extends TIOStreamTransport implements SocketAddressProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSocket.class.getName());
 
@@ -246,5 +247,15 @@ public class TSocket extends TIOStreamTransport {
       }
       socket_ = null;
     }
+  }
+
+  @Override
+  public SocketAddress getRemoteSocketAddress() {
+    return socket_.getRemoteSocketAddress();
+  }
+
+  @Override
+  public SocketAddress getLocalSocketAddress() {
+    return socket_.getLocalSocketAddress();
   }
 }

@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
@@ -32,6 +32,20 @@ RUN apt-get update && \
       software-properties-common \
       wget
 
+# Create a user
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ] && [ -z `cat /etc/group | grep ":${gid}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    if [ -z `cat /etc/passwd | grep "${user}:"` ] && [ -z `cat /etc/passwd | grep ":${uid}:"` ]; then adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos ""; fi && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /home/${user} && \
+    chown -R ${user}:${group} /home/${user}
+
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
       curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
@@ -39,7 +53,7 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
+      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/20.04/prod.list && \
       chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
       chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
@@ -48,7 +62,8 @@ RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add 
       echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -yq && \
+      apt-get install -y --no-install-recommends \
       `# General dependencies` \
       bash-completion \
       bison \
@@ -122,12 +137,13 @@ RUN apt-get install -y --no-install-recommends \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
+# Because Ubuntu 20.04 turned EOL in April/May 2025, Microsoft does not support .NET 9 or higher on that platform
 RUN apt-get install -y --no-install-recommends \
       `# dotnet core dependencies` \
-      dotnet-sdk-6.0 \
-      dotnet-runtime-6.0 \
-      aspnetcore-runtime-6.0 \
-      dotnet-apphost-pack-6.0
+      dotnet-sdk-8.0 \
+      dotnet-runtime-8.0 \
+      aspnetcore-runtime-8.0 \
+      dotnet-apphost-pack-8.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=23.3.4.11
@@ -144,24 +160,39 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.19
+ENV GOLANG_VERSION 1.24.3
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 464b6b66591f6cf055bc5df90a9750bf5fbc9d038722bb84a9d56a2bea974be6
+ENV GOLANG_DOWNLOAD_SHA256 3333f6ea53afa971e9078895eaa4ac7204a8c6b5c68c10e6bc9a33e8e391bdd8
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
       ln -s /usr/local/go/bin/go /usr/local/bin && \
       rm golang.tar.gz
 
-RUN apt-get install -y --no-install-recommends \
-      `# Haxe dependencies` \
-      haxe \
-      neko \
-      neko-dev && \
-      haxelib setup --always /usr/share/haxe/lib && \
-      haxelib install --always hxcpp 2>&1 > /dev/null
+# HAXE
+ARG HAXE_VERSION=4.2.1
+ARG NEKO_VERSION=2.3.0
+RUN cd $HOME && \
+    `# Haxe dependencies` && \
+    wget https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    tar xvf haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    rm haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    mv haxe_* /opt/haxe && \
+    wget https://github.com/HaxeFoundation/neko/releases/download/v`echo ${NEKO_VERSION} | sed "s/\./-/g"`/neko-${NEKO_VERSION}-linux64.tar.gz && \
+    tar xvf neko-${NEKO_VERSION}-linux64.tar.gz && \
+    rm neko-${NEKO_VERSION}-linux64.tar.gz && \
+    mv neko-* /opt/neko
+ENV PATH /opt/haxe:/opt/neko:$PATH
+RUN echo "/opt/neko" > /etc/ld.so.conf.d/neko.conf && \
+    ldconfig
+USER ${user}
+RUN mkdir -p $HOME/haxe/lib && \
+    haxelib setup --always $HOME/haxe/lib && \
+    haxelib install --always hxcpp 2>&1 > /dev/null && \
+    haxelib install --always uuid 2>&1 > /dev/null
+USER root
 
-ENV GRADLE_VERSION="7.5.1"
+ENV GRADLE_VERSION="8.4"
 RUN apt-get install -y --no-install-recommends \
       `# Java dependencies` \
       ant \
@@ -170,7 +201,7 @@ RUN apt-get install -y --no-install-recommends \
       openjdk-17-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-      (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
       unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
       ln -s /usr/local/gradle/bin/gradle /usr/local/bin
@@ -197,7 +228,8 @@ RUN apt-get install -y --no-install-recommends \
       `# OCaml dependencies` \
       ocaml \
       opam && \
-      opam init --yes && \
+      `# disable sandboxing see https://github.com/ocaml/opam/issues/4327` \
+      opam init --yes --disable-sandboxing && \
       opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
@@ -211,10 +243,13 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
       `# Php dependencies` \
-      php \
-      php-cli \
-      php-dev \
-      php-json \
+      php7.4 \
+      php7.4-cli \
+      php7.4-dev \
+      php7.4-mbstring \
+      php7.4-xml \
+      php7.4-curl \
+      php7.4-xdebug \
       php-pear \
       re2c \
       composer
@@ -226,7 +261,6 @@ RUN apt-get install -y --no-install-recommends \
       python3-all-dev \
       python3-pip \
       python3-setuptools \
-      python3-six \
       python3-tornado \
       python3-twisted \
       python3-wheel \
@@ -238,16 +272,26 @@ RUN apt-get install -y --no-install-recommends \
       ruby-dev \
       ruby-bundler
 
-# Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
-ENV PATH /root/.cargo/bin:$PATH
+USER ${user}
+RUN `# Rust dependencies` \
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.83.0 -y
+ENV PATH /home/${user}/.cargo/bin:$PATH
+USER root
 
 # Swift on Linux for cross tests
-RUN cd / && \
-      wget --quiet https://swift.org/builds/swift-5.3.3-release/ubuntu2004/swift-5.3.3-RELEASE/swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
-      tar xf swift-5.3.3-RELEASE-ubuntu20.04.tar.gz --strip-components=1 && \
-      rm swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
-      swift --version
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython2-dev \
+      libxml2-dev && \
+      cd / && \
+      wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz && \
+      tar xf swift-5.7-RELEASE-ubuntu20.04.tar.gz && \
+      mv swift-5.7-RELEASE-ubuntu20.04 /usr/share/swift && \
+      rm swift-5.7-RELEASE-ubuntu20.04.tar.gz
+
+ENV PATH /usr/share/swift/usr/bin:$PATH
+RUN swift --version
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
@@ -257,15 +301,11 @@ RUN apt-get install -y --no-install-recommends \
       locale-gen de_DE.UTF-8 && \
       update-locale
 
-# cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8 && \
-      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-      dpkg -i cppcheck_1.83-2_amd64.deb && \
-      rm cppcheck_1.83-2_amd64.deb
+      pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up
@@ -275,6 +315,9 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /var/tmp/*
 
 ENV THRIFT_ROOT /thrift
-RUN mkdir -p $THRIFT_ROOT/src
+RUN mkdir -p $THRIFT_ROOT/src && \
+    chown -R ${uid}:${uid} $THRIFT_ROOT/
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+USER ${user}

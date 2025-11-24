@@ -20,7 +20,7 @@
 AC_PREREQ(2.65)
 AC_CONFIG_MACRO_DIR([./aclocal])
 
-AC_INIT([thrift], [0.18.0])
+AC_INIT([thrift], [0.23.0])
 
 AC_CONFIG_AUX_DIR([.])
 
@@ -94,6 +94,18 @@ AC_PROG_LN_S
 AC_PROG_MKDIR_P
 AC_PROG_AWK
 AC_PROG_RANLIB
+
+# Check if we're using Clang
+AC_MSG_CHECKING([whether we are using Clang])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([], [[
+    #ifndef __clang__
+      not clang
+    #endif
+  ]])],
+  [CLANG=yes], [CLANG=no])
+AC_MSG_RESULT([$CLANG])
+AM_CONDITIONAL([USING_CLANG], [test "x$CLANG" = "xyes"])
 
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
@@ -211,9 +223,10 @@ AM_CONDITIONAL([WITH_JAVA], [test "$have_java" = "yes"])
 AX_THRIFT_LIB(kotlin, [Kotlin], yes)
 if test "$with_kotlin" = "yes";  then
   AX_JAVAC_AND_JAVA
+  AC_PATH_PROG([GRADLE], [gradle])
   AC_SUBST(CLASSPATH)
   AC_SUBST(GRADLE_OPTS)
-  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$GRADLE" != "x" ; then
     have_kotlin="yes"
   fi
 fi
@@ -310,9 +323,9 @@ AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
   if test -n "$PERL" ; then
-    AC_PROG_PERL_MODULES([Bit::Vector], success="yes", success="no")
+    AX_PROG_PERL_MODULES([Bit::Vector],[success="yes"],[success="no"])
     have_perl_bit_vector="$success"
-    AC_PROG_PERL_MODULES([Class::Accessor], success="yes", success="no")
+    AX_PROG_PERL_MODULES([Class::Accessor],[success="yes"],[success="no"])
     have_perl_class_accessor="$success"
   fi
   if test -n "$PERL" -a "$have_perl_bit_vector" = "yes" ; then
@@ -468,7 +481,7 @@ AX_THRIFT_LIB(netstd, [.NET Core], yes)
 if test "$with_netstd" = "yes";  then
   AC_PATH_PROG([DOTNETCORE], [dotnet])
   if [[ -x "$DOTNETCORE" ]] ; then
-    AX_PROG_DOTNETCORE_VERSION( [3.1.0], have_netstd="yes", have_netstd="no")
+    AX_PROG_DOTNETCORE_VERSION( [7.0.0], have_netstd="yes", have_netstd="no")
   fi
 fi
 AM_CONDITIONAL(WITH_DOTNET, [test "$have_netstd" = "yes"])
@@ -588,13 +601,14 @@ case "${host_os}" in
   AM_CONDITIONAL(MINGW, true)
   ;;
 *)
-  AC_ISC_POSIX
+  AC_SEARCH_LIBS([strerror],[cposix])
   ;;
 esac
 
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
+AC_C_RESTRICT
 
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
@@ -759,6 +773,7 @@ AC_CONFIG_FILES([
   lib/cl/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
+  lib/cpp/test/fuzz/Makefile
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
   lib/cpp/thrift-qt5.pc
@@ -766,6 +781,7 @@ AC_CONFIG_FILES([
   lib/c_glib/Makefile
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
+  lib/c_glib/test/fuzz/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -791,6 +807,7 @@ AC_CONFIG_FILES([
   lib/rb/Makefile
   lib/rs/Makefile
   lib/rs/test/Makefile
+  lib/rs/test/fuzz/Makefile
   lib/rs/test_recursive/Makefile
   lib/rs/test_recursive/src/Makefile
   lib/rs/test_recursive/src/maintenance/Makefile
@@ -820,6 +837,8 @@ AC_CONFIG_FILES([
   test/py.tornado/Makefile
   test/rb/Makefile
   test/rs/Makefile
+  test/swift/Makefile
+  test/swift/CrossTests/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cl/Makefile

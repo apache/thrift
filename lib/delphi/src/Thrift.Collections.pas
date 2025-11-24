@@ -66,7 +66,7 @@ type
 
   TThriftDictionaryImpl<TKey,TValue> = class( TInterfacedObject, IThriftDictionary<TKey,TValue>, IThriftContainer, ISupportsToString)
   strict private
-    FDictionaly : TDictionary<TKey,TValue>;
+    FDictionary : TDictionary<TKey,TValue>;
   strict protected
     function GetEnumerator: TEnumerator<TPair<TKey,TValue>>;
 
@@ -93,7 +93,8 @@ type
     property Keys: TDictionary<TKey,TValue>.TKeyCollection read GetKeys;
     property Values: TDictionary<TKey,TValue>.TValueCollection read GetValues;
   public
-    constructor Create(ACapacity: Integer = 0);
+    constructor Create( const aCapacity: Integer = 0);  overload;
+    constructor Create( const aCapacity: Integer; const aComparer : IEqualityComparer<TKey>);  overload;
     destructor Destroy; override;
     function ToString : string;  override;
   end;
@@ -185,125 +186,110 @@ type
     property Count: Integer read GetCount write SetCount;
     property Items[Index: Integer]: T read GetItem write SetItem; default;
   public
-    constructor Create;
+    constructor Create( const aCapacity: Integer = 0);
     destructor Destroy; override;
     function ToString : string;  override;
   end;
 
-  IThriftHashSet<TValue> = interface(IThriftContainer)
-    ['{0923A3B5-D4D4-48A8-91AD-40238E2EAD66}']
-    function GetEnumerator: TEnumerator<TValue>;
-    function GetIsReadOnly: Boolean;
+  IThriftHashSet<T> = interface(IThriftContainer)
+    ['{733E2B57-C374-4359-BBD5-2B9CD8DF737C}']
+    function GetEnumerator: TEnumerator<T>;
     function GetCount: Integer;
     property Count: Integer read GetCount;
-    property IsReadOnly: Boolean read GetIsReadOnly;
-    procedure Add( const item: TValue);
+    function Add( const item: T) : Boolean;
     procedure Clear;
-    function Contains( const item: TValue): Boolean;
-    procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( const item: TValue ): Boolean;
+    function Contains( const item: T): Boolean;
+    function Remove( const item: T): Boolean;
   end;
 
   // compatibility
-  IHashSet<TValue> = interface( IThriftHashSet<TValue>)
+  IHashSet<T> = interface( IThriftHashSet<T>)
     ['{C3CF557F-21D9-4524-B899-D3145B0389BB}']
   end deprecated 'use IThriftHashSet<T>';
 
 
   {$WARN SYMBOL_DEPRECATED OFF}
-  TThriftHashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftHashSet<TValue>, IThriftContainer, ISupportsToString)
+  TThriftHashSetImpl<T> = class( TInterfacedObject, IHashSet<T>, IThriftHashSet<T>, IThriftContainer, ISupportsToString)
   {$WARN SYMBOL_DEPRECATED DEFAULT}
   strict private
-    FDictionary : IThriftDictionary<TValue,Integer>;
-    FIsReadOnly: Boolean;
+    FDictionary : TDictionary<T,Byte>;  // there is no THashSet<T> in older Delphi versions
   strict protected
-    function GetEnumerator: TEnumerator<TValue>;
-    function GetIsReadOnly: Boolean;
+    function GetEnumerator: TEnumerator<T>;
     function GetCount: Integer;
     property Count: Integer read GetCount;
-    property IsReadOnly: Boolean read FIsReadOnly;
-    procedure Add( const item: TValue);
+    function Add( const item: T) : Boolean;
     procedure Clear;
-    function Contains( const item: TValue): Boolean;
-    procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( const item: TValue ): Boolean;
+    function Contains( const item: T): Boolean;
+    function Remove( const item: T): Boolean;
   public
-    constructor Create;
+    constructor Create( const aCapacity: Integer = 0);  overload;
+    constructor Create( const aCapacity: Integer; const aComparer : IEqualityComparer<T>);  overload;
+    destructor Destroy; override;
     function ToString : string;  override;
   end;
 
   // compatibility
-  THashSetImpl<TValue> = class( TThriftHashSetImpl<TValue>)
+  THashSetImpl<T> = class( TThriftHashSetImpl<T>)
   end deprecated 'use TThriftHashSetImpl<T>';
 
 implementation
 
-{ TThriftHashSetImpl<TValue>. }
+{ TThriftHashSetImpl<T>. }
 
-procedure TThriftHashSetImpl<TValue>.Add( const item: TValue);
+function TThriftHashSetImpl<T>.Add( const item: T) : Boolean;
 begin
-  if not FDictionary.ContainsKey(item) then
-  begin
-    FDictionary.Add( item, 0);
-  end;
+  result := not FDictionary.ContainsKey(item);
+  if result then FDictionary.Add( item, 0);
 end;
 
-procedure TThriftHashSetImpl<TValue>.Clear;
+procedure TThriftHashSetImpl<T>.Clear;
 begin
   FDictionary.Clear;
 end;
 
-function TThriftHashSetImpl<TValue>.Contains( const item: TValue): Boolean;
+function TThriftHashSetImpl<T>.Contains( const item: T): Boolean;
 begin
   Result := FDictionary.ContainsKey(item);
 end;
 
-procedure TThriftHashSetImpl<TValue>.CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-var
-  i : Integer;
-  Enumlator : TEnumerator<TValue>;
+constructor TThriftHashSetImpl<T>.Create( const aCapacity: Integer);
 begin
-  Enumlator := GetEnumerator;
-  while Enumlator.MoveNext do
-  begin
-    A[arrayIndex] := Enumlator.Current;
-    Inc(arrayIndex);
-  end;
+  inherited Create;
+  FDictionary := TDictionary<T,Byte>.Create( aCapacity);
 end;
 
-constructor TThriftHashSetImpl<TValue>.Create;
+constructor TThriftHashSetImpl<T>.Create( const aCapacity: Integer; const aComparer : IEqualityComparer<T>);
 begin
-  inherited;
-  FDictionary := TThriftDictionaryImpl<TValue,Integer>.Create;
+  inherited Create;
+  FDictionary := TDictionary<T,Byte>.Create( aCapacity, aComparer);
 end;
 
-function TThriftHashSetImpl<TValue>.GetCount: Integer;
+
+destructor TThriftHashSetImpl<T>.Destroy;
+begin
+  FDictionary.Free;
+  inherited Destroy;
+end;
+
+
+function TThriftHashSetImpl<T>.GetCount: Integer;
 begin
   Result := FDictionary.Count;
 end;
 
-function TThriftHashSetImpl<TValue>.GetEnumerator: TEnumerator<TValue>;
+function TThriftHashSetImpl<T>.GetEnumerator: TEnumerator<T>;
 begin
   Result := FDictionary.Keys.GetEnumerator;
 end;
 
-function TThriftHashSetImpl<TValue>.GetIsReadOnly: Boolean;
+function TThriftHashSetImpl<T>.Remove( const item: T): Boolean;
 begin
-  Result := FIsReadOnly;
+  Result := FDictionary.ContainsKey( item);
+  if Result then FDictionary.Remove( item );
 end;
 
-function TThriftHashSetImpl<TValue>.Remove( const item: TValue): Boolean;
-begin
-  Result := False;
-  if FDictionary.ContainsKey( item ) then
-  begin
-    FDictionary.Remove( item );
-    Result := not FDictionary.ContainsKey( item );
-  end;
-end;
-
-function TThriftHashSetImpl<TValue>.ToString : string;
-var elm : TValue;
+function TThriftHashSetImpl<T>.ToString : string;
+var elm : T;
     sb : TThriftStringBuilder;
     first : Boolean;
 begin
@@ -315,7 +301,7 @@ begin
       then first := FALSE
       else sb.Append(', ');
 
-      sb.Append( StringUtils<TValue>.ToString(elm));
+      sb.Append( StringUtils<T>.ToString(elm));
     end;
     sb.Append('}');
     Result := sb.ToString;
@@ -329,85 +315,91 @@ end;
 procedure TThriftDictionaryImpl<TKey, TValue>.Add(const Key: TKey;
   const Value: TValue);
 begin
-  FDictionaly.Add( Key, Value);
+  FDictionary.Add( Key, Value);
 end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.AddOrSetValue(const Key: TKey;
   const Value: TValue);
 begin
-  FDictionaly.AddOrSetValue( Key, Value);
+  FDictionary.AddOrSetValue( Key, Value);
 end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.Clear;
 begin
-  FDictionaly.Clear;
+  FDictionary.Clear;
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.ContainsKey(
   const Key: TKey): Boolean;
 begin
-  Result := FDictionaly.ContainsKey( Key );
+  Result := FDictionary.ContainsKey( Key );
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.ContainsValue(
   const Value: TValue): Boolean;
 begin
-  Result := FDictionaly.ContainsValue( Value );
+  Result := FDictionary.ContainsValue( Value );
 end;
 
-constructor TThriftDictionaryImpl<TKey, TValue>.Create(ACapacity: Integer);
+constructor TThriftDictionaryImpl<TKey, TValue>.Create(const aCapacity: Integer);
 begin
   inherited Create;
-  FDictionaly := TDictionary<TKey,TValue>.Create( ACapacity );
+  FDictionary := TDictionary<TKey,TValue>.Create( aCapacity);
+end;
+
+constructor TThriftDictionaryImpl<TKey, TValue>.Create(const aCapacity: Integer; const aComparer : IEqualityComparer<TKey>);
+begin
+  inherited Create;
+  FDictionary := TDictionary<TKey,TValue>.Create( aCapacity, aComparer);
 end;
 
 destructor TThriftDictionaryImpl<TKey, TValue>.Destroy;
 begin
-  FDictionaly.Free;
+  FDictionary.Free;
   inherited;
 end;
 
 {$IF CompilerVersion >= 21.0}
 function TThriftDictionaryImpl<TKey, TValue>.ExtractPair( const Key: TKey): TPair<TKey, TValue>;
 begin
-  Result := FDictionaly.ExtractPair( Key);
+  Result := FDictionary.ExtractPair( Key);
 end;
 {$IFEND}
 
 function TThriftDictionaryImpl<TKey, TValue>.GetCount: Integer;
 begin
-  Result := FDictionaly.Count;
+  Result := FDictionary.Count;
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.GetEnumerator: TEnumerator<TPair<TKey, TValue>>;
 begin
-  Result := FDictionaly.GetEnumerator;
+  Result := FDictionary.GetEnumerator;
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.GetItem(const Key: TKey): TValue;
 begin
-  Result := FDictionaly.Items[Key];
+  Result := FDictionary.Items[Key];
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.GetKeys: TDictionary<TKey, TValue>.TKeyCollection;
 begin
-  Result := FDictionaly.Keys;
+  Result := FDictionary.Keys;
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.GetValues: TDictionary<TKey, TValue>.TValueCollection;
 begin
-  Result := FDictionaly.Values;
+  Result := FDictionary.Values;
 end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.Remove(const Key: TKey);
 begin
-  FDictionaly.Remove( Key );
+  FDictionary.Remove( Key );
 end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.SetItem(const Key: TKey;
   const Value: TValue);
 begin
-  FDictionaly.AddOrSetValue( Key, Value);
+  FDictionary.AddOrSetValue( Key, Value);
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.ToArray: TArray<TPair<TKey, TValue>>;
@@ -426,7 +418,7 @@ begin
     Inc( i );
   end;
 {$ELSE}
-  Result := FDictionaly.ToArray;
+  Result := FDictionary.ToArray;
 {$IFEND}
 end;
 
@@ -438,7 +430,7 @@ begin
   sb := TThriftStringBuilder.Create('{');
   try
     first := TRUE;
-    for pair in FDictionaly do begin
+    for pair in FDictionary do begin
       if first
       then first := FALSE
       else sb.Append(', ');
@@ -458,13 +450,13 @@ end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.TrimExcess;
 begin
-  FDictionaly.TrimExcess;
+  FDictionary.TrimExcess;
 end;
 
 function TThriftDictionaryImpl<TKey, TValue>.TryGetValue(const Key: TKey;
   out Value: TValue): Boolean;
 begin
-  Result := FDictionaly.TryGetValue( Key, Value);
+  Result := FDictionary.TryGetValue( Key, Value);
 end;
 
 { TThriftListImpl<T> }
@@ -511,10 +503,13 @@ begin
   Result := FList.Contains( Value );
 end;
 
-constructor TThriftListImpl<T>.Create;
+constructor TThriftListImpl<T>.Create( const aCapacity: Integer);
 begin
-  inherited;
+  inherited Create;
   FList := TList<T>.Create;
+
+  if aCapacity > 0
+  then FList.Capacity := aCapacity;
 end;
 
 procedure TThriftListImpl<T>.Delete(Index: Integer);

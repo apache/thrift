@@ -1,6 +1,6 @@
 {
   "name": "thrift",
-  "version": "0.18.0",
+  "version": "0.23.0",
   "description": "Thrift is a software framework for scalable cross-language services development.",
   "main": "./src/thrift",
   "author": {
@@ -16,7 +16,7 @@
     "grunt": "^1.4.1",
     "grunt-cli": "^1.4.3",
     "grunt-contrib-concat": "~1.0",
-    "grunt-contrib-jshint": "~2.1",
+    "grunt-contrib-jshint": "~3.2",
     "grunt-contrib-qunit": "~3.1",
     "grunt-contrib-uglify": "~4.0",
     "grunt-jsdoc": "~2.4",

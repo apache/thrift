@@ -177,7 +177,7 @@ Breaking changes are minimized. When they are made they will be outlined below w
 
 ##### Thrift 0.14.0
 
-* **[THRIFT-5158]** - Rust library and generator now support Rust 2021 only. Required rust 1.61.0 or higher
+* **[THRIFT-5158]** - Rust library and generator now support Rust 2021 only. Required rust 1.65.0 or higher
 
     The Rust `thrift` library was updated to Rust 2021 via `cargo fix --edition`.
     All test code in the repo was updated as well. The code generator was also updated

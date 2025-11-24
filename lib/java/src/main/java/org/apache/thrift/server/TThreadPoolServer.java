@@ -19,6 +19,7 @@
 
 package org.apache.thrift.server;
 
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.SocketAddressProvider;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -82,7 +84,7 @@ public class TThreadPoolServer extends TServer {
   }
 
   // Executor service for handling client connections
-  private ExecutorService executorService_;
+  private final ExecutorService executorService_;
 
   private final TimeUnit stopTimeoutUnit;
 
@@ -140,6 +142,7 @@ public class TThreadPoolServer extends TServer {
     return true;
   }
 
+  @Override
   public void serve() {
     if (!preServe()) {
       return;
@@ -196,6 +199,7 @@ public class TThreadPoolServer extends TServer {
     return false;
   }
 
+  @Override
   public void stop() {
     stopped_ = true;
     serverTransport_.interrupt();
@@ -204,7 +208,7 @@ public class TThreadPoolServer extends TServer {
   private class WorkerProcess implements Runnable {
 
     /** Client that this services. */
-    private TTransport client_;
+    private final TTransport client_;
 
     /**
      * Default constructor.
@@ -216,6 +220,7 @@ public class TThreadPoolServer extends TServer {
     }
 
     /** Loops on processing a client forever */
+    @Override
     public void run() {
       TProcessor processor = null;
       TTransport inputTransport = null;
@@ -236,7 +241,12 @@ public class TThreadPoolServer extends TServer {
         eventHandler = Optional.ofNullable(getEventHandler());
 
         if (eventHandler.isPresent()) {
-          connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
+          connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
+          SocketAddress remoteAddress =
+              client_ instanceof SocketAddressProvider
+                  ? ((SocketAddressProvider) client_).getRemoteSocketAddress()
+                  : null;
+          connectionContext.setRemoteAddress(remoteAddress);
         }
 
         while (true) {
@@ -272,10 +282,9 @@ public class TThreadPoolServer extends TServer {
     }
 
     private void logException(Exception x) {
-      LOGGER.debug("Error processing request", x);
       // We'll usually receive RuntimeException types here
       // Need to unwrap to ascertain real causing exception before we choose to ignore
-      // Ignoring err-logging all transport-level/type exceptions and SocketExceptions
+      LOGGER.debug("Error processing request", x);
       TTransportException tTransportException = null;
 
       if (x instanceof TTransportException) {
@@ -290,8 +299,7 @@ public class TThreadPoolServer extends TServer {
           case TTransportException.TIMED_OUT:
             return; // don't log these
         }
-        if (tTransportException.getCause() != null
-            && (tTransportException.getCause() instanceof SocketException)) {
+        if (tTransportException.getCause() instanceof SocketException) {
           LOGGER.warn(
               "SocketException occurred during processing of message.",
               tTransportException.getCause());

@@ -42,7 +42,7 @@ The Thrift Java source is not build using the GNU tools, but rather uses
 the Gradle build system, which tends to be predominant amongst Java
 developers.
 
-Currently we use gradle 7.5.1 to build the Thrift Java source. The usual way to setup gradle
+Currently we use gradle 8 to build the Thrift Java source. The usual way to setup gradle
 project is to include the gradle-wrapper.jar in the project and then run the gradle wrapper to
 bootstrap setting up gradle binaries. However to avoid putting binary files into the source tree we
 have ignored the gradle wrapper files. You are expected to install it manually, as described in
@@ -50,13 +50,13 @@ the [gradle documentation](https://docs.gradle.org/current/userguide/installatio
 following this step (which is also done in the travis CI docker images):
 
 ```bash
-export GRADLE_VERSION="7.5.1"
+export GRADLE_VERSION="8.4"
 # install dependencies
-apt-get install -y --no-install-recommends openjdk-11-jdk-headless wget unzip
+apt-get install -y --no-install-recommends openjdk-17-jdk-headless wget unzip
 # download gradle distribution
 wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
 # check binary integrity
-echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -
+echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -
 # unzip and install
 unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
 mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle

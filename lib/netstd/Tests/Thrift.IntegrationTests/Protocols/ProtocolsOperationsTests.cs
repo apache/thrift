@@ -23,6 +23,7 @@ using KellermanSoftware.CompareNetObjects;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
+using Thrift.Transport;
 using Thrift.Transport.Client;
 
 #pragma warning disable IDE0063  // using
@@ -30,12 +31,9 @@ using Thrift.Transport.Client;
 namespace Thrift.IntegrationTests.Protocols
 {
     [TestClass]
-    public class ProtocolsOperationsTests
+    public class ProtocolsOperationsTests : TestBase
     {
-        private readonly CompareLogic _compareLogic = new();
-        private static readonly TConfiguration Configuration = new();
-
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Call)]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Exception)]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Oneway)]
@@ -55,12 +53,13 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteMessageBeginAsync(expected, default);
                     await protocol.WriteMessageEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
                     stream.Seek(0, SeekOrigin.Begin);
 
@@ -77,76 +76,82 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
-        [ExpectedException(typeof(Exception))]
         public async Task WriteReadStruct_Test(Type protocolType)
         {
             var expected = new TStruct(nameof(TStruct));
 
-            try
+            await Assert.ThrowsAsync<Exception>(async () =>
             {
-                var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                try
                 {
-                    var protocol = tuple.Item2;
+                    var tuple = GetProtocolInstance(protocolType);
+                    using (var stream = tuple.Stream)
+                    {
+                        var protocol = tuple.Protocol;
 
-                    await protocol.WriteStructBeginAsync(expected, default);
-                    await protocol.WriteStructEndAsync(default);
+                        await protocol.WriteStructBeginAsync(expected, default);
+                        await protocol.WriteStructEndAsync(default);
+                        await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                        stream.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadStructBeginAsync(default);
-                    await protocol.ReadStructEndAsync(default);
+                        var actual = await protocol.ReadStructBeginAsync(default);
+                        await protocol.ReadStructEndAsync(default);
 
-                    var result = _compareLogic.Compare(expected, actual);
-                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                        var result = _compareLogic.Compare(expected, actual);
+                        Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                    }
+
                 }
-
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
-            }
+                catch (Exception e)
+                {
+                    throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+                }
+            });
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
-        [ExpectedException(typeof(Exception))]
         public async Task WriteReadField_Test(Type protocolType)
         {
             var expected = new TField(nameof(TField), TType.String, 1);
 
-            try
+            await Assert.ThrowsAsync<Exception>(async() =>
             {
-                var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                try
                 {
-                    var protocol = tuple.Item2;
+                    var tuple = GetProtocolInstance(protocolType);
+                    using (var stream = tuple.Stream)
+                    {
+                        var protocol = tuple.Protocol;
 
-                    await protocol.WriteFieldBeginAsync(expected, default);
-                    await protocol.WriteFieldEndAsync(default);
+                        await protocol.WriteFieldBeginAsync(expected, default);
+                        await protocol.WriteFieldEndAsync(default);
+                        await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                        stream.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadFieldBeginAsync(default);
-                    await protocol.ReadFieldEndAsync(default);
+                        var actual = await protocol.ReadFieldBeginAsync(default);
+                        await protocol.ReadFieldEndAsync(default);
 
-                    var result = _compareLogic.Compare(expected, actual);
-                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                        var result = _compareLogic.Compare(expected, actual);
+                        Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
-            }
+                catch (Exception e)
+                {
+                    throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+                }
+            });
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -157,14 +162,15 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteMapBeginAsync(expected, default);
                     await protocol.WriteMapEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadMapBeginAsync(default);
                     await protocol.ReadMapEndAsync(default);
@@ -180,7 +186,7 @@ namespace Thrift.IntegrationTests.Protocols
 
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -191,14 +197,15 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteListBeginAsync(expected, default);
                     await protocol.WriteListEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadListBeginAsync(default);
                     await protocol.ReadListEndAsync(default);
@@ -213,7 +220,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -224,14 +231,15 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteSetBeginAsync(expected, default);
                     await protocol.WriteSetEndAsync(default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadSetBeginAsync(default);
                     await protocol.ReadSetEndAsync(default);
@@ -246,7 +254,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -257,13 +265,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteBoolAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadBoolAsync(default);
 
@@ -277,7 +286,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -288,13 +297,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteByteAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadByteAsync(default);
 
@@ -308,7 +318,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -319,13 +329,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI16Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI16Async(default);
 
@@ -339,7 +350,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -350,13 +361,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI32Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI32Async(default);
 
@@ -370,7 +382,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -381,13 +393,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteI64Async(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadI64Async(default);
 
@@ -401,7 +414,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -412,13 +425,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteDoubleAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadDoubleAsync(default);
 
@@ -432,7 +446,39 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
+        [DataRow(typeof(TBinaryProtocol))]
+        [DataRow(typeof(TCompactProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
+        public async Task WriteReadUuid_Test(Type protocolType)
+        {
+            var expected = new Guid("{00112233-4455-6677-8899-aabbccddeeff}");
+
+            try
+            {
+                var tuple = GetProtocolInstance(protocolType);
+                using (var stream = tuple.Stream)
+                {
+                    var protocol = tuple.Protocol;
+
+                    await protocol.WriteUuidAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
+
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    var actual = await protocol.ReadUuidAsync(default);
+
+                    var result = _compareLogic.Compare(expected, actual);
+                    Assert.IsTrue(result.AreEqual, result.DifferencesString);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
+            }
+        }
+
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -443,13 +489,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteStringAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadStringAsync(default);
 
@@ -463,7 +510,7 @@ namespace Thrift.IntegrationTests.Protocols
             }
         }
 
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
@@ -474,13 +521,14 @@ namespace Thrift.IntegrationTests.Protocols
             try
             {
                 var tuple = GetProtocolInstance(protocolType);
-                using (var stream = tuple.Item1)
+                using (var stream = tuple.Stream)
                 {
-                    var protocol = tuple.Item2;
+                    var protocol = tuple.Protocol;
 
                     await protocol.WriteBinaryAsync(expected, default);
+                    await tuple.Transport.FlushAsync(default);
 
-                    stream?.Seek(0, SeekOrigin.Begin);
+                    stream.Seek(0, SeekOrigin.Begin);
 
                     var actual = await protocol.ReadBinaryAsync(default);
 
@@ -492,15 +540,6 @@ namespace Thrift.IntegrationTests.Protocols
             {
                 throw new Exception($"Exception during testing of protocol: {protocolType.FullName}", e);
             }
-        }
-
-        private static Tuple<Stream, TProtocol> GetProtocolInstance(Type protocolType)
-        {
-            var memoryStream = new MemoryStream();
-            var streamClientTransport = new TStreamTransport(memoryStream, memoryStream,Configuration);
-            if( Activator.CreateInstance(protocolType, streamClientTransport) is TProtocol protocol)
-                return new Tuple<Stream, TProtocol>(memoryStream, protocol);
-            throw new Exception("Unexpected");
         }
     }
 }

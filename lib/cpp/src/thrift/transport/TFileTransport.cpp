@@ -19,11 +19,6 @@
 
 #include <thrift/thrift-config.h>
 
-#include <thrift/transport/TFileTransport.h>
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/PlatformSocket.h>
-#include <thrift/concurrency/FunctionRunner.h>
-
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -49,14 +44,17 @@
 #include <io.h>
 #endif
 
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/PlatformSocket.h>
+#include <thrift/concurrency/FunctionRunner.h>
+
 namespace apache {
 namespace thrift {
 namespace transport {
 
 using std::shared_ptr;
 using std::cerr;
-using std::cout;
-using std::endl;
 using std::string;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
@@ -1032,7 +1030,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
         break;
       }
     } catch (TException& te) {
-      cerr << te.what() << endl;
+      cerr << te.what() << '\n';
       break;
     }
   }
@@ -1060,7 +1058,7 @@ void TFileProcessor::processChunk() {
     } catch (TEOFException&) {
       break;
     } catch (TException& te) {
-      cerr << te.what() << endl;
+      cerr << te.what() << '\n';
       break;
     }
   }

@@ -37,7 +37,7 @@ uses
 
 type
   IThriftStream = interface
-    ['{3A61A8A6-3639-4B91-A260-EFCA23944F3A}']
+    ['{67801A9F-3B85-41CF-9025-D18AC6849B58}']
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer);  overload;
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;  overload;
@@ -47,6 +47,7 @@ type
     procedure Flush;
     function IsOpen: Boolean;
     function ToArray: TBytes;
+    function CanSeek : Boolean;
     function Size : Int64;
     function Position : Int64;
   end;
@@ -66,6 +67,7 @@ type
     procedure Flush; virtual; abstract;
     function IsOpen: Boolean; virtual; abstract;
     function ToArray: TBytes; virtual; abstract;
+    function CanSeek : Boolean;  virtual;
     function Size : Int64; virtual;
     function Position : Int64;  virtual;
   end;
@@ -83,6 +85,7 @@ type
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
+    function CanSeek : Boolean; override;
     function Size : Int64; override;
     function Position : Int64;  override;
   public
@@ -102,6 +105,7 @@ type
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
+    function CanSeek : Boolean; override;
     function Size : Int64; override;
     function Position : Int64;  override;
   public
@@ -174,6 +178,12 @@ begin
       FStream.Commit( STGC_DEFAULT );
     end;
   end;
+end;
+
+function TThriftStreamAdapterCOM.CanSeek : Boolean;
+var statstg: TStatStg;
+begin
+  result := IsOpen and Succeeded( FStream.Stat( statstg, STATFLAG_NONAME));
 end;
 
 function TThriftStreamAdapterCOM.Size : Int64;
@@ -290,6 +300,11 @@ begin
   CheckSizeAndOffset( pBuf, offset+count, offset, count);
 end;
 
+function TThriftStreamImpl.CanSeek : Boolean;
+begin
+  result := FALSE; // TRUE indicates Size and Position are implemented
+end;
+
 function TThriftStreamImpl.Size : Int64;
 begin
   ASSERT(FALSE);
@@ -330,6 +345,15 @@ end;
 procedure TThriftStreamAdapterDelphi.Flush;
 begin
   // nothing to do
+end;
+
+function TThriftStreamAdapterDelphi.CanSeek : Boolean;
+begin
+  try
+    result := IsOpen and (FStream.Size >= 0);  // throws if not implemented
+  except
+    result := FALSE;  // seek not implemented
+  end;
 end;
 
 function TThriftStreamAdapterDelphi.Size : Int64;

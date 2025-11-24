@@ -40,6 +40,9 @@ clean:
 	$(RM) -r .rebar/
 	$(RM) -r src/gen-erl/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM)    $(distdir)/.generated
 	$(RM) -r $(distdir)/.rebar/

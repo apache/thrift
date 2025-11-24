@@ -21,6 +21,10 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable CA1510  // net8 - use ThrowIfNull
+#pragma warning disable CA1513  // net8 - use ThrowIfNull
+
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
@@ -187,10 +191,10 @@ namespace Thrift.Transport
             IsDisposed = true;
         }
 
-        public override void ResetConsumedMessageSize(long newSize = -1)
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
         {
-            base.ResetConsumedMessageSize(newSize);
-            ReadBuffer.ResetConsumedMessageSize(newSize);
+            base.ResetMessageSizeAndConsumedBytes(newSize);
+            ReadBuffer.ResetMessageSizeAndConsumedBytes(newSize);
         }
     }
 }

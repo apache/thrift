@@ -77,8 +77,8 @@ public final class TTupleProtocol extends TCompactProtocol {
    * is big-endian which means the most significant bit is in element 0. The bit at index 0 of the
    * bit set is assumed to be the least significant bit.
    *
-   * @param bits
-   * @param vectorWidth
+   * @param bits bit set
+   * @param vectorWidth width of the vector
    * @return a byte array of at least length 1
    */
   public static byte[] toByteArray(BitSet bits, int vectorWidth) {

@@ -33,6 +33,9 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -458,7 +461,9 @@ void TSocket::local_open() {
 #ifdef _WIN32
       error == WSANO_DATA
 #else
-      error == EAI_NODATA
+      // to support systems with no ipv4 addresses but using "127.0.0.1" as a hostname
+      // getaddrinfo() fails when AI_ADDRCONFIG is present in this situation...
+      error == EAI_NODATA || error == EAI_ADDRFAMILY
 #endif
     ) {
     hints.ai_flags &= ~AI_ADDRCONFIG;
@@ -566,7 +571,7 @@ try_again:
         throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
       }
     } else /* ret == 0 */ {
-      GlobalOutput.perror("TSocket::read() THRIFT_EAGAIN (timed out) after %f ms", recvTimeout_);
+      GlobalOutput.printf("TSocket::read() THRIFT_EAGAIN (timed out) after %d ms", recvTimeout_);
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
     }
 

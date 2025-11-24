@@ -17,10 +17,10 @@
 # under the License.
 #
 
-from __future__ import absolute_import
 import logging
 import socket
 import struct
+import warnings
 
 from .transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
 
@@ -34,7 +34,7 @@ __all__ = ['TTornadoServer', 'TTornadoStreamTransport']
 logger = logging.getLogger(__name__)
 
 
-class _Lock(object):
+class _Lock:
     def __init__(self):
         self._waiters = deque()
 
@@ -67,9 +67,19 @@ class _Lock(object):
 class TTornadoStreamTransport(TTransportBase):
     """a framed, buffered transport over a Tornado stream"""
     def __init__(self, host, port, stream=None, io_loop=None):
+        if io_loop is not None:
+            warnings.warn(
+                "The `io_loop` parameter is deprecated and unused. Passing "
+                "`io_loop` is unnecessary because Tornado now automatically "
+                "provides the current I/O loop via `IOLoop.current()`. "
+                "Remove the `io_loop` parameter to ensure compatibility - it "
+                "will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self.host = host
         self.port = port
-        self.io_loop = io_loop or ioloop.IOLoop.current()
+        self.io_loop = ioloop.IOLoop.current()
         self.__wbuf = BytesIO()
         self._read_lock = _Lock()
 
@@ -77,7 +87,12 @@ class TTornadoStreamTransport(TTransportBase):
         self.stream = stream
 
     def with_timeout(self, timeout, future):
-        return gen.with_timeout(timeout, future, self.io_loop)
+        return gen.with_timeout(timeout, future)
+
+    def isOpen(self):
+       if self.stream is None:
+           return False
+       return not self.stream.closed()
 
     @gen.coroutine
     def open(self, timeout=None):
@@ -165,8 +180,7 @@ class TTornadoServer(tcpserver.TCPServer):
     @gen.coroutine
     def handle_stream(self, stream, address):
         host, port = address[:2]
-        trans = TTornadoStreamTransport(host=host, port=port, stream=stream,
-                                        io_loop=self.io_loop)
+        trans = TTornadoStreamTransport(host=host, port=port, stream=stream)
         oprot = self._oprot_factory.getProtocol(trans)
 
         try:

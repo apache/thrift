@@ -110,6 +110,8 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
+  uint32_t writeUUID(const TUuid& uuid);
+
 private:
   void indentUp();
   void indentDown();

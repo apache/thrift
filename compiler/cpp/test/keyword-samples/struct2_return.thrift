@@ -17,6 +17,8 @@
  * under the License.
  */
 
+namespace * keyword_test_003
+
 struct struct_name {
   1: required bool return = 1
 }

@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TASYNC_BUFFER_PROCESSOR_H_
 #define _THRIFT_TASYNC_BUFFER_PROCESSOR_H_ 1
 
+#include <functional>
 #include <memory>
 #include <thrift/transport/TBufferTransports.h>
 

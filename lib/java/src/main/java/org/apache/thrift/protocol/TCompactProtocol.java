@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.apache.thrift.TException;
+import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
@@ -536,29 +537,7 @@ public class TCompactProtocol extends TProtocol {
       return TSTOP;
     }
 
-    short fieldId;
-
-    // mask off the 4 MSB of the type header. it could contain a field id delta.
-    short modifier = (short) ((type & 0xf0) >> 4);
-    if (modifier == 0) {
-      // not a delta. look ahead for the zigzag varint field id.
-      fieldId = readI16();
-    } else {
-      // has a delta. add the delta to the last read field id.
-      fieldId = (short) (lastFieldId_ + modifier);
-    }
-
-    TField field = new TField("", getTType((byte) (type & 0x0f)), fieldId);
-
-    // if this happens to be a boolean field, the value is encoded in the type
-    if (isBoolType(type)) {
-      // save the boolean value in a special instance variable.
-      boolValue_ = (byte) (type & 0x0f) == Types.BOOLEAN_TRUE ? Boolean.TRUE : Boolean.FALSE;
-    }
-
-    // push the new field onto the field stack so we can keep the deltas going.
-    lastFieldId_ = field.id;
-    return field;
+    return new TField("", getTType((byte) (type & 0x0f)), readFieldId(type));
   }
 
   /**
@@ -911,9 +890,9 @@ public class TCompactProtocol extends TProtocol {
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:
-        return 0; // Stop
+        return 1; // Stop - T_STOP needs to count itself
       case 1:
-        return 0; // Void
+        return 1; // Void - T_VOID needs to count itself
       case 2:
         return 1; // Bool sizeof(byte)
       case 3:
@@ -929,7 +908,7 @@ public class TCompactProtocol extends TProtocol {
       case 11:
         return 1; // string length sizeof(byte)
       case 12:
-        return 0; // empty struct
+        return 1; // empty struct needs at least 1 byte for the T_STOP
       case 13:
         return 1; // element count Map sizeof(byte)
       case 14:
@@ -940,8 +919,46 @@ public class TCompactProtocol extends TProtocol {
         throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
+
   // -----------------------------------------------------------------
   // Additional methods to improve performance.
+
+  @Override
+  public int readFieldBeginData() throws TException {
+    byte type = readByte();
+
+    // if it's a stop, then we can return immediately, as the struct is over.
+    if (type == TType.STOP) {
+      return TFieldData.encode(type);
+    }
+
+    return TFieldData.encode(getTType((byte) (type & 0x0f)), readFieldId(type));
+  }
+
+  // Only makes sense to be called by readFieldBegin and readFieldBeginData
+  private short readFieldId(byte type) throws TException {
+    short fieldId;
+
+    // mask off the 4 MSB of the type header. it could contain a field id delta.
+    short modifier = (short) ((type & 0xf0) >> 4);
+    if (modifier == 0) {
+      // not a delta. look ahead for the zigzag varint field id.
+      fieldId = readI16();
+    } else {
+      // has a delta. add the delta to the last read field id.
+      fieldId = (short) (lastFieldId_ + modifier);
+    }
+
+    // if this happens to be a boolean field, the value is encoded in the type
+    if (isBoolType(type)) {
+      // save the boolean value in a special instance variable.
+      boolValue_ = (byte) (type & 0x0f) == Types.BOOLEAN_TRUE ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    // push the new field onto the field stack so we can keep the deltas going.
+    lastFieldId_ = fieldId;
+    return fieldId;
+  }
 
   @Override
   protected void skipBinary() throws TException {

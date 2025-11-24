@@ -10,15 +10,27 @@ public final class TByteBuffer extends TEndpointTransport {
   private final ByteBuffer byteBuffer;
 
   /**
+   * Creates a new TByteBuffer wrapping a given NIO ByteBuffer and custom TConfiguration.
+   *
+   * @param configuration the custom TConfiguration.
+   * @param byteBuffer the NIO ByteBuffer to wrap.
+   * @throws TTransportException on error.
+   */
+  public TByteBuffer(TConfiguration configuration, ByteBuffer byteBuffer)
+      throws TTransportException {
+    super(configuration);
+    this.byteBuffer = byteBuffer;
+    updateKnownMessageSize(byteBuffer.capacity());
+  }
+
+  /**
    * Creates a new TByteBuffer wrapping a given NIO ByteBuffer.
    *
    * @param byteBuffer the NIO ByteBuffer to wrap.
    * @throws TTransportException on error.
    */
   public TByteBuffer(ByteBuffer byteBuffer) throws TTransportException {
-    super(new TConfiguration());
-    this.byteBuffer = byteBuffer;
-    updateKnownMessageSize(byteBuffer.capacity());
+    this(new TConfiguration(), byteBuffer);
   }
 
   @Override

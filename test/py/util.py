@@ -26,7 +26,9 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
 
 
 def local_libpath():
-    globdir = os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
-    for libpath in glob.glob(globdir):
-        if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
-            return libpath
+    # Handle MM.mm and MMmm -> Code copied from _import_local_thrift and adapted
+    for libpath in glob.glob(os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')):
+        for pattern in ('-%d.%d', '-%d%d'):
+            postfix = pattern % (sys.version_info[0], sys.version_info[1])
+            if libpath.endswith(postfix):
+                return libpath

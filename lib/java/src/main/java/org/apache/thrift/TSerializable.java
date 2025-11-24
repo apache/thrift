@@ -30,7 +30,7 @@ public interface TSerializable {
    * @param iprot Input protocol
    * @throws TException if there is an error reading from iprot
    */
-  public void read(TProtocol iprot) throws TException;
+  void read(TProtocol iprot) throws TException;
 
   /**
    * Writes the objects out to the protocol
@@ -38,5 +38,5 @@ public interface TSerializable {
    * @param oprot Output protocol
    * @throws TException if there is an error writing to oprot
    */
-  public void write(TProtocol oprot) throws TException;
+  void write(TProtocol oprot) throws TException;
 }

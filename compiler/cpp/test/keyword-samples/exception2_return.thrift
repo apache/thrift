@@ -17,6 +17,8 @@
  * under the License.
  */
 
+namespace * keyword_test_011
+
 exception exception_name {
   1: required i8 return
 }

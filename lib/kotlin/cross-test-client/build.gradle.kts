@@ -24,9 +24,7 @@ plugins {
     id("com.ncorti.ktfmt.gradle")
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 val slf4jVersion: String by project
 val httpclientVersion: String by project
@@ -50,12 +48,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-kotlin {
-    jvmToolchain {
-        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 tasks {
     application {
         applicationName = "TestClient"
@@ -63,37 +55,31 @@ tasks {
     }
 
     if (JavaVersion.current().isJava11Compatible) {
-        ktfmt {
-            kotlinLangStyle()
-        }
+        ktfmt { kotlinLangStyle() }
     }
 
     task<Exec>("compileThrift") {
-        val thriftBin = if (hasProperty("thrift.compiler")) {
-            file(property("thrift.compiler"))
-        } else {
-            project.rootDir.resolve("../../compiler/cpp/thrift")
-        }
+        val thriftBin =
+            if (hasProperty("thrift.compiler")) {
+                file(property("thrift.compiler")!!)
+            } else {
+                project.rootDir.resolve("../../compiler/cpp/thrift")
+            }
         val outputDir = layout.buildDirectory.dir("generated-sources")
-        doFirst {
-            mkdir(outputDir)
-        }
-        commandLine = listOf(
-            thriftBin.absolutePath,
-            "-gen",
-            "kotlin",
-            "-out",
-            outputDir.get().toString(),
-            project.rootDir.resolve("../../test/ThriftTest.thrift").absolutePath
-        )
+        doFirst { mkdir(outputDir) }
+        commandLine =
+            listOf(
+                thriftBin.absolutePath,
+                "-gen",
+                "kotlin",
+                "-out",
+                outputDir.get().toString(),
+                project.rootDir.resolve("../../test/ThriftTest.thrift").absolutePath,
+            )
         group = LifecycleBasePlugin.BUILD_GROUP
     }
 
-    compileKotlin {
-        dependsOn("compileThrift")
-    }
+    compileKotlin { dependsOn("compileThrift") }
 }
 
-sourceSets["main"].java {
-    srcDir(layout.buildDirectory.dir("generated-sources"))
-}
+sourceSets["main"].java { srcDir(layout.buildDirectory.dir("generated-sources")) }

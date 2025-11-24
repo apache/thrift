@@ -65,5 +65,15 @@ public class TestAnnotationMetadata {
       expected.put("compression", "false");
       assertEquals(expected, metadata);
     }
+    {
+      Map<String, String> metadata =
+          structMetaDataMap
+              .get(OneOfEachBeansWithAnnotations._Fields.TYPEDEF_META)
+              .getFieldAnnotations();
+      Map<String, String> expected = new HashMap<>();
+      expected.put("a", "b");
+      expected.put("c", "d");
+      assertEquals(expected, metadata);
+    }
   }
 }

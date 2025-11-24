@@ -158,7 +158,7 @@ namespace Thrift.Protocol
         {
             cancellationToken.ThrowIfCancellationRequested();
             await _wrappedProtocol.ReadMessageEndAsync(cancellationToken);
-            Transport.ResetConsumedMessageSize();
+            Transport.ResetMessageSizeAndConsumedBytes();
         }
 
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
