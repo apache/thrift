@@ -38,7 +38,7 @@ RSpec::Core::RakeTask.new(:'spec:rcov') do |t|
 end
 
 desc 'Compile the .thrift files for the specs'
-task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:flat_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto', :'gen-rb:constants_demo']
+task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:flat_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto', :'gen-rb:constants_demo', :'gen-rb:fuzz']
 namespace :'gen-rb' do
   task :'spec' do
     dir = File.dirname(__FILE__) + '/spec'
@@ -71,6 +71,12 @@ namespace :'gen-rb' do
   task :'constants_demo' do
     dir = File.dirname(__FILE__) + '/spec'
     sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "../../test/ConstantsDemo.thrift"
+  end
+
+  task :'fuzz' do
+    dir = File.dirname(__FILE__) + '/test/fuzz'
+    sh "mkdir", "-p", dir
+    sh THRIFT, '--gen', 'rb', '-o', dir, "../../test/FuzzTest.thrift"
   end
 end
 

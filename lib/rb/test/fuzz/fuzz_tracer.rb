@@ -17,48 +17,12 @@
 # under the License.
 #
 
-DESTDIR ?= /
+require 'ruzzy'
 
-SUBDIRS = .
-
-if WITH_TESTS
-SUBDIRS += test/fuzz
-endif
-
-if HAVE_BUNDLER
-
-all-local:
-	$(BUNDLER) install
-	$(BUNDLER) exec rake build_ext
-
-install-exec-hook:
-	$(BUNDLER) exec rake install
-
-clean-local:
-	$(BUNDLER) install
-	$(BUNDLER) exec rake clean
-	$(RM) -r spec/gen-rb/
-
-check-local: all
-	$(BUNDLER) install
-	$(BUNDLER) exec rake
-
-endif
-
-dist-hook:
-	$(RM) -r $(distdir)/spec/gen-rb/
-
-distdir:
-	$(MAKE) $(AM_MAKEFLAGS) distdir-am
-
-EXTRA_DIST = \
-	coding_standards.md \
-	Rakefile \
-	Gemfile \
-	thrift.gemspec \
-	lib \
-	ext \
-	benchmark \
-	script \
-	spec \
-	README.md
+def trace_fuzz_target(script_path)
+  harness_path = File.expand_path(
+    "#{File.basename(script_path, '.rb')}_harness.rb",
+    File.dirname(script_path)
+  )
+  Ruzzy.trace(harness_path)
+end

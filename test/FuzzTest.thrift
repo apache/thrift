@@ -20,6 +20,7 @@
 namespace cpp fuzz
 namespace java org.apache.thrift.fuzz
 namespace py fuzz
+namespace rb Fuzz
 namespace swift Fuzz
 
 // Test typedefs
