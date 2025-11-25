@@ -13,38 +13,38 @@
 # limitations under the License.
 #
 
-FROM microsoft/dotnet-framework:4.7.1
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
 
 # Restore the default Windows shell for correct batch processing below.
 SHELL ["cmd", "/S", "/C"]
 
 # Install Build Tools excluding workloads and components with known issues.
-ADD https://aka.ms/vs/15/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+ADD --checksum=sha256:ca11782db44225d313c9887b4254dfa57c5b72fef025bf620c81c43dff73c6ed https://aka.ms/vs/15/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
 RUN C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
     --installPath C:\BuildTools `
-    --all `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
-    --remove Microsoft.VisualStudio.Component.Windows81SDK `
+    --add Microsoft.VisualStudio.Workload.VCTools `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
  || IF "%ERRORLEVEL%"=="3010" EXIT 0
 RUN DEL C:\TEMP\vs_buildtools.exe
 
 # Install CMake
-ADD https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-win64-x64.msi C:\TEMP\cmake.msi
+ADD --checksum=sha256:a10fc2527ec0727a5913acd310cddafba1e5b4ca765ca23cc6a53c55eebb7c1 https://github.com/Kitware/CMake/releases/download/v4.1.2/cmake-4.1.2-windows-x86_64.msi C:\TEMP\cmake.msi
 RUN msiexec.exe /i C:\TEMP\cmake.msi /qn && `
     SETX PATH "%PATH%;C:\Program Files\CMake\bin" && `
     DEL C:\TEMP\cmake.msi
 
 # Install boost (for the thrift runtime library build)
-ADD https://boost.teeks99.com/bin/1.69.0/boost_1_69_0-msvc-14.1-64.exe C:\TEMP\boost.exe
-RUN C:\TEMP\boost.exe /DIR="C:\Libraries\boost_1_69_0" /SILENT && `
-    DEL C:\TEMP\boost.exe
+ADD --checksum=sha256:ae6ade62886fd9a6930c95f116a33e940224f0cb7f791b01afd7dd1ceca360fe https://boost.teeks99.com/bin/1.88.0/boost_1_88_0-msvc-14.1-64.exe C:\TEMP\boost.exe
+ENV BOOST_ROOT=C:\Libraries\boost_1_88_0
+RUN C:\TEMP\boost.exe /DIR=%BOOST_ROOT% /SILENT && `
+    DEL C:\TEMP\boost.exe && `
+    SETX BOOST_LIBRARYDIR "%BOOST_ROOT%\lib64-msvc-14.1" && `
+    SETX PATH "%BOOST_LIBRARYDIR%;%PATH%"
 
 # Install chocolatey
 RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command `
-    "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" `
+    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" `
     && SETX PATH "%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
 # Install winflexbison (for the thrift compiler build)
@@ -57,44 +57,52 @@ RUN choco install 7zip curl -y
 COPY appveyor\build-libevent.bat C:\TEMP\build-libevent.bat
 ENV LIBEVENT_VERSION=2.1.8
 ENV WIN3P=C:\TEMP\WIN3P
-RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
+RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     MKDIR C:\TEMP\WIN3P && `
     C:\TEMP\build-libevent.bat && `
     MKDIR C:\Libraries\libevent-%LIBEVENT_VERSION% && `
     MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\include C:\Libraries\libevent-%LIBEVENT_VERSION% && `
     MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\lib C:\Libraries\libevent-%LIBEVENT_VERSION% && `
-    RMDIR /S /Q C:\TEMP\WIN3P
+    RMDIR /S /Q C:\TEMP\WIN3P && `
+    SETX LIBEVENT_ROOT "C:\Libraries\libevent-%LIBEVENT_VERSION%"
 
 # Install zlib
 COPY appveyor\build-zlib.bat C:\TEMP\build-zlib.bat
-ENV ZLIB_VERSION=1.2.13
+ENV ZLIB_VERSION=1.3.1
 ENV WIN3P=C:\TEMP\WIN3P
-RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 && `
+RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     MKDIR C:\TEMP\WIN3P && `
     C:\TEMP\build-zlib.bat && `
     MOVE C:\TEMP\WIN3P\zlib-inst C:\Libraries\zlib-%ZLIB_VERSION% && `
-    RMDIR /S /Q C:\TEMP\WIN3P
+    RMDIR /S /Q C:\TEMP\WIN3P && `
+    SETX ZLIB_ROOT "C:\Libraries\zlib-%ZLIB_VERSION%" && `
+    SETX PATH "%ZLIB_ROOT%\bin;%PATH%"
 
-# Install OpenSSL 1.1.0
-ADD http://slproweb.com/download/Win64OpenSSL-1_1_0l.exe C:\TEMP\openssl.exe
+# Install OpenSSL 3.6.0
+ADD --checksum=sha256:1ae24eb941ff3c11258d0ad4e6d2cba13360cb52a17d8516fb27352b5e3ed6ad https://slproweb.com/download/Win64OpenSSL-3_6_0.exe C:\TEMP\openssl.exe
 RUN C:\TEMP\openssl.exe /silent && `
-    DEL C:\TEMP\openssl.exe
+    DEL C:\TEMP\openssl.exe && `
+    SETX OPENSSL_ROOT "C:\OpenSSL-Win64" && `
+    SETX PATH "%OPENSSL_ROOT%\bin;%PATH%"
 
 # Install java
 RUN choco install jdk8 -y
 
 # Install python3
 RUN choco install python3 -y
+RUN pip install setuptools
 
 # Install Adobe Flex 4.6 SDK and set FLEX_HOME so it can be found
-ADD http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip C:\Adobe\Flex\SDK\4.6\SDK.zip
+ADD --checksum=sha256:622b63f29de44600ff8d4231174a70fcb3085812c0e146a42e91877ca8b46798 http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip C:\Adobe\Flex\SDK\4.6\SDK.zip
 RUN CD C:\Adobe\Flex\SDK\4.6 && `
     7z x SDK.zip && `
     DEL SDK.zip && `
     SETX FLEX_HOME "C:\Adobe\Flex\SDK\4.6"
 
+RUN choco install nodejs -y
+
 # Start developer command prompt with any other commands specified.
-ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 &&
+ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 &&
 
 # Default to PowerShell if no other command specified.
-CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
+CMD powershell.exe -NoLogo -ExecutionPolicy Bypass
