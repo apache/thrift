@@ -731,6 +731,8 @@ void help() {
  * runtime.
  */
 void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
+  type = type->get_true_type();
+
   if (type->is_void()) {
     throw "type error: cannot declare a void const: " + name;
   }
