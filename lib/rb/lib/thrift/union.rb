@@ -73,6 +73,8 @@ module Thrift
       fid = self.name_to_id(@setfield.to_s)
 
       field_info = struct_fields[fid]
+      raise "set_field is not valid for this union!" unless field_info
+
       type = field_info[:type]
       if is_container? type
         oprot.write_field_begin(@setfield, type, fid)
