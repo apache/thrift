@@ -22,13 +22,12 @@
 
 #include <Python.h>
 
-#ifndef _WIN32
-#include <netinet/in.h>
-#else
+#ifdef _WIN32
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
 #define inline __inline
-#endif
+#else
+#include <netinet/in.h>
 
 static inline unsigned long long ntohll(unsigned long long n) {
   union {
@@ -46,6 +45,8 @@ static inline unsigned long long ntohll(unsigned long long n) {
 }
 
 #define htonll(n) ntohll(n)
+
+#endif // !_WIN32
 
 static inline unsigned long long letohll(unsigned long long n) {
   union {
