@@ -19,10 +19,10 @@ part of thrift;
 
 class TDeserializer {
   final message = TMessage('Deserializer', TMessageType.ONEWAY, 1);
-  TBufferedTransport transport;
-  TProtocol protocol;
+  late TBufferedTransport transport;
+  late TProtocol protocol;
 
-  TDeserializer({TProtocolFactory protocolFactory}) {
+  TDeserializer({TProtocolFactory? protocolFactory}) {
     this.transport = TBufferedTransport();
 
     if (protocolFactory == null) {

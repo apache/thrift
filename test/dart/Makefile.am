@@ -17,6 +17,9 @@
 # under the License.
 #
 
+# Dart build command
+DARTPUB = dart pub
+
 gen-dart/thrift_test/lib/thrift_test.dart: ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen dart ../v0.16/ThriftTest.thrift
 

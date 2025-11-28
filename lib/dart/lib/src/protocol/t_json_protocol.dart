@@ -32,15 +32,16 @@ class TJsonProtocol extends TProtocol {
 
   static const Utf8Codec utf8Codec = Utf8Codec();
 
-  _BaseContext _context;
-  _BaseContext _rootContext;
-  _LookaheadReader _reader;
+  late _BaseContext _context;
+  late _BaseContext _rootContext;
+  late _LookaheadReader _reader;
 
   final List<_BaseContext> _contextStack = [];
   final Uint8List _tempBuffer = Uint8List(4);
 
   TJsonProtocol(TTransport transport) : super(transport) {
     _rootContext = _BaseContext(this);
+    _context = _rootContext;
     _reader = _LookaheadReader(this);
     _resetContext();
   }
@@ -122,8 +123,6 @@ class TJsonProtocol extends TProtocol {
   }
 
   void _writeJsonInteger(int i) {
-    if (i == null) i = 0;
-
     _context.write();
     String str = i.toString();
 
@@ -137,8 +136,6 @@ class TJsonProtocol extends TProtocol {
   }
 
   void _writeJsonDouble(double d) {
-    if (d == null) d = 0.0;
-
     _context.write();
     String str = d.toString();
     bool escapeNumbers = d.isNaN || d.isInfinite || _context.escapeNumbers;
@@ -267,7 +264,6 @@ class TJsonProtocol extends TProtocol {
 
   @override
   void writeBool(bool b) {
-    if (b == null) b = false;
     _writeJsonInteger(b ? 1 : 0);
   }
 
@@ -298,7 +294,7 @@ class TJsonProtocol extends TProtocol {
 
   @override
   void writeString(String s) {
-    var bytes = s != null ? utf8Codec.encode(s) : Uint8List.fromList([]);
+    var bytes = utf8Codec.encode(s);
     _writeJsonString(bytes);
   }
 
@@ -418,7 +414,7 @@ class TJsonProtocol extends TProtocol {
       Uint8List bytes = _readJsonString(skipContext: true);
       double d;
       try {
-        d = double.tryParse(utf8Codec.decode(bytes));
+        d = double.parse(utf8Codec.decode(bytes));
       } catch (_) {
         throw TProtocolError(TProtocolErrorType.INVALID_DATA,
             "Bad data encounted in numeric data");
@@ -675,7 +671,7 @@ class _Constants {
           TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
     }
 
-    return _TYPE_ID_TO_NAME_BYTES[typeId];
+    return _TYPE_ID_TO_NAME_BYTES[typeId]!;
   }
 
   static final Map<String, int> _NAME_TO_TYPE_ID = Map.unmodifiable({
@@ -699,7 +695,7 @@ class _Constants {
           TProtocolErrorType.NOT_IMPLEMENTED, "Unrecognized type");
     }
 
-    return _NAME_TO_TYPE_ID[name];
+    return _NAME_TO_TYPE_ID[name]!;
   }
 
   static final Set<int> _JSON_NUMERICS = Set.from([

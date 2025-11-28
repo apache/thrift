@@ -21,10 +21,10 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:collection/collection.dart';
-import 'package:http/http.dart' as http;
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
 import 'package:thrift_test/thrift_test.dart';
+import 'package:http/io_client.dart';
 
 const TEST_BASETYPES = 1; // 0000 0001
 const TEST_STRUCTS = 2; // 0000 0010
@@ -53,13 +53,13 @@ class TTestError extends Error {
   String toString() => '$actual != $expected';
 }
 
-List<TTest> _tests;
-ThriftTestClient client;
-bool verbose;
+late List<TTest> _tests;
+late ThriftTestClient client;
+late bool verbose;
 
 /// Adapted from TestClient.php
 main(List<String> args) async {
-  ArgResults results = _parseArgs(args);
+  ArgResults? results = _parseArgs(args);
 
   if (results == null) {
     exit(TEST_UNKNOWN);
@@ -99,7 +99,7 @@ main(List<String> args) async {
   exit(result);
 }
 
-ArgResults _parseArgs(List<String> args) {
+ArgResults? _parseArgs(List<String> args) {
   var parser = new ArgParser();
   parser.addOption('host', defaultsTo: 'localhost', help: 'The server host');
   parser.addOption('port', defaultsTo: '9090', help: 'The port to connect to');
@@ -122,7 +122,7 @@ ArgResults _parseArgs(List<String> args) {
       });
   parser.addFlag('verbose', defaultsTo: true);
 
-  ArgResults results;
+  ArgResults? results;
   try {
     results = parser.parse(args);
   } catch (e) {
@@ -147,12 +147,12 @@ TProtocolFactory getProtocolFactory(String protocolType) {
 }
 
 Future _initTestClient(
-    {String host, int port, String transportType, String protocolType}) async {
+    {required String host, required int port, required String transportType, required String protocolType}) async {
   TTransport transport;
   var protocolFactory = getProtocolFactory(protocolType);
 
   if (transportType == 'http') {
-    var httpClient = new http.IOClient();
+    var httpClient = IOClient();
     var uri = Uri.parse('http://$host:$port');
     var config = new THttpConfig(uri, {});
     transport = new THttpClientTransport(httpClient, config);
@@ -279,8 +279,8 @@ List<TTest> _createTests() {
   }));
 
   tests.add(new TTest(TEST_CONTAINERS, 'testMapMap', () async {
-    Map<int, Map<int, int>> result = await client.testMapMap(1);
-    if (result.isEmpty || result[result.keys.first].isEmpty) {
+    Map<int, Map<int, int>>? result = await client.testMapMap(1);
+    if (result != null && (result.isEmpty || (result[result.keys.first] != null && result[result.keys.first]!.isEmpty))) {
       throw new TTestError(result, 'Map<int, Map<int, int>>');
     }
   }));
@@ -290,8 +290,8 @@ List<TTest> _createTests() {
     input.userMap = {Numberz.FIVE: 5000};
     input.xtructs = [xtruct];
 
-    Map<int, Map<int, Insanity>> result = await client.testInsanity(input);
-    if (result.isEmpty || result[result.keys.first].isEmpty) {
+    Map<int, Map<int, Insanity>>? result = await client.testInsanity(input);
+    if (result != null &&  ( result.isEmpty || (result[result.keys.first] != null && result[result.keys.first]!.isEmpty))) {
       throw new TTestError(result, 'Map<int, Map<int, Insanity>>');
     }
   }));

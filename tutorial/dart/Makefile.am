@@ -19,6 +19,9 @@
 
 BUILT_SOURCES = gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart
 
+# Use 'dart pub' if 'pub' command is not available
+DARTPUB = dart pub
+
 gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen dart -r $<
 
