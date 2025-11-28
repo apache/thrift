@@ -7,7 +7,7 @@ namespace thriftcommon
 {
 	//----------------------------------------------------------------------------
 	//Launch child process and pass R/W anonymous pipe handles on cmd line.
-	//This is a simple example and does not include elevation or other 
+	//This is a simple example and does not include elevation or other
 	//advanced features.
 	//
 	bool LaunchAnonPipeChild(std::string app, boost::shared_ptr<TServerTransport> transport)
@@ -25,7 +25,7 @@ namespace thriftcommon
 		//spawn the child process
 		if (!CreateProcessA(nullptr, handles, nullptr,nullptr,TRUE,0,nullptr,nullptr,&si,&pi))
 		{
-			GlobalOutput.perror("TPipeServer CreateProcess failed, GLE=", GetLastError());
+			TOutput::instance().perror("TPipeServer CreateProcess failed, GLE=", GetLastError());
 			return false;
 		}
 

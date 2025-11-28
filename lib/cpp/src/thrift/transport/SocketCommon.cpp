@@ -37,7 +37,7 @@ socklen_t fillUnixSocketAddr(struct sockaddr_un& address, std::string& path)
 
 #ifndef __linux__
     if (isAbstractNamespace) {
-      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
+      TOutput::instance().perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
       throw TTransportException(TTransportException::NOT_OPEN,
                                 " Abstract Namespace Domain socket path not supported");
     }
@@ -51,7 +51,7 @@ socklen_t fillUnixSocketAddr(struct sockaddr_un& address, std::string& path)
 
     if (addr_len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
         int errno_copy = THRIFT_GET_SOCKET_ERROR;
-        GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
+        TOutput::instance().perror("TSocket::open() Unix Domain socket path too long", errno_copy);
         throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
     }
 
