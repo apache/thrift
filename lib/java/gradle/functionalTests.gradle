@@ -96,7 +96,8 @@ def javaExe = file("${System.getProperty('java.home')}/bin/java${execExt}").cano
 // The common Uber jar path
 def jarPath = shadowJar.archiveFile.get().asFile.canonicalPath
 def trustStore = file("${projectDir}/src/crossTest/resources/.truststore").canonicalPath
-def keyStore = file("${projectDir}/src/crossTest/resources/.keystore").canonicalPath
+def serverKeyStore = file("${projectDir}/src/crossTest/resources/.serverkeystore").canonicalPath
+def clientKeyStore = file("${projectDir}/src/crossTest/resources/.clientkeystore").canonicalPath
 
 task generateRunnerScriptForClient(group: 'Build') {
     description = 'Generate a runner script for cross-check tests with TestClient'
@@ -106,7 +107,7 @@ task generateRunnerScriptForClient(group: 'Build') {
     def runClientText = """\
 ${scriptHead}
 
-"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.trustStore=$trustStore" -Djavax.net.ssl.trustStorePassword=thrift org.apache.thrift.test.TestClient $args
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$clientKeyStore" -Djavax.net.ssl.keyStorePassword=thrift "-Djavax.net.ssl.trustStore=$trustStore" -Djavax.net.ssl.trustStorePassword=thrift org.apache.thrift.test.TestClient $args
 """
     inputs.property 'runClientText', runClientText
     outputs.file clientFile
@@ -126,7 +127,7 @@ task generateRunnerScriptForServer(group: 'Build') {
     def runServerText = """\
 ${scriptHead}
 
-"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$keyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestServer $args
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$serverKeyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestServer $args
 """
 
     inputs.property 'runServerText', runServerText
@@ -147,7 +148,7 @@ task generateRunnerScriptForNonblockingServer(group: 'Build') {
     def runServerText = """\
 ${scriptHead}
 
-"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$keyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestNonblockingServer $args
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$serverKeyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestNonblockingServer $args
 """
 
     inputs.property 'runServerText', runServerText
@@ -168,7 +169,7 @@ task generateRunnerScriptForTServletServer(group: 'Build') {
     def runServerText = """\
 ${scriptHead}
 
-"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$keyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestTServletServer $args
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$serverKeyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestTServletServer $args
 """
 
     inputs.property 'runServerText', runServerText
