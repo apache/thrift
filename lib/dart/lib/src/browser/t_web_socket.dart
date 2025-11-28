@@ -49,19 +49,19 @@ class TWebSocket implements TSocket {
       : _onStateController = StreamController.broadcast(),
         _onErrorController = StreamController.broadcast(),
         _onMessageController = StreamController.broadcast() {
-    if (url == null || !url.hasAuthority || !url.hasPort) {
+    if (!url.hasAuthority || !url.hasPort) {
       throw ArgumentError('Invalid url');
     }
   }
 
-  WebSocket _socket;
+  WebSocket? _socket;
 
   @override
-  bool get isOpen => _socket != null && _socket.readyState == WebSocket.OPEN;
+  bool get isOpen => _socket != null && _socket!.readyState == WebSocket.OPEN;
 
   @override
   bool get isClosed =>
-      _socket == null || _socket.readyState == WebSocket.CLOSED;
+      _socket == null ||_socket!.readyState == WebSocket.CLOSED;
 
   @override
   Future open() {
@@ -71,19 +71,19 @@ class TWebSocket implements TSocket {
     }
 
     _socket = WebSocket(url.toString());
-    _socket.onError.listen(_onError);
-    _socket.onOpen.listen(_onOpen);
-    _socket.onClose.listen(_onClose);
-    _socket.onMessage.listen(_onMessage);
+    _socket!.onError.listen(_onError);
+    _socket!.onOpen.listen(_onOpen);
+    _socket!.onClose.listen(_onClose);
+    _socket!.onMessage.listen(_onMessage);
 
-    return _socket.onOpen.first;
+    return _socket!.onOpen.first;
   }
 
   @override
   Future close() {
     if (_socket != null) {
-      _socket.close();
-      return _socket.onClose.first;
+      _socket!.close();
+      return _socket!.onClose.first;
     } else {
       return Future.value();
     }
@@ -98,7 +98,7 @@ class TWebSocket implements TSocket {
   void _sendRequests() {
     while (isOpen && _requests.isNotEmpty) {
       Uint8List data = _requests.removeAt(0);
-      _socket.sendString(base64.encode(data));
+      _socket!.sendString(base64.encode(data));
     }
   }
 

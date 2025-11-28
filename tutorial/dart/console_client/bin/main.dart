@@ -24,8 +24,8 @@ import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
 import 'package:tutorial/tutorial.dart';
 
-TTransport _transport;
-Calculator _calculator;
+late TTransport _transport;
+late Calculator _calculator;
 int logid = 0;
 
 const Map<String, int> operationLookup = const {
@@ -44,7 +44,7 @@ main(List<String> args) {
   var parser = new ArgParser();
   parser.addOption('port', defaultsTo: '9090', help: 'The port to connect to');
 
-  ArgResults results;
+  ArgResults? results;
   try {
     results = parser.parse(args);
   } catch (e) {
@@ -77,9 +77,9 @@ Future _run() async {
   while (true) {
     stdout.write("> ");
     var input = stdin.readLineSync();
-    var parts = input.split(' ');
-    var command = parts[0];
-    var args = parts.length > 1 ? parts.sublist(1) : [];
+    var parts = input?.split(' ');
+    var command = parts?[0];
+    var args = parts!.length > 1 ? parts.sublist(1) : [];
 
     switch (command) {
       case 'ping':
@@ -91,7 +91,7 @@ Future _run() async {
         break;
 
       case 'calc':
-        int op = operationLookup[args[1]];
+        int? op = operationLookup[args[1]];
         if (!Operation.VALID_VALUES.contains(op)) {
           stdout.writeln('Unknown operator ${args[1]}');
           break;
@@ -99,7 +99,7 @@ Future _run() async {
 
         var work = new Work()
           ..num1 = int.parse(args[0])
-          ..op = op
+          ..op = op!
           ..num2 = int.parse(args[2])
           ..comment = args.length > 3 ? args[3] : '';
 

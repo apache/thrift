@@ -33,9 +33,9 @@ class THttpClientTransport extends TBufferedTransport {
   final THttpConfig config;
 
   THttpClientTransport(this.httpClient, this.config) {
-    if (httpClient == null) {
+    /*if (httpClient == null) {
       throw ArgumentError.notNull("httpClient");
-    }
+    }*/
   }
 
   @override
@@ -75,11 +75,11 @@ class THttpClientTransport extends TBufferedTransport {
 class THttpConfig {
   final Uri url;
 
-  Map<String, String> _headers;
+  late Map<String, String> _headers;
   Map<String, String> get headers => _headers;
 
   THttpConfig(this.url, Map<String, String> headers) {
-    if (url == null || !url.hasAuthority) {
+    if (!url.hasAuthority) {
       throw ArgumentError("Invalid url");
     }
 
@@ -89,9 +89,7 @@ class THttpConfig {
   void _initHeaders(Map<String, String> initial) {
     var h = {};
 
-    if (initial != null) {
       h.addAll(initial);
-    }
 
     h['Content-Type'] = 'application/x-thrift';
     h['Accept'] = 'application/x-thrift';
