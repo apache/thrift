@@ -76,6 +76,7 @@
 #include <windows.h>
 #undef NOMINMAX
 #undef WIN32_LEAN_AND_MEAN
+#include <thrift/windows/TWinsockSingleton.h>
 #endif
 
 template <class T>

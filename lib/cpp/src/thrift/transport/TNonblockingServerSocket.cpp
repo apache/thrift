@@ -68,6 +68,10 @@
 #endif // _WIN32
 #endif
 
+#if _WIN32
+#include <thrift/windows/TWinsockSingleton.h>
+#endif
+
 template <class T>
 inline const SOCKOPT_CAST_T* const_cast_sockopt(const T* v) {
   return reinterpret_cast<const SOCKOPT_CAST_T*>(v);
