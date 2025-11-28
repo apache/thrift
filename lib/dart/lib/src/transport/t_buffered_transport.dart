@@ -20,7 +20,7 @@ part of thrift;
 /// Buffered implementation of [TTransport].
 class TBufferedTransport extends TTransport {
   final List<int> _writeBuffer = [];
-  Iterator<int> _readIterator;
+  Iterator<int>? _readIterator;
 
   Uint8List consumeWriteBuffer() {
     Uint8List buffer = Uint8List.fromList(_writeBuffer);
@@ -29,7 +29,7 @@ class TBufferedTransport extends TTransport {
   }
 
   void _setReadBuffer(Uint8List readBuffer) {
-    _readIterator = readBuffer != null ? readBuffer.iterator : null;
+    _readIterator = readBuffer.iterator;
   }
 
   void _reset({bool isOpen = false}) {
@@ -40,7 +40,7 @@ class TBufferedTransport extends TTransport {
 
   bool get hasReadData => _readIterator != null;
 
-  bool _isOpen;
+  bool _isOpen = false;
   @override
   bool get isOpen => _isOpen;
 
@@ -56,10 +56,6 @@ class TBufferedTransport extends TTransport {
 
   @override
   int read(Uint8List buffer, int offset, int length) {
-    if (buffer == null) {
-      throw ArgumentError.notNull("buffer");
-    }
-
     if (offset + length > buffer.length) {
       throw ArgumentError("The range exceeds the buffer length");
     }
@@ -69,13 +65,17 @@ class TBufferedTransport extends TTransport {
     }
 
     int i = 0;
-    while (i < length && _readIterator.moveNext()) {
-      buffer[offset + i] = _readIterator.current;
+    bool hasData = true;
+    while (i < length && hasData) {
+      hasData = _readIterator!.moveNext();
+      if (hasData) {
+      buffer[offset + i] = _readIterator!.current;
       i++;
+      }
     }
 
     // cleanup iterator when we've reached the end
-    if (_readIterator.current == null) {
+    if (!hasData) {
       _readIterator = null;
     }
 
@@ -84,10 +84,6 @@ class TBufferedTransport extends TTransport {
 
   @override
   void write(Uint8List buffer, int offset, int length) {
-    if (buffer == null) {
-      throw ArgumentError.notNull("buffer");
-    }
-
     if (offset + length > buffer.length) {
       throw ArgumentError("The range exceeds the buffer length");
     }

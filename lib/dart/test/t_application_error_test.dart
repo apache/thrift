@@ -21,7 +21,7 @@ import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
 void main() {
-  TProtocol protocol;
+  late TProtocol protocol;
 
   setUp(() {
     protocol = TBinaryProtocol(TBufferedTransport());
