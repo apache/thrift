@@ -60,9 +60,9 @@ module Thrift
             run lambda { |env|
               request = Rack::Request.new(env)
               if RackApplication.valid_thrift_request?(request)
-                RackApplication.successful_request(request, processor, protocol_factory)
+                RackApplication.successful_request(request, processor, protocol_factory).finish
               else
-                RackApplication.failed_request
+                RackApplication.failed_request.finish
               end
             }
           end
