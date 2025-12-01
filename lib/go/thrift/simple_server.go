@@ -24,7 +24,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"net"
 	"sync"
 	"sync/atomic"
 	"time"
