@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v6
       - name: Get configuration and secrets from CloudTruth
         uses: ./.github/actions/cloudtruth/configure-action
         with:
