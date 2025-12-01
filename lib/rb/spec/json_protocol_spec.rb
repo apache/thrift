@@ -221,25 +221,18 @@ describe 'JsonProtocol' do
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
-    if RUBY_VERSION >= '1.9'
-      it 'should write string' do
-        @prot.write_string('this is a test string')
-        a = @trans.read(@trans.available)
-        expect(a).to eq('"this is a test string"'.force_encoding(Encoding::BINARY))
-        expect(a.encoding).to eq(Encoding::BINARY)
-      end
+    it 'should write string' do
+      @prot.write_string('this is a test string')
+      a = @trans.read(@trans.available)
+      expect(a).to eq('"this is a test string"'.force_encoding(Encoding::BINARY))
+      expect(a.encoding).to eq(Encoding::BINARY)
+    end
 
-      it 'should write string with unicode characters' do
-        @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
-        a = @trans.read(@trans.available)
-        expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY))
-        expect(a.encoding).to eq(Encoding::BINARY)
-      end
-    else
-      it 'should write string' do
-        @prot.write_string('this is a test string')
-        expect(@trans.read(@trans.available)).to eq('"this is a test string"')
-      end
+    it 'should write string with unicode characters' do
+      @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
+      a = @trans.read(@trans.available)
+      expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY))
+      expect(a.encoding).to eq(Encoding::BINARY)
     end
 
     it "should write binary" do
@@ -509,25 +502,18 @@ describe 'JsonProtocol' do
       expect(@prot.read_double).to eq(12.23)
     end
 
-    if RUBY_VERSION >= '1.9'
-      it 'should read string' do
-        @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
-        a = @prot.read_string
-        expect(a).to eq('this is a test string')
-        expect(a.encoding).to eq(Encoding::UTF_8)
-      end
+    it 'should read string' do
+      @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
+      a = @prot.read_string
+      expect(a).to eq('this is a test string')
+      expect(a.encoding).to eq(Encoding::UTF_8)
+    end
 
-      it 'should read string with unicode characters' do
-        @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
-        a = @prot.read_string
-        expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")
-        expect(a.encoding).to eq(Encoding::UTF_8)
-      end
-    else
-      it 'should read string' do
-        @trans.write('"this is a test string"')
-        expect(@prot.read_string).to eq('this is a test string')
-      end
+    it 'should read string with unicode characters' do
+      @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
+      a = @prot.read_string
+      expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")
+      expect(a.encoding).to eq(Encoding::UTF_8)
     end
 
     it "should read binary" do
