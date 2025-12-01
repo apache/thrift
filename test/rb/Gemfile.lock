@@ -1,0 +1,28 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    daemons (1.4.1)
+    eventmachine (1.2.7)
+    power_assert (3.0.1)
+    rack (2.2.21)
+    test-unit (3.7.3)
+      power_assert
+    thin (1.8.2)
+      daemons (~> 1.0, >= 1.0.9)
+      eventmachine (~> 1.0, >= 1.0.4)
+      rack (>= 1, < 3)
+
+PLATFORMS
+  arm64-darwin
+  arm64-linux
+  ruby
+  x86_64-darwin
+  x86_64-linux
+
+DEPENDENCIES
+  rack (~> 2.0, >= 2.0.4)
+  test-unit (~> 3.2, >= 3.2.7)
+  thin (~> 1.7, >= 1.7.2)
+
+BUNDLED WITH
+   2.2.34

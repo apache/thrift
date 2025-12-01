@@ -254,7 +254,6 @@ project.lock.json
 /lib/perl/pm_to_blib
 /lib/py/build
 /lib/py/thrift.egg-info/
-/lib/rb/Gemfile.lock
 /lib/rb/debug_proto_test
 /lib/rb/.config
 /lib/rb/ext/conftest.dSYM/
@@ -373,7 +372,6 @@ project.lock.json
 /test/hs/TestServer
 /test/php/php_ext_dir/
 /test/py.twisted/_trial_temp/
-/test/rb/Gemfile.lock
 /test/netstd/**/bin
 /test/netstd/**/obj
 /test/netstd/**/launchSettings.json

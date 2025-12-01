@@ -1,6 +1,4 @@
-source "http://rubygems.org"
-
-require "rubygems"
+source "https://rubygems.org"
 
 gem 'rack', '~> 2.0', '>= 2.0.4'
 gem 'thin', '~> 1.7', '>= 1.7.2'
