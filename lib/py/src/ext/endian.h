@@ -22,75 +22,47 @@
 
 #include <Python.h>
 
-#ifndef _WIN32
-#include <netinet/in.h>
-#else
+#ifdef _WIN32
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
-#define BIG_ENDIAN (4321)
-#define LITTLE_ENDIAN (1234)
-#define BYTE_ORDER LITTLE_ENDIAN
 #define inline __inline
-#endif
-
-/* Fix endianness issues on Solaris */
-#if defined(__SVR4) && defined(__sun)
-#if defined(__i386) && !defined(__i386__)
-#define __i386__
-#endif
-
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN (4321)
-#endif
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN (1234)
-#endif
-
-/* I386 is LE, even on Solaris */
-#if !defined(BYTE_ORDER) && defined(__i386__)
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
-#endif
-
-#ifndef __BYTE_ORDER
-#if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-#define __BYTE_ORDER BYTE_ORDER
-#define __LITTLE_ENDIAN LITTLE_ENDIAN
-#define __BIG_ENDIAN BIG_ENDIAN
 #else
-#error "Cannot determine endianness"
-#endif
-#endif
+#include <netinet/in.h>
 
-// Same comment as the enum.  Sorry.
-#if __BYTE_ORDER == __BIG_ENDIAN
-#define ntohll(n) (n)
-#define htonll(n) (n)
-#if defined(__GNUC__) && defined(__GLIBC__)
-#include <byteswap.h>
-#define letohll(n) bswap_64(n)
-#define htolell(n) bswap_64(n)
-#else /* GNUC & GLIBC */
-#define letohll(n) ((((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32))
-#define htolell(n) ((((unsigned long long)htonl(n)) << 32) + htonl(n >> 32))
-#endif
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-#if defined(__GNUC__) && defined(__GLIBC__)
-#include <byteswap.h>
-#define ntohll(n) bswap_64(n)
-#define htonll(n) bswap_64(n)
-#elif defined(_MSC_VER)
-#include <stdlib.h>
-#define ntohll(n) _byteswap_uint64(n)
-#define htonll(n) _byteswap_uint64(n)
-#else /* GNUC & GLIBC */
-#define ntohll(n) ((((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32))
-#define htonll(n) ((((unsigned long long)htonl(n)) << 32) + htonl(n >> 32))
-#endif /* GNUC & GLIBC */
-#define letohll(n) (n)
-#define htolell(n) (n)
-#else /* __BYTE_ORDER */
-#error "Can't define htonll or ntohll!"
-#endif
+static inline unsigned long long ntohll(unsigned long long n) {
+  union {
+    unsigned long long f;
+    unsigned char t[8];
+  } u;
+  u.f = n;
+  return static_cast<unsigned long long>(u.t[0]) << 56
+         | static_cast<unsigned long long>(u.t[1]) << 48
+         | static_cast<unsigned long long>(u.t[2]) << 40
+         | static_cast<unsigned long long>(u.t[3]) << 32
+         | static_cast<unsigned long long>(u.t[4]) << 24
+         | static_cast<unsigned long long>(u.t[5]) << 16
+         | static_cast<unsigned long long>(u.t[6]) << 8 | static_cast<unsigned long long>(u.t[7]);
+}
+
+#define htonll(n) ntohll(n)
+
+#endif // !_WIN32
+
+static inline unsigned long long letohll(unsigned long long n) {
+  union {
+    unsigned long long f;
+    unsigned char t[8];
+  } u;
+  u.f = n;
+  return static_cast<unsigned long long>(u.t[0]) | static_cast<unsigned long long>(u.t[1]) << 8
+         | static_cast<unsigned long long>(u.t[2]) << 16
+         | static_cast<unsigned long long>(u.t[3]) << 24
+         | static_cast<unsigned long long>(u.t[4]) << 32
+         | static_cast<unsigned long long>(u.t[5]) << 40
+         | static_cast<unsigned long long>(u.t[6]) << 48
+         | static_cast<unsigned long long>(u.t[7]) << 56;
+}
+
+#define htolell(n) letohll(n)
 
 #endif // THRIFT_PY_ENDIAN_H

@@ -452,8 +452,8 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop: return 0;
-                case TType.Void: return 0;
+                case TType.Stop: return 1;  // T_STOP needs to count itself
+                case TType.Void: return 1;  // T_VOID needs to count itself
                 case TType.Bool: return sizeof(byte);
                 case TType.Byte: return sizeof(byte);
                 case TType.Double: return sizeof(double);
@@ -461,7 +461,7 @@ namespace Thrift.Protocol
                 case TType.I32: return sizeof(int);
                 case TType.I64: return sizeof(long);
                 case TType.String: return sizeof(int);  // string length
-                case TType.Struct: return 0;  // empty struct
+                case TType.Struct: return 1;  // empty struct needs at least 1 byte for the T_STOP
                 case TType.Map: return sizeof(int);  // element count
                 case TType.Set: return sizeof(int);  // element count
                 case TType.List: return sizeof(int);  // element count

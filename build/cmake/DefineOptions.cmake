@@ -117,10 +117,13 @@ CMAKE_DEPENDENT_OPTION(BUILD_NODEJS "Build NodeJS library" ON
 
 # Python
 option(WITH_PYTHON "Build Python Thrift library" ON)
-find_package(PythonInterp QUIET) # for Python executable
-find_package(PythonLibs QUIET) # for Python.h
+find_package(Python3
+    COMPONENTS
+        Interpreter # for Python executable
+        Development # for Python.h
+    )
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
-                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONINTERP_FOUND;PYTHONLIBS_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_PYTHON;Python3_Interpreter_FOUND;Python3_Development_FOUND" OFF)
 
 # Common library options
 # https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
@@ -206,7 +209,11 @@ MESSAGE_DEP(WITH_NODEJS "Disabled by WITH_NODEJS=OFF")
 message(STATUS)
 message(STATUS "  Build Python library:                       ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by WITH_PYTHON=OFF")
-MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
+MESSAGE_DEP(Python3_Interpreter_FOUND "Python interpreter missing")
+MESSAGE_DEP(Python3_Development_FOUND "Python libraries missing")
+if(BUILD_PYTHON)
+    message(STATUS "    Version:                                  ${Python3_VERSION}")
+endif()
 if(MSVC)
     message(STATUS "  Using static runtime library:               ${WITH_MT}")
 endif(MSVC)

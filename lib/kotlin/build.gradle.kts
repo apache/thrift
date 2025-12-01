@@ -24,23 +24,17 @@ plugins {
     id("com.ncorti.ktfmt.gradle")
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.10.2")
     implementation("org.apache.thrift:libthrift:INCLUDED")
     testImplementation(kotlin("test"))
 }
 
-kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
+kotlin { jvmToolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -56,41 +50,36 @@ tasks.withType<KotlinCompile> {
 
 tasks {
     if (JavaVersion.current().isJava11Compatible) {
-        ktfmt {
-            kotlinLangStyle()
-        }
+        ktfmt { kotlinLangStyle() }
     }
 
-    test {
-        useJUnitPlatform()
-    }
+    test { useJUnitPlatform() }
 
     task<Exec>("compileThrift") {
-        val thriftBin = if (hasProperty("thrift.compiler")) {
-            file(property("thrift.compiler")!!)
-        } else {
-            project.rootDir.resolve("../../compiler/cpp/thrift")
-        }
+        val thriftBin =
+            if (hasProperty("thrift.compiler")) {
+                file(property("thrift.compiler")!!)
+            } else {
+                project.rootDir.resolve("../../compiler/cpp/thrift")
+            }
         val outputDir = layout.buildDirectory.dir("generated-sources")
-        doFirst {
-            mkdir(outputDir)
-        }
-        commandLine = listOf(
-            thriftBin.absolutePath,
-            "-gen",
-            "kotlin",
-            "-out",
-            outputDir.get().toString(),
-            layout.projectDirectory.file("src/test/resources/AnnotationTest.thrift").asFile.absolutePath
-        )
+        doFirst { mkdir(outputDir) }
+        commandLine =
+            listOf(
+                thriftBin.absolutePath,
+                "-gen",
+                "kotlin",
+                "-out",
+                outputDir.get().toString(),
+                layout.projectDirectory
+                    .file("src/test/resources/AnnotationTest.thrift")
+                    .asFile
+                    .absolutePath,
+            )
         group = LifecycleBasePlugin.BUILD_GROUP
     }
 
-    compileKotlin {
-        dependsOn("compileThrift")
-    }
+    compileKotlin { dependsOn("compileThrift") }
 }
 
-sourceSets["main"].java {
-    srcDir(layout.buildDirectory.dir("generated-sources"))
-}
+sourceSets["main"].java { srcDir(layout.buildDirectory.dir("generated-sources")) }

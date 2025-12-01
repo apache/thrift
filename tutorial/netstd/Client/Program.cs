@@ -115,16 +115,20 @@ Sample:
         {
             var numClients = GetNumberOfClients(args);
 
-            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             var transport = GetTransport(args);
-            Logger.LogInformation("Selected client transport: {transport}", transport);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client transport: {transport}", transport);
 
             var protocol = MakeProtocol( args, MakeTransport(args));
-            Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
 
             var mplex = GetMultiplex(args);
-            Logger.LogInformation("Multiplex {mplex}", mplex);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Multiplex {mplex}", mplex);
 
             var tasks = new Task[numClients];
             for (int i = 0; i < numClients; i++)
@@ -133,8 +137,7 @@ Sample:
                 tasks[i] = task;
             }
 
-            Task.WaitAll(tasks,cancellationToken);
-            await Task.CompletedTask;
+            Task.WaitAll(tasks, cancellationToken);
         }
 
         private static bool GetMultiplex(string[] args)
@@ -238,7 +241,8 @@ Sample:
         {
             var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
 
-            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             if (int.TryParse(numClients, out int c) && (0 < c) && (c <= 100))
                 return c;
@@ -258,7 +262,8 @@ Sample:
             }
             else
             {
-                Logger.LogError("Root path of {path} not found", Directory.GetCurrentDirectory());
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("Root path of {path} not found", Directory.GetCurrentDirectory());
                 throw new Exception($"Root path of {Directory.GetCurrentDirectory()} not found");
             }
         }
@@ -315,7 +320,8 @@ Sample:
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError("{ex}",ex);
+                    if (Logger.IsEnabled(LogLevel.Error))
+                        Logger.LogError("{ex}",ex);
                 }
                 finally
                 {
@@ -324,7 +330,8 @@ Sample:
             }
             catch (TApplicationException x)
             {
-                Logger.LogError("{x}",x);
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("{x}",x);
             }
         }
 
@@ -332,14 +339,18 @@ Sample:
         {
             await client.OpenTransportAsync(cancellationToken);
 
-            // Async version
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
 
-            Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
             await client.ping(cancellationToken);
 
-            Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
+
             var sum = await client.add(1, 1, cancellationToken);
-            Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
 
             var work = new Work
             {
@@ -350,13 +361,18 @@ Sample:
 
             try
             {
-                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
                 await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
             work.Op = Operation.SUBTRACT;
@@ -365,20 +381,31 @@ Sample:
 
             try
             {
-                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
                 var diff = await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
-            Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
-            var log = await client.getStruct(1, cancellationToken);
-            Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
 
-            Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
+            var log = await client.getStruct(1, cancellationToken);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
+
             await client.zip(cancellationToken);
         }
 

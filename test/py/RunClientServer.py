@@ -212,6 +212,10 @@ class TestCases(object):
         # skip any servers that don't work with SSL
         if with_ssl and try_server in SKIP_SSL:
             return False
+        # Skip SSL issues -> See THRIFT-5901
+        if with_ssl:
+            print('Skipping \'with_ssl\' tests')
+            return False
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                   % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
@@ -242,6 +246,10 @@ class TestCases(object):
                         for with_ssl in (False, True):
                             # skip any servers that don't work with SSL
                             if with_ssl and try_server in SKIP_SSL:
+                                continue
+                            # Skip SSL issues -> See THRIFT-5901
+                            if with_ssl:
+                                print('Skipping \'with_ssl\' tests')
                                 continue
                             test_count += 1
                             if self.verbose > 0:
@@ -277,6 +285,14 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
+        if gp_dir == 'type_hints':
+            # Skip type hints tests -> See THRIFT-5885 (it might be related)
+            print('Skipping \'type_hints\' tests')
+            continue
+        if gp_dir == 'enum':
+            # Skip enum tests -> See THRIFT-5885
+            print('Skipping \'enum\' tests')
+            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]

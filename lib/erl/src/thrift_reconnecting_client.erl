@@ -41,16 +41,16 @@
 ]).
 
 -record(state, {
-    client = nil,
-    host,
-    port,
-    thrift_svc,
-    thrift_opts,
-    reconn_min,
-    reconn_max,
-    reconn_time = 0,
-    op_cnt_dict,
-    op_time_dict
+    client = nil :: 'nil' | thrift_client:tclient(),
+    host :: inet:socket_address() | inet:hostname(),
+    port :: inet:port_number(),
+    thrift_svc :: atom(),
+    thrift_opts :: list(),
+    reconn_min :: integer(),
+    reconn_max :: integer(),
+    reconn_time = 0 :: integer(),
+    op_cnt_dict :: dict:dict(),
+    op_time_dict :: dict:dict()
 }).
 
 %%====================================================================

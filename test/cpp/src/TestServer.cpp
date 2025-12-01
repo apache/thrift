@@ -31,6 +31,7 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TThreadedServer.h>
+#include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/THttpTransport.h>
 #include <thrift/transport/TNonblockingSSLServerSocket.h>
@@ -54,14 +55,21 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 
 #include <iostream>
-#include <stdexcept>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
@@ -570,6 +578,47 @@ protected:
   std::shared_ptr<TestHandler> _delegate;
 };
 
+struct DomainSocketFd {
+  THRIFT_SOCKET socket_fd;
+  std::string path;
+  DomainSocketFd(const std::string& path) : path(path) {
+#ifdef HAVE_SYS_UN_H
+    unlink(path.c_str());
+    socket_fd = socket(AF_UNIX, SOCK_STREAM, IPPROTO_IP);
+    if (socket_fd == -1) {
+      std::ostringstream os;
+      os << "Cannot create domain socket: " << strerror(errno);
+      throw std::runtime_error(os.str());
+    }
+    if (path.size() > sizeof(sockaddr_un::sun_path) - 1)
+      throw std::runtime_error("Path size on domain socket too big");
+    struct sockaddr_un sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sun_family = AF_UNIX;
+    strcpy(sa.sun_path, path.c_str());
+    int rv = bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa));
+    if (rv == -1) {
+      std::ostringstream os;
+      os << "Cannot bind domain socket: " << strerror(errno);
+      throw std::runtime_error(os.str());
+    }
+
+    rv = ::listen(socket_fd, 16);
+    if (rv == -1) {
+      std::ostringstream os;
+      os << "Cannot listen on domain socket: " << strerror(errno);
+      throw std::runtime_error(os.str());
+    }
+#else
+    throw std::runtime_error("Cannot create a domain socket without AF_UNIX");
+#endif
+  }
+  ~DomainSocketFd() {
+    ::THRIFT_CLOSESOCKET(socket_fd);
+    unlink(path.c_str());
+  }
+};
+
 namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
@@ -589,6 +638,8 @@ int main(int argc, char** argv) {
   string server_type = "simple";
   string domain_socket = "";
   bool abstract_namespace = false;
+  bool emulate_socketactivation = false;
+  std::unique_ptr<DomainSocketFd> domain_socket_fd;
   size_t workers = 4;
   int string_limit = 0;
   int container_limit = 0;
@@ -599,6 +650,7 @@ int main(int argc, char** argv) {
     ("port", po::value<int>(&port)->default_value(port), "Port number to listen")
     ("domain-socket", po::value<string>(&domain_socket) ->default_value(domain_socket), "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")
     ("abstract-namespace", "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")
+    ("emulate-socketactivation","Open the socket from the tester program and pass the library an already open fd")
     ("server-type", po::value<string>(&server_type)->default_value(server_type), "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
     ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http, websocket, zlib")
     ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json, multi, multic, multih, multij")
@@ -678,6 +730,9 @@ int main(int argc, char** argv) {
   if (vm.count("abstract-namespace")) {
     abstract_namespace = true;
   }
+  if (vm.count("emulate-socketactivation")) {
+    emulate_socketactivation = true;
+  }
 
   // Dispatcher
   std::shared_ptr<TProtocolFactory> protocolFactory;
@@ -727,8 +782,16 @@ int main(int argc, char** argv) {
         abstract_socket += domain_socket;
         serverSocket = std::shared_ptr<TServerSocket>(new TServerSocket(abstract_socket));
       } else {
-        unlink(domain_socket.c_str());
-        serverSocket = std::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+        if (emulate_socketactivation) {
+          unlink(domain_socket.c_str());
+          // open and bind the socket
+          domain_socket_fd.reset(new DomainSocketFd(domain_socket));
+          serverSocket = std::shared_ptr<TServerSocket>(
+              new TServerSocket(domain_socket_fd->socket_fd, SocketType::UNIX));
+        } else {
+          unlink(domain_socket.c_str());
+          serverSocket = std::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+        }
       }
       port = 0;
     } else {

@@ -150,6 +150,7 @@ EXTRA_DIST = \
 	src/TStringUtils.php \
 	coding_standards.md \
 	thrift_protocol.ini \
+	phpunit.xml \
 	README.apache.md \
 	README.md \
 	test

@@ -201,8 +201,14 @@ type
   end;
 
   TSecureProtocol = (
-    SSL_2, SSL_3, TLS_1,   // outdated, for compatibilty only
-    TLS_1_1, TLS_1_2       // secure (as of today)
+    // outdated, for compatibility only
+    SSL_2,
+    SSL_3,
+    TLS_1,
+    TLS_1_1,
+    // secure (as of today)
+    TLS_1_2,
+    TLS_1_3
   );
 
   TSecureProtocols = set of TSecureProtocol;
@@ -481,7 +487,13 @@ type
 
 
 const
-  DEFAULT_THRIFT_SECUREPROTOCOLS = [ TSecureProtocol.TLS_1_1, TSecureProtocol.TLS_1_2];
+  // From https://learn.microsoft.com/en-us/windows/win32/secauthn/protocols-in-tls-ssl--schannel-ssp-
+  //  > TLS 1.3 is supported starting in Windows 11 and Windows Server 2022.
+  //  > Enabling TLS 1.3 on earlier versions of Windows is not a safe system configuration.
+  DEFAULT_THRIFT_SECUREPROTOCOLS = [
+    TSecureProtocol.TLS_1_2
+    //TSecureProtocol.TLS_1_3   -- not supported on Win10 (see comment)
+  ];
 
 implementation
 

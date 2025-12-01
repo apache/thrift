@@ -59,9 +59,11 @@ class TestProgram(object):
         return cmd
 
     def _socket_args(self, socket, port):
+        support_socket_activation = self.kind == 'server' and sys.platform != "win32"
         return {
             'ip-ssl': ['--ssl'],
             'domain': ['--domain-socket=%s' % domain_socket_path(port)],
+            'domain-socketactivated': (['--emulate-socketactivation'] if support_socket_activation else []) + ['--domain-socket=%s' % domain_socket_path(port)],
             'abstract': ['--abstract-namespace', '--domain-socket=%s' % domain_socket_path(port)],
         }.get(socket, None)
 

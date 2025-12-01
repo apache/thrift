@@ -2759,9 +2759,14 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
              << "gobject_class->finalize = " << class_name_lc << "_finalize;" << '\n' << indent()
              << "gobject_class->set_property = " << class_name_lc << "_set_property;" << '\n'
              << indent() << "gobject_class->get_property = " << class_name_lc << "_get_property;"
-             << '\n' << '\n' << indent()
-             << "dispatch_processor_class->dispatch_call = " << class_name_lc << "_dispatch_call;"
-             << '\n' << indent() << "cls->dispatch_call = " << class_name_lc << "_dispatch_call;"
+             << '\n' << '\n';
+
+  if (extends_service) {
+    f_service_ << indent() << "dispatch_processor_class->dispatch_call = " << class_name_lc
+               << "_dispatch_call;" << '\n';
+  }
+
+  f_service_ << indent() << "cls->dispatch_call = " << class_name_lc << "_dispatch_call;"
              << '\n' << '\n' << indent() << "param_spec = g_param_spec_object (\"handler\","
              << '\n';
   args_indent = indent() + string(34, ' ');
@@ -4023,7 +4028,12 @@ void t_c_glib_generator::generate_deserialize_field(ostream& out,
     if (tbase == t_base_type::TYPE_STRING) {
       indent(out) << "if (" << name << " != NULL)" << '\n' << indent() << "{" << '\n';
       indent_up();
-      indent(out) << "g_free(" << name << ");" << '\n' << indent() << name << " = NULL;" << '\n';
+      if (type->is_binary()) {
+        indent(out) << "g_byte_array_free(" << name << ", TRUE);" << '\n';
+      } else {
+        indent(out) << "g_free(" << name << ");" << '\n';
+      }
+      indent(out) << name << " = NULL;" << '\n';
       indent_down();
       indent(out) << "}" << '\n' << '\n';
     }

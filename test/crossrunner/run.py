@@ -306,7 +306,7 @@ class PortAllocator(object):
         return port if ok else self._get_domain_port()
 
     def alloc_port(self, socket_type):
-        if socket_type in ('domain', 'abstract'):
+        if socket_type in ('domain', 'abstract','domain-socketactivated'):
             return self._get_domain_port()
         else:
             return self._get_tcp_port()
@@ -323,7 +323,7 @@ class PortAllocator(object):
         self._log.debug('free_port')
         self._lock.acquire()
         try:
-            if socket_type == 'domain':
+            if socket_type in ['domain','domain-socketactivated']:
                 self._dom_ports.remove(port)
                 path = domain_socket_path(port)
                 if os.path.exists(path):
@@ -374,16 +374,18 @@ class TestDispatcher(object):
             self._m = multiprocessing.managers.BaseManager()
             self._m.register('ports', PortAllocator)
             self._m.start()
-            self._pool = multiprocessing.Pool(concurrency, self._pool_init, (self._m.address,))
+            self._pool = multiprocessing.Pool(concurrency, TestDispatcher._pool_init, (self._m.address, self._stop))
         self._log.debug(
             'TestDispatcher started with %d concurrent jobs' % concurrency)
 
-    def _pool_init(self, address):
+    @staticmethod
+    def _pool_init(address, stop_event):
         global stop
         global m
         global ports
-        stop = self._stop
+        stop = stop_event
         m = multiprocessing.managers.BaseManager(address)
+        m.register('ports')
         m.connect()
         ports = m.ports()
 

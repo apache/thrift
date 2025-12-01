@@ -170,8 +170,8 @@ static inline To bitwise_cast(From from) {
       | (((n) & 0x0000ff00ul) << 8)  \
       | (((n) & 0x000000fful) << 24) )
 #  define bswap_16(n) \
-      ( (((n) & (static_cast<unsigned short>(0xff00ul)) >> 8)  \
-      | (((n) & (static_cast<unsigned short>(0x00fful)) << 8)  )
+      ( (((n) & static_cast<unsigned short>(0xff00ul)) >> 8)  \
+      | (((n) & static_cast<unsigned short>(0x00fful)) << 8)  )
 #  define THRIFT_htolell(n) bswap_64(n)
 #  define THRIFT_letohll(n) bswap_64(n)
 #  define THRIFT_htolel(n) bswap_32(n)

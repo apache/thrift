@@ -437,7 +437,11 @@ void t_py_generator::init_generator() {
            << "from thrift.transport import TTransport" << '\n'
            << import_dynbase_;
 
-  f_types_ << "all_structs = []" << '\n';
+  if (gen_type_hints_) {
+    f_types_ << "all_structs: list[typing.Any] = []" << '\n';
+  } else {
+    f_types_ << "all_structs = []" << '\n';
+  }
 
   f_consts_ <<
     py_autogen_comment() << '\n' <<
@@ -1884,7 +1888,9 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
         first_arg = false;
       else
         f_remote << " ";
-      if (args[i]->get_type()->is_string()) {
+      if (args[i]->get_type()->is_binary()) {
+        f_remote << "args[" << i << "].encode('utf-8'),";
+      } else if (args[i]->get_type()->is_string()) {
         f_remote << "args[" << i << "],";
       } else {
         f_remote << "eval(args[" << i << "]),";

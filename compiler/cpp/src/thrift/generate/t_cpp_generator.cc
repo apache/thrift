@@ -1412,10 +1412,10 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
     // Generate a namespace-scope swap() function
     if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
       out << indent() << "void swap(" << tstruct->get_name() << " &a1, " << tstruct->get_name()
-          << " &a2);" << '\n' << '\n';
+          << " &a2) noexcept;" << '\n' << '\n';
     } else {
        out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
-           << " &b);" << '\n' << '\n';
+           << " &b) noexcept;" << '\n' << '\n';
     }
   }
 
@@ -1746,10 +1746,10 @@ void t_cpp_generator::generate_struct_result_writer(ostream& out,
 void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
   if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
     out << indent() << "void swap(" << tstruct->get_name() << " &a1, " << tstruct->get_name()
-        << " &a2) {" << '\n';
+        << " &a2) noexcept {" << '\n';
   } else {
     out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
-        << " &b) {" << '\n';
+        << " &b) noexcept {" << '\n';
   }
 
   indent_up();

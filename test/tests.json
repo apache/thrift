@@ -404,13 +404,13 @@
       "buffered",
       "http",
       "framed",
-      "zlib",
-      "websocket"
+      "zlib"
     ],
     "sockets": [
       "ip",
       "ip-ssl",
-      "domain"
+      "domain",
+      "domain-socketactivated"
     ],
     "protocols": [
       "compact",
@@ -478,6 +478,7 @@
         "run",
         "--no-build",
         "--project=Server/Server.csproj",
+        "--configuration=Release",
         "server"
       ]
     },
@@ -488,6 +489,7 @@
         "run",
         "--no-build",
         "--project=Client/Client.csproj",
+        "--configuration=Release",
         "client"
       ]
     },
@@ -797,14 +799,14 @@
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
       "protocols": ["binary", "compact"],
       "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "sockets": ["ip", "domain"]
     },
     "client": {
       "command": ["TestClient"],
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
       "protocols": ["binary", "compact"],
       "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "sockets": ["ip", "domain"]
     }
   }
 ]

@@ -1237,8 +1237,8 @@ function TBinaryProtocolImpl.GetMinSerializedSize( const aType : TType) : Intege
 // Return the minimum number of bytes a type will consume on the wire
 begin
   case aType of
-    TType.Stop:    result := 0;
-    TType.Void:    result := 0;
+    TType.Stop:    result := 1;  // T_STOP needs to count itself
+    TType.Void:    result := 1;  // T_VOID needs to count itself
     TType.Bool_:   result := SizeOf(Byte);
     TType.Byte_:   result := SizeOf(Byte);
     TType.Double_: result := SizeOf(Double);
@@ -1246,7 +1246,7 @@ begin
     TType.I32:     result := SizeOf(Int32);
     TType.I64:     result := SizeOf(Int64);
     TType.String_: result := SizeOf(Int32);  // string length
-    TType.Struct:  result := 0;  // empty struct
+    TType.Struct:  result := 1;  // empty struct needs at least 1 byte for the T_STOP
     TType.Map:     result := SizeOf(Int32);  // element count
     TType.Set_:    result := SizeOf(Int32);  // element count
     TType.List:    result := SizeOf(Int32);  // element count

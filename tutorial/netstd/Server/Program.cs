@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using shared;
 using System;
@@ -224,13 +225,14 @@ Sample:
 
             try
             {
-                Logger.LogInformation(
-                    "TSimpleAsyncServer with \n{transport} transport\n{buffering} buffering\nmultiplex = {multiplex}\n{protocol} protocol",
-                    transport,
-                    buffering,
-                    multiplex ? "yes" : "no",
-                    protocol
-                    );
+                if( Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation(
+                        "TSimpleAsyncServer with \n{transport} transport\n{buffering} buffering\nmultiplex = {multiplex}\n{protocol} protocol",
+                        transport,
+                        buffering,
+                        multiplex ? "yes" : "no",
+                        protocol
+                        );
 
                 var server = new TSimpleAsyncServer(
                     itProcessorFactory: new TSingletonProcessorFactory(processor),
@@ -247,7 +249,8 @@ Sample:
             }
             catch (Exception x)
             {
-                Logger.LogInformation("{x}",x);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{x}",x);
             }
         }
 
@@ -315,13 +318,16 @@ Sample:
                     .AddEnvironmentVariables(prefix: "ASPNETCORE_")
                     .Build();
 
-                var host = new WebHostBuilder()
-                    .UseConfiguration(config)
-                    .UseKestrel()
-                    .UseUrls("http://localhost:9090")
-                    .UseContentRoot(Directory.GetCurrentDirectory())
-                    .UseStartup<Startup>()
-                    .ConfigureLogging((ctx,logging) => LoggingHelper.ConfigureLogging(logging))
+                var host = new HostBuilder().
+                    ConfigureWebHost(webhostbuilder => {
+                        webhostbuilder.UseConfiguration(config)
+                                      .UseUrls("http://localhost:9090")
+                                      .UseContentRoot(Directory.GetCurrentDirectory())
+                                      .UseStartup<Startup>()
+                                      .UseKestrel()
+                                      .ConfigureLogging((ctx, logging) => LoggingHelper.ConfigureLogging(logging))
+                                      ;
+                    })
                     .Build();
 
                 Logger.LogTrace("test");
@@ -373,25 +379,27 @@ Sample:
             public async Task<SharedStruct> getStruct(int key,
                 CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStruct({key})", key);
-                return await Task.FromResult(_log[key]);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("GetStruct({key})", key);
+                return _log[key];
             }
 
             public async Task ping(CancellationToken cancellationToken)
             {
                 Logger.LogInformation("Ping()");
-                await Task.CompletedTask;
             }
 
             public async Task<int> add(int num1, int num2, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("Add({num1},{num2})", num1, num2);
-                return await Task.FromResult(num1 + num2);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("Add({num1},{num2})", num1, num2);
+                return num1 + num2;
             }
 
             public async Task<int> calculate(int logid, Work? w, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])", logid, w?.Op, w?.Num1, w?.Num2);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])", logid, w?.Op, w?.Num1, w?.Num2);
 
                 int val;
                 switch (w?.Op)
@@ -441,8 +449,7 @@ Sample:
                 };
 
                 _log[logid] = entry;
-
-                return await Task.FromResult(val);
+                return val;
             }
 
             public async Task zip(CancellationToken cancellationToken)
@@ -456,12 +463,14 @@ Sample:
         {
             public async Task<SharedStruct> getStruct(int key, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStruct({key})", key);
-                return await Task.FromResult(new SharedStruct()
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("GetStruct({key})", key);
+
+                return new SharedStruct()
                 {
                     Key = key,
                     Value = "GetStruct"
-                });
+                };
             }
         }
     }

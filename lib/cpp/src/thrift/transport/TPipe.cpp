@@ -144,7 +144,7 @@ void TWaitableNamedPipeImpl::beginAsyncRead(uint8_t* buf, uint32_t len) {
   readOverlap_.reset(buf, len, ready_event_.h);
   thread_->addWorkItem(&readOverlap_);
   if (readOverlap_.success == FALSE && readOverlap_.last_error != ERROR_IO_PENDING) {
-    GlobalOutput.perror("TPipe ::ReadFile errored GLE=", readOverlap_.last_error);
+    TOutput::instance().perror("TPipe ::ReadFile errored GLE=", readOverlap_.last_error);
     throw TTransportException(TTransportException::UNKNOWN, "TPipe: ReadFile failed");
   }
 }
@@ -186,14 +186,14 @@ void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t l
     BOOL result = ::WriteFile(pipe, buf + written, len - written, nullptr, &tempOverlap);
 
     if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
-      GlobalOutput.perror("TPipe ::WriteFile errored GLE=", ::GetLastError());
+      TOutput::instance().perror("TPipe ::WriteFile errored GLE=", ::GetLastError());
       throw TTransportException(TTransportException::UNKNOWN, "TPipe: write failed");
     }
 
     DWORD bytes = 0;
     result = ::GetOverlappedResult(pipe, &tempOverlap, &bytes, TRUE);
     if (!result) {
-      GlobalOutput.perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
+      TOutput::instance().perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
       throw TTransportException(TTransportException::UNKNOWN, "TPipe: GetOverlappedResult failed");
     }
     written += bytes;
@@ -208,14 +208,14 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
   BOOL result = ::ReadFile(pipe, buf, len, nullptr, &tempOverlap);
 
   if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
-    GlobalOutput.perror("TPipe ::ReadFile errored GLE=", ::GetLastError());
+    TOutput::instance().perror("TPipe ::ReadFile errored GLE=", ::GetLastError());
     throw TTransportException(TTransportException::UNKNOWN, "TPipe: read failed");
   }
 
   DWORD bytes = 0;
   result = ::GetOverlappedResult(pipe, &tempOverlap, &bytes, TRUE);
   if (!result) {
-    GlobalOutput.perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
+    TOutput::instance().perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
     throw TTransportException(TTransportException::UNKNOWN, "TPipe: GetOverlappedResult failed");
   }
   return bytes;
@@ -286,13 +286,13 @@ void TPipe::open() {
       break; // success!
 
     if (::GetLastError() != ERROR_PIPE_BUSY) {
-      GlobalOutput.perror("TPipe::open ::CreateFile errored GLE=", ::GetLastError());
+      TOutput::instance().perror("TPipe::open ::CreateFile errored GLE=", ::GetLastError());
       throw TTransportException(TTransportException::NOT_OPEN, "Unable to open pipe");
     }
   } while (::WaitNamedPipeA(pipename_.c_str(), TimeoutSeconds_ * 1000));
 
   if (hPipe.h == INVALID_HANDLE_VALUE) {
-    GlobalOutput.perror("TPipe::open ::CreateFile errored GLE=", ::GetLastError());
+    TOutput::instance().perror("TPipe::open ::CreateFile errored GLE=", ::GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, "Unable to open pipe");
   }
 

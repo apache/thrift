@@ -468,6 +468,7 @@ namespace Thrift.Protocol
                     }
 
                     // it's \uXXXX
+                    Trans.CheckReadBytesAvailable(4);
                     await Trans.ReadAllAsync(_tempBuffer, 0, 4, cancellationToken);
 
                     var wch = (short) ((TJSONProtocolHelper.ToHexVal(_tempBuffer[0]) << 12) +
@@ -837,8 +838,8 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop: return 0;
-                case TType.Void: return 0;
+                case TType.Stop: return 1;  // T_STOP needs to count itself
+                case TType.Void: return 1;  // T_VOID needs to count itself
                 case TType.Bool: return 1;  // written as int  
                 case TType.Byte: return 1;
                 case TType.Double: return 1;
@@ -1018,6 +1019,7 @@ namespace Thrift.Protocol
                 else
                 {
                     // find more easy way to avoid exception on reading primitive types
+                    Proto.Trans.CheckReadBytesAvailable(1);
                     await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
                 }
                 return _data[0];
@@ -1034,6 +1036,7 @@ namespace Thrift.Protocol
                 if (!_hasData)
                 {
                     // find more easy way to avoid exception on reading primitive types
+                    Proto.Trans.CheckReadBytesAvailable(1);
                     await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
                     _hasData = true;
                 }

@@ -22,6 +22,7 @@ import logging
 import os
 import socket
 import sys
+import platform
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -132,6 +133,8 @@ class TSocket(TSocketBase):
             msg = 'failed to resolve sockaddr for ' + str(self._address)
             logger.exception(msg)
             raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=gai)
+        # Preserve the last exception to report if all addresses fail.
+        last_exc = None
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
@@ -144,18 +147,20 @@ class TSocket(TSocketBase):
                 handle.connect(sockaddr)
                 self.handle = handle
                 return
-            except socket.error:
+            except socket.error as e:
                 handle.close()
                 logger.info('Could not connect to %s', sockaddr, exc_info=True)
+                last_exc = e
         msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
                                                           addrs))
         logger.error(msg)
-        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg)
+        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=last_exc)
 
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
-        except socket.timeout as e:
+        # TODO: remove socket.timeout when 3.10 becomes the earliest version of python supported.
+        except (socket.timeout, TimeoutError) as e:
             raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
@@ -234,7 +239,10 @@ class TServerSocket(TSocketBase, TServerTransportBase):
 
         self.handle = s = socket.socket(res[0], res[1])
         if s.family is socket.AF_INET6:
-            s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            if platform.system() == 'Windows' and sys.version_info < (3, 8):
+                logger.warning('Windows socket defaulting to IPv4 for Python < 3.8: See https://github.com/python/cpython/issues/73701')
+            else:
+                s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(s, 'settimeout'):
             s.settimeout(None)

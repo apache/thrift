@@ -198,6 +198,10 @@ func (tdtp *TDuplicateToProtocol) ReadStructEnd(ctx context.Context) (err error)
 
 func (tdtp *TDuplicateToProtocol) ReadFieldBegin(ctx context.Context) (name string, typeId TType, id int16, err error) {
 	name, typeId, id, err = tdtp.Delegate.ReadFieldBegin(ctx)
+	if typeId == STOP {
+		tdtp.DuplicateTo.WriteFieldStop(ctx)
+		return
+	}
 	tdtp.DuplicateTo.WriteFieldBegin(ctx, name, typeId, id)
 	return
 }

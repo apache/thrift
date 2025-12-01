@@ -121,9 +121,6 @@ class TProtocolBase(object):
     def writeBinary(self, str_val):
         pass
 
-    def writeUtf8(self, str_val):
-        self.writeString(str_val.encode('utf-8'))
-
     def readMessageBegin(self):
         pass
 
@@ -183,9 +180,6 @@ class TProtocolBase(object):
 
     def readBinary(self):
         pass
-
-    def readUtf8(self):
-        return self.readString().decode('utf-8')
 
     def skip(self, ttype):
         if ttype == TType.BOOL:

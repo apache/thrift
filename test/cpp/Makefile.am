@@ -97,7 +97,7 @@ StressTestNonBlocking_LDADD = \
 #
 # Common thrift code generation rules
 #
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/SecondService.tcc: $(top_srcdir)/test/v0.16/ThriftTest.thrift $(THRIFT)
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/SecondService.tcc: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
 gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)

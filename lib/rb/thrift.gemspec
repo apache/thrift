@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'thrift'
-  s.version     = '0.22.0'
+  s.version     = '0.23.0'
   s.authors     = ['Apache Thrift Developers']
   s.email       = ['dev@thrift.apache.org']
   s.homepage    = 'http://thrift.apache.org'
@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = %w[lib ext]
 
-  s.add_development_dependency 'bundler',            '>= 1.11'
+  s.add_development_dependency 'bundler',            '~> 2.1.4'
   s.add_development_dependency 'pry',                '~> 0.11.3'
   s.add_development_dependency 'pry-byebug',         '~> 3.6'
   s.add_development_dependency 'pry-stack_explorer', '~> 0.4.9.2'

@@ -27,6 +27,8 @@
 #include <set>
 #include <iostream>
 #include <stdint.h>
+#include <chrono>
+#include <thread>
 
 namespace apache {
 namespace thrift {
@@ -42,16 +44,7 @@ static void expiredNotifier(std::shared_ptr<Runnable> runnable)
 }
 
 static void sleep_(int64_t millisec) {
-  Monitor _sleep;
-  Synchronized s(_sleep);
-
-  try {
-    _sleep.wait(millisec);
-  } catch (TimedOutException&) {
-    ;
-  } catch (...) {
-    assert(0);
-  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
 }
 
 class ThreadManagerTests {

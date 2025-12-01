@@ -31,6 +31,7 @@
     seqid :: non_neg_integer()
 }).
 -type tclient() :: #tclient{}.
+-export_type([tclient/0]).
 
 new(Protocol, Service) when
     is_atom(Service)

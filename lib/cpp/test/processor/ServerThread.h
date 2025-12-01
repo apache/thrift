@@ -91,7 +91,7 @@ public:
       try {
         stop();
       } catch (...) {
-        GlobalOutput.printf("error shutting down server");
+        TOutput::instance().printf("error shutting down server");
       }
     }
   }

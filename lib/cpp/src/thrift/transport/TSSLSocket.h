@@ -306,9 +306,8 @@ public:
    * @param manager  The AccessManager instance
    */
   virtual void access(std::shared_ptr<AccessManager> manager) { access_ = manager; }
-  static void setManualOpenSSLInitialization(bool manualOpenSSLInitialization) {
-    manualOpenSSLInitialization_ = manualOpenSSLInitialization;
-  }
+
+  static void setManualOpenSSLInitialization(bool manualOpenSSLInitialization);
 
 protected:
   std::shared_ptr<SSLContext> ctx_;
@@ -327,7 +326,7 @@ private:
   std::shared_ptr<AccessManager> access_;
   static concurrency::Mutex mutex_;
   static uint64_t count_;
-  /*THRIFT_EXPORT*/ static bool manualOpenSSLInitialization_;     // questionable to export a private member
+  static bool manualOpenSSLInitialization_;
   static bool didWeInitializeOpenSSL_;  // in that case we also perform de-init
   void setup(std::shared_ptr<TSSLSocket> ssl);
   static int passwordCallback(char* password, int size, int, void* data);
