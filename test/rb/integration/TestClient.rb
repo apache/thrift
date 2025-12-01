@@ -225,14 +225,14 @@ class SimpleClientTest < Test::Unit::TestCase
     ret = @client.testEnum(val)
 
     assert_equal(ret, 6)
-    assert_kind_of(Fixnum, ret)
+    assert_kind_of(Integer, ret)
   end
 
   def test_typedef
     p 'test_typedef'
     #UserId  testTypedef(1: UserId thing),
     assert_equal(@client.testTypedef(309858235082523), 309858235082523)
-    assert_kind_of(Fixnum, @client.testTypedef(309858235082523))
+    assert_kind_of(Integer, @client.testTypedef(309858235082523))
     true
   end
 
@@ -245,6 +245,14 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def get_struct
     Thrift::Test::Xtruct.new({'string_thing' => 'hi!', 'i32_thing' => 4 })
+  end
+
+  def test_uuid
+    p 'test_uuid'
+    val = '00112233-4455-6677-8899-aabbccddeeff'
+    ret = @client.testUuid(val)
+    assert_equal(ret, val)
+    assert_kind_of(String, ret)
   end
 
   def test_struct

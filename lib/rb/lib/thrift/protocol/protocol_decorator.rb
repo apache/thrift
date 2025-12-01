@@ -111,6 +111,10 @@ module Thrift
       @protocol.write_binary(buf)
     end
 
+    def write_uuid(uuid)
+      @protocol.write_uuid(uuid)
+    end
+
     def read_message_begin
       @protocol.read_message_begin
     end
@@ -189,6 +193,10 @@ module Thrift
 
     def read_binary
       @protocol.read_binary
+    end
+
+    def read_uuid
+      @protocol.read_uuid
     end
   end
 end

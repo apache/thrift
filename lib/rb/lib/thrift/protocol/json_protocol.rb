@@ -16,9 +16,7 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
-
-require 'base64'
+#
 
 module Thrift
   class LookaheadReader
@@ -181,6 +179,8 @@ module Thrift
         "set"
       when Types::LIST
         "lst"
+      when Types::UUID
+        "uid"
       else
         raise NotImplementedError
       end
@@ -209,6 +209,8 @@ module Thrift
         result = Types::SET
       elsif (name == "lst")
         result = Types::LIST
+      elsif (name == "uid")
+        result = Types::UUID
       else
         result = Types::STOP
       end
@@ -311,7 +313,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      trans.write(Base64.strict_encode64(str))
+      trans.write([str].pack('m0'))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -477,6 +479,10 @@ module Thrift
       write_json_base64(str)
     end
 
+    def write_uuid(uuid)
+      write_json_string(uuid)
+    end
+
     ##
     # Reading functions
     ##
@@ -555,7 +561,7 @@ module Thrift
           str += '='
         end
       end
-      Base64.strict_decode64(str)
+      str.unpack1('m0')
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
@@ -767,6 +773,10 @@ module Thrift
 
     def read_binary
       read_json_base64
+    end
+
+    def read_uuid
+      read_json_string
     end
 
     def to_s

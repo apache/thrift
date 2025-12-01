@@ -249,28 +249,44 @@ shared_examples_for 'a binary protocol' do
   it "should error gracefully when trying to write a nil string" do
     expect { @prot.write_string(nil) }.to raise_error
   end
-  
+
+  it "should write a uuid" do
+    @prot.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
+    a = @trans.read(@trans.available)
+    expect(a.unpack('C*')).to eq([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff])
+  end
+
+  it "should read a uuid" do
+    @trans.write([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff].pack('C*'))
+    uuid = @prot.read_uuid
+    expect(uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
+  end
+
+  it "should error gracefully when trying to write an invalid uuid" do
+    expect { @prot.write_uuid("invalid") }.to raise_error(Thrift::ProtocolException)
+  end
+
   it "should write the message header without version when writes are not strict" do
     @prot = protocol_class.new(@trans, true, false) # no strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
     expect(@trans.read(@trans.available)).to eq("\000\000\000\vtestMessage\001\000\000\000\021")
   end
-    
+
   it "should write the message header with a version when writes are strict" do
     @prot = protocol_class.new(@trans) # strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
     expect(@trans.read(@trans.available)).to eq("\200\001\000\001\000\000\000\vtestMessage\000\000\000\021")
   end
-  
+
   # message footer is a noop
-  
+
   it "should read a field header" do
     @trans.write([Thrift::Types::STRING, 3].pack("cn"))
     expect(@prot.read_field_begin).to eq([nil, Thrift::Types::STRING, 3])
   end
-  
+
   # field footer is a noop
-  
+
   it "should read a stop field" do
     @trans.write([Thrift::Types::STOP].pack("c"));
     expect(@prot.read_field_begin).to eq([nil, Thrift::Types::STOP, 0])
