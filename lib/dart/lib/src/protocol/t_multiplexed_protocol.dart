@@ -25,11 +25,7 @@ class TMultiplexedProtocol extends TProtocolDecorator {
 
   TMultiplexedProtocol(TProtocol protocol, String serviceName)
       : _serviceName = serviceName,
-        super(protocol) {
-    if (serviceName == null) {
-      throw ArgumentError.notNull("serviceName");
-    }
-  }
+        super(protocol);
 
   @override
   void writeMessageBegin(TMessage message) {

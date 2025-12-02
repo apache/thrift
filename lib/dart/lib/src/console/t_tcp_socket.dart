@@ -37,7 +37,7 @@ class TTcpSocket implements TSocket {
   @override
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  TTcpSocket(Socket socket)
+  TTcpSocket(Socket? socket)
       : _onStateController = StreamController.broadcast(),
         _onErrorController = StreamController.broadcast(),
         _onMessageController = StreamController.broadcast() {
@@ -46,10 +46,10 @@ class TTcpSocket implements TSocket {
     }
 
     _socket = socket;
-    _socket.listen(_onMessage, onError: _onError, onDone: close);
+    _socket!.listen(_onMessage, onError: _onError, onDone: close);
   }
 
-  Socket _socket;
+  Socket? _socket;
 
   @override
   bool get isOpen => _socket != null;
@@ -65,7 +65,7 @@ class TTcpSocket implements TSocket {
   @override
   Future close() async {
     if (_socket != null) {
-      await _socket.close();
+      await _socket!.close();
       _socket = null;
     }
 
@@ -74,7 +74,9 @@ class TTcpSocket implements TSocket {
 
   @override
   void send(Uint8List data) {
-    _socket.add(data);
+     if (_socket != null) {
+      _socket!.add(data);
+     }
   }
 
   void _onMessage(List<int> message) {

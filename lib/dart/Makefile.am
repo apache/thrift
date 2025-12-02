@@ -17,6 +17,9 @@
 # under the License.
 #
 
+# Dart build command
+DARTPUB = dart pub
+
 all-local:
 	$(DARTPUB) get
 

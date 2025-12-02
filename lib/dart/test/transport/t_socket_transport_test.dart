@@ -39,8 +39,8 @@ void main() {
   final framedResponseBase64 = base64.encode(_getFramedResponse(responseBytes));
 
   group('TClientSocketTransport', () {
-    FakeSocket socket;
-    TTransport transport;
+    late FakeSocket socket;
+    late TTransport transport;
 
     setUp(() async {
       socket = FakeSocket(sync: false);
@@ -74,8 +74,8 @@ void main() {
   }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TClientSocketTransport with FramedTransport', () {
-    FakeSocket socket;
-    TTransport transport;
+    late FakeSocket socket;
+    late TTransport transport;
 
     setUp(() async {
       socket = FakeSocket(sync: true);
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('Test client sending data over framed transport', () async {
-      String bufferText;
+      String bufferText = "";
 
       Future responseReady = transport.flush().then((_) {
         var buffer = Uint8List(responseBytes.length);
@@ -104,9 +104,9 @@ void main() {
   }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TAsyncClientSocketTransport', () {
-    FakeSocket socket;
-    FakeProtocolFactory protocolFactory;
-    TTransport transport;
+    late FakeSocket socket;
+    late FakeProtocolFactory protocolFactory;
+    late TTransport transport;
 
     setUp(() async {
       socket = FakeSocket(sync: true);
@@ -122,7 +122,7 @@ void main() {
     });
 
     test('Test response correlates to correct request', () async {
-      String bufferText;
+      String bufferText = "";
 
       Future responseReady = transport.flush().then((_) {
         var buffer = Uint8List(responseBytes.length);
@@ -152,9 +152,9 @@ void main() {
   }, timeout: Timeout(Duration(seconds: 1)));
 
   group('TAsyncClientSocketTransport with TFramedTransport', () {
-    FakeSocket socket;
-    FakeProtocolFactory protocolFactory;
-    TTransport transport;
+    late FakeSocket socket;
+    late FakeProtocolFactory protocolFactory;
+    late TTransport transport;
 
     setUp(() async {
       socket = FakeSocket(sync: true);
@@ -173,7 +173,7 @@ void main() {
     });
 
     test('Test async client sending data over framed transport', () async {
-      String bufferText;
+      String bufferText = "";
 
       Future responseReady = transport.flush().then((_) {
         var buffer = Uint8List(responseBytes.length);
@@ -251,7 +251,7 @@ class FakeSocket extends TSocket {
         _onErrorController = StreamController.broadcast(sync: sync),
         _onMessageController = StreamController.broadcast(sync: sync);
 
-  bool _isOpen;
+  bool _isOpen = false;
 
   @override
   bool get isOpen => _isOpen;
@@ -271,8 +271,8 @@ class FakeSocket extends TSocket {
     _onStateController.add(TSocketState.CLOSED);
   }
 
-  Uint8List _sendPayload;
-  Uint8List get sendPayload => _sendPayload;
+  Uint8List? _sendPayload;
+  Uint8List? get sendPayload => _sendPayload;
 
   @override
   void send(Uint8List data) {
@@ -292,7 +292,7 @@ class FakeSocket extends TSocket {
 class FakeProtocolFactory implements TProtocolFactory {
   FakeProtocolFactory();
 
-  TMessage message;
+  TMessage message = TMessage("", TMessageType.CALL, 0 /* seqid */);
 
   @override
   getProtocol(TTransport transport) => FakeProtocol(message);
