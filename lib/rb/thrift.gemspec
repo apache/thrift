@@ -12,6 +12,8 @@ Gem::Specification.new do |s|
   s.license     = 'Apache-2.0'
   s.extensions  = ['ext/extconf.rb']
 
+  s.required_ruby_version = '>= 2.4.0'
+
   s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
 
   s.rubyforge_project = 'thrift'
