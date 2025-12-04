@@ -67,8 +67,8 @@ shared_examples_for "a socket" do
     @socket.open
     allow(@handle).to receive(:closed?).and_return(true)
     expect(@socket).not_to be_open
-    expect { @socket.write("fail") }.to raise_error(IOError, "closed stream")
-    expect { @socket.read(10) }.to raise_error(IOError, "closed stream")
+    expect { @socket.write("fail") }.to raise_error(Thrift::TransportException, "closed stream") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
+    expect { @socket.read(10) }.to raise_error(Thrift::TransportException, "closed stream") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
   end
 
   it "should support the timeout accessor for read" do

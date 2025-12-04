@@ -62,7 +62,7 @@ module Thrift
     end
 
     def write(str)
-      raise IOError, "closed stream" unless open?
+      raise TransportException.new(TransportException::NOT_OPEN, "closed stream") unless open?
       str = Bytes.force_binary_encoding(str)
       begin
         if @timeout.nil? or @timeout == 0
@@ -94,7 +94,7 @@ module Thrift
     end
 
     def read(sz)
-      raise IOError, "closed stream" unless open?
+      raise TransportException.new(TransportException::NOT_OPEN, "closed stream") unless open?
 
       begin
         if @timeout.nil? or @timeout == 0
