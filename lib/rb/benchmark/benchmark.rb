@@ -40,12 +40,13 @@ class Server
     @interpreter = opts.fetch(:interpreter, "ruby")
     @host = opts.fetch(:host, ::HOST)
     @port = opts.fetch(:port, ::PORT)
+    @tls = opts.fetch(:tls, false)
   end
 
   def start
     return if @serverclass == Object
     args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
-    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
+    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{"-tls" if @tls} #{@host} #{@port} #{@serverclass.name}", "r+")
     Marshal.load(@pipe) # wait until the server has started
     sleep 0.4 # give the server time to actually start spawning sockets
   end
@@ -75,6 +76,7 @@ class BenchmarkManager
     @interpreter = opts.fetch(:interpreter, "ruby")
     @server = server
     @log_exceptions = opts.fetch(:log_exceptions, false)
+    @tls = opts.fetch(:tls, false)
   end
 
   def run
@@ -93,7 +95,7 @@ class BenchmarkManager
   end
 
   def spawn
-    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
+    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{"-tls" if @tls} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
     @pool << pipe
   end
 
@@ -249,18 +251,53 @@ def resolve_const(const)
   const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
 end
 
+def generate_certificate
+  key = OpenSSL::PKey::EC.generate("prime256v1")
+
+  cert = OpenSSL::X509::Certificate.new
+  cert.version = 2
+  cert.serial = 1
+  cert.subject = OpenSSL::X509::Name.parse("/C=US/O=Benchmark/CN=localhost")
+  cert.issuer = cert.subject
+  cert.public_key = key
+  cert.not_before = Time.now
+  cert.not_after = Time.now + 3600
+
+  # Add extensions
+  ef = OpenSSL::X509::ExtensionFactory.new
+  ef.subject_certificate = cert
+  ef.issuer_certificate = cert
+  cert.add_extension(ef.create_extension("basicConstraints", "CA:TRUE", true))
+  cert.add_extension(ef.create_extension("subjectAltName", "DNS:localhost,IP:127.0.0.1", false))
+
+  cert.sign(key, OpenSSL::Digest.new("SHA256"))
+
+  [cert, key]
+end
+
+if ENV['THRIFT_TLS']
+  puts "Generating TLS certificate and key..."
+  require 'openssl'
+
+  cert, key = generate_certificate
+  File.write(File.expand_path("cert.pem", __dir__), cert.to_pem)
+  File.write(File.expand_path("key.pem", __dir__), key.to_pem)
+end
+
 puts "Starting server..."
 args = {}
 args[:interpreter] = ENV['THRIFT_SERVER_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
 args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
 server = Server.new(args)
 server.start
 
 args = {}
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
 args[:num_processes] = (ENV['THRIFT_NUM_PROCESSES'] || 40).to_i
 args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
 args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
