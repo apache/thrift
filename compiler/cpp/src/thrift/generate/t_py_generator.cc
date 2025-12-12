@@ -785,8 +785,7 @@ void t_py_generator::generate_py_thrift_spec(ostream& out,
       indent(out) << "(" << (*m_iter)->get_key() << ", " << type_to_enum((*m_iter)->get_type())
                   << ", "
                   << "'" << (*m_iter)->get_name() << "'"
-                  << ", " << type_to_spec_args((*m_iter)->get_type()) << ", "
-                  << render_field_default_value(*m_iter) << ", "
+                  << ", " << type_to_spec_args((*m_iter)->get_type())
                   << "),"
                   << "  # " << sorted_keys_pos << '\n';
 
@@ -2747,7 +2746,11 @@ string t_py_generator::declare_argument(t_field* tfield) {
 
   result << " = ";
   if (tfield->get_value() != nullptr) {
-    result << render_field_default_value(tfield);
+    if (type->is_struct() || type->is_list() || type->is_xception() || type->is_set()) {
+      result << "None";
+    } else {
+      result << render_field_default_value(tfield);
+    }
   } else {
     result << "None";
   }
