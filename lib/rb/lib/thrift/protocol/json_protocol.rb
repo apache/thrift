@@ -16,9 +16,7 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
-
-require 'base64'
+#
 
 module Thrift
   class LookaheadReader
@@ -311,7 +309,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      trans.write(Base64.strict_encode64(str))
+      trans.write([str].pack('m0'))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -555,7 +553,7 @@ module Thrift
           str += '='
         end
       end
-      Base64.strict_decode64(str)
+      str.unpack1('m0')
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
