@@ -82,20 +82,24 @@ module Thrift
     end
 
     def write_byte(byte)
+      raise 'nil argument not allowed!' if byte.nil?
       raise RangeError if byte < -2**31 || byte >= 2**32
       trans.write([byte].pack('c'))
     end
 
     def write_i16(i16)
+      raise 'nil argument not allowed!' if i16.nil?
       trans.write([i16].pack('n'))
     end
 
     def write_i32(i32)
+      raise 'nil argument not allowed!' if i32.nil?
       raise RangeError if i32 < -2**31 || i32 >= 2**31
       trans.write([i32].pack('N'))
     end
 
     def write_i64(i64)
+      raise 'nil argument not allowed!' if i64.nil?
       raise RangeError if i64 < -2**63 || i64 >= 2**64
       hi = i64 >> 32
       lo = i64 & 0xffffffff
@@ -103,15 +107,18 @@ module Thrift
     end
 
     def write_double(dub)
+      raise 'nil argument not allowed!' if dub.nil?
       trans.write([dub].pack('G'))
     end
 
     def write_string(str)
+      raise 'nil argument not allowed!' if str.nil?
       buf = Bytes.convert_to_utf8_byte_buffer(str)
       write_binary(buf)
     end
 
     def write_binary(buf)
+      raise 'nil argument not allowed!' if buf.nil?
       write_i32(buf.bytesize)
       trans.write(buf)
     end

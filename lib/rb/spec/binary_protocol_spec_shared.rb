@@ -122,7 +122,7 @@ shared_examples_for 'a binary protocol' do
   end
   
   it "should error gracefully when trying to write a nil byte" do
-    expect { @prot.write_byte(nil) }.to raise_error
+    expect { @prot.write_byte(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
   
   it "should write an i16" do
@@ -141,7 +141,7 @@ shared_examples_for 'a binary protocol' do
   end
   
   it "should error gracefully when trying to write a nil i16" do
-    expect { @prot.write_i16(nil) }.to raise_error
+    expect { @prot.write_i16(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
   
   it "should write an i32" do
@@ -158,7 +158,7 @@ shared_examples_for 'a binary protocol' do
   end
   
   it "should error gracefully when trying to write a nil i32" do
-    expect { @prot.write_i32(nil) }.to raise_error
+    expect { @prot.write_i32(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
   
   it "should write an i64" do
@@ -181,7 +181,7 @@ shared_examples_for 'a binary protocol' do
   end
   
   it "should error gracefully when trying to write a nil i64" do
-    expect { @prot.write_i64(nil) }.to raise_error
+    expect { @prot.write_i64(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
   
   it "should write a double" do
@@ -194,7 +194,7 @@ shared_examples_for 'a binary protocol' do
   end
   
   it "should error gracefully when trying to write a nil double" do
-    expect { @prot.write_double(nil) }.to raise_error
+    expect { @prot.write_double(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
 
   if RUBY_VERSION >= '1.9'
@@ -247,9 +247,13 @@ shared_examples_for 'a binary protocol' do
   end
 
   it "should error gracefully when trying to write a nil string" do
-    expect { @prot.write_string(nil) }.to raise_error
+    expect { @prot.write_string(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
   end
-  
+
+  it "should error gracefully when trying to write a nil binary" do
+    expect { @prot.write_binary(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
+  end
+
   it "should write the message header without version when writes are not strict" do
     @prot = protocol_class.new(@trans, true, false) # no strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
