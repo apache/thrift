@@ -26,13 +26,13 @@ module Thrift
       #
       # size - The Integer size of the buffer (default: nil) to create
       #
-      # Returns a String with BINARY encoding, filled with null characters 
+      # Returns a String with BINARY encoding, filled with null characters
       # if size is greater than zero
       def self.empty_byte_buffer(size = nil)
         if (size && size > 0)
-          "\0".force_encoding(Encoding::BINARY) * size
+          "\0".b * size
         else
-          ''.force_encoding(Encoding::BINARY)
+          "".b
         end
       end
 
