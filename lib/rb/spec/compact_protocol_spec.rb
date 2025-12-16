@@ -71,6 +71,30 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should write a uuid" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+
+    proto.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
+    a = trans.read(trans.available)
+    expect(a.unpack('C*')).to eq([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff])
+  end
+
+  it "should read a uuid" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+
+    trans.write([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff].pack('C*'))
+    uuid = proto.read_uuid
+    expect(uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
+  end
+
+  it "should error gracefully when trying to write an invalid uuid" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+    expect { proto.write_uuid("invalid") }.to raise_error(Thrift::ProtocolException)
+  end
+
   it "should encode and decode a monster struct correctly" do
     trans = Thrift::MemoryBufferTransport.new
     proto = Thrift::CompactProtocol.new(trans)

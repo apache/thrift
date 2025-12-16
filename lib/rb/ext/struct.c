@@ -75,6 +75,11 @@ VALUE default_write_string(VALUE protocol, VALUE value) {
   return Qnil;
 }
 
+VALUE default_write_uuid(VALUE protocol, VALUE value) {
+  rb_funcall(protocol, write_uuid_method_id, 1, value);
+  return Qnil;
+}
+
 VALUE default_write_binary(VALUE protocol, VALUE value) {
   rb_funcall(protocol, write_binary_method_id, 1, value);
   return Qnil;
@@ -193,6 +198,10 @@ VALUE default_read_double(VALUE protocol) {
 
 VALUE default_read_string(VALUE protocol) {
   return rb_funcall(protocol, read_string_method_id, 0);
+}
+
+VALUE default_read_uuid(VALUE protocol) {
+  return rb_funcall(protocol, read_uuid_method_id, 0);
 }
 
 VALUE default_read_binary(VALUE protocol) {
@@ -342,6 +351,8 @@ static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_i
     } else {
       default_write_binary(protocol, value);
     }
+  } else if (ttype == TTYPE_UUID) {
+    default_write_uuid(protocol, value);
   } else if (IS_CONTAINER(ttype)) {
     write_container(ttype, field_info, value, protocol);
   } else if (ttype == TTYPE_STRUCT) {
@@ -452,6 +463,8 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     }
   } else if (ttype == TTYPE_DOUBLE) {
     result = default_read_double(protocol);
+  } else if (ttype == TTYPE_UUID) {
+    result = default_read_uuid(protocol);
   } else if (ttype == TTYPE_STRUCT) {
     VALUE klass = rb_hash_aref(field_info, class_sym);
     result = rb_class_new_instance(0, NULL, klass);
