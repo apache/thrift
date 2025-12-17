@@ -19,6 +19,7 @@
 
 require 'rubygems'
 $:.unshift File.dirname(__FILE__) + '/../lib'
+$:.unshift File.dirname(__FILE__) + '/../ext'
 require 'thrift'
 require 'stringio'
 
@@ -40,12 +41,13 @@ class Server
     @interpreter = opts.fetch(:interpreter, "ruby")
     @host = opts.fetch(:host, ::HOST)
     @port = opts.fetch(:port, ::PORT)
+    @tls = opts.fetch(:tls, false)
   end
 
   def start
     return if @serverclass == Object
     args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
-    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
+    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{"-tls" if @tls} #{@host} #{@port} #{@serverclass.name}", "r+")
     Marshal.load(@pipe) # wait until the server has started
     sleep 0.4 # give the server time to actually start spawning sockets
   end
@@ -75,6 +77,7 @@ class BenchmarkManager
     @interpreter = opts.fetch(:interpreter, "ruby")
     @server = server
     @log_exceptions = opts.fetch(:log_exceptions, false)
+    @tls = opts.fetch(:tls, false)
   end
 
   def run
@@ -93,13 +96,15 @@ class BenchmarkManager
   end
 
   def spawn
-    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
+    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{"-tls" if @tls} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
     @pool << pipe
   end
 
   def socket_class
     if @socket
       Thrift::UNIXSocket
+    elsif @tls
+      Thrift::SSLSocket
     else
       Thrift::Socket
     end
@@ -255,12 +260,14 @@ args[:interpreter] = ENV['THRIFT_SERVER_INTERPRETER'] || ENV['THRIFT_INTERPRETER
 args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
 server = Server.new(args)
 server.start
 
 args = {}
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
 args[:num_processes] = (ENV['THRIFT_NUM_PROCESSES'] || 40).to_i
 args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
 args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
