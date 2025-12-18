@@ -1,0 +1,325 @@
+version: 2
+mergeable:
+  - when: pull_request.*
+    name: Add 'c_glib' label to PR if changeset includes changes to the lib/c_glib or test/c_glib directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/c_glib/.*'
+          - must_include:
+              regex: 'test/c_glib/.*'
+    pass:
+      - do: labels
+        labels: ['c_glib']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'c++' label to PR if changeset includes changes to the lib/cpp or test/cpp directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/cpp/.*'
+          - must_include:
+              regex: 'test/cpp/.*'
+    pass:
+      - do: labels
+        labels: ['c++']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'dart' label to PR if changeset includes changes to the lib/dart or test/dart directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/dart/.*'
+          - must_include:
+              regex: 'test/dart/.*'
+    pass:
+      - do: labels
+        labels: ['dart']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'delphi' label to PR if changeset includes changes to the lib/delphi or test/delphi directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/delphi/.*'
+          - must_include:
+              regex: 'test/delphi/.*'
+    pass:
+      - do: labels
+        labels: ['delphi']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'erlang' label to PR if changeset includes changes to the lib/erl or test/erl directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/erl/.*'
+          - must_include:
+              regex: 'test/erl/.*'
+    pass:
+      - do: labels
+        labels: ['erlang']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'golang' label to PR if changeset includes changes to the lib/go or test/go directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/go/.*'
+          - must_include:
+              regex: 'test/go/.*'
+    pass:
+      - do: labels
+        labels: ['golang']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'haxe' label to PR if changeset includes changes to the lib/haxe or test/haxe directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/haxe/.*'
+          - must_include:
+              regex: 'test/haxe/.*'
+    pass:
+      - do: labels
+        labels: ['haxe']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'java' label to PR if changeset includes changes to the lib/java or test/java directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/java/.*'
+          - must_include:
+              regex: 'lib/javame/.*'
+    pass:
+      - do: labels
+        labels: ['java']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'javascript' label to PR if changeset includes changes to the lib/js or test/js directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/js/.*'
+    pass:
+      - do: labels
+        labels: ['javascript']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'json' label to PR if changeset includes changes to the lib/json or test/json directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/json/.*'
+    pass:
+      - do: labels
+        labels: ['json']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'kotlin' label to PR if changeset includes changes to the lib/kotlin or test/kotlin directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/kotlin/.*'
+    pass:
+      - do: labels
+        labels: ['kotlin']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'lua' label to PR if changeset includes changes to the lib/lua or test/lua directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/lua/.*'
+          - must_include:
+              regex: 'test/lua/.*'
+    pass:
+      - do: labels
+        labels: ['lua']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'c#' label to PR if changeset includes changes to the lib/netstd or test/netstd directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/netstd/.*'
+          - must_include:
+              regex: 'test/netstd/.*'
+    pass:
+      - do: labels
+        labels: ['c#']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'nodejs' label to PR if changeset includes changes to the lib/nodejs or test/nodejs directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/nodejs/.*'
+    pass:
+      - do: labels
+        labels: ['nodejs']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'typescript' label to PR if changeset includes changes to the lib/nodets or test/nodets directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/nodets/.*'
+    pass:
+      - do: labels
+        labels: ['typescript']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'ocaml' label to PR if changeset includes changes to the lib/ocaml or test/ocaml directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/ocaml/.*'
+          - must_include:
+              regex: 'test/ocaml/.*'
+    pass:
+      - do: labels
+        labels: ['ocaml']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'perl' label to PR if changeset includes changes to the lib/perl or test/perl directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/perl/.*'
+          - must_include:
+              regex: 'test/perl/.*'
+    pass:
+      - do: labels
+        labels: ['perl']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'php' label to PR if changeset includes changes to the lib/php or test/php directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/php/.*'
+          - must_include:
+              regex: 'test/php/.*'
+    pass:
+      - do: labels
+        labels: ['php']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'python' label to PR if changeset includes changes to the lib/py or test/py directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/py/.*'
+          - must_include:
+              regex: 'test/py/.*'
+          - must_include:
+              regex: 'test/py.tornado/.*'
+          - must_include:
+              regex: 'test/py.twisted/.*'
+    pass:
+      - do: labels
+        labels: ['python']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'ruby' label to PR if changeset includes changes to the lib/rb or test/rb directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/rb/.*'
+          - must_include:
+              regex: 'test/rb/.*'
+    pass:
+      - do: labels
+        labels: ['ruby']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'rust' label to PR if changeset includes changes to the lib/rs or test/rs directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/rs/.*'
+          - must_include:
+              regex: 'test/rs/.*'
+    pass:
+      - do: labels
+        labels: ['ruby']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'swift' label to PR if changeset includes changes to the lib/swift or test/swift directories
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/swift/.*'
+          - must_include:
+              regex: 'test/swift/.*'
+    pass:
+      - do: labels
+        labels: ['swift']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'compiler' label to PR if changeset includes changes to the compiler/cpp directory
+    validate:
+      - do: changeset
+        must_include:
+          regex: 'compiler/cpp/.*'
+    pass:
+      - do: labels
+        labels: ['compiler']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'github_actions' label to PR if changeset includes changes to the .github/workflows directory
+    validate:
+      - do: changeset
+        must_include:
+          regex: '.github/workflows/.*'
+    pass:
+      - do: labels
+        labels: ['github_actions']
+        mode: 'add'
