@@ -36,9 +36,6 @@ clean-local:
 check-local: all
 	$(BUNDLER) install
 	$(BUNDLER) exec rake
-	$(RUBY) test/TestBinaryProtocol.rb
-	$(RUBY) test/TestCompactProtocol.rb
-	$(RUBY) test/TestJsonProtocol.rb
 
 endif
 
@@ -58,5 +55,4 @@ EXTRA_DIST = \
 	benchmark \
 	script \
 	spec \
-	test \
 	README.md
