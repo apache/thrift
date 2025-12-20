@@ -109,7 +109,7 @@ VALUE class_sym;
 VALUE binary_sym;
 VALUE protocol_exception_class;
 
-void Init_thrift_native() {
+RUBY_FUNC_EXPORTED void Init_thrift_native(void) {
   // cached classes
   thrift_module = rb_const_get(rb_cObject, rb_intern("Thrift"));
   rb_global_variable(&thrift_module);
@@ -168,7 +168,7 @@ void Init_thrift_native() {
   read_binary_method_id = rb_intern("read_binary");
   read_double_method_id = rb_intern("read_double");
   read_map_begin_method_id = rb_intern("read_map_begin");
-  read_map_end_method_id = rb_intern("read_map_end");  
+  read_map_end_method_id = rb_intern("read_map_end");
   read_list_begin_method_id = rb_intern("read_list_begin");
   read_list_end_method_id = rb_intern("read_list_end");
   read_set_begin_method_id = rb_intern("read_set_begin");
@@ -192,7 +192,7 @@ void Init_thrift_native() {
   fields_const_id = rb_intern("FIELDS");
   transport_ivar_id = rb_intern("@trans");
   strict_read_ivar_id = rb_intern("@strict_read");
-  strict_write_ivar_id = rb_intern("@strict_write");  
+  strict_write_ivar_id = rb_intern("@strict_write");
 
   // cached symbols
   type_sym = ID2SYM(rb_intern("type"));
