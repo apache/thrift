@@ -5,3 +5,5 @@ gemspec
 # Only required for tests with Rack 2.x on Ruby 4.0+
 gem 'cgi'
 gem 'ostruct'
+
+eval_gemfile File.expand_path("Gemfile.linters", __dir__)

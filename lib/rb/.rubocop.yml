@@ -1,0 +1,13 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+
+AllCops:
+  DisabledByDefault: true
+  SuggestExtensions: false
+  TargetRubyVersion: 2.7
+  Exclude:
+    - "**/vendor/**/*"
+
+Layout/IndentationConsistency:
+  Enabled: true

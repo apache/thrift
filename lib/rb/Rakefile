@@ -81,7 +81,7 @@ task :build_ext => :'gen-rb' do
    Dir::chdir(File::dirname('ext/extconf.rb')) do
       unless sh "ruby #{File::basename('ext/extconf.rb')}"
         $stderr.puts "Failed to run extconf"
-          break
+        break
       end
       unless sh "make"
         $stderr.puts "make failed"
@@ -101,6 +101,13 @@ end
 desc 'Run benchmarking of NonblockingServer'
 task :benchmark do
   ruby 'benchmark/benchmark.rb'
+end
+
+begin
+  require "rubocop/rake_task"
+  RuboCop::RakeTask.new
+rescue LoadError
+  task(:rubocop) { abort "Install the rubocop gem to run a static analysis" }
 end
 
 desc 'Builds the thrift gem'
