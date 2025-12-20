@@ -62,6 +62,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel flake8
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "2.7"
+          bundler-cache: true
+          working-directory: "lib/rb"
+
       # Generate thrift files so the static code analysis includes an analysis
       # of the files the thrift compiler spits out.
       - name: Build compiler
@@ -155,6 +162,13 @@ jobs:
           composer install --quiet
           ./vendor/bin/phpcs
 
+      - name: Run rubocop
+        id: rubocop
+        continue-on-error: true
+        working-directory: "lib/rb"
+        run: |
+          bundle exec rubocop --config .rubocop.yml --format progress --format github . ../../test/rb ../../tutorial/rb
+
       - name: Print statistics
         if: ${{ always() }}
         run: |
@@ -176,6 +190,7 @@ jobs:
           CPPCHECK_OUTCOME: ${{ steps.cppcheck.outcome }}
           FLAKE8_OUTCOME: ${{ steps.flake8.outcome }}
           PHPCS_OUTCOME: ${{ steps.phpcs.outcome }}
+          RUBOCOP_OUTCOME: ${{ steps.rubocop.outcome }}
         run: |
           failed=0
 
@@ -189,6 +204,10 @@ jobs:
           fi
           if [ "$PHPCS_OUTCOME" != "success" ]; then
             echo "::error::Step 'phpcs' failed (outcome: $PHPCS_OUTCOME)"
+            failed=1
+          fi
+          if [ "$RUBOCOP_OUTCOME" != "success" ]; then
+            echo "::error::Step 'rubocop' failed (outcome: $RUBOCOP_OUTCOME)"
             failed=1
           fi
 
