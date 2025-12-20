@@ -62,7 +62,7 @@ namespace :'gen-rb' do
     dir = File.dirname(__FILE__) + '/benchmark'
     sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/Benchmark.thrift"
   end
-  
+
   task :'debug_proto' do
     sh "mkdir", "-p", "test/debug_proto"
     sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/v0.16/DebugProtoTest.thrift"
@@ -72,6 +72,7 @@ end
 desc "Build the native library"
 task :build_ext => :'gen-rb' do
    next if defined?(RUBY_ENGINE) && RUBY_ENGINE =~ /jruby/
+   next if ENV['SKIP_BUILD_EXT'] == '1'
    Dir::chdir(File::dirname('ext/extconf.rb')) do
       unless sh "ruby #{File::basename('ext/extconf.rb')}"
         $stderr.puts "Failed to run extconf"
@@ -115,6 +116,6 @@ end
 
 CLEAN.include [
   '.bundle', 'benchmark/gen-rb', 'coverage', 'ext/*.{o,bundle,so,dll}', 'ext/mkmf.log',
-  'ext/Makefile', 'ext/conftest.dSYM', 'Gemfile.lock', 'mkmf.log', 'pkg',  'spec/gen-rb',
-  'test', 'thrift-*.gem'
+  'ext/Makefile', 'ext/conftest.dSYM', 'ext/thrift_native.bundle.dSYM', 'mkmf.log',
+  'pkg',  'spec/gen-rb', 'test/debug_proto/gen-rb', 'thrift-*.gem'
 ]
