@@ -102,7 +102,7 @@ static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, V
   int id = FIX2INT(id_value);
   int last_id = LAST_ID(self);
   VALUE transport = GET_TRANSPORT(self);
-  
+
   // if there's a type override, use that.
   int8_t type_to_write = RTEST(type_override) ? FIX2INT(type_override) : get_compact_type(type);
   // check if we can use delta encoding for the field id
@@ -206,7 +206,7 @@ VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE 
   write_byte_direct(transport, (VERSION & VERSION_MASK) | ((FIX2INT(type) << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
   write_varint32(transport, FIX2INT(seqid));
   rb_thrift_compact_proto_write_string(self, name);
-  
+
   return Qnil;
 }
 
@@ -441,7 +441,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
     buf[len] = 0;
     rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
   }
-  
+
   int8_t version_and_type = read_byte_direct(self);
   int8_t version = version_and_type & VERSION_MASK;
   if (version != VERSION) {
@@ -450,7 +450,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
     buf[len] = 0;
     rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
   }
-  
+
   int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
   int32_t seqid = (int32_t)read_varint64(self);
   VALUE messageName = rb_thrift_compact_proto_read_string(self);
@@ -467,7 +467,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 
     // mask off the 4 MSB of the type header. it could contain a field id delta.
     uint8_t modifier = ((type & 0xf0) >> 4);
-    
+
     if (modifier == 0) {
       // not a delta. look ahead for the zigzag varint field id.
       (void) LAST_ID(self);
@@ -565,7 +565,7 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
-static void Init_constants() {
+static void Init_constants(void) {
   thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
   rb_global_variable(&thrift_compact_protocol_class);
 
@@ -582,7 +582,7 @@ static void Init_constants() {
   rbuf_ivar_id = rb_intern("@rbuf");
 }
 
-static void Init_rb_methods() {
+static void Init_rb_methods(void) {
   rb_define_method(thrift_compact_protocol_class, "native?", rb_thrift_compact_proto_native_qmark, 0);
 
   rb_define_method(thrift_compact_protocol_class, "write_message_begin", rb_thrift_compact_proto_write_message_begin, 3);
@@ -632,7 +632,7 @@ static void Init_rb_methods() {
   rb_define_method(thrift_compact_protocol_class, "read_set_end",       rb_thrift_compact_proto_read_set_end, 0);
 }
 
-void Init_compact_protocol() {
+void Init_compact_protocol(void) {
   Init_constants();
   Init_rb_methods();
 }
