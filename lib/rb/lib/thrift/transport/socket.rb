@@ -28,15 +28,24 @@ module Thrift
       @timeout = timeout
       @desc = "#{host}:#{port}"
       @handle = nil
+      @linger_on = true
+      @linger_time = 0
     end
 
-    attr_accessor :handle, :timeout
+    attr_accessor :handle, :timeout, :linger_on, :linger_time
+
+    def linger(on, seconds)
+      @linger_on = on
+      @linger_time = seconds
+      apply_linger
+    end
 
     def open
       for addrinfo in ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM) do
         begin
           socket = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
           socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+          apply_linger(socket)
           sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
           begin
             socket.connect_nonblock(sockaddr)
@@ -138,6 +147,15 @@ module Thrift
 
     def to_s
       "socket(#{@host}:#{@port})"
+    end
+
+    private
+
+    def apply_linger(socket = @handle)
+      return if socket.nil? || socket.closed?
+
+      option = [@linger_on ? 1 : 0, @linger_time].pack('ii')
+      socket.setsockopt(::Socket::SOL_SOCKET, ::Socket::SO_LINGER, option)
     end
   end
 end

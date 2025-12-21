@@ -30,8 +30,8 @@ module Thrift
     attr_accessor :ssl_context
 
     def listen
-      socket = TCPServer.new(@host, @port)
-      @handle = OpenSSL::SSL::SSLServer.new(socket, @ssl_context)
+      super
+      @handle = OpenSSL::SSL::SSLServer.new(@handle, @ssl_context)
     end
     
     def to_s
