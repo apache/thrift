@@ -53,8 +53,18 @@ describe 'SSLSocket' do
       @socket.open
     end
 
+    it "should set linger on the underlying socket" do
+      expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
+      expect(::Socket).to receive(:sockaddr_in)
+      expect(@simple_socket_handle).to receive(:setsockopt).with(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack('ii'))
+      expect(@simple_socket_handle).to receive(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, nil).and_return(@handle)
+      expect(@handle).to receive(:post_connection_check).with('localhost')
+      @socket.open
+    end
+
     it "should accept host/port options" do
-      handle = double("Handle", :connect_nonblock => true, :setsockopt => nil)
+      handle = double("Handle", :connect_nonblock => true, :setsockopt => nil, :closed? => false)
       allow(::Socket).to receive(:new).and_return(handle)
       expect(::Socket).to receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
       expect(::Socket).to receive(:sockaddr_in)
