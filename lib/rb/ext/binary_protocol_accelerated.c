@@ -43,7 +43,7 @@ static void write_byte_direct(VALUE trans, int8_t b) {
 
 static void write_i16_direct(VALUE trans, int16_t value) {
   char data[2];
-  
+
   data[1] = value;
   data[0] = (value >> 8);
 
@@ -131,7 +131,7 @@ VALUE rb_thrift_binary_proto_write_message_begin(VALUE self, VALUE name, VALUE t
     write_byte_direct(trans, FIX2INT(type));
     write_i32_direct(trans, FIX2INT(seqid));
   }
-  
+
   return Qnil;
 }
 
@@ -139,7 +139,7 @@ VALUE rb_thrift_binary_proto_write_field_begin(VALUE self, VALUE name, VALUE typ
   VALUE trans = GET_TRANSPORT(self);
   write_byte_direct(trans, FIX2INT(type));
   write_i16_direct(trans, FIX2INT(id));
-  
+
   return Qnil;
 }
 
@@ -153,7 +153,7 @@ VALUE rb_thrift_binary_proto_write_map_begin(VALUE self, VALUE ktype, VALUE vtyp
   write_byte_direct(trans, FIX2INT(ktype));
   write_byte_direct(trans, FIX2INT(vtype));
   write_i32_direct(trans, FIX2INT(size));
-  
+
   return Qnil;
 }
 
@@ -161,7 +161,7 @@ VALUE rb_thrift_binary_proto_write_list_begin(VALUE self, VALUE etype, VALUE siz
   VALUE trans = GET_TRANSPORT(self);
   write_byte_direct(trans, FIX2INT(etype));
   write_i32_direct(trans, FIX2INT(size));
-  
+
   return Qnil;
 }
 
@@ -311,9 +311,9 @@ VALUE rb_thrift_binary_proto_read_message_begin(VALUE self) {
   VALUE strict_read = GET_STRICT_READ(self);
   VALUE name, seqid;
   int type;
-  
+
   int version = read_i32_direct(self);
-  
+
   if (version < 0) {
     if ((version & VERSION_MASK) != VERSION_1) {
       rb_exc_raise(get_protocol_exception(INT2FIX(BAD_VERSION), rb_str_new2("Missing version identifier")));
@@ -329,7 +329,7 @@ VALUE rb_thrift_binary_proto_read_message_begin(VALUE self) {
     type = read_byte_direct(self);
     seqid = rb_thrift_binary_proto_read_i32(self);
   }
-  
+
   return rb_ary_new3(3, name, INT2FIX(type), seqid);
 }
 
@@ -400,7 +400,7 @@ VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
-void Init_binary_protocol_accelerated() {
+void Init_binary_protocol_accelerated(void) {
   VALUE thrift_binary_protocol_class = rb_const_get(thrift_module, rb_intern("BinaryProtocol"));
 
   VERSION_1 = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_1")));

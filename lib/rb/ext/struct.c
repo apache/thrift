@@ -691,7 +691,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
-void Init_struct() {
+void Init_struct(void) {
   VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
 
   rb_define_method(struct_module, "write", rb_thrift_struct_write, 1);
