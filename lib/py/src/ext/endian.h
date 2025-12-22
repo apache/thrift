@@ -29,6 +29,7 @@
 #else
 #include <netinet/in.h>
 
+#ifndef ntohll
 static inline unsigned long long ntohll(unsigned long long n) {
   union {
     unsigned long long f;
@@ -43,8 +44,11 @@ static inline unsigned long long ntohll(unsigned long long n) {
          | static_cast<unsigned long long>(u.t[5]) << 16
          | static_cast<unsigned long long>(u.t[6]) << 8 | static_cast<unsigned long long>(u.t[7]);
 }
+#endif
 
+#ifndef htonll
 #define htonll(n) ntohll(n)
+#endif
 
 #endif // !_WIN32
 
