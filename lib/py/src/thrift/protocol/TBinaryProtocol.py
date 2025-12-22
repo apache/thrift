@@ -17,9 +17,14 @@
 # under the License.
 #
 
-from struct import pack, unpack
+from __future__ import annotations
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
+from struct import pack, unpack
+from typing import Any
+
+from thrift.protocol.TProtocol import TProtocolBase, TProtocolException, TProtocolFactory
+from thrift.Thrift import TType
+from thrift.transport.TTransport import TTransportBase
 
 
 class TBinaryProtocol(TProtocolBase):
@@ -30,108 +35,119 @@ class TBinaryProtocol(TProtocolBase):
     # instead it'll stay in 32 bit-land.
 
     # VERSION_MASK = 0xffff0000
-    VERSION_MASK = -65536
+    VERSION_MASK: int = -65536
 
     # VERSION_1 = 0x80010000
-    VERSION_1 = -2147418112
+    VERSION_1: int = -2147418112
 
-    TYPE_MASK = 0x000000ff
+    TYPE_MASK: int = 0x000000ff
 
-    def __init__(self, trans, strictRead=False, strictWrite=True, **kwargs):
+    strictRead: bool
+    strictWrite: bool
+    string_length_limit: int | None
+    container_length_limit: int | None
+
+    def __init__(
+        self,
+        trans: TTransportBase,
+        strictRead: bool = False,
+        strictWrite: bool = True,
+        **kwargs: Any,
+    ) -> None:
         TProtocolBase.__init__(self, trans)
         self.strictRead = strictRead
         self.strictWrite = strictWrite
         self.string_length_limit = kwargs.get('string_length_limit', None)
         self.container_length_limit = kwargs.get('container_length_limit', None)
 
-    def _check_string_length(self, length):
+    def _check_string_length(self, length: int) -> None:
         self._check_length(self.string_length_limit, length)
 
-    def _check_container_length(self, length):
+    def _check_container_length(self, length: int) -> None:
         self._check_length(self.container_length_limit, length)
 
-    def writeMessageBegin(self, name, type, seqid):
+    def writeMessageBegin(self, name: str, ttype: int, seqid: int) -> None:
         if self.strictWrite:
-            self.writeI32(TBinaryProtocol.VERSION_1 | type)
+            self.writeI32(TBinaryProtocol.VERSION_1 | ttype)
             self.writeString(name)
             self.writeI32(seqid)
         else:
             self.writeString(name)
-            self.writeByte(type)
+            self.writeByte(ttype)
             self.writeI32(seqid)
 
-    def writeMessageEnd(self):
+    def writeMessageEnd(self) -> None:
         pass
 
-    def writeStructBegin(self, name):
+    def writeStructBegin(self, name: str) -> None:
         pass
 
-    def writeStructEnd(self):
+    def writeStructEnd(self) -> None:
         pass
 
-    def writeFieldBegin(self, name, type, id):
-        self.writeByte(type)
-        self.writeI16(id)
+    def writeFieldBegin(self, name: str, ttype: int, fid: int) -> None:
+        self.writeByte(ttype)
+        self.writeI16(fid)
 
-    def writeFieldEnd(self):
+    def writeFieldEnd(self) -> None:
         pass
 
-    def writeFieldStop(self):
+    def writeFieldStop(self) -> None:
         self.writeByte(TType.STOP)
 
-    def writeMapBegin(self, ktype, vtype, size):
+    def writeMapBegin(self, ktype: int, vtype: int, size: int) -> None:
         self.writeByte(ktype)
         self.writeByte(vtype)
         self.writeI32(size)
 
-    def writeMapEnd(self):
+    def writeMapEnd(self) -> None:
         pass
 
-    def writeListBegin(self, etype, size):
+    def writeListBegin(self, etype: int, size: int) -> None:
         self.writeByte(etype)
         self.writeI32(size)
 
-    def writeListEnd(self):
+    def writeListEnd(self) -> None:
         pass
 
-    def writeSetBegin(self, etype, size):
+    def writeSetBegin(self, etype: int, size: int) -> None:
         self.writeByte(etype)
         self.writeI32(size)
 
-    def writeSetEnd(self):
+    def writeSetEnd(self) -> None:
         pass
 
-    def writeBool(self, bool):
-        if bool:
+    def writeBool(self, bool_val: bool) -> None:
+        if bool_val:
             self.writeByte(1)
         else:
             self.writeByte(0)
 
-    def writeByte(self, byte):
+    def writeByte(self, byte: int) -> None:
         buff = pack("!b", byte)
         self.trans.write(buff)
 
-    def writeI16(self, i16):
+    def writeI16(self, i16: int) -> None:
         buff = pack("!h", i16)
         self.trans.write(buff)
 
-    def writeI32(self, i32):
+    def writeI32(self, i32: int) -> None:
         buff = pack("!i", i32)
         self.trans.write(buff)
 
-    def writeI64(self, i64):
+    def writeI64(self, i64: int) -> None:
         buff = pack("!q", i64)
         self.trans.write(buff)
 
-    def writeDouble(self, dub):
+    def writeDouble(self, dub: float) -> None:
         buff = pack("!d", dub)
         self.trans.write(buff)
 
-    def writeBinary(self, str):
-        self.writeI32(len(str))
-        self.trans.write(str)
+    def writeBinary(self, str_val: bytes) -> None:
+        self.writeI32(len(str_val))
+        self.trans.write(str_val)
 
-    def readMessageBegin(self):
+    def readMessageBegin(self) -> tuple[str, int, int]:
         sz = self.readI32()
         if sz < 0:
             version = sz & TBinaryProtocol.VERSION_MASK
@@ -151,85 +167,85 @@ class TBinaryProtocol(TProtocolBase):
             seqid = self.readI32()
         return (name, type, seqid)
 
-    def readMessageEnd(self):
+    def readMessageEnd(self) -> None:
         pass
 
-    def readStructBegin(self):
+    def readStructBegin(self) -> str | None:
         pass
 
-    def readStructEnd(self):
+    def readStructEnd(self) -> None:
         pass
 
-    def readFieldBegin(self):
+    def readFieldBegin(self) -> tuple[str | None, int, int]:
         type = self.readByte()
         if type == TType.STOP:
             return (None, type, 0)
         id = self.readI16()
         return (None, type, id)
 
-    def readFieldEnd(self):
+    def readFieldEnd(self) -> None:
         pass
 
-    def readMapBegin(self):
+    def readMapBegin(self) -> tuple[int, int, int]:
         ktype = self.readByte()
         vtype = self.readByte()
         size = self.readI32()
         self._check_container_length(size)
         return (ktype, vtype, size)
 
-    def readMapEnd(self):
+    def readMapEnd(self) -> None:
         pass
 
-    def readListBegin(self):
+    def readListBegin(self) -> tuple[int, int]:
         etype = self.readByte()
         size = self.readI32()
         self._check_container_length(size)
         return (etype, size)
 
-    def readListEnd(self):
+    def readListEnd(self) -> None:
         pass
 
-    def readSetBegin(self):
+    def readSetBegin(self) -> tuple[int, int]:
         etype = self.readByte()
         size = self.readI32()
         self._check_container_length(size)
         return (etype, size)
 
-    def readSetEnd(self):
+    def readSetEnd(self) -> None:
         pass
 
-    def readBool(self):
+    def readBool(self) -> bool:
         byte = self.readByte()
         if byte == 0:
             return False
         return True
 
-    def readByte(self):
+    def readByte(self) -> int:
         buff = self.trans.readAll(1)
         val, = unpack('!b', buff)
         return val
 
-    def readI16(self):
+    def readI16(self) -> int:
         buff = self.trans.readAll(2)
         val, = unpack('!h', buff)
         return val
 
-    def readI32(self):
+    def readI32(self) -> int:
         buff = self.trans.readAll(4)
         val, = unpack('!i', buff)
         return val
 
-    def readI64(self):
+    def readI64(self) -> int:
         buff = self.trans.readAll(8)
         val, = unpack('!q', buff)
         return val
 
-    def readDouble(self):
+    def readDouble(self) -> float:
         buff = self.trans.readAll(8)
         val, = unpack('!d', buff)
         return val
 
-    def readBinary(self):
+    def readBinary(self) -> bytes:
         size = self.readI32()
         self._check_string_length(size)
         s = self.trans.readAll(size)
@@ -237,13 +253,23 @@ class TBinaryProtocol(TProtocolBase):
 
 
 class TBinaryProtocolFactory(TProtocolFactory):
-    def __init__(self, strictRead=False, strictWrite=True, **kwargs):
+    strictRead: bool
+    strictWrite: bool
+    string_length_limit: int | None
+    container_length_limit: int | None
+
+    def __init__(
+        self,
+        strictRead: bool = False,
+        strictWrite: bool = True,
+        **kwargs: Any,
+    ) -> None:
         self.strictRead = strictRead
         self.strictWrite = strictWrite
         self.string_length_limit = kwargs.get('string_length_limit', None)
         self.container_length_limit = kwargs.get('container_length_limit', None)
 
-    def getProtocol(self, trans):
+    def getProtocol(self, trans: TTransportBase) -> TBinaryProtocol:
         prot = TBinaryProtocol(trans, self.strictRead, self.strictWrite,
                                string_length_limit=self.string_length_limit,
                                container_length_limit=self.container_length_limit)
@@ -270,13 +296,12 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
            Please feel free to report bugs and/or success stories
            to the public mailing list.
     """
-    pass
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         fallback = kwargs.pop('fallback', True)
         super(TBinaryProtocolAccelerated, self).__init__(*args, **kwargs)
         try:
-            from thrift.protocol import fastbinary
+            from thrift.protocol import fastbinary  # type: ignore[attr-defined]
         except ImportError:
             if not fallback:
                 raise
@@ -286,15 +311,21 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
 
 
 class TBinaryProtocolAcceleratedFactory(TProtocolFactory):
-    def __init__(self,
-                 string_length_limit=None,
-                 container_length_limit=None,
-                 fallback=True):
+    string_length_limit: int | None
+    container_length_limit: int | None
+    _fallback: bool
+
+    def __init__(
+        self,
+        string_length_limit: int | None = None,
+        container_length_limit: int | None = None,
+        fallback: bool = True,
+    ) -> None:
         self.string_length_limit = string_length_limit
         self.container_length_limit = container_length_limit
         self._fallback = fallback
 
-    def getProtocol(self, trans):
+    def getProtocol(self, trans: TTransportBase) -> TBinaryProtocolAccelerated:
         return TBinaryProtocolAccelerated(
             trans,
             string_length_limit=self.string_length_limit,

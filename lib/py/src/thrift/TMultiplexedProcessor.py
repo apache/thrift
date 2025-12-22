@@ -17,17 +17,29 @@
 # under the License.
 #
 
+from __future__ import annotations
+
+from typing import Any, Callable, TYPE_CHECKING
+
 from thrift.Thrift import TProcessor, TMessageType
 from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
 from thrift.protocol.TProtocol import TProtocolException
 
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolBase
+
 
 class TMultiplexedProcessor(TProcessor):
-    def __init__(self):
+    """Processor that multiplexes multiple services on a single connection."""
+
+    defaultProcessor: TProcessor | None
+    services: dict[str, TProcessor]
+
+    def __init__(self) -> None:
         self.defaultProcessor = None
         self.services = {}
 
-    def registerDefault(self, processor):
+    def registerDefault(self, processor: TProcessor) -> None:
         """
         If a non-multiplexed processor connects to the server and wants to
         communicate, use the given processor to handle it.  This mechanism
@@ -36,14 +48,14 @@ class TMultiplexedProcessor(TProcessor):
         """
         self.defaultProcessor = processor
 
-    def registerProcessor(self, serviceName, processor):
+    def registerProcessor(self, serviceName: str, processor: TProcessor) -> None:
         self.services[serviceName] = processor
 
-    def on_message_begin(self, func):
+    def on_message_begin(self, func: Callable[[str, int, int], None]) -> None:
         for key in self.services.keys():
             self.services[key].on_message_begin(func)
 
-    def process(self, iprot, oprot):
+    def process(self, iprot: TProtocolBase, oprot: TProtocolBase) -> bool | None:
         (name, type, seqid) = iprot.readMessageBegin()
         if type != TMessageType.CALL and type != TMessageType.ONEWAY:
             raise TProtocolException(
@@ -75,8 +87,12 @@ class TMultiplexedProcessor(TProcessor):
 
 
 class StoredMessageProtocol(TProtocolDecorator.TProtocolDecorator):
-    def __init__(self, protocol, messageBegin):
+    """Protocol decorator that stores and returns a predetermined message begin."""
+
+    messageBegin: tuple[str, int, int]
+
+    def __init__(self, protocol: TProtocolBase, messageBegin: tuple[str, int, int]) -> None:
         self.messageBegin = messageBegin
 
-    def readMessageBegin(self):
+    def readMessageBegin(self) -> tuple[str, int, int]:
         return self.messageBegin

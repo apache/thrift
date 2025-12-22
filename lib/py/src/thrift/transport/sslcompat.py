@@ -17,15 +17,18 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 import logging
 import sys
+from typing import Any, Callable
 
 from thrift.transport.TTransport import TTransportException
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-def legacy_validate_callback(cert, hostname):
+def legacy_validate_callback(cert: dict[str, Any], hostname: str) -> None:
     """legacy method to validate the peer's SSL certificate, and to check
     the commonName of the certificate to ensure it matches the hostname we
     used to make this connection.  Does not support subjectAltName records
@@ -64,7 +67,7 @@ def legacy_validate_callback(cert, hostname):
         % (hostname, cert))
 
 
-def _optional_dependencies():
+def _optional_dependencies() -> tuple[bool, Callable[[dict[str, Any], str], None]]:
     try:
         import ipaddress  # noqa
         logger.debug('ipaddress module is available')
@@ -73,9 +76,10 @@ def _optional_dependencies():
         logger.warning('ipaddress module is unavailable')
         ipaddr = False
 
+    match: Callable[[dict[str, Any], str], None]
     if sys.hexversion < 0x030500F0:
         try:
-            from backports.ssl_match_hostname import match_hostname, __version__ as ver
+            from backports.ssl_match_hostname import match_hostname, __version__ as ver  # type: ignore[import-not-found]
             ver = list(map(int, ver.split('.')))
             logger.debug('backports.ssl_match_hostname module is available')
             match = match_hostname
@@ -88,7 +92,7 @@ def _optional_dependencies():
             logger.warning('backports.ssl_match_hostname is unavailable')
             ipaddr = False
     try:
-        from ssl import match_hostname
+        from ssl import match_hostname  # type: ignore[attr-defined]
         logger.debug('ssl.match_hostname is available')
         match = match_hostname
     except ImportError:
@@ -97,11 +101,13 @@ def _optional_dependencies():
         # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
         # longer uses the ssl.match_hostname() function.""
         if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
-            match = lambda cert, hostname: True
+            match = lambda cert, hostname: None
         else:
             logger.warning('using legacy validation callback')
             match = legacy_validate_callback
     return ipaddr, match
 
 
+_match_has_ipaddress: bool
+_match_hostname: Callable[[dict[str, Any], str], None]
 _match_has_ipaddress, _match_hostname = _optional_dependencies()

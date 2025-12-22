@@ -17,14 +17,17 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAccelerated
 from thrift.protocol.TCompactProtocol import TCompactProtocolAccelerated
 from thrift.protocol.TProtocol import TProtocolBase, TProtocolException, TProtocolFactory
 from thrift.Thrift import TApplicationException, TMessageType
 from thrift.transport.THeaderTransport import THeaderTransport, THeaderSubprotocolID, THeaderClientType
+from thrift.transport.TTransport import TTransportBase
 
 
-PROTOCOLS_BY_ID = {
+PROTOCOLS_BY_ID: dict[int, type[TBinaryProtocolAccelerated] | type[TCompactProtocolAccelerated]] = {
     THeaderSubprotocolID.BINARY: TBinaryProtocolAccelerated,
     THeaderSubprotocolID.COMPACT: TCompactProtocolAccelerated,
 }
@@ -55,7 +58,15 @@ class THeaderProtocol(TProtocolBase):
 
     """
 
-    def __init__(self, transport, allowed_client_types, default_protocol=THeaderSubprotocolID.BINARY):
+    trans: THeaderTransport
+    _protocol: TBinaryProtocolAccelerated | TCompactProtocolAccelerated
+
+    def __init__(
+        self,
+        transport: TTransportBase | THeaderTransport,
+        allowed_client_types: tuple[int, ...],
+        default_protocol: int = THeaderSubprotocolID.BINARY,
+    ) -> None:
         # much of the actual work for THeaderProtocol happens down in
         # THeaderTransport since we need to do low-level shenanigans to detect
         # if the client is sending us headers or one of the headerless formats
@@ -66,80 +77,80 @@ class THeaderProtocol(TProtocolBase):
         super(THeaderProtocol, self).__init__(transport)
         self._set_protocol()
 
-    def get_headers(self):
+    def get_headers(self) -> dict[bytes, bytes]:
         return self.trans.get_headers()
 
-    def set_header(self, key, value):
+    def set_header(self, key: bytes, value: bytes) -> None:
         self.trans.set_header(key, value)
 
-    def clear_headers(self):
+    def clear_headers(self) -> None:
         self.trans.clear_headers()
 
-    def add_transform(self, transform_id):
+    def add_transform(self, transform_id: int) -> None:
         self.trans.add_transform(transform_id)
 
-    def writeMessageBegin(self, name, ttype, seqid):
+    def writeMessageBegin(self, name: str, ttype: int, seqid: int) -> None:
         self.trans.sequence_id = seqid
         return self._protocol.writeMessageBegin(name, ttype, seqid)
 
-    def writeMessageEnd(self):
+    def writeMessageEnd(self) -> None:
         return self._protocol.writeMessageEnd()
 
-    def writeStructBegin(self, name):
+    def writeStructBegin(self, name: str) -> None:
         return self._protocol.writeStructBegin(name)
 
-    def writeStructEnd(self):
+    def writeStructEnd(self) -> None:
         return self._protocol.writeStructEnd()
 
-    def writeFieldBegin(self, name, ttype, fid):
+    def writeFieldBegin(self, name: str, ttype: int, fid: int) -> None:
         return self._protocol.writeFieldBegin(name, ttype, fid)
 
-    def writeFieldEnd(self):
+    def writeFieldEnd(self) -> None:
         return self._protocol.writeFieldEnd()
 
-    def writeFieldStop(self):
+    def writeFieldStop(self) -> None:
         return self._protocol.writeFieldStop()
 
-    def writeMapBegin(self, ktype, vtype, size):
+    def writeMapBegin(self, ktype: int, vtype: int, size: int) -> None:
         return self._protocol.writeMapBegin(ktype, vtype, size)
 
-    def writeMapEnd(self):
+    def writeMapEnd(self) -> None:
         return self._protocol.writeMapEnd()
 
-    def writeListBegin(self, etype, size):
+    def writeListBegin(self, etype: int, size: int) -> None:
         return self._protocol.writeListBegin(etype, size)
 
-    def writeListEnd(self):
+    def writeListEnd(self) -> None:
         return self._protocol.writeListEnd()
 
-    def writeSetBegin(self, etype, size):
+    def writeSetBegin(self, etype: int, size: int) -> None:
         return self._protocol.writeSetBegin(etype, size)
 
-    def writeSetEnd(self):
+    def writeSetEnd(self) -> None:
         return self._protocol.writeSetEnd()
 
-    def writeBool(self, bool_val):
+    def writeBool(self, bool_val: bool) -> None:
         return self._protocol.writeBool(bool_val)
 
-    def writeByte(self, byte):
+    def writeByte(self, byte: int) -> None:
         return self._protocol.writeByte(byte)
 
-    def writeI16(self, i16):
+    def writeI16(self, i16: int) -> None:
         return self._protocol.writeI16(i16)
 
-    def writeI32(self, i32):
+    def writeI32(self, i32: int) -> None:
         return self._protocol.writeI32(i32)
 
-    def writeI64(self, i64):
+    def writeI64(self, i64: int) -> None:
         return self._protocol.writeI64(i64)
 
-    def writeDouble(self, dub):
+    def writeDouble(self, dub: float) -> None:
         return self._protocol.writeDouble(dub)
 
-    def writeBinary(self, str_val):
+    def writeBinary(self, str_val: bytes) -> None:
         return self._protocol.writeBinary(str_val)
 
-    def _set_protocol(self):
+    def _set_protocol(self) -> None:
         try:
             protocol_cls = PROTOCOLS_BY_ID[self.trans.protocol_id]
         except KeyError:
@@ -152,81 +163,84 @@ class THeaderProtocol(TProtocolBase):
         self._fast_encode = self._protocol._fast_encode
         self._fast_decode = self._protocol._fast_decode
 
-    def readMessageBegin(self):
+    def readMessageBegin(self) -> tuple[str, int, int]:
         try:
             self.trans.readFrame(0)
             self._set_protocol()
         except TApplicationException as exc:
-            self._protocol.writeMessageBegin(b"", TMessageType.EXCEPTION, 0)
+            self._protocol.writeMessageBegin(b"", TMessageType.EXCEPTION, 0)  # type: ignore[arg-type]
             exc.write(self._protocol)
             self._protocol.writeMessageEnd()
             self.trans.flush()
 
         return self._protocol.readMessageBegin()
 
-    def readMessageEnd(self):
+    def readMessageEnd(self) -> None:
         return self._protocol.readMessageEnd()
 
-    def readStructBegin(self):
+    def readStructBegin(self) -> str | None:
         return self._protocol.readStructBegin()
 
-    def readStructEnd(self):
+    def readStructEnd(self) -> None:
         return self._protocol.readStructEnd()
 
-    def readFieldBegin(self):
+    def readFieldBegin(self) -> tuple[str | None, int, int]:
         return self._protocol.readFieldBegin()
 
-    def readFieldEnd(self):
+    def readFieldEnd(self) -> None:
         return self._protocol.readFieldEnd()
 
-    def readMapBegin(self):
+    def readMapBegin(self) -> tuple[int, int, int]:
         return self._protocol.readMapBegin()
 
-    def readMapEnd(self):
+    def readMapEnd(self) -> None:
         return self._protocol.readMapEnd()
 
-    def readListBegin(self):
+    def readListBegin(self) -> tuple[int, int]:
         return self._protocol.readListBegin()
 
-    def readListEnd(self):
+    def readListEnd(self) -> None:
         return self._protocol.readListEnd()
 
-    def readSetBegin(self):
+    def readSetBegin(self) -> tuple[int, int]:
         return self._protocol.readSetBegin()
 
-    def readSetEnd(self):
+    def readSetEnd(self) -> None:
         return self._protocol.readSetEnd()
 
-    def readBool(self):
+    def readBool(self) -> bool:
         return self._protocol.readBool()
 
-    def readByte(self):
+    def readByte(self) -> int:
         return self._protocol.readByte()
 
-    def readI16(self):
+    def readI16(self) -> int:
         return self._protocol.readI16()
 
-    def readI32(self):
+    def readI32(self) -> int:
         return self._protocol.readI32()
 
-    def readI64(self):
+    def readI64(self) -> int:
         return self._protocol.readI64()
 
-    def readDouble(self):
+    def readDouble(self) -> float:
         return self._protocol.readDouble()
 
-    def readBinary(self):
+    def readBinary(self) -> bytes:
         return self._protocol.readBinary()
 
 
 class THeaderProtocolFactory(TProtocolFactory):
+    allowed_client_types: tuple[int, ...]
+    default_protocol: int
+
     def __init__(
         self,
-        allowed_client_types=(THeaderClientType.HEADERS,),
-        default_protocol=THeaderSubprotocolID.BINARY,
-    ):
+        allowed_client_types: tuple[int, ...] = (THeaderClientType.HEADERS,),
+        default_protocol: int = THeaderSubprotocolID.BINARY,
+    ) -> None:
         self.allowed_client_types = allowed_client_types
         self.default_protocol = default_protocol
 
-    def getProtocol(self, trans):
+    def getProtocol(self, trans: TTransportBase) -> THeaderProtocol:
         return THeaderProtocol(trans, self.allowed_client_types, self.default_protocol)

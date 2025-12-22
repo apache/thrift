@@ -17,24 +17,53 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 from io import BytesIO
 import os
 import ssl
 import sys
 import warnings
 import base64
-
+import http.client
 import urllib.parse
 import urllib.request
-import http.client
+from email.message import Message
+from typing import Any
 
-from .TTransport import TTransportBase
+from .TTransport import TTransportBase, TTransportException
 
 
 class THttpClient(TTransportBase):
     """Http implementation of TTransport base."""
 
-    def __init__(self, uri_or_host, port=None, path=None, cafile=None, cert_file=None, key_file=None, ssl_context=None):
+    scheme: str
+    host: str | None
+    port: int
+    path: str
+    context: ssl.SSLContext | None
+    realhost: str | None
+    realport: int | None
+    proxy_auth: str | None
+    __wbuf: BytesIO
+    __http: http.client.HTTPConnection | http.client.HTTPSConnection | None
+    __http_response: http.client.HTTPResponse | None
+    __timeout: float | None
+    __custom_headers: dict[str, str] | None
+    headers: Message | None
+    code: int
+    message: str
+
+    def __init__(
+        self,
+        uri_or_host: str,
+        port: int | None = None,
+        path: str | None = None,
+        cafile: str | None = None,
+        cert_file: str | None = None,
+        key_file: str | None = None,
+        ssl_context: ssl.SSLContext | None = None,
+    ) -> None:
         """THttpClient supports two different types of construction:
 
         THttpClient(host, port, path) - deprecated
@@ -65,7 +94,8 @@ class THttpClient(TTransportBase):
                 self.port = parsed.port or http.client.HTTPS_PORT
                 if (cafile or cert_file or key_file) and not ssl_context:
                     self.context = ssl.create_default_context(cafile=cafile)
-                    self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+                    if cert_file:
+                        self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
                 else:
                     self.context = ssl_context
             self.host = parsed.hostname
@@ -77,14 +107,14 @@ class THttpClient(TTransportBase):
         except KeyError:
             proxy = None
         else:
-            if urllib.request.proxy_bypass(self.host):
+            if self.host and urllib.request.proxy_bypass(self.host):
                 proxy = None
         if proxy:
             parsed = urllib.parse.urlparse(proxy)
             self.realhost = self.host
             self.realport = self.port
             self.host = parsed.hostname
-            self.port = parsed.port
+            self.port = parsed.port or self.port  # Fall back to original port if proxy port not specified
             self.proxy_auth = self.basic_proxy_auth_header(parsed)
         else:
             self.realhost = self.realport = self.proxy_auth = None
@@ -96,18 +126,20 @@ class THttpClient(TTransportBase):
         self.headers = None
 
     @staticmethod
-    def basic_proxy_auth_header(proxy):
+    def basic_proxy_auth_header(proxy: urllib.parse.ParseResult | None) -> str | None:
         if proxy is None or not proxy.username:
             return None
         ap = "%s:%s" % (urllib.parse.unquote(proxy.username),
-                        urllib.parse.unquote(proxy.password))
+                        urllib.parse.unquote(proxy.password or ''))
         cr = base64.b64encode(ap.encode()).strip()
-        return "Basic " + six.ensure_str(cr)
+        return "Basic " + cr.decode('ascii')
 
-    def using_proxy(self):
+    def using_proxy(self) -> bool:
         return self.realhost is not None
 
-    def open(self):
+    def open(self) -> None:
+        if not self.host:
+            raise TTransportException(TTransportException.NOT_OPEN, "No host specified")
         if self.scheme == 'http':
             self.__http = http.client.HTTPConnection(self.host, self.port,
                                                      timeout=self.__timeout)
@@ -116,33 +148,33 @@ class THttpClient(TTransportBase):
                                                       timeout=self.__timeout,
                                                       context=self.context)
         if self.using_proxy():
-            self.__http.set_tunnel(self.realhost, self.realport,
-                                   {"Proxy-Authorization": self.proxy_auth})
+            headers = {"Proxy-Authorization": self.proxy_auth} if self.proxy_auth else None
+            self.__http.set_tunnel(self.realhost, self.realport, headers)  # type: ignore[union-attr]
 
-    def close(self):
-        self.__http.close()
+    def close(self) -> None:
+        self.__http.close()  # type: ignore[union-attr]
         self.__http = None
         self.__http_response = None
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return self.__http is not None
 
-    def setTimeout(self, ms):
+    def setTimeout(self, ms: int | None) -> None:
         if ms is None:
             self.__timeout = None
         else:
             self.__timeout = ms / 1000.0
 
-    def setCustomHeaders(self, headers):
+    def setCustomHeaders(self, headers: dict[str, str]) -> None:
         self.__custom_headers = headers
 
-    def read(self, sz):
-        return self.__http_response.read(sz)
+    def read(self, sz: int) -> bytes:
+        return self.__http_response.read(sz)  # type: ignore[union-attr]
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         self.__wbuf.write(buf)
 
-    def flush(self):
+    def flush(self) -> None:
         if self.isOpen():
             self.close()
         self.open()
@@ -154,41 +186,41 @@ class THttpClient(TTransportBase):
         # HTTP request
         if self.using_proxy() and self.scheme == "http":
             # need full URL of real host for HTTP proxy here (HTTPS uses CONNECT tunnel)
-            self.__http.putrequest('POST', "http://%s:%s%s" %
+            self.__http.putrequest('POST', "http://%s:%s%s" %  # type: ignore[union-attr]
                                    (self.realhost, self.realport, self.path))
         else:
-            self.__http.putrequest('POST', self.path)
+            self.__http.putrequest('POST', self.path)  # type: ignore[union-attr]
 
         # Write headers
-        self.__http.putheader('Content-Type', 'application/x-thrift')
-        self.__http.putheader('Content-Length', str(len(data)))
+        self.__http.putheader('Content-Type', 'application/x-thrift')  # type: ignore[union-attr]
+        self.__http.putheader('Content-Length', str(len(data)))  # type: ignore[union-attr]
         if self.using_proxy() and self.scheme == "http" and self.proxy_auth is not None:
-            self.__http.putheader("Proxy-Authorization", self.proxy_auth)
+            self.__http.putheader("Proxy-Authorization", self.proxy_auth)  # type: ignore[union-attr]
 
         if not self.__custom_headers or 'User-Agent' not in self.__custom_headers:
             user_agent = 'Python/THttpClient'
             script = os.path.basename(sys.argv[0])
             if script:
                 user_agent = '%s (%s)' % (user_agent, urllib.parse.quote(script))
-            self.__http.putheader('User-Agent', user_agent)
+            self.__http.putheader('User-Agent', user_agent)  # type: ignore[union-attr]
 
         if self.__custom_headers:
             for key, val in self.__custom_headers.items():
-                self.__http.putheader(key, val)
+                self.__http.putheader(key, val)  # type: ignore[union-attr]
 
         # Saves the cookie sent by the server in the previous response.
         # HTTPConnection.putheader can only be called after a request has been
         # started, and before it's been sent.
         if self.headers and 'Set-Cookie' in self.headers:
-            self.__http.putheader('Cookie', self.headers['Set-Cookie'])
+            self.__http.putheader('Cookie', self.headers['Set-Cookie'])  # type: ignore[union-attr]
 
-        self.__http.endheaders()
+        self.__http.endheaders()  # type: ignore[union-attr]
 
         # Write payload
-        self.__http.send(data)
+        self.__http.send(data)  # type: ignore[union-attr]
 
         # Get reply to flush the request
-        self.__http_response = self.__http.getresponse()
+        self.__http_response = self.__http.getresponse()  # type: ignore[union-attr]
         self.code = self.__http_response.status
         self.message = self.__http_response.reason
         self.headers = self.__http_response.msg

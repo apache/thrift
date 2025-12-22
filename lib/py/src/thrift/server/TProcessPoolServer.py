@@ -18,14 +18,21 @@
 #
 
 
-import logging
+from __future__ import annotations
 
+import logging
 from multiprocessing import Process, Value, Condition
+from multiprocessing.synchronize import Condition as ConditionType
+from multiprocessing.sharedctypes import Synchronized
+from typing import Any, Callable, TYPE_CHECKING
 
 from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from thrift.transport.TTransport import TTransportBase
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TProcessPoolServer(TServer):
@@ -34,7 +41,14 @@ class TProcessPoolServer(TServer):
     Note that if you need shared state between the handlers - it's up to you!
     Written by Dvir Volk, doat.com
     """
-    def __init__(self, *args):
+
+    numWorkers: int
+    workers: list[Process] | None
+    isRunning: Synchronized[bool]
+    stopCondition: ConditionType
+    postForkCallback: Callable[[], None] | None
+
+    def __init__(self, *args: Any) -> None:
         TServer.__init__(self, *args)
         self.numWorkers = 10
         self.workers = []
@@ -42,21 +56,21 @@ class TProcessPoolServer(TServer):
         self.stopCondition = Condition()
         self.postForkCallback = None
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state['workers'] = None
         return state
 
-    def setPostForkCallback(self, callback):
+    def setPostForkCallback(self, callback: Callable[[], None]) -> None:
         if not callable(callback):
             raise TypeError("This is not a callback!")
         self.postForkCallback = callback
 
-    def setNumWorkers(self, num):
+    def setNumWorkers(self, num: int) -> None:
         """Set the number of worker threads that should be created"""
         self.numWorkers = num
 
-    def workerProcess(self):
+    def workerProcess(self) -> int | None:
         """Loop getting clients from the shared queue and process them"""
         if self.postForkCallback:
             self.postForkCallback()
@@ -71,8 +85,9 @@ class TProcessPoolServer(TServer):
                 return 0
             except Exception as x:
                 logger.exception(x)
+        return None
 
-    def serveClient(self, client):
+    def serveClient(self, client: TTransportBase) -> None:
         """Process input/output from a client for as long as possible"""
         itrans = self.inputTransportFactory.getTransport(client)
         otrans = self.outputTransportFactory.getTransport(client)
@@ -90,7 +105,7 @@ class TProcessPoolServer(TServer):
         itrans.close()
         otrans.close()
 
-    def serve(self):
+    def serve(self) -> None:
         """Start workers and put into queue"""
         # this is a shared state that can tell the workers to exit when False
         self.isRunning.value = True
@@ -104,7 +119,7 @@ class TProcessPoolServer(TServer):
                 w = Process(target=self.workerProcess)
                 w.daemon = True
                 w.start()
-                self.workers.append(w)
+                self.workers.append(w)  # type: ignore[union-attr]
             except Exception as x:
                 logger.exception(x)
 
@@ -121,7 +136,7 @@ class TProcessPoolServer(TServer):
 
         self.isRunning.value = False
 
-    def stop(self):
+    def stop(self) -> None:
         self.isRunning.value = False
         self.stopCondition.acquire()
         self.stopCondition.notify()

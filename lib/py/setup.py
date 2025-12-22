@@ -20,12 +20,9 @@
 #
 
 import sys
-try:
-    from setuptools import setup, Extension
-except Exception:
-    from distutils.core import setup, Extension
 
-from distutils.command.build_ext import build_ext
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 # Fix to build sdist under vagrant
@@ -36,7 +33,7 @@ if 'vagrant' in str(os.environ):
     except AttributeError:
         pass
 
-include_dirs = ['src']
+include_dirs = ['src/thrift']
 if sys.platform == 'win32':
     include_dirs.append('compat/win32')
     ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
@@ -83,10 +80,10 @@ def run_setup(with_binary):
                 Extension('thrift.protocol.fastbinary',
                           extra_compile_args=['-std=c++11'],
                           sources=[
-                              'src/ext/module.cpp',
-                              'src/ext/types.cpp',
-                              'src/ext/binary.cpp',
-                              'src/ext/compact.cpp',
+                              'src/thrift/ext/module.cpp',
+                              'src/thrift/ext/types.cpp',
+                              'src/thrift/ext/binary.cpp',
+                              'src/thrift/ext/compact.cpp',
                           ],
                           include_dirs=include_dirs,
                           )
@@ -96,13 +93,11 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
-    ssl_deps = []
-    if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
     tornado_deps = ['tornado>=4.0']
     twisted_deps = ['twisted']
 
     setup(name='thrift',
+          python_requires='>=3.12',
           version='0.23.0',
           description='Python bindings for the Apache Thrift RPC system',
           long_description=read_file("README.md"),
@@ -112,10 +107,12 @@ def run_setup(with_binary):
           url='http://thrift.apache.org',
           license='Apache License 2.0',
           extras_require={
-              'ssl': ssl_deps,
               'tornado': tornado_deps,
               'twisted': twisted_deps,
-              'all': ssl_deps + tornado_deps + twisted_deps,
+              'all': tornado_deps + twisted_deps,
+          },
+          package_data={
+              'thrift': ['py.typed'],
           },
           packages=[
               'thrift',
@@ -123,13 +120,16 @@ def run_setup(with_binary):
               'thrift.transport',
               'thrift.server',
           ],
-          package_dir={'thrift': 'src'},
+          package_dir={'': 'src'},  # Standard src layout
           classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
               'Programming Language :: Python :: 3',
+              'Programming Language :: Python :: 3.12',
+              'Programming Language :: Python :: 3.13',
+              'Typing :: Typed',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],

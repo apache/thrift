@@ -17,19 +17,23 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 from os import path
-from SCons.Builder import Builder
+from typing import Any, Iterator
+
+from SCons.Builder import Builder  # type: ignore[import-untyped]
 
 
-def scons_env(env, add=''):
+def scons_env(env: Any, add: str = '') -> None:
     opath = path.dirname(path.abspath('$TARGET'))
     lstr = 'thrift --gen cpp -o ' + opath + ' ' + add + ' $SOURCE'
     cppbuild = Builder(action=lstr)
     env.Append(BUILDERS={'ThriftCpp': cppbuild})
 
 
-def gen_cpp(env, dir, file):
+def gen_cpp(env: Any, dir: str, file: str) -> Any:
     scons_env(env)
     suffixes = ['_types.h', '_types.cpp']
-    targets = map(lambda s: 'gen-cpp/' + file + s, suffixes)
+    targets: Iterator[str] = map(lambda s: 'gen-cpp/' + file + s, suffixes)
     return env.ThriftCpp(targets, dir + file + '.thrift')

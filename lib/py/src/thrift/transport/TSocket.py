@@ -17,20 +17,29 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 import errno
 import logging
 import os
 import socket
 import sys
 import platform
+from typing import Any
 
-from .TTransport import TTransportBase, TTransportException, TServerTransportBase
+from thrift.transport.TTransport import TTransportBase, TTransportException, TServerTransportBase
 
 logger = logging.getLogger(__name__)
 
 
 class TSocketBase(TTransportBase):
-    def _resolveAddr(self):
+    host: str
+    port: int
+    handle: socket.socket | None
+    _unix_socket: str | None
+    _socket_family: socket.AddressFamily
+
+    def _resolveAddr(self) -> list[tuple[Any, ...]]:
         if self._unix_socket is not None:
             return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None,
                      self._unix_socket)]
@@ -42,7 +51,7 @@ class TSocketBase(TTransportBase):
                                       0,
                                       socket.AI_PASSIVE)
 
-    def close(self):
+    def close(self) -> None:
         if self.handle:
             self.handle.close()
             self.handle = None
@@ -51,9 +60,17 @@ class TSocketBase(TTransportBase):
 class TSocket(TSocketBase):
     """Socket implementation of TTransport base."""
 
-    def __init__(self, host='localhost', port=9090, unix_socket=None,
-                 socket_family=socket.AF_UNSPEC,
-                 socket_keepalive=False):
+    _timeout: float | None
+    _socket_keepalive: bool
+
+    def __init__(
+        self,
+        host: str = 'localhost',
+        port: int = 9090,
+        unix_socket: str | None = None,
+        socket_family: socket.AddressFamily = socket.AF_UNSPEC,
+        socket_keepalive: bool = False,
+    ) -> None:
         """Initialize a TSocket
 
         @param host(str)  The host to connect to.
@@ -71,10 +88,10 @@ class TSocket(TSocketBase):
         self._socket_family = socket_family
         self._socket_keepalive = socket_keepalive
 
-    def setHandle(self, h):
+    def setHandle(self, h: socket.socket) -> None:
         self.handle = h
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         if self.handle is None:
             return False
 
@@ -108,7 +125,7 @@ class TSocket(TSocketBase):
         self.close()
         return False
 
-    def setTimeout(self, ms):
+    def setTimeout(self, ms: int | None) -> None:
         if ms is None:
             self._timeout = None
         else:
@@ -117,14 +134,14 @@ class TSocket(TSocketBase):
         if self.handle is not None:
             self.handle.settimeout(self._timeout)
 
-    def _do_open(self, family, socktype):
+    def _do_open(self, family: socket.AddressFamily, socktype: socket.SocketKind) -> socket.socket:
         return socket.socket(family, socktype)
 
     @property
-    def _address(self):
+    def _address(self) -> str:
         return self._unix_socket if self._unix_socket else '%s:%d' % (self.host, self.port)
 
-    def open(self):
+    def open(self) -> None:
         if self.handle:
             raise TTransportException(type=TTransportException.ALREADY_OPEN, message="already open")
         try:
@@ -134,7 +151,7 @@ class TSocket(TSocketBase):
             logger.exception(msg)
             raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=gai)
         # Preserve the last exception to report if all addresses fail.
-        last_exc = None
+        last_exc: Exception | None = None
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
@@ -156,9 +173,9 @@ class TSocket(TSocketBase):
         logger.error(msg)
         raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=last_exc)
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         try:
-            buff = self.handle.recv(sz)
+            buff = self.handle.recv(sz)  # type: ignore[union-attr]
         # TODO: remove socket.timeout when 3.10 becomes the earliest version of python supported.
         except (socket.timeout, TimeoutError) as e:
             raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
@@ -171,7 +188,7 @@ class TSocket(TSocketBase):
                 # in lib/cpp/src/transport/TSocket.cpp.
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
-                buff = ''
+                buff = b''
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
@@ -179,49 +196,60 @@ class TSocket(TSocketBase):
                                       message='TSocket read 0 bytes')
         return buff
 
-    def write(self, buff):
+    def write(self, buf: bytes) -> None:
         if not self.handle:
             raise TTransportException(type=TTransportException.NOT_OPEN,
                                       message='Transport not open')
         sent = 0
-        have = len(buff)
+        have = len(buf)
         while sent < have:
             try:
-                plus = self.handle.send(buff)
+                plus = self.handle.send(buf)
                 if plus == 0:
                     raise TTransportException(type=TTransportException.END_OF_FILE,
                                               message='TSocket sent 0 bytes')
                 sent += plus
-                buff = buff[plus:]
+                buf = buf[plus:]
             except socket.error as e:
                 raise TTransportException(message="unexpected exception", inner=e)
 
-    def flush(self):
+    def flush(self) -> None:
         pass
 
 
 class TServerSocket(TSocketBase, TServerTransportBase):
     """Socket implementation of TServerTransport base."""
 
-    def __init__(self, host=None, port=9090, unix_socket=None, socket_family=socket.AF_UNSPEC):
-        self.host = host
+    _backlog: int
+
+    def __init__(
+        self,
+        host: str | None = None,
+        port: int = 9090,
+        unix_socket: str | None = None,
+        socket_family: socket.AddressFamily = socket.AF_UNSPEC,
+    ) -> None:
+        self.host = host or 'localhost'
         self.port = port
         self._unix_socket = unix_socket
         self._socket_family = socket_family
         self.handle = None
         self._backlog = 128
 
-    def setBacklog(self, backlog=None):
+    def setBacklog(self, backlog: int | None = None) -> None:
         if not self.handle:
-            self._backlog = backlog
+            self._backlog = backlog or 128
         else:
             # We cann't update backlog when it is already listening, since the
             # handle has been created.
             logger.warning('You have to set backlog before listen.')
 
-    def listen(self):
+    def listen(self) -> None:
         res0 = self._resolveAddr()
+        if not res0:
+            raise TTransportException(TTransportException.NOT_OPEN, "Could not resolve address")
         socket_family = self._socket_family == socket.AF_UNSPEC and socket.AF_INET6 or self._socket_family
+        res = res0[-1]  # Default to last result
         for res in res0:
             if res[0] is socket_family or res is res0[-1]:
                 break
@@ -249,8 +277,8 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         s.bind(res[4])
         s.listen(self._backlog)
 
-    def accept(self):
-        client, addr = self.handle.accept()
+    def accept(self) -> TSocket | None:
+        client, addr = self.handle.accept()  # type: ignore[union-attr]
         result = TSocket()
         result.setHandle(client)
         return result

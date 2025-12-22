@@ -17,17 +17,25 @@
 # under the License.
 #
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
+
 from thrift.transport import TTransport
 
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolBase
 
-class TBase(object):
-    __slots__ = ()
 
-    def __repr__(self):
+class TBase:
+    __slots__: ClassVar[tuple[str, ...]] = ()
+    thrift_spec: ClassVar[tuple[Any, ...] | None] = None
+
+    def __repr__(self) -> str:
         L = ['%s=%r' % (key, getattr(self, key)) for key in self.__slots__]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
         for attr in self.__slots__:
@@ -37,23 +45,23 @@ class TBase(object):
                 return False
         return True
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not (self == other)
 
-    def read(self, iprot):
+    def read(self, iprot: TProtocolBase) -> None:
         if (iprot._fast_decode is not None and
                 isinstance(iprot.trans, TTransport.CReadableTransport) and
                 self.thrift_spec is not None):
             iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
         else:
-            iprot.readStruct(self, self.thrift_spec)
+            iprot.readStruct(self, self.thrift_spec)  # type: ignore[arg-type]
 
-    def write(self, oprot):
+    def write(self, oprot: TProtocolBase) -> None:
         if (oprot._fast_encode is not None and self.thrift_spec is not None):
             oprot.trans.write(
                 oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
         else:
-            oprot.writeStruct(self, self.thrift_spec)
+            oprot.writeStruct(self, self.thrift_spec)  # type: ignore[arg-type]
 
 
 class TExceptionBase(TBase, Exception):
@@ -61,17 +69,17 @@ class TExceptionBase(TBase, Exception):
 
 
 class TFrozenBase(TBase):
-    def __setitem__(self, *args):
+    def __setitem__(self, *args: Any) -> NoReturn:
         raise TypeError("Can't modify frozen struct")
 
-    def __delitem__(self, *args):
+    def __delitem__(self, *args: Any) -> NoReturn:
         raise TypeError("Can't modify frozen struct")
 
-    def __hash__(self, *args):
+    def __hash__(self) -> int:
         return hash(self.__class__) ^ hash(self.__slots__)
 
     @classmethod
-    def read(cls, iprot):
+    def read(cls, iprot: TProtocolBase) -> TFrozenBase:  # type: ignore[override]
         if (iprot._fast_decode is not None and
                 isinstance(iprot.trans, TTransport.CReadableTransport) and
                 cls.thrift_spec is not None):
@@ -79,7 +87,7 @@ class TFrozenBase(TBase):
             return iprot._fast_decode(None, iprot,
                                       [self.__class__, self.thrift_spec])
         else:
-            return iprot.readStruct(cls, cls.thrift_spec, True)
+            return iprot.readStruct(cls, cls.thrift_spec, True)  # type: ignore[arg-type, return-value]
 
 
 class TFrozenExceptionBase(TFrozenBase, TExceptionBase):

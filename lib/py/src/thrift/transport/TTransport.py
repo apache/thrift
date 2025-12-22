@@ -17,49 +17,66 @@
 # under the License.
 #
 
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from io import BytesIO
 from struct import pack, unpack
+from typing import TYPE_CHECKING, Any, BinaryIO
 
 from thrift.Thrift import TException
+
+if TYPE_CHECKING:
+    from puresasl.client import SASLClient  # type: ignore[import-not-found]
 
 
 class TTransportException(TException):
     """Custom Transport Exception class"""
 
-    UNKNOWN = 0
-    NOT_OPEN = 1
-    ALREADY_OPEN = 2
-    TIMED_OUT = 3
-    END_OF_FILE = 4
-    NEGATIVE_SIZE = 5
-    SIZE_LIMIT = 6
-    INVALID_CLIENT_TYPE = 7
+    UNKNOWN: int = 0
+    NOT_OPEN: int = 1
+    ALREADY_OPEN: int = 2
+    TIMED_OUT: int = 3
+    END_OF_FILE: int = 4
+    NEGATIVE_SIZE: int = 5
+    SIZE_LIMIT: int = 6
+    INVALID_CLIENT_TYPE: int = 7
 
-    def __init__(self, type=UNKNOWN, message=None, inner=None):
+    type: int
+    inner: Exception | None
+
+    def __init__(
+        self,
+        type: int = UNKNOWN,
+        message: str | None = None,
+        inner: Exception | None = None,
+    ) -> None:
         TException.__init__(self, message)
         self.type = type
         self.inner = inner
 
 
-class TTransportBase(object):
+class TTransportBase(ABC):
     """Base class for Thrift transport layer."""
 
-    def isOpen(self):
+    @abstractmethod
+    def isOpen(self) -> bool:
         pass
 
-    def open(self):
+    def open(self) -> None:
         pass
 
-    def close(self):
+    def close(self) -> None:
         pass
 
-    def read(self, sz):
+    @abstractmethod
+    def read(self, sz: int) -> bytes:
         pass
 
-    def readAll(self, sz):
+    def readAll(self, sz: int) -> bytes:
         buff = b''
         have = 0
-        while (have < sz):
+        while have < sz:
             chunk = self.read(sz - have)
             chunkLen = len(chunk)
             have += chunkLen
@@ -70,29 +87,24 @@ class TTransportBase(object):
 
         return buff
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         pass
 
-    def flush(self):
+    def flush(self) -> None:
         pass
 
 
-# This class should be thought of as an interface.
-class CReadableTransport(object):
-    """base class for transports that are readable from C"""
+class CReadableTransport(ABC):
+    """Base class for transports that are readable from C"""
 
-    # TODO(dreiss): Think about changing this interface to allow us to use
-    #               a (Python, not c) StringIO instead, because it allows
-    #               you to write after reading.
-
-    # NOTE: This is a classic class, so properties will NOT work
-    #       correctly for setting.
     @property
-    def cstringio_buf(self):
+    @abstractmethod
+    def cstringio_buf(self) -> BytesIO:
         """A cStringIO buffer that contains the current chunk we are reading."""
         pass
 
-    def cstringio_refill(self, partialread, reqlen):
+    @abstractmethod
+    def cstringio_refill(self, partialread: bytes, reqlen: int) -> BytesIO:
         """Refills cstringio_buf.
 
         Returns the currently used buffer (which can but need not be the same as
@@ -106,30 +118,30 @@ class CReadableTransport(object):
         pass
 
 
-class TServerTransportBase(object):
+class TServerTransportBase:
     """Base class for Thrift server transports."""
 
-    def listen(self):
+    def listen(self) -> None:
         pass
 
-    def accept(self):
+    def accept(self) -> TTransportBase | None:
         pass
 
-    def close(self):
+    def close(self) -> None:
         pass
 
 
-class TTransportFactoryBase(object):
+class TTransportFactoryBase:
     """Base class for a Transport Factory"""
 
-    def getTransport(self, trans):
+    def getTransport(self, trans: TTransportBase) -> TTransportBase:
         return trans
 
 
-class TBufferedTransportFactory(object):
+class TBufferedTransportFactory:
     """Factory transport that builds buffered transports"""
 
-    def getTransport(self, trans):
+    def getTransport(self, trans: TTransportBase) -> TBufferedTransport:
         buffered = TBufferedTransport(trans)
         return buffered
 
@@ -140,32 +152,38 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
     The implementation uses a (configurable) fixed-size read buffer
     but buffers all writes until a flush is performed.
     """
-    DEFAULT_BUFFER = 4096
 
-    def __init__(self, trans, rbuf_size=DEFAULT_BUFFER):
+    DEFAULT_BUFFER: int = 4096
+
+    __trans: TTransportBase
+    __wbuf: BytesIO
+    __rbuf: BytesIO
+    __rbuf_size: int
+
+    def __init__(self, trans: TTransportBase, rbuf_size: int = DEFAULT_BUFFER) -> None:
         self.__trans = trans
         self.__wbuf = BytesIO()
         # Pass string argument to initialize read buffer as cStringIO.InputType
         self.__rbuf = BytesIO(b'')
         self.__rbuf_size = rbuf_size
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return self.__trans.isOpen()
 
-    def open(self):
+    def open(self) -> None:
         return self.__trans.open()
 
-    def close(self):
+    def close(self) -> None:
         return self.__trans.close()
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         ret = self.__rbuf.read(sz)
         if len(ret) != 0:
             return ret
         self.__rbuf = BytesIO(self.__trans.read(max(sz, self.__rbuf_size)))
         return self.__rbuf.read(sz)
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         try:
             self.__wbuf.write(buf)
         except Exception as e:
@@ -173,7 +191,7 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
             self.__wbuf = BytesIO()
             raise e
 
-    def flush(self):
+    def flush(self) -> None:
         out = self.__wbuf.getvalue()
         # reset wbuf before write/flush to preserve state on underlying failure
         self.__wbuf = BytesIO()
@@ -182,10 +200,10 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
 
     # Implement the CReadableTransport interface.
     @property
-    def cstringio_buf(self):
+    def cstringio_buf(self) -> BytesIO:
         return self.__rbuf
 
-    def cstringio_refill(self, partialread, reqlen):
+    def cstringio_refill(self, partialread: bytes, reqlen: int) -> BytesIO:
         retstring = partialread
         if reqlen < self.__rbuf_size:
             # try to make a read of as much as we can.
@@ -208,7 +226,9 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
     TODO(dreiss): Make this work like the C++ version.
     """
 
-    def __init__(self, value=None, offset=0):
+    _buffer: BytesIO
+
+    def __init__(self, value: bytes | None = None, offset: int = 0) -> None:
         """value -- a value to read from for stringio
 
         If value is set, this will be a transport for reading,
@@ -220,41 +240,41 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
         if offset:
             self._buffer.seek(offset)
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return not self._buffer.closed
 
-    def open(self):
+    def open(self) -> None:
         pass
 
-    def close(self):
+    def close(self) -> None:
         self._buffer.close()
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         return self._buffer.read(sz)
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         self._buffer.write(buf)
 
-    def flush(self):
+    def flush(self) -> None:
         pass
 
-    def getvalue(self):
+    def getvalue(self) -> bytes:
         return self._buffer.getvalue()
 
     # Implement the CReadableTransport interface.
     @property
-    def cstringio_buf(self):
+    def cstringio_buf(self) -> BytesIO:
         return self._buffer
 
-    def cstringio_refill(self, partialread, reqlen):
+    def cstringio_refill(self, partialread: bytes, reqlen: int) -> BytesIO:
         # only one shot at reading...
         raise EOFError()
 
 
-class TFramedTransportFactory(object):
+class TFramedTransportFactory:
     """Factory transport that builds framed transports"""
 
-    def getTransport(self, trans):
+    def getTransport(self, trans: TTransportBase) -> TFramedTransport:
         framed = TFramedTransport(trans)
         return framed
 
@@ -262,21 +282,25 @@ class TFramedTransportFactory(object):
 class TFramedTransport(TTransportBase, CReadableTransport):
     """Class that wraps another transport and frames its I/O when writing."""
 
-    def __init__(self, trans,):
+    __trans: TTransportBase
+    __rbuf: BytesIO
+    __wbuf: BytesIO
+
+    def __init__(self, trans: TTransportBase) -> None:
         self.__trans = trans
         self.__rbuf = BytesIO(b'')
         self.__wbuf = BytesIO()
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return self.__trans.isOpen()
 
-    def open(self):
+    def open(self) -> None:
         return self.__trans.open()
 
-    def close(self):
+    def close(self) -> None:
         return self.__trans.close()
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         ret = self.__rbuf.read(sz)
         if len(ret) != 0:
             return ret
@@ -284,15 +308,15 @@ class TFramedTransport(TTransportBase, CReadableTransport):
         self.readFrame()
         return self.__rbuf.read(sz)
 
-    def readFrame(self):
+    def readFrame(self) -> None:
         buff = self.__trans.readAll(4)
-        sz, = unpack('!i', buff)
+        (sz,) = unpack('!i', buff)
         self.__rbuf = BytesIO(self.__trans.readAll(sz))
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         self.__wbuf.write(buf)
 
-    def flush(self):
+    def flush(self) -> None:
         wout = self.__wbuf.getvalue()
         wsz = len(wout)
         # reset wbuf before write/flush to preserve state on underlying failure
@@ -307,39 +331,41 @@ class TFramedTransport(TTransportBase, CReadableTransport):
 
     # Implement the CReadableTransport interface.
     @property
-    def cstringio_buf(self):
+    def cstringio_buf(self) -> BytesIO:
         return self.__rbuf
 
-    def cstringio_refill(self, prefix, reqlen):
+    def cstringio_refill(self, partialread: bytes, reqlen: int) -> BytesIO:
         # self.__rbuf will already be empty here because fastbinary doesn't
         # ask for a refill until the previous buffer is empty.  Therefore,
         # we can start reading new frames immediately.
-        while len(prefix) < reqlen:
+        while len(partialread) < reqlen:
             self.readFrame()
-            prefix += self.__rbuf.getvalue()
-        self.__rbuf = BytesIO(prefix)
+            partialread += self.__rbuf.getvalue()
+        self.__rbuf = BytesIO(partialread)
         return self.__rbuf
 
 
 class TFileObjectTransport(TTransportBase):
     """Wraps a file-like object to make it work as a Thrift transport."""
 
-    def __init__(self, fileobj):
+    fileobj: BinaryIO
+
+    def __init__(self, fileobj: BinaryIO) -> None:
         self.fileobj = fileobj
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return True
 
-    def close(self):
+    def close(self) -> None:
         self.fileobj.close()
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         return self.fileobj.read(sz)
 
-    def write(self, buf):
+    def write(self, buf: bytes) -> None:
         self.fileobj.write(buf)
 
-    def flush(self):
+    def flush(self) -> None:
         self.fileobj.flush()
 
 
@@ -348,14 +374,25 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     SASL transport
     """
 
-    START = 1
-    OK = 2
-    BAD = 3
-    ERROR = 4
-    COMPLETE = 5
+    START: int = 1
+    OK: int = 2
+    BAD: int = 3
+    ERROR: int = 4
+    COMPLETE: int = 5
 
-    def __init__(self, transport, host, service, mechanism='GSSAPI',
-                 **sasl_kwargs):
+    transport: TTransportBase
+    sasl: SASLClient
+    __wbuf: BytesIO
+    __rbuf: BytesIO
+
+    def __init__(
+        self,
+        transport: TTransportBase,
+        host: str,
+        service: str,
+        mechanism: str = 'GSSAPI',
+        **sasl_kwargs: Any,
+    ) -> None:
         """
         transport: an underlying transport to use, typically just a TSocket
         host: the name of the server, from a SASL perspective
@@ -366,7 +403,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         constructor.
         """
 
-        from puresasl.client import SASLClient
+        from puresasl.client import SASLClient  # type: ignore[import-not-found]
 
         self.transport = transport
         self.sasl = SASLClient(host, service, mechanism, **sasl_kwargs)
@@ -374,11 +411,13 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         self.__wbuf = BytesIO()
         self.__rbuf = BytesIO(b'')
 
-    def open(self):
+    def open(self) -> None:
         if not self.transport.isOpen():
             self.transport.open()
 
-        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
+        mechanism = self.sasl.mechanism
+        assert mechanism is not None, "SASL mechanism must be set"
+        self.send_sasl_msg(self.START, bytes(mechanism, 'ascii'))
         self.send_sasl_msg(self.OK, self.sasl.process())
 
         while True:
@@ -390,43 +429,44 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
                     raise TTransportException(
                         TTransportException.NOT_OPEN,
                         "The server erroneously indicated "
-                        "that SASL negotiation was complete")
+                        "that SASL negotiation was complete",
+                    )
                 else:
                     break
             else:
                 raise TTransportException(
                     TTransportException.NOT_OPEN,
-                    "Bad SASL negotiation status: %d (%s)"
-                    % (status, challenge))
+                    "Bad SASL negotiation status: %d (%s)" % (status, challenge),
+                )
 
-    def isOpen(self):
+    def isOpen(self) -> bool:
         return self.transport.isOpen()
 
-    def send_sasl_msg(self, status, body):
+    def send_sasl_msg(self, status: int, body: bytes) -> None:
         header = pack(">BI", status, len(body))
         self.transport.write(header + body)
         self.transport.flush()
 
-    def recv_sasl_msg(self):
+    def recv_sasl_msg(self) -> tuple[int, bytes | str]:
         header = self.transport.readAll(5)
         status, length = unpack(">BI", header)
         if length > 0:
-            payload = self.transport.readAll(length)
+            payload: bytes | str = self.transport.readAll(length)
         else:
             payload = ""
         return status, payload
 
-    def write(self, data):
-        self.__wbuf.write(data)
+    def write(self, buf: bytes) -> None:
+        self.__wbuf.write(buf)
 
-    def flush(self):
+    def flush(self) -> None:
         data = self.__wbuf.getvalue()
         encoded = self.sasl.wrap(data)
         self.transport.write(pack("!i", len(encoded)) + encoded)
         self.transport.flush()
         self.__wbuf = BytesIO()
 
-    def read(self, sz):
+    def read(self, sz: int) -> bytes:
         ret = self.__rbuf.read(sz)
         if len(ret) != 0:
             return ret
@@ -434,27 +474,27 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         self._read_frame()
         return self.__rbuf.read(sz)
 
-    def _read_frame(self):
+    def _read_frame(self) -> None:
         header = self.transport.readAll(4)
-        length, = unpack('!i', header)
+        (length,) = unpack('!i', header)
         encoded = self.transport.readAll(length)
         self.__rbuf = BytesIO(self.sasl.unwrap(encoded))
 
-    def close(self):
+    def close(self) -> None:
         self.sasl.dispose()
         self.transport.close()
 
     # based on TFramedTransport
     @property
-    def cstringio_buf(self):
+    def cstringio_buf(self) -> BytesIO:
         return self.__rbuf
 
-    def cstringio_refill(self, prefix, reqlen):
+    def cstringio_refill(self, partialread: bytes, reqlen: int) -> BytesIO:
         # self.__rbuf will already be empty here because fastbinary doesn't
         # ask for a refill until the previous buffer is empty.  Therefore,
         # we can start reading new frames immediately.
-        while len(prefix) < reqlen:
+        while len(partialread) < reqlen:
             self._read_frame()
-            prefix += self.__rbuf.getvalue()
-        self.__rbuf = BytesIO(prefix)
+            partialread += self.__rbuf.getvalue()
+        self.__rbuf = BytesIO(partialread)
         return self.__rbuf

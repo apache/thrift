@@ -1,0 +1,71 @@
+[project]
+name = "thrift"
+version = "0.23.0"
+description = "Python bindings for the Apache Thrift RPC system"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [
+    { name = "Apache Thrift Developers", email = "dev@thrift.apache.org" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Networking",
+]
+
+[project.urls]
+Homepage = "https://thrift.apache.org"
+Repository = "https://github.com/apache/thrift"
+
+[project.optional-dependencies]
+tornado = ["tornado>=4.0"]
+twisted = ["twisted"]
+all = ["tornado>=4.0", "twisted"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+thrift = ["py.typed"]
+
+# Development dependencies
+[dependency-groups]
+dev = [
+    "ty>=0.0.5",
+    "pytest>=8.0",
+    "pure-sasl",  # For SASL transport tests
+]
+
+# ty type checker configuration
+[tool.ty.environment]
+python-version = "3.12"
+
+[tool.ty.rules]
+possibly-unresolved-reference = "error"
+invalid-assignment = "error"
+invalid-argument-type = "error"
+invalid-return-type = "error"
+missing-argument = "error"
+call-non-callable = "error"
+no-matching-overload = "error"
+unresolved-import = "error"
+invalid-type-form = "error"
+
+# pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

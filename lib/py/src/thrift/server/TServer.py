@@ -17,19 +17,27 @@
 # under the License.
 #
 
+from __future__ import annotations
+
 import queue
 import logging
 import os
 import threading
+from typing import Any, TYPE_CHECKING
 
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol.THeaderProtocol import THeaderProtocolFactory
 from thrift.transport import TTransport
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolFactory
+    from thrift.transport.TTransport import TTransportFactoryBase, TServerTransportBase, TTransportBase
+    from thrift.Thrift import TProcessor
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-class TServer(object):
+class TServer:
     """Base interface for a server, which must have a serve() method.
 
     Three constructors for all servers:
@@ -39,7 +47,15 @@ class TServer(object):
         inputTransportFactory, outputTransportFactory,
         inputProtocolFactory, outputProtocolFactory)
     """
-    def __init__(self, *args):
+
+    processor: TProcessor
+    serverTransport: TServerTransportBase
+    inputTransportFactory: TTransportFactoryBase
+    outputTransportFactory: TTransportFactoryBase
+    inputProtocolFactory: TProtocolFactory
+    outputProtocolFactory: TProtocolFactory
+
+    def __init__(self, *args: Any) -> None:
         if (len(args) == 2):
             self.__initArgs__(args[0], args[1],
                               TTransport.TTransportFactoryBase(),
@@ -51,9 +67,15 @@ class TServer(object):
         elif (len(args) == 6):
             self.__initArgs__(args[0], args[1], args[2], args[3], args[4], args[5])
 
-    def __initArgs__(self, processor, serverTransport,
-                     inputTransportFactory, outputTransportFactory,
-                     inputProtocolFactory, outputProtocolFactory):
+    def __initArgs__(
+        self,
+        processor: TProcessor,
+        serverTransport: TServerTransportBase,
+        inputTransportFactory: TTransportFactoryBase,
+        outputTransportFactory: TTransportFactoryBase,
+        inputProtocolFactory: TProtocolFactory,
+        outputProtocolFactory: TProtocolFactory,
+    ) -> None:
         self.processor = processor
         self.serverTransport = serverTransport
         self.inputTransportFactory = inputTransportFactory
@@ -67,17 +89,17 @@ class TServer(object):
             raise ValueError("THeaderProtocol servers require that both the input and "
                              "output protocols are THeaderProtocol.")
 
-    def serve(self):
+    def serve(self) -> None:
         pass
 
 
 class TSimpleServer(TServer):
     """Simple single-threaded server that just pumps around one transport."""
 
-    def __init__(self, *args):
+    def __init__(self, *args: Any) -> None:
         TServer.__init__(self, *args)
 
-    def serve(self):
+    def serve(self) -> None:
         self.serverTransport.listen()
         while True:
             client = self.serverTransport.accept()
@@ -113,11 +135,13 @@ class TSimpleServer(TServer):
 class TThreadedServer(TServer):
     """Threaded server that spawns a new thread per each connection."""
 
-    def __init__(self, *args, **kwargs):
+    daemon: bool
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         TServer.__init__(self, *args)
         self.daemon = kwargs.get("daemon", False)
 
-    def serve(self):
+    def serve(self) -> None:
         self.serverTransport.listen()
         while True:
             try:
@@ -132,7 +156,7 @@ class TThreadedServer(TServer):
             except Exception as x:
                 logger.exception(x)
 
-    def handle(self, client):
+    def handle(self, client: TTransportBase) -> None:
         itrans = self.inputTransportFactory.getTransport(client)
         iprot = self.inputProtocolFactory.getProtocol(itrans)
 
@@ -162,17 +186,21 @@ class TThreadedServer(TServer):
 class TThreadPoolServer(TServer):
     """Server with a fixed size pool of threads which service requests."""
 
-    def __init__(self, *args, **kwargs):
+    clients: queue.Queue[TTransportBase]
+    threads: int
+    daemon: bool
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         TServer.__init__(self, *args)
         self.clients = queue.Queue()
         self.threads = 10
         self.daemon = kwargs.get("daemon", False)
 
-    def setNumThreads(self, num):
+    def setNumThreads(self, num: int) -> None:
         """Set the number of worker threads that should be created"""
         self.threads = num
 
-    def serveThread(self):
+    def serveThread(self) -> None:
         """Loop around getting clients from the shared queue and process them."""
         while True:
             try:
@@ -181,7 +209,7 @@ class TThreadPoolServer(TServer):
             except Exception as x:
                 logger.exception(x)
 
-    def serveClient(self, client):
+    def serveClient(self, client: TTransportBase) -> None:
         """Process input/output from a client for as long as possible"""
         itrans = self.inputTransportFactory.getTransport(client)
         iprot = self.inputProtocolFactory.getProtocol(itrans)
@@ -208,7 +236,7 @@ class TThreadPoolServer(TServer):
         if otrans:
             otrans.close()
 
-    def serve(self):
+    def serve(self) -> None:
         """Start a fixed number of worker threads and put client into a queue"""
         for i in range(self.threads):
             try:
@@ -243,12 +271,15 @@ class TForkingServer(TServer):
     This code is heavily inspired by SocketServer.ForkingMixIn in the
     Python stdlib.
     """
-    def __init__(self, *args):
+
+    children: list[int]
+
+    def __init__(self, *args: Any) -> None:
         TServer.__init__(self, *args)
         self.children = []
 
-    def serve(self):
-        def try_close(file):
+    def serve(self) -> None:
+        def try_close(file: TTransportBase) -> None:
             try:
                 file.close()
             except IOError as e:
@@ -310,7 +341,7 @@ class TForkingServer(TServer):
             except Exception as x:
                 logger.exception(x)
 
-    def collect_children(self):
+    def collect_children(self) -> None:
         while self.children:
             try:
                 pid, status = os.waitpid(0, os.WNOHANG)

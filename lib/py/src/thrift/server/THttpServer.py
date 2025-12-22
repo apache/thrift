@@ -17,13 +17,19 @@
 # under the License.
 #
 
-import ssl
+from __future__ import annotations
 
 import http.server as BaseHTTPServer
+import ssl
+from typing import Any, BinaryIO, Callable, TYPE_CHECKING, cast
 
 from thrift.Thrift import TMessageType
 from thrift.server import TServer
 from thrift.transport import TTransport
+
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolFactory
+    from thrift.Thrift import TProcessor
 
 
 class ResponseException(Exception):
@@ -37,7 +43,10 @@ class ResponseException(Exception):
     for ONEWAY requests, as the HTTP response must be sent before the
     RPC is processed.
     """
-    def __init__(self, handler):
+
+    handler: Callable[[Any], None]
+
+    def __init__(self, handler: Callable[[Any], None]) -> None:
         self.handler = handler
 
 
@@ -50,13 +59,19 @@ class THttpServer(TServer.TServer):
     transport/protocol/processor/server layering, by performing the transport
     functions here.  This means things like oneway handling are oddly exposed.
     """
-    def __init__(self,
-                 processor,
-                 server_address,
-                 inputProtocolFactory,
-                 outputProtocolFactory=None,
-                 server_class=BaseHTTPServer.HTTPServer,
-                 **kwargs):
+
+    httpd: BaseHTTPServer.HTTPServer
+    _replied: bool | None
+
+    def __init__(
+        self,
+        processor: TProcessor,
+        server_address: tuple[str, int],
+        inputProtocolFactory: TProtocolFactory,
+        outputProtocolFactory: TProtocolFactory | None = None,
+        server_class: type[BaseHTTPServer.HTTPServer] = BaseHTTPServer.HTTPServer,
+        **kwargs: Any,
+    ) -> None:
         """Set up protocol factories and HTTP (or HTTPS) server.
 
         See BaseHTTPServer for server_address.
@@ -80,7 +95,7 @@ class THttpServer(TServer.TServer):
             def do_POST(self):
                 # Don't care about the request path.
                 thttpserver._replied = False
-                iftrans = TTransport.TFileObjectTransport(self.rfile)
+                iftrans = TTransport.TFileObjectTransport(cast(BinaryIO, self.rfile))
                 itrans = TTransport.TBufferedTransport(
                     iftrans, int(self.headers['Content-Length']))
                 otrans = TTransport.TMemoryBuffer()
@@ -96,7 +111,7 @@ class THttpServer(TServer.TServer):
                         # If the request was ONEWAY we would have replied already
                         data = otrans.getvalue()
                         self.send_response(200)
-                        self.send_header("Content-Length", len(data))
+                        self.send_header("Content-Length", str(len(data)))
                         self.send_header("Content-Type", "application/x-thrift")
                         self.end_headers()
                         self.wfile.write(data)
@@ -116,16 +131,20 @@ class THttpServer(TServer.TServer):
 
         self.httpd = server_class(server_address, RequestHander)
 
-        if (kwargs.get('cafile') or kwargs.get('cert_file') or kwargs.get('key_file')):
-            context = ssl.create_default_context(cafile=kwargs.get('cafile'))
+        cert_file = kwargs.get('cert_file')
+        key_file = kwargs.get('key_file')
+        cafile = kwargs.get('cafile')
+        if cafile or cert_file or key_file:
+            context = ssl.create_default_context(cafile=cafile)
             context.check_hostname = False
-            context.load_cert_chain(kwargs.get('cert_file'), kwargs.get('key_file'))
-            context.verify_mode = ssl.CERT_REQUIRED if kwargs.get('cafile') else ssl.CERT_NONE
+            if cert_file:
+                context.load_cert_chain(cert_file, key_file)
+            context.verify_mode = ssl.CERT_REQUIRED if cafile else ssl.CERT_NONE
             self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
 
-    def serve(self):
+    def serve(self) -> None:
         self.httpd.serve_forever()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.httpd.socket.close()
         # self.httpd.shutdown() # hangs forever, python doesn't handle POLLNVAL properly!

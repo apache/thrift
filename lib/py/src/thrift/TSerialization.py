@@ -17,22 +17,36 @@
 # under the License.
 #
 
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING, TypeVar
+
 from .protocol import TBinaryProtocol
 from .transport import TTransport
 
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolFactory
+    from thrift.protocol.TBase import TBase
 
-def serialize(thrift_object,
-              protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+T = TypeVar('T')
+
+
+def serialize(
+    thrift_object: TBase,
+    protocol_factory: TProtocolFactory = TBinaryProtocol.TBinaryProtocolFactory(),
+) -> bytes:
     transport = TTransport.TMemoryBuffer()
     protocol = protocol_factory.getProtocol(transport)
     thrift_object.write(protocol)
     return transport.getvalue()
 
 
-def deserialize(base,
-                buf,
-                protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+def deserialize(
+    base: T,
+    buf: bytes,
+    protocol_factory: TProtocolFactory = TBinaryProtocol.TBinaryProtocolFactory(),
+) -> T:
     transport = TTransport.TMemoryBuffer(buf)
     protocol = protocol_factory.getProtocol(transport)
-    base.read(protocol)
+    base.read(protocol)  # type: ignore[union-attr]
     return base

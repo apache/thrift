@@ -17,23 +17,18 @@
 # under the License.
 #
 
-from thrift.Thrift import TMessageType
-from thrift.protocol import TProtocolDecorator
+from __future__ import annotations
 
-SEPARATOR = ":"
+from typing import Any
+
+from thrift.protocol.TProtocol import TProtocolBase
 
 
-class TMultiplexedProtocol(TProtocolDecorator.TProtocolDecorator):
-    def __init__(self, protocol, serviceName):
-        self.serviceName = serviceName
+class TProtocolDecorator(TProtocolBase):
+    """Protocol decorator base class that wraps another protocol."""
 
-    def writeMessageBegin(self, name, type, seqid):
-        if (type == TMessageType.CALL or
-                type == TMessageType.ONEWAY):
-            super(TMultiplexedProtocol, self).writeMessageBegin(
-                self.serviceName + SEPARATOR + name,
-                type,
-                seqid
-            )
-        else:
-            super(TMultiplexedProtocol, self).writeMessageBegin(name, type, seqid)
+    def __new__(cls, protocol: TProtocolBase, *args: Any, **kwargs: Any) -> TProtocolDecorator:
+        decorated_cls = type(''.join(['Decorated', protocol.__class__.__name__]),
+                             (cls, protocol.__class__),
+                             protocol.__dict__)
+        return object.__new__(decorated_cls)

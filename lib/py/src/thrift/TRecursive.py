@@ -17,15 +17,19 @@
 # under the License.
 #
 
+from __future__ import annotations
+
+from typing import Any
+
 from thrift.Thrift import TType
 
-TYPE_IDX = 1
-SPEC_ARGS_IDX = 3
-SPEC_ARGS_CLASS_REF_IDX = 0
-SPEC_ARGS_THRIFT_SPEC_IDX = 1
+TYPE_IDX: int = 1
+SPEC_ARGS_IDX: int = 3
+SPEC_ARGS_CLASS_REF_IDX: int = 0
+SPEC_ARGS_THRIFT_SPEC_IDX: int = 1
 
 
-def fix_spec(all_structs):
+def fix_spec(all_structs: list[Any]) -> None:
     """Wire up recursive references for all TStruct definitions inside of each thrift_spec."""
     for struc in all_structs:
         spec = struc.thrift_spec
@@ -41,7 +45,7 @@ def fix_spec(all_structs):
                 _fix_map(thrift_spec[SPEC_ARGS_IDX])
 
 
-def _fix_list_or_set(element_type):
+def _fix_list_or_set(element_type: list[Any]) -> None:
     # For a list or set, the thrift_spec entry looks like,
     # (1, TType.LIST, 'lister', (TType.STRUCT, [RecList, None], False), None, ),  # 1
     # so ``element_type`` will be,
@@ -54,7 +58,7 @@ def _fix_list_or_set(element_type):
         _fix_map(element_type[1])
 
 
-def _fix_map(element_type):
+def _fix_map(element_type: list[Any]) -> None:
     # For a map of key -> value type, ``element_type`` will be,
     # (TType.I16, None, TType.STRUCT, [RecMapBasic, None], False), None, )
     # which is just a normal struct definition.

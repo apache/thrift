@@ -25,37 +25,46 @@ The thread pool should be sized for concurrent tasks, not
 maximum connections
 """
 
+from __future__ import annotations
+
 import logging
+import queue
 import select
 import socket
 import struct
 import threading
-
 from collections import deque
-import queue
+from typing import Any, Callable, TYPE_CHECKING
 
 from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
+if TYPE_CHECKING:
+    from thrift.protocol.TProtocol import TProtocolFactory
+    from thrift.Thrift import TProcessor
+    from thrift.transport.TSocket import TServerSocket
+
 __all__ = ['TNonblockingServer']
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Worker(threading.Thread):
     """Worker is a small helper to process incoming connection."""
 
-    def __init__(self, queue):
+    queue: queue.Queue[list[Any]]
+
+    def __init__(self, queue: queue.Queue[list[Any]]) -> None:
         threading.Thread.__init__(self)
         self.queue = queue
 
-    def run(self):
+    def run(self) -> None:
         """Process queries from task queue, stop if processor is None."""
         while True:
+            processor, iprot, oprot, otrans, callback = self.queue.get()
+            if processor is None:
+                break
             try:
-                processor, iprot, oprot, otrans, callback = self.queue.get()
-                if processor is None:
-                    break
                 processor.process(iprot, oprot)
                 callback(True, otrans.getvalue())
             except Exception:
@@ -63,16 +72,16 @@ class Worker(threading.Thread):
                 callback(False, b'')
 
 
-WAIT_LEN = 0
-WAIT_MESSAGE = 1
-WAIT_PROCESS = 2
-SEND_ANSWER = 3
-CLOSED = 4
+WAIT_LEN: int = 0
+WAIT_MESSAGE: int = 1
+WAIT_PROCESS: int = 2
+SEND_ANSWER: int = 3
+CLOSED: int = 4
 
 
-def locked(func):
+def locked(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator which locks self.lock."""
-    def nested(self, *args, **kwargs):
+    def nested(self: Any, *args: Any, **kwargs: Any) -> Any:
         self.lock.acquire()
         try:
             return func(self, *args, **kwargs)
@@ -81,9 +90,9 @@ def locked(func):
     return nested
 
 
-def socket_exception(func):
+def socket_exception(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator close object on socket.error."""
-    def read(self, *args, **kwargs):
+    def read(self: Any, *args: Any, **kwargs: Any) -> Any:
         try:
             return func(self, *args, **kwargs)
         except socket.error:
@@ -92,19 +101,26 @@ def socket_exception(func):
     return read
 
 
-class Message(object):
-    def __init__(self, offset, len_, header):
+class Message:
+    """Represents a message being read from or written to a connection."""
+
+    offset: int
+    len: int
+    buffer: bytes | None
+    is_header: bool
+
+    def __init__(self, offset: int, len_: int, header: bool) -> None:
         self.offset = offset
         self.len = len_
         self.buffer = None
         self.is_header = header
 
     @property
-    def end(self):
+    def end(self) -> int:
         return self.offset + self.len
 
 
-class Connection(object):
+class Connection:
     """Basic class is represented connection.
 
     It can be in state:
@@ -116,7 +132,19 @@ class Connection(object):
                         of answer).
         CLOSED --- socket was closed and connection should be deleted.
     """
-    def __init__(self, new_socket, wake_up):
+
+    socket: socket.socket
+    status: int
+    len: int
+    received: deque[Message]
+    _reading: Message
+    _rbuf: bytes
+    _wbuf: bytes
+    lock: threading.Lock
+    wake_up: Callable[[], None]
+    remaining: bool
+
+    def __init__(self, new_socket: socket.socket, wake_up: Callable[[], None]) -> None:
         self.socket = new_socket
         self.socket.setblocking(False)
         self.status = WAIT_LEN
@@ -130,7 +158,7 @@ class Connection(object):
         self.remaining = False
 
     @socket_exception
-    def read(self):
+    def read(self) -> None:
         """Reads data from stream and switch state."""
         assert self.status in (WAIT_LEN, WAIT_MESSAGE)
         assert not self.received
@@ -169,7 +197,7 @@ class Connection(object):
         self.remaining = not done
 
     @socket_exception
-    def write(self):
+    def write(self) -> None:
         """Writes data from socket and switch state."""
         assert self.status == SEND_ANSWER
         sent = self.socket.send(self._wbuf)
@@ -181,7 +209,7 @@ class Connection(object):
             self._wbuf = self._wbuf[sent:]
 
     @locked
-    def ready(self, all_ok, message):
+    def ready(self, all_ok: bool, message: bytes) -> None:
         """Callback function for switching state and waking up main thread.
 
         This function is the only function witch can be called asynchronous.
@@ -209,40 +237,55 @@ class Connection(object):
         self.wake_up()
 
     @locked
-    def is_writeable(self):
+    def is_writeable(self) -> bool:
         """Return True if connection should be added to write list of select"""
         return self.status == SEND_ANSWER
 
     # it's not necessary, but...
     @locked
-    def is_readable(self):
+    def is_readable(self) -> bool:
         """Return True if connection should be added to read list of select"""
         return self.status in (WAIT_LEN, WAIT_MESSAGE)
 
     @locked
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """Returns True if connection is closed."""
         return self.status == CLOSED
 
-    def fileno(self):
+    def fileno(self) -> int:
         """Returns the file descriptor of the associated socket."""
         return self.socket.fileno()
 
-    def close(self):
+    def close(self) -> None:
         """Closes connection"""
         self.status = CLOSED
         self.socket.close()
 
 
-class TNonblockingServer(object):
+class TNonblockingServer:
     """Non-blocking server."""
 
-    def __init__(self,
-                 processor,
-                 lsocket,
-                 inputProtocolFactory=None,
-                 outputProtocolFactory=None,
-                 threads=10):
+    processor: TProcessor
+    socket: TServerSocket
+    in_protocol: TProtocolFactory
+    out_protocol: TProtocolFactory
+    threads: int
+    clients: dict[int, Connection]
+    tasks: queue.Queue[list[Any]]
+    _read: socket.socket
+    _write: socket.socket
+    prepared: bool
+    _stop: bool
+    poll: select.poll | None
+
+    def __init__(
+        self,
+        processor: TProcessor,
+        lsocket: TServerSocket,
+        inputProtocolFactory: TProtocolFactory | None = None,
+        outputProtocolFactory: TProtocolFactory | None = None,
+        threads: int = 10,
+    ) -> None:
         self.processor = processor
         self.socket = lsocket
         self.in_protocol = inputProtocolFactory or TBinaryProtocolFactory()
@@ -255,13 +298,13 @@ class TNonblockingServer(object):
         self._stop = False
         self.poll = select.poll() if hasattr(select, 'poll') else None
 
-    def setNumThreads(self, num):
+    def setNumThreads(self, num: int) -> None:
         """Set the number of worker threads that should be created."""
         # implement ThreadPool interface
         assert not self.prepared, "Can't change number of threads after start"
         self.threads = num
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepares server for serve requests."""
         if self.prepared:
             return
@@ -272,7 +315,7 @@ class TNonblockingServer(object):
             thread.start()
         self.prepared = True
 
-    def wake_up(self):
+    def wake_up(self) -> None:
         """Wake up main thread.
 
         The server usually waits in select call in we should terminate one.
@@ -285,7 +328,7 @@ class TNonblockingServer(object):
         """
         self._write.send(b'1')
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the server.
 
         This method causes the serve() method to return.  stop() may be invoked
@@ -300,11 +343,11 @@ class TNonblockingServer(object):
         self._stop = True
         self.wake_up()
 
-    def _select(self):
+    def _select(self) -> tuple[list[int], list[int], list[int], bool]:
         """Does select on open connections."""
-        readable = [self.socket.handle.fileno(), self._read.fileno()]
-        writable = []
-        remaining = []
+        readable: list[int] = [self.socket.handle.fileno(), self._read.fileno()]  # type: ignore[union-attr]
+        writable: list[int] = []
+        remaining: list[int] = []
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 readable.append(connection.fileno())
@@ -317,35 +360,35 @@ class TNonblockingServer(object):
         if remaining:
             return remaining, [], [], False
         else:
-            return select.select(readable, writable, readable) + (True,)
+            return select.select(readable, writable, readable) + (True,)  # type: ignore[return-value]
 
-    def _poll_select(self):
+    def _poll_select(self) -> tuple[list[int], list[int], list[int], bool]:
         """Does poll on open connections, if available."""
-        remaining = []
+        remaining: list[int] = []
 
-        self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)
-        self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)
+        self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)  # type: ignore[union-attr]
+        self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)  # type: ignore[union-attr]
 
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
-                self.poll.register(connection.fileno(), select.POLLIN | select.POLLRDNORM | select.POLLERR | select.POLLHUP | select.POLLNVAL)
+                self.poll.register(connection.fileno(), select.POLLIN | select.POLLRDNORM | select.POLLERR | select.POLLHUP | select.POLLNVAL)  # type: ignore[union-attr]
                 if connection.remaining or connection.received:
                     remaining.append(connection.fileno())
             if connection.is_writeable():
-                self.poll.register(connection.fileno(), select.POLLOUT | select.POLLWRNORM)
+                self.poll.register(connection.fileno(), select.POLLOUT | select.POLLWRNORM)  # type: ignore[union-attr]
             if connection.is_closed():
                 try:
-                    self.poll.unregister(i)
+                    self.poll.unregister(i)  # type: ignore[union-attr]
                 except KeyError:
                     logger.debug("KeyError in unregistering connections...")
                 del self.clients[i]
         if remaining:
             return remaining, [], [], False
 
-        rlist = []
-        wlist = []
-        xlist = []
-        pollres = self.poll.poll()
+        rlist: list[int] = []
+        wlist: list[int] = []
+        xlist: list[int] = []
+        pollres = self.poll.poll()  # type: ignore[union-attr]
         for fd, event in pollres:
             if event & (select.POLLERR | select.POLLHUP | select.POLLNVAL):
                 xlist.append(fd)
@@ -359,7 +402,7 @@ class TNonblockingServer(object):
 
         return rlist, wlist, xlist, True
 
-    def handle(self):
+    def handle(self) -> None:
         """Handle requests.
 
         WARNING! You must call prepare() BEFORE calling handle()
@@ -373,7 +416,7 @@ class TNonblockingServer(object):
             elif readable == self.socket.handle.fileno():
                 try:
                     client = self.socket.accept()
-                    if client:
+                    if client and client.handle:
                         self.clients[client.handle.fileno()] = Connection(client.handle,
                                                                           self.wake_up)
                 except socket.error:
@@ -398,14 +441,14 @@ class TNonblockingServer(object):
         for oob in xset:
             self.clients[oob].close()
 
-    def close(self):
+    def close(self) -> None:
         """Closes the server."""
         for _ in range(self.threads):
             self.tasks.put([None, None, None, None, None])
         self.socket.close()
         self.prepared = False
 
-    def serve(self):
+    def serve(self) -> None:
         """Serve requests.
 
         Serve requests forever, or until stop() is called.
