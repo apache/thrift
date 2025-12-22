@@ -20,12 +20,9 @@
 #
 
 import sys
-try:
-    from setuptools import setup, Extension
-except Exception:
-    from distutils.core import setup, Extension
 
-from distutils.command.build_ext import build_ext
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 # Fix to build sdist under vagrant
