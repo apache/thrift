@@ -668,6 +668,7 @@ int main(int argc, char** argv) {
     UUID_TEST(testUuid, TUuid{"5e2ab18817264e75a04f1ed9a6a89c4c"}, expected_uuid);
     UUID_TEST(testUuid, TUuid{"{5e2ab18817264e75a04f1ed9a6a89c4c}"}, expected_uuid);
     UUID_TEST(testUuid, TUuid{}, TUuid{"00000000-0000-0000-0000-000000000000"});
+    UUID_TEST(testUuid, TUuid{"00112233-4455-6677-8899-aabbccddeeff"}, TUuid{"00112233-4455-6677-8899-aabbccddeeff"});
 
     /**
      * STRUCT TEST
