@@ -62,12 +62,12 @@ import thrift.test.Xtruct2;
  */
 public class TestClient {
 
-  private static int ERR_BASETYPES = 1;
-  private static int ERR_STRUCTS = 2;
-  private static int ERR_CONTAINERS = 4;
-  private static int ERR_EXCEPTIONS = 8;
-  private static int ERR_PROTOCOLS = 16;
-  private static int ERR_UNKNOWN = 64;
+  static int ERR_BASETYPES = 1;
+  static int ERR_STRUCTS = 2;
+  static int ERR_CONTAINERS = 4;
+  static int ERR_EXCEPTIONS = 8;
+  static int ERR_PROTOCOLS = 16;
+  static int ERR_UNKNOWN = 64;
 
   public static void main(String[] args) {
     String host = "localhost";
@@ -819,7 +819,7 @@ public class TestClient {
     System.exit(returnCode);
   }
 
-  private static byte[] getBytesData() {
+  static byte[] getBytesData() {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(256);
     IntStream.range(-128, 128).forEach(byteArrayOutputStream::write);
     return byteArrayOutputStream.toByteArray();

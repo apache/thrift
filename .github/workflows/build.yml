@@ -274,6 +274,7 @@ jobs:
           if-no-files-found: error
           path: |
             lib/java/build/functionalTestJar/
+            lib/java/build/runnonblockingclient
             lib/java/build/runclient
             lib/java/build/runnonblockingserver
             lib/java/build/runserver
@@ -320,21 +321,21 @@ jobs:
       - name: Set up .NET SDK (via install script)
         run: |
           # remove any existing install
-          sudo apt remove dotnet*    
+          sudo apt remove dotnet*
           # install key
           sudo apt install gpg
           wget https://dot.net/v1/dotnet-install.asc
-          gpg --import dotnet-install.asc          
+          gpg --import dotnet-install.asc
           # download and verify
           wget https://dot.net/v1/dotnet-install.sh
           wget https://dot.net/v1/dotnet-install.sig
-          gpg --verify dotnet-install.sig dotnet-install.sh          
+          gpg --verify dotnet-install.sig dotnet-install.sh
           # run install script
           chmod +x dotnet-install.sh
-          ./dotnet-install.sh --channel 10.0          
+          ./dotnet-install.sh --channel 10.0
           # export env vars
           export DOTNET_ROOT=$HOME/.dotnet
-          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools          
+          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
           dotnet --list-sdks
 
 #      the sdk is installed by default, but keep this step for reference

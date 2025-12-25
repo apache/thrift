@@ -64,7 +64,7 @@ dependencies {
 shadowJar {
     description = 'Assemble a test JAR file for cross-check execution'
     // make sure the runners are created when this runs
-    dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer', 'generateRunnerScriptForTServletServer'
+    dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForNonblockingClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer', 'generateRunnerScriptForTServletServer'
     archiveBaseName.set('functionalTest')
     destinationDirectory = file("$buildDir/functionalTestJar")
     // We do not need a version number for this internal jar
@@ -108,6 +108,26 @@ task generateRunnerScriptForClient(group: 'Build') {
 ${scriptHead}
 
 "${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$clientKeyStore" -Djavax.net.ssl.keyStorePassword=thrift "-Djavax.net.ssl.trustStore=$trustStore" -Djavax.net.ssl.trustStorePassword=thrift org.apache.thrift.test.TestClient $args
+"""
+    inputs.property 'runClientText', runClientText
+    outputs.file clientFile
+
+    doLast {
+        clientFile.parentFile.mkdirs()
+        clientFile.text = runClientText
+        clientFile.setExecutable(true, false)
+    }
+}
+
+task generateRunnerScriptForNonblockingClient(group: 'Build') {
+    description = 'Generate a runner script for cross-check tests with TestNonblockingClient'
+
+    def clientFile = file("$buildDir/runnonblockingclient${scriptExt}")
+
+    def runClientText = """\
+${scriptHead}
+
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$clientKeyStore" -Djavax.net.ssl.keyStorePassword=thrift "-Djavax.net.ssl.trustStore=$trustStore" -Djavax.net.ssl.trustStorePassword=thrift org.apache.thrift.test.TestNonblockingClient $args
 """
     inputs.property 'runClientText', runClientText
     outputs.file clientFile
