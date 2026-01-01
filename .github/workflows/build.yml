@@ -72,7 +72,7 @@ jobs:
       # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.25'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: go-precross
           if-no-files-found: error
@@ -255,7 +255,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: libthrift
           if-no-files-found: error
@@ -268,7 +268,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: java-precross
           if-no-files-found: error
@@ -290,7 +290,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -378,7 +378,7 @@ jobs:
         run: make -C test/netstd precross
 
       - name: Upload netstd precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: netstd-precross
           if-no-files-found: error
@@ -415,7 +415,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: swift-precross
           if-no-files-found: error
@@ -477,7 +477,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: rs-precross
           if-no-files-found: error
@@ -625,7 +625,7 @@ jobs:
         run: make -j$(nproc) -C test/cpp precross
 
       - name: Upload cpp precross artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cpp-precross
           if-no-files-found: error
@@ -639,7 +639,7 @@ jobs:
           retention-days: 3
 
       - name: Upload log files from failed test runs
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: lib-cpp-test-log
@@ -749,7 +749,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
