@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload LastTest log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: msvc2017-LastTest-log
           path: ${{ env.THRIFT_BUILD_DIR }}\Testing\Temporary\LastTest.log
