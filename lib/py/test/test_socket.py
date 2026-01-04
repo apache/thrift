@@ -18,6 +18,7 @@
 #
 
 import errno
+import time
 import unittest
 
 from test_sslsocket import ServerAcceptor
@@ -98,7 +99,11 @@ class TSocketTest(unittest.TestCase):
             acc.close()
 
             self.assertIsNotNone(sock.handle)
-            self.assertFalse(sock.isOpen())
+            # Give the kernel a moment to propagate FIN before asserting.
+            deadline = time.monotonic() + 0.5
+            while sock.isOpen() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertFalse(sock.isOpen(), "socket still open after 0.5s")
             # after isOpen() returned False the socket should be closed (THRIFT-5813)
             self.assertIsNone(sock.handle)
 

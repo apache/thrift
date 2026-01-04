@@ -596,7 +596,7 @@ struct DomainSocketFd {
     memset(&sa, 0, sizeof(sa));
     sa.sun_family = AF_UNIX;
     strcpy(sa.sun_path, path.c_str());
-    int rv = bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa));
+    int rv = ::bind(socket_fd, (struct sockaddr*)&sa, sizeof(sa));
     if (rv == -1) {
       std::ostringstream os;
       os << "Cannot bind domain socket: " << strerror(errno);

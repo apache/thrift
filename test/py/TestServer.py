@@ -28,6 +28,7 @@ from optparse import OptionParser
 from util import local_libpath
 sys.path.insert(0, local_libpath())
 from thrift.protocol import TProtocol, TProtocolDecorator
+from thrift.Thrift import TException
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -328,7 +329,9 @@ def main(options):
         tfactory = TTransport.TBufferedTransportFactory()
     # if --zlib, then wrap server transport, and use a different transport factory
     if options.zlib:
-        transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
+        if server_type != "TProcessPoolServer":
+            transport = TZlibTransport.TZlibTransport(transport)  # wrap with zlib
+        # Avoid wrapping the server transport for process pools; TZlibTransport isn't picklable on spawn.
         tfactory = TZlibTransport.TZlibTransportFactory()
 
     # do server-specific setup here:

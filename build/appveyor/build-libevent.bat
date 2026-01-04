@@ -26,6 +26,13 @@ IF "%APPVEYOR_BUILD_ID%" == "" (
 )
 7z x "%URLFILE%" -so | 7z x -si -ttar > nul || EXIT /B
 CD "libevent-%LIBEVENT_VERSION%-stable" || EXIT /B
+:: libevent's nmake config ships with EVENT__HAVE_STDINT_H commented out,
+:: but MSVC needs stdint.h for UINT32_MAX in minheap-internal.h.
+IF EXIST "WIN32-Code\nmake\event2\event-config.h" (
+    powershell -NoProfile -Command "(Get-Content 'WIN32-Code\nmake\event2\event-config.h') -replace '/\* #define EVENT__HAVE_STDINT_H 1 \*/', '#define EVENT__HAVE_STDINT_H 1' | Set-Content 'WIN32-Code\nmake\event2\event-config.h'"
+) ELSE IF EXIST "WIN32-Code\event2\event-config.h" (
+    powershell -NoProfile -Command "(Get-Content 'WIN32-Code\event2\event-config.h') -replace '/\* #define EVENT__HAVE_STDINT_H 1 \*/', '#define EVENT__HAVE_STDINT_H 1' | Set-Content 'WIN32-Code\event2\event-config.h'"
+)
 nmake -f Makefile.nmake static_libs || EXIT /B
 
 :: in libevent 2.0 there is no nmake subdirectory in WIN32-Code, but in 2.1 there is

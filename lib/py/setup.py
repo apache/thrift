@@ -20,13 +20,10 @@
 #
 
 import sys
-try:
-    from setuptools import setup, Extension
-except Exception:
-    from distutils.core import setup, Extension
 
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
+from setuptools.errors import CompileError, ExecError, PlatformError
 
 # Fix to build sdist under vagrant
 import os
@@ -39,9 +36,9 @@ if 'vagrant' in str(os.environ):
 include_dirs = ['src']
 if sys.platform == 'win32':
     include_dirs.append('compat/win32')
-    ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
+    ext_errors = (CompileError, ExecError, PlatformError, IOError)
 else:
-    ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
+    ext_errors = (CompileError, ExecError, PlatformError)
 
 
 class BuildFailed(Exception):
@@ -52,7 +49,7 @@ class ve_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except DistutilsPlatformError:
+        except PlatformError:
             raise BuildFailed()
 
     def build_extension(self, ext):
@@ -99,8 +96,8 @@ def run_setup(with_binary):
     ssl_deps = []
     if sys.hexversion < 0x03050000:
         ssl_deps.append('backports.ssl_match_hostname>=3.5')
-    tornado_deps = ['tornado>=4.0']
-    twisted_deps = ['twisted']
+    tornado_deps = ['tornado>=6.3.0']
+    twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
     setup(name='thrift',
           version='0.23.0',

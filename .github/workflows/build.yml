@@ -78,6 +78,42 @@ jobs:
           path: compiler/cpp/thrift
           retention-days: 3
 
+  compiler-macos:
+    strategy:
+      matrix:
+        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew install automake bison flex boost libevent openssl libtool pkg-config
+          echo "$(brew --prefix bison)/bin" >> $GITHUB_PATH
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: ./configure --disable-debug --disable-tests --disable-libs
+
+      - name: Run make
+        run: make -j$(sysctl -n hw.ncpu)
+
+      - name: Run install
+        run: sudo make install
+
+      - name: Run thrift version
+        run: /usr/local/bin/thrift -version
+
+      - name: Archive built thrift compiler (macOS)
+        uses: actions/upload-artifact@v5
+        with:
+          name: thrift-compiler-${{ matrix.os }}
+          path: compiler/cpp/thrift
+          retention-days: 3
+
   lib-php:
     needs: compiler
     runs-on: ubuntu-24.04
@@ -495,8 +531,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version:
-          - "3.13" # Pin to 3.13 for now -> see THRIFT-5900
+        python-version: &python_versions ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -514,7 +549,7 @@ jobs:
 
       - name: Python setup
         run: |
-          python -m pip install --upgrade pip setuptools wheel flake8 tornado twisted zope.interface
+          python -m pip install --upgrade pip setuptools wheel flake8 "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
           python --version
           pip --version
 
@@ -543,6 +578,65 @@ jobs:
 
       # - name: Run make install-exec-hook for python
       #   run: sudo make -C lib/py install-exec-hook
+
+      - name: Run make for python libs
+        run: make -C lib/py
+
+      - name: Run make check for python libs
+        run: make -C lib/py check
+
+      - name: Run make check for python code
+        run: make -C test/py check
+
+  lib-python-macos:
+    needs: compiler-macos
+    strategy:
+      matrix:
+        os: *macos_versions
+        python-version: *python_versions
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew install automake bison flex boost libevent openssl libtool pkg-config
+          echo "$(brew --prefix bison)/bin" >> $GITHUB_PATH
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Python setup
+        run: |
+          python -m pip install --upgrade pip setuptools wheel flake8 "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
+          python --version
+          pip --version
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: thrift-compiler-${{ matrix.os }}
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for python
+        run: make -C lib/py
+
+      - name: Run make install for python
+        run: |
+          sudo make -C lib/py install PY_PREFIX="$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Run make for python libs
         run: make -C lib/py
@@ -756,4 +850,3 @@ jobs:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
           path: test/log/
           retention-days: 3
-
