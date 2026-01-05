@@ -111,9 +111,7 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     }
     // In SSL mode, the Thrift server may merge the frame size and body into a single TLS package.
     // Setting OP_WRITE to trigger subsequent read operations in the Thrift async client.
-    if (appUnwrap.hasRemaining()) {
-      selectionKey.interestOps(SelectionKey.OP_WRITE);
-    }
+    selectionKey.interestOps(SelectionKey.OP_WRITE);
     return numBytes;
   }
 
