@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -150,7 +149,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** STRING TEST */
         System.out.print("testString(\"Test\")");
@@ -168,7 +167,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** UUID TEST */
         System.out.println("testUuid(\"00112233-4455-6677-8899-aabbccddeeff\")");
@@ -187,7 +186,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** Multiplexed test */
         if (protocol_type.startsWith("multi")) {
@@ -207,7 +206,7 @@ public class TestNonblockingClient extends TestClient {
                   latch.countDown();
                 }
               });
-          latch.await(1, TimeUnit.SECONDS);
+          latch.await();
         }
 
         /** BYTE TEST */
@@ -226,7 +225,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** I32 TEST */
         System.out.print("testI32(-1)");
@@ -244,7 +243,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** I64 TEST */
         System.out.print("testI64(-34359738368)");
@@ -262,7 +261,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** DOUBLE TEST */
         System.out.print("testDouble(-5.325098235)");
@@ -280,7 +279,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** BINARY TEST */
         System.out.print("testBinary(-128...127) = ");
@@ -318,7 +317,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** STRUCT TEST */
         System.out.print("testStruct({\"Zero\", 1, -3, -5})");
@@ -353,7 +352,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** NESTED STRUCT TEST */
         System.out.print("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
@@ -391,7 +390,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** MAP TEST */
         Map<Integer, Integer> mapout = new HashMap<Integer, Integer>();
@@ -433,7 +432,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** STRING MAP TEST */
         Map<String, String> smapout = new HashMap<String, String>();
@@ -481,7 +480,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** SET TEST */
         Set<Integer> setout = new HashSet<Integer>();
@@ -523,7 +522,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** LIST TEST */
         List<Integer> listout = new ArrayList<Integer>();
@@ -565,7 +564,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** ENUM TEST */
         System.out.print("testEnum(ONE)");
@@ -583,7 +582,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testEnum(TWO)");
         latch = new CountDownLatch(1);
@@ -600,7 +599,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testEnum(THREE)");
         latch = new CountDownLatch(1);
@@ -617,7 +616,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testEnum(FIVE)");
         latch = new CountDownLatch(1);
@@ -634,7 +633,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testEnum(EIGHT)");
         latch = new CountDownLatch(1);
@@ -651,7 +650,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** TYPEDEF TEST */
         System.out.print("testTypedef(309858235082523)");
@@ -669,7 +668,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** NESTED MAP TEST */
         System.out.print("testMapMap(1)");
@@ -710,7 +709,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** INSANITY TEST */
         final boolean[] insanityFailed = {true};
@@ -813,7 +812,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
         if (insanityFailed[0]) {
           returnCode |= ERR_STRUCTS;
           System.out.println("*** FAILURE ***\n");
@@ -842,7 +841,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testClient.testException(\"TException\") =>");
         latch = new CountDownLatch(1);
@@ -866,7 +865,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testClient.testException(\"success\") =>");
         latch = new CountDownLatch(1);
@@ -886,7 +885,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** MULTI EXCEPTION TEST */
         System.out.printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
@@ -912,7 +911,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
         latch = new CountDownLatch(1);
@@ -937,7 +936,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         System.out.print("testClient.testMultiException(\"success\", \"test 3\") =>");
         latch = new CountDownLatch(1);
@@ -958,7 +957,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         /** ONEWAY TEST */
         System.out.print("testOneway(3)...");
@@ -993,7 +992,7 @@ public class TestNonblockingClient extends TestClient {
                 latch.countDown();
               }
             });
-        latch.await(1, TimeUnit.SECONDS);
+        latch.await();
 
         long stop = System.nanoTime();
         long tot = stop - start;
