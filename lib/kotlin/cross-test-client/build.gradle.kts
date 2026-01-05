@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
@@ -46,6 +48,18 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_1_8
+        freeCompilerArgs = listOf("-Xjdk-release=1.8")
+    }
 }
 
 val keyStore: String =
