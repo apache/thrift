@@ -40,8 +40,10 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.server.THsHaServer.Args;
+import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
+import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -54,9 +56,9 @@ import thrift.test.Srv.Iface;
 
 public class TestTAsyncClientManager {
 
-  private THsHaServer server_;
-  private Thread serverThread_;
-  private TAsyncClientManager clientManager_;
+  protected TServer server_;
+  protected Thread serverThread_;
+  protected TAsyncClientManager clientManager_;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -261,9 +263,11 @@ public class TestTAsyncClientManager {
   }
 
   private Srv.AsyncClient getClient() throws IOException, TTransportException {
-    TNonblockingSocket clientSocket =
-        new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
-    return new Srv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, clientSocket);
+    return new Srv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, getClientTransport());
+  }
+
+  protected TNonblockingTransport getClientTransport() throws TTransportException, IOException {
+    return new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
   }
 
   private void basicCall(Srv.AsyncClient client) throws Exception {

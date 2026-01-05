@@ -148,11 +148,7 @@ public class TNonblockingSocket extends TNonblockingTransport implements SocketA
       throw new TTransportException(
           TTransportException.NOT_OPEN, "Cannot read from write-only socket channel");
     }
-    try {
-      return socketChannel_.read(ByteBuffer.wrap(buf, off, len));
-    } catch (IOException iox) {
-      throw new TTransportException(TTransportException.UNKNOWN, iox);
-    }
+    return read(ByteBuffer.wrap(buf, off, len));
   }
 
   /** Perform a nonblocking write of the data in buffer; */

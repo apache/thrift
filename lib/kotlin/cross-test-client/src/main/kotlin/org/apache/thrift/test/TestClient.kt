@@ -39,6 +39,7 @@ import org.apache.thrift.protocol.TProtocol
 import org.apache.thrift.protocol.TSimpleJSONProtocol
 import org.apache.thrift.transport.TNonblockingSocket
 import org.apache.thrift.transport.TNonblockingTransport
+import org.apache.thrift.transport.TSSLTransportFactory
 import org.apache.thrift.transport.TTransport
 import thrift.test.Insanity
 import thrift.test.Numberz
@@ -103,15 +104,21 @@ class TestClient : CliktCommand() {
         when (protocolType) {
             ProtocolType.Binary,
             ProtocolType.Multi -> TBinaryProtocol(transport)
+
             ProtocolType.Compact,
             ProtocolType.MultiCompact -> TCompactProtocol(transport)
+
             ProtocolType.Json,
             ProtocolType.MultiJson -> TJSONProtocol(transport)
         }
 
     private fun createTransport(): TNonblockingTransport =
         when (transportType) {
-            TransportType.Framed -> TNonblockingSocket(host, port, socketTimeout)
+            TransportType.Framed ->
+                if (useSSL)
+                    TSSLTransportFactory.getNonblockingClientSocket(host, port, socketTimeout)
+                else TNonblockingSocket(host, port, socketTimeout)
+
             else ->
                 throw UnsupportedOperationException(
                     "only frame transport type is supported for now, got $transportType"

@@ -48,12 +48,23 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
+val keyStore: String =
+    file("$projectDir/../../java/src/crossTest/resources/.clientkeystore").canonicalPath
+val trustStore: String =
+    file("$projectDir/../../java/src/crossTest/resources/.truststore").canonicalPath
+
 tasks {
     application {
         applicationName = "TestClient"
         mainClass.set("org.apache.thrift.test.TestClientKt")
+        applicationDefaultJvmArgs =
+            listOf(
+                "-Djavax.net.ssl.keyStore=$keyStore",
+                "-Djavax.net.ssl.keyStorePassword=thrift",
+                "-Djavax.net.ssl.trustStore=$trustStore",
+                "-Djavax.net.ssl.trustStorePassword=thrift",
+            )
     }
-
     if (JavaVersion.current().isJava11Compatible) {
         ktfmt { kotlinLangStyle() }
     }

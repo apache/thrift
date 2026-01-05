@@ -192,6 +192,62 @@ public class TSSLTransportFactory {
     return createClient(ctx.getSocketFactory(), host, port, timeout);
   }
 
+  /**
+   * Get a default SSL wrapped TNonblockingTransport connected to the specified host and port.
+   *
+   * @param host
+   * @param port
+   * @return A SSL wrapped TNonblockingSocket
+   * @throws TTransportException
+   */
+  public static TNonblockingSocket getNonblockingClientSocket(String host, int port)
+      throws TTransportException, IOException {
+    return getNonblockingClientSocket(host, port, 0);
+  }
+
+  /**
+   * Get a default SSL wrapped TNonblockingTransport connected to the specified host and port.
+   *
+   * @param host
+   * @param port
+   * @param timeout
+   * @return A SSL wrapped TNonblockingSocket
+   * @throws TTransportException
+   */
+  public static TNonblockingSocket getNonblockingClientSocket(String host, int port, int timeout)
+      throws TTransportException, IOException {
+    SSLContext ctx;
+    try {
+      ctx = SSLContext.getDefault();
+    } catch (Exception e) {
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Error creating the transport", e);
+    }
+    return new TNonblockingSSLSocket(host, port, timeout, ctx);
+  }
+
+  /**
+   * Get a custom configured TNonblockingTransport. The SSL settings are obtained from the passed in
+   * TSSLTransportParameters.
+   *
+   * @param host
+   * @param port
+   * @param timeout
+   * @param params
+   * @return A SSL wrapped TNonblockingSocket
+   * @throws TTransportException
+   */
+  public static TNonblockingSocket getNonblockingClientSocket(
+      String host, int port, int timeout, TSSLTransportParameters params)
+      throws TTransportException, IOException {
+    if (params == null || !(params.isKeyStoreSet || params.isTrustStoreSet)) {
+      throw new TTransportException(
+          "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
+    }
+    SSLContext ctx = createSSLContext(params);
+    return new TNonblockingSSLSocket(host, port, timeout, ctx);
+  }
+
   private static SSLContext createSSLContext(TSSLTransportParameters params)
       throws TTransportException {
     SSLContext ctx;
