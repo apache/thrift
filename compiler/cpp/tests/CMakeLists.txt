@@ -41,21 +41,23 @@ endif()
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
-# create directory for thrifty and thriftl
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
+if(NOT TARGET parse)
+    # create directory for thrifty and thriftl
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
 
-# Create flex and bison files and build the lib parse static library
-BISON_TARGET(thrifty ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc COMPILE_FLAGS "--file-prefix-map=${CMAKE_BINARY_DIR}='' --file-prefix-map=${CMAKE_SOURCE_DIR}=''")
-FLEX_TARGET(thriftl ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
-ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
+    # Create flex and bison files and build the lib parse static library
+    BISON_TARGET(thrifty ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc COMPILE_FLAGS "--file-prefix-map=${CMAKE_BINARY_DIR}='' --file-prefix-map=${CMAKE_SOURCE_DIR}=''")
+    FLEX_TARGET(thriftl ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
+    ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
-set(parse_SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
-)
+    set(parse_SOURCES
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
+    )
 
-add_library(parse STATIC ${parse_SOURCES})
+    add_library(parse STATIC ${parse_SOURCES})
+endif()
 
 # Thrift compiler tests
 set(thrift_compiler_tests
@@ -72,6 +74,8 @@ set(thrift_compiler_tests_SOURCES
 )
 
 set(thrift_compiler_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_globals.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_parser_support.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/logging.cc # we use logging instead of main to avoid breaking compillation (2 main v)
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/audit/t_audit.cpp
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/common.cc
@@ -91,10 +95,11 @@ macro(THRIFT_ADD_COMPILER name description initial)
     option(${enabler} ${description} ${initial})
     if(${enabler})
         list(APPEND thrift_compiler_SOURCES ${src})
-        file(GLOB thrift_compiler_tests_SOURCES
+        file(GLOB temp_test_sources
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.c*"
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.thrift"
         )
+        list(APPEND thrift_compiler_tests_SOURCES ${temp_test_sources})
     endif()
 endmacro()
 
@@ -106,14 +111,14 @@ macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
     list(APPEND "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.h")
     option(${enabler} ${description} ${initial})
     if(${enabler})
-        list(APPEND thrift-compiler_SOURCES ${src})
+        list(APPEND thrift_compiler_SOURCES ${src})
     endif()
 endmacro()
 
 # The following compiler with unit tests can be enabled or disabled
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" OFF)
 THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
-THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" OFF)
+THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
 THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" OFF)
@@ -142,11 +147,19 @@ THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" OFF)
 # The following compiler can be enabled or disabled by enabling or disabling certain languages
 THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)
 
-# Thrift is looking for include files in the src directory
-# we also add the current binary directory for generated files
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
+# OCaml tests include the implementation .cc directly, so compiling it into the
+# thrift_compiler lib would cause duplicate definitions (LNK2005).
+list(REMOVE_ITEM thrift_compiler_SOURCES
+  "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_ocaml_generator.cc"
+)
 
-add_library(thrift_compiler ${thrift_compiler_SOURCES})
+# Thrift is looking for include files in the src directory
+# We also add:
+# - the current binary directory for locally generated files (standalone tests build)
+# - the top-level binary directory for generated files when reusing targets from the parent build
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
+
+add_library(thrift_compiler STATIC ${thrift_compiler_SOURCES})
 
 #link parse lib to thrift_compiler lib
 target_link_libraries(thrift_compiler parse)
@@ -162,7 +175,93 @@ endif()
 set_target_properties(thrift_compiler_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin/)
 set_target_properties(thrift_compiler_tests PROPERTIES OUTPUT_NAME thrift_compiler_tests)
 
-target_link_libraries(thrift_compiler_tests thrift_compiler)
+# Ensure generator registration translation units are linked in.
+# Many generators register themselves via static initialization; linkers may
+# otherwise discard those objects from static libraries.
+if(MSVC)
+    target_link_libraries(thrift_compiler_tests PRIVATE thrift_compiler)
+    target_link_options(thrift_compiler_tests PRIVATE
+        "/WHOLEARCHIVE:$<TARGET_LINKER_FILE:thrift_compiler>"
+    )
+elseif(APPLE)
+    target_link_libraries(thrift_compiler_tests PRIVATE thrift_compiler)
+    target_link_options(thrift_compiler_tests PRIVATE
+        "-Wl,-force_load,$<TARGET_LINKER_FILE:thrift_compiler>"
+    )
+else()
+    target_link_libraries(thrift_compiler_tests PRIVATE
+        "-Wl,--whole-archive" thrift_compiler "-Wl,--no-whole-archive"
+    )
+endif()
+
+# Compile-check generated C++ output for the fixture thrift file with private_optional enabled.
+# This ensures the generator output is compileable (no link step required).
+if(TARGET thrift-compiler)
+    # Generated C++ includes Thrift runtime headers which may require Boost.
+    # Only enable the compile-check when Boost headers are available.
+    set(_private_optional_boost_include_dirs "")
+    find_package(Boost QUIET)
+    if(Boost_FOUND)
+        set(_private_optional_boost_include_dirs ${Boost_INCLUDE_DIRS})
+    elseif(DEFINED BOOST_ROOT)
+        if(EXISTS "${BOOST_ROOT}/include/boost")
+            set(_private_optional_boost_include_dirs "${BOOST_ROOT}/include")
+        elseif(EXISTS "${BOOST_ROOT}/boost")
+            set(_private_optional_boost_include_dirs "${BOOST_ROOT}")
+        endif()
+    endif()
+
+    if(_private_optional_boost_include_dirs STREQUAL "")
+        message(STATUS "Skipping generated private_optional compile-check (Boost headers not found)")
+    else()
+    set(_private_optional_thrift
+        "${CMAKE_CURRENT_SOURCE_DIR}/cpp/test_private_optional.thrift"
+    )
+    set(_private_optional_gen_out_dir
+        "${CMAKE_CURRENT_BINARY_DIR}/generated-private-optional"
+    )
+    set(_private_optional_gen_cpp_dir
+        "${_private_optional_gen_out_dir}/gen-cpp"
+    )
+    set(_private_optional_types_cpp
+        "${_private_optional_gen_cpp_dir}/test_private_optional_types.cpp"
+    )
+
+    add_custom_command(
+        OUTPUT "${_private_optional_types_cpp}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${_private_optional_gen_out_dir}"
+        COMMAND ${CMAKE_COMMAND} -E chdir "${_private_optional_gen_out_dir}"
+            $<TARGET_FILE:thrift-compiler>
+            --gen cpp:private_optional
+            -o "${_private_optional_gen_out_dir}"
+            "${_private_optional_thrift}"
+        DEPENDS thrift-compiler "${_private_optional_thrift}"
+        VERBATIM
+    )
+
+    set_source_files_properties(
+        "${_private_optional_types_cpp}"
+        PROPERTIES GENERATED TRUE
+    )
+
+    add_library(thrift_compiler_generated_private_optional STATIC
+        "${_private_optional_types_cpp}"
+    )
+
+    target_include_directories(thrift_compiler_generated_private_optional PRIVATE
+        "${_private_optional_gen_cpp_dir}"
+        "${THRIFT_COMPILER_SOURCE_DIR}/../../lib/cpp/src"
+        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_BINARY_DIR}"
+        ${_private_optional_boost_include_dirs}
+    )
+
+    # Build the compile-check as part of the standard test build.
+    add_dependencies(thrift_compiler_tests thrift_compiler_generated_private_optional)
+    endif()
+else()
+    message(STATUS "Skipping generated private_optional compile-check (no thrift-compiler target)")
+endif()
 
 enable_testing()
-add_test(NAME ThriftTests COMMAND thrift_compiler_tests)
+add_test(NAME ThriftCompilerTests COMMAND thrift_compiler_tests)
