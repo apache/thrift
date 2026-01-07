@@ -62,10 +62,10 @@ namespace :'gen-rb' do
     dir = File.dirname(__FILE__) + '/benchmark'
     sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/Benchmark.thrift"
   end
-  
+
   task :'debug_proto' do
     sh "mkdir", "-p", "test/debug_proto"
-    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/v0.16/DebugProtoTest.thrift"
+    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/DebugProtoTest.thrift"
   end
 end
 

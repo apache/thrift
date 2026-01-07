@@ -60,6 +60,7 @@ union TestUnion {
   3: i32 other_i32_field;
   4: SomeEnum enum_field;
   5: binary binary_field;
+  6: uuid uuid_field;
 }
 
 struct Foo {
@@ -71,6 +72,7 @@ struct Foo {
   6: set<i16> shorts = [5, 17, 239],
   7: optional string opt_string
   8: bool my_bool
+  9: optional uuid opt_uuid
 }
 
 struct Foo2 {
@@ -92,7 +94,8 @@ struct SimpleList {
   8: list<map<i16, i16>> maps,
   9: list<list<i16>> lists,
   10: list<set<i16>> sets,
-  11: list<Hello> hellos
+  11: list<Hello> hellos,
+  12: list<uuid> uuids
 }
 
 exception Xception {
@@ -119,6 +122,7 @@ union My_union {
   8: i32 other_i32
   9: SomeEnum some_enum;
   10: map<SomeEnum, list<SomeEnum>> my_map;
+  11: uuid unique_id;
 }
 
 struct Struct_with_union {
