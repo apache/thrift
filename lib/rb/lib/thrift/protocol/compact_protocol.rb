@@ -276,7 +276,7 @@ module Thrift
 
         # push the new field onto the field stack so we can keep the deltas going.
         @last_field.push(field_id)
-        ["", CompactTypes.get_ttype(type & 0x0f), field_id]
+        [nil, CompactTypes.get_ttype(type & 0x0f), field_id]
       end
     end
 
