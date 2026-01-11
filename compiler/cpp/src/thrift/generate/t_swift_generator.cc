@@ -62,6 +62,8 @@ public:
     promise_kit_ = false;
     safe_enums_ = false;
 
+    fprintf(stderr, "We are sorry, but for the lack of active maintainers, the SWIFT compiler target is being deprecated and may be removed in the next version. Feel free to contact the dev mailing list (dev@thrift.apache.org) for further details.\n");
+
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("log_unexpected") == 0) {
         log_unexpected_ = true;
