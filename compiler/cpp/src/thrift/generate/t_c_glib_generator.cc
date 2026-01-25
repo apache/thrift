@@ -4310,9 +4310,11 @@ void t_c_glib_generator::generate_deserialize_set_element(ostream& out,
                                                           int error_ret) {
   t_type* telem = tset->get_elem_type();
   string elem = tmp("_elem");
-  string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
 
   declare_local_variable(out, telem, elem, true);
+
+  telem = get_true_type(telem);
+  string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
 
   t_field felem(telem, telem_ptr + elem);
   generate_deserialize_field(out, &felem, "", "", error_ret);
