@@ -42,9 +42,32 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   /** Transport */
   protected TTransport trans_;
 
+  /** Current recursion depth during deserialization */
+  private int recursionDepth_ = 0;
+
   /** Constructor */
   protected TProtocol(TTransport trans) {
     trans_ = trans;
+  }
+
+  /**
+   * Increment recursion depth, checking against the configured limit.
+   *
+   * @throws TProtocolException with DEPTH_LIMIT if limit exceeded
+   */
+  public void incrementRecursionDepth() throws TProtocolException {
+    int limit = trans_.getConfiguration().getRecursionLimit();
+    if (recursionDepth_ >= limit) {
+      throw new TProtocolException(
+          TProtocolException.DEPTH_LIMIT,
+          "Recursion depth " + (recursionDepth_ + 1) + " exceeds limit " + limit);
+    }
+    ++recursionDepth_;
+  }
+
+  /** Decrement recursion depth. Call in finally block. */
+  public void decrementRecursionDepth() {
+    --recursionDepth_;
   }
 
   /** Transport accessor */
