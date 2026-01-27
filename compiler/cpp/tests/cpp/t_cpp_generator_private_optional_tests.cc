@@ -15,104 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "../catch/catch.hpp"
-#include <thrift/parse/t_program.h>
-#include <thrift/generate/t_generator.h>
-#include <thrift/generate/t_generator_registry.h>
-#include <thrift/globals.h>
-#include <thrift/main.h>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <sstream>
-
-#include <algorithm>
+#include "t_cpp_generator_test_utils.h"
 
 using std::string;
 using std::map;
-using std::ifstream;
-using std::ofstream;
-using std::ostringstream;
-
-// Provided by compiler/cpp/tests/thrift_test_parser_support.cc
-extern std::string g_curdir;
-extern std::string g_curpath;
-
-// Helper function to read file content
-string read_file(const string& filename) {
-    ifstream file(filename);
-    if (!file.is_open()) {
-        return "";
-    }
-    ostringstream ss;
-    ss << file.rdbuf();
-    return ss.str();
-}
-
-static string source_dir() {
-    string file = __FILE__;
-    std::replace(file.begin(), file.end(), '\\', '/');
-    size_t slash = file.rfind('/');
-    return (slash == string::npos) ? string(".") : file.substr(0, slash);
-}
-
-static string join_path(const string& a, const string& b) {
-    if (a.empty()) {
-        return b;
-    }
-    if (a.back() == '/' || a.back() == '\\') {
-        return a + b;
-    }
-    return a + "/" + b;
-}
-
-static string normalize_for_compare(string s) {
-    s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
-
-    std::istringstream in(s);
-    std::ostringstream out;
-    string line;
-    bool in_block_comment = false;
-    bool first = true;
-    while (std::getline(in, line)) {
-        while (!line.empty() && (line.back() == ' ' || line.back() == '\t')) {
-            line.pop_back();
-        }
-
-        const auto first_non_ws = line.find_first_not_of(" \t");
-        if (first_non_ws == string::npos) {
-            continue;
-        }
-
-        const string trimmed = line.substr(first_non_ws);
-
-        if (in_block_comment) {
-            if (trimmed.find("*/") != string::npos) {
-                in_block_comment = false;
-            }
-            continue;
-        }
-
-        if (trimmed.size() >= 2 && trimmed.compare(0, 2, "//") == 0) {
-            continue;
-        }
-
-        if (trimmed.size() >= 2 && trimmed.compare(0, 2, "/*") == 0) {
-            if (trimmed.find("*/") == string::npos) {
-                in_block_comment = true;
-            }
-            continue;
-        }
-
-        if (!first) {
-            out << '\n';
-        }
-        first = false;
-        out << line;
-    }
-
-    return out.str();
-}
+using cpp_generator_test_utils::read_file;
+using cpp_generator_test_utils::source_dir;
+using cpp_generator_test_utils::join_path;
+using cpp_generator_test_utils::normalize_for_compare;
+using cpp_generator_test_utils::parse_thrift_for_test;
 
 // Helper function to extract class definition from generated header
 string extract_class_definition(const string& content, const string& class_name) {
@@ -127,37 +38,6 @@ string extract_class_definition(const string& content, const string& class_name)
     }
     
     return content.substr(class_start, class_end - class_start + 2);
-}
-
-static void parse_thrift_for_test(t_program* program) {
-    REQUIRE(program != nullptr);
-
-    // These globals are used by the parser; see thrift/globals.h.
-    g_program = program;
-    g_scope = program->scope();
-    g_parent_scope = nullptr;
-    g_parent_prefix = program->get_name() + ".";
-
-    g_curpath = program->get_path();
-    g_curdir = directory_name(g_curpath);
-
-    // Pass 1: scan includes (even if none) to match the compiler behavior.
-    g_parse_mode = INCLUDES;
-    yylineno = 1;
-    yyin = std::fopen(g_curpath.c_str(), "r");
-    REQUIRE(yyin != nullptr);
-    REQUIRE(yyparse() == 0);
-    std::fclose(yyin);
-    yyin = nullptr;
-
-    // Pass 2: parse program.
-    g_parse_mode = PROGRAM;
-    yylineno = 1;
-    yyin = std::fopen(g_curpath.c_str(), "r");
-    REQUIRE(yyin != nullptr);
-    REQUIRE(yyparse() == 0);
-    std::fclose(yyin);
-    yyin = nullptr;
 }
 
 TEST_CASE("t_cpp_generator default behavior generates all public fields", "[functional]")
