@@ -57,6 +57,7 @@ public:
 
 
     gen_pure_enums_ = false;
+    gen_enum_class_ = false;
     use_include_prefix_ = false;
     gen_cob_style_ = false;
     gen_no_client_completion_ = false;
@@ -73,6 +74,9 @@ public:
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("pure_enums") == 0) {
         gen_pure_enums_ = true;
+        if (iter->second.compare("enum_class") == 0) {
+          gen_enum_class_ = true;
+        }
       } else if( iter->first.compare("include_prefix") == 0) {
         use_include_prefix_ = true;
       } else if( iter->first.compare("cob_style") == 0) {
@@ -335,6 +339,11 @@ private:
    * True if we should generate pure enums for Thrift enums, instead of wrapper classes.
    */
   bool gen_pure_enums_;
+
+  /**
+   * True if we should generate C++ 11 enum class for Thrift enums.
+   */
+  bool gen_enum_class_;
 
   /**
    * True if we should generate templatized reader/writer methods.
@@ -609,7 +618,11 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     f_types_ << indent() << "struct " << tenum->get_name() << " {" << '\n';
     indent_up();
   }
-  f_types_ << indent() << "enum " << enum_name;
+  if (gen_pure_enums_ && gen_enum_class_) {
+    f_types_ << indent() << "enum class " << enum_name;
+  } else {
+    f_types_ << indent() << "enum " << enum_name;
+  }
 
   generate_enum_constant_list(f_types_, constants, "", "", true);
 
@@ -624,12 +637,20 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
      Generate a character array of enum names for debugging purposes.
   */
   std::string prefix = "";
-  if (!gen_pure_enums_) {
+  std::string int_value_prefix = "";
+  std::string int_value_suffix = "";
+  if (!gen_pure_enums_ || gen_enum_class_) {
     prefix = tenum->get_name() + "::";
+  }
+  if (gen_enum_class_) {
+    int_value_prefix = "static_cast<int>(" + tenum->get_name() + "::";
+    int_value_suffix = ")";
+  } else if (!gen_pure_enums_) {
+    int_value_prefix = tenum->get_name() + "::";
   }
 
   f_types_impl_ << indent() << "int _k" << tenum->get_name() << "Values[] =";
-  generate_enum_constant_list(f_types_impl_, constants, prefix.c_str(), "", false);
+  generate_enum_constant_list(f_types_impl_, constants, int_value_prefix.c_str(), int_value_suffix.c_str(), false);
 
   f_types_impl_ << indent() << "const char* _k" << tenum->get_name() << "Names[] =";
   generate_enum_constant_list(f_types_impl_, constants, "\"", "\"", false);
@@ -680,7 +701,12 @@ void t_cpp_generator::generate_enum_ostream_operator(std::ostream& out, t_enum* 
     scope_up(out);
 
     out << indent() << "std::map<int, const char*>::const_iterator it = _"
-             << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << '\n';
+             << tenum->get_name() << "_VALUES_TO_NAMES.find(";
+    if (gen_enum_class_) {
+      out << "static_cast<int>(val));" << '\n';
+    } else {
+      out << "val);" << '\n';
+    }
     out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << '\n';
     indent_up();
     out << indent() << "out << it->second;" << '\n';
@@ -720,7 +746,12 @@ void t_cpp_generator::generate_enum_to_string_helper_function(std::ostream& out,
     scope_up(out);
 
     out << indent() << "std::map<int, const char*>::const_iterator it = _"
-             << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << '\n';
+             << tenum->get_name() << "_VALUES_TO_NAMES.find(";
+    if (gen_enum_class_) {
+      out << "static_cast<int>(val));" << '\n';
+    } else {
+      out << "val);" << '\n';
+    }
     out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << '\n';
     indent_up();
     out << indent() << "return std::string(it->second);" << '\n';
@@ -4954,6 +4985,7 @@ THRIFT_REGISTER_GENERATOR(
     "                     Omits generation of default operators ==, != and <\n"
     "    templates:       Generate templatized reader/writer methods.\n"
     "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
+    "                     When 'pure_enums=enum_class', generate C++ 11 enum class.\n"
     "    include_prefix:  Use full include paths in generated files.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
