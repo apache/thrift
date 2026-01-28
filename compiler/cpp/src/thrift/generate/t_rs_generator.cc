@@ -56,6 +56,9 @@ public:
   t_rs_generator(t_program* program, const std::map<std::string, std::string>&, const std::string&)
     : t_generator(program) {
     gen_dir_ = get_out_dir();
+
+    fprintf(stderr, "We are sorry, but for the lack of active maintainers, the RUST compiler target is being deprecated and may be removed in the next version. Feel free to contact the dev mailing list (dev@thrift.apache.org) for further details.\n");
+
   }
 
   /**
