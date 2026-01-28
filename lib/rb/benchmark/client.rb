@@ -25,13 +25,36 @@ $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'benchmark_service'
 
 class Client
-  def initialize(host, port, clients_per_process, calls_per_client, log_exceptions, tls)
+  def initialize(host, port, clients_per_process, calls_per_client, log_exceptions, tls, protocol_type)
     @host = host
     @port = port
     @clients_per_process = clients_per_process
     @calls_per_client = calls_per_client
     @log_exceptions = log_exceptions
     @tls = tls
+    @protocol_type = protocol_type || 'binary'
+  end
+
+  def create_protocol(socket)
+    case @protocol_type
+    when 'binary'
+      transport = Thrift::FramedTransport.new(socket)
+      Thrift::BinaryProtocol.new(transport)
+    when 'compact'
+      transport = Thrift::FramedTransport.new(socket)
+      Thrift::CompactProtocol.new(transport)
+    when 'header'
+      Thrift::HeaderProtocol.new(socket)
+    when 'header-compact'
+      Thrift::HeaderProtocol.new(socket, nil, Thrift::HeaderSubprotocolID::COMPACT)
+    when 'header-zlib'
+      protocol = Thrift::HeaderProtocol.new(socket)
+      protocol.add_transform(Thrift::HeaderTransformID::ZLIB)
+      protocol
+    else
+      transport = Thrift::FramedTransport.new(socket)
+      Thrift::BinaryProtocol.new(transport)
+    end
   end
 
   def run
@@ -53,8 +76,8 @@ class Client
       else
         Thrift::Socket.new(@host, @port)
       end
-      transport = Thrift::FramedTransport.new(socket)
-      protocol = Thrift::BinaryProtocol.new(transport)
+      protocol = create_protocol(socket)
+      transport = protocol.trans
       client = ThriftBenchmark::BenchmarkService::Client.new(protocol)
       begin
         start = Time.now
@@ -89,6 +112,6 @@ end
 log_exceptions = true if ARGV[0] == '-log-exceptions' and ARGV.shift
 tls = true if ARGV[0] == '-tls' and ARGV.shift
 
-host, port, clients_per_process, calls_per_client = ARGV
+host, port, clients_per_process, calls_per_client, protocol_type = ARGV
 
-Client.new(host, port.to_i, clients_per_process.to_i, calls_per_client.to_i, log_exceptions, tls).run
+Client.new(host, port.to_i, clients_per_process.to_i, calls_per_client.to_i, log_exceptions, tls, protocol_type).run
