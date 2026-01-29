@@ -20,10 +20,8 @@
 #
 
 import sys
-try:
-    from setuptools import setup, Extension
-except:
-    from distutils.core import setup, Extension, Command
+
+from setuptools import Extension, setup
 
 setup(name='thrift_fb303',
       version='1.0.0',

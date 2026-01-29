@@ -31,14 +31,7 @@ SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\install\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
 
 
-IF "%PROFILE%" == "MSVC2015" (
-  IF "%PLATFORM%" == "x86" (
-    CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 || EXIT /B
-  ) ELSE (
-    CALL "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 || EXIT /B
-    CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64 || EXIT /B
-  )
-) ELSE IF "%PROFILE%" == "MSVC2017" (
+IF "%PROFILE%" == "MSVC2017" (
   IF "%PLATFORM%" == "x86" (
     CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat" || EXIT /B
   ) ELSE (
@@ -50,6 +43,12 @@ IF "%PROFILE%" == "MSVC2015" (
   ) ELSE (
     CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || EXIT /B
   )
+) ELSE IF "%PROFILE%" == "MSVC2022" (
+  IF "%PLATFORM%" == "x86" (
+    CALL "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars32.bat" || EXIT /B
+  ) ELSE (
+    CALL "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" || EXIT /B
+  )
 ) ELSE (
   ECHO Unsupported PROFILE=%PROFILE% or PLATFORM=%PLATFORM%
   EXIT /B 1
@@ -59,16 +58,24 @@ IF "%PROFILE%" == "MSVC2015" (
 @ECHO ON
 
 :: compiler and generator detection
-IF /i "%PLATFORM%" == "x64" SET GENARCH= Win64
-IF "%PROFILE%" == "MSVC2015" (
-  SET GENERATOR=Visual Studio 14 2015!GENARCH!
-  SET COMPILER=vc140
-) ELSE IF "%PROFILE%" == "MSVC2017" (
+:: VS2017 uses "Generator Win64" syntax, VS2019+ use "-A x64" flag
+IF /i "%PLATFORM%" == "x64" (
+  SET GENARCH= Win64
+  SET CMAKE_ARCH_FLAG=-A x64
+) ELSE (
+  SET GENARCH=
+  SET CMAKE_ARCH_FLAG=-A Win32
+)
+IF "%PROFILE%" == "MSVC2017" (
   SET GENERATOR=Visual Studio 15 2017!GENARCH!
   SET COMPILER=vc141
+  SET CMAKE_ARCH_FLAG=
 ) ELSE IF "%PROFILE%" == "MSVC2019" (
-  SET GENERATOR=Visual Studio 16 2019!GENARCH!
+  SET GENERATOR=Visual Studio 16 2019
   SET COMPILER=vc142
+) ELSE IF "%PROFILE%" == "MSVC2022" (
+  SET GENERATOR=Visual Studio 17 2022
+  SET COMPILER=vc143
 ) ELSE (
   ECHO [error] unable to determine the CMake generator and compiler to use from MSVC profile %PROFILE%
   EXIT /B 1
@@ -96,7 +103,7 @@ IF "%PYTHON_VERSION%" == "" (
   IF /i "%PLATFORM%" == "x64" (SET PTEXT=-x64)
   SET PYTHON_ROOT=C:\Python%PYTHON_VERSION:.=%!PTEXT!
   SET PATH=!PYTHON_ROOT!\scripts;!PYTHON_ROOT!;!PATH!
-  SET CMAKE_PYTHON_OPTS=-DPython3_FIND_STRATEGY=LOCATION -DPython3_ROOT=!PYTHON_ROOT!
+  SET CMAKE_PYTHON_OPTS=-DPython3_FIND_STRATEGY=LOCATION -DPython3_ROOT=!PYTHON_ROOT! -DPython3_EXECUTABLE=!PYTHON_ROOT!\python.exe
 )
 
 IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
@@ -115,15 +122,15 @@ choco feature enable -n allowGlobalConfirmation || EXIT /B
 
 :: Things to install when NOT running in appveyor:
 IF "%APPVEYOR_BUILD_ID%" == "" (
-    cup -y chocolatey || EXIT /B
-    cinst -y curl || EXIT /B
-    cinst -y 7zip || EXIT /B
-    cinst -y python3 || EXIT /B
-    cinst -y openssl.light || EXIT /B
+    choco upgrade -y chocolatey || EXIT /B
+    choco install -y curl || EXIT /B
+    choco install -y 7zip || EXIT /B
+    choco install -y python3 || EXIT /B
+    choco install -y openssl.light || EXIT /B
 )
 
-cinst -y jdk8 || EXIT /B
-cinst -y winflexbison3 || EXIT /B
+choco install -y jdk8 || EXIT /B
+choco install -y winflexbison3 || EXIT /B
 
 :: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
@@ -133,12 +140,17 @@ call build-zlib.bat || EXIT /B
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
 call build-libevent.bat || EXIT /B
 
-:: python packages (correct path to pip set above)
-pip.exe ^
-    install backports.ssl_match_hostname ^
-            ipaddress ^
-            tornado ^
-            twisted || EXIT /B
+:: python packages (ensure we use the configured Python)
+IF "%WITH_PYTHON%" == "ON" (
+  "!PYTHON_ROOT!\python.exe" -m ensurepip --upgrade || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m pip install --upgrade pip setuptools wheel || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m pip ^
+      install backports.ssl_match_hostname ^
+              ipaddress ^
+              tornado>=6.3.0 ^
+              twisted>=24.3.0 ^
+              zope.interface>=6.1 || EXIT /B
+)
 
 :: Adobe Flex SDK 4.6 for ActionScript
 MKDIR "C:\Adobe\Flex\SDK\4.6" || EXIT /B
@@ -171,7 +183,7 @@ CD "%BUILDDIR%" || EXIT /B
 :: DIR C:\Libraries\boost_1_60_0\lib*
 
 cmake.exe "%SRCDIR%" ^
-  -G"%GENERATOR%" ^
+  -G"%GENERATOR%" %CMAKE_ARCH_FLAG% ^
   -DBISON_EXECUTABLE="C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_bison.exe" ^
   -DBOOST_ROOT="%BOOST_ROOT%" ^
   -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ^

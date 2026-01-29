@@ -23,6 +23,12 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 OLD)
 endif()
 
+# CMake 3.27+ warns and ignores upper-case <PACKAGENAME>_ROOT variables unless
+# CMP0144 is set. We pass BOOST_ROOT on Windows builds, so enable NEW behavior.
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 # Force using FindBoost instead of Boost's own BoostConfig.cmake.
 # BoostConfig.cmake does not populate ${Boost_LIBRARIES} the same way,
 # which causes linking failures on Windows.

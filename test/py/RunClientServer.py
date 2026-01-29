@@ -102,6 +102,14 @@ def runScriptTest(libdir, genbase, genpydir, script):
         raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
 
 
+def pick_unused_port():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('127.0.0.1', 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
 def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zlib, use_ssl, verbose):
     env = setup_pypath(libdir, os.path.join(genbase, genpydir))
     # Build command line arguments
@@ -129,7 +137,14 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
         cli_args.append('--http=/')
     if verbose > 0:
         print('Testing server %s: %s' % (server_class, ' '.join(server_args)))
-    serverproc = subprocess.Popen(server_args, env=env)
+    popen_kwargs = {'env': env}
+    # Windows uses process groups; POSIX starts a new session so we can killpg().
+    if platform.system() == 'Windows':
+        if hasattr(subprocess, 'CREATE_NEW_PROCESS_GROUP'):
+            popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs['start_new_session'] = True
+    serverproc = subprocess.Popen(server_args, **popen_kwargs)
 
     def ensureServerAlive():
         if serverproc.poll() is not None:
@@ -169,8 +184,12 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             print('PY_GEN: %s' % genpydir, file=sys.stderr)
             raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
     finally:
-        # check that server didn't die
-        ensureServerAlive()
+        # check that server didn't die, but still attempt cleanup
+        cleanup_exc = None
+        try:
+            ensureServerAlive()
+        except Exception as exc:
+            cleanup_exc = exc
         extra_sleep = EXTRA_DELAY.get(server_class, 0)
         if extra_sleep > 0 and verbose > 0:
             print('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
@@ -178,8 +197,17 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
                   % (server_class, proto, use_zlib, use_ssl, extra_sleep))
             time.sleep(extra_sleep)
         sig = signal.SIGKILL if platform.system() != 'Windows' else signal.SIGABRT
-        os.kill(serverproc.pid, sig)
+        try:
+            if platform.system() == 'Windows':
+                os.kill(serverproc.pid, sig)
+            else:
+                # POSIX: kill the whole process group to reap forked children.
+                os.killpg(serverproc.pid, sig)
+        except OSError:
+            pass
         serverproc.wait()
+        if cleanup_exc:
+            raise cleanup_exc
 
 
 class TestCases(object):
@@ -219,7 +247,8 @@ class TestCases(object):
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                   % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-        runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl, self.verbose)
+        port = self.port if self.port else pick_unused_port()
+        runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, port, with_zlib, with_ssl, self.verbose)
         if self.verbose > 0:
             print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                   % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -255,7 +284,8 @@ class TestCases(object):
                             if self.verbose > 0:
                                 print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                                       % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-                            runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl)
+                            port = self.port if self.port else pick_unused_port()
+                            runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, port, with_zlib, with_ssl, self.verbose)
                             if self.verbose > 0:
                                 print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                                       % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -268,8 +298,8 @@ def main():
     parser.add_option('--genpydirs', type='string', dest='genpydirs',
                       default='default,slots,oldstyle,no_utf8strings,dynamic,dynamicslots,enum,type_hints',
                       help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
-    parser.add_option("--port", type="int", dest="port", default=9090,
-                      help="port number for server to listen on")
+    parser.add_option("--port", type="int", dest="port", default=0,
+                      help="port number for server to listen on (0 = auto)")
     parser.add_option('-v', '--verbose', action="store_const",
                       dest="verbose", const=2,
                       help="verbose output")
