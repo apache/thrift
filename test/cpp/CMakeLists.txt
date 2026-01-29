@@ -95,12 +95,102 @@ target_link_libraries(SpecificNameTest thrift)
 target_link_libraries(SpecificNameTest thriftnb)
 add_test(NAME SpecificNameTest COMMAND SpecificNameTest)
 
+# ForwardSetterTest - tests the forward_setter option
+set(forwardsettertestgencpp_SOURCES
+    gen-cpp-forward/gen-cpp/ThriftTest_types.cpp
+    gen-cpp-forward/gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
+)
+add_library(forwardsettertestgencpp STATIC ${forwardsettertestgencpp_SOURCES})
+target_include_directories(forwardsettertestgencpp BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PROJECT_SOURCE_DIR}/lib/cpp/src"
+)
+target_link_libraries(forwardsettertestgencpp thrift)
+
+add_executable(ForwardSetterTest src/ForwardSetterTest.cpp)
+target_include_directories(ForwardSetterTest BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward/gen-cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward"
+)
+target_link_libraries(ForwardSetterTest forwardsettertestgencpp ${Boost_LIBRARIES})
+target_link_libraries(ForwardSetterTest thrift)
+add_test(NAME ForwardSetterTest COMMAND ForwardSetterTest)
+
+# PrivateOptionalTest - tests the private_optional option
+set(privateoptonaltestgencpp_SOURCES
+    gen-cpp-private/gen-cpp/ThriftTest_types.cpp
+    gen-cpp-private/gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
+)
+add_library(privateoptonaltestgencpp STATIC ${privateoptonaltestgencpp_SOURCES})
+target_include_directories(privateoptonaltestgencpp BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PROJECT_SOURCE_DIR}/lib/cpp/src"
+)
+target_link_libraries(privateoptonaltestgencpp thrift)
+
+add_executable(PrivateOptionalTest src/PrivateOptionalTest.cpp)
+target_include_directories(PrivateOptionalTest BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private/gen-cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private"
+)
+target_link_libraries(PrivateOptionalTest privateoptonaltestgencpp ${Boost_LIBRARIES})
+target_link_libraries(PrivateOptionalTest thrift)
+add_test(NAME PrivateOptionalTest COMMAND PrivateOptionalTest)
+
+# EnumClassTest - tests the pure_enums=enum_class option
+set(enumclasstestgencpp_SOURCES
+    gen-cpp-enumclass/gen-cpp/ThriftTest_types.cpp
+    gen-cpp-enumclass/gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
+)
+add_library(enumclasstestgencpp STATIC ${enumclasstestgencpp_SOURCES})
+target_include_directories(enumclasstestgencpp BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PROJECT_SOURCE_DIR}/lib/cpp/src"
+)
+target_link_libraries(enumclasstestgencpp thrift)
+
+add_executable(EnumClassTest src/EnumClassTest.cpp)
+target_include_directories(EnumClassTest BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass/gen-cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass"
+)
+target_link_libraries(EnumClassTest enumclasstestgencpp ${Boost_LIBRARIES})
+target_link_libraries(EnumClassTest thrift)
+add_test(NAME EnumClassTest COMMAND EnumClassTest)
+
 #
 # Common thrift code generation rules
 #
 
 add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest.h gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp
     COMMAND ${THRIFT_COMPILER} --gen cpp:templates,cob_style -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+)
+
+# Generate ThriftTest with forward_setter option for ForwardSetterTest
+add_custom_command(OUTPUT gen-cpp-forward/gen-cpp/ThriftTest_types.cpp gen-cpp-forward/gen-cpp/ThriftTest_types.h gen-cpp-forward/gen-cpp/ThriftTest_types.tcc gen-cpp-forward/gen-cpp/ThriftTest_constants.cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward
+    COMMAND ${THRIFT_COMPILER} --gen cpp:moveable_types=forward_setter -o gen-cpp-forward ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Generate ThriftTest with private_optional option for PrivateOptionalTest
+add_custom_command(OUTPUT gen-cpp-private/gen-cpp/ThriftTest_types.cpp gen-cpp-private/gen-cpp/ThriftTest_types.h gen-cpp-private/gen-cpp/ThriftTest_constants.cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private
+    COMMAND ${THRIFT_COMPILER} --gen cpp:private_optional -o gen-cpp-private ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Generate ThriftTest with pure_enums=enum_class option for EnumClassTest
+add_custom_command(OUTPUT gen-cpp-enumclass/gen-cpp/ThriftTest_types.cpp gen-cpp-enumclass/gen-cpp/ThriftTest_types.h gen-cpp-enumclass/gen-cpp/ThriftTest_constants.cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass
+    COMMAND ${THRIFT_COMPILER} --gen cpp:pure_enums=enum_class -o gen-cpp-enumclass ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 add_custom_command(OUTPUT gen-cpp/Service.cpp
