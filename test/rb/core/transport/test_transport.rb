@@ -20,14 +20,15 @@
 require File.join(File.dirname(__FILE__), '../../test_helper')
 
 require 'thrift'
+require 'stringio'
 
 class DummyTransport < Thrift::BaseTransport
   def initialize(data)
-    @data = data
+    @data = StringIO.new(data)
   end
   
   def read(size)
-    @data.slice!(0, size)
+    @data.read(size)
   end
 end
 
