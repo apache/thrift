@@ -767,9 +767,11 @@ void TServerSocket::interruptChildren() {
 void TServerSocket::close() {
   concurrency::Guard g(rwMutex_);
   if (serverSocket_ != THRIFT_INVALID_SOCKET) {
-    shutdown(serverSocket_, THRIFT_SHUT_RDWR);
     if( boundSocketType_ == SocketType::NONE) //Do not close the server socket if it owned by systemd
+    {
+      shutdown(serverSocket_, THRIFT_SHUT_RDWR);
       ::THRIFT_CLOSESOCKET(serverSocket_);
+    }
   }
   if (interruptSockWriter_ != THRIFT_INVALID_SOCKET) {
     ::THRIFT_CLOSESOCKET(interruptSockWriter_);
