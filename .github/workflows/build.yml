@@ -588,6 +588,24 @@ jobs:
       - name: Run make check for python code
         run: make -C test/py check
 
+      - name: Run make precross for python
+        if: matrix.python-version == '3.12'
+        run: make -C test/py precross
+
+      - name: Upload python precross artifacts
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v6
+        with:
+          name: py-precross
+          if-no-files-found: error
+          path: |
+            lib/py/build/lib.*
+            test/py/gen-py
+            test/py/TestClient.py
+            test/py/TestServer.py
+            test/py/util.py
+          retention-days: 3
+
   lib-python-macos:
     needs: compiler-macos
     strategy:
@@ -804,16 +822,21 @@ jobs:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp']
+        client_lang: ['java,kotlin', 'go,rs,cpp', 'py']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
 
       - uses: actions/setup-java@v5
         with:
@@ -868,6 +891,12 @@ jobs:
           name: cpp-precross
           path: .
 
+      - name: Download python precross artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: py-precross
+          path: .
+
       - name: Set back executable flags
         run: |
           chmod a+x lib/java/build/run*
@@ -879,6 +908,7 @@ jobs:
           chmod a+x test/cpp/*
           chmod a+x test/cpp/.libs/*
           chmod a+x lib/cpp/.libs/*.so
+          chmod a+x test/py/*.py
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
