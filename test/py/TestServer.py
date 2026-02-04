@@ -21,6 +21,7 @@
 import logging
 import os
 import signal
+import ssl
 import sys
 import time
 from optparse import OptionParser
@@ -310,12 +311,23 @@ def main(options):
 
     # set up server transport and transport factory
 
-    abs_key_path = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys', 'server.pem')
-
     host = None
     if options.ssl:
         from thrift.transport import TSSLSocket
-        transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
+        keys_dir = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys')
+        ca_certs = os.path.join(keys_dir, 'client.pem')
+        certfile = os.path.join(keys_dir, 'server.crt')
+        keyfile = os.path.join(keys_dir, 'server.key')
+        ssl_version = getattr(ssl, 'PROTOCOL_TLS_SERVER', ssl.PROTOCOL_TLSv1)
+        transport = TSSLSocket.TSSLServerSocket(
+            host,
+            options.port,
+            certfile=certfile,
+            keyfile=keyfile,
+            ca_certs=ca_certs,
+            cert_reqs=ssl.CERT_REQUIRED,
+            ssl_version=ssl_version,
+        )
     else:
         transport = TSocket.TServerSocket(host, options.port, options.domain_socket)
     tfactory = TTransport.TBufferedTransportFactory()
