@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload LastTest log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cmake-LastTest-log
           path: cmake_build/Testing/Temporary/LastTest.log
