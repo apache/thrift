@@ -639,7 +639,7 @@ jobs:
       - name: Run configure
         run: ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp
@@ -790,7 +790,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-ruby/with-ruby/')
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: thrift-compiler
           path: compiler/cpp
