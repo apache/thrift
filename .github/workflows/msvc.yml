@@ -102,6 +102,10 @@ jobs:
         shell: pwsh
         run: |
           docker run -v c:\src\thrift:C:\Thrift -v "${env:THRIFT_BUILD_DIR}:C:\build" --rm -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" c:\thrift\build\docker\msvc2017\build.bat
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Container build failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
 
       - name: Check test results
         if: always()
@@ -117,7 +121,8 @@ jobs:
               Write-Host "All tests passed"
             }
           } else {
-            Write-Warning "LastTest.log not found at $logPath"
+            Write-Error "LastTest.log not found at $logPath"
+            exit 1
           }
 
       - name: Upload LastTest log
