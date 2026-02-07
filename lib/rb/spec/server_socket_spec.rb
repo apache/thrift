@@ -28,19 +28,22 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should create a handle when calling listen" do
-      expect(TCPServer).to receive(:new).with(nil, 1234)
+      handle = double("TCPServer", :setsockopt => nil)
+      expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
     end
 
     it "should accept an optional host argument" do
       @socket = Thrift::ServerSocket.new('localhost', 1234)
-      expect(TCPServer).to receive(:new).with('localhost', 1234)
+      handle = double("TCPServer", :setsockopt => nil)
+      expect(TCPServer).to receive(:new).with('localhost', 1234).and_return(handle)
       @socket.to_s == "server(localhost:1234)"
       @socket.listen
     end
 
     it "should create a Thrift::Socket to wrap accepted sockets" do
       handle = double("TCPServer")
+      expect(handle).to receive(:setsockopt).with(Socket::SOL_SOCKET, Socket::SO_LINGER, [0, 0].pack('ii'))
       expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       sock = double("sock")
@@ -53,7 +56,7 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should close the handle when closed" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", :closed? => false, :setsockopt => nil)
       expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       expect(handle).to receive(:close)
@@ -65,7 +68,7 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should return true for closed? when appropriate" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", :closed? => false, :setsockopt => nil)
       allow(TCPServer).to receive(:new).and_return(handle)
       @socket.listen
       expect(@socket).not_to be_closed

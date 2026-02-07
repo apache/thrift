@@ -38,6 +38,14 @@ module Thrift
 
     def listen
       @handle = TCPServer.new(@host, @port)
+
+      # Turn linger off, don't want to block on calls to close
+      begin
+        @handle.setsockopt(::Socket::SOL_SOCKET, ::Socket::SO_LINGER, [0, 0].pack('ii'))
+      rescue IOError => e
+        close
+        raise TransportException.new(TransportException::NOT_OPEN, "Could not set SO_LINGER: #{e.message}")
+      end
     end
 
     def accept
