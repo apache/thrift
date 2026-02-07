@@ -120,9 +120,9 @@ ARGV.each do|a|
     puts "\t -h [ --help ] \t produce help message"
     puts "\t--domain-socket arg (=) \t Unix domain socket path"
     puts "\t--port arg (=9090) \t Port number to listen \t not valid with domain-socket"
-    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
+    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json, header"
     puts "\t--ssl \t use ssl \t not valid with domain-socket"
-    puts "\t--transport arg (=buffered) transport: buffered, framed, http"
+    puts "\t--transport arg (=buffered) transport: buffered, framed, header, http"
     exit
   elsif a.start_with?("--domain-socket")
     domain_socket = a.split("=")[1]
@@ -145,6 +145,8 @@ elsif protocol == "json"
   @protocolFactory = Thrift::JsonProtocolFactory.new
 elsif protocol == "accel"
   @protocolFactory = Thrift::BinaryProtocolAcceleratedFactory.new
+elsif protocol == "header"
+  @protocolFactory = Thrift::HeaderProtocolFactory.new
 else
   raise 'Unknown protocol type'
 end
@@ -153,6 +155,8 @@ if transport == "buffered" || transport.to_s.strip.empty?
   @transportFactory = Thrift::BufferedTransportFactory.new
 elsif transport == "framed"
   @transportFactory = Thrift::FramedTransportFactory.new
+elsif transport == "header"
+  @transportFactory = Thrift::HeaderTransportFactory.new
 else
   raise 'Unknown transport type'
 end

@@ -457,7 +457,8 @@
       "binary",
       "binary:accel",
       "compact",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "rb/gen-rb"
   },

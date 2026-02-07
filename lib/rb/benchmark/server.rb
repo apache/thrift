@@ -38,7 +38,25 @@ module Server
     end
   end
 
-  def self.start_server(host, port, serverClass, tls)
+  def self.create_factories(protocol_type)
+    case protocol_type
+    when 'binary'
+      [FramedTransportFactory.new, BinaryProtocolFactory.new]
+    when 'compact'
+      [FramedTransportFactory.new, CompactProtocolFactory.new]
+    when 'header'
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new]
+    when 'header-compact'
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new(nil, HeaderSubprotocolID::COMPACT)]
+    when 'header-zlib'
+      # Note: Server doesn't add transforms - it mirrors client's transforms
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new]
+    else
+      [FramedTransportFactory.new, BinaryProtocolFactory.new]
+    end
+  end
+
+  def self.start_server(host, port, serverClass, tls, protocol_type = nil)
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
     transport = if tls
@@ -58,8 +76,8 @@ module Server
     else
       ServerSocket.new(host, port)
     end
-    transport_factory = FramedTransportFactory.new
-    args = [processor, transport, transport_factory, nil, 20]
+    transport_factory, protocol_factory = create_factories(protocol_type || 'binary')
+    args = [processor, transport, transport_factory, protocol_factory, 20]
     if serverClass == NonblockingServer
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
@@ -88,9 +106,9 @@ end
 
 tls = true if ARGV[0] == '-tls' and ARGV.shift
 
-host, port, serverklass = ARGV
+host, port, serverklass, protocol_type = ARGV
 
-Server.start_server(host, port.to_i, resolve_const(serverklass), tls)
+Server.start_server(host, port.to_i, resolve_const(serverklass), tls, protocol_type)
 
 # let our host know that the interpreter has started
 # ideally we'd wait until the server was serving, but we don't have a hook for that
