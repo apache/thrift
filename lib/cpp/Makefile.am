@@ -143,6 +143,7 @@ include_thrift_HEADERS = \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
+                         src/thrift/TPrintTo.h \
                          src/thrift/TToString.h \
                          src/thrift/TBase.h \
                          src/thrift/TConfiguration.h \

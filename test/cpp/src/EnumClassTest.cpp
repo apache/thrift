@@ -23,8 +23,10 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <type_traits>
+#include <string>
 
 // Include generated thrift types with enum_class option
 #include "ThriftTest_types.h"
@@ -86,7 +88,88 @@ int main() {
         std::cout << "  ✓ Enum class in switch statements works" << std::endl;
     }
     
+    // Test 5: Verify to_string() works with enum class
+    {
+        Numberz one = Numberz::ONE;
+        Numberz five = Numberz::FIVE;
+        Numberz eight = Numberz::EIGHT;
+        
+        std::string str_one = to_string(one);
+        std::string str_five = to_string(five);
+        std::string str_eight = to_string(eight);
+        
+        assert(str_one == "ONE");
+        assert(str_five == "FIVE");
+        assert(str_eight == "EIGHT");
+        std::cout << "  ✓ to_string() with enum class works (ONE, FIVE, EIGHT)" << std::endl;
+    }
+    
+    // Test 6: Verify operator<< works with enum class
+    {
+        Numberz two = Numberz::TWO;
+        Numberz three = Numberz::THREE;
+        
+        std::ostringstream oss;
+        oss << two << " and " << three;
+        
+        std::string result = oss.str();
+        assert(result == "TWO and THREE");
+        std::cout << "  ✓ operator<< with enum class works (TWO and THREE)" << std::endl;
+    }
+    
+    // Test 7: Verify to_string() for invalid/cast enum values
+    {
+        // Cast an invalid value to enum (edge case testing)
+        Numberz invalid = static_cast<Numberz>(999);
+        std::string str_invalid = to_string(invalid);
+        
+        // Should fall back to numeric representation
+        assert(str_invalid == "999");
+        std::cout << "  ✓ to_string() handles invalid enum values (999)" << std::endl;
+    }
+    
+    // Test 8: Verify operator<< for invalid/cast enum values
+    {
+        Numberz invalid = static_cast<Numberz>(777);
+        std::ostringstream oss;
+        oss << invalid;
+        
+        std::string result = oss.str();
+        assert(result == "777");
+        std::cout << "  ✓ operator<< handles invalid enum values (777)" << std::endl;
+    }
+    
+    // Test 9: Verify enum class with zero value
+    {
+        Numberz zero = static_cast<Numberz>(0);
+        std::string str_zero = to_string(zero);
+        
+        std::ostringstream oss;
+        oss << zero;
+        
+        // Both should output "0" since there's no named value
+        assert(str_zero == "0");
+        assert(oss.str() == "0");
+        std::cout << "  ✓ to_string() and operator<< work with zero value" << std::endl;
+    }
+    
+    // Test 10: Verify all Numberz enum values can be converted to string
+    {
+        std::ostringstream oss;
+        oss << Numberz::ONE << ", "
+            << Numberz::TWO << ", "
+            << Numberz::THREE << ", "
+            << Numberz::FIVE << ", "
+            << Numberz::SIX << ", "
+            << Numberz::EIGHT;
+        
+        std::string result = oss.str();
+        assert(result == "ONE, TWO, THREE, FIVE, SIX, EIGHT");
+        std::cout << "  ✓ All Numberz enum values stream correctly" << std::endl;
+    }
+    
     std::cout << "\n✅ All pure_enums=enum_class tests passed!" << std::endl;
     std::cout << "   Verified at compile-time: enum class properties enforced" << std::endl;
+    std::cout << "   Verified at runtime: to_string(), operator<< work correctly" << std::endl;
     return 0;
 }

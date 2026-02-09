@@ -164,6 +164,29 @@ target_link_libraries(EnumClassTest enumclasstestgencpp ${Boost_LIBRARIES})
 target_link_libraries(EnumClassTest thrift)
 add_test(NAME EnumClassTest COMMAND EnumClassTest)
 
+# TemplateStreamOpTest - tests the template_streamop option
+set(templatestreamoptestgencpp_SOURCES
+    gen-cpp-templatestreamop/gen-cpp/ThriftTest_types.cpp
+    gen-cpp-templatestreamop/gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
+)
+add_library(templatestreamoptestgencpp STATIC ${templatestreamoptestgencpp_SOURCES})
+target_include_directories(templatestreamoptestgencpp BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PROJECT_SOURCE_DIR}/lib/cpp/src"
+)
+target_link_libraries(templatestreamoptestgencpp thrift)
+
+add_executable(TemplateStreamOpTest src/TemplateStreamOpTest.cpp)
+target_include_directories(TemplateStreamOpTest BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop/gen-cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop"
+)
+target_link_libraries(TemplateStreamOpTest templatestreamoptestgencpp ${Boost_LIBRARIES})
+target_link_libraries(TemplateStreamOpTest thrift)
+add_test(NAME TemplateStreamOpTest COMMAND TemplateStreamOpTest)
+
 #
 # Common thrift code generation rules
 #
@@ -190,6 +213,13 @@ add_custom_command(OUTPUT gen-cpp-private/gen-cpp/ThriftTest_types.cpp gen-cpp-p
 add_custom_command(OUTPUT gen-cpp-enumclass/gen-cpp/ThriftTest_types.cpp gen-cpp-enumclass/gen-cpp/ThriftTest_types.h gen-cpp-enumclass/gen-cpp/ThriftTest_constants.cpp
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass
     COMMAND ${THRIFT_COMPILER} --gen cpp:pure_enums=enum_class -o gen-cpp-enumclass ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Generate ThriftTest with template_streamop option for TemplateStreamOpTest
+add_custom_command(OUTPUT gen-cpp-templatestreamop/gen-cpp/ThriftTest_types.cpp gen-cpp-templatestreamop/gen-cpp/ThriftTest_types.h gen-cpp-templatestreamop/gen-cpp/ThriftTest_constants.cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop
+    COMMAND ${THRIFT_COMPILER} --gen cpp:template_streamop -o gen-cpp-templatestreamop ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
