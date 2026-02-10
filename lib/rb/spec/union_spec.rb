@@ -51,7 +51,9 @@ describe 'Union' do
     it "should raise for wrong set field when hash initialized and type checking is off" do
       Thrift.type_checking = false
       union = SpecNamespace::My_union.new({incorrect_field: :incorrect})
-      expect { Thrift::Serializer.new.serialize(union) }.to raise_error(RuntimeError, "set_field is not valid for this union!")
+      expect { Thrift::Serializer.new.serialize(union) }.to raise_error(Thrift::ProtocolException, "set_field is not valid for this union!") { |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      }
     end
 
     it "should not be equal to nil" do
@@ -148,7 +150,9 @@ describe 'Union' do
 
     it "should raise when validating unset union" do
       union = SpecNamespace::My_union.new
-      expect { union.validate }.to raise_error(StandardError, "Union fields are not set.")
+      expect { union.validate }.to raise_error(Thrift::ProtocolException, "Union fields are not set.") { |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      }
 
       other_union = SpecNamespace::My_union.new(:integer32, 1)
       expect { other_union.validate }.not_to raise_error
@@ -157,7 +161,9 @@ describe 'Union' do
     it "should validate an enum field properly" do
       union = SpecNamespace::TestUnion.new(:enum_field, 3)
       expect(union.get_set_field).to eq(:enum_field)
-      expect { union.validate }.to raise_error(Thrift::ProtocolException, "Invalid value of field enum_field!")
+      expect { union.validate }.to raise_error(Thrift::ProtocolException, "Invalid value of field enum_field!") { |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      }
 
       other_union = SpecNamespace::TestUnion.new(:enum_field, 1)
       expect { other_union.validate }.not_to raise_error

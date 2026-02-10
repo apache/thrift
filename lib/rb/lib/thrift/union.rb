@@ -60,7 +60,9 @@ module Thrift
       iprot.read_field_end
 
       fname, ftype, fid = iprot.read_field_begin
-      raise "Too many fields for union" unless (ftype == Types::STOP) 
+      unless (ftype == Types::STOP)
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Too many fields for union")
+      end
 
       iprot.read_struct_end
       validate
@@ -73,7 +75,9 @@ module Thrift
       fid = self.name_to_id(@setfield.to_s)
 
       field_info = struct_fields[fid]
-      raise "set_field is not valid for this union!" unless field_info
+      unless field_info
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "set_field is not valid for this union!")
+      end
 
       type = field_info[:type]
       if is_container? type
