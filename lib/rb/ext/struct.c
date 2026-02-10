@@ -20,6 +20,7 @@
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
+#include "protocol.h"
 #include "strlcpy.h"
 
 VALUE thrift_union_class;
@@ -656,7 +657,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   field_type = FIX2INT(field_type_value);
 
   if (field_type != TTYPE_STOP) {
-    rb_raise(rb_eRuntimeError, "too many fields in union!");
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("too many fields in union!")));
   }
 
   // read struct end
@@ -684,7 +685,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE field_info = rb_hash_aref(struct_fields, field_id);
 
   if(NIL_P(field_info)) {
-    rb_raise(rb_eRuntimeError, "set_field is not valid for this union!");
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("set_field is not valid for this union!")));
   }
 
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
