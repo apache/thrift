@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Licensed to the Apache Software Foundation(ASF) under one
+    or more contributor license agreements.See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+    
+  	  http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    
+    <!-- Configuration properties with defaults -->
+    <Protocol Condition="'$(Protocol)' == ''">Binary</Protocol>
+    <FuzzerType Condition="'$(FuzzerType)' == ''">Parse</FuzzerType>
+    <Engine Condition="'$(Engine)' == ''">AFL</Engine>
+    
+    <!-- Dynamic assembly name based on configuration -->
+    <AssemblyName>Thrift.FuzzTests.$(Protocol)$(FuzzerType)$(Engine)</AssemblyName>
+    
+    <!-- Unique intermediate output path to prevent overwrites -->
+    <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\$(Protocol)$(FuzzerType)$(Engine)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+  <!-- Common dependencies -->
+  <ItemGroup>
+    <ProjectReference Include="../../Thrift/Thrift.csproj" />
+    <PackageReference Include="SharpFuzz" Version="*" />
+  </ItemGroup>
+
+  <!-- Generated code -->
+  <ItemGroup>
+    <Compile Include="gen-netstd/**/*.cs" />
+  </ItemGroup>
+
+  <!-- Base classes based on fuzzer type -->
+  <ItemGroup Condition="'$(FuzzerType)' == 'Parse'">
+    <Compile Include="ProtocolFuzzerBase.cs" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(FuzzerType)' == 'Roundtrip'">
+    <Compile Include="ProtocolRoundtripFuzzerBase.cs" />
+  </ItemGroup>
+
+  <!-- Protocol and engine specific implementation files -->
+  <!-- The pattern is T{Protocol}Protocol{FuzzerType}{Engine}.cs -->
+  <!-- But for Parse fuzzers, the files don't have "Parse" in the name -->
+  <ItemGroup Condition="'$(FuzzerType)' == 'Parse'">
+    <Compile Include="T$(Protocol)Protocol$(Engine).cs" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(FuzzerType)' == 'Roundtrip'">
+    <Compile Include="T$(Protocol)ProtocolRoundtrip$(Engine).cs" />
+  </ItemGroup>
+</Project>

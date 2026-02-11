@@ -53,3 +53,14 @@ Because of the different environment requirements, migration from C# takes sligh
 - In case you are using Thrift server event handlers: the `SetEventHandler` method now starts with an uppercase letter
 - and you will also have to revise the method names of all `TServerEventHandler` descendants you have in your code
 
+# Fuzzing
+
+We use SharpFuzz (and its libfuzzer variant) for fuzzing. This is **not** supported on oss-fuzz, so all fuzzing must be run locally (currently only tested on a linux machine)
+
+To get started:
+
+* Install https://github.com/Metalnem/sharpfuzz
+* Install https://github.com/Metalnem/libfuzzer-dotnet
+* Create a directory which contains the executable `libfuzzer-dotnet` and set $SHARPFUZZ_DIR to point to it.
+
+Then you can run `buildfuzzers.sh` to build the fuzzers and `runfuzzer.sh` to run a given fuzzer.
