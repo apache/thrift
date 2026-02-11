@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,16 +6,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 # this require is to make generated struct definitions happy
 require 'set'
@@ -116,7 +116,7 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Writes a Thrift String. In Ruby 1.9+, the String passed will be transcoded to UTF-8.
+    # Writes a Thrift String. The String passed will be transcoded to UTF-8.
     #
     # str - The String to write.
     #
@@ -127,7 +127,7 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Writes a Thrift Binary (Thrift String with no encoding). In Ruby 1.9+, the String passed
+    # Writes a Thrift Binary (Thrift String with no encoding). The String passed
     # will forced into BINARY encoding.
     #
     # buf - The String to write.
@@ -206,14 +206,14 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Reads a Thrift String. In Ruby 1.9+, all Strings will be returned with an Encoding of UTF-8.
+    # Reads a Thrift String. All Strings will be returned with an Encoding of UTF-8.
     #
     # Returns a String.
     def read_string
       raise NotImplementedError
     end
 
-    # Reads a Thrift Binary (Thrift String without encoding). In Ruby 1.9+, all Strings will be returned
+    # Reads a Thrift Binary (Thrift String without encoding). All Strings will be returned
     # with an Encoding of BINARY.
     #
     # Returns a String.
@@ -391,7 +391,7 @@ module Thrift
         raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
       end
     end
-    
+
     def to_s
       "#{trans.to_s}"
     end
@@ -401,7 +401,7 @@ module Thrift
     def get_protocol(trans)
       raise NotImplementedError
     end
-    
+
     def to_s
       "base"
     end

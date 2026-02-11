@@ -1,5 +1,5 @@
 # encoding: ascii-8bit
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -7,16 +7,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 module Thrift
   class TransportException < Exception
@@ -48,12 +48,12 @@ module Thrift
 
   class BaseTransport
     def open?; end
-    
+
     def open; end
 
     def close; end
 
-    # Reads a number of bytes from the transports. In Ruby 1.9+, the String returned will have a BINARY (aka ASCII8BIT) encoding.
+    # Reads a number of bytes from the transports. The String returned will have a BINARY (aka ASCII-8BIT) encoding.
     #
     # sz - The number of bytes to read from the transport.
     #
@@ -86,11 +86,11 @@ module Thrift
         chunk = read(size - buf.length)
         buf << chunk
       end
-    
+
       buf
     end
 
-    # Writes the byte buffer to the transport. In Ruby 1.9+, the buffer will be forced into BINARY encoding.
+    # Writes the byte buffer to the transport. The buffer will be forced into BINARY encoding.
     #
     # buf - A String acting as a byte buffer.
     #
@@ -104,12 +104,12 @@ module Thrift
       "base"
     end
   end
-  
+
   class BaseTransportFactory
     def get_transport(trans)
       return trans
     end
-    
+
     def to_s
       "base"
     end
