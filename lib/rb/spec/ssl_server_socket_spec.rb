@@ -27,6 +27,14 @@ describe 'SSLServerSocket' do
       @socket = Thrift::SSLServerSocket.new(1234)
     end
 
+    it "should set linger on the underlying server socket" do
+      tcp = double("TCPServer")
+      expect(TCPServer).to receive(:new).with(nil, 1234).and_return(tcp)
+      expect(tcp).to receive(:setsockopt).with(Socket::SOL_SOCKET, Socket::SO_LINGER, [0, 0].pack('ii'))
+      expect(OpenSSL::SSL::SSLServer).to receive(:new).with(tcp, nil)
+      @socket.listen
+    end
+
     it "should provide a reasonable to_s" do
       expect(@socket.to_s).to eq("ssl(socket(:1234))")
     end

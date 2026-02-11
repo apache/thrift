@@ -40,19 +40,29 @@ describe 'Socket' do
     end
 
     it "should open a ::Socket with default args" do
-      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil))
+      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil, :closed? => false))
       expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       expect(::Socket).to receive(:sockaddr_in)
-      @socket.to_s == "socket(localhost:9090)"
+      expect(@socket.to_s).to eq("socket(localhost:9090)")
+      @socket.open
+    end
+
+    it "should set linger on the socket before connecting" do
+      handle = double("Handle", :connect_nonblock => true, :closed? => false)
+      expect(::Socket).to receive(:new).and_return(handle)
+      expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
+      expect(handle).to receive(:setsockopt).with(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack('ii'))
+      expect(handle).to receive(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      expect(::Socket).to receive(:sockaddr_in)
       @socket.open
     end
 
     it "should accept host/port options" do
-      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil))
+      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil, :closed? => false))
       expect(::Socket).to receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
       expect(::Socket).to receive(:sockaddr_in)
-      @socket = Thrift::Socket.new('my.domain', 1234).open
-      @socket.to_s == "socket(my.domain:1234)"
+      @socket = Thrift::Socket.new('my.domain', 1234).tap(&:open)
+      expect(@socket.to_s).to eq("socket(my.domain:1234)")
     end
 
     it "should accept an optional timeout" do
