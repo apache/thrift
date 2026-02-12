@@ -83,7 +83,7 @@ public abstract class ProcessFunction<I, T extends TBase, A extends TBase> {
 
   public abstract boolean isOneway();
 
-  public abstract TBase<?, ?> getResult(I iface, T args) throws TException;
+  public abstract A getResult(I iface, T args) throws TException;
 
   public abstract T getEmptyArgsInstance();
 
