@@ -32,8 +32,11 @@
   <version>0.23.0</version>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.release>8</maven.compiler.release>
+    <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+    <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
+    <maven.api.version>3.9.12</maven.api.version>
+    <maven.plugin.tools.version>3.15.2</maven.plugin.tools.version>
     <thrift.root>${basedir}/../..</thrift.root>
     <thrift.compiler>${thrift.root}/compiler/cpp/thrift</thrift.compiler>
     <thrift.test.home>${thrift.root}/test</thrift.test.home>
@@ -44,10 +47,23 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.plugin.version}</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${maven.plugin.tools.version}</version>
+        <configuration>
+          <goalPrefix>thrift</goalPrefix>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
         <configuration>
           <systemPropertyVariables>
             <thriftExecutable>${thrift.compiler}</thriftExecutable>
@@ -74,6 +90,7 @@
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
       <dependency>
       <groupId>junit</groupId>
@@ -84,12 +101,20 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>3.1.0</version>
+      <version>${maven.api.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
-      <artifactId>maven-project</artifactId>
-      <version>2.2.1</version>
+      <artifactId>maven-core</artifactId>
+      <version>${maven.api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${maven.plugin.tools.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -101,11 +126,5 @@
       <artifactId>plexus-utils</artifactId>
       <version>3.0.24</version>
     </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.10.19</version>
-      <scope>test</scope>
-   </dependency>
   </dependencies>
 </project>

@@ -20,32 +20,37 @@
 package org.apache.thrift.maven;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import com.google.common.collect.ImmutableList;
-import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * @phase generate-test-sources
- * @goal testCompile
- * @requiresDependencyResolution test
  */
+@Mojo(
+        name = "testCompile",
+        defaultPhase = LifecyclePhase.GENERATE_TEST_SOURCES,
+        requiresDependencyResolution = ResolutionScope.TEST,
+        threadSafe = true
+)
 public final class ThriftTestCompileMojo extends AbstractThriftMojo {
 
     /**
      * The source directories containing the sources to be compiled.
      *
-     * @parameter default-value="${basedir}/src/test/thrift"
-     * @required
      */
+    @Parameter(defaultValue = "${basedir}/src/test/thrift", required = true)
     private File thriftTestSourceRoot;
 
     /**
      * This is the directory into which the {@code .java} will be created.
      *
-     * @parameter default-value="${project.build.directory}/generated-test-sources/thrift"
-     * @required
      */
+    @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/thrift", required = true)
     private File outputDirectory;
 
     @Override
@@ -57,10 +62,7 @@ public final class ThriftTestCompileMojo extends AbstractThriftMojo {
 
     @Override
     protected List<Artifact> getDependencyArtifacts() {
-        // TODO(gak): maven-project needs generics
-        @SuppressWarnings("unchecked")
-        List<Artifact> testArtifacts = project.getTestArtifacts();
-        return testArtifacts;
+        return new ArrayList<Artifact>(project.getArtifacts());
     }
 
     @Override
@@ -74,12 +76,12 @@ public final class ThriftTestCompileMojo extends AbstractThriftMojo {
     }
 
     /**
-     * Set the local maven ArtifactRepository. Exposed only to allow testing outside of Maven itself.
+     * Set the local Maven repository path. Exposed only to allow testing outside of Maven itself.
      *
-     * @param localRepository local ArtifactRepository
+     * @param localRepositoryPath local Maven repository path
      */
-    public void setLocalMavenRepository(final ArtifactRepository localRepository) {
-        this.localRepository = localRepository;
+    public void setLocalRepositoryPath(final String localRepositoryPath) {
+        this.localRepositoryPath = localRepositoryPath;
     }
 
     /**

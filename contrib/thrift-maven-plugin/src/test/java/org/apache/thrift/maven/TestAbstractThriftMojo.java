@@ -20,10 +20,8 @@ package org.apache.thrift.maven;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.util.Set;
@@ -35,7 +33,7 @@ public class TestAbstractThriftMojo {
 
     private ThriftTestCompileMojo mojo;
     private File testRootDir;
-    private ArtifactRepository mavenRepository;
+    private String localRepositoryPath;
 
 
     @Before
@@ -44,11 +42,10 @@ public class TestAbstractThriftMojo {
         testRootDir = new File(tmpDir, "thrift-test");
 
         // the truncatePath method assumes a maven repository, but it only cares about the base dir
-        mavenRepository = Mockito.mock(ArtifactRepository.class);
-        Mockito.when(mavenRepository.getBasedir()).thenReturn("/test/maven/repo/basedir");
+        localRepositoryPath = "/test/maven/repo/basedir";
 
         mojo = new ThriftTestCompileMojo();
-        mojo.setLocalMavenRepository(mavenRepository);
+        mojo.setLocalRepositoryPath(localRepositoryPath);
     }
 
     @Test

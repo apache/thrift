@@ -20,8 +20,13 @@
 package org.apache.thrift.maven;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -31,32 +36,32 @@ import com.google.common.collect.ImmutableList;
  * referenced. Finally, it adds the thrift files to the project as resources so
  * that they are included in the final artifact.
  *
- * @phase generate-sources
- * @goal compile
- * @requiresDependencyResolution compile
  */
+@Mojo(
+        name = "compile",
+        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+        requiresDependencyResolution = ResolutionScope.COMPILE,
+        threadSafe = true
+)
 public final class ThriftCompileMojo extends AbstractThriftMojo {
 
     /**
      * The source directories containing the sources to be compiled.
      *
-     * @parameter default-value="${basedir}/src/main/thrift"
-     * @required
      */
+    @Parameter(defaultValue = "${basedir}/src/main/thrift", required = true)
     private File thriftSourceRoot;
 
     /**
      * This is the directory into which the {@code .java} will be created.
      *
-     * @parameter default-value="${project.build.directory}/generated-sources/thrift"
-     * @required
      */
+    @Parameter(defaultValue = "${project.build.directory}/generated-sources/thrift", required = true)
     private File outputDirectory;
 
     @Override
     protected List<Artifact> getDependencyArtifacts() {
-        List<Artifact> compileArtifacts = project.getCompileArtifacts();
-        return compileArtifacts;
+        return new ArrayList<Artifact>(project.getArtifacts());
     }
 
     @Override

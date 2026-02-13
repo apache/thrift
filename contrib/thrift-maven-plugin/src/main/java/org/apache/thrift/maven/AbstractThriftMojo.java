@@ -22,10 +22,11 @@ package org.apache.thrift.maven;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.codehaus.plexus.util.cli.CommandLineException;
@@ -33,6 +34,7 @@ import org.codehaus.plexus.util.io.RawInputStreamFacade;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -66,26 +68,22 @@ abstract class AbstractThriftMojo extends AbstractMojo {
     /**
      * The current Maven project.
      *
-     * @parameter default-value="${project}"
-     * @readonly
-     * @required
      */
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
 
     /**
      * A helper used to add resources to the project.
      *
-     * @component
-     * @required
      */
+    @Component
     protected MavenProjectHelper projectHelper;
 
     /**
      * This is the path to the {@code thrift} executable. By default it will search the {@code $PATH}.
      *
-     * @parameter default-value="thrift"
-     * @required
      */
+    @Parameter(defaultValue = "thrift", required = true)
     private String thriftExecutable;
 
     /**
@@ -93,31 +91,29 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * it will generate Java output. The main reason for this option is to be able to add options
      * to the Java generator - if you generate something else, you're on your own.
      *
-     * @parameter default-value="java"
      */
+    @Parameter(defaultValue = "java")
     private String generator;
 
     /**
-     * @parameter
      */
+    @Parameter
     private File[] additionalThriftPathElements = new File[]{};
 
     /**
      * Since {@code thrift} cannot access jars, thrift files in dependencies are extracted to this location
      * and deleted on exit. This directory is always cleaned during execution.
      *
-     * @parameter default-value="${project.build.directory}/thrift-dependencies"
-     * @required
      */
+    @Parameter(defaultValue = "${project.build.directory}/thrift-dependencies", required = true)
     private File temporaryThriftFileDirectory;
 
     /**
      * This is the path to the local maven {@code repository}.
      *
-     * @parameter default-value="${localRepository}"
-     * @required
      */
-    protected ArtifactRepository localRepository;
+    @Parameter(defaultValue = "${settings.localRepository}", required = true)
+    protected String localRepositoryPath;
 
     /**
      * Set this to {@code false} to disable hashing of dependent jar paths.
@@ -126,29 +122,28 @@ abstract class AbstractThriftMojo extends AbstractMojo {
      * Normally these paths are hashed (MD5) to avoid issues with long file names on windows.
      * However if this property is set to {@code false} longer paths will be used.
      *
-     * @parameter default-value="true"
-     * @required
      */
+    @Parameter(defaultValue = "true", required = true)
     protected boolean hashDependentPaths;
 
     /**
-     * @parameter
      */
+    @Parameter
     private Set<String> includes = ImmutableSet.of(DEFAULT_INCLUDES);
 
     /**
-     * @parameter
      */
+    @Parameter
     private Set<String> excludes = ImmutableSet.of();
 
     /**
-     * @parameter
      */
+    @Parameter(defaultValue = "0")
     private long staleMillis = 0;
 
     /**
-     * @parameter
      */
+    @Parameter(defaultValue = "false")
     private boolean checkStaleness = false;
 
     /**
@@ -227,6 +222,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
         checkNotNull(projectHelper, "projectHelper");
         checkNotNull(thriftExecutable, "thriftExecutable");
         checkNotNull(generator, "generator");
+        checkNotNull(localRepositoryPath, "localRepositoryPath");
         final File thriftSourceRoot = getThriftSourceRoot();
         checkNotNull(thriftSourceRoot);
         checkArgument(!thriftSourceRoot.isFile(), "thriftSourceRoot is a file, not a directory");
@@ -278,32 +274,30 @@ abstract class AbstractThriftMojo extends AbstractMojo {
                     !classpathElementFile.getName().endsWith(".xml")) {
 
                 // create the jar file. the constructor validates.
-                JarFile classpathJar;
-                try {
-                    classpathJar = new JarFile(classpathElementFile);
+                try (JarFile classpathJar = new JarFile(classpathElementFile)) {
+                    /**
+                     * Copy each .thrift file found in the JAR into a temporary directory, preserving the
+                     * directory path it had relative to its containing JAR. Add the resulting root directory
+                     * (unique for each JAR processed) to the set of thrift include directories to use when
+                     * compiling.
+                     */
+                    for (JarEntry jarEntry : list(classpathJar.entries())) {
+                        final String jarEntryName = jarEntry.getName();
+                        if (jarEntry.getName().endsWith(THRIFT_FILE_SUFFIX)) {
+                            final String truncatedJarPath = truncatePath(classpathJar.getName());
+                            final File thriftRootDirectory = new File(temporaryThriftFileDirectory, truncatedJarPath);
+                            final File uncompressedCopy =
+                                    new File(thriftRootDirectory, jarEntryName);
+                            uncompressedCopy.getParentFile().mkdirs();
+                            try (InputStream entryInputStream = classpathJar.getInputStream(jarEntry)) {
+                                copyStreamToFile(new RawInputStreamFacade(entryInputStream), uncompressedCopy);
+                            }
+                            thriftDirectories.add(thriftRootDirectory);
+                        }
+                    }
                 } catch (IOException e) {
                     throw new IllegalArgumentException(format(
                             "%s was not a readable artifact", classpathElementFile));
-                }
-
-                /**
-                 * Copy each .thrift file found in the JAR into a temporary directory, preserving the
-                 * directory path it had relative to its containing JAR. Add the resulting root directory
-                 * (unique for each JAR processed) to the set of thrift include directories to use when
-                 * compiling.
-                 */
-                for (JarEntry jarEntry : list(classpathJar.entries())) {
-                    final String jarEntryName = jarEntry.getName();
-                    if (jarEntry.getName().endsWith(THRIFT_FILE_SUFFIX)) {
-                        final String truncatedJarPath = truncatePath(classpathJar.getName());
-                        final File thriftRootDirectory = new File(temporaryThriftFileDirectory, truncatedJarPath);
-                        final File uncompressedCopy =
-                                new File(thriftRootDirectory, jarEntryName);
-                        uncompressedCopy.getParentFile().mkdirs();
-                        copyStreamToFile(new RawInputStreamFacade(classpathJar
-                                .getInputStream(jarEntry)), uncompressedCopy);
-                        thriftDirectories.add(thriftRootDirectory);
-                    }
                 }
 
             } else if (classpathElementFile.isDirectory()) {
@@ -313,7 +307,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
                     }
                 });
 
-                if (thriftFiles.length > 0) {
+                if (thriftFiles != null && thriftFiles.length > 0) {
                     thriftDirectories.add(classpathElementFile);
                 }
             }
@@ -347,7 +341,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
             }
         }
 
-        String repository = localRepository.getBasedir().replace('\\', '/');
+        String repository = localRepositoryPath.replace('\\', '/');
         if (!repository.endsWith("/")) {
             repository += "/";
         }
