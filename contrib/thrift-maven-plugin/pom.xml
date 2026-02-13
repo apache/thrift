@@ -37,6 +37,7 @@
     <thrift.root>${basedir}/../..</thrift.root>
     <thrift.compiler>${thrift.root}/compiler/cpp/thrift</thrift.compiler>
     <thrift.test.home>${thrift.root}/test</thrift.test.home>
+    <argLine/>
   </properties>
 
   <build>
@@ -49,6 +50,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <argLine>${argLine}</argLine>
           <systemPropertyVariables>
             <thriftExecutable>${thrift.compiler}</thriftExecutable>
           </systemPropertyVariables>
@@ -84,12 +86,12 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>3.1.0</version>
+      <version>3.9.8</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
-      <artifactId>maven-project</artifactId>
-      <version>2.2.1</version>
+      <artifactId>maven-core</artifactId>
+      <version>3.9.8</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -108,4 +110,16 @@
       <scope>test</scope>
    </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>jdk9+</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+      </properties>
+    </profile>
+  </profiles>
 </project>

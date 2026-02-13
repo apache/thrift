@@ -27,6 +27,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 
 /**
  * @phase generate-test-sources
+ * @threadSafe
  * @goal testCompile
  * @requiresDependencyResolution test
  */
