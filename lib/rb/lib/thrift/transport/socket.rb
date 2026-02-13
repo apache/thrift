@@ -134,7 +134,9 @@ module Thrift
       @handle = nil
     end
 
-    alias to_io handle
+    def to_io
+      @handle&.to_io || raise(IOError, 'closed stream')
+    end
 
     def to_s
       "socket(#{@host}:#{@port})"

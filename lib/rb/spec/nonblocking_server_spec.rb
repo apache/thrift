@@ -18,6 +18,7 @@
 #
 
 require 'spec_helper'
+require 'timeout'
 
 describe 'NonblockingServer' do
 
@@ -258,6 +259,104 @@ describe 'NonblockingServer' do
       expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       client.shutdown
       expect(@server_thread.join(2)).not_to be_nil
+    end
+  end
+
+  describe "#{Thrift::NonblockingServer} with TLS transport" do
+    before(:each) do
+      @port = available_port
+      handler = Handler.new
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      @transport = Thrift::SSLServerSocket.new('localhost', @port, create_server_ssl_context)
+      transport_factory = Thrift::FramedTransportFactory.new
+      logger = Logger.new(STDERR)
+      logger.level = Logger::WARN
+      @server = Thrift::NonblockingServer.new(processor, @transport, transport_factory, nil, 5, logger)
+      handler.server = @server
+
+      @server_thread = Thread.new(Thread.current) do |master_thread|
+        begin
+          @server.serve
+        rescue => e
+          master_thread.raise e
+        end
+      end
+
+      @clients = []
+      wait_until_listening
+    end
+
+    after(:each) do
+      @clients.each(&:close)
+      @server.shutdown if @server
+      @server_thread.join(2) if @server_thread
+      @transport.close if @transport
+    end
+
+    it "should handle requests over TLS" do
+      expect(@server_thread).to be_alive
+
+      client = setup_tls_client
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
+
+      @server.shutdown
+      expect(@server_thread.join(2)).to be_an_instance_of(Thread)
+    end
+
+    def setup_tls_client
+      transport = Thrift::FramedTransport.new(
+        Thrift::SSLSocket.new('localhost', @port, nil, create_client_ssl_context)
+      )
+      protocol = Thrift::BinaryProtocol.new(transport)
+      client = SpecNamespace::NonblockingService::Client.new(protocol)
+      transport.open
+      @clients << transport
+      client
+    end
+
+    def wait_until_listening
+      Timeout.timeout(2) do
+        until @transport.handle
+          raise "Server thread exited unexpectedly" unless @server_thread.alive?
+          sleep 0.01
+        end
+      end
+    end
+
+    def available_port
+      TCPServer.open('localhost', 0) { |server| server.addr[1] }
+    end
+
+    def ssl_keys_dir
+      File.expand_path('../../../test/keys', __dir__)
+    end
+
+    def create_server_ssl_context
+      OpenSSL::SSL::SSLContext.new.tap do |ctx|
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        if ctx.respond_to?(:min_version=) && OpenSSL::SSL.const_defined?(:TLS1_2_VERSION)
+          ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+        end
+        ctx.ca_file = File.join(ssl_keys_dir, 'CA.pem')
+        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'server.crt')))
+        ctx.cert_store = OpenSSL::X509::Store.new
+        ctx.cert_store.add_file(File.join(ssl_keys_dir, 'client.pem'))
+        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'server.key')))
+      end
+    end
+
+    def create_client_ssl_context
+      OpenSSL::SSL::SSLContext.new.tap do |ctx|
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        if ctx.respond_to?(:min_version=) && OpenSSL::SSL.const_defined?(:TLS1_2_VERSION)
+          ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+        end
+        ctx.ca_file = File.join(ssl_keys_dir, 'CA.pem')
+        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'client.crt')))
+        ctx.cert_store = OpenSSL::X509::Store.new
+        ctx.cert_store.add_file(File.join(ssl_keys_dir, 'server.pem'))
+        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'client.key')))
+      end
     end
   end
 end
