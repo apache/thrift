@@ -35,6 +35,7 @@ describe 'SSLSocket' do
       allow(@handle).to receive(:connect_nonblock)
       allow(@handle).to receive(:close)
       allow(@handle).to receive(:post_connection_check)
+      allow(@handle).to receive(:to_io).and_return(@simple_socket_handle)
 
       allow(::Socket).to receive(:new).and_return(@simple_socket_handle)
       allow(OpenSSL::SSL::SSLSocket).to receive(:new).and_return(@handle)
@@ -69,6 +70,15 @@ describe 'SSLSocket' do
 
     it "should accept an optional context" do
       expect(Thrift::SSLSocket.new('localhost', 8080, 5, @context).ssl_context).to eq(@context)
+    end
+
+    it "should delegate to_io to the underlying SSL socket handle" do
+      @socket.open
+      expect(@socket.to_io).to eq(@simple_socket_handle)
+    end
+
+    it "should raise IOError when to_io is called on a closed stream" do
+      expect { @socket.to_io }.to raise_error(IOError, 'closed stream')
     end
 
     it "should provide a reasonable to_s" do

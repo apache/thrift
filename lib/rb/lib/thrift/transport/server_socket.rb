@@ -60,7 +60,7 @@ module Thrift
     end
 
     def to_io
-      @handle || raise(IOError, 'closed stream')
+      @handle&.to_io || raise(IOError, 'closed stream')
     end
 
     def to_s
