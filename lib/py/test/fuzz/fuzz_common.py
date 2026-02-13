@@ -22,6 +22,7 @@ import sys
 import os
 import atheris
 
+
 def setup_thrift_imports():
     """Set up the Python path to include Thrift libraries and generated code."""
 
@@ -48,19 +49,21 @@ def setup_thrift_imports():
         sys.path.append(gen_path)
     print(sys.path)
 
+
 setup_thrift_imports()
 
 from thrift.transport import TTransport
 from thrift.TSerialization import serialize, deserialize
 from fuzz.ttypes import FuzzTest
 
+
 def create_parser_fuzzer(protocol_factory_class):
     """
     Create a parser fuzzer function for a specific protocol.
-    
+
     Args:
         protocol_factory_class: The Thrift protocol factory class to use
-    
+
     Returns:
         A function that can be used with atheris.Setup()
     """
@@ -71,25 +74,26 @@ def create_parser_fuzzer(protocol_factory_class):
         try:
             # Create a memory buffer with the fuzzed data
             buf = TTransport.TMemoryBuffer(data)
-            transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+            TTransport.TBufferedTransportFactory().getTransport(buf)
             factory = protocol_factory_class(string_length_limit=1000, container_length_limit=1000)
 
             # Try to deserialize the fuzzed data into the test class
-            test_instance = deserialize(FuzzTest(), data, factory)
+            deserialize(FuzzTest(), data, factory)
 
-        except Exception as e:
+        except Exception:
             # We expect various exceptions during fuzzing
             pass
 
     return TestOneInput
 
+
 def create_roundtrip_fuzzer(protocol_factory_class):
     """
     Create a roundtrip fuzzer function for a specific protocol.
-    
+
     Args:
         protocol_factory_class: The Thrift protocol factory class to use
-    
+
     Returns:
         A function that can be used with atheris.Setup()
     """
@@ -100,7 +104,7 @@ def create_roundtrip_fuzzer(protocol_factory_class):
         try:
             # Create a memory buffer with the fuzzed data
             buf = TTransport.TMemoryBuffer(data)
-            transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+            TTransport.TBufferedTransportFactory().getTransport(buf)
             factory = protocol_factory_class(string_length_limit=1000, container_length_limit=1000)
 
             # Try to deserialize the fuzzed data into the test class
@@ -112,18 +116,19 @@ def create_roundtrip_fuzzer(protocol_factory_class):
             # Verify the objects are equal after a second deserialization
             assert test_instance == deserialized
 
-        except AssertionError as e:
-            raise e
-        except Exception as e:
+        except AssertionError:
+            raise
+        except Exception:
             # We expect various exceptions during fuzzing
             pass
 
     return TestOneInput
 
+
 def _run_fuzzer(fuzzer_function):
     """
     Set up and run the fuzzer for a specific protocol.
-    
+
     Args:
         fuzzer_function: The fuzzer function to use
     """
@@ -136,7 +141,7 @@ def _run_fuzzer(fuzzer_function):
 def run_roundtrip_fuzzer(protocol_factory_class):
     """
     Set up and run the fuzzer for a specific protocol.
-    
+
     Args:
         protocol_factory_class: The Thrift protocol factory class to use
     """
@@ -146,7 +151,7 @@ def run_roundtrip_fuzzer(protocol_factory_class):
 def run_parser_fuzzer(protocol_factory_class):
     """
     Set up and run the fuzzer for a specific protocol.
-    
+
     Args:
         protocol_factory_class: The Thrift protocol factory class to use
     """

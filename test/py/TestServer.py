@@ -205,6 +205,7 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
     Wraps any protocol with sequence ID checking: looks for outbound
     uniqueness as well as request/response alignment.
     """
+
     def __init__(self, protocol):
         # TProtocolDecorator.__new__ does all the heavy lifting
         pass
@@ -410,7 +411,6 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
 
     from ThriftTest import ThriftTest, SecondService
-    from thrift.Thrift import TException
     from thrift.TMultiplexedProcessor import TMultiplexedProcessor
     from thrift.transport import THeaderTransport
     from thrift.transport import TTransport

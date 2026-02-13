@@ -266,10 +266,10 @@ class TestTBinaryProtocol(unittest.TestCase):
     def test_TBinaryProtocol_no_strict_write_read(self):
         TMessageType = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}
         test_data = [("short message name", TMessageType['T_CALL'], 0),
-                        ("1", TMessageType['T_REPLY'], 12345),
-                        ("loooooooooooooooooooooooooooooooooong", TMessageType['T_EXCEPTION'], 1 << 16),
-                        ("one way push", TMessageType['T_ONEWAY'], 12),
-                        ("Janky", TMessageType['T_CALL'], 0)]
+                     ("1", TMessageType['T_REPLY'], 12345),
+                     ("loooooooooooooooooooooooooooooooooong", TMessageType['T_EXCEPTION'], 1 << 16),
+                     ("one way push", TMessageType['T_ONEWAY'], 12),
+                     ("Janky", TMessageType['T_CALL'], 0)]
 
         try:
             for dt in test_data:

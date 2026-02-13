@@ -31,7 +31,6 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
 from thrift.protocol.TCompactProtocol import TCompactProtocolFactory
 from thrift.protocol.TCompactProtocol import TCompactProtocolAcceleratedFactory
-from thrift.transport import TTransport
 from thrift.TSerialization import serialize, deserialize
 from TestServer.ttypes import Message
 

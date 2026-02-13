@@ -44,7 +44,6 @@ from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
 from thrift.TSerialization import serialize, deserialize
-import sys
 import unittest
 
 

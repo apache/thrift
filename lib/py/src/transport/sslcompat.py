@@ -97,7 +97,8 @@ def _optional_dependencies():
         # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
         # longer uses the ssl.match_hostname() function.""
         if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
-            match = lambda cert, hostname: True
+            def match(cert, hostname):
+                return True
         else:
             logger.warning('using legacy validation callback')
             match = legacy_validate_callback

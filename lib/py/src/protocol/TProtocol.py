@@ -20,7 +20,6 @@
 from thrift.Thrift import TException, TType, TFrozenDict
 from thrift.transport.TTransport import TTransportException
 
-import sys
 from itertools import islice
 
 

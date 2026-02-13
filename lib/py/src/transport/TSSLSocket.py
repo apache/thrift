@@ -28,7 +28,10 @@ from .sslcompat import _match_has_ipaddress
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 
-_match_hostname = lambda cert, hostname: True
+
+def _match_hostname(cert, hostname):
+    return True
+
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings(
@@ -356,7 +359,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             # Preserve existing behaviors for default values
             if 'cert_reqs' not in kwargs:
                 kwargs['cert_reqs'] = ssl.CERT_NONE
-            if'certfile' not in kwargs:
+            if 'certfile' not in kwargs:
                 kwargs['certfile'] = 'cert.pem'
 
         unix_socket = kwargs.pop('unix_socket', None)
