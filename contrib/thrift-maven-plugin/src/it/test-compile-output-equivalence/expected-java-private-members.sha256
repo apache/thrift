@@ -1,0 +1,3 @@
+# Baseline checksums for generated output from src/test/resources/idl/shared.thrift with --gen java:private_members
+38e149af7c98870f0cf3dfea1cd2cfef5e7c3370e0ae647f6ba8e3740a588ff9  shared/SharedService.java
+addf92dc644e29f8f608967f314fc97a0bc7335849f51df03529f8c567d8889b  shared/SharedStruct.java
