@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableList;
  * that they are included in the final artifact.
  *
  * @phase generate-sources
+ * @threadSafe
  * @goal compile
  * @requiresDependencyResolution compile
  */
