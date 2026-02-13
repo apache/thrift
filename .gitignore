@@ -106,6 +106,7 @@ project.lock.json
 /contrib/fb303/py/fb303/__init__.py
 /contrib/fb303/py/fb303/constants.py
 /contrib/fb303/py/fb303/ttypes.py
+/contrib/thrift-maven-plugin/target/
 /depcomp
 /install-sh
 /lib/cl/backport-update.zip
