@@ -1,0 +1,195 @@
+name: "Static Code Analysis"
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+  workflow_dispatch:
+
+env:
+  BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+  SCA_DEPS: cppcheck python3-flake8 sloccount libglib2.0-dev
+  # Disable all languages for which we don't have SCA checks in place
+  CONFIG_ARGS_FOR_SCA: >
+    --enable-tutorial=no
+    --disable-debug
+    --disable-tests
+    --disable-dependency-tracking
+    --without-java
+    --without-kotlin
+    --without-netstd
+    --without-nodejs
+    --without-nodets
+    --without-swift
+    --without-go
+    --without-dart
+    --without-erlang
+    --without-haxe
+    --without-ruby
+    --without-rs
+    --without-lua
+    --without-perl
+    --without-d
+    --without-cl
+
+permissions:
+  contents: read
+
+jobs:
+  sca:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS $SCA_DEPS
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          # Lowest supported PHP version
+          php-version: "7.1"
+          extensions: mbstring, xml, curl, pcntl
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel flake8
+
+      # Generate thrift files so the static code analysis includes an analysis
+      # of the files the thrift compiler spits out.
+      - name: Build compiler
+        id: compile
+        run: |
+          ./bootstrap.sh
+          ./configure $CONFIG_ARGS_FOR_SCA
+          make -j$(nproc) -C compiler/cpp
+
+      - name: Run cppcheck
+        id: cppcheck
+        continue-on-error: true
+        run: |
+          make -j$(nproc) -C lib/cpp
+          make -j$(nproc) -C test/cpp precross
+
+          make -j$(nproc) -C lib/c_glib
+          make -j$(nproc) -C test/c_glib precross
+
+          # Compiler cppcheck (All)
+          cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
+
+          # C++ cppcheck (All)
+          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+
+          # C Glib cppcheck (All)
+          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+
+          # Silent error checks
+          # See THRIFT-4371: flex generated scanner code causes false positives in cppcheck.
+          # suppress *:thrift/thriftl.cc -> flex-generated lexer triggers false null pointer paths.
+          # suppress syntaxError:thrift/thrifty.cc -> bison-generated parser is not fully parseable.
+          # suppress normalCheckLevelMaxBranches:compiler/cpp/src/* -> avoid info-only branch limit noise.
+          cppcheck --force --quiet --inline-suppr \
+            --suppress="*:thrift/thriftl.cc" \
+            --suppress="syntaxError:thrift/thrifty.cc" \
+            --suppress="normalCheckLevelMaxBranches:compiler/cpp/src/*" \
+            --error-exitcode=1 -j2 compiler/cpp/src
+
+          # suppress unknownMacro:lib/cpp/src/thrift/qt/* -> Qt namespace macro needs Qt preprocessing.
+          # suppress unknownMacro:lib/cpp/test/* -> Boost.Test macros are unresolved in standalone analysis.
+          # suppress syntaxError:lib/cpp/src/thrift/transport/TSSLSocket.cpp -> OpenSSL macro branches confuse parser.
+          # suppress normalCheckLevelMaxBranches:* -> avoid info-only branch limit noise.
+          # exclude lib/cpp/test/gen-cpp and test/cpp/gen-* -> generated fixtures duplicate source/test coverage.
+          cppcheck --force --quiet --inline-suppr \
+            --suppress="unknownMacro:lib/cpp/src/thrift/qt/*" \
+            --suppress="unknownMacro:lib/cpp/test/*" \
+            --suppress="syntaxError:lib/cpp/src/thrift/transport/TSSLSocket.cpp" \
+            --suppress="normalCheckLevelMaxBranches:lib/cpp/src/*" \
+            --suppress="normalCheckLevelMaxBranches:lib/cpp/test/*" \
+            --suppress="normalCheckLevelMaxBranches:test/cpp/*" \
+            --suppress="normalCheckLevelMaxBranches:tutorial/cpp/*" \
+            -i lib/cpp/test/gen-cpp \
+            -i test/cpp/gen-cpp \
+            -i test/cpp/gen-cpp-forward \
+            -i test/cpp/gen-cpp-private \
+            -i test/cpp/gen-cpp-enumclass \
+            --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+
+          # suppress unknownMacro:lib/c_glib/src/* -> GObject type macros are unresolved in standalone analysis.
+          # suppress unknownMacro:lib/c_glib/test/* -> test-side GLib macros are unresolved without full preprocess.
+          # suppress syntaxError:lib/c_glib/test/* -> GLib assert macros parse as syntax errors.
+          # suppress normalCheckLevelMaxBranches:* -> avoid info-only branch limit noise.
+          # exclude lib/c_glib/test/gen-c_glib -> generated bindings are covered by generator output checks.
+          # exclude lib/c_glib/test/gen-cpp -> generated skeleton has placeholder methods without returns.
+          cppcheck --force --quiet --inline-suppr \
+            --suppress="unknownMacro:lib/c_glib/src/*" \
+            --suppress="unknownMacro:lib/c_glib/test/*" \
+            --suppress="syntaxError:lib/c_glib/test/*" \
+            --suppress="normalCheckLevelMaxBranches:lib/c_glib/src/*" \
+            --suppress="normalCheckLevelMaxBranches:lib/c_glib/test/*" \
+            --suppress="normalCheckLevelMaxBranches:test/c_glib/*" \
+            --suppress="normalCheckLevelMaxBranches:tutorial/c_glib/*" \
+            -i lib/c_glib/test/gen-c_glib \
+            -i lib/c_glib/test/gen-cpp \
+            --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
+
+      - name: Run flake8
+        id: flake8
+        continue-on-error: true
+        run: |
+          make -j$(nproc) -C test/py precross
+
+          flake8
+
+      - name: Run phpcs
+        id: phpcs
+        continue-on-error: true
+        run: |
+          # PHP code style
+          composer install --quiet
+          ./vendor/bin/phpcs
+
+      - name: Print statistics
+        if: ${{ always() }}
+        run: |
+          # TODO etc
+          echo "FIXMEs: $(grep -r FIXME * | wc -l)"
+          echo "HACKs: $(grep -r HACK * | wc -l)"
+          echo "TODOs: $(grep -r TODO * | wc -l)"
+
+          # LoC
+          sloccount .
+
+          # System info
+          # dpkg -l
+          uname -a
+
+      - name: Fail if any SCA check failed
+        if: ${{ always() && steps.compile.outcome == 'success' }}
+        env:
+          CPPCHECK_OUTCOME: ${{ steps.cppcheck.outcome }}
+          FLAKE8_OUTCOME: ${{ steps.flake8.outcome }}
+          PHPCS_OUTCOME: ${{ steps.phpcs.outcome }}
+        run: |
+          failed=0
+
+          if [ "$CPPCHECK_OUTCOME" != "success" ]; then
+            echo "::error::Step 'cppcheck' failed (outcome: $CPPCHECK_OUTCOME)"
+            failed=1
+          fi
+          if [ "$FLAKE8_OUTCOME" != "success" ]; then
+            echo "::error::Step 'flake8' failed (outcome: $FLAKE8_OUTCOME)"
+            failed=1
+          fi
+          if [ "$PHPCS_OUTCOME" != "success" ]; then
+            echo "::error::Step 'phpcs' failed (outcome: $PHPCS_OUTCOME)"
+            failed=1
+          fi
+
+          exit $failed
