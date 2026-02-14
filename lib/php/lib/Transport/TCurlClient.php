@@ -294,7 +294,9 @@ class TCurlClient extends TTransport
     {
         try {
             if (self::$curlHandle) {
-                curl_close(self::$curlHandle); #This function has no effect. Prior to PHP 8.0.0, this function was used to close the resource.
+                // This function has no effect. Prior to PHP 8.0.0,
+                // this function was used to close the resource.
+                curl_close(self::$curlHandle);
                 self::$curlHandle = null;
             }
         } catch (\Exception $x) {
