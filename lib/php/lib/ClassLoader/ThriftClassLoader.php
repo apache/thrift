@@ -102,10 +102,8 @@ class ThriftClassLoader
      */
     public function loadClass($class)
     {
-        if (
-            (true === $this->apcu && ($file = $this->findFileInApcu($class)))
-            || ($file = $this->findFile($class))
-        ) {
+        if ((true === $this->apcu && ($file = $this->findFileInApcu($class)))
+            || ($file = $this->findFile($class))) {
             require_once $file;
         }
     }
@@ -186,10 +184,8 @@ class ThriftClassLoader
                      * Available in service: Interface, Client, Processor, Rest
                      * And every service methods (_.+)
                      */
-                    if (
-                        0 === preg_match('#(.+)(if|client|processor|rest)$#i', $class, $n)
-                        && 0 === preg_match('#(.+)_[a-z0-9]+_(args|result)$#i', $class, $n)
-                    ) {
+                    if (0 === preg_match('#(.+)(if|client|processor|rest)$#i', $class, $n)
+                        && 0 === preg_match('#(.+)_[a-z0-9]+_(args|result)$#i', $class, $n)) {
                         $className = 'Types';
                     } else {
                         $className = $n[1];

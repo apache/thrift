@@ -163,28 +163,28 @@ class TSocketTest extends TestCase
         };
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
-             ->expects($this->once())
-             ->with(
-                 $host,
-                 $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-             )
-             ->willReturnCallback(
-                 function (
-                     string $hostname,
-                     int $port,
-                     &$error_code,
-                     &$error_message,
-                     ?float $timeout
-                 ) {
-                     $error_code = 999;
-                     $error_message = 'Connection refused';
+            ->expects($this->once())
+            ->with(
+                $host,
+                $port,
+                $this->anything(), #$errno,
+                $this->anything(), #$errstr,
+                $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+            )
+            ->willReturnCallback(
+                function (
+                    string $hostname,
+                    int $port,
+                    &$error_code,
+                    &$error_message,
+                    ?float $timeout
+                ) {
+                    $error_code = 999;
+                    $error_message = 'Connection refused';
 
-                     return false;
-                 }
-             );
+                    return false;
+                }
+            );
 
         $transport = new TSocket(
             $host,
@@ -291,9 +291,9 @@ class TSocketTest extends TestCase
     }
 
     /**
-     * @dataProvider open_THRIFT_5132_DataProvider
+     * @dataProvider openThrift5132DataProvider
      */
-    public function testOpen_THRIFT_5132(
+    public function testOpenThrift5132(
         $socketImportResult
     ) {
         $host = 'localhost';
@@ -302,29 +302,29 @@ class TSocketTest extends TestCase
         $debugHandler = null;
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
-             ->expects($this->once())
-             ->with(
-                 $host,
-                 $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-             )
-             ->willReturn(fopen('php://input', 'r+'));
+            ->expects($this->once())
+            ->with(
+                $host,
+                $port,
+                $this->anything(), #$errno,
+                $this->anything(), #$errstr,
+                $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+            )
+            ->willReturn(fopen('php://input', 'r+'));
 
         $this->getFunctionMock('Thrift\Transport', 'socket_import_stream')
-             ->expects($this->once())
-             ->willReturn($socketImportResult);
+            ->expects($this->once())
+            ->willReturn($socketImportResult);
 
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
-             ->expects($socketImportResult ? $this->once() : $this->never())
-             ->with(
-                 $this->anything(), #$socket,
-                 SOL_TCP, #$level
-                 TCP_NODELAY, #$option
-                 1 #$value
-             )
-             ->willReturn(true);
+            ->expects($socketImportResult ? $this->once() : $this->never())
+            ->with(
+                $this->anything(), #$socket,
+                SOL_TCP, #$level
+                TCP_NODELAY, #$option
+                1 #$value
+            )
+            ->willReturn(true);
 
         $transport = new TSocket(
             $host,
@@ -337,7 +337,7 @@ class TSocketTest extends TestCase
         $this->assertTrue($transport->isOpen());
     }
 
-    public function open_THRIFT_5132_DataProvider()
+    public function openThrift5132DataProvider()
     {
         yield 'socket_import_stream success' => [
             'socketImportResult' => true,

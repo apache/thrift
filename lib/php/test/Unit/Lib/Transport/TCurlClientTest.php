@@ -121,7 +121,7 @@ class TCurlClientTest extends TestCase
         $this->assertEquals('67890', $propResponse->getValue($transport));
     }
 
-    public function testReadAll_THRIFT_4656()
+    public function testReadAllThrift4656()
     {
         $host = 'localhost';
         $transport = new TCurlClient($host);
@@ -187,16 +187,16 @@ class TCurlClientTest extends TestCase
         $expectedCode = null
     ) {
         $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function')
-             ->expects($this->once())
-             ->with(
-                 $this->callback(
-                     function ($arg) {
-                         return is_array(
-                                 $arg
-                             ) && $arg[0] === 'Thrift\\Transport\\TCurlClient' && $arg[1] === 'closeCurlHandle';
-                     }
-                 )
-             );
+            ->expects($this->once())
+            ->with(
+                $this->callback(
+                    function ($arg) {
+                        return is_array($arg)
+                            && $arg[0] === 'Thrift\\Transport\\TCurlClient'
+                            && $arg[1] === 'closeCurlHandle';
+                    }
+                )
+            );
         $this->getFunctionMock('Thrift\\Transport', 'curl_init')
              ->expects($this->once());
 

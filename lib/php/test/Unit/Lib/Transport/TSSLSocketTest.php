@@ -150,23 +150,23 @@ class TSSLSocketTest extends TestCase
         };
 
         $this->getFunctionMock('Thrift\Transport', 'stream_socket_client')
-             ->expects($this->once())
-             ->with(
-                 'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-                 STREAM_CLIENT_CONNECT,
-                 $this->anything() #$context
-             )
-             ->willReturnCallback(
-                 function ($host, &$error_code, &$error_message, $timeout, $flags, $context) {
-                     $error_code = 999;
-                     $error_message = 'Connection refused';
+            ->expects($this->once())
+            ->with(
+                'ssl://' . $host . ':' . $port,
+                $this->anything(), #$errno,
+                $this->anything(), #$errstr,
+                $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                STREAM_CLIENT_CONNECT,
+                $this->anything() #$context
+            )
+            ->willReturnCallback(
+                function ($host, &$error_code, &$error_message, $timeout, $flags, $context) {
+                    $error_code = 999;
+                    $error_message = 'Connection refused';
 
-                     return false;
-                 }
-             );
+                    return false;
+                }
+            );
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('TSocket: Could not connect to');
