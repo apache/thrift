@@ -80,6 +80,5 @@ class TMultiplexedProtocolTest extends TestCase
             'seqid' => 1,
             'expectedName' => 'testName'
         ];
-
     }
 }
