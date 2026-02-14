@@ -32,7 +32,7 @@ from thrift.transport.TTransport import TTransportException
 
 class TSocketTest(unittest.TestCase):
     def test_failed_connection_raises_exception(self):
-        sock = TSocket(host="localhost", port=60606) # unused port
+        sock = TSocket(host="localhost", port=60606)  # unused port
         with self.assertRaises(TTransportException) as ctx:
             sock.open()
         exc = ctx.exception
@@ -55,7 +55,7 @@ class TSocketTest(unittest.TestCase):
         exc = ctx.exception
         self.assertEqual(exc.message, "read timeout")
 
-        acc.client.close() # this also blocks until the other thread is done
+        acc.client.close()  # this also blocks until the other thread is done
         acc.close()
         sock.close()
 

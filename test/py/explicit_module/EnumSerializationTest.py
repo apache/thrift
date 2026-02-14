@@ -27,12 +27,14 @@ from thrift.TSerialization import serialize, deserialize
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
+
 def deserialize_immutable(base,
-                buf,
-                protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+                          buf,
+                          protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
     transport = TTransport.TMemoryBuffer(buf)
     protocol = protocol_factory.getProtocol(transport)
     return base.read(protocol)
+
 
 def serialization_deserialization_struct_enum_test():
     test_obj = TestStruct(param1="test_string", param2=TestEnum.TestEnum1, param3=SharedEnum.SharedEnum1)
@@ -42,6 +44,7 @@ def serialization_deserialization_struct_enum_test():
     assert test_obj.param2 == test_obj2.param2
     assert test_obj.param3 == test_obj2.param3
 
+
 def serialization_deserialization_struct_enum_as_string_test():
     test_obj = TestStruct(param1="test_string", param2=TestEnum.TestEnum1.name, param3=SharedEnum.SharedEnum1.name)
     test_obj_serialized = serialize(test_obj)
@@ -49,6 +52,7 @@ def serialization_deserialization_struct_enum_as_string_test():
     assert test_obj.param1 == test_obj2.param1
     assert test_obj.param2 == test_obj2.param2
     assert test_obj.param3 == test_obj2.param3
+
 
 def serialization_deserialization_exception_enum_as_string_test():
     test_obj = TestException(whatOp=0, why=SharedEnum.SharedEnum0.name, who=TestEnum.TestEnum0.name)
@@ -58,6 +62,7 @@ def serialization_deserialization_exception_enum_as_string_test():
     assert test_obj.why == test_obj2.why
     assert test_obj.who == test_obj2.who
 
+
 def serialization_deserialization_exception_enum_test():
     test_obj = TestException(whatOp=0, why=SharedEnum.SharedEnum0, who=TestEnum.TestEnum0)
     test_obj_serialized = serialize(test_obj)
@@ -65,7 +70,6 @@ def serialization_deserialization_exception_enum_test():
     assert test_obj.whatOp == test_obj2.whatOp
     assert test_obj.why == test_obj2.why
     assert test_obj.who == test_obj2.who
-
 
 
 if __name__ == "__main__":

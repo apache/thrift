@@ -26,8 +26,6 @@ PYTHONPATH=./gen-py:../../lib/py/build/lib... ./FastbinaryTest.py
 # TODO(dreiss): Test error cases.  Check for memory leaks.
 
 import math
-import os
-import sys
 import timeit
 
 from copy import deepcopy

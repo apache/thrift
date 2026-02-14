@@ -306,7 +306,7 @@ class PortAllocator(object):
         return port if ok else self._get_domain_port()
 
     def alloc_port(self, socket_type):
-        if socket_type in ('domain', 'abstract','domain-socketactivated'):
+        if socket_type in ('domain', 'abstract', 'domain-socketactivated'):
             return self._get_domain_port()
         else:
             return self._get_tcp_port()
@@ -323,7 +323,7 @@ class PortAllocator(object):
         self._log.debug('free_port')
         self._lock.acquire()
         try:
-            if socket_type in ['domain','domain-socketactivated']:
+            if socket_type in ['domain', 'domain-socketactivated']:
                 self._dom_ports.remove(port)
                 path = domain_socket_path(port)
                 if os.path.exists(path):

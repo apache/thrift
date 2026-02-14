@@ -21,7 +21,6 @@ from .TProtocol import (TType, TProtocolBase, TProtocolException,
                         TProtocolFactory, checkIntegerLimits)
 import base64
 import math
-import sys
 
 
 __all__ = ['TJSONProtocol',

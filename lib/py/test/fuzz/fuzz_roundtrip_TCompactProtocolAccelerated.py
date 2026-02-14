@@ -20,8 +20,10 @@
 from fuzz_common import run_roundtrip_fuzzer
 from thrift.protocol.TCompactProtocol import TCompactProtocolAcceleratedFactory
 
+
 def main():
     run_roundtrip_fuzzer(TCompactProtocolAcceleratedFactory)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

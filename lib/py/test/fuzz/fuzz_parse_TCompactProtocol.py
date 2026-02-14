@@ -20,8 +20,10 @@
 from fuzz_common import run_parser_fuzzer
 from thrift.protocol.TCompactProtocol import TCompactProtocolFactory
 
+
 def main():
     run_parser_fuzzer(TCompactProtocolFactory)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

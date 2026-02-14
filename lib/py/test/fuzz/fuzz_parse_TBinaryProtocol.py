@@ -20,8 +20,10 @@
 from fuzz_common import run_parser_fuzzer
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
+
 def main():
     run_parser_fuzzer(TBinaryProtocolFactory)
+
 
 if __name__ == "__main__":
     main()

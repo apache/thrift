@@ -66,6 +66,7 @@ class _Lock:
 
 class TTornadoStreamTransport(TTransportBase):
     """a framed, buffered transport over a Tornado stream"""
+
     def __init__(self, host, port, stream=None, io_loop=None):
         if io_loop is not None:
             warnings.warn(
@@ -90,9 +91,9 @@ class TTornadoStreamTransport(TTransportBase):
         return gen.with_timeout(timeout, future)
 
     def isOpen(self):
-       if self.stream is None:
-           return False
-       return not self.stream.closed()
+        if self.stream is None:
+            return False
+        return not self.stream.closed()
 
     @gen.coroutine
     def open(self, timeout=None):
