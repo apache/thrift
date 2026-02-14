@@ -76,14 +76,13 @@ public:
       this->nspace_lc = "";
     } else {
       /* replace dots with underscores */
-      char* tmp = strdup(this->nspace.c_str());
-      for (unsigned int i = 0; i < strlen(tmp); i++) {
+      string tmp = this->nspace;
+      for (size_t i = 0; i < tmp.size(); i++) {
         if (tmp[i] == '.') {
           tmp[i] = '_';
         }
       }
-      this->nspace = string(tmp, strlen(tmp));
-      free(tmp);
+      this->nspace = tmp;
 
       /* clean up the namespace for C.
        * An input of 'namespace foo' should result in:
