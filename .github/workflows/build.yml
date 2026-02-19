@@ -464,6 +464,7 @@ jobs:
   lib-rust:
     needs: compiler
     runs-on: ubuntu-24.04
+    if: false    # currently broken and no maintainers around -> see THRIFT-5917
     env:
       TOOLCHAIN_VERSION: 1.83.0
     steps:
@@ -827,8 +828,8 @@ jobs:
   cross-test:
     needs:
       - lib-java-kotlin
-      #- lib-swift                     # swift is currently broken and no maintainers around -> see THRIFT-5864
-      - lib-rust
+      #- lib-swift                     # currently broken and no maintainers around -> see THRIFT-5864
+      #- lib-rust                      # currently broken and no maintainers around -> see THRIFT-5917
       - lib-go
       - lib-python
       - lib-cpp
@@ -837,10 +838,11 @@ jobs:
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
+        # rust currently broken and no maintainers around -> see THRIFT-5917
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb']
+        server_lang: ['java', 'go', 'cpp', 'py', 'rb']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp', 'py', 'rb']
+        client_lang: ['java,kotlin', 'go,cpp', 'py', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -888,15 +890,16 @@ jobs:
           name: kotlin-precross
           path: lib/kotlin
 
-      # swift is currently broken and no maintainers around -> see THRIFT-5864
-      #- name: Download swift precross artifacts
-      #  uses: actions/download-artifact@v7
-      #  with:
-      #    name: swift-precross
-      #    path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
+      - name: Download swift precross artifacts
+        uses: actions/download-artifact@v7
+        if: false   # currently broken and no maintainers around -> see THRIFT-5864
+        with:
+          name: swift-precross
+          path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
         uses: actions/download-artifact@v7
+        if: false   # currently broken and no maintainers around -> see THRIFT-5917
         with:
           name: rs-precross
           path: test/rs/bin
@@ -931,7 +934,7 @@ jobs:
           chmod a+x lib/kotlin/cross-test-client/build/install/TestClient/bin/*
           chmod a+x lib/kotlin/cross-test-server/build/install/TestServer/bin/*
           # THRIFT-5864  chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
-          chmod a+x test/rs/bin/*
+          # THRIFT-5917  chmod a+x test/rs/bin/*
           chmod a+x test/go/bin/*
           chmod a+x test/cpp/*
           chmod a+x test/cpp/.libs/*
