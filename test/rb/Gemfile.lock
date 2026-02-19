@@ -11,7 +11,7 @@ GEM
     eventmachine (1.2.7)
     logger (1.7.0)
     power_assert (3.0.1)
-    rack (2.2.21)
+    rack (2.2.22)
     test-unit (3.7.3)
       power_assert
     thin (1.8.2)
@@ -27,7 +27,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  rack (~> 2.0, >= 2.0.4)
+  rack (~> 2.2)
   test-unit (~> 3.2, >= 3.2.7)
   thin (~> 1.7, >= 1.7.2)
   thrift!
