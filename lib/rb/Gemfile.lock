@@ -28,7 +28,7 @@ GEM
     pry-stack_explorer (0.4.9.3)
       binding_of_caller (>= 0.7)
       pry (>= 0.9.11)
-    rack (2.2.21)
+    rack (2.2.22)
     rack-test (0.8.3)
       rack (>= 1.0, < 3)
     rake (13.3.1)
