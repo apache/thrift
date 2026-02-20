@@ -13,16 +13,17 @@
 # limitations under the License.
 #
 
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8.1-windowsservercore-ltsc2025
 
 # Restore the default Windows shell for correct batch processing below.
 SHELL ["cmd", "/S", "/C"]
 
 # Install Build Tools excluding workloads and components with known issues.
-ADD --checksum=sha256:ca11782db44225d313c9887b4254dfa57c5b72fef025bf620c81c43dff73c6ed https://aka.ms/vs/15/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+ADD --checksum=sha256:93bf06959261a301aca6406d058ade08f34ae83ca458fe3ed0689aa2105d9ccc https://aka.ms/vs/17/release/vs_BuildTools.exe C:\TEMP\vs_buildtools.exe
 RUN C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
     --installPath C:\BuildTools `
-    --add Microsoft.VisualStudio.Workload.VCTools `
+    --add Microsoft.VisualStudio.Component.VC.CoreBuildTools `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
  || IF "%ERRORLEVEL%"=="3010" EXIT 0
 RUN DEL C:\TEMP\vs_buildtools.exe
@@ -34,11 +35,11 @@ RUN msiexec.exe /i C:\TEMP\cmake.msi /qn && `
     DEL C:\TEMP\cmake.msi
 
 # Install boost (for the thrift runtime library build)
-ADD --checksum=sha256:ae6ade62886fd9a6930c95f116a33e940224f0cb7f791b01afd7dd1ceca360fe https://boost.teeks99.com/bin/1.88.0/boost_1_88_0-msvc-14.1-64.exe C:\TEMP\boost.exe
+ADD --checksum=sha256:bff575f21343f602c7b6c3ad3883a28053a1a50cde2153102d30479f85911738 https://boost.teeks99.com/bin/1.88.0/boost_1_88_0-msvc-14.3-64.exe C:\TEMP\boost.exe
 ENV BOOST_ROOT=C:\Libraries\boost_1_88_0
 RUN C:\TEMP\boost.exe /DIR=%BOOST_ROOT% /SILENT && `
     DEL C:\TEMP\boost.exe && `
-    SETX BOOST_LIBRARYDIR "%BOOST_ROOT%\lib64-msvc-14.1" && `
+    SETX BOOST_LIBRARYDIR "%BOOST_ROOT%\lib64-msvc-14.3" && `
     SETX PATH "%BOOST_LIBRARYDIR%;%PATH%"
 
 # Install chocolatey
@@ -78,8 +79,8 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     SETX ZLIB_ROOT "C:\Libraries\zlib-%ZLIB_VERSION%" && `
     SETX PATH "%ZLIB_ROOT%\bin;%PATH%"
 
-# Install OpenSSL 3.6.0
-ADD --checksum=sha256:1ae24eb941ff3c11258d0ad4e6d2cba13360cb52a17d8516fb27352b5e3ed6ad https://slproweb.com/download/Win64OpenSSL-3_6_0.exe C:\TEMP\openssl.exe
+# Install OpenSSL 3.6.1
+ADD --checksum=sha256:8ce11c409adbd177ca627115bc697c3b66c414bb36175ebb375341eb426894a8 https://slproweb.com/download/Win64OpenSSL-3_6_1.exe C:\TEMP\openssl.exe
 RUN C:\TEMP\openssl.exe /silent && `
     DEL C:\TEMP\openssl.exe && `
     SETX OPENSSL_ROOT "C:\OpenSSL-Win64" && `
