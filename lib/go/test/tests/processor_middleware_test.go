@@ -92,11 +92,9 @@ func TestProcessorMiddleware(t *testing.T) {
 		server.Stop()
 	})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		server.Serve()
-	}()
+	})
 
 	time.Sleep(10 * time.Millisecond)
 

@@ -482,7 +482,7 @@ func TestAnnotationCompatibleTest(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	jsonMap := make(map[string]interface{})
+	jsonMap := make(map[string]any)
 	if err = json.Unmarshal(b, &jsonMap); err != nil {
 		t.Error(err)
 	}

@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 )
 
 // Size in bytes for 32-bit ints.
@@ -787,10 +788,8 @@ func (t *THeaderTransport) isFramed() bool {
 // addWriteTransformsDedupe adds id to writeTransforms only if it's not already
 // there.
 func (t *THeaderTransport) addWriteTransformsDedupe(id THeaderTransformID) {
-	for _, existingID := range t.writeTransforms {
-		if existingID == id {
-			return
-		}
+	if slices.Contains(t.writeTransforms, id) {
+		return
 	}
 	t.writeTransforms = append(t.writeTransforms, id)
 }

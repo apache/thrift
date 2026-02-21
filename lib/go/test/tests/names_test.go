@@ -27,8 +27,7 @@ import (
 )
 
 func TestThatAttributeNameSubstituionDoesNotOccur(t *testing.T) {
-	s := namestest.NamesTest{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[namestest.NamesTest]()
 	_, ok := st.FieldByName("Type")
 	if !ok {
 		t.Error("Type attribute is missing!")
