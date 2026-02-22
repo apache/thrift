@@ -68,20 +68,20 @@ module Thrift
         if @timeout.nil? or @timeout == 0
           @handle.write(str)
         else
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
           len = 0
-          start = Time.now
-          while Time.now - start < @timeout
-            rd, wr, = IO.select(nil, [@handle], nil, @timeout)
-            if wr and not wr.empty?
+
+          while len < str.length
+            begin
               len += @handle.write_nonblock(str[len..-1])
-              break if len >= str.length
+            rescue IO::WaitWritable
+              wait_for(:write, deadline, str.length)
+            rescue IO::WaitReadable
+              wait_for(:read, deadline, str.length)
             end
           end
-          if len < str.length
-            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out writing #{str.length} bytes to #{@desc}")
-          else
-            len
-          end
+
+          len
         end
       rescue TransportException => e
         # pass this on
@@ -100,19 +100,16 @@ module Thrift
         if @timeout.nil? or @timeout == 0
           data = @handle.readpartial(sz)
         else
-          # it's possible to interrupt select for something other than the timeout
-          # so we need to ensure we've waited long enough, but not too long
-          start = Time.now
-          timespent = 0
-          rd = loop do
-            rd, = IO.select([@handle], nil, nil, @timeout - timespent)
-            timespent = Time.now - start
-            break rd if (rd and not rd.empty?) or timespent >= @timeout
-          end
-          if rd.nil? or rd.empty?
-            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out reading #{sz} bytes from #{@desc}")
-          else
-            data = @handle.readpartial(sz)
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
+
+          data = loop do
+            begin
+              break @handle.read_nonblock(sz)
+            rescue IO::WaitReadable
+              wait_for(:read, deadline, sz)
+            rescue IO::WaitWritable
+              wait_for(:write, deadline, sz)
+            end
           end
         end
       rescue TransportException => e
@@ -140,6 +137,34 @@ module Thrift
 
     def to_s
       "socket(#{@host}:#{@port})"
+    end
+
+    private
+
+    def wait_for(operation, deadline, sz)
+      rd_ary, wr_ary = case operation
+      when :read
+        [[@handle], nil]
+      when :write
+        [nil, [@handle]]
+      else
+        raise ArgumentError, "Unknown IO wait operation: #{operation.inspect}"
+      end
+
+      loop do
+        remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        if remaining <= 0
+          case operation
+          when :read
+            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out reading #{sz} bytes from #{@desc}")
+          when :write
+            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out writing #{sz} bytes to #{@desc}")
+          end
+        end
+
+        rd, wr, = IO.select(rd_ary, wr_ary, nil, remaining)
+        return if (rd && !rd.empty?) || (wr && !wr.empty?)
+      end
     end
   end
 end

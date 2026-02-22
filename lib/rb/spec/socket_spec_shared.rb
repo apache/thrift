@@ -74,31 +74,94 @@ shared_examples_for "a socket" do
   it "should support the timeout accessor for read" do
     @socket.timeout = 3
     @socket.open
-    expect(IO).to receive(:select).with([@handle], nil, nil, 3).and_return([[@handle], [], []])
-    expect(@handle).to receive(:readpartial).with(17).and_return("test data")
+    expect(@handle).to receive(:read_nonblock).with(17).and_raise(IO::EAGAINWaitReadable)
+    expect(IO).to receive(:select) do |rd, wr, err, timeout|
+      expect(rd).to eq([@handle])
+      expect(wr).to be_nil
+      expect(err).to be_nil
+      expect(timeout).to be > 0
+      expect(timeout).to be <= 3
+      [[@handle], [], []]
+    end
+    expect(@handle).to receive(:read_nonblock).with(17).and_return("test data")
     expect(@socket.read(17)).to eq("test data")
   end
 
   it "should support the timeout accessor for write" do
     @socket.timeout = 3
     @socket.open
-    expect(IO).to receive(:select).with(nil, [@handle], nil, 3).twice.and_return([[], [@handle], []])
-    expect(@handle).to receive(:write_nonblock).with("test data").and_return(4)
-    expect(@handle).to receive(:write_nonblock).with(" data").and_return(5)
+    write_calls = 0
+    expect(@handle).to receive(:write_nonblock).exactly(3).times do |chunk|
+      write_calls += 1
+      case write_calls
+      when 1
+        expect(chunk).to eq("test data")
+        raise IO::EAGAINWaitWritable
+      when 2
+        expect(chunk).to eq("test data")
+        4
+      when 3
+        expect(chunk).to eq(" data")
+        5
+      end
+    end
+    expect(IO).to receive(:select) do |rd, wr, err, timeout|
+      expect(rd).to be_nil
+      expect(wr).to eq([@handle])
+      expect(err).to be_nil
+      expect(timeout).to be > 0
+      expect(timeout).to be <= 3
+      [[], [@handle], []]
+    end
     expect(@socket.write("test data")).to eq(9)
   end
 
   it "should raise an error when read times out" do
     @socket.timeout = 0.5
     @socket.open
-    expect(IO).to receive(:select).once {sleep(0.5); nil}
+    expect(@handle).to receive(:read_nonblock).with(17).and_raise(IO::EAGAINWaitReadable)
+    expect(IO).to receive(:select).once { sleep(0.6); nil }
     expect { @socket.read(17) }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
   end
 
   it "should raise an error when write times out" do
     @socket.timeout = 0.5
     @socket.open
-    allow(IO).to receive(:select).with(nil, [@handle], nil, 0.5).and_return(nil)
+    expect(@handle).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
+    expect(IO).to receive(:select).once { sleep(0.6); nil }
     expect { @socket.write("test data") }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
+  end
+
+  it "should read buffered SSL data without waiting on the raw socket again" do
+    @socket.timeout = 1
+    @socket.open
+
+    expect(@handle).to receive(:read_nonblock).with(4).ordered.and_raise(IO::EAGAINWaitReadable)
+    expect(IO).to receive(:select).once.ordered do |rd, wr, err, timeout|
+      expect(rd).to eq([@handle])
+      expect(wr).to be_nil
+      expect(err).to be_nil
+      expect(timeout).to be > 0
+      expect(timeout).to be <= 1
+      [[@handle], [], []]
+    end
+    expect(@handle).to receive(:read_nonblock).with(4).ordered.and_return("ABCD")
+    expect(@handle).to receive(:read_nonblock).with(5).ordered.and_return("12345")
+
+    expect(@socket.read(4)).to eq("ABCD")
+    expect(@socket.read(5)).to eq("12345")
+  end
+
+  it "should read without timeout using the blocking path" do
+    @socket.timeout = nil
+    @socket.open
+
+    expect(IO).not_to receive(:select)
+    expect(@handle).not_to receive(:read_nonblock)
+    expect(@handle).to receive(:readpartial).with(4).ordered.and_return("ABCD")
+    expect(@handle).to receive(:readpartial).with(5).ordered.and_return("12345")
+
+    expect(@socket.read(4)).to eq("ABCD")
+    expect(@socket.read(5)).to eq("12345")
   end
 end

@@ -72,9 +72,9 @@ class Client
           ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keys_dir, "client.key")))
         end
 
-        Thrift::SSLSocket.new(@host, @port, nil, ssl_context)
+        Thrift::SSLSocket.new(@host, @port, 5, ssl_context)
       else
-        Thrift::Socket.new(@host, @port)
+        Thrift::Socket.new(@host, @port, 5)
       end
       protocol = create_protocol(socket)
       transport = protocol.trans
