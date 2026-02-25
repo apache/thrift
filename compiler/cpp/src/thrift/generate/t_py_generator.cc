@@ -838,6 +838,14 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
   std::string thrift_spec_type = gen_type_hints_ ? ": typing.Any" : "";
   out << indent() << "thrift_spec" << thrift_spec_type << " = None" << '\n';
 
+  if (gen_type_hints_ && is_immutable(tstruct) && members.size() > 0) {
+    out << '\n';
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      indent(out) << (*m_iter)->get_name()
+                  << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << '\n';
+    }
+  }
+
   out << '\n';
 
   /*
