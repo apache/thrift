@@ -59,7 +59,7 @@ def service_ctrl(
                 msg += " - %s" % status_details
             print(msg)
             return 2 if status == fb_status.ALIVE else 3
-        except:
+        except Exception:
             print("Failed to get status")
             return 3
 
@@ -69,7 +69,7 @@ def service_ctrl(
             result = fb303_wrapper(command, port, trans_factory, prot_factory)
             print(result)
             return 0
-        except:
+        except Exception:
             print("failed to get ", command)
             return 3
 
@@ -80,7 +80,7 @@ def service_ctrl(
             for counter in counters:
                 print("%s: %d" % (counter.encode('utf-8'), counters[counter]))
             return 0
-        except:
+        except Exception:
             print("failed to get counters")
             return 3
 
@@ -91,7 +91,7 @@ def service_ctrl(
             try:
                 fb303_wrapper(command, port, trans_factory, prot_factory)
                 return 0
-            except:
+            except Exception:
                 print("failed to tell the service to ", command)
                 return 3
     else:
