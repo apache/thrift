@@ -26,6 +26,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/apache/thrift/lib/go/thrift"
+
 	//lint:ignore ST1001 allow dot import here
 	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
@@ -45,7 +47,7 @@ func (p *printingHandler) TestVoid(ctx context.Context) (err error) {
 // @return string - returns the string 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestString(ctx context.Context, thing string) (r string, err error) {
 	fmt.Printf("testString(\"%s\")\n", thing)
 	return thing, nil
@@ -56,7 +58,7 @@ func (p *printingHandler) TestString(ctx context.Context, thing string) (r strin
 // @return bool - returns the bool 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestBool(ctx context.Context, thing bool) (r bool, err error) {
 	fmt.Printf("testBool(%t)\n", thing)
 	return thing, nil
@@ -67,7 +69,7 @@ func (p *printingHandler) TestBool(ctx context.Context, thing bool) (r bool, err
 // @return byte - returns the byte 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestByte(ctx context.Context, thing int8) (r int8, err error) {
 	fmt.Printf("testByte(%d)\n", thing)
 	return thing, nil
@@ -78,7 +80,7 @@ func (p *printingHandler) TestByte(ctx context.Context, thing int8) (r int8, err
 // @return i32 - returns the i32 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestI32(ctx context.Context, thing int32) (r int32, err error) {
 	fmt.Printf("testI32(%d)\n", thing)
 	return thing, nil
@@ -89,7 +91,7 @@ func (p *printingHandler) TestI32(ctx context.Context, thing int32) (r int32, er
 // @return i64 - returns the i64 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestI64(ctx context.Context, thing int64) (r int64, err error) {
 	fmt.Printf("testI64(%d)\n", thing)
 	return thing, nil
@@ -100,7 +102,7 @@ func (p *printingHandler) TestI64(ctx context.Context, thing int64) (r int64, er
 // @return double - returns the double 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestDouble(ctx context.Context, thing float64) (r float64, err error) {
 	fmt.Printf("testDouble(%f)\n", thing)
 	return thing, nil
@@ -111,9 +113,20 @@ func (p *printingHandler) TestDouble(ctx context.Context, thing float64) (r floa
 // @return []byte - returns the binary 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestBinary(ctx context.Context, thing []byte) (r []byte, err error) {
 	fmt.Printf("testBinary(%s)\n", hex.EncodeToString(thing))
+	return thing, nil
+}
+
+// Prints 'testUuid("%s")' where '%s' is the uuid given. Note that the uuid byte order should be correct.
+// @param uuid  thing - the uuid to print
+// @return uuid  - returns the uuid 'thing'
+//
+// Parameters:
+//   - Thing
+func (p *printingHandler) TestUuid(ctx context.Context, thing thrift.Tuuid) (r thrift.Tuuid, err error) {
+	fmt.Printf("testUuid(%s)\n", thing.String())
 	return thing, nil
 }
 
@@ -122,7 +135,7 @@ func (p *printingHandler) TestBinary(ctx context.Context, thing []byte) (r []byt
 // @return Xtruct - returns the Xtruct 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestStruct(ctx context.Context, thing *Xtruct) (r *Xtruct, err error) {
 	fmt.Printf("testStruct({\"%s\", %d, %d, %d})\n", thing.StringThing, thing.ByteThing, thing.I32Thing, thing.I64Thing)
 	return thing, err
@@ -133,7 +146,7 @@ func (p *printingHandler) TestStruct(ctx context.Context, thing *Xtruct) (r *Xtr
 // @return Xtruct2 - returns the Xtruct2 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestNest(ctx context.Context, nest *Xtruct2) (r *Xtruct2, err error) {
 	thing := nest.StructThing
 	fmt.Printf("testNest({%d, {\"%s\", %d, %d, %d}, %d})\n", nest.ByteThing, thing.StringThing, thing.ByteThing, thing.I32Thing, thing.I64Thing, nest.I32Thing)
@@ -141,12 +154,14 @@ func (p *printingHandler) TestNest(ctx context.Context, nest *Xtruct2) (r *Xtruc
 }
 
 // Prints 'testMap("{%s")' where thing has been formatted into a string of  'key => value' pairs
-//  separated by commas and new lines
+//
+//	separated by commas and new lines
+//
 // @param map<i32,i32> thing - the map<i32,i32> to print
 // @return map<i32,i32> - returns the map<i32,i32> 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestMap(ctx context.Context, thing map[int32]int32) (r map[int32]int32, err error) {
 	fmt.Printf("testMap({")
 	first := true
@@ -163,12 +178,14 @@ func (p *printingHandler) TestMap(ctx context.Context, thing map[int32]int32) (r
 }
 
 // Prints 'testStringMap("{%s}")' where thing has been formatted into a string of  'key => value' pairs
-//  separated by commas and new lines
+//
+//	separated by commas and new lines
+//
 // @param map<string,string> thing - the map<string,string> to print
 // @return map<string,string> - returns the map<string,string> 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestStringMap(ctx context.Context, thing map[string]string) (r map[string]string, err error) {
 	fmt.Printf("testStringMap({")
 	first := true
@@ -185,12 +202,14 @@ func (p *printingHandler) TestStringMap(ctx context.Context, thing map[string]st
 }
 
 // Prints 'testSet("{%s}")' where thing has been formatted into a string of  values
-//  separated by commas and new lines
+//
+//	separated by commas and new lines
+//
 // @param set<i32> thing - the set<i32> to print
 // @return set<i32> - returns the set<i32> 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestSet(ctx context.Context, thing []int32) (r []int32, err error) {
 	fmt.Printf("testSet({")
 	first := true
@@ -207,12 +226,14 @@ func (p *printingHandler) TestSet(ctx context.Context, thing []int32) (r []int32
 }
 
 // Prints 'testList("{%s}")' where thing has been formatted into a string of  values
-//  separated by commas and new lines
+//
+//	separated by commas and new lines
+//
 // @param list<i32> thing - the list<i32> to print
 // @return list<i32> - returns the list<i32> 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestList(ctx context.Context, thing []int32) (r []int32, err error) {
 	fmt.Printf("testList({")
 	for i, v := range thing {
@@ -230,7 +251,7 @@ func (p *printingHandler) TestList(ctx context.Context, thing []int32) (r []int3
 // @return Numberz - returns the Numberz 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestEnum(ctx context.Context, thing Numberz) (r Numberz, err error) {
 	fmt.Printf("testEnum(%d)\n", thing)
 	return thing, nil
@@ -241,7 +262,7 @@ func (p *printingHandler) TestEnum(ctx context.Context, thing Numberz) (r Number
 // @return UserId - returns the UserId 'thing'
 //
 // Parameters:
-//  - Thing
+//   - Thing
 func (p *printingHandler) TestTypedef(ctx context.Context, thing UserId) (r UserId, err error) {
 	fmt.Printf("testTypedef(%d)\n", thing)
 	return thing, nil
@@ -250,10 +271,11 @@ func (p *printingHandler) TestTypedef(ctx context.Context, thing UserId) (r User
 // Prints 'testMapMap("%d")' with hello as '%d'
 // @param i32 hello - the i32 to print
 // @return map<i32,map<i32,i32>> - returns a dictionary with these values:
-//   {-4 => {-4 => -4, -3 => -3, -2 => -2, -1 => -1, }, 4 => {1 => 1, 2 => 2, 3 => 3, 4 => 4, }, }
+//
+//	{-4 => {-4 => -4, -3 => -3, -2 => -2, -1 => -1, }, 4 => {1 => 1, 2 => 2, 3 => 3, 4 => 4, }, }
 //
 // Parameters:
-//  - Hello
+//   - Hello
 func (p *printingHandler) TestMapMap(ctx context.Context, hello int32) (r map[int32]map[int32]int32, err error) {
 	fmt.Printf("testMapMap(%d)\n", hello)
 
@@ -267,15 +289,17 @@ func (p *printingHandler) TestMapMap(ctx context.Context, hello int32) (r map[in
 // So you think you've got this all worked, out eh?
 //
 // Creates a the returned map with these values and prints it out:
-//   { 1 => { 2 => argument,
-//            3 => argument,
-//          },
-//     2 => { 6 => <empty Insanity struct>, },
-//   }
+//
+//	{ 1 => { 2 => argument,
+//	         3 => argument,
+//	       },
+//	  2 => { 6 => <empty Insanity struct>, },
+//	}
+//
 // @return map<UserId, map<Numberz,Insanity>> - a map with the above values
 //
 // Parameters:
-//  - Argument
+//   - Argument
 func (p *printingHandler) TestInsanity(ctx context.Context, argument *Insanity) (r map[UserId]map[Numberz]*Insanity, err error) {
 	fmt.Printf("testInsanity()\n")
 	r = make(map[UserId]map[Numberz]*Insanity)
@@ -297,15 +321,16 @@ func (p *printingHandler) TestInsanity(ctx context.Context, argument *Insanity) 
 // @param Numberz arg4 -
 // @param UserId arg5 -
 // @return Xtruct - returns an Xtruct with StringThing = "Hello2, ByteThing = arg0, I32Thing = arg1
-//    and I64Thing = arg2
+//
+//	and I64Thing = arg2
 //
 // Parameters:
-//  - Arg0
-//  - Arg1
-//  - Arg2
-//  - Arg3
-//  - Arg4
-//  - Arg5
+//   - Arg0
+//   - Arg1
+//   - Arg2
+//   - Arg3
+//   - Arg4
+//   - Arg5
 func (p *printingHandler) TestMulti(ctx context.Context, arg0 int8, arg1 int32, arg2 int64, arg3 map[int16]string, arg4 Numberz, arg5 UserId) (r *Xtruct, err error) {
 	fmt.Printf("testMulti()\n")
 	r = NewXtruct()
@@ -324,7 +349,7 @@ func (p *printingHandler) TestMulti(ctx context.Context, arg0 int8, arg1 int32, 
 // else do not throw anything
 //
 // Parameters:
-//  - Arg
+//   - Arg
 func (p *printingHandler) TestException(ctx context.Context, arg string) (err error) {
 	fmt.Printf("testException(%s)\n", arg)
 	switch arg {
@@ -348,8 +373,8 @@ func (p *printingHandler) TestException(ctx context.Context, arg string) (err er
 // @return Xtruct - an Xtruct with StringThing = arg1
 //
 // Parameters:
-//  - Arg0
-//  - Arg1
+//   - Arg0
+//   - Arg1
 func (p *printingHandler) TestMultiException(ctx context.Context, arg0 string, arg1 string) (r *Xtruct, err error) {
 	fmt.Printf("testMultiException(%s, %s)\n", arg0, arg1)
 	switch arg0 {
@@ -378,7 +403,7 @@ func (p *printingHandler) TestMultiException(ctx context.Context, arg0 string, a
 // @param i32 secondsToSleep - the number of seconds to sleep
 //
 // Parameters:
-//  - SecondsToSleep
+//   - SecondsToSleep
 func (p *printingHandler) TestOneway(ctx context.Context, secondsToSleep int32) (err error) {
 	fmt.Printf("testOneway(%d): Sleeping...\n", secondsToSleep)
 	time.Sleep(time.Second * time.Duration(secondsToSleep))

@@ -25,6 +25,7 @@
 #include <sstream>
 
 #include "thrift/parse/t_type.h"
+#include "thrift/parse/t_typedef.h"
 #include "thrift/parse/t_service.h"
 #include "thrift/parse/t_const.h"
 #include "thrift/parse/t_const_value.h"
@@ -96,7 +97,20 @@ public:
     }
   }
 
+  void resolve_all_consts() {
+    std::map<std::string, t_const*>::iterator iter;
+    for (iter = constants_.begin(); iter != constants_.end(); ++iter) {
+      t_const_value* cval = iter->second->get_value();
+      t_type* ttype = iter->second->get_type();
+      resolve_const_value(cval, ttype);
+    }
+  }
+
   void resolve_const_value(t_const_value* const_val, t_type* ttype) {
+    while (ttype->is_typedef()) {
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+
     if (ttype->is_map()) {
       const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
@@ -151,6 +165,9 @@ public:
             break;
           case t_base_type::TYPE_STRING:
             const_val->set_string(constant->get_value()->get_string());
+            break;
+          case t_base_type::TYPE_UUID:
+            const_val->set_uuid(constant->get_value()->get_uuid());
             break;
           case t_base_type::TYPE_DOUBLE:
             const_val->set_double(constant->get_value()->get_double());

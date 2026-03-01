@@ -18,7 +18,7 @@ dnl notice and this notice are preserved.
 AC_DEFUN([AX_THRIFT_LIB],
          [
           AC_ARG_WITH($1,
-                      AC_HELP_STRING([--with-$1], [build the $2 library @<:@default=$3@:>@]),
+                      AS_HELP_STRING([--with-$1], [build the $2 library @<:@default=$3@:>@]),
                       [with_$1="$withval"],
                       [with_$1=$3]
                       )

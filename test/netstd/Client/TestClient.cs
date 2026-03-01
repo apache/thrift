@@ -17,7 +17,6 @@
 
 #pragma warning disable IDE0066 // switch expression
 #pragma warning disable IDE0057 // substring
-#pragma warning disable CS1998  // no await in async method
 
 using System;
 using System.Collections.Generic;
@@ -93,19 +92,19 @@ namespace ThriftTest
                     }
                     else if (args[i].StartsWith("--pipe="))
                     {
-                        pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                        pipe = args[i].Substring(args[i].IndexOf('=') + 1);
                         transport = TransportChoice.NamedPipe;
                     }
                     else if (args[i].StartsWith("--host="))
                     {
                         // check there for ipaddress
-                        host = args[i].Substring(args[i].IndexOf("=") + 1);
+                        host = args[i].Substring(args[i].IndexOf('=') + 1);
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
                     else if (args[i].StartsWith("--port="))
                     {
-                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                        port = int.Parse(args[i].Substring(args[i].IndexOf('=') + 1));
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
@@ -226,7 +225,8 @@ namespace ThriftTest
                     throw new FileNotFoundException($"Cannot find file: {clientCertName}");
                 }
 
-                var cert = new X509Certificate2(existingPath, "thrift");
+                //var cert = new X509Certificate2(existingPath, "thrift");
+                var cert = X509CertificateLoader.LoadPkcs12FromFile(existingPath, "thrift");
 
                 return cert;
             }
@@ -257,7 +257,7 @@ namespace ThriftTest
                         trans = new TTlsSocketTransport(host, port, Configuration, 0,
                             cert,
                             (sender, certificate, chain, errors) => true,
-                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                            null);
                         break;
 
                     case TransportChoice.Socket:
@@ -393,7 +393,7 @@ namespace ThriftTest
             Console.WriteLine();
         }
 
-        public static async Task<int> Execute(List<string> args)
+        public static Task<int> Execute(List<string> args)
         {
             try
             {
@@ -407,32 +407,45 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     Console.WriteLine("Error while parsing arguments");
-                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
-                    return ErrorUnknown;
+                    Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
+                    return Task.FromResult(ErrorUnknown);
                 }
 
-                var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
-
                 //issue tests on separate threads simultaneously
+                var nThreads = Math.Max(param.numThreads, 1);
+                Console.Write("Starting {0} test thread(s) ", nThreads);
+                var tasks = new Task[nThreads];
                 var start = DateTime.Now;
-                var tasks = tests.Select(test => test.Execute()).ToArray();
+                var retcode = 0;
+                for (var i = 0; i < tasks.Length; ++i)
+                {
+                    Console.Write('.');
+                    tasks[i] = Task.Run(async () =>
+                    {
+                        var test = new ClientTest(param);
+                        await test.Execute();
+                        lock (tasks)
+                            retcode |= test.ReturnCode;
+                    });
+                }
+                Console.WriteLine(" OK");
                 Task.WaitAll(tasks);
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();
-                return tests.Select(t => t.ReturnCode).Aggregate((r1, r2) => r1 | r2);
+                return Task.FromResult(retcode);
             }
             catch (Exception outerEx)
             {
                 Console.WriteLine("*** FAILED ***");
                 Console.WriteLine("Unexpected error");
                 Console.WriteLine(outerEx.Message + "\n" + outerEx.StackTrace);
-                return ErrorUnknown;
+                return Task.FromResult(ErrorUnknown);
             }
         }
 
         public static string BytesToHex(byte[] data)
         {
-            return BitConverter.ToString(data).Replace("-", string.Empty);
+            return Convert.ToHexString(data);
         }
 
 
@@ -490,7 +503,7 @@ namespace ThriftTest
             return retval;
         }
 
-        private static CancellationToken MakeTimeoutToken(int msec = 5000)
+        private static CancellationToken MakeTimeoutToken(int msec = 15_000)
         {
             var token = new CancellationTokenSource(msec);
             return token.Token;
@@ -575,8 +588,28 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
 
+            // testUuid()
+            var uuidOut = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+            Console.Write("testUuid({0})", uuidOut);
+            try
+            {
+                var uuidIn = await client.testUuid(uuidOut, MakeTimeoutToken());
+                Console.WriteLine(" = {0}", uuidIn);
+                if (!uuidIn.Equals(uuidOut))
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                }
+            }
+            catch (Thrift.TApplicationException ex)
+            {
+                Console.WriteLine("*** FAILED ***");
+                returnCode |= ErrorBaseTypes;
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+            }
+
             // testBinary()
-            foreach(BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
+            foreach (BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
             {
                 var binOut = PrepareTestData(true, binTestCase);
 
@@ -613,8 +646,8 @@ namespace ThriftTest
             var two = new CrazyNesting();
             one.String_field = "crazy";
             two.String_field = "crazy";
-            one.Binary_field = new byte[] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
-            two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+            one.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
+            two.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
             if (typeof(CrazyNesting).GetMethod("Equals")?.DeclaringType == typeof(CrazyNesting))
             {
                 if (!one.Equals(two))
@@ -644,9 +677,14 @@ namespace ThriftTest
                 Struct_thing = o,
                 I32_thing = 5
             };
-            var i2 = await client.testNest(o2, MakeTimeoutToken());
+            Xtruct2 i2 = await client.testNest(o2, MakeTimeoutToken());
             i = i2.Struct_thing;
-            Console.WriteLine(" = {" + i2.Byte_thing + ", {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}, " + i2.I32_thing + "}");
+            Console.WriteLine(" = {" + i2.Byte_thing + ", {\""
+                            + (i?.String_thing ?? "<null>") + "\", "
+                            + (i?.Byte_thing ?? 0) + ", "
+                            + (i?.I32_thing ?? 0) + ", "
+                            + (i?.I64_thing ?? 0) + "}, "
+                            + i2.I32_thing + "}");
 
             var mapout = new Dictionary<int, int>();
             for (var j = 0; j < 5; j++)
@@ -681,7 +719,7 @@ namespace ThriftTest
 
             //set
             // TODO: Validate received message
-            var setout = new THashSet<int>();
+            var setout = new HashSet<int>();
             for (var j = -2; j < 3; j++)
             {
                 setout.Add(j);
@@ -782,10 +820,7 @@ namespace ThriftTest
                 I32_thing = 8,
                 I64_thing = 8
             };
-            insane.Xtructs = new List<Xtruct>
-            {
-                truck
-            };
+            insane.Xtructs = [ truck ];
             Console.Write("testInsanity()");
             var whoa = await client.testInsanity(insane, MakeTimeoutToken());
             Console.Write(" = {");
@@ -937,7 +972,7 @@ namespace ThriftTest
             }
             catch (Xception2 ex)
             {
-                if (ex.ErrorCode != 2002 || ex.Struct_thing.String_thing != "This is an Xception2")
+                if (ex.ErrorCode != 2002 || ex.Struct_thing?.String_thing != "This is an Xception2")
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorExceptions;

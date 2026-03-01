@@ -23,6 +23,7 @@
 #include <thrift/protocol/TProtocol.h>
 #include <memory>
 #include <thrift/Thrift.h>
+#include <thrift/TUuid.h>
 
 /* ClassName Helper for cleaner exceptions */
 class ClassNames {
@@ -57,6 +58,10 @@ template <>
 const char* ClassNames::getName<std::string>() {
   return "string";
 }
+template <>
+const char* ClassNames::getName<apache::thrift::TUuid>() {
+  return "uuid";
+}
 
 /* Generic Protocol I/O function for tests */
 class GenericIO {
@@ -87,6 +92,10 @@ public:
     return proto->writeString(val);
   }
 
+  static uint32_t write(std::shared_ptr<apache::thrift::protocol::TProtocol> proto, const apache::thrift::TUuid& val) {
+    return proto->writeUUID(val);
+  }
+
   /* Read functions */
 
   static uint32_t read(std::shared_ptr<apache::thrift::protocol::TProtocol> proto, int8_t& val) { return proto->readByte(val); }
@@ -101,6 +110,10 @@ public:
 
   static uint32_t read(std::shared_ptr<apache::thrift::protocol::TProtocol> proto, std::string& val) {
     return proto->readString(val);
+  }
+
+  static uint32_t read(std::shared_ptr<apache::thrift::protocol::TProtocol> proto, apache::thrift::TUuid& val) {
+    return proto->readUUID(val);
   }
 };
 

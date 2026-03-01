@@ -26,7 +26,7 @@ Also, maybe, later it will be migrated to Catch2 (https://github.com/philsquared
 ## How to add your tests
 
 - Open **CMakeLists.txt**
-- Set **On** to call of **THRIFT_ADD_COMPILER** for your language
+- Set call of `THRIFT_ADD_COMPILER` for your language to `ON`
 
 ``` cmake 
 THRIFT_ADD_COMPILER(netstd "Enable compiler for .NET Standard" ON)

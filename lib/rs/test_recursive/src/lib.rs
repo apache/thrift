@@ -17,9 +17,9 @@
 
 #![allow(dead_code)]
 
+pub mod maintenance;
 pub mod transit;
 pub mod vehicles;
-pub mod maintenance;
 
 mod server {
     use crate::maintenance::maintenance_facility::{

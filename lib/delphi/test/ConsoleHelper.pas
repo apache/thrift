@@ -21,30 +21,42 @@ unit ConsoleHelper;
 
 interface
 
-uses Classes;
+uses Classes, SysUtils, SyncObjs;
 
 type
   TThriftConsole = class
+  strict private
+    FLock : TCriticalSection;
+  strict protected
+    procedure Lock;
+    procedure UnLock;
   public
+    constructor Create;
+    destructor Destroy; override;
+
     procedure Write( const S: string); virtual;
     procedure WriteLine( const S: string); virtual;
   end;
 
+
   TGUIConsole = class( TThriftConsole )
-  private
+  strict private
     FLineBreak : Boolean;
     FMemo : TStrings;
 
     procedure InternalWrite( const S: string; bWriteLine: Boolean);
   public
+    constructor Create( AMemo: TStrings);
+
     procedure Write( const S: string); override;
     procedure WriteLine( const S: string); override;
-    constructor Create( AMemo: TStrings);
   end;
+
 
 function Console: TThriftConsole;
 procedure ChangeConsole( AConsole: TThriftConsole );
 procedure RestoreConsoleToDefault;
+
 
 implementation
 
@@ -59,14 +71,46 @@ end;
 
 { TThriftConsole }
 
+constructor TThriftConsole.Create;
+begin
+  inherited Create;
+  FLock := TCriticalSection.Create;
+end;
+
+destructor TThriftConsole.Destroy;
+begin
+  FreeAndNil( FLock);
+  inherited Destroy;
+end;
+
+procedure TThriftConsole.Lock;
+begin
+  FLock.Enter;
+end;
+
+procedure TThriftConsole.UnLock;
+begin
+  FLock.Leave;
+end;
+
 procedure TThriftConsole.Write(const S: string);
 begin
-  System.Write( S );
+  Lock;
+  try
+    System.Write( S );
+  finally
+    Unlock;
+  end;
 end;
 
 procedure TThriftConsole.WriteLine(const S: string);
 begin
-  System.Writeln( S );
+  Lock;
+  try
+    System.Writeln( S );
+  finally
+    Unlock;
+  end;
 end;
 
 procedure ChangeConsole( AConsole: TThriftConsole );
@@ -89,21 +133,25 @@ begin
 end;
 
 procedure TGUIConsole.InternalWrite(const S: string; bWriteLine: Boolean);
-var
-  idx : Integer;
+var idx : Integer;
 begin
-  if FLineBreak then
-  begin
-    FMemo.Add( S );
-  end else
-  begin
-    idx := FMemo.Count - 1;
-    if idx < 0 then
+  Lock;
+  try
+
+    if FLineBreak then begin
       FMemo.Add( S )
-    else
-      FMemo[idx] := FMemo[idx] + S;
+    end
+    else begin
+      idx := FMemo.Count - 1;
+      if idx < 0
+      then FMemo.Add( S )
+      else FMemo[idx] := FMemo[idx] + S;
+    end;
+    FLineBreak := bWriteLine;
+
+  finally
+    Unlock;
   end;
-  FLineBreak := bWriteLine;
 end;
 
 procedure TGUIConsole.Write(const S: string);
@@ -117,15 +165,12 @@ begin
 end;
 
 initialization
-begin
   FDefaultConsole := TThriftConsole.Create;
   FConsole := FDefaultConsole;
-end;
 
 finalization
-begin
   FDefaultConsole.Free;
-end;
+  FDefaultConsole := nil;
 
 end.
 

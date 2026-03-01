@@ -2,7 +2,7 @@
 
 namespace Thrift\Server;
 
-use Thrift\Factory\TTransportFactory;
+use Thrift\Factory\TTransportFactoryInterface;
 use Thrift\Factory\TProtocolFactory;
 
 /**
@@ -30,14 +30,14 @@ abstract class TServer
     /**
      * Input transport factory
      *
-     * @var TTransportFactory
+     * @var TTransportFactoryInterface
      */
     protected $inputTransportFactory_;
 
     /**
      * Output transport factory
      *
-     * @var TTransportFactory
+     * @var TTransportFactoryInterface
      */
     protected $outputTransportFactory_;
 
@@ -60,8 +60,8 @@ abstract class TServer
      *
      * @param object $processor
      * @param TServerTransport $transport
-     * @param TTransportFactory $inputTransportFactory
-     * @param TTransportFactory $outputTransportFactory
+     * @param TTransportFactoryInterface $inputTransportFactory
+     * @param TTransportFactoryInterface $outputTransportFactory
      * @param TProtocolFactory $inputProtocolFactory
      * @param TProtocolFactory $outputProtocolFactory
      * @return void
@@ -69,8 +69,8 @@ abstract class TServer
     public function __construct(
         $processor,
         TServerTransport $transport,
-        TTransportFactory $inputTransportFactory,
-        TTransportFactory $outputTransportFactory,
+        TTransportFactoryInterface $inputTransportFactory,
+        TTransportFactoryInterface $outputTransportFactory,
         TProtocolFactory $inputProtocolFactory,
         TProtocolFactory $outputProtocolFactory
     ) {

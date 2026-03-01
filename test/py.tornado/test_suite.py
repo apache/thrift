@@ -37,7 +37,7 @@ except ImportError:
     sys.exit(0)
 
 from tornado import gen
-from tornado.testing import AsyncTestCase, get_unused_port, gen_test
+from tornado.testing import AsyncTestCase, bind_unused_port, gen_test
 
 from thrift import TTornado
 from thrift.Thrift import TApplicationException
@@ -123,7 +123,8 @@ class ThriftTestCase(AsyncTestCase):
     def setUp(self):
         super(ThriftTestCase, self).setUp()
 
-        self.port = get_unused_port()
+        sock, self.port = bind_unused_port()
+        sock.close()
 
         # server
         self.handler = TestHandler(self)

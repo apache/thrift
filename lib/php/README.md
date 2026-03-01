@@ -21,7 +21,7 @@ under the License.
 
 # Using Thrift with PHP
 
-Thrift requires PHP 5. Thrift makes as few assumptions about your PHP
+Thrift requires PHP 7.1 Thrift makes as few assumptions about your PHP
 environment as possible while trying to make some more advanced PHP
 features (i.e. APCu cacheing using asbolute path URLs) as simple as possible.
 

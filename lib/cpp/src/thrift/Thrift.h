@@ -50,19 +50,26 @@
 namespace apache {
 namespace thrift {
 
-class TEnumIterator
-    : public std::iterator<std::forward_iterator_tag, std::pair<int, const char*> > {
+class TEnumIterator {
 public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = std::pair<int, const char*>;
+  using difference_type = std::ptrdiff_t;
+  using pointer = value_type*;
+  using reference = value_type&;
+
   TEnumIterator(int n, int* enums, const char** names)
     : ii_(0), n_(n), enums_(enums), names_(names) {}
 
   int operator++() { return ++ii_; }
 
-  bool operator!=(const TEnumIterator& end) {
-    THRIFT_UNUSED_VARIABLE(end);
-    assert(end.n_ == -1);
-    return (ii_ != n_);
+  bool operator==(const TEnumIterator& rhs) const {
+    bool is_end = ii_ == n_ || n_ == -1;
+    bool is_rhs_end = rhs.ii_ == rhs.n_ || rhs.n_ == -1;
+    return (ii_ == rhs.ii_ && n_ == rhs.n_) || (is_end && is_rhs_end);
   }
+
+  bool operator!=(const TEnumIterator& rhs) const { return !(*this == rhs); }
 
   std::pair<int, const char*> operator*() const { return std::make_pair(enums_[ii_], names_[ii_]); }
 

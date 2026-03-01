@@ -17,8 +17,9 @@
  * under the License.
  */
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <cmath>
 
 #include <thrift/transport/TBufferTransports.h>
 
@@ -255,8 +256,8 @@ void TFramedTransport::flush() {
 
   // Slip the frame size into the start of the buffer.
   sz_hbo = static_cast<uint32_t>(wBase_ - (wBuf_.get() + sizeof(sz_nbo)));
-  sz_nbo = (int32_t)htonl((uint32_t)(sz_hbo));
-  memcpy(wBuf_.get(), (uint8_t*)&sz_nbo, sizeof(sz_nbo));
+  sz_nbo = static_cast<int32_t>(htonl(static_cast<uint32_t>(sz_hbo)));
+  memcpy(wBuf_.get(), reinterpret_cast<uint8_t*>(&sz_nbo), sizeof(sz_nbo));
 
   if (sz_hbo > 0) {
     // Note that we reset wBase_ (with a pad for the frame size)
@@ -307,6 +308,8 @@ uint32_t TFramedTransport::readEnd() {
     setReadBuffer(rBuf_.get(), rBufSize_);
   }
 
+  resetConsumedMessageSize();
+
   return bytes_read;
 }
 
@@ -346,7 +349,7 @@ uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
   computeRead(len, &start, &give);
 
   // Append to the provided string.
-  str.append((char*)start, give);
+  str.append(reinterpret_cast<char*>(start), give);
 
   return give;
 }
@@ -362,9 +365,9 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
     throw TTransportException("Insufficient space in external MemoryBuffer");
   }
 
-  // Grow the buffer as necessary.
-  const uint32_t current_used = bufferSize_ - avail;
-  const uint32_t required_buffer_size = len + current_used;
+  // Grow the buffer as necessary. Use uint64_t to avoid overflow.
+  const uint64_t current_used = bufferSize_ - avail;
+  const uint64_t required_buffer_size = len + current_used;
   if (required_buffer_size > maxBufferSize_) {
     throw TTransportException(TTransportException::BAD_ARGS,
                               "Internal buffer size overflow when requesting a buffer of size " + std::to_string(required_buffer_size));

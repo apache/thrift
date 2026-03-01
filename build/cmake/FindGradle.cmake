@@ -21,7 +21,7 @@
 #  GRADLE_FOUND - system has Gradle
 #  GRADLE_EXECUTABLE - the Gradle executable
 #
-# It will search the environment variable ANT_HOME if it is set
+# It will search the environment variable GRADLE_HOME if it is set
 
 include(FindPackageHandleStandardArgs)
 

@@ -39,7 +39,20 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const std::string endl = "\n"; // avoid ostream << std::endl flushes
+/**
+ * Helper enum for string mapping
+ */
+enum class StringTo {String, Binary, Both};
+
+/**
+ * Helper enum for sets mapping
+ */
+enum class SetsTo {V1, V2};
+
+/**
+ * Helper enum for type declaration
+ */
+enum class TypeDeclaraion {Type, Nominal};
 
 /**
  * Erlang code generator.
@@ -60,6 +73,9 @@ public:
     maps_ = false;
     export_lines_first_ = true;
     export_types_lines_first_ = true;
+    string_to_ = StringTo::Both;
+    sets_to_ = SetsTo::V1;
+    type_declaration_ = TypeDeclaraion::Type;
 
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
@@ -70,6 +86,35 @@ public:
         delimiter_ = iter->second;
       } else if( iter->first.compare("app_prefix") == 0) {
         app_prefix_ = iter->second;
+      } else if( iter->first.compare("string") == 0) {
+        auto string_to_value = iter->second;
+        if( string_to_value.compare("string") == 0) {
+          string_to_ = StringTo::String;
+        } else if( string_to_value.compare("binary") == 0) {
+          string_to_ = StringTo::Binary;
+        } else if( string_to_value.compare("both") == 0) {
+          string_to_ = StringTo::Both;
+        } else {
+          throw "unknown string option value:" + string_to_value;
+        }
+      } else if( iter->first.compare("set") == 0) {
+        auto set_to_value = iter->second;
+        if( set_to_value.compare("v1") == 0) {
+          sets_to_ = SetsTo::V1;
+        } else if( set_to_value.compare("v2") == 0) {
+          sets_to_ = SetsTo::V2;
+        } else {
+          throw "unknown set option value:" + set_to_value;
+        }
+      } else if( iter->first.compare("type") == 0) {
+        auto type_to_value = iter->second;
+        if( type_to_value.compare("type") == 0) {
+          type_declaration_ = TypeDeclaraion::Type;
+        } else if( type_to_value.compare("nominal") == 0) {
+          type_declaration_ = TypeDeclaraion::Nominal;
+        } else {
+          throw "unknown type option value:" + type_to_value;
+        }
       } else {
         throw "unknown option erl:" + iter->first;
       }
@@ -84,6 +129,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -102,10 +148,20 @@ public:
   std::string render_member_value(t_field* field);
   std::string render_member_requiredness(t_field* field);
 
+  std::string render_typedef_type(t_typedef* ttypedef);
+
+  std::string render_type(t_type* type);
+  std::string render_base_type(t_type* type);
+  std::string render_string_type();
+  std::string render_type_declaration();
+  std::string render_const_name(std::string name);
+  std::string render_const_name(std::string sname, std::string name);
+
   //  std::string render_default_value(t_type* type);
   std::string render_default_value(t_field* field);
   std::string render_const_value(t_type* type, t_const_value* value);
   std::string render_type_term(t_type* ttype, bool expand_structs, bool extended_info = false);
+  std::string render_default_sets_value();
 
   /**
    * Struct generation code
@@ -141,6 +197,7 @@ public:
   std::string render_includes();
   std::string type_name(t_type* ttype);
   std::string render_const_list_values(t_type* type, t_const_value* value);
+  std::string render_const_string_value(t_const_value* value);
 
   std::string function_signature(t_function* tfunction, std::string prefix = "");
 
@@ -188,6 +245,15 @@ private:
 
   /* used to avoid module name clashes for different applications */
   std::string app_prefix_;
+
+  /* string type definition strategy */
+  StringTo string_to_;
+
+  /* sets type definition strategy */
+  SetsTo sets_to_;
+
+  /* type declaration strategy */
+  TypeDeclaraion type_declaration_;
 
   /**
    * add function to export list
@@ -267,14 +333,14 @@ void t_erl_generator::init_generator() {
 
   hrl_header(f_types_hrl_file_, program_module_name + "_types");
 
-  f_types_file_ << erl_autogen_comment() << endl
-                << "-module(" << program_module_name << "_types)." << endl
-                << erl_imports() << endl;
+  f_types_file_ << erl_autogen_comment() << '\n'
+                << "-module(" << program_module_name << "_types)." << '\n'
+                << erl_imports() << '\n';
 
-  f_types_file_ << "-include(\"" << program_module_name << "_types.hrl\")." << endl
-                  << endl;
+  f_types_file_ << "-include(\"" << program_module_name << "_types.hrl\")." << '\n'
+                  << '\n';
 
-  f_types_hrl_file_ << render_includes() << endl;
+  f_types_hrl_file_ << render_includes() << '\n';
 
   // consts files
   string f_consts_name = get_out_dir() + program_module_name + "_constants.erl";
@@ -283,28 +349,28 @@ void t_erl_generator::init_generator() {
   f_consts_file_.open(f_consts_name.c_str());
   f_consts_hrl_file_.open(f_consts_hrl_name.c_str());
 
-  f_consts_file_ << erl_autogen_comment() << endl
-                 << "-module(" << program_module_name << "_constants)." << endl
-                 << erl_imports() << endl
-                 << "-include(\"" << program_module_name << "_types.hrl\")." << endl
-                 << endl;
+  f_consts_file_ << erl_autogen_comment() << '\n'
+                 << "-module(" << program_module_name << "_constants)." << '\n'
+                 << erl_imports() << '\n'
+                 << "-include(\"" << program_module_name << "_types.hrl\")." << '\n'
+                 << '\n';
 
-  f_consts_hrl_file_ << erl_autogen_comment() << endl << erl_imports() << endl
-                     << "-include(\"" << program_module_name << "_types.hrl\")." << endl << endl;
+  f_consts_hrl_file_ << erl_autogen_comment() << '\n' << erl_imports() << '\n'
+                     << "-include(\"" << program_module_name << "_types.hrl\")." << '\n' << '\n';
 }
 
 /**
  * Boilerplate at beginning and end of header files
  */
 void t_erl_generator::hrl_header(ostream& out, string name) {
-  out << erl_autogen_comment() << endl
-      << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
-      << endl;
+  out << erl_autogen_comment() << '\n'
+      << "-ifndef(_" << name << "_included)." << '\n' << "-define(_" << name << "_included, yeah)."
+      << '\n';
 }
 
 void t_erl_generator::hrl_footer(ostream& out, string name) {
   (void)name;
-  out << "-endif." << endl;
+  out << "-endif." << '\n';
 }
 
 /**
@@ -364,13 +430,13 @@ void t_erl_generator::close_generator() {
   export_types_string("struct_names", 0);
   export_types_string("exception_names", 0);
 
-  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
+  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << '\n' << '\n';
 
   f_types_file_ << f_info_.str();
-  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << endl << endl;
+  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << '\n' << '\n';
 
   f_types_file_ << f_info_ext_.str();
-  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
+  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << '\n' << '\n';
 
   generate_const_functions();
 
@@ -438,12 +504,13 @@ void t_erl_generator::generate_type_metadata(std::string function_name, vector<s
 }
 
 /**
- * Generates a typedef. no op
+ * Generates a typedef.
  *
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
-  (void)ttypedef;
+  f_types_hrl_file_ << render_type_declaration() << type_name(ttypedef)
+                    << "() :: " << render_typedef_type(ttypedef) << ".\n" << "\n";
 }
 
 
@@ -517,19 +584,44 @@ void t_erl_generator::generate_const_functions() {
 void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
+  vector<string> const_names;
+  vector<string>::iterator names_iter;
 
   v_enums_.push_back(tenum);
   v_enum_names_.push_back(atomify(tenum->get_name()));
 
+  f_types_hrl_file_ << "%% enum " << tenum->get_name() << "\n" << "\n";
+
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = (*c_iter)->get_name();
-    indent(f_types_hrl_file_) << "-define(" << constify(make_safe_for_module_name(program_name_))
-                              << "_" << constify(tenum->get_name()) << "_" << constify(name) << ", "
-                              << value << ")." << endl;
+    string const_name = render_const_name(tenum->get_name(), name);
+    indent(f_types_hrl_file_) << "-define(" << const_name << ", " << value << ")." << '\n';
+    const_names.push_back(const_name);
   }
+  f_types_hrl_file_ << '\n';
 
-  f_types_hrl_file_ << endl;
+  string enum_definition = render_type_declaration() + type_name(tenum) + "() :: ";
+  string value_indent(enum_definition.size(), ' ');
+  f_types_hrl_file_ << enum_definition;
+  bool names_iter_first = false;
+  for (names_iter = const_names.begin(); names_iter != const_names.end(); ++names_iter) {
+    if (names_iter_first) {
+      f_types_hrl_file_ << " |" << "\n" << value_indent;
+    } else {
+      names_iter_first = true;
+    }
+    indent(f_types_hrl_file_) << "?" << *names_iter;
+  }
+  f_types_hrl_file_ << ".\n" << "\n";
+}
+
+string t_erl_generator::render_const_name(std::string name) {
+  return constify(make_safe_for_module_name(program_name_)) + "_" + constify(name);
+}
+
+string t_erl_generator::render_const_name(std::string sname, std::string name) {
+  return render_const_name(sname) + "_" + constify(name);
 }
 
 void t_erl_generator::generate_enum_info(t_enum* tenum){
@@ -550,7 +642,7 @@ void t_erl_generator::generate_enum_info(t_enum* tenum){
     }
     indent_down();
   }
-  f_types_file_ << "\n";
+  f_types_file_ << '\n';
   indent(f_types_file_) << "];\n\n";
   indent_down();
 }
@@ -577,8 +669,8 @@ void t_erl_generator::generate_const(t_const* tconst) {
   // Save the tconst so that function can be emitted in generate_const_functions().
   v_consts_.push_back(tconst);
 
-  f_consts_hrl_file_ << "-define(" << constify(make_safe_for_module_name(program_name_)) << "_"
-                     << constify(name) << ", " << render_const_value(type, value) << ")." << endl << endl;
+  f_consts_hrl_file_ << "-define(" << render_const_name(name) << ", "
+                     << render_const_value(type, value) << ")." << '\n' << '\n';
 }
 
 /**
@@ -594,7 +686,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      out << '"' << get_escaped_string(value) << '"';
+      out << render_const_string_value(value);
       break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
@@ -616,7 +708,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    indent(out) << value->get_integer();
+    string name = (((t_enum*)type)->get_constant_by_value(value->get_integer()))->get_name();
+    indent(out) << "?" << render_const_name(type->get_name(), name);
 
   } else if (type->is_struct() || type->is_xception()) {
     out << "#" << type_name(type) << "{";
@@ -677,7 +770,11 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
         out << ",";
       }
     }
-    out << "])";
+    out << "]";
+    if (sets_to_ == SetsTo::V2) {
+      out << ", [{version, 2}]";
+    }
+    out << ")";
   } else if (type->is_list()) {
     out << "[" << render_const_list_values(type, value) << "]";
   } else {
@@ -704,6 +801,13 @@ string t_erl_generator::render_const_list_values(t_type* type, t_const_value* va
   return out.str();
 }
 
+string t_erl_generator::render_const_string_value(t_const_value* constval) {
+  if (string_to_ == StringTo::Binary) {
+    return "<<\"" + get_escaped_string(constval) + "\">>";
+  }
+  return '"' + get_escaped_string(constval) + '"';
+}
+
 
 string t_erl_generator::render_default_value(t_field* field) {
   t_type* type = field->get_type();
@@ -716,7 +820,7 @@ string t_erl_generator::render_default_value(t_field* field) {
       return "dict:new()";
     }
   } else if (type->is_set()) {
-    return "sets:new()";
+    return render_default_sets_value();
   } else if (type->is_list()) {
     return "[]";
   } else {
@@ -724,32 +828,32 @@ string t_erl_generator::render_default_value(t_field* field) {
   }
 }
 
+string t_erl_generator::render_default_sets_value() {
+  switch (sets_to_) {
+  case SetsTo::V1:
+    return "sets:new()";
+  case SetsTo::V2:
+    return "sets:new([{version,2}])";
+  default:
+    throw "compiler error: unsupported set type";
+  }
+}
+
 string t_erl_generator::render_member_type(t_field* field) {
-  t_type* type = get_true_type(field->get_type());
+  t_type* type = field->get_type();
+  return render_type(type);
+}
+
+string t_erl_generator::render_type(t_type* type) {
   if (type->is_base_type()) {
-    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-    switch (tbase) {
-    case t_base_type::TYPE_STRING:
-      return "string() | binary()";
-    case t_base_type::TYPE_BOOL:
-      return "boolean()";
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      return "integer()";
-    case t_base_type::TYPE_DOUBLE:
-      return "float()";
-    default:
-      throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
-    }
+    return render_base_type(type);
   } else if (type->is_enum()) {
-    return "integer()";
-  } else if (type->is_struct() || type->is_xception()) {
+    return type_name(type) + "()";
+  } else if (type->is_struct() || type->is_xception() || type->is_typedef()) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
-      return "map()";
+      return "maps:map()";
     } else {
       return "dict:dict()";
     }
@@ -762,6 +866,49 @@ string t_erl_generator::render_member_type(t_field* field) {
   }
 }
 
+string t_erl_generator::render_base_type(t_type* type) {
+  t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+  switch (tbase) {
+  case t_base_type::TYPE_STRING:
+    return render_string_type();
+  case t_base_type::TYPE_BOOL:
+    return "boolean()";
+  case t_base_type::TYPE_I8:
+  case t_base_type::TYPE_I16:
+  case t_base_type::TYPE_I32:
+  case t_base_type::TYPE_I64:
+    return "integer()";
+  case t_base_type::TYPE_DOUBLE:
+    return "float()";
+  default:
+    throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
+  }
+}
+
+string t_erl_generator::render_string_type() {
+  switch (string_to_) {
+  case StringTo::String:
+    return "string()";
+  case StringTo::Binary:
+    return "binary()";
+  case StringTo::Both:
+    return "string() | binary()";
+  default:
+    throw "compiler error: unsupported string type";
+  }
+}
+
+string t_erl_generator::render_type_declaration() {
+  switch (type_declaration_) {
+  case TypeDeclaraion::Type:
+    return "-type ";
+  case TypeDeclaraion::Nominal:
+    return "-nominal ";
+  default:
+    throw "compiler error: unsupported type declaration";
+  }
+}
+
 string t_erl_generator::render_member_requiredness(t_field* field) {
   switch (field->get_req()) {
   case t_field::T_REQUIRED:
@@ -771,6 +918,11 @@ string t_erl_generator::render_member_requiredness(t_field* field) {
   default:
     return "undefined";
   }
+}
+
+string t_erl_generator::render_typedef_type(t_typedef* ttypedef) {
+  t_type* type = ttypedef->get_type();
+  return render_type(type);
 }
 
 /**
@@ -808,7 +960,15 @@ void t_erl_generator::generate_erl_struct(t_struct* tstruct, bool is_exception) 
  * @param tstruct The struct definition
  */
 void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tstruct) {
-  indent(out) << "%% struct " << type_name(tstruct) << endl << endl;
+  indent(out) << "%% ";
+  if (tstruct->is_union()) {
+    out << "union ";
+  } else if (tstruct->is_xception()) {
+    out << "exception ";
+  } else {
+    out << "struct ";
+  }
+  out << tstruct->get_name() << '\n' << '\n';
 
   std::stringstream buf;
   buf << indent() << "-record(" << type_name(tstruct) << ", {";
@@ -818,13 +978,14 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();) {
     generate_erl_struct_member(buf, *m_iter);
     if (++m_iter != members.end()) {
-      buf << "," << endl << field_indent;
+      buf << "," << '\n' << field_indent;
     }
   }
   buf << "}).";
 
-  out << buf.str() << endl;
-  out << "-type " + type_name(tstruct) << "() :: #" + type_name(tstruct) + "{}." << endl << endl;
+  out << buf.str() << '\n';
+  out << render_type_declaration() << type_name(tstruct)
+      << "() :: #" + type_name(tstruct) + "{}." << '\n' << '\n';
 }
 
 /**
@@ -870,19 +1031,19 @@ string t_erl_generator::render_member_value(t_field* field) {
  * Generates the read method for a struct
  */
 void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << endl;
+  indent(out) << "struct_info(" << type_name(tstruct) << ") ->" << '\n';
   indent_up();
-  out << indent() << render_type_term(tstruct, true) << ";" << endl;
+  out << indent() << render_type_term(tstruct, true) << ";" << '\n';
   indent_down();
-  out << endl;
+  out << '\n';
 }
 
 void t_erl_generator::generate_erl_extended_struct_info(ostream& out, t_struct* tstruct) {
-  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << endl;
+  indent(out) << "struct_info_ext(" << type_name(tstruct) << ") ->" << '\n';
   indent_up();
-  out << indent() << render_type_term(tstruct, true, true) << ";" << endl;
+  out << indent() << render_type_term(tstruct, true, true) << ";" << '\n';
   indent_down();
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -908,11 +1069,11 @@ void t_erl_generator::generate_service(t_service* tservice) {
   if (tservice->get_extends() != nullptr) {
     f_service_hrl_ << "-include(\""
                    << make_safe_for_module_name(tservice->get_extends()->get_name())
-                   << "_thrift.hrl\"). % inherit " << endl;
+                   << "_thrift.hrl\"). % inherit " << '\n';
   }
 
   f_service_hrl_ << "-include(\"" << make_safe_for_module_name(program_name_) << "_types.hrl\")."
-                 << endl << endl;
+                 << '\n' << '\n';
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_helpers(tservice); // cpiro: New Erlang Order
@@ -923,13 +1084,13 @@ void t_erl_generator::generate_service(t_service* tservice) {
 
   // indent_down();
 
-  f_service_file_ << erl_autogen_comment() << endl << "-module(" << service_name_ << "_thrift)."
-                  << endl << "-behaviour(thrift_service)." << endl << endl << erl_imports() << endl;
+  f_service_file_ << erl_autogen_comment() << '\n' << "-module(" << service_name_ << "_thrift)."
+                  << '\n' << "-behaviour(thrift_service)." << '\n' << '\n' << erl_imports() << '\n';
 
   f_service_file_ << "-include(\"" << make_safe_for_module_name(tservice->get_name())
-                  << "_thrift.hrl\")." << endl << endl;
+                  << "_thrift.hrl\")." << '\n' << '\n';
 
-  f_service_file_ << "-export([" << export_lines_.str() << "])." << endl << endl;
+  f_service_file_ << "-export([" << export_lines_.str() << "])." << '\n' << '\n';
 
   f_service_file_ << f_service_.str();
 
@@ -945,7 +1106,7 @@ void t_erl_generator::generate_service_metadata(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   size_t num_functions = functions.size();
 
-  indent(f_service_) << "function_names() -> " << endl;
+  indent(f_service_) << "function_names() -> " << '\n';
   indent_up();
   indent(f_service_) << "[";
 
@@ -971,14 +1132,14 @@ void t_erl_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   //  indent(f_service_) <<
-  //  "% HELPER FUNCTIONS AND STRUCTURES" << endl << endl;
+  //  "% HELPER FUNCTIONS AND STRUCTURES" << '\n' << '\n';
 
   export_string("struct_info", 1);
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_erl_function_helpers(*f_iter);
   }
-  f_service_ << "struct_info(_) -> erlang:error(function_clause)." << endl;
+  f_service_ << "struct_info(_) -> erlang:error(function_clause)." << '\n';
 }
 
 /**
@@ -1001,26 +1162,26 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
-  f_service_ << "%%% interface" << endl;
+  f_service_ << "%%% interface" << '\n';
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ << indent() << "% " << function_signature(*f_iter) << endl;
+    f_service_ << indent() << "% " << function_signature(*f_iter) << '\n';
 
     generate_function_info(tservice, *f_iter);
   }
 
   // Inheritance - pass unknown functions to base class
   if (tservice->get_extends() != nullptr) {
-    indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
+    indent(f_service_) << "function_info(Function, InfoType) ->" << '\n';
     indent_up();
     indent(f_service_) << make_safe_for_module_name(tservice->get_extends()->get_name())
-                       << "_thrift:function_info(Function, InfoType)." << endl;
+                       << "_thrift:function_info(Function, InfoType)." << '\n';
     indent_down();
   } else {
     // return function_clause error for non-existent functions
-    indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)." << endl;
+    indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)." << '\n';
   }
 
-  indent(f_service_) << endl;
+  indent(f_service_) << '\n';
 }
 
 /**
@@ -1035,30 +1196,30 @@ void t_erl_generator::generate_function_info(t_service* tservice, t_function* tf
   t_struct* arg_struct = tfunction->get_arglist();
 
   // function_info(Function, params_type):
-  indent(f_service_) << "function_info(" << name_atom << ", params_type) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", params_type) ->" << '\n';
   indent_up();
 
-  indent(f_service_) << render_type_term(arg_struct, true) << ";" << endl;
+  indent(f_service_) << render_type_term(arg_struct, true) << ";" << '\n';
 
   indent_down();
 
   // function_info(Function, reply_type):
-  indent(f_service_) << "function_info(" << name_atom << ", reply_type) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", reply_type) ->" << '\n';
   indent_up();
 
   if (!tfunction->get_returntype()->is_void())
-    indent(f_service_) << render_type_term(tfunction->get_returntype(), false) << ";" << endl;
+    indent(f_service_) << render_type_term(tfunction->get_returntype(), false) << ";" << '\n';
   else if (tfunction->is_oneway())
-    indent(f_service_) << "oneway_void;" << endl;
+    indent(f_service_) << "oneway_void;" << '\n';
   else
     indent(f_service_) << "{struct, []}"
-                       << ";" << endl;
+                       << ";" << '\n';
   indent_down();
 
   // function_info(Function, exceptions):
-  indent(f_service_) << "function_info(" << name_atom << ", exceptions) ->" << endl;
+  indent(f_service_) << "function_info(" << name_atom << ", exceptions) ->" << '\n';
   indent_up();
-  indent(f_service_) << render_type_term(xs, true) << ";" << endl;
+  indent(f_service_) << render_type_term(xs, true) << ";" << '\n';
   indent_down();
 }
 
@@ -1168,6 +1329,8 @@ string t_erl_generator::type_to_enum(t_type* type) {
       return "?tType_I64";
     case t_base_type::TYPE_DOUBLE:
       return "?tType_DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "?tType_I32";
@@ -1211,6 +1374,8 @@ std::string t_erl_generator::render_type_term(t_type* type,
       return "i64";
     case t_base_type::TYPE_DOUBLE:
       return "double";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "i32";
@@ -1241,11 +1406,11 @@ std::string t_erl_generator::render_type_term(t_type* type,
         }
 
         if (++i != end) {
-          buf << "," << endl << field_indent;
+          buf << "," << '\n' << field_indent;
         }
       }
 
-      buf << "]}" << endl;
+      buf << "]}" << '\n';
       return buf.str();
     } else {
       return "{struct, {" + atomify(type_module(type)) + ", " + type_name(type) + "}}";
@@ -1276,10 +1441,18 @@ std::string t_erl_generator::type_module(t_type* ttype) {
   return make_safe_for_module_name(ttype->get_program()->get_name()) + "_types";
 }
 
+std::string t_erl_generator::display_name() const {
+  return "Erlang";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     erl,
     "Erlang",
     "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
     "    delimiter=       Delimiter between namespace prefix and record name. Default is '.'.\n"
     "    app_prefix=      Application prefix for generated Erlang files.\n"
-    "    maps:            Generate maps instead of dicts.\n")
+    "    maps:            Generate maps instead of dicts.\n"
+    "    string=          Define string as 'string', 'binary' or 'both'. Default is 'both'.\n"
+    "    set=             Define sets implementation, supported 'v1' and 'v2'. Default is 'v1'.\n"
+    "    type=            Define type declaration, supported 'type' and 'nominal'. Default is 'type'.\n")

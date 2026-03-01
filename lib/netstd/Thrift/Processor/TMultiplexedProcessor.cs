@@ -23,6 +23,11 @@ using System.Threading.Tasks;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+#pragma warning disable IDE0290 // net8 - primary CTOR
+
 namespace Thrift.Processor
 {
     // ReSharper disable once InconsistentNaming
@@ -30,8 +35,7 @@ namespace Thrift.Processor
     {
         //TODO: Localization
 
-        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap =
-            new Dictionary<string, ITAsyncProcessor>();
+        private readonly Dictionary<string, ITAsyncProcessor> _serviceProcessorMap = new Dictionary<string, ITAsyncProcessor>();
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)
         {

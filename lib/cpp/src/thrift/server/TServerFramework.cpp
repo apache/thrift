@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 #include <stdint.h>
 #include <thrift/server/TServerFramework.h>
@@ -100,7 +101,7 @@ static void releaseOneDescriptor(const string& name, T& pTransport) {
       pTransport->close();
     } catch (const TTransportException& ttx) {
       string errStr = string("TServerFramework " + name + " close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
+      TOutput::instance()(errStr.c_str());
     }
   }
 }
@@ -178,7 +179,7 @@ void TServerFramework::serve() {
         // All other transport exceptions are logged.
         // State of connection is unknown.  Done.
         string errStr = string("TServerTransport died: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
+        TOutput::instance()(errStr.c_str());
         break;
       }
     }

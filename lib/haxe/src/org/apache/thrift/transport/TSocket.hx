@@ -213,7 +213,7 @@ class TSocket extends TEndpointTransport  {
         #elseif js
 
         var data = obuffer.getBytes();
-        var outbuf = new js.html.Int8Array(data.length);
+        var outbuf = new js.lib.Int8Array(data.length);
         var len = 0;
         while( len < data.length) {
             outbuf.set( [data.get(len)], len);

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,16 +24,17 @@
 namespace Thrift\Factory;
 
 use Thrift\Protocol\TJSONProtocol;
+use Thrift\Transport\TTransport;
 
 /**
  * JSON Protocol Factory
  */
 class TJSONProtocolFactory implements TProtocolFactory
 {
-    public function __construct()
-    {
-    }
-
+    /**
+     * @param TTransport $trans
+     * @return TJSONProtocol
+     */
     public function getProtocol($trans)
     {
         return new TJSONProtocol($trans);

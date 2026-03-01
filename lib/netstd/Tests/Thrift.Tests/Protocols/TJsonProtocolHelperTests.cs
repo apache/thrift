@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -34,37 +34,35 @@ namespace Thrift.Tests.Protocols
             // input/output
             var sets = new List<Tuple<TType, byte[]>>
             {
-                new Tuple<TType, byte[]>(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
-                new Tuple<TType, byte[]>(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
-                new Tuple<TType, byte[]>(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
-                new Tuple<TType, byte[]>(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
-                new Tuple<TType, byte[]>(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
-                new Tuple<TType, byte[]>(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
-                new Tuple<TType, byte[]>(TType.String, TJSONProtocolConstants.TypeNames.NameString),
-                new Tuple<TType, byte[]>(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
-                new Tuple<TType, byte[]>(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
-                new Tuple<TType, byte[]>(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
-                new Tuple<TType, byte[]>(TType.List, TJSONProtocolConstants.TypeNames.NameList),
+                new(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
+                new(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
+                new(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
+                new(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
+                new(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
+                new(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
+                new(TType.String, TJSONProtocolConstants.TypeNames.NameString),
+                new(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
+                new(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
+                new(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
+                new(TType.List, TJSONProtocolConstants.TypeNames.NameList),
             };
 
             foreach (var t in sets)
             {
-                Assert.IsTrue(TJSONProtocolHelper.GetTypeNameForTypeId(t.Item1) == t.Item2, $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
+                Assert.AreEqual(t.Item2, TJSONProtocolHelper.GetTypeNameForTypeId(t.Item1), $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
             }
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void GetTypeNameForTypeId_TStop_Test()
         {
-            TJSONProtocolHelper.GetTypeNameForTypeId(TType.Stop);
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.GetTypeNameForTypeId(TType.Stop));
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void GetTypeNameForTypeId_NonExistingTType_Test()
         {
-            TJSONProtocolHelper.GetTypeNameForTypeId((TType)100);
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.GetTypeNameForTypeId((TType)100));
         }
 
         [TestMethod]
@@ -73,44 +71,41 @@ namespace Thrift.Tests.Protocols
             // input/output
             var sets = new List<Tuple<TType, byte[]>>
             {
-                new Tuple<TType, byte[]>(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
-                new Tuple<TType, byte[]>(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
-                new Tuple<TType, byte[]>(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
-                new Tuple<TType, byte[]>(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
-                new Tuple<TType, byte[]>(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
-                new Tuple<TType, byte[]>(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
-                new Tuple<TType, byte[]>(TType.String, TJSONProtocolConstants.TypeNames.NameString),
-                new Tuple<TType, byte[]>(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
-                new Tuple<TType, byte[]>(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
-                new Tuple<TType, byte[]>(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
-                new Tuple<TType, byte[]>(TType.List, TJSONProtocolConstants.TypeNames.NameList),
+                new(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
+                new(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
+                new(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
+                new(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
+                new(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
+                new(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
+                new(TType.String, TJSONProtocolConstants.TypeNames.NameString),
+                new(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
+                new(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
+                new(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
+                new(TType.List, TJSONProtocolConstants.TypeNames.NameList),
             };
 
             foreach (var t in sets)
             {
-                Assert.IsTrue(TJSONProtocolHelper.GetTypeIdForTypeName(t.Item2) == t.Item1, $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
+                Assert.AreEqual(t.Item1, TJSONProtocolHelper.GetTypeIdForTypeName(t.Item2), $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
             }
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_TStopTypeName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new []{(byte)TType.Stop, (byte)TType.Stop});
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.GetTypeIdForTypeName([(byte)TType.Stop, (byte)TType.Stop]));
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_NonExistingTypeName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new byte[]{100});
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.GetTypeIdForTypeName([100]));
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_EmptyName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new byte[] {});
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.GetTypeIdForTypeName([]));
         }
 
         [TestMethod]
@@ -125,7 +120,7 @@ namespace Thrift.Tests.Protocols
 
             foreach (var t in sets)
             {
-                Assert.IsTrue(TJSONProtocolHelper.IsJsonNumeric(t.Item1) == t.Item2, $"Wrong mapping of Char {t.Item1} to bool: {t.Item2}");
+                Assert.AreEqual(t.Item2, TJSONProtocolHelper.IsJsonNumeric(t.Item1), $"Wrong mapping of Char {t.Item1} to bool: {t.Item2}");
             }
         }
 
@@ -141,15 +136,14 @@ namespace Thrift.Tests.Protocols
             foreach (var t in sets)
             {
                 var actualResult = TJSONProtocolHelper.ToHexVal((byte)t.Item1);
-                Assert.IsTrue(actualResult == t.Item2, $"Wrong mapping of char byte {t.Item1} to it expected hex value: {t.Item2}. Actual hex value: {actualResult}");
+                Assert.AreEqual(t.Item2, actualResult, $"Wrong mapping of char byte {t.Item1} to it expected hex value: {t.Item2}. Actual hex value: {actualResult}");
             }
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TProtocolException))]
         public void ToHexVal_WrongInputChar_Test()
         {
-            TJSONProtocolHelper.ToHexVal((byte)'s');
+            Assert.ThrowsExactly<TProtocolException>(() => TJSONProtocolHelper.ToHexVal((byte)'s'));
         }
 
         [TestMethod]
@@ -164,8 +158,8 @@ namespace Thrift.Tests.Protocols
 
             foreach (var t in sets)
             {
-                var actualResult = TJSONProtocolHelper.ToHexChar(t.Item1);
-                Assert.IsTrue(actualResult == t.Item2, $"Wrong mapping of hex value {t.Item1} to it expected char: {t.Item2}. Actual hex value: {actualResult}");
+                var actualResult = (char)TJSONProtocolHelper.ToHexChar(t.Item1);
+                Assert.AreEqual(t.Item2, actualResult, $"Wrong mapping of hex value {t.Item1} to it expected char: {t.Item2}. Actual hex value: {actualResult}");
             }
         }
     }

@@ -31,13 +31,13 @@
 -export([read/2, write/2, force_flush/1, flush/1, close/1]).
 
 %% state
--record(dl_transport, {log,
-                       close_on_close = false,
-                       sync_every = infinity,
-                       sync_tref}).
--type state() :: #dl_transport{}.
--include("thrift_transport_behaviour.hrl").
-
+-record(dl_transport, {
+    %% Keep in sync with disk_log:log/0 type
+    log :: term(),
+    close_on_close = false :: boolean(),
+    sync_every = infinity :: undefined | timeout(),
+    sync_tref :: undefined | timer:tref()
+}).
 
 %% Create a transport attached to an already open log.
 %% If you'd like this transport to close the disk_log using disk_log:lclose()
@@ -51,11 +51,11 @@ new(LogName, Opts) when is_atom(LogName), is_list(Opts) ->
             N when is_integer(N), N > 0 ->
                 {ok, TRef} = timer:apply_interval(N, ?MODULE, force_flush, [State]),
                 State#dl_transport{sync_tref = TRef};
-            _ -> State
+            _ ->
+                State
         end,
 
     thrift_transport:new(?MODULE, State2).
-
 
 parse_opts([], State) ->
     State;
@@ -63,7 +63,6 @@ parse_opts([{close_on_close, Bool} | Rest], State) when is_boolean(Bool) ->
     parse_opts(Rest, State#dl_transport{close_on_close = Bool});
 parse_opts([{sync_every, Int} | Rest], State) when is_integer(Int), Int > 0 ->
     parse_opts(Rest, State#dl_transport{sync_every = Int}).
-
 
 %%%% TRANSPORT IMPLENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -80,38 +79,40 @@ force_flush(#dl_transport{log = Log}) ->
 
 flush(This = #dl_transport{log = Log, sync_every = SE}) ->
     case SE of
-        undefined -> % no time-based sync
-            disk_log:sync(Log);
-        _Else ->     % sync will happen automagically
+        % no time-based sync
+        undefined ->
+            ok = disk_log:sync(Log);
+        % sync will happen automagically
+        _Else ->
             ok
     end,
     {This, ok}.
-
-
-
 
 %% On close, close the underlying log if we're configured to do so.
 close(This = #dl_transport{close_on_close = false}) ->
     {This, ok};
 close(This = #dl_transport{log = Log}) ->
-    {This, disk_log:lclose(Log)}.
-
+    {This, disk_log:close(Log)}.
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 new_transport_factory(Name, ExtraLogOpts) ->
-    new_transport_factory(Name, ExtraLogOpts, [{close_on_close, true},
-                                               {sync_every, 500}]).
+    new_transport_factory(Name, ExtraLogOpts, [
+        {close_on_close, true},
+        {sync_every, 500}
+    ]).
 
 new_transport_factory(Name, ExtraLogOpts, TransportOpts) ->
     F = fun() -> factory_impl(Name, ExtraLogOpts, TransportOpts) end,
     {ok, F}.
 
 factory_impl(Name, ExtraLogOpts, TransportOpts) ->
-    LogOpts = [{name, Name},
-               {format, external},
-               {type, wrap} |
-               ExtraLogOpts],
+    LogOpts = [
+        {name, Name},
+        {format, external},
+        {type, wrap}
+        | ExtraLogOpts
+    ],
     Log =
         case disk_log:open(LogOpts) of
             {ok, LogS} ->

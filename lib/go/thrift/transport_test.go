@@ -36,7 +36,7 @@ var (
 
 func init() {
 	transport_bdata = make([]byte, TRANSPORT_BINARY_DATA_SIZE)
-	for i := 0; i < TRANSPORT_BINARY_DATA_SIZE; i++ {
+	for i := range TRANSPORT_BINARY_DATA_SIZE {
 		transport_bdata[i] = byte((i + 'a') % 255)
 	}
 	transport_header = map[string]string{"key": "User-Agent",

@@ -20,6 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
+#include <cstdint>
 #include <memory>
 #include <thrift/TNonCopyable.h>
 

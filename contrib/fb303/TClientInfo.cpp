@@ -149,7 +149,7 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
     char addrBuf[INET6_ADDRSTRLEN];
     const char* addrStr = info->getAddr(addrBuf, sizeof addrBuf);
     if (addrStr == nullptr) {
-      // cerr << "no addr!" << endl;
+      // cerr << "no addr!" << '\n';
       continue;
     }
 
@@ -160,7 +160,7 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
     char buf[256];
     snprintf(buf, sizeof buf, "%d %s %s %.3f %llu", i, addrStr, callStr, secs,
              (uint64_t)info->getNCalls());
-               
+
     result.push_back(buf);
   }
 }

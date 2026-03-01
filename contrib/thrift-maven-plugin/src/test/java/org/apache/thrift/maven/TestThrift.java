@@ -73,7 +73,7 @@ public class TestThrift {
 
     @Test
     public void testThriftCompileWithGeneratorOption() throws Exception {
-        builder.setGenerator("java:private-members");
+        builder.setGenerator("java:private_members");
         executeThriftCompile();
     }
 

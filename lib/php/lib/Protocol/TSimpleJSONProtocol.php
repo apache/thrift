@@ -115,6 +115,7 @@ class TSimpleJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
+        #TODO add compatibility with NAN and INF
         $this->trans_->write(json_encode((float)$num));
 
         if ($isMapKey) {

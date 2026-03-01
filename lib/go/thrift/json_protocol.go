@@ -33,7 +33,6 @@ const (
 
 // JSON protocol implementation for thrift.
 // Utilizes Simple JSON protocol
-//
 type TJSONProtocol struct {
 	*TSimpleJSONProtocol
 }
@@ -315,11 +314,14 @@ func (p *TJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, valueT
 	if err != nil {
 		return keyType, valueType, size, err
 	}
-	err = checkSizeForProtocol(int32(iSize), p.cfg)
+	size = int(iSize)
+
+	minElemSize := p.getMinSerializedSize(keyType) + p.getMinSerializedSize(valueType)
+	totalMinSize := int32(iSize) * minElemSize
+	err = checkSizeForProtocol(totalMinSize, p.cfg)
 	if err != nil {
 		return keyType, valueType, 0, err
 	}
-	size = int(iSize)
 
 	_, e = p.ParseObjectStart()
 	return keyType, valueType, size, e
@@ -493,11 +495,14 @@ func (p *TJSONProtocol) ParseElemListBegin() (elemType TType, size int, e error)
 	if err != nil {
 		return elemType, 0, err
 	}
-	err = checkSizeForProtocol(int32(nSize), p.cfg)
+	size = int(nSize)
+
+	minElemSize := p.getMinSerializedSize(elemType)
+	totalMinSize := int32(nSize) * minElemSize
+	err = checkSizeForProtocol(totalMinSize, p.cfg)
 	if err != nil {
 		return elemType, 0, err
 	}
-	size = int(nSize)
 	return elemType, size, nil
 }
 
@@ -525,6 +530,8 @@ func (p *TJSONProtocol) TypeIdToString(fieldType TType) (string, error) {
 		return "set", nil
 	case LIST:
 		return "lst", nil
+	case UUID:
+		return "uid", nil
 	}
 
 	e := fmt.Errorf("Unknown fieldType: %d", int(fieldType))
@@ -555,10 +562,48 @@ func (p *TJSONProtocol) StringToTypeId(fieldType string) (TType, error) {
 		return TType(SET), nil
 	case "lst":
 		return TType(LIST), nil
+	case "uid":
+		return TType(UUID), nil
 	}
 
 	e := fmt.Errorf("Unknown type identifier: %s", fieldType)
 	return TType(STOP), NewTProtocolExceptionWithType(INVALID_DATA, e)
+}
+
+// Return the minimum number of bytes a type will consume on the wire
+func (p *TJSONProtocol) getMinSerializedSize(ttype TType) int32 {
+	switch ttype {
+	case STOP:
+		return 1 // T_STOP needs to count itself
+	case VOID:
+		return 1 // T_VOID needs to count itself
+	case BOOL:
+		return 1 // written as int
+	case BYTE:
+		return 1
+	case DOUBLE:
+		return 1
+	case I16:
+		return 1
+	case I32:
+		return 1
+	case I64:
+		return 1
+	case STRING:
+		return 2 // empty string
+	case STRUCT:
+		return 2 // empty struct
+	case MAP:
+		return 2 // empty map
+	case SET:
+		return 2 // empty set
+	case LIST:
+		return 2 // empty list
+	case UUID:
+		return 16 // empty UUID
+	default:
+		return 1 // unknown type
+	}
 }
 
 var _ TConfigurationSetter = (*TJSONProtocol)(nil)

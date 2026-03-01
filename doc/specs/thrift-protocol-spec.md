@@ -67,6 +67,7 @@ of a function, or an exception.
 
     <field-type> ::= T_BOOL | T_BYTE | T_I8 | T_I16 | T_I32 | T_I64 | T_DOUBLE
                      | T_STRING | T_BINARY | T_STRUCT | T_MAP | T_SET | T_LIST
+                     | T_UUID
 
       <field-id> ::= I16
 

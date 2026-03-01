@@ -20,13 +20,10 @@
 #
 
 import sys
-try:
-    from setuptools import setup, Extension
-except Exception:
-    from distutils.core import setup, Extension
 
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
+from setuptools.errors import CompileError, ExecError, PlatformError
 
 # Fix to build sdist under vagrant
 import os
@@ -39,9 +36,9 @@ if 'vagrant' in str(os.environ):
 include_dirs = ['src']
 if sys.platform == 'win32':
     include_dirs.append('compat/win32')
-    ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
+    ext_errors = (CompileError, ExecError, PlatformError, IOError)
 else:
-    ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
+    ext_errors = (CompileError, ExecError, PlatformError)
 
 
 class BuildFailed(Exception):
@@ -52,7 +49,7 @@ class ve_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except DistutilsPlatformError:
+        except PlatformError:
             raise BuildFailed()
 
     def build_extension(self, ext):
@@ -97,15 +94,13 @@ def run_setup(with_binary):
         extensions = dict()
 
     ssl_deps = []
-    if sys.version_info[0] == 2:
-        ssl_deps.append('ipaddress')
     if sys.hexversion < 0x03050000:
         ssl_deps.append('backports.ssl_match_hostname>=3.5')
-    tornado_deps = ['tornado>=4.0']
-    twisted_deps = ['twisted']
+    tornado_deps = ['tornado>=6.3.0']
+    twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
     setup(name='thrift',
-          version='0.16.0',
+          version='0.23.0',
           description='Python bindings for the Apache Thrift RPC system',
           long_description=read_file("README.md"),
           long_description_content_type="text/markdown",
@@ -113,7 +108,6 @@ def run_setup(with_binary):
           author_email='dev@thrift.apache.org',
           url='http://thrift.apache.org',
           license='Apache License 2.0',
-          install_requires=['six>=1.7.2'],
           extras_require={
               'ssl': ssl_deps,
               'tornado': tornado_deps,
@@ -132,7 +126,6 @@ def run_setup(with_binary):
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
-              'Programming Language :: Python :: 2',
               'Programming Language :: Python :: 3',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'

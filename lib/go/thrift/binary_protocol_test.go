@@ -61,6 +61,11 @@ func TestSafeReadBytes(t *testing.T) {
 		dataSize  int
 	}{
 		{
+			label:     "tiny",
+			askedSize: 8,
+			dataSize:  8,
+		},
+		{
 			label:     "normal",
 			askedSize: 100,
 			dataSize:  100,
@@ -80,6 +85,9 @@ func TestSafeReadBytes(t *testing.T) {
 					c.dataSize,
 					len(buf),
 				)
+			}
+			if c.dataSize < bytes.MinRead && cap(buf) != c.dataSize {
+				t.Errorf("Expected to allocate %d bytes for read, allocated %d", c.dataSize, cap(buf))
 			}
 			if !strings.HasPrefix(safeReadBytesSource, string(buf)) {
 				t.Errorf("Unexpected read data: %q", buf)
@@ -112,7 +120,7 @@ func generateSafeReadBytesBenchmark(askedSize int32, dataSize int) func(b *testi
 	return func(b *testing.B) {
 		data := make([]byte, dataSize)
 		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			safeReadBytes(askedSize, bytes.NewReader(data))
 		}
 	}

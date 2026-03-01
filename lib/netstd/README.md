@@ -5,13 +5,14 @@ Thrift client library for Microsoft .NET Standard
 # Build the library
 
 ## How to build on Windows
-- Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable
+- Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable. 
+- Alternatively, build from source by using the cmake target "copy-thrift-compiler", which places the binary to a suitable place.
 - Open the Thrift.sln project with Visual Studio and build.
 or 
 - Build with scripts
 
 ## How to build on Unix/Linux
-- Ensure you have .NET Core SDK 3.1 (LTS) installed, or use the [Ubuntu docker image](../../build/docker/README.md)
+- Ensure you have a suitable .NET Core SDK installed, or use the [Ubuntu docker image](../../build/docker/README.md)
 - Follow common automake build practice: `./ bootstrap && ./ configure && make`
 
 ## Known issues

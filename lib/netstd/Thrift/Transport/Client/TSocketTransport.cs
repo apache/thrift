@@ -18,7 +18,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,6 +36,16 @@ namespace Thrift.Transport.Client
             SetInputOutputStream();
         }
 
+        /// <summary>
+        /// The constructor for a TSocketTransport which takes an IPAddress object.
+        /// </summary>
+        /// <param name="host">The IP address.</param>
+        /// <param name="port">The TcpClient port number.</param>
+        /// <param name="config">The <see cref="TConfiguration"/>.</param>
+        /// <param name="timeout">The TcpClient send timeout.</param>
+        /// <remarks>
+        /// The TcpClient is not connected automatically.  You are required to use <see cref="OpenAsync(CancellationToken)"/>.
+        /// </remarks>
         public TSocketTransport(IPAddress host, int port, TConfiguration config, int timeout = 0)
             : base(config)
         {
@@ -46,9 +55,22 @@ namespace Thrift.Transport.Client
             TcpClient = new TcpClient();
             TcpClient.ReceiveTimeout = TcpClient.SendTimeout = timeout;
             TcpClient.Client.NoDelay = true;
+
             SetInputOutputStream();
         }
 
+        /// <summary>
+        /// The constructor for a TSocketTransport which takes either a host name, e.g. 'host.example.com' and port number.
+        /// If host is not found using Dns.GetHostEntry(host) an exception will be thrown.
+        /// </summary>
+        /// <param name="host">The host name.</param>
+        /// <param name="port">The TcpClient port number.</param>
+        /// <param name="config">The <see cref="TConfiguration"/>.</param>
+        /// <param name="timeout">The TcpClient send timeout.</param>
+        /// <exception cref="TTransportException"></exception>
+        /// <remarks>
+        /// The TcpClient is connected automatically.
+        /// </remarks>
         public TSocketTransport(string host, int port, TConfiguration config, int timeout = 0)
             : base(config)
         {
@@ -64,6 +86,57 @@ namespace Thrift.Transport.Client
                 TcpClient = new TcpClient(host, port);
                 TcpClient.ReceiveTimeout = TcpClient.SendTimeout = timeout;
                 TcpClient.Client.NoDelay = true;
+
+                SetInputOutputStream();
+            }
+            catch (SocketException e)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, e.Message, e);
+            }
+        }
+
+        /// <summary>
+        /// <para>The constructor for a TSocketTransport which takes either a host name, e.g. 'host.example.com' or and IP address string, e.g '123.456.789' and port number.
+        /// If hostNameOrIpAddress represents a valid IP address this will be used directly.
+        /// If hostNameOrIpAddress does not represent a valid IP address an IP address will be retrieved using Dns.GetHostEntry(hostNameOrIpAddress).
+        /// If that fails an exception will be thrown.</para>
+        /// </summary>
+        /// <param name="hostNameOrIpAddress">The host name or IP address.</param>
+        /// <param name="port">The TcpClient port number.</param>
+        /// <param name="connectClient">If true attempt to connect the TcpClient.</param>
+        /// <param name="config">The <see cref="TConfiguration"/>.</param>
+        /// <param name="timeout">The TcpClient send timeout.</param>
+        /// <exception cref="TTransportException"></exception>
+        /// <remarks>
+        /// The TcpClient is connected dependent on the value of <paramref name="connectClient"/>./>.
+        /// </remarks>
+        public TSocketTransport(string hostNameOrIpAddress, int port, bool connectClient, TConfiguration config, int timeout = 0)
+            : base(config)
+        {
+            try
+            {
+                if (!IPAddress.TryParse(hostNameOrIpAddress, out var address))
+                {
+                    var entry = Dns.GetHostEntry(hostNameOrIpAddress);
+
+                    if (entry.AddressList.Length == 0)
+                        throw new TTransportException(TTransportException.ExceptionType.Unknown, "unable to resolve host name");
+
+                    address = entry.AddressList[0];
+                }
+
+                Host = address;
+                Port = port;
+
+                TcpClient = new TcpClient();
+                TcpClient.ReceiveTimeout = TcpClient.SendTimeout = timeout;
+                TcpClient.Client.NoDelay = true;
+
+                if (connectClient)
+                {
+                    TcpClient.Connect(Host, Port);
+                }
+
                 SetInputOutputStream();
             }
             catch (SocketException e)

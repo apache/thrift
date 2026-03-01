@@ -25,6 +25,7 @@ import org.apache.thrift.transport.*;
 import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
 import org.apache.thrift.helper.*;
+import uuid.Uuid;
 
 import haxe.Int32;
 import haxe.Int64;
@@ -143,6 +144,19 @@ class TestServerHandler implements ThriftTest_service {
             hex += StringTools.hex( thing.get(i), 2);
         }
         trace('testBinary($hex)');
+        return thing;
+    }
+
+    /**
+     * Prints 'testUuid("%s")' 
+     * @param Uuid  thing - the uuid to print
+     * @return Uuid  - returns the uuid 'thing'
+     *
+     * @param thing
+     */
+    public function testUuid(thing : String) : String
+    {
+        trace('testUuid($thing)');
         return thing;
     }
 

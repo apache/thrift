@@ -93,6 +93,9 @@ func (p *TSSLServerSocket) Open() error {
 }
 
 func (p *TSSLServerSocket) Addr() net.Addr {
+	if p.listener != nil {
+		return p.listener.Addr()
+	}
 	return p.addr
 }
 

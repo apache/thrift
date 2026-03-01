@@ -277,6 +277,7 @@
       <enumeration value="map" />
       <enumeration value="set" />
       <enumeration value="list" />
+      <enumeration value="uuid" />
     </restriction>
   </simpleType>
 

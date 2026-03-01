@@ -40,9 +40,9 @@ namespace Client.Tests
             };
         }
 
-        private static THashSet<Insanity> CreateSetField(int count)
+        private static HashSet<Insanity> CreateSetField(int count)
         {
-            var retval = new THashSet<Insanity>();
+            var retval = new HashSet<Insanity>();
             for (var i = 0; i < count; ++i)
                 retval.Add(CreateInsanity(count));
             return retval;
@@ -90,41 +90,41 @@ namespace Client.Tests
             return retval;
         }
 
-        private static List<Dictionary<THashSet<int>, Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>>>> CreateListField(int count)
+        private static List<Dictionary<HashSet<int>, Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>>>> CreateListField(int count)
         {
-            var retval = new List<Dictionary<THashSet<int>, Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>>>>();
+            var retval = new List<Dictionary<HashSet<int>, Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>>>>();
             for (var i = 0; i < count; ++i)
                 retval.Add(CreateListFieldData(count));
             return retval;
         }
 
-        private static Dictionary<THashSet<int>, Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>>> CreateListFieldData(int count)
+        private static Dictionary<HashSet<int>, Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>>> CreateListFieldData(int count)
         {
-            var retval = new Dictionary<THashSet<int>, Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>>>();
+            var retval = new Dictionary<HashSet<int>, Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>>>();
             for (var i = 0; i < count; ++i)
                 retval.Add( CreateIntHashSet(count), CreateListFieldDataDict(count));
             return retval;
         }
 
-        private static THashSet<int> CreateIntHashSet(int count)
+        private static HashSet<int> CreateIntHashSet(int count)
         {
-            var retval = new THashSet<int>();
+            var retval = new HashSet<int>();
             for (var i = 0; i < count; ++i)
                 retval.Add(i);
             return retval;
         }
 
-        private static Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>> CreateListFieldDataDict(int count)
+        private static Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>> CreateListFieldDataDict(int count)
         {
-            var retval = new Dictionary<int, THashSet<List<Dictionary<Insanity, string>>>>();
+            var retval = new Dictionary<int, HashSet<List<Dictionary<Insanity, string>>>>();
             for (var i = 0; i < count; ++i)
                 retval.Add(i, CreateListFieldDataDictValue(count));
             return retval;
         }
 
-        private static THashSet<List<Dictionary<Insanity, string>>> CreateListFieldDataDictValue(int count)
+        private static HashSet<List<Dictionary<Insanity, string>>> CreateListFieldDataDictValue(int count)
         {
-            var retval = new THashSet<List<Dictionary<Insanity, string>>>();
+            var retval = new HashSet<List<Dictionary<Insanity, string>>>();
             for (var i = 0; i < count; ++i)
                 retval.Add( CreateListFieldDataDictValueList(count));
             return retval;

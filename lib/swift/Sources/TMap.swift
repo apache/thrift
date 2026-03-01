@@ -180,5 +180,5 @@ public func ==<Key, Value>(lhs: TMap<Key,Value>, rhs: TMap<Key, Value>) -> Bool 
   if lhs.count != rhs.count {
     return false
   }
-  return lhs.storage.elementsEqual(rhs.storage) { $0.key == $1.key && $0.value == $1.value }
+  return lhs.storage == rhs.storage
 }

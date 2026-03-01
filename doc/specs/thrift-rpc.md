@@ -151,7 +151,7 @@ always slightly faster.
 ## Compatibility
 
 A server could automatically determine whether a client talks the binary protocol or the compact protocol by
-investigating the first byte. If the value is `1000 0001` or `0000 0000` (assuming a name shorter than ±16 MB) it is the
+investigating the first byte. If the value is `1000 0000` or `0000 0000` (assuming a name shorter than ±16 MB) it is the
 binary protocol. When the value is `1000 0010` it is talking the compact protocol.
 
 ## Framed vs. unframed transport

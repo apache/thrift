@@ -50,9 +50,17 @@ module Thrift
       @oprot.trans.flush
     end
 
-    def receive_message(result_klass)
+    def receive_message_begin()
       fname, mtype, rseqid = @iprot.read_message_begin
-      handle_exception(mtype)
+      [fname, mtype, rseqid]
+    end
+
+    def reply_seqid(rseqid)
+     result = (rseqid==@seqid)?true:false
+     result
+    end
+
+    def receive_message(result_klass)
       result = result_klass.new
       result.read(@iprot)
       @iprot.read_message_end

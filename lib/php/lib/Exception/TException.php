@@ -38,6 +38,7 @@ use Thrift\Base\TBase;
  * @param mixed $p1 Message (string) or type-spec (array)
  * @param mixed $p2 Code (integer) or values (array)
  */
+#[\AllowDynamicProperties]
 class TException extends \Exception
 {
     public function __construct($p1 = null, $p2 = 0)
@@ -52,7 +53,7 @@ class TException extends \Exception
                 }
             }
         } else {
-            parent::__construct($p1, $p2);
+            parent::__construct((string)$p1, $p2);
         }
     }
 

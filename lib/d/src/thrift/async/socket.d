@@ -37,6 +37,10 @@ version (Windows) {
   import core.sys.posix.sys.socket : connect;
 } else static assert(0, "Don't know connect on this platform.");
 
+version (OSX) {
+  import core.stdc.errno : ECONNRESET;
+}
+
 version (Win32) {
   import core.stdc.config : __c_long;
 }

@@ -74,6 +74,7 @@ struct Recipe {
   1: string recipeName
   2: string cuisine
   3: i8 page
+  4: uuid recipeId
 }
 
 union CookingTools {

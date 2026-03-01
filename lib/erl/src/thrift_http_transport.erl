@@ -27,15 +27,16 @@
 %% thrift_transport callbacks
 -export([write/2, read/2, flush/1, close/1]).
 
--record(http_transport, {host, % string()
-                         path, % string()
-                         read_buffer, % iolist()
-                         write_buffer, % iolist()
-                         http_options, % see http(3)
-                         extra_headers % [{str(), str()}, ...]
-                        }).
--type state() :: #http_transport{}.
--include("thrift_transport_behaviour.hrl").
+% string()
+-record(http_transport, {
+    host :: string(),
+    path :: string(),
+    read_buffer :: iodata(),
+    write_buffer :: iodata(),
+    % see httpc(3)
+    http_options :: [{atom(), term()}],
+    extra_headers :: [{string(), string()}]
+}).
 
 new(Host, Path) ->
     new(Host, Path, _Options = []).
@@ -46,12 +47,14 @@ new(Host, Path) ->
 %%   {extra_headers, ExtraHeaders}  = List of extra HTTP headers
 %%--------------------------------------------------------------------
 new(Host, Path, Options) ->
-    State1 = #http_transport{host = Host,
-                             path = Path,
-                             read_buffer = [],
-                             write_buffer = [],
-                             http_options = [],
-                             extra_headers = []},
+    State1 = #http_transport{
+        host = Host,
+        path = Path,
+        read_buffer = [],
+        write_buffer = [],
+        http_options = [],
+        extra_headers = []
+    },
     ApplyOption =
         fun
             ({http_options, HttpOpts}, State = #http_transport{}) ->
@@ -75,28 +78,38 @@ write(State = #http_transport{write_buffer = WBuf}, Data) ->
     {State#http_transport{write_buffer = [WBuf, Data]}, ok}.
 
 %% Flushes the buffer, making a request
-flush(State = #http_transport{host = Host,
-                                 path = Path,
-                                 read_buffer = Rbuf,
-                                 write_buffer = Wbuf,
-                                 http_options = HttpOptions,
-                                 extra_headers = ExtraHeaders}) ->
+flush(
+    State = #http_transport{
+        host = Host,
+        path = Path,
+        read_buffer = Rbuf,
+        write_buffer = Wbuf,
+        http_options = HttpOptions,
+        extra_headers = ExtraHeaders
+    }
+) ->
     case iolist_to_binary(Wbuf) of
         <<>> ->
             %% Don't bother flushing empty buffers.
             {State, ok};
         WBinary ->
             {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
-              httpc:request(post,
-                           {"http://" ++ Host ++ Path,
-                            [{"User-Agent", "Erlang/thrift_http_transport"} | ExtraHeaders],
-                            "application/x-thrift",
-                            WBinary},
-                           HttpOptions,
-                           [{body_format, binary}]),
+                httpc:request(
+                    post,
+                    {
+                        "http://" ++ Host ++ Path,
+                        [{"User-Agent", "Erlang/thrift_http_transport"} | ExtraHeaders],
+                        "application/x-thrift",
+                        WBinary
+                    },
+                    HttpOptions,
+                    [{body_format, binary}]
+                ),
 
-            State1 = State#http_transport{read_buffer = [Rbuf, Body],
-                                          write_buffer = []},
+            State1 = State#http_transport{
+                read_buffer = [Rbuf, Body],
+                write_buffer = []
+            },
             {State1, ok}
     end.
 
@@ -109,7 +122,7 @@ read(State = #http_transport{read_buffer = RBuf}, Len) when is_integer(Len) ->
     case iolist_to_binary(RBuf) of
         <<Data:Give/binary, RBuf1/binary>> ->
             Response = {ok, Data},
-            State1 = State#http_transport{read_buffer=RBuf1},
+            State1 = State#http_transport{read_buffer = RBuf1},
             {State1, Response};
         _ ->
             {State, {error, 'EOF'}}

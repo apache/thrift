@@ -20,6 +20,7 @@
 #
 
 import os
+import ssl
 import sys
 import time
 import unittest
@@ -40,7 +41,7 @@ class AbstractTest(unittest.TestCase):
                                             options.port,
                                             (options.http_path if options.http_path else '/'))
             if options.ssl:
-                __cafile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "CA.pem")
+                __cafile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.pem")
                 __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.crt")
                 __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.key")
                 self.transport = THttpClient.THttpClient(uri, cafile=__cafile, cert_file=__certfile, key_file=__keyfile)
@@ -49,7 +50,20 @@ class AbstractTest(unittest.TestCase):
         else:
             if options.ssl:
                 from thrift.transport import TSSLSocket
-                socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
+                keys_dir = os.path.join(os.path.dirname(SCRIPT_DIR), "keys")
+                ca_certs = os.path.join(keys_dir, "server.pem")
+                certfile = os.path.join(keys_dir, "client.crt")
+                keyfile = os.path.join(keys_dir, "client.key")
+                ssl_version = getattr(ssl, "PROTOCOL_TLS_CLIENT", ssl.PROTOCOL_TLSv1)
+                socket = TSSLSocket.TSSLSocket(
+                    options.host,
+                    options.port,
+                    certfile=certfile,
+                    keyfile=keyfile,
+                    ca_certs=ca_certs,
+                    cert_reqs=ssl.CERT_REQUIRED,
+                    ssl_version=ssl_version,
+                )
             else:
                 socket = TSocket.TSocket(options.host, options.port, options.domain_socket)
             # frame or buffer depending upon args
@@ -106,9 +120,6 @@ class AbstractTest(unittest.TestCase):
         Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük,
         Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文,
         Bân-lâm-gú, 粵語"""
-        if sys.version_info[0] == 2 and os.environ.get('THRIFT_TEST_PY_NO_UTF8STRINGS'):
-            s1 = s1.encode('utf8')
-            s2 = s2.encode('utf8')
         self.assertEqual(self.client.testString(s1), s1)
         self.assertEqual(self.client.testString(s2), s2)
 
@@ -233,7 +244,7 @@ class AbstractTest(unittest.TestCase):
         try:
             self.client.testException('TException')
             self.fail("should have gotten exception")
-        except TException as x:
+        except TException:
             pass
 
         # Should not throw
@@ -255,6 +266,35 @@ class AbstractTest(unittest.TestCase):
 
         y = self.client.testMultiException('success', 'foobar')
         self.assertEqual(y.string_thing, 'foobar')
+
+    def testException__traceback__(self):
+        print('testException__traceback__')
+        self.client.testException('Safe')
+        expect_slots = uses_slots = False
+        expect_dynamic = uses_dynamic = False
+        try:
+            self.client.testException('Xception')
+            self.fail("should have gotten exception")
+        except Xception as x:
+            uses_slots = hasattr(x, '__slots__')
+            uses_dynamic = (not isinstance(x, TException))
+            # We set expected values here so that we get clean tracebackes when
+            # the assertions fail.
+            try:
+                x.__traceback__ = x.__traceback__
+                # If `__traceback__` was set without errors than we expect that
+                # the slots option was used and that dynamic classes were not.
+                expect_slots = True
+                expect_dynamic = False
+            except Exception as e:
+                self.assertTrue(isinstance(e, TypeError))
+                # There are no other meaningful tests we can preform because we
+                # are unable to determine the desired state of either `__slots__`
+                # or `dynamic`.
+                return
+
+        self.assertEqual(expect_slots, uses_slots)
+        self.assertEqual(expect_dynamic, uses_dynamic)
 
     def testOneway(self):
         print('testOneway')
@@ -280,6 +320,7 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
     Wraps any protocol with sequence ID checking: looks for outbound
     uniqueness as well as request/response alignment.
     """
+
     def __init__(self, protocol):
         # TProtocolDecorator.__new__ does all the heavy lifting
         pass
@@ -295,7 +336,6 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
             name, type, seqid)
 
     def readMessageBegin(self):
-        global LAST_SEQID
         (name, type, seqid) =\
             super(TPedanticSequenceIdProtocolWrapper, self).readMessageBegin()
         if LAST_SEQID != seqid:

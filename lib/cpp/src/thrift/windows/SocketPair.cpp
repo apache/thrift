@@ -34,7 +34,7 @@
 #include <string.h>
 
 // Win32
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
 
 int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2]) {
   THRIFT_UNUSED_VARIABLE(protocol);

@@ -31,6 +31,9 @@ tutorialclient: all
 clean-local:
 	$(RM) -r gen-*
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	PerlServer.pl \
 	PerlClient.pl

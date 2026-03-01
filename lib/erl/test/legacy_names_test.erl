@@ -18,52 +18,58 @@
 %%
 
 -module(legacy_names_test).
--compile(export_all).
 
 -include_lib("eunit/include/eunit.hrl").
 
 -include("gen-erl/legacyNames_constants.hrl").
 
 record_generation_test_() ->
-  [
-    {"capitalizedStruct record", ?_assertMatch(
-      {capitalizedStruct, _, _},
-      #capitalizedStruct{id=null,message=null}
-    )}
-  ].
+    [
+        {"capitalizedStruct record",
+            ?_assertMatch(
+                {capitalizedStruct, _, _},
+                #capitalizedStruct{id = null, message = null}
+            )}
+    ].
 
 struct_info_test_() ->
-  [
-    {"capitalizedStruct extended definition", ?_assertEqual(
-      {struct, [
-        {1, undefined, i32, 'id', undefined},
-        {2, undefined, string, 'message', undefined}
-      ]},
-      legacyNames_types:struct_info_ext(capitalizedStruct)
-    )},
-    {"listCapitalizedStructs extended definition", ?_assertEqual(
-      {struct, [
-        {1, undefined, {list, {struct, {'legacyNames_types', 'capitalizedStruct'}}}, 'structs', []}
-      ]},
-      legacyNames_types:struct_info_ext(listCapitalizedStructs)
-    )}
-  ].
+    [
+        {"capitalizedStruct extended definition",
+            ?_assertEqual(
+                {struct, [
+                    {1, undefined, i32, 'id', undefined},
+                    {2, undefined, string, 'message', undefined}
+                ]},
+                legacyNames_types:struct_info_ext(capitalizedStruct)
+            )},
+        {"listCapitalizedStructs extended definition",
+            ?_assertEqual(
+                {struct, [
+                    {1, undefined, {list, {struct, {'legacyNames_types', 'capitalizedStruct'}}},
+                        'structs', []}
+                ]},
+                legacyNames_types:struct_info_ext(listCapitalizedStructs)
+            )}
+    ].
 
 service_info_test_() ->
-  [
-    {"names params", ?_assertEqual(
-      {struct, [
-        {1, {struct, {'legacyNames_types', 'capitalizedStruct'}}},
-        {2, {struct, {'legacyNames_types', 'capitalizedStruct'}}}
-      ]},
-      legacyNames_thrift:function_info(names, params_type)
-    )},
-    {"names reply", ?_assertEqual(
-      {struct, {'legacyNames_types', 'listCapitalizedStructs'}},
-      legacyNames_thrift:function_info(names, reply_type)
-    )},
-    {"names exceptions", ?_assertEqual(
-      {struct, [{1, {struct, {'legacyNames_types', 'xception'}}}]},
-      legacyNames_thrift:function_info(names, exceptions)
-    )}
-  ].
+    [
+        {"names params",
+            ?_assertEqual(
+                {struct, [
+                    {1, {struct, {'legacyNames_types', 'capitalizedStruct'}}},
+                    {2, {struct, {'legacyNames_types', 'capitalizedStruct'}}}
+                ]},
+                legacyNames_thrift:function_info(names, params_type)
+            )},
+        {"names reply",
+            ?_assertEqual(
+                {struct, {'legacyNames_types', 'listCapitalizedStructs'}},
+                legacyNames_thrift:function_info(names, reply_type)
+            )},
+        {"names exceptions",
+            ?_assertEqual(
+                {struct, [{1, {struct, {'legacyNames_types', 'xception'}}}]},
+                legacyNames_thrift:function_info(names, exceptions)
+            )}
+    ].

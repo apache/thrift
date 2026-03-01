@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(thrift_compiler_tests)
 
@@ -41,21 +41,23 @@ endif()
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
-# create directory for thrifty and thriftl
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
+if(NOT TARGET parse)
+    # create directory for thrifty and thriftl
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
 
-# Create flex and bison files and build the lib parse static library
-BISON_TARGET(thrifty ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc)
-FLEX_TARGET(thriftl ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
-ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
+    # Create flex and bison files and build the lib parse static library
+    BISON_TARGET(thrifty ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc COMPILE_FLAGS "--file-prefix-map=${CMAKE_BINARY_DIR}='' --file-prefix-map=${CMAKE_SOURCE_DIR}=''")
+    FLEX_TARGET(thriftl ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
+    ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
-set(parse_SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
-)
+    set(parse_SOURCES
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
+    )
 
-add_library(parse STATIC ${parse_SOURCES})
+    add_library(parse STATIC ${parse_SOURCES})
+endif()
 
 # Thrift compiler tests
 set(thrift_compiler_tests
@@ -72,13 +74,17 @@ set(thrift_compiler_tests_SOURCES
 )
 
 set(thrift_compiler_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_globals.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_parser_support.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/logging.cc # we use logging instead of main to avoid breaking compillation (2 main v)
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/audit/t_audit.cpp
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/common.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.h
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
-    ${THRIFT_COMPILER_SOURCE_DIR}/thrift/version.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -89,17 +95,30 @@ macro(THRIFT_ADD_COMPILER name description initial)
     option(${enabler} ${description} ${initial})
     if(${enabler})
         list(APPEND thrift_compiler_SOURCES ${src})
-        file(GLOB thrift_compiler_tests_SOURCES
+        file(GLOB temp_test_sources
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.c*"
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.thrift"
         )
+        list(APPEND thrift_compiler_tests_SOURCES ${temp_test_sources})
+    endif()
+endmacro()
+
+# This macro adds an option THRIFT_VALIDATOR_COMPILER_${NAME}
+# that allows enabling or disabling certain languages
+macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
+    string(TOUPPER "THRIFT_VALIDATOR_COMPILER_${name}" enabler)
+    set(src "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.cc")
+    list(APPEND "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.h")
+    option(${enabler} ${description} ${initial})
+    if(${enabler})
+        list(APPEND thrift_compiler_SOURCES ${src})
     endif()
 endmacro()
 
 # The following compiler with unit tests can be enabled or disabled
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" OFF)
 THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
-THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" OFF)
+THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
 THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" OFF)
@@ -114,7 +133,7 @@ THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" OFF)
 THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" OFF)
 THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" OFF)
 THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
-THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" OFF)
+THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" ON)
 THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" OFF)
 THRIFT_ADD_COMPILER(php     "Enable compiler for PHP" OFF)
 THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" OFF)
@@ -125,11 +144,22 @@ THRIFT_ADD_COMPILER(swift   "Enable compiler for Swift" OFF)
 THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" OFF)
 THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" OFF)
 
-# Thrift is looking for include files in the src directory
-# we also add the current binary directory for generated files
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
+# The following compiler can be enabled or disabled by enabling or disabling certain languages
+THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)
 
-add_library(thrift_compiler ${thrift_compiler_SOURCES})
+# OCaml tests include the implementation .cc directly, so compiling it into the
+# thrift_compiler lib would cause duplicate definitions (LNK2005).
+list(REMOVE_ITEM thrift_compiler_SOURCES
+  "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_ocaml_generator.cc"
+)
+
+# Thrift is looking for include files in the src directory
+# We also add:
+# - the current binary directory for locally generated files (standalone tests build)
+# - the top-level binary directory for generated files when reusing targets from the parent build
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
+
+add_library(thrift_compiler STATIC ${thrift_compiler_SOURCES})
 
 #link parse lib to thrift_compiler lib
 target_link_libraries(thrift_compiler parse)
@@ -145,7 +175,24 @@ endif()
 set_target_properties(thrift_compiler_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin/)
 set_target_properties(thrift_compiler_tests PROPERTIES OUTPUT_NAME thrift_compiler_tests)
 
-target_link_libraries(thrift_compiler_tests thrift_compiler)
+# Ensure generator registration translation units are linked in.
+# Many generators register themselves via static initialization; linkers may
+# otherwise discard those objects from static libraries.
+if(MSVC)
+    target_link_libraries(thrift_compiler_tests PRIVATE thrift_compiler)
+    target_link_options(thrift_compiler_tests PRIVATE
+        "/WHOLEARCHIVE:$<TARGET_LINKER_FILE:thrift_compiler>"
+    )
+elseif(APPLE)
+    target_link_libraries(thrift_compiler_tests PRIVATE thrift_compiler)
+    target_link_options(thrift_compiler_tests PRIVATE
+        "-Wl,-force_load,$<TARGET_LINKER_FILE:thrift_compiler>"
+    )
+else()
+    target_link_libraries(thrift_compiler_tests PRIVATE
+        "-Wl,--whole-archive" thrift_compiler "-Wl,--no-whole-archive"
+    )
+endif()
 
 enable_testing()
-add_test(NAME ThriftTests COMMAND thrift_compiler_tests)
+add_test(NAME ThriftCompilerTests COMMAND thrift_compiler_tests)

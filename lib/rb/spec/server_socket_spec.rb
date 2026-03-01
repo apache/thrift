@@ -44,6 +44,7 @@ describe 'Thrift::ServerSocket' do
       expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       sock = double("sock")
+      expect(sock).to receive(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
       expect(handle).to receive(:accept).and_return(sock)
       trans = double("Socket")
       expect(Thrift::Socket).to receive(:new).and_return(trans)

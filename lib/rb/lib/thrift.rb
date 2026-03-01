@@ -23,7 +23,6 @@
 $:.unshift File.dirname(__FILE__)
 
 require 'thrift/bytes'
-require 'thrift/core_ext'
 require 'thrift/exceptions'
 require 'thrift/types'
 require 'thrift/processor'
@@ -32,6 +31,7 @@ require 'thrift/client'
 require 'thrift/struct'
 require 'thrift/union'
 require 'thrift/struct_union'
+require 'thrift/uuid'
 
 # serializer
 require 'thrift/serializer/serializer'
@@ -44,6 +44,7 @@ require 'thrift/protocol/binary_protocol_accelerated'
 require 'thrift/protocol/compact_protocol'
 require 'thrift/protocol/json_protocol'
 require 'thrift/protocol/multiplexed_protocol'
+require 'thrift/protocol/header_protocol'
 
 # transport
 require 'thrift/transport/base_transport'
@@ -56,6 +57,7 @@ require 'thrift/transport/unix_socket'
 require 'thrift/transport/unix_server_socket'
 require 'thrift/transport/buffered_transport'
 require 'thrift/transport/framed_transport'
+require 'thrift/transport/header_transport'
 require 'thrift/transport/http_client_transport'
 require 'thrift/transport/io_stream_transport'
 require 'thrift/transport/memory_buffer_transport'

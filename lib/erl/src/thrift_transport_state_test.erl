@@ -26,28 +26,35 @@
 -export([new/1]).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+-export([
+    init/1,
+    handle_call/3,
+    handle_cast/2,
+    handle_info/2,
+    terminate/2,
+    code_change/3
+]).
 
 %% thrift_transport callbacks
 -export([write/2, read/2, flush/1, close/1]).
 
--record(trans, {wrapped, % #thrift_transport{}
-                version :: integer(),
-                counter :: pid()
-               }).
--type state() :: #trans{}.
--include("thrift_transport_behaviour.hrl").
+% #thrift_transport{}
+-record(trans, {
+    wrapped :: thrift_transport:t_transport(),
+    version :: integer(),
+    counter :: pid()
+}).
 
 -record(state, {cversion :: integer()}).
-
 
 new(WrappedTransport) ->
     case gen_server:start_link(?MODULE, [], []) of
         {ok, Pid} ->
-            Trans = #trans{wrapped = WrappedTransport,
-                           version = 0,
-                           counter = Pid},
+            Trans = #trans{
+                wrapped = WrappedTransport,
+                version = 0,
+                counter = Pid
+            },
             thrift_transport:new(?MODULE, Trans);
         Else ->
             Else
@@ -82,7 +89,6 @@ read(Transport0 = #trans{wrapped = Wrapped0}, Len) ->
     Transport2 = Transport1#trans{wrapped = Wrapped1},
     {Transport2, Result}.
 
-
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -91,7 +97,7 @@ init([]) ->
     {ok, #state{cversion = 0}}.
 
 handle_call(check_version, _From, State = #state{cversion = Version}) ->
-    {reply, Version, State#state{cversion = Version+1}}.
+    {reply, Version, State#state{cversion = Version + 1}}.
 
 handle_cast(shutdown, State) ->
     {stop, normal, State}.
@@ -107,7 +113,7 @@ terminate(_Reason, _State) -> ok.
 check_version(Transport = #trans{version = Version, counter = Counter}) ->
     case gen_server:call(Counter, check_version) of
         Version ->
-            Transport#trans{version = Version+1};
+            Transport#trans{version = Version + 1};
         _Else ->
             % State wasn't propagated properly.  Die.
             erlang:error(state_not_propagated)

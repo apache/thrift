@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,16 +6,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 # this require is to make generated struct definitions happy
 require 'set'
@@ -116,7 +116,7 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Writes a Thrift String. In Ruby 1.9+, the String passed will be transcoded to UTF-8.
+    # Writes a Thrift String. The String passed will be transcoded to UTF-8.
     #
     # str - The String to write.
     #
@@ -127,13 +127,22 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Writes a Thrift Binary (Thrift String with no encoding). In Ruby 1.9+, the String passed
+    # Writes a Thrift Binary (Thrift String with no encoding). The String passed
     # will forced into BINARY encoding.
     #
     # buf - The String to write.
     #
     # Returns nothing.
     def write_binary(buf)
+      raise NotImplementedError
+    end
+
+    # Writes a UUID as 16 bytes.
+    #
+    # uuid - The UUID string to write (e.g. "550e8400-e29b-41d4-a716-446655440000").
+    #
+    # Returns nothing.
+    def write_uuid(uuid)
       raise NotImplementedError
     end
 
@@ -197,18 +206,25 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Reads a Thrift String. In Ruby 1.9+, all Strings will be returned with an Encoding of UTF-8.
+    # Reads a Thrift String. All Strings will be returned with an Encoding of UTF-8.
     #
     # Returns a String.
     def read_string
       raise NotImplementedError
     end
 
-    # Reads a Thrift Binary (Thrift String without encoding). In Ruby 1.9+, all Strings will be returned
+    # Reads a Thrift Binary (Thrift String without encoding). All Strings will be returned
     # with an Encoding of BINARY.
     #
     # Returns a String.
     def read_binary
+      raise NotImplementedError
+    end
+
+    # Reads a UUID as 16 bytes and returns it as a string.
+    #
+    # Returns a String (e.g. "550e8400-e29b-41d4-a716-446655440000").
+    def read_uuid
       raise NotImplementedError
     end
 
@@ -251,9 +267,9 @@ module Thrift
     #
     # Returns nothing.
     def write_type(field_info, value)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 
@@ -276,6 +292,8 @@ module Thrift
         else
           write_string(value)
         end
+      when Types::UUID
+        write_uuid(value)
       when Types::STRUCT
         value.write(self)
       else
@@ -291,9 +309,9 @@ module Thrift
     #
     # Returns the value read; object type varies based on field_info[:type].
     def read_type(field_info)
-      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Integer
         field_info = {:type => field_info}
       end
 
@@ -316,6 +334,8 @@ module Thrift
         else
           read_string
         end
+      when Types::UUID
+        read_uuid
       else
         raise NotImplementedError
       end
@@ -337,6 +357,8 @@ module Thrift
         read_double
       when Types::STRING
         read_string
+      when Types::UUID
+        read_uuid
       when Types::STRUCT
         read_struct_begin
         while true
@@ -369,7 +391,7 @@ module Thrift
         raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
       end
     end
-    
+
     def to_s
       "#{trans.to_s}"
     end
@@ -379,7 +401,7 @@ module Thrift
     def get_protocol(trans)
       raise NotImplementedError
     end
-    
+
     def to_s
       "base"
     end

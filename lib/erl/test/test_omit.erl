@@ -1,3 +1,22 @@
+%%
+%% Licensed to the Apache Software Foundation (ASF) under one
+%% or more contributor license agreements. See the NOTICE file
+%% distributed with this work for additional information
+%% regarding copyright ownership. The ASF licenses this file
+%% to you under the Apache License, Version 2.0 (the
+%% "License"); you may not use this file except in compliance
+%% with the License. You may obtain a copy of the License at
+%%
+%%   http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing,
+%% software distributed under the License is distributed on an
+%% "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+%% KIND, either express or implied. See the License for the
+%% specific language governing permissions and limitations
+%% under the License.
+%%
+
 -module(test_omit).
 
 -include("gen-erl/thrift_omit_with_types.hrl").
@@ -6,74 +25,83 @@
 -include_lib("eunit/include/eunit.hrl").
 
 omit_struct1_test() ->
-  %% In this test, the field that is deleted is a basic type (an i32).
-  A = #test1{one = 1, three = 3},
-  B = #test1{one = 1, two = 2, three = 3},
-  {ok, Transport} = thrift_membuffer_transport:new(),
-  {ok, P0} = thrift_binary_protocol:new(Transport),
+    %% In this test, the field that is deleted is a basic type (an i32).
+    A = #test1{one = 1, three = 3},
+    B = #test1{one = 1, two = 2, three = 3},
+    {ok, Transport} = thrift_membuffer_transport:new(),
+    {ok, P0} = thrift_binary_protocol:new(Transport),
 
-  {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, A)}}, A}),
-  {P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, A)}}),
-  ?assertEqual(element(1, A), element(1, O0)),
-  ?assertEqual(element(2, A), element(2, O0)),
-  ?assertEqual(element(4, A), element(3, O0)),
+    {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, A)}}, A}),
+    {P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, A)}}),
+    ?assertEqual(element(1, A), element(1, O0)),
+    ?assertEqual(element(2, A), element(2, O0)),
+    ?assertEqual(element(4, A), element(3, O0)),
 
-  {P3, ok} = thrift_protocol:write(P2, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
-  {_P4, {ok, O1}} = thrift_protocol:read(P3, {struct, {thrift_omit_without_types, element(1, A)}}),
-  ?assertEqual(element(1, A), element(1, O1)),
-  ?assertEqual(element(2, A), element(2, O1)),
-  ?assertEqual(element(4, A), element(3, O1)),
+    {P3, ok} = thrift_protocol:write(P2, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
+    {_P4, {ok, O1}} = thrift_protocol:read(
+        P3, {struct, {thrift_omit_without_types, element(1, A)}}
+    ),
+    ?assertEqual(element(1, A), element(1, O1)),
+    ?assertEqual(element(2, A), element(2, O1)),
+    ?assertEqual(element(4, A), element(3, O1)),
 
-  ok.
+    ok.
 
 omit_struct2_test() ->
-  %% In this test, the field that is deleted is a struct.
-  A = #test2{one = 1, two = #test2{one = 10, three = 30}, three = 3},
-  B = #test2{one = 1, two = #test2{one = 10, two = #test2{one = 100}, three = 30}, three = 3},
+    %% In this test, the field that is deleted is a struct.
+    A = #test2{one = 1, two = #test2{one = 10, three = 30}, three = 3},
+    B = #test2{one = 1, two = #test2{one = 10, two = #test2{one = 100}, three = 30}, three = 3},
 
-  {ok, Transport} = thrift_membuffer_transport:new(),
-  {ok, P0} = thrift_binary_protocol:new(Transport),
+    {ok, Transport} = thrift_membuffer_transport:new(),
+    {ok, P0} = thrift_binary_protocol:new(Transport),
 
-  {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, A)}}, A}),
-  {P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, A)}}),
-  ?assertEqual(element(1, A), element(1, O0)),
-  ?assertEqual(element(2, A), element(2, O0)),
-  ?assertEqual(element(4, A), element(3, O0)),
+    {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, A)}}, A}),
+    {P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, A)}}),
+    ?assertEqual(element(1, A), element(1, O0)),
+    ?assertEqual(element(2, A), element(2, O0)),
+    ?assertEqual(element(4, A), element(3, O0)),
 
-  {P3, ok} = thrift_protocol:write(P2, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
-  {_P4, {ok, O1}} = thrift_protocol:read(P3, {struct, {thrift_omit_without_types, element(1, A)}}),
-  ?assertEqual(element(1, A), element(1, O1)),
-  ?assertEqual(element(2, A), element(2, O1)),
-  ?assertEqual(element(4, A), element(3, O1)),
+    {P3, ok} = thrift_protocol:write(P2, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
+    {_P4, {ok, O1}} = thrift_protocol:read(
+        P3, {struct, {thrift_omit_without_types, element(1, A)}}
+    ),
+    ?assertEqual(element(1, A), element(1, O1)),
+    ?assertEqual(element(2, A), element(2, O1)),
+    ?assertEqual(element(4, A), element(3, O1)),
 
-  ok.
+    ok.
 
 omit_list_test() ->
-  %% In this test, the field that is deleted is a list.
-  A = #test1{one = 1, two = 2, three = 3},
-  B = #test3{one = 1, two = [ A ]},
+    %% In this test, the field that is deleted is a list.
+    A = #test1{one = 1, two = 2, three = 3},
+    B = #test3{one = 1, two = [A]},
 
-  {ok, Transport} = thrift_membuffer_transport:new(),
-  {ok, P0} = thrift_binary_protocol:new(Transport),
+    {ok, Transport} = thrift_membuffer_transport:new(),
+    {ok, P0} = thrift_binary_protocol:new(Transport),
 
-  {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
-  {_P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, B)}}),
-  ?assertEqual(element(2, B), element(2, O0)),
+    {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
+    {_P2, {ok, O0}} = thrift_protocol:read(
+        P1, {struct, {thrift_omit_without_types, element(1, B)}}
+    ),
+    ?assertEqual(element(2, B), element(2, O0)),
 
-  ok.
+    ok.
 
 omit_map_test() ->
-  %% In this test, the field that is deleted is a map.
-  A = #test1{one = 1, two = 2, three = 3},
-  B = #test4{one = 1, two = dict:from_list([ {2, A} ])},
+    %% In this test, the field that is deleted is a map.
+    A = #test1{one = 1, two = 2, three = 3},
+    B = #test4{one = 1, two = dict:from_list([{2, A}])},
 
-  {ok, Transport} = thrift_membuffer_transport:new(),
-  {ok, P0} = thrift_binary_protocol:new(Transport),
+    {ok, Transport} = thrift_membuffer_transport:new(),
+    {ok, P0} = thrift_binary_protocol:new(Transport),
 
-  {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
-  {_P2, {ok, O0}} = thrift_protocol:read(P1, {struct, {thrift_omit_without_types, element(1, B)}}),
-  ?assertEqual(element(2, B), element(2, O0)),
+    {P1, ok} = thrift_protocol:write(P0, {{struct, {thrift_omit_with_types, element(1, B)}}, B}),
+    {_P2, {ok, O0}} = thrift_protocol:read(
+        P1, {struct, {thrift_omit_without_types, element(1, B)}}
+    ),
+    ?assertEqual(element(2, B), element(2, O0)),
 
-  ok.
+    ok.
 
--endif. %% TEST
+%% TEST
+-endif.

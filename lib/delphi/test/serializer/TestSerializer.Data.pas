@@ -23,7 +23,12 @@ interface
 
 uses
   SysUtils,
+  ActiveX,
+  ComObj,
+  Thrift.Protocol,
   Thrift.Collections,
+  test.ExceptionStruct,
+  test.SimpleException,
   DebugProtoTest;
 
 
@@ -34,6 +39,8 @@ type
     class function CreateNesting : INesting;
     class function CreateHolyMoley : IHolyMoley;
     class function CreateCompactProtoTestStruct : ICompactProtoTestStruct;
+    class function CreateBatchGetResponse : IBatchGetResponse;
+    class function CreateSimpleException : IError;
 
   // These byte arrays are serialized versions of the above structs.
   // They were serialized in binary protocol using thrift 0.6.x and are used to
@@ -192,8 +199,12 @@ begin
   // !!
   result.setZomg_unicode( UnicodeString( us));
 
+  result.Rfc4122_uuid := TGuid.Create('{00112233-4455-6677-8899-aabbccddeeff}');
+
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.SetBase64( TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes('base64')));
   {$ELSE}
   result.SetBase64( TEncoding.UTF8.GetBytes('base64'));
   {$IFEND}
@@ -206,7 +217,7 @@ class function Fixtures.CreateNesting : INesting;
 var bonk : IBonk;
 begin
   bonk := TBonkImpl.Create;
-  bonk.Type_   := 31337;
+  bonk.&Type   := 31337;
   bonk.Message := 'I am a bonk... xor!';
 
   result := TNestingImpl.Create;
@@ -216,8 +227,10 @@ end;
 
 
 class function Fixtures.CreateHolyMoley : IHolyMoley;
+type
+  TStringType = {$IF cDebugProtoTest_Option_COM_Types} WideString {$ELSE} String {$IFEND};
 var big : IThriftList<IOneOfEach>;
-    stage1 : IThriftList<String>;
+    stage1 : IThriftList<TStringType>;
     stage2 : IThriftList<IBonk>;
     b      : IBonk;
 begin
@@ -230,34 +243,34 @@ begin
   result.Big[0].setA_bite( $22);
   result.Big[0].setA_bite( $23);
 
-  result.Contain := THashSetImpl< IThriftList<string>>.Create;
-  stage1 := TThriftListImpl<String>.Create;
+  result.Contain := TThriftHashSetImpl< IThriftList<TStringType>>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'and a one');
   stage1.add( 'and a two');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'then a one, two');
   stage1.add( 'three!');
   stage1.add( 'FOUR!!');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   result.Contain.add( stage1);
 
   stage2 := TThriftListImpl<IBonk>.Create;
-  result.Bonks := TThriftDictionaryImpl< String, IThriftList< IBonk>>.Create;
+  result.Bonks := TThriftDictionaryImpl< TStringType, IThriftList< IBonk>>.Create;
   // one empty
   result.Bonks.Add( 'zero', stage2);
 
   // one with two
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 1;
+  b.&type := 1;
   b.message := 'Wait.';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 2;
+  b.&type := 2;
   b.message := 'What?';
   stage2.Add( b);
   result.Bonks.Add( 'two', stage2);
@@ -265,15 +278,15 @@ begin
   // one with three
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 3;
+  b.&type := 3;
   b.message := 'quoth';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 4;
+  b.&type := 4;
   b.message := 'the raven';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 5;
+  b.&type := 5;
   b.message := 'nevermore';
   stage2.Add( b);
   result.bonks.Add( 'three', stage2);
@@ -342,12 +355,59 @@ begin
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.A_binary := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8));
   {$ELSE}
   result.A_binary := TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8);
   {$IFEND}
 end;
 
 
+class function Fixtures.CreateBatchGetResponse : IBatchGetResponse;
+var
+  data : IGetRequest;
+  error : ISomeException;
+const
+  REQUEST_ID = '123';
+begin
+  data := TGetRequestImpl.Create;
+  data.Id := REQUEST_ID;
+  data.Data := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8));
+
+  error := TSomeExceptionImpl.Create;
+  error.Error := TErrorCode.GenericError;
+
+  result := TBatchGetResponseImpl.Create;
+  result.Responses := TThriftDictionaryImpl<WideString, IGetRequest>.Create;
+  result.Responses.Add( REQUEST_ID, data);
+  result.Errors := TThriftDictionaryImpl<WideString, ISomeException>.Create;
+  result.Errors.Add( REQUEST_ID, error);
+end;
+
+
+class function Fixtures.CreateSimpleException : IError;
+var i : Integer;
+    inner : IError;
+    guid : TGuid;
+const
+  IDL_GUID_VALUE : TGuid = '{00000000-4444-CCCC-ffff-0123456789ab}';
+begin
+  result := nil;
+  for i := 0 to 4 do begin
+    inner := result;
+    result := TErrorImpl.Create;
+
+    // validate const values set in IDL
+    ASSERT( result.ErrorCode = 42);  // IDL default value
+    ASSERT( IsEqualGUID( result.ExceptionData, IDL_GUID_VALUE));
+
+    // set fresh, but reproducible values
+    FillChar( guid, SizeOf(guid), i);
+    result.ErrorCode := i;
+    result.ExceptionData := guid;
+    result.InnerException := inner;
+  end;
+end;
 
 
 end.

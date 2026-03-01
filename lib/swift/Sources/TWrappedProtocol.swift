@@ -101,6 +101,10 @@ open class TWrappedProtocol<Protocol: TProtocol> : TProtocol {
     return try concreteProtocol.read()
   }
   
+  public func read() throws -> Int8 {
+    return try concreteProtocol.read()
+  }
+    
   public func read() throws -> Int16 {
     return try concreteProtocol.read()
   }
@@ -118,6 +122,10 @@ open class TWrappedProtocol<Protocol: TProtocol> : TProtocol {
   }
   
   public func read() throws -> Data {
+    return try concreteProtocol.read()
+  }
+    
+  public func read() throws -> UUID {
     return try concreteProtocol.read()
   }
   
@@ -185,6 +193,10 @@ open class TWrappedProtocol<Protocol: TProtocol> : TProtocol {
   public func write(_ value: UInt8) throws {
     try concreteProtocol.write(value)
   }
+  
+  public func write(_ value: Int8) throws {
+    try concreteProtocol.write(value)
+  }
 
   public func write(_ value: Int16) throws {
     try concreteProtocol.write(value)
@@ -204,5 +216,9 @@ open class TWrappedProtocol<Protocol: TProtocol> : TProtocol {
 
   public func write(_ data: Data) throws {
     try concreteProtocol.write(data)
+  }
+    
+  public func write(_ value: UUID) throws {
+    try concreteProtocol.write(value)
   }
 }

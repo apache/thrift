@@ -192,6 +192,9 @@ TESTS = $(addprefix unittest/debug/, $(d_test_modules)) \
 precross: all-local
 	$(MAKE) -C test precross
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	src \
 	test \

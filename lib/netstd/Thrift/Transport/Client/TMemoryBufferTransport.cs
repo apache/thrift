@@ -115,7 +115,7 @@ namespace Thrift.Transport.Client
                 throw new ArgumentException("Cannot seek outside of the valid range",nameof(origin));
             Position = newPos;
 
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
             CountConsumedMessageBytes(Position);
         }
 
@@ -145,7 +145,7 @@ namespace Thrift.Transport.Client
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ResetConsumedMessageSize();
+            ResetMessageSizeAndConsumedBytes();
             return Task.CompletedTask;
         }
 

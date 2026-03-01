@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -22,6 +22,8 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Thrift.Collections;
 
+#pragma warning disable IDE0063  // simplify using 
+
 namespace Thrift.Tests.Collections
 {
     // ReSharper disable once InconsistentNaming
@@ -33,7 +35,7 @@ namespace Thrift.Tests.Collections
         {
             const int value = 1;
 
-            var hashSet = new THashSet<int> {value};
+            var hashSet = new HashSet<int> {value};
             
             Assert.IsTrue(hashSet.Contains(value));
 

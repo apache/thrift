@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -36,7 +37,7 @@ using Thrift.Transport.Server;
 
 #pragma warning disable IDE0063  // using can be simplified, we don't
 #pragma warning disable IDE0057  // substr can be simplified, we don't
-#pragma warning disable CS1998   // await missing
+#pragma warning disable IDE0130  // unexpected folder structure
 
 namespace ThriftTest
 {
@@ -83,12 +84,12 @@ namespace ThriftTest
             {
                 if (args[i].StartsWith("--pipe="))
                 {
-                    pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                    pipe = args[i].Substring(args[i].IndexOf('=') + 1);
                     transport = TransportChoice.NamedPipe;
                 }
                 else if (args[i].StartsWith("--port="))
                 {
-                    port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                    port = int.Parse(args[i].Substring(args[i].IndexOf('=') + 1));
                     if(transport != TransportChoice.TlsSocket)
                         transport = TransportChoice.Socket;
                 }
@@ -163,9 +164,8 @@ namespace ThriftTest
 
     public class TestServer
     {
-        #pragma warning disable CA2211
-        public static int _clientID = -1;  // use with Interlocked only!
-        #pragma warning restore CA2211
+        private static int _clientID = -1;  // use with Interlocked only!
+        public static int ClientID => Interlocked.Add(ref _clientID, 0);
 
         private static readonly TConfiguration Configuration = new(); 
 
@@ -181,10 +181,10 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public async Task<object?> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
+            public Task<object?> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
             {
                 callCount++;
-                return null;
+                return Task.FromResult<object?>(null);
             }
 
             public Task DeleteContextAsync(object serverContext, TProtocol input, TProtocol output, CancellationToken cancellationToken)
@@ -204,7 +204,6 @@ namespace ThriftTest
         {
             //public TServer Server { get; set; }
             private readonly int handlerID;
-            private readonly StringBuilder sb = new();
             private readonly TestLogDelegate logger;
 
             public TestHandlerAsync()
@@ -216,11 +215,12 @@ namespace ThriftTest
 
             public void TestConsoleLogger(string msg, params object[] values)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.AppendFormat("handler{0:D3}:", handlerID);
                 sb.AppendFormat(msg, values);
                 sb.AppendLine();
-                Console.Write(sb.ToString());
+                lock (typeof(Console))
+                    Console.Write(sb.ToString());
             }
 
             public Task testVoid(CancellationToken cancellationToken)
@@ -229,10 +229,10 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public Task<string> testString(string thing, CancellationToken cancellationToken)
+            public Task<string> testString(string? thing, CancellationToken cancellationToken)
             {
-                logger.Invoke("testString({0})", thing);
-                return Task.FromResult(thing);
+                logger.Invoke("testString({0})", thing ?? "<null>");
+                return Task.FromResult(thing ?? string.Empty);
             }
 
             public Task<bool> testBool(bool thing, CancellationToken cancellationToken)
@@ -265,117 +265,135 @@ namespace ThriftTest
                 return Task.FromResult(thing);
             }
 
-            public Task<byte[]> testBinary(byte[] thing, CancellationToken cancellationToken)
+            public Task<byte[]> testBinary(byte[]? thing, CancellationToken cancellationToken)
             {
-                logger.Invoke("testBinary({0} bytes)", thing.Length);
+                logger.Invoke("testBinary({0} bytes)", thing?.Length ?? 0);
+                return Task.FromResult(thing ?? []);
+            }
+
+            public Task<Guid> testUuid(Guid thing, CancellationToken cancellationToken)
+            {
+                logger.Invoke("testUuid({0})", thing.ToString("B"));
                 return Task.FromResult(thing);
             }
 
-            public Task<Xtruct> testStruct(Xtruct thing, CancellationToken cancellationToken)
+            public Task<Xtruct> testStruct(Xtruct? thing, CancellationToken cancellationToken)
             {
-                logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
-                return Task.FromResult(thing);
+                logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing?.String_thing ?? "<null>", thing?.Byte_thing ?? 0, thing?.I32_thing ?? 0, thing?.I64_thing ?? 0);
+                return Task.FromResult(thing ?? new Xtruct());   // null returns are not allowed in Thrift
             }
 
-            public Task<Xtruct2> testNest(Xtruct2 nest, CancellationToken cancellationToken)
+            public Task<Xtruct2> testNest(Xtruct2? nest, CancellationToken cancellationToken)
             {
-                var thing = nest.Struct_thing;
+                var thing = nest?.Struct_thing;
                 logger.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
-                    nest.Byte_thing,
-                    thing.String_thing,
-                    thing.Byte_thing,
-                    thing.I32_thing,
-                    thing.I64_thing,
-                    nest.I32_thing);
-                return Task.FromResult(nest);
+                    nest?.Byte_thing ?? 0,
+                    thing?.String_thing ?? "<null>",
+                    thing?.Byte_thing ?? 0,
+                    thing?.I32_thing ?? 0,
+                    thing?.I64_thing ?? 0,
+                    nest?.I32_thing ?? 0);
+                return Task.FromResult(nest ?? new Xtruct2());   // null returns are not allowed in Thrift
             }
 
-            public Task<Dictionary<int, int>> testMap(Dictionary<int, int> thing, CancellationToken cancellationToken)
+            public Task<Dictionary<int, int>> testMap(Dictionary<int, int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testMap({{");
-                var first = true;
-                foreach (var key in thing.Keys)
+                if (thing != null)
                 {
-                    if (first)
+                    var first = true;
+                    foreach (var key in thing.Keys)
                     {
-                        first = false;
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.AppendFormat("{0} => {1}", key, thing[key]);
                     }
-                    else
-                    {
-                        sb.Append(", ");
-                    }
-                    sb.AppendFormat("{0} => {1}", key, thing[key]);
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing);
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
-            public Task<Dictionary<string, string>> testStringMap(Dictionary<string, string> thing, CancellationToken cancellationToken)
+            public Task<Dictionary<string, string>> testStringMap(Dictionary<string, string>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testStringMap({{");
-                var first = true;
-                foreach (var key in thing.Keys)
+                if (thing != null)
                 {
-                    if (first)
+                    var first = true;
+                    foreach (var key in thing.Keys)
                     {
-                        first = false;
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.AppendFormat("{0} => {1}", key, thing[key]);
                     }
-                    else
-                    {
-                        sb.Append(", ");
-                    }
-                    sb.AppendFormat("{0} => {1}", key, thing[key]);
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing);
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
-            public Task<THashSet<int>> testSet(THashSet<int> thing, CancellationToken cancellationToken)
+            public Task<HashSet<int>> testSet(HashSet<int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testSet({{");
-                var first = true;
-                foreach (int elem in thing)
+                if (thing != null)
                 {
-                    if (first)
+                    var first = true;
+                    foreach (int elem in thing)
                     {
-                        first = false;
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.AppendFormat("{0}", elem);
                     }
-                    else
-                    {
-                        sb.Append(", ");
-                    }
-                    sb.AppendFormat("{0}", elem);
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing);
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
-            public Task<List<int>> testList(List<int> thing, CancellationToken cancellationToken)
+            public Task<List<int>> testList(List<int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testList({{");
-                var first = true;
-                foreach (var elem in thing)
+                if (thing != null)
                 {
-                    if (first)
+                    var first = true;
+                    foreach (var elem in thing)
                     {
-                        first = false;
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            sb.Append(", ");
+                        }
+                        sb.AppendFormat("{0}", elem);
                     }
-                    else
-                    {
-                        sb.Append(", ");
-                    }
-                    sb.AppendFormat("{0}", elem);
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing);
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
             public Task<Numberz> testEnum(Numberz thing, CancellationToken cancellationToken)
@@ -409,7 +427,7 @@ namespace ThriftTest
                 return Task.FromResult(mapmap);
             }
 
-            public Task<Dictionary<long, Dictionary<Numberz, Insanity>>> testInsanity(Insanity argument, CancellationToken cancellationToken)
+            public Task<Dictionary<long, Dictionary<Numberz, Insanity>>> testInsanity(Insanity? argument, CancellationToken cancellationToken)
             {
                 logger.Invoke("testInsanity()");
 
@@ -428,8 +446,9 @@ namespace ThriftTest
                 var first_map = new Dictionary<Numberz, Insanity>();
                 var second_map = new Dictionary<Numberz, Insanity>(); ;
 
-                first_map[Numberz.TWO] = argument;
-                first_map[Numberz.THREE] = argument;
+                // null dict keys/values are not allowed in Thrift
+                first_map[Numberz.TWO] = argument ?? new Insanity();
+                first_map[Numberz.THREE] = argument ?? new Insanity();
 
                 second_map[Numberz.SIX] = new Insanity();
 
@@ -442,7 +461,7 @@ namespace ThriftTest
                 return Task.FromResult(insane);
             }
 
-            public Task<Xtruct> testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5,
+            public Task<Xtruct> testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string>? arg3, Numberz arg4, long arg5,
                 CancellationToken cancellationToken)
             {
                 logger.Invoke("testMulti()");
@@ -455,9 +474,9 @@ namespace ThriftTest
                 return Task.FromResult(hello);
             }
 
-            public Task testException(string arg, CancellationToken cancellationToken)
+            public Task testException(string? arg, CancellationToken cancellationToken)
             {
-                logger.Invoke("testException({0})", arg);
+                logger.Invoke("testException({0})", arg ?? "<null>");
                 if (arg == "Xception")
                 {
                     var x = new Xception
@@ -474,9 +493,9 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public Task<Xtruct> testMultiException(string arg0, string arg1, CancellationToken cancellationToken)
+            public Task<Xtruct> testMultiException(string? arg0, string? arg1, CancellationToken cancellationToken)
             {
-                logger.Invoke("testMultiException({0}, {1})", arg0, arg1);
+                logger.Invoke("testMultiException({0}, {1})", arg0 ?? "<null>", arg1 ?? "<null>");
                 if (arg0 == "Xception")
                 {
                     var x = new Xception
@@ -536,9 +555,10 @@ namespace ThriftTest
             {
                 throw new FileNotFoundException($"Cannot find file: {serverCertName}");
             }
-                                    
-            var cert = new X509Certificate2(existingPath, "thrift");
-                        
+
+            //var cert = new X509Certificate2(existingPath, "thrift");
+            var cert = X509CertificateLoader.LoadPkcs12FromFile(existingPath, "thrift");
+
             return cert;
         }
 
@@ -560,7 +580,7 @@ namespace ThriftTest
                     {
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Error while  parsing arguments");
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
                         return 1;
                     }
 
@@ -571,7 +591,8 @@ namespace ThriftTest
                     {
                         case TransportChoice.NamedPipe:
                             Debug.Assert(param.pipe != null);
-                            trans = new TNamedPipeServerTransport(param.pipe, Configuration, NamedPipeClientFlags.OnlyLocalClients);
+                            var numListen = (param.server == ServerChoice.Simple) ? 1 : 16;
+                            trans = new TNamedPipeServerTransport(param.pipe, Configuration, NamedPipeServerFlags.OnlyLocalClients, numListen);
                             break;
 
 
@@ -586,7 +607,7 @@ namespace ThriftTest
                             trans = new TTlsServerSocketTransport(param.port, Configuration,
                                 cert,
                                 (sender, certificate, chain, errors) => true,
-                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                                null);
                             break;
 
                         case TransportChoice.Socket:

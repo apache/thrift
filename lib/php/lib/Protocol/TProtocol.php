@@ -181,7 +181,7 @@ abstract class TProtocol
      * The skip function is a utility to parse over unrecognized date without
      * causing corruption.
      *
-     * @param TType $type What type is it
+     * @param int $type What type is it (defined in TType::class)
      */
     public function skip($type)
     {

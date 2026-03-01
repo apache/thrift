@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
@@ -149,12 +152,17 @@ void cleanupOpenSSL() {
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE)
   ENGINE_cleanup();             // https://www.openssl.org/docs/man1.1.0/crypto/ENGINE_cleanup.html - cleanup call is needed before 1.1.0
 #endif
+#if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
   CONF_modules_unload(1);
+#endif
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
 #if OPENSSL_VERSION_NUMBER >= 0x10100000
+  // Do nothing unless an openssl derivative is detected
+#  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
   // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
   OPENSSL_thread_stop();
+#  endif
 #else
   // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
   // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
@@ -378,21 +386,24 @@ void TSSLSocket::close() {
       if (rc < 0) {
         string errors;
         buildErrors(errors, errno_copy, error);
-        GlobalOutput(("SSL_shutdown: " + errors).c_str());
+        TOutput::instance()(("SSL_shutdown: " + errors).c_str());
       }
     } catch (TTransportException& te) {
       // Don't emit an exception because this method is called by the
       // destructor. There's also not much that a user can do to recover, so
       // just clean up as much as possible without throwing, similar to the rc
       // < 0 case above.
-      GlobalOutput.printf("SSL_shutdown: %s", te.what());
+      TOutput::instance().printf("SSL_shutdown: %s", te.what());
     }
     SSL_free(ssl_);
     ssl_ = nullptr;
     handshakeCompleted_ = false;
 #if OPENSSL_VERSION_NUMBER >= 0x10100000
+    // Do nothing unless an openssl derivative is detected
+#  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
     // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
     OPENSSL_thread_stop();
+#  endif
 #else
     // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
     // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
@@ -598,7 +609,7 @@ void TSSLSocket::initializeHandshakeParams() {
   int flags;
   if ((flags = THRIFT_FCNTL(socket_, THRIFT_F_GETFL, 0)) < 0
       || THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags | THRIFT_O_NONBLOCK) < 0) {
-    GlobalOutput.perror("thriftServerEventHandler: set THRIFT_O_NONBLOCK (THRIFT_FCNTL) ",
+    TOutput::instance().perror("thriftServerEventHandler: set THRIFT_O_NONBLOCK (THRIFT_FCNTL) ",
                         THRIFT_GET_SOCKET_ERROR);
     ::THRIFT_CLOSESOCKET(socket_);
     return;
@@ -700,7 +711,7 @@ void TSSLSocket::initializeHandshake() {
 }
 
 void TSSLSocket::authorize() {
-  int rc = SSL_get_verify_result(ssl_);
+  long rc = SSL_get_verify_result(ssl_);
   if (rc != X509_V_OK) { // verify authentication result
     throw TSSLException(string("SSL_get_verify_result(), ") + X509_verify_cert_error_string(rc));
   }
@@ -822,7 +833,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
     throw TSSLException("SSL_get_?bio returned nullptr");
   }
 
-  if (BIO_get_fd(bio, &fdSocket) <= 0) {
+  if (BIO_get_fd(bio, &fdSocket) < 0) {
     throw TSSLException("BIO_get_fd failed");
   }
 
@@ -854,7 +865,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
       return TSSL_EINTR; // repeat operation
     }
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TSSLSocket::read THRIFT_POLL() ", errno_copy);
+    TOutput::instance().perror("TSSLSocket::read THRIFT_POLL() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
   } else if (ret > 0){
     if (fds[1].revents & THRIFT_POLLIN) {
@@ -870,11 +881,13 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex TSSLSocketFactory::mutex_;
 bool TSSLSocketFactory::manualOpenSSLInitialization_ = false;
+bool TSSLSocketFactory::didWeInitializeOpenSSL_ = false;
 
 TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
     if (!manualOpenSSLInitialization_) {
+      didWeInitializeOpenSSL_ = true;
       initializeOpenSSL();
     }
     randomize();
@@ -887,8 +900,9 @@ TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
   ctx_.reset();
   count_--;
-  if (count_ == 0 && !manualOpenSSLInitialization_) {
+  if (count_ == 0 && didWeInitializeOpenSSL_) {
     cleanupOpenSSL();
+    didWeInitializeOpenSSL_ = false;
   }
 }
 
@@ -1118,6 +1132,10 @@ int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* dat
   strncpy(password, userPassword.c_str(), length);
   userPassword.assign(userPassword.size(), '*');
   return length;
+}
+
+void TSSLSocketFactory::setManualOpenSSLInitialization(bool manualOpenSSLInitialization) {
+  manualOpenSSLInitialization_ = manualOpenSSLInitialization;
 }
 
 // extract error messages from error queue

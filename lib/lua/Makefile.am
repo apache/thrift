@@ -57,6 +57,9 @@ liblualongnumber_la_CPPFLAGS = $(AM_CPPFLAGS) $(LUA_INCLUDE) -DLUA_COMPAT_MODULE
 liblualongnumber_la_LDFLAGS = $(AM_LDFLAGS)
 liblualongnumber_la_LIBADD = $(LUA_LIB) -lm
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 		coding_standards.md \
 		TBinaryProtocol.lua \

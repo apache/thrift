@@ -164,7 +164,7 @@ thrift_transport_checkReadBytesAvailable(ThriftTransport *transport, glong numBy
 {
   gboolean boolean = TRUE;
   ThriftTransport *tt = THRIFT_TRANSPORT (transport);
-  if(tt->remainingMessageSize_ < numBytes)
+  if(tt->remainingMessageSize_ < numBytes || numBytes < 0)
   {
     g_set_error(error,
                 THRIFT_TRANSPORT_ERROR,

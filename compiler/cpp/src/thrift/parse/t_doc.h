@@ -47,6 +47,8 @@ public:
 
   bool has_doc() { return has_doc_; }
 
+  virtual void validate() const { ; }
+
 private:
   std::string doc_;
   bool has_doc_;

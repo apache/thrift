@@ -28,4 +28,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0066", Justification = "compatibility", Scope = "module")]
 [assembly: SuppressMessage("Style", "IDE0090", Justification = "compatibility", Scope = "module")]
 [assembly: SuppressMessage("Style", "IDE0063", Justification = "compatibility", Scope = "module")]
+[assembly: SuppressMessage("Style", "IDE0130", Justification = "compatibility", Scope = "module")]
+[assembly: SuppressMessage("Style", "IDE0290", Justification = "compatibility", Scope = "module")]
+[assembly: SuppressMessage("Style", "CS0114", Justification = "known issue, see JIRA ticket", Scope = "module")]
 

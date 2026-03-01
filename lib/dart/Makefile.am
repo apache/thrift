@@ -17,6 +17,9 @@
 # under the License.
 #
 
+# Dart build command
+DARTPUB = dart pub
+
 all-local:
 	$(DARTPUB) get
 
@@ -27,6 +30,9 @@ clean-local:
 	find . -type d -name "packages" | xargs $(RM) -r
 
 check-local: all
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 dist-hook:
 	$(RM) -r $(distdir)/.pub

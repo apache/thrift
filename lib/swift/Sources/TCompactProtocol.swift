@@ -34,6 +34,7 @@ public enum TCType: UInt8 {
   case set           = 0x0A
   case map           = 0x0B
   case `struct`      = 0x0C
+  case uuid          = 0x0D
   
   public static let typeMask: UInt8 = 0xE0 // 1110 0000
   public static let typeBits: UInt8 = 0x07 // 0000 0111
@@ -188,6 +189,7 @@ public class TCompactProtocol: TProtocol {
     case .set: return .set;
     case .map: return .map;
     case .struct: return .struct;
+    case .uuid: return .uuid;
     }
   }
   
@@ -206,8 +208,7 @@ public class TCompactProtocol: TProtocol {
     case .map:    return .map
     case .set:    return .set
     case .list:   return .list
-    case .utf8:   return .binary
-    case .utf16:  return .binary
+    case .uuid:   return .uuid
     }
   }
   
@@ -261,7 +262,8 @@ public class TCompactProtocol: TProtocol {
     guard let mtype = TMessageType(rawValue: Int32(type)) else {
       throw TProtocolError(message: "Unknown TMessageType value: \(type)")
     }
-    let sequenceId = try readVarint32()
+    let varint = zigZagToi32(try readVarint32())
+    let sequenceId = Int32(varint)
     let name: String = try read()
     
     return (name, mtype, Int32(sequenceId))
@@ -351,6 +353,16 @@ public class TCompactProtocol: TProtocol {
     return buff
   }
   
+  public func read() throws -> Int8 {
+    var buff = Data()
+    try ProtocolTransportTry(error: TProtocolError(message: "Transport Read Failed")) {
+      buff = try self.transport.readAll(size: 1)
+    }
+    return buff.withUnsafeBytes { pntr in
+      return pntr.load(as: Int8.self)
+    }
+  }
+  
   public func read() throws -> Int16 {
     let v = try readVarint32()
     return Int16(zigZagToi32(v))
@@ -379,6 +391,20 @@ public class TCompactProtocol: TProtocol {
   public func read() throws -> Data {
     let length = try readVarint32()
     return try readBinary(Int(length))
+  }
+  
+  public func read() throws -> UUID {
+    let data = try self.transport.readAll(size: 16)
+    let lsb = data[0..<data.count/2]
+    let msb = data[(data.count/2)..<data.count]
+    
+    var id = UUID().uuid
+    withUnsafeMutableBytes(of: &id) { pntr in
+      var copyData = msb
+      copyData.append(lsb)
+      copyData.copyBytes(to: pntr)
+    }
+    return UUID(uuid: id)
   }
   
   public func readMapBegin() throws -> (TType, TType, Int32) {
@@ -423,7 +449,7 @@ public class TCompactProtocol: TProtocol {
                           (UInt8((UInt32(messageType.rawValue) << UInt32(TCType.typeShiftAmount))) &
                           TCType.typeMask)
     try writebyteDirect(nextByte)
-    try writeVarint32(UInt32(sequenceID))
+    try writeVarint32(i32ToZigZag(sequenceID))
     try write(name)
     
     currentMessageName = name
@@ -536,7 +562,15 @@ public class TCompactProtocol: TProtocol {
   public func write(_ value: UInt8) throws {
     try writebyteDirect(value)
   }
-
+  
+  public func write(_ value: Int8) throws {
+    var value = value
+    let buff = Data(bytes: &value, count: MemoryLayout<Int8>.size(ofValue: value))
+    try ProtocolTransportTry(error: TProtocolError(message: "Transport write failed")) {
+      try self.transport.write(data: buff)
+    }
+  }
+  
   public func write(_ value: Int16) throws {
     try writeVarint32(i32ToZigZag(Int32(value)))
   }
@@ -564,5 +598,19 @@ public class TCompactProtocol: TProtocol {
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Write Failed")) {
       try self.transport.write(data: data)
     }
+  }
+  
+  public func write(_ value: UUID) throws {
+    let data = withUnsafePointer(to: value.uuid) {
+      Data(bytes: $0, count: MemoryLayout.size(ofValue: value.uuid))
+    }
+    let msb = data[0..<data.count/2]
+    let lsb = data[(data.count/2)..<data.count]
+    
+    var buff = Data()
+    buff.append(lsb)
+    buff.append(msb)
+    
+    try self.transport.write(data: buff)
   }
 }

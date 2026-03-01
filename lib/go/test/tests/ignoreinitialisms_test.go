@@ -27,8 +27,7 @@ import (
 )
 
 func TestIgnoreInitialismsFlagIsHonoured(t *testing.T) {
-	s := ignoreinitialismstest.IgnoreInitialismsTest{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[ignoreinitialismstest.IgnoreInitialismsTest]()
 	_, ok := st.FieldByName("Id")
 	if !ok {
 		t.Error("Id attribute is missing!")

@@ -27,8 +27,7 @@ import (
 )
 
 func TestDefaultTag(t *testing.T) {
-	s := gotagtest.Tagged{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[gotagtest.Tagged]()
 	field, ok := st.FieldByName("StringThing")
 	if !ok || field.Tag.Get("json") != "string_thing" {
 		t.Error("Unexpected default tag value")
@@ -36,8 +35,7 @@ func TestDefaultTag(t *testing.T) {
 }
 
 func TestCustomTag(t *testing.T) {
-	s := gotagtest.Tagged{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[gotagtest.Tagged]()
 	field, ok := st.FieldByName("IntThing")
 	if !ok {
 		t.Error("Missing field IntThing")
@@ -53,8 +51,7 @@ func TestCustomTag(t *testing.T) {
 }
 
 func TestOptionalTag(t *testing.T) {
-	s := gotagtest.Tagged{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[gotagtest.Tagged]()
 	field, ok := st.FieldByName("OptionalIntThing")
 	if !ok || field.Tag.Get("json") != "optional_int_thing,omitempty" {
 		t.Error("Unexpected default tag value for optional field")
@@ -62,8 +59,7 @@ func TestOptionalTag(t *testing.T) {
 }
 
 func TestOptionalTagWithDefaultValue(t *testing.T) {
-	s := gotagtest.Tagged{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[gotagtest.Tagged]()
 	field, ok := st.FieldByName("OptionalBoolThing")
 	if !ok || field.Tag.Get("json") != "optional_bool_thing" {
 		t.Error("Unexpected default tag value for optional field that has a default value")

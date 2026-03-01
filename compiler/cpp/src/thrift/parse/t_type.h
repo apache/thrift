@@ -20,11 +20,13 @@
 #ifndef T_TYPE_H
 #define T_TYPE_H
 
-#include <string>
-#include <map>
-#include <cstring>
-#include <stdint.h>
 #include "thrift/parse/t_doc.h"
+#include <cstring>
+#include <map>
+#include <stdint.h>
+#include <string>
+
+#define ALLOW_EXCEPTIONS_AS_TYPE
 
 class t_program;
 
@@ -47,12 +49,14 @@ public:
   virtual bool is_void() const { return false; }
   virtual bool is_base_type() const { return false; }
   virtual bool is_string() const { return false; }
+  virtual bool is_uuid() const { return false; }
   virtual bool is_binary() const { return false; }
   virtual bool is_bool() const { return false; }
   virtual bool is_typedef() const { return false; }
   virtual bool is_enum() const { return false; }
   virtual bool is_struct() const { return false; }
   virtual bool is_xception() const { return false; }
+  virtual bool is_method_xcepts() const { return false; }
   virtual bool is_container() const { return false; }
   virtual bool is_list() const { return false; }
   virtual bool is_set() const { return false; }
@@ -82,7 +86,7 @@ public:
     return rv;
   }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 protected:
   t_type() : program_(nullptr) { ; }

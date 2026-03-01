@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 // Naming testcases, sepcifically for these tickets (but not limited to them)
 // THRIFT-2508 Uncompileable C# code due to language keywords in IDL
 // THRIFT-2557 error CS0542 member names cannot be the same as their enclosing type
@@ -97,6 +116,20 @@ exception Problem_ {
   2: bool Problem
 }
 
+struct Thrift5626 {
+   1: i8       i8
+   2: i16      i16
+   3: i32      i32
+   4: i64      i64
+   5: uuid     uuid
+   6: string   string
+   7: binary   binary
+   8: bool     bool
+   9: byte     byte
+  10: list<string>        list
+  11: set<string>         set
+  12: map<string,string>  map
+}
 
 service extern {
     delegate event(1: partial get)

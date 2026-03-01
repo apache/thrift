@@ -20,6 +20,7 @@
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
+#include "protocol.h"
 #include "strlcpy.h"
 
 VALUE thrift_union_class;
@@ -72,6 +73,11 @@ VALUE default_write_double(VALUE protocol, VALUE value) {
 
 VALUE default_write_string(VALUE protocol, VALUE value) {
   rb_funcall(protocol, write_string_method_id, 1, value);
+  return Qnil;
+}
+
+VALUE default_write_uuid(VALUE protocol, VALUE value) {
+  rb_funcall(protocol, write_uuid_method_id, 1, value);
   return Qnil;
 }
 
@@ -195,6 +201,10 @@ VALUE default_read_string(VALUE protocol) {
   return rb_funcall(protocol, read_string_method_id, 0);
 }
 
+VALUE default_read_uuid(VALUE protocol) {
+  return rb_funcall(protocol, read_uuid_method_id, 0);
+}
+
 VALUE default_read_binary(VALUE protocol) {
   return rb_funcall(protocol, read_binary_method_id, 0);
 }
@@ -225,7 +235,7 @@ VALUE get_field_value(VALUE obj, VALUE field_name) {
 }
 
 static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol) {
-  int sz, i;
+  long sz, i;
 
   if (ttype == TTYPE_MAP) {
     VALUE keys;
@@ -342,6 +352,8 @@ static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_i
     } else {
       default_write_binary(protocol, value);
     }
+  } else if (ttype == TTYPE_UUID) {
+    default_write_uuid(protocol, value);
   } else if (IS_CONTAINER(ttype)) {
     write_container(ttype, field_info, value, protocol);
   } else if (ttype == TTYPE_STRUCT) {
@@ -452,6 +464,8 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     }
   } else if (ttype == TTYPE_DOUBLE) {
     result = default_read_double(protocol);
+  } else if (ttype == TTYPE_UUID) {
+    result = default_read_uuid(protocol);
   } else if (ttype == TTYPE_STRUCT) {
     VALUE klass = rb_hash_aref(field_info, class_sym);
     result = rb_class_new_instance(0, NULL, klass);
@@ -643,7 +657,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   field_type = FIX2INT(field_type_value);
 
   if (field_type != TTYPE_STOP) {
-    rb_raise(rb_eRuntimeError, "too many fields in union!");
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("too many fields in union!")));
   }
 
   // read struct end
@@ -671,7 +685,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE field_info = rb_hash_aref(struct_fields, field_id);
 
   if(NIL_P(field_info)) {
-    rb_raise(rb_eRuntimeError, "set_field is not valid for this union!");
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("set_field is not valid for this union!")));
   }
 
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
@@ -691,7 +705,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
-void Init_struct() {
+void Init_struct(void) {
   VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
 
   rb_define_method(struct_module, "write", rb_thrift_struct_write, 1);

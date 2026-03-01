@@ -19,8 +19,8 @@
 
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-thrift_gen: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen py:tornado ../ThriftTest.thrift
+thrift_gen: ../v0.16/ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen py:tornado ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen py:tornado ../SmallTest.thrift
 
 check: thrift_gen
@@ -31,6 +31,9 @@ clean-local:
 	find . -type f \( -iname "*.pyc" \) | xargs rm -f
 	find . -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
 	$(RM) -r gen-py*/
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 dist-hook:
 	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f

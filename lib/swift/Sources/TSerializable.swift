@@ -61,11 +61,11 @@ extension Int8 : TSerializable {
   public static var thriftType: TType { return .i8 }
 
   public static func read(from proto: TProtocol) throws -> Int8 {
-    return Int8(try proto.read() as UInt8)
+    return try proto.read() as Int8
   }
 
   public func write(to proto: TProtocol) throws {
-    try proto.write(UInt8(self))
+    try proto.write(Int8(self))
   }
 }
 
@@ -125,6 +125,18 @@ extension String : TSerializable {
     return try proto.read()
   }
 
+  public func write(to proto: TProtocol) throws {
+    try proto.write(self)
+  }
+}
+
+extension UUID : TSerializable {
+  public static var thriftType: TType { .uuid }
+  
+  public static func read(from proto: TProtocol) throws -> UUID {
+    return try proto.read()
+  }
+  
   public func write(to proto: TProtocol) throws {
     try proto.write(self)
   }

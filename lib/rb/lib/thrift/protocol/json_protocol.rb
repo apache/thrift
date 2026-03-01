@@ -1,5 +1,5 @@
 # encoding: UTF-8
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -7,18 +7,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
-
-require 'base64'
+#
 
 module Thrift
   class LookaheadReader
@@ -181,6 +179,8 @@ module Thrift
         "set"
       when Types::LIST
         "lst"
+      when Types::UUID
+        "uid"
       else
         raise NotImplementedError
       end
@@ -209,6 +209,8 @@ module Thrift
         result = Types::SET
       elsif (name == "lst")
         result = Types::LIST
+      elsif (name == "uid")
+        result = Types::UUID
       else
         result = Types::STOP
       end
@@ -311,7 +313,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      trans.write(Base64.strict_encode64(str))
+      trans.write([str].pack('m0'))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -477,6 +479,11 @@ module Thrift
       write_json_base64(str)
     end
 
+    def write_uuid(uuid)
+      UUID.validate_uuid!(uuid)
+      write_json_string(uuid.downcase)
+    end
+
     ##
     # Reading functions
     ##
@@ -497,11 +504,7 @@ module Thrift
       str += @reader.read
       str += @reader.read
       str += @reader.read
-      if RUBY_VERSION >= '1.9'
-        str.hex.chr(Encoding::UTF_8)
-      else
-        str.hex.chr
-      end
+      str.hex.chr(Encoding::UTF_8)
     end
 
     # Decodes a JSON string, including unescaping, and returns the string via str
@@ -555,7 +558,7 @@ module Thrift
           str += '='
         end
       end
-      Base64.strict_decode64(str)
+      str.unpack1('m0')
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
@@ -767,6 +770,13 @@ module Thrift
 
     def read_binary
       read_json_base64
+    end
+
+    def read_uuid
+      uuid = read_json_string
+      raise EOFError.new if uuid.length < 36
+      UUID.validate_uuid!(uuid)
+      uuid.tap(&:downcase!)
     end
 
     def to_s

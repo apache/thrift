@@ -379,7 +379,7 @@ void alarm_handler() {
   // Write some data to the transport to hopefully unblock it.
   auto* buf = new uint8_t[info->writeLength];
   memset(buf, 'b', info->writeLength);
-  boost::scoped_array<uint8_t> array(buf);
+  std::unique_ptr<uint8_t[]> array(buf);
   info->transport->write(buf, info->writeLength);
   info->transport->flush();
 
@@ -784,23 +784,23 @@ void test_borrow_none_available() {
  **************************************************************************/
 
 #define ADD_TEST_RW(CoupledTransports, totalSize, ...)                                             \
-  addTestRW<CoupledTransports>(BOOST_STRINGIZE(CoupledTransports), totalSize, ##__VA_ARGS__);
+  addTestRW<CoupledTransports>(BOOST_STRINGIZE(CoupledTransports), totalSize, __VA_ARGS__);
 
 #define TEST_RW(CoupledTransports, totalSize, ...)                                                 \
   do {                                                                                             \
     /* Add the test as specified, to test the non-virtual function calls */                        \
-    ADD_TEST_RW(CoupledTransports, totalSize, ##__VA_ARGS__);                                      \
+    ADD_TEST_RW(CoupledTransports, totalSize, __VA_ARGS__);                                        \
     /*                                                                                             \
      * Also test using the transport as a TTransport*, to test                                     \
      * the read_virt()/write_virt() calls                                                          \
      */                                                                                            \
-    ADD_TEST_RW(CoupledTTransports<CoupledTransports>, totalSize, ##__VA_ARGS__);                  \
+    ADD_TEST_RW(CoupledTTransports<CoupledTransports>, totalSize, __VA_ARGS__);                    \
     /* Test wrapping the transport with TBufferedTransport */                                      \
-    ADD_TEST_RW(CoupledBufferedTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);          \
+    ADD_TEST_RW(CoupledBufferedTransportsT<CoupledTransports>, totalSize, __VA_ARGS__);            \
     /* Test wrapping the transport with TFramedTransports */                                       \
-    ADD_TEST_RW(CoupledFramedTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);            \
+    ADD_TEST_RW(CoupledFramedTransportsT<CoupledTransports>, totalSize, __VA_ARGS__);              \
     /* Test wrapping the transport with TZlibTransport */                                          \
-    ADD_TEST_RW(CoupledZlibTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);              \
+    ADD_TEST_RW(CoupledZlibTransportsT<CoupledTransports>, totalSize, __VA_ARGS__);                \
   } while (0)
 
 #define ADD_TEST_BLOCKING(CoupledTransports)                                                       \

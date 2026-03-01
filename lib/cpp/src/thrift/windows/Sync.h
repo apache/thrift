@@ -29,11 +29,23 @@
 
 // Including Windows.h can conflict with Winsock2 usage, and also
 // adds problematic macros like min() and max(). Try to work around:
+#ifndef NOMINMAX
 #define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
 #undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
 #undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 
 /*
   Lightweight synchronization objects that only make sense on Windows.  For cross-platform
@@ -46,7 +58,7 @@ namespace thrift {
 struct TCriticalSection : apache::thrift::TNonCopyable {
   CRITICAL_SECTION cs;
   TCriticalSection() { InitializeCriticalSection(&cs); }
-  ~TCriticalSection() { DeleteCriticalSection(&cs); }
+  virtual ~TCriticalSection() { DeleteCriticalSection(&cs); }
 };
 
 class TAutoCrit : apache::thrift::TNonCopyable {
@@ -55,7 +67,7 @@ private:
 
 public:
   explicit TAutoCrit(TCriticalSection& cs) : cs_(&cs.cs) { EnterCriticalSection(cs_); }
-  ~TAutoCrit() { LeaveCriticalSection(cs_); }
+  virtual ~TAutoCrit() { LeaveCriticalSection(cs_); }
 };
 
 struct TAutoResetEvent : apache::thrift::TNonCopyable {
@@ -64,11 +76,11 @@ struct TAutoResetEvent : apache::thrift::TNonCopyable {
   TAutoResetEvent() {
     h = CreateEvent(nullptr, FALSE, FALSE, nullptr);
     if (h == nullptr) {
-      GlobalOutput.perror("TAutoResetEvent unable to create event, GLE=", GetLastError());
+      TOutput::instance().perror("TAutoResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TAutoResetEvent() { CloseHandle(h); }
+  virtual ~TAutoResetEvent() { CloseHandle(h); }
 };
 
 struct TManualResetEvent : apache::thrift::TNonCopyable {
@@ -77,11 +89,11 @@ struct TManualResetEvent : apache::thrift::TNonCopyable {
   TManualResetEvent() {
     h = CreateEvent(nullptr, TRUE, FALSE, nullptr);
     if (h == nullptr) {
-      GlobalOutput.perror("TManualResetEvent unable to create event, GLE=", GetLastError());
+      TOutput::instance().perror("TManualResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
   }
-  ~TManualResetEvent() { CloseHandle(h); }
+  virtual ~TManualResetEvent() { CloseHandle(h); }
 };
 
 struct TAutoHandle : apache::thrift::TNonCopyable {

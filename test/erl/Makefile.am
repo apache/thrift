@@ -25,7 +25,7 @@ ERL_FLAG = erl
 	for f in $(THRIFT_FILES) ; do \
 	  $(THRIFT) --gen $(ERL_FLAG) -o src $$f ; \
 	done ; \
-	$(THRIFT) --gen $(ERL_FLAG) -o src ../ThriftTest.thrift
+	$(THRIFT) --gen $(ERL_FLAG) -o src ../v0.16/ThriftTest.thrift
 	touch .generated
 
 precross: .generated
@@ -39,6 +39,9 @@ clean:
 	$(RM)    .generated
 	$(RM) -r .rebar/
 	$(RM) -r src/gen-erl/
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 dist-hook:
 	$(RM)    $(distdir)/.generated

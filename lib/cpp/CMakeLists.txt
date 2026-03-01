@@ -31,6 +31,7 @@ endif()
 set(thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
    src/thrift/TOutput.cpp
+   src/thrift/TUuid.cpp
    src/thrift/async/TAsyncChannel.cpp
    src/thrift/async/TAsyncProtocolProcessor.cpp
    src/thrift/async/TConcurrentClientSyncInfo.h
@@ -177,16 +178,25 @@ if(WITH_LIBEVENT)
     else()
         target_link_libraries(thriftnb PUBLIC ${LIBEVENT_LIBRARIES})
     endif()
+    if(WIN32)
+        target_link_libraries(thriftnb PUBLIC iphlpapi)
+    endif()
     ADD_PKGCONFIG_THRIFT(thrift-nb)
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     target_link_libraries(thriftz PUBLIC thrift)
-    target_link_libraries(thriftz PUBLIC ${ZLIB_LIBRARIES})
+
+    if(TARGET ZLIB::ZLIB)
+        target_link_libraries(thriftz PUBLIC ZLIB::ZLIB)
+    else()
+        include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
+        target_link_libraries(thriftz PUBLIC ${ZLIB_LIBRARIES})
+    endif()
+
     ADD_PKGCONFIG_THRIFT(thrift-z)
 endif()
 

@@ -29,6 +29,9 @@ check: stubs
 clean-local:
 	-$(RM) city_services.rs
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	mod.rs \
 	CityServices.thrift

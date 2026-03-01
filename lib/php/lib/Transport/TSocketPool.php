@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,24 +24,6 @@
 namespace Thrift\Transport;
 
 use Thrift\Exception\TException;
-
-/**
- * This library makes use of APCu cache to make hosts as down in a web
- * environment. If you are running from the CLI or on a system without APCu
- * installed, then these null functions will step in and act like cache
- * misses.
- */
-if (!function_exists('apcu_fetch')) {
-    function apcu_fetch($key)
-    {
-        return false;
-    }
-
-    function apcu_store($key, $var, $ttl = 0)
-    {
-        return false;
-    }
-}
 
 /**
  * Sockets implementation of the TTransport interface that allows connection
@@ -92,6 +75,12 @@ class TSocketPool extends TSocket
     private $alwaysTryLast_ = true;
 
     /**
+     * Use apcu cache
+     * @var bool
+     */
+    private $useApcuCache;
+
+    /**
      * Socket pool constructor
      *
      * @param array $hosts List of remote hostnames
@@ -116,9 +105,13 @@ class TSocketPool extends TSocket
         }
 
         foreach ($hosts as $key => $host) {
-            $this->servers_ [] = array('host' => $host,
-                'port' => $ports[$key]);
+            $this->servers_ [] = array(
+                'host' => $host,
+                'port' => $ports[$key]
+            );
         }
+
+        $this->useApcuCache = function_exists('apcu_fetch');
     }
 
     /**
@@ -206,7 +199,7 @@ class TSocketPool extends TSocket
             $failtimeKey = 'thrift_failtime:' . $host . ':' . $port . '~';
 
             // Cache miss? Assume it's OK
-            $lastFailtime = apcu_fetch($failtimeKey);
+            $lastFailtime = $this->apcuFetch($failtimeKey);
             if ($lastFailtime === false) {
                 $lastFailtime = 0;
             }
@@ -251,7 +244,7 @@ class TSocketPool extends TSocket
 
                         // Only clear the failure counts if required to do so
                         if ($lastFailtime > 0) {
-                            apcu_store($failtimeKey, 0);
+                            $this->apcuStore($failtimeKey, 0);
                         }
 
                         // Successful connection, return now
@@ -265,7 +258,7 @@ class TSocketPool extends TSocket
                 $consecfailsKey = 'thrift_consecfails:' . $host . ':' . $port . '~';
 
                 // Ignore cache misses
-                $consecfails = apcu_fetch($consecfailsKey);
+                $consecfails = $this->apcuFetch($consecfailsKey);
                 if ($consecfails === false) {
                     $consecfails = 0;
                 }
@@ -284,12 +277,12 @@ class TSocketPool extends TSocket
                         );
                     }
                     // Store the failure time
-                    apcu_store($failtimeKey, time());
+                    $this->apcuStore($failtimeKey, time());
 
                     // Clear the count of consecutive failures
-                    apcu_store($consecfailsKey, 0);
+                    $this->apcuStore($consecfailsKey, 0);
                 } else {
-                    apcu_store($consecfailsKey, $consecfails);
+                    $this->apcuStore($consecfailsKey, $consecfails);
                 }
             }
         }
@@ -306,5 +299,21 @@ class TSocketPool extends TSocket
             call_user_func($this->debugHandler_, $error);
         }
         throw new TException($error);
+    }
+
+    /**
+     * This library makes use of APCu cache to make hosts as down in a web
+     * environment. If you are running from the CLI or on a system without APCu
+     * installed, then these null functions will step in and act like cache
+     * misses.
+     */
+    private function apcuFetch($key, &$success = null)
+    {
+        return $this->useApcuCache ? apcu_fetch($key, $success) : false;
+    }
+
+    private function apcuStore($key, $var, $ttl = 0)
+    {
+        return $this->useApcuCache ? apcu_store($key, $var, $ttl) : false;
     }
 }

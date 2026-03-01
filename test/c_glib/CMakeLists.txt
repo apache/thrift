@@ -56,5 +56,5 @@ target_link_libraries(test_client crosstestgencglib "${OPENSSL_LIBRARIES}")
 #
 
 add_custom_command(OUTPUT gen-c_glib/t_test_second_service.c  gen-c_glib/t_test_second_service.h  gen-c_glib/t_test_thrift_test.c  gen-c_glib/t_test_thrift_test.h  gen-c_glib/t_test_thrift_test_types.c  gen-c_glib/t_test_thrift_test_types.h
-    COMMAND ${THRIFT_COMPILER} --gen c_glib -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib -r ${PROJECT_SOURCE_DIR}/test/v0.16/ThriftTest.thrift
 )

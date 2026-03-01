@@ -114,7 +114,7 @@ func write(_ val: String) throws
 ##### Protocols
 - [x] TBinaryProtocol
 - [x] TCompactProtocol
-- [ ] TJSONProtocol - This will need to be implemented
+- [x] TJSONProtocol
 
 ##### Generator
 - [x] Code Complete Generator

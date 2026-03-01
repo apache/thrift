@@ -37,9 +37,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-static const string endl2 = "\n\n";
-
 /**
  * Use the current Thrift version for static libraries.  When releasing, update
  * the version in these files.
@@ -89,11 +86,11 @@ public:
   }
 
   void scope_up(std::ostream& out, std::string prefix=" ") {
-    out << prefix << "{" << endl;
+    out << prefix << "{" << '\n';
     indent_up();
   }
 
-  void scope_down(std::ostream& out, std::string postfix=endl) {
+  void scope_down(std::ostream& out, std::string postfix="\n") {
     indent_down();
     indent(out) << "}" << postfix;
   }
@@ -123,6 +120,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void export_class_to_library(string file_name, string class_name);
 
@@ -146,7 +144,8 @@ public:
                          t_type* type,
                          t_const_value* value,
                          bool in_static,
-                         bool defval = false);
+                         bool defval = false,
+                         bool inlineOnly = false);
   std::string render_const_value(ostream& out,
                                  std::string name,
                                  t_type* type,
@@ -239,6 +238,7 @@ public:
   std::string dart_thrift_imports();
   std::string type_name(t_type* ttype);
   std::string base_type_name(t_base_type* tbase);
+  std::string type_name_instantiate(t_type* ttype);
   std::string declare_field(t_field* tfield, bool init = false);
   std::string function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
@@ -250,6 +250,10 @@ public:
 
     return ttype->is_container() || ttype->is_struct() || ttype->is_xception()
            || ttype->is_string();
+  }
+
+  std::string get_type_suffix(t_type* ttype) {
+    return type_can_be_null(ttype) ? "?" : "";
   }
 
   vector<std::string> split(const string& s, char delim) {
@@ -338,7 +342,7 @@ string t_dart_generator::dart_library(string file_name) {
  * @return List of imports for services
  */
 string t_dart_generator::service_imports() {
-  return "import 'dart:async';" + endl;
+  return string("import 'dart:async';") + "\n";
 }
 
 /**
@@ -347,14 +351,14 @@ string t_dart_generator::service_imports() {
  * @return List of imports necessary for thrift
  */
 string t_dart_generator::dart_thrift_imports() {
-  string imports = "import 'dart:typed_data' show Uint8List;" + endl +
-                   "import 'package:thrift/thrift.dart';" + endl;
+  string imports = string("import 'dart:typed_data' show Uint8List;") + "\n" +
+                   string("import 'package:thrift/thrift.dart';") + "\n";
 
   // add import for this library
   if (package_prefix_.empty()) {
-    imports += "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + endl;
+    imports += "import 'package:" + library_name_ + "/" + library_name_ + ".dart';" + "\n";
   } else {
-    imports += "import 'package:" + package_prefix_ + library_name_ + ".dart';" + endl;
+    imports += "import 'package:" + package_prefix_ + library_name_ + ".dart';" + "\n";
   }
 
   // add imports for included thrift files
@@ -363,9 +367,9 @@ string t_dart_generator::dart_thrift_imports() {
     string include_name = find_library_name(include);
     string named_import = "t_" + include_name;
     if (package_prefix_.empty()) {
-      imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + endl;
+      imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + "\n";
     } else {
-      imports += "import 'package:" + package_prefix_ + include_name + ".dart' as " + named_import + ";" + endl;
+      imports += "import 'package:" + package_prefix_ + include_name + ".dart' as " + named_import + ";" + "\n";
     }
   }
 
@@ -394,8 +398,8 @@ void t_dart_generator::generate_dart_library() {
   ofstream_with_content_based_conditional_update f_library;
   f_library.open(f_library_name.c_str());
 
-  f_library << autogen_comment() << endl;
-  f_library << "library " << library_prefix_ << library_name_ << ";" << endl2;
+  f_library << autogen_comment() << '\n';
+  f_library << "library " << library_prefix_ << library_name_ << ";" << '\n' << '\n';
   f_library << library_exports_;
 
   f_library.close();
@@ -408,7 +412,7 @@ void t_dart_generator::export_class_to_library(string file_name, string class_na
   } else {
     subdir = library_name_;
   }
-  library_exports_ += "export '" + subdir + "/" + file_name + ".dart' show " + class_name + ";" + endl;
+  library_exports_ += "export '" + subdir + "/" + file_name + ".dart' show " + class_name + ";" + "\n";
 }
 
 void t_dart_generator::generate_dart_pubspec() {
@@ -416,30 +420,30 @@ void t_dart_generator::generate_dart_pubspec() {
   ofstream_with_content_based_conditional_update f_pubspec;
   f_pubspec.open(f_pubspec_name.c_str());
 
-  indent(f_pubspec) << "name: " << library_name_ << endl;
-  indent(f_pubspec) << "version: 0.0.1" << endl;
-  indent(f_pubspec) << "description: Autogenerated by Thrift Compiler" << endl;
-  f_pubspec << endl;
+  indent(f_pubspec) << "name: " << library_name_ << '\n';
+  indent(f_pubspec) << "version: 0.0.1" << '\n';
+  indent(f_pubspec) << "description: Autogenerated by Thrift Compiler" << '\n';
+  f_pubspec << '\n';
 
-  indent(f_pubspec) << "environment:" << endl;
+  indent(f_pubspec) << "environment:" << '\n';
   indent_up();
-  indent(f_pubspec) << "sdk: '>=1.24.3 <3.0.0'" << endl;
+  indent(f_pubspec) << "sdk: '>=2.12.0 <4.0.0'" << '\n';
   indent_down();
-  f_pubspec << endl;
+  f_pubspec << '\n';
 
-  indent(f_pubspec) << "dependencies:" << endl;
+  indent(f_pubspec) << "dependencies:" << '\n';
   indent_up();
 
   if (pubspec_lib_.empty()) {
     // default to relative path within working directory, which works for tests
-    indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << endl;
+    indent(f_pubspec) << "thrift:  # ^" << dart_thrift_version << '\n';
     indent_up();
-    indent(f_pubspec) << "path: ../../../../lib/dart" << endl;
+    indent(f_pubspec) << "path: ../../../../lib/dart" << '\n';
     indent_down();
   } else {
     const vector<std::string> lines = split(pubspec_lib_, '|');
     for (const auto & line : lines) {
-      indent(f_pubspec) << line << endl;
+      indent(f_pubspec) << line << '\n';
     }
   }
 
@@ -447,14 +451,14 @@ void t_dart_generator::generate_dart_pubspec() {
   const vector<t_program*>& includes = program_->get_includes();
   for (auto include : includes) {
     string include_name = find_library_name(include);
-    indent(f_pubspec) << include_name << ":" << endl;
+    indent(f_pubspec) << include_name << ":" << '\n';
     indent_up();
-    indent(f_pubspec) << "path: ../" << include_name << endl;
+    indent(f_pubspec) << "path: ../" << include_name << '\n';
     indent_down();
   }
 
   indent_down();
-  f_pubspec << endl;
+  f_pubspec << '\n';
 
   f_pubspec.close();
 }
@@ -482,7 +486,7 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
   f_enum.open(f_enum_name.c_str());
 
   // Comment and add library
-  f_enum << autogen_comment() << dart_library(file_name) << endl;
+  f_enum << autogen_comment() << dart_library(file_name) << '\n';
 
   string class_name = tenum->get_name();
   export_class_to_library(file_name, class_name);
@@ -494,34 +498,34 @@ void t_dart_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     indent(f_enum) << "static const int " << (*c_iter)->get_name() << " = " << value << ";"
-                   << endl;
+                   << '\n';
   }
 
   // Create a static Set with all valid values for this enum
-  f_enum << endl;
+  f_enum << '\n';
 
-  indent(f_enum) << "static final Set<int> VALID_VALUES = new Set.from([" << endl;
+  indent(f_enum) << "static final Set<int> VALID_VALUES = new Set.from([" << '\n';
   indent_up();
   bool firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // populate set
     indent(f_enum) << (firstValue ? "" : ", ");
-    f_enum << (*c_iter)->get_name() << endl;
+    f_enum << (*c_iter)->get_name() << '\n';
     firstValue = false;
   }
   indent_down();
-  indent(f_enum) << "]);" << endl;
+  indent(f_enum) << "]);" << '\n';
 
-  indent(f_enum) << "static final Map<int, String> VALUES_TO_NAMES = {" << endl;
+  indent(f_enum) << "static final Map<int, String> VALUES_TO_NAMES = {" << '\n';
   indent_up();
   firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     indent(f_enum) << (firstValue ? "" : ", ");
-    f_enum  << (*c_iter)->get_name() << ": '" << (*c_iter)->get_name() << "'" << endl;
+    f_enum  << (*c_iter)->get_name() << ": '" << (*c_iter)->get_name() << "'" << '\n';
     firstValue = false;
   }
   indent_down();
-  indent(f_enum) << "};" << endl;
+  indent(f_enum) << "};" << '\n';
 
   scope_down(f_enum); // end class
 
@@ -544,8 +548,8 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts.open(f_consts_name.c_str());
 
   // Print header
-  f_consts << autogen_comment() << dart_library(file_name) << endl;
-  f_consts << dart_thrift_imports() << endl;
+  f_consts << autogen_comment() << dart_library(file_name) << '\n';
+  f_consts << dart_thrift_imports() << '\n';
 
   export_class_to_library(file_name, class_name);
   indent(f_consts) << "class " << class_name;
@@ -558,7 +562,7 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
                       (*c_iter)->get_type(),
                       (*c_iter)->get_value(),
                       false);
-    f_consts << endl;
+    f_consts << '\n';
   }
 
   scope_down(f_consts);
@@ -571,11 +575,12 @@ void t_dart_generator::print_const_value(std::ostream& out,
                                         t_type* type,
                                         t_const_value* value,
                                         bool in_static,
-                                        bool defval) {
+                                        bool defval,
+                                        bool inlineOnly) {
   type = get_true_type(type);
 
   indent(out);
-  if (!defval) {
+  if (!defval && !inlineOnly) {
     out << (in_static ? "var " : "static final ");
   }
   if (type->is_base_type()) {
@@ -584,19 +589,23 @@ void t_dart_generator::print_const_value(std::ostream& out,
     }
     string v2 = render_const_value(out, name, type, value);
     out << name;
-    out << " = " << v2 << ";" << endl << endl;
+    out << " = " << v2 << ";" << '\n' << '\n';
   } else if (type->is_enum()) {
     if (!defval) {
       out << type_name(type) << " ";
     }
     out << name;
-    out << " = " << value->get_integer() << ";" << endl << endl;
+    out << " = " << value->get_integer() << ";" << '\n' << '\n';
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-    out << type_name(type) << " " << name << " = new " << type_name(type) << "()";
+    if (!inlineOnly) {
+      out << type_name(type) << " " << name << " = new " << type_name(type) << "()";
+    } else {
+      out << "new " << type_name(type) << "()";
+    }
     indent_up();
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = nullptr;
@@ -609,16 +618,24 @@ void t_dart_generator::print_const_value(std::ostream& out,
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
-      out << endl;
+      out << '\n';
       indent(out) << ".." << v_iter->first->get_string() << " = " << val;
     }
     indent_down();
-    out << ";" << endl;
+    if (!inlineOnly) {
+      out << ";";
+    }
+    out << '\n';
+
   } else if (type->is_map()) {
-    if (!defval) {
+    if (!defval && !inlineOnly) {
       out << type_name(type) << " ";
     }
-    out << name << " =";
+
+    if (!inlineOnly) {
+      out << name<< " =";
+    }
+
     scope_up(out);
 
     t_type* ktype = ((t_map*)type)->get_key_type();
@@ -629,22 +646,25 @@ void t_dart_generator::print_const_value(std::ostream& out,
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(out, name, ktype, v_iter->first);
       string val = render_const_value(out, name, vtype, v_iter->second);
-      indent(out) << key << ": " << val << "," << endl;
+      indent(out) << key << ": " << val << "," << '\n';
     }
-    scope_down(out, ";" + endl);
+    scope_down(out, (inlineOnly? string("") : string(";")) + "\n");
 
-    out << endl;
+    out << '\n';
   } else if (type->is_list() || type->is_set()) {
-    if (!defval) {
+    if (!defval && !inlineOnly) {
       out << type_name(type) << " ";
     }
-    out << name << " = ";
+    if (!inlineOnly) {
+      out << name << " =";
+    }
+
     t_type* etype;
     if (type->is_list()) {
-      out << "[" << endl;
+      out << "[" << '\n';
       etype = ((t_list*)type)->get_elem_type();
     } else {
-      out << "new " << type_name(type) << ".from([" << endl;
+      out << "new " << type_name(type) << ".from([" << '\n';
       etype = ((t_set*)type)->get_elem_type();
     }
     const vector<t_const_value*>& val = value->get_list();
@@ -653,14 +673,14 @@ void t_dart_generator::print_const_value(std::ostream& out,
     indent_up();
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string val = render_const_value(out, name, etype, *v_iter);
-      indent(out) << val << "," << endl;
+      indent(out) << val << "," << '\n';
     }
     indent_down();
 
     if (type->is_list()) {
-      indent(out) << "];" << endl;
+      indent(out) << "]" << (inlineOnly? "" : ";") << '\n';
     } else {
-      indent(out) << "]);" << endl;
+      indent(out) << "])" << (inlineOnly? "" : ";") << '\n';
     }
 
   } else {
@@ -673,6 +693,7 @@ string t_dart_generator::render_const_value(ostream& out,
                                            t_type* type,
                                            t_const_value* value) {
   (void)name;
+  (void)out;
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -705,9 +726,7 @@ string t_dart_generator::render_const_value(ostream& out,
     render << value->get_integer();
   } else {
     string t = tmp("tmp");
-    print_const_value(out, t, type, value, true);
-    out << endl;
-    render << t;
+    print_const_value(render, t, type, value, true, false, true);
   }
 
   return render.str();
@@ -743,11 +762,11 @@ void t_dart_generator::generate_dart_struct(t_struct* tstruct, bool is_exception
   ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
-  f_struct << autogen_comment() << dart_library(file_name) << endl;
+  f_struct << autogen_comment() << dart_library(file_name) << '\n';
 
   string imports;
 
-  f_struct << dart_thrift_imports() << endl;
+  f_struct << dart_thrift_imports() << '\n';
 
   generate_dart_struct_definition(f_struct, tstruct, is_exception, false, file_name);
 
@@ -784,7 +803,7 @@ void t_dart_generator::generate_dart_struct_definition(ostream& out,
   scope_up(out);
 
   indent(out) << "static final TStruct _STRUCT_DESC = new TStruct(\"" << class_name
-              << "\");" << endl;
+              << "\");" << '\n';
 
   // Members are public for -dart, private for -dartbean
   const vector<t_field*>& members = tstruct->get_members();
@@ -794,33 +813,33 @@ void t_dart_generator::generate_dart_struct_definition(ostream& out,
     indent(out) << "static final TField _" << constant_name((*m_iter)->get_name())
                 << "_FIELD_DESC = new TField(\"" << (*m_iter)->get_name() << "\", "
                 << type_to_enum((*m_iter)->get_type()) << ", " << (*m_iter)->get_key() << ");"
-                << endl;
+                << '\n';
   }
 
-  out << endl;
+  out << '\n';
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_dart_doc(out, *m_iter);
-    indent(out) << type_name((*m_iter)->get_type()) + " _"
-                << get_member_name((*m_iter)->get_name()) << init_value(*m_iter) << ";" << endl;
+    indent(out) << type_name((*m_iter)->get_type()) + get_type_suffix((*m_iter)->get_type())  + " _"
+                << get_member_name((*m_iter)->get_name()) << init_value(*m_iter) << ";" << '\n';
 
     indent(out) << "static const int " << upcase_string((*m_iter)->get_name())
-                << " = " << (*m_iter)->get_key() << ";" << endl;
+                << " = " << (*m_iter)->get_key() << ";" << '\n';
   }
 
-  out << endl;
+  out << '\n';
 
   // Inner Isset class
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (!type_can_be_null((*m_iter)->get_type())) {
         string field_name = get_member_name((*m_iter)->get_name());
-        indent(out) << "bool __isset_" << field_name << " = false;" << endl;
+        indent(out) << "bool __isset_" << field_name << " = false;" << '\n';
       }
     }
   }
 
-  out << endl;
+  out << '\n';
 
   // Default constructor
   indent(out) << tstruct->get_name() << "()";
@@ -837,7 +856,7 @@ void t_dart_generator::generate_dart_struct_definition(ostream& out,
     }
   }
   scope_down(out);
-  out << endl;
+  out << '\n';
 
   generate_dart_bean_boilerplate(out, tstruct);
   generate_generic_field_getters(out, tstruct);
@@ -853,7 +872,7 @@ void t_dart_generator::generate_dart_struct_definition(ostream& out,
   generate_dart_struct_tostring(out, tstruct);
   generate_dart_validator(out, tstruct);
   scope_down(out);
-  out << endl;
+  out << '\n';
 }
 
 /**
@@ -869,20 +888,20 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
   vector<t_field*>::const_iterator f_iter;
 
   // Declare stack tmp variables and read struct header
-  indent(out) << "TField field;" << endl;
-  indent(out) << "iprot.readStructBegin();" << endl;
+  indent(out) << "TField field;" << '\n';
+  indent(out) << "iprot.readStructBegin();" << '\n';
 
   // Loop over reading in fields
   indent(out) << "while (true)";
   scope_up(out);
 
   // Read beginning field marker
-  indent(out) << "field = iprot.readFieldBegin();" << endl;
+  indent(out) << "field = iprot.readFieldBegin();" << '\n';
 
   // Check for field STOP marker and break
   indent(out) << "if (field.type == TType.STOP)";
   scope_up(out);
-  indent(out) << "break;" << endl;
+  indent(out) << "break;" << '\n';
   scope_down(out);
 
   // Switch statement on the field we are reading
@@ -891,7 +910,7 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    indent(out) << "case " << upcase_string((*f_iter)->get_name()) << ":" << endl;
+    indent(out) << "case " << upcase_string((*f_iter)->get_name()) << ":" << '\n';
     indent_up();
 
     indent(out) << "if (field.type == " << type_to_enum((*f_iter)->get_type()) << ")";
@@ -902,33 +921,33 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
 
     scope_down(out, " else");
     scope_up(out);
-    indent(out) << "TProtocolUtil.skip(iprot, field.type);" << endl;
+    indent(out) << "TProtocolUtil.skip(iprot, field.type);" << '\n';
     scope_down(out);
 
-    indent(out) << "break;" << endl;
+    indent(out) << "break;" << '\n';
     indent_down();
   }
 
   // In the default case we skip the field
-  indent(out) << "default:" << endl;
+  indent(out) << "default:" << '\n';
   indent_up();
-  indent(out) << "TProtocolUtil.skip(iprot, field.type);" << endl;
-  indent(out) << "break;" << endl;
+  indent(out) << "TProtocolUtil.skip(iprot, field.type);" << '\n';
+  indent(out) << "break;" << '\n';
   indent_down();
 
   scope_down(out);
 
   // Read field end marker
-  indent(out) << "iprot.readFieldEnd();" << endl;
+  indent(out) << "iprot.readFieldEnd();" << '\n';
 
   scope_down(out);
 
-  indent(out) << "iprot.readStructEnd();" << endl2;
+  indent(out) << "iprot.readStructEnd();" << '\n' << '\n';
 
   // in non-beans style, check for required fields of primitive type
   // (which can be checked here but not in the general validate method)
   indent(out) << "// check for required fields of primitive type, which can't be "
-                 "checked in the validate method" << endl;
+                 "checked in the validate method" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
       string field_name = get_member_name((*f_iter)->get_name());
@@ -936,15 +955,15 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
       scope_up(out);
       indent(out) << "  throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"Required field '"
           << field_name
-          << "' was not found in serialized data! Struct: \" + toString());" << endl;
-      scope_down(out, endl2);
+          << "' was not found in serialized data! Struct: \" + toString());" << '\n';
+      scope_down(out, "\n\n");
     }
   }
 
   // performs various checks (e.g. check that all required fields are set)
-  indent(out) << "validate();" << endl;
+  indent(out) << "validate();" << '\n';
 
-  scope_down(out, endl2);
+  scope_down(out, "\n\n");
 }
 
 // generates dart method to perform various checks
@@ -956,7 +975,7 @@ void t_dart_generator::generate_dart_validator(ostream& out, t_struct* tstruct) 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "// check for required fields" << endl;
+  indent(out) << "// check for required fields" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       string field_name = get_member_name((*f_iter)->get_name());
@@ -965,17 +984,17 @@ void t_dart_generator::generate_dart_validator(ostream& out, t_struct* tstruct) 
         scope_up(out);
         indent(out) << "throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"Required field '"
                     << field_name << "' was not present! Struct: \" + toString());"
-                    << endl;
+                    << '\n';
         scope_down(out);
       } else {
         indent(out) << "// alas, we cannot check '" << field_name
-                    << "' because it's a primitive and you chose the non-beans generator." << endl;
+                    << "' because it's a primitive and you chose the non-beans generator." << '\n';
       }
     }
   }
 
   // check that fields of type enum have valid values
-  indent(out) << "// check that fields of type enum have valid values" << endl;
+  indent(out) << "// check that fields of type enum have valid values" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
     t_type* type = field->get_type();
@@ -987,12 +1006,12 @@ void t_dart_generator::generate_dart_validator(ostream& out, t_struct* tstruct) 
       scope_up(out);
       indent(out) << "throw new TProtocolError(TProtocolErrorType.UNKNOWN, \"The field '"
                   << field_name << "' has been assigned the invalid value "
-                  << "$" << field_name << "\");" << endl;
+                  << "$" << field_name << "\");" << '\n';
       scope_down(out);
     }
   }
 
-  scope_down(out, endl2);
+  scope_down(out, "\n\n");
 }
 
 /**
@@ -1008,9 +1027,9 @@ void t_dart_generator::generate_dart_struct_writer(ostream& out, t_struct* tstru
   vector<t_field*>::const_iterator f_iter;
 
   // performs various checks (e.g. check that all required fields are set)
-  indent(out) << "validate();" << endl2;
+  indent(out) << "validate();" << '\n' << '\n';
 
-  indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << endl;
+  indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     string field_name = get_member_name((*f_iter)->get_name());
@@ -1026,13 +1045,13 @@ void t_dart_generator::generate_dart_struct_writer(ostream& out, t_struct* tstru
     }
 
     indent(out) << "oprot.writeFieldBegin(_" << constant_name((*f_iter)->get_name())
-                << "_FIELD_DESC);" << endl;
+                << "_FIELD_DESC);" << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
 
     // Write field closer
-    indent(out) << "oprot.writeFieldEnd();" << endl;
+    indent(out) << "oprot.writeFieldEnd();" << '\n';
 
     if (null_allowed) {
       scope_down(out);
@@ -1042,10 +1061,10 @@ void t_dart_generator::generate_dart_struct_writer(ostream& out, t_struct* tstru
     }
   }
   // Write the struct map
-  indent(out) << "oprot.writeFieldStop();" << endl << indent() << "oprot.writeStructEnd();"
-      << endl;
+  indent(out) << "oprot.writeFieldStop();" << '\n' << indent() << "oprot.writeStructEnd();"
+      << '\n';
 
-  scope_down(out, endl2);
+  scope_down(out, "\n\n");
 }
 
 /**
@@ -1063,7 +1082,7 @@ void t_dart_generator::generate_dart_struct_result_writer(ostream& out, t_struct
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << endl2;
+  indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << '\n' << '\n';
 
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1078,23 +1097,23 @@ void t_dart_generator::generate_dart_struct_result_writer(ostream& out, t_struct
     scope_up(out);
 
     indent(out) << "oprot.writeFieldBegin(_" << constant_name((*f_iter)->get_name())
-                << "_FIELD_DESC);" << endl;
+                << "_FIELD_DESC);" << '\n';
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
 
     // Write field closer
-    indent(out) << "oprot.writeFieldEnd();" << endl;
+    indent(out) << "oprot.writeFieldEnd();" << '\n';
 
     scope_down(out, "");
   }
-  out << endl;
+  out << '\n';
 
   // Write the struct map
-  indent(out) << "oprot.writeFieldStop();" << endl << indent()
-      << "oprot.writeStructEnd();" << endl;
+  indent(out) << "oprot.writeFieldStop();" << '\n' << indent()
+      << "oprot.writeStructEnd();" << '\n';
 
-  scope_down(out, endl2);
+  scope_down(out, "\n\n");
 }
 
 void t_dart_generator::generate_generic_field_getters(std::ostream& out,
@@ -1112,26 +1131,26 @@ void t_dart_generator::generate_generic_field_getters(std::ostream& out,
     t_field* field = *f_iter;
     std::string field_name = get_member_name(field->get_name());
 
-    indent(out) << "case " << upcase_string(field_name) << ":" << endl;
+    indent(out) << "case " << upcase_string(field_name) << ":" << '\n';
     indent_up();
-    indent(out) << "return this." << field_name << ";" << endl;
+    indent(out) << "return this." << field_name << ";" << '\n';
     indent_down();
   }
 
-  indent(out) << "default:" << endl;
+  indent(out) << "default:" << '\n';
   indent_up();
-  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << endl;
+  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << '\n';
   indent_down();
 
   scope_down(out);  // switch
-  scope_down(out, endl2);  // method
+  scope_down(out, "\n\n");  // method
 }
 
 void t_dart_generator::generate_generic_field_setters(std::ostream& out,
                                                       t_struct* tstruct) {
 
   // create the setter
-  indent(out) << "setFieldValue(int fieldID, Object value)";
+  indent(out) << "setFieldValue(int fieldID, Object? value)";
   scope_up(out);
 
   indent(out) << "switch (fieldID)";
@@ -1142,33 +1161,35 @@ void t_dart_generator::generate_generic_field_setters(std::ostream& out,
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
+    t_type* type = get_true_type(field->get_type());
     std::string field_name = get_member_name(field->get_name());
 
-    indent(out) << "case " << upcase_string(field_name) << ":" << endl;
+    indent(out) << "case " << upcase_string(field_name) << ":" << '\n';
     indent_up();
 
     indent(out) << "if (value == null)";
     scope_up(out);
-    indent(out) << "unset" << get_cap_name(field_name) << "();" << endl;
+    indent(out) << "unset" << get_cap_name(field_name) << "();" << '\n';
 
     scope_down(out, " else");
     scope_up(out);
-    indent(out) << "this." << field_name << " = value;" << endl;
+
+    indent(out) << "this." << field_name << " = value as " << type_name(type) << ";" << '\n';
     scope_down(out);
 
-    indent(out) << "break;" << endl;
+    indent(out) << "break;" << '\n';
 
     indent_down();
-    out << endl;
+    out << '\n';
   }
 
-  indent(out) << "default:" << endl;
+  indent(out) << "default:" << '\n';
   indent_up();
-  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << endl;
+  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << '\n';
   indent_down();
 
   scope_down(out);  // switch
-  scope_down(out, endl2);  // method
+  scope_down(out, "\n\n");  // method
 }
 
 // Creates a generic isSet method that takes the field number as argument
@@ -1178,7 +1199,7 @@ void t_dart_generator::generate_generic_isset_method(std::ostream& out, t_struct
 
   // create the isSet method
   indent(out) << "// Returns true if field corresponding to fieldID is set (has been assigned a "
-                 "value) and false otherwise" << endl;
+                 "value) and false otherwise" << '\n';
   indent(out) << "bool isSet(int fieldID)";
   scope_up(out);
 
@@ -1187,19 +1208,19 @@ void t_dart_generator::generate_generic_isset_method(std::ostream& out, t_struct
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
-    indent(out) << "case " << upcase_string(field->get_name()) << ":" << endl;
+    indent(out) << "case " << upcase_string(field->get_name()) << ":" << '\n';
     indent_up();
-    indent(out) << "return " << generate_isset_check(field) << ";" << endl;
+    indent(out) << "return " << generate_isset_check(field) << ";" << '\n';
     indent_down();
   }
 
-  indent(out) << "default:" << endl;
+  indent(out) << "default:" << '\n';
   indent_up();
-  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << endl;
+  indent(out) << "throw new ArgumentError(\"Field $fieldID doesn't exist!\");" << '\n';
   indent_down();
 
   scope_down(out);  // switch
-  scope_down(out, endl2);  // method
+  scope_down(out, "\n\n");  // method
 }
 
 /**
@@ -1218,37 +1239,37 @@ void t_dart_generator::generate_dart_bean_boilerplate(ostream& out,
     std::string field_name = get_member_name(field->get_name());
     std::string cap_name = get_cap_name(field_name);
 
-    indent(out) << "// " << field_name << endl;
+    indent(out) << "// " << field_name << '\n';
 
     // Simple getter
     generate_dart_doc(out, field);
-    indent(out) << type_name(type) << " get " << field_name << " => this._" << field_name << ";" << endl2;
+    indent(out) << type_name(type) << get_type_suffix(type) << " get " << field_name << " => this._" << field_name << ";" << '\n' << '\n';
 
     // Simple setter
     generate_dart_doc(out, field);
-    indent(out) << "set " << field_name << "(" << type_name(type) << " " << field_name << ")";
+    indent(out) << "set " << field_name << "(" << type_name(type) << get_type_suffix(type)  << " " << field_name << ")";
     scope_up(out);
-    indent(out) << "this._" << field_name << " = " << field_name << ";" << endl;
+    indent(out) << "this._" << field_name << " = " << field_name << ";" << '\n';
     generate_isset_set(out, field);
-    scope_down(out, endl2);
+    scope_down(out, "\n\n");
 
     // isSet method
     indent(out) << "bool is" << get_cap_name("set") << cap_name << "()";
     if (type_can_be_null(type)) {
-      out << " => this." << field_name << " != null;" << endl2;
+      out << " => this." << field_name << " != null;" << '\n' << '\n';
     } else {
-      out << " => this.__isset_" << field_name << ";" << endl2;
+      out << " => this.__isset_" << field_name << ";" << '\n' << '\n';
     }
 
     // Unsetter
     indent(out) << "unset" << cap_name << "()";
     scope_up(out);
     if (type_can_be_null(type)) {
-      indent(out) << "this." << field_name << " = null;" << endl;
+      indent(out) << "this." << field_name << " = null;" << '\n';
     } else {
-      indent(out) << "this.__isset_" << field_name << " = false;" << endl;
+      indent(out) << "this.__isset_" << field_name << " = false;" << '\n';
     }
-    scope_down(out, endl2);
+    scope_down(out, "\n\n");
   }
 }
 
@@ -1263,7 +1284,7 @@ void t_dart_generator::generate_dart_struct_tostring(ostream& out,
   scope_up(out);
 
   indent(out) << "StringBuffer ret = new StringBuffer(\""
-              << tstruct->get_name() << "(\");" << endl2;
+              << tstruct->get_name() << "(\");" << '\n' << '\n';
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1280,36 +1301,36 @@ void t_dart_generator::generate_dart_struct_tostring(ostream& out,
     std::string field_name = get_member_name(field->get_name());
 
     if (!first) {
-      indent(out) << "ret.write(\", \");" << endl;
+      indent(out) << "ret.write(\", \");" << '\n';
     }
-    indent(out) << "ret.write(\"" << field_name << ":\");" << endl;
+    indent(out) << "ret.write(\"" << field_name << ":\");" << '\n';
     bool can_be_null = type_can_be_null(field->get_type());
     if (can_be_null) {
       indent(out) << "if (this." << field_name << " == null)";
       scope_up(out);
-      indent(out) << "ret.write(\"null\");" << endl;
+      indent(out) << "ret.write(\"null\");" << '\n';
       scope_down(out, " else");
       scope_up(out);
     }
 
     if (field->get_type()->is_binary()) {
-      indent(out) << "ret.write(\"BINARY\");" << endl;
+      indent(out) << "ret.write(\"BINARY\");" << '\n';
     } else if (field->get_type()->is_enum()) {
-      indent(out) << "String " << field_name << "_name = "
+      indent(out) << "String? " << field_name << "_name = "
                   << get_ttype_class_name(field->get_type())
-                  << ".VALUES_TO_NAMES[this." << field_name << "];" << endl;
+                  << ".VALUES_TO_NAMES[this." << field_name << "];" << '\n';
       indent(out) << "if (" << field_name << "_name != null)";
       scope_up(out);
-      indent(out) << "ret.write(" << field_name << "_name);" << endl;
-      indent(out) << "ret.write(\" (\");" << endl;
+      indent(out) << "ret.write(" << field_name << "_name);" << '\n';
+      indent(out) << "ret.write(\" (\");" << '\n';
       scope_down(out);
-      indent(out) << "ret.write(this." << field_name << ");" << endl;
+      indent(out) << "ret.write(this." << field_name << ");" << '\n';
       indent(out) << "if (" << field_name << "_name != null)";
       scope_up(out);
-      indent(out) << "ret.write(\")\");" << endl;
+      indent(out) << "ret.write(\")\");" << '\n';
       scope_down(out);
     } else {
-      indent(out) << "ret.write(this." << field_name << ");" << endl;
+      indent(out) << "ret.write(this." << field_name << ");" << '\n';
     }
 
     if (can_be_null) {
@@ -1319,15 +1340,15 @@ void t_dart_generator::generate_dart_struct_tostring(ostream& out,
       scope_down(out);
     }
 
-    out << endl;
+    out << '\n';
     first = false;
   }
 
-  indent(out) << "ret.write(\")\");" << endl2;
+  indent(out) << "ret.write(\")\");" << '\n' << '\n';
 
-  indent(out) << "return ret.toString();" << endl;
+  indent(out) << "return ret.toString();" << '\n';
 
-  scope_down(out, endl2);
+  scope_down(out, "\n\n");
 }
 
 /**
@@ -1390,9 +1411,9 @@ void t_dart_generator::generate_service(t_service* tservice) {
   string f_service_name = src_dir_ + "/" + file_name + ".dart";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << dart_library(file_name) << endl;
-  f_service_ << service_imports() << dart_thrift_imports() << endl;
-  f_service_ << endl;
+  f_service_ << autogen_comment() << dart_library(file_name) << '\n';
+  f_service_ << service_imports() << dart_thrift_imports() << '\n';
+  f_service_ << '\n';
 
   generate_service_interface(tservice);
   generate_service_client(tservice);
@@ -1423,12 +1444,12 @@ void t_dart_generator::generate_service_interface(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ << endl;
+    f_service_ << '\n';
     generate_dart_doc(f_service_, *f_iter);
-    indent(f_service_) << function_signature(*f_iter) << ";" << endl;
+    indent(f_service_) << function_signature(*f_iter) << ";" << '\n';
   }
 
-  scope_down(f_service_, endl2);
+  scope_down(f_service_, "\n\n");
 }
 
 /**
@@ -1464,31 +1485,31 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
   indent(f_service_) << "class " << class_name << extends_client
                      << " implements " << service_name_;
   scope_up(f_service_);
-  f_service_ << endl;
+  f_service_ << '\n';
 
-  indent(f_service_) << class_name << "(TProtocol iprot, [TProtocol oprot = null])";
+  indent(f_service_) << class_name << "(TProtocol iprot, [TProtocol? oprot = null])";
 
   if (!extends.empty()) {
     indent_up();
-    f_service_ << endl;
-    indent(f_service_) << ": super(iprot, oprot);" << endl;
+    f_service_ << '\n';
+    indent(f_service_) << ": super(iprot, oprot);" << '\n';
     indent_down();
   } else {
     scope_up(f_service_);
-    indent(f_service_) << "_iprot = iprot;" << endl;
-    indent(f_service_) << "_oprot = (oprot == null) ? iprot : oprot;" << endl;
+    indent(f_service_) << "_iprot = iprot;" << '\n';
+    indent(f_service_) << "_oprot = (oprot == null) ? iprot : oprot;" << '\n';
     scope_down(f_service_);
   }
-  f_service_ << endl;
+  f_service_ << '\n';
 
   if (extends.empty()) {
-    indent(f_service_) << "TProtocol _iprot;" << endl2;
-    indent(f_service_) << "TProtocol get iprot => _iprot;" << endl2;
-    indent(f_service_) << "TProtocol _oprot;" << endl2;
-    indent(f_service_) << "TProtocol get oprot => _oprot;" << endl2;
-    indent(f_service_) << "int _seqid = 0;" << endl2;
-    indent(f_service_) << "int get seqid => _seqid;" << endl2;
-    indent(f_service_) << "int nextSeqid() => ++_seqid;" << endl2;
+    indent(f_service_) << "late TProtocol _iprot;" << '\n' << '\n';
+    indent(f_service_) << "TProtocol get iprot => _iprot;" << '\n' << '\n';
+    indent(f_service_) << "late TProtocol _oprot;" << '\n' << '\n';
+    indent(f_service_) << "TProtocol get oprot => _oprot;" << '\n' << '\n';
+    indent(f_service_) << "int _seqid = 0;" << '\n' << '\n';
+    indent(f_service_) << "int get seqid => _seqid;" << '\n' << '\n';
+    indent(f_service_) << "int nextSeqid() => ++_seqid;" << '\n' << '\n';
   }
 
   // Generate client method implementations
@@ -1509,40 +1530,40 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
     // Serialize the request
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << (*f_iter)->get_name() << "\", "
                << ((*f_iter)->is_oneway() ? "TMessageType.ONEWAY" : "TMessageType.CALL")
-               << ", nextSeqid()));" << endl;
-    indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
+               << ", nextSeqid()));" << '\n';
+    indent(f_service_) << argsname << " args = new " << argsname << "();" << '\n';
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       string arg_field_name = get_member_name((*fld_iter)->get_name());
       indent(f_service_) << "args." << arg_field_name << " = "
-                 << arg_field_name << ";" << endl;
+                 << arg_field_name << ";" << '\n';
     }
 
-    indent(f_service_) << "args.write(oprot);" << endl;
-    indent(f_service_) << "oprot.writeMessageEnd();" << endl2;
+    indent(f_service_) << "args.write(oprot);" << '\n';
+    indent(f_service_) << "oprot.writeMessageEnd();" << '\n' << '\n';
 
-    indent(f_service_) << "await oprot.transport.flush();" << endl2;
+    indent(f_service_) << "await oprot.transport.flush();" << '\n' << '\n';
 
     if (!(*f_iter)->is_oneway()) {
-      indent(f_service_) << "TMessage msg = iprot.readMessageBegin();" << endl;
+      indent(f_service_) << "TMessage msg = iprot.readMessageBegin();" << '\n';
       indent(f_service_) << "if (msg.type == TMessageType.EXCEPTION)";
       scope_up(f_service_);
-      indent(f_service_) << "TApplicationError error = TApplicationError.read(iprot);" << endl;
-      indent(f_service_) << "iprot.readMessageEnd();" << endl;
-      indent(f_service_) << "throw error;" << endl;
-      scope_down(f_service_, endl2);
+      indent(f_service_) << "TApplicationError error = TApplicationError.read(iprot);" << '\n';
+      indent(f_service_) << "iprot.readMessageEnd();" << '\n';
+      indent(f_service_) << "throw error;" << '\n';
+      scope_down(f_service_, "\n\n");
 
       string result_class = get_result_class_name((*f_iter)->get_name());
-      indent(f_service_) << result_class << " result = new " << result_class << "();" << endl;
-      indent(f_service_) << "result.read(iprot);" << endl;
-      indent(f_service_) << "iprot.readMessageEnd();" << endl;
+      indent(f_service_) << result_class << " result = new " << result_class << "();" << '\n';
+      indent(f_service_) << "result.read(iprot);" << '\n';
+      indent(f_service_) << "iprot.readMessageEnd();" << '\n';
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         indent(f_service_) << "if (result." << generate_isset_check("success") << ")";
         scope_up(f_service_);
-        indent(f_service_) << "return result.success;" << endl;
-        scope_down(f_service_, endl2);
+        indent(f_service_) << "return result.success;" << '\n';
+        scope_down(f_service_, "\n\n");
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -1552,23 +1573,23 @@ void t_dart_generator::generate_service_client(t_service* tservice) {
         string result_field_name = get_member_name((*x_iter)->get_name());
         indent(f_service_) << "if (result." << result_field_name << " != null)";
         scope_up(f_service_);
-        indent(f_service_) << "throw result." << result_field_name << ";" << endl;
+        indent(f_service_) << "throw result." << result_field_name << "!;" << '\n';
         scope_down(f_service_);
       }
 
       // If you get here it's an exception, unless a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "return;" << endl;
+        indent(f_service_) << "return;" << '\n';
       } else {
         indent(f_service_) << "throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, \""
-                   << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+                   << (*f_iter)->get_name() << " failed: unknown result\");" << '\n';
       }
     }
 
-    scope_down(f_service_, endl2);
+    scope_down(f_service_, "\n\n");
   }
 
-  scope_down(f_service_, endl2);
+  scope_down(f_service_, "\n\n");
 }
 
 /**
@@ -1582,14 +1603,16 @@ void t_dart_generator::generate_service_server(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   // typedef
-  indent(f_service_) << "typedef void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);" << endl2;
+  indent(f_service_) << "typedef void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);" << '\n' << '\n';
 
   // Extends stuff
   string extends = "";
   string extends_processor = "";
+  string extends_covariant = "";
   if (tservice->get_extends() != nullptr) {
     extends = get_ttype_class_name(tservice->get_extends());
     extends_processor = " extends " + extends + "Processor";
+    extends_covariant = "covariant ";
   }
 
   // Generate the header portion
@@ -1601,57 +1624,58 @@ void t_dart_generator::generate_service_server(t_service* tservice) {
   indent(f_service_) << class_name << "(" << service_name_ << " iface)";
   if (!extends.empty()) {
     indent_up();
-    f_service_ << endl;
+    f_service_ << '\n';
     indent(f_service_) << ": super(iface)";
     indent_down();
   }
   scope_up(f_service_);
 
   if (extends.empty()) {
-    indent(f_service_) << "iface_ = iface;" << endl;
+    indent(f_service_) << "iface_ = iface;" << '\n';
   }
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_service_) << "PROCESS_MAP[\"" << (*f_iter)->get_name()
-               << "\"] = " << get_member_name((*f_iter)->get_name()) << ";" << endl;
+               << "\"] = " << get_member_name((*f_iter)->get_name()) << ";" << '\n';
   }
-  scope_down(f_service_, endl2);
+  scope_down(f_service_, "\n\n");
 
-  indent(f_service_) << service_name_ << " iface_;" << endl;
+
+  indent(f_service_) << extends_covariant << "late " << service_name_ << " iface_;" << '\n';
 
   if (extends.empty()) {
-    indent(f_service_) << "final Map<String, ProcessFunction> PROCESS_MAP = {};" << endl;
+    indent(f_service_) << "final Map<String, ProcessFunction> PROCESS_MAP = {};" << '\n';
   }
 
-  f_service_ << endl;
+  f_service_ << '\n';
 
   // Generate the server implementation
   indent(f_service_) << "bool process(TProtocol iprot, TProtocol oprot)";
   scope_up(f_service_);
-  indent(f_service_) << "TMessage msg = iprot.readMessageBegin();" << endl;
-  indent(f_service_) << "ProcessFunction fn = PROCESS_MAP[msg.name];" << endl;
+  indent(f_service_) << "TMessage msg = iprot.readMessageBegin();" << '\n';
+  indent(f_service_) << "ProcessFunction? fn = PROCESS_MAP[msg.name];" << '\n';
   indent(f_service_) << "if (fn == null)";
   scope_up(f_service_);
-  indent(f_service_) << "TProtocolUtil.skip(iprot, TType.STRUCT);" << endl;
-  indent(f_service_) << "iprot.readMessageEnd();" << endl;
+  indent(f_service_) << "TProtocolUtil.skip(iprot, TType.STRUCT);" << '\n';
+  indent(f_service_) << "iprot.readMessageEnd();" << '\n';
   indent(f_service_) << "TApplicationError x = new TApplicationError(TApplicationErrorType.UNKNOWN_METHOD, "
-         "\"Invalid method name: '\"+msg.name+\"'\");" << endl;
-  indent(f_service_) << "oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl;
-  indent(f_service_) << "x.write(oprot);" << endl;
-  indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-  indent(f_service_) << "oprot.transport.flush();" << endl;
-  indent(f_service_) << "return true;" << endl;
+         "\"Invalid method name: '\"+msg.name+\"'\");" << '\n';
+  indent(f_service_) << "oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << '\n';
+  indent(f_service_) << "x.write(oprot);" << '\n';
+  indent(f_service_) << "oprot.writeMessageEnd();" << '\n';
+  indent(f_service_) << "oprot.transport.flush();" << '\n';
+  indent(f_service_) << "return true;" << '\n';
   scope_down(f_service_);
-  indent(f_service_) << "fn(msg.seqid, iprot, oprot);" << endl;
-  indent(f_service_) << "return true;" << endl;
-  scope_down(f_service_, endl2); // process function
+  indent(f_service_) << "fn(msg.seqid, iprot, oprot);" << '\n';
+  indent(f_service_) << "return true;" << '\n';
+  scope_down(f_service_, "\n\n"); // process function
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
   }
 
-  scope_down(f_service_, endl2); // class
+  scope_down(f_service_, "\n\n"); // class
 }
 
 /**
@@ -1699,16 +1723,16 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
   string argsname = get_args_class_name(tfunction->get_name());
   string resultname = get_result_class_name(tfunction->get_name());
 
-  indent(f_service_) << argsname << " args = new " << argsname << "();" << endl;
-  indent(f_service_) << "args.read(iprot);" << endl;
-  indent(f_service_) << "iprot.readMessageEnd();" << endl;
+  indent(f_service_) << argsname << " args = new " << argsname << "();" << '\n';
+  indent(f_service_) << "args.read(iprot);" << '\n';
+  indent(f_service_) << "iprot.readMessageEnd();" << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
   if (!tfunction->is_oneway()) {
-    indent(f_service_) << resultname << " result = new " << resultname << "();" << endl;
+    indent(f_service_) << resultname << " result = new " << resultname << "();" << '\n';
   }
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
@@ -1735,7 +1759,7 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
     }
     f_service_ << "args." << get_member_name((*f_iter)->get_name());
   }
-  f_service_ << ");" << endl;
+  f_service_ << ");" << '\n';
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
@@ -1746,36 +1770,36 @@ void t_dart_generator::generate_process_function(t_service* tservice, t_function
       scope_up(f_service_);
       if (!tfunction->is_oneway()) {
         indent(f_service_) << "result." << result_field_name << " = "
-                   << result_field_name << ";" << endl;
+                   << result_field_name << ";" << '\n';
       }
     }
     scope_down(f_service_, " ");
     f_service_ << "catch (th)";
     scope_up(f_service_);
-    indent(f_service_) << "// Internal error" << endl;
+    indent(f_service_) << "// Internal error" << '\n';
     indent(f_service_) << "TApplicationError x = new "
                "TApplicationError(TApplicationErrorType.INTERNAL_ERROR, \"Internal error processing "
-               << tfunction->get_name() << "\");" << endl;
+               << tfunction->get_name() << "\");" << '\n';
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
-               << "\", TMessageType.EXCEPTION, seqid));" << endl;
-    indent(f_service_) << "x.write(oprot);" << endl;
-    indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-    indent(f_service_) << "oprot.transport.flush();" << endl;
-    indent(f_service_) << "return;" << endl;
+               << "\", TMessageType.EXCEPTION, seqid));" << '\n';
+    indent(f_service_) << "x.write(oprot);" << '\n';
+    indent(f_service_) << "oprot.writeMessageEnd();" << '\n';
+    indent(f_service_) << "oprot.transport.flush();" << '\n';
+    indent(f_service_) << "return;" << '\n';
     scope_down(f_service_);
   }
 
   if (tfunction->is_oneway()) {
-    indent(f_service_) << "return;" << endl;
+    indent(f_service_) << "return;" << '\n';
   } else {
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
-               << "\", TMessageType.REPLY, seqid));" << endl;
-    indent(f_service_) << "result.write(oprot);" << endl;
-    indent(f_service_) << "oprot.writeMessageEnd();" << endl;
-    indent(f_service_) << "oprot.transport.flush();" << endl;
+               << "\", TMessageType.REPLY, seqid));" << '\n';
+    indent(f_service_) << "result.write(oprot);" << '\n';
+    indent(f_service_) << "oprot.writeMessageEnd();" << '\n';
+    indent(f_service_) << "oprot.transport.flush();" << '\n';
   }
 
-  scope_down(f_service_, endl2);
+  scope_down(f_service_, "\n\n");
 }
 
 /**
@@ -1839,7 +1863,7 @@ void t_dart_generator::generate_deserialize_field(ostream& out, t_field* tfield,
     } else if (type->is_enum()) {
       out << "readI32();";
     }
-    out << endl;
+    out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            field_name.c_str(),
@@ -1851,8 +1875,8 @@ void t_dart_generator::generate_deserialize_field(ostream& out, t_field* tfield,
  * Generates an unserializer for a struct, invokes read()
  */
 void t_dart_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct, string prefix) {
-  indent(out) << prefix << " = new " << type_name(tstruct) << "();" << endl;
-  indent(out) << prefix << ".read(iprot);" << endl;
+  indent(out) << prefix << " = new " << type_name(tstruct) << "();" << '\n';
+  indent(out) << prefix << "!.read(iprot);" << '\n';
 }
 
 /**
@@ -1874,14 +1898,14 @@ void t_dart_generator::generate_deserialize_container(ostream& out, t_type* ttyp
 
   // Declare variables, read header
   if (ttype->is_map()) {
-    indent(out) << "TMap " << obj << " = iprot.readMapBegin();" << endl;
+    indent(out) << "TMap " << obj << " = iprot.readMapBegin();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "TSet " << obj << " = iprot.readSetBegin();" << endl;
+    indent(out) << "TSet " << obj << " = iprot.readSetBegin();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "TList " << obj << " = iprot.readListBegin();" << endl;
+    indent(out) << "TList " << obj << " = iprot.readListBegin();" << '\n';
   }
 
-  indent(out) << prefix << " = new " << type_name(ttype) << "();" << endl;
+  indent(out) << prefix << " = " << type_name_instantiate(ttype) << ";" << '\n';
 
   // For loop iterates over elements
   string i = tmp("_i");
@@ -1902,11 +1926,11 @@ void t_dart_generator::generate_deserialize_container(ostream& out, t_type* ttyp
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "iprot.readMapEnd();" << endl;
+    indent(out) << "iprot.readMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "iprot.readSetEnd();" << endl;
+    indent(out) << "iprot.readSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "iprot.readListEnd();" << endl;
+    indent(out) << "iprot.readListEnd();" << '\n';
   }
 
   scope_down(out);
@@ -1921,13 +1945,13 @@ void t_dart_generator::generate_deserialize_map_element(ostream& out, t_map* tma
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(out) << declare_field(&fkey) << endl;
-  indent(out) << declare_field(&fval) << endl;
+  indent(out) << declare_field(&fkey) << '\n';
+  indent(out) << declare_field(&fval) << '\n';
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) << prefix << "[" << key << "] = " << val << ";" << endl;
+  indent(out) << prefix << "![" << key << "] = " << val << ";" << '\n';
 }
 
 /**
@@ -1937,11 +1961,11 @@ void t_dart_generator::generate_deserialize_set_element(ostream& out, t_set* tse
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem) << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << prefix << ".add(" << elem << ");" << endl;
+  indent(out) << prefix << "!.add(" << elem << ");" << '\n';
 }
 
 /**
@@ -1953,11 +1977,11 @@ void t_dart_generator::generate_deserialize_list_element(ostream& out,
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem) << '\n';
 
   generate_deserialize_field(out, &felem);
 
-  indent(out) << prefix << ".add(" << elem << ");" << endl;
+  indent(out) << prefix << "!.add(" << elem << ");" << '\n';
 }
 
 /**
@@ -1969,6 +1993,7 @@ void t_dart_generator::generate_deserialize_list_element(ostream& out,
 void t_dart_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
   string field_name = get_member_name(tfield->get_name());
+  bool null_allowed = type_can_be_null(type);
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -1992,28 +2017,28 @@ void t_dart_generator::generate_serialize_field(ostream& out, t_field* tfield, s
         break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
-          out << "writeBinary(" << name << ");";
+          out << "writeBinary(" << name << (null_allowed ? "!);" : ");");
         } else {
-          out << "writeString(" << name << ");";
+          out << "writeString(" << name << (null_allowed ? "!);" : ");");
         }
         break;
       case t_base_type::TYPE_BOOL:
-        out << "writeBool(" << name << ");";
+        out << "writeBool(" << name << "!);";
         break;
       case t_base_type::TYPE_I8:
-        out << "writeByte(" << name << ");";
+        out << "writeByte(" << name << "!);";
         break;
       case t_base_type::TYPE_I16:
-        out << "writeI16(" << name << ");";
+        out << "writeI16(" << name << "!);";
         break;
       case t_base_type::TYPE_I32:
-        out << "writeI32(" << name << ");";
+        out << "writeI32(" << name << "!);";
         break;
       case t_base_type::TYPE_I64:
-        out << "writeI64(" << name << ");";
+        out << "writeI64(" << name << "!);";
         break;
       case t_base_type::TYPE_DOUBLE:
-        out << "writeDouble(" << name << ");";
+        out << "writeDouble(" << name << "!);";
         break;
       default:
         throw "compiler error: no Dart name for base type " + t_base_type::t_base_name(tbase);
@@ -2021,7 +2046,7 @@ void t_dart_generator::generate_serialize_field(ostream& out, t_field* tfield, s
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ");";
     }
-    out << endl;
+    out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
            prefix.c_str(),
@@ -2038,7 +2063,7 @@ void t_dart_generator::generate_serialize_field(ostream& out, t_field* tfield, s
  */
 void t_dart_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
-  indent(out) << prefix << ".write(oprot);" << endl;
+  indent(out) << prefix << "?.write(oprot);" << '\n';
 }
 
 /**
@@ -2054,22 +2079,22 @@ void t_dart_generator::generate_serialize_container(ostream& out, t_type* ttype,
   if (ttype->is_map()) {
     string iter = tmp("_key");
     indent(out) << "oprot.writeMapBegin(new TMap(" << type_to_enum(((t_map*)ttype)->get_key_type())
-                << ", " << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << prefix << ".length));"
-                << endl;
+                << ", " << type_to_enum(((t_map*)ttype)->get_val_type()) << ", " << prefix << "!.length));"
+                << '\n';
   } else if (ttype->is_set()) {
     indent(out) << "oprot.writeSetBegin(new TSet(" << type_to_enum(((t_set*)ttype)->get_elem_type())
-                << ", " << prefix << ".length));" << endl;
+                << ", " << prefix << "!.length));" << '\n';
   } else if (ttype->is_list()) {
     indent(out) << "oprot.writeListBegin(new TList("
-                << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " << prefix << ".length));"
-                << endl;
+                << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " << prefix << "!.length));"
+                << '\n';
   }
 
   string iter = tmp("elem");
   if (ttype->is_map()) {
-    indent(out) << "for (var " << iter << " in " << prefix << ".keys)";
+    indent(out) << "for (var " << iter << " in " << prefix << "!.keys)";
   } else if (ttype->is_set() || ttype->is_list()) {
-    indent(out) << "for (var " << iter << " in " << prefix << ")";
+    indent(out) << "for (var " << iter << " in " << prefix << "!)";
   }
 
   scope_up(out);
@@ -2085,11 +2110,11 @@ void t_dart_generator::generate_serialize_container(ostream& out, t_type* ttype,
   scope_down(out);
 
   if (ttype->is_map()) {
-    indent(out) << "oprot.writeMapEnd();" << endl;
+    indent(out) << "oprot.writeMapEnd();" << '\n';
   } else if (ttype->is_set()) {
-    indent(out) << "oprot.writeSetEnd();" << endl;
+    indent(out) << "oprot.writeSetEnd();" << '\n';
   } else if (ttype->is_list()) {
-    indent(out) << "oprot.writeListEnd();" << endl;
+    indent(out) << "oprot.writeListEnd();" << '\n';
   }
 
   scope_down(out);
@@ -2104,7 +2129,7 @@ void t_dart_generator::generate_serialize_map_element(ostream& out,
                                                      string map) {
   t_field kfield(tmap->get_key_type(), iter);
   generate_serialize_field(out, &kfield, "");
-  t_field vfield(tmap->get_val_type(), map + "[" + iter + "]");
+  t_field vfield(tmap->get_val_type(), map + "![" + iter + "]");
   generate_serialize_field(out, &vfield, "");
 }
 
@@ -2147,6 +2172,34 @@ string t_dart_generator::type_name(t_type* ttype) {
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*)ttype;
     return "List<" + type_name(tlist->get_elem_type()) + ">";
+  }
+
+  return get_ttype_class_name(ttype);
+}
+
+/**
+ * Returns instantiate code for a Dart type name
+ *
+ * @param ttype The type
+ * @return Dart type name, i.e. Map<Key, Value>
+ */
+string t_dart_generator::type_name_instantiate(t_type* ttype) {
+  ttype = get_true_type(ttype);
+
+  if (ttype->is_base_type()) {
+    return base_type_name((t_base_type*)ttype);
+  } else if (ttype->is_enum()) {
+    return "int";
+  } else if (ttype->is_map()) {
+    t_map* tmap = (t_map*)ttype;
+    return "<" + type_name(tmap->get_key_type()) + ", "
+                  + type_name(tmap->get_val_type()) + ">{}";
+  } else if (ttype->is_set()) {
+    t_set* tset = (t_set*)ttype;
+    return "<" + type_name(tset->get_elem_type()) + ">{}";
+  } else if (ttype->is_list()) {
+    t_list* tlist = (t_list*)ttype;
+    return "<" + type_name(tlist->get_elem_type()) + ">[]";
   }
 
   return get_ttype_class_name(ttype);
@@ -2216,6 +2269,8 @@ string t_dart_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_DOUBLE:
         result += " = 0.0";
         break;
+      default:
+        throw "compiler error: unhandled type";
       }
 
     } else if (ttype->is_enum()) {
@@ -2241,9 +2296,9 @@ string t_dart_generator::function_signature(t_function* tfunction) {
 
   std::string returntype;
   if (tfunction->get_returntype()->is_void()) {
-    returntype = "Future";
+    returntype = "Future<void>";
   } else {
-    returntype = "Future<" + type_name(tfunction->get_returntype()) + ">";
+    returntype = "Future<" + type_name(tfunction->get_returntype()) + get_type_suffix(tfunction->get_returntype()) + ">";
   }
 
   std::string result = returntype + " " + get_member_name(tfunction->get_name()) +
@@ -2267,7 +2322,7 @@ string t_dart_generator::argument_list(t_struct* tstruct) {
       result += ", ";
     }
     string field_name = get_member_name((*f_iter)->get_name());
-    result += type_name((*f_iter)->get_type()) + " " + field_name;
+    result += type_name((*f_iter)->get_type()) + (type_can_be_null((*f_iter)->get_type()) ? "?" : "") + " " + field_name;
   }
   return result;
 }
@@ -2297,6 +2352,8 @@ string t_dart_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "TType.I32";
@@ -2314,12 +2371,13 @@ string t_dart_generator::type_to_enum(t_type* type) {
 }
 
 std::string t_dart_generator::init_value(t_field* field) {
-  // Do not initialize optional fields
-  if (field->get_req() == t_field::T_OPTIONAL) {
-    return "";
-  }
 
   t_type* ttype = field->get_type();
+
+  if (ttype->is_enum())
+  {
+    return " = 0";
+  }
 
   // Get the actual type for a typedef
   if (ttype->is_typedef()) {
@@ -2351,6 +2409,8 @@ std::string t_dart_generator::init_value(t_field* field) {
   case t_base_type::TYPE_STRING:
     result = "";
     break;
+  default:
+    throw "compiler error: unhandled type";
   }
 
   return result;
@@ -2489,7 +2549,7 @@ std::string t_dart_generator::generate_isset_check(std::string field_name) {
 void t_dart_generator::generate_isset_set(ostream& out, t_field* field) {
   if (!type_can_be_null(field->get_type())) {
     string field_name = get_member_name(field->get_name());
-    indent(out) << "this.__isset_" << field_name << " = true;" << endl;
+    indent(out) << "this.__isset_" << field_name << " = true;" << '\n';
   }
 }
 
@@ -2501,6 +2561,11 @@ std::string t_dart_generator::get_ttype_class_name(t_type* ttype) {
     return named_import + "." + ttype->get_name();
   }
 }
+
+std::string t_dart_generator::display_name() const {
+  return "Dart";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     dart,

@@ -76,6 +76,8 @@ function TTransportBase:readAll(len)
   return buf
 end
 function TTransportBase:write(buf) end
+-- flushOneway is a NOOP for most transport types.
+function TTransportBase:flushOneway() end
 function TTransportBase:flush() end
 
 TServerTransportBase = __TObject:new{

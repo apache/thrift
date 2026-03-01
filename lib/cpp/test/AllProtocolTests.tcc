@@ -25,6 +25,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/Thrift.h>
+#include <thrift/TUuid.h>
 
 #include "GenericHelpers.h"
 
@@ -207,6 +208,9 @@ void testProtocol(const char* protoname) {
     testNaked<TProto, std::string>("borderlinetiny");
     testNaked<TProto, std::string>("a bit longer than the smallest possible");
     testNaked<TProto, std::string>("\x1\x2\x3\x4\x5\x6\x7\x8\x9\xA"); // kinda binary test
+
+    testNaked<TProto, TUuid>(TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"));
+    testField<TProto, T_UUID, TUuid>(TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4c"));
 
     testField<TProto, T_STRING, std::string>("");
     testField<TProto, T_STRING, std::string>("short");

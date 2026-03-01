@@ -18,6 +18,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
+
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
@@ -40,14 +43,8 @@ namespace Thrift.Transport
 
         public async ValueTask<TTransport> AcceptAsync(CancellationToken cancellationToken = default)
         {
-            var transport = await AcceptImplementationAsync(cancellationToken);
-
-            if (transport == null)
-            {
-                throw new TTransportException($"{nameof(AcceptImplementationAsync)} should not return null");
-            }
-
-            return transport;
+            return await AcceptImplementationAsync(cancellationToken)
+                ?? throw new TTransportException($"{nameof(AcceptImplementationAsync)} should not return null");
         }
     }
 }

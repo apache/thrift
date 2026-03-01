@@ -119,6 +119,11 @@ func (p *THeaderProtocol) ClearWriteHeaders() {
 }
 
 // AddTransform add a transform for writing.
+//
+// Deprecated: This only applies to the next message written, and the next read
+// message will cause write transforms to be reset from what's configured in
+// TConfiguration. For sticky transforms, use TConfiguration.THeaderTransforms
+// instead.
 func (p *THeaderProtocol) AddTransform(transform THeaderTransformID) error {
 	return p.transport.AddTransform(transform)
 }
@@ -219,6 +224,10 @@ func (p *THeaderProtocol) WriteString(ctx context.Context, value string) error {
 
 func (p *THeaderProtocol) WriteBinary(ctx context.Context, value []byte) error {
 	return p.protocol.WriteBinary(ctx, value)
+}
+
+func (p *THeaderProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	return p.protocol.WriteUUID(ctx, value)
 }
 
 // ReadFrame calls underlying THeaderTransport's ReadFrame function.
@@ -332,6 +341,10 @@ func (p *THeaderProtocol) ReadString(ctx context.Context) (value string, err err
 
 func (p *THeaderProtocol) ReadBinary(ctx context.Context) (value []byte, err error) {
 	return p.protocol.ReadBinary(ctx)
+}
+
+func (p *THeaderProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	return p.protocol.ReadUUID(ctx)
 }
 
 func (p *THeaderProtocol) Skip(ctx context.Context, fieldType TType) error {

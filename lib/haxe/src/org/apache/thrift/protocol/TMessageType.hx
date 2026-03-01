@@ -19,8 +19,7 @@
 
 package org.apache.thrift.protocol;
 
-@:enum
-abstract TMessageType(Int)  from Int to Int  {
+enum abstract TMessageType(Int)  from Int to Int  {
     public static inline var CALL      : Int = 1;
     public static inline var REPLY     : Int = 2;
     public static inline var EXCEPTION : Int = 3;

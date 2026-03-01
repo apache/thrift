@@ -451,7 +451,7 @@ func TestReadJSONProtocolBinary(t *testing.T) {
 	if len(v) != len(value) {
 		t.Fatalf("Bad value for %s value length %v, wrote: %v, received length: %v", thetype, len(value), s, len(v))
 	}
-	for i := 0; i < len(v); i++ {
+	for i := range v {
 		if v[i] != value[i] {
 			t.Fatalf("Bad value for %s at index %d value %v, wrote: %v, received: %v", thetype, i, value[i], s, v[i])
 		}
@@ -479,7 +479,7 @@ func TestWriteJSONProtocolList(t *testing.T) {
 		t.Fatalf("Unable to write %s due to error flushing: %s", thetype, e.Error())
 	}
 	str := trans.String()
-	str1 := new([]interface{})
+	str1 := new([]any)
 	err := json.Unmarshal([]byte(str), str1)
 	if err != nil {
 		t.Fatalf("Unable to decode %s, wrote: %s", thetype, str)
@@ -533,7 +533,7 @@ func TestWriteJSONProtocolSet(t *testing.T) {
 		t.Fatalf("Unable to write %s due to error flushing: %s", thetype, e.Error())
 	}
 	str := trans.String()
-	str1 := new([]interface{})
+	str1 := new([]any)
 	err := json.Unmarshal([]byte(str), str1)
 	if err != nil {
 		t.Fatalf("Unable to decode %s, wrote: %s", thetype, str)

@@ -243,26 +243,26 @@ func TestSerializer(t *testing.T) {
 
 func TestSerializerPoolAsync(t *testing.T) {
 	var wg sync.WaitGroup
-	var counter int64
+	var counter atomic.Int64
 	s := NewTSerializerPool(NewTSerializer)
 	d := NewTDeserializerPool(NewTDeserializer)
 	f := func(i int64) bool {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			t.Run(
-				fmt.Sprintf("#%d-%d", atomic.AddInt64(&counter, 1), i),
+				fmt.Sprintf("#%d-%d", counter.Add(1), i),
 				func(t *testing.T) {
 					m := MyTestStruct{
 						Int64: i,
 					}
 					str, err := s.WriteString(context.Background(), &m)
 					if err != nil {
-						t.Fatal("serialize:", err)
+						t.Error("serialize:", err)
+						return
 					}
 					var m1 MyTestStruct
 					if err = d.ReadString(context.Background(), &m1, str); err != nil {
-						t.Fatal("deserialize:", err)
+						t.Error("deserialize:", err)
+						return
 
 					}
 
@@ -271,7 +271,7 @@ func TestSerializerPoolAsync(t *testing.T) {
 					}
 				},
 			)
-		}()
+		})
 		return true
 	}
 	quick.Check(f, nil)
@@ -326,7 +326,7 @@ func BenchmarkSerializer(b *testing.B) {
 		b.Run(
 			c.Label,
 			func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					s := c.Serializer()
 					m := MyTestStruct{}
 					str, _ := s.WriteString(context.Background(), &m)

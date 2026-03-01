@@ -43,7 +43,7 @@ abstract class TConstant
     {
         if (is_null(static::$$constant)) {
             static::$$constant = call_user_func(
-                sprintf('static::init_%s', $constant)
+                sprintf(static::class . '::init_%s', $constant)
             );
         }
 

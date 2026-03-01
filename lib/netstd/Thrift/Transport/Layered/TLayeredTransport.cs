@@ -16,8 +16,9 @@
 // under the License.
 
 using System;
-using System.Collections.Generic;
-using System.Text;
+
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Transport
 {
@@ -40,6 +41,11 @@ namespace Thrift.Transport
         public override void CheckReadBytesAvailable(long numBytes)
         {
             InnerTransport.CheckReadBytesAvailable(numBytes);
+        }
+
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
+        {
+            InnerTransport.ResetMessageSizeAndConsumedBytes(newSize);
         }
     }
 }

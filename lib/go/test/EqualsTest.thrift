@@ -20,6 +20,7 @@
 typedef i8 mybyte
 typedef string mystr
 typedef binary mybin
+typedef uuid myuuid
 
 enum EnumFoo {
   e1
@@ -51,6 +52,10 @@ struct BasicEqualsFoo {
   22: optional mystr OptMyStrFoo,
   23: mybin MyBinFoo,
   24: optional mybin OptMyBinFoo,
+  25: uuid UUIDFoo,
+  26: optional uuid OptUUIDFoo,
+  27: myuuid MyUUIDFoo,
+  28: optional myuuid OptMyUUIDFoo,
 }
 
 struct StructEqualsFoo {
@@ -79,6 +84,10 @@ struct ListEqualsFoo {
     18: optional list<mystr> OptMyStrListFoo,
     19: list<mybin> MyBinListFoo,
     20: optional list<mybin> OptMyBinListFoo,
+    21: list<uuid> UUIDListFoo,
+    22: optional list<uuid> OptUUIDListFoo,
+    23: list<myuuid> MyUUIDListFoo,
+    24: optional list<myuuid> OptMyUUIDListFoo,
 }
 
 struct SetEqualsFoo {
@@ -102,6 +111,10 @@ struct SetEqualsFoo {
     18: optional set<mystr> OptMyStrSetFoo,
     19: set<mybin> MyBinSetFoo,
     20: optional set<mybin> OptMyBinSetFoo,
+    21: set<uuid> UUIDSetFoo,
+    22: optional set<uuid> OptUUIDSetFoo,
+    23: set<myuuid> MyUUIDSetFoo,
+    24: optional set<myuuid> OptMyUUIDSetFoo,
 }
 
 struct MapEqualsFoo {
@@ -125,4 +138,8 @@ struct MapEqualsFoo {
     18: optional map<i64, mybyte> OptInt64MyByteMapFoo,
     19: map<mybyte, i64> MyByteInt64MapFoo,
     20: optional map<mybyte, i64> OptMyByteInt64MapFoo,
+    21: map<i64, uuid> UUIDMapFoo,
+    22: optional map<i64, uuid> OptUUIDMapFoo,
+    23: map<i64, myuuid> MyUUIDMapFoo,
+    24: optional map<i64, myuuid> OptMyUUIDMapFoo,
 }

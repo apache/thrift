@@ -33,5 +33,8 @@ endif
 clean-local:
 	$(RM) -r gen-rb/
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 dist-hook:
 	$(RM) -r $(distdir)/gen-rb/

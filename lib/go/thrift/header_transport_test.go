@@ -316,7 +316,7 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 	writer := NewTHeaderTransport(trans)
 
 	t.Run("pair", func(t *testing.T) {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			// write
 			if _, err := io.Copy(writer, strings.NewReader(content)); err != nil {
 				t.Fatalf("Failed to write on #%d: %v", i, err)
@@ -338,7 +338,7 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 
 	t.Run("batched", func(t *testing.T) {
 		// write
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if _, err := io.Copy(writer, strings.NewReader(content)); err != nil {
 				t.Fatalf("Failed to write on #%d: %v", i, err)
 			}
@@ -348,7 +348,7 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 		}
 
 		// read
-		for i := 0; i < n; i++ {
+		for i := range n {
 			const (
 				size = len(content)
 			)

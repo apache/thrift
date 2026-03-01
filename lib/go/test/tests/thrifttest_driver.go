@@ -150,7 +150,7 @@ func (p *ThriftTestDriver) Start() {
 	}
 
 	mapout := make(map[int32]int32)
-	for i := int32(0); i < 5; i++ {
+	for i := range int32(5) {
 		mapout[i] = i - 10
 	}
 	if r, err := client.TestMap(defaultCtx, mapout); !reflect.DeepEqual(r, mapout) || err != nil {

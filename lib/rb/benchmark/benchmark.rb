@@ -19,6 +19,7 @@
 
 require 'rubygems'
 $:.unshift File.dirname(__FILE__) + '/../lib'
+$:.unshift File.dirname(__FILE__) + '/../ext'
 require 'thrift'
 require 'stringio'
 
@@ -34,18 +35,21 @@ class Server
   attr_accessor :interpreter
   attr_accessor :host
   attr_accessor :port
+  attr_accessor :protocol_type
 
   def initialize(opts)
     @serverclass = opts.fetch(:class, Thrift::NonblockingServer)
     @interpreter = opts.fetch(:interpreter, "ruby")
     @host = opts.fetch(:host, ::HOST)
     @port = opts.fetch(:port, ::PORT)
+    @protocol_type = opts.fetch(:protocol_type, 'binary')
+    @tls = opts.fetch(:tls, false)
   end
 
   def start
     return if @serverclass == Object
     args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
-    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
+    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{"-tls" if @tls} #{@host} #{@port} #{@serverclass.name} #{@protocol_type}", "r+")
     Marshal.load(@pipe) # wait until the server has started
     sleep 0.4 # give the server time to actually start spawning sockets
   end
@@ -75,6 +79,8 @@ class BenchmarkManager
     @interpreter = opts.fetch(:interpreter, "ruby")
     @server = server
     @log_exceptions = opts.fetch(:log_exceptions, false)
+    @protocol_type = opts.fetch(:protocol_type, 'binary')
+    @tls = opts.fetch(:tls, false)
   end
 
   def run
@@ -93,13 +99,15 @@ class BenchmarkManager
   end
 
   def spawn
-    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
+    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{"-tls" if @tls} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client} #{@protocol_type}")
     @pool << pipe
   end
 
   def socket_class
     if @socket
       Thrift::UNIXSocket
+    elsif @tls
+      Thrift::SSLSocket
     else
       Thrift::Socket
     end
@@ -197,6 +205,7 @@ class BenchmarkManager
              [["Server class", "%s"], @server.serverclass == Object ? "" : @server.serverclass],
              [["Server interpreter", "%s"], @server.interpreter],
              [["Client interpreter", "%s"], @interpreter],
+             [["Protocol type", "%s"], @protocol_type],
              [["Socket class", "%s"], socket_class],
              ["Number of processes", @num_processes],
              ["Clients per process", @clients_per_process],
@@ -250,22 +259,27 @@ def resolve_const(const)
 end
 
 puts "Starting server..."
+protocol_type = ENV['THRIFT_PROTOCOL'] || 'binary'
 args = {}
 args[:interpreter] = ENV['THRIFT_SERVER_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
 args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
+args[:protocol_type] = protocol_type
 server = Server.new(args)
 server.start
 
 args = {}
 args[:host] = ENV['THRIFT_HOST'] || HOST
 args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
+args[:tls] = ENV['THRIFT_TLS'] == 'true'
 args[:num_processes] = (ENV['THRIFT_NUM_PROCESSES'] || 40).to_i
 args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
 args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
 args[:interpreter] = ENV['THRIFT_CLIENT_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
 args[:log_exceptions] = !!ENV['THRIFT_LOG_EXCEPTIONS']
+args[:protocol_type] = protocol_type
 BenchmarkManager.new(args, server).run
 
 server.shutdown

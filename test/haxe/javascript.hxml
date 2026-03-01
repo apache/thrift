@@ -26,7 +26,7 @@
 -main Main
 
 #JavaScript target
--js bin/Tutorial.js
+-js bin/ThriftTest.js
 
 #You can use -D source-map-content (requires Haxe 3.1+) to have the .hx 
 #files directly embedded into the map file, this way you only have to 
@@ -34,11 +34,11 @@
 #you modify your .hx files.
 -D source-map-content
 
+# libs
+-lib uuid
+
 #Generate source map and add debug information
 -debug
 
 #dead code elimination : remove unused code
-#"-dce no" : do not remove unused code
-#"-dce std" : remove unused code in the std lib (default)
-#"-dce full" : remove all unused code
 -dce full

@@ -18,7 +18,7 @@
  */
 
 #ifndef _THRIFT_ENUM_H_
-#define _THRIFT_ENUM_H_ 
+#define _THRIFT_ENUM_H_
 
 namespace apache {
 namespace thrift {
@@ -46,8 +46,7 @@ enum TType {
   T_MAP        = 13,
   T_SET        = 14,
   T_LIST       = 15,
-  T_UTF8       = 16,
-  T_UTF16      = 17
+  T_UUID       = 16,
 };
 
 /**
@@ -63,4 +62,4 @@ enum TMessageType {
 
 }}} // apache::thrift::protocol
 
-#endif // #define _THRIFT_ENUM_H_ 
+#endif // #define _THRIFT_ENUM_H_

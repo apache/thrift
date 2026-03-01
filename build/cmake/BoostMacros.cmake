@@ -17,6 +17,23 @@
 # under the License.
 #
 
+# CMake 4.0+ removed the FindBoost module (CMP0167). Use OLD behavior to
+# preserve compatibility with existing ${Boost_LIBRARIES} usage.
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 OLD)
+endif()
+
+# CMake 3.27+ warns and ignores upper-case <PACKAGENAME>_ROOT variables unless
+# CMP0144 is set. We pass BOOST_ROOT on Windows builds, so enable NEW behavior.
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
+# Force using FindBoost instead of Boost's own BoostConfig.cmake.
+# BoostConfig.cmake does not populate ${Boost_LIBRARIES} the same way,
+# which causes linking failures on Windows.
+set(Boost_NO_BOOST_CMAKE ON)
+
 set(BOOST_MINREV 1.56)
 
 macro(REQUIRE_BOOST_HEADERS)

@@ -28,7 +28,6 @@
 %% legacy api
 -export([new_transport_factory/0]).
 
-
 %% wrapper around thrift_membuffer_transport for legacy reasons
 
 new() -> thrift_membuffer_transport:new().
@@ -44,4 +43,3 @@ read(State, Data) -> thrift_membuffer_transport:read(State, Data).
 flush(State) -> thrift_membuffer_transport:flush(State).
 
 close(State) -> thrift_membuffer_transport:close(State).
-

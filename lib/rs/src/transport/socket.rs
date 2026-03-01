@@ -20,6 +20,9 @@ use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream, ToSocketAddrs};
 
+#[cfg(unix)]
+use std::os::unix::net::UnixStream;
+
 use super::{ReadHalf, TIoChannel, WriteHalf};
 use crate::{new_transport_error, TransportErrorKind};
 
@@ -49,6 +52,7 @@ use crate::{new_transport_error, TransportErrorKind};
 /// use thrift::transport::TTcpChannel;
 ///
 /// let stream = TcpStream::connect("127.0.0.1:9189").unwrap();
+/// stream.set_nodelay(true).unwrap();
 ///
 /// // no need to call c.open() since we've already connected above
 /// let mut c = TTcpChannel::with_stream(stream);
@@ -91,6 +95,7 @@ impl TTcpChannel {
         } else {
             match TcpStream::connect(&remote_address) {
                 Ok(s) => {
+                    s.set_nodelay(true)?;
                     self.stream = Some(s);
                     Ok(())
                 }
@@ -164,5 +169,17 @@ impl Write for TTcpChannel {
 
     fn flush(&mut self) -> io::Result<()> {
         self.if_set(|s| s.flush())
+    }
+}
+
+#[cfg(unix)]
+impl TIoChannel for UnixStream {
+    fn split(self) -> crate::Result<(ReadHalf<Self>, WriteHalf<Self>)>
+    where
+        Self: Sized,
+    {
+        let socket_rx = self.try_clone().unwrap();
+
+        Ok((ReadHalf::new(self), WriteHalf::new(socket_rx)))
     }
 }

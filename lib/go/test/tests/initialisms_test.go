@@ -27,8 +27,7 @@ import (
 )
 
 func TestThatCommonInitialismsAreFixed(t *testing.T) {
-	s := initialismstest.InitialismsTest{}
-	st := reflect.TypeOf(s)
+	st := reflect.TypeFor[initialismstest.InitialismsTest]()
 	_, ok := st.FieldByName("UserID")
 	if !ok {
 		t.Error("UserID attribute is missing!")

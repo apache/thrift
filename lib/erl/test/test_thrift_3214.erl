@@ -18,7 +18,6 @@
 %%
 
 -module(test_thrift_3214).
--compile(export_all).
 
 -include("gen-erl/thrift3214_types.hrl").
 
@@ -26,33 +25,38 @@
 -include_lib("eunit/include/eunit.hrl").
 
 record_generation_test_() ->
-  [
-    {"StringMap record", ?_assertMatch(
-      {'StringMap', _},
-      #'StringMap'{data=#{50 => "foo"}}
-    )},
-    {"StringMap record defaults", ?_assertEqual(
-      {'StringMap', #{1 => "a", 2 => "b"}},
-      #'StringMap'{}
-    )},
-    {"StringMap record dict from list", ?_assertNotEqual(
-      {'StringMap', dict:from_list([{1, "a"}, {2, "b"}])},
-      #'StringMap'{}
-    )},
-    {"StringMap record map from list", ?_assertEqual(
-      {'StringMap', maps:from_list([{1, "a"}, {2, "b"}])},
-      #'StringMap'{}
-    )}
-  ].
+    [
+        {"StringMap record",
+            ?_assertMatch(
+                {'StringMap', _},
+                #'StringMap'{data = #{50 => "foo"}}
+            )},
+        {"StringMap record defaults",
+            ?_assertEqual(
+                {'StringMap', #{1 => "a", 2 => "b"}},
+                #'StringMap'{}
+            )},
+        {"StringMap record dict from list",
+            ?_assertNotEqual(
+                {'StringMap', dict:from_list([{1, "a"}, {2, "b"}])},
+                #'StringMap'{}
+            )},
+        {"StringMap record map from list",
+            ?_assertEqual(
+                {'StringMap', maps:from_list([{1, "a"}, {2, "b"}])},
+                #'StringMap'{}
+            )}
+    ].
 
 struct_info_test_() ->
-  [
-    {"StringMap extended definition", ?_assertEqual(
-      {struct, [
-        {1, undefined, {map, i32, string}, 'data', #{1 => "a", 2 => "b"}}
-      ]},
-      thrift3214_types:struct_info_ext('StringMap')
-    )}
-  ].
+    [
+        {"StringMap extended definition",
+            ?_assertEqual(
+                {struct, [
+                    {1, undefined, {map, i32, string}, 'data', #{1 => "a", 2 => "b"}}
+                ]},
+                thrift3214_types:struct_info_ext('StringMap')
+            )}
+    ].
 
 -endif.

@@ -20,10 +20,12 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <constants.h>
 #include <struct.h>
 #include <macros.h>
 #include <bytes.h>
+#include <protocol.h>
 
 VALUE rb_thrift_binary_proto_native_qmark(VALUE self) {
   return Qtrue;
@@ -34,7 +36,6 @@ VALUE rb_thrift_binary_proto_native_qmark(VALUE self) {
 static int VERSION_1;
 static int VERSION_MASK;
 static int TYPE_MASK;
-static int BAD_VERSION;
 static ID rbuf_ivar_id;
 
 static void write_byte_direct(VALUE trans, int8_t b) {
@@ -43,7 +44,7 @@ static void write_byte_direct(VALUE trans, int8_t b) {
 
 static void write_i16_direct(VALUE trans, int16_t value) {
   char data[2];
-  
+
   data[1] = value;
   data[0] = (value >> 8);
 
@@ -82,7 +83,7 @@ static void write_string_direct(VALUE trans, VALUE str) {
     rb_raise(rb_eStandardError, "Value should be a string");
   }
   str = convert_to_utf8_byte_buffer(str);
-  write_i32_direct(trans, RSTRING_LEN(str));
+  write_i32_direct(trans, (int32_t)RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
 }
 
@@ -131,7 +132,7 @@ VALUE rb_thrift_binary_proto_write_message_begin(VALUE self, VALUE name, VALUE t
     write_byte_direct(trans, FIX2INT(type));
     write_i32_direct(trans, FIX2INT(seqid));
   }
-  
+
   return Qnil;
 }
 
@@ -139,7 +140,7 @@ VALUE rb_thrift_binary_proto_write_field_begin(VALUE self, VALUE name, VALUE typ
   VALUE trans = GET_TRANSPORT(self);
   write_byte_direct(trans, FIX2INT(type));
   write_i16_direct(trans, FIX2INT(id));
-  
+
   return Qnil;
 }
 
@@ -153,7 +154,7 @@ VALUE rb_thrift_binary_proto_write_map_begin(VALUE self, VALUE ktype, VALUE vtyp
   write_byte_direct(trans, FIX2INT(ktype));
   write_byte_direct(trans, FIX2INT(vtype));
   write_i32_direct(trans, FIX2INT(size));
-  
+
   return Qnil;
 }
 
@@ -161,7 +162,7 @@ VALUE rb_thrift_binary_proto_write_list_begin(VALUE self, VALUE etype, VALUE siz
   VALUE trans = GET_TRANSPORT(self);
   write_byte_direct(trans, FIX2INT(etype));
   write_i32_direct(trans, FIX2INT(size));
-  
+
   return Qnil;
 }
 
@@ -223,8 +224,48 @@ VALUE rb_thrift_binary_proto_write_binary(VALUE self, VALUE buf) {
   CHECK_NIL(buf);
   VALUE trans = GET_TRANSPORT(self);
   buf = force_binary_encoding(buf);
-  write_i32_direct(trans, RSTRING_LEN(buf));
+  write_i32_direct(trans, (int32_t)RSTRING_LEN(buf));
   rb_funcall(trans, write_method_id, 1, buf);
+  return Qnil;
+}
+
+VALUE rb_thrift_binary_proto_write_uuid(VALUE self, VALUE uuid) {
+  if (NIL_P(uuid) || TYPE(uuid) != T_STRING) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("UUID must be a string")));
+  }
+
+  VALUE trans = GET_TRANSPORT(self);
+  char bytes[16];
+  const char* str = RSTRING_PTR(uuid);
+  long len = RSTRING_LEN(uuid);
+
+  // Parse UUID string (format: "550e8400-e29b-41d4-a716-446655440000")
+  // Expected length: 36 characters (32 hex + 4 hyphens)
+  if (len != 36 || str[8] != '-' || str[13] != '-' || str[18] != '-' || str[23] != '-') {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  // Parse hex string to bytes using direct conversion, skipping hyphens
+  int byte_idx = 0;
+  for (int i = 0; i < len && byte_idx < 16; i++) {
+    if (str[i] == '-') continue;
+    if (i + 1 >= len || str[i + 1] == '-') break;
+
+    // Convert two hex characters to one byte
+    int high = hex_char_to_int(str[i]);
+    int low = hex_char_to_int(str[i + 1]);
+
+    if (high < 0 || low < 0) break;
+
+    bytes[byte_idx++] = (unsigned char)((high << 4) | low);
+    i++; // skip next char since we processed two
+  }
+
+  if (byte_idx != 16) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  WRITE(trans, bytes, 16);
   return Qnil;
 }
 
@@ -272,13 +313,6 @@ static int64_t read_i64_direct(VALUE self) {
   return (hi << 32) | lo;
 }
 
-static VALUE get_protocol_exception(VALUE code, VALUE message) {
-  VALUE args[2];
-  args[0] = code;
-  args[1] = message;
-  return rb_class_new_instance(2, (VALUE*)&args, protocol_exception_class);
-}
-
 VALUE rb_thrift_binary_proto_read_message_end(VALUE self) {
   return Qnil;
 }
@@ -311,25 +345,25 @@ VALUE rb_thrift_binary_proto_read_message_begin(VALUE self) {
   VALUE strict_read = GET_STRICT_READ(self);
   VALUE name, seqid;
   int type;
-  
+
   int version = read_i32_direct(self);
-  
+
   if (version < 0) {
     if ((version & VERSION_MASK) != VERSION_1) {
-      rb_exc_raise(get_protocol_exception(INT2FIX(BAD_VERSION), rb_str_new2("Missing version identifier")));
+      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_BAD_VERSION), rb_str_new2("Missing version identifier")));
     }
     type = version & TYPE_MASK;
     name = rb_thrift_binary_proto_read_string(self);
     seqid = rb_thrift_binary_proto_read_i32(self);
   } else {
     if (strict_read == Qtrue) {
-      rb_exc_raise(get_protocol_exception(INT2FIX(BAD_VERSION), rb_str_new2("No version identifier, old protocol client?")));
+      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_BAD_VERSION), rb_str_new2("No version identifier, old protocol client?")));
     }
     name = READ(self, version);
     type = read_byte_direct(self);
     seqid = rb_thrift_binary_proto_read_i32(self);
   }
-  
+
   return rb_ary_new3(3, name, INT2FIX(type), seqid);
 }
 
@@ -400,12 +434,33 @@ VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
-void Init_binary_protocol_accelerated() {
+VALUE rb_thrift_binary_proto_read_uuid(VALUE self) {
+  VALUE data = READ(self, 16);
+  const unsigned char* bytes = (const unsigned char*)RSTRING_PTR(data);
+
+  // Format as UUID string: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  char uuid_str[37];
+  char* p = uuid_str;
+
+  for (int i = 0; i < 16; i++) {
+    *p++ = int_to_hex_char((bytes[i] >> 4) & 0x0F);
+    *p++ = int_to_hex_char(bytes[i] & 0x0F);
+    if (i == 3 || i == 5 || i == 7 || i == 9) {
+      *p++ = '-';
+    }
+  }
+
+  *p = '\0';
+
+  return rb_str_new(uuid_str, 36);
+}
+
+void Init_binary_protocol_accelerated(void) {
   VALUE thrift_binary_protocol_class = rb_const_get(thrift_module, rb_intern("BinaryProtocol"));
 
-  VERSION_1 = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_1")));
-  VERSION_MASK = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_MASK")));
-  TYPE_MASK = rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("TYPE_MASK")));
+  VERSION_1 = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_1")));
+  VERSION_MASK = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("VERSION_MASK")));
+  TYPE_MASK = (int)rb_num2ll(rb_const_get(thrift_binary_protocol_class, rb_intern("TYPE_MASK")));
 
   VALUE bpa_class = rb_define_class_under(thrift_module, "BinaryProtocolAccelerated", thrift_binary_protocol_class);
 
@@ -425,6 +480,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "write_double",        rb_thrift_binary_proto_write_double, 1);
   rb_define_method(bpa_class, "write_string",        rb_thrift_binary_proto_write_string, 1);
   rb_define_method(bpa_class, "write_binary",        rb_thrift_binary_proto_write_binary, 1);
+  rb_define_method(bpa_class, "write_uuid",          rb_thrift_binary_proto_write_uuid, 1);
   // unused methods
   rb_define_method(bpa_class, "write_message_end", rb_thrift_binary_proto_write_message_end, 0);
   rb_define_method(bpa_class, "write_struct_begin", rb_thrift_binary_proto_write_struct_begin, 1);
@@ -447,6 +503,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_double",         rb_thrift_binary_proto_read_double, 0);
   rb_define_method(bpa_class, "read_string",         rb_thrift_binary_proto_read_string, 0);
   rb_define_method(bpa_class, "read_binary",         rb_thrift_binary_proto_read_binary, 0);
+  rb_define_method(bpa_class, "read_uuid",           rb_thrift_binary_proto_read_uuid, 0);
   // unused methods
   rb_define_method(bpa_class, "read_message_end", rb_thrift_binary_proto_read_message_end, 0);
   rb_define_method(bpa_class, "read_struct_begin", rb_thrift_binary_proto_read_struct_begin, 0);

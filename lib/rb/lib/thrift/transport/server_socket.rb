@@ -43,6 +43,7 @@ module Thrift
     def accept
       unless @handle.nil?
         sock = @handle.accept
+        sock.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
         trans = Socket.new
         trans.handle = sock
         trans
@@ -58,7 +59,9 @@ module Thrift
       @handle.nil? or @handle.closed?
     end
 
-    alias to_io handle
+    def to_io
+      @handle&.to_io || raise(IOError, 'closed stream')
+    end
 
     def to_s
       "socket(#{@host}:#{@port})"

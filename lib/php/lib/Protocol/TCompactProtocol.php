@@ -154,6 +154,7 @@ class TCompactProtocol extends TProtocol
             $shift += 7;
         }
 
+        #unreachable statement
         return $idx;
     }
 

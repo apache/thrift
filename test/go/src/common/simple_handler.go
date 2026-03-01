@@ -23,6 +23,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/apache/thrift/lib/go/thrift"
+
 	//lint:ignore ST1001 allow dot import here
 	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
@@ -60,6 +62,10 @@ func (p *simpleHandler) TestDouble(thing float64) (r float64, err error) {
 }
 
 func (p *simpleHandler) TestBinary(thing []byte) (r []byte, err error) {
+	return thing, nil
+}
+
+func (p *simpleHandler) TestUuid(thing thrift.Tuuid) (r thrift.Tuuid, err error) {
 	return thing, nil
 }
 

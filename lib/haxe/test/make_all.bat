@@ -27,6 +27,7 @@ set path=%HAXEPATH%;%HAXEPATH%\..\neko;%path%
 
 rem # invoke Thrift comnpiler
 thrift -r -gen haxe  ..\..\..\test\ThriftTest.thrift
+thrift -r -gen haxe  ..\..\..\test\ConstantsDemo.thrift
 thrift -r -gen haxe  ..\..\..\contrib\async-test\aggr.thrift
 thrift -r -gen haxe  ..\..\..\lib\rb\benchmark\Benchmark.thrift
 if errorlevel 1 goto STOP

@@ -23,6 +23,8 @@ using Thrift.Processor;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Server
 {

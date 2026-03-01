@@ -29,7 +29,8 @@ namespace Thrift.Transport
             AlreadyOpen,
             TimedOut,
             EndOfFile,
-            Interrupted
+            Interrupted,
+            MessageSizeLimit
         }
 
         public ExceptionType ExType { get; private set; }

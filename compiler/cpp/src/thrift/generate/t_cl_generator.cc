@@ -60,7 +60,7 @@ class t_cl_generator : public t_oop_generator {
       if(iter->first.compare("no_asd") == 0) {
         no_asd = true;
       } else if (iter->first.compare("sys_pref") == 0) {
-	system_prefix = iter->second;
+      system_prefix = iter->second;
       } else {
         throw "unknown option cl:" + iter->first;
       }
@@ -72,6 +72,7 @@ class t_cl_generator : public t_oop_generator {
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_typedef     (t_typedef*  ttypedef) override;
   void generate_enum        (t_enum*     tenum) override;
@@ -129,9 +130,9 @@ void t_cl_generator::init_generator() {
   string f_vars_name = program_dir + "/" + program_name_ + "-vars.lisp";
 
   f_types_.open(f_types_name);
-  f_types_ << cl_autogen_comment() << endl;
+  f_types_ << cl_autogen_comment() << '\n';
   f_vars_.open(f_vars_name);
-  f_vars_ << cl_autogen_comment() << endl;
+  f_vars_ << cl_autogen_comment() << '\n';
 
   package_def(f_types_);
   package_in(f_types_);
@@ -140,7 +141,7 @@ void t_cl_generator::init_generator() {
   if (!no_asd) {
     string f_asd_name = program_dir + "/" + system_prefix + program_name_ + ".asd";
     f_asd_.open(f_asd_name);
-    f_asd_ << cl_autogen_comment() << endl;
+    f_asd_ << cl_autogen_comment() << '\n';
     asdf_def(f_asd_);
   }
 }
@@ -196,13 +197,13 @@ string t_cl_generator::generated_package() {
 }
 
 void t_cl_generator::asdf_def(std::ostream &out) {
-  out << "(asdf:defsystem #:" << system_prefix << program_name_ << endl;
+  out << "(asdf:defsystem #:" << system_prefix << program_name_ << '\n';
   indent_up();
   out << indent() << render_includes()
-      << indent() << ":serial t" << endl
+      << indent() << ":serial t" << '\n'
       << indent() << ":components ("
       << "(:file \"" << program_name_ << "-types\") "
-      << "(:file \"" << program_name_ << "-vars\")))" << endl;
+      << "(:file \"" << program_name_ << "-vars\")))" << '\n';
   indent_down();
 }
 
@@ -220,11 +221,11 @@ void t_cl_generator::package_def(std::ostream &out) {
     }
     out << ")";
   }
-  out << ")" << endl << endl;
+  out << ")" << '\n' << '\n';
 }
 
 void t_cl_generator::package_in(std::ostream &out) {
-  out << "(cl:in-package :" << package() << ")" << endl << endl;
+  out << "(cl:in-package :" << package() << ")" << '\n' << '\n';
 }
 
 /**
@@ -237,7 +238,7 @@ void t_cl_generator::generate_typedef(t_typedef* ttypedef) {
 }
 
 void t_cl_generator::generate_enum(t_enum* tenum) {
-  f_types_ << "(thrift:def-enum " << prefix(tenum->get_name()) << endl;
+  f_types_ << "(thrift:def-enum " << prefix(tenum->get_name()) << '\n';
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -248,12 +249,12 @@ void t_cl_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     value = (*c_iter)->get_value();
 
-    if(c_iter != constants.begin()) f_types_ << endl << indent() << " ";
+    if(c_iter != constants.begin()) f_types_ << '\n' << indent() << " ";
 
     f_types_ << "(\"" << (*c_iter)->get_name() << "\" . " << value << ")";
   }
   indent_down();
-  f_types_ << "))" << endl << endl;
+  f_types_ << "))" << '\n' << '\n';
 }
 
 /**
@@ -265,7 +266,7 @@ void t_cl_generator::generate_const(t_const* tconst) {
   t_const_value* value = tconst->get_value();
 
   f_vars_ << "(thrift:def-constant " << prefix(name) << " " << render_const_value(type, value) << ")"
-          << endl << endl;
+          << '\n' << '\n';
 }
 
 /**
@@ -305,7 +306,7 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
     out << (type->is_struct() ? "(make-instance '" : "(make-exception '") <<
-           lowercase(type->get_name()) << " " << endl;
+           lowercase(type->get_name()) << " " << '\n';
     indent_up();
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -325,7 +326,7 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
       }
 
       out << indent() << ":" << v_iter->first->get_string() << " " <<
-        render_const_value(field_type, v_iter->second) << endl;
+        render_const_value(field_type, v_iter->second) << '\n';
     }
     out << indent() << ")";
 
@@ -339,7 +340,7 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      out << endl << indent()
+      out << '\n' << indent()
           << "(cl:cons " << render_const_value(ktype, v_iter->first) << " "
           << render_const_value(vtype, v_iter->second) << ")";
     }
@@ -353,16 +354,16 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
       etype = ((t_set*)type)->get_elem_type();
     }
     if (type->is_set()) {
-      out << "(thrift:set" << endl;
+      out << "(thrift:set" << '\n';
     } else {
-      out << "(thrift:list" << endl;
+      out << "(thrift:list" << '\n';
     }
     indent_up();
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      out << indent() << render_const_value(etype, *v_iter) << endl;
+      out << indent() << render_const_value(etype, *v_iter) << '\n';
     }
     out << indent() << ")";
     indent_down();
@@ -393,7 +394,7 @@ void t_cl_generator::generate_cl_struct_internal(std::ostream& out, t_struct* ts
     t_type* type = (*m_iter)->get_type();
 
     if (m_iter != members.begin()) {
-      out << endl << indent() << " ";
+      out << '\n' << indent() << " ";
     }
     out << "(" << prefix((*m_iter)->get_name()) << " " <<
         ( (nullptr != value) ? render_const_value(type, value) : "nil" ) <<
@@ -420,16 +421,16 @@ void t_cl_generator::generate_cl_struct_internal(std::ostream& out, t_struct* ts
 void t_cl_generator::generate_cl_struct(std::ostream& out, t_struct* tstruct, bool is_exception = false) {
   std::string name = type_name(tstruct);
   out << (is_exception ? "(thrift:def-exception " : "(thrift:def-struct ") <<
-      prefix(name) << endl;
+      prefix(name) << '\n';
   indent_up();
   if ( tstruct->has_doc() ) {
     out << indent() ;
-    out << "\"" << cl_docstring(tstruct->get_doc()) << "\"" << endl;
+    out << "\"" << cl_docstring(tstruct->get_doc()) << "\"" << '\n';
   }
   out << indent() ;
   generate_cl_struct_internal(out, tstruct, is_exception);
   indent_down();
-  out << ")" << endl << endl;
+  out << ")" << '\n' << '\n';
 }
 
 void t_cl_generator::generate_exception_sig(std::ostream& out, t_function* f) {
@@ -453,7 +454,7 @@ void t_cl_generator::generate_service(t_service* tservice) {
   indent_up();
 
   if ( tservice->has_doc()) {
-      f_types_ << endl << indent()
+      f_types_ << '\n' << indent()
                << "(:documentation \"" << cl_docstring(tservice->get_doc()) << "\")";
     }
 
@@ -464,23 +465,23 @@ void t_cl_generator::generate_service(t_service* tservice) {
     t_struct* exceptions = function->get_xceptions();
     const vector<t_field*>& xmembers = exceptions->get_members();
 
-    f_types_ << endl << indent() << "(:method " << prefix(fname);
+    f_types_ << '\n' << indent() << "(:method " << prefix(fname);
     f_types_ << " (" << signature << " "  << typespec((*f_iter)->get_returntype()) << ")";
     if (xmembers.size() > 0) {
-      f_types_ << endl << indent() << " :exceptions " ;
+      f_types_ << '\n' << indent() << " :exceptions " ;
       generate_exception_sig(f_types_, function);
     }
     if ( (*f_iter)->is_oneway() ) {
-      f_types_ << endl << indent() << " :oneway t";
+      f_types_ << '\n' << indent() << " :oneway t";
     }
     if ( (*f_iter)->has_doc() ) {
-      f_types_ << endl << indent() << " :documentation \""
+      f_types_ << '\n' << indent() << " :documentation \""
                << cl_docstring((*f_iter)->get_doc()) << "\"";
   }
     f_types_ << ")";
   }
 
-  f_types_ << ")" << endl << endl;
+  f_types_ << ")" << '\n' << '\n';
 
   indent_down();
 }
@@ -550,6 +551,11 @@ string t_cl_generator::type_name(t_type* ttype) {
 
   return prefix + name;
 }
+
+std::string t_cl_generator::display_name() const {
+  return "Common Lisp";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     cl,

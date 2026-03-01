@@ -34,10 +34,6 @@ abstract class TSocketTransport extends TBufferedTransport {
 
   /// A transport using the provided [socket].
   TSocketTransport(this.socket) {
-    if (socket == null) {
-      throw ArgumentError.notNull('socket');
-    }
-
     socket.onError.listen((e) => logger.warning(e));
     socket.onMessage.listen(handleIncomingMessage);
   }
@@ -96,7 +92,7 @@ class TClientSocketTransport extends TSocketTransport {
 
     if (_completers.isNotEmpty) {
       var completer = _completers.removeAt(0);
-      completer.complete();
+      completer.complete(Uint8List(0));
     }
   }
 }
@@ -134,15 +130,13 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     var completer = Completer<Uint8List>.sync();
     _completers[seqid] = completer;
 
-    if (responseTimeout != null) {
-      Future.delayed(responseTimeout, () {
-        var completer = _completers.remove(seqid);
-        if (completer != null) {
-          completer.completeError(
-              TimeoutException("Response timed out.", responseTimeout));
-        }
-      });
-    }
+    Future.delayed(responseTimeout, () {
+      var completer = _completers.remove(seqid);
+      if (completer != null) {
+        completer.completeError(
+            TimeoutException("Response timed out.", responseTimeout));
+      }
+    });
 
     socket.send(bytes);
 
@@ -156,7 +150,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     TMessage message = messageReader.readMessage(messageBytes);
     var completer = _completers.remove(message.seqid);
     if (completer != null) {
-      completer.complete();
+      completer.complete(Uint8List(0));
     }
   }
 }

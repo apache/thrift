@@ -18,7 +18,9 @@
 #
 
 $:.unshift File.dirname(__FILE__) + '/../lib'
+$:.unshift File.dirname(__FILE__) + '/../ext'
 require 'thrift'
+require 'openssl'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'benchmark_service'
 
@@ -36,12 +38,46 @@ module Server
     end
   end
 
-  def self.start_server(host, port, serverClass)
+  def self.create_factories(protocol_type)
+    case protocol_type
+    when 'binary'
+      [FramedTransportFactory.new, BinaryProtocolFactory.new]
+    when 'compact'
+      [FramedTransportFactory.new, CompactProtocolFactory.new]
+    when 'header'
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new]
+    when 'header-compact'
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new(nil, HeaderSubprotocolID::COMPACT)]
+    when 'header-zlib'
+      # Note: Server doesn't add transforms - it mirrors client's transforms
+      [HeaderTransportFactory.new, HeaderProtocolFactory.new]
+    else
+      [FramedTransportFactory.new, BinaryProtocolFactory.new]
+    end
+  end
+
+  def self.start_server(host, port, serverClass, tls, protocol_type = nil)
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
-    transport = ServerSocket.new(host, port)
-    transport_factory = FramedTransportFactory.new
-    args = [processor, transport, transport_factory, nil, 20]
+    transport = if tls
+      ssl_context = OpenSSL::SSL::SSLContext.new.tap do |ctx|
+        ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
+
+        keys_dir = File.expand_path("../../../test/keys", __dir__)
+        ctx.ca_file = File.join(keys_dir, "CA.pem")
+        ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keys_dir, "server.crt")))
+        ctx.cert_store = OpenSSL::X509::Store.new
+        ctx.cert_store.add_file(File.join(keys_dir, 'client.pem'))
+        ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keys_dir, "server.key")))
+      end
+
+      Thrift::SSLServerSocket.new(host, port, ssl_context)
+    else
+      ServerSocket.new(host, port)
+    end
+    transport_factory, protocol_factory = create_factories(protocol_type || 'binary')
+    args = [processor, transport, transport_factory, protocol_factory, 20]
     if serverClass == NonblockingServer
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
@@ -68,9 +104,11 @@ def resolve_const(const)
   const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
 end
 
-host, port, serverklass = ARGV
+tls = true if ARGV[0] == '-tls' and ARGV.shift
 
-Server.start_server(host, port.to_i, resolve_const(serverklass))
+host, port, serverklass, protocol_type = ARGV
+
+Server.start_server(host, port.to_i, resolve_const(serverklass), tls, protocol_type)
 
 # let our host know that the interpreter has started
 # ideally we'd wait until the server was serving, but we don't have a hook for that

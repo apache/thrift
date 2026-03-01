@@ -32,6 +32,9 @@ clean-local:
 	$(RM) -r Server/obj
 	$(RM) -r ThriftTest/ThriftTest
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	Client \
 	README.md \

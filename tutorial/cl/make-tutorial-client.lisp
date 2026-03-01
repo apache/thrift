@@ -14,6 +14,9 @@
 
 (require "asdf")
 (load (merge-pathnames "load-locally.lisp" *load-truename*))
+(require "sb-grovel") ;; necessary for :net.didierverna.clon.termio
+(asdf:load-asd (first (directory (merge-pathnames "../../lib/cl/externals/software/clon-*/termio/net.didierverna.clon.termio.asd"
+                                                  *load-truename*))))
 (asdf:load-system :net.didierverna.clon)
 (asdf:load-asd (merge-pathnames "gen-cl/shared/thrift-gen-shared.asd" *load-truename*))
 (asdf:load-asd (merge-pathnames "gen-cl/tutorial/thrift-gen-tutorial.asd" *load-truename*))

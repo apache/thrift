@@ -38,6 +38,9 @@ tutorialclient_promise: all
 clean-local:
 	$(RM) -r gen-*
 
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
 EXTRA_DIST = \
 	NodeServer.js \
 	NodeClient.js \

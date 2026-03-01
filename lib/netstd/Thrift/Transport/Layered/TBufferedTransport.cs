@@ -179,6 +179,11 @@ namespace Thrift.Transport
             }
         }
 
+        public override void ResetMessageSizeAndConsumedBytes(long newSize = -1)
+        {
+            base.ResetMessageSizeAndConsumedBytes(newSize);
+            ReadBuffer.ResetMessageSizeAndConsumedBytes(newSize);
+        }
 
         private void CheckNotDisposed()
         {

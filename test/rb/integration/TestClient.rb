@@ -40,9 +40,9 @@ ARGV.each do|a|
     puts "\t--domain-socket arg (=) \t Unix domain socket path"
     puts "\t--host arg (=localhost) \t Host to connect \t not valid with domain-socket"
     puts "\t--port arg (=9090) \t Port number to listen \t not valid with domain-socket"
-    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
+    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json, header"
     puts "\t--ssl \t use ssl \t not valid with domain-socket"
-    puts "\t--transport arg (=buffered) transport: buffered, framed, http"
+    puts "\t--transport arg (=buffered) transport: buffered, framed, header, http"
     exit
   elsif a.start_with?("--domain-socket")
     $domain_socket = a.split("=")[1]
@@ -87,6 +87,8 @@ class SimpleClientTest < Test::Unit::TestCase
         transportFactory = Thrift::BufferedTransport.new(@socket)
       elsif $transport == "framed"
         transportFactory = Thrift::FramedTransport.new(@socket)
+      elsif $transport == "header"
+        transportFactory = Thrift::HeaderTransport.new(@socket)
       else
         raise 'Unknown transport type'
       end
@@ -99,6 +101,9 @@ class SimpleClientTest < Test::Unit::TestCase
         @protocol = Thrift::JsonProtocol.new(transportFactory)
       elsif $protocolType == "accel"
         @protocol = Thrift::BinaryProtocolAccelerated.new(transportFactory)
+      elsif $protocolType == "header"
+        # HeaderProtocol wraps its own transport, so pass the selected transport
+        @protocol = Thrift::HeaderProtocol.new(transportFactory)
       else
         raise 'Unknown protocol type'
       end
@@ -225,14 +230,14 @@ class SimpleClientTest < Test::Unit::TestCase
     ret = @client.testEnum(val)
 
     assert_equal(ret, 6)
-    assert_kind_of(Fixnum, ret)
+    assert_kind_of(Integer, ret)
   end
 
   def test_typedef
     p 'test_typedef'
     #UserId  testTypedef(1: UserId thing),
     assert_equal(@client.testTypedef(309858235082523), 309858235082523)
-    assert_kind_of(Fixnum, @client.testTypedef(309858235082523))
+    assert_kind_of(Integer, @client.testTypedef(309858235082523))
     true
   end
 
@@ -245,6 +250,14 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def get_struct
     Thrift::Test::Xtruct.new({'string_thing' => 'hi!', 'i32_thing' => 4 })
+  end
+
+  def test_uuid
+    p 'test_uuid'
+    val = '00112233-4455-6677-8899-aabbccddeeff'
+    ret = @client.testUuid(val)
+    assert_equal(ret, val)
+    assert_kind_of(String, ret)
   end
 
   def test_struct
@@ -378,4 +391,3 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
 end
-

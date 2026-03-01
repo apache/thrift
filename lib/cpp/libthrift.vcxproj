@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-mt|Win32">
       <Configuration>Debug-mt</Configuration>
@@ -35,41 +35,42 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\thrift\async\TAsyncChannel.cpp"/>
-    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp" />
-    <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp" />
-    <ClCompile Include="src\thrift\concurrency\ThreadManager.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\TimerManager.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\Util.cpp"/>
-    <ClCompile Include="src\thrift\processor\PeekProcessor.cpp"/>
+    <ClCompile Include="src\thrift\async\TAsyncChannel.cpp" />
+    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Monitor.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Mutex.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Thread.cpp" />
+    <ClCompile Include="src\thrift\concurrency\ThreadFactory.cpp" />
+    <ClCompile Include="src\thrift\concurrency\ThreadManager.cpp" />
+    <ClCompile Include="src\thrift\concurrency\TimerManager.cpp" />
+    <ClCompile Include="src\thrift\processor\PeekProcessor.cpp" />
     <ClCompile Include="src\thrift\protocol\TBase64Utils.cpp" />
-    <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp"/>
-    <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TConnectedClient.cpp"/>
-    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TServerFramework.cpp"/>
-    <ClCompile Include="src\thrift\TApplicationException.cpp"/>
-    <ClCompile Include="src\thrift\TOutput.cpp"/>
-    <ClCompile Include="src\thrift\transport\TBufferTransports.cpp"/>
+    <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp" />
+    <ClCompile Include="src\thrift\server\TConnectedClient.cpp" />
+    <ClCompile Include="src\thrift\server\TServer.cpp" />
+    <ClCompile Include="src\thrift\server\TServerFramework.cpp" />
+    <ClCompile Include="src\thrift\server\TSimpleServer.cpp" />
+    <ClCompile Include="src\thrift\server\TThreadedServer.cpp" />
+    <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp" />
+    <ClCompile Include="src\thrift\TApplicationException.cpp" />
+    <ClCompile Include="src\thrift\TOutput.cpp" />
+    <ClCompile Include="src\thrift\TUuid.cpp" />
+    <ClCompile Include="src\thrift\transport\SocketCommon.cpp" />
+    <ClCompile Include="src\thrift\transport\TBufferTransports.cpp" />
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp" />
-    <ClCompile Include="src\thrift\transport\THttpClient.cpp" />
-    <ClCompile Include="src\thrift\transport\THttpServer.cpp" />
-    <ClCompile Include="src\thrift\transport\THttpTransport.cpp"/>
+    <ClCompile Include="src\thrift\transport\TFileTransport.cpp" />
+    <ClCompile Include="src\thrift\transport\THttpTransport.cpp" />
     <ClCompile Include="src\thrift\transport\TPipe.cpp" />
     <ClCompile Include="src\thrift\transport\TPipeServer.cpp" />
-    <ClCompile Include="src\thrift\transport\TServerSocket.cpp"/>
+    <ClCompile Include="src\thrift\transport\TServerSocket.cpp" />
     <ClCompile Include="src\thrift\transport\TSimpleFileTransport.cpp" />
-    <ClCompile Include="src\thrift\transport\TFileTransport.cpp" />
-    <ClCompile Include="src\thrift\transport\TSocket.cpp"/>
-    <ClCompile Include="src\thrift\transport\TSSLSocket.cpp"/>
-    <ClCompile Include="src\thrift\transport\TTransportException.cpp"/>
-    <ClCompile Include="src\thrift\transport\TTransportUtils.cpp"/>
+    <ClCompile Include="src\thrift\transport\TSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TSocketPool.cpp" />
+    <ClCompile Include="src\thrift\transport\TTransportException.cpp" />
+    <ClCompile Include="src\thrift\transport\TTransportUtils.cpp" />
     <ClCompile Include="src\thrift\windows\GetTimeOfDay.cpp" />
     <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
     <ClCompile Include="src\thrift\windows\SocketPair.cpp" />
@@ -96,18 +97,16 @@
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TOutput.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
+    <ClInclude Include="src\thrift\TUuid.h" />
     <ClInclude Include="src\thrift\transport\TBufferTransports.h" />
     <ClInclude Include="src\thrift\transport\TFDTransport.h" />
     <ClInclude Include="src\thrift\transport\TFileTransport.h" />
-    <ClInclude Include="src\thrift\transport\THttpClient.h" />
-    <ClInclude Include="src\thrift\transport\THttpServer.h" />
     <ClInclude Include="src\thrift\transport\TPipe.h" />
     <ClInclude Include="src\thrift\transport\TPipeServer.h" />
     <ClInclude Include="src\thrift\transport\TServerSocket.h" />
     <ClInclude Include="src\thrift\transport\TServerTransport.h" />
     <ClInclude Include="src\thrift\transport\TSimpleFileTransport.h" />
     <ClInclude Include="src\thrift\transport\TSocket.h" />
-    <ClInclude Include="src\thrift\transport\TSSLSocket.h" />
     <ClInclude Include="src\thrift\transport\TTransport.h" />
     <ClInclude Include="src\thrift\transport\TTransportException.h" />
     <ClInclude Include="src\thrift\transport\TTransportUtils.h" />
@@ -134,45 +133,53 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -239,7 +246,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -253,7 +260,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
     </ClCompile>
@@ -295,7 +302,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDll</RuntimeLibrary>
     </ClCompile>
@@ -313,7 +320,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;thrift_EXPORTS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDll</RuntimeLibrary>
     </ClCompile>

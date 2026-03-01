@@ -20,10 +20,12 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <constants.h>
 #include <struct.h>
 #include <macros.h>
 #include <bytes.h>
+#include <protocol.h>
 
 #define LAST_ID(obj) FIX2INT(rb_ary_pop(rb_ivar_get(obj, last_field_id)))
 #define SET_LAST_ID(obj, val) rb_ary_push(rb_ivar_get(obj, last_field_id), val)
@@ -58,6 +60,7 @@ static int CTYPE_LIST           = 0x09;
 static int CTYPE_SET            = 0x0A;
 static int CTYPE_MAP            = 0x0B;
 static int CTYPE_STRUCT         = 0x0C;
+static int CTYPE_UUID           = 0x0D;
 
 VALUE rb_thrift_compact_proto_write_i16(VALUE self, VALUE i16);
 
@@ -86,6 +89,8 @@ static int get_compact_type(VALUE type_value) {
     return CTYPE_MAP;
   } else if (type == TTYPE_STRUCT) {
     return CTYPE_STRUCT;
+  } else if (type == TTYPE_UUID) {
+    return CTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", type);
@@ -102,7 +107,7 @@ static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, V
   int id = FIX2INT(id_value);
   int last_id = LAST_ID(self);
   VALUE transport = GET_TRANSPORT(self);
-  
+
   // if there's a type override, use that.
   int8_t type_to_write = RTEST(type_override) ? FIX2INT(type_override) : get_compact_type(type);
   // check if we can use delta encoding for the field id
@@ -169,6 +174,7 @@ static void write_collection_begin(VALUE transport, VALUE elem_type, VALUE size_
 VALUE rb_thrift_compact_proto_write_i32(VALUE self, VALUE i32);
 VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str);
 VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf);
+VALUE rb_thrift_compact_proto_write_uuid(VALUE self, VALUE uuid);
 
 VALUE rb_thrift_compact_proto_write_message_end(VALUE self) {
   return Qnil;
@@ -206,7 +212,7 @@ VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE 
   write_byte_direct(transport, (VERSION & VERSION_MASK) | ((FIX2INT(type) << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
   write_varint32(transport, FIX2INT(seqid));
   rb_thrift_compact_proto_write_string(self, name);
-  
+
   return Qnil;
 }
 
@@ -315,8 +321,48 @@ VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
 VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
   buf = force_binary_encoding(buf);
   VALUE transport = GET_TRANSPORT(self);
-  write_varint32(transport, RSTRING_LEN(buf));
+  write_varint32(transport, (uint32_t)RSTRING_LEN(buf));
   WRITE(transport, StringValuePtr(buf), RSTRING_LEN(buf));
+  return Qnil;
+}
+
+VALUE rb_thrift_compact_proto_write_uuid(VALUE self, VALUE uuid) {
+  if (NIL_P(uuid) || TYPE(uuid) != T_STRING) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("UUID must be a string")));
+  }
+
+  VALUE transport = GET_TRANSPORT(self);
+  char bytes[16];
+  const char* str = RSTRING_PTR(uuid);
+  long len = RSTRING_LEN(uuid);
+
+  // Parse UUID string (format: "550e8400-e29b-41d4-a716-446655440000")
+  // Expected length: 36 characters (32 hex + 4 hyphens)
+  if (len != 36 || str[8] != '-' || str[13] != '-' || str[18] != '-' || str[23] != '-') {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  // Parse hex string to bytes using direct conversion, skipping hyphens
+  int byte_idx = 0;
+  for (int i = 0; i < len && byte_idx < 16; i++) {
+    if (str[i] == '-') continue;
+    if (i + 1 >= len || str[i + 1] == '-') break;
+
+    // Convert two hex characters to one byte
+    int high = hex_char_to_int(str[i]);
+    int low = hex_char_to_int(str[i + 1]);
+
+    if (high < 0 || low < 0) break;
+
+    bytes[byte_idx++] = (unsigned char)((high << 4) | low);
+    i++; // skip next char since we processed two
+  }
+
+  if (byte_idx != 16) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Invalid UUID format")));
+  }
+
+  WRITE(transport, bytes, 16);
   return Qnil;
 }
 
@@ -331,6 +377,7 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self);
 VALUE rb_thrift_compact_proto_read_byte(VALUE self);
 VALUE rb_thrift_compact_proto_read_i32(VALUE self);
 VALUE rb_thrift_compact_proto_read_i16(VALUE self);
+VALUE rb_thrift_compact_proto_read_uuid(VALUE self);
 
 static int8_t get_ttype(int8_t ctype) {
   if (ctype == TTYPE_STOP) {
@@ -357,6 +404,8 @@ static int8_t get_ttype(int8_t ctype) {
     return TTYPE_MAP;
   } else if (ctype == CTYPE_STRUCT) {
     return TTYPE_STRUCT;
+  } else if (ctype == CTYPE_UUID) {
+    return TTYPE_UUID;
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", ctype);
@@ -394,13 +443,6 @@ static int64_t read_varint64(VALUE self) {
 
 static int16_t read_i16(VALUE self) {
   return zig_zag_to_int((int32_t)read_varint64(self));
-}
-
-static VALUE get_protocol_exception(VALUE code, VALUE message) {
-  VALUE args[2];
-  args[0] = code;
-  args[1] = message;
-  return rb_class_new_instance(2, (VALUE*)&args, protocol_exception_class);
 }
 
 VALUE rb_thrift_compact_proto_read_message_end(VALUE self) {
@@ -441,7 +483,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
     buf[len] = 0;
     rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
   }
-  
+
   int8_t version_and_type = read_byte_direct(self);
   int8_t version = version_and_type & VERSION_MASK;
   if (version != VERSION) {
@@ -450,9 +492,9 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
     buf[len] = 0;
     rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
   }
-  
+
   int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
-  int32_t seqid = read_varint64(self);
+  int32_t seqid = (int32_t)read_varint64(self);
   VALUE messageName = rb_thrift_compact_proto_read_string(self);
   return rb_ary_new3(3, messageName, INT2FIX(type), INT2NUM(seqid));
 }
@@ -467,7 +509,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 
     // mask off the 4 MSB of the type header. it could contain a field id delta.
     uint8_t modifier = ((type & 0xf0) >> 4);
-    
+
     if (modifier == 0) {
       // not a delta. look ahead for the zigzag varint field id.
       (void) LAST_ID(self);
@@ -490,7 +532,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_map_begin(VALUE self) {
-  int32_t size = read_varint64(self);
+  int32_t size = (int32_t)read_varint64(self);
   uint8_t key_and_value_type = size == 0 ? 0 : read_byte_direct(self);
   return rb_ary_new3(3, INT2FIX(get_ttype(key_and_value_type >> 4)), INT2FIX(get_ttype(key_and_value_type & 0xf)), INT2FIX(size));
 }
@@ -499,7 +541,7 @@ VALUE rb_thrift_compact_proto_read_list_begin(VALUE self) {
   uint8_t size_and_type = read_byte_direct(self);
   int32_t size = (size_and_type >> 4) & 0x0f;
   if (size == 15) {
-    size = read_varint64(self);
+    size = (int32_t)read_varint64(self);
   }
   uint8_t type = get_ttype(size_and_type & 0x0f);
   return rb_ary_new3(2, INT2FIX(type), INT2FIX(size));
@@ -528,7 +570,7 @@ VALUE rb_thrift_compact_proto_read_i16(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_i32(VALUE self) {
-  return INT2NUM(zig_zag_to_int(read_varint64(self)));
+  return INT2NUM(zig_zag_to_int((int32_t)read_varint64(self)));
 }
 
 VALUE rb_thrift_compact_proto_read_i64(VALUE self) {
@@ -565,14 +607,35 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
   return READ(self, size);
 }
 
-static void Init_constants() {
+VALUE rb_thrift_compact_proto_read_uuid(VALUE self) {
+  VALUE data = READ(self, 16);
+  const unsigned char* bytes = (const unsigned char*)RSTRING_PTR(data);
+
+  // Format as UUID string: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  char uuid_str[37];
+  char* p = uuid_str;
+
+  for (int i = 0; i < 16; i++) {
+    *p++ = int_to_hex_char((bytes[i] >> 4) & 0x0F);
+    *p++ = int_to_hex_char(bytes[i] & 0x0F);
+    if (i == 3 || i == 5 || i == 7 || i == 9) {
+      *p++ = '-';
+    }
+  }
+
+  *p = '\0';
+
+  return rb_str_new(uuid_str, 36);
+}
+
+static void Init_constants(void) {
   thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
   rb_global_variable(&thrift_compact_protocol_class);
 
-  VERSION = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
-  VERSION_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));
-  TYPE_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_MASK")));
-  TYPE_BITS = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_BITS")));
+  VERSION = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
+  VERSION_MASK = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));
+  TYPE_MASK = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_MASK")));
+  TYPE_BITS = (int32_t)rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_BITS")));
   TYPE_SHIFT_AMOUNT = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("TYPE_SHIFT_AMOUNT")));
   PROTOCOL_ID = FIX2INT(rb_const_get(thrift_compact_protocol_class, rb_intern("PROTOCOL_ID")));
 
@@ -582,7 +645,7 @@ static void Init_constants() {
   rbuf_ivar_id = rb_intern("@rbuf");
 }
 
-static void Init_rb_methods() {
+static void Init_rb_methods(void) {
   rb_define_method(thrift_compact_protocol_class, "native?", rb_thrift_compact_proto_native_qmark, 0);
 
   rb_define_method(thrift_compact_protocol_class, "write_message_begin", rb_thrift_compact_proto_write_message_begin, 3);
@@ -599,6 +662,7 @@ static void Init_rb_methods() {
   rb_define_method(thrift_compact_protocol_class, "write_double",        rb_thrift_compact_proto_write_double, 1);
   rb_define_method(thrift_compact_protocol_class, "write_string",        rb_thrift_compact_proto_write_string, 1);
   rb_define_method(thrift_compact_protocol_class, "write_binary",        rb_thrift_compact_proto_write_binary, 1);
+  rb_define_method(thrift_compact_protocol_class, "write_uuid",          rb_thrift_compact_proto_write_uuid, 1);
 
   rb_define_method(thrift_compact_protocol_class, "write_message_end", rb_thrift_compact_proto_write_message_end, 0);
   rb_define_method(thrift_compact_protocol_class, "write_struct_begin", rb_thrift_compact_proto_write_struct_begin, 1);
@@ -622,6 +686,7 @@ static void Init_rb_methods() {
   rb_define_method(thrift_compact_protocol_class, "read_double",         rb_thrift_compact_proto_read_double, 0);
   rb_define_method(thrift_compact_protocol_class, "read_string",         rb_thrift_compact_proto_read_string, 0);
   rb_define_method(thrift_compact_protocol_class, "read_binary",         rb_thrift_compact_proto_read_binary, 0);
+  rb_define_method(thrift_compact_protocol_class, "read_uuid",           rb_thrift_compact_proto_read_uuid, 0);
 
   rb_define_method(thrift_compact_protocol_class, "read_message_end", rb_thrift_compact_proto_read_message_end, 0);
   rb_define_method(thrift_compact_protocol_class, "read_struct_begin",  rb_thrift_compact_proto_read_struct_begin, 0);
@@ -632,7 +697,7 @@ static void Init_rb_methods() {
   rb_define_method(thrift_compact_protocol_class, "read_set_end",       rb_thrift_compact_proto_read_set_end, 0);
 }
 
-void Init_compact_protocol() {
+void Init_compact_protocol(void) {
   Init_constants();
   Init_rb_methods();
 }

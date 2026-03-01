@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <thrift/thrift_export.h>
+//#include <thrift/thrift_export.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 

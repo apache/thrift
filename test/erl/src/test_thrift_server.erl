@@ -19,7 +19,7 @@
 
 -module(test_thrift_server).
 
--export([start/0, start/1, start_link/2, handle_function/2]).
+-export([start/0, start/1, start_link/2, handle_function/2, handle_error/2]).
 
 -include("thrift_constants.hrl").
 -include("gen-erl/thrift_test_types.hrl").
@@ -231,3 +231,7 @@ handle_function(testOneway, {Seconds}) ->
     io:format("testOneway: ~p~n", [Seconds]),
     timer:sleep(1000 * Seconds),
     ok.
+
+% This is not mandatory but improving test logs.
+handle_error(Arg1, Arg2) ->
+  io:format("handle_error is called: ~p ~p~n", [Arg1, Arg2]).

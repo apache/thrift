@@ -18,6 +18,7 @@
  */
 
 package org.apache.thrift.transport;
+#if sys
 
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
@@ -99,3 +100,4 @@ class TFileStream implements TStream {
 
 }
  
+#end

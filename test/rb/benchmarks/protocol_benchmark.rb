@@ -38,6 +38,16 @@ ruby_binary_protocol = Thrift::BinaryProtocol.new(transport1)
 transport2 = Thrift::MemoryBuffer.new
 c_fast_binary_protocol = Thrift::BinaryProtocolAccelerated.new(transport2)
 
+transport3 = Thrift::MemoryBuffer.new
+header_binary_protocol = Thrift::HeaderProtocol.new(transport3)
+
+transport4 = Thrift::MemoryBuffer.new
+header_compact_protocol = Thrift::HeaderProtocol.new(transport4, nil, Thrift::HeaderSubprotocolID::COMPACT)
+
+transport5 = Thrift::MemoryBuffer.new
+header_zlib_protocol = Thrift::HeaderProtocol.new(transport5)
+header_zlib_protocol.add_transform(Thrift::HeaderTransformID::ZLIB)
+
 
 ooe = Fixtures::Structs::OneOfEach.new
 ooe.im_true   = true
@@ -170,5 +180,44 @@ Benchmark.bmbm do |x|
       Fixtures::Structs::OneOfEach.new.read(c_fast_binary_protocol)
     end
   end
-  
+
+  x.report("header (binary) write 10_000 small structures") do
+    10_000.times do
+      ooe.write(header_binary_protocol)
+      header_binary_protocol.trans.flush
+    end
+  end
+
+  x.report("header (binary) read 10_000 small structures") do
+    10_000.times do
+      Fixtures::Structs::OneOfEach.new.read(header_binary_protocol)
+    end
+  end
+
+  x.report("header (compact) write 10_000 small structures") do
+    10_000.times do
+      ooe.write(header_compact_protocol)
+      header_compact_protocol.trans.flush
+    end
+  end
+
+  x.report("header (compact) read 10_000 small structures") do
+    10_000.times do
+      Fixtures::Structs::OneOfEach.new.read(header_compact_protocol)
+    end
+  end
+
+  x.report("header (zlib) write 10_000 small structures") do
+    10_000.times do
+      ooe.write(header_zlib_protocol)
+      header_zlib_protocol.trans.flush
+    end
+  end
+
+  x.report("header (zlib) read 10_000 small structures") do
+    10_000.times do
+      Fixtures::Structs::OneOfEach.new.read(header_zlib_protocol)
+    end
+  end
+
 end

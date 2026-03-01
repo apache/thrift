@@ -23,12 +23,10 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen cl ../ThriftTest.thrift
 
 TestServer: make-test-server.lisp
-	@echo 'cl broken, commented out due to deprecation'
-	## $(SBCL) --script make-test-server.lisp
+	$(SBCL) --script make-test-server.lisp
 
 TestClient: make-test-client.lisp
-	@echo 'cl broken, commented out due to deprecation'
-	## $(SBCL) --script make-test-client.lisp
+	$(SBCL) --script make-test-client.lisp
 
 precross: stubs TestServer TestClient
 
@@ -36,6 +34,9 @@ clean-local:
 	$(RM) -r gen-cl
 	$(RM) TestServer
 	$(RM) TestClient
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	implementation.lisp \

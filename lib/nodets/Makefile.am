@@ -17,9 +17,9 @@
 
 # We call npm twice to work around npm issues
 
-stubs: $(top_srcdir)/test/ThriftTest.thrift
+stubs: $(top_srcdir)/test/v0.16/ThriftTest.thrift
 	mkdir -p test-compiled
-	$(THRIFT) --gen js:node,ts -o test/ $(top_srcdir)/test/ThriftTest.thrift && $(THRIFT) --gen js:node,ts -o test-compiled $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen js:node,ts -o test/ $(top_srcdir)/test/v0.16/ThriftTest.thrift && $(THRIFT) --gen js:node,ts -o test-compiled $(top_srcdir)/test/v0.16/ThriftTest.thrift
 	$(THRIFT) --gen js:node,ts -o test/ $(top_srcdir)/test/Int64Test.thrift && $(THRIFT) --gen js:node,ts -o test-compiled $(top_srcdir)/test/Int64Test.thrift
 
 ts-compile: stubs
@@ -40,6 +40,9 @@ clean-local:
 	$(RM) -r test/gen-nodejs
 	$(RM) -r $(top_srcdir)/node_modules
 	$(RM) -r test-compiled
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
 	test \

@@ -191,6 +191,16 @@ public class TBinaryProtocol: TProtocol {
     return buff[0]
   }
   
+  public func read() throws -> Int8 {
+    var buff = Data()
+    try ProtocolTransportTry(error: TProtocolError(message: "Transport Read Failed")) {
+      buff = try self.transport.readAll(size: 1)
+    }
+    return buff.withUnsafeBytes { pntr in
+      return pntr.load(as: Int8.self)
+    }
+  }
+  
   public func read() throws -> Int16 {
     var buff = Data()
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Read Failed")) {
@@ -244,6 +254,20 @@ public class TBinaryProtocol: TProtocol {
     }
     
     return data
+  }
+  
+  public func read() throws -> UUID {
+    let data = try self.transport.readAll(size: 16)
+    let lsb = data[0..<8]
+    let msb = data[8..<16]
+    
+    var id = UUID().uuid
+    withUnsafeMutableBytes(of: &id) { pntr in
+      var copyData = msb
+      copyData.append(lsb)
+      copyData.copyBytes(to: pntr)
+    }
+    return UUID(uuid: id)
   }
   
   // Write methods
@@ -332,6 +356,14 @@ public class TBinaryProtocol: TProtocol {
     }
   }
   
+  public func write(_ value: Int8) throws {
+    var value = value
+    let buff = Data(bytes: &value, count: MemoryLayout<Int8>.size(ofValue: value))
+    try ProtocolTransportTry(error: TProtocolError(message: "Transport write failed")) {
+      try self.transport.write(data: buff)
+    }
+  }
+  
   public func write(_ value: Int16) throws {
     var buff = Data()
     buff.append(Data([UInt8(0xff & (value >> 8))]))
@@ -380,5 +412,19 @@ public class TBinaryProtocol: TProtocol {
     try ProtocolTransportTry(error: TProtocolError(message: "Transport write failed")) {
       try self.transport.write(data: data)
     }
+  }
+  
+  public func write(_ value: UUID) throws {
+    let data = withUnsafePointer(to: value.uuid) {
+      Data(bytes: $0, count: MemoryLayout.size(ofValue: value.uuid))
+    }
+    let msb = data[0..<8]
+    let lsb = data[8..<16]
+    
+    var buff = Data()
+    buff.append(lsb)
+    buff.append(msb)
+    
+    try self.transport.write(data: buff)
   }
 }

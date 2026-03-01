@@ -135,6 +135,10 @@ class TProtocolDecorator implements TProtocol
         wrapped.writeBinary( value);
     }
 
+    public function writeUuid(value : String ) : Void {
+        wrapped.writeUuid( value);
+    }
+
     public function readMessageBegin() : TMessage {
         return wrapped.readMessageBegin();
     }
@@ -214,6 +218,10 @@ class TProtocolDecorator implements TProtocol
 
     public function readBinary() : Bytes {
         return wrapped.readBinary();
+    }
+
+    public function readUuid() : String {
+        return wrapped.readUuid();
     }
 
     public function IncrementRecursionDepth() : Void {

@@ -25,6 +25,14 @@
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol.h>
 
+/* object properties */
+enum _ThriftBinaryProtocolProperties
+{
+    PROP_0,
+    PROP_THRIFT_BINARY_PROTOCOL_STRING_LIMIT,
+    PROP_THRIFT_BINARY_PROTOCOL_CONTAINER_LIMIT
+};
+
 G_DEFINE_TYPE(ThriftBinaryProtocol, thrift_binary_protocol, THRIFT_TYPE_PROTOCOL)
 
 static guint64
@@ -561,6 +569,14 @@ thrift_binary_protocol_read_map_begin (ThriftProtocol *protocol,
     return -1;
   }
 
+  ThriftBinaryProtocol *bp = THRIFT_BINARY_PROTOCOL (protocol);
+  if (bp->container_limit > 0 && sizei > bp->container_limit) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_SIZE_LIMIT,
+                 "got size over limit (%d > %d)", sizei, bp->container_limit);
+    return -1;
+  }
+
   if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport), 
                                     sizei * thrift_binary_protocol_get_min_serialized_size(protocol, k, error) + 
                                     sizei * thrift_binary_protocol_get_min_serialized_size(protocol, v, error),
@@ -615,6 +631,14 @@ thrift_binary_protocol_read_list_begin (ThriftProtocol *protocol,
     g_set_error (error, THRIFT_PROTOCOL_ERROR,
                  THRIFT_PROTOCOL_ERROR_NEGATIVE_SIZE,
                  "got negative size of %d", sizei);
+    return -1;
+  }
+
+  ThriftBinaryProtocol *bp = THRIFT_BINARY_PROTOCOL (protocol);
+  if (bp->container_limit > 0 && sizei > bp->container_limit) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_SIZE_LIMIT,
+                 "got size over limit (%d > %d)", sizei, bp->container_limit);
     return -1;
   }
 
@@ -814,6 +838,23 @@ thrift_binary_protocol_read_string (ThriftProtocol *protocol,
     return -1;
   }
 
+  ThriftBinaryProtocol *bp = THRIFT_BINARY_PROTOCOL (protocol);
+  if (bp->string_limit > 0 && read_len > bp->string_limit) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_SIZE_LIMIT,
+                 "got size over limit (%d > %d)", read_len, bp->string_limit);
+    *str = NULL;
+    return -1;
+  }
+
+  ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
+  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport), read_len, error))
+  {
+    *str = NULL;
+    return -1;
+  }
+
   /* allocate the memory for the string */
   len = (guint32) read_len + 1; /* space for null terminator */
   *str = g_new0 (gchar, len);
@@ -854,8 +895,36 @@ thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
   }
   xfer += ret;
 
+  if (read_len < 0) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_NEGATIVE_SIZE,
+                 "got negative size of %d", read_len);
+    *buf = NULL;
+    *len = 0;
+    return -1;
+  }
+
+  ThriftBinaryProtocol *bp = THRIFT_BINARY_PROTOCOL (protocol);
+  if (bp->string_limit > 0 && read_len > bp->string_limit) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_SIZE_LIMIT,
+                 "got size over limit (%d > %d)", read_len, bp->string_limit);
+    *buf = NULL;
+    *len = 0;
+    return -1;
+  }
+
   if (read_len > 0)
   {
+    ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+    ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
+    if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport), read_len, error))
+    {
+      *buf = NULL;
+      *len = 0;
+      return -1;
+    }
+
     /* allocate the memory as an array of unsigned char for binary data */
     *len = (guint32) read_len;
     *buf = g_new (guchar, *len);
@@ -885,9 +954,9 @@ thrift_binary_protocol_get_min_serialized_size(ThriftProtocol *protocol, ThriftT
   switch (type)
   {
     case T_STOP:
-         return 0;
+         return 1;  /* T_STOP needs to count itself */
     case T_VOID:
-         return 0;
+         return 1;  /* T_VOID needs to count itself */
     case T_BOOL:
          return sizeof(gint8);
     case T_BYTE:
@@ -903,7 +972,7 @@ thrift_binary_protocol_get_min_serialized_size(ThriftProtocol *protocol, ThriftT
     case T_STRING:
          return sizeof(int);
     case T_STRUCT:
-         return 0;
+         return 1;  /* empty struct needs at least 1 byte for the T_STOP */
     case T_MAP:
          return sizeof(int);
     case T_SET:
@@ -919,6 +988,48 @@ thrift_binary_protocol_get_min_serialized_size(ThriftProtocol *protocol, ThriftT
   }
 }
 
+/* property accessor */
+void
+thrift_binary_protocol_get_property (GObject *object, guint property_id,
+                                     GValue *value, GParamSpec *pspec)
+{
+  ThriftBinaryProtocol *tb;
+
+  THRIFT_UNUSED_VAR (pspec);
+
+  tb = THRIFT_BINARY_PROTOCOL (object);
+
+  switch (property_id) {
+    case PROP_THRIFT_BINARY_PROTOCOL_STRING_LIMIT:
+      g_value_set_int (value, tb->string_limit);
+      break;
+    case PROP_THRIFT_BINARY_PROTOCOL_CONTAINER_LIMIT:
+      g_value_set_int (value, tb->container_limit);
+      break;
+  }
+}
+
+/* property mutator */
+void
+thrift_binary_protocol_set_property (GObject *object, guint property_id,
+                                     const GValue *value, GParamSpec *pspec)
+{
+  ThriftBinaryProtocol *tb;
+
+  THRIFT_UNUSED_VAR (pspec);
+
+  tb = THRIFT_BINARY_PROTOCOL (object);
+
+  switch (property_id) {
+    case PROP_THRIFT_BINARY_PROTOCOL_STRING_LIMIT:
+      tb->string_limit = g_value_get_int (value);
+      break;
+    case PROP_THRIFT_BINARY_PROTOCOL_CONTAINER_LIMIT:
+      tb->container_limit = g_value_get_int (value);
+      break;
+  }
+}
+
 static void
 thrift_binary_protocol_init (ThriftBinaryProtocol *protocol)
 {
@@ -929,7 +1040,39 @@ thrift_binary_protocol_init (ThriftBinaryProtocol *protocol)
 static void
 thrift_binary_protocol_class_init (ThriftBinaryProtocolClass *klass)
 {
-  ThriftProtocolClass *cls = THRIFT_PROTOCOL_CLASS (klass);
+  ThriftProtocolClass *cls;
+  GObjectClass *gobject_class;
+  GParamSpec *param_spec;
+
+  cls = THRIFT_PROTOCOL_CLASS (klass);
+  gobject_class = G_OBJECT_CLASS (klass);
+  param_spec = NULL;
+
+  /* setup accessors and mutators */
+  gobject_class->get_property = thrift_binary_protocol_get_property;
+  gobject_class->set_property = thrift_binary_protocol_set_property;
+
+  param_spec = g_param_spec_int ("string_limit",
+                                 "Max allowed string size",
+                                 "Set the max string limit",
+                                 0, /* min */
+                                 G_MAXINT32, /* max */
+                                 0, /* default value */
+                                 G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_BINARY_PROTOCOL_STRING_LIMIT,
+                                   param_spec);
+
+  param_spec = g_param_spec_int ("container_limit",
+                                 "Max allowed container size",
+                                 "Set the max container limit",
+                                 0, /* min */
+                                 G_MAXINT32, /* max */
+                                 0, /* default value */
+                                 G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_BINARY_PROTOCOL_CONTAINER_LIMIT,
+                                   param_spec);
 
   cls->write_message_begin = thrift_binary_protocol_write_message_begin;
   cls->write_message_end = thrift_binary_protocol_write_message_end;

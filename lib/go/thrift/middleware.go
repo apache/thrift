@@ -19,7 +19,9 @@
 
 package thrift
 
-import "context"
+import (
+	"context"
+)
 
 // ProcessorMiddleware is a function that can be passed to WrapProcessor to wrap the
 // TProcessorFunctions for that TProcessor.
@@ -106,4 +108,41 @@ func WrapClient(client TClient, middlewares ...ClientMiddleware) TClient {
 		client = middlewares[i](client)
 	}
 	return client
+}
+
+// ExtractIDLExceptionClientMiddleware is a ClientMiddleware implementation that
+// extracts exceptions defined in thrift IDL into the error return of
+// TClient.Call. It uses ExtractExceptionFromResult under the hood.
+//
+// By default if a client call gets an exception defined in the thrift IDL, for
+// example:
+//
+//     service MyService {
+//       FooResponse foo(1: FooRequest request) throws (
+//         1: Exception1 error1,
+//         2: Exception2 error2,
+//       )
+//     }
+//
+// Exception1 or Exception2 will not be in the err return of TClient.Call,
+// but in the result TStruct instead, and there's no easy access to them.
+// If you have a ClientMiddleware that would need to access them,
+// you can add this middleware into your client middleware chain,
+// *after* your other middlewares need them,
+// then your other middlewares will have access to those exceptions from the err
+// return.
+//
+// Alternatively you can also just use ExtractExceptionFromResult in your client
+// middleware directly to access those exceptions.
+func ExtractIDLExceptionClientMiddleware(next TClient) TClient {
+	return WrappedTClient{
+		Wrapped: func(ctx context.Context, method string, args, result TStruct) (_ ResponseMeta, err error) {
+			defer func() {
+				if err == nil {
+					err = ExtractExceptionFromResult(result)
+				}
+			}()
+			return next.Call(ctx, method, args, result)
+		},
+	}
 }

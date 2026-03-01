@@ -21,5 +21,6 @@
 union Sample {
   1: map<string, string> u1,
   2: binary u2,
-  3: list<string> u3
+  3: list<string> u3,
+  4: set<string> u4,
 }

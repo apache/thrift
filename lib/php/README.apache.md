@@ -29,7 +29,7 @@ you must use a THttpClient transport.
 
 Sample Code
 ===========
-
+```php
 <?php
 
 namespace MyNamespace;
@@ -72,3 +72,4 @@ $protocol = new TBinaryProtocol($transport);
 $transport->open();
 $processor->process($protocol, $protocol);
 $transport->close();
+```

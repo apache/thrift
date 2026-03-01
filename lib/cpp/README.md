@@ -232,6 +232,32 @@ OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 The PRNG seed is key to the application security. This method should be
 overridden if it's not strong enough for you.
 
+# Thrift UUID
+
+The `uuid` `BaseType` is implemented in C++ by the `apache::thrift::TUuid` class. This class
+is a strong wrapper class around an internal buffer of 16 bytes.
+
+The `apache::thrift::TUuid` supports construction from different UUID string representations.
+Some examples of supported string formats are:
+
+* `"hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh"`
+* `"{hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh}"`
+* `"hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"`
+* `"{hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh}"`
+
+## `TUuid` and `boost::uuids::uuid`
+
+Internally the TUuid class is implemented using the `boost::uuids::uuid` library. As a result the TUuid
+can seamlessly interoperate with the boost UUID type since the underlying data structure is the same.
+
+For convenience, when boost is already used by a project the `THRIFT_TUUID_SUPPORT_BOOST_UUID` preprocessor
+directive can be set when including the thrift library to enable construction of a `TUuid` from a
+`boost::uuids::uuid`. By default this is an implicit constructor that can be changed to be explicit
+by defining the `THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT` preprocessor directive.
+
+The thrift library does not need to be compiled differently when this constructor is needed. The preprocessor
+directives can be set on the project that uses the thrift library.
+
 # Deprecations
 
 ## 0.12.0

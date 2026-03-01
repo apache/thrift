@@ -18,8 +18,8 @@
 #
 
 file(GLOB KEYWORD_SAMPLES "${CMAKE_CURRENT_SOURCE_DIR}/keyword-samples/*.thrift")
-set(KEYWORD_LANGS ${thrift_compiler_LANGS})
-LIST(REMOVE_ITEM KEYWORD_LANGS swift) # in Swift you can escape reserved words
+set(KEYWORD_LANGS php)  # the whole ticket THRIFT-4655 is only about PHP so leave other languages alone
+LIST(REMOVE_ITEM KEYWORD_LANGS swift) # in Swift you can escape reserved words (and in other languages as well)
 foreach(LANG ${KEYWORD_LANGS})
     foreach(SAMPLE ${KEYWORD_SAMPLES})
         get_filename_component(FILENAME ${SAMPLE} NAME_WE)
@@ -30,9 +30,9 @@ foreach(LANG ${KEYWORD_LANGS})
     endforeach()
 endforeach()
 
-find_package(PythonInterp QUIET)
-if(PYTHONINTERP_FOUND)
-  add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME StalenessCheckTest COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
 else()
   message(WARNING "Skipping StalenessCheckTest as there is no python interpreter available.")
 endif()

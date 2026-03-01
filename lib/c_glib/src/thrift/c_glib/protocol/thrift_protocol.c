@@ -471,10 +471,12 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
       }
     case T_STRING:
       {
-        gpointer data;
+        gpointer data = NULL;
         guint32 len;
         gint32 ret = thrift_protocol_read_binary (protocol, &data, &len, error);
-        g_free (data);
+        if (data) {
+          g_free (data);
+        }
         return ret;
       }
     case T_STRUCT:

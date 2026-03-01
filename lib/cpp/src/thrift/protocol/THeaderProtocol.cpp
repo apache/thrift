@@ -146,6 +146,10 @@ uint32_t THeaderProtocol::writeBinary(const std::string& str) {
   return proto_->writeBinary(str);
 }
 
+uint32_t THeaderProtocol::writeUUID(const TUuid& uuid) {
+  return proto_->writeUUID(uuid);
+}
+
 /**
  * Reading functions
  */
@@ -245,6 +249,10 @@ uint32_t THeaderProtocol::readString(std::string& str) {
 
 uint32_t THeaderProtocol::readBinary(std::string& binary) {
   return proto_->readBinary(binary);
+}
+
+uint32_t THeaderProtocol::readUUID(TUuid& uuid) {
+  return proto_->readUUID(uuid);
 }
 }
 }

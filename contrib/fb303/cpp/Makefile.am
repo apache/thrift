@@ -47,7 +47,7 @@ AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 # Use <progname|libname>_<FLAG> to set prog / lib specific flag s
 # foo_CXXFLAGS foo_CPPFLAGS foo_LDFLAGS foo_LDADD
 
-fb303_lib = gen-cpp/FacebookService.cpp gen-cpp/fb303_constants.cpp gen-cpp/fb303_types.cpp FacebookBase.cpp ServiceTracker.cpp
+fb303_lib = gen-cpp/FacebookService.cpp gen-cpp/fb303_types.cpp FacebookBase.cpp ServiceTracker.cpp
 
 # Static -- multiple libraries can be defined
 if STATIC
@@ -71,7 +71,7 @@ endif
 $(eval $(call thrift_template,.,../if/fb303.thrift,-I $(thrift_home)/share  --gen cpp:pure_enums ))
 
 include_fb303dir = $(includedir)/thrift/fb303
-include_fb303_HEADERS = FacebookBase.h ServiceTracker.h gen-cpp/FacebookService.h gen-cpp/fb303_constants.h gen-cpp/fb303_types.h
+include_fb303_HEADERS = FacebookBase.h ServiceTracker.h gen-cpp/FacebookService.h gen-cpp/fb303_types.h
 
 include_fb303ifdir = $(prefix)/share/fb303/if
 include_fb303if_HEADERS = ../if/fb303.thrift

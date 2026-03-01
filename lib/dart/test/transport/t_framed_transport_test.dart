@@ -28,10 +28,10 @@ void main() {
   group('TFramedTransport partial reads', () {
     final flushAwaitDuration = Duration(seconds: 10);
 
-    FakeReadOnlySocket socket;
-    TSocketTransport socketTransport;
-    TFramedTransport transport;
-    var messageAvailable;
+    late FakeReadOnlySocket socket;
+    late TSocketTransport socketTransport;
+    late TFramedTransport transport;
+    late bool messageAvailable;
 
     setUp(() {
       socket = FakeReadOnlySocket();

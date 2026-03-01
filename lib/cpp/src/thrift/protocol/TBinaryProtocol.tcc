@@ -193,6 +193,13 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeBinary(const std::string
   return TBinaryProtocolT<Transport_, ByteOrder_>::writeString(str);
 }
 
+template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeUUID(const TUuid& uuid) {
+  // TODO: Consider endian swapping, see lib/delphi/src/Thrift.Utils.pas:377
+  this->trans_->write(uuid.data(), uuid.size());
+  return 16;
+}
+
 /**
  * Reading functions
  */
@@ -237,7 +244,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMessageEnd() {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStructBegin(std::string& name) {
-  name = "";
+  name.clear();
   return 0;
 }
 
@@ -286,7 +293,7 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
-  
+
   TMap map(keyType, valType, size);
   checkReadBytesAvailable(map);
 
@@ -429,6 +436,12 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readBinary(std::string& str) 
 }
 
 template <class Transport_, class ByteOrder_>
+uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readUUID(TUuid& uuid) {
+  this->trans_->readAll(uuid.begin(), uuid.size());
+  return 16;
+}
+
+template <class Transport_, class ByteOrder_>
 template <typename StrType>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, int32_t size) {
   uint32_t result = 0;
@@ -448,13 +461,16 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, 
   }
 
   // Try to borrow first
-  const uint8_t* borrow_buf;
   uint32_t got = size;
-  if ((borrow_buf = this->trans_->borrow(nullptr, &got))) {
+  const uint8_t* borrow_buf = this->trans_->borrow(nullptr, &got);
+  if (borrow_buf) {
     str.assign((const char*)borrow_buf, size);
     this->trans_->consume(size);
     return size;
   }
+
+  // Check against MaxMessageSize before alloc
+  trans_->checkReadBytesAvailable(size);
 
   str.resize(size);
   this->trans_->readAll(reinterpret_cast<uint8_t*>(&str[0]), size);
@@ -467,8 +483,8 @@ int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
 {
   switch (type)
   {
-      case T_STOP: return 0;
-      case T_VOID: return 0;
+      case T_STOP: return 1;  // T_STOP needs to count itself
+      case T_VOID: return 1;  // T_VOID needs to count itself
       case T_BOOL: return sizeof(int8_t);
       case T_BYTE: return sizeof(int8_t);
       case T_DOUBLE: return sizeof(double);
@@ -476,10 +492,11 @@ int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
       case T_I32: return sizeof(int);
       case T_I64: return sizeof(long);
       case T_STRING: return sizeof(int);  // string length
-      case T_STRUCT: return 0;  // empty struct
+      case T_STRUCT: return 1;  // empty struct needs at least 1 byte for the T_STOP
       case T_MAP: return sizeof(int);  // element count
       case T_SET: return sizeof(int);  // element count
       case T_LIST: return sizeof(int);  // element count
+      case T_UUID: return 16; // 16 bytes
       default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
   }
 }

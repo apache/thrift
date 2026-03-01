@@ -19,8 +19,8 @@
 
 TRIAL ?= trial
 
-stubs: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen py:twisted ../ThriftTest.thrift
+stubs: ../v0.16/ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen py:twisted ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen py:twisted ../SmallTest.thrift
 
 check: stubs
@@ -31,6 +31,9 @@ clean-local:
 	find . -type f \( -iname "*.pyc" \) | xargs rm -f
 	find . -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
 	$(RM) -r gen-py*/
+
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 dist-hook:
 	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f

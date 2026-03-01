@@ -135,6 +135,8 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
+  uint32_t writeUUID(const TUuid& uuid);
+
   /**
    * Reading functions
    */
@@ -180,6 +182,8 @@ public:
   uint32_t readString(std::string& str);
 
   uint32_t readBinary(std::string& binary);
+
+  uint32_t readUUID(TUuid& uuid);
 
 protected:
   std::shared_ptr<THeaderTransport> trans_;

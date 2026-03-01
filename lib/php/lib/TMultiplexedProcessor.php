@@ -97,7 +97,7 @@ class TMultiplexedProcessor
         }
 
         // Extract the service name and the new Message name.
-        if (strpos($fname, TMultiplexedProtocol::SEPARATOR) === false) {
+        if (strpos((string) $fname, TMultiplexedProtocol::SEPARATOR) === false) {
             throw new TException("Service name not found in message name: {$fname}. Did you " .
                 "forget to use a TMultiplexProtocol in your client?");
         }

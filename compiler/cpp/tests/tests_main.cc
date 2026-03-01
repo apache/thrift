@@ -15,5 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_NO_POSIX_SIGNALS
+#define CATCH_CONFIG_RUNNER
 #include "catch/catch.hpp"
+
+#include "thrift/common.h"
+
+int main(int argc, char* argv[]) {
+	initGlobals();
+	int result = Catch::Session().run(argc, argv);
+	clearGlobals();
+	return result;
+}

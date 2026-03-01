@@ -25,8 +25,11 @@ import haxe.io.BytesOutput;
 import haxe.io.BytesBuffer;
 import haxe.Int64;
 
+import uuid.Uuid;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.helper.UuidHelper;
 
 /**
 * Binary protocol implementation for thrift.
@@ -164,6 +167,12 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
         Transport.write(bin, 0, bin.length);
     }
 
+    public function writeUuid(uuid : String) : Void {		
+        var bytes : Bytes = Uuid.parse(UuidHelper.CanonicalUuid(uuid));
+        Transport.write(bytes, 0, bytes.length);
+    }
+
+
     /**
      * Reading methods.
      */
@@ -300,13 +309,20 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
         return buffer.getBytes();
     }
 
+    public function readUuid() : String {
+        var buffer = new BytesBuffer();
+        Transport.readAll( buffer, 0, 16);
+        var bytes : Bytes = buffer.getBytes();
+        return Uuid.stringify( bytes);
+    }
+
 	// Return the minimum number of bytes a type will consume on the wire
 	public override function GetMinSerializedSize(type : TType) : Int
 	{
 		switch (type)
 		{
-			case TType.STOP: return 0;
-			case TType.VOID_: return 0;
+			case TType.STOP: return 1;  // T_STOP needs to count itself
+			case TType.VOID_: return 1;  // T_VOID needs to count itself
 			case TType.BOOL: return 1;
 			case TType.BYTE: return 1;
 			case TType.DOUBLE: return 8;
@@ -314,10 +330,11 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
 			case TType.I32: return 4;
 			case TType.I64: return 8;
 			case TType.STRING: return 4;  // string length
-			case TType.STRUCT: return 0;  // empty struct
+			case TType.STRUCT: return 1;  // empty struct needs at least 1 byte for the T_STOP
 			case TType.MAP: return 4;  // element count
 			case TType.SET: return 4;  // element count
 			case TType.LIST: return 4;  // element count
+			case TType.UUID: return 16;  // uuid bytes
 			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
 		}
 	}

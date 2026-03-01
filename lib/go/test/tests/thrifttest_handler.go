@@ -82,6 +82,10 @@ func (p *ThriftTestHandler) TestBinary(ctx context.Context, thing []byte) (r []b
 	return thing, nil
 }
 
+func (p *ThriftTestHandler) TestUuid(ctx context.Context, thing thrift.Tuuid) (r thrift.Tuuid, err error) {
+	return thing, nil
+}
+
 func (p *ThriftTestHandler) TestStruct(ctx context.Context, thing *thrifttest.Xtruct) (r *thrifttest.Xtruct, err error) {
 	return thing, nil
 }

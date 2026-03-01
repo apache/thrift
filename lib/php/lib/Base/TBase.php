@@ -31,6 +31,7 @@ use Thrift\Type\TType;
  * of PHP. Note that code is intentionally duplicated in here to avoid making
  * function calls for every field or member of a container..
  */
+#[\AllowDynamicProperties]
 abstract class TBase
 {
     public static $tmethod = array(

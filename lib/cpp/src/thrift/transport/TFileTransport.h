@@ -123,7 +123,7 @@ typedef struct readState {
 class TFileTransportBuffer {
 public:
   TFileTransportBuffer(uint32_t size);
-  ~TFileTransportBuffer();
+  virtual ~TFileTransportBuffer();
 
   bool addEvent(eventInfo* event);
   eventInfo* getNext();
@@ -218,7 +218,7 @@ public:
 
   void setEventBufferSize(uint32_t bufferSize) {
     if (bufferAndThreadInitialized_) {
-      GlobalOutput("Cannot change the buffer size after writer thread started");
+      TOutput::instance()("Cannot change the buffer size after writer thread started");
       return;
     }
     eventBufferSize_ = bufferSize;

@@ -15,8 +15,8 @@ interoperable RPC clients and servers.
 ![Apache Thrift Layered Architecture](doc/images/thrift-layers.png)
 
 Thrift makes it easy for programs written in different programming
-languages to share data and call remote procedures.  With support 
-for [28 programming languages](LANGUAGES.md), chances are Thrift 
+languages to share data and call remote procedures.  With support
+for [28 programming languages](LANGUAGES.md), chances are Thrift
 supports the languages that you currently use.
 
 Thrift is specifically designed to support non-atomic version changes
@@ -35,13 +35,13 @@ Status
 
 | Branch | Travis | Appveyor | Coverity Scan | codecov.io | Website |
 | :----- | :----- | :------- | :------------ | :--------- | :------ |
-| [`master`](https://github.com/apache/thrift/tree/master) | [![Build Status](https://travis-ci.org/apache/thrift.svg?branch=master)](https://travis-ci.org/apache/thrift/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/github/apache/thrift?branch=master&svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/history) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/1345/badge.svg)](https://scan.coverity.com/projects/thrift) | | [![Website](https://img.shields.io/badge/official-website-brightgreen.svg)](https://thrift.apache.org/) |
-| [`0.14.0`](https://github.com/apache/thrift/tree/0.14.0) | [![Build Status](https://travis-ci.org/apache/thrift.svg?branch=0.14.0)](https://travis-ci.org/apache/thrift/branches) | | | | |
+| [`master`](https://github.com/apache/thrift/tree/master) | [![Build Status](https://api.travis-ci.com/apache/thrift.svg?branch=master)](https://app.travis-ci.com/apache/thrift/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/github/apache/thrift?branch=master&svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/history) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/1345/badge.svg)](https://scan.coverity.com/projects/thrift) | | [![Website](https://img.shields.io/badge/official-website-brightgreen.svg)](https://thrift.apache.org/) |
+| [`0.17.0`](https://github.com/apache/thrift/tree/0.17.0) | [![Build Status](https://api.travis-ci.com/apache/thrift.svg?branch=0.17.0)](https://app.travis-ci.com/apache/thrift/branches) | | | | |
 
 Releases
 ========
 
-Thrift does not maintain a specific release calendar at this time.  
+Thrift does not maintain a specific release calendar at this time.
 
 We strive to release twice yearly.  Download the [current release](http://thrift.apache.org/download).
 
@@ -182,9 +182,9 @@ installation of each language library package.
 Package Managers
 ================
 
-Apache Thrift is available via a number of package managers, a list which is 
-is steadily growing. A more detailed overview can be found 
-[at the Apache Thrift web site under "Libraries"](http://thrift.apache.org/lib/) 
+Apache Thrift is available via a number of package managers, a list which is
+is steadily growing. A more detailed overview can be found
+[at the Apache Thrift web site under "Libraries"](http://thrift.apache.org/lib/)
 and/or in the respective READMEs for each language under /lib
 
 Testing

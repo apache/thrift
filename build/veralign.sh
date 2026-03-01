@@ -1,4 +1,4 @@
-x#!/usr/bin/env bash
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -68,11 +68,16 @@ FILES[lib/java/gradle.properties]=simpleReplace
 FILES[lib/js/package-lock.json]=jsonReplace
 FILES[lib/js/package.json]=jsonReplace
 FILES[lib/js/src/thrift.js]=simpleReplace
+FILES[lib/js/package-lock.json]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
-FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
-FILES[lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj]=simpleReplace
-FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
 FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
+FILES[lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
 FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
 FILES[lib/ocaml/_oasis]=simpleReplace
 FILES[lib/perl/lib/Thrift.pm]=simpleReplace
@@ -101,6 +106,8 @@ FILES[tutorial/netstd/Client/Client.csproj]=simpleReplace
 FILES[tutorial/netstd/Interfaces/Interfaces.csproj]=simpleReplace
 FILES[tutorial/netstd/Server/Server.csproj]=simpleReplace
 FILES[tutorial/ocaml/_oasis]=simpleReplace
+FILES[lib/ts/package-lock.json]=simpleReplace
+FILES[package-lock.json]=simpleReplace
 
 
 

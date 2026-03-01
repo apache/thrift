@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,16 +24,17 @@
 namespace Thrift\Factory;
 
 use Thrift\Protocol\TCompactProtocol;
+use Thrift\Transport\TTransport;
 
 /**
  * Compact Protocol Factory
  */
 class TCompactProtocolFactory implements TProtocolFactory
 {
-    public function __construct()
-    {
-    }
-
+    /**
+     * @param TTransport $trans
+     * @return TCompactProtocol
+     */
     public function getProtocol($trans)
     {
         return new TCompactProtocol($trans);

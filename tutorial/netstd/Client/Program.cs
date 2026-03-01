@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -25,16 +25,12 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 using tutorial;
-using shared;
 
-#pragma warning disable IDE0063  // using
 #pragma warning disable IDE0057  // substr
 
 namespace Client
@@ -58,7 +54,7 @@ namespace Client
     public class Program
     {
         private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
-        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
+        private static readonly TConfiguration Configuration = new();
 
         private static void DisplayHelp()
         {
@@ -97,11 +93,12 @@ Sample:
 ");
         }
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            args ??= Array.Empty<string>();
+            args ??= [];
 
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            // -help is rather unusual but we leave it for compatibility
+            if (args.Any(x => x.Equals("-help") || x.Equals("--help") || x.Equals("-h") || x.Equals("-?")))
             {
                 DisplayHelp();
                 return;
@@ -109,10 +106,8 @@ Sample:
 
             Logger.LogInformation("Starting client...");
 
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
-            }
+            using var source = new CancellationTokenSource();
+            await RunAsync(args, source.Token);
         }
 
         
@@ -120,16 +115,20 @@ Sample:
         {
             var numClients = GetNumberOfClients(args);
 
-            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             var transport = GetTransport(args);
-            Logger.LogInformation("Selected client transport: {transport}", transport);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client transport: {transport}", transport);
 
             var protocol = MakeProtocol( args, MakeTransport(args));
-            Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
 
             var mplex = GetMultiplex(args);
-            Logger.LogInformation("Multiplex {mplex}", mplex);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Multiplex {mplex}", mplex);
 
             var tasks = new Task[numClients];
             for (int i = 0; i < numClients; i++)
@@ -138,8 +137,7 @@ Sample:
                 tasks[i] = task;
             }
 
-            Task.WaitAll(tasks,cancellationToken);
-            await Task.CompletedTask;
+            Task.WaitAll(tasks, cancellationToken);
         }
 
         private static bool GetMultiplex(string[] args)
@@ -150,7 +148,7 @@ Sample:
 
         private static Protocol GetProtocol(string[] args)
         {
-            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(protocol))
                 return Protocol.Binary;
 
@@ -163,7 +161,7 @@ Sample:
 
         private static Buffering GetBuffering(string[] args)
         {
-            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(":")?[1];
+            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(buffering))
                 return Buffering.None;
 
@@ -176,7 +174,7 @@ Sample:
 
         private static Transport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
             if (string.IsNullOrEmpty(transport))
                 return Transport.Tcp;
 
@@ -191,7 +189,7 @@ Sample:
         private static TTransport MakeTransport(string[] args)
         {
             // construct endpoint transport
-            TTransport transport = null;
+            TTransport? transport = null;
             Transport selectedTransport = GetTransport(args);
             {
                 switch (selectedTransport)
@@ -241,9 +239,10 @@ Sample:
 
         private static int GetNumberOfClients(string[] args)
         {
-            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':')?[1];
+            var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':').Skip(1).Take(1).FirstOrDefault();
 
-            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             if (int.TryParse(numClients, out int c) && (0 < c) && (c <= 100))
                 return c;
@@ -254,35 +253,43 @@ Sample:
         private static X509Certificate2 GetCertificate()
         {
             // due to files location in net core better to take certs from top folder
-            var certFile = GetCertPath(Directory.GetParent(Directory.GetCurrentDirectory()));
-            return new X509Certificate2(certFile, "ThriftTest");
+            var dir = Directory.GetParent(Directory.GetCurrentDirectory());
+            if (dir != null)
+            {
+                var certFile = GetCertPath(dir);
+                //return new X509Certificate2(certFile, "ThriftTest");
+                return X509CertificateLoader.LoadPkcs12FromFile(certFile, "ThriftTest");
+            }
+            else
+            {
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("Root path of {path} not found", Directory.GetCurrentDirectory());
+                throw new Exception($"Root path of {Directory.GetCurrentDirectory()} not found");
+            }
         }
 
-        private static string GetCertPath(DirectoryInfo di, int maxCount = 6)
+        private static string GetCertPath(DirectoryInfo? di, int maxCount = 6)
         {
             var topDir = di;
-            var certFile =
-                topDir.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories)
-                    .FirstOrDefault();
+            var certFile = topDir?.EnumerateFiles("ThriftTest.pfx", SearchOption.AllDirectories).FirstOrDefault();
             if (certFile == null)
             {
                 if (maxCount == 0)
                     throw new FileNotFoundException("Cannot find file in directories");
-                return GetCertPath(di.Parent, maxCount - 1);
+                return GetCertPath(di?.Parent, --maxCount);
             }
 
             return certFile.FullName;
         }
 
-        private static X509Certificate LocalCertificateSelectionCallback(object sender,
+        private static X509Certificate2 LocalCertificateSelectionCallback(object sender,
             string targetHost, X509CertificateCollection localCertificates,
-            X509Certificate remoteCertificate, string[] acceptableIssuers)
+            X509Certificate? remoteCertificate, string[] acceptableIssuers)
         {
             return GetCertificate();
         }
 
-        private static bool CertValidator(object sender, X509Certificate certificate,
-            X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private static bool CertValidator(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
@@ -313,7 +320,8 @@ Sample:
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError("{ex}",ex);
+                    if (Logger.IsEnabled(LogLevel.Error))
+                        Logger.LogError("{ex}",ex);
                 }
                 finally
                 {
@@ -322,7 +330,8 @@ Sample:
             }
             catch (TApplicationException x)
             {
-                Logger.LogError("{x}",x);
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("{x}",x);
             }
         }
 
@@ -330,14 +339,18 @@ Sample:
         {
             await client.OpenTransportAsync(cancellationToken);
 
-            // Async version
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
 
-            Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
             await client.ping(cancellationToken);
 
-            Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
+
             var sum = await client.add(1, 1, cancellationToken);
-            Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
 
             var work = new Work
             {
@@ -348,13 +361,18 @@ Sample:
 
             try
             {
-                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
                 await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
             work.Op = Operation.SUBTRACT;
@@ -363,20 +381,31 @@ Sample:
 
             try
             {
-                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
+
                 var diff = await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
+
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
+                if (Logger.IsEnabled(LogLevel.Information))
+                    Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
-            Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
-            var log = await client.getStruct(1, cancellationToken);
-            Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
 
-            Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
+            var log = await client.getStruct(1, cancellationToken);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
+
             await client.zip(cancellationToken);
         }
 

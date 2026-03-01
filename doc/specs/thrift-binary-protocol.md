@@ -80,12 +80,21 @@ Where:
 ### Double encoding
 
 Values of type `double` are first converted to an int64 according to the IEEE 754 floating-point "double format" bit
-layout. Most run-times provide a library to make this conversion. Both the binary protocol as the compact protocol then
+layout. Most run-times provide a library to make this conversion. Both the binary protocol and the compact protocol then
 encode the int64 in 8 bytes in big endian order.
 
 ### Boolean encoding
 
 Values of `bool` type are first converted to an int8. True is converted to `1`, false to `0`.
+
+### Universal unique identifier encoding
+
+Values of `uuid` type are expected as 16-byte binary in big endian (or "network") order. Byte order conversion 
+might be necessary on certain platforms, e.g. Windows holds GUIDs in a complex record-like structure whose 
+memory layout differs.
+
+*Note*: Since the length is fixed, no `byte length` prefix is necessary and the field is always 16 bytes long.
+
 
 ## Message
 
@@ -192,6 +201,7 @@ The following field-types are used:
 * `MAP`, encoded as `13`
 * `SET`, encoded as `14`
 * `LIST`, encoded as `15`
+* `UUID`, encoded as `16`
 
 ## List and Set
 

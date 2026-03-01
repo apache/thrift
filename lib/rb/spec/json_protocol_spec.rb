@@ -221,25 +221,18 @@ describe 'JsonProtocol' do
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
-    if RUBY_VERSION >= '1.9'
-      it 'should write string' do
-        @prot.write_string('this is a test string')
-        a = @trans.read(@trans.available)
-        expect(a).to eq('"this is a test string"'.force_encoding(Encoding::BINARY))
-        expect(a.encoding).to eq(Encoding::BINARY)
-      end
+    it 'should write string' do
+      @prot.write_string('this is a test string')
+      a = @trans.read(@trans.available)
+      expect(a).to eq('"this is a test string"'.force_encoding(Encoding::BINARY))
+      expect(a.encoding).to eq(Encoding::BINARY)
+    end
 
-      it 'should write string with unicode characters' do
-        @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
-        a = @trans.read(@trans.available)
-        expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY))
-        expect(a.encoding).to eq(Encoding::BINARY)
-      end
-    else
-      it 'should write string' do
-        @prot.write_string('this is a test string')
-        expect(@trans.read(@trans.available)).to eq('"this is a test string"')
-      end
+    it 'should write string with unicode characters' do
+      @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
+      a = @trans.read(@trans.available)
+      expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY))
+      expect(a.encoding).to eq(Encoding::BINARY)
     end
 
     it "should write binary" do
@@ -250,6 +243,11 @@ describe 'JsonProtocol' do
     it "should write long binary" do
       @prot.write_binary((0...256).to_a.pack('C*'))
       expect(@trans.read(@trans.available)).to eq("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
+    end
+
+    it "should write a uuid" do
+      @prot.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
+      expect(@trans.read(@trans.available)).to eq("\"00112233-4455-6677-8899-aabbccddeeff\"")
     end
 
     it "should get type name for type id" do
@@ -504,25 +502,18 @@ describe 'JsonProtocol' do
       expect(@prot.read_double).to eq(12.23)
     end
 
-    if RUBY_VERSION >= '1.9'
-      it 'should read string' do
-        @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
-        a = @prot.read_string
-        expect(a).to eq('this is a test string')
-        expect(a.encoding).to eq(Encoding::UTF_8)
-      end
+    it 'should read string' do
+      @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
+      a = @prot.read_string
+      expect(a).to eq('this is a test string')
+      expect(a.encoding).to eq(Encoding::UTF_8)
+    end
 
-      it 'should read string with unicode characters' do
-        @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
-        a = @prot.read_string
-        expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")
-        expect(a.encoding).to eq(Encoding::UTF_8)
-      end
-    else
-      it 'should read string' do
-        @trans.write('"this is a test string"')
-        expect(@prot.read_string).to eq('this is a test string')
-      end
+    it 'should read string with unicode characters' do
+      @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
+      a = @prot.read_string
+      expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")
+      expect(a.encoding).to eq(Encoding::UTF_8)
     end
 
     it "should read binary" do
@@ -534,7 +525,17 @@ describe 'JsonProtocol' do
       @trans.write("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
       expect(@prot.read_binary.bytes.to_a).to eq((0...256).to_a)
     end
-  
+
+    it "should read a uuid" do
+      @trans.write("\"00112233-4455-6677-8899-aabbccddeeff\"")
+      expect(@prot.read_uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
+    end
+
+    it "should normalize uppercase uuid on read" do
+      @trans.write("\"00112233-4455-6677-8899-AABBCCDDEEFF\"")
+      expect(@prot.read_uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
+    end
+
     it "should provide a reasonable to_s" do
       expect(@prot.to_s).to eq("json(memory)")
     end

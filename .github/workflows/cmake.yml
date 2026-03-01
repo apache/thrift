@@ -1,0 +1,48 @@
+name: 'Build with CMake'
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+env:
+  BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
+
+permissions:
+  contents: read
+
+jobs:
+  compiler:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
+      - name: Generate makefile using CMake
+        run: |
+          mkdir cmake_build
+          cd cmake_build
+          cmake .. -DBUILD_LIBRARIES=OFF
+
+      - name: Run make
+        run: |
+          cd cmake_build
+          cmake --build .
+
+      - name: Run test
+        run: |
+          cd cmake_build
+          ctest -j$(nproc)
+
+      - name: Upload LastTest log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cmake-LastTest-log
+          path: cmake_build/Testing/Temporary/LastTest.log
+          if-no-files-found: warn

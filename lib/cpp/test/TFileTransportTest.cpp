@@ -67,8 +67,8 @@ public:
   FsyncLog() = default;
 
   void fsync(int fd) {
-    (void)fd;
     FsyncCall call;
+    call.fd = fd;
     THRIFT_GETTIMEOFDAY(&call.time, nullptr);
     calls_.push_back(call);
   }

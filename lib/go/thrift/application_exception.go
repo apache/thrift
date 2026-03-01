@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"strings"
 )
 
 const (
@@ -35,6 +36,7 @@ const (
 	INVALID_TRANSFORM              = 8
 	INVALID_PROTOCOL               = 9
 	UNSUPPORTED_CLIENT_TYPE        = 10
+	VALIDATION_FAILED              = 11
 )
 
 var defaultApplicationExceptionMessage = map[int32]string{
@@ -49,6 +51,7 @@ var defaultApplicationExceptionMessage = map[int32]string{
 	INVALID_TRANSFORM:              "Invalid transform",
 	INVALID_PROTOCOL:               "Invalid protocol",
 	UNSUPPORTED_CLIENT_TYPE:        "Unsupported client type",
+	VALIDATION_FAILED:              "validation failed",
 }
 
 // Application level Thrift exception
@@ -59,9 +62,39 @@ type TApplicationException interface {
 	Write(ctx context.Context, oprot TProtocol) error
 }
 
+type ValidationError struct {
+	message     string
+	check       string
+	fieldSymbol string
+}
+
+func (e *ValidationError) Check() string {
+	return e.check
+}
+
+func (e *ValidationError) TypeName() string {
+	return strings.Split(e.fieldSymbol, ".")[0]
+}
+
+func (e *ValidationError) Field() string {
+	if fs := strings.Split(e.fieldSymbol, "."); len(fs) > 1 {
+		return fs[1]
+	}
+	return e.fieldSymbol
+}
+
+func (e *ValidationError) FieldSymbol() string {
+	return e.fieldSymbol
+}
+
+func (e ValidationError) Error() string {
+	return e.message
+}
+
 type tApplicationException struct {
 	message string
 	type_   int32
+	err     error
 }
 
 var _ TApplicationException = (*tApplicationException)(nil)
@@ -77,8 +110,20 @@ func (e tApplicationException) Error() string {
 	return defaultApplicationExceptionMessage[e.type_]
 }
 
+func (e tApplicationException) Unwrap() error {
+	return e.err
+}
+
 func NewTApplicationException(type_ int32, message string) TApplicationException {
-	return &tApplicationException{message, type_}
+	return &tApplicationException{message, type_, nil}
+}
+
+func NewValidationException(type_ int32, check string, field string, message string) TApplicationException {
+	return &tApplicationException{
+		type_:   type_,
+		message: message,
+		err:     &ValidationError{message: message, check: check, fieldSymbol: field},
+	}
 }
 
 func (p *tApplicationException) TypeId() int32 {

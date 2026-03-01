@@ -18,10 +18,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-from __future__ import division
 import logging
 import os
 import signal
+import ssl
 import sys
 import time
 from optparse import OptionParser
@@ -29,62 +29,67 @@ from optparse import OptionParser
 from util import local_libpath
 sys.path.insert(0, local_libpath())
 from thrift.protocol import TProtocol, TProtocolDecorator
+from thrift.Thrift import TException
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestHandler(object):
+    def __init__(self, options):
+        self.options = options
+
     def testVoid(self):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testVoid()')
 
     def testString(self, str):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testString(%s)' % str)
         return str
 
     def testBool(self, boolean):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testBool(%s)' % str(boolean).lower())
         return boolean
 
     def testByte(self, byte):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testByte(%d)' % byte)
         return byte
 
     def testI16(self, i16):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI16(%d)' % i16)
         return i16
 
     def testI32(self, i32):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI32(%d)' % i32)
         return i32
 
     def testI64(self, i64):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testI64(%d)' % i64)
         return i64
 
     def testDouble(self, dub):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testDouble(%f)' % dub)
         return dub
 
     def testBinary(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testBinary()')  # TODO: hex output
         return thing
 
     def testStruct(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testStruct({%s, %s, %s, %s})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing))
         return thing
 
     def testException(self, arg):
-        # if options.verbose > 1:
+        from ThriftTest.ttypes import Xception
+        # if self.options.verbose > 1:
         logging.info('testException(%s)' % arg)
         if arg == 'Xception':
             raise Xception(errorCode=1001, message=arg)
@@ -92,7 +97,9 @@ class TestHandler(object):
             raise TException(message='This is a TException')
 
     def testMultiException(self, arg0, arg1):
-        if options.verbose > 1:
+        from ThriftTest.ttypes import Xtruct, Xception, Xception2
+
+        if self.options.verbose > 1:
             logging.info('testMultiException(%s, %s)' % (arg0, arg1))
         if arg0 == 'Xception':
             raise Xception(errorCode=1001, message='This is an Xception')
@@ -103,49 +110,49 @@ class TestHandler(object):
         return Xtruct(string_thing=arg1)
 
     def testOneway(self, seconds):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testOneway(%d) => sleeping...' % seconds)
         time.sleep(seconds / 3)  # be quick
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('done sleeping')
 
     def testNest(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testNest(%s)' % thing)
         return thing
 
     def testMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMap(%s)' % thing)
         return thing
 
     def testStringMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testStringMap(%s)' % thing)
         return thing
 
     def testSet(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testSet(%s)' % thing)
         return thing
 
     def testList(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testList(%s)' % thing)
         return thing
 
     def testEnum(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testEnum(%s)' % thing)
         return thing
 
     def testTypedef(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testTypedef(%s)' % thing)
         return thing
 
     def testMapMap(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testMapMap(%s)' % thing)
         return {
             -4: {
@@ -163,7 +170,9 @@ class TestHandler(object):
         }
 
     def testInsanity(self, argument):
-        if options.verbose > 1:
+        from ThriftTest.ttypes import Insanity
+
+        if self.options.verbose > 1:
             logging.info('testInsanity(%s)' % argument)
         return {
             1: {
@@ -174,7 +183,9 @@ class TestHandler(object):
         }
 
     def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
-        if options.verbose > 1:
+        from ThriftTest.ttypes import Xtruct
+
+        if self.options.verbose > 1:
             logging.info('testMulti(%s, %s, %s, %s, %s, %s)' % (arg0, arg1, arg2, arg3, arg4, arg5))
         return Xtruct(string_thing='Hello2',
                       byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
@@ -195,6 +206,7 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
     Wraps any protocol with sequence ID checking: looks for outbound
     uniqueness as well as request/response alignment.
     """
+
     def __init__(self, protocol):
         # TProtocolDecorator.__new__ does all the heavy lifting
         pass
@@ -272,7 +284,7 @@ def main(options):
         server_type = 'THttpServer'
 
     # Set up the handler and processor objects
-    handler = TestHandler()
+    handler = TestHandler(options)
     processor = ThriftTest.Processor(handler)
 
     if options.proto.startswith('multi'):
@@ -300,12 +312,23 @@ def main(options):
 
     # set up server transport and transport factory
 
-    abs_key_path = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys', 'server.pem')
-
     host = None
     if options.ssl:
         from thrift.transport import TSSLSocket
-        transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
+        keys_dir = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys')
+        ca_certs = os.path.join(keys_dir, 'client.pem')
+        certfile = os.path.join(keys_dir, 'server.crt')
+        keyfile = os.path.join(keys_dir, 'server.key')
+        ssl_version = getattr(ssl, 'PROTOCOL_TLS_SERVER', ssl.PROTOCOL_TLSv1)
+        transport = TSSLSocket.TSSLServerSocket(
+            host,
+            options.port,
+            certfile=certfile,
+            keyfile=keyfile,
+            ca_certs=ca_certs,
+            cert_reqs=ssl.CERT_REQUIRED,
+            ssl_version=ssl_version,
+        )
     else:
         transport = TSocket.TServerSocket(host, options.port, options.domain_socket)
     tfactory = TTransport.TBufferedTransportFactory()
@@ -319,7 +342,9 @@ def main(options):
         tfactory = TTransport.TBufferedTransportFactory()
     # if --zlib, then wrap server transport, and use a different transport factory
     if options.zlib:
-        transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
+        if server_type != "TProcessPoolServer":
+            transport = TZlibTransport.TZlibTransport(transport)  # wrap with zlib
+        # Avoid wrapping the server transport for process pools; TZlibTransport isn't picklable on spawn.
         tfactory = TZlibTransport.TZlibTransportFactory()
 
     # do server-specific setup here:
@@ -398,8 +423,6 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
 
     from ThriftTest import ThriftTest, SecondService
-    from ThriftTest.ttypes import Xtruct, Xception, Xception2, Insanity
-    from thrift.Thrift import TException
     from thrift.TMultiplexedProcessor import TMultiplexedProcessor
     from thrift.transport import THeaderTransport
     from thrift.transport import TTransport
