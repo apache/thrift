@@ -42,6 +42,15 @@ function THttpTransport:new(obj)
   return TTransportBase.new(self, obj)
 end
 
+local function THttpHeaders()
+    local data = {}
+    return setmetatable({}, {
+        __index = function(_, key) return data[string.lower(key)] end,
+        __newindex = function(_, key, value) data[string.lower(key)] = value end,
+        __pairs = function() return pairs(data) end
+    })
+end
+
 function THttpTransport:isOpen()
   return self.trans:isOpen()
 end
@@ -112,7 +121,7 @@ function THttpTransport:getLine()
 end
 
 function THttpTransport:_parseHeaders()
-  local headers = {}
+  local headers = THttpHeaders()
 
   repeat
     local line = self:getLine()
