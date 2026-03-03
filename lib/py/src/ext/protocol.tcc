@@ -543,25 +543,20 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   }
 
   case T_UUID: {
-    ScopedPyObject instval(PyObject_GetAttrString(value, "bytes"));
+    ScopedPyObject instval(PyObject_GetAttr(value, INTERN_STRING(bytes)));
     if (!instval) {
         return false;
     }
 
     Py_ssize_t size;
     char* buffer;
-
     if (PyBytes_AsStringAndSize(instval.get(), &buffer, &size) < 0) {
-        // Python exception is already set (e.g. TypeError, MemoryError)
-        // Thrift accelerator functions usually just return NULL here
-        return false;   // or whatever your writeXXX method returns on error
+        return false;
     }
-    // Optional but strongly recommended for safety:
     if (size != 16) {
         PyErr_SetString(PyExc_TypeError, "uuid.bytes must be exactly 16 bytes long");
         return false;
     }
-
     impl()->writeUuid(buffer);
     return true;
   }
@@ -845,27 +840,26 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
       return nullptr;
     }
 
-    PyObject* uuid_mod = PyImport_ImportModule("uuid");
-    if (!uuid_mod) return NULL;
-
-    PyObject* UUID_type = PyObject_GetAttrString(uuid_mod, "UUID");
-    Py_DECREF(uuid_mod);
-    if (!UUID_type) return NULL;
-
-    PyObject* py_bytes = PyBytes_FromStringAndSize(buf, 16);
-    if (!py_bytes) {
-        Py_DECREF(UUID_type);
-        return NULL;
+    if(!UuidModule) {
+      UuidModule = PyImport_ImportModule("uuid");
+      if (!UuidModule)
+        return nullptr;
     }
 
-    PyObject* kwargs = Py_BuildValue("{s:O}", "bytes", py_bytes);
-    Py_DECREF(py_bytes);
+    ScopedPyObject cls(PyObject_GetAttr(UuidModule, INTERN_STRING(UUID)));
+    if (!cls) {
+        return nullptr;
+    }
 
-    PyObject* uuid_obj = PyObject_Call(UUID_type, PyTuple_New(0), kwargs);
-    Py_DECREF(kwargs);
-    Py_DECREF(UUID_type);
+    ScopedPyObject pyBytes(PyBytes_FromStringAndSize(buf, 16));
+    if (!pyBytes) {
+        return nullptr;
+    }
 
-    return uuid_obj;
+    ScopedPyObject args(PyTuple_New(0));
+    ScopedPyObject kwargs(Py_BuildValue("{O:O}", INTERN_STRING(bytes), pyBytes.get()));
+    ScopedPyObject ret(PyObject_Call(cls.get(), args.get(), kwargs.get()));
+    return ret.release();
   }
 
   case T_STOP:
