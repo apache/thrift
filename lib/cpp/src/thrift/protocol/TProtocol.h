@@ -784,6 +784,10 @@ uint32_t skip(Protocol_& prot, TType type) {
     result += prot.readListEnd();
     return result;
   }
+  case T_UUID: {
+    TUuid uuid;
+    return prot.readUUID(uuid);
+  }
   default:
     break;
   }
