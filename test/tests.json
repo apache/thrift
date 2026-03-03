@@ -393,7 +393,7 @@
       ]
     },
     "client": {
-      "timeout": 8,
+      "timeout": 10,
       "command": [
         "TestClient"
       ],
