@@ -24,23 +24,26 @@ namespace apache {
 namespace thrift {
 namespace py {
 
+/** Mapping of Compact type to Thrift Type according.
+ * This list must match the TType enum in TEnum.h */
 const uint8_t CompactProtocol::TTypeToCType[] = {
-    CT_STOP,         // T_STOP
-    0,               // unused
-    CT_BOOLEAN_TRUE, // T_BOOL
-    CT_BYTE,         // T_BYTE
-    CT_DOUBLE,       // T_DOUBLE
-    0,               // unused
-    CT_I16,          // T_I16
-    0,               // unused
-    CT_I32,          // T_I32
-    0,               // unused
-    CT_I64,          // T_I64
-    CT_BINARY,       // T_STRING
-    CT_STRUCT,       // T_STRUCT
-    CT_MAP,          // T_MAP
-    CT_SET,          // T_SET
-    CT_LIST,         // T_LIST
+/*  0 */    CT_STOP,         // T_STOP
+/*  1 */    0,               // unused
+/*  2 */    CT_BOOLEAN_TRUE, // T_BOOL
+/*  3 */    CT_BYTE,         // T_BYTE
+/*  4 */    CT_DOUBLE,       // T_DOUBLE
+/*  5 */    0,               // unused
+/*  6 */    CT_I16,          // T_I16
+/*  7 */    0,               // unused
+/*  8 */    CT_I32,          // T_I32
+/*  9 */    0,               // unused
+/* 10 */    CT_I64,          // T_I64
+/* 11 */    CT_BINARY,       // T_STRING
+/* 12 */    CT_STRUCT,       // T_STRUCT
+/* 13 */    CT_MAP,          // T_MAP
+/* 14 */    CT_SET,          // T_SET
+/* 15 */    CT_LIST,         // T_LIST
+/* 16 */    CT_UUID,         // T_UUID
 };
 
 bool CompactProtocol::readFieldBegin(TType& type, int16_t& tag) {
@@ -98,6 +101,8 @@ TType CompactProtocol::getTType(uint8_t type) {
     return T_MAP;
   case CT_STRUCT:
     return T_STRUCT;
+  case CT_UUID:
+    return T_UUID;
   default:
     PyErr_Format(PyExc_TypeError, "don't know what type: %d", type);
     return static_cast<TType>(-1);

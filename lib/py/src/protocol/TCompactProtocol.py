@@ -80,7 +80,7 @@ def readVarint(trans):
             return result
         shift += 7
 
-
+# As per TCompactProtocol.tcc
 class CompactType(object):
     STOP = 0x00
     TRUE = 0x01

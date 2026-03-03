@@ -117,7 +117,10 @@ class TProtocolBase(object):
     def writeString(self, str_val):
         self.writeBinary(bytes(str_val, 'utf-8'))
 
-    def writeBinary(self, str_val):
+    def writeBinary(self, uuid):
+        pass
+
+    def writeUuid(self, str_val):
         pass
 
     def readMessageBegin(self):
@@ -180,6 +183,9 @@ class TProtocolBase(object):
     def readBinary(self):
         pass
 
+    def readUuid(self):
+        pass
+
     def skip(self, ttype):
         if ttype == TType.BOOL:
             self.readBool()
@@ -220,6 +226,8 @@ class TProtocolBase(object):
             for i in range(size):
                 self.skip(etype)
             self.readListEnd()
+        elif ttype == TType.UUID:
+            self.readUuid()
         else:
             raise TProtocolException(
                 TProtocolException.INVALID_DATA,
@@ -238,11 +246,12 @@ class TProtocolBase(object):
         ('readI32', 'writeI32', False),  # 8 TType.I32
         (None, None, False),  # 9 undefined
         ('readI64', 'writeI64', False),  # 10 TType.I64
-        ('readString', 'writeString', False),  # 11 TType.STRING and UTF7
+        ('readString', 'writeString', False),  # 11 TType.STRING and UTF8
         ('readContainerStruct', 'writeContainerStruct', True),  # 12 *.STRUCT
         ('readContainerMap', 'writeContainerMap', True),  # 13 TType.MAP
         ('readContainerSet', 'writeContainerSet', True),  # 14 TType.SET
         ('readContainerList', 'writeContainerList', True),  # 15 TType.LIST
+        ('readUuid', 'writeUuid', False),  # 16 TType.UUID
         (None, None, False),  # 16 TType.UTF8 # TODO: handle utf8 types?
         (None, None, False)  # 17 TType.UTF16 # TODO: handle utf16 types?
     )

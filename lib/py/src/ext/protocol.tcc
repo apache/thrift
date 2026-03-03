@@ -542,10 +542,32 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
     return true;
   }
 
+  case T_UUID: {
+    ScopedPyObject instval(PyObject_GetAttrString(value, "bytes"));
+    if (!instval) {
+        return false;
+    }
+
+    Py_ssize_t size;
+    char* buffer;
+
+    if (PyBytes_AsStringAndSize(instval.get(), &buffer, &size) < 0) {
+        // Python exception is already set (e.g. TypeError, MemoryError)
+        // Thrift accelerator functions usually just return NULL here
+        return false;   // or whatever your writeXXX method returns on error
+    }
+    // Optional but strongly recommended for safety:
+    if (size != 16) {
+        PyErr_SetString(PyExc_TypeError, "uuid.bytes must be exactly 16 bytes long");
+        return false;
+    }
+
+    impl()->writeUuid(buffer);
+    return true;
+  }
+
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for encodeValue: %d", type);
@@ -625,11 +647,12 @@ bool ProtocolBase<Impl>::skip(TType type) {
     }
     return true;
   }
+  case T_UUID: {
+    return impl()->skipUuid();
+  }
 
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for skip: %d", type);
@@ -816,10 +839,37 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
     return readStruct(Py_None, parsedargs.klass, parsedargs.spec);
   }
 
+  case T_UUID: {
+    char* buf = nullptr;
+    if(!impl()->readUuid(&buf)) {
+      return nullptr;
+    }
+
+    PyObject* uuid_mod = PyImport_ImportModule("uuid");
+    if (!uuid_mod) return NULL;
+
+    PyObject* UUID_type = PyObject_GetAttrString(uuid_mod, "UUID");
+    Py_DECREF(uuid_mod);
+    if (!UUID_type) return NULL;
+
+    PyObject* py_bytes = PyBytes_FromStringAndSize(buf, 16);
+    if (!py_bytes) {
+        Py_DECREF(UUID_type);
+        return NULL;
+    }
+
+    PyObject* kwargs = Py_BuildValue("{s:O}", "bytes", py_bytes);
+    Py_DECREF(py_bytes);
+
+    PyObject* uuid_obj = PyObject_Call(UUID_type, PyTuple_New(0), kwargs);
+    Py_DECREF(kwargs);
+    Py_DECREF(UUID_type);
+
+    return uuid_obj;
+  }
+
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for decodeValue: %d", type);
