@@ -83,7 +83,7 @@ class TestHandler(object):
         return thing
 
     def testUuid(self, thing):
-        if options.verbose > 1:
+        if self.options.verbose > 1:
             logging.info('testUuid(%s)' % thing)
         return thing
 
