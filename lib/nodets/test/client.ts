@@ -28,9 +28,10 @@ import ThriftTestDriverPromise = test_driver.ThriftTestDriverPromise;
 import { program } from "commander";
 
 program
-  .option("--port <port>", "Set thrift server port number to connect", Number.parseInt, 9090)
+  .option("--port <port>", "Set thrift server port number to connect", (v) => parseInt(v, 10), 9090)
   .option("--promise", "test with promise style functions")
-  .option("--protocol", "Set thrift protocol (binary) [protocol]")
+  .option('--protocol <protocol>', '"Set thrift protocol (binary) [protocol]"')
+  .option('--transport <transport>', '"Set thrift transport (buffered) [transport]"')
   .parse(process.argv);
 
 

@@ -17,9 +17,9 @@
 
 # We call npm twice to work around npm issues
 
-stubs: $(top_srcdir)/test/v0.16/ThriftTest.thrift $(top_srcdir)/test/v0.16/FuzzTestNoUuid.thrift
-	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/v0.16/ThriftTest.thrift
-	$(THRIFT) --gen js:node -o test/fuzz/ $(top_srcdir)/test/v0.16/FuzzTestNoUuid.thrift
+stubs: $(top_srcdir)/test/ThriftTest.thrift $(top_srcdir)/test/FuzzTestNoUuid.thrift
+	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen js:node -o test/fuzz/ $(top_srcdir)/test/FuzzTestNoUuid.thrift
 	sed -i "s/require('thrift')/require(\"..\/..\/..\/lib\/thrift\")/" test/fuzz/gen-nodejs/FuzzTestNoUuid_types.js
 
 
