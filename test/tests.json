@@ -219,7 +219,7 @@
     "server": {
       "command": [
         "node",
-        "server.js",
+        "server.mjs",
         "--type=tcp"
       ]
     },
@@ -227,7 +227,7 @@
       "timeout": 6,
       "command": [
         "node",
-        "client.js",
+        "client.mjs",
         "--type=tcp"
       ]
     },
