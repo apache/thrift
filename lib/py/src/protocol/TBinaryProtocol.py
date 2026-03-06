@@ -18,6 +18,7 @@
 #
 
 from struct import pack, unpack
+import uuid
 
 from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
 
@@ -131,6 +132,9 @@ class TBinaryProtocol(TProtocolBase):
         self.writeI32(len(str))
         self.trans.write(str)
 
+    def writeUuid(self, uuid):
+        self.trans.write(uuid.bytes)
+
     def readMessageBegin(self):
         sz = self.readI32()
         if sz < 0:
@@ -235,6 +239,10 @@ class TBinaryProtocol(TProtocolBase):
         s = self.trans.readAll(size)
         return s
 
+    def readUuid(self):
+        buff = self.trans.readAll(16)
+        val = uuid.UUID(bytes=buff)
+        return val
 
 class TBinaryProtocolFactory(TProtocolFactory):
     def __init__(self, strictRead=False, strictWrite=True, **kwargs):

@@ -577,12 +577,6 @@ jobs:
       - name: Run make install for python
         run: sudo make -C lib/py install
 
-      # - name: Run make install-exec-hook for python
-      #   run: sudo make -C lib/py install-exec-hook
-
-      - name: Run make for python libs
-        run: make -C lib/py
-
       - name: Run make check for python libs
         run: make -C lib/py check
 
@@ -842,7 +836,7 @@ jobs:
         # kotlin cross test are failing -> see THRIFT-5879
         server_lang: ['java', 'go', 'cpp', 'py', 'rb']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,cpp', 'py', 'rb']
+        client_lang: ['java,kotlin', 'go,cpp,py', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6

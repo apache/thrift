@@ -542,10 +542,27 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
     return true;
   }
 
+  case T_UUID: {
+    ScopedPyObject instval(PyObject_GetAttr(value, INTERN_STRING(bytes)));
+    if (!instval) {
+        return false;
+    }
+
+    Py_ssize_t size;
+    char* buffer;
+    if (PyBytes_AsStringAndSize(instval.get(), &buffer, &size) < 0) {
+        return false;
+    }
+    if (size != 16) {
+        PyErr_SetString(PyExc_TypeError, "uuid.bytes must be exactly 16 bytes long");
+        return false;
+    }
+    impl()->writeUuid(buffer);
+    return true;
+  }
+
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for encodeValue: %d", type);
@@ -625,11 +642,12 @@ bool ProtocolBase<Impl>::skip(TType type) {
     }
     return true;
   }
+  case T_UUID: {
+    return impl()->skipUuid();
+  }
 
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for skip: %d", type);
@@ -816,10 +834,36 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
     return readStruct(Py_None, parsedargs.klass, parsedargs.spec);
   }
 
+  case T_UUID: {
+    char* buf = nullptr;
+    if(!impl()->readUuid(&buf)) {
+      return nullptr;
+    }
+
+    if(!UuidModule) {
+      UuidModule = PyImport_ImportModule("uuid");
+      if (!UuidModule)
+        return nullptr;
+    }
+
+    ScopedPyObject cls(PyObject_GetAttr(UuidModule, INTERN_STRING(UUID)));
+    if (!cls) {
+        return nullptr;
+    }
+
+    ScopedPyObject pyBytes(PyBytes_FromStringAndSize(buf, 16));
+    if (!pyBytes) {
+        return nullptr;
+    }
+
+    ScopedPyObject args(PyTuple_New(0));
+    ScopedPyObject kwargs(Py_BuildValue("{O:O}", INTERN_STRING(bytes), pyBytes.get()));
+    ScopedPyObject ret(PyObject_Call(cls.get(), args.get(), kwargs.get()));
+    return ret.release();
+  }
+
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
-  case T_UTF8:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for decodeValue: %d", type);
