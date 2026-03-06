@@ -25,6 +25,8 @@ import thrift = require("thrift");
 import Thrift = thrift.Thrift;
 import Q = require("q");
 import Int64 = require("node-int64");
+import { v4 as uuid } from 'uuid';
+type uuid = string;
 
 export class SyncThriftTestHandler {
   testVoid(): Q.IPromise<void> {
@@ -128,6 +130,9 @@ export class SyncThriftTestHandler {
     return Q.resolve(thing);
   }
   testBinary(thing: Buffer) {
+    return Q.resolve(thing);
+  }
+  testUuid(thing: uuid) {
     return Q.resolve(thing);
   }
   testStruct(thing: ttypes.Xtruct) {
@@ -306,6 +311,13 @@ export class AsyncThriftTestHandler {
     thing: Buffer,
     callback: (err: any, result: Buffer) => void,
   ): Q.IPromise<Buffer> {
+    callback(null, thing);
+    return Q.resolve();
+  }
+  testUuid(
+    thing: uuid,
+    callback: (err: any, result: uuid) => void,
+  ): Q.IPromise<uuid> {
     callback(null, thing);
     return Q.resolve();
   }
