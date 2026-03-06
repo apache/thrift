@@ -5,9 +5,10 @@ import test_handler = require('./test_handler');
 
 
 program
-  .option('--port <port>', 'Set thrift server port', Number.parseInt, 9090)
+  .option('--port <port>', 'Set thrift server port', (v) => parseInt(v, 10), 9090)
   .option('--promise', 'test with promise style functions')
-  .option('--protocol', '"Set thrift protocol (binary) [protocol]"')
+  .option('--protocol <protocol>', '"Set thrift protocol (binary) [protocol]"')
+  .option('--transport <transport>', '"Set thrift transport (buffered) [transport]"')
   .parse(process.argv);
 
 var opts = program.opts();
