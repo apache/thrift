@@ -25,7 +25,7 @@ import thrift = require("thrift");
 import Thrift = thrift.Thrift;
 import Q = require("q");
 import Int64 = require("node-int64");
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from "uuid";
 type uuid = string;
 
 export class SyncThriftTestHandler {
