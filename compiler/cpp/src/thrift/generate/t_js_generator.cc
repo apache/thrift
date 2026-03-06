@@ -519,7 +519,7 @@ void t_js_generator::init_generator() {
 string t_js_generator::js_includes() {
   if (gen_node_) {
     string result;
-    
+
     if (gen_esm_) {
       result += "import { Thrift } from 'thrift';\n";
     } else {
@@ -534,13 +534,16 @@ string t_js_generator::js_includes() {
       }
     }
     if (gen_esm_) {
-      result += "import Int64 from 'node-int64';";
+      result += "import Int64 from 'node-int64';\n";
+      result += "import { v4 as uuid } from 'uuid';";
     } else {
       result += js_const_type_ + "Int64 = require('node-int64');\n";
+      result += js_const_type_ + "uuid = require('uuid').v4;\n";
     }
     return result;
   }
   string result = "if (typeof Int64 === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "Int64 = require('node-int64');\n}\n";
+  result += "if (typeof uuid === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "uuid = require('uuid').v4;\n}\n";
   return result;
 }
 
@@ -553,9 +556,14 @@ string t_js_generator::ts_includes() {
         "import thrift = require('thrift');\n"
         "import Thrift = thrift.Thrift;\n"
         "import Q = thrift.Q;\n"
-        "import Int64 = require('node-int64');");
+        "import Int64 = require('node-int64');\n"
+        "import { v4 as uuid } from 'uuid';\n"
+        "type uuid = string;");
   }
-  return string("import Int64 = require('node-int64');");
+  return string(
+    "import Int64 = require('node-int64');\n"
+    "import { v4 as uuid } from 'uuid';\n"
+    "type uuid = string;");
 }
 
 /**
@@ -740,6 +748,10 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
+      out << "'" << get_escaped_string(value) << "'";
+      break;
+    case t_base_type::TYPE_UUID:
+      // The UUID should be in the correct string format already the get_escaped* might be redundant
       out << "'" << get_escaped_string(value) << "'";
       break;
     case t_base_type::TYPE_BOOL:
@@ -2317,6 +2329,9 @@ void t_js_generator::generate_deserialize_field(ostream& out,
       case t_base_type::TYPE_STRING:
         out << (type->is_binary() ? "readBinary()" : "readString()");
         break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid()";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "readBool()";
         break;
@@ -2503,6 +2518,9 @@ void t_js_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       case t_base_type::TYPE_STRING:
         out << (type->is_binary() ? "writeBinary(" : "writeString(") << name << ")";
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ")";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
         break;
@@ -2661,6 +2679,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_VOID:
         break;
       case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_UUID:
       case t_base_type::TYPE_BOOL:
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
@@ -2752,6 +2771,8 @@ string t_js_generator::type_to_enum(t_type* type) {
       throw std::runtime_error("NO T_VOID CONSTRUCT");
     case t_base_type::TYPE_STRING:
       return "Thrift.Type.STRING";
+    case t_base_type::TYPE_UUID:
+      return "Thrift.Type.UUID";
     case t_base_type::TYPE_BOOL:
       return "Thrift.Type.BOOL";
     case t_base_type::TYPE_I8:
@@ -2765,7 +2786,7 @@ string t_js_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_DOUBLE:
       return "Thrift.Type.DOUBLE";
     default:
-      throw "compiler error: unhandled type";
+      throw "compiler error: unhandled js type";
     }
   } else if (type->is_enum()) {
     return "Thrift.Type.I32";
@@ -2798,6 +2819,9 @@ string t_js_generator::ts_get_type(t_type* type) {
     case t_base_type::TYPE_STRING:
       ts_type = type->is_binary() ? "Buffer" : "string";
       break;
+    case t_base_type::TYPE_UUID:
+      ts_type = "uuid";
+      break;
     case t_base_type::TYPE_BOOL:
       ts_type = "boolean";
       break;
@@ -2816,7 +2840,7 @@ string t_js_generator::ts_get_type(t_type* type) {
       ts_type = "void";
       break;
     default:
-      throw "compiler error: unhandled type";
+      throw "compiler error: unhandled js type";
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     std::string type_name;

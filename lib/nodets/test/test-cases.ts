@@ -2,6 +2,7 @@
 
 import ttypes = require("./gen-nodejs/ThriftTest_types");
 import Int64 = require("node-int64");
+import { v4 as uuidv4, v7 as uuidv7 } from 'uuid';
 
 //all Languages in UTF-8
 /*jshint -W100 */
@@ -64,6 +65,9 @@ export var simple = [
   ["testDouble", -5.2098523],
   ["testDouble", 7.012052175215044],
   ["testEnum", ttypes.Numberz.ONE],
+  ["testUuid", "00112233-4455-6677-8899-aabbccddeeff"],
+  ["testUuid", uuidv4()],
+  ["testUuid", uuidv7()],
 ];
 
 export var simpleLoose = [
