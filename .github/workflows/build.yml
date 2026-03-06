@@ -689,6 +689,24 @@ jobs:
       - name: Run ts tests
         run: make -C lib/nodets check
 
+      - name: Run js precross
+        run: make -C lib/nodejs precross
+
+      - name: Run ts precross
+        run: make -C lib/nodets precross
+
+      - name: Upload nodejs precross artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nodejs-precross
+          if-no-files-found: error
+          include-hidden-files: true
+          path: |
+            lib/nodejs/test/gen-nodejs
+            lib/nodets/test/gen-nodejs
+            lib/nodets/test-compiled
+          retention-days: 3
+
   lib-cpp:
     needs: compiler
     runs-on: ubuntu-24.04
@@ -828,15 +846,16 @@ jobs:
       - lib-python
       - lib-cpp
       - lib-ruby
+      - lib-nodejs
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
         # rust currently broken and no maintainers around -> see THRIFT-5917
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'cpp', 'py', 'rb']
+        server_lang: ['java', 'go', 'cpp', 'py', 'rb', 'nodejs', 'nodets']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,cpp,py', 'rb']
+        client_lang: ['java,kotlin', 'go,cpp,nodejs,nodets', 'py', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -922,6 +941,12 @@ jobs:
           name: rb-precross
           path: .
 
+      - name: Download nodejs and nodets precross artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: nodejs-precross
+          path: lib
+
       - name: Set back executable flags
         run: |
           chmod a+x lib/java/build/run*
@@ -935,6 +960,11 @@ jobs:
           chmod a+x lib/cpp/.libs/*.so
           chmod a+x test/py/*.py
           chmod a+x lib/rb/ext/*.so
+
+      - name: Installs for nodets and nodejs
+        run: |
+          npm install .
+          cd lib/nodejs/test/ && npm install .
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
