@@ -72,7 +72,7 @@ jobs:
       # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -108,7 +108,7 @@ jobs:
         run: /usr/local/bin/thrift -version
 
       - name: Archive built thrift compiler (macOS)
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp/thrift
@@ -141,7 +141,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-php/with-php/' | sed 's/without-php_extension/with-php_extension/' )
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -195,7 +195,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -219,7 +219,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.26'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: go-precross
           if-no-files-found: error
@@ -273,7 +273,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -291,7 +291,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libthrift
           if-no-files-found: error
@@ -304,7 +304,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: java-precross
           if-no-files-found: error
@@ -327,7 +327,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -389,7 +389,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-netstd/with-netstd/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -415,7 +415,7 @@ jobs:
         run: make -C test/netstd precross
 
       - name: Upload netstd precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: netstd-precross
           if-no-files-found: error
@@ -438,7 +438,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -452,7 +452,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: swift-precross
           if-no-files-found: error
@@ -492,7 +492,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -515,7 +515,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rs-precross
           if-no-files-found: error
@@ -561,7 +561,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -589,7 +589,7 @@ jobs:
 
       - name: Upload python precross artifacts
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: py-precross
           if-no-files-found: error
@@ -634,7 +634,7 @@ jobs:
       - name: Run configure
         run: ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp
@@ -673,7 +673,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-node([tj])s/with-node\1s/g')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -710,7 +710,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-cpp/with-cpp/g')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -733,7 +733,7 @@ jobs:
         run: make -j$(nproc) -C test/cpp precross
 
       - name: Upload cpp precross artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cpp-precross
           if-no-files-found: error
@@ -747,7 +747,7 @@ jobs:
           retention-days: 3
 
       - name: Upload log files from failed test runs
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: lib-cpp-test-log
@@ -785,7 +785,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-ruby/with-ruby/')
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: thrift-compiler
           path: compiler/cpp
@@ -810,7 +810,7 @@ jobs:
       - name: Upload ruby precross artifacts
         # has to match the version used in cross-test
         if: matrix.ruby-version == '2.7' && matrix.skip-build-ext == false
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: rb-precross
           if-no-files-found: error
@@ -873,51 +873,51 @@ jobs:
             libevent-dev
 
       - name: Download java precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: java-precross
           path: lib/java/build
 
       - name: Download kotlin precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: kotlin-precross
           path: lib/kotlin
 
       - name: Download swift precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         if: false   # currently broken and no maintainers around -> see THRIFT-5864
         with:
           name: swift-precross
           path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
 
       - name: Download rust precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         if: false   # currently broken and no maintainers around -> see THRIFT-5917
         with:
           name: rs-precross
           path: test/rs/bin
 
       - name: Download go precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: go-precross
           path: test/go/bin
 
       - name: Download cpp precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: cpp-precross
           path: .
 
       - name: Download python precross artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: py-precross
           path: .
 
       - name: Download ruby precross artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: rb-precross
           path: .
@@ -950,7 +950,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
