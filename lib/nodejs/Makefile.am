@@ -17,11 +17,8 @@
 
 # We call npm twice to work around npm issues
 
-stubs: $(top_srcdir)/test/ThriftTest.thrift $(top_srcdir)/test/FuzzTestNoUuid.thrift
+stubs: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen js:node -o test/fuzz/ $(top_srcdir)/test/FuzzTestNoUuid.thrift
-	sed -i "s/require('thrift')/require(\"..\/..\/..\/lib\/thrift\")/" test/fuzz/gen-nodejs/FuzzTestNoUuid_types.js
-
 
 deps-root: $(top_srcdir)/package.json
 	$(NPM) install $(top_srcdir)/ || $(NPM) install $(top_srcdir)/
