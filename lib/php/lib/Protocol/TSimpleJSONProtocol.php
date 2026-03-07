@@ -270,6 +270,11 @@ class TSimpleJSONProtocol extends TProtocol
         $this->writeJSONString($str);
     }
 
+    public function writeUuid($uuid)
+    {
+        $this->writeJSONString($uuid);
+    }
+
     /**
      * Reading methods.
      *
@@ -369,6 +374,11 @@ class TSimpleJSONProtocol extends TProtocol
     }
 
     public function readString(&$str)
+    {
+        throw new TException("Not implemented");
+    }
+
+    public function readUuid(&$uuid)
     {
         throw new TException("Not implemented");
     }

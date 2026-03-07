@@ -74,6 +74,7 @@ class TJSONProtocol extends TProtocol
     const NAME_MAP = "map";
     const NAME_LIST = "lst";
     const NAME_SET = "set";
+    const NAME_UUID = "uid";
 
     private function getTypeNameForTypeID($typeID)
     {
@@ -100,6 +101,8 @@ class TJSONProtocol extends TProtocol
                 return self::NAME_SET;
             case TType::LST:
                 return self::NAME_LIST;
+            case TType::UUID:
+                return self::NAME_UUID;
             default:
                 throw new TProtocolException("Unrecognized type", TProtocolException::UNKNOWN);
         }
@@ -148,6 +151,9 @@ class TJSONProtocol extends TProtocol
                     break;
                 case 't':
                     $result = TType::BOOL;
+                    break;
+                case 'u':
+                    $result = TType::UUID;
                     break;
             }
         }
@@ -574,6 +580,11 @@ class TJSONProtocol extends TProtocol
         $this->writeJSONString($str);
     }
 
+    public function writeUuid($uuid)
+    {
+        $this->writeJSONString($uuid);
+    }
+
     /**
      * Reads the message header
      *
@@ -727,6 +738,13 @@ class TJSONProtocol extends TProtocol
     public function readString(&$str)
     {
         $str = $this->readJSONString(false);
+
+        return true;
+    }
+
+    public function readUuid(&$uuid)
+    {
+        $uuid = $this->readJSONString(false);
 
         return true;
     }

@@ -794,6 +794,36 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(5, $protocol->writeString('test'));
     }
 
+    public function testWriteUuid()
+    {
+        $uuid = '01234567-89ab-cdef-0123-456789abcdef';
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport
+            ->expects($this->once())
+            ->method('write')
+            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16)
+            ->willReturn(16);
+
+        $this->assertSame(16, $protocol->writeUuid($uuid));
+    }
+
+    public function testReadUuid()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport
+            ->expects($this->once())
+            ->method('readAll')
+            ->with(16)
+            ->willReturn(hex2bin('0123456789abcdef0123456789abcdef'));
+
+        $this->assertSame(16, $protocol->readUuid($value));
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $value);
+    }
+
     /**
      * @dataProvider writeI64DataProvider
      */
