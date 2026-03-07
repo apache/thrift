@@ -178,6 +178,11 @@ abstract class TProtocolDecorator extends TProtocol
         return $this->concreteProtocol_->writeString($str);
     }
 
+    public function writeUuid($uuid)
+    {
+        return $this->concreteProtocol_->writeUuid($uuid);
+    }
+
     /**
      * Reads the message header
      *
@@ -281,5 +286,10 @@ abstract class TProtocolDecorator extends TProtocol
     public function readString(&$str)
     {
         return $this->concreteProtocol_->readString($str);
+    }
+
+    public function readUuid(&$uuid)
+    {
+        return $this->concreteProtocol_->readUuid($uuid);
     }
 }

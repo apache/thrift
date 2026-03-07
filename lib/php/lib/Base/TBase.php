@@ -41,7 +41,8 @@ abstract class TBase
         TType::I32 => 'I32',
         TType::I64 => 'I64',
         TType::DOUBLE => 'Double',
-        TType::STRING => 'String'
+        TType::STRING => 'String',
+        TType::UUID => 'Uuid'
     );
 
     abstract public function read($input);
