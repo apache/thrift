@@ -45,6 +45,7 @@ class TCompactProtocol extends TProtocol
     const COMPACT_SET = 0x0A;
     const COMPACT_MAP = 0x0B;
     const COMPACT_STRUCT = 0x0C;
+    const COMPACT_UUID = 0x0D;
 
     const STATE_CLEAR = 0;
     const STATE_FIELD_WRITE = 1;
@@ -76,6 +77,7 @@ class TCompactProtocol extends TProtocol
         TType::LST => TCompactProtocol::COMPACT_LIST,
         TType::SET => TCompactProtocol::COMPACT_SET,
         TType::MAP => TCompactProtocol::COMPACT_MAP,
+        TType::UUID => TCompactProtocol::COMPACT_UUID,
     );
 
     protected static $ttypes = array(
@@ -92,6 +94,7 @@ class TCompactProtocol extends TProtocol
         TCompactProtocol::COMPACT_LIST => TType::LST,
         TCompactProtocol::COMPACT_SET => TType::SET,
         TCompactProtocol::COMPACT_MAP => TType::MAP,
+        TCompactProtocol::COMPACT_UUID => TType::UUID,
     );
 
     protected $state = TCompactProtocol::STATE_CLEAR;
@@ -370,6 +373,14 @@ class TCompactProtocol extends TProtocol
         return $result + $len;
     }
 
+    public function writeUuid($uuid)
+    {
+        $data = hex2bin(str_replace('-', '', $uuid));
+        $this->trans_->write($data, 16);
+
+        return 16;
+    }
+
     public function readFieldBegin(&$name, &$field_type, &$field_id)
     {
         $result = $this->readUByte($compact_type_and_delta);
@@ -585,6 +596,19 @@ class TCompactProtocol extends TProtocol
         }
 
         return $result + $len;
+    }
+
+    public function readUuid(&$value)
+    {
+        $data = $this->trans_->readAll(16);
+        $hex = bin2hex($data);
+        $value = substr($hex, 0, 8) . '-' .
+                 substr($hex, 8, 4) . '-' .
+                 substr($hex, 12, 4) . '-' .
+                 substr($hex, 16, 4) . '-' .
+                 substr($hex, 20, 12);
+
+        return 16;
     }
 
     public function getTType($byte)

@@ -189,6 +189,21 @@ roundtrip($testClient, 'testDouble', -852.234234234);
  */
 
 /**
+ * UUID TEST
+ */
+print_r("testUuid('00000000-0000-0000-0000-000000000000')");
+$uuid_in = '00000000-0000-0000-0000-000000000000';
+$uuid_out = $testClient->testUuid($uuid_in);
+print_r(" = \"$uuid_out\"\n");
+if ($uuid_in !== $uuid_out) {
+    echo "**FAILED**\n";
+    $exitcode |= ERR_BASETYPES;
+}
+
+roundtrip($testClient, 'testUuid', '00000000-0000-0000-0000-000000000000');
+roundtrip($testClient, 'testUuid', '550e8400-e29b-41d4-a716-446655440000');
+
+/**
  * STRUCT TEST
  */
 print_r("testStruct({\"Zero\", 1, -3, -5})");

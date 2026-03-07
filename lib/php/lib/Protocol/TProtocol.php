@@ -129,6 +129,8 @@ abstract class TProtocol
 
     abstract public function writeString($str);
 
+    abstract public function writeUuid($uuid);
+
     /**
      * Reads the message header
      *
@@ -177,6 +179,8 @@ abstract class TProtocol
 
     abstract public function readString(&$str);
 
+    abstract public function readUuid(&$uuid);
+
     /**
      * The skip function is a utility to parse over unrecognized date without
      * causing corruption.
@@ -200,6 +204,8 @@ abstract class TProtocol
                 return $this->readDouble($dub);
             case TType::STRING:
                 return $this->readString($str);
+            case TType::UUID:
+                return $this->readUuid($uuid);
             case TType::STRUCT:
                 $result = $this->readStructBegin($name);
                 while (true) {
@@ -271,6 +277,8 @@ abstract class TProtocol
                 return $itrans->readAll(8);
             case TType::DOUBLE:
                 return $itrans->readAll(8);
+            case TType::UUID:
+                return $itrans->readAll(16);
             case TType::STRING:
                 $len = unpack('N', $itrans->readAll(4));
                 $len = $len[1];
