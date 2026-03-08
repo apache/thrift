@@ -82,7 +82,7 @@ class SimpleClientTest < Test::Unit::TestCase
       else
         @socket = Thrift::UNIXSocket.new($domain_socket)
       end
-      
+
       if $transport == "buffered"
         transportFactory = Thrift::BufferedTransport.new(@socket)
       elsif $transport == "framed"

@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,9 +6,9 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -24,11 +24,11 @@ module Thrift
     def initialize
       @actual_processors = {}
     end
- 
+
     def register_processor(service_name, processor)
       @actual_processors[service_name] = processor
     end
- 
+
     def process(iprot, oprot)
       name, type, seqid = iprot.read_message_begin
       check_type(type)
@@ -63,7 +63,7 @@ module Thrift
   class StoredMessageProtocol < BaseProtocol
 
     include ProtocolDecorator
-    
+
     def initialize(protocol, message_begin)
       super(protocol)
       @message_begin = message_begin

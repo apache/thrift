@@ -31,7 +31,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneByte
       include Thrift::Struct
       attr_accessor :byte
@@ -42,7 +42,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneI16
       include Thrift::Struct
       attr_accessor :i16
@@ -53,7 +53,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneI32
       include Thrift::Struct
       attr_accessor :i32
@@ -64,7 +64,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneI64
       include Thrift::Struct
       attr_accessor :i64
@@ -75,7 +75,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneDouble
       include Thrift::Struct
       attr_accessor :double
@@ -86,7 +86,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneString
       include Thrift::Struct
       attr_accessor :string
@@ -97,7 +97,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneMap
       include Thrift::Struct
       attr_accessor :map
@@ -108,7 +108,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class NestedMap
       include Thrift::Struct
       attr_accessor :map
@@ -119,7 +119,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneList
       include Thrift::Struct
       attr_accessor :list
@@ -130,7 +130,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class NestedList
       include Thrift::Struct
       attr_accessor :list
@@ -141,7 +141,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class OneSet
       include Thrift::Struct
       attr_accessor :set
@@ -152,7 +152,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     class NestedSet
       include Thrift::Struct
       attr_accessor :set
@@ -163,7 +163,7 @@ module Fixtures
       def validate
       end
     end
-    
+
     # struct OneOfEach {
     #   1: bool im_true,
     #   2: bool im_false,

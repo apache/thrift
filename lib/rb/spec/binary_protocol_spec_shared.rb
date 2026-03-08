@@ -57,7 +57,6 @@ shared_examples_for 'a binary protocol' do
     expect(@trans.read(@trans.available)).to eq("\200\001\000\001\000\000\000\vtestMessage\000\000\000\021")
   end
 
-
   # message footer is a noop
 
   it "should write the field header" do
