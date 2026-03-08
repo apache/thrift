@@ -33,7 +33,7 @@ module Thrift
       socket = TCPServer.new(@host, @port)
       @handle = OpenSSL::SSL::SSLServer.new(socket, @ssl_context)
     end
-    
+
     def to_s
       "ssl(#{super.to_s})"
     end

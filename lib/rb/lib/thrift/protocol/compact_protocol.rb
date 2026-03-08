@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,16 +6,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 module Thrift
   class CompactProtocol < BaseProtocol
@@ -29,9 +29,9 @@ module Thrift
 
     TSTOP = [nil, Types::STOP, 0]
 
-    # 
+    #
     # All of the on-wire type codes.
-    # 
+    #
     class CompactTypes
       BOOLEAN_TRUE   = 0x01
       BOOLEAN_FALSE  = 0x02
@@ -50,7 +50,7 @@ module Thrift
       def self.is_bool_type?(b)
         (b & 0x0f) == BOOLEAN_TRUE || (b & 0x0f) == BOOLEAN_FALSE
       end
-      
+
       COMPACT_TO_TTYPE = {
         Types::STOP   => Types::STOP,
         BOOLEAN_FALSE => Types::BOOL,
@@ -83,13 +83,13 @@ module Thrift
         Types::STRUCT         => STRUCT,
         Types::UUID           => UUID
       }
-      
+
       def self.get_ttype(compact_type)
         val = COMPACT_TO_TTYPE[compact_type & 0x0f]
         raise "don't know what type: #{compact_type & 0x0f}" unless val
         val
       end
-      
+
       def self.get_compact_type(ttype)
         val = TTYPE_TO_COMPACT[ttype]
         raise "don't know what type: #{ttype & 0x0f}" unless val
@@ -135,14 +135,14 @@ module Thrift
       nil
     end
 
-    # 
-    # The workhorse of writeFieldBegin. It has the option of doing a 
-    # 'type override' of the type header. This is used specifically in the 
+    #
+    # The workhorse of writeFieldBegin. It has the option of doing a
+    # 'type override' of the type header. This is used specifically in the
     # boolean field case.
-    # 
+    #
     def write_field_begin_internal(type, id, type_override=nil)
       last_id = @last_field.pop
-      
+
       # if there's a type override, use that.
       typeToWrite = type_override || CompactTypes.get_compact_type(type)
 
@@ -408,11 +408,11 @@ module Thrift
         end
       end
     end
-    
+
     def read_varint32()
       read_varint64()
     end
-    
+
     def read_varint64()
       shift = 0
       result = 0
@@ -424,20 +424,20 @@ module Thrift
       end
       result
     end
-    
+
     def int_to_zig_zag(n)
       (n << 1) ^ (n >> 31)
     end
-    
+
     def long_to_zig_zag(l)
       # puts "zz encoded #{l} to #{(l << 1) ^ (l >> 63)}"
       (l << 1) ^ (l >> 63)
     end
-    
+
     def zig_zag_to_int(n)
       (n >> 1) ^ -(n & 1)
     end
-    
+
     def zig_zag_to_long(n)
       (n >> 1) ^ -(n & 1)
     end
@@ -447,7 +447,7 @@ module Thrift
     def get_protocol(trans)
       CompactProtocol.new(trans)
     end
-    
+
     def to_s
       "compact"
     end

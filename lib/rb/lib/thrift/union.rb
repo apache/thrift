@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,16 +6,16 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 module Thrift
   class Union
@@ -105,7 +105,7 @@ module Thrift
       klass.send :define_method, field_info[:name] do
         if field_info[:name].to_sym == @setfield
           @value
-        else 
+        else
           raise RuntimeError, "#{field_info[:name]} is not union's set field."
         end
       end
@@ -130,7 +130,7 @@ module Thrift
       end
     end
 
-    # get the symbol that indicates what the currently set field type is. 
+    # get the symbol that indicates what the currently set field type is.
     def get_set_field
       @setfield
     end

@@ -38,7 +38,7 @@ describe 'Server' do
     it "should not serve" do
       expect { @server.serve()}.to raise_error(NotImplementedError)
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(@serverTrans).to receive(:to_s).once.and_return("serverTrans")
       expect(@trans).to receive(:to_s).once.and_return("trans")
@@ -56,14 +56,14 @@ describe 'Server' do
       @client = double("Client")
       @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(@serverTrans).to receive(:to_s).once.and_return("serverTrans")
       expect(@trans).to receive(:to_s).once.and_return("trans")
       expect(@prot).to receive(:to_s).once.and_return("prot")
       expect(@server.to_s).to eq("simple(server(prot(trans(serverTrans))))")
     end
-    
+
     it "should serve in the main thread" do
       expect(@serverTrans).to receive(:listen).ordered
       expect(@serverTrans).to receive(:accept).exactly(3).times.and_return(@client)
@@ -99,7 +99,7 @@ describe 'Server' do
       expect(@prot).to receive(:to_s).once.and_return("prot")
       expect(@server.to_s).to eq("threaded(server(prot(trans(serverTrans))))")
     end
-    
+
     it "should serve using threads" do
       expect(@serverTrans).to receive(:listen).ordered
       expect(@serverTrans).to receive(:accept).exactly(3).times.and_return(@client)
@@ -137,10 +137,10 @@ describe 'Server' do
       expect(@prot).to receive(:to_s).once.and_return("prot")
       expect(@server.to_s).to eq("threadpool(server(prot(trans(server_trans))))")
     end
-    
+
     it "should serve inside a thread" do
       exception_q = @server.instance_variable_get(:@exception_q)
-      expect_any_instance_of(described_class).to receive(:serve) do 
+      expect_any_instance_of(described_class).to receive(:serve) do
         exception_q.push(StandardError.new('ERROR'))
       end
       expect { @server.rescuable_serve }.to(raise_error('ERROR'))
@@ -149,7 +149,7 @@ describe 'Server' do
 
     it "should avoid running the server twice when retrying rescuable_serve" do
       exception_q = @server.instance_variable_get(:@exception_q)
-      expect_any_instance_of(described_class).to receive(:serve) do 
+      expect_any_instance_of(described_class).to receive(:serve) do
         exception_q.push(StandardError.new('ERROR1'))
         exception_q.push(StandardError.new('ERROR2'))
       end

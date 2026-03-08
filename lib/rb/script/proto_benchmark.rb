@@ -42,13 +42,13 @@ Benchmark.bm(60) do |reporter|
       binser.serialize(obj)
     end
   end
-  
+
   reporter.report("accelerated binary protocol, write") do
     HOW_MANY.times do
       accel_bin_ser.serialize(obj)
     end
   end
-  
+
   reporter.report("compact protocol, write") do
     # RubyProf.start
     HOW_MANY.times do
@@ -60,25 +60,24 @@ Benchmark.bm(60) do |reporter|
     # printer.print(file, 0)
     # file.close
   end
-  
+
   reporter.report("binary protocol, read") do
     HOW_MANY.times do
       bindeser.deserialize(obj, bin_data)
     end
   end
-  
+
   reporter.report("accelerated binary protocol, read") do
     HOW_MANY.times do
       accel_bin_deser.deserialize(obj, bin_data)
     end
   end
-  
+
   reporter.report("compact protocol, read") do
     HOW_MANY.times do
       compact_deser.deserialize(obj, compact_data)
     end
   end
-
 
   # f = File.new("/tmp/testfile", "w")
   # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(Thrift::MemoryBufferTransport.new, f))
@@ -89,7 +88,7 @@ Benchmark.bm(60) do |reporter|
   #   f.flush
   # end
   # f.close
-  #   
+  #
   # f = File.new("/tmp/testfile", "r")
   # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBufferTransport.new))
   # reporter.report("accelerated binary protocol, read (from disk)") do
@@ -98,7 +97,7 @@ Benchmark.bm(60) do |reporter|
   #   end
   # end
   # f.close
-  # 
+  #
   # f = File.new("/tmp/testfile", "w")
   # reporter.report("compact protocol, write (to disk)") do
   #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(Thrift::MemoryBufferTransport.new, f))
@@ -108,7 +107,7 @@ Benchmark.bm(60) do |reporter|
   #   f.flush
   # end
   # f.close
-  # 
+  #
   # f = File.new("/tmp/testfile", "r")
   # reporter.report("compact protocol, read (from disk)") do
   #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBufferTransport.new))

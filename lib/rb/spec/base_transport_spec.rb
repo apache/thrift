@@ -48,7 +48,7 @@ describe 'BaseTransport' do
     it "should alias << to write" do
       expect(Thrift::BaseTransport.instance_method(:<<)).to eq(Thrift::BaseTransport.instance_method(:write))
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(Thrift::BaseTransport.new.to_s).to eq("base")
     end
@@ -67,7 +67,7 @@ describe 'BaseTransport' do
       transport = double("Transport")
       expect(Thrift::BaseTransportFactory.new.get_transport(transport)).to eql(transport)
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(Thrift::BaseTransportFactory.new.to_s).to eq("base")
     end
@@ -149,7 +149,7 @@ describe 'BaseTransport' do
       expect(Thrift::BufferedTransport).to receive(:new).with(trans).and_return(btrans)
       expect(Thrift::BufferedTransportFactory.new.get_transport(trans)).to eq(btrans)
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(Thrift::BufferedTransportFactory.new.to_s).to eq("buffered")
     end
@@ -271,7 +271,7 @@ describe 'BaseTransport' do
       expect(Thrift::FramedTransport).to receive(:new).with(trans)
       Thrift::FramedTransportFactory.new.get_transport(trans)
     end
-    
+
     it "should provide a reasonable to_s" do
       expect(Thrift::FramedTransportFactory.new.to_s).to eq("framed")
     end

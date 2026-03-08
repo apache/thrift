@@ -1,4 +1,4 @@
-# 
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,23 +6,23 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-# 
+#
 #   http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
 module Thrift
   class BinaryProtocol < BaseProtocol
     VERSION_MASK = 0xffff0000
     VERSION_1 = 0x80010000
     TYPE_MASK = 0x000000ff
-    
+
     attr_reader :strict_read, :strict_write
 
     def initialize(trans, strict_read=true, strict_write=true)
@@ -36,7 +36,7 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
-      # this is necessary because we added (needed) bounds checking to 
+      # this is necessary because we added (needed) bounds checking to
       # write_i32, and 0x80010000 is too big for that.
       if strict_write
         write_i16(VERSION_1 >> 16)
@@ -252,7 +252,7 @@ module Thrift
     def get_protocol(trans)
       return Thrift::BinaryProtocol.new(trans)
     end
-    
+
     def to_s
       "binary"
     end

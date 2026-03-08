@@ -26,7 +26,7 @@ class DummyTransport < Thrift::BaseTransport
   def initialize(data)
     @data = StringIO.new(data)
   end
-  
+
   def read(size)
     @data.read(size)
   end
@@ -37,19 +37,19 @@ class TestThriftTransport < Test::Unit::TestCase
   def setup
     @trans = Thrift::BaseTransport.new
   end
-  
+
   def test_open?
     assert_nil @trans.open?
   end
-  
+
   def test_open
     assert_nil @trans.open
   end
-  
+
   def test_close
     assert_nil @trans.close
   end
-  
+
   # TODO:
   # This doesn't necessarily test he right thing.
   # It _looks_ like read isn't guaranteed to return the length
@@ -60,11 +60,11 @@ class TestThriftTransport < Test::Unit::TestCase
     t = DummyTransport.new("hello")
     assert_equal "hello", t.read_all(5)
   end
-  
+
   def test_write
     assert_nil @trans.write(5) # arbitrary value
   end
-  
+
   def test_flush
     assert_nil @trans.flush
   end

@@ -42,7 +42,7 @@ describe 'UNIXSocket' do
       allow(::UNIXSocket).to receive(:new)
       expect(Thrift::UNIXSocket.new(@path, 5).timeout).to eq(5)
     end
-    
+
     it "should provide a reasonable to_s" do
       allow(::UNIXSocket).to receive(:new)
       expect(Thrift::UNIXSocket.new(@path).to_s).to eq("domain(#{@path})")

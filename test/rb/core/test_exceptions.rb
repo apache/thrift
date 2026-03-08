@@ -27,4 +27,3 @@ class TestException < Test::Unit::TestCase
     assert_equal msg, Thrift::Exception.new(msg).message
   end
 end
-

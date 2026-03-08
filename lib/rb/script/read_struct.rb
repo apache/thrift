@@ -38,6 +38,6 @@ if cpts == Fixtures::COMPACT_PROTOCOL_TEST_STRUCT
   puts "Object verified successfully!"
 else
   puts "Object failed verification! Expected #{Fixtures::COMPACT_PROTOCOL_TEST_STRUCT.inspect} but got #{cpts.inspect}"
-  
+
   puts cpts.differences(Fixtures::COMPACT_PROTOCOL_TEST_STRUCT)
 end
