@@ -222,6 +222,7 @@ class TBinaryProtocol extends TProtocol
 
     public function writeUuid($uuid)
     {
+        self::validateUuid($uuid);
         $data = hex2bin(str_replace('-', '', $uuid));
         $this->trans_->write($data, 16);
 
