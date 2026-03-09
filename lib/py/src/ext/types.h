@@ -79,8 +79,6 @@ enum TType {
   T_MAP = 13,
   T_SET = 14,
   T_LIST = 15,
-  T_UTF8 = 11,
-  T_UTF16 = 11,
   T_UUID = 16,
 };
 
