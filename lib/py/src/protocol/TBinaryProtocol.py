@@ -244,6 +244,7 @@ class TBinaryProtocol(TProtocolBase):
         val = uuid.UUID(bytes=buff)
         return val
 
+
 class TBinaryProtocolFactory(TProtocolFactory):
     def __init__(self, strictRead=False, strictWrite=True, **kwargs):
         self.strictRead = strictRead

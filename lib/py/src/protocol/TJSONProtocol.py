@@ -671,7 +671,7 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
         self.writeJSONBase64(binary)
 
     def writeUuid(self, uuid):
-        self.writeJSONString(str(binary))
+        self.writeJSONString(str(uuid))
 
 
 class TSimpleJSONProtocolFactory(TProtocolFactory):
