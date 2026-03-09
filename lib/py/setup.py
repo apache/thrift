@@ -161,7 +161,7 @@ try:
     run_setup(False)
     sys.exit(0)
 
-except :
+except BuildFailed:
     print()
     print('*' * 80)
     print("An error occurred while trying to compile without the C extension enabled")

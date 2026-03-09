@@ -69,4 +69,4 @@ class TypeAnnotationsTest(unittest.TestCase):
         self.assertEqual(Client.testSet.__annotations__, {'return': set[int], 'thing': set[int]})
 
     def test_uuid(self):
-        self.assertEqual(Client.testUuid.__annotations__, {'return': uuid, 'thing': uuid})
+        self.assertEqual(Client.testUuid.__annotations__, {'return': UUID, 'thing': UUID})
