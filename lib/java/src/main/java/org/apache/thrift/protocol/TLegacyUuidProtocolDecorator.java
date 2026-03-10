@@ -23,20 +23,17 @@ import java.util.UUID;
 import org.apache.thrift.TException;
 
 /**
- * The TLegacyUuidProtocolDecorator that decorates an existing TProtocol to
- * provide backwards compatibility with the old UUID format that the Java
- * library used on the wire.
+ * The TLegacyUuidProtocolDecorator that decorates an existing TProtocol to provide backwards
+ * compatibility with the old UUID format that the Java library used on the wire.
  *
- * The initial UUID implementation in Java was not according to the protocol
- * specification. This was fixed in THRIFT-5925 and as a result would break
- * backwards compatibility with existing implementations that depends on that
- * format.
+ * <p>The initial UUID implementation in Java was not according to the protocol specification. This
+ * was fixed in THRIFT-5925 and as a result would break backwards compatibility with existing
+ * implementations that depends on that format.
  *
- * This decorator is especially useful where migration is not needed and
- * interop between other languages, that follows the specification, are not
- * needed.
+ * <p>This decorator is especially useful where migration is not needed and interop between other
+ * languages, that follows the specification, are not needed.
  *
- * For usage see the TestTLegacyUuidProtocolDecorator tests.
+ * <p>For usage see the TestTLegacyUuidProtocolDecorator tests.
  */
 public class TLegacyUuidProtocolDecorator extends TProtocolDecorator {
 
@@ -76,23 +73,25 @@ public class TLegacyUuidProtocolDecorator extends TProtocolDecorator {
     byte[] buf = new byte[16];
     getTransport().readAll(buf, 0, 16);
 
-    long lsb = ((long) (buf[0] & 0xff) << 56)
-        | ((long) (buf[1] & 0xff) << 48)
-        | ((long) (buf[2] & 0xff) << 40)
-        | ((long) (buf[3] & 0xff) << 32)
-        | ((long) (buf[4] & 0xff) << 24)
-        | ((long) (buf[5] & 0xff) << 16)
-        | ((long) (buf[6] & 0xff) << 8)
-        | ((long) (buf[7] & 0xff));
+    long lsb =
+        ((long) (buf[0] & 0xff) << 56)
+            | ((long) (buf[1] & 0xff) << 48)
+            | ((long) (buf[2] & 0xff) << 40)
+            | ((long) (buf[3] & 0xff) << 32)
+            | ((long) (buf[4] & 0xff) << 24)
+            | ((long) (buf[5] & 0xff) << 16)
+            | ((long) (buf[6] & 0xff) << 8)
+            | ((long) (buf[7] & 0xff));
 
-    long msb = ((long) (buf[8] & 0xff) << 56)
-        | ((long) (buf[9] & 0xff) << 48)
-        | ((long) (buf[10] & 0xff) << 40)
-        | ((long) (buf[11] & 0xff) << 32)
-        | ((long) (buf[12] & 0xff) << 24)
-        | ((long) (buf[13] & 0xff) << 16)
-        | ((long) (buf[14] & 0xff) << 8)
-        | ((long) (buf[15] & 0xff));
+    long msb =
+        ((long) (buf[8] & 0xff) << 56)
+            | ((long) (buf[9] & 0xff) << 48)
+            | ((long) (buf[10] & 0xff) << 40)
+            | ((long) (buf[11] & 0xff) << 32)
+            | ((long) (buf[12] & 0xff) << 24)
+            | ((long) (buf[13] & 0xff) << 16)
+            | ((long) (buf[14] & 0xff) << 8)
+            | ((long) (buf[15] & 0xff));
 
     return new UUID(msb, lsb);
   }
