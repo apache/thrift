@@ -344,8 +344,9 @@ public class TCompactProtocol extends TProtocol {
 
   @Override
   public void writeUuid(UUID uuid) throws TException {
-    fixedLongToBytes(uuid.getLeastSignificantBits(), temp, 0);
-    fixedLongToBytes(uuid.getMostSignificantBits(), temp, 8);
+    ByteBuffer bb = ByteBuffer.wrap(temp);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
     trans_.write(temp, 0, 16);
   }
 
@@ -642,9 +643,8 @@ public class TCompactProtocol extends TProtocol {
   @Override
   public UUID readUuid() throws TException {
     trans_.readAll(temp, 0, 16);
-    long mostSigBits = bytesToLong(temp, 8);
-    long leastSigBits = bytesToLong(temp, 0);
-    return new UUID(mostSigBits, leastSigBits);
+    ByteBuffer bb = ByteBuffer.wrap(temp, 0, 16);
+    return new UUID(bb.getLong(), bb.getLong());
   }
 
   /** Reads a byte[] (via readBinary), and then UTF-8 decodes it. */
