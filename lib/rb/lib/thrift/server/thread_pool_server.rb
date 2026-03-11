@@ -21,7 +21,7 @@ require 'thread'
 
 module Thrift
   class ThreadPoolServer < BaseServer
-    def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil, num=20)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20)
       super(processor, server_transport, transport_factory, protocol_factory)
       @thread_q = SizedQueue.new(num)
       @exception_q = Queue.new

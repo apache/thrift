@@ -14,15 +14,15 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = '>= 2.4.0'
 
-  s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
+  s.rdoc_options = %w[--line-numbers --inline-source --title Thrift --main README]
 
   dir = File.expand_path(File.dirname(__FILE__))
 
   s.files = Dir.glob("{lib,spec}/**/*")
   s.test_files = Dir.glob("{test,spec,benchmark}/**/*")
-  s.executables =  Dir.glob("{bin}/**/*")
+  s.executables = Dir.glob("{bin}/**/*")
 
-  s.extra_rdoc_files  = %w[README.md] + Dir.glob("{ext,lib}/**/*.{c,h,rb}")
+  s.extra_rdoc_files = %w[README.md] + Dir.glob("{ext,lib}/**/*.{c,h,rb}")
 
   s.require_paths = %w[lib ext]
 

@@ -116,7 +116,7 @@ class BenchmarkManager
   def collect_output
     puts "Collecting output..."
     # read from @pool until all sockets are closed
-    @buffers = Hash.new { |h,k| h[k] = '' }
+    @buffers = Hash.new { |h, k| h[k] = '' }
     until @pool.empty?
       rd, = select(@pool)
       next if rd.nil?
@@ -184,9 +184,9 @@ class BenchmarkManager
       end
     end
     @report = {}
-    @report[:total_calls] = call_times.inject(0.0) { |a,t| a += t }
+    @report[:total_calls] = call_times.inject(0.0) { |a, t| a += t }
     @report[:avg_calls] = @report[:total_calls] / call_times.size
-    @report[:total_clients] = client_times.inject(0.0) { |a,t| a += t }
+    @report[:total_clients] = client_times.inject(0.0) { |a, t| a += t }
     @report[:avg_clients] = @report[:total_clients] / client_times.size
     @report[:connection_failures] = connection_failures.size
     @report[:connection_errors] = connection_errors.size
@@ -241,8 +241,8 @@ class BenchmarkManager
 
   def tabulate(fmt, *labels_and_values)
     labels = labels_and_values.map { |l| Array === l ? l.first : l }
-    label_width = labels.inject(0) { |w,l| l.size > w ? l.size : w }
-    labels_and_values.each do |(l,v)|
+    label_width = labels.inject(0) { |w, l| l.size > w ? l.size : w }
+    labels_and_values.each do |(l, v)|
       f = fmt
       l, f, c = l if Array === l
       fmtstr = "%-#{label_width+1}s #{f}"
@@ -255,7 +255,7 @@ class BenchmarkManager
 end
 
 def resolve_const(const)
-  const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
+  const and const.split('::').inject(Object) { |k, c| k.const_get(c) }
 end
 
 puts "Starting server..."

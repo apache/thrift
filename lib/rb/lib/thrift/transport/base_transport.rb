@@ -28,7 +28,7 @@ module Thrift
 
     attr_reader :type
 
-    def initialize(type=UNKNOWN, message=nil)
+    def initialize(type = UNKNOWN, message = nil)
       super(message)
       @type = type
     end

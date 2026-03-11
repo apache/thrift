@@ -19,7 +19,7 @@
 
 module Thrift
   class BaseServer
-    def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil)
       @processor = processor
       @server_transport = server_transport
       @transport_factory = transport_factory ? transport_factory : Thrift::BaseTransportFactory.new

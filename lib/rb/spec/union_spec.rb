@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'Union' do
-
   describe Thrift::Union do
     it "should return nil value in unset union" do
       union = SpecNamespace::My_union.new
@@ -194,7 +193,7 @@ describe 'Union' do
     end
 
     it "should not throw an error when inspected and unset" do
-      expect{SpecNamespace::TestUnion.new().inspect}.not_to raise_error
+      expect{ SpecNamespace::TestUnion.new().inspect }.not_to raise_error
     end
 
     it "should print enum value name when inspected" do
