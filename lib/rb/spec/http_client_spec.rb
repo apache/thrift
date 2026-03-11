@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'Thrift::HTTPClientTransport' do
-
   describe Thrift::HTTPClientTransport do
     before(:each) do
       @client = Thrift::HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
@@ -84,7 +83,7 @@ describe 'Thrift::HTTPClientTransport' do
         end
       end
 
-      @client.flush  rescue
+      @client.flush rescue
       expect(@client.instance_variable_get(:@outbuf)).to eq(Thrift::Bytes.empty_byte_buffer)
     end
 
@@ -105,7 +104,6 @@ describe 'Thrift::HTTPClientTransport' do
 
       expect { @client.flush }.to raise_error(Thrift::TransportException)
     end
-
   end
 
   describe 'ssl enabled' do

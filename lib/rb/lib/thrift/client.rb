@@ -19,7 +19,7 @@
 
 module Thrift
   module Client
-    def initialize(iprot, oprot=nil)
+    def initialize(iprot, oprot = nil)
       @iprot = iprot
       @oprot = oprot || iprot
       @seqid = 0

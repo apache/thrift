@@ -21,7 +21,6 @@ require 'spec_helper'
 require 'timeout'
 
 describe 'NonblockingServer' do
-
   class Handler
     def initialize
       @queue = Queue.new
@@ -77,7 +76,7 @@ describe 'NonblockingServer' do
       @transport.read(sz)
     end
 
-    def write(buf,sz=nil)
+    def write(buf, sz = nil)
       @transport.write(buf, sz)
     end
 
@@ -167,7 +166,7 @@ describe 'NonblockingServer' do
               break
             end
           end
-          @clients.each { |c,t| t.close and break if c == client } #close the transport
+          @clients.each { |c, t| t.close and break if c == client } # close the transport
         rescue => e
           raise e unless @catch_exceptions
         end

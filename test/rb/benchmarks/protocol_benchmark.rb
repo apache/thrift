@@ -215,5 +215,4 @@ Benchmark.bmbm do |x|
       Fixtures::Structs::OneOfEach.new.read(header_zlib_protocol)
     end
   end
-
 end

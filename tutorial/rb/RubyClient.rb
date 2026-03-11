@@ -38,10 +38,10 @@ begin
   client.ping()
   print "ping()\n"
 
-  sum = client.add(1,1)
+  sum = client.add(1, 1)
   print "1+1=", sum, "\n"
 
-  sum = client.add(1,4)
+  sum = client.add(1, 4)
   print "1+4=", sum, "\n"
 
   work = Work.new()

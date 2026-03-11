@@ -135,5 +135,5 @@ end
 CLEAN.include [
   '.bundle', 'benchmark/gen-rb', 'coverage', 'ext/*.{o,bundle,so,dll}', 'ext/mkmf.log',
   'ext/Makefile', 'ext/conftest.dSYM', 'ext/thrift_native.bundle.dSYM', 'mkmf.log',
-  'pkg',  'spec/gen-rb', 'test/debug_proto/gen-rb', 'thrift-*.gem'
+  'pkg', 'spec/gen-rb', 'test/debug_proto/gen-rb', 'thrift-*.gem'
 ]

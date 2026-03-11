@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'BaseProtocol' do
-
   before(:each) do
     @trans = double("MockTransport")
     @prot = Thrift::BaseProtocol.new(@trans)
@@ -215,7 +214,7 @@ describe 'BaseProtocol' do
   describe Thrift::BaseProtocolFactory do
     it "should raise NotImplementedError" do
       # returning nil since Protocol is just an abstract class
-      expect {Thrift::BaseProtocolFactory.new.get_protocol(double("MockTransport"))}.to raise_error(NotImplementedError)
+      expect { Thrift::BaseProtocolFactory.new.get_protocol(double("MockTransport")) }.to raise_error(NotImplementedError)
     end
 
     it "should provide a reasonable to_s" do

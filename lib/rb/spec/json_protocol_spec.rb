@@ -21,7 +21,6 @@
 require 'spec_helper'
 
 describe 'JsonProtocol' do
-
   describe Thrift::JsonProtocol do
     before(:each) do
       @trans = Thrift::MemoryBufferTransport.new
@@ -251,8 +250,8 @@ describe 'JsonProtocol' do
     end
 
     it "should get type name for type id" do
-      expect {@prot.get_type_name_for_type_id(Thrift::Types::STOP)}.to raise_error(NotImplementedError)
-      expect {@prot.get_type_name_for_type_id(Thrift::Types::VOID)}.to raise_error(NotImplementedError)
+      expect { @prot.get_type_name_for_type_id(Thrift::Types::STOP) }.to raise_error(NotImplementedError)
+      expect { @prot.get_type_name_for_type_id(Thrift::Types::VOID) }.to raise_error(NotImplementedError)
       expect(@prot.get_type_name_for_type_id(Thrift::Types::BOOL)).to eq("tf")
       expect(@prot.get_type_name_for_type_id(Thrift::Types::BYTE)).to eq("i8")
       expect(@prot.get_type_name_for_type_id(Thrift::Types::DOUBLE)).to eq("dbl")
@@ -267,7 +266,7 @@ describe 'JsonProtocol' do
     end
 
     it "should get type id for type name" do
-      expect {@prot.get_type_id_for_type_name("pp")}.to raise_error(NotImplementedError)
+      expect { @prot.get_type_id_for_type_name("pp") }.to raise_error(NotImplementedError)
       expect(@prot.get_type_id_for_type_name("tf")).to eq(Thrift::Types::BOOL)
       expect(@prot.get_type_id_for_type_name("i8")).to eq(Thrift::Types::BYTE)
       expect(@prot.get_type_id_for_type_name("dbl")).to eq(Thrift::Types::DOUBLE)
@@ -283,7 +282,7 @@ describe 'JsonProtocol' do
 
     it "should read json syntax char" do
       @trans.write('F')
-      expect {@prot.read_json_syntax_char('G')}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_json_syntax_char('G') }.to raise_error(Thrift::ProtocolException)
       @trans.write('H')
       @prot.read_json_syntax_char('H')
     end
@@ -319,7 +318,7 @@ describe 'JsonProtocol' do
 
     it "should read json string" do
       @trans.write("\"\\P")
-      expect {@prot.read_json_string(false)}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_json_string(false) }.to raise_error(Thrift::ProtocolException)
 
       @trans.write("\"this is a test string\"")
       expect(@prot.read_json_string).to eq("this is a test string")
@@ -356,7 +355,7 @@ describe 'JsonProtocol' do
 
     it "should read json integer" do
       @trans.write("1.45\"\"")
-      expect {@prot.read_json_integer}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_json_integer }.to raise_error(Thrift::ProtocolException)
       @prot.read_string
 
       @trans.write("1453T")
@@ -365,11 +364,11 @@ describe 'JsonProtocol' do
 
     it "should read json double" do
       @trans.write("1.45e3e01\"\"")
-      expect {@prot.read_json_double}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_json_double }.to raise_error(Thrift::ProtocolException)
       @prot.read_string
 
       @trans.write("\"1.453e01\"")
-      expect {@prot.read_json_double}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_json_double }.to raise_error(Thrift::ProtocolException)
 
       @trans.write("1.453e01\"\"")
       expect(@prot.read_json_double).to eq(14.53)
@@ -407,7 +406,7 @@ describe 'JsonProtocol' do
 
     it "should read_message_begin" do
       @trans.write("[2,")
-      expect {@prot.read_message_begin}.to raise_error(Thrift::ProtocolException)
+      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException)
 
       @trans.write("[1,\"name\",12,32\"\"")
       expect(@prot.read_message_begin).to eq(["name", 12, 32])

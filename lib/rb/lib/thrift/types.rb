@@ -44,7 +44,7 @@ module Thrift
   class TypeError < Exception
   end
 
-  def self.check_type(value, field, name, skip_nil=true)
+  def self.check_type(value, field, name, skip_nil = true)
     return if value.nil? and skip_nil
     klasses = case field[:type]
               when Types::VOID
@@ -73,7 +73,7 @@ module Thrift
     # check elements now
     case field[:type]
     when Types::MAP
-      value.each_pair do |k,v|
+      value.each_pair do |k, v|
         check_type(k, field[:key], "#{name}.key", false)
         check_type(v, field[:value], "#{name}.value", false)
       end

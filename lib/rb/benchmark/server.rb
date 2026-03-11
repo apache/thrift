@@ -101,7 +101,7 @@ module Server
 end
 
 def resolve_const(const)
-  const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
+  const and const.split('::').inject(Object) { |k, c| k.const_get(c) }
 end
 
 tls = true if ARGV[0] == '-tls' and ARGV.shift

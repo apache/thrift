@@ -257,7 +257,7 @@ module Thrift
       if (ch_value.kind_of? String)
         ch_value = ch.bytes.first
       end
-      trans.write(ch_value.to_s(16).rjust(4,'0'))
+      trans.write(ch_value.to_s(16).rjust(4, '0'))
     end
 
     # Write the character ch as part of a JSON string, escaping as appropriate.
@@ -268,9 +268,9 @@ module Thrift
       # <other> : escape using "\<other>" notation
       kJSONCharTable = [
           # 0 1 2 3 4 5 6 7 8 9 A B C D E F
-          0, 0, 0, 0, 0, 0, 0, 0,'b','t','n', 0,'f','r', 0, 0, # 0
+          0, 0, 0, 0, 0, 0, 0, 0, 'b', 't', 'n', 0, 'f', 'r', 0, 0, # 0
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
-          1, 1,'"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
+          1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
       ]
 
       ch_value = ch[0]

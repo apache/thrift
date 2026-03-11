@@ -32,13 +32,11 @@ class SimpleHandler
   [:testVoid, :testString, :testBool, :testByte, :testI32, :testI64, :testDouble, :testBinary,
    :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testEnum, :testTypedef,
    :testEnum, :testTypedef, :testMultiException, :testUuid].each do |meth|
-
     define_method(meth) do |thing|
       p meth
       p thing
       thing
     end
-
   end
 
   def testVoid()

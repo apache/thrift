@@ -185,7 +185,7 @@ shared_examples_for 'a binary protocol' do
 
   it "should write a double" do
     # try a random scattering of values, including min/max
-    values = [Float::MIN,-1231.15325, -123123.23, -23.23515123, 0, 12351.1325, 523.23, Float::MAX]
+    values = [Float::MIN, -1231.15325, -123123.23, -23.23515123, 0, 12351.1325, 523.23, Float::MAX]
     values.each do |f|
       @prot.write_double(f)
       expect(@trans.read(@trans.available)).to eq([f].pack("G"))
@@ -373,22 +373,22 @@ shared_examples_for 'a binary protocol' do
 
   it "should perform a complete rpc with no args or return" do
     srv_test(
-      proc {|client| client.send_voidMethod()},
-      proc {|client| expect(client.recv_voidMethod).to eq(nil)}
+      proc { |client| client.send_voidMethod() },
+      proc { |client| expect(client.recv_voidMethod).to eq(nil) }
     )
   end
 
   it "should perform a complete rpc with a primitive return type" do
     srv_test(
-      proc {|client| client.send_primitiveMethod()},
-      proc {|client| expect(client.recv_primitiveMethod).to eq(1)}
+      proc { |client| client.send_primitiveMethod() },
+      proc { |client| expect(client.recv_primitiveMethod).to eq(1) }
     )
   end
 
   it "should perform a complete rpc with a struct return type" do
     srv_test(
-      proc {|client| client.send_structMethod()},
-      proc {|client|
+      proc { |client| client.send_structMethod() },
+      proc { |client|
         result = client.recv_structMethod
         result.set_byte_map = nil
         result.map_byte_map = nil

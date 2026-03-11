@@ -21,7 +21,6 @@ require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
 describe 'UNIXSocket' do
-
   describe Thrift::UNIXSocket do
     before(:each) do
       @path = '/tmp/thrift_spec_socket'

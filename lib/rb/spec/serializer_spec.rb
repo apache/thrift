@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'Serializer' do
-
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
       serializer = Thrift::Serializer.new(Thrift::BinaryProtocolAcceleratedFactory.new)

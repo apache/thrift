@@ -63,5 +63,4 @@ describe 'namespaced generation' do
   it "extended a service" do
     require "extended/extended_service"
   end
-
 end

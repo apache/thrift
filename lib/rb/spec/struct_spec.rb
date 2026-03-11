@@ -20,11 +20,10 @@
 require 'spec_helper'
 
 describe 'Struct' do
-
   describe Thrift::Struct do
     it "should iterate over all fields properly" do
       fields = {}
-      SpecNamespace::Foo.new.each_field { |fid,field_info| fields[fid] = field_info }
+      SpecNamespace::Foo.new.each_field { |fid, field_info| fields[fid] = field_info }
       expect(fields).to eq(SpecNamespace::Foo::FIELDS)
     end
 
@@ -51,10 +50,10 @@ describe 'Struct' do
       begin
         struct = SpecNamespace::Foo.new
         struct.ints << 17
-        expect(SpecNamespace::Foo.new.ints).to eq([1,2,2,3])
+        expect(SpecNamespace::Foo.new.ints).to eq([1, 2, 2, 3])
       ensure
         # ensure no leakage to other tests
-        SpecNamespace::Foo::FIELDS[4][:default] = [1,2,2,3]
+        SpecNamespace::Foo::FIELDS[4][:default] = [1, 2, 2, 3]
       end
     end
 
@@ -209,7 +208,7 @@ describe 'Struct' do
     end
 
     it "should write itself to the wire" do
-      prot = Thrift::BaseProtocol.new(double("transport")) #mock("Protocol")
+      prot = Thrift::BaseProtocol.new(double("transport")) # mock("Protocol")
       expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Foo")
       expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Hello")
       expect(prot).to receive(:write_struct_end).twice
@@ -287,9 +286,9 @@ describe 'Struct' do
         prot = Thrift::BaseProtocol.new(double("trans"))
         expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
         expect(prot).to receive(:write_struct_end)
-        expect(prot).to receive(:write_field_begin).with('message', Thrift::Types::STRING, 1)#, "something happened")
+        expect(prot).to receive(:write_field_begin).with('message', Thrift::Types::STRING, 1)
         expect(prot).to receive(:write_string).with("something happened")
-        expect(prot).to receive(:write_field_begin).with('code', Thrift::Types::I32, 2)#, 1)
+        expect(prot).to receive(:write_field_begin).with('code', Thrift::Types::I32, 2)
         expect(prot).to receive(:write_i32).with(1)
         expect(prot).to receive(:write_field_stop)
         expect(prot).to receive(:write_field_end).twice

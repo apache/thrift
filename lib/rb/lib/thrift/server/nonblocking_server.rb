@@ -23,7 +23,7 @@ require 'thread'
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
   class NonblockingServer < BaseServer
-    def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil, num=20, logger=nil)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20, logger = nil)
       super(processor, server_transport, transport_factory, protocol_factory)
       @num_threads = num
       if logger.nil?
@@ -106,7 +106,7 @@ module Thrift
         @num_threads = num
         @logger = logger
         @connections = []
-        @buffers = Hash.new { |h,k| h[k] = '' }
+        @buffers = Hash.new { |h, k| h[k] = '' }
         @signal_queue = Queue.new
         @signal_pipes = IO.pipe
         @signal_pipes[1].sync = true

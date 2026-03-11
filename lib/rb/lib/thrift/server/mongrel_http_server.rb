@@ -38,12 +38,12 @@ module Thrift
             @processor.process protocol, protocol
           end
         else
-          response.start(404) { }
+          response.start(404) {}
         end
       end
     end
 
-    def initialize(processor, opts={})
+    def initialize(processor, opts = {})
       Kernel.warn "[DEPRECATION WARNING] `Thrift::MongrelHTTPServer` is deprecated.  Please use `Thrift::ThinHTTPServer` instead."
       port = opts[:port] || 80
       ip = opts[:ip] || "0.0.0.0"

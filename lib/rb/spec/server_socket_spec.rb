@@ -21,7 +21,6 @@ require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
 describe 'Thrift::ServerSocket' do
-
   describe Thrift::ServerSocket do
     before(:each) do
       @socket = Thrift::ServerSocket.new(1234)
