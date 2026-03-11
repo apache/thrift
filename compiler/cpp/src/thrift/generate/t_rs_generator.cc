@@ -1817,11 +1817,10 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
     f_gen_ << indent() << "}," << '\n';
   }
 
-  // default case (skip fields)
+  // default case (skip unknown fields without affecting the count)
   f_gen_ << indent() << "_ => {" << '\n';
   indent_up();
   f_gen_ << indent() << "i_prot.skip(field_ident.field_type)?;" << '\n';
-  f_gen_ << indent() << "received_field_count += 1;" << '\n';
   indent_down();
   f_gen_ << indent() << "}," << '\n';
 
