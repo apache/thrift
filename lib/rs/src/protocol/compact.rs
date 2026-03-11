@@ -217,7 +217,15 @@ where
             ),
             _ => {
                 if field_delta != 0 {
-                    self.last_read_field_id += field_delta as i16;
+                    self.last_read_field_id = self
+                        .last_read_field_id
+                        .checked_add(field_delta as i16)
+                        .ok_or_else(|| {
+                            crate::Error::Protocol(ProtocolError::new(
+                                ProtocolErrorKind::InvalidData,
+                                "field id overflow",
+                            ))
+                        })?;
                 } else {
                     self.last_read_field_id = self.read_i16()?;
                 };
