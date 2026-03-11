@@ -444,30 +444,6 @@ class TBinaryProtocolTest extends TestCase
     }
 
     /**
-     * @dataProvider invalidUuidDataProvider
-     */
-    public function testWriteUuidValidation($invalidUuid)
-    {
-        $transport = $this->createMock(TTransport::class);
-        $protocol = new TBinaryProtocol($transport, false, false);
-
-        $this->expectException(\Thrift\Exception\TProtocolException::class);
-        $this->expectExceptionMessage('Invalid UUID format');
-        $protocol->writeUuid($invalidUuid);
-    }
-
-    public function invalidUuidDataProvider()
-    {
-        return [
-            'too short' => ['550e8400-e29b-41d4-a716'],
-            'no dashes' => ['550e8400e29b41d4a716446655440000'],
-            'invalid char' => ['550e8400-e29b-41d4-a716-44665544000g'],
-            'empty' => [''],
-            'not a string' => [12345],
-        ];
-    }
-
-    /**
      * @dataProvider readMessageBeginDataProvider
      */
     public function testReadMessageBegin(

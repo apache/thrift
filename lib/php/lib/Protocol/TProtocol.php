@@ -131,13 +131,6 @@ abstract class TProtocol
 
     abstract public function writeUuid($uuid);
 
-    protected static function validateUuid($uuid)
-    {
-        if (!is_string($uuid) || !preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $uuid)) {
-            throw new TProtocolException('Invalid UUID format', TProtocolException::INVALID_DATA);
-        }
-    }
-
     /**
      * Reads the message header
      *

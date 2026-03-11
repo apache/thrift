@@ -582,7 +582,6 @@ class TJSONProtocol extends TProtocol
 
     public function writeUuid($uuid)
     {
-        self::validateUuid($uuid);
         $this->writeJSONString($uuid);
     }
 
@@ -746,7 +745,6 @@ class TJSONProtocol extends TProtocol
     public function readUuid(&$uuid)
     {
         $uuid = $this->readJSONString(false);
-        self::validateUuid($uuid);
 
         return true;
     }
