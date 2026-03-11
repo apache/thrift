@@ -42,6 +42,11 @@ class Handler implements \ThriftTest\ThriftTestIf
         return $thing;
     }
 
+    public function testUuid($thing)
+    {
+        return $thing;
+    }
+
     public function testStruct(\ThriftTest\Xtruct $thing)
     {
         return $thing;

@@ -42,6 +42,7 @@ class TType
     const MAP    = 13;
     const SET    = 14;
     const LST    = 15;    // N.B. cannot use LIST keyword in PHP!
+    const UUID   = 16;
     const UTF8   = 16;
     const UTF16  = 17;
 }

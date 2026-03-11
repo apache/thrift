@@ -671,6 +671,9 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
         out << value->get_double();
       }
       break;
+    case t_base_type::TYPE_UUID:
+      out << '"' << get_escaped_string(value) << '"';
+      break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
@@ -2175,6 +2178,15 @@ void t_php_generator::generate_deserialize_field(ostream& out,
             out << indent() << "$arr = unpack('d', strrev(" << itrans << "->readAll(8)));" << '\n'
                 << indent() << "$" << name << " = $arr[1];" << '\n';
             break;
+          case t_base_type::TYPE_UUID:
+            out << indent() << "$_uuid_bin = " << itrans << "->readAll(16);" << '\n'
+                << indent() << "$_uuid_hex = bin2hex($_uuid_bin);" << '\n'
+                << indent() << "$" << name << " = substr($_uuid_hex, 0, 8) . '-' . "
+                << "substr($_uuid_hex, 8, 4) . '-' . "
+                << "substr($_uuid_hex, 12, 4) . '-' . "
+                << "substr($_uuid_hex, 16, 4) . '-' . "
+                << "substr($_uuid_hex, 20, 12);" << '\n';
+            break;
           default:
             throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase)
                 + tfield->get_name();
@@ -2215,6 +2227,9 @@ void t_php_generator::generate_deserialize_field(ostream& out,
             break;
           case t_base_type::TYPE_DOUBLE:
             out << "readDouble($" << name << ");";
+            break;
+          case t_base_type::TYPE_UUID:
+            out << "readUuid($" << name << ");";
             break;
           default:
             throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
@@ -2417,6 +2432,9 @@ void t_php_generator::generate_serialize_field(ostream& out, t_field* tfield, st
         case t_base_type::TYPE_DOUBLE:
           out << indent() << "$output .= strrev(pack('d', $" << name << "));" << '\n';
           break;
+        case t_base_type::TYPE_UUID:
+          out << indent() << "$output .= hex2bin(str_replace('-', '', $" << name << "));" << '\n';
+          break;
         default:
           throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
         }
@@ -2453,6 +2471,9 @@ void t_php_generator::generate_serialize_field(ostream& out, t_field* tfield, st
           break;
         case t_base_type::TYPE_DOUBLE:
           out << "writeDouble($" << name << ");";
+          break;
+        case t_base_type::TYPE_UUID:
+          out << "writeUuid($" << name << ");";
           break;
         default:
           throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
@@ -2782,6 +2803,8 @@ string t_php_generator::type_to_cast(t_type* type) {
       return "(double)";
     case t_base_type::TYPE_STRING:
       return "(string)";
+    case t_base_type::TYPE_UUID:
+      return "(string)";
     default:
       return "";
     }
@@ -2816,6 +2839,8 @@ string t_php_generator::type_to_enum(t_type* type) {
       return "TType::I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType::DOUBLE";
+    case t_base_type::TYPE_UUID:
+      return "TType::UUID";
     default:
       throw "compiler error: unhandled type";
     }
@@ -2859,6 +2884,8 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
       return "int";
     case t_base_type::TYPE_DOUBLE:
       return "double";
+    case t_base_type::TYPE_UUID:
+      return "string";
     default:
       throw "compiler error: unhandled type";
     }

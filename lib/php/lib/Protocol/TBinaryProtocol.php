@@ -220,6 +220,14 @@ class TBinaryProtocol extends TProtocol
         return $result + $len;
     }
 
+    public function writeUuid($uuid)
+    {
+        $data = hex2bin(str_replace('-', '', $uuid));
+        $this->trans_->write($data, 16);
+
+        return 16;
+    }
+
     public function readMessageBegin(&$name, &$type, &$seqid)
     {
         $result = $this->readI32($sz);
@@ -449,5 +457,18 @@ class TBinaryProtocol extends TProtocol
         }
 
         return $result + $len;
+    }
+
+    public function readUuid(&$value)
+    {
+        $data = $this->trans_->readAll(16);
+        $hex = bin2hex($data);
+        $value = substr($hex, 0, 8) . '-' .
+                 substr($hex, 8, 4) . '-' .
+                 substr($hex, 12, 4) . '-' .
+                 substr($hex, 16, 4) . '-' .
+                 substr($hex, 20, 12);
+
+        return 16;
     }
 }
