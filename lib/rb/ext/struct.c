@@ -35,6 +35,19 @@ static ID sorted_field_ids_method_id;
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
 
+static VALUE new_container_array(int size) {
+  if (size < 0) {
+    rb_exc_raise(
+      get_protocol_exception(
+        INT2FIX(PROTOERR_NEGATIVE_SIZE),
+        rb_str_new2("Negative container size")
+      )
+    );
+  }
+
+  return rb_ary_new2(size > 1024 ? 1024 : size);
+}
+
 //-------------------------------------------
 // Writing section
 //-------------------------------------------
@@ -483,6 +496,10 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
     int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
 
+    if (num_entries < 0) {
+      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_NEGATIVE_SIZE), rb_str_new2("Negative container size")));
+    }
+
     // Check the declared key and value types against the expected ones and skip the map contents
     // if the types don't match.
     VALUE key_info = rb_hash_aref(field_info, key_sym);
@@ -523,7 +540,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     if (!NIL_P(element_info)) {
       int specified_element_type = FIX2INT(rb_hash_aref(element_info, type_sym));
       if (specified_element_type == element_ttype) {
-        result = rb_ary_new2(num_elements);
+        result = new_container_array(num_elements);
 
         for (i = 0; i < num_elements; ++i) {
           rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
@@ -550,7 +567,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     if (!NIL_P(element_info)) {
       int specified_element_type = FIX2INT(rb_hash_aref(element_info, type_sym));
       if (specified_element_type == element_ttype) {
-        items = rb_ary_new2(num_elements);
+        items = new_container_array(num_elements);
 
         for (i = 0; i < num_elements; ++i) {
           rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
