@@ -855,7 +855,7 @@ jobs:
         # kotlin cross test are failing -> see THRIFT-5879
         server_lang: ['java', 'go', 'cpp', 'py', 'rb', 'nodejs', 'nodets']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,cpp,nodejs,nodets', 'py', 'rb']
+        client_lang: ['java,kotlin', 'go,cpp,py,nodejs,nodets', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
