@@ -82,6 +82,7 @@ module Thrift
 
     # Write methods - delegate to underlying protocol
     def write_message_begin(name, type, seqid)
+      @header_transport.sequence_id = seqid
       @protocol.write_message_begin(name, type, seqid)
     end
 

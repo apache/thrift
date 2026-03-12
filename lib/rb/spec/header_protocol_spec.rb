@@ -102,6 +102,15 @@ describe 'HeaderProtocol' do
         expect(seqid).to eq(123)
       end
 
+      it "should propagate seqid to the outer header frame" do
+        @protocol.write_message_begin("test_method", Thrift::MessageTypes::CALL, 123)
+        @protocol.write_message_end
+        @protocol.trans.flush
+
+        data = @buffer.read(@buffer.available)
+        expect(data[8, 4].unpack('N').first).to eq(123)
+      end
+
       it "should write and read structs" do
         @protocol.write_message_begin("test", Thrift::MessageTypes::CALL, 1)
         @protocol.write_struct_begin("TestStruct")

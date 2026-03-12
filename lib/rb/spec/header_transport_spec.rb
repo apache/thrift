@@ -129,6 +129,15 @@ describe 'HeaderTransport' do
         expect(data.bytesize).to be > 30 # Should include header key-value
       end
 
+      it "should write the configured sequence id into the frame header" do
+        @trans.sequence_id = 456
+        @trans.write("payload")
+        @trans.flush
+
+        data = @underlying.read(@underlying.available)
+        expect(data[8, 4].unpack('N').first).to eq(456)
+      end
+
       it "should apply ZLIB transform" do
         @trans.add_transform(Thrift::HeaderTransformID::ZLIB)
         original_payload = "a" * 1000 # Compressible data
@@ -203,6 +212,19 @@ describe 'HeaderTransport' do
         read_trans.read(7)
         headers = read_trans.get_headers
         expect(headers["request-id"]).to eq("12345")
+      end
+
+      it "should decode signed sequence ids from Header frames" do
+        @trans.sequence_id = -2147483648
+        @trans.write("payload")
+        @trans.flush
+
+        written_data = @underlying.read(@underlying.available)
+        read_transport = Thrift::MemoryBufferTransport.new(written_data)
+        read_trans = Thrift::HeaderTransport.new(read_transport)
+
+        expect(read_trans.read(7)).to eq("payload")
+        expect(read_trans.sequence_id).to eq(-2147483648)
       end
 
       it "should decompress ZLIB payload" do

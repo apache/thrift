@@ -114,6 +114,14 @@ module Thrift
       @max_frame_size = MAX_FRAME_SIZE
     end
 
+    def sequence_id=(sequence_id)
+      if sequence_id < -(2**31) || sequence_id > (2**31) - 1
+        raise RangeError, "sequence_id must be a signed int32"
+      end
+
+      @sequence_id = sequence_id
+    end
+
     def open?
       @transport.open?
     end
@@ -307,7 +315,7 @@ module Thrift
 
       # Read flags and sequence ID
       @flags = buf.read(2).unpack('n').first
-      @sequence_id = buf.read(4).unpack('N').first
+      @sequence_id = signed_int32(buf.read(4).unpack('N').first)
 
       # Read header length (in 32-bit words)
       header_words = buf.read(2).unpack('n').first
@@ -412,7 +420,7 @@ module Thrift
       frame << [frame_size].pack('N')               # Length
       frame << [HEADER_MAGIC].pack('n')             # Magic
       frame << [@flags].pack('n')                   # Flags
-      frame << [@sequence_id].pack('N')             # Sequence ID
+      frame << [unsigned_int32(@sequence_id)].pack('N') # Sequence ID
       frame << [header_data.bytesize / 4].pack('n') # Header length (in 32-bit words)
       frame << header_data                          # Header data
       frame << payload                              # Payload
@@ -479,6 +487,14 @@ module Thrift
       value = Bytes.force_binary_encoding(value)
       write_varint32(io, value.bytesize)
       io.write(value)
+    end
+
+    def signed_int32(value)
+      value > 0x7fffffff ? value - (2**32) : value
+    end
+
+    def unsigned_int32(value)
+      value < 0 ? value + (2**32) : value
     end
   end
 
