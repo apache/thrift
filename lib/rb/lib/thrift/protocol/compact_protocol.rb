@@ -110,7 +110,7 @@ module Thrift
     def write_message_begin(name, type, seqid)
       write_byte(PROTOCOL_ID)
       write_byte((VERSION & VERSION_MASK) | ((type << TYPE_SHIFT_AMOUNT) & TYPE_MASK))
-      write_varint32(seqid)
+      write_varint32(message_seqid_to_varint32(seqid))
       write_string(name)
       nil
     end
@@ -241,7 +241,7 @@ module Thrift
       end
 
       type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS
-      seqid = read_varint32()
+      seqid = message_seqid_from_varint32(read_varint32())
       messageName = read_string()
       [messageName, type, seqid]
     end
@@ -440,6 +440,18 @@ module Thrift
 
     def zig_zag_to_long(n)
       (n >> 1) ^ -(n & 1)
+    end
+
+    def message_seqid_to_varint32(seqid)
+      if seqid < -(2**31) || seqid > (2**31) - 1
+        raise RangeError, "seqid must be a signed int32"
+      end
+
+      seqid < 0 ? seqid + (2**32) : seqid
+    end
+
+    def message_seqid_from_varint32(seqid)
+      seqid > 0x7fffffff ? seqid - (2**32) : seqid
     end
   end
 

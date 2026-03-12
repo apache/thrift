@@ -946,11 +946,8 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent_up();
 
       f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << '\n';
-      f_service_.indent() << "handle_exception(mtype)" << '\n';
-
-      f_service_.indent() << "if reply_seqid(rseqid)==false" << '\n';
-      f_service_.indent() << "  raise \"seqid reply faild\"" << '\n';
-      f_service_.indent() << "end" << '\n';
+      f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, '" << funname << "')"
+                          << '\n';
 
       f_service_.indent() << "result = receive_message(" << resultname << ")" << '\n';
 
