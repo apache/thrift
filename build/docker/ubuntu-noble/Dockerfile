@@ -52,8 +52,8 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
   /etc/apt/sources.list.d/dart_stable.list
 
 # node.js
-RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-  echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | apt-key add - && \
+  echo "deb https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update -yq && \
@@ -295,8 +295,8 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
   `# Static Code Analysis dependencies` \
   cppcheck \
-  sloccount 
-  
+  sloccount
+
 #RUN pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
