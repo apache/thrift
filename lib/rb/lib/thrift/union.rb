@@ -19,7 +19,7 @@
 
 module Thrift
   class Union
-    def initialize(name=nil, value=nil)
+    def initialize(name = nil, value = nil)
       if name
         if name.is_a? Hash
           if name.size > 1

@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'BaseTransport' do
-
   describe Thrift::TransportException do
     it "should make type accessible" do
       exc = Thrift::TransportException.new(Thrift::TransportException::ALREADY_OPEN, "msg")
@@ -341,10 +340,10 @@ describe 'BaseTransport' do
 
     it "should throw an EOFError when there isn't enough data in the buffer" do
       @buffer.reset_buffer("")
-      expect{@buffer.read(1)}.to raise_error(EOFError)
+      expect{ @buffer.read(1) }.to raise_error(EOFError)
 
       @buffer.reset_buffer("1234")
-      expect{@buffer.read(5)}.to raise_error(EOFError)
+      expect{ @buffer.read(5) }.to raise_error(EOFError)
     end
   end
 

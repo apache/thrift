@@ -20,13 +20,13 @@
 
 module Thrift
   class FramedTransport < BaseTransport
-    def initialize(transport, read=true, write=true)
+    def initialize(transport, read = true, write = true)
       @transport = transport
       @rbuf      = Bytes.empty_byte_buffer
       @wbuf      = Bytes.empty_byte_buffer
       @read      = read
       @write     = write
-      @index      = 0
+      @index     = 0
     end
 
     def open?
@@ -77,7 +77,7 @@ module Thrift
       i
     end
 
-    def write(buf, sz=nil)
+    def write(buf, sz = nil)
       return @transport.write(buf) unless @write
 
       buf = Bytes.force_binary_encoding(buf)

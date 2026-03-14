@@ -32,7 +32,7 @@ module Thrift
     # * :ip
     # * :path
     # * :protocol_factory
-    def initialize(processor, options={})
+    def initialize(processor, options = {})
       port = options[:port] || 80
       ip = options[:ip] || "0.0.0.0"
       path = options[:path] || "/"

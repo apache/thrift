@@ -22,13 +22,10 @@ require 'rack/test'
 require 'thrift/server/thin_http_server'
 
 describe Thrift::ThinHTTPServer do
-
   let(:processor) { double('processor') }
 
   describe "#initialize" do
-
     context "when using the defaults" do
-
       it "binds to port 80, with host 0.0.0.0, a path of '/'" do
         expect(Thin::Server).to receive(:new).with('0.0.0.0', 80, an_instance_of(Rack::Builder))
         Thrift::ThinHTTPServer.new(processor)
@@ -43,11 +40,9 @@ describe Thrift::ThinHTTPServer do
         expect(Thrift::BinaryProtocolFactory).to receive(:new)
         Thrift::ThinHTTPServer.new(processor)
       end
-
     end
 
     context "when using the options" do
-
       it 'accepts :ip, :port, :path' do
         ip = "192.168.0.1"
         port = 3000
@@ -64,13 +59,10 @@ describe Thrift::ThinHTTPServer do
         Thrift::ThinHTTPServer.new(processor,
                            :protocol_factory => Thrift::JsonProtocolFactory.new)
       end
-
     end
-
   end
 
   describe "#serve" do
-
     it 'starts the Thin server' do
       underlying_thin_server = double('thin server', :start => true)
       allow(Thin::Server).to receive(:new).and_return(underlying_thin_server)
@@ -81,7 +73,6 @@ describe Thrift::ThinHTTPServer do
       thin_thrift_server.serve
     end
   end
-
 end
 
 describe Thrift::ThinHTTPServer::RackApplication do
@@ -95,7 +86,6 @@ describe Thrift::ThinHTTPServer::RackApplication do
   end
 
   context "404 response" do
-
     it 'receives a non-POST' do
       header('Content-Type', "application/x-thrift")
       get "/"
@@ -107,11 +97,9 @@ describe Thrift::ThinHTTPServer::RackApplication do
       post "/"
       expect(last_response.status).to eq 404
     end
-
   end
 
   context "200 response" do
-
     before do
       allow(protocol_factory).to receive(:get_protocol)
       allow(processor).to receive(:process)
@@ -134,7 +122,5 @@ describe Thrift::ThinHTTPServer::RackApplication do
       post "/"
       expect(last_response.ok?).to be true
     end
-
   end
-
 end

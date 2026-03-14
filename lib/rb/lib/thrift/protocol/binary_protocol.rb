@@ -25,7 +25,7 @@ module Thrift
 
     attr_reader :strict_read, :strict_write
 
-    def initialize(trans, strict_read=true, strict_write=true)
+    def initialize(trans, strict_read = true, strict_write = true)
       super(trans)
       @strict_read = strict_read
       @strict_write = strict_write

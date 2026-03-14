@@ -22,7 +22,7 @@ require 'socket'
 
 module Thrift
   class Socket < BaseTransport
-    def initialize(host='localhost', port=9090, timeout=nil)
+    def initialize(host = 'localhost', port = 9090, timeout = nil)
       @host = host
       @port = port
       @timeout = timeout

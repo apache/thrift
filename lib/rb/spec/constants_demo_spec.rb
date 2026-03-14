@@ -73,7 +73,7 @@ describe 'ConstantsDemo' do
   it 'should have correct set constants' do
     expect(ConstantsDemo::GEN_SET).to be_a(Set)
     expect(ConstantsDemo::GEN_SET.size).to eq(2)
-    expect(ConstantsDemo::GEN_SET.include?(235)).to be true  # added twice, but this is a set
+    expect(ConstantsDemo::GEN_SET.include?(235)).to be true # added twice, but this is a set
     expect(ConstantsDemo::GEN_SET.include?(53235)).to be true
 
     expect(ConstantsDemo::GUID_SET).to be_a(Set)

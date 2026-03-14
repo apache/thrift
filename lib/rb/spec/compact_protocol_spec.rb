@@ -23,9 +23,9 @@ require 'spec_helper'
 describe Thrift::CompactProtocol do
   TESTS = {
     :byte => (-127..127).to_a,
-    :i16 => (0..14).map {|shift| [1 << shift, -(1 << shift)]}.flatten.sort,
-    :i32 => (0..30).map {|shift| [1 << shift, -(1 << shift)]}.flatten.sort,
-    :i64 => (0..62).map {|shift| [1 << shift, -(1 << shift)]}.flatten.sort,
+    :i16 => (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    :i32 => (0..30).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    :i64 => (0..62).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
     :string => ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
     :binary => ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
     :double => [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0/0.0, -1.0/0.0],

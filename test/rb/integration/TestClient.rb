@@ -219,7 +219,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_list
     p 'test_list'
-    val = [1,2,3,4,5]
+    val = [1, 2, 3, 4, 5]
     assert_equal(@client.testList(val), val)
     assert_kind_of(Array, @client.testList(val))
   end
@@ -235,7 +235,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_typedef
     p 'test_typedef'
-    #UserId  testTypedef(1: UserId thing),
+    # UserId  testTypedef(1: UserId thing),
     assert_equal(@client.testTypedef(309858235082523), 309858235082523)
     assert_kind_of(Integer, @client.testTypedef(309858235082523))
     true
@@ -243,7 +243,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_set
     p 'test_set'
-    val = Set.new([1,2,3])
+    val = Set.new([1, 2, 3])
     assert_equal(@client.testSet(val), val)
     assert_kind_of(Set, @client.testSet(val))
   end

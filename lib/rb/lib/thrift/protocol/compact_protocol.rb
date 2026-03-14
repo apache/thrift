@@ -140,7 +140,7 @@ module Thrift
     # 'type override' of the type header. This is used specifically in the
     # boolean field case.
     #
-    def write_field_begin_internal(type, id, type_override=nil)
+    def write_field_begin_internal(type, id, type_override = nil)
       last_id = @last_field.pop
 
       # if there's a type override, use that.
@@ -399,7 +399,7 @@ module Thrift
 
     def write_varint64(n)
       while true
-        if (n & EVERYTHING_ELSE_MASK) == 0 #TODO need to find a way to make this into a long...
+        if (n & EVERYTHING_ELSE_MASK) == 0 # TODO need to find a way to make this into a long...
           write_byte(n)
           break
         else

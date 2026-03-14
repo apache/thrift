@@ -21,7 +21,7 @@ require 'set'
 
 module Thrift
   module Struct
-    def initialize(d={}, &block)
+    def initialize(d = {}, &block)
       # get a copy of the default values to work on, removing defaults in favor of arguments
       fields_with_defaults = fields_with_default_values.dup
 

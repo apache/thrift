@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'Processor' do
-
   class ProcessorSpec
     include Thrift::Processor
   end

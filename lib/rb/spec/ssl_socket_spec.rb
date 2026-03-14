@@ -21,7 +21,6 @@ require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
 describe 'SSLSocket' do
-
   describe Thrift::SSLSocket do
     before(:each) do
       @context = OpenSSL::SSL::SSLContext.new

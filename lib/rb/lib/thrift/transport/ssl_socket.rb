@@ -19,7 +19,7 @@
 
 module Thrift
   class SSLSocket < Socket
-    def initialize(host='localhost', port=9090, timeout=nil, ssl_context=nil)
+    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil)
       super(host, port, timeout)
       @ssl_context = ssl_context
     end

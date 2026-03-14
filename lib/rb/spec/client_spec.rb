@@ -20,7 +20,6 @@
 require 'spec_helper'
 
 describe 'Client' do
-
   class ClientSpec
     include Thrift::Client
   end

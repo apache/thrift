@@ -21,7 +21,7 @@ require 'logger'
 
 module Thrift
   module Processor
-    def initialize(handler, logger=nil)
+    def initialize(handler, logger = nil)
       @handler = handler
       if logger.nil?
         @logger = Logger.new(STDERR)
@@ -32,7 +32,7 @@ module Thrift
     end
 
     def process(iprot, oprot)
-      name, type, seqid  = iprot.read_message_begin
+      name, type, seqid = iprot.read_message_begin
       if respond_to?("process_#{name}")
         begin
           send("process_#{name}", seqid, iprot, oprot)

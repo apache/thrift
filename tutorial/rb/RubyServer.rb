@@ -42,7 +42,7 @@ class CalculatorHandler
   end
 
   def calculate(logid, work)
-    print "calculate(", logid, ", {", work.op, ",", work.num1, ",", work.num2,"})\n"
+    print "calculate(", logid, ", {", work.op, ",", work.num1, ",", work.num2, "})\n"
     if work.op == Operation::ADD
       val = work.num1 + work.num2
     elsif work.op == Operation::SUBTRACT
