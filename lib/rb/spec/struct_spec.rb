@@ -142,6 +142,34 @@ describe 'Struct' do
       expect(struct.shorts).to eq(Set.new([3, 2]))
     end
 
+    it "rejects negative container sizes while reading" do
+      struct = SpecNamespace::Foo.new
+      prot = Thrift::BaseProtocol.new(double("transport"))
+
+      expect(prot).to receive(:read_list_begin).and_return([Thrift::Types::I32, -1])
+
+      expect {
+        struct.send(:read_field, prot, SpecNamespace::Foo::FIELDS[4])
+      }.to raise_error(Thrift::ProtocolException, "Negative size") { |error|
+        expect(error.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+      }
+    end
+
+    it "does not preallocate arrays from declared list sizes" do
+      struct = SpecNamespace::Foo.new
+      prot = Thrift::BaseProtocol.new(double("transport"))
+      declared_size = 1 << 30
+      sentinel = RuntimeError.new("stop after first element")
+
+      expect(prot).to receive(:read_list_begin).and_return([Thrift::Types::I32, declared_size])
+      expect(prot).to receive(:read_i32).and_raise(sentinel)
+      expect(Array).not_to receive(:new).with(declared_size)
+
+      expect {
+        struct.send(:read_field, prot, SpecNamespace::Foo::FIELDS[4])
+      }.to raise_error(sentinel)
+    end
+
     it "should serialize false boolean fields correctly" do
       b = SpecNamespace::BoolStruct.new(:yesno => false)
       prot = Thrift::BinaryProtocol.new(Thrift::MemoryBufferTransport.new)

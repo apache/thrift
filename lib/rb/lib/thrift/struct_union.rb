@@ -20,6 +20,12 @@ require 'set'
 
 module Thrift
   module Struct_Union
+    def validate_container_size(size)
+      return size unless size < 0
+
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size')
+    end
+
     def name_to_id(name)
       names_to_ids = self.class.instance_variable_get(:@names_to_ids)
       unless names_to_ids
@@ -55,6 +61,7 @@ module Thrift
         value.read(iprot)
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
+        validate_container_size(size)
         # Skip the map contents if the declared key or value types don't match the expected ones.
         if (size != 0 && (key_type != field[:key][:type] || val_type != field[:value][:type]))
           size.times do
@@ -73,6 +80,7 @@ module Thrift
         iprot.read_map_end
       when Types::LIST
         e_type, size = iprot.read_list_begin
+        validate_container_size(size)
         # Skip the list contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do
@@ -80,13 +88,15 @@ module Thrift
           end
           value = nil
         else
-          value = Array.new(size) do |n|
-            read_field(iprot, field_info(field[:element]))
+          value = []
+          size.times do
+            value << read_field(iprot, field_info(field[:element]))
           end
         end
         iprot.read_list_end
       when Types::SET
         e_type, size = iprot.read_set_begin
+        validate_container_size(size)
         # Skip the set contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do
