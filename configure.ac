@@ -805,6 +805,7 @@ AC_CONFIG_FILES([
   lib/dart/Makefile
   lib/py/Makefile
   lib/rb/Makefile
+  lib/rb/test/fuzz/Makefile
   lib/rs/Makefile
   lib/rs/test/Makefile
   lib/rs/test/fuzz/Makefile

@@ -17,48 +17,6 @@
 # under the License.
 #
 
-DESTDIR ?= /
+require_relative 'fuzz_tracer'
 
-SUBDIRS = .
-
-if WITH_TESTS
-SUBDIRS += test/fuzz
-endif
-
-if HAVE_BUNDLER
-
-all-local:
-	$(BUNDLER) install
-	$(BUNDLER) exec rake build_ext
-
-install-exec-hook:
-	$(BUNDLER) exec rake install
-
-clean-local:
-	$(BUNDLER) install
-	$(BUNDLER) exec rake clean
-	$(RM) -r spec/gen-rb/
-
-check-local: all
-	$(BUNDLER) install
-	$(BUNDLER) exec rake
-
-endif
-
-dist-hook:
-	$(RM) -r $(distdir)/spec/gen-rb/
-
-distdir:
-	$(MAKE) $(AM_MAKEFLAGS) distdir-am
-
-EXTRA_DIST = \
-	coding_standards.md \
-	Rakefile \
-	Gemfile \
-	thrift.gemspec \
-	lib \
-	ext \
-	benchmark \
-	script \
-	spec \
-	README.md
+trace_fuzz_target(__FILE__)
