@@ -379,13 +379,19 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
             self.transport.open()
 
         self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
-        self.send_sasl_msg(self.OK, self.sasl.process())
+        initial_response = self.sasl.process()
+        self.send_sasl_msg(self.OK, initial_response if initial_response is not None else b'')
 
         while True:
             status, challenge = self.recv_sasl_msg()
             if status == self.OK:
                 self.send_sasl_msg(self.OK, self.sasl.process(challenge))
             elif status == self.COMPLETE:
+                if challenge:
+                    # Process server's final challenge (e.g. DIGEST-MD5 rspauth
+                    # verification). Return value intentionally unused; puresasl
+                    # raises on verification failure.
+                    self.sasl.process(challenge)
                 if not self.sasl.complete:
                     raise TTransportException(
                         TTransportException.NOT_OPEN,
@@ -403,6 +409,8 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         return self.transport.isOpen()
 
     def send_sasl_msg(self, status, body):
+        if body is None:
+            body = b''
         header = pack(">BI", status, len(body))
         self.transport.write(header + body)
         self.transport.flush()
@@ -413,7 +421,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         if length > 0:
             payload = self.transport.readAll(length)
         else:
-            payload = ""
+            payload = b""
         return status, payload
 
     def write(self, data):
