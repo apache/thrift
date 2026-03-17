@@ -31,7 +31,10 @@ BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
                 gen-cpp-enumclass/ThriftTest_constants.cpp \
                 gen-cpp-templatestreamop/ThriftTest_types.cpp \
                 gen-cpp-templatestreamop/ThriftTest_types.tcc \
-                gen-cpp-templatestreamop/ThriftTest_constants.cpp
+                gen-cpp-templatestreamop/ThriftTest_constants.cpp \
+                gen-cpp-private-templatestreamop/ThriftTest_types.cpp \
+                gen-cpp-private-templatestreamop/ThriftTest_types.tcc \
+                gen-cpp-private-templatestreamop/ThriftTest_constants.cpp
 
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
@@ -55,7 +58,8 @@ noinst_LTLIBRARIES += \
 	libforwardsettertestgencpp.la \
 	libprivateoptonaltestgencpp.la \
 	libenumclasstestgencpp.la \
-	libtemplatestreamoptestgencpp.la
+	libtemplatestreamoptestgencpp.la \
+	libprivateopttemplstreamoptestgencpp.la
 
 nodist_libforwardsettertestgencpp_la_SOURCES = \
 	gen-cpp-forward/ThriftTest_types.cpp \
@@ -95,6 +99,16 @@ nodist_libtemplatestreamoptestgencpp_la_SOURCES = \
 
 libtemplatestreamoptestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
+nodist_libprivateopttemplstreamoptestgencpp_la_SOURCES = \
+	gen-cpp-private-templatestreamop/ThriftTest_types.cpp \
+	gen-cpp-private-templatestreamop/ThriftTest_types.h \
+	gen-cpp-private-templatestreamop/ThriftTest_types.tcc \
+	gen-cpp-private-templatestreamop/ThriftTest_constants.cpp \
+	gen-cpp-private-templatestreamop/ThriftTest_constants.h \
+	src/ThriftTest_extras.cpp
+
+libprivateopttemplstreamoptestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
+
 nodist_libstresstestgencpp_la_SOURCES = \
 	gen-cpp/StressTest_types.h \
 	gen-cpp/Service.cpp \
@@ -112,7 +126,8 @@ check_PROGRAMS = \
 	ForwardSetterTest \
 	PrivateOptionalTest \
 	EnumClassTest \
-	TemplateStreamOpTest
+	TemplateStreamOpTest \
+	PrivateOptionalTemplateStreamOpTest
 
 # we currently do not run the testsuite, stop c++ server issue
 # TESTS = \
@@ -185,6 +200,14 @@ TemplateStreamOpTest_LDADD = \
 	libtemplatestreamoptestgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la
 
+PrivateOptionalTemplateStreamOpTest_SOURCES = \
+	src/PrivateOptionalTemplateStreamOpTest.cpp
+
+PrivateOptionalTemplateStreamOpTest_CPPFLAGS = -Igen-cpp-private-templatestreamop $(AM_CPPFLAGS)
+PrivateOptionalTemplateStreamOpTest_LDADD = \
+	libprivateopttemplstreamoptestgencpp.la \
+	$(top_builddir)/lib/cpp/libthrift.la
+
 #
 # Common thrift code generation rules
 #
@@ -211,6 +234,11 @@ gen-cpp-templatestreamop/ThriftTest_types.cpp gen-cpp-templatestreamop/ThriftTes
 	$(MKDIR_P) gen-cpp-templatestreamop
 	$(THRIFT) --gen cpp:template_streamop -out gen-cpp-templatestreamop $<
 
+# Generate ThriftTest with private_optional,template_streamop options
+gen-cpp-private-templatestreamop/ThriftTest_types.cpp gen-cpp-private-templatestreamop/ThriftTest_types.h gen-cpp-private-templatestreamop/ThriftTest_types.tcc gen-cpp-private-templatestreamop/ThriftTest_constants.cpp: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
+	$(MKDIR_P) gen-cpp-private-templatestreamop
+	$(THRIFT) --gen cpp:private_optional,template_streamop -out gen-cpp-private-templatestreamop $<
+
 gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
@@ -222,7 +250,7 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACR
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
-	$(RM) -r gen-cpp/ gen-cpp-forward/ gen-cpp-private/ gen-cpp-enumclass/ gen-cpp-templatestreamop/
+	$(RM) -r gen-cpp/ gen-cpp-forward/ gen-cpp-private/ gen-cpp-enumclass/ gen-cpp-templatestreamop/ gen-cpp-private-templatestreamop/
 
 style-local:
 	$(CPPSTYLE_CMD)
@@ -238,4 +266,5 @@ EXTRA_DIST = \
 	src/ForwardSetterTest.cpp \
 	src/PrivateOptionalTest.cpp \
 	src/EnumClassTest.cpp \
-	src/TemplateStreamOpTest.cpp
+	src/TemplateStreamOpTest.cpp \
+	src/PrivateOptionalTemplateStreamOpTest.cpp
