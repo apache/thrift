@@ -208,7 +208,7 @@ pub trait TInputProtocol {
             TType::I32 => self.read_i32().map(|_| ()),
             TType::I64 => self.read_i64().map(|_| ()),
             TType::Double => self.read_double().map(|_| ()),
-            TType::String => self.read_string().map(|_| ()),
+            TType::String => self.read_bytes().map(|_| ()),
             TType::Uuid => self.read_uuid().map(|_| ()),
             TType::Struct => {
                 self.read_struct_begin()?;
@@ -1059,5 +1059,74 @@ mod tests {
         W: TOutputProtocol,
     {
         t.flush().unwrap();
+    }
+
+    // Test unknown binary fields are skipped without error (THRIFT-5928)
+
+    fn build_struct_with_unknown_binary_field(payload: &[u8]) -> Vec<u8> {
+        let mut buf = Vec::new();
+        buf.push(0x0A); // field 1: TType::I64
+        buf.extend_from_slice(&1_i16.to_be_bytes());
+        buf.extend_from_slice(&42_i64.to_be_bytes());
+        buf.push(0x0B); // field 99: TType::String (same wire type for binary)
+        buf.extend_from_slice(&99_i16.to_be_bytes());
+        buf.extend_from_slice(&(payload.len() as i32).to_be_bytes());
+        buf.extend_from_slice(payload);
+        buf.push(0x00); // stop
+        buf
+    }
+
+    fn read_struct_skipping_unknown(data: &[u8]) -> crate::Result<i64> {
+        let cursor = Cursor::new(data.to_vec());
+        let mut proto = TBinaryInputProtocol::new(cursor, true);
+        proto.read_struct_begin()?;
+        let mut known_value: Option<i64> = None;
+        loop {
+            let field = proto.read_field_begin()?;
+            if field.field_type == TType::Stop {
+                break;
+            }
+            match field.id {
+                Some(1) if field.field_type == TType::I64 => {
+                    known_value = Some(proto.read_i64()?);
+                }
+                _ => {
+                    proto.skip(field.field_type)?;
+                }
+            }
+            proto.read_field_end()?;
+        }
+        proto.read_struct_end()?;
+        known_value.ok_or_else(|| {
+            crate::Error::Protocol(crate::ProtocolError {
+                kind: crate::ProtocolErrorKind::InvalidData,
+                message: "missing known field".to_string(),
+            })
+        })
+    }
+
+    #[test]
+    fn must_skip_binary_field_with_non_utf8_bytes() {
+        let non_utf8: Vec<u8> = vec![
+            0x04, 0xFF, 0xFE, 0x80, 0x90, 0xAB, 0xCD, 0xEF,
+            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE,
+        ];
+        assert!(String::from_utf8(non_utf8.clone()).is_err());
+        let data = build_struct_with_unknown_binary_field(&non_utf8);
+        let result = read_struct_skipping_unknown(&data);
+        assert!(result.is_ok(), "skip() failed on non-UTF-8 binary: {:?}", result.err());
+        assert_eq!(result.unwrap(), 42);
+    }
+
+    #[test]
+    fn must_skip_valid_utf8_string_field() {
+        let data = build_struct_with_unknown_binary_field(b"hello world");
+        assert_eq!(read_struct_skipping_unknown(&data).unwrap(), 42);
+    }
+
+    #[test]
+    fn must_skip_empty_binary_field() {
+        let data = build_struct_with_unknown_binary_field(&[]);
+        assert_eq!(read_struct_skipping_unknown(&data).unwrap(), 42);
     }
 }
