@@ -187,6 +187,29 @@ target_link_libraries(TemplateStreamOpTest templatestreamoptestgencpp ${Boost_LI
 target_link_libraries(TemplateStreamOpTest thrift)
 add_test(NAME TemplateStreamOpTest COMMAND TemplateStreamOpTest)
 
+# PrivateOptionalTemplateStreamOpTest - tests private_optional and template_streamop together
+set(privateopttemplstreamoptestgencpp_SOURCES
+    gen-cpp-private-templatestreamop/gen-cpp/ThriftTest_types.cpp
+    gen-cpp-private-templatestreamop/gen-cpp/ThriftTest_constants.cpp
+    src/ThriftTest_extras.cpp
+)
+add_library(privateopttemplstreamoptestgencpp STATIC ${privateopttemplstreamoptestgencpp_SOURCES})
+target_include_directories(privateopttemplstreamoptestgencpp BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop"
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PROJECT_SOURCE_DIR}/lib/cpp/src"
+)
+target_link_libraries(privateopttemplstreamoptestgencpp thrift)
+
+add_executable(PrivateOptionalTemplateStreamOpTest src/PrivateOptionalTemplateStreamOpTest.cpp)
+target_include_directories(PrivateOptionalTemplateStreamOpTest BEFORE PRIVATE 
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop/gen-cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop"
+)
+target_link_libraries(PrivateOptionalTemplateStreamOpTest privateopttemplstreamoptestgencpp ${Boost_LIBRARIES})
+target_link_libraries(PrivateOptionalTemplateStreamOpTest thrift)
+add_test(NAME PrivateOptionalTemplateStreamOpTest COMMAND PrivateOptionalTemplateStreamOpTest)
+
 #
 # Common thrift code generation rules
 #
@@ -220,6 +243,13 @@ add_custom_command(OUTPUT gen-cpp-enumclass/gen-cpp/ThriftTest_types.cpp gen-cpp
 add_custom_command(OUTPUT gen-cpp-templatestreamop/gen-cpp/ThriftTest_types.cpp gen-cpp-templatestreamop/gen-cpp/ThriftTest_types.h gen-cpp-templatestreamop/gen-cpp/ThriftTest_constants.cpp
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop
     COMMAND ${THRIFT_COMPILER} --gen cpp:template_streamop -o gen-cpp-templatestreamop ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Generate ThriftTest with private_optional,template_streamop options for PrivateOptionalTemplateStreamOpTest
+add_custom_command(OUTPUT gen-cpp-private-templatestreamop/gen-cpp/ThriftTest_types.cpp gen-cpp-private-templatestreamop/gen-cpp/ThriftTest_types.h gen-cpp-private-templatestreamop/gen-cpp/ThriftTest_constants.cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop
+    COMMAND ${THRIFT_COMPILER} --gen cpp:private_optional,template_streamop -o gen-cpp-private-templatestreamop ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
