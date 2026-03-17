@@ -113,4 +113,10 @@ If your pull request contains commits that are not yours, then you should use th
 
 This procedure will apply only your commits in order to the current master, then you will squash them to a single commit, and then you force push your local THRIFT-9999-take-2 into remote THRIFT-9999 which represents your pull request, replacing all the commits with the new one.
 
+## AI generated content ##
+
+The [ASF Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html) serves as a great summary. It also outlines potential issues that come with generative tools. For the reasons set out in this document, but also to make it absolutely clear to the reviewers, we strongly recommend using the `Generated-by:` marker in commits and pull requests, if applicable.
+
+----
+
  
