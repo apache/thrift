@@ -1,7 +1,7 @@
 version: 2
 mergeable:
   - when: pull_request.*
-    name: Add 'c_glib' label to PR if changeset includes changes to the lib/c_glib or test/c_glib directories
+    name: Add 'c_glib' label to PR if changeset includes changes to the lib/c_glib, test/c_glib, or tutorial/c_glib directories
     validate:
       - do: changeset
         or:
@@ -9,13 +9,15 @@ mergeable:
               regex: 'lib/c_glib/.*'
           - must_include:
               regex: 'test/c_glib/.*'
+          - must_include:
+              regex: 'tutorial/c_glib/.*'
     pass:
       - do: labels
         labels: ['c_glib']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'c++' label to PR if changeset includes changes to the lib/cpp or test/cpp directories
+    name: Add 'c++' label to PR if changeset includes changes to the lib/cpp, test/cpp, or tutorial/cpp directories
     validate:
       - do: changeset
         or:
@@ -23,13 +25,15 @@ mergeable:
               regex: 'lib/cpp/.*'
           - must_include:
               regex: 'test/cpp/.*'
+          - must_include:
+              regex: 'tutorial/cpp/.*'
     pass:
       - do: labels
         labels: ['c++']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'dart' label to PR if changeset includes changes to the lib/dart or test/dart directories
+    name: Add 'dart' label to PR if changeset includes changes to the lib/dart, test/dart, or tutorial/dart directories
     validate:
       - do: changeset
         or:
@@ -37,13 +41,15 @@ mergeable:
               regex: 'lib/dart/.*'
           - must_include:
               regex: 'test/dart/.*'
+          - must_include:
+              regex: 'tutorial/dart/.*'
     pass:
       - do: labels
         labels: ['dart']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'delphi' label to PR if changeset includes changes to the lib/delphi or test/delphi directories
+    name: Add 'delphi' label to PR if changeset includes changes to the lib/delphi, test/delphi, or tutorial/delphi directories
     validate:
       - do: changeset
         or:
@@ -51,13 +57,15 @@ mergeable:
               regex: 'lib/delphi/.*'
           - must_include:
               regex: 'test/delphi/.*'
+          - must_include:
+              regex: 'tutorial/delphi/.*'
     pass:
       - do: labels
         labels: ['delphi']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'erlang' label to PR if changeset includes changes to the lib/erl or test/erl directories
+    name: Add 'erlang' label to PR if changeset includes changes to the lib/erl, test/erl, or tutorial/erl directories
     validate:
       - do: changeset
         or:
@@ -65,13 +73,15 @@ mergeable:
               regex: 'lib/erl/.*'
           - must_include:
               regex: 'test/erl/.*'
+          - must_include:
+              regex: 'tutorial/erl/.*'
     pass:
       - do: labels
         labels: ['erlang']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'golang' label to PR if changeset includes changes to the lib/go or test/go directories
+    name: Add 'golang' label to PR if changeset includes changes to the lib/go, test/go, or tutorial/go directories
     validate:
       - do: changeset
         or:
@@ -79,13 +89,15 @@ mergeable:
               regex: 'lib/go/.*'
           - must_include:
               regex: 'test/go/.*'
+          - must_include:
+              regex: 'tutorial/go/.*'
     pass:
       - do: labels
         labels: ['golang']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'haxe' label to PR if changeset includes changes to the lib/haxe or test/haxe directories
+    name: Add 'haxe' label to PR if changeset includes changes to the lib/haxe, test/haxe, or tutorial/haxe directories
     validate:
       - do: changeset
         or:
@@ -93,13 +105,15 @@ mergeable:
               regex: 'lib/haxe/.*'
           - must_include:
               regex: 'test/haxe/.*'
+          - must_include:
+              regex: 'tutorial/haxe/.*'
     pass:
       - do: labels
         labels: ['haxe']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'java' label to PR if changeset includes changes to the lib/java or test/java directories
+    name: Add 'java' label to PR if changeset includes changes to the lib/java, lib/javame, or tutorial/java directories
     validate:
       - do: changeset
         or:
@@ -107,25 +121,29 @@ mergeable:
               regex: 'lib/java/.*'
           - must_include:
               regex: 'lib/javame/.*'
+          - must_include:
+              regex: 'tutorial/java/.*'
     pass:
       - do: labels
         labels: ['java']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'javascript' label to PR if changeset includes changes to the lib/js or test/js directories
+    name: Add 'javascript' label to PR if changeset includes changes to the lib/js or tutorial/js directories
     validate:
       - do: changeset
         or:
           - must_include:
               regex: 'lib/js/.*'
+          - must_include:
+              regex: 'tutorial/js/.*'
     pass:
       - do: labels
         labels: ['javascript']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'json' label to PR if changeset includes changes to the lib/json or test/json directories
+    name: Add 'json' label to PR if changeset includes changes to the lib/json directory
     validate:
       - do: changeset
         or:
@@ -137,7 +155,7 @@ mergeable:
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'kotlin' label to PR if changeset includes changes to the lib/kotlin or test/kotlin directories
+    name: Add 'kotlin' label to PR if changeset includes changes to the lib/kotlin directory
     validate:
       - do: changeset
         or:
@@ -163,7 +181,7 @@ mergeable:
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'c#' label to PR if changeset includes changes to the lib/netstd or test/netstd directories
+    name: Add 'c#' label to PR if changeset includes changes to the lib/netstd, test/netstd, or tutorial/netstd directories
     validate:
       - do: changeset
         or:
@@ -171,37 +189,43 @@ mergeable:
               regex: 'lib/netstd/.*'
           - must_include:
               regex: 'test/netstd/.*'
+          - must_include:
+              regex: 'tutorial/netstd/.*'
     pass:
       - do: labels
         labels: ['c#']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'nodejs' label to PR if changeset includes changes to the lib/nodejs or test/nodejs directories
+    name: Add 'nodejs' label to PR if changeset includes changes to the lib/nodejs or tutorial/nodejs directories
     validate:
       - do: changeset
         or:
           - must_include:
               regex: 'lib/nodejs/.*'
+          - must_include:
+              regex: 'tutorial/nodejs/.*'
     pass:
       - do: labels
         labels: ['nodejs']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'typescript' label to PR if changeset includes changes to the lib/nodets or test/nodets directories
+    name: Add 'typescript' label to PR if changeset includes changes to the lib/nodets or lib/ts directories
     validate:
       - do: changeset
         or:
           - must_include:
               regex: 'lib/nodets/.*'
+          - must_include:
+              regex: 'lib/ts/.*'
     pass:
       - do: labels
         labels: ['typescript']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'ocaml' label to PR if changeset includes changes to the lib/ocaml or test/ocaml directories
+    name: Add 'ocaml' label to PR if changeset includes changes to the lib/ocaml, test/ocaml, or tutorial/ocaml directories
     validate:
       - do: changeset
         or:
@@ -209,13 +233,15 @@ mergeable:
               regex: 'lib/ocaml/.*'
           - must_include:
               regex: 'test/ocaml/.*'
+          - must_include:
+              regex: 'tutorial/ocaml/.*'
     pass:
       - do: labels
         labels: ['ocaml']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'perl' label to PR if changeset includes changes to the lib/perl or test/perl directories
+    name: Add 'perl' label to PR if changeset includes changes to the lib/perl, test/perl, or tutorial/perl directories
     validate:
       - do: changeset
         or:
@@ -223,13 +249,15 @@ mergeable:
               regex: 'lib/perl/.*'
           - must_include:
               regex: 'test/perl/.*'
+          - must_include:
+              regex: 'tutorial/perl/.*'
     pass:
       - do: labels
         labels: ['perl']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'php' label to PR if changeset includes changes to the lib/php or test/php directories
+    name: Add 'php' label to PR if changeset includes changes to the lib/php, test/php, or tutorial/php directories
     validate:
       - do: changeset
         or:
@@ -237,13 +265,15 @@ mergeable:
               regex: 'lib/php/.*'
           - must_include:
               regex: 'test/php/.*'
+          - must_include:
+              regex: 'tutorial/php/.*'
     pass:
       - do: labels
         labels: ['php']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'python' label to PR if changeset includes changes to the lib/py or test/py directories
+    name: Add 'python' label to PR if changeset includes changes to the lib/py, test/py, test/py.tornado, test/py.twisted, tutorial/py, tutorial/py.tornado, or tutorial/py.twisted directories
     validate:
       - do: changeset
         or:
@@ -255,13 +285,19 @@ mergeable:
               regex: 'test/py.tornado/.*'
           - must_include:
               regex: 'test/py.twisted/.*'
+          - must_include:
+              regex: 'tutorial/py/.*'
+          - must_include:
+              regex: 'tutorial/py.tornado/.*'
+          - must_include:
+              regex: 'tutorial/py.twisted/.*'
     pass:
       - do: labels
         labels: ['python']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'ruby' label to PR if changeset includes changes to the lib/rb or test/rb directories
+    name: Add 'ruby' label to PR if changeset includes changes to the lib/rb, test/rb, or tutorial/rb directories
     validate:
       - do: changeset
         or:
@@ -269,13 +305,15 @@ mergeable:
               regex: 'lib/rb/.*'
           - must_include:
               regex: 'test/rb/.*'
+          - must_include:
+              regex: 'tutorial/rb/.*'
     pass:
       - do: labels
         labels: ['ruby']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'rust' label to PR if changeset includes changes to the lib/rs or test/rs directories
+    name: Add 'rust' label to PR if changeset includes changes to the lib/rs, test/rs, or tutorial/rs directories
     validate:
       - do: changeset
         or:
@@ -283,13 +321,15 @@ mergeable:
               regex: 'lib/rs/.*'
           - must_include:
               regex: 'test/rs/.*'
+          - must_include:
+              regex: 'tutorial/rs/.*'
     pass:
       - do: labels
-        labels: ['ruby']
+        labels: ['rust']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'swift' label to PR if changeset includes changes to the lib/swift or test/swift directories
+    name: Add 'swift' label to PR if changeset includes changes to the lib/swift, test/swift, or tutorial/swift directories
     validate:
       - do: changeset
         or:
@@ -297,6 +337,8 @@ mergeable:
               regex: 'lib/swift/.*'
           - must_include:
               regex: 'test/swift/.*'
+          - must_include:
+              regex: 'tutorial/swift/.*'
     pass:
       - do: labels
         labels: ['swift']
@@ -311,6 +353,58 @@ mergeable:
     pass:
       - do: labels
         labels: ['compiler']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'testsuite' label to PR if changeset includes changes to shared test schemas, fixtures, or harnesses
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: '^test/[^/]+\.thrift$'
+          - must_include:
+              regex: '^test/(Makefile|Makefile\.am|Makefile\.in|README\.md|index\.html|known_failures_Linux\.json|rebuild_known_failures\.sh|result\.js|results\.json|test\.py|tests\.json|valgrind\.suppress)$'
+          - must_include:
+              regex: '^test/(audit|crossrunner|features|keys|log|partial|threads|v0\.16)/.*'
+    pass:
+      - do: labels
+        labels: ['testsuite']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'build and general CI' label to PR if changeset includes changes to CMake, automake, or build system files
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: '(^|.*/)CMakeLists\.txt$'
+          - must_include:
+              regex: '.*\.cmake$'
+          - must_include:
+              regex: '(^|.*/)Makefile\.am$'
+          - must_include:
+              regex: '(^|.*/)Makefile\.in$'
+          - must_include:
+              regex: '(^|.*/)configure\.ac$'
+          - must_include:
+              regex: '^bootstrap\.sh$'
+          - must_include:
+              regex: '^aclocal$'
+          - must_include:
+              regex: '^aclocal\.m4$'
+          - must_include:
+              regex: '^build/.*'
+          - must_include:
+              regex: '^build-docker/.*'
+          - must_include:
+              regex: '^debian/.*'
+          - must_include:
+              regex: '^appveyor\.yml$'
+          - must_include:
+              regex: '^sonar-project\.properties$'
+    pass:
+      - do: labels
+        labels: ['build and general CI']
         mode: 'add'
 
   - when: pull_request.*
