@@ -435,7 +435,7 @@ void throw_tprotocolexception(const char* what, long errorcode) {
 // Sets EG(exception), call this and then RETURN_NULL();
 static
 void throw_zend_exception_from_std_exception(const std::exception& ex) {
-  zend_throw_exception(zend_exception_get_default(), const_cast<char*>(ex.what()), 0);
+  zend_throw_exception(zend_ce_exception, const_cast<char*>(ex.what()), 0);
 }
 
 static
