@@ -18,6 +18,7 @@
  */
 
 #include <netdb.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
@@ -71,6 +72,18 @@ my_send(int socket, const void *buffer, size_t length, int flags)
 
 static void thrift_socket_server (const int port);
 static void thrift_socket_server_open (const int port, int times);
+
+static gchar *
+make_too_long_unix_socket_path (void)
+{
+  struct sockaddr_un addr;
+  const size_t path_len = sizeof (addr.sun_path) + 1;
+  gchar *path = g_malloc (path_len + 1);
+
+  memset (path, 'a', path_len);
+  path[path_len] = '\0';
+  return path;
+}
 /* test object creation and destruction */
 static void
 test_create_and_destroy(void)
@@ -289,6 +302,50 @@ test_peek(void)
 }
 
 static void
+test_open_rejects_too_long_unix_path (void)
+{
+  ThriftSocket *tsocket = NULL;
+  ThriftTransport *transport = NULL;
+  GError *error = NULL;
+  gchar *path = make_too_long_unix_socket_path ();
+
+  tsocket = g_object_new (THRIFT_TYPE_SOCKET,
+                          "path", path,
+                          NULL);
+  transport = THRIFT_TRANSPORT (tsocket);
+
+  g_assert (thrift_socket_open (transport, &error) == FALSE);
+  g_assert_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SOCKET);
+  g_clear_error (&error);
+  g_assert (thrift_socket_is_open (transport) == FALSE);
+
+  g_object_unref (tsocket);
+  g_free (path);
+}
+
+static void
+test_server_listen_rejects_too_long_unix_path (void)
+{
+  ThriftServerSocket *tsocket = NULL;
+  ThriftServerTransport *transport = NULL;
+  GError *error = NULL;
+  gchar *path = make_too_long_unix_socket_path ();
+
+  tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+                          "path", path,
+                          NULL);
+  transport = THRIFT_SERVER_TRANSPORT (tsocket);
+
+  g_assert (thrift_server_transport_listen (transport, &error) == FALSE);
+  g_assert_error (error, THRIFT_SERVER_SOCKET_ERROR, THRIFT_SERVER_SOCKET_ERROR_BIND);
+  g_clear_error (&error);
+  g_assert (tsocket->sd == THRIFT_INVALID_SOCKET);
+
+  g_object_unref (tsocket);
+  g_free (path);
+}
+
+static void
 thrift_socket_server_open (const int port, int times)
 {
   ThriftServerTransport *transport = NULL;
@@ -355,7 +412,8 @@ main(int argc, char *argv[])
   g_test_add_func ("/testtransportsocket/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testtransportsocket/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testtransportsocket/Peek", test_peek);
+  g_test_add_func ("/testtransportsocket/OpenRejectsTooLongUnixPath", test_open_rejects_too_long_unix_path);
+  g_test_add_func ("/testtransportsocket/ServerListenRejectsTooLongUnixPath", test_server_listen_rejects_too_long_unix_path);
 
   return g_test_run ();
 }
-

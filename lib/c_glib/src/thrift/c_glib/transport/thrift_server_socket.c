@@ -49,6 +49,28 @@ enum _ThriftServerSocketProperties
 
 G_DEFINE_TYPE(ThriftServerSocket, thrift_server_socket, THRIFT_TYPE_SERVER_TRANSPORT)
 
+static gboolean
+thrift_server_socket_path_fits_unix_addr (const gchar *path, GError **error)
+{
+  const size_t path_len = strlen (path);
+  const size_t sun_path_len = sizeof (((struct sockaddr_un *) 0)->sun_path);
+
+  if (path_len >= sun_path_len)
+  {
+    if (error != NULL)
+    {
+      g_set_error (error,
+                   THRIFT_SERVER_SOCKET_ERROR,
+                   THRIFT_SERVER_SOCKET_ERROR_BIND,
+                   "unix socket path is too long (%zu bytes, max %zu)",
+                   path_len, sun_path_len - 1);
+    }
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 gboolean
 thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
 {
@@ -80,6 +102,13 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
   /* bind to the socket */
   if (tsocket->path)
   {
+    if (!thrift_server_socket_path_fits_unix_addr (tsocket->path, error))
+    {
+      close (tsocket->sd);
+      tsocket->sd = THRIFT_INVALID_SOCKET;
+      return FALSE;
+    }
+
     /* create a socket structure */
     struct sockaddr_un pin;
     memset (&pin, 0, sizeof(pin));
@@ -374,4 +403,3 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
   tstc->accept = thrift_server_socket_accept;
   tstc->close = thrift_server_socket_close;
 }
-
