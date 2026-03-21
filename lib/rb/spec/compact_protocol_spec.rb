@@ -124,6 +124,20 @@ describe Thrift::CompactProtocol do
     expect(client.recv_Janky).to eq(2)
   end
 
+  it "should round-trip wrapped negative seqids in message headers" do
+    trans = Thrift::MemoryBufferTransport.new
+    writer = Thrift::CompactProtocol.new(trans)
+
+    writer.write_message_begin("test", Thrift::MessageTypes::CALL, -2147483648)
+    writer.write_message_end
+
+    reader = Thrift::CompactProtocol.new(trans)
+    name, type, seqid = reader.read_message_begin
+    expect(name).to eq("test")
+    expect(type).to eq(Thrift::MessageTypes::CALL)
+    expect(seqid).to eq(-2147483648)
+  end
+
   it "should deal with fields following fields that have non-delta ids" do
     brcp = Thrift::Test::BreaksRubyCompactProtocol.new(
       :field1 => "blah",
