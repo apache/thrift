@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <cstring>
 #include <string>
 #include <algorithm>
 #include <sys/types.h>
@@ -164,16 +165,24 @@ bool g_generator_failure = false;
  * Win32 doesn't have realpath, so use fallback implementation in that case,
  * otherwise this just calls through to realpath
  */
-char* saferealpath(const char* path, char* resolved_path) {
+char* saferealpath(const char* path, char* resolved_path, size_t resolved_path_size) {
 #ifdef _WIN32
   char buf[MAX_PATH];
   char* basename;
+  const char* source;
+  size_t source_len;
   DWORD len = GetFullPathNameA(path, MAX_PATH, buf, &basename);
   if (len == 0 || len > MAX_PATH - 1) {
-    strcpy(resolved_path, path);
+    source = path;
   } else {
-    strcpy(resolved_path, buf);
+    source = buf;
   }
+
+  source_len = strlen(source);
+  if (source_len >= resolved_path_size) {
+    return nullptr;
+  }
+  strcpy(resolved_path, source);
 
   // Replace backslashes with forward slashes so the
   // rest of the code behaves correctly.
@@ -185,6 +194,7 @@ char* saferealpath(const char* path, char* resolved_path) {
   }
   return resolved_path;
 #else
+  (void) resolved_path_size;
   return realpath(path, resolved_path);
 #endif
 }
@@ -337,7 +347,7 @@ string include_file(string filename) {
     // Realpath!
     char rp[THRIFT_PATH_MAX];
     // cppcheck-suppress uninitvar
-    if (saferealpath(filename.c_str(), rp) == nullptr) {
+    if (saferealpath(filename.c_str(), rp, THRIFT_PATH_MAX) == nullptr) {
       pwarning(0, "Cannot open include file %s\n", filename.c_str());
       return std::string();
     }
@@ -360,7 +370,7 @@ string include_file(string filename) {
       // Realpath!
       char rp[THRIFT_PATH_MAX];
       // cppcheck-suppress uninitvar
-      if (saferealpath(sfilename.c_str(), rp) == nullptr) {
+      if (saferealpath(sfilename.c_str(), rp, THRIFT_PATH_MAX) == nullptr) {
         continue;
       }
 
@@ -1174,7 +1184,7 @@ int main(int argc, char** argv) {
         char old_thrift_file_rp[THRIFT_PATH_MAX];
 
         // cppcheck-suppress uninitvar
-        if (saferealpath(arg, old_thrift_file_rp) == nullptr) {
+        if (saferealpath(arg, old_thrift_file_rp, THRIFT_PATH_MAX) == nullptr) {
           failure("Could not open input file with realpath: %s", arg);
         }
         old_input_file = string(old_thrift_file_rp);
@@ -1232,7 +1242,7 @@ int main(int argc, char** argv) {
       usage();
     }
     // cppcheck-suppress uninitvar
-    if (saferealpath(argv[i], new_thrift_file_rp) == nullptr) {
+    if (saferealpath(argv[i], new_thrift_file_rp, THRIFT_PATH_MAX) == nullptr) {
       failure("Could not open input file with realpath: %s", argv[i]);
     }
     string new_input_file(new_thrift_file_rp);
@@ -1258,7 +1268,7 @@ int main(int argc, char** argv) {
       usage();
     }
     // cppcheck-suppress uninitvar
-    if (saferealpath(argv[i], rp) == nullptr) {
+    if (saferealpath(argv[i], rp, THRIFT_PATH_MAX) == nullptr) {
       failure("Could not open input file with realpath: %s", argv[i]);
     }
     string input_file(rp);
