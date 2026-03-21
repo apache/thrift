@@ -374,4 +374,3 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
   tstc->accept = thrift_server_socket_accept;
   tstc->close = thrift_server_socket_close;
 }
-
