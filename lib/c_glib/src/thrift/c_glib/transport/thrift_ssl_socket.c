@@ -164,42 +164,42 @@ static
 void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const gchar *error_msg, guint thrift_error_no, int ssl_error, GError **error)
 {
   unsigned long error_code;
-  char buffer[1024];
-  int buffer_size=1024;
+  GString *message = g_string_new ("");
   gboolean first_error = TRUE;
   int ssl_error_type = SSL_get_error(socket->ssl, ssl_error);
   if(ssl_error_type>0){
       switch(ssl_error_type){
 	case SSL_ERROR_SSL:
-	  buffer_size-=snprintf(buffer, buffer_size, "SSL %s: ", error_msg);
-	  while ((error_code = ERR_get_error()) != 0 && buffer_size>1) {
+	  g_string_append_printf (message, "SSL %s: ", error_msg);
+	  while ((error_code = ERR_get_error()) != 0) {
 	      const char* reason = ERR_reason_error_string(error_code);
 	      if(reason!=NULL){
 		  if(!first_error) {
-		      buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "\n\t");
-		      first_error=FALSE;
+		      g_string_append (message, "\n\t");
 		  }
-		  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX(%s) -> %s", error_code, reason, SSL_state_string(socket->ssl));
+		  g_string_append_printf (message, "%lX(%s) -> %s", error_code, reason, SSL_state_string(socket->ssl));
+		  first_error = FALSE;
 	      }
 	  }
 	  break;
 	case SSL_ERROR_SYSCALL:
-	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", errno, strerror(errno));
+	  g_string_append_printf (message, "%s: ", error_msg);
+	  g_string_append_printf (message, "%X -> %s", errno, strerror(errno));
 	  break;
 	case SSL_ERROR_WANT_READ:
-	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", ssl_error_type, "Error while reading from underlaying layer");
+	  g_string_append_printf (message, "%s: ", error_msg);
+	  g_string_append_printf (message, "%X -> %s", ssl_error_type, "Error while reading from underlaying layer");
 	  break;
 	case SSL_ERROR_WANT_WRITE:
-	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", ssl_error_type, "Error while writting to underlaying layer");
+	  g_string_append_printf (message, "%s: ", error_msg);
+	  g_string_append_printf (message, "%X -> %s", ssl_error_type, "Error while writting to underlaying layer");
 	  break;
 
       }
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		   thrift_error_no, "%s", buffer);
+		   thrift_error_no, "%s", message->str);
   }
+  g_string_free (message, TRUE);
 }
 
 /**
@@ -867,4 +867,3 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
 
   return context;
 }
-
