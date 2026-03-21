@@ -22,11 +22,14 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TTransport;
 
 class TFramedTransportTest extends TestCase
 {
+    use ReflectionHelper;
+
     public function testIsOpen()
     {
         $transport = $this->createMock(TTransport::class);
@@ -72,13 +75,10 @@ class TFramedTransportTest extends TestCase
         $framedTransport = new TFramedTransport($transport);
         $framedTransport->putBack('test');
 
-        $ref = new \ReflectionClass($framedTransport);
-        $property = $ref->getProperty('rBuf_');
-        $property->setAccessible(true);
-        $this->assertEquals('test', $property->getValue($framedTransport));
+        $this->assertEquals('test', $this->getPropertyValue($framedTransport, 'rBuf_'));
 
         $framedTransport->putBack('abcde');
-        $this->assertEquals('abcdetest', $property->getValue($framedTransport));
+        $this->assertEquals('abcdetest', $this->getPropertyValue($framedTransport, 'rBuf_'));
     }
 
     /**
@@ -163,10 +163,7 @@ class TFramedTransportTest extends TestCase
 
         $framedTransport->write($writeData, $writeLength);
 
-        $ref = new \ReflectionClass($framedTransport);
-        $property = $ref->getProperty('wBuf_');
-        $property->setAccessible(true);
-        $this->assertEquals($expectedWriteBufferValue, $property->getValue($framedTransport));
+        $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($framedTransport, 'wBuf_'));
     }
 
     public function writeDataProvider()
@@ -201,10 +198,7 @@ class TFramedTransportTest extends TestCase
     ) {
         $transport = $this->createMock(TTransport::class);
         $framedTransport = new TFramedTransport($transport, true, $writeAllowed);
-        $ref = new \ReflectionClass($framedTransport);
-        $property = $ref->getProperty('wBuf_');
-        $property->setAccessible(true);
-        $property->setValue($framedTransport, $writeBuffer);
+        $this->setPropertyValue($framedTransport, 'wBuf_', $writeBuffer);
 
         $transport
             ->expects($this->once())

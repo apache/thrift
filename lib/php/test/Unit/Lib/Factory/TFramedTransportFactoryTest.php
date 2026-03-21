@@ -22,12 +22,15 @@
 namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TFramedTransportFactory;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TTransport;
 
 class TFramedTransportFactoryTest extends TestCase
 {
+    use ReflectionHelper;
+
     /**
      * @return void
      */
@@ -39,16 +42,8 @@ class TFramedTransportFactoryTest extends TestCase
 
         $this->assertInstanceOf(TFramedTransport::class, $framedTransport);
 
-        $ref = new \ReflectionClass($framedTransport);
-        $refRead = $ref->getProperty('read_');
-        $refRead->setAccessible(true);
-        $refWrite = $ref->getProperty('write_');
-        $refWrite->setAccessible(true);
-        $refTrans = $ref->getProperty('transport_');
-        $refTrans->setAccessible(true);
-
-        $this->assertTrue($refRead->getValue($framedTransport));
-        $this->assertTrue($refWrite->getValue($framedTransport));
-        $this->assertSame($transport, $refTrans->getValue($framedTransport));
+        $this->assertTrue($this->getPropertyValue($framedTransport, 'read_'));
+        $this->assertTrue($this->getPropertyValue($framedTransport, 'write_'));
+        $this->assertSame($transport, $this->getPropertyValue($framedTransport, 'transport_'));
     }
 }

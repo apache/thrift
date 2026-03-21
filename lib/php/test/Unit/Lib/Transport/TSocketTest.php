@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocket;
@@ -30,6 +31,7 @@ use Thrift\Transport\TSocket;
 class TSocketTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
 
     /**
      * @dataProvider openExceptionDataProvider
@@ -379,13 +381,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setSendTimeout(9999);
-        $reflector = new \ReflectionClass($transport);
-        $property = $reflector->getProperty('sendTimeoutSec_');
-        $property->setAccessible(true);
-        $this->assertEquals(9.0, $property->getValue($transport));
-        $property = $reflector->getProperty('sendTimeoutUsec_');
-        $property->setAccessible(true);
-        $this->assertEquals(999000, $property->getValue($transport));
+        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'sendTimeoutSec_'));
+        $this->assertEquals(999000, $this->getPropertyValue($transport, 'sendTimeoutUsec_'));
     }
 
     public function testSetRecvTimeout()
@@ -402,13 +399,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setRecvTimeout(9999);
-        $reflector = new \ReflectionClass($transport);
-        $property = $reflector->getProperty('recvTimeoutSec_');
-        $property->setAccessible(true);
-        $this->assertEquals(9.0, $property->getValue($transport));
-        $property = $reflector->getProperty('recvTimeoutUsec_');
-        $property->setAccessible(true);
-        $this->assertEquals(999000, $property->getValue($transport));
+        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'recvTimeoutSec_'));
+        $this->assertEquals(999000, $this->getPropertyValue($transport, 'recvTimeoutUsec_'));
     }
 
     /**
@@ -463,16 +455,10 @@ class TSocketTest extends TestCase
             $debugHandler
         );
         $transport->setHandle(fopen('php://memory', 'r+'));
-        $reflector = new \ReflectionClass($transport);
-        $property = $reflector->getProperty('handle_');
-        $property->setAccessible(true);
-        $this->assertNotNull($property->getValue($transport));
+        $this->assertNotNull($this->getPropertyValue($transport, 'handle_'));
 
         $transport->close();
-        $reflector = new \ReflectionClass($transport);
-        $property = $reflector->getProperty('handle_');
-        $property->setAccessible(true);
-        $this->assertNull($property->getValue($transport));
+        $this->assertNull($this->getPropertyValue($transport, 'handle_'));
     }
 
     /**

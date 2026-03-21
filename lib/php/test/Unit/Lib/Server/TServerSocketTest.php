@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TTransportException;
 use Thrift\Server\TServerSocket;
 use Thrift\Transport\TSocket;
@@ -30,17 +31,14 @@ use Thrift\Transport\TSocket;
 class TServerSocketTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
 
     public function testSetAcceptTimeout(): void
     {
         $socket = new TServerSocket();
         $socket->setAcceptTimeout(1000);
 
-        $reflection = new \ReflectionClass($socket);
-        $property = $reflection->getProperty('acceptTimeout_');
-        $property->setAccessible(true);
-
-        $this->assertEquals(1000, $property->getValue($socket));
+        $this->assertEquals(1000, $this->getPropertyValue($socket, 'acceptTimeout_'));
     }
 
     public function testListenAndClose(): void
@@ -55,11 +53,7 @@ class TServerSocketTest extends TestCase
 
         $socket->listen();
 
-        $reflection = new \ReflectionClass($socket);
-        $property = $reflection->getProperty('listener_');
-        $property->setAccessible(true);
-
-        $this->assertIsResource($property->getValue($socket));
+        $this->assertIsResource($this->getPropertyValue($socket, 'listener_'));
 
         $this->getFunctionMock('Thrift\Server', 'fclose')
              ->expects($this->once())
@@ -67,7 +61,7 @@ class TServerSocketTest extends TestCase
              ->willReturn(true);
 
         $socket->close();
-        $this->assertNull($property->getValue($socket));
+        $this->assertNull($this->getPropertyValue($socket, 'listener_'));
     }
 
     public function testAccept()
@@ -94,10 +88,7 @@ class TServerSocketTest extends TestCase
         $result = $socket->accept();
         $this->assertInstanceOf(TSocket::class, $result);
 
-        $reflection = new \ReflectionClass($result);
-        $property = $reflection->getProperty('handle_');
-        $property->setAccessible(true);
-        $this->assertEquals($transportHandle, $property->getValue($result));
+        $this->assertEquals($transportHandle, $this->getPropertyValue($result, 'handle_'));
     }
 
     public function testAcceptFailed()
