@@ -22,12 +22,15 @@
 namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TCompactProtocolFactory;
 use Thrift\Protocol\TCompactProtocol;
 use Thrift\Transport\TTransport;
 
 class TCompactProtocolFactoryTest extends TestCase
 {
+    use ReflectionHelper;
+
     /**
      * @return void
      */
@@ -39,10 +42,6 @@ class TCompactProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TCompactProtocol::class, $protocol);
 
-        $ref = new \ReflectionClass($protocol);
-        $refTrans = $ref->getProperty('trans_');
-        $refTrans->setAccessible(true);
-
-        $this->assertSame($transport, $refTrans->getValue($protocol));
+        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
     }
 }

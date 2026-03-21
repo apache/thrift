@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Factory;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TStringFuncFactory;
 use Thrift\StringFunc\Core;
 use Thrift\StringFunc\Mbstring;
@@ -31,6 +32,7 @@ use Thrift\StringFunc\TStringFunc;
 class TStringFuncFactoryTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
 
     /**
      * @dataProvider createDataProvider
@@ -48,10 +50,7 @@ class TStringFuncFactoryTest extends TestCase
         /**
          * it is a hack to nullable the instance of TStringFuncFactory, and get a new instance based on the new ini_get value
          */
-        $ref = new \ReflectionClass($factory);
-        $refInstance = $ref->getProperty('_instance');
-        $refInstance->setAccessible(true);
-        $refInstance->setValue($factory, null);
+        $this->setPropertyValue($factory, '_instance', null);
 
         $stringFunc = $factory::create();
 

@@ -23,12 +23,14 @@ namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TException;
 use Thrift\Transport\TSocketPool;
 
 class TSocketPoolTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
 
     protected function setUp(): void
     {
@@ -48,11 +50,7 @@ class TSocketPoolTest extends TestCase
     ) {
         $socketPool = new TSocketPool($hosts, $ports, $persist, $debugHandler);
 
-        $ref = new \ReflectionObject($socketPool);
-        $serversProp = $ref->getProperty('servers_');
-        $serversProp->setAccessible(true);
-
-        $this->assertEquals($expectedServers, $serversProp->getValue($socketPool));
+        $this->assertEquals($expectedServers, $this->getPropertyValue($socketPool, 'servers_'));
     }
 
 
@@ -103,11 +101,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->addServer('localhost', 9090);
 
-        $ref = new \ReflectionObject($socketPool);
-        $servers = $ref->getProperty('servers_');
-        $servers->setAccessible(true);
-
-        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $servers->getValue($socketPool));
+        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $this->getPropertyValue($socketPool, 'servers_'));
     }
 
     public function testSetNumRetries(): void
@@ -115,11 +109,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setNumRetries(5);
 
-        $ref = new \ReflectionObject($socketPool);
-        $numRetries = $ref->getProperty('numRetries_');
-        $numRetries->setAccessible(true);
-
-        $this->assertEquals(5, $numRetries->getValue($socketPool));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'numRetries_'));
     }
 
     public function testrSetRetryInterval(): void
@@ -127,11 +117,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRetryInterval(5);
 
-        $ref = new \ReflectionObject($socketPool);
-        $retryInterval = $ref->getProperty('retryInterval_');
-        $retryInterval->setAccessible(true);
-
-        $this->assertEquals(5, $retryInterval->getValue($socketPool));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'retryInterval_'));
     }
 
     public function testrSetMaxConsecutiveFailures(): void
@@ -139,11 +125,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setMaxConsecutiveFailures(5);
 
-        $ref = new \ReflectionObject($socketPool);
-        $maxConsecutiveFailures = $ref->getProperty('maxConsecutiveFailures_');
-        $maxConsecutiveFailures->setAccessible(true);
-
-        $this->assertEquals(5, $maxConsecutiveFailures->getValue($socketPool));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'maxConsecutiveFailures_'));
     }
 
     public function testrSetRandomize(): void
@@ -151,11 +133,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRandomize(false);
 
-        $ref = new \ReflectionObject($socketPool);
-        $randomize = $ref->getProperty('randomize_');
-        $randomize->setAccessible(true);
-
-        $this->assertEquals(false, $randomize->getValue($socketPool));
+        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'randomize_'));
     }
 
     public function testrSetAlwaysTryLast(): void
@@ -163,11 +141,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setAlwaysTryLast(false);
 
-        $ref = new \ReflectionObject($socketPool);
-        $alwaysTryLast = $ref->getProperty('alwaysTryLast_');
-        $alwaysTryLast->setAccessible(true);
-
-        $this->assertEquals(false, $alwaysTryLast->getValue($socketPool));
+        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'alwaysTryLast_'));
     }
 
     /**

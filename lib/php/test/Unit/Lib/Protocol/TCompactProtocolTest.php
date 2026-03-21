@@ -23,6 +23,7 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TCompactProtocol;
 use Thrift\Transport\TTransport;
@@ -30,6 +31,8 @@ use Thrift\Type\TType;
 
 class TCompactProtocolTest extends TestCase
 {
+    use ReflectionHelper;
+
     private const COMPACT_STOP = 0x00;
     private const COMPACT_TRUE = 0x01;
     private const COMPACT_FALSE = 0x02;
@@ -192,10 +195,7 @@ class TCompactProtocolTest extends TestCase
         $result = $protocol->writeMessageBegin($name, $type, $seqid);
         $this->assertSame(12, $result);
 
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $this->assertSame(self::STATE_VALUE_WRITE, $state->getValue($protocol));
+        $this->assertSame(self::STATE_VALUE_WRITE, $this->getPropertyValue($protocol, 'state'));
     }
 
     public function testWriteMessageEnd()
@@ -204,10 +204,7 @@ class TCompactProtocolTest extends TestCase
         $protocol = new TCompactProtocol($transport);
 
         $this->assertSame(0, $protocol->writeMessageEnd());
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $this->assertSame(self::STATE_CLEAR, $state->getValue($protocol));
+        $this->assertSame(self::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
     }
 
     public function testWriteStruct()
@@ -216,33 +213,25 @@ class TCompactProtocolTest extends TestCase
 
         $transport = $this->createMock(TTransport::class);
         $protocol = new TCompactProtocol($transport);
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $lastFid = $ref->getProperty('lastFid');
-        $lastFid->setAccessible(true);
-        $structs = $ref->getProperty('structs');
-        $structs->setAccessible(true);
+        $this->assertSame(0, $protocol->writeStructBegin($name));
+        $this->assertSame([[self::STATE_CLEAR, 0]], $this->getPropertyValue($protocol, 'structs'));
+        $this->assertSame(self::STATE_FIELD_WRITE, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame(0, $this->getPropertyValue($protocol, 'lastFid'));
 
         $this->assertSame(0, $protocol->writeStructBegin($name));
-        $this->assertSame([[self::STATE_CLEAR, 0]], $structs->getValue($protocol));
-        $this->assertSame(self::STATE_FIELD_WRITE, $state->getValue($protocol));
-        $this->assertSame(0, $lastFid->getValue($protocol));
-
-        $this->assertSame(0, $protocol->writeStructBegin($name));
-        $this->assertSame(self::STATE_FIELD_WRITE, $state->getValue($protocol));
-        $this->assertSame(0, $lastFid->getValue($protocol));
-        $this->assertSame([[self::STATE_CLEAR, 0], [self::STATE_FIELD_WRITE, 0]], $structs->getValue($protocol));
+        $this->assertSame(self::STATE_FIELD_WRITE, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame(0, $this->getPropertyValue($protocol, 'lastFid'));
+        $this->assertSame([[self::STATE_CLEAR, 0], [self::STATE_FIELD_WRITE, 0]], $this->getPropertyValue($protocol, 'structs'));
 
         $this->assertSame(0, $protocol->writeStructEnd());
-        $this->assertSame(self::STATE_FIELD_WRITE, $state->getValue($protocol));
-        $this->assertSame(0, $lastFid->getValue($protocol));
-        $this->assertSame([[self::STATE_CLEAR, 0]], $structs->getValue($protocol));
+        $this->assertSame(self::STATE_FIELD_WRITE, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame(0, $this->getPropertyValue($protocol, 'lastFid'));
+        $this->assertSame([[self::STATE_CLEAR, 0]], $this->getPropertyValue($protocol, 'structs'));
 
         $this->assertSame(0, $protocol->writeStructEnd());
-        $this->assertSame(self::STATE_CLEAR, $state->getValue($protocol));
-        $this->assertSame(0, $lastFid->getValue($protocol));
-        $this->assertSame([], $structs->getValue($protocol));
+        $this->assertSame(self::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame(0, $this->getPropertyValue($protocol, 'lastFid'));
+        $this->assertSame([], $this->getPropertyValue($protocol, 'structs'));
     }
 
     public function testWriteFieldStop()
@@ -331,16 +320,9 @@ class TCompactProtocolTest extends TestCase
 
         $this->assertSame($expectedResult, $protocol->writeFieldBegin($fieldName, $fieldType, $fieldId));
 
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $boolFid = $ref->getProperty('boolFid');
-        $boolFid->setAccessible(true);
-        $lastFid = $ref->getProperty('lastFid');
-        $lastFid->setAccessible(true);
-        $this->assertSame($expectedState, $state->getValue($protocol));
-        $this->assertSame($expectedBoolFid, $boolFid->getValue($protocol));
-        $this->assertSame($expectedLastFid, $lastFid->getValue($protocol));
+        $this->assertSame($expectedState, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame($expectedBoolFid, $this->getPropertyValue($protocol, 'boolFid'));
+        $this->assertSame($expectedLastFid, $this->getPropertyValue($protocol, 'lastFid'));
     }
 
     public function writeFieldBeginDataProvider()
@@ -380,10 +362,7 @@ class TCompactProtocolTest extends TestCase
 
         $this->assertSame(0, $protocol->writeFieldEnd());
 
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $this->assertSame(self::STATE_FIELD_WRITE, $state->getValue($protocol));
+        $this->assertSame(self::STATE_FIELD_WRITE, $this->getPropertyValue($protocol, 'state'));
     }
 
     /**
@@ -409,16 +388,11 @@ class TCompactProtocolTest extends TestCase
 
         $this->assertSame($expectedResult, $protocol->writeCollectionBegin($etype, $size));
 
-        $ref = new \ReflectionClass($protocol);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $containers = $ref->getProperty('containers');
-        $containers->setAccessible(true);
-        $this->assertSame($expectedState, $state->getValue($protocol));
-        $this->assertSame($expectedContainers, $containers->getValue($protocol));
+        $this->assertSame($expectedState, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame($expectedContainers, $this->getPropertyValue($protocol, 'containers'));
 
         $this->assertSame(0, $protocol->writeCollectionEnd());
-        $this->assertSame(TCompactProtocol::STATE_CLEAR, $state->getValue($protocol));
+        $this->assertSame(TCompactProtocol::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
     }
 
     public function writeCollectionDataProvider()
@@ -480,17 +454,12 @@ class TCompactProtocolTest extends TestCase
 
         $this->assertSame($expectedResult, $protocol->writeMapBegin($keyType, $valType, $size));
 
-        $ref = new \ReflectionClass($protocol);
-        $containers = $ref->getProperty('containers');
-        $containers->setAccessible(true);
-        $state = $ref->getProperty('state');
-        $state->setAccessible(true);
-        $this->assertSame($expectedContainers, $containers->getValue($protocol));
-        $this->assertSame(TCompactProtocol::STATE_CLEAR, $state->getValue($protocol));
+        $this->assertSame($expectedContainers, $this->getPropertyValue($protocol, 'containers'));
+        $this->assertSame(TCompactProtocol::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
 
         $this->assertSame(0, $protocol->writeMapEnd());
-        $this->assertSame(TCompactProtocol::STATE_CLEAR, $state->getValue($protocol));
-        $this->assertSame([], $containers->getValue($protocol));
+        $this->assertSame(TCompactProtocol::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
+        $this->assertSame([], $this->getPropertyValue($protocol, 'containers'));
     }
 
     public function writeMapDataProvider()
@@ -595,10 +564,7 @@ class TCompactProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TCompactProtocol($transport);
         if (!is_null($startState)) {
-            $ref = new \ReflectionClass($protocol);
-            $state = $ref->getProperty('state');
-            $state->setAccessible(true);
-            $state->setValue($protocol, $startState);
+            $this->setPropertyValue($protocol, 'state', $startState);
         }
 
         $transport

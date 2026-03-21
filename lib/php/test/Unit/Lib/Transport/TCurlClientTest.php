@@ -23,12 +23,14 @@ namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TCurlClient;
 
 class TCurlClientTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
 
     public function testSetTimeoutSecs()
     {
@@ -36,10 +38,7 @@ class TCurlClientTest extends TestCase
         $transport = new TCurlClient($host);
         $transport->setTimeoutSecs(1000);
 
-        $ref = new \ReflectionClass($transport);
-        $prop = $ref->getProperty('timeout_');
-        $prop->setAccessible(true);
-        $this->assertEquals(1000, $prop->getValue($transport));
+        $this->assertEquals(1000, $this->getPropertyValue($transport, 'timeout_'));
     }
 
     public function testSetConnectionTimeoutSecs()
@@ -48,10 +47,7 @@ class TCurlClientTest extends TestCase
         $transport = new TCurlClient($host);
         $transport->setConnectionTimeoutSecs(1000);
 
-        $ref = new \ReflectionClass($transport);
-        $prop = $ref->getProperty('connectionTimeout_');
-        $prop->setAccessible(true);
-        $this->assertEquals(1000, $prop->getValue($transport));
+        $this->assertEquals(1000, $this->getPropertyValue($transport, 'connectionTimeout_'));
     }
 
     public function testIsOpen()
@@ -73,17 +69,12 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propRequest = $ref->getProperty('request_');
-        $propRequest->setAccessible(true);
-        $propRequest->setValue($transport, 'testRequest');
-        $propResponse = $ref->getProperty('response_');
-        $propResponse->setAccessible(true);
-        $propResponse->setValue($transport, 'testResponse');
+        $this->setPropertyValue($transport, 'request_', 'testRequest');
+        $this->setPropertyValue($transport, 'response_', 'testResponse');
 
         $this->assertNull($transport->close());
-        $this->assertEmpty($propRequest->getValue($transport));
-        $this->assertEmpty($propResponse->getValue($transport));
+        $this->assertEmpty($this->getPropertyValue($transport, 'request_'));
+        $this->assertEmpty($this->getPropertyValue($transport, 'response_'));
     }
 
     public function testRead()
@@ -91,19 +82,16 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propResponse = $ref->getProperty('response_');
-        $propResponse->setAccessible(true);
-        $propResponse->setValue($transport, '1234567890');
+        $this->setPropertyValue($transport, 'response_', '1234567890');
 
         $response = $transport->read(5);
         $this->assertEquals('12345', $response);
-        $this->assertEquals('67890', $propResponse->getValue($transport));
+        $this->assertEquals('67890', $this->getPropertyValue($transport, 'response_'));
 
         $response = $transport->read(5);
         $this->assertEquals('67890', $response);
         # The response does not cleaned after reading full answer, maybe it should be fixed
-        $this->assertEquals('67890', $propResponse->getValue($transport));
+        $this->assertEquals('67890', $this->getPropertyValue($transport, 'response_'));
     }
 
     public function testReadAll()
@@ -111,14 +99,11 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propResponse = $ref->getProperty('response_');
-        $propResponse->setAccessible(true);
-        $propResponse->setValue($transport, '1234567890');
+        $this->setPropertyValue($transport, 'response_', '1234567890');
 
         $response = $transport->readAll(5);
         $this->assertEquals('12345', $response);
-        $this->assertEquals('67890', $propResponse->getValue($transport));
+        $this->assertEquals('67890', $this->getPropertyValue($transport, 'response_'));
     }
 
     public function testReadAllThrift4656()
@@ -126,10 +111,7 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propResponse = $ref->getProperty('response_');
-        $propResponse->setAccessible(true);
-        $propResponse->setValue($transport, '');
+        $this->setPropertyValue($transport, 'response_', '');
 
         $this->expectException(TTransportException::class);
         $this->expectExceptionMessage('TCurlClient could not read 5 bytes');
@@ -143,13 +125,10 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propRequest = $ref->getProperty('request_');
-        $propRequest->setAccessible(true);
-        $propRequest->setValue($transport, '1234567890');
+        $this->setPropertyValue($transport, 'request_', '1234567890');
 
         $transport->write('12345');
-        $this->assertEquals('123456789012345', $propRequest->getValue($transport));
+        $this->assertEquals('123456789012345', $this->getPropertyValue($transport, 'request_'));
     }
 
     public function testAddHeaders()
@@ -157,13 +136,10 @@ class TCurlClientTest extends TestCase
         $host = 'localhost';
         $transport = new TCurlClient($host);
 
-        $ref = new \ReflectionClass($transport);
-        $propRequest = $ref->getProperty('headers_');
-        $propRequest->setAccessible(true);
-        $propRequest->setValue($transport, ['test' => '1234567890']);
+        $this->setPropertyValue($transport, 'headers_', ['test' => '1234567890']);
 
         $transport->addHeaders(['test2' => '12345']);
-        $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $propRequest->getValue($transport));
+        $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $this->getPropertyValue($transport, 'headers_'));
     }
 
     /**
@@ -413,10 +389,7 @@ class TCurlClientTest extends TestCase
              ->with('testHandle');
 
         $transport = new TCurlClient('localhost');
-        $ref = new \ReflectionClass($transport);
-        $prop = $ref->getProperty('curlHandle');
-        $prop->setAccessible(true);
-        $prop->setValue($transport, 'testHandle');
+        $this->setPropertyValue($transport, 'curlHandle', 'testHandle');
 
         $transport::closeCurlHandle();
     }
