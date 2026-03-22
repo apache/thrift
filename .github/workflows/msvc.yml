@@ -51,8 +51,6 @@ jobs:
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
-        permissions:
-          packages: write
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
           registry: ghcr.io
