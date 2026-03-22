@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ '*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
 
@@ -16,32 +20,36 @@ jobs:
   compiler:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install dependencies
+        timeout-minutes: 10
         run: |
           sudo apt-get update -yq
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
 
       - name: Generate makefile using CMake
+        timeout-minutes: 10
         run: |
           mkdir cmake_build
           cd cmake_build
           cmake .. -DBUILD_LIBRARIES=OFF
 
       - name: Run make
+        timeout-minutes: 30
         run: |
           cd cmake_build
           cmake --build .
 
       - name: Run test
+        timeout-minutes: 30
         run: |
           cd cmake_build
-          ctest -j$(nproc)
+          ctest -j$(nproc --ignore=2)
 
       - name: Upload LastTest log
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: cmake-LastTest-log
           path: cmake_build/Testing/Temporary/LastTest.log
