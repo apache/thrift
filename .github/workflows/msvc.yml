@@ -16,6 +16,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-2025
+    if: false   # currently broken -> see THRIFT-5936
     env:
       THRIFT_BUILD_DIR: C:\thrift-build
 
