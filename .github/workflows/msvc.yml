@@ -6,9 +6,12 @@ on:
   pull_request:
     branches: [ '*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  packages: write
 
 jobs:
   build:
@@ -18,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Ensure expected workspace path
         shell: pwsh
@@ -47,7 +50,10 @@ jobs:
           "IMAGE_TAG=msvc-$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        permissions:
+          packages: write
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -56,18 +62,25 @@ jobs:
       - name: Pull cached image
         id: pull_cached
         continue-on-error: true
+        timeout-minutes: 10
         shell: pwsh
         run: |
           $needBuild = $true
 
-          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
-          docker pull "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" 2>&1 | Out-Host
+          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env.IMAGE_TAG)"
+          $output = docker pull "$($env.DOCKER_IMAGE):$($env.IMAGE_TAG)" 2>&1
+          $output | Out-Host
+
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Successfully pulled cached image with hash tag"
             $needBuild = $false
-          } else {
-            Write-Host "Hash tag not found, no fallback configured. Will build from scratch."
+          } elseif ($output -match 'not found|does not exist|404') {
+            Write-Host "Image not found in registry, will build from scratch."
             $needBuild = $true
+          } else {
+            Write-Host "##[error]Docker pull failed with unexpected error. Check logs above."
+            Write-Host "This may indicate an authentication issue, registry problem, or network error."
+            exit 1
           }
 
           Write-Host "Setting outputs: need_build=$needBuild"
@@ -75,6 +88,7 @@ jobs:
 
       - name: Build Docker image
         if: steps.pull_cached.outputs.need_build == 'true'
+        timeout-minutes: 60
         shell: pwsh
         run: |
           Write-Host "Building with tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
@@ -88,6 +102,7 @@ jobs:
 
       - name: Push Docker image
         if: github.event_name != 'pull_request' && steps.pull_cached.outputs.need_build == 'true'
+        timeout-minutes: 20
         shell: pwsh
         run: |
           Write-Host "Pushing hash-based tag only: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
@@ -99,6 +114,7 @@ jobs:
           Write-Host "Successfully pushed hash-tagged image"
 
       - name: Build and test inside container
+        timeout-minutes: 120
         shell: pwsh
         run: |
           docker run -v c:\src\thrift:C:\Thrift -v "${env:THRIFT_BUILD_DIR}:C:\build" --rm -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" c:\thrift\build\docker\msvc\build.bat
@@ -127,7 +143,7 @@ jobs:
 
       - name: Upload LastTest log
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: msvc-LastTest-log
           path: ${{ env.THRIFT_BUILD_DIR }}\Testing\Temporary\LastTest.log
