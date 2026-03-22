@@ -2800,7 +2800,7 @@ string t_php_generator::type_to_cast(t_type* type) {
     case t_base_type::TYPE_I64:
       return "(int)";
     case t_base_type::TYPE_DOUBLE:
-      return "(double)";
+      return "(float)";
     case t_base_type::TYPE_STRING:
       return "(string)";
     case t_base_type::TYPE_UUID:
