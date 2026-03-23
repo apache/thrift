@@ -22,3 +22,7 @@ include "Types.thrift"
 service Service {
   Types.Type1 testEpisode(1:Types.Type1 arg)
 }
+
+service ExtendedService extends Types.BaseService {
+  Types.Type1 testEpisodeExtend(1:Types.Type1 arg)
+}

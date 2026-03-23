@@ -60,20 +60,23 @@ testServer()
 
 testEpisodicCompilation()
 {
+  local _server=$1
+  local _client=$2
+  echo "  [Episodic Variant: ${_server}:${_client}] Testing Client(${_client})/Server(${_server})";
   RET=0
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${EPISODIC_DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint &
+    ${ISTANBUL} cover ${EPISODIC_DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --base "${_server}"   &
     COUNT=$((COUNT+1))
   else
-    node ${EPISODIC_DIR}/server.js &
+    node ${EPISODIC_DIR}/server.js --base "${_server}" &
   fi
   SERVERPID=$!
   sleep 0.1
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${EPISODIC_DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} || RET=1
+    ${ISTANBUL} cover ${EPISODIC_DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --base "${_client}" || RET=1
     COUNT=$((COUNT+1))
   else
-    node ${EPISODIC_DIR}/client.js || RET=1
+    node ${EPISODIC_DIR}/client.js --base "${_client}" || RET=1
   fi
   kill -2 $SERVERPID || RET=1
   wait $SERVERPID
@@ -105,17 +108,21 @@ TYPES_PACKAGE=${EPISODIC_DIR}/node_modules/types-package
 
 # generate the first episode
 mkdir --parents ${EPISODIC_DIR}/gen-1/first-episode
-${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-1/first-episode --gen js:node,thrift_package_output_directory=first-episode ${THRIFT_FILES_DIR}/Types.thrift
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-1/first-episode --gen js:node,ts,thrift_package_output_directory=first-episode ${THRIFT_FILES_DIR}/Types.thrift
 
 # create a "package" from the first episode and "install" it, the episode file must be at the module root
 mkdir --parents ${TYPES_PACKAGE}/first-episode
 cp --force ${EPISODIC_DIR}/episodic_compilation.package.json ${TYPES_PACKAGE}/package.json
 cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/Types_types.js ${TYPES_PACKAGE}/first-episode/
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/Types_types.d.ts ${TYPES_PACKAGE}/first-episode/
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/BaseService.js ${TYPES_PACKAGE}/first-episode/
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/BaseService.d.ts ${TYPES_PACKAGE}/first-episode/
 cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/thrift.js.episode ${TYPES_PACKAGE}
+rm --force --recursive ${EPISODIC_DIR}/gen-1
 
 # generate the second episode
 mkdir --parents ${EPISODIC_DIR}/gen-2/second-episode
-${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-2/second-episode --gen js:node,imports=${TYPES_PACKAGE} ${THRIFT_FILES_DIR}/Service.thrift
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-2/second-episode --gen js:node,ts,imports=${TYPES_PACKAGE} ${THRIFT_FILES_DIR}/Service.thrift
 if [ -f ${EPISODIC_DIR}/gen-2/second-episode/Types_types.js ]; then
   TESTOK=1
 fi
@@ -148,7 +155,12 @@ do
 done
 
 # episodic compilation test
-testEpisodicCompilation
+echo "Testing Episode Compilation"
+testEpisodicCompilation 'pure' 'pure' || TESTOK=1
+testEpisodicCompilation 'base' 'base' || TESTOK=1
+testEpisodicCompilation 'extend' 'extend' || TESTOK=1
+testEpisodicCompilation 'extend' 'base' || TESTOK=1
+testEpisodicCompilation 'base' 'pure' || TESTOK=1
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html
