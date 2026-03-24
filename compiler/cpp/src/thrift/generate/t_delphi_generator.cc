@@ -36,6 +36,7 @@
 
 #include "thrift/platform.h"
 #include "thrift/generate/t_oop_generator.h"
+#include "thrift/generate/sha.h"
 
 #ifdef _WIN32
 #include <locale>
@@ -74,6 +75,7 @@ public:
     async_ = false;
     com_types_ = false;
     rtti_ = false;
+    guid_v5_ = true;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
@@ -91,6 +93,10 @@ public:
         com_types_ = true;
       } else if( iter->first.compare("rtti") == 0) {
         rtti_ = true;
+      } else if( iter->first.compare("guid_v5") == 0) {
+        guid_v5_ = true;
+      } else if( iter->first.compare("guid_random") == 0) {
+        guid_v5_ = false;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
@@ -235,6 +241,9 @@ public:
   void generate_service_interface(t_service* tservice);
   void generate_service_interface(t_service* tservice, bool for_async);
   void generate_guid(std::ostream& out);
+  void generate_guid_v5(std::ostream& out);
+  void generate_guid_v5(std::ostream& out, t_service* tservice);
+  void generate_guid_v5(std::ostream& out, t_struct* tstruct);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
@@ -364,11 +373,20 @@ private:
   bool has_forward;
   bool has_enum;
   bool has_const;
+  bool guid_v5_;
   std::string namespace_dir_;
   std::set<std::string> types_known;
   std::list<t_typedef*> typedefs_pending;
   std::vector<std::string> uses_list;
   std::string empty_value(t_type* type);
+
+  std::string type_to_canonical_string(t_type* ttype);
+  std::string get_parent_sha1_hex(t_service* tservice);
+  std::string build_service_canonical_string(t_service* tservice, bool for_async);
+  std::string build_struct_canonical_string(t_struct* tstruct);
+  std::string get_program_namespace();
+  std::string get_root_namespace_uuid();
+  std::string get_program_namespace_uuid();
 
   const std::string DELPHI_KEYWORDS[81] = {
     // keywords
@@ -1641,7 +1659,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   }
   indent_up();
 
-  generate_guid(out);
+  generate_guid_v5(out, tstruct);
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_delphi_property_reader_definition(out, *m_iter, false);
@@ -1903,7 +1921,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   }
 
   indent_up();
-  generate_guid(s_service);
+  generate_guid_v5(s_service, tservice);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1933,6 +1951,276 @@ void t_delphi_generator::generate_guid(std::ostream& out) {
 #else
   (void)out;  // prevent unused warning on other platforms
 #endif
+}
+
+static const uint8_t UUIDv5_NAMESPACE_DNS[] = {
+  0x6b, 0xa7, 0xb8, 0x11, 0x50, 0x50, 0x51, 0x40,
+  0xb8, 0xe1, 0x00, 0x15, 0x5d, 0x00, 0x00, 0x00
+};
+
+static void sha1_hash(const uint8_t* data, size_t len, uint8_t hash[SHA1HashSize]) {
+  SHA1Context context;
+  SHA1Reset(&context);
+  SHA1Input(&context, data, static_cast<unsigned int>(len));
+  SHA1Result(&context, hash);
+}
+
+static std::string bytes_to_hex(const uint8_t* data, size_t len) {
+  static const char hex_chars[] = "0123456789abcdef";
+  std::string result;
+  result.reserve(len * 2);
+  for (size_t i = 0; i < len; ++i) {
+    result += hex_chars[data[i] >> 4];
+    result += hex_chars[data[i] & 0x0F];
+  }
+  return result;
+}
+
+static void sha1_hex(const uint8_t* data, size_t len, std::string& out_hex) {
+  uint8_t hash[SHA1HashSize];
+  sha1_hash(data, len, hash);
+  out_hex = bytes_to_hex(hash, SHA1HashSize);
+}
+
+static std::string uuid5_from_namespace_and_name(const uint8_t namespace_uuid[16],
+                                                 const std::string& name) {
+  uint8_t combined[16 + SHA1HashSize];
+  for (int i = 0; i < 16; ++i) {
+    combined[i] = namespace_uuid[i];
+  }
+  for (size_t i = 0; i < name.size(); ++i) {
+    combined[16 + i] = static_cast<uint8_t>(name[i]);
+  }
+
+  uint8_t hash[SHA1HashSize];
+  sha1_hash(combined, 16 + name.size(), hash);
+
+  uint8_t uuid[16];
+  for (int i = 0; i < 16; ++i) {
+    uuid[i] = hash[i];
+  }
+  uuid[6] = (uuid[6] & 0x0F) | 0x50;
+  uuid[8] = (uuid[8] & 0x3F) | 0x80;
+
+  char guid_str[40];
+  snprintf(guid_str, sizeof(guid_str),
+           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+           uuid[0], uuid[1], uuid[2], uuid[3],
+           uuid[4], uuid[5],
+           uuid[6], uuid[7],
+           uuid[8], uuid[9],
+           uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+
+  return std::string(guid_str);
+}
+
+std::string t_delphi_generator::type_to_canonical_string(t_type* ttype) {
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+      case t_base_type::TYPE_VOID:
+          return "void";
+      case t_base_type::TYPE_BOOL:
+          return "bool";
+      case t_base_type::TYPE_I8:
+          return "i8";
+      case t_base_type::TYPE_I16:
+          return "i16";
+      case t_base_type::TYPE_I32:
+          return "i32";
+      case t_base_type::TYPE_I64:
+          return "i64";
+      case t_base_type::TYPE_DOUBLE:
+          return "double";
+      case t_base_type::TYPE_UUID:
+          return "uuid";
+      case t_base_type::TYPE_STRING:
+        if (ttype->is_binary()) {
+          return "binary";
+        } else {
+          return "string";
+        }
+      default:
+        throw "INVALID base type in uuid5_from_namespace_and_name: " + ttype->get_name();
+    }
+  } else if (ttype->is_enum()) {
+    return type_name(ttype, false, true);
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    return type_name(ttype, false, true);
+  } else if (ttype->is_typedef()) {
+    return type_name(ttype, false, true);
+  } else if (ttype->is_list()) {
+    t_list* tlist = (t_list*)ttype;
+    return "list<" + type_to_canonical_string(tlist->get_elem_type()) + ">";
+  } else if (ttype->is_set()) {
+    t_set* tset = (t_set*)ttype;
+    return "set<" + type_to_canonical_string(tset->get_elem_type()) + ">";
+  } else if (ttype->is_map()) {
+    t_map* tmap = (t_map*)ttype;
+    return "map<" + type_to_canonical_string(tmap->get_key_type())
+         + "," + type_to_canonical_string(tmap->get_val_type()) + ">";
+  }
+
+  throw "INVALID type in uuid5_from_namespace_and_name: " + ttype->get_name();
+}
+
+std::string t_delphi_generator::get_parent_sha1_hex(t_service* tservice) {
+  t_service* parent = tservice->get_extends();
+  if (!parent) {
+    return "";
+  }
+  std::string canonical = type_name(parent, false, true);
+  std::string sha1_hex_result;
+  sha1_hex(reinterpret_cast<const uint8_t*>(canonical.data()), canonical.size(), sha1_hex_result);
+  return sha1_hex_result;
+}
+
+std::string t_delphi_generator::build_service_canonical_string(t_service* tservice, bool for_async) {
+  std::string program_ns = get_program_namespace();
+  std::string canonical;
+
+  canonical = program_ns;
+  canonical += ":";
+  canonical += type_name(tservice, false, true);
+  canonical += ":";
+
+  if (for_async) {
+    canonical += "async:";
+  }
+
+  std::string parent_sha1 = get_parent_sha1_hex(tservice);
+  canonical += parent_sha1;
+  canonical += ":";
+
+  const vector<t_function*>& functions = tservice->get_functions();
+  for (size_t i = 0; i < functions.size(); ++i) {
+    t_function* func = functions[i];
+    if (i > 0) {
+      canonical += ",";
+    }
+    canonical += func->get_name();
+    canonical += ":";
+    canonical += type_to_canonical_string(func->get_returntype());
+    canonical += ":";
+
+    if (func->is_oneway()) {
+      canonical += "oneway:";
+    }
+
+    const vector<t_field*>& args = func->get_arglist()->get_members();
+    for (size_t j = 0; j < args.size(); ++j) {
+      if (j > 0) {
+        canonical += ",";
+      }
+      canonical += type_to_canonical_string(args[j]->get_type());
+    }
+  }
+
+  return canonical;
+}
+
+std::string t_delphi_generator::build_struct_canonical_string(t_struct* tstruct) {
+  std::string program_ns = get_program_namespace();
+  std::string canonical;
+
+  canonical = program_ns;
+  canonical += ":";
+  canonical += type_name(tstruct, false, true);
+  canonical += ":";
+
+  const vector<t_field*>& members = tstruct->get_members();
+  for (size_t i = 0; i < members.size(); ++i) {
+    if (i > 0) {
+      canonical += ",";
+    }
+    canonical += members[i]->get_name();
+    canonical += ":";
+    canonical += type_to_canonical_string(members[i]->get_type());
+  }
+
+  return canonical;
+}
+
+std::string t_delphi_generator::get_program_namespace() {
+  const t_program* program = get_program();
+  const std::string& ns = program->get_namespace();
+  if (ns.empty()) {
+    return program->get_name();
+  }
+  return ns;
+}
+
+std::string t_delphi_generator::get_root_namespace_uuid() {
+  return uuid5_from_namespace_and_name(UUIDv5_NAMESPACE_DNS, "thrift.apache.org");
+}
+
+static void uuid_to_bytes(const std::string& uuid_str, uint8_t bytes[16]) {
+  for (int i = 0; i < 16; ++i) {
+    unsigned int byte;
+    sscanf(uuid_str.c_str() + i * 2, "%02x", &byte);
+    bytes[i] = static_cast<uint8_t>(byte);
+  }
+}
+
+static std::string uuid_bytes_to_string(const uint8_t bytes[16]) {
+  char str[40];
+  snprintf(str, sizeof(str),
+           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+           bytes[0], bytes[1], bytes[2], bytes[3],
+           bytes[4], bytes[5],
+           bytes[6], bytes[7],
+           bytes[8], bytes[9],
+           bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]);
+  return std::string(str);
+}
+
+std::string t_delphi_generator::get_program_namespace_uuid() {
+  uint8_t root_ns_bytes[16];
+  uuid_to_bytes(get_root_namespace_uuid(), root_ns_bytes);
+
+  std::string program_name = get_program_namespace();
+  std::string program_ns_uuid_str = uuid5_from_namespace_and_name(root_ns_bytes, program_name);
+
+  return program_ns_uuid_str;
+}
+
+void t_delphi_generator::generate_guid_v5(std::ostream& out) {
+  generate_guid(out);
+}
+
+void t_delphi_generator::generate_guid_v5(std::ostream& out, t_service* tservice) {
+  if (!guid_v5_) {
+    generate_guid(out);
+    return;
+  }
+
+  bool for_async = async_;
+  std::string canonical = build_service_canonical_string(tservice, for_async);
+
+  std::string program_ns_uuid = get_program_namespace_uuid();
+
+  uint8_t ns_uuid[16];
+  uuid_to_bytes(program_ns_uuid, ns_uuid);
+
+  std::string guid_str = uuid5_from_namespace_and_name(ns_uuid, canonical);
+  indent(out) << "['{" << guid_str << "}']" << '\n';
+}
+
+void t_delphi_generator::generate_guid_v5(std::ostream& out, t_struct* tstruct) {
+  if (!guid_v5_) {
+    generate_guid(out);
+    return;
+  }
+
+  std::string canonical = build_struct_canonical_string(tstruct);
+
+  std::string program_ns_uuid = get_program_namespace_uuid();
+
+  uint8_t ns_uuid[16];
+  uuid_to_bytes(program_ns_uuid, ns_uuid);
+
+  std::string guid_str = uuid5_from_namespace_and_name(ns_uuid, canonical);
+  indent(out) << "['{" << guid_str << "}']" << '\n';
 }
 
 void t_delphi_generator::generate_service_helpers(t_service* tservice) {
@@ -3942,4 +4230,6 @@ THRIFT_REGISTER_GENERATOR(
     "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n"
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
     "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
-    "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n")
+    "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n"
+    "    guid_v5:         Generate stable, deterministic GUIDs using UUIDv5 (default).\n"
+    "    guid_random:     Generate random GUIDs (legacy behavior, Windows only).\n")

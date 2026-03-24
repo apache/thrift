@@ -74,8 +74,11 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_cpp_generator.cc \
                   src/thrift/generate/t_d_generator.cc \
                   src/thrift/generate/t_dart_generator.cc \
-                  src/thrift/generate/t_delphi_generator.cc \
-                  src/thrift/generate/t_erl_generator.cc \
+                   src/thrift/generate/t_delphi_generator.cc \
+                   src/thrift/generate/sha.h \
+                   src/thrift/generate/sha-private.h \
+                   src/thrift/generate/sha1.c \
+                   src/thrift/generate/t_erl_generator.cc \
                   src/thrift/generate/t_go_generator.cc \
                   src/thrift/generate/t_go_generator.h \
                   src/thrift/generate/t_gv_generator.cc \
