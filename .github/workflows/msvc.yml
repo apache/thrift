@@ -16,7 +16,9 @@ permissions:
 jobs:
   build:
     runs-on: windows-2025
-    if: false   # currently broken -> see THRIFT-5936
+    permissions:
+      contents: read
+      packages: write
     env:
       THRIFT_BUILD_DIR: C:\thrift-build
 
@@ -36,6 +38,20 @@ jobs:
         run: |
           New-Item -Path $env:THRIFT_BUILD_DIR -ItemType Directory -Force | Out-Null
 
+      - name: Configure Docker credential store
+        shell: pwsh
+        run: |
+          $dockerConfig = Join-Path $env:RUNNER_TEMP 'docker-config'
+          New-Item -Path $dockerConfig -ItemType Directory -Force | Out-Null
+
+          if (-not (Get-Command 'docker-credential-wincred.exe' -ErrorAction SilentlyContinue)) {
+            Write-Error 'docker-credential-wincred.exe is not available on this runner'
+            exit 1
+          }
+
+          '{"credsStore":"wincred"}' | Out-File -FilePath (Join-Path $dockerConfig 'config.json') -Encoding ascii
+          "DOCKER_CONFIG=$dockerConfig" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Set Docker image name
         shell: pwsh
         env:
@@ -52,22 +68,32 @@ jobs:
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USERNAME --password-stdin
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to log in to GHCR"
+            exit 1
+          }
 
       - name: Pull cached image
         id: pull_cached
         continue-on-error: true
-        timeout-minutes: 10
+        timeout-minutes: 40
         shell: pwsh
         run: |
           $needBuild = $true
 
-          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env.IMAGE_TAG)"
-          $output = docker pull "$($env.DOCKER_IMAGE):$($env.IMAGE_TAG)" 2>&1
+          if ([string]::IsNullOrWhiteSpace($env:DOCKER_IMAGE) -or [string]::IsNullOrWhiteSpace($env:IMAGE_TAG)) {
+            Write-Error "DOCKER_IMAGE or IMAGE_TAG is empty. DOCKER_IMAGE='$env:DOCKER_IMAGE' IMAGE_TAG='$env:IMAGE_TAG'"
+            exit 1
+          }
+
+          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+          $output = docker pull "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" 2>&1
           $output | Out-Host
 
           if ($LASTEXITCODE -eq 0) {
@@ -147,3 +173,11 @@ jobs:
           name: msvc-LastTest-log
           path: ${{ env.THRIFT_BUILD_DIR }}\Testing\Temporary\LastTest.log
           if-no-files-found: warn
+
+      - name: Remove Docker credential store
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:DOCKER_CONFIG) -and (Test-Path $env:DOCKER_CONFIG)) {
+            Remove-Item $env:DOCKER_CONFIG -Recurse -Force
+          }
