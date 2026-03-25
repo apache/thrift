@@ -51,13 +51,10 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
         map<string, string> parsed_options = {};
         std::unique_ptr<t_program> program(new t_program(path, name));
         parse_thrift_for_test(program.get());
-        std::unique_ptr<t_generator> gen(
-            t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
-
-        program.reset(new t_program(path, name));
-        parse_thrift_for_test(program.get());
-        gen.reset(t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
-        REQUIRE_NOTHROW(gen->generate_program());
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
         content_run1 = read_file("gen-delphi/Test.GuidV5.Types.pas");
     }
 
