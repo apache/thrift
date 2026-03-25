@@ -75,6 +75,7 @@ public:
     async_ = false;
     com_types_ = false;
     rtti_ = false;
+    guid_v4_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
@@ -319,7 +320,7 @@ public:
   std::string make_pascal_string_literal( std::string value);
   std::string input_arg_prefix(t_type* ttype);
 
-  std::string base_type_name(t_base_type* tbase);
+  std::string base_type_name(t_base_type* tbase) const;
   std::string declare_field(t_field* tfield,
                             std::string prefix = "",
                             bool is_xception_class = false);
@@ -448,7 +449,7 @@ private:
   bool rtti_;
   void indent_up_impl() { ++indent_impl_; };
   void indent_down_impl() { --indent_impl_; };
-  std::string indent_impl() {
+  std::string indent_impl() const {
     std::string ind = "";
     int i;
     for (i = 0; i < indent_impl_; ++i) {
@@ -1985,44 +1986,13 @@ static void sha1_hex(const uint8_t* data, size_t len, std::string& out_hex) {
   out_hex = bytes_to_hex(hash, SHA1HashSize);
 }
 
-static std::string uuid5_from_namespace_and_name(const uint8_t namespace_uuid[16],
-                                                 const std::string& name) {
-  uint8_t combined[16 + SHA1HashSize];
-  for (int i = 0; i < 16; ++i) {
-    combined[i] = namespace_uuid[i];
-  }
-  for (size_t i = 0; i < name.size(); ++i) {
-    combined[16 + i] = static_cast<uint8_t>(name[i]);
-  }
-
-  uint8_t hash[SHA1HashSize];
-  sha1_hash(combined, 16 + name.size(), hash);
-
-  uint8_t uuid[16];
-  for (int i = 0; i < 16; ++i) {
-    uuid[i] = hash[i];
-  }
-  uuid[6] = (uuid[6] & 0x0F) | 0x50;
-  uuid[8] = (uuid[8] & 0x3F) | 0x80;
-
-  char guid_str[40];
-  snprintf(guid_str, sizeof(guid_str),
-           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-           uuid[0], uuid[1], uuid[2], uuid[3],
-           uuid[4], uuid[5],
-           uuid[6], uuid[7],
-           uuid[8], uuid[9],
-           uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
-
-  return std::string(guid_str);
-}
-
 static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16],
                                                   const std::string& name) {
-  uint8_t combined[16 + SHA256HashSize];
-  for (int i = 0; i < 16; ++i) {
-    combined[i] = namespace_uuid[i];
-  }
+  uint8_t combined[16 + SHA256HashSize] = {
+      namespace_uuid[0], namespace_uuid[1], namespace_uuid[2], namespace_uuid[3], namespace_uuid[4], namespace_uuid[5], namespace_uuid[6], namespace_uuid[7],
+      namespace_uuid[8], namespace_uuid[9], namespace_uuid[10], namespace_uuid[11], namespace_uuid[12], namespace_uuid[13], namespace_uuid[14], namespace_uuid[15],
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
+  };
   for (size_t i = 0; i < name.size(); ++i) {
     combined[16 + i] = static_cast<uint8_t>(name[i]);
   }
@@ -2030,10 +2000,10 @@ static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16
   uint8_t hash[SHA256HashSize];
   sha256_hash(combined, 16 + name.size(), hash);
 
-  uint8_t uuid[16];
-  for (int i = 0; i < 16; ++i) {
-    uuid[i] = hash[i];
-  }
+  uint8_t uuid[16] = {
+      hash[0], hash[1], hash[2],  hash[3],  hash[4],  hash[5],  hash[6],  hash[7],
+      hash[8], hash[9], hash[10], hash[11], hash[12], hash[13], hash[14], hash[15]
+  };
   uuid[6] = (uuid[6] & 0x0F) | 0x80;
   uuid[8] = (uuid[8] & 0x3F) | 0x80;
 
@@ -2192,21 +2162,11 @@ std::string t_delphi_generator::get_root_namespace_uuid() {
 static void uuid_to_bytes(const std::string& uuid_str, uint8_t bytes[16]) {
   for (int i = 0; i < 16; ++i) {
     unsigned int byte;
-    sscanf(uuid_str.c_str() + i * 2, "%02x", &byte);
+    if (sscanf(uuid_str.c_str() + i * 2, "%02x", &byte) != 1) {
+      throw "Internal compiler error: uuid_to_bytes()";
+    }
     bytes[i] = static_cast<uint8_t>(byte);
   }
-}
-
-static std::string uuid_bytes_to_string(const uint8_t bytes[16]) {
-  char str[40];
-  snprintf(str, sizeof(str),
-           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-           bytes[0], bytes[1], bytes[2], bytes[3],
-           bytes[4], bytes[5],
-           bytes[6], bytes[7],
-           bytes[8], bytes[9],
-           bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]);
-  return std::string(str);
 }
 
 std::string t_delphi_generator::get_program_namespace_uuid() {
@@ -3462,7 +3422,7 @@ string t_delphi_generator::input_arg_prefix(t_type* ttype) {
   return "const "; // possibly refcounted pointer
 }
 
-string t_delphi_generator::base_type_name(t_base_type* tbase) {
+string t_delphi_generator::base_type_name(t_base_type* tbase) const {
   switch (tbase->get_base()) {
   case t_base_type::TYPE_VOID:
     // no "void" in Delphi language
@@ -4262,4 +4222,4 @@ THRIFT_REGISTER_GENERATOR(
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
     "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
     "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n"
-    "    guid_v4:         Generate random UUIDv4 GUIDs instead of stable UUIDv8 (legacy fallback).\n")
+    "    guid_v4:         Generate random UUIDv4 GUIDs instead of stable UUIDv8 (legacy behavior, Windows only).\n")
