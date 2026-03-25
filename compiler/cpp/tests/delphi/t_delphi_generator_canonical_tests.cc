@@ -24,6 +24,8 @@ using std::string;
 using std::map;
 using std::vector;
 using delphi_generator_test_utils::parse_thrift_for_test;
+using delphi_generator_test_utils::join_path;
+using delphi_generator_test_utils::source_dir;
 
 TEST_CASE("t_delphi_generator canonical string for simple struct", "[delphi][canonical]") {
     string path = join_path(source_dir(), "test_canonical.thrift");

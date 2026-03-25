@@ -23,6 +23,7 @@
 using std::string;
 using std::map;
 using std::set;
+using std::vector;
 using std::regex;
 using std::regex_search;
 using delphi_generator_test_utils::read_file;
@@ -30,7 +31,7 @@ using delphi_generator_test_utils::source_dir;
 using delphi_generator_test_utils::join_path;
 using delphi_generator_test_utils::parse_thrift_for_test;
 
-static const string UUID_PATTERN = R"(\[\{'[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'\}\])";
+static const string UUID_PATTERN = R"(\[\{'[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'\}\])";
 
 static set<string> extract_guids(const string& content) {
     set<string> guids;
@@ -45,8 +46,8 @@ static set<string> extract_guids(const string& content) {
 }
 
 static string extract_guid_for_interface(const string& content, const string& iface_name) {
-    string pattern = iface_name + R"( = interface\(.*?\n\s*)" + UUID_PATTERN;
-    regex r(pattern, std::regex::dotall);
+    string pattern = iface_name + R"( = interface\([\s\S]*?"\n\s*)" + UUID_PATTERN;
+    regex r(pattern);
     std::smatch match;
     if (regex_search(content, match, r)) {
         string matched = match.str();

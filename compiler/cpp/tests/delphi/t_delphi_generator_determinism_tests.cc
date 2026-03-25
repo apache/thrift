@@ -23,12 +23,13 @@
 using std::string;
 using std::map;
 using std::set;
+using std::vector;
 using delphi_generator_test_utils::read_file;
 using delphi_generator_test_utils::source_dir;
 using delphi_generator_test_utils::join_path;
 using delphi_generator_test_utils::parse_thrift_for_test;
 
-static const string UUIDv5_PATTERN = R"(\[\{'([0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})'\}\])";
+static const string UUIDv5_PATTERN = R"(\[\{'([0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})'\}\])";
 
 static string extract_first_guid(const string& content) {
     std::regex r(UUIDv5_PATTERN);
@@ -137,7 +138,8 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
         string uuid = (*i).str(1);
         CHECK(uuid.length() == 36);
         CHECK(uuid[14] == '5');
-        CHECK(uuid[19] >= '8' && uuid[19] <= 'b');
+        CHECK(uuid[19] >= '8');
+        CHECK(uuid[19] <= 'b');
     }
 
     CHECK(guid_count >= 2);

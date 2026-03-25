@@ -82,6 +82,8 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/sha1.c
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/sha256.c
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h
@@ -121,7 +123,7 @@ THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
-THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" OFF)
+THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" ON)
 THRIFT_ADD_COMPILER(erl     "Enable compiler for Erlang" OFF)
 THRIFT_ADD_COMPILER(go      "Enable compiler for Go" OFF)
 THRIFT_ADD_COMPILER(gv      "Enable compiler for GraphViz" OFF)

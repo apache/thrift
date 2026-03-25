@@ -60,6 +60,7 @@
     <ClCompile Include="src\thrift\generate\t_dart_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_delphi_generator.cc" />
     <ClCompile Include="src\thrift\generate\sha1.c" />
+    <ClCompile Include="src\thrift\generate\sha256.c" />
     <ClCompile Include="src\thrift\generate\t_erl_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_go_generator.cc" />

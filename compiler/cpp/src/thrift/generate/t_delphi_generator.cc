@@ -238,8 +238,8 @@ public:
   void generate_service_interface(t_service* tservice);
   void generate_service_interface(t_service* tservice, bool for_async);
   void generate_guid_v4(std::ostream& out);
-  void generate_guid_v5(std::ostream& out, t_service* tservice);
-  void generate_guid_v5(std::ostream& out, t_struct* tstruct);
+  void generate_guid_v8(std::ostream& out, t_service* tservice);
+  void generate_guid_v8(std::ostream& out, t_struct* tstruct);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
@@ -1655,7 +1655,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   }
   indent_up();
 
-  generate_guid_v5(out, tstruct);
+  generate_guid_v8(out, tstruct);
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_delphi_property_reader_definition(out, *m_iter, false);
@@ -1917,7 +1917,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   }
 
   indent_up();
-  generate_guid_v5(s_service, tservice);
+  generate_guid_v8(s_service, tservice);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1961,6 +1961,13 @@ static void sha1_hash(const uint8_t* data, size_t len, uint8_t hash[SHA1HashSize
   SHA1Result(&context, hash);
 }
 
+static void sha256_hash(const uint8_t* data, size_t len, uint8_t hash[SHA256HashSize]) {
+  SHA256Context context;
+  SHA256Reset(&context);
+  SHA256Input(&context, data, static_cast<unsigned int>(len));
+  SHA256Result(&context, hash);
+}
+
 static std::string bytes_to_hex(const uint8_t* data, size_t len) {
   static const char hex_chars[] = "0123456789abcdef";
   std::string result;
@@ -1996,6 +2003,38 @@ static std::string uuid5_from_namespace_and_name(const uint8_t namespace_uuid[16
     uuid[i] = hash[i];
   }
   uuid[6] = (uuid[6] & 0x0F) | 0x50;
+  uuid[8] = (uuid[8] & 0x3F) | 0x80;
+
+  char guid_str[40];
+  snprintf(guid_str, sizeof(guid_str),
+           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+           uuid[0], uuid[1], uuid[2], uuid[3],
+           uuid[4], uuid[5],
+           uuid[6], uuid[7],
+           uuid[8], uuid[9],
+           uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+
+  return std::string(guid_str);
+}
+
+static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16],
+                                                  const std::string& name) {
+  uint8_t combined[16 + SHA256HashSize];
+  for (int i = 0; i < 16; ++i) {
+    combined[i] = namespace_uuid[i];
+  }
+  for (size_t i = 0; i < name.size(); ++i) {
+    combined[16 + i] = static_cast<uint8_t>(name[i]);
+  }
+
+  uint8_t hash[SHA256HashSize];
+  sha256_hash(combined, 16 + name.size(), hash);
+
+  uint8_t uuid[16];
+  for (int i = 0; i < 16; ++i) {
+    uuid[i] = hash[i];
+  }
+  uuid[6] = (uuid[6] & 0x0F) | 0x80;
   uuid[8] = (uuid[8] & 0x3F) | 0x80;
 
   char guid_str[40];
@@ -2147,7 +2186,7 @@ std::string t_delphi_generator::get_program_namespace() {
 }
 
 std::string t_delphi_generator::get_root_namespace_uuid() {
-  return uuid5_from_namespace_and_name(UUIDv5_NAMESPACE_DNS, "thrift.apache.org");
+  return uuid8_from_namespace_and_name(UUIDv5_NAMESPACE_DNS, "thrift.apache.org");
 }
 
 static void uuid_to_bytes(const std::string& uuid_str, uint8_t bytes[16]) {
@@ -2175,12 +2214,12 @@ std::string t_delphi_generator::get_program_namespace_uuid() {
   uuid_to_bytes(get_root_namespace_uuid(), root_ns_bytes);
 
   std::string program_name = get_program_namespace();
-  std::string program_ns_uuid_str = uuid5_from_namespace_and_name(root_ns_bytes, program_name);
+  std::string program_ns_uuid_str = uuid8_from_namespace_and_name(root_ns_bytes, program_name);
 
   return program_ns_uuid_str;
 }
 
-void t_delphi_generator::generate_guid_v5(std::ostream& out, t_service* tservice) {
+void t_delphi_generator::generate_guid_v8(std::ostream& out, t_service* tservice) {
   if (guid_v4_) {
     generate_guid_v4(out);
     return;
@@ -2194,11 +2233,11 @@ void t_delphi_generator::generate_guid_v5(std::ostream& out, t_service* tservice
   uint8_t ns_uuid[16];
   uuid_to_bytes(program_ns_uuid, ns_uuid);
 
-  std::string guid_str = uuid5_from_namespace_and_name(ns_uuid, canonical);
+  std::string guid_str = uuid8_from_namespace_and_name(ns_uuid, canonical);
   indent(out) << "['{" << guid_str << "}']" << '\n';
 }
 
-void t_delphi_generator::generate_guid_v5(std::ostream& out, t_struct* tstruct) {
+void t_delphi_generator::generate_guid_v8(std::ostream& out, t_struct* tstruct) {
   if (guid_v4_) {
     generate_guid_v4(out);
     return;
@@ -2211,7 +2250,7 @@ void t_delphi_generator::generate_guid_v5(std::ostream& out, t_struct* tstruct) 
   uint8_t ns_uuid[16];
   uuid_to_bytes(program_ns_uuid, ns_uuid);
 
-  std::string guid_str = uuid5_from_namespace_and_name(ns_uuid, canonical);
+  std::string guid_str = uuid8_from_namespace_and_name(ns_uuid, canonical);
   indent(out) << "['{" << guid_str << "}']" << '\n';
 }
 
@@ -4223,4 +4262,4 @@ THRIFT_REGISTER_GENERATOR(
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
     "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
     "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n"
-    "    guid_v4:         Generate random GUIDs instead of stable v5 GUIDs (legacy behavior, Windows only).\n")
+    "    guid_v4:         Generate random UUIDv4 GUIDs instead of stable UUIDv8 (legacy fallback).\n")

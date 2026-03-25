@@ -48,6 +48,8 @@ set(compiler_core
     src/thrift/generate/t_generator.cc
     src/thrift/generate/validator_parser.cc
     src/thrift/generate/validator_parser.h
+    src/thrift/generate/sha1.c
+    src/thrift/generate/sha256.c
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
     src/thrift/version.h
