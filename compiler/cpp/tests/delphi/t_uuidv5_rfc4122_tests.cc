@@ -38,11 +38,12 @@ static std::string bytes_to_hex(const uint8_t* data, size_t len) {
 
 static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16],
                                                const std::string& name) {
-    uint8_t combined[16 + SHA256HashSize];
+    uint8_t combined[16 + SHA256HashSize] = {};
     for (int i = 0; i < 16; ++i) {
         combined[i] = namespace_uuid[i];
     }
-    for (size_t i = 0; i < name.size(); ++i) {
+    size_t name_len = std::min(name.size(), static_cast<size_t>(SHA256HashSize));
+    for (size_t i = 0; i < name_len; ++i) {
         combined[16 + i] = static_cast<uint8_t>(name[i]);
     }
 

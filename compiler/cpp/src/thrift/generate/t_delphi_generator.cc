@@ -1993,7 +1993,8 @@ static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16
       namespace_uuid[8], namespace_uuid[9], namespace_uuid[10], namespace_uuid[11], namespace_uuid[12], namespace_uuid[13], namespace_uuid[14], namespace_uuid[15],
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
   };
-  for (size_t i = 0; i < name.size(); ++i) {
+  size_t name_len = std::min(name.size(), static_cast<size_t>(SHA256HashSize));
+  for (size_t i = 0; i < name_len; ++i) {
     combined[16 + i] = static_cast<uint8_t>(name[i]);
   }
 
