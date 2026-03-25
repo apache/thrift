@@ -75,7 +75,6 @@ public:
     async_ = false;
     com_types_ = false;
     rtti_ = false;
-    guid_v5_ = true;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
@@ -93,10 +92,8 @@ public:
         com_types_ = true;
       } else if( iter->first.compare("rtti") == 0) {
         rtti_ = true;
-      } else if( iter->first.compare("guid_v5") == 0) {
-        guid_v5_ = true;
-      } else if( iter->first.compare("guid_random") == 0) {
-        guid_v5_ = false;
+      } else if( iter->first.compare("guid_v4") == 0) {
+        guid_v4_ = true;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
@@ -240,8 +237,7 @@ public:
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
   void generate_service_interface(t_service* tservice, bool for_async);
-  void generate_guid(std::ostream& out);
-  void generate_guid_v5(std::ostream& out);
+  void generate_guid_v4(std::ostream& out);
   void generate_guid_v5(std::ostream& out, t_service* tservice);
   void generate_guid_v5(std::ostream& out, t_struct* tstruct);
   void generate_service_helpers(t_service* tservice);
@@ -373,7 +369,7 @@ private:
   bool has_forward;
   bool has_enum;
   bool has_const;
-  bool guid_v5_;
+  bool guid_v4_;
   std::string namespace_dir_;
   std::set<std::string> types_known;
   std::list<t_typedef*> typedefs_pending;
@@ -1413,7 +1409,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
                        prop_name((*m_iter)->get_name(), false, "F"),
                        truetype,
                        (*m_iter)->get_value(),
-					   is_const_class);
+                       is_const_class);
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         indent_impl(code) << prop_name((*m_iter), false, "F__isset_") << " := True;" << '\n';
       }
@@ -1936,7 +1932,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   indent_down();
 }
 
-void t_delphi_generator::generate_guid(std::ostream& out) {
+void t_delphi_generator::generate_guid_v4(std::ostream& out) {
 #ifdef _WIN32   // TODO: add support for non-windows platforms if needed
   GUID guid;
   if (SUCCEEDED(CoCreateGuid(&guid))) {
@@ -2184,13 +2180,9 @@ std::string t_delphi_generator::get_program_namespace_uuid() {
   return program_ns_uuid_str;
 }
 
-void t_delphi_generator::generate_guid_v5(std::ostream& out) {
-  generate_guid(out);
-}
-
 void t_delphi_generator::generate_guid_v5(std::ostream& out, t_service* tservice) {
-  if (!guid_v5_) {
-    generate_guid(out);
+  if (guid_v4_) {
+    generate_guid_v4(out);
     return;
   }
 
@@ -2207,8 +2199,8 @@ void t_delphi_generator::generate_guid_v5(std::ostream& out, t_service* tservice
 }
 
 void t_delphi_generator::generate_guid_v5(std::ostream& out, t_struct* tstruct) {
-  if (!guid_v5_) {
-    generate_guid(out);
+  if (guid_v4_) {
+    generate_guid_v4(out);
     return;
   }
 
@@ -4231,5 +4223,4 @@ THRIFT_REGISTER_GENERATOR(
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
     "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
     "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n"
-    "    guid_v5:         Generate stable, deterministic GUIDs using UUIDv5 (default).\n"
-    "    guid_random:     Generate random GUIDs (legacy behavior, Windows only).\n")
+    "    guid_v4:         Generate random GUIDs instead of stable v5 GUIDs (legacy behavior, Windows only).\n")
