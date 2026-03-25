@@ -182,7 +182,7 @@ char* saferealpath(const char* path, char* resolved_path, size_t resolved_path_s
   if (source_len >= resolved_path_size) {
     return nullptr;
   }
-  memcpy(resolved_path, source, source_len + 1);
+  strcpy(resolved_path, source);
 
   // Replace backslashes with forward slashes so the
   // rest of the code behaves correctly.
