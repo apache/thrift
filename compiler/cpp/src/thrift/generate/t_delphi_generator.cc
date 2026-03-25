@@ -1163,7 +1163,7 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
         }
       }
       if (field_type == nullptr) {
-        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+        throw std::string("type error: ") + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(vars, out, field_type, v_iter->second, false);
       indent_impl(out) << cls_prefix << normalize_name(name) << "."
@@ -1332,7 +1332,7 @@ string t_delphi_generator::render_const_value(ostream& vars,
       }
       break;
     default:
-      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
+      throw std::string("compiler error: no const of base type ") + t_base_type::t_base_name(tbase);
     }
   } else if (truetype->is_enum()) {
     render << type_name(type, false) << "." << value->get_identifier_name();
@@ -2046,7 +2046,7 @@ std::string t_delphi_generator::type_to_canonical_string(t_type* ttype) {
           return "string";
         }
       default:
-        throw "INVALID base type in uuid5_from_namespace_and_name: " + ttype->get_name();
+        throw std::string("INVALID base type in uuid5_from_namespace_and_name: ") + ttype->get_name();
     }
   } else if (ttype->is_enum()) {
     return type_name(ttype, false, true);
@@ -2066,7 +2066,7 @@ std::string t_delphi_generator::type_to_canonical_string(t_type* ttype) {
          + "," + type_to_canonical_string(tmap->get_val_type()) + ">";
   }
 
-  throw "INVALID type in uuid5_from_namespace_and_name: " + ttype->get_name();
+  throw std::string("INVALID type in uuid5_from_namespace_and_name: ") + ttype->get_name();
 }
 
 std::string t_delphi_generator::get_parent_sha1_hex(t_service* tservice) {
@@ -2163,7 +2163,7 @@ static void uuid_to_bytes(const std::string& uuid_str, uint8_t bytes[16]) {
   for (int i = 0; i < 16; ++i) {
     unsigned int byte;
     if (sscanf(uuid_str.c_str() + i * 2, "%02x", &byte) != 1) {
-      throw "Internal compiler error: uuid_to_bytes()";
+      throw std::string("Internal compiler error: uuid_to_bytes()");
     }
     bytes[i] = static_cast<uint8_t>(byte);
   }
@@ -2884,7 +2884,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
   t_type* type = tfield->get_type()->get_true_type();
 
   if (type->is_void()) {
-    throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + prefix + tfield->get_name();
+    throw std::string("CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: ") + prefix + tfield->get_name();
   }
 
   string name = prefix + prop_name(tfield, is_xception);
@@ -2906,7 +2906,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_VOID:
-        throw "compiler error: cannot serialize void field in a struct: " + name;
+        throw std::string("compiler error: cannot serialize void field in a struct: ") + name;
         break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
@@ -2937,7 +2937,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
         out << "ReadDouble();";
         break;
       default:
-        throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase);
+        throw std::string("compiler error: no Delphi name for base type ") + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "ReadI32()";
@@ -3082,7 +3082,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
   string name = prefix + prop_name(tfield, is_xception);
 
   if (type->is_void()) {
-    throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " + name;
+    throw std::string("CANNOT GENERATE SERIALIZE CODE FOR void TYPE: ") + name;
   }
 
   if (type->is_struct() || type->is_xception()) {
@@ -3098,7 +3098,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
 
       switch (tbase) {
       case t_base_type::TYPE_VOID:
-        throw "compiler error: cannot serialize void field in a struct: " + name;
+        throw std::string("compiler error: cannot serialize void field in a struct: ") + name;
         break;
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
@@ -3130,7 +3130,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
         out << "WriteDouble(" << name << ");";
         break;
       default:
-        throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase);
+        throw std::string("compiler error: no Delphi name for base type ") + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "WriteI32(System.Integer(" << name << "));";
@@ -3313,7 +3313,7 @@ string t_delphi_generator::type_name(t_type* ttype,
                          b_cls,
                          b_no_postfix);
       } else {
-        throw "unresolved forward declaration: " + tdef->get_symbolic();
+        throw std::string("unresolved forward declaration: ") + tdef->get_symbolic();
       }
     } else {
       return normalize_name("T" + tdef->get_symbolic());
@@ -3399,7 +3399,7 @@ string t_delphi_generator::input_arg_prefix(t_type* ttype) {
 
     // we better always report any unknown types
     default:
-      throw "compiler error: no input_arg_prefix() for base type "
+      throw std::string("compiler error: no input_arg_prefix() for base type ")
           + t_base_type::t_base_name(((t_base_type*)ttype)->get_base());
     }
 
@@ -3452,7 +3452,7 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) const {
   case t_base_type::TYPE_DOUBLE:
     return "System.Double";
   default:
-    throw "compiler error: no Delphi name for base type "
+    throw std::string("compiler error: no Delphi name for base type ")
         + t_base_type::t_base_name(tbase->get_base());
   }
 }
@@ -3589,7 +3589,7 @@ string t_delphi_generator::type_to_enum(t_type* type) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:
-      throw "NO T_VOID CONSTRUCT";
+      throw std::string("NO T_VOID CONSTRUCT");
     case t_base_type::TYPE_STRING:
       return "TType.String_";
     case t_base_type::TYPE_UUID:
@@ -3619,7 +3619,7 @@ string t_delphi_generator::type_to_enum(t_type* type) {
     return "TType.List";
   }
 
-  throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+  throw std::string("INVALID TYPE IN type_to_enum: ") + type->get_name();
 }
 
 string t_delphi_generator::empty_value(t_type* type) {
@@ -3660,7 +3660,7 @@ string t_delphi_generator::empty_value(t_type* type) {
     return "nil";
   }
 
-  throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+  throw std::string("INVALID TYPE IN type_to_enum: ") + type->get_name();
 }
 
 void t_delphi_generator::generate_delphi_property_writer_definition(ostream& out,
