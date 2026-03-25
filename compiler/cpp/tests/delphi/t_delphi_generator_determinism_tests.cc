@@ -48,7 +48,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
     string content_run2;
 
     {
-        map<string, string> parsed_options = {{"", ""}};
+        map<string, string> parsed_options = {};
         std::unique_ptr<t_program> program(new t_program(path, name));
         parse_thrift_for_test(program.get());
         std::unique_ptr<t_generator> gen(
@@ -62,7 +62,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
     }
 
     {
-        map<string, string> parsed_options = {{"", ""}};
+        map<string, string> parsed_options = {};
         std::unique_ptr<t_program> program(new t_program(path, name));
         parse_thrift_for_test(program.get());
         std::unique_ptr<t_generator> gen(
@@ -85,7 +85,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
 TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs", "[delphi][determinism]") {
     string path = join_path(source_dir(), "test_canonical.thrift");
     string name = "test_canonical";
-    map<string, string> parsed_options = {{"", ""}};
+    map<string, string> parsed_options = {};
 
     set<string> all_guids_run1;
     set<string> all_guids_run2;
@@ -117,7 +117,7 @@ TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs"
 TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[delphi][determinism]") {
     string path = join_path(source_dir(), "test_uuidv5.thrift");
     string name = "test_uuidv5";
-    map<string, string> parsed_options = {{"", ""}};
+    map<string, string> parsed_options = {};
 
     std::unique_ptr<t_program> program(new t_program(path, name));
     parse_thrift_for_test(program.get());
@@ -148,7 +148,7 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
 TEST_CASE("t_delphi_generator unique GUIDs per interface", "[delphi][determinism]") {
     string path = join_path(source_dir(), "test_uuidv5.thrift");
     string name = "test_uuidv5";
-    map<string, string> parsed_options = {{"", ""}};
+    map<string, string> parsed_options = {};
 
     std::unique_ptr<t_program> program(new t_program(path, name));
     parse_thrift_for_test(program.get());
