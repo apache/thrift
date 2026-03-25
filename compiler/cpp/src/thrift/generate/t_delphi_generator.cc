@@ -96,7 +96,7 @@ public:
       } else if( iter->first.compare("guid_v4") == 0) {
         guid_v4_ = true;
       } else {
-        throw std::string("unknown option delphi:") + iter->first;
+        throw std::string("FIXED: unknown delphi option: ") + iter->first;
       }
     }
 
