@@ -286,6 +286,7 @@
     "server": {
       "extra_args": ["TSimpleServer"],
       "command": [
+        "python3",
         "TestServer.py",
         "--verbose",
         "--genpydir=gen-py"
@@ -294,6 +295,7 @@
     "client": {
       "timeout": 15,
       "command": [
+        "python3",
         "TestClient.py",
         "--verbose",
         "--host=localhost",
@@ -563,6 +565,8 @@
       "command": [
         "php",
         "-dextension_dir=php_ext_dir",
+        "-dextension=thrift_protocol.so",
+        "-dextension=sockets.so",
         "--php-ini=test_php.ini",
         "--no-php-ini",
         "-ddisplay_errors=stderr",
@@ -589,6 +593,8 @@
       "command": [
         "php",
         "-dextension_dir=php_ext_dir",
+        "-dextension=thrift_protocol.so",
+        "-dextension=sockets.so",
         "--php-ini=test_php.ini",
         "--no-php-ini",
         "-ddisplay_errors=stderr",
