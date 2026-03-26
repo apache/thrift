@@ -1,4 +1,4 @@
-namespace delphi Test.GuidV5
+namespace delphi Test.GuidV8
 
 struct SimpleStruct {
   1: string name,
