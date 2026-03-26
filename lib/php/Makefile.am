@@ -64,8 +64,8 @@ phpfactory_DATA = \
 	lib/Factory/TJSONProtocolFactory.php \
 	lib/Factory/TProtocolFactory.php \
 	lib/Factory/TStringFuncFactory.php \
-	lib/Factory/TTransportFactoryInterface.php
-	lib/Factory/TTransportFactory.php
+	lib/Factory/TTransportFactoryInterface.php \
+	lib/Factory/TTransportFactory.php \
 	lib/Factory/TFramedTransportFactory.php
 
 phpprotocoldir = $(phpdir)/Protocol
@@ -158,4 +158,3 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
-

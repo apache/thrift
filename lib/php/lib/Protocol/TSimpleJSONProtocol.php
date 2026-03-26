@@ -85,7 +85,7 @@ class TSimpleJSONProtocol extends TProtocol
     {
         $this->writeContext_->write();
 
-        $this->trans_->write(json_encode((string)$b));
+        $this->trans_->write(json_encode((string)$b, JSON_UNESCAPED_SLASHES));
     }
 
     private function writeJSONInteger($num)
