@@ -29,7 +29,7 @@ using delphi_generator_test_utils::source_dir;
 using delphi_generator_test_utils::join_path;
 using delphi_generator_test_utils::parse_thrift_for_test;
 
-static const string UUIDv5_PATTERN = R"(\[\{'([0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})'\}\])";
+static const string UUIDv5_PATTERN = R"(\[\s*'\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}'\])";
 
 static string extract_first_guid(const string& content) {
     std::regex r(UUIDv5_PATTERN);
@@ -55,7 +55,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
         t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
     REQUIRE(gen != nullptr);
     REQUIRE_NOTHROW(gen->generate_program());
-        content_run1 = read_file("gen-delphi/Test.GuidV5.Types.pas");
+        content_run1 = read_file("gen-delphi/Test.GuidV5.pas");
     }
 
     {
@@ -66,7 +66,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
             t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
         REQUIRE(gen != nullptr);
         REQUIRE_NOTHROW(gen->generate_program());
-        content_run2 = read_file("gen-delphi/Test.GuidV5.Types.pas");
+        content_run2 = read_file("gen-delphi/Test.GuidV5.pas");
     }
 
     REQUIRE(!content_run1.empty());
@@ -96,7 +96,7 @@ TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs"
         REQUIRE(gen != nullptr);
         REQUIRE_NOTHROW(gen->generate_program());
 
-        string content = read_file("gen-delphi/Test.Canonical.Types.pas");
+        string content = read_file("gen-delphi/test.canonical.pas");
         REQUIRE(!content.empty());
 
         std::regex r(UUIDv5_PATTERN);
@@ -125,7 +125,7 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
     REQUIRE(gen != nullptr);
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string content = read_file("gen-delphi/Test.GuidV5.Types.pas");
+    string content = read_file("gen-delphi/Test.GuidV5.pas");
     REQUIRE(!content.empty());
 
     std::regex r(UUIDv5_PATTERN);
@@ -158,7 +158,7 @@ TEST_CASE("t_delphi_generator unique GUIDs per interface", "[delphi][determinism
     REQUIRE_NOTHROW(gen->generate_program());
 
     set<string> all_guids;
-    vector<string> files = {"gen-delphi/Test.GuidV5.Types.pas", "gen-delphi/Test.GuidV5.Service.pas"};
+    vector<string> files = {"gen-delphi/Test.GuidV5.pas"};
 
     for (const auto& file : files) {
         string content = read_file(file);

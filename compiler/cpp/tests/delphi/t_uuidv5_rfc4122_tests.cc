@@ -49,7 +49,7 @@ static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16
 
     SHA256Context ctx;
     SHA256Reset(&ctx);
-    SHA256Input(&ctx, combined, 16 + static_cast<unsigned int>(name.size()));
+    SHA256Input(&ctx, combined, 16 + static_cast<unsigned int>(name_len));
 
     uint8_t hash[SHA256HashSize];
     SHA256Result(&ctx, hash);

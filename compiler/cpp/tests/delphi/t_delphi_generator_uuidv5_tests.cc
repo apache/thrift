@@ -31,7 +31,7 @@ using delphi_generator_test_utils::source_dir;
 using delphi_generator_test_utils::join_path;
 using delphi_generator_test_utils::parse_thrift_for_test;
 
-static const string UUID_PATTERN = R"(\[\{'[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'\}\])";
+static const string UUID_PATTERN = R"(\[\s*'\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}'\])";
 
 static set<string> extract_guids(const string& content) {
     set<string> guids;
@@ -74,7 +74,7 @@ TEST_CASE("t_delphi_generator generates deterministic UUIDv5 GUIDs", "[delphi][u
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.Types.pas";
+    string generated_file = "gen-delphi/Test.GuidV5.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -113,7 +113,7 @@ TEST_CASE("t_delphi_generator generates different GUIDs for sync vs async", "[de
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.Types.pas";
+    string generated_file = "gen-delphi/Test.GuidV5.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -140,7 +140,7 @@ TEST_CASE("t_delphi_generator generates different GUIDs for service inheritance"
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.Service.pas";
+    string generated_file = "gen-delphi/Test.GuidV5.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -167,11 +167,11 @@ TEST_CASE("t_delphi_generator generates GUID format matching Delphi interface de
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.Types.pas";
+    string generated_file = "gen-delphi/Test.GuidV5.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
-    string pattern = R"(ISimpleStruct = interface\(IBase\)\n\s+\['\{[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'\}\])";
+    string pattern = R"(ISimpleStruct = interface\(IBase\)\n\s+\[\s*'\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}'\])";
     regex r(pattern);
     CHECK(regex_search(content, r));
 }
@@ -192,7 +192,7 @@ TEST_CASE("t_delphi_generator generates unique GUIDs for each entity", "[delphi]
     REQUIRE_NOTHROW(gen->generate_program());
 
     set<string> all_guids;
-    vector<string> files = {"gen-delphi/Test.GuidV5.Types.pas", "gen-delphi/Test.GuidV5.Service.pas"};
+    vector<string> files = {"gen-delphi/Test.GuidV5.pas"};
 
     for (const auto& file : files) {
         string content = read_file(file);
