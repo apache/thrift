@@ -286,7 +286,7 @@
     "server": {
       "extra_args": ["TSimpleServer"],
       "command": [
-        "python3",
+        "python",
         "TestServer.py",
         "--verbose",
         "--genpydir=gen-py"
@@ -295,7 +295,7 @@
     "client": {
       "timeout": 15,
       "command": [
-        "python3",
+        "python",
         "TestClient.py",
         "--verbose",
         "--host=localhost",

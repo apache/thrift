@@ -170,6 +170,8 @@ class Handler implements \ThriftTest\ThriftTestIf
 
     public function testOneway($secondsToSleep)
     {
+        // Keep the oneway test quick so the cross-test matrix measures fire-and-forget behavior,
+        // not a full second of handler blocking in the single-threaded PHP test server.
         usleep($secondsToSleep * 300000);
     }
 }
