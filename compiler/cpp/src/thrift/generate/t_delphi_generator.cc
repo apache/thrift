@@ -34,8 +34,11 @@
 #include <sstream>
 #include <cctype>
 
+#include <iomanip>
+
 #include "thrift/platform.h"
 #include "thrift/generate/t_oop_generator.h"
+#include "thrift/generate/sha256.h"
 
 #ifdef _WIN32
 #include <locale>
@@ -74,6 +77,7 @@ public:
     async_ = false;
     com_types_ = false;
     rtti_ = false;
+    guid_v4_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
@@ -91,6 +95,8 @@ public:
         com_types_ = true;
       } else if( iter->first.compare("rtti") == 0) {
         rtti_ = true;
+      } else if( iter->first.compare("guid_v4") == 0) {
+        guid_v4_ = true;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
@@ -235,6 +241,12 @@ public:
   void generate_service_interface(t_service* tservice);
   void generate_service_interface(t_service* tservice, bool for_async);
   void generate_guid(std::ostream& out);
+  void generate_guid_v8(std::ostream& out, t_service* tservice);
+  void generate_guid_v8(std::ostream& out, t_struct* tstruct);
+  std::string type_name_for_guid(t_type* ttype);
+  std::string canonical_service_string(t_service* tservice);
+  std::string canonical_struct_string(t_struct* tstruct);
+  std::vector<uint8_t> program_namespace_uuid();
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
@@ -432,6 +444,7 @@ private:
   bool async_;
   bool com_types_;
   bool rtti_;
+  bool guid_v4_;
   void indent_up_impl() { ++indent_impl_; };
   void indent_down_impl() { --indent_impl_; };
   std::string indent_impl() {
@@ -1641,7 +1654,11 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   }
   indent_up();
 
-  generate_guid(out);
+  if (guid_v4_) {
+    generate_guid(out);
+  } else {
+    generate_guid_v8(out, tstruct);
+  }
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_delphi_property_reader_definition(out, *m_iter, false);
@@ -1903,7 +1920,11 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   }
 
   indent_up();
-  generate_guid(s_service);
+  if (guid_v4_) {
+    generate_guid(s_service);
+  } else {
+    generate_guid_v8(s_service, tservice);
+  }
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1933,6 +1954,168 @@ void t_delphi_generator::generate_guid(std::ostream& out) {
 #else
   (void)out;  // prevent unused warning on other platforms
 #endif
+}
+
+// ---------------------------------------------------------------------------
+// UUIDv8 helpers (RFC 9562)
+// ---------------------------------------------------------------------------
+
+// Compute UUIDv8 from a 16-byte namespace UUID and an arbitrary name string.
+// Hashes (namespace || name) with SHA-256, then applies version=8 and
+// variant=0b10 bit fields per RFC 9562 §5.8.
+static std::vector<uint8_t> compute_uuid_v8(const std::vector<uint8_t>& ns_bytes,
+                                             const std::string& name) {
+  // SHA-256 input = namespace_bytes || name_bytes
+  std::string input(ns_bytes.begin(), ns_bytes.end());
+  input += name;
+  std::vector<uint8_t> h = thrift_generator::sha256(input);
+  // Apply version (4 high bits of byte 6 = 0x8) and variant (2 high bits of byte 8 = 0b10)
+  h[6] = static_cast<uint8_t>(0x80u | (h[6] & 0x0Fu));
+  h[8] = static_cast<uint8_t>(0x80u | (h[8] & 0x3Fu));
+  h.resize(16);
+  return h;
+}
+
+// Format 16 UUID bytes as a Delphi GUID attribute string:
+//   ['{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}']
+static std::string uuid_bytes_to_delphi_guid(const std::vector<uint8_t>& b) {
+  std::ostringstream ss;
+  ss << std::uppercase << std::hex << std::setfill('0');
+  ss << "['{";
+  for (int i = 0; i < 4;  ++i) { ss << std::setw(2) << static_cast<unsigned>(b[i]); }
+  ss << '-';
+  for (int i = 4; i < 6;  ++i) { ss << std::setw(2) << static_cast<unsigned>(b[i]); }
+  ss << '-';
+  for (int i = 6; i < 8;  ++i) { ss << std::setw(2) << static_cast<unsigned>(b[i]); }
+  ss << '-';
+  for (int i = 8; i < 10; ++i) { ss << std::setw(2) << static_cast<unsigned>(b[i]); }
+  ss << '-';
+  for (int i = 10; i < 16; ++i) { ss << std::setw(2) << static_cast<unsigned>(b[i]); }
+  ss << "}']";
+  return ss.str();
+}
+
+// The well-known RFC 4122 DNS namespace UUID bytes (6ba7b810-9dad-11d1-80b4-00c04fd430c8).
+static const uint8_t DNS_NAMESPACE_BYTES[16] = {
+  0x6b,0xa7,0xb8,0x10, 0x9d,0xad, 0x11,0xd1, 0x80,0xb4, 0x00,0xc0,0x4f,0xd4,0x30,0xc8
+};
+
+// Returns the Thrift root namespace UUID: UUIDv8(DNS_NAMESPACE, "thrift.apache.org")
+static std::vector<uint8_t> thrift_root_namespace() {
+  static std::vector<uint8_t> root; // computed once
+  if (root.empty()) {
+    std::vector<uint8_t> dns_ns(DNS_NAMESPACE_BYTES, DNS_NAMESPACE_BYTES + 16);
+    root = compute_uuid_v8(dns_ns, "thrift.apache.org");
+  }
+  return root;
+}
+
+// Returns program-level namespace UUID: UUIDv8(ROOT, program_name).
+std::vector<uint8_t> t_delphi_generator::program_namespace_uuid() {
+  return compute_uuid_v8(thrift_root_namespace(), program_->get_name());
+}
+
+// Utility: convert a vector of bytes to a lowercase hex string.
+static std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {
+  std::ostringstream ss;
+  ss << std::hex << std::setfill('0');
+  for (auto b : bytes) { ss << std::setw(2) << static_cast<unsigned>(b); }
+  return ss.str();
+}
+
+// Returns the Thrift IDL canonical type name for GUID hashing.
+// Resolves typedefs. Uses built-in keyword form, qualified names for user types,
+// and container notation (list<T>, map<K,V>, set<T>).
+std::string t_delphi_generator::type_name_for_guid(t_type* ttype) {
+  ttype = ttype->get_true_type();
+  if (ttype->is_base_type()) {
+    t_base_type* btype = static_cast<t_base_type*>(ttype);
+    switch (btype->get_base()) {
+    case t_base_type::TYPE_VOID:   return "void";
+    case t_base_type::TYPE_BOOL:   return "bool";
+    case t_base_type::TYPE_I8:     return "i8";
+    case t_base_type::TYPE_I16:    return "i16";
+    case t_base_type::TYPE_I32:    return "i32";
+    case t_base_type::TYPE_I64:    return "i64";
+    case t_base_type::TYPE_DOUBLE: return "double";
+    case t_base_type::TYPE_UUID:   return "uuid";
+    case t_base_type::TYPE_STRING:
+      return btype->is_binary() ? "binary" : "string";
+    default:
+      throw "compiler error: unknown base type in type_name_for_guid";
+    }
+  } else if (ttype->is_map()) {
+    t_map* tmap = static_cast<t_map*>(ttype);
+    return "map<" + type_name_for_guid(tmap->get_key_type()) + ","
+                  + type_name_for_guid(tmap->get_val_type()) + ">";
+  } else if (ttype->is_set()) {
+    t_set* tset = static_cast<t_set*>(ttype);
+    return "set<" + type_name_for_guid(tset->get_elem_type()) + ">";
+  } else if (ttype->is_list()) {
+    t_list* tlist = static_cast<t_list*>(ttype);
+    return "list<" + type_name_for_guid(tlist->get_elem_type()) + ">";
+  } else {
+    // Struct, exception, enum, service — use fully qualified name when from another program
+    if (ttype->get_program() != nullptr && ttype->get_program() != program_) {
+      return ttype->get_program()->get_name() + "." + ttype->get_name();
+    }
+    return ttype->get_name();
+  }
+}
+
+// Builds the canonical string for a struct used in UUID hashing.
+std::string t_delphi_generator::canonical_struct_string(t_struct* tstruct) {
+  std::string prog_ns_hex = bytes_to_hex(program_namespace_uuid());
+  std::string canonical = prog_ns_hex + "\n" + tstruct->get_name() + "\n";
+  const vector<t_field*>& members = tstruct->get_members();
+  for (vector<t_field*>::const_iterator m = members.begin(); m != members.end(); ++m) {
+    canonical += (*m)->get_name() + ":" + type_name_for_guid((*m)->get_type()) + "\n";
+  }
+  return canonical;
+}
+
+// Builds the canonical string for a service used in UUID hashing.
+// Recursively includes the SHA-256 of the parent service's canonical string (if any).
+std::string t_delphi_generator::canonical_service_string(t_service* tservice) {
+  std::string prog_ns_hex = bytes_to_hex(program_namespace_uuid());
+
+  std::string parent_hash;
+  if (tservice->get_extends() != nullptr) {
+    std::string parent_canonical = canonical_service_string(tservice->get_extends());
+    parent_hash = bytes_to_hex(thrift_generator::sha256(parent_canonical));
+  }
+
+  std::string canonical = prog_ns_hex + "\n" + tservice->get_name() + "\n"
+                        + parent_hash + "\n";
+
+  vector<t_function*> functions = tservice->get_functions();
+  for (vector<t_function*>::const_iterator f = functions.begin(); f != functions.end(); ++f) {
+    std::string line;
+    if ((*f)->is_oneway()) { line += "oneway:"; }
+    line += (*f)->get_name() + ":" + type_name_for_guid((*f)->get_returntype());
+    const vector<t_field*>& args = (*f)->get_arglist()->get_members();
+    for (vector<t_field*>::const_iterator a = args.begin(); a != args.end(); ++a) {
+      line += ":" + type_name_for_guid((*a)->get_type());
+    }
+    canonical += line + "\n";
+  }
+  return canonical;
+}
+
+// Emits a deterministic UUIDv8 GUID attribute for a service interface.
+void t_delphi_generator::generate_guid_v8(std::ostream& out, t_service* tservice) {
+  std::vector<uint8_t> prog_ns = program_namespace_uuid();
+  std::string canonical = canonical_service_string(tservice);
+  std::vector<uint8_t> uuid = compute_uuid_v8(prog_ns, canonical);
+  indent(out) << uuid_bytes_to_delphi_guid(uuid) << '\n';
+}
+
+// Emits a deterministic UUIDv8 GUID attribute for a struct interface.
+void t_delphi_generator::generate_guid_v8(std::ostream& out, t_struct* tstruct) {
+  std::vector<uint8_t> prog_ns = program_namespace_uuid();
+  std::string canonical = canonical_struct_string(tstruct);
+  std::vector<uint8_t> uuid = compute_uuid_v8(prog_ns, canonical);
+  indent(out) << uuid_bytes_to_delphi_guid(uuid) << '\n';
 }
 
 void t_delphi_generator::generate_service_helpers(t_service* tservice) {
@@ -3942,4 +4125,5 @@ THRIFT_REGISTER_GENERATOR(
     "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n"
     "    com_types:       Use COM-compatible data types (e.g. WideString).\n"
     "    old_names:       Compatibility: generate \"reserved\" identifiers with '_' postfix instead of '&' prefix.\n"
-    "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n")
+    "    rtti:            Activate {$TYPEINFO} and {$RTTI} at the generated API interfaces.\n"
+    "    guid_v4:         Use random UUIDv4 (Windows only, legacy). Default: stable UUIDv8.\n")

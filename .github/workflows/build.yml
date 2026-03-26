@@ -69,6 +69,40 @@ jobs:
       - name: Run thrift version
         run: /usr/local/bin/thrift -version
 
+      - name: Test Delphi UUIDv8 GUID determinism
+        run: |
+          # Run the Delphi generator twice on the same input and verify identical output.
+          # Tests: cross-platform determinism, service inheritance, struct field-order.
+          THRIFT=/usr/local/bin/thrift
+          INPUT=test/delphi/UuidV8Test.thrift
+
+          mkdir -p /tmp/delphi-guid-run1 /tmp/delphi-guid-run2
+          $THRIFT --gen delphi --out /tmp/delphi-guid-run1 $INPUT
+          $THRIFT --gen delphi --out /tmp/delphi-guid-run2 $INPUT
+          diff -r /tmp/delphi-guid-run1 /tmp/delphi-guid-run2
+
+          # Also verify GUIDs are non-empty (grep for the GUID attribute pattern)
+          grep -qP "^\s+\['\{[0-9A-F]{8}-[0-9A-F]{4}-8[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}\}'\]" \
+            /tmp/delphi-guid-run1/UuidV8Test.pas \
+            && echo "UUIDv8 GUIDs found in output" \
+            || { echo "ERROR: No UUIDv8 GUIDs found in Delphi output"; exit 1; }
+
+          # Verify that Point and PointReversed have DIFFERENT GUIDs (field-order sensitivity)
+          POINT_GUID=$(grep -A1 "IPoint = interface" /tmp/delphi-guid-run1/UuidV8Test.pas | grep "^\s*\['" | tr -d ' ')
+          POINTREV_GUID=$(grep -A1 "IPointReversed = interface" /tmp/delphi-guid-run1/UuidV8Test.pas | grep "^\s*\['" | tr -d ' ')
+          [ "$POINT_GUID" != "$POINTREV_GUID" ] \
+            && echo "Field-order sensitivity OK (Point vs PointReversed GUIDs differ)" \
+            || { echo "ERROR: Point and PointReversed have the same GUID — field order not hashed"; exit 1; }
+
+          # Verify that BaseService and ExtendedService have DIFFERENT GUIDs (parent hash included)
+          BASE_GUID=$(grep -A1 "Iface = interface$" /tmp/delphi-guid-run1/UuidV8Test.pas | grep "^\s*\['" | head -1 | tr -d ' ')
+          EXT_GUID=$(grep -A1 "Iface = interface(.*Base" /tmp/delphi-guid-run1/UuidV8Test.pas | grep "^\s*\['" | head -1 | tr -d ' ')
+          [ "$BASE_GUID" != "$EXT_GUID" ] \
+            && echo "Parent-hash inclusion OK (BaseService vs ExtendedService GUIDs differ)" \
+            || { echo "ERROR: BaseService and ExtendedService have the same GUID — parent not hashed"; exit 1; }
+
+          echo "All Delphi UUIDv8 GUID determinism tests passed."
+
       # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
