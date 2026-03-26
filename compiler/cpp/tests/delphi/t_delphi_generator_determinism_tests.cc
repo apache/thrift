@@ -29,10 +29,10 @@ using delphi_generator_test_utils::source_dir;
 using delphi_generator_test_utils::join_path;
 using delphi_generator_test_utils::parse_thrift_for_test;
 
-static const string UUIDv5_PATTERN = R"(\[\s*'\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}'\])";
+static const string UUID_PATTERN = R"(\[\s*'\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}'\])";
 
 static string extract_first_guid(const string& content) {
-    std::regex r(UUIDv5_PATTERN);
+    std::regex r(UUID_PATTERN);
     std::smatch match;
     if (std::regex_search(content, match, r)) {
         return match.str(1);
@@ -41,8 +41,8 @@ static string extract_first_guid(const string& content) {
 }
 
 TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple generations", "[delphi][determinism]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
 
     string content_run1;
     string content_run2;
@@ -55,7 +55,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
         t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
     REQUIRE(gen != nullptr);
     REQUIRE_NOTHROW(gen->generate_program());
-        content_run1 = read_file("gen-delphi/Test.GuidV5.pas");
+        content_run1 = read_file("gen-delphi/Test.GuidV8.pas");
     }
 
     {
@@ -66,7 +66,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
             t_generator_registry::get_generator(program.get(), "delphi", parsed_options, ""));
         REQUIRE(gen != nullptr);
         REQUIRE_NOTHROW(gen->generate_program());
-        content_run2 = read_file("gen-delphi/Test.GuidV5.pas");
+        content_run2 = read_file("gen-delphi/Test.GuidV8.pas");
     }
 
     REQUIRE(!content_run1.empty());
@@ -80,7 +80,7 @@ TEST_CASE("t_delphi_generator produces deterministic GUIDs across multiple gener
     CHECK(guid1_run1 == guid1_run2);
 }
 
-TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs", "[delphi][determinism]") {
+TEST_CASE("t_delphi_generator produces same GUIDs with guid_v8 on multiple runs", "[delphi][determinism]") {
     string path = join_path(source_dir(), "test_canonical.thrift");
     string name = "test_canonical";
     map<string, string> parsed_options = {};
@@ -99,7 +99,7 @@ TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs"
         string content = read_file("gen-delphi/test.canonical.pas");
         REQUIRE(!content.empty());
 
-        std::regex r(UUIDv5_PATTERN);
+        std::regex r(UUID_PATTERN);
         auto begin = std::sregex_iterator(content.begin(), content.end(), r);
         auto end = std::sregex_iterator();
 
@@ -114,8 +114,8 @@ TEST_CASE("t_delphi_generator produces same GUIDs with guid_v5 on multiple runs"
 }
 
 TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[delphi][determinism]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
 
     std::unique_ptr<t_program> program(new t_program(path, name));
@@ -125,10 +125,10 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
     REQUIRE(gen != nullptr);
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string content = read_file("gen-delphi/Test.GuidV5.pas");
+    string content = read_file("gen-delphi/Test.GuidV8.pas");
     REQUIRE(!content.empty());
 
-    std::regex r(UUIDv5_PATTERN);
+    std::regex r(UUID_PATTERN);
     auto begin = std::sregex_iterator(content.begin(), content.end(), r);
     auto end = std::sregex_iterator();
 
@@ -146,8 +146,8 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
 }
 
 TEST_CASE("t_delphi_generator unique GUIDs per interface", "[delphi][determinism]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
 
     std::unique_ptr<t_program> program(new t_program(path, name));
@@ -158,12 +158,12 @@ TEST_CASE("t_delphi_generator unique GUIDs per interface", "[delphi][determinism
     REQUIRE_NOTHROW(gen->generate_program());
 
     set<string> all_guids;
-    vector<string> files = {"gen-delphi/Test.GuidV5.pas"};
+    vector<string> files = {"gen-delphi/Test.GuidV8.pas"};
 
     for (const auto& file : files) {
         string content = read_file(file);
         if (!content.empty()) {
-            std::regex r(UUIDv5_PATTERN);
+            std::regex r(UUID_PATTERN);
             auto begin = std::sregex_iterator(content.begin(), content.end(), r);
             auto end = std::sregex_iterator();
             for (auto i = begin; i != end; ++i) {

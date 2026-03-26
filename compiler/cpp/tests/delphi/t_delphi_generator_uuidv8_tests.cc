@@ -59,9 +59,9 @@ static string extract_guid_for_interface(const string& content, const string& if
     return "";
 }
 
-TEST_CASE("t_delphi_generator generates deterministic UUIDv5 GUIDs", "[delphi][uuidv5]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+TEST_CASE("t_delphi_generator generates deterministic UUIDv8 GUIDs", "[delphi][uuidv8]") {
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
     string option_string = "";
 
@@ -74,7 +74,7 @@ TEST_CASE("t_delphi_generator generates deterministic UUIDv5 GUIDs", "[delphi][u
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.pas";
+    string generated_file = "gen-delphi/Test.GuidV8.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -98,9 +98,9 @@ TEST_CASE("t_delphi_generator generates deterministic UUIDv5 GUIDs", "[delphi][u
     CHECK(simple_struct_guid != complex_struct_guid);
 }
 
-TEST_CASE("t_delphi_generator generates different GUIDs for sync vs async", "[delphi][uuidv5]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+TEST_CASE("t_delphi_generator generates different GUIDs for sync vs async", "[delphi][uuidv8]") {
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {{"async", ""}};
     string option_string = "";
 
@@ -113,7 +113,7 @@ TEST_CASE("t_delphi_generator generates different GUIDs for sync vs async", "[de
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.pas";
+    string generated_file = "gen-delphi/Test.GuidV8.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -125,9 +125,9 @@ TEST_CASE("t_delphi_generator generates different GUIDs for sync vs async", "[de
     CHECK(simple_service_guid != simple_service_async_guid);
 }
 
-TEST_CASE("t_delphi_generator generates different GUIDs for service inheritance", "[delphi][uuidv5]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+TEST_CASE("t_delphi_generator generates different GUIDs for service inheritance", "[delphi][uuidv8]") {
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
     string option_string = "";
 
@@ -140,7 +140,7 @@ TEST_CASE("t_delphi_generator generates different GUIDs for service inheritance"
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.pas";
+    string generated_file = "gen-delphi/Test.GuidV8.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -152,9 +152,9 @@ TEST_CASE("t_delphi_generator generates different GUIDs for service inheritance"
     CHECK(simple_service_guid != complex_service_guid);
 }
 
-TEST_CASE("t_delphi_generator generates GUID format matching Delphi interface declaration", "[delphi][uuidv5]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+TEST_CASE("t_delphi_generator generates GUID format matching Delphi interface declaration", "[delphi][uuidv8]") {
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
     string option_string = "";
 
@@ -167,7 +167,7 @@ TEST_CASE("t_delphi_generator generates GUID format matching Delphi interface de
 
     REQUIRE_NOTHROW(gen->generate_program());
 
-    string generated_file = "gen-delphi/Test.GuidV5.pas";
+    string generated_file = "gen-delphi/Test.GuidV8.pas";
     string content = read_file(generated_file);
     REQUIRE(!content.empty());
 
@@ -176,9 +176,9 @@ TEST_CASE("t_delphi_generator generates GUID format matching Delphi interface de
     CHECK(regex_search(content, r));
 }
 
-TEST_CASE("t_delphi_generator generates unique GUIDs for each entity", "[delphi][uuidv5]") {
-    string path = join_path(source_dir(), "test_uuidv5.thrift");
-    string name = "test_uuidv5";
+TEST_CASE("t_delphi_generator generates unique GUIDs for each entity", "[delphi][uuidv8]") {
+    string path = join_path(source_dir(), "test_uuidv8.thrift");
+    string name = "test_uuidv8";
     map<string, string> parsed_options = {};
     string option_string = "";
 
@@ -192,7 +192,7 @@ TEST_CASE("t_delphi_generator generates unique GUIDs for each entity", "[delphi]
     REQUIRE_NOTHROW(gen->generate_program());
 
     set<string> all_guids;
-    vector<string> files = {"gen-delphi/Test.GuidV5.pas"};
+    vector<string> files = {"gen-delphi/Test.GuidV8.pas"};
 
     for (const auto& file : files) {
         string content = read_file(file);

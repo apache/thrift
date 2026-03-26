@@ -1950,7 +1950,7 @@ void t_delphi_generator::generate_guid_v4(std::ostream& out) {
 #endif
 }
 
-static const uint8_t UUIDv5_NAMESPACE_DNS[] = {
+static const uint8_t UUIDv8_NAMESPACE_DNS[] = {
   0x6b, 0xa7, 0xb8, 0x11, 0x50, 0x50, 0x51, 0x40,
   0xb8, 0xe1, 0x00, 0x15, 0x5d, 0x00, 0x00, 0x00
 };
@@ -1993,7 +1993,7 @@ static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16
       namespace_uuid[8], namespace_uuid[9], namespace_uuid[10], namespace_uuid[11], namespace_uuid[12], namespace_uuid[13], namespace_uuid[14], namespace_uuid[15],
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
   };
-  size_t name_len = std::min(name.size(), static_cast<size_t>(SHA256HashSize));
+  size_t name_len = std::min<size_t>(name.size(), static_cast<size_t>(SHA256HashSize));
   for (size_t i = 0; i < name_len; ++i) {
     combined[16 + i] = static_cast<uint8_t>(name[i]);
   }
@@ -2157,7 +2157,7 @@ std::string t_delphi_generator::get_program_namespace() {
 }
 
 std::string t_delphi_generator::get_root_namespace_uuid() {
-  return uuid8_from_namespace_and_name(UUIDv5_NAMESPACE_DNS, "thrift.apache.org");
+  return uuid8_from_namespace_and_name(UUIDv8_NAMESPACE_DNS, "thrift.apache.org");
 }
 
 static void uuid_to_bytes(const std::string& uuid_str, uint8_t bytes[16]) {
