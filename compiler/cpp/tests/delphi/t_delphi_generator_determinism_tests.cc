@@ -137,7 +137,7 @@ TEST_CASE("t_delphi_generator produces consistent GUIDs across platforms", "[del
         guid_count++;
         string uuid = (*i).str(1);
         CHECK(uuid.length() == 36);
-        CHECK(uuid[14] == '5');
+        CHECK(uuid[14] == '8');
         CHECK(uuid[19] >= '8');
         CHECK(uuid[19] <= 'b');
     }

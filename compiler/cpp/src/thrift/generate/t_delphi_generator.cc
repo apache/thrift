@@ -2005,7 +2005,7 @@ static std::string uuid8_from_namespace_and_name(const uint8_t namespace_uuid[16
       hash[0], hash[1], hash[2],  hash[3],  hash[4],  hash[5],  hash[6],  hash[7],
       hash[8], hash[9], hash[10], hash[11], hash[12], hash[13], hash[14], hash[15]
   };
-  uuid[6] = (uuid[6] & 0x0F) | 0x50;
+  uuid[6] = (uuid[6] & 0x0F) | 0x80;
   uuid[8] = (uuid[8] & 0x3F) | 0x80;
 
   char guid_str[40];
