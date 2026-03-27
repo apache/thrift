@@ -45,6 +45,28 @@ enum _ThriftSocketProperties
 
 G_DEFINE_TYPE(ThriftSocket, thrift_socket, THRIFT_TYPE_TRANSPORT)
 
+static gboolean
+thrift_socket_path_fits_unix_addr (const gchar *path, GError **error)
+{
+  const size_t path_len = strlen (path);
+  const size_t sun_path_len = sizeof (((struct sockaddr_un *) 0)->sun_path);
+
+  if (path_len >= sun_path_len)
+  {
+    if (error != NULL)
+    {
+      g_set_error (error,
+                   THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_SOCKET,
+                   "unix socket path is too long (%zu bytes, max %zu)",
+                   path_len, sun_path_len - 1);
+    }
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 /* implements thrift_transport_is_open */
 gboolean
 thrift_socket_is_open (ThriftTransport *transport)
@@ -135,8 +157,13 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
 
   ThriftSocket *tsocket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (tsocket->sd == THRIFT_INVALID_SOCKET, FALSE);
-  
+
   if (tsocket->path) {
+    if (!thrift_socket_path_fits_unix_addr (tsocket->path, error))
+    {
+      return FALSE;
+    }
+
     /* create a socket structure */
     struct sockaddr_un pin;
     memset (&pin, 0, sizeof(pin));
