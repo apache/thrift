@@ -115,7 +115,7 @@ This procedure will apply only your commits in order to the current master, then
 
 ## AI generated content ##
 
-The [ASF Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html) serves as a great summary. It also outlines potential issues that come with generative tools. For the reasons set out in this document, but also to make it absolutely clear to the reviewers, we strongly recommend using the `Generated-by:` marker in commits and pull requests, if applicable.
+The [ASF Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html) serves as a great summary. It also outlines potential issues that come with generative tools. For the reasons set out in this document, but also to make it absolutely clear to the reviewers, we strongly recommend using either the `Generated-by:` (as recommended by the linked ASF source) or `Co-Authored-By:` clause (widely adopted common practice, e.g. [here](https://issues.apache.org/jira/browse/SPARK-25018) and [here](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/CommitMessageConventions.html)) in commits and pull requests, if applicable.
 
 ----
 
