@@ -138,7 +138,12 @@ module Thrift
 
       def ensure_closed
         kill_worker_threads if @worker_threads
-        @iom_thread.kill
+        if @iom_thread&.alive?
+          @iom_thread.kill
+          @iom_thread.join
+        end
+        close_connections
+        close_signal_pipes
       end
 
       private
@@ -244,6 +249,26 @@ module Thrift
           t.kill if t.status
         end
         @worker_threads.clear
+      end
+
+      def close_connections
+        @connections.each do |fd|
+          begin
+            fd.close
+          rescue IOError, SystemCallError, TransportException
+          end
+        end
+        @connections.clear
+        @buffers.clear
+      end
+
+      def close_signal_pipes
+        @signal_pipes.each do |pipe|
+          begin
+            pipe.close unless pipe.closed?
+          rescue IOError
+          end
+        end
       end
 
       def slice_frame!(buf)
