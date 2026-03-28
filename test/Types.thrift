@@ -21,3 +21,7 @@ struct Type1 {
   1: i32 number,
   2: string message,
 }
+
+service BaseService {
+  Type1 testEpisode(1:Type1 arg)
+}

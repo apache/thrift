@@ -226,6 +226,7 @@ public:
   std::string render_includes();
   std::string render_ts_includes();
   std::string get_import_path(t_program* program);
+  std::string get_import_path(t_service* service);
   std::string declare_field(t_field* tfield, bool init = false, bool obj = false);
   std::string function_signature(t_function* tfunction,
                                  std::string prefix = "",
@@ -632,6 +633,17 @@ string t_js_generator::get_import_path(t_program* program) {
   if (program->get_recursive()) {
     return "./" + import_file_name_with_extension;
   }
+
+  auto module_name_and_import_path_iterator = module_name_2_import_path.find(import_file_name);
+  if (module_name_and_import_path_iterator != module_name_2_import_path.end()) {
+    return module_name_and_import_path_iterator->second;
+  }
+  return "./" + import_file_name_with_extension;
+}
+
+string t_js_generator::get_import_path(t_service* service) {
+  const string import_file_name(service->get_name());
+  const string import_file_name_with_extension = import_file_name + (gen_esm_ ? ".mjs" : ".js");
 
   auto module_name_and_import_path_iterator = module_name_2_import_path.find(import_file_name);
   if (module_name_and_import_path_iterator != module_name_2_import_path.end()) {
@@ -1275,7 +1287,9 @@ void t_js_generator::generate_service(t_service* tservice) {
   f_service_ << js_includes() << '\n' << render_includes() << '\n';
 
   if (gen_ts_) {
-    if (tservice->get_extends() != nullptr) {
+    if ((tservice->get_extends() != nullptr)
+        && (module_name_2_import_path.find(tservice->get_extends()->get_name()) == module_name_2_import_path.end())) {
+      // Only add the reference if the service does not come from the episode
       f_service_ts_ << "/// <reference path=\"" << tservice->get_extends()->get_name()
                     << ".d.ts\" />" << '\n';
     }
@@ -1328,15 +1342,15 @@ void t_js_generator::generate_service(t_service* tservice) {
 
   if (gen_node_) {
     if (tservice->get_extends() != nullptr) {
-      f_service_ << js_const_type_ <<  tservice->get_extends()->get_name() << " = require('./"
-                 << tservice->get_extends()->get_name() << "');" << '\n' << js_const_type_
+      f_service_ << js_const_type_ <<  tservice->get_extends()->get_name() << " = require('"
+                 << get_import_path(tservice->get_extends()) << "');" << '\n' << js_const_type_
                  << tservice->get_extends()->get_name()
                  << "Client = " << tservice->get_extends()->get_name() << ".Client;" << '\n'
                  << js_const_type_ << tservice->get_extends()->get_name()
                  << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << '\n';
 
-      f_service_ts_ << "import " << tservice->get_extends()->get_name() << " = require('./"
-                    << tservice->get_extends()->get_name() << "');" << '\n';
+      f_service_ts_ << "import " << tservice->get_extends()->get_name() << " = require('"
+                    << get_import_path(tservice->get_extends()) << "');" << '\n';
     }
 
     if (gen_esm_) {
