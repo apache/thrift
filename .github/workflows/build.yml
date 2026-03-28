@@ -201,6 +201,26 @@ jobs:
       - name: Run Tests
         run: vendor/bin/phpunit -c lib/php/phpunit.xml
 
+      - name: Build PHP cross test extension
+        if: matrix.php-version == '8.3'
+        run: make -C lib/php src/ext/thrift_protocol/modules/thrift_protocol.so
+
+      - name: Run make precross for php test
+        if: matrix.php-version == '8.3'
+        run: make -C test/php precross
+
+      - name: Upload php precross artifacts
+        if: matrix.php-version == '8.3'
+        uses: actions/upload-artifact@v7
+        with:
+          name: php-precross
+          if-no-files-found: error
+          path: |
+            lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so
+            test/php/gen-php/
+            test/php/gen-php-classmap/
+          retention-days: 3
+
   lib-go:
     needs: compiler
     runs-on: ubuntu-24.04
@@ -873,6 +893,7 @@ jobs:
 
   cross-test:
     needs:
+      - lib-php
       - lib-java-kotlin
       #- lib-swift                     # currently broken and no maintainers around -> see THRIFT-5864
       #- lib-rust                      # currently broken and no maintainers around -> see THRIFT-5917
@@ -887,9 +908,9 @@ jobs:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
         # rust currently broken and no maintainers around -> see THRIFT-5917
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'cpp', 'py', 'rb', 'nodejs', 'nodets']
+        server_lang: ['java', 'go', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,cpp,py,nodejs,nodets', 'rb']
+        client_lang: ['java,kotlin', 'go,cpp,py,php,nodejs,nodets', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -902,6 +923,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools
           python -m pip install "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, xml, curl, sockets
+          ini-values: "error_reporting=E_ALL"
+
+      - name: Install PHP dependencies
+        run: composer install --no-progress --prefer-dist
 
       - uses: actions/setup-java@v5
         with:
@@ -974,6 +1005,18 @@ jobs:
         with:
           name: rb-precross
           path: .
+
+      - name: Download php precross artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: php-precross
+          path: .
+
+      - name: Prepare PHP cross test extensions
+        run: |
+          mkdir -p test/php/php_ext_dir
+          ln -sf ../../../lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so test/php/php_ext_dir/
+          ln -sf "$(php-config --extension-dir)/sockets.so" test/php/php_ext_dir/
 
       - name: Download nodejs and nodets precross artifacts
         uses: actions/download-artifact@v8

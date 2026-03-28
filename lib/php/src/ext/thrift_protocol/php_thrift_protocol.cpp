@@ -72,6 +72,7 @@ enum TType {
   T_MAP        = 13,
   T_SET        = 14,
   T_LIST       = 15,
+  T_UUID       = 16,
   T_UTF8       = 16,
   T_UTF16      = 17
 };
@@ -84,6 +85,61 @@ const int8_t T_EXCEPTION = 3;
 // tprotocolexception
 const int INVALID_DATA = 1;
 const int BAD_VERSION = 4;
+
+static inline int uuid_hex_nibble(char c) {
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+  if (c >= 'a' && c <= 'f') {
+    return 10 + (c - 'a');
+  }
+  if (c >= 'A' && c <= 'F') {
+    return 10 + (c - 'A');
+  }
+  return -1;
+}
+
+static bool parse_uuid_string(const char* value, size_t len, uint8_t (&uuid)[16]) {
+  size_t nibble_index = 0;
+  int high_nibble = -1;
+
+  for (size_t i = 0; i < len; ++i) {
+    const char c = value[i];
+    if (c == '-' || c == '{' || c == '}') {
+      continue;
+    }
+
+    const int nibble = uuid_hex_nibble(c);
+    if (nibble < 0) {
+      return false;
+    }
+
+    if (high_nibble < 0) {
+      high_nibble = nibble;
+    } else {
+      if (nibble_index >= sizeof(uuid)) {
+        return false;
+      }
+      uuid[nibble_index++] = static_cast<uint8_t>((high_nibble << 4) | nibble);
+      high_nibble = -1;
+    }
+  }
+
+  return nibble_index == sizeof(uuid) && high_nibble < 0;
+}
+
+static void format_uuid_string(const uint8_t (&uuid)[16], char (&buffer)[37]) {
+  static const char hex[] = "0123456789abcdef";
+  size_t out = 0;
+  for (size_t i = 0; i < sizeof(uuid); ++i) {
+    if (i == 4 || i == 6 || i == 8 || i == 10) {
+      buffer[out++] = '-';
+    }
+    buffer[out++] = hex[(uuid[i] >> 4) & 0x0f];
+    buffer[out++] = hex[uuid[i] & 0x0f];
+  }
+  buffer[out] = '\0';
+}
 
 zend_module_entry thrift_protocol_module_entry = {
   STANDARD_MODULE_HEADER,
@@ -467,8 +523,10 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
     case T_DOUBLE:
       transport.skip(8);
       return;
+    case T_UUID:
+      transport.skip(16);
+      return;
     //case T_UTF7: // aliases T_STRING
-    case T_UTF8:
     case T_UTF16:
     case T_STRING: {
       uint32_t len = transport.readU32();
@@ -582,7 +640,6 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       RETURN_DOUBLE(a.d);
     }
     //case T_UTF7: // aliases T_STRING
-    case T_UTF8:
     case T_UTF16:
     case T_STRING: {
       uint32_t size = transport.readU32();
@@ -594,6 +651,14 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       } else {
         ZVAL_EMPTY_STRING(return_value);
       }
+      return;
+    }
+    case T_UUID: {
+      uint8_t uuid[16];
+      char strbuf[37];
+      transport.readBytes(uuid, sizeof(uuid));
+      format_uuid_string(uuid, strbuf);
+      ZVAL_STRINGL(return_value, strbuf, sizeof(strbuf) - 1);
       return;
     }
     case T_MAP: { // array of key -> value
@@ -673,7 +738,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
 static
 void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transport, HashTable* ht, HashPosition& ht_pos, HashTable* spec) {
-  bool keytype_is_numeric = (!((keytype == T_STRING) || (keytype == T_UTF8) || (keytype == T_UTF16)));
+  bool keytype_is_numeric = (!((keytype == T_STRING) || (keytype == T_UUID) || (keytype == T_UTF16)));
 
   zend_string* key;
   uint key_len;
@@ -751,7 +816,15 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       a.d = Z_DVAL_P(value);
       transport.writeI64(a.c);
     } return;
-    case T_UTF8:
+    case T_UUID: {
+      if (Z_TYPE_P(value) != IS_STRING) convert_to_string(value);
+      uint8_t uuid[16];
+      if (!parse_uuid_string(Z_STRVAL_P(value), Z_STRLEN_P(value), uuid)) {
+        throw_tprotocolexception("Attempt to send an invalid UUID string", INVALID_DATA);
+      }
+      transport.write(reinterpret_cast<const char*>(uuid), sizeof(uuid));
+      return;
+    }
     case T_UTF16:
     case T_STRING:
       if (Z_TYPE_P(value) != IS_STRING) convert_to_string(value);

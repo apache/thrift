@@ -210,7 +210,7 @@ class TJSONProtocol extends TProtocol
             $this->trans_->write(self::QUOTE);
         }
 
-        $this->trans_->write(json_encode($b, JSON_UNESCAPED_UNICODE));
+        $this->trans_->write(json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);

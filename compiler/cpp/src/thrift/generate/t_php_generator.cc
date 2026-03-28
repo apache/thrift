@@ -1550,11 +1550,10 @@ void t_php_generator::generate_process_function(std::ostream& out, t_service* ts
     out << indent() << "$result = new " << resultname << "();" << '\n';
   }
 
-  // Try block for a function with exceptions
-  if (xceptions.size() > 0) {
-    out << indent() << "try {" << '\n';
-    indent_up();
-  }
+  // Wrap handler invocations so undeclared runtime failures become
+  // TApplicationException responses instead of crashing the PHP test server.
+  out << indent() << "try {" << '\n';
+  indent_up();
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
@@ -1577,23 +1576,44 @@ void t_php_generator::generate_process_function(std::ostream& out, t_service* ts
   }
   out << ");" << '\n';
 
-  if (!tfunction->is_oneway() && xceptions.size() > 0) {
-    indent_down();
-    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      out << indent() << "} catch ("
-                 << php_namespace(get_true_type((*x_iter)->get_type())->get_program())
-                 << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {"
-                 << '\n';
-      if (!tfunction->is_oneway()) {
-        indent_up();
-        out << indent() << "$result->" << (*x_iter)->get_name() << " = $"
-                   << (*x_iter)->get_name() << ";" << '\n';
-        indent_down();
-        out << indent();
-      }
+  indent_down();
+  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+    out << indent() << "} catch ("
+               << php_namespace(get_true_type((*x_iter)->get_type())->get_program())
+               << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {"
+               << '\n';
+    if (!tfunction->is_oneway()) {
+      indent_up();
+      out << indent() << "$result->" << (*x_iter)->get_name() << " = $"
+                 << (*x_iter)->get_name() << ";" << '\n';
+      indent_down();
     }
-    out << "}" << '\n';
   }
+  out << indent() << "} catch (TApplicationException $ex) {" << '\n';
+  indent_up();
+  if (!tfunction->is_oneway()) {
+    out << indent() << "$output->writeMessageBegin('" << tfunction->get_name()
+        << "', TMessageType::EXCEPTION, $seqid);" << '\n'
+        << indent() << "$ex->write($output);" << '\n'
+        << indent() << "$output->writeMessageEnd();" << '\n'
+        << indent() << "$output->getTransport()->flush();" << '\n';
+  }
+  out << indent() << "return;" << '\n';
+  indent_down();
+  out << indent() << "} catch (\\Throwable $ex) {" << '\n';
+  indent_up();
+  if (!tfunction->is_oneway()) {
+    out << indent() << "$x = new TApplicationException($ex->getMessage(), "
+        << "TApplicationException::INTERNAL_ERROR);" << '\n'
+        << indent() << "$output->writeMessageBegin('" << tfunction->get_name()
+        << "', TMessageType::EXCEPTION, $seqid);" << '\n'
+        << indent() << "$x->write($output);" << '\n'
+        << indent() << "$output->writeMessageEnd();" << '\n'
+        << indent() << "$output->getTransport()->flush();" << '\n';
+  }
+  out << indent() << "return;" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
@@ -2707,6 +2727,7 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_VOID:
         break;
       case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_UUID:
         result += " = ''";
         break;
       case t_base_type::TYPE_BOOL:
