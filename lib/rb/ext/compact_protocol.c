@@ -124,21 +124,29 @@ static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, V
   SET_LAST_ID(self, id_value);
 }
 
-static int32_t int_to_zig_zag(int32_t n) {
-  return (n << 1) ^ (n >> 31);
+static uint32_t int_to_zig_zag(int32_t n) {
+  return (((uint32_t)n) << 1) ^ (0U - (uint32_t)(n < 0));
 }
 
 static uint64_t ll_to_zig_zag(int64_t n) {
-  return (n << 1) ^ (n >> 63);
+  return (((uint64_t)n) << 1) ^ (0ULL - (uint64_t)(n < 0));
+}
+
+static uint32_t message_seqid_to_varint32(int32_t seqid) {
+  return seqid < 0 ? (uint32_t)((int64_t)seqid + (INT64_C(1) << 32)) : (uint32_t)seqid;
+}
+
+static int32_t message_seqid_from_varint32(uint32_t seqid) {
+  return seqid > INT32_MAX ? (int32_t)((int64_t)seqid - (INT64_C(1) << 32)) : (int32_t)seqid;
 }
 
 static void write_varint32(VALUE transport, uint32_t n) {
   while (true) {
-    if ((n & ~0x7F) == 0) {
-      write_byte_direct(transport, n & 0x7f);
+    if ((n & ~0x7FU) == 0U) {
+      write_byte_direct(transport, n & 0x7FU);
       break;
     } else {
-      write_byte_direct(transport, (n & 0x7F) | 0x80);
+      write_byte_direct(transport, (n & 0x7FU) | 0x80U);
       n = n >> 7;
     }
   }
@@ -146,11 +154,11 @@ static void write_varint32(VALUE transport, uint32_t n) {
 
 static void write_varint64(VALUE transport, uint64_t n) {
   while (true) {
-    if ((n & ~0x7F) == 0) {
-      write_byte_direct(transport, n & 0x7f);
+    if ((n & ~0x7FULL) == 0ULL) {
+      write_byte_direct(transport, n & 0x7FULL);
       break;
     } else {
-      write_byte_direct(transport, (n & 0x7F) | 0x80);
+      write_byte_direct(transport, (n & 0x7FULL) | 0x80ULL);
       n = n >> 7;
     }
   }
@@ -208,9 +216,10 @@ VALUE rb_thrift_compact_proto_write_set_end(VALUE self) {
 
 VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE type, VALUE seqid) {
   VALUE transport = GET_TRANSPORT(self);
+  int32_t seqid_value = FIX2INT(seqid);
   write_byte_direct(transport, PROTOCOL_ID);
   write_byte_direct(transport, (VERSION & VERSION_MASK) | ((FIX2INT(type) << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
-  write_varint32(transport, FIX2INT(seqid));
+  write_varint32(transport, message_seqid_to_varint32(seqid_value));
   rb_thrift_compact_proto_write_string(self, name);
 
   return Qnil;
@@ -419,20 +428,20 @@ static char read_byte_direct(VALUE self) {
   return (char)(FIX2INT(byte));
 }
 
-static int64_t zig_zag_to_ll(int64_t n) {
-  return (((uint64_t)n) >> 1) ^ -(n & 1);
+static int64_t zig_zag_to_ll(uint64_t n) {
+  return (int64_t)((n >> 1) ^ (0ULL - (n & 1ULL)));
 }
 
-static int32_t zig_zag_to_int(int32_t n) {
-  return (((uint32_t)n) >> 1) ^ -(n & 1);
+static int32_t zig_zag_to_int(uint32_t n) {
+  return (int32_t)((n >> 1) ^ (0U - (n & 1U)));
 }
 
-static int64_t read_varint64(VALUE self) {
+static uint64_t read_varint64(VALUE self) {
   int shift = 0;
-  int64_t result = 0;
+  uint64_t result = 0;
   while (true) {
     int8_t b = read_byte_direct(self);
-    result = result | ((uint64_t)(b & 0x7f) << shift);
+    result |= ((uint64_t)(b & 0x7f) << shift);
     if ((b & 0x80) != 0x80) {
       break;
     }
@@ -441,8 +450,12 @@ static int64_t read_varint64(VALUE self) {
   return result;
 }
 
+static uint32_t read_varint32(VALUE self) {
+  return (uint32_t)read_varint64(self);
+}
+
 static int16_t read_i16(VALUE self) {
-  return zig_zag_to_int((int32_t)read_varint64(self));
+  return (int16_t)zig_zag_to_int(read_varint32(self));
 }
 
 VALUE rb_thrift_compact_proto_read_message_end(VALUE self) {
@@ -494,7 +507,7 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
   }
 
   int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
-  int32_t seqid = (int32_t)read_varint64(self);
+  int32_t seqid = message_seqid_from_varint32(read_varint32(self));
   VALUE messageName = rb_thrift_compact_proto_read_string(self);
   return rb_ary_new3(3, messageName, INT2FIX(type), INT2NUM(seqid));
 }
@@ -532,19 +545,19 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_map_begin(VALUE self) {
-  int32_t size = (int32_t)read_varint64(self);
+  uint32_t size = read_varint32(self);
   uint8_t key_and_value_type = size == 0 ? 0 : read_byte_direct(self);
-  return rb_ary_new3(3, INT2FIX(get_ttype(key_and_value_type >> 4)), INT2FIX(get_ttype(key_and_value_type & 0xf)), INT2FIX(size));
+  return rb_ary_new3(3, INT2FIX(get_ttype(key_and_value_type >> 4)), INT2FIX(get_ttype(key_and_value_type & 0xf)), UINT2NUM(size));
 }
 
 VALUE rb_thrift_compact_proto_read_list_begin(VALUE self) {
   uint8_t size_and_type = read_byte_direct(self);
-  int32_t size = (size_and_type >> 4) & 0x0f;
+  uint32_t size = (size_and_type >> 4) & 0x0f;
   if (size == 15) {
-    size = (int32_t)read_varint64(self);
+    size = read_varint32(self);
   }
   uint8_t type = get_ttype(size_and_type & 0x0f);
-  return rb_ary_new3(2, INT2FIX(type), INT2FIX(size));
+  return rb_ary_new3(2, INT2FIX(type), UINT2NUM(size));
 }
 
 VALUE rb_thrift_compact_proto_read_set_begin(VALUE self) {
@@ -570,7 +583,7 @@ VALUE rb_thrift_compact_proto_read_i16(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_i32(VALUE self) {
-  return INT2NUM(zig_zag_to_int((int32_t)read_varint64(self)));
+  return INT2NUM(zig_zag_to_int(read_varint32(self)));
 }
 
 VALUE rb_thrift_compact_proto_read_i64(VALUE self) {
@@ -603,8 +616,8 @@ VALUE rb_thrift_compact_proto_read_string(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
-  int64_t size = read_varint64(self);
-  return READ(self, size);
+  uint32_t size = read_varint32(self);
+  return rb_funcall(GET_TRANSPORT(self), read_all_method_id, 1, UINT2NUM(size));
 }
 
 VALUE rb_thrift_compact_proto_read_uuid(VALUE self) {
