@@ -252,8 +252,6 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
   if (ttype == TTYPE_MAP) {
     VALUE keys;
-    VALUE key;
-    VALUE val;
 
     Check_Type(value, T_HASH);
 
@@ -272,8 +270,8 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     default_write_map_begin(protocol, keytype_value, valuetype_value, INT2FIX(sz));
 
     for (i = 0; i < sz; i++) {
-      key = rb_ary_entry(keys, i);
-      val = rb_hash_aref(value, key);
+      VALUE key = rb_ary_entry(keys, i);
+      VALUE val = rb_hash_aref(value, key);
 
       if (IS_CONTAINER(keytype)) {
         write_container(keytype, key_info, key, protocol);
@@ -489,8 +487,6 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       rb_thrift_struct_read(result, protocol);
     }
   } else if (ttype == TTYPE_MAP) {
-    int i;
-
     VALUE map_header = default_read_map_begin(protocol);
     int key_ttype = FIX2INT(rb_ary_entry(map_header, 0));
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
@@ -511,7 +507,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       if (num_entries == 0 || (specified_key_type == key_ttype && specified_value_type == value_ttype)) {
         result = rb_hash_new();
 
-        for (i = 0; i < num_entries; ++i) {
+        for (int i = 0; i < num_entries; ++i) {
           VALUE key, val;
 
           key = read_anything(protocol, key_ttype, key_info);
@@ -528,8 +524,6 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
 
     default_read_map_end(protocol);
   } else if (ttype == TTYPE_LIST) {
-    int i;
-
     VALUE list_header = default_read_list_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
@@ -542,7 +536,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       if (specified_element_type == element_ttype) {
         result = new_container_array(num_elements);
 
-        for (i = 0; i < num_elements; ++i) {
+        for (int i = 0; i < num_elements; ++i) {
           rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
         }
       } else {
@@ -555,7 +549,6 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     default_read_list_end(protocol);
   } else if (ttype == TTYPE_SET) {
     VALUE items;
-    int i;
 
     VALUE set_header = default_read_set_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
@@ -569,7 +562,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       if (specified_element_type == element_ttype) {
         items = new_container_array(num_elements);
 
-        for (i = 0; i < num_elements; ++i) {
+        for (int i = 0; i < num_elements; ++i) {
           rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
         }
 
