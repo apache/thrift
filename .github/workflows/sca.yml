@@ -182,6 +182,10 @@ jobs:
         continue-on-error: true
         working-directory: "lib/rb"
         run: |
+          # The SCA configure args disable Ruby, so top-level precross skips Ruby targets.
+          make -j$(nproc) -C ../../test/rb precross
+          make -j$(nproc) -C ../../tutorial/rb
+          bundle exec rake gen-rb
           bundle exec rubocop --config .rubocop.yml --format progress --format github . ../../test/rb ../../tutorial/rb
 
       - name: Print statistics
