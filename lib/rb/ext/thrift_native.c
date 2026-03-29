@@ -121,6 +121,7 @@ int PROTOERR_BAD_VERSION;
 int PROTOERR_NOT_IMPLEMENTED;
 int PROTOERR_DEPTH_LIMIT;
 
+// cppcheck-suppress unusedFunction
 RUBY_FUNC_EXPORTED void Init_thrift_native(void) {
   // cached classes
   thrift_module = rb_const_get(rb_cObject, rb_intern("Thrift"));

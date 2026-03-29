@@ -124,12 +124,12 @@ static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, V
   SET_LAST_ID(self, id_value);
 }
 
-static int32_t int_to_zig_zag(int32_t n) {
-  return (n << 1) ^ (n >> 31);
+static uint32_t int_to_zig_zag(int32_t n) {
+  return (((uint32_t)n) << 1) ^ (0U - (uint32_t)(n < 0));
 }
 
 static uint64_t ll_to_zig_zag(int64_t n) {
-  return (n << 1) ^ (n >> 63);
+  return (((uint64_t)n) << 1) ^ (0ULL - (uint64_t)(n < 0));
 }
 
 static void write_varint32(VALUE transport, uint32_t n) {
@@ -419,17 +419,17 @@ static char read_byte_direct(VALUE self) {
   return (char)(FIX2INT(byte));
 }
 
-static int64_t zig_zag_to_ll(int64_t n) {
-  return (((uint64_t)n) >> 1) ^ -(n & 1);
+static int64_t zig_zag_to_ll(uint64_t n) {
+  return (int64_t)((n >> 1) ^ (0ULL - (n & 1ULL)));
 }
 
-static int32_t zig_zag_to_int(int32_t n) {
-  return (((uint32_t)n) >> 1) ^ -(n & 1);
+static int32_t zig_zag_to_int(uint32_t n) {
+  return (int32_t)((n >> 1) ^ (0U - (n & 1U)));
 }
 
-static int64_t read_varint64(VALUE self) {
+static uint64_t read_varint64(VALUE self) {
   int shift = 0;
-  int64_t result = 0;
+  uint64_t result = 0;
   while (true) {
     int8_t b = read_byte_direct(self);
     result = result | ((uint64_t)(b & 0x7f) << shift);

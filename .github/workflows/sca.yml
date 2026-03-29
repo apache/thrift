@@ -146,6 +146,21 @@ jobs:
             -i lib/c_glib/test/gen-cpp \
             --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
+          # Ruby C extension error checks
+          # suppress missingIncludeSystem:lib/rb/ext/* -> Ruby and libc headers are not needed for analysis.
+          # suppress checkersReport -> hide info-only active-checker summary.
+          # Use -j1 with a build dir: build-dir avoids a large staticFunction false-positive set in serial scans,
+          # and -j1 avoids the -j2 whole-program path where Init_thrift_native's inline unusedFunction suppression misbinds.
+          mkdir -p /tmp/cppcheck-rb-ext
+          cppcheck --force --quiet --inline-suppr --enable=all \
+            -j1 --cppcheck-build-dir=/tmp/cppcheck-rb-ext \
+            -I lib/rb/ext \
+            --library=ruby \
+            --suppress="missingIncludeSystem:lib/rb/ext/*" \
+            --suppress="checkersReport" \
+            --check-level=exhaustive \
+            --error-exitcode=1 lib/rb/ext
+
       - name: Run flake8
         id: flake8
         continue-on-error: true

@@ -21,6 +21,16 @@
 require 'spec_helper'
 
 describe Thrift::CompactProtocol do
+  INTEGER_BOUNDARY_TESTS = {
+    :i32 => [-(2**31), (2**31) - 1],
+    :i64 => [-(2**63), (2**63) - 1]
+  }
+
+  INTEGER_MINIMUM_ENCODINGS = {
+    :i32 => [0xff, 0xff, 0xff, 0xff, 0x0f],
+    :i64 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
+  }
+
   TESTS = {
     :byte => (-127..127).to_a,
     :i16 => (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
@@ -68,6 +78,28 @@ describe Thrift::CompactProtocol do
         expect(read_back).to eq(value)
         proto.read_field_end
       end
+    end
+  end
+
+  it "should round-trip signed integer boundaries correctly" do
+    INTEGER_BOUNDARY_TESTS.each_pair do |primitive_type, test_values|
+      test_values.each do |value|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+
+        proto.send(writer(primitive_type), value)
+        expect(proto.send(reader(primitive_type))).to eq(value)
+      end
+    end
+  end
+
+  it "should encode signed integer minima with the canonical zigzag varint bytes" do
+    INTEGER_MINIMUM_ENCODINGS.each_pair do |primitive_type, expected_bytes|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.send(writer(primitive_type), INTEGER_BOUNDARY_TESTS.fetch(primitive_type).first)
+      expect(trans.read(trans.available).bytes).to eq(expected_bytes)
     end
   end
 
