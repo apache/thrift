@@ -101,7 +101,9 @@ switch ($protocol) {
         exit(1);
 }
 
-$serverTransport = new \Thrift\Server\TServerSocket('localhost', $port);
+// `localhost` may resolve to an IPv6-only listener in newer PHP/runtime combinations,
+// while some cross-test clients still connect via 127.0.0.1. Bind explicitly to IPv4.
+$serverTransport = new \Thrift\Server\TServerSocket('127.0.0.1', $port);
 $handler = new Handler();
 $processor = new ThriftTest\ThriftTestProcessor($handler);
 
