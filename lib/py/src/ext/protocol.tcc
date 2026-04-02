@@ -874,17 +874,46 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
 template <typename Impl>
 PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyObject* spec_seq) {
   int spec_seq_len = PyTuple_Size(spec_seq);
-  bool immutable = output == Py_None;
+  bool immutable = false;
   ScopedPyObject kwargs;
+  ScopedPyObject created_output;
   if (spec_seq_len == -1) {
     return nullptr;
   }
 
-  if (immutable) {
-    kwargs.reset(PyDict_New());
-    if (!kwargs) {
-      PyErr_SetString(PyExc_TypeError, "failed to prepare kwargument storage");
-      return nullptr;
+  if (output == Py_None) {
+    static PyObject* TBaseModule = nullptr;
+    static PyObject* TFrozenBase = nullptr;
+    if (!TFrozenBase) {
+      if (!TBaseModule) {
+        TBaseModule = PyImport_ImportModule("thrift.protocol.TBase");
+      }
+      if (!TBaseModule) {
+        return nullptr;
+      }
+      TFrozenBase = PyObject_GetAttrString(TBaseModule, "TFrozenBase");
+      if (!TFrozenBase) {
+        return nullptr;
+      }
+    }
+    // Immutable structs are produced by two codegen paths:
+    //   1. "frozen2" mode: classes inherit from TFrozenBase
+    //   2. "python.immutable" annotation: classes get a __setattr__ that raises TypeError
+    immutable = PyObject_IsSubclass(klass, TFrozenBase)
+        || reinterpret_cast<PyTypeObject*>(klass)->tp_setattro != PyObject_GenericSetAttr;
+
+    if (immutable) {
+      kwargs.reset(PyDict_New());
+      if (!kwargs) {
+        PyErr_SetString(PyExc_TypeError, "failed to prepare kwargument storage");
+        return nullptr;
+      }
+    } else {
+      created_output.reset(PyObject_CallObject(klass, nullptr));
+      if (!created_output) {
+        return nullptr;
+      }
+      output = created_output.get();
     }
   }
 
