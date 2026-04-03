@@ -593,6 +593,28 @@ if test "$enable_tutorial" = "no"; then
 fi
 AM_CONDITIONAL(WITH_TUTORIAL, [test "$have_tutorial" = "yes"])
 
+AC_ARG_ENABLE([contrib],
+  AS_HELP_STRING([--enable-contrib], [build contrib [default=yes]]),
+  [], enable_contrib=yes
+)
+have_contrib=yes
+if test "$enable_contrib" = "no"; then
+  have_contrib="no"
+fi
+AM_CONDITIONAL(WITH_CONTRIB, [test "$have_contrib" = "yes"])
+
+AC_ARG_WITH([maven-plugin],
+  [AS_HELP_STRING([--with-maven-plugin], [build the Maven plugin [default=yes]])],
+  [with_maven_plugin="$withval"], [with_maven_plugin="yes"])
+have_maven_plugin="no"
+if test "$enable_contrib" = "yes" -a "$with_maven_plugin" = "yes";  then
+  AC_PATH_PROG([MAVEN], [mvn])
+  if [[ -x "$MAVEN" ]] ; then
+    AX_PROG_MAVEN_VERSION([3.0.0], have_maven_plugin="yes", have_maven_plugin="no")
+  fi
+fi
+AM_CONDITIONAL(WITH_MAVEN_PLUGIN, [test "$have_maven_plugin" = "yes"])
+
 AM_CONDITIONAL(MINGW, false)
 case "${host_os}" in
 *mingw*)
@@ -769,6 +791,8 @@ AC_CONFIG_FILES([
   compiler/cpp/Makefile
   compiler/cpp/src/Makefile
   compiler/cpp/test/Makefile
+  contrib/Makefile
+  contrib/thrift-maven-plugin/Makefile
   lib/Makefile
   lib/cl/Makefile
   lib/cpp/Makefile
@@ -929,6 +953,7 @@ echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
 echo "Building Swift Library ....... : $have_swift"
+echo "Building Maven Plugin ........ : $have_maven_plugin"
 
 if test "$have_c_glib" = "yes" ; then
   echo
@@ -1063,6 +1088,12 @@ if test "$have_swift" = "yes" ; then
   echo "Swift Library:"
   echo "   Using Swift ............... : $SWIFT"
   echo "   Using Swift version ....... : $($SWIFT --version | head -1)"
+fi
+if test "$have_maven_plugin" = "yes" ; then
+  echo
+  echo "Maven Plugin:"
+  echo "   Using Maven ............... : $MAVEN"
+  echo "   Using Maven version ....... : $($MAVEN --version --quiet)"
 fi
 echo
 echo "If something is missing that you think should be present,"

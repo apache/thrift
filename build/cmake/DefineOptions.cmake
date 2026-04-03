@@ -31,6 +31,7 @@ endif()
 CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build with unit tests" ON "HAVE_COMPILER" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_TUTORIALS "Build Thrift tutorials" ON "HAVE_COMPILER" OFF)
 option(BUILD_LIBRARIES "Build Thrift libraries" ON)
+option(BUILD_CONTRIB "Build Thrift contrib" ON)
 
 # Libraries to build
 
@@ -125,6 +126,13 @@ find_package(Python3
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
                        "BUILD_LIBRARIES;WITH_PYTHON;Python3_Interpreter_FOUND;Python3_Development_FOUND" OFF)
 
+## Maven Plugin
+option(WITH_MAVEN_PLUGIN "Build Maven plugin" ON)
+find_package(Java QUIET)
+find_package(Maven QUIET)
+CMAKE_DEPENDENT_OPTION(BUILD_MAVEN_PLUGIN "Build Maven plugin" ON
+                       "BUILD_CONTRIB;WITH_JAVA;JAVA_FOUND;MAVEN_FOUND" OFF)
+
 # Common library options
 # https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
 # Default on Windows is static, shared mode library support needs work...
@@ -167,6 +175,8 @@ message(STATUS "  Build compiler:                             ${BUILD_COMPILER}"
 message(STATUS "  Build libraries:                            ${BUILD_LIBRARIES}")
 message(STATUS "  Build tests:                                ${BUILD_TESTING}")
 MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_COMPILER=OFF and no valid THRIFT_COMPILER is given")
+message(STATUS "  Build contrib:                              ${BUILD_CONTRIB}")
+MESSAGE_DEP(BUILD_CONTRIB "Disabled because BUILD_CONTRIB=OFF")
 message(STATUS "  Build type:                                 ${CMAKE_BUILD_TYPE}")
 message(STATUS)
 message(STATUS "Language libraries:")
@@ -218,6 +228,12 @@ if(MSVC)
     message(STATUS "  Using static runtime library:               ${WITH_MT}")
 endif(MSVC)
 message(STATUS)
+message(STATUS "Contributed:")
+message(STATUS)
+message(STATUS "  Build Maven plugin:                         ${BUILD_MAVEN_PLUGIN}")
+MESSAGE_DEP(WITH_MAVEN_PLUGIN "Disabled by WITH_MAVEN_PLUGIN=OFF")
+MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
+MESSAGE_DEP(MAVEN_FOUND "Maven missing")
 message(STATUS)
 message(STATUS "----------------------------------------------------------")
 endmacro(PRINT_CONFIG_SUMMARY)
