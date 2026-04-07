@@ -17,6 +17,7 @@
  * under the License.
  */
 
+
 package thrift
 
 import (
@@ -25,15 +26,19 @@ import (
 	"time"
 )
 
+// TServerSocketListenerFactory abstracts how listeners are created.
+type TServerSocketListenerFactory func(listen bool) (net.Addr, net.Listener, error)
+
 type TServerSocket struct {
-	addr          net.Addr
+	factory       TServerSocketListenerFactory
 	clientTimeout time.Duration
 
-	// Protects the listener and interrupted fields to make them thread safe.
 	mu          sync.RWMutex
 	listener    net.Listener
 	interrupted bool
 }
+
+// --- Constructors ---
 
 func NewTServerSocket(listenAddr string) (*TServerSocket, error) {
 	return NewTServerSocketTimeout(listenAddr, 0)
@@ -44,26 +49,60 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 	if err != nil {
 		return nil, err
 	}
-	return &TServerSocket{addr: addr, clientTimeout: clientTimeout}, nil
+
+	return NewTServerSocketFromAddrTimeout(addr, clientTimeout), nil
 }
 
-// Creates a TServerSocket from a net.Addr
 func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration) *TServerSocket {
-	return &TServerSocket{addr: addr, clientTimeout: clientTimeout}
+	factory := func(listen bool) (net.Addr, net.Listener, error) {
+		var listener net.Listener
+		var err error
+		if (listen){
+			listener, err = net.Listen(addr.Network(), addr.String())
+		}
+		return addr, listener, err
+	}
+
+	return NewTServerSocketFromFactoryTimeout(factory, clientTimeout)
 }
 
-func (p *TServerSocket) Listen() error {
+// Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
+func NewTServerSocketFromFactoryTimeout(factory TServerSocketListenerFactory, clientTimeout time.Duration) *TServerSocket {
+	return &TServerSocket{
+		factory:       factory,
+		clientTimeout: clientTimeout,
+	}
+}
+
+// --- Core methods ---
+
+func (p *TServerSocket) try_listen(raise bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.IsListening() {
+
+	if p.listener != nil {
+		if (raise) {
+		        return NewTTransportException(ALREADY_OPEN, "Server socket already open")
+		}
 		return nil
 	}
-	l, err := net.Listen(p.addr.Network(), p.addr.String())
+
+	_, l, err := p.factory(true)
 	if err != nil {
 		return err
 	}
+
 	p.listener = l
+	p.interrupted = false
 	return nil
+}
+
+func (p *TServerSocket) Open() error {
+	return p.try_listen(true)
+}
+
+func (p *TServerSocket) Listen() error {
+	return p.try_listen(false)
 }
 
 func (p *TServerSocket) Accept() (TTransport, error) {
@@ -87,51 +126,48 @@ func (p *TServerSocket) Accept() (TTransport, error) {
 	return NewTSocketFromConnTimeout(conn, p.clientTimeout), nil
 }
 
-// Checks whether the socket is listening.
-func (p *TServerSocket) IsListening() bool {
-	return p.listener != nil
-}
+// --- State helpers ---
 
-// Connects the socket, creating a new socket object if necessary.
-func (p *TServerSocket) Open() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.IsListening() {
-		return NewTTransportException(ALREADY_OPEN, "Server socket already open")
-	}
-	if l, err := net.Listen(p.addr.Network(), p.addr.String()); err != nil {
-		return err
-	} else {
-		p.listener = l
-	}
-	return nil
+func (p *TServerSocket) IsListening() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.listener != nil
 }
 
 func (p *TServerSocket) Addr() net.Addr {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	if p.IsListening() {
+
+	if p.listener != nil {
 		return p.listener.Addr()
 	}
-	return p.addr
+	addr, _, _ := p.factory(false)
+	return addr
 }
 
+// --- Shutdown / control ---
+
 func (p *TServerSocket) Close() error {
-	var err error
 	p.mu.Lock()
-	if p.IsListening() {
+	defer p.mu.Unlock()
+
+	var err error
+	if p.listener != nil {
 		err = p.listener.Close()
 		p.listener = nil
 	}
-	p.mu.Unlock()
 	return err
 }
 
 func (p *TServerSocket) Interrupt() error {
 	p.mu.Lock()
 	p.interrupted = true
+	listener := p.listener
+	p.listener = nil
 	p.mu.Unlock()
-	p.Close()
 
+	if listener != nil {
+		return listener.Close()
+	}
 	return nil
 }
