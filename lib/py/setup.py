@@ -108,7 +108,7 @@ def run_setup(with_binary):
     twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
     setup(name='thrift',
-          version='0.23.0',
+          version='0.24.0',
           description='Python bindings for the Apache Thrift RPC system',
           long_description=read_file("README.md"),
           long_description_content_type="text/markdown",
