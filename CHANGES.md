@@ -1,5 +1,100 @@
 # Apache Thrift Changelog
 
+## 0.23.0
+
+### Build Process
+
+- [THRIFT-5877](https://issues.apache.org/jira/browse/THRIFT-5877) - Add cpp cross tests
+- [THRIFT-5866](https://issues.apache.org/jira/browse/THRIFT-5866) - Dockerfile to support Ubuntu 24.04 LTS (Noble Numbat)
+- [THRIFT-5909](https://issues.apache.org/jira/browse/THRIFT-5909) - add Ruby in GitHub workflow
+- [THRIFT-5649](https://issues.apache.org/jira/browse/THRIFT-5649) - add go in GitHub workflow / action
+
+### C glib
+
+- [THRIFT-5931](https://issues.apache.org/jira/browse/THRIFT-5931) - thrift_ssl_socket_get_ssl_error() can underflow its remaining-buffer counter and write past the stack buffer
+- [THRIFT-5871](https://issues.apache.org/jira/browse/THRIFT-5871) - Improve MAX_MESSAGE_SIZE check and friends
+
+### C++ 
+
+- [THRIFT-5911](https://issues.apache.org/jira/browse/THRIFT-5911) - Inconsistent UUID compilation for aliased types
+- [THRIFT-5912](https://issues.apache.org/jira/browse/THRIFT-5912) - Assertion failed: `delta > 0`, file ThreadManagerTests.h, line 162
+- [THRIFT-5880](https://issues.apache.org/jira/browse/THRIFT-5880) - C++ TSocket on an IPv6-only system fails if you use a hostname of 127.0.0.1
+- [THRIFT-3268](https://issues.apache.org/jira/browse/THRIFT-3268) - warning: token pasting of ',' and `__VA_ARGS__` is a GNU extension
+- [THRIFT-5887](https://issues.apache.org/jira/browse/THRIFT-5887) - build/cmake/ should be prepended (not appended) to CMAKE_MODULE_PATH
+- [THRIFT-5878](https://issues.apache.org/jira/browse/THRIFT-5878) - Add UUID support for THeaderProtocol and TProtocolTap
+- [THRIFT-5898](https://issues.apache.org/jira/browse/THRIFT-5898) - Unable to build Thrift as a shared library on Windows
+
+### Contributed
+
+- [THRIFT-5920](https://issues.apache.org/jira/browse/THRIFT-5920) - Remove threadsafe warnings in thrift-maven-plugin
+
+### Delphi
+
+- [THRIFT-5939](https://issues.apache.org/jira/browse/THRIFT-5939) - Replace GUID generation with stable UUID algorithm
+- [THRIFT-5876](https://issues.apache.org/jira/browse/THRIFT-5876) - Add Delphi WinHTTP client TLS1.3 support
+
+### Go
+
+- [THRIFT-5896](https://issues.apache.org/jira/browse/THRIFT-5896) - Race condition in TServerSocket.Addr() method
+
+
+### Java
+
+- [THRIFT-5925](https://issues.apache.org/jira/browse/THRIFT-5925) - UUID implementation in JAVA is not according to the Thrift Specification
+- [THRIFT-5869](https://issues.apache.org/jira/browse/THRIFT-5869) - Close the transport after TServerEventHandler deleteContext
+- [THRIFT-5863](https://issues.apache.org/jira/browse/THRIFT-5863) - Make TServerTransport able to customize the max message size
+- [THRIFT-5774](https://issues.apache.org/jira/browse/THRIFT-5774) - Add remote client's IP address to ServerContext in TServerEventHandler
+- [THRIFT-4280](https://issues.apache.org/jira/browse/THRIFT-4280) - Add async nonblocking ssl support in java client
+- [THRIFT-5879](https://issues.apache.org/jira/browse/THRIFT-5879) - java and kotlin cross tests fail in the GitHub action 
+
+### netstd
+
+- [THRIFT-5902](https://issues.apache.org/jira/browse/THRIFT-5902) - Add net10 support
+- [THRIFT-5874](https://issues.apache.org/jira/browse/THRIFT-5874) - Introduce new type `MESSAGE_SIZE_LIMIT` in TTransportException
+
+### nodejs
+
+- [THRIFT-5937](https://issues.apache.org/jira/browse/THRIFT-5937) - nodejs episodic generation does not handle extending services 
+
+### PHP
+
+- [THRIFT-5935](https://issues.apache.org/jira/browse/THRIFT-5935) - Fix deprecated non-canonical casts for PHP 8.5 compatibility
+- [THRIFT-5921](https://issues.apache.org/jira/browse/THRIFT-5921) - Ubuntu focal fail to run composer install
+
+## Python
+
+- [THRIFT-5927](https://issues.apache.org/jira/browse/THRIFT-5927) - Cannot use reserved language keyword "None" with target language Python
+- [THRIFT-5885](https://issues.apache.org/jira/browse/THRIFT-5885) - TBinaryProtocolAccelerated incorrectly deserializes IntEnum to None
+- [THRIFT-5923](https://issues.apache.org/jira/browse/THRIFT-5923) - UUID support for Python
+- [THRIFT-5926](https://issues.apache.org/jira/browse/THRIFT-5926) - TSaslClientTransport.open() crashes with DIGEST-MD5 due to None initial response
+- [THRIFT-5915](https://issues.apache.org/jira/browse/THRIFT-5915) - Python 3.12+ is not supported due to distutils
+- [THRIFT-5892](https://issues.apache.org/jira/browse/THRIFT-5892) - PY_SSIZE_T_CLEAN error in some environments
+- [THRIFT-5873](https://issues.apache.org/jira/browse/THRIFT-5873) - mTLS broken with python THttpClient
+- [THRIFT-792](https://issues.apache.org/jira/browse/THRIFT-792) - TSocket hides underlying exceptions when open() fails 
+- [THRIFT-5888](https://issues.apache.org/jira/browse/THRIFT-5888) - declare support for free-threaded CPython in extension modules
+- [THRIFT-5900](https://issues.apache.org/jira/browse/THRIFT-5900) - Thrift Cross Test broken in Github (Python 3.14)
+
+### Ruby
+
+- [THRIFT-5308](https://issues.apache.org/jira/browse/THRIFT-5308) - implement ruby seq replyÂ 
+- [THRIFT-5910](https://issues.apache.org/jira/browse/THRIFT-5910) - Add UUID support in Ruby
+- [THRIFT-5906](https://issues.apache.org/jira/browse/THRIFT-5906) - Remove Fixnum references to support modern Ruby versions
+- [THRIFT-5905](https://issues.apache.org/jira/browse/THRIFT-5905) - Add base64 and logger as explicit dependencies
+- [THRIFT-5903](https://issues.apache.org/jira/browse/THRIFT-5903) - Fixnum is no longer supported since Ruby 3.2
+- [THRIFT-5687](https://issues.apache.org/jira/browse/THRIFT-5687) - Ruby gems deprecation warning: Gem::Specification#has_rdoc= is deprecated with no replacement
+- [THRIFT-4035](https://issues.apache.org/jira/browse/THRIFT-4035) - Thrift ruby runtime does not send unique sequence IDs in requests according to the unit tests
+- [THRIFT-1911](https://issues.apache.org/jira/browse/THRIFT-1911) - IOError not being caught in socket.rb
+- [THRIFT-4526](https://issues.apache.org/jira/browse/THRIFT-4526) - Implement rubocop for ruby in the sca build, once clean into every make
+- [THRIFT-5273](https://issues.apache.org/jira/browse/THRIFT-5273) - warning in ruby version >= 2.4
+- [THRIFT-5918](https://issues.apache.org/jira/browse/THRIFT-5918) - Implement header protocol support for Ruby
+
+### Rust
+
+- [THRIFT-5559](https://issues.apache.org/jira/browse/THRIFT-5559) - Processor can be implemented on handler trait itself
+- [THRIFT-5928](https://issues.apache.org/jira/browse/THRIFT-5928) - skip() call on unknown binary field fails deserialization instead of graceful skipping over field
+- [THRIFT-5739](https://issues.apache.org/jira/browse/THRIFT-5739) - set_nodelay should be enabled for TTcpChannel
+
+
 ## 0.22.0
 
 ### Build Process
