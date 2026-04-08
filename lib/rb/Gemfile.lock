@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    thrift (0.23.0)
+    thrift (0.24.0)
       logger
 
 GEM
