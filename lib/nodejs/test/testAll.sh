@@ -133,6 +133,7 @@ node ${DIR}/binary.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
+node ${DIR}/generated-exceptions.test.js || TESTOK=1
 node ${DIR}/include.test.mjs || TESTOK=1
 node ${DIR}/thrift_4987_xhr_protocol.test.mjs || TESTOK=1
 
