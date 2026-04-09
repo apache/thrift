@@ -17,8 +17,36 @@
 # under the License.
 #
 
-begin
-  require "thrift_native"
-rescue LoadError
-  warn "Unable to load thrift_native extension. Defaulting to pure Ruby libraries."
-end
+name: Release Ruby Gem
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    environment: release
+
+    steps:
+      # Set up
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: "4.0"
+          working-directory: lib/rb
+
+      # Release
+      - uses: rubygems/release-gem@v1
+        with:
+          working-directory: lib/rb
