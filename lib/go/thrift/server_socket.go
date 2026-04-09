@@ -28,7 +28,8 @@ import (
 
 type TServerSocket struct {
 	// TServerSocketListenerFactory abstracts how listeners are created.
-	factory       func(bool) (net.Addr, net.Listener, error)
+	factory       func(net.Addr) (net.Listener, error)
+	addr          net.Addr
 	clientTimeout time.Duration
 
 	mu          sync.RWMutex
@@ -52,22 +53,18 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 }
 
 func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration) *TServerSocket {
-	factory := func(listen bool) (net.Addr, net.Listener, error) {
-		var listener net.Listener
-		var err error
-		if (listen){
-			listener, err = net.Listen(addr.Network(), addr.String())
-		}
-		return addr, listener, err
+	factory := func(addr net.Addr) (net.Listener, error) {
+		return net.Listen(addr.Network(), addr.String())
 	}
 
-	return NewTServerSocketFromFactoryTimeout(factory, clientTimeout)
+	return NewTServerSocketFromFactoryTimeout(factory, addr, clientTimeout)
 }
 
 // Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
-func NewTServerSocketFromFactoryTimeout(factory func(listen bool) (addr net.Addr, listener net.Listener, err error), clientTimeout time.Duration) *TServerSocket {
+func NewTServerSocketFromFactoryTimeout(factory func(addr net.Addr) (listener net.Listener, err error), addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	return &TServerSocket{
 		factory:       factory,
+		addr:          addr,
 		clientTimeout: clientTimeout,
 	}
 }
