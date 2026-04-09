@@ -4,6 +4,14 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
+class TBinaryProtocolAcceleratedFactory implements \Thrift\Factory\TProtocolFactory
+{
+    public function getProtocol($trans)
+    {
+        return new \Thrift\Protocol\TBinaryProtocolAccelerated($trans, false, true);
+    }
+}
+
 $opts = getopt(
     'h::',
     [
@@ -30,7 +38,7 @@ if (isset($opts['h'])) {
       --server-type=arg (simple)   type of server, "simple", "thread-pool",
                                    "threaded", or "nonblocking"
       --transport=arg (buffered)   transport: buffered, framed, http, anonpipe, zlib
-      --protocol=arg (binary)      protocol: binary, compact, header, json
+      --protocol=arg (binary)      protocol: binary, compact, json, accel
       --multiplex                  Add TMultiplexedProtocol service name "ThriftTest"
       --abstract-namespace         Create the domain socket in the Abstract Namespace
                                    (no connection with filesystem pathnames)
@@ -45,10 +53,11 @@ HELP;
 
 $port = $opts['port'] ?? 9090;
 $transport = $opts['transport'] ?? 'buffered';
+$protocol = $opts['protocol'] ?? 'binary';
 
 
 $loader = new Thrift\ClassLoader\ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../../lib/php/test/Resources/packages/phpcm');
+$loader->registerDefinition('ThriftTest', __DIR__ . '/gen-php-classmap');
 $loader->register();
 
 $sslOptions = \stream_context_create(
@@ -70,7 +79,31 @@ switch ($transport) {
         $serverTransportFactory = new \Thrift\Factory\TTransportFactory();
 }
 
-$serverTransport = new \Thrift\Server\TServerSocket('localhost', $port);
+switch ($protocol) {
+    case 'binary':
+        $protocolFactory = new \Thrift\Factory\TBinaryProtocolFactory(false, true);
+        break;
+    case 'accel':
+        if (!function_exists('thrift_protocol_write_binary')) {
+            fwrite(STDERR, "Acceleration extension is not loaded\n");
+            exit(1);
+        }
+        $protocolFactory = new TBinaryProtocolAcceleratedFactory();
+        break;
+    case 'compact':
+        $protocolFactory = new \Thrift\Factory\TCompactProtocolFactory();
+        break;
+    case 'json':
+        $protocolFactory = new \Thrift\Factory\TJSONProtocolFactory();
+        break;
+    default:
+        fwrite(STDERR, "--protocol must be one of {binary|compact|json|accel}\n");
+        exit(1);
+}
+
+// `localhost` may resolve to an IPv6-only listener in newer PHP/runtime combinations,
+// while some cross-test clients still connect via 127.0.0.1. Bind explicitly to IPv4.
+$serverTransport = new \Thrift\Server\TServerSocket('127.0.0.1', $port);
 $handler = new Handler();
 $processor = new ThriftTest\ThriftTestProcessor($handler);
 
@@ -79,8 +112,8 @@ $server = new \Thrift\Server\TSimpleServer(
     $serverTransport,
     $serverTransportFactory,
     $serverTransportFactory,
-    new \Thrift\Factory\TBinaryProtocolFactory(),
-    new \Thrift\Factory\TBinaryProtocolFactory()
+    $protocolFactory,
+    $protocolFactory
 );
 
 echo "Starting the Test server...\n";
