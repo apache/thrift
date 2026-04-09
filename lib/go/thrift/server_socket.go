@@ -26,11 +26,9 @@ import (
 	"time"
 )
 
-// TServerSocketListenerFactory abstracts how listeners are created.
-type TServerSocketListenerFactory func(listen bool) (net.Addr, net.Listener, error)
-
 type TServerSocket struct {
-	factory       TServerSocketListenerFactory
+	// TServerSocketListenerFactory abstracts how listeners are created.
+	factory       func(bool) (net.Addr, net.Listener, error)
 	clientTimeout time.Duration
 
 	mu          sync.RWMutex
@@ -67,7 +65,20 @@ func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration)
 }
 
 // Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
-func NewTServerSocketFromFactoryTimeout(factory TServerSocketListenerFactory, clientTimeout time.Duration) *TServerSocket {
+func NewTServerSocketFromFactoryAddrTimeout(proc func(addr net.Addr) (listener net.Listener, err error),addr net.Addr, clientTimeout time.Duration) *TServerSocket {
+	factory := func(listen bool) (net.Addr, net.Listener, error) {
+		var listener net.Listener
+		var err error
+		if (listen){
+			listener, err = proc(addr)
+		}
+		return addr, listener, err
+	}
+	return NewTServerSocketFromFactoryTimeout(factory, clientTimeout)
+}
+
+// Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
+func NewTServerSocketFromFactoryTimeout(factory func(listen bool) (addr net.Addr, listener net.Listener, err error), clientTimeout time.Duration) *TServerSocket {
 	return &TServerSocket{
 		factory:       factory,
 		clientTimeout: clientTimeout,
@@ -147,11 +158,14 @@ func (p *TServerSocket) Addr() net.Addr {
 
 // --- Shutdown / control ---
 
-func (p *TServerSocket) Close() error {
+func (p *TServerSocket) try_close(interrupt bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if (interrupt){
+		p.interrupted = true
+	}
 
-	var err error
+	var err error = nil
 	if p.listener != nil {
 		err = p.listener.Close()
 		p.listener = nil
@@ -159,15 +173,11 @@ func (p *TServerSocket) Close() error {
 	return err
 }
 
-func (p *TServerSocket) Interrupt() error {
-	p.mu.Lock()
-	p.interrupted = true
-	listener := p.listener
-	p.listener = nil
-	p.mu.Unlock()
 
-	if listener != nil {
-		return listener.Close()
-	}
-	return nil
+func (p *TServerSocket) Close() error {
+	return p.try_close(false)
+}
+
+func (p *TServerSocket) Interrupt() error {
+	return p.try_close(true)
 }
