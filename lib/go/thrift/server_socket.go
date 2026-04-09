@@ -109,7 +109,7 @@ func (p *TServerSocket) try_listen(raise bool) error {
 }
 
 func (p *TServerSocket) Open() error {
-	return p.try_listen(true)
+	return p.try_listen(true /* raise */)
 }
 
 func (p *TServerSocket) Listen() error {
