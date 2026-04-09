@@ -109,11 +109,11 @@ func (p *TServerSocket) try_listen(raise bool) error {
 }
 
 func (p *TServerSocket) Open() error {
-	return p.try_listen(true /* raise */)
+	return p.try_listen(true /* raise error if listening */)
 }
 
 func (p *TServerSocket) Listen() error {
-	return p.try_listen(false)
+	return p.try_listen(false /* do not raise error if listening */)
 }
 
 func (p *TServerSocket) Accept() (TTransport, error) {
@@ -175,9 +175,9 @@ func (p *TServerSocket) try_close(interrupt bool) error {
 
 
 func (p *TServerSocket) Close() error {
-	return p.try_close(false)
+	return p.try_close(false /* do not set interrupted flag */)
 }
 
 func (p *TServerSocket) Interrupt() error {
-	return p.try_close(true)
+	return p.try_close(true /* set interrupted flag */)
 }
