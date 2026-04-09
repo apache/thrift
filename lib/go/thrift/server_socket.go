@@ -65,19 +65,6 @@ func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration)
 }
 
 // Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
-func NewTServerSocketFromListenerAddrTimeout(listener func(addr net.Addr) (listener net.Listener, err error), addr net.Addr, clientTimeout time.Duration) *TServerSocket {
-	factory := func(listen bool) (net.Addr, net.Listener, error) {
-		var listener net.Listener
-		var err error
-		if (listen){
-			listener, err = proc(addr)
-		}
-		return addr, listener, err
-	}
-	return NewTServerSocketFromFactoryTimeout(factory, clientTimeout)
-}
-
-// Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
 func NewTServerSocketFromFactoryTimeout(factory func(listen bool) (addr net.Addr, listener net.Listener, err error), clientTimeout time.Duration) *TServerSocket {
 	return &TServerSocket{
 		factory:       factory,
