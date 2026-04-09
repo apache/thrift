@@ -31,7 +31,8 @@ type TServerSocket struct {
 	factory       func(net.Addr) (net.Listener, error)
 	addr          net.Addr
 	clientTimeout time.Duration
-
+	
+	// Protects the listener and interrupted fields to make them thread safe.
 	mu          sync.RWMutex
 	listener    net.Listener
 	interrupted bool
