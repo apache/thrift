@@ -19,9 +19,6 @@
 
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-# Generate FuzzTest code
-BUILT_SOURCES = gen-cpp/FuzzTest_types.h
-
 noinst_LTLIBRARIES = libfuzztest_gen.la
 
 nodist_libfuzztest_gen_la_SOURCES = \
@@ -83,6 +80,14 @@ endif
 # Generate thrift files
 gen-cpp/FuzzTest_types.cpp gen-cpp/FuzzTest_types.h: $(top_srcdir)/test/FuzzTest.thrift
 	$(THRIFT) --gen cpp $<
+
+# Ensure generated headers exist before compiling sources that include them
+FuzzParseCompact.$(OBJEXT): gen-cpp/FuzzTest_types.h
+FuzzParseBinary.$(OBJEXT): gen-cpp/FuzzTest_types.h
+FuzzRoundtripCompact.$(OBJEXT): gen-cpp/FuzzTest_types.h
+FuzzRoundtripBinary.$(OBJEXT): gen-cpp/FuzzTest_types.h
+FuzzParseJson.$(OBJEXT): gen-cpp/FuzzTest_types.h
+FuzzRoundtripJson.$(OBJEXT): gen-cpp/FuzzTest_types.h
 
 # Clean target
 clean-local:
