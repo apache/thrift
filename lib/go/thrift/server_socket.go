@@ -31,14 +31,12 @@ type TServerSocket struct {
 	factory       func(net.Addr) (net.Listener, error)
 	addr          net.Addr
 	clientTimeout time.Duration
-	
+
 	// Protects the listener and interrupted fields to make them thread safe.
 	mu          sync.RWMutex
 	listener    net.Listener
 	interrupted bool
 }
-
-// --- Constructors ---
 
 func NewTServerSocket(listenAddr string) (*TServerSocket, error) {
 	return NewTServerSocketTimeout(listenAddr, 0)
@@ -53,6 +51,7 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 	return NewTServerSocketFromAddrTimeout(addr, clientTimeout), nil
 }
 
+// Creates a TServerSocket from a net.Addr
 func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	factory := func(addr net.Addr) (net.Listener, error) {
 		return net.Listen(addr.Network(), addr.String())
@@ -69,8 +68,6 @@ func NewTServerSocketFromFactoryTimeout(factory func(addr net.Addr) (listener ne
 		clientTimeout: clientTimeout,
 	}
 }
-
-// --- Core methods ---
 
 func (p *TServerSocket) try_listen(raise bool) error {
 	p.mu.Lock()
@@ -93,6 +90,7 @@ func (p *TServerSocket) try_listen(raise bool) error {
 	return nil
 }
 
+// Connects the socket, creating a new socket object if necessary.
 func (p *TServerSocket) Open() error {
 	return p.try_listen(true /* raise error if listening */)
 }
@@ -122,8 +120,7 @@ func (p *TServerSocket) Accept() (TTransport, error) {
 	return NewTSocketFromConnTimeout(conn, p.clientTimeout), nil
 }
 
-// --- State helpers ---
-
+// Checks whether the socket is listening.
 func (p *TServerSocket) IsListening() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -141,8 +138,6 @@ func (p *TServerSocket) Addr() net.Addr {
 	return addr
 }
 
-// --- Shutdown / control ---
-
 func (p *TServerSocket) try_close(interrupt bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -157,7 +152,6 @@ func (p *TServerSocket) try_close(interrupt bool) error {
 	}
 	return err
 }
-
 
 func (p *TServerSocket) Close() error {
 	return p.try_close(false /* do not set interrupted flag */)
