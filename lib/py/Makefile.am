@@ -81,6 +81,8 @@ EXTRA_DIST = \
 	compat \
 	setup.py \
 	setup.cfg \
+	pyproject.toml \
 	src \
 	test \
 	README.md
+	
