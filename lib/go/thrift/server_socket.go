@@ -51,6 +51,7 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 	return NewTServerSocketFromAddrTimeout(addr, clientTimeout), nil
 }
 
+// NewTServerSocketFromFactoryTimeout
 // Creates a TServerSocket from a net.Addr
 func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	factory := func(addr net.Addr) (net.Listener, error) {
@@ -80,7 +81,7 @@ func (p *TServerSocket) try_listen(raise bool) error {
 		return nil
 	}
 
-	_, l, err := p.factory(true)
+	l, err := p.factory(p.addr)
 	if err != nil {
 		return err
 	}
@@ -134,8 +135,7 @@ func (p *TServerSocket) Addr() net.Addr {
 	if p.listener != nil {
 		return p.listener.Addr()
 	}
-	addr, _, _ := p.factory(false)
-	return addr
+	return p.addr
 }
 
 func (p *TServerSocket) try_close(interrupt bool) error {
