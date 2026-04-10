@@ -51,7 +51,7 @@ func NewTServerSocketTimeout(listenAddr string, clientTimeout time.Duration) (*T
 	return NewTServerSocketFromAddrTimeout(addr, clientTimeout), nil
 }
 
-// NewTServerSocketFromAddrTimeout ...
+// NewTServerSocketFromAddrTimeout returns TServerSocket
 // Creates a TServerSocket from a net.Addr
 func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	factory := func(addr net.Addr) (net.Listener, error) {
@@ -61,7 +61,7 @@ func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration)
 	return NewTServerSocketFromFactoryTimeout(factory, addr, clientTimeout)
 }
 
-// NewTServerSocketFromFactoryTimeout ...
+// NewTServerSocketFromFactoryTimeout returns TServerSocket
 // Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
 func NewTServerSocketFromFactoryTimeout(factory func(addr net.Addr) (listener net.Listener, err error), addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	return &TServerSocket{
@@ -92,7 +92,7 @@ func (p *TServerSocket) try_listen(raise bool) error {
 	return nil
 }
 
-// Open ...
+// Open does try to listen and return on failure
 // Connects the socket, creating a new socket object if necessary.
 func (p *TServerSocket) Open() error {
 	return p.try_listen(true /* raise error if listening */)
@@ -123,7 +123,7 @@ func (p *TServerSocket) Accept() (TTransport, error) {
 	return NewTSocketFromConnTimeout(conn, p.clientTimeout), nil
 }
 
-// IsListening ...
+// IsListening returns listener != nil
 // Checks whether the socket is listening.
 func (p *TServerSocket) IsListening() bool {
 	p.mu.RLock()
