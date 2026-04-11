@@ -133,6 +133,14 @@ public extension TProtocol {
   }
   
   func skip(type: TType) throws {
+    try skip(type: type, depth: 0)
+  }
+
+  private func skip(type: TType, depth: Int) throws {
+    let nextDepth = depth + 1
+    if nextDepth > 64 {
+      throw TProtocolError(error: .depthLimit, message: "Maximum skip depth exceeded")
+    }
     switch type {
     case .bool:   _ = try read() as Bool
     case .i8:   _ = try read() as Int8
@@ -142,7 +150,7 @@ public extension TProtocol {
     case .double: _ = try read() as Double
     case .string: _ = try read() as String
     case .uuid: _ = try read() as UUID
-      
+
     case .struct:
       _ = try readStructBegin()
       while true {
@@ -150,35 +158,44 @@ public extension TProtocol {
         if fieldType == .stop {
           break
         }
-        try skip(type: fieldType)
+        try skip(type: fieldType, depth: nextDepth)
         try readFieldEnd()
       }
       try readStructEnd()
-      
-      
+
+
     case .map:
       let (keyType, valueType, size) = try readMapBegin()
+      if size < 0 {
+        throw TProtocolError(error: .negativeSize, message: "Negative map size: \(size)")
+      }
       for _ in 0..<size {
-        try skip(type: keyType)
-        try skip(type: valueType)
+        try skip(type: keyType, depth: nextDepth)
+        try skip(type: valueType, depth: nextDepth)
       }
       try readMapEnd()
-      
-      
+
+
     case .set:
       let (elemType, size) = try readSetBegin()
+      if size < 0 {
+        throw TProtocolError(error: .negativeSize, message: "Negative set size: \(size)")
+      }
       for _ in 0..<size {
-        try skip(type: elemType)
+        try skip(type: elemType, depth: nextDepth)
       }
       try readSetEnd()
-      
+
     case .list:
       let (elemType, size) = try readListBegin()
+      if size < 0 {
+        throw TProtocolError(error: .negativeSize, message: "Negative list size: \(size)")
+      }
       for _ in 0..<size {
-        try skip(type: elemType)
+        try skip(type: elemType, depth: nextDepth)
       }
       try readListEnd()
-      
+
     default:
       throw TProtocolError(error: .invalidData, message: "Invalid data")
     }
