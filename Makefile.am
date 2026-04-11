@@ -151,10 +151,12 @@ EXTRA_DIST = \
 	.github/workflows/release_rust.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
+	AGENTS.md \
 	appveyor.yml \
 	bootstrap.sh \
 	bower.json \
 	build \
+	CLAUDE.md \
 	CHANGES.md \
 	CMakeLists.txt \
 	composer.json \
@@ -165,6 +167,7 @@ EXTRA_DIST = \
 	doc \
 	dub.json \
 	eslint.config.mjs \
+	FUZZING.md \
 	go.mod \
 	jitpack.yml \
 	LANGUAGES.md \

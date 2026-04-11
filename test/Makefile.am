@@ -130,6 +130,7 @@ EXTRA_DIST = \
 	cpp \
 	crossrunner \
 	dart \
+	delphi \
 	erl \
 	keys \
 	lua \
@@ -147,9 +148,7 @@ EXTRA_DIST = \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
-	v0.16/ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
-	v0.16/DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	DoubleConstantsTest.thrift \
@@ -157,36 +156,40 @@ EXTRA_DIST = \
 	EnumTest.thrift \
 	ExceptionStruct.thrift \
 	FullCamelTest.thrift \
-	Include.thrift \
+	FuzzTest.thrift \
 	Identifiers.thrift \
+	Include.thrift \
+	index.html \
 	Int64Test.thrift \
 	JsDeepConstructorTest.thrift \
+	keys/keygen/.gitignore \
+	known_failures_Linux.json \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
 	NameConflictTest.thrift \
-	v0.16/NameConflictTest.thrift \
 	OptionalRequiredTest.thrift \
+	partial/thrift_test_schema.thrift \
+	README.md \
+	rebuild_known_failures.sh \
 	Recursive.thrift \
+	result.js \
 	ReuseObjects.thrift \
+	Service.thrift \
 	SmallTest.thrift \
+	SpecificNameTest.thrift \
 	StressTest.thrift \
+	test.py \
+	tests.json \
 	ThriftTest.thrift \
-	v0.16/ThriftTest.thrift \
 	TypedefTest.thrift \
 	Types.thrift \
 	UnsafeTypes.thrift \
-	Service.thrift \
-	SpecificNameTest.thrift \
+	v0.16/ConstantsDemo.thrift \
+	v0.16/DebugProtoTest.thrift \
+	v0.16/FuzzTestNoUuid.thrift \
+	v0.16/NameConflictTest.thrift \
+	v0.16/ThriftTest.thrift \
 	VoidMethExceptionsTest.thrift \
-	partial/thrift_test_schema.thrift \
-	keys/keygen/.gitignore \
-	known_failures_Linux.json \
-	test.py \
-	tests.json \
-	rebuild_known_failures.sh \
-	result.js \
-	index.html \
-	README.md \
 	valgrind.suppress
 
 precross-%:

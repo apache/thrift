@@ -53,6 +53,7 @@ EXTRA_DIST = \
 	Cargo.toml \
 	README.md \
 	release.sh \
+	test/fuzz/.gitignore \
 	NOTICE \
 	LICENSE \
 	RELEASING.md

@@ -19,10 +19,6 @@
 
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-BUILT_SOURCES = \
-    gen-c_glib/fuzz_test_no_uuid_types.h \
-    gen-c_glib/fuzz_test_no_uuid_types.c
-
 noinst_LTLIBRARIES = libtestgencfuzz.la
 nodist_libtestgencfuzz_la_SOURCES = \
     gen-c_glib/fuzz_test_no_uuid_types.c \
@@ -59,6 +55,10 @@ fuzz_parse_binary_LDADD = \
 #
 gen-c_glib/fuzz_test_no_uuid_types.c gen-c_glib/fuzz_test_no_uuid_types.h: $(top_srcdir)/test/v0.16/FuzzTestNoUuid.thrift
 	$(THRIFT) --gen c_glib -r $<
+
+# Ensure generated headers exist before compiling sources that include them
+fuzz_parse_compact.$(OBJEXT): gen-c_glib/fuzz_test_no_uuid_types.h
+fuzz_parse_binary.$(OBJEXT): gen-c_glib/fuzz_test_no_uuid_types.h
 
 clean-local:
 	$(RM) -r gen-c_glib/
