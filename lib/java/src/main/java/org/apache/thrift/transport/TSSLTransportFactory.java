@@ -30,6 +30,7 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -343,6 +344,9 @@ public class TSSLTransportFactory {
     try {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
       socket.setSoTimeout(timeout);
+      SSLParameters sslParams = socket.getSSLParameters();
+      sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+      socket.setSSLParameters(sslParams);
       return new TSocket(socket);
     } catch (TTransportException tte) {
       throw tte;
