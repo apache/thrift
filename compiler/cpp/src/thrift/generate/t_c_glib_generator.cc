@@ -2594,8 +2594,8 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
   f_service_ << indent() << parent_class_name << "Class "
                                                  "*parent_class =" << '\n';
   indent_up();
-  f_service_ << indent() << "g_type_class_peek_parent (" << class_name_uc << "_GET_CLASS (self));"
-             << '\n';
+  f_service_ << indent() << "g_type_class_peek_parent (g_type_class_peek ("
+             << class_name_lc << "_get_type ()));" << '\n';
   indent_down();
   f_service_ << '\n'
              << indent() << "process_function_def = "
