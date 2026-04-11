@@ -314,6 +314,10 @@ public class TCompactProtocol: TProtocol {
     }
     
     // push the new field onto the field stack so we can keep the deltas going
+    guard fieldId >= 0 && fieldId <= Int16(UInt8.max) else {
+      throw TProtocolError(error: .invalidData,
+                           message: "Field id out of range: \(fieldId)")
+    }
     lastFieldId = UInt8(fieldId)
     return ("", fieldType, Int32(fieldId))
   }
