@@ -1,0 +1,156 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# .github/CODEOWNERS
+# Only lists active Apache Thrift committers (PMC/committer role).
+# Based on commit activity 2023-04 through 2026-04.
+#
+# References:
+#   PMC roster:  https://people.apache.org/phonebook.html?project=thrift
+#   Committers:  https://people.apache.org/phonebook.html?project=thrift
+#
+# NOTE: GitHub requires CODEOWNERS entries to reference users with
+#       write access to the repository.
+
+# ── Compiler ───────────────────────────────────────────────────
+#
+# Core (parser, lexer, AST, common infrastructure)
+/compiler/                    @Jens-G @fishy @mhlakhani
+
+# Per-language code generators (override the broad /compiler/ rule)
+/compiler/cpp/src/thrift/generate/t_c_glib_generator.*       @mhlakhani
+/compiler/cpp/src/thrift/generate/t_cpp_generator.*          @emmenlau @mhlakhani
+/compiler/cpp/src/thrift/generate/t_netstd_generator.*       @Jens-G
+/compiler/cpp/src/thrift/generate/t_delphi_generator.*       @Jens-G
+/compiler/cpp/src/thrift/generate/t_go_generator.*           @fishy
+/compiler/cpp/src/thrift/generate/go_validator_generator.*   @fishy
+/compiler/cpp/src/thrift/generate/t_haxe_generator.*         @Jens-G
+/compiler/cpp/src/thrift/generate/t_java_generator.*         @jimexist @fishy
+/compiler/cpp/src/thrift/generate/t_js_generator.*           @Jens-G @emmenlau
+/compiler/cpp/src/thrift/generate/t_kotlin_generator.*       @jimexist
+/compiler/cpp/src/thrift/generate/t_py_generator.*           @mhlakhani
+/compiler/cpp/src/thrift/generate/t_rs_generator.*           @jimexist @mhlakhani
+/compiler/cpp/src/thrift/generate/t_gv_generator.*           @Jens-G
+/compiler/cpp/src/thrift/generate/t_html_generator.*         @Jens-G
+/compiler/cpp/src/thrift/generate/t_markdown_generator.*     @Jens-G
+
+# Generators without a dedicated committer:
+# t_cl_generator.*, t_d_generator.*, t_dart_generator.*,
+# t_erl_generator.*, t_lua_generator.*, t_ocaml_generator.*,
+# t_perl_generator.*, t_rb_generator.*, t_php_generator.*,
+# t_st_generator.*, t_javame_generator.*, t_swift_generator.*,
+# t_json_generator.*, t_xml_generator.*, t_xsd_generator.*
+
+# Per-language tests
+/compiler/cpp/tests/netcore     @Jens-G
+/compiler/cpp/tests/cpp         @emmenlau @mhlakhani
+
+# Per-language tests without dedicated committer
+# /compiler/cpp/tests/ocaml
+
+
+
+# ── Language libraries, tests, and tutorials ───────────────────
+#
+# Each language block covers lib/, test/, and tutorial/ together.
+# Owners reflect committers active in that area over the last 3 years.
+
+# C / C++
+/lib/c_glib/                  @mhlakhani
+/test/c_glib/                 @mhlakhani
+/tutorial/c_glib/             @mhlakhani
+/lib/cpp/                     @emmenlau @mhlakhani
+/test/cpp/                    @emmenlau @mhlakhani
+/tutorial/cpp/                @emmenlau @mhlakhani
+
+# .NET
+/lib/netstd/                  @Jens-G
+/test/netstd/                 @Jens-G
+/tutorial/netstd/             @Jens-G
+
+# Delphi
+/lib/delphi/                  @Jens-G
+/test/delphi/                 @Jens-G
+/tutorial/delphi/             @Jens-G
+
+# Go
+/lib/go/                      @fishy
+/test/go/                     @fishy
+/tutorial/go/                 @fishy
+
+# Haxe
+/lib/haxe/                    @Jens-G
+/test/haxe/                   @Jens-G
+/tutorial/haxe/               @Jens-G
+
+# Java
+/lib/java/                    @jimexist @fishy
+/tutorial/java/               @jimexist @fishy
+
+# JavaScript / TypeScript / Node
+/lib/js/                      @emmenlau
+/lib/nodejs/                  @emmenlau
+/lib/nodets/                  @emmenlau
+/lib/ts/                      @emmenlau
+/tutorial/js/                 @emmenlau
+/tutorial/nodejs/             @emmenlau
+
+# Kotlin
+/lib/kotlin/                  @jimexist
+
+# Python
+/lib/py/                      @mhlakhani
+/test/py/                     @mhlakhani
+/test/py.tornado/             @mhlakhani
+/test/py.twisted/             @mhlakhani
+/tutorial/py/                 @mhlakhani
+/tutorial/py.tornado/         @mhlakhani
+/tutorial/py.twisted/         @mhlakhani
+
+# Rust
+/lib/rs/                      @jimexist @mhlakhani
+/test/rs/                     @jimexist @mhlakhani
+/tutorial/rs/                 @jimexist @mhlakhani
+
+# The following languages have no dedicated committer with recent activity.
+#
+# Common Lisp:  /lib/cl/   /test/cl/   /tutorial/cl/
+# D:            /lib/d/                 /tutorial/d/
+# Dart:         /lib/dart/ /test/dart/  /tutorial/dart/
+# Erlang:       /lib/erl/  /test/erl/  /tutorial/erl/
+# Lua:          /lib/lua/  /test/lua/
+# OCaml:        /lib/ocaml/ /test/ocaml/ /tutorial/ocaml/
+# Perl:         /lib/perl/ /test/perl/  /tutorial/perl/
+# Smalltalk:    /lib/st/
+# Swift:		/lib/swift/   /test/swift/   /tutorial/swift/    
+
+# ── CI / GitHub Actions ───────────────────────────────────────
+/.github/                     @fishy @Jens-G @jimexist
+
+# ── Build system ──────────────────────────────────────────────
+/build/                       @Jens-G
+
+# ── Cross-language test infrastructure ────────────────────────
+# /test/crossrunner/          add and uncomment as needed
+# /test/features/             add and uncomment as needed
+
+# ── Documentation & project governance ────────────────────────
+/doc/                         @Jens-G
+
+# eof
