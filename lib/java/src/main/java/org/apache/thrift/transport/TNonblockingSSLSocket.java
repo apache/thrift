@@ -30,6 +30,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,9 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     super(host, port, timeout);
     sslEngine_ = sslContext.createSSLEngine(host, port);
     sslEngine_.setUseClientMode(true);
+    SSLParameters sslParams = sslEngine_.getSSLParameters();
+    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+    sslEngine_.setSSLParameters(sslParams);
 
     int appBufferSize = sslEngine_.getSession().getApplicationBufferSize();
     int netBufferSize = sslEngine_.getSession().getPacketBufferSize();
