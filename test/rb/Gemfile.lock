@@ -21,7 +21,7 @@ GEM
     power_assert (3.0.1)
     prism (1.9.0)
     racc (1.8.1)
-    rack (2.2.22)
+    rack (2.2.23)
     rainbow (3.1.1)
     regexp_parser (2.11.3)
     rubocop (1.82.1)
@@ -64,7 +64,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  rack (~> 2.2)
+  rack (~> 2.2, >= 2.2.23)
   rubocop (~> 1.82.0)
   rubocop-performance (~> 1.26.1)
   rubocop-rspec (~> 3.8.0)
