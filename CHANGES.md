@@ -55,6 +55,12 @@
 ### nodejs
 
 - [THRIFT-5937](https://issues.apache.org/jira/browse/THRIFT-5937) - nodejs episodic generation does not handle extending services 
+- [THRIFT-5924](https://issues.apache.org/jira/browse/THRIFT-5924) - UUID support for nodejs and nodets
+- [THRIFT-4987](https://issues.apache.org/jira/browse/THRIFT-4987) - TProtocolException: Bad version in readMessageBegin when using XHR client with C++ server
+
+### nodets
+
+- [THRIFT-5924](https://issues.apache.org/jira/browse/THRIFT-5924) - UUID support for nodejs and nodets
 
 ### PHP
 
