@@ -66,6 +66,7 @@
 
 - [THRIFT-5935](https://issues.apache.org/jira/browse/THRIFT-5935) - Fix deprecated non-canonical casts for PHP 8.5 compatibility
 - [THRIFT-5921](https://issues.apache.org/jira/browse/THRIFT-5921) - Ubuntu focal fail to run composer install
+- [THRIFT-5929](https://issues.apache.org/jira/browse/THRIFT-5929) - Fix build failure on PHP 8.5 due to removed zend_exception_get_default
 
 ## Python
 
