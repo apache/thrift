@@ -29,6 +29,23 @@ check-local:
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
+# Opt-in. Not wired into check-local because it requires the
+# SharpFuzz.CommandLine global tool and libfuzzer-dotnet binary,
+# which are dev-only dependencies. Run manually: `make build-fuzzers`.
+build-fuzzers:
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Binary -p:FuzzerType=Parse -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Binary -p:FuzzerType=Parse -p:Engine=Libfuzzer
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Binary -p:FuzzerType=Roundtrip -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Binary -p:FuzzerType=Roundtrip -p:Engine=Libfuzzer
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Compact -p:FuzzerType=Parse -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Compact -p:FuzzerType=Parse -p:Engine=Libfuzzer
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Compact -p:FuzzerType=Roundtrip -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Compact -p:FuzzerType=Roundtrip -p:Engine=Libfuzzer
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Json -p:FuzzerType=Parse -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Json -p:FuzzerType=Parse -p:Engine=Libfuzzer
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Json -p:FuzzerType=Roundtrip -p:Engine=AFL
+	$(DOTNETCORE) build Tests/Thrift.FuzzTests/Thrift.FuzzTests.csproj -p:Protocol=Json -p:FuzzerType=Roundtrip -p:Engine=Libfuzzer
+
 clean-local:
 	$(RM) -r Thrift/bin
 	$(RM) -r Thrift/obj
@@ -44,6 +61,8 @@ clean-local:
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/obj
+	$(RM) -r Tests/Thrift.FuzzTests/bin
+	$(RM) -r Tests/Thrift.FuzzTests/obj
 
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
@@ -60,6 +79,7 @@ EXTRA_DIST = \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj \
+	Tests/Thrift.FuzzTests \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \
 	Tests/Thrift.Tests/Protocols \

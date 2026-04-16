@@ -24,10 +24,7 @@ We currently maintain fuzzers for the following languages:
 - Ruby
 - Rust
 - Swift
-
-We are working on adding fuzzers for the following languages:
-
-- netstd
+- netstd (only supported locally, and not on oss-fuzz)
 
 ## Fuzzer Types
 
