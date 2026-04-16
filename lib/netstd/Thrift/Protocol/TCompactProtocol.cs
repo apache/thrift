@@ -796,7 +796,11 @@ namespace Thrift.Protocol
         private static TType GetTType(byte type)
         {
             // Given a TCompactProtocol.Types constant, convert it to its corresponding TType value.
-            return CompactTypeToTType[type & 0x0f];
+            var index = type & 0x0f;
+            if (index < CompactTypeToTType.Length)
+                return CompactTypeToTType[index];
+
+            throw new TProtocolException(TProtocolException.INVALID_DATA, $"Unknown compact protocol type {index}");
         }
 
         private static ulong LongToZigzag(long n)
