@@ -49,11 +49,12 @@
 /compiler/cpp/src/thrift/generate/t_gv_generator.*           @Jens-G
 /compiler/cpp/src/thrift/generate/t_html_generator.*         @Jens-G
 /compiler/cpp/src/thrift/generate/t_markdown_generator.*     @Jens-G
+/compiler/cpp/src/thrift/generate/t_rb_generator.*           @kpumuk
 
 # Generators without a dedicated committer:
 # t_cl_generator.*, t_d_generator.*, t_dart_generator.*,
 # t_erl_generator.*, t_lua_generator.*, t_ocaml_generator.*,
-# t_perl_generator.*, t_rb_generator.*, t_php_generator.*,
+# t_perl_generator.*, t_php_generator.*,
 # t_st_generator.*, t_javame_generator.*, t_swift_generator.*,
 # t_json_generator.*, t_xml_generator.*, t_xsd_generator.*
 
@@ -127,6 +128,12 @@
 /lib/rs/                      @jimexist @mhlakhani
 /test/rs/                     @jimexist @mhlakhani
 /tutorial/rs/                 @jimexist @mhlakhani
+
+# Ruby
+/lib/rb/                      @kpumuk
+/test/rb/                     @kpumuk
+/tutorial/rb/                 @kpumuk
+
 
 # The following languages have no dedicated committer with recent activity.
 #
