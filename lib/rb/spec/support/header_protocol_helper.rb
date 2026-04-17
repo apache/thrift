@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -33,7 +34,7 @@ module HeaderProtocolHelper
   end
 
   def build_header_frame(header_data, payload = Thrift::Bytes.empty_byte_buffer, header_words: nil)
-    header_data = Thrift::Bytes.force_binary_encoding(header_data)
+    header_data = header_data.b
     if header_words.nil?
       padding = (4 - (header_data.bytesize % 4)) % 4
       header_data += "\x00" * padding

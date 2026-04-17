@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -35,6 +36,16 @@ describe 'BaseTransport' do
       expect(transport).to receive(:read).with(30).ordered.and_return("fifteen letters")
       expect(transport).to receive(:read).with(15).ordered.and_return("more characters")
       expect(transport.read_all(40)).to eq("10 lettersfifteen lettersmore characters")
+    end
+
+    it "should coerce reads to binary encoding" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(3).and_return(+'abc')
+
+      buf = transport.read_all(3)
+
+      expect(buf).to eq('abc')
+      expect(buf.encoding).to eq(Encoding::BINARY)
     end
 
     it "should stub out the rest of the methods" do
@@ -286,7 +297,7 @@ describe 'BaseTransport' do
     end
 
     it "should accept a buffer on input and use it directly" do
-      s = "this is a test"
+      s = +"this is a test"
       @buffer = Thrift::MemoryBufferTransport.new(s)
       expect(@buffer.read(4)).to eq("this")
       s.slice!(-4..-1)

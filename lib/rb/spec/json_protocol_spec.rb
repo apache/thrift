@@ -1,4 +1,5 @@
 # encoding: UTF-8
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -223,14 +224,14 @@ describe 'JsonProtocol' do
     it 'should write string' do
       @prot.write_string('this is a test string')
       a = @trans.read(@trans.available)
-      expect(a).to eq('"this is a test string"'.force_encoding(Encoding::BINARY))
+      expect(a).to eq('"this is a test string"'.b)
       expect(a.encoding).to eq(Encoding::BINARY)
     end
 
     it 'should write string with unicode characters' do
       @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
       a = @trans.read(@trans.available)
-      expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY))
+      expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".b)
       expect(a.encoding).to eq(Encoding::BINARY)
     end
 
@@ -502,14 +503,14 @@ describe 'JsonProtocol' do
     end
 
     it 'should read string' do
-      @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
+      @trans.write('"this is a test string"'.b)
       a = @prot.read_string
       expect(a).to eq('this is a test string')
       expect(a.encoding).to eq(Encoding::UTF_8)
     end
 
     it 'should read string with unicode characters' do
-      @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
+      @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.b)
       a = @prot.read_string
       expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")
       expect(a.encoding).to eq(Encoding::UTF_8)
