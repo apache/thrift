@@ -80,7 +80,7 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     SETX PATH "%ZLIB_ROOT%\bin;%PATH%"
 
 # Install OpenSSL 3.6.1
-ADD --checksum=sha256:8ce11c409adbd177ca627115bc697c3b66c414bb36175ebb375341eb426894a8 https://slproweb.com/download/Win64OpenSSL-3_6_1.exe C:\TEMP\openssl.exe
+ADD --checksum=sha256:c395482a1af33b2cdd4b801b227c864ed049e0f6aff79413d31b4fa916a67b1a https://slproweb.com/download/Win64OpenSSL-3_6_2.exe C:\TEMP\openssl.exe
 RUN C:\TEMP\openssl.exe /silent && `
     DEL C:\TEMP\openssl.exe && `
     SETX OPENSSL_ROOT "C:\OpenSSL-Win64" && `
@@ -92,13 +92,6 @@ RUN choco install jdk8 -y
 # Install python3
 RUN choco install python3 -y
 RUN pip install setuptools
-
-# Install Adobe Flex 4.6 SDK and set FLEX_HOME so it can be found
-ADD --checksum=sha256:622b63f29de44600ff8d4231174a70fcb3085812c0e146a42e91877ca8b46798 http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip C:\Adobe\Flex\SDK\4.6\SDK.zip
-RUN CD C:\Adobe\Flex\SDK\4.6 && `
-    7z x SDK.zip && `
-    DEL SDK.zip && `
-    SETX FLEX_HOME "C:\Adobe\Flex\SDK\4.6"
 
 RUN choco install nodejs -y
 

@@ -175,7 +175,6 @@ Last updated: March 5, 2024
 | Tool      | ubuntu-focal  | ubuntu-jammy  | ubuntu-noble  | Notes |
 | :-------- | :------------ | :------------ | :------------ | :---- |
 | as of     | Mar 06, 2018  | Jul 1, 2019   |               |       |
-| as3       | 4.6.0         | 4.6.0         |               |       |
 | C++ gcc   | 9.4.0         | 11.4.0        |               |       |
 | C++ clang | 13.0.0        | 13.0.0        |               |       |
 | c\_glib   | 3.2.12        | 3.2.12        |               |       |

@@ -44,15 +44,6 @@ if (NOT Boost_USE_STATIC_LIBS)
     add_definitions(-DBOOST_TEST_DYN_LINK)
 endif()
 
-# as3
-option(WITH_AS3 "Build ActionScript 3 Thrift Library" ON)
-if (WITH_AS3)
-    set(POSSIBLE_PATHS "${FLEX_HOME}/bin" "$ENV{FLEX_HOME}/bin")
-    find_program(HAVE_COMPC NAMES compc HINTS ${POSSIBLE_PATHS})
-endif ()
-CMAKE_DEPENDENT_OPTION(BUILD_AS3 "Build as3 library" ON
-                       "BUILD_LIBRARIES;WITH_AS3;HAVE_COMPC" OFF)
-
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
@@ -170,10 +161,6 @@ MESSAGE_DEP(HAVE_COMPILER "Disabled because BUILD_COMPILER=OFF and no valid THRI
 message(STATUS "  Build type:                                 ${CMAKE_BUILD_TYPE}")
 message(STATUS)
 message(STATUS "Language libraries:")
-message(STATUS)
-message(STATUS "  Build as3 library:                          ${BUILD_AS3}")
-MESSAGE_DEP(WITH_AS3 "Disabled by WITH_AS3=OFF")
-MESSAGE_DEP(HAVE_COMPC "Adobe Flex compc was not found - did you set env var FLEX_HOME?")
 message(STATUS)
 message(STATUS "  Build with OpenSSL:                         ${WITH_OPENSSL}")
 if(WITH_OPENSSL)

@@ -99,7 +99,7 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Successfully pulled cached image with hash tag"
             $needBuild = $false
-          } elseif ($output -match 'not found|does not exist|404') {
+          } elseif ($output -match 'not found|does not exist|404|manifest unknown') {
             Write-Host "Image not found in registry, will build from scratch."
             $needBuild = $true
           } else {
