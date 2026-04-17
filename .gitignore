@@ -44,10 +44,12 @@ cmake-*
 dub.selections.json
 libapache-thrift.a
 node_modules
+opsx-*.md
 compile
 test-driver
 erl_crash.dump
 project.lock.json
+SKILL.md
 
 .Dockerfile.sha512
 .sonar
@@ -57,6 +59,7 @@ project.lock.json
 .vscode
 .vs
 
+/.claude
 /aclocal/libtool.m4
 /aclocal/lt*.m4
 /autoscan.log
@@ -332,6 +335,7 @@ project.lock.json
 /ltmain.sh
 /missing
 /node_modules/
+/openspec
 /vendor/
 /composer.lock
 /stamp-h1
