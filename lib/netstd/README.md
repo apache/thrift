@@ -55,7 +55,14 @@ Because of the different environment requirements, migration from C# takes sligh
 
 # Fuzzing
 
-We use [SharpFuzz](https://github.com/Metalnem/sharpfuzz) (and its libfuzzer variant) to fuzz the Thrift protocol parsers. This is **not** integrated with oss-fuzz, so all fuzzing must be run locally. **Supported platform: Linux only.** The fuzzers are opt-in and are **not** built by `make check`; run `make build-fuzzers` (or `./buildfuzzers.sh`) explicitly.
+We use [SharpFuzz](https://github.com/Metalnem/sharpfuzz) (and its libfuzzer variant) to fuzz the Thrift protocol parsers. This is **not** integrated with oss-fuzz, so all fuzzing must be run locally. **Supported platform: Linux only.**
+
+`make check` compiles the 12 fuzzer variants without SharpFuzz IL
+instrumentation, so changes that break the fuzzer build will fail CI.
+Full, instrumented builds suitable for actually running a fuzzer remain
+opt-in: run `make build-fuzzers` (or `./buildfuzzers.sh`), which
+additionally requires the SharpFuzz.CommandLine global tool and the
+`libfuzzer-dotnet` native driver as described below.
 
 ## Prerequisites
 

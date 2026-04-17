@@ -21,38 +21,59 @@
 
 set -e
 
+# Parse arguments. --no-instrument performs code generation and builds the
+# 12 fuzzer assemblies but skips SharpFuzz IL rewriting. Intended for
+# `make check`, where we want to catch source changes that break the
+# fuzzer build without requiring the dev-only SharpFuzz.CommandLine
+# global tool or the libfuzzer-dotnet native driver.
+INSTRUMENT=1
+for arg in "$@"; do
+    case "$arg" in
+        --no-instrument)
+            INSTRUMENT=0
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            echo "Usage: $0 [--no-instrument]"
+            exit 1
+            ;;
+    esac
+done
+
 # Ensure the SharpFuzz.CommandLine global tool (runtimeconfig-pinned to
 # net9.0 in package 2.2.0) can roll forward onto the net10 runtime used
 # by this repo. Remove once SharpFuzz 2.3.0 (upstream PR #72) ships with
 # an updated runtimeconfig.
 export DOTNET_ROLL_FORWARD=Major
 
-# Check for SHARPFUZZ_DIR environment variable
-if [ -z "$SHARPFUZZ_DIR" ]; then
-    echo "Error: SHARPFUZZ_DIR environment variable is not set."
-    echo "Please set SHARPFUZZ_DIR to the location of your SharpFuzz installation."
-    echo "See README for installation instructions."
-    exit 1
-fi
+if [ "$INSTRUMENT" = "1" ]; then
+    # Check for SHARPFUZZ_DIR environment variable
+    if [ -z "$SHARPFUZZ_DIR" ]; then
+        echo "Error: SHARPFUZZ_DIR environment variable is not set."
+        echo "Please set SHARPFUZZ_DIR to the location of your SharpFuzz installation."
+        echo "See README for installation instructions."
+        exit 1
+    fi
 
-# Verify libfuzzer-dotnet exists
-LIBFUZZER="$SHARPFUZZ_DIR/libfuzzer-dotnet"
-if [ ! -f "$LIBFUZZER" ]; then
-    echo "Error: libfuzzer-dotnet not found at $LIBFUZZER"
-    echo "Please ensure SharpFuzz is properly installed in $SHARPFUZZ_DIR"
-    echo "See README for installation instructions."
-    exit 1
-fi
+    # Verify libfuzzer-dotnet exists
+    LIBFUZZER="$SHARPFUZZ_DIR/libfuzzer-dotnet"
+    if [ ! -f "$LIBFUZZER" ]; then
+        echo "Error: libfuzzer-dotnet not found at $LIBFUZZER"
+        echo "Please ensure SharpFuzz is properly installed in $SHARPFUZZ_DIR"
+        echo "See README for installation instructions."
+        exit 1
+    fi
 
-# Verify the sharpfuzz instrumentation CLI is on PATH before we spend
-# time building 12 assemblies that would otherwise fail to be instrumented.
-if ! command -v sharpfuzz >/dev/null 2>&1; then
-    echo "Error: 'sharpfuzz' CLI not found on PATH."
-    echo "Install it with:"
-    echo "  dotnet tool install --global SharpFuzz.CommandLine"
-    echo "  export PATH=\"\$PATH:\$HOME/.dotnet/tools\""
-    echo "See README for full installation instructions."
-    exit 1
+    # Verify the sharpfuzz instrumentation CLI is on PATH before we spend
+    # time building 12 assemblies that would otherwise fail to be instrumented.
+    if ! command -v sharpfuzz >/dev/null 2>&1; then
+        echo "Error: 'sharpfuzz' CLI not found on PATH."
+        echo "Install it with:"
+        echo "  dotnet tool install --global SharpFuzz.CommandLine"
+        echo "  export PATH=\"\$PATH:\$HOME/.dotnet/tools\""
+        echo "See README for full installation instructions."
+        exit 1
+    fi
 fi
 
 # Find the local Thrift compiler
@@ -108,6 +129,11 @@ for protocol in Binary Compact Json; do
 done
 
 # Step 3: Instrument the assemblies
+if [ "$INSTRUMENT" = "0" ]; then
+    echo "Build complete (instrumentation skipped)."
+    exit 0
+fi
+
 echo "Instrumenting assemblies for fuzzing ..."
 
 # Exclusions for instrumentation
@@ -143,4 +169,4 @@ while IFS= read -r -d '' dll; do
     fi
 done < <(find "$OUTPUT_DIR" -maxdepth 1 -type f -name "*.dll" -print0)
 
-echo "Build and instrumentation complete." 
+echo "Build and instrumentation complete."
