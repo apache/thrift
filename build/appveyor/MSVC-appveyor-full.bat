@@ -152,13 +152,6 @@ IF "%WITH_PYTHON%" == "ON" (
               zope.interface>=6.1 || EXIT /B
 )
 
-:: Adobe Flex SDK 4.6 for ActionScript
-MKDIR "C:\Adobe\Flex\SDK\4.6" || EXIT /B
-appveyor DownloadFile https://fpdownload.adobe.com/pub/flex/sdk/builds/flex4.6/flex_sdk_4.6.0.23201B.zip -FileName C:\Adobe\Flex\SDK\4.6\SDK.zip || EXIT /B
-CD "C:\Adobe\Flex\SDK\4.6" || EXIT /B
-7z x SDK.zip || EXIT /B
-SETX FLEX_HOME "C:\Adobe\Flex\SDK\4.6"
-
 
 ::
 :: Configure and build our software with cmake

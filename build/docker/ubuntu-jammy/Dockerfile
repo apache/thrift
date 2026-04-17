@@ -79,13 +79,6 @@ RUN apt-get update -yq && \
   vim
 ENV PATH=/usr/lib/llvm-6.0/bin:$PATH
 
-# lib/as3 (ActionScript)
-RUN mkdir -p /usr/local/adobe/flex/4.6 && \
-  cd /usr/local/adobe/flex/4.6 && \
-  wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
-  unzip flex_sdk_4.6.zip
-ENV FLEX_HOME=/usr/local/adobe/flex/4.6
-
 # TODO: "apt-get install" without "apt-get update" in the same "RUN" step can cause cache issues if modified later.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
 RUN apt-get install -y --no-install-recommends \
