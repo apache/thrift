@@ -111,6 +111,30 @@ directly from your application.
 
 ## Breaking Changes
 
+### 0.24.0
+
+Connect timeout handling changed for both `Thrift::Socket` and
+`Thrift::SSLSocket`.
+
+- `timeout == nil` and `timeout == 0` now use blocking connect/open semantics.
+  Older releases already treated `nil` that way, but treated `0` differently
+  across operations: `read` and `write` used the blocking path, plain TCP
+  `open` used a zero-length poll, and TLS `open` could spin in the handshake
+  retry loop.
+- Positive timeouts now bound the whole connect/open operation instead of
+  effectively applying a fresh timeout window at each wait or address attempt.
+  For plain TCP this budget is shared across address fallback. For TLS it is
+  shared across the TCP connect and the SSL handshake.
+- Connect/open timeout expiry now raises
+  `Thrift::TransportException::TIMED_OUT`. Older releases could report the same
+  condition as `NOT_OPEN`, and `Thrift::SSLSocket` could keep retrying the
+  handshake after the wait timed out.
+
+If your application matched `NOT_OPEN` for connect timeout handling, update it
+to handle `TIMED_OUT`. If you relied on `timeout = 0` meaning immediate failure
+or on repeated retries extending the effective timeout during TCP fallback or
+TLS handshake, update those call paths before upgrading.
+
 ### 0.23.0
 
 The documented source-build flow now effectively requires Ruby `2.7+`.
@@ -165,6 +189,12 @@ best-effort, not guaranteed.
 
 ## Migration Notes
 
+- If you upgrade to `0.24.0`, treat `timeout` on `Thrift::Socket` and
+  `Thrift::SSLSocket` as one budget for the whole open path. For
+  `Thrift::SSLSocket`, that includes both the TCP connect and the TLS
+  handshake.
+- If you upgrade to `0.24.0`, handle connect/open timeout expiry as
+  `Thrift::TransportException::TIMED_OUT` instead of `NOT_OPEN`.
 - If you upgrade across the stricter reply-validation changes, regenerate all
   Ruby stubs and deploy them with the matching Ruby runtime. Do not mix old
   generated code, new generated code, and new runtime code on the same client

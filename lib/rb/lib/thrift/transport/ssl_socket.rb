@@ -17,6 +17,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+require 'io/wait'
+
 module Thrift
   class SSLSocket < Socket
     def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil)
@@ -27,20 +29,49 @@ module Thrift
     attr_accessor :ssl_context
 
     def open
-      socket = super
-      @handle = OpenSSL::SSL::SSLSocket.new(socket, @ssl_context)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout unless @timeout.nil? || @timeout == 0
+      socket = connect_socket(deadline)
+
       begin
-        @handle.connect_nonblock
+        ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, @ssl_context)
+        ssl_socket.sync_close = true
+        @handle = ssl_socket
+
+        if deadline
+          loop do
+            result = @handle.connect_nonblock(exception: false)
+
+            case result
+            when @handle
+              break
+            when :wait_readable
+              remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              if remaining <= 0 || !@handle.to_io.wait_readable(remaining)
+                raise TransportException.new(TransportException::TIMED_OUT, "SSL socket: Timed out establishing session with #{@desc}")
+              end
+            when :wait_writable
+              remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              if remaining <= 0 || !@handle.to_io.wait_writable(remaining)
+                raise TransportException.new(TransportException::TIMED_OUT, "SSL socket: Timed out establishing session with #{@desc}")
+              end
+            else
+              raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: unexpected SSL connect result #{result.inspect}")
+            end
+          end
+        else
+          @handle.connect
+        end
+
         @handle.post_connection_check(@host)
         @handle
-      rescue IO::WaitReadable
-        IO.select([ @handle ], nil, nil, @timeout)
-        retry
-      rescue IO::WaitWritable
-        IO.select(nil, [ @handle ], nil, @timeout)
-        retry
-      rescue StandardError => e
-        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
+      rescue TransportException
+        close_socket(@handle)
+        @handle = nil
+        raise
+      rescue StandardError
+        close_socket(@handle || socket)
+        @handle = nil
+        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}")
       end
     end
 
