@@ -1,4 +1,5 @@
 # encoding: UTF-8
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -56,7 +57,7 @@ describe Thrift::Bytes do
 
   describe '.set_string_byte' do
     it 'should set byte value at index' do
-      s = "\x41\x42"
+      s = "\x41\x42".b
       Thrift::Bytes.set_string_byte(s, 0, 0x43)
       expect(s.getbyte(0)).to eq(0x43)
       expect(s).to eq('CB')

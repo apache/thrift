@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -106,7 +107,7 @@ task :test do
 end
 
 desc 'Run benchmarking of NonblockingServer'
-task :benchmark do
+task :benchmark => [:'gen-rb:benchmark'] do
   ruby 'benchmark/benchmark.rb'
 end
 

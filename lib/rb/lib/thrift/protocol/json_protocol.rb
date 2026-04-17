@@ -1,4 +1,5 @@
 # encoding: UTF-8
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -500,10 +501,10 @@ module Thrift
     # characters above the BMP are encoded as two escape sequences (surrogate pairs),
     # which is not yet implemented
     def read_json_escape_char
-      str = @reader.read
-      str += @reader.read
-      str += @reader.read
-      str += @reader.read
+      str = +@reader.read
+      str << @reader.read
+      str << @reader.read
+      str << @reader.read
       str.hex.chr(Encoding::UTF_8)
     end
 
@@ -524,8 +525,7 @@ module Thrift
         @context.read(@reader)
       end
       read_json_syntax_char(@@kJSONStringDelimiter)
-      ch = ""
-      str = ""
+      str = +''
       while (true)
         ch = @reader.read
         if (ch == @@kJSONStringDelimiter)
@@ -543,7 +543,7 @@ module Thrift
             ch = escape_char_vals[pos]
           end
         end
-        str += ch
+        str << ch
       end
       return str
     end
@@ -564,14 +564,14 @@ module Thrift
     # Reads a sequence of characters, stopping at the first one that is not
     # a valid JSON numeric character.
     def read_json_numeric_chars
-      str = ""
+      str = String.new(encoding: Encoding::UTF_8)
       while (true)
         ch = @reader.peek
         if (!is_json_numeric(ch))
           break;
         end
         ch = @reader.read
-        str += ch
+        str << ch
       end
       return str
     end

@@ -41,3 +41,12 @@ Layout/TrailingEmptyLines:
 
 Layout/TrailingWhitespace:
   Enabled: true
+
+Lint/OrderedMagicComments:
+  Enabled: true
+
+Performance/UnfreezeString:
+  Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Enabled: true

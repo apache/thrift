@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -106,7 +107,7 @@ module Thrift
         @num_threads = num
         @logger = logger
         @connections = []
-        @buffers = Hash.new { |h, k| h[k] = '' }
+        @buffers = Hash.new { |h, k| h[k] = Bytes.empty_byte_buffer }
         @signal_queue = Queue.new
         @signal_pipes = IO.pipe
         @signal_pipes[1].sync = true

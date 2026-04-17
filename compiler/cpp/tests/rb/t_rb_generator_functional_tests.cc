@@ -57,6 +57,7 @@ TEST_CASE("t_rb_generator emits bare marker for CRLF blank RDoc lines", "[functi
     const string generated_content = read_file("gen-rb/test_rdoc_crlf_types.rb");
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("\r") == string::npos);
+    REQUIRE(generated_content.rfind("# frozen_string_literal: true\n", 0) == 0);
     REQUIRE(generated_content.find("#  * first line\n") != string::npos);
     REQUIRE(generated_content.find("#  *\n") != string::npos);
 

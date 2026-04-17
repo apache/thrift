@@ -1,4 +1,5 @@
 # encoding: ascii-8bit
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -81,7 +82,7 @@ module Thrift
 
     def read_all(size)
       return Bytes.empty_byte_buffer if size <= 0
-      buf = read(size)
+      buf = Bytes.force_binary_encoding(read(size))
       while (buf.length < size)
         chunk = read(size - buf.length)
         buf << chunk

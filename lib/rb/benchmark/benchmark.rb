@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -116,7 +117,7 @@ class BenchmarkManager
   def collect_output
     puts "Collecting output..."
     # read from @pool until all sockets are closed
-    @buffers = Hash.new { |h, k| h[k] = '' }
+    @buffers = Hash.new { |h, k| h[k] = ''.b }
     until @pool.empty?
       rd, = select(@pool)
       next if rd.nil?
