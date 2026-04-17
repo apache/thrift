@@ -33,39 +33,19 @@ module Thrift
     attr_accessor :handle, :timeout
 
     def open
-      for addrinfo in ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM) do
-        begin
-          socket = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
-          socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-          sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
-          begin
-            socket.connect_nonblock(sockaddr)
-          rescue Errno::EINPROGRESS
-            unless IO.select(nil, [ socket ], nil, @timeout)
-              next
-            end
-            begin
-              socket.connect_nonblock(sockaddr)
-            rescue Errno::EISCONN
-            end
-          end
-          return @handle = socket
-        rescue StandardError => e
-          next
-        end
-      end
-      raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout unless @timeout.nil? || @timeout == 0
+      @handle = connect_socket(deadline)
     end
 
     def open?
-      !@handle.nil? and !@handle.closed?
+      !@handle.nil? && !@handle.closed?
     end
 
     def write(str)
       raise TransportException.new(TransportException::NOT_OPEN, "closed stream") unless open?
       str = Bytes.force_binary_encoding(str)
       begin
-        if @timeout.nil? or @timeout == 0
+        if @timeout.nil? || @timeout == 0
           @handle.write(str)
         else
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
@@ -87,7 +67,7 @@ module Thrift
         # pass this on
         raise e
       rescue StandardError => e
-        @handle.close
+        close_socket(@handle)
         @handle = nil
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
@@ -97,7 +77,7 @@ module Thrift
       raise TransportException.new(TransportException::NOT_OPEN, "closed stream") unless open?
 
       begin
-        if @timeout.nil? or @timeout == 0
+        if @timeout.nil? || @timeout == 0
           data = @handle.readpartial(sz)
         else
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
@@ -116,18 +96,18 @@ module Thrift
         # don't let this get caught by the StandardError handler
         raise e
       rescue StandardError => e
-        @handle.close unless @handle.closed?
+        close_socket(@handle)
         @handle = nil
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
-      if (data.nil? or data.length == 0)
+      if (data.nil? || data.length == 0)
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@desc}")
       end
       data
     end
 
     def close
-      @handle.close unless @handle.nil? or @handle.closed?
+      close_socket(@handle)
       @handle = nil
     end
 
@@ -140,6 +120,64 @@ module Thrift
     end
 
     private
+
+    def connect_socket(deadline)
+      last_error = nil
+      connected_socket = nil
+
+      Addrinfo.foreach(@host, @port, nil, :STREAM) do |addrinfo|
+        socket = nil
+
+        begin
+          socket = if deadline
+            remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out opening connection to #{@desc}") if remaining <= 0
+
+            addrinfo.connect(timeout: remaining)
+          else
+            addrinfo.connect
+          end
+
+          socket.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+          connected_socket = socket
+          break
+        rescue Errno::ETIMEDOUT => e
+          close_socket(socket)
+          last_error = e
+        rescue TransportException
+          close_socket(socket)
+          raise
+        rescue StandardError => e
+          close_socket(socket)
+          last_error = e
+        end
+      end
+
+      return connected_socket if connected_socket
+
+      if last_error.is_a?(Errno::ETIMEDOUT)
+        raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out opening connection to #{@desc}")
+      end
+
+      if deadline && deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC) <= 0
+        raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out opening connection to #{@desc}")
+      end
+
+      raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}"), cause: last_error
+    rescue TransportException
+      raise
+    rescue StandardError
+      raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}")
+    end
+
+    def close_socket(socket)
+      return if socket.nil?
+      return if socket.respond_to?(:closed?) && socket.closed?
+
+      socket.close
+    rescue StandardError
+      nil
+    end
 
     def wait_for(operation, deadline, sz)
       rd_ary, wr_ary = case operation
