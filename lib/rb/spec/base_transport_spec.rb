@@ -338,6 +338,21 @@ describe 'BaseTransport' do
       expect(@buffer.read(@buffer.available)).to eq("foo bar")
     end
 
+    it "should force mutable write buffers into binary in place" do
+      s = "abc \u20AC".encode("UTF-8")
+      @buffer.write(s)
+      expect(s.encoding).to eq(Encoding::BINARY)
+      expect(@buffer.read(@buffer.available)).to eq("abc \u20AC".encode("UTF-8").b)
+    end
+
+    it "should not mutate frozen write buffers while forcing binary encoding" do
+      s = "abc \u20AC".encode("UTF-8").freeze
+      @buffer.write(s)
+      expect(s.encoding).to eq(Encoding::UTF_8)
+      expect(s).to be_frozen
+      expect(@buffer.read(@buffer.available)).to eq("abc \u20AC".encode("UTF-8").b)
+    end
+
     it "should throw an EOFError when there isn't enough data in the buffer" do
       @buffer.reset_buffer("")
       expect{ @buffer.read(1) }.to raise_error(EOFError)

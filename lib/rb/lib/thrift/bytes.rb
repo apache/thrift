@@ -36,13 +36,15 @@ module Thrift
     end
 
     # Forces the encoding of the buffer to BINARY. If the buffer
-    # passed is frozen, then it will be duplicated.
+    # passed is frozen and not already BINARY, then it will be duplicated.
     #
     # buffer - The String to force the encoding of.
     #
     # Returns the String passed with an encoding of BINARY; returned
     # String may be a duplicate.
     def self.force_binary_encoding(buffer)
+      return buffer if buffer.encoding == Encoding::BINARY
+
       buffer = buffer.dup if buffer.frozen?
       buffer.force_encoding(Encoding::BINARY)
     end

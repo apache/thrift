@@ -228,6 +228,18 @@ describe Thrift::CompactProtocol do
     expect(Thrift::CompactProtocol.new(trans).to_s).to eq("compact(memory)")
   end
 
+  it "should write a frozen non-binary string without mutating the input" do
+    trans = Thrift::MemoryBufferTransport.new
+    prot = Thrift::CompactProtocol.new(trans)
+    buffer = "abc \u20AC".encode("UTF-8").freeze
+
+    prot.write_binary(buffer)
+
+    expect(buffer.encoding).to eq(Encoding::UTF_8)
+    expect(buffer).to be_frozen
+    expect(trans.read(trans.available).unpack("C*")).to eq([0x07, 0x61, 0x62, 0x63, 0x20, 0xE2, 0x82, 0xAC])
+  end
+
   class JankyHandler
     def Janky(i32arg)
       i32arg * 2

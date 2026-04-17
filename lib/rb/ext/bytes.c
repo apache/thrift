@@ -24,6 +24,20 @@
 #include <constants.h>
 
 VALUE force_binary_encoding(VALUE buffer) {
+  if (RB_TYPE_P(buffer, T_STRING)) {
+    if (rb_enc_get_index(buffer) == rb_ascii8bit_encindex()) {
+      return buffer;
+    }
+
+    if (RB_OBJ_FROZEN(buffer)) {
+      buffer = rb_obj_dup(buffer);
+    }
+
+    rb_enc_associate_index(buffer, rb_ascii8bit_encindex());
+
+    return buffer;
+  }
+
   return rb_funcall(thrift_bytes_module, force_binary_encoding_id, 1, buffer);
 }
 
