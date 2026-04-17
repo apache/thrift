@@ -44,6 +44,23 @@ describe Thrift::Bytes do
       a = Thrift::Bytes.force_binary_encoding e
       expect(a.encoding).to eq(Encoding::BINARY)
     end
+
+    it 'should return the same frozen binary string unchanged' do
+      e = 'STRING'.b.freeze
+      a = Thrift::Bytes.force_binary_encoding(e)
+      expect(a).to equal(e)
+      expect(a.encoding).to eq(Encoding::BINARY)
+      expect(a).to be_frozen
+    end
+
+    it 'should duplicate a frozen non-binary string before changing encoding' do
+      e = 'STRING'.encode('UTF-8').freeze
+      a = Thrift::Bytes.force_binary_encoding(e)
+      expect(a).not_to equal(e)
+      expect(a.encoding).to eq(Encoding::BINARY)
+      expect(e.encoding).to eq(Encoding::UTF_8)
+      expect(e).to be_frozen
+    end
   end
 
   describe '.get_string_byte' do
