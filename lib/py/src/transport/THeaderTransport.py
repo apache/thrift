@@ -60,9 +60,7 @@ class THeaderTransformID(object):
     ZLIB = 0x01
 
 
-READ_TRANSFORMS_BY_ID = {
-    THeaderTransformID.ZLIB: zlib.decompress,
-}
+KNOWN_READ_TRANSFORM_IDS = frozenset({THeaderTransformID.ZLIB})
 
 
 WRITE_TRANSFORMS_BY_ID = {
@@ -102,6 +100,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         self.sequence_id = 0
         self._protocol_id = default_protocol
         self._max_frame_size = HARD_MAX_FRAME_SIZE
+        self._max_decompressed_size = HARD_MAX_FRAME_SIZE
 
     def isOpen(self):
         return self._transport.isOpen()
@@ -134,6 +133,22 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         if not 0 < size < HARD_MAX_FRAME_SIZE:
             raise ValueError("maximum frame size should be < %d and > 0" % HARD_MAX_FRAME_SIZE)
         self._max_frame_size = size
+
+    def set_max_decompressed_size(self, size):
+        if not 0 < size <= HARD_MAX_FRAME_SIZE:
+            raise ValueError("maximum decompressed size should be <= %d and > 0" % HARD_MAX_FRAME_SIZE)
+        self._max_decompressed_size = size
+
+    def _apply_read_transform(self, transform_id, payload):
+        if transform_id == THeaderTransformID.ZLIB:
+            decompressor = zlib.decompressobj()
+            payload = decompressor.decompress(payload, self._max_decompressed_size)
+            if decompressor.unconsumed_tail:
+                raise TTransportException(
+                    TTransportException.SIZE_LIMIT,
+                    "Decompressed payload exceeds maximum allowed size.",
+                )
+        return payload
 
     @property
     def protocol_id(self):
@@ -250,7 +265,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         transform_count = readVarint(buffer_transport)
         for _ in range(transform_count):
             transform_id = readVarint(buffer_transport)
-            if transform_id not in READ_TRANSFORMS_BY_ID:
+            if transform_id not in KNOWN_READ_TRANSFORM_IDS:
                 raise TApplicationException(
                     TApplicationException.INVALID_TRANSFORM,
                     "Unknown transform: %d" % transform_id,
@@ -276,8 +291,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
 
         payload = buffer.read()
         for transform_id in transforms:
-            transform_fn = READ_TRANSFORMS_BY_ID[transform_id]
-            payload = transform_fn(payload)
+            payload = self._apply_read_transform(transform_id, payload)
         return BytesIO(payload)
 
     def write(self, buf):
