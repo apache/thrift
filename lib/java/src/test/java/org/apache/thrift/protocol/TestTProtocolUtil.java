@@ -19,9 +19,13 @@
 package org.apache.thrift.protocol;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
+import org.apache.thrift.transport.TMemoryInputTransport;
 import org.junit.jupiter.api.Test;
 import thrift.test.GuessProtocolStruct;
 
@@ -89,5 +93,34 @@ public class TestTProtocolUtil {
     TProtocolFactory factory =
         TProtocolUtil.guessProtocolFactory(buf, new TSimpleJSONProtocol.Factory());
     assertTrue(factory instanceof TSimpleJSONProtocol.Factory);
+  }
+
+  private static byte[] craftNestedStructs(int depth) throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    for (int i = 0; i < depth; i++) {
+      baos.write(TType.STRUCT); // field type
+      baos.write(0x00); // field ID high byte
+      baos.write(0x01); // field ID low byte (id=1)
+    }
+    for (int i = 0; i <= depth; i++) {
+      baos.write(TType.STOP); // STOP for each level + innermost
+    }
+    return baos.toByteArray();
+  }
+
+  @Test
+  public void testSkipDefaultDepthRejectsDeeplyNestedStruct() throws Exception {
+    byte[] payload = craftNestedStructs(64);
+    TMemoryInputTransport trans = new TMemoryInputTransport(payload);
+    TBinaryProtocol proto = new TBinaryProtocol(trans);
+    assertThrows(TException.class, () -> TProtocolUtil.skip(proto, TType.STRUCT));
+  }
+
+  @Test
+  public void testSkipDefaultDepthAcceptsStructWithinLimit() throws Exception {
+    byte[] payload = craftNestedStructs(63);
+    TMemoryInputTransport trans = new TMemoryInputTransport(payload);
+    TBinaryProtocol proto = new TBinaryProtocol(trans);
+    TProtocolUtil.skip(proto, TType.STRUCT); // must not throw
   }
 }
