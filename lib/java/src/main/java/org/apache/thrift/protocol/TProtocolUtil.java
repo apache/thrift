@@ -27,8 +27,12 @@ public class TProtocolUtil {
   // no instantiation
   private TProtocolUtil() {}
 
-  /** The maximum recursive depth the skip() function will traverse before throwing a TException. */
-  private static int maxSkipDepth = Integer.MAX_VALUE;
+  /**
+   * The maximum recursive depth the skip() function will traverse before throwing a TException.
+   * Matches the DEFAULT_RECURSION_DEPTH used by C++, Go, and Node.js (64). Override with
+   * setMaxSkipDepth() when your application requires deeper nesting.
+   */
+  private static int maxSkipDepth = 64;
 
   /**
    * Specifies the maximum recursive depth that the skip function will traverse before throwing a
