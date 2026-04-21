@@ -17,11 +17,13 @@
 # under the License.
 #
 
+import struct
 import unittest
 import uuid
 
 import _import_local_thrift  # noqa
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+from thrift.protocol.TProtocol import TProtocolException
 from thrift.transport import TTransport
 
 
@@ -295,6 +297,37 @@ class TestTBinaryProtocol(unittest.TestCase):
         except Exception as e:
             print("Assertion fail")
             raise e
+
+
+def _craft_nested_structs(depth):
+    buf = bytearray()
+    for _ in range(depth):
+        buf += bytes([0x0c])           # TType.STRUCT = 12
+        buf += struct.pack('>h', 1)    # field ID 1
+    for _ in range(depth + 1):
+        buf += bytes([0x00])           # STOP per level + innermost
+    return bytes(buf)
+
+
+class TestSkipDepthLimit(unittest.TestCase):
+
+    def _make_proto(self, payload):
+        trans = TTransport.TMemoryBuffer(payload)
+        return TBinaryProtocol(trans)
+
+    def test_skip_rejects_deeply_nested_struct(self):
+        from thrift.Thrift import TType
+        payload = _craft_nested_structs(64)
+        proto = self._make_proto(payload)
+        with self.assertRaises(TProtocolException) as ctx:
+            proto.skip(TType.STRUCT)
+        self.assertEqual(ctx.exception.type, TProtocolException.DEPTH_LIMIT)
+
+    def test_skip_accepts_struct_within_depth_limit(self):
+        from thrift.Thrift import TType
+        payload = _craft_nested_structs(63)
+        proto = self._make_proto(payload)
+        proto.skip(TType.STRUCT)  # must not raise
 
 
 if __name__ == '__main__':
