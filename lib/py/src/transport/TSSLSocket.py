@@ -24,13 +24,9 @@ import ssl
 import sys
 import warnings
 
-from .sslcompat import _match_has_ipaddress
+from .sslcompat import _match_has_ipaddress, _match_hostname
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
-
-
-def _match_hostname(cert, hostname):
-    return True
 
 
 logger = logging.getLogger(__name__)
