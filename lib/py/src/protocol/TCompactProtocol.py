@@ -69,16 +69,21 @@ def writeVarint(trans, n):
     trans.write(bytes(out))
 
 
+_MAX_VARINT_BYTES = 10  # ceil(64/7); matches protobuf wire format
+
+
 def readVarint(trans):
     result = 0
     shift = 0
-    while True:
+    for _ in range(_MAX_VARINT_BYTES):
         x = trans.readAll(1)
         byte = ord(x)
         result |= (byte & 0x7f) << shift
         if byte >> 7 == 0:
             return result
         shift += 7
+    raise TProtocolException(TProtocolException.INVALID_DATA,
+                             "Variable-length int over 10 bytes.")
 
 
 # As per TCompactProtocol.tcc

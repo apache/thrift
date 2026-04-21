@@ -164,6 +164,38 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(1000, $result);
     }
 
+    public function testReadVarintRejectsOverlong()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturn("\x80"); // continuation byte — bit 7 always set
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::INVALID_DATA);
+        $protocol->readVarint($result);
+    }
+
+    public function testReadVarintAcceptsValid10ByteVarint()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $continuations = array_fill(0, 9, "\x80");
+        $continuations[] = "\x01"; // terminating byte
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(...$continuations);
+
+        $byteCount = $protocol->readVarint($result);
+        $this->assertSame(10, $byteCount);
+    }
+
     public function testWriteMessageBegin()
     {
         $name = 'testName';

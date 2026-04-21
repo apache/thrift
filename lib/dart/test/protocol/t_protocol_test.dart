@@ -395,6 +395,29 @@ void main() {
     });
 
     group('shared tests', sharedTests);
+
+    test('readI64 rejects overlong varint', () async {
+      final trans = TBufferedTransport();
+      final proto = TCompactProtocol(trans);
+      final bytes = Uint8List(11)..fillRange(0, 11, 0x80);
+      trans.write(bytes, 0, 11);
+      await trans.flush();
+      expect(
+        () => proto.readI64(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.INVALID_DATA)));
+    });
+
+    test('readI64 accepts valid 10-byte varint', () async {
+      final trans = TBufferedTransport();
+      final proto = TCompactProtocol(trans);
+      final bytes = Uint8List(10)
+        ..fillRange(0, 9, 0x80)
+        ..[9] = 0x01;
+      trans.write(bytes, 0, 10);
+      await trans.flush();
+      expect(() => proto.readI64(), returnsNormally);
+    });
   });
 }
 

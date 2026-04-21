@@ -19,8 +19,14 @@
 
 package org.apache.thrift.protocol;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Arrays;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TMemoryInputTransport;
 import org.junit.jupiter.api.Test;
 import thrift.test.Bonk;
 
@@ -47,6 +53,42 @@ public class TestTCompactProtocol extends ProtocolTestBase {
     } catch (TException e) {
       // Ignore as we are only checking for OOM in the failure case
     }
+  }
+
+  @Test
+  public void testReadVarint64FastPathRejectsOverlong() throws Exception {
+    byte[] buf = new byte[11];
+    Arrays.fill(buf, (byte) 0x80); // 11 continuation bytes, no terminator
+    TCompactProtocol proto = new TCompactProtocol(new TMemoryInputTransport(buf));
+    TProtocolException ex = assertThrows(TProtocolException.class, proto::readI64);
+    assertEquals(TProtocolException.INVALID_DATA, ex.getType());
+  }
+
+  @Test
+  public void testReadVarint64FastPathAcceptsValid10Byte() throws Exception {
+    byte[] buf = new byte[10];
+    Arrays.fill(buf, (byte) 0x80);
+    buf[9] = 0x01; // terminating byte
+    TCompactProtocol proto = new TCompactProtocol(new TMemoryInputTransport(buf));
+    assertDoesNotThrow(proto::readI64);
+  }
+
+  @Test
+  public void testReadVarint32FastPathRejectsOverlong() throws Exception {
+    byte[] buf = new byte[6];
+    Arrays.fill(buf, (byte) 0x80); // 6 continuation bytes, no terminator
+    TCompactProtocol proto = new TCompactProtocol(new TMemoryInputTransport(buf));
+    TProtocolException ex = assertThrows(TProtocolException.class, proto::readI32);
+    assertEquals(TProtocolException.INVALID_DATA, ex.getType());
+  }
+
+  @Test
+  public void testReadVarint32FastPathAcceptsValid5Byte() throws Exception {
+    byte[] buf = new byte[5];
+    Arrays.fill(buf, (byte) 0x80);
+    buf[4] = 0x01; // terminating byte
+    TCompactProtocol proto = new TCompactProtocol(new TMemoryInputTransport(buf));
+    assertDoesNotThrow(proto::readI32);
   }
 
   public static void main(String args[]) throws Exception {

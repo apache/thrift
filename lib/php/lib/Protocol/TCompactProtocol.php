@@ -64,6 +64,8 @@ class TCompactProtocol extends TProtocol
     const TYPE_BITS = 0x07;
     const TYPE_SHIFT_AMOUNT = 5;
 
+    const MAX_VARINT_BYTES = 10; // ceil(64/7); matches protobuf wire format
+
     protected static $ctypes = array(
         TType::STOP => TCompactProtocol::COMPACT_STOP,
         TType::BOOL => TCompactProtocol::COMPACT_TRUE, // used for collection
@@ -145,7 +147,7 @@ class TCompactProtocol extends TProtocol
         $idx = 0;
         $shift = 0;
         $result = 0;
-        while (true) {
+        while ($idx < self::MAX_VARINT_BYTES) {
             $x = $this->trans_->readAll(1);
             $arr = unpack('C', $x);
             $byte = $arr[1];
@@ -156,9 +158,7 @@ class TCompactProtocol extends TProtocol
             }
             $shift += 7;
         }
-
-        #unreachable statement
-        return $idx;
+        throw new TProtocolException('Variable-length int over 10 bytes.', TProtocolException::INVALID_DATA);
     }
 
     public function __construct($trans)

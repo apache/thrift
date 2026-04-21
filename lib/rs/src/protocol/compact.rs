@@ -16,7 +16,7 @@
 // under the License.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use integer_encoding::{VarIntReader, VarIntWriter};
+use integer_encoding::VarIntWriter;
 use std::convert::{From, TryFrom};
 use std::io;
 
@@ -31,6 +31,8 @@ use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
 const COMPACT_PROTOCOL_ID: u8 = 0x82;
 const COMPACT_VERSION: u8 = 0x01;
 const COMPACT_VERSION_MASK: u8 = 0x1F;
+const MAX_VARINT32_BYTES: usize = 5; // ceil(32/7); matches protobuf wire format
+const MAX_VARINT64_BYTES: usize = 10; // ceil(64/7); matches protobuf wire format
 
 /// Read messages encoded in the Thrift compact protocol.
 ///
@@ -101,7 +103,7 @@ where
             // high bits set high if count and type encoded separately
             possible_element_count as i32
         } else {
-            self.transport.read_varint::<u32>()? as i32
+            self.read_varint32()? as i32
         };
 
         let min_element_size = self.min_serialized_size(element_type);
@@ -120,6 +122,40 @@ where
             }
         }
         Ok(())
+    }
+
+    fn read_varint32(&mut self) -> crate::Result<u32> {
+        let mut result = 0u32;
+        let mut shift = 0u32;
+        for _ in 0..MAX_VARINT32_BYTES {
+            let b = self.read_byte()?;
+            result |= ((b & 0x7F) as u32) << shift;
+            if b & 0x80 == 0 {
+                return Ok(result);
+            }
+            shift += 7;
+        }
+        Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "Variable-length int over 5 bytes.",
+        )))
+    }
+
+    fn read_varint64(&mut self) -> crate::Result<u64> {
+        let mut result = 0u64;
+        let mut shift = 0u32;
+        for _ in 0..MAX_VARINT64_BYTES {
+            let b = self.read_byte()?;
+            result |= ((b & 0x7F) as u64) << shift;
+            if b & 0x80 == 0 {
+                return Ok(result);
+            }
+            shift += 7;
+        }
+        Err(crate::Error::Protocol(ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "Variable-length int over 10 bytes.",
+        )))
     }
 }
 
@@ -156,7 +192,7 @@ where
         // NOTE: unsigned right shift will pad with 0s
         let message_type: TMessageType = TMessageType::try_from(type_and_byte >> 5)?;
         // writing side wrote signed sequence number as u32 to avoid zigzag encoding
-        let sequence_number = self.transport.read_varint::<u32>()? as i32;
+        let sequence_number = self.read_varint32()? as i32;
         let service_call_name = self.read_string()?;
 
         self.last_read_field_id = 0;
@@ -265,7 +301,7 @@ where
     }
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
-        let len = self.transport.read_varint::<u32>()?;
+        let len = self.read_varint32()?;
 
         if let Some(max_size) = self.config.max_string_size() {
             if len as usize > max_size {
@@ -291,15 +327,15 @@ where
     }
 
     fn read_i16(&mut self) -> crate::Result<i16> {
-        self.transport.read_varint::<i16>().map_err(From::from)
+        Ok(zigzag_to_i32(self.read_varint32()?) as i16)
     }
 
     fn read_i32(&mut self) -> crate::Result<i32> {
-        self.transport.read_varint::<i32>().map_err(From::from)
+        Ok(zigzag_to_i32(self.read_varint32()?))
     }
 
     fn read_i64(&mut self) -> crate::Result<i64> {
-        self.transport.read_varint::<i64>().map_err(From::from)
+        Ok(zigzag_to_i64(self.read_varint64()?))
     }
 
     fn read_double(&mut self) -> crate::Result<f64> {
@@ -340,7 +376,7 @@ where
     }
 
     fn read_map_begin(&mut self) -> crate::Result<TMapIdentifier> {
-        let element_count = self.transport.read_varint::<u32>()? as i32;
+        let element_count = self.read_varint32()? as i32;
         if element_count == 0 {
             Ok(TMapIdentifier::new(None, None, 0))
         } else {
@@ -395,6 +431,16 @@ pub(crate) fn compact_protocol_min_serialized_size(field_type: TType) -> usize {
         TType::Uuid => 16,  // 16 bytes
         TType::Utf7 => 1,   // 1 byte
     }
+}
+
+#[inline]
+fn zigzag_to_i32(n: u32) -> i32 {
+    ((n >> 1) as i32) ^ (0i32.wrapping_sub((n & 1) as i32))
+}
+
+#[inline]
+fn zigzag_to_i64(n: u64) -> i64 {
+    ((n >> 1) as i64) ^ (0i64.wrapping_sub((n & 1) as i64))
 }
 
 impl<T> io::Seek for TCompactInputProtocol<T>
@@ -2905,6 +2951,29 @@ mod tests {
     fn must_read_map_end() {
         let (mut i_prot, _) = test_objects();
         assert!(i_prot.read_map_end().is_ok()); // will blow up if we try to read from empty buffer
+    }
+
+    #[test]
+    fn must_reject_overlong_varint_i64() {
+        let (mut i_prot, _) = test_objects();
+        i_prot.transport.set_readable_bytes(&[0x80u8; 11]); // 11 continuation bytes, no terminator
+        let res = i_prot.read_i64();
+        assert!(res.is_err());
+        match res {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::InvalidData);
+            }
+            _ => panic!("expected Protocol/InvalidData error"),
+        }
+    }
+
+    #[test]
+    fn must_accept_valid_10_byte_varint_i64() {
+        let (mut i_prot, _) = test_objects();
+        let mut bytes = [0x80u8; 10];
+        bytes[9] = 0x01; // terminating byte
+        i_prot.transport.set_readable_bytes(&bytes);
+        assert!(i_prot.read_i64().is_ok());
     }
 
     fn test_objects() -> (
