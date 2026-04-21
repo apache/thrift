@@ -42,6 +42,8 @@ namespace Thrift.Protocol
         private const byte TypeMask = 0xE0; // 1110 0000
         private const byte TypeBits = 0x07; // 0000 0111
         private const int TypeShiftAmount = 5;
+        private const int MaxVarint32Bytes = 5;   // ceil(32/7); matches protobuf wire format
+        private const int MaxVarint64Bytes = 10;  // ceil(64/7); matches protobuf wire format
 
         private const byte NoTypeOverride = 0xFF;
 
@@ -744,18 +746,18 @@ namespace Thrift.Protocol
             uint result = 0;
             var shift = 0;
 
-            while (true)
+            for (var idx = 0; idx < MaxVarint32Bytes; idx++)
             {
                 var b = (byte) await ReadByteAsync(cancellationToken);
                 result |= (uint) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {
-                    break;
+                    return result;
                 }
                 shift += 7;
             }
 
-            return result;
+            throw new TProtocolException(TProtocolException.INVALID_DATA, "Variable-length int over 5 bytes.");
         }
 
         private async ValueTask<ulong> ReadVarInt64Async(CancellationToken cancellationToken)
@@ -769,18 +771,19 @@ namespace Thrift.Protocol
 
             var shift = 0;
             ulong result = 0;
-            while (true)
+
+            for (var idx = 0; idx < MaxVarint64Bytes; idx++)
             {
                 var b = (byte) await ReadByteAsync(cancellationToken);
                 result |= (ulong) (b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80)
                 {
-                    break;
+                    return result;
                 }
                 shift += 7;
             }
 
-            return result;
+            throw new TProtocolException(TProtocolException.INVALID_DATA, "Variable-length int over 10 bytes.");
         }
 
         private static int ZigzagToInt(uint n)

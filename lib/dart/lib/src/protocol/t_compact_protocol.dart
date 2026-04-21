@@ -39,6 +39,7 @@ class TCompactProtocol extends TProtocol {
   static const int TYPE_MASK = 0xE0;
   static const int TYPE_BITS = 0x07;
   static const int TYPE_SHIFT_AMOUNT = 5;
+  static const int MAX_VARINT_BYTES = 10; // ceil(64/7); matches protobuf wire format
   static final TField TSTOP = TField("", TType.STOP, 0);
 
   static const int TYPE_BOOLEAN_TRUE = 0x01;
@@ -427,25 +428,25 @@ static final List<int> _typeMap = List<int>.unmodifiable(
   Int32 _readVarInt32() {
     Int32 result = Int32.ZERO;
     int shift = 0;
-    while (true) {
+    for (int idx = 0; idx < MAX_VARINT_BYTES; idx++) {
       Int32 b = Int32(readByte());
       result |= (b & 0x7f) << shift;
-      if ((b & 0x80) != 0x80) break;
+      if ((b & 0x80) != 0x80) return result;
       shift += 7;
     }
-    return result;
+    throw TProtocolError(TProtocolErrorType.INVALID_DATA, 'Variable-length int over 10 bytes.');
   }
 
   Int64 _readVarInt64() {
     Int64 result = Int64.ZERO;
     int shift = 0;
-    while (true) {
+    for (int idx = 0; idx < MAX_VARINT_BYTES; idx++) {
       Int64 b = Int64(readByte());
       result |= (b & 0x7f) << shift;
-      if ((b & 0x80) != 0x80) break;
+      if ((b & 0x80) != 0x80) return result;
       shift += 7;
     }
-    return result;
+    throw TProtocolError(TProtocolErrorType.INVALID_DATA, 'Variable-length int over 10 bytes.');
   }
 
   Int32 _zigzagToInt32(Int32 n) {

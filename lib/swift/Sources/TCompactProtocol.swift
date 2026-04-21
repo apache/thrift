@@ -47,7 +47,8 @@ public class TCompactProtocol: TProtocol {
   public static let protocolID: UInt8  = 0x82
   public static let version: UInt8     = 1
   public static let versionMask: UInt8 = 0x1F // 0001 1111
-  
+  static let maxVarintBytes = 10 // ceil(64/7); matches protobuf wire format
+
   public var transport: TTransport
   
   var lastField: [UInt8] = []
@@ -139,35 +140,33 @@ public class TCompactProtocol: TProtocol {
   func readVarint32() throws -> UInt32 {
     var result: UInt32 = 0
     var shift: UInt32 = 0
-    while true {
+    for _ in 0 ..< TCompactProtocol.maxVarintBytes {
       let byte: UInt8 = try read()
-      
+
       result |= UInt32(byte & 0x7F) << shift
       if (byte & 0x80) == 0 {
-        break
+        return result
       }
-      
+
       shift += 7
     }
-    
-    return result
+    throw TProtocolError(error: .invalidData, message: "Variable-length int over 10 bytes.")
   }
-  
+
   func readVarint64() throws -> UInt64 {
     var result: UInt64 = 0
     var shift: UInt64 = 0
-    
-    while true {
+    for _ in 0 ..< TCompactProtocol.maxVarintBytes {
       let byte: UInt8 = try read()
-      
+
       result |= UInt64(byte & 0x7F) << shift
       if (byte & 0x80) == 0 {
-        break
+        return result
       }
-      
+
       shift += 7
     }
-    return result
+    throw TProtocolError(error: .invalidData, message: "Variable-length int over 10 bytes.")
   }
   
 

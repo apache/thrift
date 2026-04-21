@@ -211,6 +211,31 @@ class TCompactProtocolTests: XCTestCase {
     XCTAssertEqual(proto.zigZagToi64(UInt64.max), min, "Error 64bit zigzag on \(min)")
   }
   
+  func testVarintRejectsOverlong() {
+    let buf = Data(repeating: 0x80, count: 11) // 11 continuation bytes, no terminator
+    let t = TMemoryBufferTransport(readBuffer: buf)
+    let p = TCompactProtocol(on: t)
+    do {
+      let _: Int64 = try p.read()
+      XCTFail("Expected TProtocolError but no error was thrown")
+    } catch let protoError as TProtocolError {
+      guard case .invalidData = protoError.error else {
+        XCTFail("Expected .invalidData, got \(protoError.error)"); return
+      }
+    } catch {
+      XCTFail("Expected TProtocolError, got \(error)")
+    }
+  }
+
+  func testVarintAcceptsValid10Byte() {
+    var bytes = [UInt8](repeating: 0x80, count: 9)
+    bytes.append(0x01) // terminating byte
+    let buf = Data(bytes)
+    let t = TMemoryBufferTransport(readBuffer: buf)
+    let p = TCompactProtocol(on: t)
+    XCTAssertNoThrow(try p.read() as Int64)
+  }
+
   static var allTests : [(String, (TCompactProtocolTests) -> () throws -> Void)] {
     return [
       ("testInt8WriteRead", testInt8WriteRead),
@@ -223,7 +248,9 @@ class TCompactProtocolTests: XCTestCase {
       ("testDataWriteRead", testDataWriteRead),
       ("testStructWriteRead", testStructWriteRead),
       ("testInt32ZigZag", testInt32ZigZag),
-      ("testInt64ZigZag", testInt64ZigZag)
+      ("testInt64ZigZag", testInt64ZigZag),
+      ("testVarintRejectsOverlong", testVarintRejectsOverlong),
+      ("testVarintAcceptsValid10Byte", testVarintAcceptsValid10Byte)
     ]
   }
 }

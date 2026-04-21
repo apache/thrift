@@ -241,6 +241,34 @@ describe Thrift::CompactProtocol do
     expect(trans.read(trans.available).unpack("C*")).to eq([0x07, 0x61, 0x62, 0x63, 0x20, 0xE2, 0x82, 0xAC])
   end
 
+  it "should reject a varint with more than 10 continuation bytes" do
+    trans = Thrift::MemoryBufferTransport.new(([0x80] * 11).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect { proto.read_i64 }.to raise_error(Thrift::ProtocolException) do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+    end
+  end
+
+  it "should accept a valid 10-byte varint" do
+    trans = Thrift::MemoryBufferTransport.new((([0x80] * 9) + [0x01]).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect { proto.read_i64 }.not_to raise_error
+  end
+
+  it "should reject a 32-bit varint with more than 5 continuation bytes" do
+    trans = Thrift::MemoryBufferTransport.new(([0x80] * 6).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect { proto.read_i32 }.to raise_error(Thrift::ProtocolException) do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+    end
+  end
+
+  it "should accept a valid 5-byte varint for i32" do
+    trans = Thrift::MemoryBufferTransport.new((([0x80] * 4) + [0x0f]).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect { proto.read_i32 }.not_to raise_error
+  end
+
   class JankyHandler
     def Janky(i32arg)
       i32arg * 2

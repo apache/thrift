@@ -29,7 +29,8 @@ TCompactProtocol = __TObject.new(TProtocolBase, {
   COMPACT_VERSION_MASK      = 0x1f,
   COMPACT_TYPE_MASK         = 0xE0,
   COMPACT_TYPE_BITS         = 0x07,
-  COMPACT_TYPE_SHIFT_AMOUNT = 5,
+  COMPACT_TYPE_SHIFT_AMOUNT  = 5,
+  COMPACT_MAX_VARINT_BYTES   = 10, -- ceil(64/7); matches protobuf wire format
 
   -- Used to keep track of the last field for the current and previous structs,
   -- so we can do the delta stuff.
@@ -445,31 +446,33 @@ end
 function TCompactProtocol:readVarint32()
   local shiftl = 0
   local result = 0
-  while true do
+  for idx = 0, self.COMPACT_MAX_VARINT_BYTES - 1 do
     b = self:readByte()
     result = libluabitwise.bor(result,
              libluabitwise.shiftl(libluabitwise.band(b, 0x7f), shiftl))
     if libluabitwise.band(b, 0x80) ~= 0x80 then
-      break
+      return result
     end
     shiftl = shiftl + 7
   end
-  return result
+  terror(TProtocolException:new{errorCode = TProtocolException.INVALID_DATA,
+    message = 'Variable-length int over 10 bytes.'})
 end
 
 function TCompactProtocol:readVarint64()
   local result = liblualongnumber.new
   local data = result(0)
   local shiftl = 0
-  while true do
+  for idx = 0, self.COMPACT_MAX_VARINT_BYTES - 1 do
     b = self:readSignByte()
     endFlag, data = libluabpack.fromVarint64(b, shiftl, data)
     shiftl = shiftl + 7
     if endFlag == 0 then
-      break
+      return data
     end
   end
-  return data
+  terror(TProtocolException:new{errorCode = TProtocolException.INVALID_DATA,
+    message = 'Variable-length int over 10 bytes.'})
 end
 
 function TCompactProtocol:getTType(ctype)

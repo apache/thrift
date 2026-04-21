@@ -50,6 +50,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     private static inline var TYPE_MASK : Int = 0xE0; // 1110 0000
     private static inline var TYPE_BITS : Int = 0x07; // 0000 0111
     private static inline var TYPE_SHIFT_AMOUNT : Int = 5;
+    private static inline var MAX_VARINT_BYTES : Int = 10; // ceil(64/7); matches protobuf wire format
 
 
     private static var ttypeToCompactType = [
@@ -650,15 +651,15 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     private function ReadVarint32() : UInt {
         var result : UInt = 0;
         var shift : Int = 0;
-        while (true) {
+        for (idx in 0 ... MAX_VARINT_BYTES) {
             var b : Int = readByte();
             result |= cast((b & 0x7f) << shift, UInt);
             if ((b & 0x80) != 0x80) {
-                break;
+                return result;
             }
             shift += 7;
         }
-        return result;
+        throw new TProtocolException( TProtocolException.INVALID_DATA, "Variable-length int over 10 bytes.");
     }
 
     /**
@@ -668,16 +669,15 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     private function ReadVarint64() : Int64 {
         var shift : Int = 0;
         var result : Int64 = Int64.make(0,0);
-        while (true) {
+        for (idx in 0 ... MAX_VARINT_BYTES) {
             var b : Int = readByte();
             result = Int64.or( result, Int64.shl( Int64.make(0,b & 0x7f), shift));
             if ((b & 0x80) != 0x80) {
-                break;
+                return result;
             }
             shift += 7;
         }
-
-        return result;
+        throw new TProtocolException( TProtocolException.INVALID_DATA, "Variable-length int over 10 bytes.");
     }
 
 

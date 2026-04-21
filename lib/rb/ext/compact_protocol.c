@@ -436,22 +436,37 @@ static int32_t zig_zag_to_int(uint32_t n) {
   return (int32_t)((n >> 1) ^ (0U - (n & 1U)));
 }
 
+#define MAX_VARINT32_BYTES 5  /* ceil(32/7); matches protobuf wire format */
+#define MAX_VARINT64_BYTES 10 /* ceil(64/7); matches protobuf wire format */
+
 static uint64_t read_varint64(VALUE self) {
-  int shift = 0;
+  int i, shift = 0;
   uint64_t result = 0;
-  while (true) {
+  for (i = 0; i < MAX_VARINT64_BYTES; i++) {
     int8_t b = read_byte_direct(self);
     result |= ((uint64_t)(b & 0x7f) << shift);
     if ((b & 0x80) != 0x80) {
-      break;
+      return result;
     }
     shift += 7;
   }
-  return result;
+  rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Variable-length int over 10 bytes.")));
+  return 0; /* unreachable */
 }
 
 static uint32_t read_varint32(VALUE self) {
-  return (uint32_t)read_varint64(self);
+  int i, shift = 0;
+  uint32_t result = 0;
+  for (i = 0; i < MAX_VARINT32_BYTES; i++) {
+    int8_t b = read_byte_direct(self);
+    result |= ((uint32_t)(b & 0x7f) << shift);
+    if ((b & 0x80) != 0x80) {
+      return result;
+    }
+    shift += 7;
+  }
+  rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Variable-length int over 5 bytes.")));
+  return 0; /* unreachable */
 }
 
 static int16_t read_i16(VALUE self) {

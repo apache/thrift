@@ -19,6 +19,7 @@
 
 import _import_local_thrift  # noqa
 from thrift.protocol import TCompactProtocol
+from thrift.protocol.TProtocol import TProtocolException
 from thrift.transport import TTransport
 import unittest
 import uuid
@@ -300,6 +301,20 @@ class TestTCompactProtocol(unittest.TestCase):
         except Exception as e:
             print("Assertion fail")
             raise e
+
+    def test_readVarint_rejects_overlong_input(self):
+        payload = bytes([0x80] * 11)  # 11 continuation bytes, no terminator
+        trans = TTransport.TMemoryBuffer(payload)
+        with self.assertRaises(TProtocolException) as ctx:
+            TCompactProtocol.readVarint(trans)
+        self.assertEqual(ctx.exception.type, TProtocolException.INVALID_DATA)
+
+    def test_readVarint_accepts_valid_10_byte_varint(self):
+        # max valid varint64: 10 bytes, last byte has bit 7 clear
+        payload = bytes([0x80] * 9 + [0x01])
+        trans = TTransport.TMemoryBuffer(payload)
+        result = TCompactProtocol.readVarint(trans)
+        self.assertIsNotNone(result)
 
 
 if __name__ == "__main__":

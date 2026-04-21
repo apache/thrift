@@ -27,6 +27,8 @@ module Thrift
     TYPE_MASK = 0xE0
     TYPE_BITS = 0x07
     TYPE_SHIFT_AMOUNT = 5
+    MAX_VARINT32_BYTES = 5  # ceil(32/7); matches protobuf wire format
+    MAX_VARINT_BYTES = 10   # ceil(64/7); matches protobuf wire format
 
     TSTOP = [nil, Types::STOP, 0]
 
@@ -411,19 +413,27 @@ module Thrift
     end
 
     def read_varint32()
-      read_varint64()
+      shift = 0
+      result = 0
+      MAX_VARINT32_BYTES.times do
+        b = read_byte()
+        result |= (b & 0x7f) << shift
+        return result if (b & 0x80) != 0x80
+        shift += 7
+      end
+      raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 5 bytes.')
     end
 
     def read_varint64()
       shift = 0
       result = 0
-      while true
+      MAX_VARINT_BYTES.times do
         b = read_byte()
         result |= (b & 0x7f) << shift
-        break if (b & 0x80) != 0x80
+        return result if (b & 0x80) != 0x80
         shift += 7
       end
-      result
+      raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 10 bytes.')
     end
 
     def int_to_zig_zag(n)

@@ -129,13 +129,15 @@ to_varint(Value, Acc) when (Value < 16#80) -> [Acc, Value];
 to_varint(Value, Acc) -> to_varint(Value bsr 7, [Acc, ((Value band 16#7F) bor 16#80)]).
 
 -spec read_varint(t_compact(), non_neg_integer(), non_neg_integer()) ->
-    {t_compact(), {'ok', integer()}}.
-read_varint(This0, Acc, Count) ->
+    {t_compact(), {'ok', integer()} | {error, term()}}.
+read_varint(This0, Acc, Count) when Count < 10 ->
     {This1, {ok, Byte}} = read(This0, byte),
     case (Byte band 16#80) of
         0 -> {This1, {ok, (Byte bsl (7 * Count)) + Acc}};
         _ -> read_varint(This1, ((Byte band 16#7f) bsl (7 * Count)) + Acc, Count + 1)
-    end.
+    end;
+read_varint(This0, _Acc, _Count) ->
+    {This0, {error, {invalid_data, "Variable-length int exceeds 10 bytes"}}}.
 
 write(This0, #protocol_message_begin{
     name = Name,
@@ -348,16 +350,22 @@ read(This0, byte) ->
         Else -> {This1, Else}
     end;
 read(This0, i16) ->
-    {This1, {ok, Zigzag}} = read_varint(This0, 0, 0),
-    {This1, {ok, from_zigzag(Zigzag)}};
+    case read_varint(This0, 0, 0) of
+        {This1, {ok, Zigzag}} -> {This1, {ok, from_zigzag(Zigzag)}};
+        {This1, {error, _} = Err} -> {This1, Err}
+    end;
 read(This0, ui32) ->
     read_varint(This0, 0, 0);
 read(This0, i32) ->
-    {This1, {ok, Zigzag}} = read_varint(This0, 0, 0),
-    {This1, {ok, from_zigzag(Zigzag)}};
+    case read_varint(This0, 0, 0) of
+        {This1, {ok, Zigzag}} -> {This1, {ok, from_zigzag(Zigzag)}};
+        {This1, {error, _} = Err} -> {This1, Err}
+    end;
 read(This0, i64) ->
-    {This1, {ok, Zigzag}} = read_varint(This0, 0, 0),
-    {This1, {ok, from_zigzag(Zigzag)}};
+    case read_varint(This0, 0, 0) of
+        {This1, {ok, Zigzag}} -> {This1, {ok, from_zigzag(Zigzag)}};
+        {This1, {error, _} = Err} -> {This1, Err}
+    end;
 read(This0, double) ->
     {This1, Bytes} = read_data(This0, 8),
     case Bytes of
