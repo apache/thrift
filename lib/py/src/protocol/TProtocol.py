@@ -186,7 +186,10 @@ class TProtocolBase(object):
     def readUuid(self):
         pass
 
-    def skip(self, ttype):
+    def skip(self, ttype, max_depth=64):
+        if max_depth <= 0:
+            raise TProtocolException(TProtocolException.DEPTH_LIMIT,
+                                     "Maximum skip depth exceeded")
         if ttype == TType.BOOL:
             self.readBool()
         elif ttype == TType.BYTE:
@@ -207,24 +210,24 @@ class TProtocolBase(object):
                 (name, ttype, id) = self.readFieldBegin()
                 if ttype == TType.STOP:
                     break
-                self.skip(ttype)
+                self.skip(ttype, max_depth - 1)
                 self.readFieldEnd()
             self.readStructEnd()
         elif ttype == TType.MAP:
             (ktype, vtype, size) = self.readMapBegin()
             for i in range(size):
-                self.skip(ktype)
-                self.skip(vtype)
+                self.skip(ktype, max_depth - 1)
+                self.skip(vtype, max_depth - 1)
             self.readMapEnd()
         elif ttype == TType.SET:
             (etype, size) = self.readSetBegin()
             for i in range(size):
-                self.skip(etype)
+                self.skip(etype, max_depth - 1)
             self.readSetEnd()
         elif ttype == TType.LIST:
             (etype, size) = self.readListBegin()
             for i in range(size):
-                self.skip(etype)
+                self.skip(etype, max_depth - 1)
             self.readListEnd()
         elif ttype == TType.UUID:
             self.readUuid()
