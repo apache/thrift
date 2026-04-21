@@ -351,6 +351,22 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, ssl_context=client_context)
 
 
+class TestMatchHostname(unittest.TestCase):
+    def test_match_hostname_is_from_sslcompat(self):
+        from thrift.transport.TSSLSocket import _match_hostname as ssl_match
+        from thrift.transport.sslcompat import _match_hostname as compat_match
+        self.assertIs(ssl_match, compat_match,
+                      "_match_hostname in TSSLSocket must be the sslcompat version, not an inline no-op")
+
+    @unittest.skipIf(sys.version_info >= (3, 12),
+                     "ssl.match_hostname removed in Python 3.12; OpenSSL handles hostname verification")
+    def test_match_hostname_rejects_mismatch(self):
+        from thrift.transport.TSSLSocket import _match_hostname
+        fake_cert = {"subject": ((("commonName", "evil.attacker.com"),),)}
+        with self.assertRaises(Exception):
+            _match_hostname(fake_cert, "real-server.com")
+
+
 # Add a dummy test because starting from python 3.12, if all tests in a test
 # file are skipped that's considered an error.
 class DummyTest(unittest.TestCase):
