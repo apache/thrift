@@ -1704,13 +1704,8 @@ void t_rs_generator::render_struct_sync_read(const string& struct_name,
       f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << '\n';
       indent_up();
       if (is_union_field) {
-        // Union fields: catch "received empty union" errors from unknown
-        // variants and treat them as None for forward compatibility.
-        // This matches how Java, Go, and Python Thrift handle unknown
-        // union fields -- they skip silently instead of failing.
-        //
-        // Use the resolved (non-Box) type for the method call since
-        // Box<T>::method() is not valid Rust syntax for turbofish.
+        // Catch EmptyUnion from unknown variants for forward compatibility.
+        // Use the resolved (non-Box) type since Box<T>::method() isn't valid syntax.
         string resolved_type = to_rust_type(resolved);
         bool is_boxed_union = to_rust_type(tfield->get_type()) != resolved_type;
         string read_call(resolved_type + "::read_from_in_protocol(i_prot)");
@@ -1718,7 +1713,7 @@ void t_rs_generator::render_struct_sync_read(const string& struct_name,
         f_gen_ << indent() << "match " << read_call << " {" << '\n';
         indent_up();
         f_gen_ << indent() << "Ok(val) => { " << struct_field_read_temp_variable(tfield) << " = Some(" << val_expr << "); }," << '\n';
-        f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.message.contains(\"received empty union\") => {" << '\n';
+        f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.kind == ProtocolErrorKind::EmptyUnion => {" << '\n';
         indent_up();
         f_gen_ << indent() << "// forward compatibility: unknown union variant skipped" << '\n';
         indent_down();
@@ -1861,7 +1856,7 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
   // return the value or an error
   f_gen_ << indent() << "if received_field_count == 0 {" << '\n';
   indent_up();
-  render_thrift_error("Protocol", "ProtocolError", "ProtocolErrorKind::InvalidData",
+  render_thrift_error("Protocol", "ProtocolError", "ProtocolErrorKind::EmptyUnion",
                       "\"received empty union from remote " + union_name + "\"");
   indent_down();
   f_gen_ << indent() << "} else if received_field_count > 1 {" << '\n';

@@ -50,4 +50,65 @@ mod tests {
             ..Default::default()
         };
     }
+
+    #[test]
+    fn unknown_union_variant_in_struct_field_is_treated_as_none() {
+        use std::io::Cursor;
+
+        use thrift::protocol::{
+            TBinaryInputProtocol, TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol,
+            TStructIdentifier, TType,
+        };
+
+        // Serialize AidKit with an unknown union variant (id=99), verify it deserializes as None.
+
+        let mut write_buf: Vec<u8> = Vec::new();
+        {
+            let cursor = Cursor::new(&mut write_buf);
+            let mut prot = TBinaryOutputProtocol::new(cursor, false);
+
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "AidKit".to_owned(),
+            })
+            .unwrap();
+            // field 1: optional aid (union => Struct on wire)
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Struct,
+                id: Some(1),
+            })
+            .unwrap();
+            // inner union-as-struct
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "MeasuringAids".to_owned(),
+            })
+            .unwrap();
+            // unknown variant: use an id that doesn't exist (99), type i32
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::I32,
+                id: Some(99),
+            })
+            .unwrap();
+            prot.write_i32(42).unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+            // end outer field
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+        }
+
+        // Read it back using generated code
+        let read_cursor = Cursor::new(write_buf);
+        let mut rprot = TBinaryInputProtocol::new(read_cursor, false);
+        let kit = base_one::AidKit::read_from_in_protocol(&mut rprot)
+            .expect("forward-compat deserialization should succeed");
+
+        assert!(
+            kit.aid.is_none(),
+            "unknown union variant should result in None field (forward compat)"
+        );
+    }
 }
