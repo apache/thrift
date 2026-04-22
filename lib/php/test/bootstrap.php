@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Basic', __DIR__ . '/Resources/packages/php');
+$loader->registerNamespace('BasicInline', __DIR__ . '/Resources/packages/phpi');
 $loader->registerNamespace('Validate', __DIR__ . '/Resources/packages/phpv');
 $loader->registerNamespace('ValidateOop', __DIR__ . '/Resources/packages/phpvo');
 $loader->registerNamespace('Json', __DIR__ . '/Resources/packages/phpjs');

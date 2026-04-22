@@ -26,7 +26,6 @@ use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TProtocol;
 use Thrift\Transport\TMemoryBuffer;
-use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
 
 class TProtocolTest extends TestCase
@@ -36,9 +35,11 @@ class TProtocolTest extends TestCase
      */
     public function testSkipScalarValues(int $type, string $writerMethod, $value): void
     {
-        $buffer = $this->buildBinaryBuffer(function (TBinaryProtocol $protocol) use ($writerMethod, $value): void {
-            $protocol->{$writerMethod}($value);
-        });
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol) use ($writerMethod, $value): void {
+                $protocol->{$writerMethod}($value);
+            }
+        );
         $transport = new TMemoryBuffer($buffer);
         $protocol = new TBinaryProtocol($transport);
 
@@ -92,17 +93,19 @@ class TProtocolTest extends TestCase
 
     public function testSkipStruct(): void
     {
-        $buffer = $this->buildBinaryBuffer(function (TBinaryProtocol $protocol): void {
-            $protocol->writeStructBegin('Example');
-            $protocol->writeFieldBegin('flag', TType::BOOL, 1);
-            $protocol->writeBool(true);
-            $protocol->writeFieldEnd();
-            $protocol->writeFieldBegin('name', TType::STRING, 2);
-            $protocol->writeString('value');
-            $protocol->writeFieldEnd();
-            $protocol->writeFieldStop();
-            $protocol->writeStructEnd();
-        });
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeStructBegin('Example');
+                $protocol->writeFieldBegin('flag', TType::BOOL, 1);
+                $protocol->writeBool(true);
+                $protocol->writeFieldEnd();
+                $protocol->writeFieldBegin('name', TType::STRING, 2);
+                $protocol->writeString('value');
+                $protocol->writeFieldEnd();
+                $protocol->writeFieldStop();
+                $protocol->writeStructEnd();
+            }
+        );
 
         $transport = new TMemoryBuffer($buffer);
         $protocol = new TBinaryProtocol($transport);
@@ -113,14 +116,16 @@ class TProtocolTest extends TestCase
 
     public function testSkipMap(): void
     {
-        $buffer = $this->buildBinaryBuffer(function (TBinaryProtocol $protocol): void {
-            $protocol->writeMapBegin(TType::I32, TType::STRING, 2);
-            $protocol->writeI32(1);
-            $protocol->writeString('a');
-            $protocol->writeI32(2);
-            $protocol->writeString('bc');
-            $protocol->writeMapEnd();
-        });
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeMapBegin(TType::I32, TType::STRING, 2);
+                $protocol->writeI32(1);
+                $protocol->writeString('a');
+                $protocol->writeI32(2);
+                $protocol->writeString('bc');
+                $protocol->writeMapEnd();
+            }
+        );
 
         $transport = new TMemoryBuffer($buffer);
         $protocol = new TBinaryProtocol($transport);
@@ -131,12 +136,14 @@ class TProtocolTest extends TestCase
 
     public function testSkipSet(): void
     {
-        $buffer = $this->buildBinaryBuffer(function (TBinaryProtocol $protocol): void {
-            $protocol->writeSetBegin(TType::I16, 2);
-            $protocol->writeI16(10);
-            $protocol->writeI16(20);
-            $protocol->writeSetEnd();
-        });
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeSetBegin(TType::I16, 2);
+                $protocol->writeI16(10);
+                $protocol->writeI16(20);
+                $protocol->writeSetEnd();
+            }
+        );
 
         $transport = new TMemoryBuffer($buffer);
         $protocol = new TBinaryProtocol($transport);
@@ -147,12 +154,14 @@ class TProtocolTest extends TestCase
 
     public function testSkipList(): void
     {
-        $buffer = $this->buildBinaryBuffer(function (TBinaryProtocol $protocol): void {
-            $protocol->writeListBegin(TType::STRING, 2);
-            $protocol->writeString('first');
-            $protocol->writeString('second');
-            $protocol->writeListEnd();
-        });
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeListBegin(TType::STRING, 2);
+                $protocol->writeString('first');
+                $protocol->writeString('second');
+                $protocol->writeListEnd();
+            }
+        );
 
         $transport = new TMemoryBuffer($buffer);
         $protocol = new TBinaryProtocol($transport);
@@ -171,89 +180,81 @@ class TProtocolTest extends TestCase
         $protocol->skip(999);
     }
 
-    public function testSkipBinarySkipsBool(): void
+    /**
+     * @dataProvider skipScalarDataProvider
+     */
+    public function testSkipBinaryScalarValues(int $type, string $writerMethod, $value): void
     {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->once())
-            ->method('readAll')
-            ->with(1)
-            ->willReturn('1');
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol) use ($writerMethod, $value): void {
+                $protocol->{$writerMethod}($value);
+            }
+        );
 
-        TProtocol::skipBinary($transport, TType::BOOL);
+        $this->assertSkipBinaryConsumesBuffer($buffer, $type);
     }
 
-    public function testSkipBinarySkipsString(): void
+    public function testSkipBinaryStruct(): void
     {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->exactly(2))
-            ->method('readAll')
-            ->withConsecutive([4], [2])
-            ->willReturnOnConsecutiveCalls(pack('N', 2), '12');
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeStructBegin('Example');
+                $protocol->writeFieldBegin('flag', TType::BOOL, 1);
+                $protocol->writeBool(true);
+                $protocol->writeFieldEnd();
+                $protocol->writeFieldBegin('name', TType::STRING, 2);
+                $protocol->writeString('value');
+                $protocol->writeFieldEnd();
+                $protocol->writeFieldStop();
+                $protocol->writeStructEnd();
+            }
+        );
 
-        TProtocol::skipBinary($transport, TType::STRING);
+        $this->assertSkipBinaryConsumesBuffer($buffer, TType::STRUCT);
     }
 
-    public function testSkipBinarySkipsStruct(): void
+    public function testSkipBinaryMap(): void
     {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->exactly(4))
-            ->method('readAll')
-            ->withConsecutive([1], [2], [2], [1])
-            ->willReturnOnConsecutiveCalls(
-                chr(TType::I16),
-                '2',
-                '2',
-                chr(TType::STOP)
-            );
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeMapBegin(TType::I32, TType::STRING, 2);
+                $protocol->writeI32(1);
+                $protocol->writeString('a');
+                $protocol->writeI32(2);
+                $protocol->writeString('bc');
+                $protocol->writeMapEnd();
+            }
+        );
 
-        TProtocol::skipBinary($transport, TType::STRUCT);
+        $this->assertSkipBinaryConsumesBuffer($buffer, TType::MAP);
     }
 
-    public function testSkipBinarySkipsMap(): void
+    public function testSkipBinaryList(): void
     {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->exactly(5))
-            ->method('readAll')
-            ->withConsecutive([1], [1], [4], [1], [2])
-            ->willReturnOnConsecutiveCalls(
-                chr(TType::BOOL),
-                chr(TType::I16),
-                pack('N', 1),
-                '1',
-                '2'
-            );
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeListBegin(TType::STRING, 2);
+                $protocol->writeString('first');
+                $protocol->writeString('second');
+                $protocol->writeListEnd();
+            }
+        );
 
-        TProtocol::skipBinary($transport, TType::MAP);
+        $this->assertSkipBinaryConsumesBuffer($buffer, TType::LST);
     }
 
-    public function testSkipBinarySkipsList(): void
+    public function testSkipBinarySet(): void
     {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->exactly(3))
-            ->method('readAll')
-            ->withConsecutive([1], [4], [1])
-            ->willReturnOnConsecutiveCalls(
-                chr(TType::BYTE),
-                pack('N', 1),
-                '1'
-            );
+        $buffer = $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol): void {
+                $protocol->writeSetBegin(TType::DOUBLE, 2);
+                $protocol->writeDouble(3.14);
+                $protocol->writeDouble(6.28);
+                $protocol->writeSetEnd();
+            }
+        );
 
-        TProtocol::skipBinary($transport, TType::LST);
-    }
-
-    public function testSkipBinarySkipsSet(): void
-    {
-        $transport = $this->createMock(TTransport::class);
-        $transport->expects($this->exactly(3))
-            ->method('readAll')
-            ->withConsecutive([1], [4], [8])
-            ->willReturnOnConsecutiveCalls(
-                chr(TType::DOUBLE),
-                pack('N', 1),
-                '8'
-            );
-
-        TProtocol::skipBinary($transport, TType::SET);
+        $this->assertSkipBinaryConsumesBuffer($buffer, TType::SET);
     }
 
     public function testSkipBinaryThrowsForUnknownType(): void
@@ -261,7 +262,7 @@ class TProtocolTest extends TestCase
         $this->expectException(TProtocolException::class);
         $this->expectExceptionCode(TProtocolException::INVALID_DATA);
 
-        TProtocol::skipBinary($this->createMock(TTransport::class), 999);
+        TProtocol::skipBinary(new TMemoryBuffer(), 999);
     }
 
     private function buildBinaryBuffer(callable $writer): string
@@ -271,5 +272,13 @@ class TProtocolTest extends TestCase
         $writer($protocol);
 
         return $transport->getBuffer();
+    }
+
+    private function assertSkipBinaryConsumesBuffer(string $buffer, int $type): void
+    {
+        $transport = new TMemoryBuffer($buffer);
+
+        $this->assertSame(strlen($buffer), TProtocol::skipBinary($transport, $type));
+        $this->assertSame(0, (int)$transport->available());
     }
 }
