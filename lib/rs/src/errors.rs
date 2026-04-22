@@ -509,6 +509,10 @@ pub enum ProtocolErrorKind {
     /// Reached the maximum nested depth to which an encoded Thrift field could
     /// be skipped.
     DepthLimit = 6,
+    /// A Thrift union was deserialized with zero fields on the wire.
+    EmptyUnion = 7,
+    /// A Thrift union contained fields but none matched known variants.
+    UnknownUnionVariant = 8,
 }
 
 impl Display for ProtocolError {
@@ -521,6 +525,8 @@ impl Display for ProtocolError {
             ProtocolErrorKind::BadVersion => "invalid thrift version",
             ProtocolErrorKind::NotImplemented => "not implemented",
             ProtocolErrorKind::DepthLimit => "maximum skip depth reached",
+            ProtocolErrorKind::EmptyUnion => "empty union",
+            ProtocolErrorKind::UnknownUnionVariant => "unknown union variant",
         };
 
         write!(f, "{}", error_text)
@@ -538,6 +544,8 @@ impl TryFrom<i32> for ProtocolErrorKind {
             4 => Ok(ProtocolErrorKind::BadVersion),
             5 => Ok(ProtocolErrorKind::NotImplemented),
             6 => Ok(ProtocolErrorKind::DepthLimit),
+            7 => Ok(ProtocolErrorKind::EmptyUnion),
+            8 => Ok(ProtocolErrorKind::UnknownUnionVariant),
             _ => Err(Error::Protocol(ProtocolError {
                 kind: ProtocolErrorKind::Unknown,
                 message: format!("cannot convert {} to ProtocolErrorKind", from),
