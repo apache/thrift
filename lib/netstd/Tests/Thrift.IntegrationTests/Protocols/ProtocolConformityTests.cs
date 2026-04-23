@@ -32,7 +32,7 @@ namespace Thrift.IntegrationTests.Protocols
     [TestClass]
     public class ProtocolConformityTests : TestBase
     {
-        [DataTestMethod]
+        [TestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
         [DataRow(typeof(TJsonProtocol))]
