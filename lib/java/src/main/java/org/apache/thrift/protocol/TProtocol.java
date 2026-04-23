@@ -441,12 +441,12 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   }
 
   public void skip(byte fieldType) throws TException {
-    this.skip(fieldType, Integer.MAX_VALUE);
+    this.skip(fieldType, this.getTransport().getConfiguration().getRecursionLimit());
   }
 
   public void skip(byte fieldType, int maxDepth) throws TException {
     if (maxDepth <= 0) {
-      throw new TException("Maximum skip depth exceeded");
+      throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Maximum skip depth exceeded");
     }
 
     switch (fieldType) {
