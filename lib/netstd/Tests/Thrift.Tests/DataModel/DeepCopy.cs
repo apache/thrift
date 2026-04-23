@@ -117,20 +117,20 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(instance.__isset.opt_eight_with_value);
             Assert.IsTrue(instance.__isset.opt_nine_with_value);
 
-            Assert.AreEqual(instance.Req_one_with_value, (Distance)1);
-            Assert.AreEqual(instance.Req_two_with_value, 2.22);
-            Assert.AreEqual(instance.Req_three_with_value, 3);
-            Assert.AreEqual(instance.Req_four_with_value, "four");
+            Assert.AreEqual((Distance)1, instance.Req_one_with_value);
+            Assert.AreEqual(2.22, instance.Req_two_with_value);
+            Assert.AreEqual(3, instance.Req_three_with_value);
+            Assert.AreEqual("four", instance.Req_four_with_value);
             Assert.AreEqual(new Guid("55555555-5555-5555-5555-000000000000"), instance.Req_five_with_value);
 
-            Assert.IsTrue(instance.Req_six_with_value!.Count == 1);
-            Assert.AreEqual(instance.Req_six_with_value[0], 6 );
+            Assert.HasCount(1, instance.Req_six_with_value ?? []);
+            Assert.AreEqual(6, instance.Req_six_with_value?[0] ?? 0);
 
-            Assert.IsTrue(instance.Req_seven_with_value!.Count == 1);
-            Assert.IsTrue(instance.Req_seven_with_value.Contains(7));
+            Assert.HasCount(1, instance.Req_seven_with_value ?? []);
+            Assert.Contains(7, instance.Req_seven_with_value ?? []);
 
-            Assert.IsTrue(instance.Req_eight_with_value!.Count == 1);
-            Assert.IsTrue(instance.Req_eight_with_value[8] == 8);
+            Assert.HasCount(1, instance.Req_eight_with_value ?? []);
+            Assert.AreEqual(8, instance.Req_eight_with_value?[8] ?? 0);
 
             Assert.AreEqual("nine", Encoding.UTF8.GetString(instance.Req_nine_with_value!));
 
