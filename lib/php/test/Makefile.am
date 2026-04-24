@@ -21,11 +21,13 @@ PHPUNIT=php $(top_srcdir)/vendor/bin/phpunit
 
 stubs: Resources/ThriftTest.thrift
 	mkdir -p ./Resources/packages/php
+	mkdir -p ./Resources/packages/phpi
 	mkdir -p ./Resources/packages/phpv
 	mkdir -p ./Resources/packages/phpvo
 	mkdir -p ./Resources/packages/phpjs
 	mkdir -p ./Resources/packages/phpcm
 	$(THRIFT) --gen php:nsglobal="Basic" -r --out ./Resources/packages/php Resources/ThriftTest.thrift
+	$(THRIFT) --gen php:inlined,nsglobal="BasicInline" -r --out ./Resources/packages/phpi Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:validate,nsglobal="Validate" -r --out ./Resources/packages/phpv Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:validate,oop,nsglobal="ValidateOop" -r --out ./Resources/packages/phpvo Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:json,nsglobal="Json" -r --out ./Resources/packages/phpjs Resources/ThriftTest.thrift
