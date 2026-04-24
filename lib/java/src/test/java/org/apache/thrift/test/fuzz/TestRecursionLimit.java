@@ -31,6 +31,8 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransport;
@@ -140,6 +142,75 @@ public class TestRecursionLimit {
     assertTrue(
         exception.getType() == TProtocolException.DEPTH_LIMIT,
         "Expected DEPTH_LIMIT exception type, got: " + exception.getType());
+  }
+
+  /** Tests that TProtocol.skip() throws DEPTH_LIMIT when nesting exceeds recursionLimit. */
+  @Test
+  public void testTProtocolSkipExceedsRecursionLimit() throws Exception {
+    final int limit = 5;
+    RecursiveStruct deepStruct = createNestedStruct(limit + 1);
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    TConfiguration config = TConfiguration.custom().setRecursionLimit(limit).build();
+    TTransport transport = new TIOStreamTransport(config, baos);
+    TProtocol protocol = new TBinaryProtocol(transport);
+    deepStruct.write(protocol);
+    byte[] serialized = baos.toByteArray();
+
+    TTransport inputTransport = new TMemoryInputTransport(config, serialized);
+    TProtocol inputProtocol = new TBinaryProtocol(inputTransport);
+
+    TProtocolException exception =
+        assertThrows(TProtocolException.class, () -> inputProtocol.skip(TType.STRUCT));
+    assertTrue(
+        exception.getType() == TProtocolException.DEPTH_LIMIT,
+        "Expected DEPTH_LIMIT, got: " + exception.getType());
+  }
+
+  /** Tests that TProtocolUtil.skip() throws DEPTH_LIMIT when nesting exceeds recursionLimit. */
+  @Test
+  public void testTProtocolUtilSkipExceedsRecursionLimit() throws Exception {
+    final int limit = 5;
+    RecursiveStruct deepStruct = createNestedStruct(limit + 1);
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    TConfiguration config = TConfiguration.custom().setRecursionLimit(limit).build();
+    TTransport transport = new TIOStreamTransport(config, baos);
+    TProtocol protocol = new TBinaryProtocol(transport);
+    deepStruct.write(protocol);
+    byte[] serialized = baos.toByteArray();
+
+    TTransport inputTransport = new TMemoryInputTransport(config, serialized);
+    TProtocol inputProtocol = new TBinaryProtocol(inputTransport);
+
+    TProtocolException exception =
+        assertThrows(
+            TProtocolException.class, () -> TProtocolUtil.skip(inputProtocol, TType.STRUCT));
+    assertTrue(
+        exception.getType() == TProtocolException.DEPTH_LIMIT,
+        "Expected DEPTH_LIMIT, got: " + exception.getType());
+  }
+
+  /** Tests that skip() succeeds when nesting is within recursionLimit. */
+  @Test
+  public void testSkipWithinRecursionLimit() throws Exception {
+    final int limit = 5;
+    RecursiveStruct struct = createNestedStruct(limit - 1);
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    TConfiguration config = TConfiguration.custom().setRecursionLimit(limit).build();
+    TTransport transport = new TIOStreamTransport(config, baos);
+    TProtocol protocol = new TBinaryProtocol(transport);
+    struct.write(protocol);
+    byte[] serialized = baos.toByteArray();
+
+    TTransport inputTransport1 = new TMemoryInputTransport(config, serialized);
+    TProtocol inputProtocol1 = new TBinaryProtocol(inputTransport1);
+    assertDoesNotThrow(() -> inputProtocol1.skip(TType.STRUCT));
+
+    TTransport inputTransport2 = new TMemoryInputTransport(config, serialized);
+    TProtocol inputProtocol2 = new TBinaryProtocol(inputTransport2);
+    assertDoesNotThrow(() -> TProtocolUtil.skip(inputProtocol2, TType.STRUCT));
   }
 
   /** Tests that structures within the recursion limit deserialize successfully. */
