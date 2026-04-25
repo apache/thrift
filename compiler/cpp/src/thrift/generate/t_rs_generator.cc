@@ -1704,7 +1704,6 @@ void t_rs_generator::render_struct_sync_read(const string& struct_name,
       f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << '\n';
       indent_up();
       if (is_union_field) {
-        // Catch EmptyUnion from unknown variants for forward compatibility.
         // Use the resolved (non-Box) type since Box<T>::method() isn't valid syntax.
         string resolved_type = to_rust_type(resolved);
         bool is_boxed_union = to_rust_type(tfield->get_type()) != resolved_type;
@@ -1714,9 +1713,6 @@ void t_rs_generator::render_struct_sync_read(const string& struct_name,
         indent_up();
         f_gen_ << indent() << "Ok(val) => { " << struct_field_read_temp_variable(tfield) << " = Some(" << val_expr << "); }," << '\n';
         f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.kind == ProtocolErrorKind::EmptyUnion => {" << '\n';
-        indent_up();
-        f_gen_ << indent() << "// forward compatibility: unknown union variant skipped" << '\n';
-        indent_down();
         f_gen_ << indent() << "}," << '\n';
         f_gen_ << indent() << "Err(e) => return Err(e)," << '\n';
         indent_down();

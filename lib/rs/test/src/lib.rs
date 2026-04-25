@@ -57,7 +57,7 @@ mod tests {
 
         use thrift::protocol::{
             TBinaryInputProtocol, TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol,
-            TStructIdentifier, TType,
+            TSerializable, TStructIdentifier, TType,
         };
 
         // Serialize AidKit with an unknown union variant (id=99), verify it deserializes as None.
@@ -71,19 +71,16 @@ mod tests {
                 name: "AidKit".to_owned(),
             })
             .unwrap();
-            // field 1: optional aid (union => Struct on wire)
             prot.write_field_begin(&TFieldIdentifier {
                 name: None,
                 field_type: TType::Struct,
                 id: Some(1),
             })
             .unwrap();
-            // inner union-as-struct
             prot.write_struct_begin(&TStructIdentifier {
                 name: "MeasuringAids".to_owned(),
             })
             .unwrap();
-            // unknown variant: use an id that doesn't exist (99), type i32
             prot.write_field_begin(&TFieldIdentifier {
                 name: None,
                 field_type: TType::I32,
@@ -94,13 +91,11 @@ mod tests {
             prot.write_field_end().unwrap();
             prot.write_field_stop().unwrap();
             prot.write_struct_end().unwrap();
-            // end outer field
             prot.write_field_end().unwrap();
             prot.write_field_stop().unwrap();
             prot.write_struct_end().unwrap();
         }
 
-        // Read it back using generated code
         let read_cursor = Cursor::new(write_buf);
         let mut rprot = TBinaryInputProtocol::new(read_cursor, false);
         let kit = base_one::AidKit::read_from_in_protocol(&mut rprot)
