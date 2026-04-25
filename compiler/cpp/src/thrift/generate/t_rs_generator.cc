@@ -1699,10 +1699,28 @@ void t_rs_generator::render_struct_sync_read(const string& struct_name,
 
     for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
       t_field* tfield = (*members_iter);
+      t_type* resolved = get_true_type(tfield->get_type());
+      bool is_union_field = resolved->is_struct() && ((t_struct*)resolved)->is_union();
       f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << '\n';
       indent_up();
-      render_type_sync_read("val", tfield->get_type());
-      f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << '\n';
+      if (is_union_field) {
+        // Use the resolved (non-Box) type since Box<T>::method() isn't valid syntax.
+        string resolved_type = to_rust_type(resolved);
+        bool is_boxed_union = to_rust_type(tfield->get_type()) != resolved_type;
+        string read_call(resolved_type + "::read_from_in_protocol(i_prot)");
+        string val_expr = is_boxed_union ? "Box::new(val)" : "val";
+        f_gen_ << indent() << "match " << read_call << " {" << '\n';
+        indent_up();
+        f_gen_ << indent() << "Ok(val) => { " << struct_field_read_temp_variable(tfield) << " = Some(" << val_expr << "); }," << '\n';
+        f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.kind == ProtocolErrorKind::EmptyUnion => {" << '\n';
+        f_gen_ << indent() << "}," << '\n';
+        f_gen_ << indent() << "Err(e) => return Err(e)," << '\n';
+        indent_down();
+        f_gen_ << indent() << "}" << '\n';
+      } else {
+        render_type_sync_read("val", tfield->get_type());
+        f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << '\n';
+      }
       indent_down();
       f_gen_ << indent() << "}," << '\n';
     }
@@ -1834,7 +1852,7 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
   // return the value or an error
   f_gen_ << indent() << "if received_field_count == 0 {" << '\n';
   indent_up();
-  render_thrift_error("Protocol", "ProtocolError", "ProtocolErrorKind::InvalidData",
+  render_thrift_error("Protocol", "ProtocolError", "ProtocolErrorKind::EmptyUnion",
                       "\"received empty union from remote " + union_name + "\"");
   indent_down();
   f_gen_ << indent() << "} else if received_field_count > 1 {" << '\n';
