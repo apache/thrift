@@ -518,9 +518,8 @@ jobs:
   lib-rust:
     needs: compiler
     runs-on: ubuntu-24.04
-    if: false    # currently broken and no maintainers around -> see THRIFT-5917
     env:
-      TOOLCHAIN_VERSION: 1.83.0
+      TOOLCHAIN_VERSION: 1.85.1
     steps:
       - uses: actions/checkout@v6
 
