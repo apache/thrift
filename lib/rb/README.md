@@ -141,6 +141,13 @@ to handle `TIMED_OUT`. If you relied on `timeout = 0` meaning immediate failure
 or on repeated retries extending the effective timeout during TCP fallback or
 TLS handshake, update those call paths before upgrading.
 
+Generated Ruby structs and unions now suffix field ID constants as
+`*_FIELD_ID` instead of exposing bare uppercased field names. For example,
+`MyStruct::FOO` becomes `MyStruct::FOO_FIELD_ID`. This avoids collisions with
+the generated `FIELDS` metadata hash for field names such as `fields`, but it
+is a source-compatible break if your application referenced the old constants
+directly. Regenerate Ruby code and update those constant references atomically.
+
 ### 0.23.0
 
 The documented source-build flow now effectively requires Ruby `2.7+`.

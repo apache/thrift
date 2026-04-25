@@ -206,6 +206,7 @@ public:
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string rb_namespace_to_path_prefix(std::string rb_namespace);
+  std::string field_id_constant_name(const std::string& field_name);
 
   std::vector<std::string> ruby_modules(const t_program* p) {
     std::string ns = p->get_namespace("rb");
@@ -701,9 +702,8 @@ void t_rb_generator::generate_field_constants(t_rb_ofstream& out, t_struct* tstr
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     std::string field_name = (*f_iter)->get_name();
-    std::string cap_field_name = upcase_string(field_name);
 
-    out.indent() << cap_field_name << " = " << (*f_iter)->get_key() << '\n';
+    out.indent() << field_id_constant_name(field_name) << " = " << (*f_iter)->get_key() << '\n';
   }
   out << '\n';
 }
@@ -722,7 +722,7 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
     // generate the field docstrings within the FIELDS constant. no real better place...
     generate_rdoc(out, *f_iter);
 
-    out.indent() << upcase_string((*f_iter)->get_name()) << " => ";
+    out.indent() << field_id_constant_name((*f_iter)->get_name()) << " => ";
 
     generate_field_data(out,
                         (*f_iter)->get_type(),
@@ -735,6 +735,10 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
   out.indent() << "}" << '\n' << '\n';
 
   out.indent() << "def struct_fields; FIELDS; end" << '\n' << '\n';
+}
+
+std::string t_rb_generator::field_id_constant_name(const std::string& field_name) {
+  return upcase_string(field_name) + "_FIELD_ID";
 }
 
 void t_rb_generator::generate_field_data(t_rb_ofstream& out,
