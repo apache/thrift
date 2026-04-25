@@ -520,9 +520,8 @@ jobs:
   lib-rust:
     needs: compiler
     runs-on: ubuntu-24.04
-    if: false    # currently broken and no maintainers around -> see THRIFT-5917
     env:
-      TOOLCHAIN_VERSION: 1.83.0
+      TOOLCHAIN_VERSION: 1.85.1
     steps:
       - uses: actions/checkout@v6
 
@@ -898,7 +897,7 @@ jobs:
       - lib-php
       - lib-java-kotlin
       #- lib-swift                     # currently broken and no maintainers around -> see THRIFT-5864
-      #- lib-rust                      # currently broken and no maintainers around -> see THRIFT-5917
+      - lib-rust
       - lib-go
       - lib-python
       - lib-cpp
@@ -908,11 +907,10 @@ jobs:
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
-        # rust currently broken and no maintainers around -> see THRIFT-5917
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,cpp,py,php,nodejs,nodets', 'rb']
+        client_lang: ['java,kotlin', 'go,rs,cpp,py,php,nodejs,nodets', 'rb']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -979,7 +977,6 @@ jobs:
 
       - name: Download rust precross artifacts
         uses: actions/download-artifact@v8
-        if: false   # currently broken and no maintainers around -> see THRIFT-5917
         with:
           name: rs-precross
           path: test/rs/bin
@@ -1032,7 +1029,7 @@ jobs:
           chmod a+x lib/kotlin/cross-test-client/build/install/TestClient/bin/*
           chmod a+x lib/kotlin/cross-test-server/build/install/TestServer/bin/*
           # THRIFT-5864  chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
-          # THRIFT-5917  chmod a+x test/rs/bin/*
+          chmod a+x test/rs/bin/*
           chmod a+x test/go/bin/*
           chmod a+x test/cpp/*
           chmod a+x test/cpp/.libs/*
