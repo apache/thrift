@@ -1108,13 +1108,17 @@ mod tests {
     #[test]
     fn must_skip_binary_field_with_non_utf8_bytes() {
         let non_utf8: Vec<u8> = vec![
-            0x04, 0xFF, 0xFE, 0x80, 0x90, 0xAB, 0xCD, 0xEF,
-            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE,
+            0x04, 0xFF, 0xFE, 0x80, 0x90, 0xAB, 0xCD, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE,
+            0xBA, 0xBE,
         ];
         assert!(String::from_utf8(non_utf8.clone()).is_err());
         let data = build_struct_with_unknown_binary_field(&non_utf8);
         let result = read_struct_skipping_unknown(&data);
-        assert!(result.is_ok(), "skip() failed on non-UTF-8 binary: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "skip() failed on non-UTF-8 binary: {:?}",
+            result.err()
+        );
         assert_eq!(result.unwrap(), 42);
     }
 
