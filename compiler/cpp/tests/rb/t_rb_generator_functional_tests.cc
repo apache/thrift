@@ -63,3 +63,38 @@ TEST_CASE("t_rb_generator emits bare marker for CRLF blank RDoc lines", "[functi
 
     std::remove(thrift_path.c_str());
 }
+
+TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS collisions", "[functional]")
+{
+    const string thrift_path = "test_field_id_conflict.thrift";
+    const string thrift_source =
+        "struct Example {\n"
+        "  1: string fields\n"
+        "}\n";
+
+    {
+        std::ofstream thrift_file(thrift_path, std::ios::binary);
+        REQUIRE(thrift_file.is_open());
+        thrift_file << thrift_source;
+    }
+
+    map<string, string> parsed_options;
+    std::unique_ptr<t_program> program(new t_program(thrift_path, "test_field_id_conflict"));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "rb", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    const string generated_content = read_file("gen-rb/test_field_id_conflict_types.rb");
+    REQUIRE(!generated_content.empty());
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID = 1") != string::npos);
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+            != string::npos);
+    REQUIRE(generated_content.find("FIELDS = 1") == string::npos);
+    REQUIRE(generated_content.find("FIELDS => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+            == string::npos);
+
+    std::remove(thrift_path.c_str());
+}
