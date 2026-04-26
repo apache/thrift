@@ -25,6 +25,13 @@ else
 
   append_cflags(["-fsigned-char", "-g", "-O2", "-Wall", "-Werror", "-Werror=old-style-definition"])
 
+  # clang 21+ introduced -Wdefault-const-init-field-unsafe, which fires on
+  # Ruby 3.2's rstring.h (struct RString has a const field via RBasic).
+  # This is a Ruby header issue, not a Thrift bug, so suppress the warning here.
+  # append_cflags silently ignores flags unsupported by the compiler, so this
+  # is safe across all clang versions.
+  append_cflags("-Wno-default-const-init-field-unsafe")
+
   # Makes all symbols private by default to avoid unintended conflict
   # with other gems. To explicitly export symbols you can use RUBY_FUNC_EXPORTED
   # selectively, or entirely remove this flag.
