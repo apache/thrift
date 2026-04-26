@@ -184,7 +184,8 @@ public class TestRecursionLimit {
     TProtocol inputProtocol = new TBinaryProtocol(inputTransport);
 
     TProtocolException exception =
-        assertThrows(TProtocolException.class, () -> TProtocolUtil.skip(inputProtocol, TType.STRUCT));
+        assertThrows(
+            TProtocolException.class, () -> TProtocolUtil.skip(inputProtocol, TType.STRUCT));
     assertTrue(
         exception.getType() == TProtocolException.DEPTH_LIMIT,
         "Expected DEPTH_LIMIT, got: " + exception.getType());
