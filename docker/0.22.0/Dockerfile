@@ -1,0 +1,78 @@
+FROM debian:trixie AS builder
+
+ARG THRIFT_VERSION=0.22.0
+ARG THRIFT_SOURCE_URL=https://archive.apache.org/dist/thrift/0.22.0/thrift-0.22.0.tar.gz
+ARG THRIFT_SOURCE_SHA256=794a0e455787960d9f27ab92c38e34da27e8deeda7a5db0e59dc64a00df8a1e5
+ARG THRIFT_SOURCE_SIGNER=8CD87F186F06E958EFCA963D76BD340FC4B75865
+
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		bison \
+		ca-certificates \
+		cmake \
+		curl \
+		flex \
+		g++ \
+		gnupg \
+		make \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src
+
+RUN set -eux; \
+	curl -fsSL -o thrift.tar.gz "$THRIFT_SOURCE_URL"; \
+	curl -fsSL -o thrift.tar.gz.asc "$THRIFT_SOURCE_URL.asc"; \
+	curl -fsSL -o thrift-KEYS https://downloads.apache.org/thrift/KEYS; \
+	echo "$THRIFT_SOURCE_SHA256 *thrift.tar.gz" | sha256sum -c -; \
+	export GNUPGHOME="$(mktemp -d)"; \
+	gpg --batch --import thrift-KEYS; \
+	gpg --batch --status-fd 1 --verify thrift.tar.gz.asc thrift.tar.gz > gpg.status; \
+	grep -F "[GNUPG:] VALIDSIG $THRIFT_SOURCE_SIGNER " gpg.status; \
+	gpgconf --kill all; \
+	rm -rf "$GNUPGHOME"; \
+	mkdir thrift; \
+	tar -xzf thrift.tar.gz -C thrift --strip-components=1; \
+	rm thrift.tar.gz thrift.tar.gz.asc thrift-KEYS gpg.status
+
+RUN set -eux; \
+	cmake -S thrift -B build \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_COMPILER=ON \
+		-DBUILD_LIBRARIES=OFF \
+		-DBUILD_TESTING=OFF \
+		-DBUILD_TUTORIALS=OFF; \
+	cmake --build build --target thrift-compiler -j "$(nproc)"; \
+	cmake --install build --prefix /opt/thrift
+
+FROM debian:trixie-slim
+
+ARG THRIFT_VERSION=0.22.0
+
+LABEL org.opencontainers.image.title="Apache Thrift Compiler" \
+	org.opencontainers.image.version="$THRIFT_VERSION" \
+	org.opencontainers.image.source="https://github.com/apache/thrift" \
+	org.opencontainers.image.url="https://thrift.apache.org/" \
+	org.opencontainers.image.licenses="Apache-2.0"
+
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends libstdc++6; \
+	rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/thrift/bin/thrift /usr/local/bin/thrift
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY tests/smoke.thrift /tmp/smoke.thrift
+
+RUN set -eux; \
+	thrift --version | grep -F "$THRIFT_VERSION"; \
+	mkdir -p /tmp/smoke-out; \
+	thrift --gen json -o /tmp/smoke-out /tmp/smoke.thrift; \
+	find /tmp/smoke-out -type f | grep -q .; \
+	rm -rf /tmp/smoke.thrift /tmp/smoke-out
+
+WORKDIR /data
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["thrift"]
