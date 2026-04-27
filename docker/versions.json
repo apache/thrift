@@ -1,0 +1,23 @@
+{
+  "maintained_releases": 2,
+  "versions": {
+    "0.22.0": {
+      "source": "https://archive.apache.org/dist/thrift/0.22.0/thrift-0.22.0.tar.gz",
+      "sha256": "794a0e455787960d9f27ab92c38e34da27e8deeda7a5db0e59dc64a00df8a1e5",
+      "signer": "8CD87F186F06E958EFCA963D76BD340FC4B75865",
+      "released": "2025-05-14",
+      "debian": "trixie",
+      "alpine": "3.23",
+      "maintained": true
+    },
+    "0.23.0": {
+      "source": "https://archive.apache.org/dist/thrift/0.23.0/thrift-0.23.0.tar.gz",
+      "sha256": "1859d932d2ae1f13d16c5a196931208c116310a5ff50f2bfd11d3db03be8f46f",
+      "signer": "8CD87F186F06E958EFCA963D76BD340FC4B75865",
+      "released": "2026-04-27",
+      "debian": "trixie",
+      "alpine": "3.23",
+      "maintained": true
+    }
+  }
+}
