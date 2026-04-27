@@ -1,0 +1,70 @@
+name: Docker Official Image
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'docker/**'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    paths:
+      - 'docker/**'
+      - '.github/workflows/docker.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bashbrew:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Install Bashbrew
+        run: |
+          set -eux
+          GOBIN="$PWD/docker/tmp/bin" go install github.com/docker-library/bashbrew/cmd/bashbrew@v0.1.14
+          echo "$PWD/docker/tmp/bin" >> "$GITHUB_PATH"
+
+      - name: Validate Bashbrew manifest
+        run: |
+          set -eux
+          mkdir -p docker/tmp/bashbrew-library
+          (cd docker && GIT_COMMIT="$(git rev-parse HEAD)" ./generate-stackbrew-library.sh) > docker/tmp/bashbrew-library/thrift
+          BASHBREW_LIBRARY="$PWD/docker/tmp/bashbrew-library" bashbrew cat thrift >/dev/null
+          BASHBREW_LIBRARY="$PWD/docker/tmp/bashbrew-library" bashbrew list --build-order --uniq thrift >/dev/null
+
+  docker:
+    name: Docker (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-22.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Verify Docker Buildx
+        run: docker buildx version
+
+      - name: Build and test Docker images
+        timeout-minutes: 90
+        run: docker/test.sh
