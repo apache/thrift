@@ -55,11 +55,18 @@
 ### nodejs
 
 - [THRIFT-5937](https://issues.apache.org/jira/browse/THRIFT-5937) - nodejs episodic generation does not handle extending services 
+- [THRIFT-5924](https://issues.apache.org/jira/browse/THRIFT-5924) - UUID support for nodejs and nodets
+- [THRIFT-4987](https://issues.apache.org/jira/browse/THRIFT-4987) - TProtocolException: Bad version in readMessageBegin when using XHR client with C++ server
+
+### nodets
+
+- [THRIFT-5924](https://issues.apache.org/jira/browse/THRIFT-5924) - UUID support for nodejs and nodets
 
 ### PHP
 
 - [THRIFT-5935](https://issues.apache.org/jira/browse/THRIFT-5935) - Fix deprecated non-canonical casts for PHP 8.5 compatibility
 - [THRIFT-5921](https://issues.apache.org/jira/browse/THRIFT-5921) - Ubuntu focal fail to run composer install
+- [THRIFT-5929](https://issues.apache.org/jira/browse/THRIFT-5929) - Fix build failure on PHP 8.5 due to removed zend_exception_get_default
 
 ## Python
 
