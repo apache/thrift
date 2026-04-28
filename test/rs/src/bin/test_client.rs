@@ -233,8 +233,8 @@ fn make_thrift_calls(
 
     info!("testUuid");
     verify_expected_result(
-        thrift_test_client.test_uuid(uuid::uuid!("00010203-0405-0607-0809-0a0b0c0d0e0f")),
-        uuid::uuid!("00010203-0405-0607-0809-0a0b0c0d0e0f"),
+        thrift_test_client.test_uuid(uuid::uuid!("00112233-4455-6677-8899-aabbccddeeff")),
+        uuid::uuid!("00112233-4455-6677-8899-aabbccddeeff"),
     )?;
 
     info!("testBool");
