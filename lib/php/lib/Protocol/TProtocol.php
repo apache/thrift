@@ -266,19 +266,33 @@ abstract class TProtocol
     {
         switch ($type) {
             case TType::BOOL:
-                return $itrans->readAll(1);
+                $itrans->readAll(1);
+
+                return 1;
             case TType::BYTE:
-                return $itrans->readAll(1);
+                $itrans->readAll(1);
+
+                return 1;
             case TType::I16:
-                return $itrans->readAll(2);
+                $itrans->readAll(2);
+
+                return 2;
             case TType::I32:
-                return $itrans->readAll(4);
+                $itrans->readAll(4);
+
+                return 4;
             case TType::I64:
-                return $itrans->readAll(8);
+                $itrans->readAll(8);
+
+                return 8;
             case TType::DOUBLE:
-                return $itrans->readAll(8);
+                $itrans->readAll(8);
+
+                return 8;
             case TType::UUID:
-                return $itrans->readAll(16);
+                $itrans->readAll(16);
+
+                return 16;
             case TType::STRING:
                 $len = unpack('N', $itrans->readAll(4));
                 $len = $len[1];
@@ -286,7 +300,9 @@ abstract class TProtocol
                     $len = 0 - (($len - 1) ^ 0xffffffff);
                 }
 
-                return 4 + $itrans->readAll($len);
+                $itrans->readAll($len);
+
+                return 4 + $len;
 
             case TType::STRUCT:
                 $result = 0;
@@ -294,13 +310,15 @@ abstract class TProtocol
                     $ftype = 0;
                     $fid = 0;
                     $data = $itrans->readAll(1);
+                    $result += 1;
                     $arr = unpack('c', $data);
                     $ftype = $arr[1];
                     if ($ftype == TType::STOP) {
                         break;
                     }
                     // I16 field id
-                    $result += $itrans->readAll(2);
+                    $itrans->readAll(2);
+                    $result += 2;
                     $result += self::skipBinary($itrans, $ftype);
                 }
 
