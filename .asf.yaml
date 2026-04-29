@@ -1,8 +1,29 @@
+# ASF Configuration for Apache Thrift
+# See https://github.com/apache/infrastructure-asfyaml/blob/main/README.md
 notifications:
-    commits:      commits@thrift.apache.org
-    issues:       dev@thrift.apache.org
-    pullrequests_status: dev@thrift.apache.org
-    pullrequests_comment: notifications@thrift.apache.org
-    jira_options: link label worklog
-    
-    
+  commits: commits@thrift.apache.org
+  issues: dev@thrift.apache.org
+  pullrequests_status: dev@thrift.apache.org
+  pullrequests_comment: notifications@thrift.apache.org
+  jira_options: link label worklog
+
+github:
+  autolink_jira:
+    - THRIFT
+  enabled_merge_buttons:
+    squash: true
+    rebase: true
+    # Linear history and squashed commits are preferred.
+    # See https://thrift.apache.org/docs/HowToContribute
+    merge: false
+  features:
+    # We use thrift-website repo for documentation
+    # See https://github.com/apache/thrift-website
+    wiki: false
+    # We use Jira for issue tracking and projects
+    # See https://issues.apache.org/jira/browse/THRIFT
+    issues: false
+    projects: false
+    # We use mailing lists for discussions
+    # See https://thrift.apache.org/mailing
+    discussions: false
