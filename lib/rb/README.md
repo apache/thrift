@@ -47,49 +47,55 @@ clients and services.
 The Ruby library does not include the Thrift compiler. Use a compiler built
 from the root of this repository to generate Ruby bindings:
 
-    thrift --gen rb path/to/service.thrift
-    # with namespaced modules
-    thrift --gen rb:namespaced --recurse path/to/service.thrift
+```bash
+thrift --gen rb path/to/service.thrift
+# with namespaced modules
+thrift --gen rb:namespaced --recurse path/to/service.thrift
+```
 
 Generated files are typically written to `gen-rb/` and can be required
 directly from your application.
 
 ## Basic Client Usage
 
-    $:.push File.expand_path('gen-rb', __dir__)
-    require 'thrift'
-    require 'calculator'
+```ruby
+$:.push File.expand_path('gen-rb', __dir__)
+require 'thrift'
+require 'calculator'
 
-    socket     = Thrift::Socket.new('localhost', 9090)
-    transport  = Thrift::BufferedTransport.new(socket)
-    protocol   = Thrift::BinaryProtocol.new(transport)
-    client     = Calculator::Client.new(protocol)
+socket     = Thrift::Socket.new('localhost', 9090)
+transport  = Thrift::BufferedTransport.new(socket)
+protocol   = Thrift::BinaryProtocol.new(transport)
+client     = Calculator::Client.new(protocol)
 
-    transport.open
-    puts client.add(1, 1)
-    transport.close
+transport.open
+puts client.add(1, 1)
+transport.close
+```
 
 ## Basic Server Usage
 
-    $:.push File.expand_path('gen-rb', __dir__)
-    require 'thrift'
-    require 'calculator'
+```ruby
+$:.push File.expand_path('gen-rb', __dir__)
+require 'thrift'
+require 'calculator'
 
-    class CalculatorHandler
-      def add(a, b)
-        a + b
-      end
-    end
+class CalculatorHandler
+  def add(a, b)
+    a + b
+  end
+end
 
-    handler            = CalculatorHandler.new
-    processor          = Calculator::Processor.new(handler)
-    server_transport   = Thrift::ServerSocket.new(9090)
-    transport_factory  = Thrift::BufferedTransportFactory.new
-    protocol_factory   = Thrift::BinaryProtocolFactory.new
+handler            = CalculatorHandler.new
+processor          = Calculator::Processor.new(handler)
+server_transport   = Thrift::ServerSocket.new(9090)
+transport_factory  = Thrift::BufferedTransportFactory.new
+protocol_factory   = Thrift::BinaryProtocolFactory.new
 
-    server = Thrift::ThreadedServer.new(processor, server_transport,
-                                        transport_factory, protocol_factory)
-    server.serve
+server = Thrift::ThreadedServer.new(processor, server_transport,
+                                    transport_factory, protocol_factory)
+server.serve
+```
 
 ## Development and Tests
 
@@ -181,11 +187,13 @@ best-effort, not guaranteed.
   `thrift --gen rb` and namespaced output from `thrift --gen rb:namespaced`
   use different require paths, so switch them atomically with regenerated code.
 
-      # --gen rb
-      require 'calculator'
+  ```ruby
+  # --gen rb
+  require 'calculator'
 
-      # --gen rb:namespaced
-      require 'my_namespace/calculator'
+  # --gen rb:namespaced
+  require 'my_namespace/calculator'
+  ```
 
 ## Migration Notes
 
