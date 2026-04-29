@@ -203,8 +203,8 @@ func (p *TFramedTransport) WriteString(s string) (n int, err error) {
 
 func (p *TFramedTransport) Flush(ctx context.Context) error {
 	size := p.writeBuf.Len()
-	if size > math.MaxUint32 {
-		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("frame too large: %d bytes exceeds uint32 max",size))
+	if uint64(size) > uint64(math.MaxUint32) {
+		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("frame too large: %d bytes exceeds uint32 max", size))
 	}
 
 	defer bufPool.put(&p.writeBuf)
