@@ -160,6 +160,13 @@ set(thriftcppz_SOURCES
 include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
+if(TARGET Boost::headers)
+    target_link_libraries(thrift PUBLIC Boost::headers)
+else()
+    target_include_directories(thrift SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
+        $<INSTALL_INTERFACE:${Boost_INCLUDE_DIRS}>)
+endif()
 target_link_libraries(thrift PUBLIC ${SYSLIBS})
 if(WIN32)
     target_link_libraries(thrift PUBLIC ws2_32)

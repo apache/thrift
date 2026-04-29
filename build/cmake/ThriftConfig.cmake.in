@@ -68,6 +68,8 @@ endif()
 
 include(CMakeFindDependencyMacro)
 
+find_dependency(Boost @BOOST_MINREV@)
+
 if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
     find_dependency(ZLIB)
 endif()
