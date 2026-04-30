@@ -370,6 +370,20 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Update the web site content to include the new release. The repository is located at https://github.com/apache/thrift-website and there are plenty of instructions how to update both staging and live web site. With regard to the release, its actually quite simple: check out the main branch and edit two lines in _config.yml, then commit. The build bot will update staging. After checking everything is right, simply fast-forward "asf-site" to "asf-staging" and push, then production site will automatically get updated as well
 
+1. Update the Docker Official Image packaging. Docker images are convenience artifacts built from the voted ASF source release; they are not ASF release artifacts and must not block the source release announcement if Docker Library review is delayed. Submit Docker updates only after the vote has passed, release artifacts have been promoted, and the web site/download page has been updated.
+
+    The Docker Official Image library tracks the two latest full Apache Thrift releases. Initial restored Docker image maintenance starts with the current release only; older releases are not backfilled. `latest` and unqualified OS aliases move according to the newest retained release and the explicit base metadata in `docker/versions.json`.
+
+    ```bash
+    thrift$ cd docker
+    thrift/docker$ ./update.sh 1.0.0
+    thrift/docker$ ./test.sh --all-platforms
+    ```
+
+    `update.sh` records archive.apache.org source URLs so retained Docker tags remain rebuildable; if the archive has not synced yet, wait and rerun it. Commit and push the Docker packaging update to Apache Thrift before generating the Docker Library manifest. Then run `./generate-official-images-library.sh /path/to/official-images/library/thrift` from `thrift/docker`; Docker Library manifests are generated artifacts and are not checked into this repository.
+
+    See [`docker/README.md`](../docker/README.md) for the detailed Docker Official Images workflow. Include Docker image availability in the announcement only if the Docker tags have already landed; otherwise follow up after Docker Official Images publishes them.
+
 1. Make an announcement on the dev@ and user@ mailing lists of the release.  There's no template to follow, but you can point folks to the official web site at https://thrift.apache.org, and to the GitHub site at https://github.org/apache.thrift.
 
 ### Post-Release
