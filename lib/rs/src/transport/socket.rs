@@ -19,6 +19,7 @@ use std::convert::From;
 use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream, ToSocketAddrs};
+use std::time::Duration;
 
 #[cfg(unix)]
 use std::os::unix::net::UnixStream;
@@ -64,6 +65,8 @@ use crate::{new_transport_error, TransportErrorKind};
 #[derive(Debug, Default)]
 pub struct TTcpChannel {
     stream: Option<TcpStream>,
+    read_timeout: Option<Duration>,
+    write_timeout: Option<Duration>,
 }
 
 impl TTcpChannel {
@@ -72,7 +75,11 @@ impl TTcpChannel {
     /// The returned instance must be opened using `TTcpChannel::open(...)`
     /// before it can be used.
     pub fn new() -> TTcpChannel {
-        TTcpChannel { stream: None }
+        TTcpChannel {
+            stream: None,
+            read_timeout: None,
+            write_timeout: None,
+        }
     }
 
     /// Create a `TTcpChannel` that wraps an existing `TcpStream`.
@@ -80,9 +87,55 @@ impl TTcpChannel {
     /// The passed-in stream is assumed to have been opened before being wrapped
     /// by the created `TTcpChannel` instance.
     pub fn with_stream(stream: TcpStream) -> TTcpChannel {
+        let read_timeout = stream.read_timeout().unwrap_or(None);
+        let write_timeout = stream.write_timeout().unwrap_or(None);
+
         TTcpChannel {
             stream: Some(stream),
+            read_timeout,
+            write_timeout,
         }
+    }
+
+    /// Get the read timeout for this channel.
+    pub fn read_timeout(&self) -> Option<Duration> {
+        self.read_timeout
+    }
+
+    /// Get the write timeout for this channel.
+    pub fn write_timeout(&self) -> Option<Duration> {
+        self.write_timeout
+    }
+
+    /// Set the read timeout for this channel.
+    pub fn set_read_timeout(&mut self, timeout: Option<Duration>) -> crate::Result<()> {
+        if let Some(ref stream) = self.stream {
+            stream.set_read_timeout(timeout)?;
+        }
+
+        self.read_timeout = timeout;
+        Ok(())
+    }
+
+    /// Set the write timeout for this channel.
+    pub fn set_write_timeout(&mut self, timeout: Option<Duration>) -> crate::Result<()> {
+        if let Some(ref stream) = self.stream {
+            stream.set_write_timeout(timeout)?;
+        }
+
+        self.write_timeout = timeout;
+        Ok(())
+    }
+
+    /// Set the read and write timeouts for this channel.
+    pub fn set_timeouts(
+        &mut self,
+        read_timeout: Option<Duration>,
+        write_timeout: Option<Duration>,
+    ) -> crate::Result<()> {
+        self.set_read_timeout(read_timeout)?;
+        self.set_write_timeout(write_timeout)?;
+        Ok(())
     }
 
     /// Connect to `remote_address`, which should implement `ToSocketAddrs` trait.
@@ -96,6 +149,8 @@ impl TTcpChannel {
             match TcpStream::connect(&remote_address) {
                 Ok(s) => {
                     s.set_nodelay(true)?;
+                    s.set_read_timeout(self.read_timeout)?;
+                    s.set_write_timeout(self.write_timeout)?;
                     self.stream = Some(s);
                     Ok(())
                 }
@@ -141,9 +196,13 @@ impl TIoChannel for TTcpChannel {
             .map(|cloned| {
                 let read_half = ReadHalf::new(TTcpChannel {
                     stream: s.stream.take(),
+                    read_timeout: s.read_timeout,
+                    write_timeout: s.write_timeout,
                 });
                 let write_half = WriteHalf::new(TTcpChannel {
                     stream: Some(cloned),
+                    read_timeout: s.read_timeout,
+                    write_timeout: s.write_timeout,
                 });
                 (read_half, write_half)
             })
@@ -181,5 +240,175 @@ impl TIoChannel for UnixStream {
         let socket_rx = self.try_clone().unwrap();
 
         Ok((ReadHalf::new(self), WriteHalf::new(socket_rx)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::{SocketAddr, TcpListener, TcpStream};
+    use std::thread;
+    use std::time::Duration;
+
+    use super::*;
+
+    fn listening_address() -> (TcpListener, SocketAddr) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        (listener, address)
+    }
+
+    fn connected_streams() -> (TcpStream, TcpStream) {
+        let (listener, address) = listening_address();
+        let accept_handle = thread::spawn(move || listener.accept().unwrap().0);
+        let client = TcpStream::connect(address).unwrap();
+        let server = accept_handle.join().unwrap();
+        (client, server)
+    }
+
+    fn wrapped_channel() -> (TTcpChannel, TcpStream) {
+        let (client, server) = connected_streams();
+        (TTcpChannel::with_stream(client), server)
+    }
+
+    #[test]
+    fn must_store_read_timeout_before_open() {
+        let timeout = Some(Duration::from_millis(80));
+        let mut channel = TTcpChannel::new();
+
+        channel.set_read_timeout(timeout).unwrap();
+
+        assert_eq!(channel.read_timeout, timeout);
+        assert_eq!(channel.read_timeout(), timeout);
+        assert!(channel.stream.is_none());
+    }
+
+    #[test]
+    fn must_apply_timeouts_when_opening_channel() {
+        let timeout = Some(Duration::from_millis(80));
+        let (listener, address) = listening_address();
+        let accept_handle = thread::spawn(move || listener.accept().unwrap().0);
+        let mut channel = TTcpChannel::new();
+
+        channel.set_timeouts(timeout, timeout).unwrap();
+        channel.open(address).unwrap();
+
+        let stream = channel.stream.as_ref().unwrap();
+        assert_eq!(stream.read_timeout().unwrap(), timeout);
+        assert_eq!(stream.write_timeout().unwrap(), timeout);
+        let _server = accept_handle.join().unwrap();
+    }
+
+    #[test]
+    fn must_enforce_read_timeout_set_before_open() {
+        let timeout = Duration::from_millis(80);
+        let (listener, address) = listening_address();
+        let server_handle = thread::spawn(move || {
+            let stream = listener.accept().unwrap().0;
+            thread::sleep(Duration::from_millis(200));
+            drop(stream);
+        });
+        let mut channel = TTcpChannel::new();
+        let mut buf = [0; 1];
+
+        channel.set_read_timeout(Some(timeout)).unwrap();
+        channel.open(address).unwrap();
+
+        let err = channel.read(&mut buf).unwrap_err();
+
+        assert!(matches!(
+            err.kind(),
+            ErrorKind::TimedOut | ErrorKind::WouldBlock
+        ));
+        server_handle.join().unwrap();
+    }
+
+    #[test]
+    fn must_set_read_timeout_on_wrapped_stream() {
+        let timeout = Some(Duration::from_millis(80));
+        let (mut channel, _server) = wrapped_channel();
+
+        channel.set_read_timeout(timeout).unwrap();
+
+        assert_eq!(channel.read_timeout, timeout);
+        assert_eq!(channel.read_timeout(), timeout);
+        assert_eq!(
+            channel.stream.as_ref().unwrap().read_timeout().unwrap(),
+            timeout
+        );
+    }
+
+    #[test]
+    fn must_set_write_timeout_on_wrapped_stream() {
+        let timeout = Some(Duration::from_millis(80));
+        let (mut channel, _server) = wrapped_channel();
+
+        channel.set_write_timeout(timeout).unwrap();
+
+        assert_eq!(channel.write_timeout, timeout);
+        assert_eq!(channel.write_timeout(), timeout);
+        assert_eq!(
+            channel.stream.as_ref().unwrap().write_timeout().unwrap(),
+            timeout
+        );
+    }
+
+    #[test]
+    fn must_set_both_timeouts_on_wrapped_stream() {
+        let read_timeout = Some(Duration::from_millis(80));
+        let write_timeout = Some(Duration::from_millis(120));
+        let (mut channel, _server) = wrapped_channel();
+
+        channel.set_timeouts(read_timeout, write_timeout).unwrap();
+
+        assert_eq!(channel.read_timeout, read_timeout);
+        assert_eq!(channel.write_timeout, write_timeout);
+        assert_eq!(channel.read_timeout(), read_timeout);
+        assert_eq!(channel.write_timeout(), write_timeout);
+        assert_eq!(
+            channel.stream.as_ref().unwrap().read_timeout().unwrap(),
+            read_timeout
+        );
+        assert_eq!(
+            channel.stream.as_ref().unwrap().write_timeout().unwrap(),
+            write_timeout
+        );
+    }
+
+    #[test]
+    fn must_clear_timeouts_on_wrapped_stream() {
+        let timeout = Some(Duration::from_millis(80));
+        let (mut channel, _server) = wrapped_channel();
+
+        channel.set_timeouts(timeout, timeout).unwrap();
+        channel.set_timeouts(None, None).unwrap();
+
+        assert_eq!(channel.read_timeout, None);
+        assert_eq!(channel.write_timeout, None);
+        assert_eq!(channel.read_timeout(), None);
+        assert_eq!(channel.write_timeout(), None);
+        assert_eq!(
+            channel.stream.as_ref().unwrap().read_timeout().unwrap(),
+            None
+        );
+        assert_eq!(
+            channel.stream.as_ref().unwrap().write_timeout().unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn must_store_timeouts_from_wrapped_stream() {
+        let read_timeout = Some(Duration::from_millis(80));
+        let write_timeout = Some(Duration::from_millis(120));
+        let (client, _server) = connected_streams();
+
+        client.set_read_timeout(read_timeout).unwrap();
+        client.set_write_timeout(write_timeout).unwrap();
+        let channel = TTcpChannel::with_stream(client);
+
+        assert_eq!(channel.read_timeout, read_timeout);
+        assert_eq!(channel.write_timeout, write_timeout);
+        assert_eq!(channel.read_timeout(), read_timeout);
+        assert_eq!(channel.write_timeout(), write_timeout);
     }
 }
