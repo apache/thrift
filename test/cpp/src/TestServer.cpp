@@ -136,7 +136,7 @@ public:
   void testBinary(std::string& _return, const std::string& thing) override {
     std::ostringstream hexstr;
     hexstr << std::hex << thing;
-    printf("testBinary(%lu: %s)\n", safe_numeric_cast<unsigned long>(thing.size()), hexstr.str().c_str());
+    printf("testBinary(%lu: %s)\n", static_cast<unsigned long>(thing.size()), hexstr.str().c_str());
     _return = thing;
   }
 

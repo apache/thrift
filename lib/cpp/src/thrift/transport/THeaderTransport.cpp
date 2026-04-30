@@ -23,6 +23,8 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <limits>
 #include <utility>
 #include <string>
@@ -39,6 +41,20 @@ namespace thrift {
 using std::shared_ptr;
 
 namespace transport {
+
+/**
+ * Legacy code in transport implementations have overflow issues
+ * that need to be enforced.
+ */
+template <typename To, typename From> To safe_numeric_cast(From i) {
+  try {
+    return boost::numeric_cast<To>(i);
+  }
+  catch (const std::bad_cast& bc) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              bc.what());
+  }
+}
 
 using namespace apache::thrift::protocol;
 using apache::thrift::protocol::TBinaryProtocol;
@@ -607,6 +623,11 @@ uint32_t THeaderTransport::writeVarint32(int32_t n, uint8_t* pkt) {
 uint32_t THeaderTransport::writeVarint16(int16_t n, uint8_t* pkt) {
   return writeVarint32(n, pkt);
 }
+
+uint16_t THeaderTransport::getNumTransforms() const {
+  return safe_numeric_cast<uint16_t>(writeTrans_.size());
+}
+
 }
 }
 } // apache::thrift::transport

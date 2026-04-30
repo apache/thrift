@@ -72,7 +72,7 @@ public:
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
-  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport, 
+  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport,
                             std::shared_ptr<TConfiguration> config = nullptr)
     : TVirtualTransport(transport, config),
       outTransport_(transport),
@@ -140,9 +140,7 @@ public:
    */
   void transform(uint8_t* ptr, uint32_t sz);
 
-  uint16_t getNumTransforms() const {
-    return safe_numeric_cast<uint16_t>(writeTrans_.size());
-  }
+  uint16_t getNumTransforms() const;
 
   void setTransform(uint16_t transId) { writeTrans_.push_back(transId); }
 
