@@ -44,4 +44,30 @@ class TCompactProtocolFactoryTest extends TestCase
 
         $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
     }
+
+    /**
+     * @return void
+     */
+    public function testGetTransport()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TCompactProtocolFactory();
+        $protocol = $factory->getProtocol($transport);
+
+        $this->assertSame($transport, $protocol->getTransport());
+    }
+
+    /**
+     * @return void
+     */
+    public function testGetProtocolCreatesNewInstancePerCall()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TCompactProtocolFactory();
+
+        $protocol1 = $factory->getProtocol($transport);
+        $protocol2 = $factory->getProtocol($transport);
+
+        $this->assertNotSame($protocol1, $protocol2);
+    }
 }

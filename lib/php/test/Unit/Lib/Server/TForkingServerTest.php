@@ -21,12 +21,258 @@
 
 namespace Test\Thrift\Unit\Lib\Server;
 
+use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
+use Thrift\Exception\TException;
+use Thrift\Exception\TTransportException;
+use Thrift\Factory\TProtocolFactory;
+use Thrift\Factory\TTransportFactoryInterface;
+use Thrift\Server\TForkingServer;
+use Thrift\Server\TServerTransport;
+use Thrift\Transport\TTransport;
 
 class TForkingServerTest extends TestCase
 {
-    public function testServe(): void
+    use PHPMock;
+    use ReflectionHelper;
+
+    private function createServer(
+        $processor = null,
+        $transport = null,
+        $inputTransportFactory = null,
+        $outputTransportFactory = null,
+        $inputProtocolFactory = null,
+        $outputProtocolFactory = null
+    ): TForkingServer {
+        return new TForkingServer(
+            $processor ?? new \stdClass(),
+            $transport ?? $this->createMock(TServerTransport::class),
+            $inputTransportFactory ?? $this->createMock(TTransportFactoryInterface::class),
+            $outputTransportFactory ?? $this->createMock(TTransportFactoryInterface::class),
+            $inputProtocolFactory ?? $this->createMock(TProtocolFactory::class),
+            $outputProtocolFactory ?? $this->createMock(TProtocolFactory::class)
+        );
+    }
+
+    public function testStopClosesTransportAndSetsFlag()
     {
-        $this->markTestSkipped('Unit test could not be written for class which use pcntl_fork and exit functions');
+        $transport = $this->createMock(TServerTransport::class);
+        $transport->expects($this->once())->method('close');
+
+        $server = $this->createServer(null, $transport);
+        $server->stop();
+
+        $this->assertTrue($this->getPropertyValue($server, 'stop_'));
+    }
+
+    public function testChildrenArrayInitiallyEmpty()
+    {
+        $server = $this->createServer();
+        $this->assertEmpty($this->getPropertyValue($server, 'children_'));
+    }
+
+    public function testConstructorStoresCollaborators()
+    {
+        $processor = new \stdClass();
+        $transport = $this->createMock(TServerTransport::class);
+        $inputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
+        $outputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
+        $inputProtocolFactory = $this->createMock(TProtocolFactory::class);
+        $outputProtocolFactory = $this->createMock(TProtocolFactory::class);
+
+        $server = $this->createServer(
+            $processor,
+            $transport,
+            $inputTransportFactory,
+            $outputTransportFactory,
+            $inputProtocolFactory,
+            $outputProtocolFactory
+        );
+
+        $this->assertSame($processor, $this->getPropertyValue($server, 'processor_'));
+        $this->assertSame($transport, $this->getPropertyValue($server, 'transport_'));
+        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory_'));
+        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory_'));
+        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory_'));
+        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory_'));
+    }
+
+    public function testServeListensAndLoopsUntilStopped()
+    {
+        $serverTransport = $this->createMock(TServerTransport::class);
+        $serverTransport->expects($this->once())->method('listen');
+
+        $server = $this->createServer(null, $serverTransport);
+
+        // accept returns null (no connection), then on second call we stop
+        $callCount = 0;
+        $serverTransport->method('accept')->willReturnCallback(
+            function () use ($server, &$callCount) {
+                $callCount++;
+                if ($callCount >= 2) {
+                    $this->setPropertyValue($server, 'stop_', true);
+                }
+                return null;
+            }
+        );
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $server->serve();
+
+        $this->assertGreaterThanOrEqual(2, $callCount);
+    }
+
+    public function testServeForksAndHandlesParent()
+    {
+        $serverTransport = $this->createMock(TServerTransport::class);
+        $serverTransport->expects($this->once())->method('listen');
+
+        $clientTransport = $this->createMock(TTransport::class);
+        $server = $this->createServer(null, $serverTransport);
+
+        $callCount = 0;
+        $serverTransport->method('accept')->willReturnCallback(
+            function () use ($server, $clientTransport, &$callCount) {
+                $callCount++;
+                if ($callCount === 1) {
+                    return $clientTransport;
+                }
+                $this->setPropertyValue($server, 'stop_', true);
+                return null;
+            }
+        );
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_fork')
+             ->expects($this->once())
+             ->willReturn(12345);
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $server->serve();
+
+        $children = $this->getPropertyValue($server, 'children_');
+        $this->assertArrayHasKey(12345, $children);
+        $this->assertSame($clientTransport, $children[12345]);
+    }
+
+    public function testServeThrowsTExceptionOnForkFailure()
+    {
+        $this->expectException(TException::class);
+        $this->expectExceptionMessage('Failed to fork');
+
+        $serverTransport = $this->createMock(TServerTransport::class);
+        $clientTransport = $this->createMock(TTransport::class);
+
+        $server = $this->createServer(null, $serverTransport);
+
+        $serverTransport->method('accept')->willReturn($clientTransport);
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_fork')
+             ->expects($this->once())
+             ->willReturn(-1);
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $server->serve();
+    }
+
+    public function testServeIgnoresTTransportException()
+    {
+        $serverTransport = $this->createMock(TServerTransport::class);
+        $serverTransport->expects($this->once())->method('listen');
+
+        $server = $this->createServer(null, $serverTransport);
+
+        $callCount = 0;
+        $serverTransport->method('accept')->willReturnCallback(
+            function () use ($server, &$callCount) {
+                $callCount++;
+                if ($callCount === 1) {
+                    throw new TTransportException('Connection reset');
+                }
+                $this->setPropertyValue($server, 'stop_', true);
+                return null;
+            }
+        );
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $server->serve();
+
+        $this->assertGreaterThanOrEqual(2, $callCount);
+    }
+
+    public function testCollectChildrenRemovesFinishedAndClosesTransport()
+    {
+        $server = $this->createServer();
+
+        $transport1 = $this->createMock(TTransport::class);
+        $transport1->expects($this->once())->method('close');
+
+        $transport2 = $this->createMock(TTransport::class);
+        $transport2->expects($this->never())->method('close');
+
+        $this->setPropertyValue($server, 'children_', [
+            111 => $transport1,
+            222 => $transport2,
+        ]);
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->exactly(2))
+             ->willReturnCallback(function ($pid) {
+                 return ($pid === 111) ? 111 : 0;
+             });
+
+        $method = new \ReflectionMethod($server, 'collectChildren');
+        $method->setAccessible(true);
+        $method->invoke($server);
+
+        $children = $this->getPropertyValue($server, 'children_');
+        $this->assertArrayNotHasKey(111, $children);
+        $this->assertArrayHasKey(222, $children);
+    }
+
+    public function testCollectChildrenHandlesNullTransport()
+    {
+        $server = $this->createServer();
+
+        $this->setPropertyValue($server, 'children_', [
+            333 => null,
+        ]);
+
+        $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
+             ->expects($this->once())
+             ->willReturn(333);
+
+        $method = new \ReflectionMethod($server, 'collectChildren');
+        $method->setAccessible(true);
+        $method->invoke($server);
+
+        $children = $this->getPropertyValue($server, 'children_');
+        $this->assertEmpty($children);
+    }
+
+    public function testHandleParentStoresChildPid()
+    {
+        $server = $this->createServer();
+        $transport = $this->createMock(TTransport::class);
+
+        $method = new \ReflectionMethod($server, 'handleParent');
+        $method->setAccessible(true);
+        $method->invoke($server, $transport, 42);
+
+        $children = $this->getPropertyValue($server, 'children_');
+        $this->assertArrayHasKey(42, $children);
+        $this->assertSame($transport, $children[42]);
     }
 }

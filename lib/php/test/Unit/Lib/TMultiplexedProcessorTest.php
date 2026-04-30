@@ -22,7 +22,7 @@
 namespace Test\Thrift\Unit\Lib;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\Fixture\ProcessorSpy;
+use Test\Thrift\Unit\Lib\Fixture\TestProcessor;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TProtocol;
 use Thrift\StoredMessageProtocol;
@@ -37,7 +37,7 @@ class TMultiplexedProcessorTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $input = $this->createMock(TProtocol::class);
         $output = $this->createMock(TProtocol::class);
-        $processor = $this->createMock(ProcessorSpy::class);
+        $processor = $this->createMock(TestProcessor::class);
 
         $input->expects($this->once())
             ->method('readMessageBegin')
@@ -136,7 +136,7 @@ class TMultiplexedProcessorTest extends TestCase
             });
 
         $multiplexedProcessor = new TMultiplexedProcessor();
-        $multiplexedProcessor->registerProcessor('Other', $this->createMock(ProcessorSpy::class));
+        $multiplexedProcessor->registerProcessor('Other', $this->createMock(TestProcessor::class));
 
         $this->expectException(TException::class);
         $this->expectExceptionMessage('Service name not found: Missing.');

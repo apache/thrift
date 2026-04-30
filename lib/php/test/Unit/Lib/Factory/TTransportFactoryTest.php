@@ -38,4 +38,22 @@ class TTransportFactoryTest extends TestCase
 
         $this->assertSame($transport, $result);
     }
+
+    /**
+     * @return void
+     */
+    public function testGetTransportCreatesNewInstancePerCall()
+    {
+        $factory = new TTransportFactory();
+
+        $transport1 = $this->createMock(TTransport::class);
+        $transport2 = $this->createMock(TTransport::class);
+
+        $this->assertSame($transport1, $factory->getTransport($transport1));
+        $this->assertSame($transport2, $factory->getTransport($transport2));
+        $this->assertNotSame(
+            $factory->getTransport($transport1),
+            $factory->getTransport($transport2)
+        );
+    }
 }
