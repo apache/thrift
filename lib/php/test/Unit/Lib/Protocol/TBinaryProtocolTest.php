@@ -874,6 +874,12 @@ class TBinaryProtocolTest extends TestCase
     public function readI64For32BitArchitectureDataProvider()
     {
         $storedValueRepresent = function ($value) {
+            // PHP_INT_MIN (-2^63) cannot be safely negated:
+            // -PHP_INT_MIN overflows the 64-bit signed integer range.
+            if ($value === PHP_INT_MIN) {
+                return pack('N2', 0x80000000, 0x00000000);
+            }
+
             $neg = $value < 0;
 
             if ($neg) {
