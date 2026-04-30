@@ -233,8 +233,7 @@ class TForkingServerTest extends TestCase
                  return ($pid === 111) ? 111 : 0;
              });
 
-        $method = new \ReflectionMethod($server, 'collectChildren');
-        $method->setAccessible(true);
+        $method = $this->getAccessibleMethod($server, 'collectChildren');
         $method->invoke($server);
 
         $children = $this->getPropertyValue($server, 'children_');
@@ -254,8 +253,7 @@ class TForkingServerTest extends TestCase
              ->expects($this->once())
              ->willReturn(333);
 
-        $method = new \ReflectionMethod($server, 'collectChildren');
-        $method->setAccessible(true);
+        $method = $this->getAccessibleMethod($server, 'collectChildren');
         $method->invoke($server);
 
         $children = $this->getPropertyValue($server, 'children_');
@@ -267,8 +265,7 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer();
         $transport = $this->createMock(TTransport::class);
 
-        $method = new \ReflectionMethod($server, 'handleParent');
-        $method->setAccessible(true);
+        $method = $this->getAccessibleMethod($server, 'handleParent');
         $method->invoke($server, $transport, 42);
 
         $children = $this->getPropertyValue($server, 'children_');

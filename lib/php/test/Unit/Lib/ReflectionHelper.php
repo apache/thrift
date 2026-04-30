@@ -24,6 +24,25 @@ namespace Test\Thrift\Unit\Lib;
 trait ReflectionHelper
 {
     /**
+     * Get a reflection method and make it accessible if needed
+     *
+     * @param object|string $objectOrClass
+     * @param string $methodName
+     * @return \ReflectionMethod
+     */
+    protected function getAccessibleMethod($objectOrClass, string $methodName): \ReflectionMethod
+    {
+        $method = new \ReflectionMethod($objectOrClass, $methodName);
+
+        // Only call setAccessible for PHP < 8.1.0
+        if (PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method;
+    }
+
+    /**
      * Get a reflection property and make it accessible if needed
      *
      * @param object|string $objectOrClass
