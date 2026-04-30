@@ -62,13 +62,14 @@ class BoundaryValuesTest extends TestCase
             'i32 min' => ['writeMethod' => 'writeI32', 'readMethod' => 'readI32', 'value' => -2147483648],
             'i32 max' => ['writeMethod' => 'writeI32', 'readMethod' => 'readI32', 'value' => 2147483647],
             'i32 zero' => ['writeMethod' => 'writeI32', 'readMethod' => 'readI32', 'value' => 0],
-            'i64 min' => ['writeMethod' => 'writeI64', 'readMethod' => 'readI64', 'value' => -9223372036854775807],
+            'i64 min' => ['writeMethod' => 'writeI64', 'readMethod' => 'readI64', 'value' => PHP_INT_MIN],
             'i64 max' => ['writeMethod' => 'writeI64', 'readMethod' => 'readI64', 'value' => PHP_INT_MAX],
             'i64 zero' => ['writeMethod' => 'writeI64', 'readMethod' => 'readI64', 'value' => 0],
 
             // doubles
             'double zero' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 0.0],
             'double negative zero' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => -0.0],
+            // TODO: replace literals with PHP_FLOAT_MAX/MIN/EPSILON when PHP 7.1 support is dropped (available since PHP 7.2)
             'double max' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 1.7976931348623158e+308],
             'double min' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 2.2250738585072014e-308],
             'double epsilon' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 2.2204460492503131e-16],

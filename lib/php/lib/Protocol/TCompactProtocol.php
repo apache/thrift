@@ -702,8 +702,16 @@ class TCompactProtocol extends TProtocol
 
     public function writeI64($value)
     {
-        // If we are in an I32 range, use the easy method below.
-        if (($value > 4294967296) || ($value < -4294967296)) {
+        if ($value === PHP_INT_MIN) {
+            // PHP_INT_MIN (-2^63) cannot be safely negated: -PHP_INT_MIN overflows
+            // the 64-bit signed integer range. Its zigzag encoding is the maximum
+            // unsigned 64-bit varint (0xFFFFFFFFFFFFFFFF), so we write it directly.
+
+            $out = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01";
+            $this->trans_->write($out, 10);
+
+            return 10;
+        } elseif (($value > 4294967296) || ($value < -4294967296)) {
             // Convert $value to $hi and $lo
             $neg = $value < 0;
 
