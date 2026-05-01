@@ -106,7 +106,7 @@ jobs:
       # only upload while building ubuntu-24.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -142,7 +142,7 @@ jobs:
         run: /usr/local/bin/thrift -version
 
       - name: Archive built thrift compiler (macOS)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp/thrift
@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload php precross artifacts
         if: matrix.php-version == '8.3'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: php-precross
           if-no-files-found: error
@@ -275,7 +275,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.26'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: go-precross
           if-no-files-found: error
@@ -347,7 +347,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: libthrift
           if-no-files-found: error
@@ -360,7 +360,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: java-precross
           if-no-files-found: error
@@ -383,7 +383,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -471,7 +471,7 @@ jobs:
         run: make -C test/netstd precross
 
       - name: Upload netstd precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: netstd-precross
           if-no-files-found: error
@@ -508,7 +508,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: swift-precross
           if-no-files-found: error
@@ -570,7 +570,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: rs-precross
           if-no-files-found: error
@@ -644,7 +644,7 @@ jobs:
 
       - name: Upload python precross artifacts
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: py-precross
           if-no-files-found: error
@@ -751,7 +751,7 @@ jobs:
         run: make -C lib/nodets precross
 
       - name: Upload nodejs precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: nodejs-precross
           if-no-files-found: error
@@ -806,7 +806,7 @@ jobs:
         run: make -j$(nproc) -C test/cpp precross
 
       - name: Upload cpp precross artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: cpp-precross
           if-no-files-found: error
@@ -820,7 +820,7 @@ jobs:
           retention-days: 3
 
       - name: Upload log files from failed test runs
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         if: failure()
         with:
           name: lib-cpp-test-log
@@ -883,7 +883,7 @@ jobs:
       - name: Upload ruby precross artifacts
         # has to match the version used in cross-test
         if: matrix.ruby-version == '2.7' && matrix.skip-build-ext == false
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: rb-precross
           if-no-files-found: error
@@ -1056,7 +1056,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         if: failure()
         with:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
