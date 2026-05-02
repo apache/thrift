@@ -21,11 +21,37 @@
 
 namespace Test\Thrift\Unit\Lib\Fixture;
 
-use Thrift\Protocol\TProtocol;
+use Thrift\Base\TBase;
+use Thrift\Type\TType;
 
-class ProcessorSpy
+class TestSerializerStruct extends TBase
 {
-    public function process(TProtocol $input, TProtocol $output)
+    public static $_TSPEC = [
+        1 => [
+            'var' => 'stringField',
+            'type' => TType::STRING,
+        ],
+        2 => [
+            'var' => 'intField',
+            'type' => TType::I32,
+        ],
+    ];
+
+    public $stringField = null;
+    public $intField = null;
+
+    public function getName()
     {
+        return 'TestSerializerStruct';
+    }
+
+    public function read($input)
+    {
+        return $this->_read(self::class, self::$_TSPEC, $input);
+    }
+
+    public function write($output)
+    {
+        return $this->_write('TestSerializerStruct', self::$_TSPEC, $output);
     }
 }

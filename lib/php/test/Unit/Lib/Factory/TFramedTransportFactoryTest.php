@@ -46,4 +46,31 @@ class TFramedTransportFactoryTest extends TestCase
         $this->assertTrue($this->getPropertyValue($framedTransport, 'write_'));
         $this->assertSame($transport, $this->getPropertyValue($framedTransport, 'transport_'));
     }
+
+    /**
+     * @return void
+     */
+    public function testGetTransportWrapsInnerTransport()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TFramedTransportFactory();
+        $framedTransport = $factory->getTransport($transport);
+
+        $this->assertNotSame($transport, $framedTransport);
+        $this->assertInstanceOf(TFramedTransport::class, $framedTransport);
+    }
+
+    /**
+     * @return void
+     */
+    public function testGetTransportCreatesNewInstancePerCall()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TFramedTransportFactory();
+
+        $result1 = $factory->getTransport($transport);
+        $result2 = $factory->getTransport($transport);
+
+        $this->assertNotSame($result1, $result2);
+    }
 }

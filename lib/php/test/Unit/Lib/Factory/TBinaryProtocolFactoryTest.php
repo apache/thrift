@@ -71,4 +71,30 @@ class TBinaryProtocolFactoryTest extends TestCase
             'strictWrite' => true,
         ];
     }
+
+    /**
+     * @return void
+     */
+    public function testGetTransport()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TBinaryProtocolFactory();
+        $protocol = $factory->getProtocol($transport);
+
+        $this->assertSame($transport, $protocol->getTransport());
+    }
+
+    /**
+     * @return void
+     */
+    public function testGetProtocolCreatesNewInstancePerCall()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TBinaryProtocolFactory();
+
+        $protocol1 = $factory->getProtocol($transport);
+        $protocol2 = $factory->getProtocol($transport);
+
+        $this->assertNotSame($protocol1, $protocol2);
+    }
 }

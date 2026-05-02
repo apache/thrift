@@ -92,5 +92,7 @@ class TProtocolDecoratorTest extends TestCase
         yield 'readI64' => ['readI64', ['value']];
         yield 'readDouble' => ['readDouble', ['value']];
         yield 'readString' => ['readString', ['value']];
+        yield 'writeUuid' => ['writeUuid', ['value']];
+        yield 'readUuid' => ['readUuid', ['value']];
     }
 }
