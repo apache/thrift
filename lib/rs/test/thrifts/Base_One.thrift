@@ -64,6 +64,10 @@ union MeasuringAids {
   2: MeasuringCup cup
 }
 
+struct AidKit {
+  1: optional MeasuringAids aid
+}
+
 struct CookingTemperatures {
   1: set<double> commonTemperatures
   2: list<double> usedTemperatures
