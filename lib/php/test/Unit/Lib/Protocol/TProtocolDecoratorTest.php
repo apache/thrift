@@ -23,15 +23,14 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Protocol\TProtocol;
 use Thrift\Protocol\TProtocolDecorator;
 
 class TProtocolDecoratorTest extends TestCase
 {
 
-    /**
-     * @dataProvider methodDecorationDataProvider
-     */
+    #[DataProvider('methodDecorationDataProvider')]
     public function testMethodDecoration(
         $methodName,
         $methodArguments
@@ -51,7 +50,7 @@ class TProtocolDecoratorTest extends TestCase
         $decorator->$methodName(...$methodArguments);
     }
 
-    public function methodDecorationDataProvider()
+    public static function methodDecorationDataProvider()
     {
         yield 'writeMessageBegin' => ['writeMessageBegin', ['name', 'type', 'seqid']];
         yield 'writeMessageEnd' => ['writeMessageEnd', []];

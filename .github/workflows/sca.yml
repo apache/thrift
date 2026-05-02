@@ -51,7 +51,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           # Lowest supported PHP version
-          php-version: "7.1"
+          php-version: "8.1"
           extensions: mbstring, xml, curl, pcntl
 
       - uses: actions/setup-python@v6
@@ -177,6 +177,13 @@ jobs:
           composer install --quiet
           ./vendor/bin/phpcs
 
+      - name: Run phpstan
+        id: phpstan
+        continue-on-error: true
+        run: |
+          # PHP static analysis
+          ./vendor/bin/phpstan analyse -c lib/php/phpstan.neon --no-progress --error-format=github
+
       - name: Run rubocop
         id: rubocop
         continue-on-error: true
@@ -209,6 +216,7 @@ jobs:
           CPPCHECK_OUTCOME: ${{ steps.cppcheck.outcome }}
           FLAKE8_OUTCOME: ${{ steps.flake8.outcome }}
           PHPCS_OUTCOME: ${{ steps.phpcs.outcome }}
+          PHPSTAN_OUTCOME: ${{ steps.phpstan.outcome }}
           RUBOCOP_OUTCOME: ${{ steps.rubocop.outcome }}
         run: |
           failed=0
@@ -223,6 +231,10 @@ jobs:
           fi
           if [ "$PHPCS_OUTCOME" != "success" ]; then
             echo "::error::Step 'phpcs' failed (outcome: $PHPCS_OUTCOME)"
+            failed=1
+          fi
+          if [ "$PHPSTAN_OUTCOME" != "success" ]; then
+            echo "::error::Step 'phpstan' failed (outcome: $PHPSTAN_OUTCOME)"
             failed=1
           fi
           if [ "$RUBOCOP_OUTCOME" != "success" ]; then

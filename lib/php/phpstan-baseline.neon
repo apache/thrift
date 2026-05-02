@@ -1,0 +1,26 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Method Thrift\\\\ClassLoader\\\\ThriftClassLoader\\:\\:findFile\\(\\) should return string but return statement is missing\\.$#"
+			count: 1
+			path: lib/ClassLoader/ThriftClassLoader.php
+
+		-
+			message: "#^Method Thrift\\\\Protocol\\\\TJSONProtocol\\:\\:writeStructBegin\\(\\) should return int but return statement is missing\\.$#"
+			count: 1
+			path: lib/Protocol/TJSONProtocol.php
+
+		-
+			message: "#^Method Thrift\\\\Protocol\\\\TJSONProtocol\\:\\:writeStructEnd\\(\\) should return int but return statement is missing\\.$#"
+			count: 1
+			path: lib/Protocol/TJSONProtocol.php
+
+		-
+			message: "#^Method Thrift\\\\Protocol\\\\TSimpleJSONProtocol\\:\\:writeStructBegin\\(\\) should return int but return statement is missing\\.$#"
+			count: 1
+			path: lib/Protocol/TSimpleJSONProtocol.php
+
+		-
+			message: "#^Method Thrift\\\\Protocol\\\\TSimpleJSONProtocol\\:\\:writeStructEnd\\(\\) should return int but return statement is missing\\.$#"
+			count: 1
+			path: lib/Protocol/TSimpleJSONProtocol.php

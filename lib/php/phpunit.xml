@@ -21,18 +21,15 @@
          bootstrap="test/bootstrap.php"
          cacheResult="false"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
          stopOnWarning="true"
          stopOnFailure="true"
          processIsolation="true"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd">
+    <source>
+        <include>
             <directory suffix=".php">./lib</directory>
-        </whitelist>
-    </filter>
+        </include>
+    </source>
     <testsuites>
         <testsuite name="Thrift PHP Unit Test Suite">
             <directory>./test/Unit</directory>

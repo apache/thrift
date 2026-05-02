@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TBinaryProtocolFactory;
 use Thrift\Protocol\TBinaryProtocol;
@@ -32,11 +33,11 @@ class TBinaryProtocolFactoryTest extends TestCase
     use ReflectionHelper;
 
     /**
-     * @dataProvider getProtocolDataProvider
      * @param bool $strictRead
      * @param bool $strictWrite
      * @return void
      */
+    #[DataProvider('getProtocolDataProvider')]
     public function testGetProtocol(
         $strictRead,
         $strictWrite
@@ -52,7 +53,7 @@ class TBinaryProtocolFactoryTest extends TestCase
         $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
     }
 
-    public function getProtocolDataProvider()
+    public static function getProtocolDataProvider()
     {
         yield 'allTrue' => [
             'strictRead' => true,

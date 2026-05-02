@@ -22,6 +22,7 @@
 namespace Test\Thrift\Integration\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Protocol\TSimpleJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
@@ -64,9 +65,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->assertSame('["testString",1,0,{"thing":"test"}]', $this->protocol->getTransport()->getBuffer());
     }
 
-    /**
-     * @dataProvider writeDataProvider
-     */
+    #[DataProvider('writeDataProvider')]
     public function testWrite(
         $argsClassName,
         $argsValues,
@@ -80,7 +79,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->assertEquals($expected, $actual);
     }
 
-    public function writeDataProvider()
+    public static function writeDataProvider()
     {
         if (!is_dir(__DIR__ . '/../../../Resources/packages/php')) {
             throw new \RuntimeException(

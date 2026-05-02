@@ -22,6 +22,8 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Constraint\Constraint;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TTransport;
@@ -81,9 +83,7 @@ class TFramedTransportTest extends TestCase
         $this->assertEquals('abcdetest', $this->getPropertyValue($framedTransport, 'rBuf_'));
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $readAllowed,
         $readBuffer,
@@ -106,13 +106,24 @@ class TFramedTransportTest extends TestCase
         $transport
             ->expects($this->exactly(count($lowLevelTransportReadAllParams)))
             ->method('readAll')
-            ->withConsecutive(...$lowLevelTransportReadAllParams)
-            ->willReturnOnConsecutiveCalls(...$lowLevelTransportReadAllResult);
+            ->willReturnCallback(function (...$args) use ($lowLevelTransportReadAllParams, $lowLevelTransportReadAllResult) {
+                static $iteration = 0;
+                $expected = $lowLevelTransportReadAllParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($args[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $args[$i]);
+                    }
+                }
+
+                return $lowLevelTransportReadAllResult[$iteration++];
+            });
 
         $this->assertEquals($expectedReadResult, $framedTransport->read($readLength));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'read not allowed' => [
             'readAllowed' => false,
@@ -143,9 +154,7 @@ class TFramedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeDataProvider
-     */
+    #[DataProvider('writeDataProvider')]
     public function testWrite(
         $writeAllowed,
         $writeData,
@@ -166,7 +175,7 @@ class TFramedTransportTest extends TestCase
         $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($framedTransport, 'wBuf_'));
     }
 
-    public function writeDataProvider()
+    public static function writeDataProvider()
     {
         yield 'write not allowed' => [
             'writeAllowed' => false,
@@ -188,9 +197,7 @@ class TFramedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $writeAllowed,
         $writeBuffer,
@@ -213,7 +220,7 @@ class TFramedTransportTest extends TestCase
         $this->assertNull($framedTransport->flush());
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         yield 'write not allowed' => [
             'writeAllowed' => false,
