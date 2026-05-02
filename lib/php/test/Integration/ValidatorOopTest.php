@@ -25,7 +25,7 @@ namespace Test\Thrift\Integration;
  * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
  * lib/php/test$ ../../../compiler/cpp/thrift --gen php:validate,oop,nsglobal="ValidateOop" -r --out ./Resources/packages/phpvo ./Resources/ThriftTest.thrift
  */
-class ValidatorOopTest extends BaseValidatorTest
+class ValidatorOopTest extends AbstractValidatorTestCase
 {
     public function getNsGlobal()
     {

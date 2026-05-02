@@ -23,15 +23,14 @@ namespace Test\Thrift\Unit\Lib\ClassLoader;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\ClassLoader\ThriftClassLoader;
 
 class ThriftClassLoaderTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider registerNamespaceDataProvider
-     */
+    #[DataProvider('registerNamespaceDataProvider')]
     public function testRegisterNamespace(
         $namespaces,
         $class,
@@ -62,7 +61,7 @@ class ThriftClassLoaderTest extends TestCase
         }
     }
 
-    public function registerNamespaceDataProvider()
+    public static function registerNamespaceDataProvider()
     {
         yield 'default' => [
             'namespaces' => [

@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Transport\TTransport;
@@ -71,7 +72,7 @@ class TBufferedTransportTest extends TestCase
 
     public function testPutBack()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $bufferedTransport = new TBufferedTransport($transport);
         $bufferedTransport->putBack('test');
 
@@ -81,9 +82,7 @@ class TBufferedTransportTest extends TestCase
         $this->assertEquals('abcdetest', $this->getPropertyValue($bufferedTransport, 'rBuf_'));
     }
 
-    /**
-     * @dataProvider readAllDataProvider
-     */
+    #[DataProvider('readAllDataProvider')]
     public function testReadAll(
         $startBuffer,
         $readLength,
@@ -107,7 +106,7 @@ class TBufferedTransportTest extends TestCase
         $this->assertEquals($expectedBufferValue, $this->getPropertyValue($bufferedTransport, 'rBuf_'));
     }
 
-    public function readAllDataProvider()
+    public static function readAllDataProvider()
     {
         yield 'buffer empty' => [
             'startBuffer' => '',
@@ -143,9 +142,7 @@ class TBufferedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $readBufferSize,
         $startBuffer,
@@ -169,7 +166,7 @@ class TBufferedTransportTest extends TestCase
         $this->assertEquals($expectedBufferValue, $this->getPropertyValue($bufferedTransport, 'rBuf_'));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'buffer empty' => [
             'readBufferSize' => 10,
@@ -197,9 +194,7 @@ class TBufferedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeDataProvider
-     */
+    #[DataProvider('writeDataProvider')]
     public function testWrite(
         $writeBufferSize,
         $writeData,
@@ -220,7 +215,7 @@ class TBufferedTransportTest extends TestCase
         $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($bufferedTransport, 'wBuf_'));
     }
 
-    public function writeDataProvider()
+    public static function writeDataProvider()
     {
         yield 'store data in buffer' => [
             'writeBufferSize' => 10,
@@ -236,9 +231,7 @@ class TBufferedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $writeBuffer
     ) {
@@ -262,7 +255,7 @@ class TBufferedTransportTest extends TestCase
         $this->assertEquals('', $this->getPropertyValue($bufferedTransport, 'wBuf_'));
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         yield 'empty buffer' => [
             'writeBuffer' => '',

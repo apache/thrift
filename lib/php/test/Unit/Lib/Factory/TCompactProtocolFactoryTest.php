@@ -36,7 +36,7 @@ class TCompactProtocolFactoryTest extends TestCase
      */
     public function testGetProtocol()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TCompactProtocolFactory();
         $protocol = $factory->getProtocol($transport);
 
@@ -50,7 +50,7 @@ class TCompactProtocolFactoryTest extends TestCase
      */
     public function testGetTransport()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TCompactProtocolFactory();
         $protocol = $factory->getProtocol($transport);
 
@@ -62,7 +62,7 @@ class TCompactProtocolFactoryTest extends TestCase
      */
     public function testGetProtocolCreatesNewInstancePerCall()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TCompactProtocolFactory();
 
         $protocol1 = $factory->getProtocol($transport);

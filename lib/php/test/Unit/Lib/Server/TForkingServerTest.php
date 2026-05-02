@@ -47,11 +47,11 @@ class TForkingServerTest extends TestCase
     ): TForkingServer {
         return new TForkingServer(
             $processor ?? new \stdClass(),
-            $transport ?? $this->createMock(TServerTransport::class),
-            $inputTransportFactory ?? $this->createMock(TTransportFactoryInterface::class),
-            $outputTransportFactory ?? $this->createMock(TTransportFactoryInterface::class),
-            $inputProtocolFactory ?? $this->createMock(TProtocolFactory::class),
-            $outputProtocolFactory ?? $this->createMock(TProtocolFactory::class)
+            $transport ?? $this->createStub(TServerTransport::class),
+            $inputTransportFactory ?? $this->createStub(TTransportFactoryInterface::class),
+            $outputTransportFactory ?? $this->createStub(TTransportFactoryInterface::class),
+            $inputProtocolFactory ?? $this->createStub(TProtocolFactory::class),
+            $outputProtocolFactory ?? $this->createStub(TProtocolFactory::class)
         );
     }
 
@@ -75,11 +75,11 @@ class TForkingServerTest extends TestCase
     public function testConstructorStoresCollaborators()
     {
         $processor = new \stdClass();
-        $transport = $this->createMock(TServerTransport::class);
-        $inputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
-        $outputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
-        $inputProtocolFactory = $this->createMock(TProtocolFactory::class);
-        $outputProtocolFactory = $this->createMock(TProtocolFactory::class);
+        $transport = $this->createStub(TServerTransport::class);
+        $inputTransportFactory = $this->createStub(TTransportFactoryInterface::class);
+        $outputTransportFactory = $this->createStub(TTransportFactoryInterface::class);
+        $inputProtocolFactory = $this->createStub(TProtocolFactory::class);
+        $outputProtocolFactory = $this->createStub(TProtocolFactory::class);
 
         $server = $this->createServer(
             $processor,
@@ -131,7 +131,7 @@ class TForkingServerTest extends TestCase
         $serverTransport = $this->createMock(TServerTransport::class);
         $serverTransport->expects($this->once())->method('listen');
 
-        $clientTransport = $this->createMock(TTransport::class);
+        $clientTransport = $this->createStub(TTransport::class);
         $server = $this->createServer(null, $serverTransport);
 
         $callCount = 0;
@@ -167,7 +167,7 @@ class TForkingServerTest extends TestCase
         $this->expectExceptionMessage('Failed to fork');
 
         $serverTransport = $this->createMock(TServerTransport::class);
-        $clientTransport = $this->createMock(TTransport::class);
+        $clientTransport = $this->createStub(TTransport::class);
 
         $server = $this->createServer(null, $serverTransport);
 
@@ -263,7 +263,7 @@ class TForkingServerTest extends TestCase
     public function testHandleParentStoresChildPid()
     {
         $server = $this->createServer();
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
 
         $method = $this->getAccessibleMethod($server, 'handleParent');
         $method->invoke($server, $transport, 42);

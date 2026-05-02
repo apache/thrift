@@ -23,13 +23,12 @@
 namespace Test\Thrift\Unit\Lib\StringFunc;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\StringFunc\Core;
 
 class CoreTest extends TestCase
 {
-    /**
-     * @dataProvider substrDataProvider
-     */
+    #[DataProvider('substrDataProvider')]
     public function testSubstr(
         $expected,
         $str,
@@ -40,9 +39,7 @@ class CoreTest extends TestCase
         $this->assertEquals($expected, $core->substr($str, $start, $length));
     }
 
-    /**
-     * @dataProvider strlenDataProvider
-     */
+    #[DataProvider('strlenDataProvider')]
     public function testStrlen(
         $expectedLength,
         $str
@@ -51,7 +48,7 @@ class CoreTest extends TestCase
         $this->assertEquals($expectedLength, $core->strlen($str));
     }
 
-    public function substrDataProvider()
+    public static function substrDataProvider()
     {
         yield 'Afrikaans' => [
             'expected' => 'Afrikaans',
@@ -165,7 +162,7 @@ class CoreTest extends TestCase
         ];
     }
 
-    public function strlenDataProvider()
+    public static function strlenDataProvider()
     {
         yield 'Afrikaans' => [
             'expectedLength' => 9,

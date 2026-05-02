@@ -24,6 +24,7 @@ namespace Test\Thrift\Unit\Lib\Serializer;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Fixture\TestSerializerStruct;
 use Thrift\Serializer\TBinarySerializer;
 
@@ -31,9 +32,7 @@ class TBinarySerializerTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider serializeDeserializeDataProvider
-     */
+    #[DataProvider('serializeDeserializeDataProvider')]
     public function testSerializeAndDeserialize($stringVal, $intVal)
     {
         $object = new TestSerializerStruct();
@@ -52,7 +51,7 @@ class TBinarySerializerTest extends TestCase
         $this->assertEquals($intVal, $deserialized->intField);
     }
 
-    public function serializeDeserializeDataProvider()
+    public static function serializeDeserializeDataProvider()
     {
         yield 'both fields' => [
             'stringVal' => 'hello',

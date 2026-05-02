@@ -112,7 +112,7 @@ class TransportErrorScenariosTest extends TestCase
 
     public function testBufferedTransportWriteOnUnderlyingTransportErrorThrowsException()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         // Use a small write buffer so that write triggers a flush to underlying transport
         $bufferedTransport = new TBufferedTransport($transport, 512, 10);
 
@@ -130,7 +130,7 @@ class TransportErrorScenariosTest extends TestCase
 
     public function testBufferedTransportFlushOnUnderlyingTransportErrorThrowsException()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $bufferedTransport = new TBufferedTransport($transport);
 
         $transport
@@ -153,7 +153,7 @@ class TransportErrorScenariosTest extends TestCase
 
     public function testFramedTransportReadWithNoFrameAvailableThrowsException()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $framedTransport = new TFramedTransport($transport);
 
         // readFrame calls transport_->readAll(4) which will throw when no data available
