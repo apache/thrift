@@ -1,0 +1,11 @@
+parameters:
+    level: 1
+    paths:
+        - lib
+    bootstrapFiles:
+        - test/bootstrap.php
+    treatPhpDocTypesAsCertain: false
+    excludePaths:
+        - test/Resources/packages/*
+includes:
+    - phpstan-baseline.neon

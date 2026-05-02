@@ -132,7 +132,7 @@ class TBufferedTransport extends TTransport
         } elseif ($have == $len) {
             $data = $this->rBuf_;
             $this->rBuf_ = '';
-        } elseif ($have > $len) {
+        } else {
             $data = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
             $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
         }
