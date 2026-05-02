@@ -40,13 +40,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
         with:
           bundler-cache: true
           ruby-version: "4.0"
           working-directory: lib/rb
 
       # Release
-      - uses: rubygems/release-gem@v1
+      - uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7 # v1.2.0
         with:
           working-directory: lib/rb
