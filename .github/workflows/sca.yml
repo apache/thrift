@@ -40,7 +40,7 @@ jobs:
   sca:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install dependencies
         run: |
@@ -48,13 +48,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS $SCA_DEPS
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
         with:
           # Lowest supported PHP version
           php-version: "7.1"
           extensions: mbstring, xml, curl, pcntl
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
@@ -63,7 +63,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel flake8
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
         with:
           ruby-version: "2.7"
           bundler-cache: true
