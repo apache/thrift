@@ -23,6 +23,7 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
@@ -31,9 +32,7 @@ use Thrift\Type\TType;
 
 class TJSONProtocolTest extends TestCase
 {
-    /**
-     * @dataProvider writeAndReadMessageBeginDataProvider
-     */
+    #[DataProvider('writeAndReadMessageBeginDataProvider')]
     public function testWriteAndReadMessageBegin(string $name, int $type, int $seqid)
     {
         $transport = new TMemoryBuffer();
@@ -57,7 +56,7 @@ class TJSONProtocolTest extends TestCase
         $this->assertSame($seqid, $readSeqid);
     }
 
-    public function writeAndReadMessageBeginDataProvider()
+    public static function writeAndReadMessageBeginDataProvider()
     {
         yield 'call message' => [
             'name' => 'testMethod',
@@ -97,9 +96,7 @@ class TJSONProtocolTest extends TestCase
         $protocol->readMessageBegin($name, $type, $seqid);
     }
 
-    /**
-     * @dataProvider writeAndReadScalarDataProvider
-     */
+    #[DataProvider('writeAndReadScalarDataProvider')]
     public function testWriteAndReadScalar(int $fieldType, string $writeMethod, $value, string $readMethod)
     {
         if ($fieldType === TType::I64 && PHP_INT_SIZE === 4) {
@@ -133,7 +130,7 @@ class TJSONProtocolTest extends TestCase
         }
     }
 
-    public function writeAndReadScalarDataProvider()
+    public static function writeAndReadScalarDataProvider()
     {
         yield 'bool true' => [
             'fieldType' => TType::BOOL,

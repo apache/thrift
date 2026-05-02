@@ -23,6 +23,8 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Constraint\Constraint;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TCompactProtocol;
@@ -64,9 +66,7 @@ class TCompactProtocolTest extends TestCase
     private const TYPE_BITS = 0x07;
     private const TYPE_SHIFT_AMOUNT = 5;
 
-    /**
-     * @dataProvider toZigZagDataProvider
-     */
+    #[DataProvider('toZigZagDataProvider')]
     public function testToZigZag(
         $n,
         $bits,
@@ -76,7 +76,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame($expected, $protocol->toZigZag($n, $bits));
     }
 
-    public function toZigZagDataProvider()
+    public static function toZigZagDataProvider()
     {
         yield ['n' => 0, 'bits' => 16, 'expected' => 0];
         yield ['n' => -1, 'bits' => 16, 'expected' => 1];
@@ -91,9 +91,7 @@ class TCompactProtocolTest extends TestCase
         yield ['n' => 0x7fffffff, 'bits' => 64, 'expected' => 4294967294];
     }
 
-    /**
-     * @dataProvider fromZigZagDataProvider
-     */
+    #[DataProvider('fromZigZagDataProvider')]
     public function testFromZigZag(
         $n,
         $expected
@@ -102,7 +100,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame($expected, $protocol->fromZigZag($n));
     }
 
-    public function fromZigZagDataProvider()
+    public static function fromZigZagDataProvider()
     {
         yield ['n' => 0, 'expected' => 0];
         yield ['n' => 1, 'expected' => -1];
@@ -113,9 +111,7 @@ class TCompactProtocolTest extends TestCase
         yield ['n' => 4294967294, 'expected' => 0x7fffffff];
     }
 
-    /**
-     * @dataProvider getVarintDataProvider
-     */
+    #[DataProvider('getVarintDataProvider')]
     public function testGetVarint(
         $data,
         $expected
@@ -124,7 +120,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame($expected, $protocol->getVarint($data));
     }
 
-    public function getVarintDataProvider()
+    public static function getVarintDataProvider()
     {
         yield ['data' => 0, 'expected' => "\x00"];
         yield ['data' => 1, 'expected' => "\x01"];
@@ -205,24 +201,30 @@ class TCompactProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TCompactProtocol($transport);
 
+        $expectedWriteArgs = [
+            [pack('C', self::PROTOCOL_ID), 1], #protocal id
+            [pack('C', self::VERSION | ($type << TCompactProtocol::TYPE_SHIFT_AMOUNT)), 1], #version
+            ["\x01", 1], #seqid
+            ["\x08", 1], #field name length
+            ["testName", 8], #field name
+        ];
+        $writeReturns = [1, 1, 1, 1, 8];
         $transport
             ->expects($this->exactly(5))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('C', self::PROTOCOL_ID), 1], #protocal id
-                       [pack('C', self::VERSION | ($type << TCompactProtocol::TYPE_SHIFT_AMOUNT)), 1], #version
-                       ["\x01", 1], #seqid
-                       ["\x08", 1], #field name length
-                       ["testName", 8], #field name
-                   ]
-            )->willReturnOnConsecutiveCalls(
-                1,
-                1,
-                1,
-                1,
-                8
-            );
+            ->willReturnCallback(function (...$callArgs) use ($expectedWriteArgs, $writeReturns) {
+                static $iteration = 0;
+                $expected = $expectedWriteArgs[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeReturns[$iteration++];
+            });
 
         $result = $protocol->writeMessageBegin($name, $type, $seqid);
         $this->assertSame(12, $result);
@@ -278,9 +280,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(1, $protocol->writeFieldStop());
     }
 
-    /**
-     * @dataProvider writeFieldHeaderDataProvider
-     */
+    #[DataProvider('writeFieldHeaderDataProvider')]
     public function testWriteFieldHeader(
         $type,
         $fid,
@@ -294,13 +294,24 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->exactly(count($writeCallParams)))
             ->method('write')
-            ->withConsecutive(...$writeCallParams)
-            ->willReturnOnConsecutiveCalls(...$writeCallResult);
+            ->willReturnCallback(function (...$callArgs) use ($writeCallParams, $writeCallResult) {
+                static $iteration = 0;
+                $expected = $writeCallParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeCallResult[$iteration++];
+            });
 
         $this->assertSame($expectedResult, $protocol->writeFieldHeader($type, $fid));
     }
 
-    public function writeFieldHeaderDataProvider()
+    public static function writeFieldHeaderDataProvider()
     {
         yield 'bool' => [
             'type' => TType::BOOL,
@@ -327,9 +338,7 @@ class TCompactProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeFieldBeginDataProvider
-     */
+    #[DataProvider('writeFieldBeginDataProvider')]
     public function testWriteFieldBegin(
         $fieldName,
         $fieldType,
@@ -347,8 +356,19 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->exactly(count($writeCallParams)))
             ->method('write')
-            ->withConsecutive(...$writeCallParams)
-            ->willReturnOnConsecutiveCalls(...$writeCallResult);
+            ->willReturnCallback(function (...$callArgs) use ($writeCallParams, $writeCallResult) {
+                static $iteration = 0;
+                $expected = $writeCallParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeCallResult[$iteration++];
+            });
 
         $this->assertSame($expectedResult, $protocol->writeFieldBegin($fieldName, $fieldType, $fieldId));
 
@@ -357,7 +377,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame($expectedLastFid, $this->getPropertyValue($protocol, 'lastFid'));
     }
 
-    public function writeFieldBeginDataProvider()
+    public static function writeFieldBeginDataProvider()
     {
         yield 'bool' => [
             'fieldName' => 'testName',
@@ -397,9 +417,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(self::STATE_FIELD_WRITE, $this->getPropertyValue($protocol, 'state'));
     }
 
-    /**
-     * @dataProvider writeCollectionDataProvider
-     */
+    #[DataProvider('writeCollectionDataProvider')]
     public function testWriteCollection(
         $etype,
         $size,
@@ -415,8 +433,19 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->exactly(count($writeCallParams)))
             ->method('write')
-            ->withConsecutive(...$writeCallParams)
-            ->willReturnOnConsecutiveCalls(...$writeCallResult);
+            ->willReturnCallback(function (...$callArgs) use ($writeCallParams, $writeCallResult) {
+                static $iteration = 0;
+                $expected = $writeCallParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeCallResult[$iteration++];
+            });
 
         $this->assertSame($expectedResult, $protocol->writeCollectionBegin($etype, $size));
 
@@ -427,7 +456,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(TCompactProtocol::STATE_CLEAR, $this->getPropertyValue($protocol, 'state'));
     }
 
-    public function writeCollectionDataProvider()
+    public static function writeCollectionDataProvider()
     {
         yield 'size < 14' => [
             'etype' => TType::STRING,
@@ -463,9 +492,7 @@ class TCompactProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeMapDataProvider
-     */
+    #[DataProvider('writeMapDataProvider')]
     public function testWriteMap(
         $keyType,
         $valType,
@@ -481,8 +508,19 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->exactly(count($writeCallParams)))
             ->method('write')
-            ->withConsecutive(...$writeCallParams)
-            ->willReturnOnConsecutiveCalls(...$writeCallResult);
+            ->willReturnCallback(function (...$callArgs) use ($writeCallParams, $writeCallResult) {
+                static $iteration = 0;
+                $expected = $writeCallParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeCallResult[$iteration++];
+            });
 
         $this->assertSame($expectedResult, $protocol->writeMapBegin($keyType, $valType, $size));
 
@@ -494,7 +532,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame([], $this->getPropertyValue($protocol, 'containers'));
     }
 
-    public function writeMapDataProvider()
+    public static function writeMapDataProvider()
     {
         yield 'size zero' => [
             'keyType' => TType::STRING,
@@ -576,9 +614,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(1, $protocol->writeSetEnd());
     }
 
-    /**
-     * @dataProvider writeBinaryDataProvider
-     */
+    #[DataProvider('writeBinaryDataProvider')]
     public function testWriteBool(
         $value,
         $startState,
@@ -602,13 +638,24 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->exactly(count($writeCallParams)))
             ->method('write')
-            ->withConsecutive(...$writeCallParams)
-            ->willReturnOnConsecutiveCalls(...$writeCallResult);
+            ->willReturnCallback(function (...$callArgs) use ($writeCallParams, $writeCallResult) {
+                static $iteration = 0;
+                $expected = $writeCallParams[$iteration];
+                foreach ($expected as $i => $exp) {
+                    if ($exp instanceof Constraint) {
+                        $this->assertThat($callArgs[$i], $exp);
+                    } else {
+                        $this->assertSame($exp, $callArgs[$i]);
+                    }
+                }
+
+                return $writeCallResult[$iteration++];
+            });
 
         $this->assertSame($expectedResult, $protocol->writeBool($value));
     }
 
-    public function writeBinaryDataProvider()
+    public static function writeBinaryDataProvider()
     {
         yield 'invalid state' => [
             'value' => true,
@@ -667,9 +714,7 @@ class TCompactProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeByteDataProvider
-     */
+    #[DataProvider('writeByteDataProvider')]
     public function testWriteByte(
         $value,
         $expectedWriteCallParam
@@ -684,7 +729,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(1, $protocol->writeByte($value));
     }
 
-    public function writeByteDataProvider()
+    public static function writeByteDataProvider()
     {
         yield 'signed' => [
             'value' => -1,
@@ -704,9 +749,7 @@ class TCompactProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeUByteDataProvider
-     */
+    #[DataProvider('writeUByteDataProvider')]
     public function testWriteUByte(
         $value,
         $expectedWriteCallParam
@@ -721,7 +764,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(1, $protocol->writeUByte($value));
     }
 
-    public function writeUByteDataProvider()
+    public static function writeUByteDataProvider()
     {
         yield 'signed' => [
             'value' => -1,
@@ -782,12 +825,25 @@ class TCompactProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TCompactProtocol($transport);
 
+        $expectedWriteArgs = [
+            ["\x04", 1],
+            ["test", 4],
+        ];
         $transport->expects($this->exactly(2))
                   ->method('write')
-                  ->withConsecutive(
-                      ["\x04", 1],
-                      ["test", 4]
-                  );
+                  ->willReturnCallback(function (...$callArgs) use ($expectedWriteArgs) {
+                      static $iteration = 0;
+                      $expected = $expectedWriteArgs[$iteration++];
+                      foreach ($expected as $i => $exp) {
+                          if ($exp instanceof Constraint) {
+                              $this->assertThat($callArgs[$i], $exp);
+                          } else {
+                              $this->assertSame($exp, $callArgs[$i]);
+                          }
+                      }
+
+                      return null;
+                  });
 
         $this->assertSame(5, $protocol->writeString('test'));
     }
@@ -822,9 +878,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $value);
     }
 
-    /**
-     * @dataProvider writeI64DataProvider
-     */
+    #[DataProvider('writeI64DataProvider')]
     public function testWriteI64(
         $value,
         $expectedWriteCallParam,
@@ -840,7 +894,7 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame($expectedResult, $protocol->writeI64($value));
     }
 
-    public function writeI64DataProvider()
+    public static function writeI64DataProvider()
     {
         yield 'simple' => [
             'value' => 0,

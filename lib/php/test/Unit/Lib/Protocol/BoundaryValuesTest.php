@@ -23,6 +23,7 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TCompactProtocol;
 use Thrift\Protocol\TJSONProtocol;
@@ -41,9 +42,7 @@ class BoundaryValuesTest extends TestCase
         'writeBool' => TType::BOOL,
     ];
 
-    /**
-     * @dataProvider boundaryProvider
-     */
+    #[DataProvider('boundaryProvider')]
     public function testBoundaryValues($protocolClass, $writeMethod, $readMethod, $value)
     {
         $this->assertRoundtrip($protocolClass, $writeMethod, $readMethod, $value);

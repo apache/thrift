@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSSLSocket;
@@ -31,9 +32,7 @@ class TSSLSocketTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider openExceptionDataProvider
-     */
+    #[DataProvider('openExceptionDataProvider')]
     public function testOpenException(
         $host,
         $port,
@@ -69,7 +68,7 @@ class TSSLSocketTest extends TestCase
         $socket->open();
     }
 
-    public function openExceptionDataProvider()
+    public static function openExceptionDataProvider()
     {
         yield 'host is empty' => [
             'host' => '',
@@ -221,9 +220,7 @@ class TSSLSocketTest extends TestCase
         $this->assertTrue($transport->isOpen());
     }
 
-    /**
-     * @dataProvider hostDataProvider
-     */
+    #[DataProvider('hostDataProvider')]
     public function testGetHost($host, $expected)
     {
         $port = 9090;
@@ -238,7 +235,7 @@ class TSSLSocketTest extends TestCase
         $this->assertEquals($expected, $transport->getHost());
     }
 
-    public function hostDataProvider()
+    public static function hostDataProvider()
     {
         yield 'localhost' => ['localhost', 'ssl://localhost'];
         yield 'ssl_localhost' => ['ssl://localhost', 'ssl://localhost'];

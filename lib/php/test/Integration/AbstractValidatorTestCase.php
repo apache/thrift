@@ -26,7 +26,7 @@ use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TMemoryBuffer;
 
-abstract class BaseValidatorTest extends TestCase
+abstract class AbstractValidatorTestCase extends TestCase
 {
     abstract public function getNsGlobal();
 
