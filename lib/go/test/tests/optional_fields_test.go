@@ -182,7 +182,7 @@ func TestListNotEmpty(t *testing.T) {
 	}
 }
 
-//Make sure that optional fields are not being serialized
+// Make sure that optional fields are not being serialized
 func TestNoOptionalUnsetFieldsOnWire(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -210,7 +210,7 @@ func TestNoSetToDefaultFieldsOnWire(t *testing.T) {
 	ao.Write(context.Background(), proto)
 }
 
-//Make sure that only one field is being serialized when set to non-default
+// Make sure that only one field is being serialized when set to non-default
 func TestOneISetFieldOnWire(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

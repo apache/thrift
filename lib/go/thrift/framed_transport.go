@@ -61,10 +61,7 @@ func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
 
 // Deprecated: Use NewTFramedTransportFactoryConf instead.
 func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength uint32) TTransportFactory {
-	safeMax := maxLength
-	if safeMax > math.MaxInt32 {
-		safeMax = math.MaxInt32
-	}
+	safeMax := min(maxLength, math.MaxInt32)
 
 	return NewTFramedTransportFactoryConf(factory, &TConfiguration{
 		MaxFrameSize: int32(safeMax),

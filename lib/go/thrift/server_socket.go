@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package thrift
 
 import (
@@ -28,9 +27,9 @@ import (
 
 type TServerSocket struct {
 	// TServerSocketListenerFactory abstracts how listeners are created.
-	listenerFactory      func(net.Addr) (net.Listener, error)
-	addr          net.Addr
-	clientTimeout time.Duration
+	listenerFactory func(net.Addr) (net.Listener, error)
+	addr            net.Addr
+	clientTimeout   time.Duration
 
 	// Protects the listener and interrupted fields to make them thread safe.
 	mu          sync.RWMutex
@@ -66,9 +65,9 @@ func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration)
 // Allows full customization (TLS, mocks, unix sockets, windows named pipes, etc.)
 func NewTServerSocketFromFactoryTimeout(listenerFactory func(addr net.Addr) (listener net.Listener, err error), addr net.Addr, clientTimeout time.Duration) *TServerSocket {
 	return &TServerSocket{
-		listenerFactory:       listenerFactory,
-		addr:          addr,
-		clientTimeout: clientTimeout,
+		listenerFactory: listenerFactory,
+		addr:            addr,
+		clientTimeout:   clientTimeout,
 	}
 }
 
@@ -77,7 +76,7 @@ func (p *TServerSocket) try_listen(raise bool) error {
 	defer p.mu.Unlock()
 
 	if p.listener != nil {
-		if (raise) {
+		if raise {
 			return NewTTransportException(ALREADY_OPEN, "Server socket already open")
 		}
 		return nil
@@ -145,7 +144,7 @@ func (p *TServerSocket) Addr() net.Addr {
 func (p *TServerSocket) try_close(interrupt bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if (interrupt){
+	if interrupt {
 		p.interrupted = true
 	}
 

@@ -185,6 +185,30 @@ jobs:
             -i lib/c_glib/test/gen-cpp \
             --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
+  lib-go:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        go:
+          - '1.26'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Run gofmt
+        # Args:
+        # -s: Simplify code
+        # -d: Display changes, and exit non-zero when changes present
+        # -e: Report all errors instead of only the first 10
+        run: gofmt -s -d -e $(git ls-files | grep "\.go$")
+
   lib-python:
     needs: compiler
     runs-on: ubuntu-24.04

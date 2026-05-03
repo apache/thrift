@@ -775,7 +775,7 @@ const maxVarint64Bytes = 10
 func (p *TCompactProtocol) readVarint64() (int64, error) {
 	shift := uint(0)
 	result := int64(0)
-	for rsize := 0; rsize < maxVarint64Bytes; rsize++ {
+	for range maxVarint64Bytes {
 		b, err := p.readByteDirect()
 		if err != nil {
 			return 0, err
