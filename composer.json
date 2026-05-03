@@ -24,10 +24,14 @@
         "phpunit/phpunit": "^9.5",
         "squizlabs/php_codesniffer": "^3.10",
         "php-mock/php-mock-phpunit": "^2.10",
+        "phpstan/phpstan": "^1.12",
         "ext-json": "*",
         "ext-xml": "*",
         "ext-curl": "*",
         "ext-pcntl": "*"
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c lib/php/phpstan.neon"
     },
     "autoload": {
         "psr-4": {"Thrift\\": "lib/php/lib/"}

@@ -192,8 +192,8 @@ class TSocketPool extends TSocket
         $numServers = count($this->servers_);
 
         for ($i = 0; $i < $numServers; ++$i) {
-            // This extracts the $host and $port variables
-            extract($this->servers_[$i]);
+            $host = $this->servers_[$i]['host'];
+            $port = $this->servers_[$i]['port'];
 
             // Check APCu cache for a record of this server being down
             $failtimeKey = 'thrift_failtime:' . $host . ':' . $port . '~';
