@@ -9,7 +9,6 @@ on:
 
 env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
-  SCA_DEPS: cppcheck python3-flake8 sloccount libglib2.0-dev
   # Disable all languages for which we don't have SCA checks in place
   CONFIG_ARGS_FOR_SCA: >
     --enable-tutorial=no
@@ -37,7 +36,7 @@ permissions:
   contents: read
 
 jobs:
-  sca:
+  compiler:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -47,57 +46,49 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS $SCA_DEPS
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
-        with:
-          # Lowest supported PHP version
-          php-version: "8.1"
-          extensions: mbstring, xml, curl, pcntl
-
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.12"
-
-      - name: Install Python test dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel flake8
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
-        with:
-          ruby-version: "2.7"
-          bundler-cache: true
-          working-directory: "lib/rb"
-
-      # Generate thrift files so the static code analysis includes an analysis
-      # of the files the thrift compiler spits out.
       - name: Build compiler
-        id: compile
         run: |
           ./bootstrap.sh
+          # shellcheck disable=SC2086
           ./configure $CONFIG_ARGS_FOR_SCA
-          make -j$(nproc) -C compiler/cpp
+          make -j"$(nproc)" -C compiler/cpp
+
+      - name: Run thrift-compiler
+        run: compiler/cpp/thrift -version
+
+      - name: Archive built thrift compiler
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp/thrift
+          retention-days: 3
+
+  compiler-cpp:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS cppcheck
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
 
       - name: Run cppcheck
-        id: cppcheck
-        continue-on-error: true
         run: |
-          make -j$(nproc) -C lib/cpp
-          make -j$(nproc) -C test/cpp precross
-
-          make -j$(nproc) -C lib/c_glib
-          make -j$(nproc) -C test/c_glib precross
-
           # Compiler cppcheck (All)
           cppcheck --force --quiet --inline-suppr --enable=all -j2 compiler/cpp/src
-
-          # C++ cppcheck (All)
-          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
-
-          # C Glib cppcheck (All)
-          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
           # Silent error checks
           # See THRIFT-4371: flex generated scanner code causes false positives in cppcheck.
@@ -109,6 +100,52 @@ jobs:
             --suppress="syntaxError:thrift/thrifty.cc" \
             --suppress="normalCheckLevelMaxBranches:compiler/cpp/src/*" \
             --error-exitcode=1 -j2 compiler/cpp/src
+
+  lib-cpp:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS cppcheck libglib2.0-dev
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Generate C/C++ thrift files
+        run: |
+          make -j"$(nproc)" -C lib/cpp
+          make -j"$(nproc)" -C test/cpp precross
+
+          make -j"$(nproc)" -C lib/c_glib
+          make -j"$(nproc)" -C test/c_glib precross
+
+      - name: Run cppcheck
+        run: |
+          # C++ cppcheck (All)
+          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
+
+          # C Glib cppcheck (All)
+          cppcheck --force --quiet --inline-suppr --enable=all -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
           # suppress unknownMacro:lib/cpp/src/thrift/qt/* -> Qt namespace macro needs Qt preprocessing.
           # suppress unknownMacro:lib/cpp/test/* -> Boost.Test macros are unresolved in standalone analysis.
@@ -148,6 +185,137 @@ jobs:
             -i lib/c_glib/test/gen-cpp \
             --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
+  lib-python:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel flake8
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Generate Python thrift files
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+          make -j"$(nproc)" -C test/py precross
+
+      - name: Run flake8
+        run: flake8
+
+  lib-php:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
+        with:
+          # Lowest supported PHP version
+          php-version: "8.1"
+          extensions: mbstring, xml, curl, pcntl
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Generate PHP thrift files
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+          make -j"$(nproc)" -C lib/php/test stubs
+          make -j"$(nproc)" -C test/php precross
+
+      - name: Run phpcs
+        run: |
+          composer install --quiet
+          ./vendor/bin/phpcs
+
+      - name: Run phpstan
+        run: |
+          ./vendor/bin/phpstan analyse -c lib/php/phpstan.neon --no-progress --error-format=github
+
+  lib-ruby:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS cppcheck
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+        with:
+          ruby-version: "2.7"
+          bundler-cache: true
+          working-directory: "lib/rb"
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Generate Ruby thrift files
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+          make -j"$(nproc)" -C test/rb precross
+          make -j"$(nproc)" -C tutorial/rb
+
+      - name: Run cppcheck
+        run: |
           # Ruby C extension error checks
           # suppress missingIncludeSystem:lib/rb/ext/* -> Ruby and libc headers are not needed for analysis.
           # suppress checkersReport -> hide info-only active-checker summary.
@@ -163,91 +331,42 @@ jobs:
             --check-level=exhaustive \
             --error-exitcode=1 lib/rb/ext
 
-      - name: Run flake8
-        id: flake8
-        continue-on-error: true
-        run: |
-          make -j$(nproc) -C test/py precross
-
-          flake8
-
-      - name: Run phpcs
-        id: phpcs
-        continue-on-error: true
-        run: |
-          # PHP code style
-          composer install --quiet
-          ./vendor/bin/phpcs
-
-      - name: Run phpstan
-        id: phpstan
-        continue-on-error: true
-        run: |
-          # PHP static analysis
-          ./vendor/bin/phpstan analyse -c lib/php/phpstan.neon --no-progress --error-format=github
-
       - name: Run rubocop
-        id: rubocop
-        continue-on-error: true
         working-directory: "lib/rb"
         run: |
-          # The SCA configure args disable Ruby, so top-level precross skips Ruby targets.
-          make -j$(nproc) -C ../../test/rb precross
-          make -j$(nproc) -C ../../tutorial/rb
           bundle exec rake gen-rb
           bundle exec rubocop --config .rubocop.yml --format progress --format github . ../../test/rb ../../tutorial/rb
 
+  statistics:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: "1.25"
+
+      - name: Install scc
+        run: |
+          go install github.com/boyter/scc/v3@v3.6.0
+
       - name: Print statistics
-        if: ${{ always() }}
         run: |
           # TODO etc
-          echo "FIXMEs: $(grep -r FIXME * | wc -l)"
-          echo "HACKs: $(grep -r HACK * | wc -l)"
-          echo "TODOs: $(grep -r TODO * | wc -l)"
+          echo "FIXMEs: $(grep -r FIXME -- * | wc -l)"
+          echo "HACKs: $(grep -r HACK -- * | wc -l)"
+          echo "TODOs: $(grep -r TODO -- * | wc -l)"
 
           # LoC
-          sloccount .
+          scc .
 
           # System info
           # dpkg -l
           uname -a
 
-      - name: Fail if any SCA check failed
-        if: ${{ always() && steps.compile.outcome == 'success' }}
-        env:
-          CPPCHECK_OUTCOME: ${{ steps.cppcheck.outcome }}
-          FLAKE8_OUTCOME: ${{ steps.flake8.outcome }}
-          PHPCS_OUTCOME: ${{ steps.phpcs.outcome }}
-          PHPSTAN_OUTCOME: ${{ steps.phpstan.outcome }}
-          RUBOCOP_OUTCOME: ${{ steps.rubocop.outcome }}
-        run: |
-          failed=0
-
-          if [ "$CPPCHECK_OUTCOME" != "success" ]; then
-            echo "::error::Step 'cppcheck' failed (outcome: $CPPCHECK_OUTCOME)"
-            failed=1
-          fi
-          if [ "$FLAKE8_OUTCOME" != "success" ]; then
-            echo "::error::Step 'flake8' failed (outcome: $FLAKE8_OUTCOME)"
-            failed=1
-          fi
-          if [ "$PHPCS_OUTCOME" != "success" ]; then
-            echo "::error::Step 'phpcs' failed (outcome: $PHPCS_OUTCOME)"
-            failed=1
-          fi
-          if [ "$PHPSTAN_OUTCOME" != "success" ]; then
-            echo "::error::Step 'phpstan' failed (outcome: $PHPSTAN_OUTCOME)"
-            failed=1
-          fi
-          if [ "$RUBOCOP_OUTCOME" != "success" ]; then
-            echo "::error::Step 'rubocop' failed (outcome: $RUBOCOP_OUTCOME)"
-            failed=1
-          fi
-
-          exit $failed
-
   zizmor:
-    name: Run zizmor
     runs-on: ubuntu-24.04
     permissions:
       security-events: write # Required for upload-sarif (used by zizmor-action) to upload SARIF files.
