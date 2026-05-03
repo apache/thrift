@@ -111,7 +111,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
 1. Generate the content for `CHANGES.md` - this is one of the most time-consuming parts of the release cycle.  It is a lot of work, but the result is well worth it to the consumers of Apache Thrift:
 
-    1. Find all [Issues Fixed but not Closed in 1.0.0](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20thrift%20and%20fixVersion%20%3D%201.0.0%20and%20status%20!%3D%20closed) (adjust the version in the link to suit your needs).
+    1. Find all [Issues with fixed in 1.0.0 that are not open](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20thrift%20and%20resolution%20%3DFixed%20%20AND%20fixVersion%20%3D%201.0.0%20AND%20status%20!%3D%20Open) (adjust the version in the link to suit your needs).
 
     1. Export the list of issues to a CSV (Current Fields) and open in Excel (or a similar spreadsheet).
 
