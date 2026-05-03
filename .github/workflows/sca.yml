@@ -51,7 +51,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           # Lowest supported PHP version
-          php-version: "7.1"
+          php-version: "8.1"
           extensions: mbstring, xml, curl, pcntl
 
       - uses: actions/setup-python@v6
