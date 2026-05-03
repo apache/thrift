@@ -23,11 +23,17 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
   - package-ecosystem: "gradle"
     directory: "/lib/java"
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
   - package-ecosystem: "gradle"
     directory: "/lib/kotlin"
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
