@@ -32,7 +32,7 @@ class TTransportFactoryTest extends TestCase
      */
     public function testGetTransport()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TTransportFactory();
         $result = $factory->getTransport($transport);
 
@@ -46,8 +46,8 @@ class TTransportFactoryTest extends TestCase
     {
         $factory = new TTransportFactory();
 
-        $transport1 = $this->createMock(TTransport::class);
-        $transport2 = $this->createMock(TTransport::class);
+        $transport1 = $this->createStub(TTransport::class);
+        $transport2 = $this->createStub(TTransport::class);
 
         $this->assertSame($transport1, $factory->getTransport($transport1));
         $this->assertSame($transport2, $factory->getTransport($transport2));

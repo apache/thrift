@@ -23,6 +23,7 @@ namespace Test\Thrift\Integration\Lib\ClassLoader;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\ClassLoader\ThriftClassLoader;
 
 /***
@@ -33,9 +34,7 @@ class ThriftClassLoaderTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider registerDefinitionDataProvider
-     */
+    #[DataProvider('registerDefinitionDataProvider')]
     public function testRegisterDefinition(
         $definitions,
         $class,
@@ -67,7 +66,7 @@ class ThriftClassLoaderTest extends TestCase
         }
     }
 
-    public function registerDefinitionDataProvider()
+    public static function registerDefinitionDataProvider()
     {
         yield 'loadType' => [
             'definitions' => [

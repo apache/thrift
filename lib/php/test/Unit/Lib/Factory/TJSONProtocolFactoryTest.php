@@ -36,7 +36,7 @@ class TJSONProtocolFactoryTest extends TestCase
      */
     public function testGetProtocol()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TJSONProtocolFactory();
         $protocol = $factory->getProtocol($transport);
 

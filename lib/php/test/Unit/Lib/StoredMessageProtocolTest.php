@@ -31,7 +31,7 @@ class StoredMessageProtocolTest extends TestCase
 {
     public function testReadMessageBeginReturnsStoredValues(): void
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = $this->createMock(TProtocol::class);
         $protocol->expects($this->once())
             ->method('getTransport')

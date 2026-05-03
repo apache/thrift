@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TProtocol;
@@ -30,9 +31,7 @@ use Thrift\Type\TType;
 
 class TProtocolTest extends TestCase
 {
-    /**
-     * @dataProvider skipScalarDataProvider
-     */
+    #[DataProvider('skipScalarDataProvider')]
     public function testSkipScalarValues(int $type, string $writerMethod, $value): void
     {
         $buffer = $this->buildBinaryBuffer(
@@ -47,7 +46,7 @@ class TProtocolTest extends TestCase
         $this->assertSame(0, (int)$transport->available());
     }
 
-    public function skipScalarDataProvider(): iterable
+    public static function skipScalarDataProvider(): iterable
     {
         yield 'bool' => [
             TType::BOOL,
@@ -180,9 +179,7 @@ class TProtocolTest extends TestCase
         $protocol->skip(999);
     }
 
-    /**
-     * @dataProvider skipScalarDataProvider
-     */
+    #[DataProvider('skipScalarDataProvider')]
     public function testSkipBinaryScalarValues(int $type, string $writerMethod, $value): void
     {
         $buffer = $this->buildBinaryBuffer(

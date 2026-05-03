@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TBinaryProtocolFactory;
 use Thrift\Protocol\TBinaryProtocol;
@@ -32,16 +33,16 @@ class TBinaryProtocolFactoryTest extends TestCase
     use ReflectionHelper;
 
     /**
-     * @dataProvider getProtocolDataProvider
      * @param bool $strictRead
      * @param bool $strictWrite
      * @return void
      */
+    #[DataProvider('getProtocolDataProvider')]
     public function testGetProtocol(
         $strictRead,
         $strictWrite
     ) {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TBinaryProtocolFactory($strictRead, $strictWrite);
         $protocol = $factory->getProtocol($transport);
 
@@ -52,7 +53,7 @@ class TBinaryProtocolFactoryTest extends TestCase
         $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
     }
 
-    public function getProtocolDataProvider()
+    public static function getProtocolDataProvider()
     {
         yield 'allTrue' => [
             'strictRead' => true,
@@ -77,7 +78,7 @@ class TBinaryProtocolFactoryTest extends TestCase
      */
     public function testGetTransport()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TBinaryProtocolFactory();
         $protocol = $factory->getProtocol($transport);
 
@@ -89,7 +90,7 @@ class TBinaryProtocolFactoryTest extends TestCase
      */
     public function testGetProtocolCreatesNewInstancePerCall()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TBinaryProtocolFactory();
 
         $protocol1 = $factory->getProtocol($transport);

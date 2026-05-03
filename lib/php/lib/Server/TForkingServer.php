@@ -101,6 +101,7 @@ class TForkingServer extends TServer
      */
     private function collectChildren()
     {
+        $status = null;
         foreach ($this->children_ as $pid => $transport) {
             if (pcntl_waitpid($pid, $status, WNOHANG) > 0) {
                 unset($this->children_[$pid]);

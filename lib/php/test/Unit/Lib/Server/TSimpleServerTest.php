@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Server;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Server\Fixture\TestProcessor;
 use Thrift\Factory\TProtocolFactory;
 use Thrift\Factory\TTransportFactoryInterface;
@@ -93,14 +94,12 @@ class TSimpleServerTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider serveDataProvider
-     */
+    #[DataProvider('serveDataProvider')]
     public function testServe(
         $serveLoopCount,
         array $processLoopResult
     ): void {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
 
         $this->transport->expects($this->once())
             ->method('listen');
@@ -110,17 +109,17 @@ class TSimpleServerTest extends TestCase
 
         $this->inputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createMock(TServerTransport::class));
+            ->willReturn($this->createStub(TServerTransport::class));
         $this->outputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createMock(TServerTransport::class));
+            ->willReturn($this->createStub(TServerTransport::class));
 
-        $inputProtocol = $this->createMock(TServerTransport::class);
+        $inputProtocol = $this->createStub(TServerTransport::class);
         $this->inputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($inputProtocol);
 
-        $outputProtocol = $this->createMock(TServerTransport::class);
+        $outputProtocol = $this->createStub(TServerTransport::class);
         $this->outputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($outputProtocol);
@@ -130,24 +129,27 @@ class TSimpleServerTest extends TestCase
          * it is a hack to stop the server loop in unit test
          * last call of process can return any value, but should stop server for removing infinite loop
          **/
-        $processLoopResult[] = $this->returnCallback(function () {
-            $this->server->stop();
-
-            return false;
-        });
-
-        $this->processor->expects($this->exactly(count($processLoopResult)))
+        $totalCalls = count($processLoopResult) + 1;
+        $this->processor->expects($this->exactly($totalCalls))
             ->method('process')
             ->with(
                 $this->equalTo($inputProtocol),
                 $this->equalTo($outputProtocol)
             )
-            ->willReturnOnConsecutiveCalls(...$processLoopResult);
+            ->willReturnCallback(function () use ($processLoopResult) {
+                static $iteration = 0;
+                if ($iteration < count($processLoopResult)) {
+                    return $processLoopResult[$iteration++];
+                }
+                $this->server->stop();
+
+                return false;
+            });
 
         $this->server->serve();
     }
 
-    public function serveDataProvider()
+    public static function serveDataProvider()
     {
         yield 'one serve loop' => [
             'serveLoopCount' => 1,

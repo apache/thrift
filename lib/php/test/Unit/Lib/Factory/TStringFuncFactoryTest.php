@@ -23,6 +23,7 @@ namespace Test\Thrift\Unit\Lib\Factory;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Factory\TStringFuncFactory;
 use Thrift\StringFunc\Core;
@@ -34,9 +35,7 @@ class TStringFuncFactoryTest extends TestCase
     use PHPMock;
     use ReflectionHelper;
 
-    /**
-     * @dataProvider createDataProvider
-     */
+    #[DataProvider('createDataProvider')]
     public function testCreate(
         $mbstringFuncOverload,
         $expectedClass
@@ -58,16 +57,16 @@ class TStringFuncFactoryTest extends TestCase
         $this->assertInstanceOf($expectedClass, $stringFunc);
     }
 
-    public function createDataProvider()
+    public static function createDataProvider()
     {
         yield 'mbstring' => [
-            'mbstring.func_overload' => 2,
-            'expected' => Mbstring::class
+            'mbstringFuncOverload' => 2,
+            'expectedClass' => Mbstring::class,
         ];
 
         yield 'string' => [
-            'mbstring.func_overload' => 0,
-            'expected' => Core::class
+            'mbstringFuncOverload' => 0,
+            'expectedClass' => Core::class,
         ];
     }
 }

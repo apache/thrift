@@ -34,9 +34,9 @@ class TMultiplexedProcessorTest extends TestCase
 {
     public function testProcessDispatchesToRegisteredService(): void
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $input = $this->createMock(TProtocol::class);
-        $output = $this->createMock(TProtocol::class);
+        $output = $this->createStub(TProtocol::class);
         $processor = $this->createMock(TestProcessor::class);
 
         $input->expects($this->once())
@@ -81,7 +81,7 @@ class TMultiplexedProcessorTest extends TestCase
     public function testProcessRejectsUnexpectedMessageType(): void
     {
         $input = $this->createMock(TProtocol::class);
-        $output = $this->createMock(TProtocol::class);
+        $output = $this->createStub(TProtocol::class);
 
         $input->expects($this->once())
             ->method('readMessageBegin')
@@ -102,7 +102,7 @@ class TMultiplexedProcessorTest extends TestCase
     public function testProcessRequiresServiceSeparator(): void
     {
         $input = $this->createMock(TProtocol::class);
-        $output = $this->createMock(TProtocol::class);
+        $output = $this->createStub(TProtocol::class);
 
         $input->expects($this->once())
             ->method('readMessageBegin')
@@ -123,7 +123,7 @@ class TMultiplexedProcessorTest extends TestCase
     public function testProcessRequiresKnownServiceName(): void
     {
         $input = $this->createMock(TProtocol::class);
-        $output = $this->createMock(TProtocol::class);
+        $output = $this->createStub(TProtocol::class);
 
         $input->expects($this->once())
             ->method('readMessageBegin')
@@ -136,7 +136,7 @@ class TMultiplexedProcessorTest extends TestCase
             });
 
         $multiplexedProcessor = new TMultiplexedProcessor();
-        $multiplexedProcessor->registerProcessor('Other', $this->createMock(TestProcessor::class));
+        $multiplexedProcessor->registerProcessor('Other', $this->createStub(TestProcessor::class));
 
         $this->expectException(TException::class);
         $this->expectExceptionMessage('Service name not found: Missing.');

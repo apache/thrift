@@ -23,6 +23,7 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TSimpleJSONProtocol;
 use Thrift\Protocol\SimpleJSON\CollectionMapKeyException;
@@ -39,8 +40,8 @@ class TSimpleJSONProtocolTest extends TestCase
      * - see http://wiki.apache.org/thrift/ThriftUsageJava
      * - use JSON instead
      *
-     * @dataProvider readDataProvider
      */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $methodName,
         $methodArguments
@@ -48,12 +49,12 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->expectException(TException::class);
         $this->expectExceptionMessage("Not implemented");
 
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = new TSimpleJSONProtocol($transport);
         $protocol->$methodName(...$methodArguments);
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'readMessageBegin' => [
             'methodName' => 'readMessageBegin',
@@ -133,9 +134,7 @@ class TSimpleJSONProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeScalarProvider
-     */
+    #[DataProvider('writeScalarProvider')]
     public function testWriteScalar(string $writeMethod, $value, string $expectedJson)
     {
         $transport = new TMemoryBuffer();
@@ -148,7 +147,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->assertSame('[' . $expectedJson . ']', $transport->getBuffer());
     }
 
-    public function writeScalarProvider()
+    public static function writeScalarProvider()
     {
         yield 'bool true' => [
             'writeMethod' => 'writeBool',
@@ -272,9 +271,7 @@ class TSimpleJSONProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeContainerProvider
-     */
+    #[DataProvider('writeContainerProvider')]
     public function testWriteContainer(array $operations, string $expectedJson)
     {
         $transport = new TMemoryBuffer();
@@ -287,7 +284,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->assertSame($expectedJson, $transport->getBuffer());
     }
 
-    public function writeContainerProvider()
+    public static function writeContainerProvider()
     {
         yield 'list of integers' => [
             'operations' => [
@@ -350,9 +347,7 @@ class TSimpleJSONProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeStructuralProvider
-     */
+    #[DataProvider('writeStructuralProvider')]
     public function testWriteStructural(array $operations, string $expectedJson)
     {
         $transport = new TMemoryBuffer();
@@ -365,7 +360,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $this->assertSame($expectedJson, $transport->getBuffer());
     }
 
-    public function writeStructuralProvider()
+    public static function writeStructuralProvider()
     {
         yield 'message begin' => [
             'operations' => [

@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Exception;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Fixture\TestRichException;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocol;
@@ -81,9 +82,7 @@ class TExceptionTest extends TestCase
         $this->assertEquals('set', $exception->field1);
     }
 
-    /**
-     * @dataProvider writeAndReadFieldDataProvider
-     */
+    #[DataProvider('writeAndReadFieldDataProvider')]
     public function testWriteAndReadField($field, $value)
     {
         $exception = new TestRichException();
@@ -94,7 +93,7 @@ class TExceptionTest extends TestCase
         $this->assertEquals($value, $result->$field);
     }
 
-    public function writeAndReadFieldDataProvider()
+    public static function writeAndReadFieldDataProvider()
     {
         // scalars
         yield 'string' => ['field' => 'stringField', 'value' => 'hello world'];

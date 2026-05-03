@@ -30,7 +30,7 @@ class TServerTransportTest extends TestCase
 {
     public function testAcceptReturnsTransportFromImplementation(): void
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $serverTransport = new ServerTransportStub($transport);
 
         $this->assertSame($transport, $serverTransport->accept());

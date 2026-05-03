@@ -36,7 +36,7 @@ class TFramedTransportFactoryTest extends TestCase
      */
     public function testGetTransport()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TFramedTransportFactory();
         $framedTransport = $factory->getTransport($transport);
 
@@ -52,7 +52,7 @@ class TFramedTransportFactoryTest extends TestCase
      */
     public function testGetTransportWrapsInnerTransport()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TFramedTransportFactory();
         $framedTransport = $factory->getTransport($transport);
 
@@ -65,7 +65,7 @@ class TFramedTransportFactoryTest extends TestCase
      */
     public function testGetTransportCreatesNewInstancePerCall()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $factory = new TFramedTransportFactory();
 
         $result1 = $factory->getTransport($transport);

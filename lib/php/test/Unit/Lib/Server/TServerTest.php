@@ -35,11 +35,11 @@ class TServerTest extends TestCase
     public function testConstructorStoresCollaborators(): void
     {
         $processor = new \stdClass();
-        $transport = $this->createMock(TServerTransport::class);
-        $inputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
-        $outputTransportFactory = $this->createMock(TTransportFactoryInterface::class);
-        $inputProtocolFactory = $this->createMock(TProtocolFactory::class);
-        $outputProtocolFactory = $this->createMock(TProtocolFactory::class);
+        $transport = $this->createStub(TServerTransport::class);
+        $inputTransportFactory = $this->createStub(TTransportFactoryInterface::class);
+        $outputTransportFactory = $this->createStub(TTransportFactoryInterface::class);
+        $inputProtocolFactory = $this->createStub(TProtocolFactory::class);
+        $outputProtocolFactory = $this->createStub(TProtocolFactory::class);
 
         $server = new ServerStub(
             $processor,
