@@ -244,7 +244,8 @@ void t_perl_generator::init_generator() {
   f_types_ << autogen_comment() << perl_includes();
 
   // Print header
-  f_consts_ << autogen_comment() << "package " << perl_namespace(program_) << "Constants;" << '\n'
+  f_consts_ << autogen_comment() << "package " << perl_namespace(program_)
+            << "Constants;  ## no critic (RequireFilenameMatchesPackage)" << '\n'
             << perl_includes() << '\n';
 }
 
@@ -292,7 +293,8 @@ void t_perl_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_perl_generator::generate_enum(t_enum* tenum) {
-  f_types_ << "package " << perl_namespace(program_) << tenum->get_name() << ";" << '\n';
+  f_types_ << "package " << perl_namespace(program_) << tenum->get_name()
+           << ";  ## no critic (RequireFilenameMatchesPackage)" << '\n';
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -458,7 +460,8 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
-  out << "package " << perl_namespace(tstruct->get_program()) << tstruct->get_name() << ";\n";
+  out << "package " << perl_namespace(tstruct->get_program()) << tstruct->get_name()
+      << ";  ## no critic (RequireFilenameMatchesPackage)\n";
   if (is_exception) {
     out << "use base qw(Thrift::TException);\n";
   }
@@ -719,7 +722,8 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
   indent_up();
 
   // Generate the header portion
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Processor;" << '\n'
+  f_service_ << "package " << perl_namespace(program_) << service_name_
+             << "Processor;  ## no critic (RequireFilenameMatchesPackage)" << '\n'
              << '\n' << "use strict;" << '\n' << extends_processor << '\n' << '\n';
 
   if (extends.empty()) {
@@ -943,7 +947,8 @@ void t_perl_generator::generate_service_interface(t_service* tservice) {
                  + "If);";
   }
 
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "If;" << '\n' << '\n'
+  f_service_ << "package " << perl_namespace(program_) << service_name_
+             << "If;  ## no critic (RequireFilenameMatchesPackage)" << '\n' << '\n'
              << "use strict;" << '\n' << extends_if << '\n' << '\n';
 
   indent_up();
@@ -968,7 +973,8 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
     extends_if = "use base qw(" + perl_namespace(extends_s->get_program()) + extends_s->get_name()
                  + "Rest);";
   }
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Rest;" << '\n' << '\n'
+  f_service_ << "package " << perl_namespace(program_) << service_name_
+             << "Rest;  ## no critic (RequireFilenameMatchesPackage)" << '\n' << '\n'
              << "use strict;" << '\n' << extends_if << '\n' << '\n';
 
   if (extends.empty()) {
@@ -1030,7 +1036,8 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
     extends_client = "use base qw(" + extends + "Client);";
   }
 
-  f_service_ << "package " << perl_namespace(program_) << service_name_ << "Client;" << '\n' << '\n'
+  f_service_ << "package " << perl_namespace(program_) << service_name_
+             << "Client;  ## no critic (RequireFilenameMatchesPackage)" << '\n' << '\n'
              << extends_client << '\n' << "use base qw(" << perl_namespace(program_)
              << service_name_ << "If);" << '\n';
 

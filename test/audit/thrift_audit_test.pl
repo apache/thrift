@@ -199,7 +199,7 @@ sub auditNonBreakingChanges
 
 # -----------------------------------------------------------------------------------------------------
 # call thriftAuditTool script
-sub callThriftAuditTool ( $ )
+sub callThriftAuditTool
 {
     my $args = shift;
 
@@ -210,7 +210,7 @@ sub callThriftAuditTool ( $ )
     return ($exitCode,$output);
 }
 
-sub getMessageSubString( $ )
+sub getMessageSubString
 {
     my $fileName = shift;
     my %lookupTable = (
