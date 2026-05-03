@@ -275,6 +275,46 @@ jobs:
         run: |
           ./vendor/bin/phpstan analyse -c lib/php/phpstan.neon --no-progress --error-format=github
 
+  lib-perl:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libperl-critic-perl
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $CONFIG_ARGS_FOR_SCA
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Generate Perl thrift files
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+          make -j"$(nproc)" -C lib/perl precross
+          make -j"$(nproc)" -C test/perl precross
+          make -j"$(nproc)" -C tutorial/perl
+
+      - name: Run perlcritic
+        run: |
+          find lib/perl test/perl tutorial/perl test/audit -iname '*.p[lm]' -type f \
+            ! -path 'lib/perl/blib/*' \
+            ! -path 'lib/perl/t/*' \
+            -print0 | xargs -0 perlcritic
+
   lib-ruby:
     needs: compiler
     runs-on: ubuntu-24.04

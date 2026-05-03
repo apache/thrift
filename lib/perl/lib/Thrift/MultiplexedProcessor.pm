@@ -27,7 +27,7 @@ use Thrift::MultiplexedProtocol;
 use Thrift::Protocol;
 use Thrift::ProtocolDecorator;
 
-package Thrift::StoredMessageProtocol;
+package Thrift::StoredMessageProtocol;  ## no critic (RequireFilenameMatchesPackage)
 use base qw(Thrift::ProtocolDecorator);
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 

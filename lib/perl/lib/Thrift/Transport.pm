@@ -27,7 +27,7 @@ use Thrift::Exception;
 #
 # Transport exceptions
 #
-package Thrift::TTransportException;
+package Thrift::TTransportException;  ## no critic (RequireFilenameMatchesPackage)
 use base('Thrift::TException');
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
@@ -130,7 +130,7 @@ sub flush {}
 #
 # TransportFactory creates transport objects from transports
 #
-package Thrift::TransportFactory;
+package Thrift::TransportFactory;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
@@ -157,7 +157,7 @@ sub getTransport
 #
 #  ServerTransport base class module
 #
-package Thrift::ServerTransport;
+package Thrift::ServerTransport;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub listen
@@ -177,4 +177,3 @@ sub close
 
 
 1;
-

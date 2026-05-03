@@ -96,7 +96,14 @@ PERL_GEN = \
 	$(BENCHMARK_GEN) \
 	$(AGGR_GEN)
 
+PERL_PRECROSS_GEN = \
+	gen-perl/ThriftTest/Constants.pm \
+	gen-perl/BenchmarkService.pm \
+	gen-perl2/Aggr.pm
+
 BUILT_SOURCES = $(PERL_GEN)
+
+precross: $(PERL_PRECROSS_GEN)
 
 check-local: $(PERL_GEN)
 	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/gen-perl2 -I@builddir@/gen-perl \

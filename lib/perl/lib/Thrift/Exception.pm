@@ -24,7 +24,7 @@ use warnings;
 use Thrift;
 use Thrift::Type;
 
-package Thrift::TException;
+package Thrift::TException;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use overload '""' => sub {
@@ -42,7 +42,7 @@ sub new {
     return bless($self,$classname);
 }
 
-package Thrift::TApplicationException;
+package Thrift::TApplicationException;  ## no critic (RequireFilenameMatchesPackage)
 use parent -norequire, 'Thrift::TException';
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
