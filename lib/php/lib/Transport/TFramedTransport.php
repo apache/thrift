@@ -22,8 +22,6 @@
 
 namespace Thrift\Transport;
 
-use Thrift\Factory\TStringFuncFactory;
-
 /**
  * Framed transport. Writes and reads data in chunks that are stamped with
  * their length.
@@ -44,14 +42,14 @@ class TFramedTransport extends TTransport
      *
      * @var string
      */
-    private $rBuf_;
+    private $rBuf_ = '';
 
     /**
      * Buffer for queued output data
      *
      * @var string
      */
-    private $wBuf_;
+    private $wBuf_ = '';
 
     /**
      * Whether to frame reads
@@ -106,21 +104,20 @@ class TFramedTransport extends TTransport
             return $this->transport_->read($len);
         }
 
-        if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
+        if (strlen($this->rBuf_) === 0) {
             $this->readFrame();
         }
 
         // Just return full buff
-        if ($len >= TStringFuncFactory::create()->strlen($this->rBuf_)) {
+        if ($len >= strlen($this->rBuf_)) {
             $out = $this->rBuf_;
-            $this->rBuf_ = null;
+            $this->rBuf_ = '';
 
             return $out;
         }
 
-        // Return TStringFuncFactory::create()->substr
-        $out = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
-        $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
+        $out = substr($this->rBuf_, 0, $len);
+        $this->rBuf_ = substr($this->rBuf_, $len);
 
         return $out;
     }
@@ -132,7 +129,7 @@ class TFramedTransport extends TTransport
      */
     public function putBack($data)
     {
-        if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
+        if (strlen($this->rBuf_) === 0) {
             $this->rBuf_ = $data;
         } else {
             $this->rBuf_ = ($data . $this->rBuf_);
@@ -163,8 +160,8 @@ class TFramedTransport extends TTransport
             return $this->transport_->write($buf, $len);
         }
 
-        if ($len !== null && $len < TStringFuncFactory::create()->strlen($buf)) {
-            $buf = TStringFuncFactory::create()->substr($buf, 0, $len);
+        if ($len !== null && $len < strlen($buf)) {
+            $buf = substr($buf, 0, $len);
         }
         $this->wBuf_ .= $buf;
     }
@@ -175,11 +172,11 @@ class TFramedTransport extends TTransport
      */
     public function flush()
     {
-        if (!$this->write_ || TStringFuncFactory::create()->strlen($this->wBuf_) == 0) {
+        if (!$this->write_ || strlen($this->wBuf_) == 0) {
             return $this->transport_->flush();
         }
 
-        $out = pack('N', TStringFuncFactory::create()->strlen($this->wBuf_));
+        $out = pack('N', strlen($this->wBuf_));
         $out .= $this->wBuf_;
 
         // Note that we clear the internal wBuf_ prior to the underlying write

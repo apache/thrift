@@ -24,7 +24,6 @@
 namespace Thrift\Transport;
 
 use Thrift\Exception\TTransportException;
-use Thrift\Factory\TStringFuncFactory;
 
 /**
  * A memory buffer is a tranpsort that simply reads from and writes to an
@@ -67,7 +66,7 @@ class TMemoryBuffer extends TTransport
 
     public function read($len)
     {
-        $bufLength = TStringFuncFactory::create()->strlen($this->buf_);
+        $bufLength = strlen($this->buf_);
 
         if ($bufLength === 0) {
             throw new TTransportException(
@@ -84,8 +83,8 @@ class TMemoryBuffer extends TTransport
             return $ret;
         }
 
-        $ret = TStringFuncFactory::create()->substr($this->buf_, 0, $len);
-        $this->buf_ = TStringFuncFactory::create()->substr($this->buf_, $len);
+        $ret = substr($this->buf_, 0, $len);
+        $this->buf_ = substr($this->buf_, $len);
 
         return $ret;
     }
@@ -97,7 +96,7 @@ class TMemoryBuffer extends TTransport
 
     public function available()
     {
-        return TStringFuncFactory::create()->strlen($this->buf_);
+        return strlen($this->buf_);
     }
 
     public function putBack($data)

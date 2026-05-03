@@ -24,7 +24,6 @@
 namespace Thrift\Transport;
 
 use Thrift\Exception\TTransportException;
-use Thrift\Factory\TStringFuncFactory;
 
 /**
  * HTTP client for Thrift
@@ -107,7 +106,7 @@ class THttpClient extends TTransport
      */
     public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = array())
     {
-        if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri[0] != '/')) {
+        if ((strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
         $this->scheme_ = $scheme;
@@ -218,7 +217,7 @@ class THttpClient extends TTransport
             'Accept' => 'application/x-thrift',
             'User-Agent' => 'PHP/THttpClient',
             'Content-Type' => 'application/x-thrift',
-            'Content-Length' => TStringFuncFactory::create()->strlen($this->buf_)
+            'Content-Length' => strlen($this->buf_)
         );
 
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {

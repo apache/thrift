@@ -820,4 +820,3 @@ if (!isset($GLOBALS['THRIFT_ROOT'])) {
 }
 include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TProtocol.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
-include_once $GLOBALS['THRIFT_ROOT'].'/TStringUtils.php';

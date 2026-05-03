@@ -270,7 +270,7 @@ jobs:
         with:
           # Lowest supported PHP version
           php-version: "8.1"
-          extensions: mbstring, xml, curl, pcntl
+          extensions: xml, curl, pcntl
 
       - name: Configure
         run: |

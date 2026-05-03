@@ -232,7 +232,6 @@ RUN apt-get install -y --no-install-recommends \
   php8.3 \
   php8.3-cli \
   php8.3-dev \
-  php8.3-mbstring \
   php8.3-xml \
   php8.3-curl \
   php8.3-xdebug \
