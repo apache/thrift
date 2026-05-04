@@ -128,7 +128,7 @@ function THttpTransport:_parseHeaders()
     for key, val in string.gmatch(line, "([%w%-]+)%s*:%s*(.+)") do
       if headers[key] then
         local delimiter = ", "
-        if key == "Set-Cookie" then
+        if string.lower(key) == "set-cookie" then
           delimiter = "; "
         end
         headers[key] = headers[key] .. delimiter .. tostring(val)
