@@ -26,7 +26,7 @@ use Thrift\Type\TType;
 
 class NestedStruct extends TBase
 {
-    public static $_TSPEC = [
+    public static $tspec = [
         1 => [
             'var' => 'value',
             'type' => TType::STRING,
@@ -37,11 +37,11 @@ class NestedStruct extends TBase
 
     public function read($input)
     {
-        return $this->_read(self::class, self::$_TSPEC, $input);
+        return $this->readStruct(self::class, self::$tspec, $input);
     }
 
     public function write($output)
     {
-        return $this->_write('NestedStruct', self::$_TSPEC, $output);
+        return $this->writeStruct('NestedStruct', self::$tspec, $output);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -40,7 +41,7 @@ abstract class TProtocolDecorator extends TProtocol
      *
      * @var TProtocol
      */
-    private $concreteProtocol_;
+    private $concreteProtocol;
 
     /**
      * Constructor of <code>TProtocolDecorator</code> class.
@@ -51,7 +52,7 @@ abstract class TProtocolDecorator extends TProtocol
     protected function __construct(TProtocol $protocol)
     {
         parent::__construct($protocol->getTransport());
-        $this->concreteProtocol_ = $protocol;
+        $this->concreteProtocol = $protocol;
     }
 
     /**
@@ -63,7 +64,7 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function writeMessageBegin($name, $type, $seqid)
     {
-        return $this->concreteProtocol_->writeMessageBegin($name, $type, $seqid);
+        return $this->concreteProtocol->writeMessageBegin($name, $type, $seqid);
     }
 
     /**
@@ -71,7 +72,7 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function writeMessageEnd()
     {
-        return $this->concreteProtocol_->writeMessageEnd();
+        return $this->concreteProtocol->writeMessageEnd();
     }
 
     /**
@@ -84,7 +85,7 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function writeStructBegin($name)
     {
-        return $this->concreteProtocol_->writeStructBegin($name);
+        return $this->concreteProtocol->writeStructBegin($name);
     }
 
     /**
@@ -95,92 +96,92 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function writeStructEnd()
     {
-        return $this->concreteProtocol_->writeStructEnd();
+        return $this->concreteProtocol->writeStructEnd();
     }
 
     public function writeFieldBegin($fieldName, $fieldType, $fieldId)
     {
-        return $this->concreteProtocol_->writeFieldBegin($fieldName, $fieldType, $fieldId);
+        return $this->concreteProtocol->writeFieldBegin($fieldName, $fieldType, $fieldId);
     }
 
     public function writeFieldEnd()
     {
-        return $this->concreteProtocol_->writeFieldEnd();
+        return $this->concreteProtocol->writeFieldEnd();
     }
 
     public function writeFieldStop()
     {
-        return $this->concreteProtocol_->writeFieldStop();
+        return $this->concreteProtocol->writeFieldStop();
     }
 
     public function writeMapBegin($keyType, $valType, $size)
     {
-        return $this->concreteProtocol_->writeMapBegin($keyType, $valType, $size);
+        return $this->concreteProtocol->writeMapBegin($keyType, $valType, $size);
     }
 
     public function writeMapEnd()
     {
-        return $this->concreteProtocol_->writeMapEnd();
+        return $this->concreteProtocol->writeMapEnd();
     }
 
     public function writeListBegin($elemType, $size)
     {
-        return $this->concreteProtocol_->writeListBegin($elemType, $size);
+        return $this->concreteProtocol->writeListBegin($elemType, $size);
     }
 
     public function writeListEnd()
     {
-        return $this->concreteProtocol_->writeListEnd();
+        return $this->concreteProtocol->writeListEnd();
     }
 
     public function writeSetBegin($elemType, $size)
     {
-        return $this->concreteProtocol_->writeSetBegin($elemType, $size);
+        return $this->concreteProtocol->writeSetBegin($elemType, $size);
     }
 
     public function writeSetEnd()
     {
-        return $this->concreteProtocol_->writeSetEnd();
+        return $this->concreteProtocol->writeSetEnd();
     }
 
     public function writeBool($bool)
     {
-        return $this->concreteProtocol_->writeBool($bool);
+        return $this->concreteProtocol->writeBool($bool);
     }
 
     public function writeByte($byte)
     {
-        return $this->concreteProtocol_->writeByte($byte);
+        return $this->concreteProtocol->writeByte($byte);
     }
 
     public function writeI16($i16)
     {
-        return $this->concreteProtocol_->writeI16($i16);
+        return $this->concreteProtocol->writeI16($i16);
     }
 
     public function writeI32($i32)
     {
-        return $this->concreteProtocol_->writeI32($i32);
+        return $this->concreteProtocol->writeI32($i32);
     }
 
     public function writeI64($i64)
     {
-        return $this->concreteProtocol_->writeI64($i64);
+        return $this->concreteProtocol->writeI64($i64);
     }
 
     public function writeDouble($dub)
     {
-        return $this->concreteProtocol_->writeDouble($dub);
+        return $this->concreteProtocol->writeDouble($dub);
     }
 
     public function writeString($str)
     {
-        return $this->concreteProtocol_->writeString($str);
+        return $this->concreteProtocol->writeString($str);
     }
 
     public function writeUuid($uuid)
     {
-        return $this->concreteProtocol_->writeUuid($uuid);
+        return $this->concreteProtocol->writeUuid($uuid);
     }
 
     /**
@@ -192,7 +193,7 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function readMessageBegin(&$name, &$type, &$seqid)
     {
-        return $this->concreteProtocol_->readMessageBegin($name, $type, $seqid);
+        return $this->concreteProtocol->readMessageBegin($name, $type, $seqid);
     }
 
     /**
@@ -200,96 +201,96 @@ abstract class TProtocolDecorator extends TProtocol
      */
     public function readMessageEnd()
     {
-        return $this->concreteProtocol_->readMessageEnd();
+        return $this->concreteProtocol->readMessageEnd();
     }
 
     public function readStructBegin(&$name)
     {
-        return $this->concreteProtocol_->readStructBegin($name);
+        return $this->concreteProtocol->readStructBegin($name);
     }
 
     public function readStructEnd()
     {
-        return $this->concreteProtocol_->readStructEnd();
+        return $this->concreteProtocol->readStructEnd();
     }
 
     public function readFieldBegin(&$name, &$fieldType, &$fieldId)
     {
-        return $this->concreteProtocol_->readFieldBegin($name, $fieldType, $fieldId);
+        return $this->concreteProtocol->readFieldBegin($name, $fieldType, $fieldId);
     }
 
     public function readFieldEnd()
     {
-        return $this->concreteProtocol_->readFieldEnd();
+        return $this->concreteProtocol->readFieldEnd();
     }
 
     public function readMapBegin(&$keyType, &$valType, &$size)
     {
-        $this->concreteProtocol_->readMapBegin($keyType, $valType, $size);
+        $this->concreteProtocol->readMapBegin($keyType, $valType, $size);
     }
 
     public function readMapEnd()
     {
-        return $this->concreteProtocol_->readMapEnd();
+        return $this->concreteProtocol->readMapEnd();
     }
 
     public function readListBegin(&$elemType, &$size)
     {
-        $this->concreteProtocol_->readListBegin($elemType, $size);
+        $this->concreteProtocol->readListBegin($elemType, $size);
     }
 
     public function readListEnd()
     {
-        return $this->concreteProtocol_->readListEnd();
+        return $this->concreteProtocol->readListEnd();
     }
 
     public function readSetBegin(&$elemType, &$size)
     {
-        return $this->concreteProtocol_->readSetBegin($elemType, $size);
+        return $this->concreteProtocol->readSetBegin($elemType, $size);
     }
 
     public function readSetEnd()
     {
-        return $this->concreteProtocol_->readSetEnd();
+        return $this->concreteProtocol->readSetEnd();
     }
 
     public function readBool(&$bool)
     {
-        return $this->concreteProtocol_->readBool($bool);
+        return $this->concreteProtocol->readBool($bool);
     }
 
     public function readByte(&$byte)
     {
-        return $this->concreteProtocol_->readByte($byte);
+        return $this->concreteProtocol->readByte($byte);
     }
 
     public function readI16(&$i16)
     {
-        return $this->concreteProtocol_->readI16($i16);
+        return $this->concreteProtocol->readI16($i16);
     }
 
     public function readI32(&$i32)
     {
-        return $this->concreteProtocol_->readI32($i32);
+        return $this->concreteProtocol->readI32($i32);
     }
 
     public function readI64(&$i64)
     {
-        return $this->concreteProtocol_->readI64($i64);
+        return $this->concreteProtocol->readI64($i64);
     }
 
     public function readDouble(&$dub)
     {
-        return $this->concreteProtocol_->readDouble($dub);
+        return $this->concreteProtocol->readDouble($dub);
     }
 
     public function readString(&$str)
     {
-        return $this->concreteProtocol_->readString($str);
+        return $this->concreteProtocol->readString($str);
     }
 
     public function readUuid(&$uuid)
     {
-        return $this->concreteProtocol_->readUuid($uuid);
+        return $this->concreteProtocol->readUuid($uuid);
     }
 }

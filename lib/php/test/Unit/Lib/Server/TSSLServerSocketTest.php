@@ -72,7 +72,7 @@ class TSSLServerSocketTest extends TestCase
 
         $socket->listen();
 
-        $this->assertIsResource($this->getPropertyValue($socket, 'listener_'));
+        $this->assertIsResource($this->getPropertyValue($socket, 'listener'));
 
         $this->getFunctionMock('Thrift\Server', 'fclose')
              ->expects($this->once())
@@ -80,7 +80,7 @@ class TSSLServerSocketTest extends TestCase
              ->willReturn(true);
 
         $socket->close();
-        $this->assertNull($this->getPropertyValue($socket, 'listener_'));
+        $this->assertNull($this->getPropertyValue($socket, 'listener'));
     }
 
     public function testAccept()
@@ -115,7 +115,7 @@ class TSSLServerSocketTest extends TestCase
         $result = $socket->accept();
         $this->assertInstanceOf(TSocket::class, $result);
 
-        $this->assertEquals($transportHandle, $this->getPropertyValue($result, 'handle_'));
+        $this->assertEquals($transportHandle, $this->getPropertyValue($result, 'handle'));
     }
 
     public function testAcceptFailed()

@@ -63,13 +63,13 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer(null, $transport);
         $server->stop();
 
-        $this->assertTrue($this->getPropertyValue($server, 'stop_'));
+        $this->assertTrue($this->getPropertyValue($server, 'stop'));
     }
 
     public function testChildrenArrayInitiallyEmpty()
     {
         $server = $this->createServer();
-        $this->assertEmpty($this->getPropertyValue($server, 'children_'));
+        $this->assertEmpty($this->getPropertyValue($server, 'children'));
     }
 
     public function testConstructorStoresCollaborators()
@@ -90,12 +90,12 @@ class TForkingServerTest extends TestCase
             $outputProtocolFactory
         );
 
-        $this->assertSame($processor, $this->getPropertyValue($server, 'processor_'));
-        $this->assertSame($transport, $this->getPropertyValue($server, 'transport_'));
-        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory_'));
-        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory_'));
-        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory_'));
-        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory_'));
+        $this->assertSame($processor, $this->getPropertyValue($server, 'processor'));
+        $this->assertSame($transport, $this->getPropertyValue($server, 'transport'));
+        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory'));
+        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory'));
+        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory'));
+        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory'));
     }
 
     public function testServeListensAndLoopsUntilStopped()
@@ -111,7 +111,7 @@ class TForkingServerTest extends TestCase
             function () use ($server, &$callCount) {
                 $callCount++;
                 if ($callCount >= 2) {
-                    $this->setPropertyValue($server, 'stop_', true);
+                    $this->setPropertyValue($server, 'stop', true);
                 }
                 return null;
             }
@@ -141,7 +141,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     return $clientTransport;
                 }
-                $this->setPropertyValue($server, 'stop_', true);
+                $this->setPropertyValue($server, 'stop', true);
                 return null;
             }
         );
@@ -156,7 +156,7 @@ class TForkingServerTest extends TestCase
 
         $server->serve();
 
-        $children = $this->getPropertyValue($server, 'children_');
+        $children = $this->getPropertyValue($server, 'children');
         $this->assertArrayHasKey(12345, $children);
         $this->assertSame($clientTransport, $children[12345]);
     }
@@ -198,7 +198,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     throw new TTransportException('Connection reset');
                 }
-                $this->setPropertyValue($server, 'stop_', true);
+                $this->setPropertyValue($server, 'stop', true);
                 return null;
             }
         );
@@ -222,7 +222,7 @@ class TForkingServerTest extends TestCase
         $transport2 = $this->createMock(TTransport::class);
         $transport2->expects($this->never())->method('close');
 
-        $this->setPropertyValue($server, 'children_', [
+        $this->setPropertyValue($server, 'children', [
             111 => $transport1,
             222 => $transport2,
         ]);
@@ -236,7 +236,7 @@ class TForkingServerTest extends TestCase
         $method = $this->getAccessibleMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children_');
+        $children = $this->getPropertyValue($server, 'children');
         $this->assertArrayNotHasKey(111, $children);
         $this->assertArrayHasKey(222, $children);
     }
@@ -245,7 +245,7 @@ class TForkingServerTest extends TestCase
     {
         $server = $this->createServer();
 
-        $this->setPropertyValue($server, 'children_', [
+        $this->setPropertyValue($server, 'children', [
             333 => null,
         ]);
 
@@ -256,7 +256,7 @@ class TForkingServerTest extends TestCase
         $method = $this->getAccessibleMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children_');
+        $children = $this->getPropertyValue($server, 'children');
         $this->assertEmpty($children);
     }
 
@@ -268,7 +268,7 @@ class TForkingServerTest extends TestCase
         $method = $this->getAccessibleMethod($server, 'handleParent');
         $method->invoke($server, $transport, 42);
 
-        $children = $this->getPropertyValue($server, 'children_');
+        $children = $this->getPropertyValue($server, 'children');
         $this->assertArrayHasKey(42, $children);
         $this->assertSame($transport, $children[42]);
     }

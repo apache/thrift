@@ -48,9 +48,9 @@ class TBinaryProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TBinaryProtocol::class, $protocol);
 
-        $this->assertEquals($strictRead, $this->getPropertyValue($protocol, 'strictRead_'));
-        $this->assertEquals($strictWrite, $this->getPropertyValue($protocol, 'strictWrite_'));
-        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
+        $this->assertEquals($strictRead, $this->getPropertyValue($protocol, 'strictRead'));
+        $this->assertEquals($strictWrite, $this->getPropertyValue($protocol, 'strictWrite'));
+        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans'));
     }
 
     public static function getProtocolDataProvider()

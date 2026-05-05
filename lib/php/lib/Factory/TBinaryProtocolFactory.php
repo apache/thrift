@@ -34,11 +34,11 @@ class TBinaryProtocolFactory implements TProtocolFactory
     /**
      * @var bool
      */
-    private $strictRead_ = false;
+    private $strictRead = false;
     /**
      * @var bool
      */
-    private $strictWrite_ = false;
+    private $strictWrite = false;
 
     /**
      * @param bool $strictRead
@@ -46,8 +46,8 @@ class TBinaryProtocolFactory implements TProtocolFactory
      */
     public function __construct($strictRead = false, $strictWrite = false)
     {
-        $this->strictRead_ = $strictRead;
-        $this->strictWrite_ = $strictWrite;
+        $this->strictRead = $strictRead;
+        $this->strictWrite = $strictWrite;
     }
 
     /**
@@ -56,6 +56,6 @@ class TBinaryProtocolFactory implements TProtocolFactory
      */
     public function getProtocol($trans)
     {
-        return new TBinaryProtocol($trans, $this->strictRead_, $this->strictWrite_);
+        return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
     }
 }

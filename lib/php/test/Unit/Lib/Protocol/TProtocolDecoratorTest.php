@@ -29,7 +29,6 @@ use Thrift\Protocol\TProtocolDecorator;
 
 class TProtocolDecoratorTest extends TestCase
 {
-
     #[DataProvider('methodDecorationDataProvider')]
     public function testMethodDecoration(
         $methodName,

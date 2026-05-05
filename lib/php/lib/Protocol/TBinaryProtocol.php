@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -31,22 +32,22 @@ use Thrift\Exception\TProtocolException;
  */
 class TBinaryProtocol extends TProtocol
 {
-    const VERSION_MASK = 0xffff0000;
-    const VERSION_1 = 0x80010000;
+    public const VERSION_MASK = 0xffff0000;
+    public const VERSION_1 = 0x80010000;
 
-    protected $strictRead_ = false;
-    protected $strictWrite_ = true;
+    protected $strictRead = false;
+    protected $strictWrite = true;
 
     public function __construct($trans, $strictRead = false, $strictWrite = true)
     {
         parent::__construct($trans);
-        $this->strictRead_ = $strictRead;
-        $this->strictWrite_ = $strictWrite;
+        $this->strictRead = $strictRead;
+        $this->strictWrite = $strictWrite;
     }
 
     public function writeMessageBegin($name, $type, $seqid)
     {
-        if ($this->strictWrite_) {
+        if ($this->strictWrite) {
             $version = self::VERSION_1 | $type;
 
             return
@@ -134,7 +135,7 @@ class TBinaryProtocol extends TProtocol
     public function writeBool($value)
     {
         $data = pack('c', $value ? 1 : 0);
-        $this->trans_->write($data, 1);
+        $this->trans->write($data, 1);
 
         return 1;
     }
@@ -142,7 +143,7 @@ class TBinaryProtocol extends TProtocol
     public function writeByte($value)
     {
         $data = pack('c', $value);
-        $this->trans_->write($data, 1);
+        $this->trans->write($data, 1);
 
         return 1;
     }
@@ -150,7 +151,7 @@ class TBinaryProtocol extends TProtocol
     public function writeI16($value)
     {
         $data = pack('n', $value);
-        $this->trans_->write($data, 2);
+        $this->trans->write($data, 2);
 
         return 2;
     }
@@ -158,7 +159,7 @@ class TBinaryProtocol extends TProtocol
     public function writeI32($value)
     {
         $data = pack('N', $value);
-        $this->trans_->write($data, 4);
+        $this->trans->write($data, 4);
 
         return 4;
     }
@@ -195,7 +196,7 @@ class TBinaryProtocol extends TProtocol
             $data = pack('N2', $hi, $lo);
         }
 
-        $this->trans_->write($data, 8);
+        $this->trans->write($data, 8);
 
         return 8;
     }
@@ -203,7 +204,7 @@ class TBinaryProtocol extends TProtocol
     public function writeDouble($value)
     {
         $data = pack('d', $value);
-        $this->trans_->write(strrev($data), 8);
+        $this->trans->write(strrev($data), 8);
 
         return 8;
     }
@@ -213,7 +214,7 @@ class TBinaryProtocol extends TProtocol
         $len = strlen($value);
         $result = $this->writeI32($len);
         if ($len) {
-            $this->trans_->write($value, $len);
+            $this->trans->write($value, $len);
         }
 
         return $result + $len;
@@ -222,7 +223,7 @@ class TBinaryProtocol extends TProtocol
     public function writeUuid($uuid)
     {
         $data = hex2bin(str_replace('-', '', $uuid));
-        $this->trans_->write($data, 16);
+        $this->trans->write($data, 16);
 
         return 16;
     }
@@ -240,14 +241,14 @@ class TBinaryProtocol extends TProtocol
                 $this->readString($name) +
                 $this->readI32($seqid);
         } else {
-            if ($this->strictRead_) {
+            if ($this->strictRead) {
                 throw new TProtocolException(
                     'No version identifier, old protocol client?',
                     TProtocolException::BAD_VERSION
                 );
             } else {
                 // Handle pre-versioned input
-                $name = $this->trans_->readAll($sz);
+                $name = $this->trans->readAll($sz);
                 $result +=
                     $sz +
                     $this->readByte($type) +
@@ -332,7 +333,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readBool(&$value)
     {
-        $data = $this->trans_->readAll(1);
+        $data = $this->trans->readAll(1);
         $arr = unpack('c', $data);
         $value = $arr[1] == 1;
 
@@ -341,7 +342,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readByte(&$value)
     {
-        $data = $this->trans_->readAll(1);
+        $data = $this->trans->readAll(1);
         $arr = unpack('c', $data);
         $value = $arr[1];
 
@@ -350,7 +351,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readI16(&$value)
     {
-        $data = $this->trans_->readAll(2);
+        $data = $this->trans->readAll(2);
         $arr = unpack('n', $data);
         $value = $arr[1];
         if ($value > 0x7fff) {
@@ -362,7 +363,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readI32(&$value)
     {
-        $data = $this->trans_->readAll(4);
+        $data = $this->trans->readAll(4);
         $arr = unpack('N', $data);
         $value = $arr[1];
         if ($value > 0x7fffffff) {
@@ -374,7 +375,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readI64(&$value)
     {
-        $data = $this->trans_->readAll(8);
+        $data = $this->trans->readAll(8);
 
         $arr = unpack('N2', $data);
 
@@ -439,7 +440,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readDouble(&$value)
     {
-        $data = strrev($this->trans_->readAll(8));
+        $data = strrev($this->trans->readAll(8));
         $arr = unpack('d', $data);
         $value = $arr[1];
 
@@ -450,7 +451,7 @@ class TBinaryProtocol extends TProtocol
     {
         $result = $this->readI32($len);
         if ($len) {
-            $value = $this->trans_->readAll($len);
+            $value = $this->trans->readAll($len);
         } else {
             $value = '';
         }
@@ -460,7 +461,7 @@ class TBinaryProtocol extends TProtocol
 
     public function readUuid(&$value)
     {
-        $data = $this->trans_->readAll(16);
+        $data = $this->trans->readAll(16);
         $hex = bin2hex($data);
         $value = substr($hex, 0, 8) . '-' .
                  substr($hex, 8, 4) . '-' .

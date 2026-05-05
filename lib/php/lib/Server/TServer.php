@@ -17,7 +17,7 @@ abstract class TServer
      *
      * @var TProcessor
      */
-    protected $processor_;
+    protected $processor;
 
     /**
      * Server transport to be used for listening
@@ -25,35 +25,35 @@ abstract class TServer
      *
      * @var TServerTransport
      */
-    protected $transport_;
+    protected $transport;
 
     /**
      * Input transport factory
      *
      * @var TTransportFactoryInterface
      */
-    protected $inputTransportFactory_;
+    protected $inputTransportFactory;
 
     /**
      * Output transport factory
      *
      * @var TTransportFactoryInterface
      */
-    protected $outputTransportFactory_;
+    protected $outputTransportFactory;
 
     /**
      * Input protocol factory
      *
      * @var TProtocolFactory
      */
-    protected $inputProtocolFactory_;
+    protected $inputProtocolFactory;
 
     /**
      * Output protocol factory
      *
      * @var TProtocolFactory
      */
-    protected $outputProtocolFactory_;
+    protected $outputProtocolFactory;
 
     /**
      * Sets up all the factories, etc
@@ -74,12 +74,12 @@ abstract class TServer
         TProtocolFactory $inputProtocolFactory,
         TProtocolFactory $outputProtocolFactory
     ) {
-        $this->processor_ = $processor;
-        $this->transport_ = $transport;
-        $this->inputTransportFactory_ = $inputTransportFactory;
-        $this->outputTransportFactory_ = $outputTransportFactory;
-        $this->inputProtocolFactory_ = $inputProtocolFactory;
-        $this->outputProtocolFactory_ = $outputProtocolFactory;
+        $this->processor = $processor;
+        $this->transport = $transport;
+        $this->inputTransportFactory = $inputTransportFactory;
+        $this->outputTransportFactory = $outputTransportFactory;
+        $this->inputProtocolFactory = $inputProtocolFactory;
+        $this->outputProtocolFactory = $outputProtocolFactory;
     }
 
     /**

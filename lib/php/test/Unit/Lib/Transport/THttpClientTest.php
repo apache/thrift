@@ -39,7 +39,7 @@ class THttpClientTest extends TestCase
         $transport = new THttpClient($host);
         $transport->setTimeoutSecs(1000);
 
-        $this->assertEquals(1000, $this->getPropertyValue($transport, 'timeout_'));
+        $this->assertEquals(1000, $this->getPropertyValue($transport, 'timeout'));
     }
 
     public function testIsOpen()
@@ -67,10 +67,10 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'handle_', $handle);
+        $this->setPropertyValue($transport, 'handle', $handle);
 
         $this->assertNull($transport->close());
-        $this->assertNull($this->getPropertyValue($transport, 'handle_'));
+        $this->assertNull($this->getPropertyValue($transport, 'handle'));
     }
 
     #[DataProvider('readDataProvider')]
@@ -103,7 +103,7 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'handle_', $handle);
+        $this->setPropertyValue($transport, 'handle', $handle);
 
         $this->assertEquals($expectedResult, $transport->read($readLen));
     }
@@ -150,7 +150,7 @@ class THttpClientTest extends TestCase
 
         $transport->write('1234567890');
 
-        $this->assertEquals('1234567890', $this->getPropertyValue($transport, 'buf_'));
+        $this->assertEquals('1234567890', $this->getPropertyValue($transport, 'buf'));
     }
 
     #[DataProvider('flushDataProvider')]
@@ -307,9 +307,9 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'headers_', ['test' => '1234567890']);
+        $this->setPropertyValue($transport, 'headers', ['test' => '1234567890']);
 
         $transport->addHeaders(['test2' => '12345']);
-        $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $this->getPropertyValue($transport, 'headers_'));
+        $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $this->getPropertyValue($transport, 'headers'));
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -26,39 +27,39 @@ use Thrift\Protocol\TJSONProtocol;
 
 class PairContext extends BaseContext
 {
-    private $first_ = true;
-    private $colon_ = true;
-    private $p_ = null;
+    private $first = true;
+    private $colon = true;
+    private $protocol = null;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p_ = $p;
+        $this->protocol = $protocol;
     }
 
     public function write()
     {
-        if ($this->first_) {
-            $this->first_ = false;
-            $this->colon_ = true;
+        if ($this->first) {
+            $this->first = false;
+            $this->colon = true;
         } else {
-            $this->p_->getTransport()->write($this->colon_ ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
-            $this->colon_ = !$this->colon_;
+            $this->protocol->getTransport()->write($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
+            $this->colon = !$this->colon;
         }
     }
 
     public function read()
     {
-        if ($this->first_) {
-            $this->first_ = false;
-            $this->colon_ = true;
+        if ($this->first) {
+            $this->first = false;
+            $this->colon = true;
         } else {
-            $this->p_->readJSONSyntaxChar($this->colon_ ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
-            $this->colon_ = !$this->colon_;
+            $this->protocol->readJSONSyntaxChar($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
+            $this->colon = !$this->colon;
         }
     }
 
     public function escapeNum()
     {
-        return $this->colon_;
+        return $this->colon;
     }
 }

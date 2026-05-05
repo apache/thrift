@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -37,14 +38,14 @@ abstract class TProtocol
      *
      * @var TTransport
      */
-    protected $trans_;
+    protected $trans;
 
     /**
      * @param TTransport $trans
      */
     protected function __construct($trans)
     {
-        $this->trans_ = $trans;
+        $this->trans = $trans;
     }
 
     /**
@@ -54,7 +55,7 @@ abstract class TProtocol
      */
     public function getTransport()
     {
-        return $this->trans_;
+        return $this->trans;
     }
 
     /**

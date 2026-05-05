@@ -26,7 +26,7 @@ use Thrift\Type\TType;
 
 class TestRichException extends TException
 {
-    public static $_TSPEC = [];
+    public static $tspec = [];
 
     public $message = null;
     public $code = null;
@@ -40,7 +40,7 @@ class TestRichException extends TException
 
     public function __construct($vals = null)
     {
-        self::$_TSPEC = [
+        self::$tspec = [
             1 => [
                 'var' => 'stringField',
                 'type' => TType::STRING,
@@ -80,7 +80,7 @@ class TestRichException extends TException
         ];
 
         if (is_array($vals)) {
-            parent::__construct(self::$_TSPEC, $vals);
+            parent::__construct(self::$tspec, $vals);
         }
     }
 
@@ -91,11 +91,11 @@ class TestRichException extends TException
 
     public function read($input)
     {
-        return $this->_read(self::class, self::$_TSPEC, $input);
+        return $this->readStruct(self::class, self::$tspec, $input);
     }
 
     public function write($output)
     {
-        return $this->_write('TestRichException', self::$_TSPEC, $output);
+        return $this->writeStruct('TestRichException', self::$tspec, $output);
     }
 }

@@ -42,6 +42,6 @@ class TJSONProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TJSONProtocol::class, $protocol);
 
-        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
+        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans'));
     }
 }

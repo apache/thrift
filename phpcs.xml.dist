@@ -4,16 +4,13 @@
 
     <file>lib/php/lib</file>
     <file>lib/php/test</file>
-    <exclude-pattern>lib/php/test/Resources/packages/*</exclude-pattern>
 
     <arg name="basepath" value="."/>
     <arg name="colors" />
     <arg name="parallel" value="4" />
 
-    <rule ref="PSR2">
-        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
-    </rule>
+    <rule ref="PSR12"/>
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
     <rule ref="PSR1.Files.SideEffects">
         <exclude-pattern>lib/php/test/*</exclude-pattern>

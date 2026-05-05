@@ -50,11 +50,11 @@ class TServerTest extends TestCase
             $outputProtocolFactory
         );
 
-        $this->assertSame($processor, $this->getPropertyValue($server, 'processor_'));
-        $this->assertSame($transport, $this->getPropertyValue($server, 'transport_'));
-        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory_'));
-        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory_'));
-        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory_'));
-        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory_'));
+        $this->assertSame($processor, $this->getPropertyValue($server, 'processor'));
+        $this->assertSame($transport, $this->getPropertyValue($server, 'transport'));
+        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory'));
+        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory'));
+        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory'));
+        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory'));
     }
 }

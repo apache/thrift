@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -35,7 +36,7 @@ class TSSLServerSocket extends TServerSocket
      *
      * @var resource
      */
-    protected $context_ = null;
+    protected $context = null;
 
     /**
      * ServerSocket constructor
@@ -53,7 +54,7 @@ class TSSLServerSocket extends TServerSocket
         if ($context === null) {
             $context = stream_context_create();
         }
-        $this->context_ = $context;
+        $this->context = $context;
     }
 
     public function getSSLHost($host)
@@ -72,12 +73,12 @@ class TSSLServerSocket extends TServerSocket
      */
     public function listen()
     {
-        $this->listener_ = @stream_socket_server(
-            $this->host_ . ':' . $this->port_,
+        $this->listener = @stream_socket_server(
+            $this->host . ':' . $this->port,
             $errno,
             $errstr,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
-            $this->context_
+            $this->context
         );
     }
 
@@ -88,7 +89,7 @@ class TSSLServerSocket extends TServerSocket
      */
     protected function acceptImpl()
     {
-        $handle = @stream_socket_accept($this->listener_, $this->acceptTimeout_ / 1000.0);
+        $handle = @stream_socket_accept($this->listener, $this->acceptTimeout / 1000.0);
         if (!$handle) {
             return null;
         }

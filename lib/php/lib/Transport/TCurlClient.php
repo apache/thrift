@@ -39,63 +39,63 @@ class TCurlClient extends TTransport
      *
      * @var string
      */
-    protected $host_;
+    protected $host;
 
     /**
      * The port to connect on
      *
      * @var int
      */
-    protected $port_;
+    protected $port;
 
     /**
      * The URI to request
      *
      * @var string
      */
-    protected $uri_;
+    protected $uri;
 
     /**
      * The scheme to use for the request, i.e. http, https
      *
      * @var string
      */
-    protected $scheme_;
+    protected $scheme;
 
     /**
      * Buffer for the HTTP request data
      *
      * @var string
      */
-    protected $request_;
+    protected $request;
 
     /**
      * Buffer for the HTTP response data.
      *
      * @var binary string
      */
-    protected $response_;
+    protected $response;
 
     /**
      * Read timeout
      *
      * @var float
      */
-    protected $timeout_;
+    protected $timeout;
 
     /**
      * Connection timeout
      *
      * @var float
      */
-    protected $connectionTimeout_;
+    protected $connectionTimeout;
 
     /**
      * http headers
      *
      * @var array
      */
-    protected $headers_;
+    protected $headers;
 
     /**
      * Make a new HTTP client.
@@ -109,15 +109,15 @@ class TCurlClient extends TTransport
         if ((strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
-        $this->scheme_ = $scheme;
-        $this->host_ = $host;
-        $this->port_ = $port;
-        $this->uri_ = $uri;
-        $this->request_ = '';
-        $this->response_ = null;
-        $this->timeout_ = null;
-        $this->connectionTimeout_ = null;
-        $this->headers_ = array();
+        $this->scheme = $scheme;
+        $this->host = $host;
+        $this->port = $port;
+        $this->uri = $uri;
+        $this->request = '';
+        $this->response = null;
+        $this->timeout = null;
+        $this->connectionTimeout = null;
+        $this->headers = [];
     }
 
     /**
@@ -127,7 +127,7 @@ class TCurlClient extends TTransport
      */
     public function setTimeoutSecs($timeout)
     {
-        $this->timeout_ = $timeout;
+        $this->timeout = $timeout;
     }
 
     /**
@@ -137,7 +137,7 @@ class TCurlClient extends TTransport
      */
     public function setConnectionTimeoutSecs($connectionTimeout)
     {
-        $this->connectionTimeout_ = $connectionTimeout;
+        $this->connectionTimeout = $connectionTimeout;
     }
 
     /**
@@ -164,8 +164,8 @@ class TCurlClient extends TTransport
      */
     public function close()
     {
-        $this->request_ = '';
-        $this->response_ = null;
+        $this->request = '';
+        $this->response = null;
     }
 
     /**
@@ -177,11 +177,11 @@ class TCurlClient extends TTransport
      */
     public function read($len)
     {
-        if ($len >= strlen($this->response_)) {
-            return $this->response_;
+        if ($len >= strlen($this->response)) {
+            return $this->response;
         } else {
-            $ret = substr($this->response_, 0, $len);
-            $this->response_ = substr($this->response_, $len);
+            $ret = substr($this->response, 0, $len);
+            $this->response = substr($this->response, $len);
 
             return $ret;
         }
@@ -199,7 +199,7 @@ class TCurlClient extends TTransport
         $data = $this->read($len);
 
         if (strlen($data) !== $len) {
-            throw new TTransportException('TCurlClient could not read '.$len.' bytes');
+            throw new TTransportException('TCurlClient could not read ' . $len . ' bytes');
         }
 
         return $data;
@@ -213,7 +213,7 @@ class TCurlClient extends TTransport
      */
     public function write($buf)
     {
-        $this->request_ .= $buf;
+        $this->request .= $buf;
     }
 
     /**
@@ -224,7 +224,7 @@ class TCurlClient extends TTransport
     public function flush()
     {
         if (!self::$curlHandle) {
-            register_shutdown_function(array('Thrift\\Transport\\TCurlClient', 'closeCurlHandle'));
+            register_shutdown_function(['Thrift\\Transport\\TCurlClient', 'closeCurlHandle']);
             self::$curlHandle = curl_init();
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
@@ -233,51 +233,51 @@ class TCurlClient extends TTransport
             curl_setopt(self::$curlHandle, CURLOPT_MAXREDIRS, 1);
         }
         // God, PHP really has some esoteric ways of doing simple things.
-        $host = $this->host_ . ($this->port_ != 80 ? ':' . $this->port_ : '');
-        $fullUrl = $this->scheme_ . "://" . $host . $this->uri_;
+        $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
+        $fullUrl = $this->scheme . "://" . $host . $this->uri;
 
-        $headers = array();
-        $defaultHeaders = array(
+        $headers = [];
+        $defaultHeaders = [
             'Accept' => 'application/x-thrift',
             'Content-Type' => 'application/x-thrift',
-            'Content-Length' => strlen($this->request_)
-        );
-        foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
+            'Content-Length' => strlen($this->request)
+        ];
+        foreach (array_merge($defaultHeaders, $this->headers) as $key => $value) {
             $headers[] = "$key: $value";
         }
 
         curl_setopt(self::$curlHandle, CURLOPT_HTTPHEADER, $headers);
 
-        if ($this->timeout_ > 0) {
-            if ($this->timeout_ < 1.0) {
+        if ($this->timeout > 0) {
+            if ($this->timeout < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_TIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout);
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout);
             }
         }
-        if ($this->connectionTimeout_ > 0) {
-            if ($this->connectionTimeout_ < 1.0) {
+        if ($this->connectionTimeout > 0) {
+            if ($this->connectionTimeout < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_CONNECTTIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout);
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout);
             }
         }
-        curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request_);
-        $this->request_ = '';
+        curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request);
+        $this->request = '';
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
-        $this->response_ = curl_exec(self::$curlHandle);
+        $this->response = curl_exec(self::$curlHandle);
         $responseError = curl_error(self::$curlHandle);
 
         $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
 
         // Handle non 200 status code / connect failure
-        if ($this->response_ === false || $code !== 200) {
+        if ($this->response === false || $code !== 200) {
             curl_close(self::$curlHandle);
             self::$curlHandle = null;
-            $this->response_ = null;
+            $this->response = null;
             $error = 'TCurlClient: Could not connect to ' . $fullUrl;
             if ($responseError) {
                 $error .= ', ' . $responseError;
@@ -306,6 +306,6 @@ class TCurlClient extends TTransport
 
     public function addHeaders($headers)
     {
-        $this->headers_ = array_merge($this->headers_, $headers);
+        $this->headers = array_merge($this->headers, $headers);
     }
 }

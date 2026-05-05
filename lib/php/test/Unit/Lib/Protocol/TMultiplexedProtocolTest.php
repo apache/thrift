@@ -30,7 +30,6 @@ use Thrift\Type\TMessageType;
 
 class TMultiplexedProtocolTest extends TestCase
 {
-
     #[DataProvider('writeMessageBeginDataProvider')]
     public function testWriteMessageBegin(
         $serviceName,

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -26,23 +27,28 @@ use Thrift\Type\TType;
 
 class TApplicationException extends TException
 {
-    public static $_TSPEC =
-        array(1 => array('var' => 'message',
-            'type' => TType::STRING),
-            2 => array('var' => 'code',
-                'type' => TType::I32));
+    public static $tspec = [
+        1 => [
+            'var' => 'message',
+            'type' => TType::STRING,
+        ],
+        2 => [
+            'var' => 'code',
+            'type' => TType::I32,
+        ],
+    ];
 
-    const UNKNOWN = 0;
-    const UNKNOWN_METHOD = 1;
-    const INVALID_MESSAGE_TYPE = 2;
-    const WRONG_METHOD_NAME = 3;
-    const BAD_SEQUENCE_ID = 4;
-    const MISSING_RESULT = 5;
-    const INTERNAL_ERROR = 6;
-    const PROTOCOL_ERROR = 7;
-    const INVALID_TRANSFORM = 8;
-    const INVALID_PROTOCOL = 9;
-    const UNSUPPORTED_CLIENT_TYPE = 10;
+    public const UNKNOWN = 0;
+    public const UNKNOWN_METHOD = 1;
+    public const INVALID_MESSAGE_TYPE = 2;
+    public const WRONG_METHOD_NAME = 3;
+    public const BAD_SEQUENCE_ID = 4;
+    public const MISSING_RESULT = 5;
+    public const INTERNAL_ERROR = 6;
+    public const PROTOCOL_ERROR = 7;
+    public const INVALID_TRANSFORM = 8;
+    public const INVALID_PROTOCOL = 9;
+    public const UNSUPPORTED_CLIENT_TYPE = 10;
 
     public function __construct($message = null, $code = 0)
     {
@@ -51,7 +57,7 @@ class TApplicationException extends TException
 
     public function read($output)
     {
-        return $this->_read('TApplicationException', self::$_TSPEC, $output);
+        return $this->readStruct('TApplicationException', self::$tspec, $output);
     }
 
     public function write($output)

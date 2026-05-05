@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -51,7 +52,7 @@ use Thrift\Type\TMessageType;
 
 class TMultiplexedProcessor
 {
-    private $serviceProcessorMap_;
+    private $serviceProcessorMap;
 
     /**
      * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -65,7 +66,7 @@ class TMultiplexedProcessor
      */
     public function registerProcessor($serviceName, $processor)
     {
-        $this->serviceProcessorMap_[$serviceName] = $processor;
+        $this->serviceProcessorMap[$serviceName] = $processor;
     }
 
     /**
@@ -102,13 +103,13 @@ class TMultiplexedProcessor
                 "forget to use a TMultiplexProtocol in your client?");
         }
         list($serviceName, $messageName) = explode(':', $fname, 2);
-        if (!array_key_exists($serviceName, $this->serviceProcessorMap_)) {
+        if (!array_key_exists($serviceName, $this->serviceProcessorMap)) {
             throw new TException("Service name not found: {$serviceName}.  Did you forget " .
                 "to call registerProcessor()?");
         }
 
         // Dispatch processing to the stored processor
-        $processor = $this->serviceProcessorMap_[$serviceName];
+        $processor = $this->serviceProcessorMap[$serviceName];
 
         return $processor->process(
             new StoredMessageProtocol($input, $messageName, $mtype, $rseqid),

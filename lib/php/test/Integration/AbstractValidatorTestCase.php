@@ -163,13 +163,13 @@ abstract class AbstractValidatorTestCase extends TestCase
     {
         $rc = new \ReflectionClass($class);
 
-        return $rc->hasMethod('_validateForRead');
+        return $rc->hasMethod('validateForRead');
     }
 
     private static function hasWriteValidator($class)
     {
         $rc = new \ReflectionClass($class);
 
-        return $rc->hasMethod('_validateForWrite');
+        return $rc->hasMethod('validateForWrite');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -57,7 +58,7 @@ class TException extends \Exception
         }
     }
 
-    public static $tmethod = array(
+    public static $tmethod = [
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',
@@ -65,9 +66,9 @@ class TException extends \Exception
         TType::I64 => 'I64',
         TType::DOUBLE => 'Double',
         TType::STRING => 'String'
-    );
+    ];
 
-    private function _readMap(&$var, $spec, $input)
+    private function readMap(&$var, $spec, $input)
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -83,7 +84,7 @@ class TException extends \Exception
         } else {
             $vspec = $spec['val'];
         }
-        $var = array();
+        $var = [];
         $_ktype = $_vtype = $size = 0;
         $xfer += $input->readMapBegin($_ktype, $_vtype, $size);
         for ($i = 0; $i < $size; ++$i) {
@@ -98,13 +99,13 @@ class TException extends \Exception
                         $xfer += $key->read($input);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_readMap($key, $kspec, $input);
+                        $xfer += $this->readMap($key, $kspec, $input);
                         break;
                     case TType::LST:
-                        $xfer += $this->_readList($key, $kspec, $input, false);
+                        $xfer += $this->readList($key, $kspec, $input, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_readList($key, $kspec, $input, true);
+                        $xfer += $this->readList($key, $kspec, $input, true);
                         break;
                 }
             }
@@ -118,13 +119,13 @@ class TException extends \Exception
                         $xfer += $val->read($input);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_readMap($val, $vspec, $input);
+                        $xfer += $this->readMap($val, $vspec, $input);
                         break;
                     case TType::LST:
-                        $xfer += $this->_readList($val, $vspec, $input, false);
+                        $xfer += $this->readList($val, $vspec, $input, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_readList($val, $vspec, $input, true);
+                        $xfer += $this->readList($val, $vspec, $input, true);
                         break;
                 }
             }
@@ -135,7 +136,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function _readList(&$var, $spec, $input, $set = false)
+    private function readList(&$var, $spec, $input, $set = false)
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -145,7 +146,7 @@ class TException extends \Exception
         } else {
             $espec = $spec['elem'];
         }
-        $var = array();
+        $var = [];
         $_etype = $size = 0;
         if ($set) {
             $xfer += $input->readSetBegin($_etype, $size);
@@ -165,13 +166,13 @@ class TException extends \Exception
                         $xfer += $elem->read($input);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_readMap($elem, $espec, $input);
+                        $xfer += $this->readMap($elem, $espec, $input);
                         break;
                     case TType::LST:
-                        $xfer += $this->_readList($elem, $espec, $input, false);
+                        $xfer += $this->readList($elem, $espec, $input, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_readList($elem, $espec, $input, true);
+                        $xfer += $this->readList($elem, $espec, $input, true);
                         break;
                 }
             }
@@ -190,7 +191,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    protected function _read($class, $spec, $input)
+    protected function readStruct($class, $spec, $input)
     {
         $xfer = 0;
         $fname = null;
@@ -218,13 +219,13 @@ class TException extends \Exception
                                 $xfer += $this->$var->read($input);
                                 break;
                             case TType::MAP:
-                                $xfer += $this->_readMap($this->$var, $fspec, $input);
+                                $xfer += $this->readMap($this->$var, $fspec, $input);
                                 break;
                             case TType::LST:
-                                $xfer += $this->_readList($this->$var, $fspec, $input, false);
+                                $xfer += $this->readList($this->$var, $fspec, $input, false);
                                 break;
                             case TType::SET:
-                                $xfer += $this->_readList($this->$var, $fspec, $input, true);
+                                $xfer += $this->readList($this->$var, $fspec, $input, true);
                                 break;
                         }
                     }
@@ -241,7 +242,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function _writeMap($var, $spec, $output)
+    private function writeMap($var, $spec, $output)
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -267,13 +268,13 @@ class TException extends \Exception
                         $xfer += $key->write($output);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_writeMap($key, $kspec, $output);
+                        $xfer += $this->writeMap($key, $kspec, $output);
                         break;
                     case TType::LST:
-                        $xfer += $this->_writeList($key, $kspec, $output, false);
+                        $xfer += $this->writeList($key, $kspec, $output, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_writeList($key, $kspec, $output, true);
+                        $xfer += $this->writeList($key, $kspec, $output, true);
                         break;
                 }
             }
@@ -285,13 +286,13 @@ class TException extends \Exception
                         $xfer += $val->write($output);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_writeMap($val, $vspec, $output);
+                        $xfer += $this->writeMap($val, $vspec, $output);
                         break;
                     case TType::LST:
-                        $xfer += $this->_writeList($val, $vspec, $output, false);
+                        $xfer += $this->writeList($val, $vspec, $output, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_writeList($val, $vspec, $output, true);
+                        $xfer += $this->writeList($val, $vspec, $output, true);
                         break;
                 }
             }
@@ -301,7 +302,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function _writeList($var, $spec, $output, $set = false)
+    private function writeList($var, $spec, $output, $set = false)
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -326,13 +327,13 @@ class TException extends \Exception
                         $xfer += $elem->write($output);
                         break;
                     case TType::MAP:
-                        $xfer += $this->_writeMap($elem, $espec, $output);
+                        $xfer += $this->writeMap($elem, $espec, $output);
                         break;
                     case TType::LST:
-                        $xfer += $this->_writeList($elem, $espec, $output, false);
+                        $xfer += $this->writeList($elem, $espec, $output, false);
                         break;
                     case TType::SET:
-                        $xfer += $this->_writeList($elem, $espec, $output, true);
+                        $xfer += $this->writeList($elem, $espec, $output, true);
                         break;
                 }
             }
@@ -346,7 +347,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    protected function _write($class, $spec, $output)
+    protected function writeStruct($class, $spec, $output)
     {
         $xfer = 0;
         $xfer += $output->writeStructBegin($class);
@@ -364,13 +365,13 @@ class TException extends \Exception
                             $xfer += $this->$var->write($output);
                             break;
                         case TType::MAP:
-                            $xfer += $this->_writeMap($this->$var, $fspec, $output);
+                            $xfer += $this->writeMap($this->$var, $fspec, $output);
                             break;
                         case TType::LST:
-                            $xfer += $this->_writeList($this->$var, $fspec, $output, false);
+                            $xfer += $this->writeList($this->$var, $fspec, $output, false);
                             break;
                         case TType::SET:
-                            $xfer += $this->_writeList($this->$var, $fspec, $output, true);
+                            $xfer += $this->writeList($this->$var, $fspec, $output, true);
                             break;
                     }
                 }

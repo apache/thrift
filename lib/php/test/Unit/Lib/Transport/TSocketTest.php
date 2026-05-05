@@ -378,8 +378,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setSendTimeout(9999);
-        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'sendTimeoutSec_'));
-        $this->assertEquals(999000, $this->getPropertyValue($transport, 'sendTimeoutUsec_'));
+        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'sendTimeoutSec'));
+        $this->assertEquals(999000, $this->getPropertyValue($transport, 'sendTimeoutUsec'));
     }
 
     public function testSetRecvTimeout()
@@ -396,8 +396,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setRecvTimeout(9999);
-        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'recvTimeoutSec_'));
-        $this->assertEquals(999000, $this->getPropertyValue($transport, 'recvTimeoutUsec_'));
+        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'recvTimeoutSec'));
+        $this->assertEquals(999000, $this->getPropertyValue($transport, 'recvTimeoutUsec'));
     }
 
     #[DataProvider('hostDataProvider')]
@@ -450,10 +450,10 @@ class TSocketTest extends TestCase
             $debugHandler
         );
         $transport->setHandle(fopen('php://memory', 'r+'));
-        $this->assertNotNull($this->getPropertyValue($transport, 'handle_'));
+        $this->assertNotNull($this->getPropertyValue($transport, 'handle'));
 
         $transport->close();
-        $this->assertNull($this->getPropertyValue($transport, 'handle_'));
+        $this->assertNull($this->getPropertyValue($transport, 'handle'));
     }
 
     #[DataProvider('writeFailDataProvider')]
