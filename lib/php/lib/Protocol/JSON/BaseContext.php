@@ -23,12 +23,8 @@
 
 namespace Thrift\Protocol\JSON;
 
-use Thrift\Base\TrailingUnderscorePropertyCompat;
-
 class BaseContext
 {
-    use TrailingUnderscorePropertyCompat;
-
     public function escapeNum()
     {
         return false;

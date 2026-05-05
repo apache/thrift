@@ -23,7 +23,6 @@
 
 namespace Thrift\Factory;
 
-use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TTransport;
 
@@ -32,8 +31,6 @@ use Thrift\Transport\TTransport;
  */
 class TBinaryProtocolFactory implements TProtocolFactory
 {
-    use TrailingUnderscorePropertyCompat;
-
     /**
      * @var bool
      */

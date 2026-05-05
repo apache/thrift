@@ -23,12 +23,8 @@
 
 namespace Thrift\Protocol\SimpleJSON;
 
-use Thrift\Base\TrailingUnderscorePropertyCompat;
-
 class Context
 {
-    use TrailingUnderscorePropertyCompat;
-
     public function write()
     {
     }

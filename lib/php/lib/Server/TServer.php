@@ -2,7 +2,6 @@
 
 namespace Thrift\Server;
 
-use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Factory\TTransportFactoryInterface;
 use Thrift\Factory\TProtocolFactory;
 
@@ -13,8 +12,6 @@ use Thrift\Factory\TProtocolFactory;
  */
 abstract class TServer
 {
-    use TrailingUnderscorePropertyCompat;
-
     /**
      * Processor to handle new clients
      *

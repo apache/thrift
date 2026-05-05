@@ -168,6 +168,69 @@ class TJSONProtocol extends TProtocol
     public $context;
     public $reader;
 
+    /**
+     * Map of property names that were renamed in THRIFT-5959 (PSR-12
+     * adoption). Old name (with trailing underscore) -> new name. Used by
+     * the deprecation shim below; remove this map and the magic methods
+     * once the deprecation period ends.
+     */
+    private const DEPRECATED_PROPERTY_ALIASES = [
+        'contextStack_' => 'contextStack',
+        'context_' => 'context',
+        'reader_' => 'reader',
+    ];
+
+    public function __get(string $name)
+    {
+        if (isset(self::DEPRECATED_PROPERTY_ALIASES[$name])) {
+            return $this->{self::resolveDeprecatedPropertyAlias($name)};
+        }
+        @trigger_error(
+            'Undefined property: ' . static::class . '::$' . $name,
+            E_USER_NOTICE
+        );
+        return null;
+    }
+
+    public function __set(string $name, $value): void
+    {
+        if (isset(self::DEPRECATED_PROPERTY_ALIASES[$name])) {
+            $this->{self::resolveDeprecatedPropertyAlias($name)} = $value;
+            return;
+        }
+        $this->$name = $value;
+    }
+
+    public function __isset(string $name): bool
+    {
+        if (isset(self::DEPRECATED_PROPERTY_ALIASES[$name])) {
+            return isset($this->{self::DEPRECATED_PROPERTY_ALIASES[$name]});
+        }
+        return false;
+    }
+
+    public function __unset(string $name): void
+    {
+        if (isset(self::DEPRECATED_PROPERTY_ALIASES[$name])) {
+            unset($this->{self::resolveDeprecatedPropertyAlias($name)});
+        }
+    }
+
+    private static function resolveDeprecatedPropertyAlias(string $name): string
+    {
+        $real = self::DEPRECATED_PROPERTY_ALIASES[$name];
+        @trigger_error(
+            sprintf(
+                'Property %s::$%s is deprecated since THRIFT-5959, use $%s instead.',
+                static::class,
+                $name,
+                $real
+            ),
+            E_USER_DEPRECATED
+        );
+        return $real;
+    }
+
     private function pushContext($c)
     {
         array_push($this->contextStack, $this->context);
