@@ -280,7 +280,7 @@ class TSocket extends TTransport
     public function read($len)
     {
         $null = null;
-        $read = array($this->handle);
+        $read = [$this->handle];
         $readable = @stream_select(
             $read,
             $null,
@@ -316,7 +316,7 @@ class TSocket extends TTransport
     public function write($buf)
     {
         $null = null;
-        $write = array($this->handle);
+        $write = [$this->handle];
 
         // keep writing until all the data has been written
         while (strlen($buf) > 0) {

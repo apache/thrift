@@ -36,7 +36,7 @@ class TSocketPool extends TSocket
     /**
      * Remote servers. Array of associative arrays with 'host' and 'port' keys
      */
-    private $servers = array();
+    private $servers = [];
 
     /**
      * How many times to retry each host in connect
@@ -89,8 +89,8 @@ class TSocketPool extends TSocket
      * @param mixed $debugHandler Function for error logging
      */
     public function __construct(
-        $hosts = array('localhost'),
-        $ports = array(9090),
+        $hosts = ['localhost'],
+        $ports = [9090],
         $persist = false,
         $debugHandler = null
     ) {
@@ -98,17 +98,17 @@ class TSocketPool extends TSocket
 
         if (!is_array($ports)) {
             $port = $ports;
-            $ports = array();
+            $ports = [];
             foreach ($hosts as $key => $val) {
                 $ports[$key] = $port;
             }
         }
 
         foreach ($hosts as $key => $host) {
-            $this->servers [] = array(
+            $this->servers [] = [
                 'host' => $host,
                 'port' => $ports[$key]
-            );
+            ];
         }
 
         $this->useApcuCache = function_exists('apcu_fetch');
@@ -124,7 +124,7 @@ class TSocketPool extends TSocket
      */
     public function addServer($host, $port)
     {
-        $this->servers[] = array('host' => $host, 'port' => $port);
+        $this->servers[] = ['host' => $host, 'port' => $port];
     }
 
     /**
@@ -291,7 +291,7 @@ class TSocketPool extends TSocket
 
         // Oh no; we failed them all. The system is totally ill!
         $error = 'TSocketPool: All hosts in pool are down. ';
-        $hosts = array();
+        $hosts = [];
         foreach ($this->servers as $server) {
             $hosts [] = $server['host'] . ':' . $server['port'];
         }

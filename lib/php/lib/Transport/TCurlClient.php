@@ -117,7 +117,7 @@ class TCurlClient extends TTransport
         $this->response = null;
         $this->timeout = null;
         $this->connectionTimeout = null;
-        $this->headers = array();
+        $this->headers = [];
     }
 
     /**
@@ -224,7 +224,7 @@ class TCurlClient extends TTransport
     public function flush()
     {
         if (!self::$curlHandle) {
-            register_shutdown_function(array('Thrift\\Transport\\TCurlClient', 'closeCurlHandle'));
+            register_shutdown_function(['Thrift\\Transport\\TCurlClient', 'closeCurlHandle']);
             self::$curlHandle = curl_init();
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
@@ -236,12 +236,12 @@ class TCurlClient extends TTransport
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
         $fullUrl = $this->scheme . "://" . $host . $this->uri;
 
-        $headers = array();
-        $defaultHeaders = array(
+        $headers = [];
+        $defaultHeaders = [
             'Accept' => 'application/x-thrift',
             'Content-Type' => 'application/x-thrift',
             'Content-Length' => strlen($this->request)
-        );
+        ];
         foreach (array_merge($defaultHeaders, $this->headers) as $key => $value) {
             $headers[] = "$key: $value";
         }

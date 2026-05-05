@@ -567,7 +567,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
                    << '\n';
   }
 
-  indent(f_enum) << "public static $names = array(" << '\n';
+  indent(f_enum) << "public static $names = [" << '\n';
 
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
@@ -575,7 +575,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
     indent(f_enum) << value << " => '" << (*c_iter)->get_name() << "'," << '\n';
   }
   indent_down();
-  indent(f_enum) << ");" << '\n';
+  indent(f_enum) << "];" << '\n';
 
   indent_down();
 
@@ -680,7 +680,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << "new " << php_namespace(type->get_program()) << type->get_name() << "(array(" << '\n';
+    out << "new " << php_namespace(type->get_program()) << type->get_name() << "([" << '\n';
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -703,11 +703,11 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
       out << "," << '\n';
     }
     indent_down();
-    indent(out) << "))";
+    indent(out) << "])";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    out << "array(" << '\n';
+    out << "[" << '\n';
     indent_up();
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
@@ -719,7 +719,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
       out << "," << '\n';
     }
     indent_down();
-    indent(out) << ")";
+    indent(out) << "]";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
@@ -727,7 +727,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
     } else {
       etype = ((t_set*)type)->get_elem_type();
     }
-    out << "array(" << '\n';
+    out << "[" << '\n';
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
@@ -740,7 +740,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
       out << "," << '\n';
     }
     indent_down();
-    indent(out) << ")";
+    indent(out) << "]";
   }
   return out.str();
 }
@@ -792,15 +792,15 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
     t_type* vtype = get_true_type(((t_map*)t)->get_val_type());
     indent(out) << "'ktype' => " << type_to_enum(ktype) << "," << '\n';
     indent(out) << "'vtype' => " << type_to_enum(vtype) << "," << '\n';
-    indent(out) << "'key' => array(" << '\n';
+    indent(out) << "'key' => [" << '\n';
     indent_up();
     generate_php_type_spec(out, ktype);
     indent_down();
-    indent(out) << ")," << '\n';
-    indent(out) << "'val' => array(" << '\n';
+    indent(out) << "]," << '\n';
+    indent(out) << "'val' => [" << '\n';
     indent_up();
     generate_php_type_spec(out, vtype);
-    indent(out) << ")," << '\n';
+    indent(out) << "]," << '\n';
     indent_down();
   } else if (t->is_list() || t->is_set()) {
     t_type* etype;
@@ -810,10 +810,10 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
       etype = get_true_type(((t_set*)t)->get_elem_type());
     }
     indent(out) << "'etype' => " << type_to_enum(etype) << "," << '\n';
-    indent(out) << "'elem' => array(" << '\n';
+    indent(out) << "'elem' => [" << '\n';
     indent_up();
     generate_php_type_spec(out, etype);
-    indent(out) << ")," << '\n';
+    indent(out) << "]," << '\n';
     indent_down();
   } else {
     throw "compiler error: no type for php struct spec field";
@@ -825,24 +825,24 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
  * type information to generalize serialization routines.
  */
 void t_php_generator::generate_php_struct_spec(ostream& out, t_struct* tstruct) {
-  indent(out) << "public static $tspec = array(" << '\n';
+  indent(out) << "public static $tspec = [" << '\n';
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
-    indent(out) << (*m_iter)->get_key() << " => array(" << '\n';
+    indent(out) << (*m_iter)->get_key() << " => [" << '\n';
     indent_up();
     out << indent() << "'var' => '" << (*m_iter)->get_name() << "'," << '\n';
     out << indent() << "'isRequired' => " << ((*m_iter)->get_req() == t_field::T_REQUIRED ? "true" : "false") << "," << '\n';
     generate_php_type_spec(out, t);
     indent_down();
-    indent(out) << ")," << '\n';
+    indent(out) << "]," << '\n';
   }
 
   indent_down();
-  indent(out) << ");" << '\n' << '\n';
+  indent(out) << "];" << '\n' << '\n';
 }
 /**
  * Generates necessary accessors and mutators for the fields
@@ -2295,7 +2295,7 @@ void t_php_generator::generate_deserialize_container(ostream& out, t_type* ttype
   t_field fvtype(g_type_i8, vtype);
   t_field fetype(g_type_i8, etype);
 
-  out << indent() << "$" << prefix << " = array();" << '\n' << indent() << "$" << size << " = 0;"
+  out << indent() << "$" << prefix << " = [];" << '\n' << indent() << "$" << size << " = 0;"
       << '\n';
 
   // Declare variables, read header
@@ -2753,7 +2753,7 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
     } else if (type->is_enum()) {
       result += " = 0";
     } else if (type->is_container()) {
-      result += " = array()";
+      result += " = []";
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
         result += " = new " + php_namespace(type->get_program()) + type->get_name() + "()";

@@ -66,7 +66,7 @@ class TCompactProtocol extends TProtocol
 
     public const MAX_VARINT_BYTES = 10; // ceil(64/7); matches protobuf wire format
 
-    protected static $ctypes = array(
+    protected static $ctypes = [
         TType::STOP => TCompactProtocol::COMPACT_STOP,
         TType::BOOL => TCompactProtocol::COMPACT_TRUE, // used for collection
         TType::BYTE => TCompactProtocol::COMPACT_BYTE,
@@ -80,9 +80,9 @@ class TCompactProtocol extends TProtocol
         TType::SET => TCompactProtocol::COMPACT_SET,
         TType::MAP => TCompactProtocol::COMPACT_MAP,
         TType::UUID => TCompactProtocol::COMPACT_UUID,
-    );
+    ];
 
-    protected static $ttypes = array(
+    protected static $ttypes = [
         TCompactProtocol::COMPACT_STOP => TType::STOP,
         TCompactProtocol::COMPACT_TRUE => TType::BOOL, // used for collection
         TCompactProtocol::COMPACT_FALSE => TType::BOOL,
@@ -97,14 +97,14 @@ class TCompactProtocol extends TProtocol
         TCompactProtocol::COMPACT_SET => TType::SET,
         TCompactProtocol::COMPACT_MAP => TType::MAP,
         TCompactProtocol::COMPACT_UUID => TType::UUID,
-    );
+    ];
 
     protected $state = TCompactProtocol::STATE_CLEAR;
     protected $lastFid = 0;
     protected $boolFid = null;
     protected $boolValue = null;
-    protected $structs = array();
-    protected $containers = array();
+    protected $structs = [];
+    protected $containers = [];
 
     // Some varint / zigzag helper methods
     public function toZigZag($n, $bits)
@@ -188,7 +188,7 @@ class TCompactProtocol extends TProtocol
 
     public function writeStructBegin($name)
     {
-        $this->structs[] = array($this->state, $this->lastFid);
+        $this->structs[] = [$this->state, $this->lastFid];
         $this->state = TCompactProtocol::STATE_FIELD_WRITE;
         $this->lastFid = 0;
 
@@ -476,7 +476,7 @@ class TCompactProtocol extends TProtocol
     public function readStructBegin(&$name)
     {
         $name = ''; // unused
-        $this->structs[] = array($this->state, $this->lastFid);
+        $this->structs[] = [$this->state, $this->lastFid];
         $this->state = TCompactProtocol::STATE_FIELD_READ;
         $this->lastFid = 0;
 

@@ -32,13 +32,13 @@ class ThriftClassLoader
      * Namespaces path
      * @var array
      */
-    protected $namespaces = array();
+    protected $namespaces = [];
 
     /**
      * Thrift definition paths
      * @var array
      */
-    protected $definitions = array();
+    protected $definitions = [];
 
     /**
      * Do we use APCu cache ?
@@ -92,7 +92,7 @@ class ThriftClassLoader
      */
     public function register($prepend = false)
     {
-        spl_autoload_register(array($this, 'loadClass'), true, $prepend);
+        spl_autoload_register([$this, 'loadClass'], true, $prepend);
     }
 
     /**

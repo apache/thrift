@@ -443,12 +443,12 @@ class TJSONProtocolTest extends TestCase
                 'argsClassName' => \Basic\ThriftTest\ThriftTest_testStruct_args::class,
                 'argsPropertyName' => 'thing',
                 'expectedValue' => new Xtruct(
-                    array(
+                    [
                         'string_thing' => 'worked',
                         'byte_thing' => 0x01,
                         'i32_thing' => pow(2, 30),
                         'i64_thing' => pow(2, 60),
-                    )
+                    ]
                 ),
                 'expectedResult' => 4,
             ];
@@ -457,18 +457,18 @@ class TJSONProtocolTest extends TestCase
                 'argsClassName' => \Basic\ThriftTest\ThriftTest_testNest_args::class,
                 'argsPropertyName' => 'thing',
                 'expectedValue' => new Xtruct2(
-                    array(
+                    [
                         'byte_thing' => 0x01,
                         'struct_thing' => new Xtruct(
-                            array(
+                            [
                                 'string_thing' => 'worked',
                                 'byte_thing' => 0x01,
                                 'i32_thing' => pow(2, 30),
                                 'i64_thing' => pow(2, 60),
-                            )
+                            ]
                         ),
                         'i32_thing' => pow(2, 15)
-                    )
+                    ]
                 ),
                 'expectedResult' => 6,
             ];
@@ -484,12 +484,12 @@ class TJSONProtocolTest extends TestCase
                 'buffer' => '{"1":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":1152921504606847000}}}}',
                 'argsClassName' => \Basic\ThriftTest\ThriftTest_testStruct_args::class,
                 'expectedValue' => new Xtruct(
-                    array(
+                    [
                         'string_thing' => 'worked',
                         'byte_thing' => 0x01,
                         'i32_thing' => pow(2, 30),
                         'i64_thing' => "1152921504606847000",
-                    )
+                    ]
                 ),
                 'expectedResult' => 4,
             ];
@@ -498,18 +498,18 @@ class TJSONProtocolTest extends TestCase
                 'argsClassName' => \Basic\ThriftTest\ThriftTest_testNest_args::class,
                 'argsPropertyName' => 'thing',
                 'expectedValue' => new Xtruct2(
-                    array(
+                    [
                         'byte_thing' => 0x01,
                         'struct_thing' => new Xtruct(
-                            array(
+                            [
                                 'string_thing' => 'worked',
                                 'byte_thing' => 0x01,
                                 'i32_thing' => pow(2, 30),
                                 'i64_thing' => "1152921504606847000",
-                            )
+                            ]
                         ),
                         'i32_thing' => pow(2, 15)
-                    )
+                    ]
                 ),
                 'expectedResult' => 6,
             ];

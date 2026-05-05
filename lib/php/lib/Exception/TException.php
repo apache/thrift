@@ -58,7 +58,7 @@ class TException extends \Exception
         }
     }
 
-    public static $tmethod = array(
+    public static $tmethod = [
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',
@@ -66,7 +66,7 @@ class TException extends \Exception
         TType::I64 => 'I64',
         TType::DOUBLE => 'Double',
         TType::STRING => 'String'
-    );
+    ];
 
     private function readMap(&$var, $spec, $input)
     {
@@ -84,7 +84,7 @@ class TException extends \Exception
         } else {
             $vspec = $spec['val'];
         }
-        $var = array();
+        $var = [];
         $_ktype = $_vtype = $size = 0;
         $xfer += $input->readMapBegin($_ktype, $_vtype, $size);
         for ($i = 0; $i < $size; ++$i) {
@@ -146,7 +146,7 @@ class TException extends \Exception
         } else {
             $espec = $spec['elem'];
         }
-        $var = array();
+        $var = [];
         $_etype = $size = 0;
         if ($set) {
             $xfer += $input->readSetBegin($_etype, $size);

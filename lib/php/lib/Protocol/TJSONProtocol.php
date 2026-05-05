@@ -50,18 +50,18 @@ class TJSONProtocol extends TProtocol
 
     public const VERSION = 1;
 
-    public static $JSON_CHAR_TABLE = array(
+    public static $JSON_CHAR_TABLE = [
         /*  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
         0, 0, 0, 0, 0, 0, 0, 0, 'b', 't', 'n', 0, 'f', 'r', 0, 0, // 0
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1
         1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 2
-    );
+    ];
 
-    public static $ESCAPE_CHARS = array('"', '\\', '/', "b", "f", "n", "r", "t");
+    public static $ESCAPE_CHARS = ['"', '\\', '/', "b", "f", "n", "r", "t"];
 
-    public static $ESCAPE_CHAR_VALS = array(
+    public static $ESCAPE_CHAR_VALS = [
         '"', '\\', '/', "\x08", "\f", "\n", "\r", "\t",
-    );
+    ];
 
     public const NAME_BOOL = "tf";
     public const NAME_BYTE = "i8";
@@ -164,7 +164,7 @@ class TJSONProtocol extends TProtocol
         return $result;
     }
 
-    public $contextStack = array();
+    public $contextStack = [];
     public $context;
     public $reader;
 
@@ -188,7 +188,7 @@ class TJSONProtocol extends TProtocol
 
     public function reset()
     {
-        $this->contextStack = array();
+        $this->contextStack = [];
         $this->context = new BaseContext();
         $this->reader = new LookaheadReader($this);
     }
@@ -328,7 +328,7 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONNumericChars()
     {
-        $strbld = array();
+        $strbld = [];
 
         while (true) {
             $ch = $this->reader->peek();

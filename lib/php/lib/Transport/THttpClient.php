@@ -104,7 +104,7 @@ class THttpClient extends TTransport
      * @param string $scheme
      * @param array  $context
      */
-    public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = array())
+    public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = [])
     {
         if ((strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
@@ -116,7 +116,7 @@ class THttpClient extends TTransport
         $this->buf = '';
         $this->handle = null;
         $this->timeout = null;
-        $this->headers = array();
+        $this->headers = [];
         $this->context = $context;
     }
 
@@ -211,14 +211,14 @@ class THttpClient extends TTransport
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
 
-        $headers = array();
-        $defaultHeaders = array(
+        $headers = [];
+        $defaultHeaders = [
             'Host' => $host,
             'Accept' => 'application/x-thrift',
             'User-Agent' => 'PHP/THttpClient',
             'Content-Type' => 'application/x-thrift',
             'Content-Length' => strlen($this->buf)
-        );
+        ];
 
         foreach (array_merge($defaultHeaders, $this->headers) as $key => $value) {
             $headers[] = "$key: $value";
@@ -226,14 +226,14 @@ class THttpClient extends TTransport
 
         $options = $this->context;
 
-        $baseHttpOptions = isset($options["http"]) ? $options["http"] : array();
+        $baseHttpOptions = isset($options["http"]) ? $options["http"] : [];
 
-        $httpOptions = $baseHttpOptions + array(
+        $httpOptions = $baseHttpOptions + [
             'method' => 'POST',
             'header' => implode("\r\n", $headers),
             'max_redirects' => 1,
             'content' => $this->buf
-        );
+        ];
         if ($this->timeout > 0) {
             $httpOptions['timeout'] = $this->timeout;
         }

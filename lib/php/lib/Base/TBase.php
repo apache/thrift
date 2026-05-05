@@ -35,7 +35,7 @@ use Thrift\Type\TType;
 #[\AllowDynamicProperties]
 abstract class TBase
 {
-    public static $tmethod = array(
+    public static $tmethod = [
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',
@@ -44,7 +44,7 @@ abstract class TBase
         TType::DOUBLE => 'Double',
         TType::STRING => 'String',
         TType::UUID => 'Uuid'
-    );
+    ];
 
     abstract public function read($input);
 
@@ -83,7 +83,7 @@ abstract class TBase
         } else {
             $vspec = $spec['val'];
         }
-        $var = array();
+        $var = [];
         $_ktype = $_vtype = $size = 0;
         $xfer += $input->readMapBegin($_ktype, $_vtype, $size);
         for ($i = 0; $i < $size; ++$i) {
@@ -145,7 +145,7 @@ abstract class TBase
         } else {
             $espec = $spec['elem'];
         }
-        $var = array();
+        $var = [];
         $_etype = $size = 0;
         if ($set) {
             $xfer += $input->readSetBegin($_etype, $size);

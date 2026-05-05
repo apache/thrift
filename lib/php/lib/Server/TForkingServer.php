@@ -25,7 +25,7 @@ class TForkingServer extends TServer
      *
      * @var array
      */
-    protected $children = array();
+    protected $children = [];
 
     /**
      * Listens for new client using the supplied

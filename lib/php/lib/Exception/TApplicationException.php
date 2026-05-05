@@ -27,11 +27,16 @@ use Thrift\Type\TType;
 
 class TApplicationException extends TException
 {
-    public static $tspec =
-        array(1 => array('var' => 'message',
-            'type' => TType::STRING),
-            2 => array('var' => 'code',
-                'type' => TType::I32));
+    public static $tspec = [
+        1 => [
+            'var' => 'message',
+            'type' => TType::STRING,
+        ],
+        2 => [
+            'var' => 'code',
+            'type' => TType::I32,
+        ],
+    ];
 
     public const UNKNOWN = 0;
     public const UNKNOWN_METHOD = 1;

@@ -11,6 +11,7 @@
     <arg name="parallel" value="4" />
 
     <rule ref="PSR12"/>
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
 
     <rule ref="PSR1.Files.SideEffects">
         <exclude-pattern>lib/php/test/*</exclude-pattern>

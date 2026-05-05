@@ -33,16 +33,16 @@ class JsonSerializeTest extends TestCase
 {
     public function testEmptyStruct()
     {
-        $empty = new \Json\ThriftTest\EmptyStruct(array('non_existing_key' => 'bar'));
+        $empty = new \Json\ThriftTest\EmptyStruct(['non_existing_key' => 'bar']);
         $this->assertEquals(new stdClass(), json_decode(json_encode($empty)));
     }
 
     public function testStringsAndInts()
     {
-        $input = array(
+        $input = [
             'string_thing' => 'foo',
             'i64_thing' => 1234567890,
-        );
+        ];
         $xtruct = new \Json\ThriftTest\Xtruct($input);
 
         // Xtruct's 'i32_thing' and 'byte_thing' fields should not be present here!
@@ -54,12 +54,12 @@ class JsonSerializeTest extends TestCase
 
     public function testNestedStructs()
     {
-        $xtruct2 = new \Json\ThriftTest\Xtruct2(array(
+        $xtruct2 = new \Json\ThriftTest\Xtruct2([
             'byte_thing' => 42,
-            'struct_thing' => new \Json\ThriftTest\Xtruct(array(
+            'struct_thing' => new \Json\ThriftTest\Xtruct([
                 'i32_thing' => 123456,
-            )),
-        ));
+            ]),
+        ]);
 
         $expected = new stdClass();
         $expected->byte_thing = $xtruct2->byte_thing;
@@ -70,22 +70,22 @@ class JsonSerializeTest extends TestCase
 
     public function testInsanity()
     {
-        $xinput = array('string_thing' => 'foo');
+        $xinput = ['string_thing' => 'foo'];
         $xtruct = new \Json\ThriftTest\Xtruct($xinput);
-        $insanity = new \Json\ThriftTest\Insanity(array(
-            'xtructs' => array($xtruct, $xtruct, $xtruct)
-        ));
+        $insanity = new \Json\ThriftTest\Insanity([
+            'xtructs' => [$xtruct, $xtruct, $xtruct]
+        ]);
         $expected = new stdClass();
-        $expected->xtructs = array((object)$xinput, (object)$xinput, (object)$xinput);
+        $expected->xtructs = [(object)$xinput, (object)$xinput, (object)$xinput];
         $this->assertEquals($expected, json_decode(json_encode($insanity)));
     }
 
     public function testNestedLists()
     {
-        $bonk = new \Json\ThriftTest\Bonk(array('message' => 'foo'));
-        $nested = new \Json\ThriftTest\NestedListsBonk(array('bonk' => array(array(array($bonk)))));
+        $bonk = new \Json\ThriftTest\Bonk(['message' => 'foo']);
+        $nested = new \Json\ThriftTest\NestedListsBonk(['bonk' => [[[$bonk]]]]);
         $expected = new stdClass();
-        $expected->bonk = array(array(array((object)array('message' => 'foo'))));
+        $expected->bonk = [[[(object)['message' => 'foo']]]];
         $this->assertEquals($expected, json_decode(json_encode($nested)));
     }
 

@@ -36,7 +36,7 @@ class BinarySerializerTest extends TestCase
      */
     public function testBinarySerializer()
     {
-        $struct = new \Basic\ThriftTest\Xtruct(array('string_thing' => 'abc'));
+        $struct = new \Basic\ThriftTest\Xtruct(['string_thing' => 'abc']);
         $serialized = TBinarySerializer::serialize($struct, '\\Basic\\ThriftTest\\Xtruct');
         $deserialized = TBinarySerializer::deserialize($serialized, '\\Basic\\ThriftTest\\Xtruct');
         $this->assertEquals($struct, $deserialized);

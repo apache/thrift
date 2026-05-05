@@ -26,7 +26,7 @@ namespace Thrift\Protocol\JSON;
 class LookaheadReader
 {
     private $hasData = false;
-    private $data = array();
+    private $data = [];
     private $protocol;
 
     public function __construct($protocol)
