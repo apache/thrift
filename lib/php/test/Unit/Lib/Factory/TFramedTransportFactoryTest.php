@@ -42,9 +42,9 @@ class TFramedTransportFactoryTest extends TestCase
 
         $this->assertInstanceOf(TFramedTransport::class, $framedTransport);
 
-        $this->assertTrue($this->getPropertyValue($framedTransport, 'read_'));
-        $this->assertTrue($this->getPropertyValue($framedTransport, 'write_'));
-        $this->assertSame($transport, $this->getPropertyValue($framedTransport, 'transport_'));
+        $this->assertTrue($this->getPropertyValue($framedTransport, 'read'));
+        $this->assertTrue($this->getPropertyValue($framedTransport, 'write'));
+        $this->assertSame($transport, $this->getPropertyValue($framedTransport, 'transport'));
     }
 
     /**

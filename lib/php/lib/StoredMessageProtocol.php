@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -32,22 +33,22 @@ use Thrift\Protocol\TProtocolDecorator;
  */
 class StoredMessageProtocol extends TProtocolDecorator
 {
-    private $fname_;
-    private $mtype_;
-    private $rseqid_;
+    private $fname;
+    private $mtype;
+    private $rseqid;
 
     public function __construct(TProtocol $protocol, $fname, $mtype, $rseqid)
     {
         parent::__construct($protocol);
-        $this->fname_  = $fname;
-        $this->mtype_  = $mtype;
-        $this->rseqid_ = $rseqid;
+        $this->fname  = $fname;
+        $this->mtype  = $mtype;
+        $this->rseqid = $rseqid;
     }
 
     public function readMessageBegin(&$name, &$type, &$seqid)
     {
-        $name  = $this->fname_;
-        $type  = $this->mtype_;
-        $seqid = $this->rseqid_;
+        $name  = $this->fname;
+        $type  = $this->mtype;
+        $seqid = $this->rseqid;
     }
 }

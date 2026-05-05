@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -39,14 +40,14 @@ class TMultiplexedProtocol extends TProtocolDecorator
      *
      * @var string
      */
-    const SEPARATOR = ":";
+    public const SEPARATOR = ":";
 
     /**
      * The name of service.
      *
      * @var string
      */
-    private $serviceName_;
+    private $serviceName;
 
     /**
      * Constructor of <code>TMultiplexedProtocol</code> class.
@@ -62,7 +63,7 @@ class TMultiplexedProtocol extends TProtocolDecorator
     public function __construct(TProtocol $protocol, $serviceName)
     {
         parent::__construct($protocol);
-        $this->serviceName_ = $serviceName;
+        $this->serviceName = $serviceName;
     }
 
     /**
@@ -76,7 +77,7 @@ class TMultiplexedProtocol extends TProtocolDecorator
     public function writeMessageBegin($name, $type, $seqid)
     {
         if ($type == TMessageType::CALL || $type == TMessageType::ONEWAY) {
-            $nameWithService = $this->serviceName_ . self::SEPARATOR . $name;
+            $nameWithService = $this->serviceName . self::SEPARATOR . $name;
             parent::writeMessageBegin($nameWithService, $type, $seqid);
         } else {
             parent::writeMessageBegin($name, $type, $seqid);

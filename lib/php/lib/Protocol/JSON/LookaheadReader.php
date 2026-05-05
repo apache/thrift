@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -24,34 +25,34 @@ namespace Thrift\Protocol\JSON;
 
 class LookaheadReader
 {
-    private $hasData_ = false;
-    private $data_ = array();
-    private $p_;
+    private $hasData = false;
+    private $data = array();
+    private $p;
 
     public function __construct($p)
     {
-        $this->p_ = $p;
+        $this->p = $p;
     }
 
     public function read()
     {
-        if ($this->hasData_) {
-            $this->hasData_ = false;
+        if ($this->hasData) {
+            $this->hasData = false;
         } else {
-            $this->data_ = $this->p_->getTransport()->readAll(1);
+            $this->data = $this->p->getTransport()->readAll(1);
         }
 
-        return substr($this->data_, 0, 1);
+        return substr($this->data, 0, 1);
     }
 
     public function peek()
     {
-        if (!$this->hasData_) {
-            $this->data_ = $this->p_->getTransport()->readAll(1);
+        if (!$this->hasData) {
+            $this->data = $this->p->getTransport()->readAll(1);
         }
 
-        $this->hasData_ = true;
+        $this->hasData = true;
 
-        return substr($this->data_, 0, 1);
+        return substr($this->data, 0, 1);
     }
 }

@@ -33,7 +33,7 @@ class TBaseTest extends TestCase
     public function testConstructorHydratesKnownFieldsFromSpec(): void
     {
         $struct = new ComplexStruct(
-            ComplexStruct::$_TSPEC,
+            ComplexStruct::$tspec,
             [
                 'flag' => true,
                 'name' => 'hydrated',
@@ -116,12 +116,12 @@ class TBaseTest extends TestCase
 
     private function createComplexStruct(): ComplexStruct
     {
-        $child = new NestedStruct(NestedStruct::$_TSPEC, ['value' => 'child']);
-        $first = new NestedStruct(NestedStruct::$_TSPEC, ['value' => 'first']);
-        $second = new NestedStruct(NestedStruct::$_TSPEC, ['value' => 'second']);
+        $child = new NestedStruct(NestedStruct::$tspec, ['value' => 'child']);
+        $first = new NestedStruct(NestedStruct::$tspec, ['value' => 'first']);
+        $second = new NestedStruct(NestedStruct::$tspec, ['value' => 'second']);
 
         return new ComplexStruct(
-            ComplexStruct::$_TSPEC,
+            ComplexStruct::$tspec,
             [
                 'flag' => true,
                 'name' => 'root',

@@ -16,7 +16,7 @@ class TSimpleServer extends TServer
      *
      * @var bool
      */
-    private $stop_ = false;
+    private $stop = false;
 
     /**
      * Listens for new client using the supplied
@@ -27,18 +27,18 @@ class TSimpleServer extends TServer
      */
     public function serve()
     {
-        $this->transport_->listen();
+        $this->transport->listen();
 
-        while (!$this->stop_) {
+        while (!$this->stop) {
             try {
-                $transport = $this->transport_->accept();
+                $transport = $this->transport->accept();
 
                 if ($transport != null) {
-                    $inputTransport = $this->inputTransportFactory_->getTransport($transport);
-                    $outputTransport = $this->outputTransportFactory_->getTransport($transport);
-                    $inputProtocol = $this->inputProtocolFactory_->getProtocol($inputTransport);
-                    $outputProtocol = $this->outputProtocolFactory_->getProtocol($outputTransport);
-                    while ($this->processor_->process($inputProtocol, $outputProtocol)) {
+                    $inputTransport = $this->inputTransportFactory->getTransport($transport);
+                    $outputTransport = $this->outputTransportFactory->getTransport($transport);
+                    $inputProtocol = $this->inputProtocolFactory->getProtocol($inputTransport);
+                    $outputProtocol = $this->outputProtocolFactory->getProtocol($outputTransport);
+                    while ($this->processor->process($inputProtocol, $outputProtocol)) {
                     }
                 }
             } catch (TTransportException $e) {
@@ -54,7 +54,7 @@ class TSimpleServer extends TServer
      */
     public function stop()
     {
-        $this->transport_->close();
-        $this->stop_ = true;
+        $this->transport->close();
+        $this->stop = true;
     }
 }

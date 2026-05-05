@@ -35,7 +35,7 @@ use Thrift\Exception\TTransportException;
  */
 class TMemoryBuffer extends TTransport
 {
-    protected $buf_ = '';
+    protected $buf = '';
 
     /**
      * Constructor. Optionally pass an initial value
@@ -43,7 +43,7 @@ class TMemoryBuffer extends TTransport
      */
     public function __construct($buf = '')
     {
-        $this->buf_ = $buf;
+        $this->buf = $buf;
     }
 
     public function isOpen()
@@ -61,12 +61,12 @@ class TMemoryBuffer extends TTransport
 
     public function write($buf)
     {
-        $this->buf_ .= $buf;
+        $this->buf .= $buf;
     }
 
     public function read($len)
     {
-        $bufLength = strlen($this->buf_);
+        $bufLength = strlen($this->buf);
 
         if ($bufLength === 0) {
             throw new TTransportException(
@@ -77,30 +77,30 @@ class TMemoryBuffer extends TTransport
         }
 
         if ($bufLength <= $len) {
-            $ret = $this->buf_;
-            $this->buf_ = '';
+            $ret = $this->buf;
+            $this->buf = '';
 
             return $ret;
         }
 
-        $ret = substr($this->buf_, 0, $len);
-        $this->buf_ = substr($this->buf_, $len);
+        $ret = substr($this->buf, 0, $len);
+        $this->buf = substr($this->buf, $len);
 
         return $ret;
     }
 
     public function getBuffer()
     {
-        return $this->buf_;
+        return $this->buf;
     }
 
     public function available()
     {
-        return strlen($this->buf_);
+        return strlen($this->buf);
     }
 
     public function putBack($data)
     {
-        $this->buf_ = $data . $this->buf_;
+        $this->buf = $data . $this->buf;
     }
 }

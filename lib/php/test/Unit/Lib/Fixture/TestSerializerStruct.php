@@ -26,7 +26,7 @@ use Thrift\Type\TType;
 
 class TestSerializerStruct extends TBase
 {
-    public static $_TSPEC = [
+    public static $tspec = [
         1 => [
             'var' => 'stringField',
             'type' => TType::STRING,
@@ -47,11 +47,11 @@ class TestSerializerStruct extends TBase
 
     public function read($input)
     {
-        return $this->_read(self::class, self::$_TSPEC, $input);
+        return $this->readStruct(self::class, self::$tspec, $input);
     }
 
     public function write($output)
     {
-        return $this->_write('TestSerializerStruct', self::$_TSPEC, $output);
+        return $this->writeStruct('TestSerializerStruct', self::$tspec, $output);
     }
 }

@@ -77,10 +77,10 @@ class TFramedTransportTest extends TestCase
         $framedTransport = new TFramedTransport($transport);
         $framedTransport->putBack('test');
 
-        $this->assertEquals('test', $this->getPropertyValue($framedTransport, 'rBuf_'));
+        $this->assertEquals('test', $this->getPropertyValue($framedTransport, 'rBuf'));
 
         $framedTransport->putBack('abcde');
-        $this->assertEquals('abcdetest', $this->getPropertyValue($framedTransport, 'rBuf_'));
+        $this->assertEquals('abcdetest', $this->getPropertyValue($framedTransport, 'rBuf'));
     }
 
     #[DataProvider('readDataProvider')]
@@ -172,7 +172,7 @@ class TFramedTransportTest extends TestCase
 
         $framedTransport->write($writeData, $writeLength);
 
-        $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($framedTransport, 'wBuf_'));
+        $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($framedTransport, 'wBuf'));
     }
 
     public static function writeDataProvider()
@@ -205,7 +205,7 @@ class TFramedTransportTest extends TestCase
     ) {
         $transport = $this->createMock(TTransport::class);
         $framedTransport = new TFramedTransport($transport, true, $writeAllowed);
-        $this->setPropertyValue($framedTransport, 'wBuf_', $writeBuffer);
+        $this->setPropertyValue($framedTransport, 'wBuf', $writeBuffer);
 
         $transport
             ->expects($this->once())

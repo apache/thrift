@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -36,28 +37,28 @@ class TServerSocket extends TServerTransport
      *
      * @var resource
      */
-    protected $listener_;
+    protected $listener;
 
     /**
      * Port for the listener to listen on
      *
      * @var int
      */
-    protected $port_;
+    protected $port;
 
     /**
      * Timeout when listening for a new client
      *
      * @var int
      */
-    protected $acceptTimeout_ = 30000;
+    protected $acceptTimeout = 30000;
 
     /**
      * Host to listen on
      *
      * @var string
      */
-    protected $host_;
+    protected $host;
 
     /**
      * ServerSocket constructor
@@ -68,8 +69,8 @@ class TServerSocket extends TServerTransport
      */
     public function __construct($host = 'localhost', $port = 9090)
     {
-        $this->host_ = $host;
-        $this->port_ = $port;
+        $this->host = $host;
+        $this->port = $port;
     }
 
     /**
@@ -80,7 +81,7 @@ class TServerSocket extends TServerTransport
      */
     public function setAcceptTimeout($acceptTimeout)
     {
-        $this->acceptTimeout_ = $acceptTimeout;
+        $this->acceptTimeout = $acceptTimeout;
     }
 
     /**
@@ -90,7 +91,7 @@ class TServerSocket extends TServerTransport
      */
     public function listen()
     {
-        $this->listener_ = stream_socket_server('tcp://' . $this->host_ . ':' . $this->port_);
+        $this->listener = stream_socket_server('tcp://' . $this->host . ':' . $this->port);
     }
 
     /**
@@ -100,8 +101,8 @@ class TServerSocket extends TServerTransport
      */
     public function close()
     {
-        @fclose($this->listener_);
-        $this->listener_ = null;
+        @fclose($this->listener);
+        $this->listener = null;
     }
 
     /**
@@ -111,7 +112,7 @@ class TServerSocket extends TServerTransport
      */
     protected function acceptImpl()
     {
-        $handle = @stream_socket_accept($this->listener_, $this->acceptTimeout_ / 1000.0);
+        $handle = @stream_socket_accept($this->listener, $this->acceptTimeout / 1000.0);
         if (!$handle) {
             return null;
         }

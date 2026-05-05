@@ -33,34 +33,34 @@ use Thrift\Exception\TException;
  */
 class TPhpStream extends TTransport
 {
-    const MODE_R = 1;
-    const MODE_W = 2;
+    public const MODE_R = 1;
+    public const MODE_W = 2;
 
-    private $inStream_ = null;
+    private $inStream = null;
 
-    private $outStream_ = null;
+    private $outStream = null;
 
-    private $read_ = false;
+    private $read = false;
 
-    private $write_ = false;
+    private $write = false;
 
     public function __construct($mode)
     {
-        $this->read_ = $mode & self::MODE_R;
-        $this->write_ = $mode & self::MODE_W;
+        $this->read = $mode & self::MODE_R;
+        $this->write = $mode & self::MODE_W;
     }
 
     public function open()
     {
-        if ($this->read_) {
-            $this->inStream_ = @fopen($this->inStreamName(), 'r');
-            if (!is_resource($this->inStream_)) {
+        if ($this->read) {
+            $this->inStream = @fopen($this->inStreamName(), 'r');
+            if (!is_resource($this->inStream)) {
                 throw new TException('TPhpStream: Could not open php://input');
             }
         }
-        if ($this->write_) {
-            $this->outStream_ = @fopen('php://output', 'w');
-            if (!is_resource($this->outStream_)) {
+        if ($this->write) {
+            $this->outStream = @fopen('php://output', 'w');
+            if (!is_resource($this->outStream)) {
                 throw new TException('TPhpStream: Could not open php://output');
             }
         }
@@ -68,26 +68,26 @@ class TPhpStream extends TTransport
 
     public function close()
     {
-        if ($this->read_) {
-            @fclose($this->inStream_);
-            $this->inStream_ = null;
+        if ($this->read) {
+            @fclose($this->inStream);
+            $this->inStream = null;
         }
-        if ($this->write_) {
-            @fclose($this->outStream_);
-            $this->outStream_ = null;
+        if ($this->write) {
+            @fclose($this->outStream);
+            $this->outStream = null;
         }
     }
 
     public function isOpen()
     {
         return
-            (!$this->read_ || is_resource($this->inStream_)) &&
-            (!$this->write_ || is_resource($this->outStream_));
+            (!$this->read || is_resource($this->inStream)) &&
+            (!$this->write || is_resource($this->outStream));
     }
 
     public function read($len)
     {
-        $data = @fread($this->inStream_, $len);
+        $data = @fread($this->inStream, $len);
         if ($data === false || $data === '') {
             throw new TException('TPhpStream: Could not read ' . $len . ' bytes');
         }
@@ -98,7 +98,7 @@ class TPhpStream extends TTransport
     public function write($buf)
     {
         while (strlen($buf) > 0) {
-            $got = @fwrite($this->outStream_, $buf);
+            $got = @fwrite($this->outStream, $buf);
             if ($got === 0 || $got === false) {
                 throw new TException(
                     'TPhpStream: Could not write ' . strlen($buf) . ' bytes'
@@ -110,7 +110,7 @@ class TPhpStream extends TTransport
 
     public function flush()
     {
-        @fflush($this->outStream_);
+        @fflush($this->outStream);
     }
 
     private function inStreamName()

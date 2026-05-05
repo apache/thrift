@@ -39,49 +39,49 @@ class TBufferedTransport extends TTransport
      *
      * @var TTransport
      */
-    protected $transport_;
+    protected $transport;
 
     /**
      * The receive buffer size
      *
      * @var int
      */
-    protected $rBufSize_ = 512;
+    protected $rBufSize = 512;
 
     /**
      * The write buffer size
      *
      * @var int
      */
-    protected $wBufSize_ = 512;
+    protected $wBufSize = 512;
 
     /**
      * The write buffer.
      *
      * @var string
      */
-    protected $wBuf_ = '';
+    protected $wBuf = '';
 
     /**
      * The read buffer.
      *
      * @var string
      */
-    protected $rBuf_ = '';
+    protected $rBuf = '';
 
     /**
      * Constructor. Creates a buffered transport around an underlying transport
      */
     public function __construct($transport, $rBufSize = 512, $wBufSize = 512)
     {
-        $this->transport_ = $transport;
-        $this->rBufSize_ = $rBufSize;
-        $this->wBufSize_ = $wBufSize;
+        $this->transport = $transport;
+        $this->rBufSize = $rBufSize;
+        $this->wBufSize = $wBufSize;
     }
 
     public function isOpen()
     {
-        return $this->transport_->isOpen();
+        return $this->transport->isOpen();
     }
 
     /**
@@ -91,20 +91,20 @@ class TBufferedTransport extends TTransport
      */
     public function open()
     {
-        $this->transport_->open();
+        $this->transport->open();
     }
 
     public function close()
     {
-        $this->transport_->close();
+        $this->transport->close();
     }
 
     public function putBack($data)
     {
-        if (strlen($this->rBuf_) === 0) {
-            $this->rBuf_ = $data;
+        if (strlen($this->rBuf) === 0) {
+            $this->rBuf = $data;
         } else {
-            $this->rBuf_ = ($data . $this->rBuf_);
+            $this->rBuf = ($data . $this->rBuf);
         }
     }
 
@@ -121,19 +121,19 @@ class TBufferedTransport extends TTransport
      */
     public function readAll($len)
     {
-        $have = strlen($this->rBuf_);
+        $have = strlen($this->rBuf);
         if ($have == 0) {
-            $data = $this->transport_->readAll($len);
+            $data = $this->transport->readAll($len);
         } elseif ($have < $len) {
-            $data = $this->rBuf_;
-            $this->rBuf_ = '';
-            $data .= $this->transport_->readAll($len - $have);
+            $data = $this->rBuf;
+            $this->rBuf = '';
+            $data .= $this->transport->readAll($len - $have);
         } elseif ($have == $len) {
-            $data = $this->rBuf_;
-            $this->rBuf_ = '';
+            $data = $this->rBuf;
+            $this->rBuf = '';
         } else {
-            $data = substr($this->rBuf_, 0, $len);
-            $this->rBuf_ = substr($this->rBuf_, $len);
+            $data = substr($this->rBuf, 0, $len);
+            $this->rBuf = substr($this->rBuf, $len);
         }
 
         return $data;
@@ -148,19 +148,19 @@ class TBufferedTransport extends TTransport
      */
     public function read($len)
     {
-        if (strlen($this->rBuf_) === 0) {
-            $this->rBuf_ = $this->transport_->read($this->rBufSize_);
+        if (strlen($this->rBuf) === 0) {
+            $this->rBuf = $this->transport->read($this->rBufSize);
         }
 
-        if (strlen($this->rBuf_) <= $len) {
-            $ret = $this->rBuf_;
-            $this->rBuf_ = '';
+        if (strlen($this->rBuf) <= $len) {
+            $ret = $this->rBuf;
+            $this->rBuf = '';
 
             return $ret;
         }
 
-        $ret = substr($this->rBuf_, 0, $len);
-        $this->rBuf_ = substr($this->rBuf_, $len);
+        $ret = substr($this->rBuf, 0, $len);
+        $this->rBuf = substr($this->rBuf, $len);
 
         return $ret;
     }
@@ -173,15 +173,15 @@ class TBufferedTransport extends TTransport
      */
     public function write($buf)
     {
-        $this->wBuf_ .= $buf;
-        if (strlen($this->wBuf_) >= $this->wBufSize_) {
-            $out = $this->wBuf_;
+        $this->wBuf .= $buf;
+        if (strlen($this->wBuf) >= $this->wBufSize) {
+            $out = $this->wBuf;
 
             // Note that we clear the internal wBuf_ prior to the underlying write
             // to ensure we're in a sane state (i.e. internal buffer cleaned)
             // if the underlying write throws up an exception
-            $this->wBuf_ = '';
-            $this->transport_->write($out);
+            $this->wBuf = '';
+            $this->transport->write($out);
         }
     }
 
@@ -192,15 +192,15 @@ class TBufferedTransport extends TTransport
      */
     public function flush()
     {
-        if (strlen($this->wBuf_) > 0) {
-            $out = $this->wBuf_;
+        if (strlen($this->wBuf) > 0) {
+            $out = $this->wBuf;
 
             // Note that we clear the internal wBuf_ prior to the underlying write
             // to ensure we're in a sane state (i.e. internal buffer cleaned)
             // if the underlying write throws up an exception
-            $this->wBuf_ = '';
-            $this->transport_->write($out);
+            $this->wBuf = '';
+            $this->transport->write($out);
         }
-        $this->transport_->flush();
+        $this->transport->flush();
     }
 }

@@ -36,28 +36,28 @@ use Thrift\Protocol\SimpleJSON\CollectionMapKeyException;
  */
 class TSimpleJSONProtocol extends TProtocol
 {
-    const COMMA = ',';
-    const COLON = ':';
-    const LBRACE = '{';
-    const RBRACE = '}';
-    const LBRACKET = '[';
-    const RBRACKET = ']';
-    const QUOTE = '"';
+    public const COMMA = ',';
+    public const COLON = ':';
+    public const LBRACE = '{';
+    public const RBRACE = '}';
+    public const LBRACKET = '[';
+    public const RBRACKET = ']';
+    public const QUOTE = '"';
 
-    const NAME_MAP = "map";
-    const NAME_LIST = "lst";
-    const NAME_SET = "set";
+    public const NAME_MAP = "map";
+    public const NAME_LIST = "lst";
+    public const NAME_SET = "set";
 
-    protected $writeContext_ = null;
-    protected $writeContextStack_ = [];
+    protected $writeContext = null;
+    protected $writeContextStack = [];
 
     /**
      * Push a new write context onto the stack.
      */
     protected function pushWriteContext(Context $c)
     {
-        $this->writeContextStack_[] = $this->writeContext_;
-        $this->writeContext_ = $c;
+        $this->writeContextStack[] = $this->writeContext;
+        $this->writeContext = $c;
     }
 
     /**
@@ -65,7 +65,7 @@ class TSimpleJSONProtocol extends TProtocol
      */
     protected function popWriteContext()
     {
-        $this->writeContext_ = array_pop($this->writeContextStack_);
+        $this->writeContext = array_pop($this->writeContextStack);
     }
 
     /**
@@ -73,7 +73,7 @@ class TSimpleJSONProtocol extends TProtocol
      */
     protected function assertContextIsNotMapKey($invalidKeyType)
     {
-        if ($this->writeContext_->isMapKey()) {
+        if ($this->writeContext->isMapKey()) {
             throw new CollectionMapKeyException(
                 "Cannot serialize a map with keys that are of type " .
                 $invalidKeyType
@@ -83,43 +83,43 @@ class TSimpleJSONProtocol extends TProtocol
 
     private function writeJSONString($b)
     {
-        $this->writeContext_->write();
+        $this->writeContext->write();
 
-        $this->trans_->write(json_encode((string)$b, JSON_UNESCAPED_SLASHES));
+        $this->trans->write(json_encode((string)$b, JSON_UNESCAPED_SLASHES));
     }
 
     private function writeJSONInteger($num)
     {
-        $isMapKey = $this->writeContext_->isMapKey();
+        $isMapKey = $this->writeContext->isMapKey();
 
-        $this->writeContext_->write();
+        $this->writeContext->write();
 
         if ($isMapKey) {
-            $this->trans_->write(self::QUOTE);
+            $this->trans->write(self::QUOTE);
         }
 
-        $this->trans_->write((int)$num);
+        $this->trans->write((int)$num);
 
         if ($isMapKey) {
-            $this->trans_->write(self::QUOTE);
+            $this->trans->write(self::QUOTE);
         }
     }
 
     private function writeJSONDouble($num)
     {
-        $isMapKey = $this->writeContext_->isMapKey();
+        $isMapKey = $this->writeContext->isMapKey();
 
-        $this->writeContext_->write();
+        $this->writeContext->write();
 
         if ($isMapKey) {
-            $this->trans_->write(self::QUOTE);
+            $this->trans->write(self::QUOTE);
         }
 
         #TODO add compatibility with NAN and INF
-        $this->trans_->write(json_encode((float)$num));
+        $this->trans->write(json_encode((float)$num));
 
         if ($isMapKey) {
-            $this->trans_->write(self::QUOTE);
+            $this->trans->write(self::QUOTE);
         }
     }
 
@@ -129,7 +129,7 @@ class TSimpleJSONProtocol extends TProtocol
     public function __construct($trans)
     {
         parent::__construct($trans);
-        $this->writeContext_ = new Context();
+        $this->writeContext = new Context();
     }
 
     /**
@@ -141,7 +141,7 @@ class TSimpleJSONProtocol extends TProtocol
      */
     public function writeMessageBegin($name, $type, $seqid)
     {
-        $this->trans_->write(self::LBRACKET);
+        $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         $this->writeJSONString($name);
         $this->writeJSONInteger($type);
@@ -154,7 +154,7 @@ class TSimpleJSONProtocol extends TProtocol
     public function writeMessageEnd()
     {
         $this->popWriteContext();
-        $this->trans_->write(self::RBRACKET);
+        $this->trans->write(self::RBRACKET);
     }
 
     /**
@@ -164,8 +164,8 @@ class TSimpleJSONProtocol extends TProtocol
      */
     public function writeStructBegin($name)
     {
-        $this->writeContext_->write();
-        $this->trans_->write(self::LBRACE);
+        $this->writeContext->write();
+        $this->trans->write(self::LBRACE);
         $this->pushWriteContext(new StructContext($this));
     }
 
@@ -175,7 +175,7 @@ class TSimpleJSONProtocol extends TProtocol
     public function writeStructEnd()
     {
         $this->popWriteContext();
-        $this->trans_->write(self::RBRACE);
+        $this->trans->write(self::RBRACE);
     }
 
     public function writeFieldBegin($fieldName, $fieldType, $fieldId)
@@ -194,22 +194,22 @@ class TSimpleJSONProtocol extends TProtocol
     public function writeMapBegin($keyType, $valType, $size)
     {
         $this->assertContextIsNotMapKey(self::NAME_MAP);
-        $this->writeContext_->write();
-        $this->trans_->write(self::LBRACE);
+        $this->writeContext->write();
+        $this->trans->write(self::LBRACE);
         $this->pushWriteContext(new MapContext($this));
     }
 
     public function writeMapEnd()
     {
         $this->popWriteContext();
-        $this->trans_->write(self::RBRACE);
+        $this->trans->write(self::RBRACE);
     }
 
     public function writeListBegin($elemType, $size)
     {
         $this->assertContextIsNotMapKey(self::NAME_LIST);
-        $this->writeContext_->write();
-        $this->trans_->write(self::LBRACKET);
+        $this->writeContext->write();
+        $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         // No metadata!
     }
@@ -217,14 +217,14 @@ class TSimpleJSONProtocol extends TProtocol
     public function writeListEnd()
     {
         $this->popWriteContext();
-        $this->trans_->write(self::RBRACKET);
+        $this->trans->write(self::RBRACKET);
     }
 
     public function writeSetBegin($elemType, $size)
     {
         $this->assertContextIsNotMapKey(self::NAME_SET);
-        $this->writeContext_->write();
-        $this->trans_->write(self::LBRACKET);
+        $this->writeContext->write();
+        $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         // No metadata!
     }
@@ -232,7 +232,7 @@ class TSimpleJSONProtocol extends TProtocol
     public function writeSetEnd()
     {
         $this->popWriteContext();
-        $this->trans_->write(self::RBRACKET);
+        $this->trans->write(self::RBRACKET);
     }
 
     public function writeBool($bool)

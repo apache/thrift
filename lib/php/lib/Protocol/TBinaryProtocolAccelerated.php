@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -57,11 +58,11 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol
 
     public function isStrictRead()
     {
-        return $this->strictRead_;
+        return $this->strictRead;
     }
 
     public function isStrictWrite()
     {
-        return $this->strictWrite_;
+        return $this->strictWrite;
     }
 }

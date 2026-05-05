@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -25,7 +26,7 @@ namespace Thrift\Protocol\SimpleJSON;
 class MapContext extends StructContext
 {
     protected $isKey = true;
-    private $p_;
+    private $p;
 
     public function __construct($p)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -27,11 +28,11 @@ namespace Thrift\Exception;
  */
 class TTransportException extends TException
 {
-    const UNKNOWN = 0;
-    const NOT_OPEN = 1;
-    const ALREADY_OPEN = 2;
-    const TIMED_OUT = 3;
-    const END_OF_FILE = 4;
+    public const UNKNOWN = 0;
+    public const NOT_OPEN = 1;
+    public const ALREADY_OPEN = 2;
+    public const TIMED_OUT = 3;
+    public const END_OF_FILE = 4;
 
     public function __construct($message = null, $code = 0)
     {

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -35,35 +36,35 @@ class TFramedTransport extends TTransport
      *
      * @var TTransport
      */
-    private $transport_;
+    private $transport;
 
     /**
      * Buffer for read data.
      *
      * @var string
      */
-    private $rBuf_ = '';
+    private $rBuf = '';
 
     /**
      * Buffer for queued output data
      *
      * @var string
      */
-    private $wBuf_ = '';
+    private $wBuf = '';
 
     /**
      * Whether to frame reads
      *
      * @var bool
      */
-    private $read_;
+    private $read;
 
     /**
      * Whether to frame writes
      *
      * @var bool
      */
-    private $write_;
+    private $write;
 
     /**
      * Constructor.
@@ -72,24 +73,24 @@ class TFramedTransport extends TTransport
      */
     public function __construct($transport = null, $read = true, $write = true)
     {
-        $this->transport_ = $transport;
-        $this->read_ = $read;
-        $this->write_ = $write;
+        $this->transport = $transport;
+        $this->read = $read;
+        $this->write = $write;
     }
 
     public function isOpen()
     {
-        return $this->transport_->isOpen();
+        return $this->transport->isOpen();
     }
 
     public function open()
     {
-        $this->transport_->open();
+        $this->transport->open();
     }
 
     public function close()
     {
-        $this->transport_->close();
+        $this->transport->close();
     }
 
     /**
@@ -100,24 +101,24 @@ class TFramedTransport extends TTransport
      */
     public function read($len)
     {
-        if (!$this->read_) {
-            return $this->transport_->read($len);
+        if (!$this->read) {
+            return $this->transport->read($len);
         }
 
-        if (strlen($this->rBuf_) === 0) {
+        if (strlen($this->rBuf) === 0) {
             $this->readFrame();
         }
 
         // Just return full buff
-        if ($len >= strlen($this->rBuf_)) {
-            $out = $this->rBuf_;
-            $this->rBuf_ = '';
+        if ($len >= strlen($this->rBuf)) {
+            $out = $this->rBuf;
+            $this->rBuf = '';
 
             return $out;
         }
 
-        $out = substr($this->rBuf_, 0, $len);
-        $this->rBuf_ = substr($this->rBuf_, $len);
+        $out = substr($this->rBuf, 0, $len);
+        $this->rBuf = substr($this->rBuf, $len);
 
         return $out;
     }
@@ -129,10 +130,10 @@ class TFramedTransport extends TTransport
      */
     public function putBack($data)
     {
-        if (strlen($this->rBuf_) === 0) {
-            $this->rBuf_ = $data;
+        if (strlen($this->rBuf) === 0) {
+            $this->rBuf = $data;
         } else {
-            $this->rBuf_ = ($data . $this->rBuf_);
+            $this->rBuf = ($data . $this->rBuf);
         }
     }
 
@@ -141,11 +142,11 @@ class TFramedTransport extends TTransport
      */
     private function readFrame()
     {
-        $buf = $this->transport_->readAll(4);
+        $buf = $this->transport->readAll(4);
         $val = unpack('N', $buf);
         $sz = $val[1];
 
-        $this->rBuf_ = $this->transport_->readAll($sz);
+        $this->rBuf = $this->transport->readAll($sz);
     }
 
     /**
@@ -156,14 +157,14 @@ class TFramedTransport extends TTransport
      */
     public function write($buf, $len = null)
     {
-        if (!$this->write_) {
-            return $this->transport_->write($buf, $len);
+        if (!$this->write) {
+            return $this->transport->write($buf, $len);
         }
 
         if ($len !== null && $len < strlen($buf)) {
             $buf = substr($buf, 0, $len);
         }
-        $this->wBuf_ .= $buf;
+        $this->wBuf .= $buf;
     }
 
     /**
@@ -172,18 +173,18 @@ class TFramedTransport extends TTransport
      */
     public function flush()
     {
-        if (!$this->write_ || strlen($this->wBuf_) == 0) {
-            return $this->transport_->flush();
+        if (!$this->write || strlen($this->wBuf) == 0) {
+            return $this->transport->flush();
         }
 
-        $out = pack('N', strlen($this->wBuf_));
-        $out .= $this->wBuf_;
+        $out = pack('N', strlen($this->wBuf));
+        $out .= $this->wBuf;
 
         // Note that we clear the internal wBuf_ prior to the underlying write
         // to ensure we're in a sane state (i.e. internal buffer cleaned)
         // if the underlying write throws up an exception
-        $this->wBuf_ = '';
-        $this->transport_->write($out);
-        $this->transport_->flush();
+        $this->wBuf = '';
+        $this->transport->write($out);
+        $this->transport->flush();
     }
 }

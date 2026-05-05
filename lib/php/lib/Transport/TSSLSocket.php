@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -37,7 +38,7 @@ class TSSLSocket extends TSocket
      *
      * @var null|resource
      */
-    protected $context_ = null;
+    protected $context = null;
 
     /**
      * Socket constructor
@@ -54,14 +55,14 @@ class TSSLSocket extends TSocket
         $context = null,
         $debugHandler = null
     ) {
-        $this->host_ = $this->getSSLHost($host);
-        $this->port_ = $port;
+        $this->host = $this->getSSLHost($host);
+        $this->port = $port;
         // Initialize a stream context if not provided
         if ($context === null) {
             $context = stream_context_create();
         }
-        $this->context_ = $context;
-        $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
+        $this->context = $context;
+        $this->debugHandler = $debugHandler ? $debugHandler : 'error_log';
     }
 
     /**
@@ -90,30 +91,30 @@ class TSSLSocket extends TSocket
             throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);
         }
 
-        $host = parse_url($this->host_, PHP_URL_HOST);
+        $host = parse_url($this->host, PHP_URL_HOST);
         if (empty($host)) {
             throw new TTransportException('Cannot open null host', TTransportException::NOT_OPEN);
         }
 
-        if ($this->port_ <= 0) {
+        if ($this->port <= 0) {
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
-        $this->handle_ = @stream_socket_client(
-            $this->host_ . ':' . $this->port_,
+        $this->handle = @stream_socket_client(
+            $this->host . ':' . $this->port,
             $errno,
             $errstr,
-            $this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+            $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000),
             STREAM_CLIENT_CONNECT,
-            $this->context_
+            $this->context
         );
 
         // Connect failed?
-        if ($this->handle_ === false) {
+        if ($this->handle === false) {
             $error = 'TSocket: Could not connect to ' .
-                $this->host_ . ':' . $this->port_ . ' (' . $errstr . ' [' . $errno . '])';
-            if ($this->debug_) {
-                call_user_func($this->debugHandler_, $error);
+                $this->host . ':' . $this->port . ' (' . $errstr . ' [' . $errno . '])';
+            if ($this->debug) {
+                call_user_func($this->debugHandler, $error);
             }
             throw new TException($error);
         }

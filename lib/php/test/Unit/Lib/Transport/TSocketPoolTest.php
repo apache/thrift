@@ -51,7 +51,7 @@ class TSocketPoolTest extends TestCase
     ) {
         $socketPool = new TSocketPool($hosts, $ports, $persist, $debugHandler);
 
-        $this->assertEquals($expectedServers, $this->getPropertyValue($socketPool, 'servers_'));
+        $this->assertEquals($expectedServers, $this->getPropertyValue($socketPool, 'servers'));
     }
 
 
@@ -102,7 +102,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->addServer('localhost', 9090);
 
-        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $this->getPropertyValue($socketPool, 'servers_'));
+        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $this->getPropertyValue($socketPool, 'servers'));
     }
 
     public function testSetNumRetries(): void
@@ -110,7 +110,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setNumRetries(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'numRetries_'));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'numRetries'));
     }
 
     public function testrSetRetryInterval(): void
@@ -118,7 +118,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRetryInterval(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'retryInterval_'));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'retryInterval'));
     }
 
     public function testrSetMaxConsecutiveFailures(): void
@@ -126,7 +126,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setMaxConsecutiveFailures(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'maxConsecutiveFailures_'));
+        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'maxConsecutiveFailures'));
     }
 
     public function testrSetRandomize(): void
@@ -134,7 +134,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRandomize(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'randomize_'));
+        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'randomize'));
     }
 
     public function testrSetAlwaysTryLast(): void
@@ -142,7 +142,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setAlwaysTryLast(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'alwaysTryLast_'));
+        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'alwaysTryLast'));
     }
 
     #[DataProvider('openDataProvider')]

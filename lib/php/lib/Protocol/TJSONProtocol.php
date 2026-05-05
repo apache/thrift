@@ -36,19 +36,19 @@ use Thrift\Protocol\JSON\ListContext;
  */
 class TJSONProtocol extends TProtocol
 {
-    const COMMA = ',';
-    const COLON = ':';
-    const LBRACE = '{';
-    const RBRACE = '}';
-    const LBRACKET = '[';
-    const RBRACKET = ']';
-    const QUOTE = '"';
-    const BACKSLASH = '\\';
-    const ZERO = '0';
-    const ESCSEQ = '\\';
-    const DOUBLEESC = '__DOUBLE_ESCAPE_SEQUENCE__';
+    public const COMMA = ',';
+    public const COLON = ':';
+    public const LBRACE = '{';
+    public const RBRACE = '}';
+    public const LBRACKET = '[';
+    public const RBRACKET = ']';
+    public const QUOTE = '"';
+    public const BACKSLASH = '\\';
+    public const ZERO = '0';
+    public const ESCSEQ = '\\';
+    public const DOUBLEESC = '__DOUBLE_ESCAPE_SEQUENCE__';
 
-    const VERSION = 1;
+    public const VERSION = 1;
 
     public static $JSON_CHAR_TABLE = array(
         /*  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
@@ -63,18 +63,18 @@ class TJSONProtocol extends TProtocol
         '"', '\\', '/', "\x08", "\f", "\n", "\r", "\t",
     );
 
-    const NAME_BOOL = "tf";
-    const NAME_BYTE = "i8";
-    const NAME_I16 = "i16";
-    const NAME_I32 = "i32";
-    const NAME_I64 = "i64";
-    const NAME_DOUBLE = "dbl";
-    const NAME_STRUCT = "rec";
-    const NAME_STRING = "str";
-    const NAME_MAP = "map";
-    const NAME_LIST = "lst";
-    const NAME_SET = "set";
-    const NAME_UUID = "uid";
+    public const NAME_BOOL = "tf";
+    public const NAME_BYTE = "i8";
+    public const NAME_I16 = "i16";
+    public const NAME_I32 = "i32";
+    public const NAME_I64 = "i64";
+    public const NAME_DOUBLE = "dbl";
+    public const NAME_STRUCT = "rec";
+    public const NAME_STRING = "str";
+    public const NAME_MAP = "map";
+    public const NAME_LIST = "lst";
+    public const NAME_SET = "set";
+    public const NAME_UUID = "uid";
 
     private function getTypeNameForTypeID($typeID)
     {
@@ -164,38 +164,38 @@ class TJSONProtocol extends TProtocol
         return $result;
     }
 
-    public $contextStack_ = array();
-    public $context_;
-    public $reader_;
+    public $contextStack = array();
+    public $context;
+    public $reader;
 
     private function pushContext($c)
     {
-        array_push($this->contextStack_, $this->context_);
-        $this->context_ = $c;
+        array_push($this->contextStack, $this->context);
+        $this->context = $c;
     }
 
     private function popContext()
     {
-        $this->context_ = array_pop($this->contextStack_);
+        $this->context = array_pop($this->contextStack);
     }
 
     public function __construct($trans)
     {
         parent::__construct($trans);
-        $this->context_ = new BaseContext();
-        $this->reader_ = new LookaheadReader($this);
+        $this->context = new BaseContext();
+        $this->reader = new LookaheadReader($this);
     }
 
     public function reset()
     {
-        $this->contextStack_ = array();
-        $this->context_ = new BaseContext();
-        $this->reader_ = new LookaheadReader($this);
+        $this->contextStack = array();
+        $this->context = new BaseContext();
+        $this->reader = new LookaheadReader($this);
     }
 
     public function readJSONSyntaxChar($b)
     {
-        $ch = $this->reader_->read();
+        $ch = $this->reader->read();
 
         if (substr($ch, 0, 1) != $b) {
             throw new TProtocolException("Unexpected character: " . $ch, TProtocolException::INVALID_DATA);
@@ -204,90 +204,92 @@ class TJSONProtocol extends TProtocol
 
     private function writeJSONString($b)
     {
-        $this->context_->write();
+        $this->context->write();
 
-        if (is_numeric($b) && $this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if (is_numeric($b) && $this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
 
-        $this->trans_->write(json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->trans->write(json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        if (is_numeric($b) && $this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if (is_numeric($b) && $this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
     }
 
     private function writeJSONInteger($num)
     {
-        $this->context_->write();
+        $this->context->write();
 
-        if ($this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if ($this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
 
-        $this->trans_->write($num);
+        $this->trans->write($num);
 
-        if ($this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if ($this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
     }
 
     private function writeJSONDouble($num)
     {
-        $this->context_->write();
+        $this->context->write();
 
-        if ($this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if ($this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
 
         #TODO add compatibility with NAN and INF
-        $this->trans_->write(json_encode($num));
+        $this->trans->write(json_encode($num));
 
-        if ($this->context_->escapeNum()) {
-            $this->trans_->write(self::QUOTE);
+        if ($this->context->escapeNum()) {
+            $this->trans->write(self::QUOTE);
         }
     }
 
     private function writeJSONObjectStart()
     {
-        $this->context_->write();
-        $this->trans_->write(self::LBRACE);
+        $this->context->write();
+        $this->trans->write(self::LBRACE);
         $this->pushContext(new PairContext($this));
     }
 
     private function writeJSONObjectEnd()
     {
         $this->popContext();
-        $this->trans_->write(self::RBRACE);
+        $this->trans->write(self::RBRACE);
     }
 
     private function writeJSONArrayStart()
     {
-        $this->context_->write();
-        $this->trans_->write(self::LBRACKET);
+        $this->context->write();
+        $this->trans->write(self::LBRACKET);
         $this->pushContext(new ListContext($this));
     }
 
     private function writeJSONArrayEnd()
     {
         $this->popContext();
-        $this->trans_->write(self::RBRACKET);
+        $this->trans->write(self::RBRACKET);
     }
 
     private function readJSONString($skipContext)
     {
         if (!$skipContext) {
-            $this->context_->read();
+            $this->context->read();
         }
 
         $jsonString = '';
         $lastChar = null;
         while (true) {
-            $ch = $this->reader_->read();
+            $ch = $this->reader->read();
             $jsonString .= $ch;
-            if ($ch == self::QUOTE &&
+            if (
+                $ch == self::QUOTE &&
                 $lastChar !== null &&
-                $lastChar !== self::ESCSEQ) {
+                $lastChar !== self::ESCSEQ
+            ) {
                 break;
             }
             if ($ch == self::ESCSEQ && $lastChar == self::ESCSEQ) {
@@ -329,13 +331,13 @@ class TJSONProtocol extends TProtocol
         $strbld = array();
 
         while (true) {
-            $ch = $this->reader_->peek();
+            $ch = $this->reader->peek();
 
             if (!$this->isJSONNumeric($ch)) {
                 break;
             }
 
-            $strbld[] = $this->reader_->read();
+            $strbld[] = $this->reader->read();
         }
 
         return implode("", $strbld);
@@ -343,15 +345,15 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONInteger()
     {
-        $this->context_->read();
+        $this->context->read();
 
-        if ($this->context_->escapeNum()) {
+        if ($this->context->escapeNum()) {
             $this->readJSONSyntaxChar(self::QUOTE);
         }
 
         $str = $this->readJSONNumericChars();
 
-        if ($this->context_->escapeNum()) {
+        if ($this->context->escapeNum()) {
             $this->readJSONSyntaxChar(self::QUOTE);
         }
 
@@ -370,15 +372,15 @@ class TJSONProtocol extends TProtocol
      */
     private function readJSONIntegerAsString()
     {
-        $this->context_->read();
+        $this->context->read();
 
-        if ($this->context_->escapeNum()) {
+        if ($this->context->escapeNum()) {
             $this->readJSONSyntaxChar(self::QUOTE);
         }
 
         $str = $this->readJSONNumericChars();
 
-        if ($this->context_->escapeNum()) {
+        if ($this->context->escapeNum()) {
             $this->readJSONSyntaxChar(self::QUOTE);
         }
 
@@ -391,16 +393,16 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONDouble()
     {
-        $this->context_->read();
+        $this->context->read();
 
-        if (substr($this->reader_->peek(), 0, 1) == self::QUOTE) {
+        if (substr($this->reader->peek(), 0, 1) == self::QUOTE) {
             $arr = $this->readJSONString(true);
 
             if ($arr == "NaN") {
                 return NAN;
             } elseif ($arr == "Infinity") {
                 return INF;
-            } elseif (!$this->context_->escapeNum()) {
+            } elseif (!$this->context->escapeNum()) {
                 throw new TProtocolException(
                     "Numeric data unexpectedly quoted " . $arr,
                     TProtocolException::INVALID_DATA
@@ -409,7 +411,7 @@ class TJSONProtocol extends TProtocol
 
             return floatval($arr);
         } else {
-            if ($this->context_->escapeNum()) {
+            if ($this->context->escapeNum()) {
                 $this->readJSONSyntaxChar(self::QUOTE);
             }
 
@@ -419,7 +421,7 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONObjectStart()
     {
-        $this->context_->read();
+        $this->context->read();
         $this->readJSONSyntaxChar(self::LBRACE);
         $this->pushContext(new PairContext($this));
     }
@@ -432,7 +434,7 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONArrayStart()
     {
-        $this->context_->read();
+        $this->context->read();
         $this->readJSONSyntaxChar(self::LBRACKET);
         $this->pushContext(new ListContext($this));
     }
@@ -629,7 +631,7 @@ class TJSONProtocol extends TProtocol
 
     public function readFieldBegin(&$name, &$fieldType, &$fieldId)
     {
-        $ch = $this->reader_->peek();
+        $ch = $this->reader->peek();
         $name = "";
 
         if (substr($ch, 0, 1) == self::RBRACE) {

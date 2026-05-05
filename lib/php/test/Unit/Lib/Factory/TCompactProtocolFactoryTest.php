@@ -42,7 +42,7 @@ class TCompactProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TCompactProtocol::class, $protocol);
 
-        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans_'));
+        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans'));
     }
 
     /**
