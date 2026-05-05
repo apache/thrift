@@ -24,7 +24,6 @@
 namespace Thrift\Transport;
 
 use Thrift\Exception\TTransportException;
-use Thrift\Factory\TStringFuncFactory;
 
 /**
  * HTTP client for Thrift
@@ -107,7 +106,7 @@ class TCurlClient extends TTransport
      */
     public function __construct($host, $port = 80, $uri = '', $scheme = 'http')
     {
-        if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri[0] != '/')) {
+        if ((strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
         $this->scheme_ = $scheme;
@@ -199,7 +198,7 @@ class TCurlClient extends TTransport
     {
         $data = $this->read($len);
 
-        if (TStringFuncFactory::create()->strlen($data) !== $len) {
+        if (strlen($data) !== $len) {
             throw new TTransportException('TCurlClient could not read '.$len.' bytes');
         }
 
@@ -241,7 +240,7 @@ class TCurlClient extends TTransport
         $defaultHeaders = array(
             'Accept' => 'application/x-thrift',
             'Content-Type' => 'application/x-thrift',
-            'Content-Length' => TStringFuncFactory::create()->strlen($this->request_)
+            'Content-Length' => strlen($this->request_)
         );
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
             $headers[] = "$key: $value";

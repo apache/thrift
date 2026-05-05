@@ -24,7 +24,6 @@ namespace Thrift\Transport;
 
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
-use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Sockets implementation of the TTransport interface.
@@ -319,7 +318,7 @@ class TSocket extends TTransport
         $write = array($this->handle_);
 
         // keep writing until all the data has been written
-        while (TStringFuncFactory::create()->strlen($buf) > 0) {
+        while (strlen($buf) > 0) {
             // wait for stream to become available for writing
             $writable = @stream_select(
                 $null,
@@ -334,20 +333,20 @@ class TSocket extends TTransport
                 $closed_socket = $written === 0 && feof($this->handle_);
                 if ($written === -1 || $written === false || $closed_socket) {
                     throw new TTransportException(
-                        'TSocket: Could not write ' . TStringFuncFactory::create()->strlen($buf) . ' bytes ' .
+                        'TSocket: Could not write ' . strlen($buf) . ' bytes ' .
                         $this->host_ . ':' . $this->port_
                     );
                 }
                 // determine how much of the buffer is left to write
-                $buf = TStringFuncFactory::create()->substr($buf, $written);
+                $buf = substr($buf, $written);
             } elseif ($writable === 0) {
                 throw new TTransportException(
-                    'TSocket: timed out writing ' . TStringFuncFactory::create()->strlen($buf) . ' bytes from ' .
+                    'TSocket: timed out writing ' . strlen($buf) . ' bytes from ' .
                     $this->host_ . ':' . $this->port_
                 );
             } else {
                 throw new TTransportException(
-                    'TSocket: Could not write ' . TStringFuncFactory::create()->strlen($buf) . ' bytes ' .
+                    'TSocket: Could not write ' . strlen($buf) . ' bytes ' .
                     $this->host_ . ':' . $this->port_
                 );
             }

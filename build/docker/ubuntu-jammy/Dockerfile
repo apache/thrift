@@ -233,7 +233,6 @@ RUN apt-get install -y --no-install-recommends \
   php8.1 \
   php8.1-cli \
   php8.1-dev \
-  php8.1-mbstring \
   php8.1-xml \
   php8.1-curl \
   php8.1-xdebug \

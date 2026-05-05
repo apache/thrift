@@ -24,7 +24,6 @@
 namespace Thrift\Transport;
 
 use Thrift\Exception\TException;
-use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Php stream transport. Reads to and writes from the php standard streams
@@ -98,14 +97,14 @@ class TPhpStream extends TTransport
 
     public function write($buf)
     {
-        while (TStringFuncFactory::create()->strlen($buf) > 0) {
+        while (strlen($buf) > 0) {
             $got = @fwrite($this->outStream_, $buf);
             if ($got === 0 || $got === false) {
                 throw new TException(
-                    'TPhpStream: Could not write ' . TStringFuncFactory::create()->strlen($buf) . ' bytes'
+                    'TPhpStream: Could not write ' . strlen($buf) . ' bytes'
                 );
             }
-            $buf = TStringFuncFactory::create()->substr($buf, $got);
+            $buf = substr($buf, $got);
         }
     }
 
