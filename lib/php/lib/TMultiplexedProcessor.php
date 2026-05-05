@@ -23,6 +23,7 @@
 
 namespace Thrift;
 
+use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TProtocol;
 use Thrift\Protocol\TMultiplexedProtocol;
@@ -52,6 +53,8 @@ use Thrift\Type\TMessageType;
 
 class TMultiplexedProcessor
 {
+    use TrailingUnderscorePropertyCompat;
+
     private $serviceProcessorMap;
 
     /**

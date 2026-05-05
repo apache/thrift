@@ -2,6 +2,7 @@
 
 namespace Thrift\Server;
 
+use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TTransport;
 
@@ -12,6 +13,8 @@ use Thrift\Transport\TTransport;
  */
 abstract class TServerTransport
 {
+    use TrailingUnderscorePropertyCompat;
+
     /**
      * List for new clients
      *

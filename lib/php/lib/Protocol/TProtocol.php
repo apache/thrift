@@ -23,6 +23,7 @@
 
 namespace Thrift\Protocol;
 
+use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Exception\TException;
 use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
@@ -33,6 +34,8 @@ use Thrift\Exception\TProtocolException;
  */
 abstract class TProtocol
 {
+    use TrailingUnderscorePropertyCompat;
+
     /**
      * Underlying transport
      *

@@ -23,6 +23,7 @@
 
 namespace Thrift\Transport;
 
+use Thrift\Base\TrailingUnderscorePropertyCompat;
 use Thrift\Exception\TTransportException;
 
 /**
@@ -32,6 +33,8 @@ use Thrift\Exception\TTransportException;
  */
 abstract class TTransport
 {
+    use TrailingUnderscorePropertyCompat;
+
     /**
      * Whether this transport is open.
      *
