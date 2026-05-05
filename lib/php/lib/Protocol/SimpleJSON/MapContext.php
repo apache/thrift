@@ -26,11 +26,11 @@ namespace Thrift\Protocol\SimpleJSON;
 class MapContext extends StructContext
 {
     protected $isKey = true;
-    private $p;
+    private $protocol;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        parent::__construct($p);
+        parent::__construct($protocol);
     }
 
     public function write()

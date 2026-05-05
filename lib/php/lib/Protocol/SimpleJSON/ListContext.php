@@ -28,11 +28,11 @@ use Thrift\Protocol\TSimpleJSONProtocol;
 class ListContext extends Context
 {
     protected $first = true;
-    private $p;
+    private $protocol;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p = $p;
+        $this->protocol = $protocol;
     }
 
     public function write()
@@ -40,7 +40,7 @@ class ListContext extends Context
         if ($this->first) {
             $this->first = false;
         } else {
-            $this->p->getTransport()->write(TSimpleJSONProtocol::COMMA);
+            $this->protocol->getTransport()->write(TSimpleJSONProtocol::COMMA);
         }
     }
 }

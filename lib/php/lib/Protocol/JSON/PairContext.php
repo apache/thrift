@@ -29,11 +29,11 @@ class PairContext extends BaseContext
 {
     private $first = true;
     private $colon = true;
-    private $p = null;
+    private $protocol = null;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p = $p;
+        $this->protocol = $protocol;
     }
 
     public function write()
@@ -42,7 +42,7 @@ class PairContext extends BaseContext
             $this->first = false;
             $this->colon = true;
         } else {
-            $this->p->getTransport()->write($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
+            $this->protocol->getTransport()->write($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
             $this->colon = !$this->colon;
         }
     }
@@ -53,7 +53,7 @@ class PairContext extends BaseContext
             $this->first = false;
             $this->colon = true;
         } else {
-            $this->p->readJSONSyntaxChar($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
+            $this->protocol->readJSONSyntaxChar($this->colon ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
             $this->colon = !$this->colon;
         }
     }

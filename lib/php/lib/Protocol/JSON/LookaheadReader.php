@@ -27,11 +27,11 @@ class LookaheadReader
 {
     private $hasData = false;
     private $data = array();
-    private $p;
+    private $protocol;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p = $p;
+        $this->protocol = $protocol;
     }
 
     public function read()
@@ -39,7 +39,7 @@ class LookaheadReader
         if ($this->hasData) {
             $this->hasData = false;
         } else {
-            $this->data = $this->p->getTransport()->readAll(1);
+            $this->data = $this->protocol->getTransport()->readAll(1);
         }
 
         return substr($this->data, 0, 1);
@@ -48,7 +48,7 @@ class LookaheadReader
     public function peek()
     {
         if (!$this->hasData) {
-            $this->data = $this->p->getTransport()->readAll(1);
+            $this->data = $this->protocol->getTransport()->readAll(1);
         }
 
         $this->hasData = true;

@@ -28,11 +28,11 @@ use Thrift\Protocol\TJSONProtocol;
 class ListContext extends BaseContext
 {
     private $first = true;
-    private $p;
+    private $protocol;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p = $p;
+        $this->protocol = $protocol;
     }
 
     public function write()
@@ -40,7 +40,7 @@ class ListContext extends BaseContext
         if ($this->first) {
             $this->first = false;
         } else {
-            $this->p->getTransport()->write(TJSONProtocol::COMMA);
+            $this->protocol->getTransport()->write(TJSONProtocol::COMMA);
         }
     }
 
@@ -49,7 +49,7 @@ class ListContext extends BaseContext
         if ($this->first) {
             $this->first = false;
         } else {
-            $this->p->readJSONSyntaxChar(TJSONProtocol::COMMA);
+            $this->protocol->readJSONSyntaxChar(TJSONProtocol::COMMA);
         }
     }
 }

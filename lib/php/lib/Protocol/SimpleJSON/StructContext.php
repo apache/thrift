@@ -29,11 +29,11 @@ class StructContext extends Context
 {
     protected $first = true;
     protected $colon = true;
-    private $p;
+    private $protocol;
 
-    public function __construct($p)
+    public function __construct($protocol)
     {
-        $this->p = $p;
+        $this->protocol = $protocol;
     }
 
     public function write()
@@ -42,7 +42,7 @@ class StructContext extends Context
             $this->first = false;
             $this->colon = true;
         } else {
-            $this->p->getTransport()->write(
+            $this->protocol->getTransport()->write(
                 $this->colon ?
                     TSimpleJSONProtocol::COLON :
                     TSimpleJSONProtocol::COMMA
