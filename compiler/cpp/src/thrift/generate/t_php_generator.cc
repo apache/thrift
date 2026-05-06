@@ -106,6 +106,41 @@ public:
     return "    ";
   }
 
+  /**
+   * Override the default autogen comment to include `phpcs:disable`
+   * directives so that downstream projects running PSR-12 / Squiz
+   * sniffs against generated PHP get clean output without per-project
+   * configuration. The disabled sniffs split into two groups:
+   *
+   *  - Cross-Thrift naming conventions (snake_case method names,
+   *    `<service>_<method>_args` class names, multiple classes per
+   *    file in the classmap variant) that must remain consistent
+   *    with the other Thrift language libraries.
+   *  - Cosmetic emission style (trailing whitespace inside docblocks,
+   *    inline-mode indent, `new Foo` without parens, closing-brace
+   *    placement, etc.) that the C++ generator does not currently
+   *    align with PSR-12 — pre-existing and out of scope here.
+   */
+  std::string autogen_comment() override {
+    return std::string("/**\n")
+           + " * " + autogen_summary() + "\n"
+           + " *\n"
+           + " * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n"
+           + " *  @generated\n"
+           + " *\n"
+           + " * phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses\n"
+           + " * phpcs:disable PSR1.Methods.CamelCapsMethodName\n"
+           + " * phpcs:disable Squiz.Classes.ValidClassName\n"
+           + " * phpcs:disable Squiz.WhiteSpace.SuperfluousWhitespace\n"
+           + " * phpcs:disable Generic.WhiteSpace.ScopeIndent\n"
+           + " * phpcs:disable Generic.ControlStructures.InlineControlStructure\n"
+           + " * phpcs:disable PSR12.Operators.OperatorSpacing\n"
+           + " * phpcs:disable PSR12.Classes.ClassInstantiation\n"
+           + " * phpcs:disable PSR2.Classes.ClassDeclaration\n"
+           + " * phpcs:disable PSR2.Files.EndFileNewline\n"
+           + " */\n";
+  }
+
   static bool is_valid_namespace(const std::string& sub_namespace);
 
   /**
@@ -511,28 +546,26 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {
  * Generates service header contains namespace suffix and includes inside file specified
  */
 void t_php_generator::generate_service_header(t_service* tservice, std::ostream& file) {
-  file << "<?php" << '\n';
+  file << "<?php" << '\n' << '\n'
+       << autogen_comment() << '\n';
   if (!php_namespace_suffix(tservice->get_program()).empty()) {
     file << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << '\n'
          << '\n';
   }
-  file << autogen_comment() << php_includes();
-
-  file << '\n';
+  file << php_includes() << '\n';
 }
 
 /**
  * Generates program header contains namespace suffix and includes inside file specified
  */
 void t_php_generator::generate_program_header(std::ostream& file) {
-  file << "<?php" << '\n';
+  file << "<?php" << '\n' << '\n'
+       << autogen_comment() << '\n';
   if (!php_namespace_suffix(get_program()).empty()) {
     file << "namespace " << php_namespace_suffix(get_program()) << ";" << '\n'
          << '\n';
   }
-  file << autogen_comment() << php_includes();
-
-  file << '\n';
+  file << php_includes() << '\n';
 }
 
 /**
