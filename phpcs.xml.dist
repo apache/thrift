@@ -4,6 +4,14 @@
 
     <file>lib/php/lib</file>
     <file>lib/php/test</file>
+    <!--
+        Auto-generated test fixtures: the cross-Thrift code-generation
+        conventions intentionally use snake_case identifiers
+        (`process_testVoid`, `send_*`, `recv_*`, `ThriftTest_testFoo_args`)
+        and pack multiple classes per classmap-variant file. Those clash
+        with PSR-1 / Squiz strict naming rules but must stay consistent
+        with the other Thrift language libraries.
+    -->
     <exclude-pattern>lib/php/test/Resources/packages/*</exclude-pattern>
 
     <arg name="basepath" value="."/>
