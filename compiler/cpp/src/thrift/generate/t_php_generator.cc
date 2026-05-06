@@ -800,8 +800,8 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
     indent(out) << "'val' => [" << '\n';
     indent_up();
     generate_php_type_spec(out, vtype);
-    indent(out) << "]," << '\n';
     indent_down();
+    indent(out) << "]," << '\n';
   } else if (t->is_list() || t->is_set()) {
     t_type* etype;
     if (t->is_list()) {
@@ -813,8 +813,8 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
     indent(out) << "'elem' => [" << '\n';
     indent_up();
     generate_php_type_spec(out, etype);
-    indent(out) << "]," << '\n';
     indent_down();
+    indent(out) << "]," << '\n';
   } else {
     throw "compiler error: no type for php struct spec field";
   }
