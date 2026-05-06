@@ -2682,10 +2682,25 @@ void t_php_generator::generate_serialize_list_element(ostream& out, t_list* tlis
 }
 
 /**
- * Emits a PHPDoc comment for the given contents
+ * Emits a PHPDoc comment for the given contents.
+ *
+ * Equivalent to the base `generate_docstring_comment` with prefix `" * "`,
+ * except empty docstring lines are emitted as `" *"` (no trailing space) so
+ * the result is clean under PSR-12 / Squiz `SuperfluousWhitespace` sniffs.
  */
 void t_php_generator::generate_php_docstring_comment(ostream& out, string contents) {
-  generate_docstring_comment(out, "/**\n", " * ", contents, " */\n");
+  indent(out) << "/**" << '\n';
+  std::stringstream docs(contents, std::ios_base::in);
+  while (!(docs.eof() || docs.fail())) {
+    char line[1024];
+    docs.getline(line, 1024);
+    if (strlen(line) > 0) {
+      indent(out) << " * " << line << '\n';
+    } else if (!docs.eof()) {
+      indent(out) << " *" << '\n';
+    }
+  }
+  indent(out) << " */" << '\n';
 }
 
 /**
@@ -2758,7 +2773,7 @@ void t_php_generator::generate_php_doc(ostream& out, t_function* function) {
     ss << '\n';
   }
 
-  generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
+  generate_php_docstring_comment(out, ss.str());
 }
 
 /**

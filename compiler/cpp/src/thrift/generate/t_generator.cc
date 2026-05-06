@@ -184,14 +184,7 @@ void t_generator::generate_docstring_comment(ostream& out,
     } else if (line_prefix.empty()){
       out << '\n';
     } else if(!docs.eof()) {
-      // Empty docstring line — emit the prefix with any trailing
-      // whitespace stripped so we don't leak `* ` style trailing space
-      // into the output.
-      std::string trimmed = line_prefix;
-      while (!trimmed.empty() && (trimmed.back() == ' ' || trimmed.back() == '\t')) {
-        trimmed.pop_back();
-      }
-      indent(out) << trimmed << '\n';
+      indent(out) << line_prefix << '\n';
     }
   }
   if (!comment_end.empty())
