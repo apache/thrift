@@ -2204,13 +2204,13 @@ void t_php_generator::generate_deserialize_field(ostream& out,
                 << indent() << "$" << name << " = $arr[1];" << '\n';
             break;
           case t_base_type::TYPE_UUID:
-            out << indent() << "$_uuid_bin = " << itrans << "->readAll(16);" << '\n'
-                << indent() << "$_uuid_hex = bin2hex($_uuid_bin);" << '\n'
-                << indent() << "$" << name << " = substr($_uuid_hex, 0, 8) . '-' . "
-                << "substr($_uuid_hex, 8, 4) . '-' . "
-                << "substr($_uuid_hex, 12, 4) . '-' . "
-                << "substr($_uuid_hex, 16, 4) . '-' . "
-                << "substr($_uuid_hex, 20, 12);" << '\n';
+            out << indent() << "$uuidBin = " << itrans << "->readAll(16);" << '\n'
+                << indent() << "$uuidHex = bin2hex($uuidBin);" << '\n'
+                << indent() << "$" << name << " = substr($uuidHex, 0, 8) . '-' . "
+                << "substr($uuidHex, 8, 4) . '-' . "
+                << "substr($uuidHex, 12, 4) . '-' . "
+                << "substr($uuidHex, 16, 4) . '-' . "
+                << "substr($uuidHex, 20, 12);" << '\n';
             break;
           default:
             throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase)
