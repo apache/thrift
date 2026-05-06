@@ -587,7 +587,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         RETURN_NULL();
       }
 
-      zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
+      zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "tspec", sizeof("tspec")-1, false);
       ZVAL_DEREF(spec);
       if (EG(exception)) {
         zend_object *ex = EG(exception);
@@ -770,7 +770,7 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       if (Z_TYPE_P(value) != IS_OBJECT) {
         throw_tprotocolexception("Attempt to send non-object type as a T_STRUCT", INVALID_DATA);
       }
-      zval* spec = zend_read_static_property(Z_OBJCE_P(value), "_TSPEC", sizeof("_TSPEC")-1, true);
+      zval* spec = zend_read_static_property(Z_OBJCE_P(value), "tspec", sizeof("tspec")-1, true);
       if (spec && Z_TYPE_P(spec) == IS_REFERENCE) {
         ZVAL_DEREF(spec);
       }
@@ -969,7 +969,7 @@ void validate_thrift_object(zval* object) {
     if (is_validate) {
       ZVAL_DEREF(is_validate);
     }
-    zval* spec = zend_read_static_property(object_class_entry, "_TSPEC", sizeof("_TSPEC")-1, true);
+    zval* spec = zend_read_static_property(object_class_entry, "tspec", sizeof("tspec")-1, true);
     if (spec) {
       ZVAL_DEREF(spec);
     }
@@ -1105,7 +1105,7 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
   }
 
   try {
-    zval* spec = zend_read_static_property(Z_OBJCE_P(request_struct), "_TSPEC", sizeof("_TSPEC")-1, true);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(request_struct), "tspec", sizeof("tspec")-1, true);
     if (spec) {
       ZVAL_DEREF(spec);
     }
@@ -1172,7 +1172,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     if (messageType == T_EXCEPTION) {
       zval ex;
       createObject("\\Thrift\\Exception\\TApplicationException", &ex);
-      zval* spec = zend_read_static_property(Z_OBJCE(ex), "_TSPEC", sizeof("_TPSEC")-1, false);
+      zval* spec = zend_read_static_property(Z_OBJCE(ex), "tspec", sizeof("tspec")-1, false);
       ZVAL_DEREF(spec);
       if (EG(exception)) {
         zend_object *ex = EG(exception);
@@ -1184,7 +1184,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     }
 
     createObject(ZSTR_VAL(obj_typename), return_value);
-    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, true);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "tspec", sizeof("tspec")-1, true);
     if (spec) {
       ZVAL_DEREF(spec);
     }
@@ -1220,7 +1220,7 @@ PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin) {
     PHPInputTransport transport(protocol, buffer_size);
 
     createObject(ZSTR_VAL(obj_typename), return_value);
-    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "tspec", sizeof("tspec")-1, false);
     ZVAL_DEREF(spec);
     binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
