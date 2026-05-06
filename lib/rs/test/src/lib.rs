@@ -106,4 +106,163 @@ mod tests {
             "unknown union variant should result in None field (forward compat)"
         );
     }
+
+    #[test]
+    fn union_with_known_and_unknown_fields_deserializes_to_known_variant() {
+        use std::io::Cursor;
+
+        use thrift::protocol::{
+            TBinaryInputProtocol, TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol,
+            TSerializable, TStructIdentifier, TType,
+        };
+
+        // Regression test for total_field_count: a newer server may send a union
+        // with a recognised variant (id=2, MeasuringCup) plus an extra unknown
+        // field (id=99).  The deserializer must return the known variant rather
+        // than failing with "received multiple fields for union".
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut prot = TBinaryOutputProtocol::new(Cursor::new(&mut buf), false);
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "MeasuringAids".to_owned(),
+            })
+            .unwrap();
+            // Known variant: MeasuringCup (field id=2)
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Struct,
+                id: Some(2),
+            })
+            .unwrap();
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "MeasuringCup".to_owned(),
+            })
+            .unwrap();
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Double,
+                id: Some(1),
+            })
+            .unwrap();
+            prot.write_double(250.0).unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+            prot.write_field_end().unwrap();
+            // Unknown field from a newer schema (field id=99)
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::I32,
+                id: Some(99),
+            })
+            .unwrap();
+            prot.write_i32(0).unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+        }
+
+        let aids = base_one::MeasuringAids::read_from_in_protocol(&mut TBinaryInputProtocol::new(
+            Cursor::new(buf),
+            false,
+        ))
+        .expect("union with a known variant plus an unknown field must deserialize successfully");
+
+        assert!(
+            matches!(aids, base_one::MeasuringAids::Cup(_)),
+            "known variant (Cup) must be returned when an unknown field is also present"
+        );
+    }
+
+    #[test]
+    fn nested_union_unknown_variant_does_not_corrupt_stream() {
+        use std::io::Cursor;
+
+        use thrift::protocol::{
+            TBinaryInputProtocol, TBinaryOutputProtocol, TFieldIdentifier, TOutputProtocol,
+            TSerializable, TStructIdentifier, TType,
+        };
+
+        // Regression test for stream corruption: when suppress_unknown catches
+        // an UnknownUnionVariant error from a union field whose variant value is
+        // itself a union, the outer union's Stop byte must have been consumed
+        // before the error propagates.  If it hasn't, the enclosing struct loop
+        // reads that orphaned 0x00 as its own Stop and silently drops every
+        // subsequent field.
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut prot = TBinaryOutputProtocol::new(Cursor::new(&mut buf), false);
+            // InstrumentBox
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "InstrumentBox".to_owned(),
+            })
+            .unwrap();
+            // field 1: InstrumentUnion
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Struct,
+                id: Some(1),
+            })
+            .unwrap();
+            // InstrumentUnion: known variant 1 whose value (MeasuringAids) carries
+            // only an unknown sub-variant, so MeasuringAids::read returns
+            // UnknownUnionVariant, which propagates via ? before InstrumentUnion
+            // has consumed its own Stop byte.
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "InstrumentUnion".to_owned(),
+            })
+            .unwrap();
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Struct,
+                id: Some(1),
+            })
+            .unwrap();
+            prot.write_struct_begin(&TStructIdentifier {
+                name: "MeasuringAids".to_owned(),
+            })
+            .unwrap();
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::I32,
+                id: Some(99),
+            })
+            .unwrap();
+            prot.write_i32(0).unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap(); // InstrumentUnion's Stop
+            prot.write_struct_end().unwrap();
+            prot.write_field_end().unwrap();
+            // field 2: tag=42 — must survive even if field 1 triggers suppress_unknown
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::I32,
+                id: Some(2),
+            })
+            .unwrap();
+            prot.write_i32(42).unwrap();
+            prot.write_field_end().unwrap();
+            prot.write_field_stop().unwrap();
+            prot.write_struct_end().unwrap();
+        }
+
+        let ibox = base_one::InstrumentBox::read_from_in_protocol(&mut TBinaryInputProtocol::new(
+            Cursor::new(buf),
+            false,
+        ))
+        .expect("struct with a nested unknown union variant must deserialize without error");
+
+        assert!(
+            ibox.instrument.is_none(),
+            "outer union with nested unknown variant must become None"
+        );
+        assert_eq!(
+            ibox.tag,
+            Some(42),
+            "field following a suppressed union must not be silently dropped due to stream corruption"
+        );
+    }
 }
