@@ -68,6 +68,15 @@ struct AidKit {
   1: optional MeasuringAids aid
 }
 
+union InstrumentUnion {
+  1: MeasuringAids measuring_aids
+}
+
+struct InstrumentBox {
+  1: optional InstrumentUnion instrument
+  2: optional i32 tag
+}
+
 struct CookingTemperatures {
   1: set<double> commonTemperatures
   2: list<double> usedTemperatures
