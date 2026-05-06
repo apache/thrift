@@ -107,31 +107,37 @@ public:
   }
 
   /**
-   * Override the default autogen comment to include `phpcs:disable`
-   * directives so that downstream projects running PSR-12 / Squiz
-   * sniffs against generated PHP get clean output without per-project
-   * configuration. The disabled sniffs split into two groups:
+   * Build a PHP file-level docblock. Optional `phpcs_disables` are
+   * emitted as `phpcs:disable <Sniff>` lines inside the same docblock
+   * so downstream projects running PSR-12 / Squiz sniffs against the
+   * generated code get clean output without per-project configuration.
    *
-   *  - Cross-Thrift naming conventions (snake_case method names,
-   *    `<service>_<method>_args` class names, multiple classes per
-   *    file in the classmap variant) that must remain consistent
-   *    with the other Thrift language libraries.
-   *  - Cosmetic emission style (trailing whitespace inside docblocks,
-   *    inline-mode indent, `new Foo` without parens, closing-brace
-   *    placement, etc.) that the C++ generator does not currently
-   *    align with PSR-12 — pre-existing and out of scope here.
+   * The three sniffs we ever disable cover cross-Thrift naming
+   * conventions that must remain consistent with the other Thrift
+   * language generators, so they are passed through only for the
+   * file shapes that actually contain those identifiers (service
+   * client, processor, helper structs, classmap-mode service files,
+   * etc.). Plain struct / enum / interface / REST files are emitted
+   * with a clean docblock and no disable noise.
    */
+  std::string php_autogen_comment(const std::vector<std::string>& phpcs_disables) {
+    std::string s = "/**\n";
+    s += " * " + autogen_summary() + "\n";
+    s += " *\n";
+    s += " * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n";
+    s += " *  @generated\n";
+    if (!phpcs_disables.empty()) {
+      s += " *\n";
+      for (const auto& rule : phpcs_disables) {
+        s += " * phpcs:disable " + rule + "\n";
+      }
+    }
+    s += " */\n";
+    return s;
+  }
+
   std::string autogen_comment() override {
-    return std::string("/**\n")
-           + " * " + autogen_summary() + "\n"
-           + " *\n"
-           + " * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING\n"
-           + " *  @generated\n"
-           + " *\n"
-           + " * phpcs:disable PSR1.Classes.ClassDeclaration.MultipleClasses\n"
-           + " * phpcs:disable PSR1.Methods.CamelCapsMethodName\n"
-           + " * phpcs:disable Squiz.Classes.ValidClassName\n"
-           + " */\n";
+    return php_autogen_comment({});
   }
 
   static bool is_valid_namespace(const std::string& sub_namespace);
@@ -201,8 +207,11 @@ public:
   void generate_service_client(t_service* tservice);
   void generate_service_processor(t_service* tservice);
   void generate_process_function(std::ostream& out, t_service* tservice, t_function* tfunction);
-  void generate_service_header(t_service* tservice, std::ostream& file);
-  void generate_program_header(std::ostream& file);
+  void generate_service_header(t_service* tservice,
+                               std::ostream& file,
+                               const std::vector<std::string>& phpcs_disables = {});
+  void generate_program_header(std::ostream& file,
+                               const std::vector<std::string>& phpcs_disables = {});
 
   /**
    * Serialization constructs
@@ -491,7 +500,11 @@ void t_php_generator::init_generator() {
     // Make output file
     string f_types_name = package_dir_ + "Types.php";
     f_types_.open(f_types_name.c_str());
-    generate_program_header(f_types_);
+    generate_program_header(f_types_, {
+        "PSR1.Classes.ClassDeclaration.MultipleClasses",
+        "PSR1.Methods.CamelCapsMethodName",
+        "Squiz.Classes.ValidClassName",
+    });
   }
 }
 
@@ -538,9 +551,11 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {
 /**
  * Generates service header contains namespace suffix and includes inside file specified
  */
-void t_php_generator::generate_service_header(t_service* tservice, std::ostream& file) {
+void t_php_generator::generate_service_header(t_service* tservice,
+                                              std::ostream& file,
+                                              const std::vector<std::string>& phpcs_disables) {
   file << "<?php" << '\n' << '\n'
-       << autogen_comment() << '\n';
+       << php_autogen_comment(phpcs_disables) << '\n';
   if (!php_namespace_suffix(tservice->get_program()).empty()) {
     file << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << '\n'
          << '\n';
@@ -551,9 +566,10 @@ void t_php_generator::generate_service_header(t_service* tservice, std::ostream&
 /**
  * Generates program header contains namespace suffix and includes inside file specified
  */
-void t_php_generator::generate_program_header(std::ostream& file) {
+void t_php_generator::generate_program_header(std::ostream& file,
+                                              const std::vector<std::string>& phpcs_disables) {
   file << "<?php" << '\n' << '\n'
-       << autogen_comment() << '\n';
+       << php_autogen_comment(phpcs_disables) << '\n';
   if (!php_namespace_suffix(get_program()).empty()) {
     file << "namespace " << php_namespace_suffix(get_program()) << ";" << '\n'
          << '\n';
@@ -626,7 +642,7 @@ void t_php_generator::generate_consts(vector<t_const*> consts) {
     if (!classmap_) {
       string f_consts_name = package_dir_ + "Constant.php";
       f_consts.open(f_consts_name.c_str());
-      generate_program_header(f_consts);
+      generate_program_header(f_consts, {"PSR1.Methods.CamelCapsMethodName"});
     }
     f_consts << "final class Constant extends \\Thrift\\Type\\TConstant"<< '\n'
              << "{" << '\n';
@@ -1392,7 +1408,11 @@ void t_php_generator::generate_service(t_service* tservice) {
   if(classmap_) {
     string f_service_name = package_dir_ + service_name_ + ".php";
     f_service_.open(f_service_name.c_str());
-    generate_service_header(tservice, f_service_);
+    generate_service_header(tservice, f_service_, {
+        "PSR1.Classes.ClassDeclaration.MultipleClasses",
+        "PSR1.Methods.CamelCapsMethodName",
+        "Squiz.Classes.ValidClassName",
+    });
   }
 
   // Generate the three main parts of the service (well, two for now in PHP)
@@ -1421,7 +1441,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   if (!classmap_) {
     string f_service_processor_name = package_dir_ + service_name_ + "Processor.php";
     f_service_processor.open(f_service_processor_name.c_str());
-    generate_service_header(tservice, f_service_processor);
+    generate_service_header(tservice, f_service_processor, {"PSR1.Methods.CamelCapsMethodName"});
   }
 
   // Generate the dispatch methods
@@ -1715,7 +1735,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
     if (!classmap_) {
       string f_struct_definition_name = package_dir_ + service_name_ + "_" + name + ".php";
       f_struct_definition.open(f_struct_definition_name.c_str());
-      generate_service_header(tservice, f_struct_definition);
+      generate_service_header(tservice, f_struct_definition, {"Squiz.Classes.ValidClassName"});
     }
 
     generate_php_struct_definition(f_struct_definition, ts);
@@ -1752,7 +1772,7 @@ void t_php_generator::generate_php_function_helpers(t_service* tservice, t_funct
     if (!classmap_) {
       string f_struct_helper_name = package_dir_ + result.get_name() + ".php";
       f_struct_helper.open(f_struct_helper_name.c_str());
-      generate_service_header(tservice, f_struct_helper);
+      generate_service_header(tservice, f_struct_helper, {"Squiz.Classes.ValidClassName"});
     }
     generate_php_struct_definition(f_struct_helper, &result, false, true);
     if (!classmap_) {
@@ -1896,7 +1916,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
   if (!classmap_) {
     string f_service_client_name = package_dir_ + service_name_ + "Client.php";
     f_service_client.open(f_service_client_name.c_str());
-    generate_service_header(tservice, f_service_client);
+    generate_service_header(tservice, f_service_client, {"PSR1.Methods.CamelCapsMethodName"});
   }
 
   string extends = "";
