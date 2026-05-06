@@ -518,6 +518,7 @@ string t_php_generator::php_includes() {
                     "use Thrift\\Exception\\TException;\n"
                     "use Thrift\\Exception\\TProtocolException;\n"
                     "use Thrift\\Protocol\\TProtocol;\n"
+                    "use Thrift\\Protocol\\TBinaryProtocol;\n"
                     "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n"
                     "use Thrift\\Exception\\TApplicationException;\n";
 
@@ -1693,7 +1694,7 @@ void t_php_generator::generate_process_function(std::ostream& out, t_service* ts
 
   // Serialize the request header
   if (binary_inline_) {
-    out << indent() << "$buff = pack('N', (0x80010000 | "
+    out << indent() << "$buff = pack('N', (TBinaryProtocol::VERSION_1 | "
         << "TMessageType::REPLY)); " << '\n' << indent() << "$buff .= pack('N', strlen('"
         << tfunction->get_name() << "'));" << '\n' << indent() << "$buff .= '"
         << tfunction->get_name() << "';" << '\n' << indent() << "$buff .= pack('N', $seqid);"
@@ -2032,7 +2033,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     if (binary_inline_) {
-      f_service_client << indent() << "$buff = pack('N', (0x80010000 | " << messageType << "));" << '\n'
+      f_service_client << indent() << "$buff = pack('N', (TBinaryProtocol::VERSION_1 | " << messageType << "));" << '\n'
                        << indent() << "$buff .= pack('N', strlen('" << funname << "'));" << '\n'
                        << indent() << "$buff .= '" << funname << "';" << '\n' << indent()
                        << "$buff .= pack('N', $this->seqid);" << '\n';
@@ -2099,11 +2100,11 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         t_field fseqid(g_type_i32, "rseqid");
         f_service_client << indent() << "$ver = unpack('N', $this->input->readAll(4));" << '\n'
                          << indent() << "$ver = $ver[1];" << '\n' << indent() << "$mtype = $ver & 0xff;"
-                         << '\n' << indent() << "$ver = $ver & 0xffff0000;" << '\n' << indent()
-                         << "if ($ver != 0x80010000) {" << '\n' << indent()
-                         << "    throw new TProtocolException('Bad version identifier: ' . $ver, "
-                         << "TProtocolException::BAD_VERSION);" << '\n' << indent()
-                         << "}" << '\n';
+                         << '\n' << indent() << "$ver = $ver & TBinaryProtocol::VERSION_MASK;" << '\n'
+                         << indent() << "if ($ver != TBinaryProtocol::VERSION_1) {" << '\n'
+                         << indent() << "    throw new TProtocolException('Bad version identifier: ' . $ver, "
+                         << "TProtocolException::BAD_VERSION);" << '\n'
+                         << indent() << "}" << '\n';
         generate_deserialize_field(f_service_client, &ffname, "", true);
         generate_deserialize_field(f_service_client, &fseqid, "", true);
       } else {
