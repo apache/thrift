@@ -424,6 +424,8 @@ public class TBinaryProtocol extends TProtocol {
   public String readString() throws TException {
     int size = readI32();
 
+    checkStringReadLength(size);
+
     if (trans_.getBytesRemainingInBuffer() >= size) {
       String s =
           new String(trans_.getBuffer(), trans_.getBufferPosition(), size, StandardCharsets.UTF_8);
@@ -431,7 +433,9 @@ public class TBinaryProtocol extends TProtocol {
       return s;
     }
 
-    return readStringBody(size);
+    byte[] buf = new byte[size];
+    trans_.readAll(buf, 0, size);
+    return new String(buf, StandardCharsets.UTF_8);
   }
 
   public String readStringBody(int size) throws TException {

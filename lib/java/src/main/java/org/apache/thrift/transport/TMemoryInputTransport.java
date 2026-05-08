@@ -96,7 +96,6 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     if (amtToRead > 0) {
       System.arraycopy(buf_, pos_, buf, off, amtToRead);
       consumeBuffer(amtToRead);
-      countConsumedMessageBytes(amtToRead);
     }
     return amtToRead;
   }
@@ -119,7 +118,13 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     return endPos_ - pos_;
   }
 
+  @Override
   public void consumeBuffer(int len) {
     pos_ += len;
+    if (remainingMessageSize >= len) {
+      remainingMessageSize -= len;
+    } else {
+      remainingMessageSize = 0;
+    }
   }
 }
