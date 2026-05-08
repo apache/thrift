@@ -40,7 +40,7 @@ jobs:
         uses: ./.github/actions/cloudtruth/configure-action
         with:
           apikey: "${{ secrets.CLOUDTRUTH_API_KEY }}"
-          project: "${{ github.repository }}"
+          project: "${{ github.event.repository.name }}"
           environment: "${{ github.event.action }}"
       - name: build sdist
         run: "cd lib/py && python setup.py sdist"
