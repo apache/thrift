@@ -865,6 +865,7 @@ jobs:
       fail-fast: false
     env:
       SKIP_BUILD_EXT: ${{ matrix.skip-build-ext && '1' || '' }}
+      BUNDLER_VERSION: ${{ case(matrix.ruby-version == 'head', '0', '2.2.34') }} # Bundler version is managed via setup-ruby action, not Bundler itself
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -874,6 +875,9 @@ jobs:
         uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
         with:
           ruby-version: ${{ matrix.ruby-version }}
+          # Old bundler used the internal constant of Pathname, that was not private due to a typo.
+          # https://github.com/ruby/rubygems/pull/9529
+          bundler: ${{ case(matrix.ruby-version == 'head', 'default', 'Gemfile.lock') }}
           bundler-cache: true
           working-directory: lib/rb
 
