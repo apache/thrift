@@ -13,10 +13,8 @@ class TSimpleServer extends TServer
 {
     /**
      * Flag for the main serving loop
-     *
-     * @var bool
      */
-    private $stop = false;
+    private bool $stop = false;
 
     /**
      * Listens for new client using the supplied

@@ -31,14 +31,8 @@ use Thrift\Transport\TTransport;
  */
 class TBinaryProtocolFactory implements TProtocolFactory
 {
-    /**
-     * @var bool
-     */
-    private $strictRead = false;
-    /**
-     * @var bool
-     */
-    private $strictWrite = false;
+    private bool $strictRead = false;
+    private bool $strictWrite = false;
 
     /**
      * @param bool $strictRead

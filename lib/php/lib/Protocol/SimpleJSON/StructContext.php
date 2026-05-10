@@ -27,13 +27,11 @@ use Thrift\Protocol\TSimpleJSONProtocol;
 
 class StructContext extends Context
 {
-    protected $first = true;
-    protected $colon = true;
-    private $protocol;
+    protected bool $first = true;
+    protected bool $colon = true;
 
-    public function __construct($protocol)
+    public function __construct(private TSimpleJSONProtocol $protocol)
     {
-        $this->protocol = $protocol;
     }
 
     public function write()

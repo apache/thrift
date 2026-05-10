@@ -44,10 +44,8 @@ class TMultiplexedProtocol extends TProtocolDecorator
 
     /**
      * The name of service.
-     *
-     * @var string
      */
-    private $serviceName;
+    private string $serviceName;
 
     /**
      * Constructor of <code>TMultiplexedProtocol</code> class.

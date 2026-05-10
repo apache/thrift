@@ -52,7 +52,10 @@ use Thrift\Type\TMessageType;
 
 class TMultiplexedProcessor
 {
-    private $serviceProcessorMap;
+    /**
+     * @var array<string, object>
+     */
+    private array $serviceProcessorMap = [];
 
     /**
      * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This

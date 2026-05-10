@@ -21,25 +21,21 @@
 
 namespace Test\Thrift\Unit\Lib\Protocol\Fixture;
 
-use Thrift\Transport\TTransport;
+use Thrift\Protocol\TJSONProtocol;
 
-class JsonProtocolStub
+/**
+ * Test double for TJSONProtocol that captures readJSONSyntaxChar calls
+ * for inspection. Inherits getTransport() and the rest of the protocol
+ * machinery from TJSONProtocol so context-level tests can pass it where
+ * a real TJSONProtocol is expected.
+ */
+class JsonProtocolStub extends TJSONProtocol
 {
-    private $transport;
-    public $readChars = [];
+    /** @var list<string> */
+    public array $readChars = [];
 
-    public function __construct(TTransport $transport)
+    public function readJSONSyntaxChar($b): void
     {
-        $this->transport = $transport;
-    }
-
-    public function getTransport(): TTransport
-    {
-        return $this->transport;
-    }
-
-    public function readJSONSyntaxChar(string $char): void
-    {
-        $this->readChars[] = $char;
+        $this->readChars[] = $b;
     }
 }

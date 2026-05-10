@@ -36,38 +36,28 @@ class TBufferedTransport extends TTransport
 {
     /**
      * The underlying transport
-     *
-     * @var TTransport
      */
-    protected $transport;
+    protected TTransport $transport;
 
     /**
      * The receive buffer size
-     *
-     * @var int
      */
-    protected $rBufSize = 512;
+    protected int $rBufSize = 512;
 
     /**
      * The write buffer size
-     *
-     * @var int
      */
-    protected $wBufSize = 512;
+    protected int $wBufSize = 512;
 
     /**
      * The write buffer.
-     *
-     * @var string
      */
-    protected $wBuf = '';
+    protected string $wBuf = '';
 
     /**
      * The read buffer.
-     *
-     * @var string
      */
-    protected $rBuf = '';
+    protected string $rBuf = '';
 
     /**
      * Constructor. Creates a buffered transport around an underlying transport

@@ -35,7 +35,8 @@ use Thrift\Type\TType;
 #[\AllowDynamicProperties]
 abstract class TBase
 {
-    public static $tmethod = [
+    /** @var array<int, string> */
+    public static array $tmethod = [
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',

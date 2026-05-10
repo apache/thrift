@@ -20,40 +20,29 @@ abstract class TServer
     protected $processor;
 
     /**
-     * Server transport to be used for listening
-     * and accepting new clients
-     *
-     * @var TServerTransport
+     * Server transport to be used for listening and accepting new clients
      */
-    protected $transport;
+    protected TServerTransport $transport;
 
     /**
      * Input transport factory
-     *
-     * @var TTransportFactoryInterface
      */
-    protected $inputTransportFactory;
+    protected TTransportFactoryInterface $inputTransportFactory;
 
     /**
      * Output transport factory
-     *
-     * @var TTransportFactoryInterface
      */
-    protected $outputTransportFactory;
+    protected TTransportFactoryInterface $outputTransportFactory;
 
     /**
      * Input protocol factory
-     *
-     * @var TProtocolFactory
      */
-    protected $inputProtocolFactory;
+    protected TProtocolFactory $inputProtocolFactory;
 
     /**
      * Output protocol factory
-     *
-     * @var TProtocolFactory
      */
-    protected $outputProtocolFactory;
+    protected TProtocolFactory $outputProtocolFactory;
 
     /**
      * Sets up all the factories, etc

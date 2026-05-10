@@ -27,7 +27,8 @@ use Thrift\Type\TType;
 
 class TApplicationException extends TException
 {
-    public static $tspec = [
+    /** @var array<int, array{var: string, type: int}> */
+    public static array $tspec = [
         1 => [
             'var' => 'message',
             'type' => TType::STRING,

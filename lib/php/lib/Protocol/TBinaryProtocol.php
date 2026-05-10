@@ -35,8 +35,8 @@ class TBinaryProtocol extends TProtocol
     public const VERSION_MASK = 0xffff0000;
     public const VERSION_1 = 0x80010000;
 
-    protected $strictRead = false;
-    protected $strictWrite = true;
+    protected bool $strictRead = false;
+    protected bool $strictWrite = true;
 
     public function __construct($trans, $strictRead = false, $strictWrite = true)
     {

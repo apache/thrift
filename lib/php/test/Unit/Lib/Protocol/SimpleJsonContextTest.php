@@ -22,13 +22,13 @@
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\Protocol\Fixture\SimpleJsonProtocolStub;
 use Thrift\Exception\TException;
 use Thrift\Protocol\SimpleJSON\CollectionMapKeyException;
 use Thrift\Protocol\SimpleJSON\Context;
 use Thrift\Protocol\SimpleJSON\ListContext;
 use Thrift\Protocol\SimpleJSON\MapContext;
 use Thrift\Protocol\SimpleJSON\StructContext;
+use Thrift\Protocol\TSimpleJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
 
 class SimpleJsonContextTest extends TestCase
@@ -44,7 +44,7 @@ class SimpleJsonContextTest extends TestCase
     public function testListContextWritesCommasAfterFirstElement(): void
     {
         $transport = new TMemoryBuffer();
-        $context = new ListContext(new SimpleJsonProtocolStub($transport));
+        $context = new ListContext(new TSimpleJSONProtocol($transport));
 
         $context->write();
         $context->write();
@@ -56,7 +56,7 @@ class SimpleJsonContextTest extends TestCase
     public function testStructContextWritesColonsAndCommas(): void
     {
         $transport = new TMemoryBuffer();
-        $context = new StructContext(new SimpleJsonProtocolStub($transport));
+        $context = new StructContext(new TSimpleJSONProtocol($transport));
 
         $context->write();
         $context->write();
@@ -68,7 +68,7 @@ class SimpleJsonContextTest extends TestCase
     public function testMapContextTogglesMapKeyState(): void
     {
         $transport = new TMemoryBuffer();
-        $context = new MapContext(new SimpleJsonProtocolStub($transport));
+        $context = new MapContext(new TSimpleJSONProtocol($transport));
 
         $this->assertTrue($context->isMapKey());
 

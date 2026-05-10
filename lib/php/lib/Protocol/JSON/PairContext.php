@@ -27,13 +27,11 @@ use Thrift\Protocol\TJSONProtocol;
 
 class PairContext extends BaseContext
 {
-    private $first = true;
-    private $colon = true;
-    private $protocol = null;
+    private bool $first = true;
+    private bool $colon = true;
 
-    public function __construct($protocol)
+    public function __construct(private TJSONProtocol $protocol)
     {
-        $this->protocol = $protocol;
     }
 
     public function write()

@@ -15,17 +15,15 @@ class TForkingServer extends TServer
 {
     /**
      * Flag for the main serving loop
-     *
-     * @var bool
      */
-    private $stop = false;
+    private bool $stop = false;
 
     /**
      * List of children.
      *
-     * @var array
+     * @var array<int, TTransport>
      */
-    protected $children = [];
+    protected array $children = [];
 
     /**
      * Listens for new client using the supplied

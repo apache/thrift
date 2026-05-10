@@ -27,12 +27,10 @@ use Thrift\Protocol\TSimpleJSONProtocol;
 
 class ListContext extends Context
 {
-    protected $first = true;
-    private $protocol;
+    protected bool $first = true;
 
-    public function __construct($protocol)
+    public function __construct(private TSimpleJSONProtocol $protocol)
     {
-        $this->protocol = $protocol;
     }
 
     public function write()

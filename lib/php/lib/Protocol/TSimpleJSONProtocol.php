@@ -48,8 +48,9 @@ class TSimpleJSONProtocol extends TProtocol
     public const NAME_LIST = "lst";
     public const NAME_SET = "set";
 
-    protected $writeContext = null;
-    protected $writeContextStack = [];
+    protected ?Context $writeContext = null;
+    /** @var list<Context|null> */
+    protected array $writeContextStack = [];
 
     /**
      * Push a new write context onto the stack.

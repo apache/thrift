@@ -23,12 +23,13 @@
 
 namespace Thrift\Protocol\SimpleJSON;
 
+use Thrift\Protocol\TSimpleJSONProtocol;
+
 class MapContext extends StructContext
 {
-    protected $isKey = true;
-    private $protocol;
+    protected bool $isKey = true;
 
-    public function __construct($protocol)
+    public function __construct(TSimpleJSONProtocol $protocol)
     {
         parent::__construct($protocol);
     }
