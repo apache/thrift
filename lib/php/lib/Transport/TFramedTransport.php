@@ -33,38 +33,28 @@ class TFramedTransport extends TTransport
 {
     /**
      * Underlying transport object.
-     *
-     * @var TTransport
      */
-    private $transport;
+    private ?TTransport $transport;
 
     /**
      * Buffer for read data.
-     *
-     * @var string
      */
-    private $rBuf = '';
+    private string $rBuf = '';
 
     /**
      * Buffer for queued output data
-     *
-     * @var string
      */
-    private $wBuf = '';
+    private string $wBuf = '';
 
     /**
      * Whether to frame reads
-     *
-     * @var bool
      */
-    private $read;
+    private bool $read;
 
     /**
      * Whether to frame writes
-     *
-     * @var bool
      */
-    private $write;
+    private bool $write;
 
     /**
      * Constructor.

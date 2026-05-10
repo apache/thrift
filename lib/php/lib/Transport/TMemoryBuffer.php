@@ -35,7 +35,7 @@ use Thrift\Exception\TTransportException;
  */
 class TMemoryBuffer extends TTransport
 {
-    protected $buf = '';
+    protected string $buf = '';
 
     /**
      * Constructor. Optionally pass an initial value

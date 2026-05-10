@@ -30,27 +30,27 @@ class ThriftClassLoader
 {
     /**
      * Namespaces path
-     * @var array
+     *
+     * @var array<string, list<string>>
      */
-    protected $namespaces = [];
+    protected array $namespaces = [];
 
     /**
      * Thrift definition paths
-     * @var array
+     *
+     * @var array<string, list<string>>
      */
-    protected $definitions = [];
+    protected array $definitions = [];
 
     /**
      * Do we use APCu cache ?
-     * @var boolean
      */
-    protected $apcu = false;
+    protected bool $apcu = false;
 
     /**
      * APCu Cache prefix
-     * @var string
      */
-    protected $apcu_prefix;
+    protected ?string $apcu_prefix;
 
     /**
      * Set autoloader to use APCu cache

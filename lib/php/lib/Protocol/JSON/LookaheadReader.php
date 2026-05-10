@@ -23,15 +23,15 @@
 
 namespace Thrift\Protocol\JSON;
 
+use Thrift\Protocol\TJSONProtocol;
+
 class LookaheadReader
 {
-    private $hasData = false;
-    private $data = [];
-    private $protocol;
+    private bool $hasData = false;
+    private string $data = '';
 
-    public function __construct($protocol)
+    public function __construct(private TJSONProtocol $protocol)
     {
-        $this->protocol = $protocol;
     }
 
     public function read()

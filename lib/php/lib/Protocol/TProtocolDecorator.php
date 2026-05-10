@@ -38,10 +38,8 @@ abstract class TProtocolDecorator extends TProtocol
 {
     /**
      * Instance of protocol, to which all operations will be forwarded.
-     *
-     * @var TProtocol
      */
-    private $concreteProtocol;
+    private TProtocol $concreteProtocol;
 
     /**
      * Constructor of <code>TProtocolDecorator</code> class.

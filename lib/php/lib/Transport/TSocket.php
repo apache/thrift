@@ -36,80 +36,62 @@ class TSocket extends TTransport
     /**
      * Handle to PHP socket
      *
-     * @var resource
+     * @var resource|null
      */
     protected $handle = null;
 
     /**
      * Remote hostname
-     *
-     * @var string
      */
-    protected $host = 'localhost';
+    protected string $host = 'localhost';
 
     /**
      * Remote port
-     *
-     * @var int
      */
-    protected $port = '9090';
+    protected int $port = 9090;
 
     /**
      * Send timeout in seconds.
      *
      * Combined with sendTimeoutUsec this is used for send timeouts.
-     *
-     * @var int
      */
-    protected $sendTimeoutSec = 0;
+    protected int $sendTimeoutSec = 0;
 
     /**
      * Send timeout in microseconds.
      *
      * Combined with sendTimeoutSec this is used for send timeouts.
-     *
-     * @var int
      */
-    protected $sendTimeoutUsec = 100000;
+    protected int $sendTimeoutUsec = 100000;
 
     /**
      * Recv timeout in seconds
      *
      * Combined with recvTimeoutUsec this is used for recv timeouts.
-     *
-     * @var int
      */
-    protected $recvTimeoutSec = 0;
+    protected int $recvTimeoutSec = 0;
 
     /**
      * Recv timeout in microseconds
      *
      * Combined with recvTimeoutSec this is used for recv timeouts.
-     *
-     * @var int
      */
-    protected $recvTimeoutUsec = 750000;
+    protected int $recvTimeoutUsec = 750000;
 
     /**
      * Persistent socket or plain?
-     *
-     * @var bool
      */
-    protected $persist = false;
+    protected bool $persist = false;
 
     /**
      * Debugging on?
-     *
-     * @var bool
      */
-    protected $debug = false;
+    protected bool $debug = false;
 
     /**
      * Debug handler
-     *
-     * @var mixed
      */
-    protected $debugHandler = null;
+    protected mixed $debugHandler = null;
 
     /**
      * Socket constructor

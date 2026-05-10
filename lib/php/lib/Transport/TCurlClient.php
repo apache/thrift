@@ -32,70 +32,59 @@ use Thrift\Exception\TTransportException;
  */
 class TCurlClient extends TTransport
 {
+    /** @var \CurlHandle|null */
     private static $curlHandle;
 
     /**
      * The host to connect to
-     *
-     * @var string
      */
-    protected $host;
+    protected string $host;
 
     /**
      * The port to connect on
-     *
-     * @var int
      */
-    protected $port;
+    protected int $port;
 
     /**
      * The URI to request
-     *
-     * @var string
      */
-    protected $uri;
+    protected string $uri;
 
     /**
      * The scheme to use for the request, i.e. http, https
-     *
-     * @var string
      */
-    protected $scheme;
+    protected string $scheme;
 
     /**
      * Buffer for the HTTP request data
-     *
-     * @var string
      */
-    protected $request;
+    protected string $request;
 
     /**
-     * Buffer for the HTTP response data.
-     *
-     * @var binary string
+     * Buffer for the HTTP response data. `false` reflects a failed curl_exec.
      */
-    protected $response;
+    protected string|false|null $response;
 
     /**
      * Read timeout
      *
-     * @var float
+     * @var float|int|null
      */
     protected $timeout;
 
     /**
      * Connection timeout
      *
-     * @var float
+     * @var float|int|null
      */
     protected $connectionTimeout;
 
     /**
      * http headers
      *
-     * @var array
+     * @var array<string, string|int>
      */
-    protected $headers;
+    protected array $headers;
 
     /**
      * Make a new HTTP client.

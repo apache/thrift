@@ -35,30 +35,24 @@ class TServerSocket extends TServerTransport
     /**
      * Handle for the listener socket
      *
-     * @var resource
+     * @var resource|null
      */
     protected $listener;
 
     /**
      * Port for the listener to listen on
-     *
-     * @var int
      */
-    protected $port;
+    protected int $port;
 
     /**
      * Timeout when listening for a new client
-     *
-     * @var int
      */
-    protected $acceptTimeout = 30000;
+    protected int $acceptTimeout = 30000;
 
     /**
      * Host to listen on
-     *
-     * @var string
      */
-    protected $host;
+    protected string $host;
 
     /**
      * ServerSocket constructor

@@ -34,66 +34,56 @@ class THttpClient extends TTransport
 {
     /**
      * The host to connect to
-     *
-     * @var string
      */
-    protected $host;
+    protected string $host;
 
     /**
      * The port to connect on
-     *
-     * @var int
      */
-    protected $port;
+    protected int $port;
 
     /**
      * The URI to request
-     *
-     * @var string
      */
-    protected $uri;
+    protected string $uri;
 
     /**
      * The scheme to use for the request, i.e. http, https
-     *
-     * @var string
      */
-    protected $scheme;
+    protected string $scheme;
 
     /**
      * Buffer for the HTTP request data
-     *
-     * @var string
      */
-    protected $buf;
+    protected string $buf;
 
     /**
      * Input socket stream.
      *
-     * @var resource
+     * @var resource|null
      */
     protected $handle;
 
     /**
      * Read timeout
      *
-     * @var float
+     * @var float|int|null
      */
     protected $timeout;
 
     /**
      * http headers
      *
-     * @var array
+     * @var array<string, string|int>
      */
-    protected $headers;
+    protected array $headers;
 
     /**
      * Context additional options
      *
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $context;
+    protected array $context;
 
     /**
      * Make a new HTTP client.

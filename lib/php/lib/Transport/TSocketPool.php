@@ -35,50 +35,41 @@ class TSocketPool extends TSocket
 {
     /**
      * Remote servers. Array of associative arrays with 'host' and 'port' keys
+     *
+     * @var list<array{host: string, port: int}>
      */
-    private $servers = [];
+    private array $servers = [];
 
     /**
      * How many times to retry each host in connect
-     *
-     * @var int
      */
-    private $numRetries = 1;
+    private int $numRetries = 1;
 
     /**
      * Retry interval in seconds, how long to not try a host if it has been
      * marked as down.
-     *
-     * @var int
      */
-    private $retryInterval = 60;
+    private int $retryInterval = 60;
 
     /**
      * Max consecutive failures before marking a host down.
-     *
-     * @var int
      */
-    private $maxConsecutiveFailures = 1;
+    private int $maxConsecutiveFailures = 1;
 
     /**
      * Try hosts in order? or Randomized?
-     *
-     * @var bool
      */
-    private $randomize = true;
+    private bool $randomize = true;
 
     /**
      * Always try last host, even if marked down?
-     *
-     * @var bool
      */
-    private $alwaysTryLast = true;
+    private bool $alwaysTryLast = true;
 
     /**
      * Use apcu cache
-     * @var bool
      */
-    private $useApcuCache;
+    private bool $useApcuCache;
 
     /**
      * Socket pool constructor
@@ -94,7 +85,7 @@ class TSocketPool extends TSocket
         $persist = false,
         $debugHandler = null
     ) {
-        parent::__construct(null, 0, $persist, $debugHandler);
+        parent::__construct('', 0, $persist, $debugHandler);
 
         if (!is_array($ports)) {
             $port = $ports;

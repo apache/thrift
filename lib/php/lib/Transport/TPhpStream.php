@@ -36,13 +36,15 @@ class TPhpStream extends TTransport
     public const MODE_R = 1;
     public const MODE_W = 2;
 
+    /** @var resource|null */
     private $inStream = null;
 
+    /** @var resource|null */
     private $outStream = null;
 
-    private $read = false;
+    private bool $read = false;
 
-    private $write = false;
+    private bool $write = false;
 
     public function __construct($mode)
     {

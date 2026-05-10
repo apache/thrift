@@ -58,7 +58,8 @@ class TException extends \Exception
         }
     }
 
-    public static $tmethod = [
+    /** @var array<int, string> */
+    public static array $tmethod = [
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',

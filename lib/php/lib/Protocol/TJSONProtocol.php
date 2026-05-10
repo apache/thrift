@@ -164,9 +164,10 @@ class TJSONProtocol extends TProtocol
         return $result;
     }
 
+    /** @var list<BaseContext> */
     private array $contextStack = [];
-    private $context;
-    private $reader;
+    private BaseContext $context;
+    private LookaheadReader $reader;
 
     private function pushContext($c)
     {

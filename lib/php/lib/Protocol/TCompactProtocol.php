@@ -66,7 +66,8 @@ class TCompactProtocol extends TProtocol
 
     public const MAX_VARINT_BYTES = 10; // ceil(64/7); matches protobuf wire format
 
-    protected static $ctypes = [
+    /** @var array<int, int> */
+    protected static array $ctypes = [
         TType::STOP => TCompactProtocol::COMPACT_STOP,
         TType::BOOL => TCompactProtocol::COMPACT_TRUE, // used for collection
         TType::BYTE => TCompactProtocol::COMPACT_BYTE,
@@ -82,7 +83,8 @@ class TCompactProtocol extends TProtocol
         TType::UUID => TCompactProtocol::COMPACT_UUID,
     ];
 
-    protected static $ttypes = [
+    /** @var array<int, int> */
+    protected static array $ttypes = [
         TCompactProtocol::COMPACT_STOP => TType::STOP,
         TCompactProtocol::COMPACT_TRUE => TType::BOOL, // used for collection
         TCompactProtocol::COMPACT_FALSE => TType::BOOL,
@@ -99,12 +101,14 @@ class TCompactProtocol extends TProtocol
         TCompactProtocol::COMPACT_UUID => TType::UUID,
     ];
 
-    protected $state = TCompactProtocol::STATE_CLEAR;
-    protected $lastFid = 0;
-    protected $boolFid = null;
-    protected $boolValue = null;
-    protected $structs = [];
-    protected $containers = [];
+    protected int $state = TCompactProtocol::STATE_CLEAR;
+    protected ?int $lastFid = 0;
+    protected ?int $boolFid = null;
+    protected ?bool $boolValue = null;
+    /** @var list<array{0: int, 1: int}> */
+    protected array $structs = [];
+    /** @var list<int> */
+    protected array $containers = [];
 
     // Some varint / zigzag helper methods
     public function toZigZag($n, $bits)
