@@ -31,17 +31,10 @@ use Thrift\Transport\TTransport;
  */
 class TBinaryProtocolFactory implements TProtocolFactory
 {
-    private bool $strictRead = false;
-    private bool $strictWrite = false;
-
-    /**
-     * @param bool $strictRead
-     * @param bool $strictWrite
-     */
-    public function __construct($strictRead = false, $strictWrite = false)
-    {
-        $this->strictRead = $strictRead;
-        $this->strictWrite = $strictWrite;
+    public function __construct(
+        private bool $strictRead = false,
+        private bool $strictWrite = false,
+    ) {
     }
 
     /**

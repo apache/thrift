@@ -34,13 +34,14 @@ class TSSLServerSocketTest extends TestCase
     use ReflectionHelper;
 
 
-    public function testGetSSLHost()
+    public function testEnsureSslHostPrefix()
     {
         $socket = new TSSLServerSocket();
+        $ensureSslHostPrefix = $this->getAccessibleMethod($socket, 'ensureSslHostPrefix');
 
-        $this->assertEquals('ssl://localhost', $socket->getSSLHost('localhost'));
-        $this->assertEquals('ssl://localhost', $socket->getSSLHost('ssl://localhost'));
-        $this->assertEquals('tcp://localhost', $socket->getSSLHost('tcp://localhost'));
+        $this->assertEquals('ssl://localhost', $ensureSslHostPrefix->invoke($socket, 'localhost'));
+        $this->assertEquals('ssl://localhost', $ensureSslHostPrefix->invoke($socket, 'ssl://localhost'));
+        $this->assertEquals('tcp://localhost', $ensureSslHostPrefix->invoke($socket, 'tcp://localhost'));
     }
 
     public function testListenAndClose(): void

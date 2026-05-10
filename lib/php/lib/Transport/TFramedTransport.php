@@ -32,11 +32,6 @@ namespace Thrift\Transport;
 class TFramedTransport extends TTransport
 {
     /**
-     * Underlying transport object.
-     */
-    private ?TTransport $transport;
-
-    /**
      * Buffer for read data.
      */
     private string $rBuf = '';
@@ -46,26 +41,11 @@ class TFramedTransport extends TTransport
      */
     private string $wBuf = '';
 
-    /**
-     * Whether to frame reads
-     */
-    private bool $read;
-
-    /**
-     * Whether to frame writes
-     */
-    private bool $write;
-
-    /**
-     * Constructor.
-     *
-     * @param TTransport $transport Underlying transport
-     */
-    public function __construct($transport = null, $read = true, $write = true)
-    {
-        $this->transport = $transport;
-        $this->read = $read;
-        $this->write = $write;
+    public function __construct(
+        private TTransport $transport,
+        private bool $read = true,
+        private bool $write = true,
+    ) {
     }
 
     public function isOpen()

@@ -34,52 +34,25 @@ use Thrift\Exception\TTransportException;
 class TSSLSocket extends TSocket
 {
     /**
-     * Remote port
+     * Stream context
      *
-     * @var null|resource
+     * @var resource|null
      */
-    protected $context = null;
+    protected $context;
 
     /**
      * Socket constructor
      *
-     * @param string $host Remote hostname
-     * @param int $port Remote port
-     * @param resource $context Stream context
-     * @param bool $persist Whether to use a persistent socket
-     * @param string $debugHandler Function to call for error logging
+     * @param resource|null $context Stream context
      */
     public function __construct(
-        $host = 'localhost',
-        $port = 9090,
+        string $host = 'localhost',
+        int $port = 9090,
         $context = null,
-        $debugHandler = null
+        $debugHandler = null,
     ) {
-        $this->host = $this->getSSLHost($host);
-        $this->port = $port;
-        // Initialize a stream context if not provided
-        if ($context === null) {
-            $context = stream_context_create();
-        }
-        $this->context = $context;
-        $this->debugHandler = $debugHandler ? $debugHandler : 'error_log';
-    }
-
-    /**
-     * Creates a host name with SSL transport protocol
-     * if no transport protocol already specified in
-     * the host name.
-     *
-     * @param string $host Host to listen on
-     * @return string $host   Host name with transport protocol
-     */
-    private function getSSLHost($host)
-    {
-        $transport_protocol_loc = strpos($host, "://");
-        if ($transport_protocol_loc === false) {
-            $host = 'ssl://' . $host;
-        }
-        return $host;
+        parent::__construct($this->ensureSslHostPrefix($host), $port, false, $debugHandler);
+        $this->context = $context ?? stream_context_create();
     }
 
     /**
@@ -118,5 +91,14 @@ class TSSLSocket extends TSocket
             }
             throw new TException($error);
         }
+    }
+
+    /**
+     * Returns the host with an `ssl://` prefix when no transport-protocol
+     * prefix is already present.
+     */
+    private function ensureSslHostPrefix(string $host): string
+    {
+        return str_contains($host, '://') ? $host : 'ssl://' . $host;
     }
 }

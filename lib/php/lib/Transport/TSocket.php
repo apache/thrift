@@ -34,21 +34,16 @@ use Thrift\Exception\TTransportException;
 class TSocket extends TTransport
 {
     /**
+     * Default debug handler used when none is supplied to the constructor.
+     */
+    public const DEFAULT_DEBUG_HANDLER = 'error_log';
+
+    /**
      * Handle to PHP socket
      *
      * @var resource|null
      */
     protected $handle = null;
-
-    /**
-     * Remote hostname
-     */
-    protected string $host = 'localhost';
-
-    /**
-     * Remote port
-     */
-    protected int $port = 9090;
 
     /**
      * Send timeout in seconds.
@@ -79,11 +74,6 @@ class TSocket extends TTransport
     protected int $recvTimeoutUsec = 750000;
 
     /**
-     * Persistent socket or plain?
-     */
-    protected bool $persist = false;
-
-    /**
      * Debugging on?
      */
     protected bool $debug = false;
@@ -91,26 +81,18 @@ class TSocket extends TTransport
     /**
      * Debug handler
      */
-    protected mixed $debugHandler = null;
+    protected mixed $debugHandler;
 
     /**
      * Socket constructor
-     *
-     * @param string $host Remote hostname
-     * @param int $port Remote port
-     * @param bool $persist Whether to use a persistent socket
-     * @param string $debugHandler Function to call for error logging
      */
     public function __construct(
-        $host = 'localhost',
-        $port = 9090,
-        $persist = false,
-        $debugHandler = null
+        protected string $host = 'localhost',
+        protected int $port = 9090,
+        protected bool $persist = false,
+        $debugHandler = null,
     ) {
-        $this->host = $host;
-        $this->port = $port;
-        $this->persist = $persist;
-        $this->debugHandler = $debugHandler ? $debugHandler : 'error_log';
+        $this->debugHandler = $debugHandler ?? self::DEFAULT_DEBUG_HANDLER;
     }
 
     /**

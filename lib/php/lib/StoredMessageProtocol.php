@@ -33,16 +33,13 @@ use Thrift\Protocol\TProtocolDecorator;
  */
 class StoredMessageProtocol extends TProtocolDecorator
 {
-    private string $fname;
-    private int $mtype;
-    private int $rseqid;
-
-    public function __construct(TProtocol $protocol, $fname, $mtype, $rseqid)
-    {
+    public function __construct(
+        TProtocol $protocol,
+        private string $fname,
+        private int $mtype,
+        private int $rseqid,
+    ) {
         parent::__construct($protocol);
-        $this->fname  = $fname;
-        $this->mtype  = $mtype;
-        $this->rseqid = $rseqid;
     }
 
     public function readMessageBegin(&$name, &$type, &$seqid)
