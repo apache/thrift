@@ -36,77 +36,51 @@ class TCurlClient extends TTransport
     private static $curlHandle;
 
     /**
-     * The host to connect to
-     */
-    protected string $host;
-
-    /**
-     * The port to connect on
-     */
-    protected int $port;
-
-    /**
      * The URI to request
      */
     protected string $uri;
 
     /**
-     * The scheme to use for the request, i.e. http, https
-     */
-    protected string $scheme;
-
-    /**
      * Buffer for the HTTP request data
      */
-    protected string $request;
+    protected string $request = '';
 
     /**
      * Buffer for the HTTP response data. `false` reflects a failed curl_exec.
      */
-    protected string|false|null $response;
+    protected string|false|null $response = null;
 
     /**
      * Read timeout
      *
      * @var float|int|null
      */
-    protected $timeout;
+    protected $timeout = null;
 
     /**
      * Connection timeout
      *
      * @var float|int|null
      */
-    protected $connectionTimeout;
+    protected $connectionTimeout = null;
 
     /**
      * http headers
      *
      * @var array<string, string|int>
      */
-    protected array $headers;
+    protected array $headers = [];
 
     /**
      * Make a new HTTP client.
-     *
-     * @param string $host
-     * @param int $port
-     * @param string $uri
      */
-    public function __construct($host, $port = 80, $uri = '', $scheme = 'http')
-    {
-        if ((strlen($uri) > 0) && ($uri[0] != '/')) {
-            $uri = '/' . $uri;
-        }
-        $this->scheme = $scheme;
-        $this->host = $host;
-        $this->port = $port;
-        $this->uri = $uri;
-        $this->request = '';
-        $this->response = null;
-        $this->timeout = null;
-        $this->connectionTimeout = null;
-        $this->headers = [];
+    public function __construct(
+        protected string $host,
+        protected int $port = 80,
+        string $uri = '',
+        protected string $scheme = 'http',
+    ) {
+        $this->uri = ($uri === '' || str_starts_with($uri, '/')) ? $uri : '/' . $uri;
     }
 
     /**

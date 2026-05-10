@@ -43,24 +43,12 @@ class ThriftClassLoader
     protected array $definitions = [];
 
     /**
-     * Do we use APCu cache ?
-     */
-    protected bool $apcu = false;
-
-    /**
-     * APCu Cache prefix
-     */
-    protected ?string $apcu_prefix;
-
-    /**
      * Set autoloader to use APCu cache
-     * @param boolean $apc
-     * @param string $apcu_prefix
      */
-    public function __construct($apc = false, $apcu_prefix = null)
-    {
-        $this->apcu = $apc;
-        $this->apcu_prefix = $apcu_prefix;
+    public function __construct(
+        protected bool $apcu = false,
+        protected ?string $apcu_prefix = null,
+    ) {
     }
 
     /**

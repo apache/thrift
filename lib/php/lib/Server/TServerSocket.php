@@ -40,31 +40,17 @@ class TServerSocket extends TServerTransport
     protected $listener;
 
     /**
-     * Port for the listener to listen on
-     */
-    protected int $port;
-
-    /**
      * Timeout when listening for a new client
      */
     protected int $acceptTimeout = 30000;
 
     /**
-     * Host to listen on
-     */
-    protected string $host;
-
-    /**
      * ServerSocket constructor
-     *
-     * @param string $host Host to listen on
-     * @param int $port Port to listen on
-     * @return void
      */
-    public function __construct($host = 'localhost', $port = 9090)
-    {
-        $this->host = $host;
-        $this->port = $port;
+    public function __construct(
+        protected string $host = 'localhost',
+        protected int $port = 9090,
+    ) {
     }
 
     /**

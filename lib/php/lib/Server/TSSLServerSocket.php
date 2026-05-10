@@ -32,38 +32,24 @@ use Thrift\Transport\TSSLSocket;
 class TSSLServerSocket extends TServerSocket
 {
     /**
-     * Remote port
+     * Stream context
      *
-     * @var resource
+     * @var resource|null
      */
-    protected $context = null;
+    protected $context;
 
     /**
      * ServerSocket constructor
      *
-     * @param string $host Host to listen on
-     * @param int $port Port to listen on
-     * @param resource $context Stream context
-     * @return void
+     * @param resource|null $context Stream context
      */
-    public function __construct($host = 'localhost', $port = 9090, $context = null)
-    {
-        $ssl_host = $this->getSSLHost($host);
-        parent::__construct($ssl_host, $port);
-        // Initialize a stream context if not provided
-        if ($context === null) {
-            $context = stream_context_create();
-        }
-        $this->context = $context;
-    }
-
-    public function getSSLHost($host)
-    {
-        $transport_protocol_loc = strpos($host, "://");
-        if ($transport_protocol_loc === false) {
-            $host = 'ssl://' . $host;
-        }
-        return $host;
+    public function __construct(
+        string $host = 'localhost',
+        int $port = 9090,
+        $context = null,
+    ) {
+        parent::__construct($this->ensureSslHostPrefix($host), $port);
+        $this->context = $context ?? stream_context_create();
     }
 
     /**
@@ -98,5 +84,14 @@ class TSSLServerSocket extends TServerSocket
         $socket->setHandle($handle);
 
         return $socket;
+    }
+
+    /**
+     * Returns the host with an `ssl://` prefix when no transport-protocol
+     * prefix is already present.
+     */
+    private function ensureSslHostPrefix(string $host): string
+    {
+        return str_contains($host, '://') ? $host : 'ssl://' . $host;
     }
 }

@@ -35,15 +35,11 @@ use Thrift\Exception\TTransportException;
  */
 class TMemoryBuffer extends TTransport
 {
-    protected string $buf = '';
-
     /**
-     * Constructor. Optionally pass an initial value
-     * for the buffer.
+     * Constructor. Optionally pass an initial value for the buffer.
      */
-    public function __construct($buf = '')
+    public function __construct(protected string $buf = '')
     {
-        $this->buf = $buf;
     }
 
     public function isOpen()

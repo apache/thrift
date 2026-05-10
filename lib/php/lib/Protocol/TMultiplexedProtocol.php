@@ -43,25 +43,16 @@ class TMultiplexedProtocol extends TProtocolDecorator
     public const SEPARATOR = ":";
 
     /**
-     * The name of service.
-     */
-    private string $serviceName;
-
-    /**
      * Constructor of <code>TMultiplexedProtocol</code> class.
      *
      * Wrap the specified protocol, allowing it to be used to communicate with a
      * multiplexing server.  The <code>$serviceName</code> is required as it is
      * prepended to the message header so that the multiplexing server can broker
      * the function call to the proper service.
-     *
-     * @param TProtocol $protocol
-     * @param string    $serviceName The name of service.
      */
-    public function __construct(TProtocol $protocol, $serviceName)
+    public function __construct(TProtocol $protocol, private string $serviceName)
     {
         parent::__construct($protocol);
-        $this->serviceName = $serviceName;
     }
 
     /**

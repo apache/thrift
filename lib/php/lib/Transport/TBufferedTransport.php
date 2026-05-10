@@ -35,21 +35,6 @@ use Thrift\Exception\TTransportException;
 class TBufferedTransport extends TTransport
 {
     /**
-     * The underlying transport
-     */
-    protected TTransport $transport;
-
-    /**
-     * The receive buffer size
-     */
-    protected int $rBufSize = 512;
-
-    /**
-     * The write buffer size
-     */
-    protected int $wBufSize = 512;
-
-    /**
      * The write buffer.
      */
     protected string $wBuf = '';
@@ -62,11 +47,11 @@ class TBufferedTransport extends TTransport
     /**
      * Constructor. Creates a buffered transport around an underlying transport
      */
-    public function __construct($transport, $rBufSize = 512, $wBufSize = 512)
-    {
-        $this->transport = $transport;
-        $this->rBufSize = $rBufSize;
-        $this->wBufSize = $wBufSize;
+    public function __construct(
+        protected TTransport $transport,
+        protected int $rBufSize = 512,
+        protected int $wBufSize = 512,
+    ) {
     }
 
     public function isOpen()
