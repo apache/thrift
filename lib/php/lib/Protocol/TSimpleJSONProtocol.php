@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
@@ -89,7 +91,7 @@ class TSimpleJSONProtocol extends TProtocol
         $this->trans->write(json_encode((string)$b, JSON_UNESCAPED_SLASHES));
     }
 
-    private function writeJSONInteger($num)
+    private function writeJSONInteger(int $num)
     {
         $isMapKey = $this->writeContext->isMapKey();
 
@@ -99,7 +101,7 @@ class TSimpleJSONProtocol extends TProtocol
             $this->trans->write(self::QUOTE);
         }
 
-        $this->trans->write((int)$num);
+        $this->trans->write((string) $num);
 
         if ($isMapKey) {
             $this->trans->write(self::QUOTE);
@@ -266,7 +268,7 @@ class TSimpleJSONProtocol extends TProtocol
         $this->writeJSONDouble($dub);
     }
 
-    public function writeString($str)
+    public function writeString(string $str)
     {
         $this->writeJSONString($str);
     }

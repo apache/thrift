@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Thrift\ClassLoader\ThriftClassLoader;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';

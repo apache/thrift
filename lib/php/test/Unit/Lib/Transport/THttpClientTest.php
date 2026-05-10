@@ -19,6 +19,8 @@
  * under the License.
  */
 
+declare(strict_types=1);
+
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
@@ -206,7 +208,7 @@ class THttpClientTest extends TestCase
     {
         $default = [
             'host' => 'localhost',
-            'port' => '80',
+            'port' => 80,
             'uri' => '',
             'scheme' => 'http',
             'context' => [],

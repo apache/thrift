@@ -22,6 +22,8 @@
  * @author: rmarin (marin.radu@facebook.com)
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Serializer;
 
 use Thrift\Transport\TMemoryBuffer;

@@ -51,7 +51,7 @@ HELP;
     exit(0);
 }
 
-$port = $opts['port'] ?? 9090;
+$port = (int) ($opts['port'] ?? 9090);
 $transport = $opts['transport'] ?? 'buffered';
 $protocol = $opts['protocol'] ?? 'binary';
 

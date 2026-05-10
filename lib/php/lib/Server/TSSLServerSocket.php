@@ -20,6 +20,8 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Server;
 
 use Thrift\Transport\TSSLSocket;

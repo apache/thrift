@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Type\TType;
@@ -207,7 +209,7 @@ class TBinaryProtocol extends TProtocol
         return 8;
     }
 
-    public function writeString($value)
+    public function writeString(string $value)
     {
         $len = strlen($value);
         $result = $this->writeI32($len);

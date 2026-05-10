@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
@@ -172,7 +174,7 @@ abstract class TProtocolDecorator extends TProtocol
         return $this->concreteProtocol->writeDouble($dub);
     }
 
-    public function writeString($str)
+    public function writeString(string $str)
     {
         return $this->concreteProtocol->writeString($str);
     }

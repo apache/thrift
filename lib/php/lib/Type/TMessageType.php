@@ -21,6 +21,8 @@
  * @package thrift
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Type;
 
 /**

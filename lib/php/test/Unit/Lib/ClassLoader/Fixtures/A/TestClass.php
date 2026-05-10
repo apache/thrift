@@ -19,6 +19,8 @@
  * under the License.
  */
 
+declare(strict_types=1);
+
 namespace A;
 
 class TestClass

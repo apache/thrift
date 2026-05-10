@@ -20,6 +20,8 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace Test\Thrift\Unit\Lib\Serializer;
 
 use phpmock\phpunit\PHPMock;

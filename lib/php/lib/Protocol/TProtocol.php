@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
@@ -128,7 +130,7 @@ abstract class TProtocol
 
     abstract public function writeDouble($dub);
 
-    abstract public function writeString($str);
+    abstract public function writeString(string $str);
 
     abstract public function writeUuid($uuid);
 
