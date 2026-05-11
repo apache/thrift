@@ -860,8 +860,7 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16)
-            ->willReturn(16);
+            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16);
 
         $this->assertSame(16, $protocol->writeUuid($uuid));
     }

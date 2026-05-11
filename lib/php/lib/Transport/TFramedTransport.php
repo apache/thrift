@@ -50,17 +50,17 @@ class TFramedTransport extends TTransport
     ) {
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return $this->transport->isOpen();
     }
 
-    public function open()
+    public function open(): void
     {
         $this->transport->open();
     }
 
-    public function close()
+    public function close(): void
     {
         $this->transport->close();
     }
@@ -68,10 +68,8 @@ class TFramedTransport extends TTransport
     /**
      * Reads from the buffer. When more data is required reads another entire
      * chunk and serves future reads out of that.
-     *
-     * @param int $len How much data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         if (!$this->read) {
             return $this->transport->read($len);
@@ -95,12 +93,7 @@ class TFramedTransport extends TTransport
         return $out;
     }
 
-    /**
-     * Put previously read data back into the buffer
-     *
-     * @param string $data data to return
-     */
-    public function putBack($data)
+    public function putBack(string $data): void
     {
         if (strlen($this->rBuf) === 0) {
             $this->rBuf = $data;
@@ -112,7 +105,7 @@ class TFramedTransport extends TTransport
     /**
      * Reads a chunk of data into the internal read buffer.
      */
-    private function readFrame()
+    private function readFrame(): void
     {
         $buf = $this->transport->readAll(4);
         $val = unpack('N', $buf);
@@ -122,15 +115,14 @@ class TFramedTransport extends TTransport
     }
 
     /**
-     * Writes some data to the pending output buffer.
-     *
-     * @param string $buf The data
-     * @param int $len Limit of bytes to write
+     * Writes some data to the pending output buffer. When $len is provided,
+     * truncates $buf to at most $len bytes.
      */
-    public function write($buf, $len = null)
+    public function write(string $buf, ?int $len = null): void
     {
         if (!$this->write) {
-            return $this->transport->write($buf, $len);
+            $this->transport->write($buf);
+            return;
         }
 
         if ($len !== null && $len < strlen($buf)) {
@@ -143,18 +135,18 @@ class TFramedTransport extends TTransport
      * Writes the output buffer to the stream in the format of a 4-byte length
      * followed by the actual data.
      */
-    public function flush()
+    public function flush(): void
     {
         if (!$this->write || strlen($this->wBuf) == 0) {
-            return $this->transport->flush();
+            $this->transport->flush();
+            return;
         }
 
         $out = pack('N', strlen($this->wBuf));
         $out .= $this->wBuf;
 
-        // Note that we clear the internal wBuf_ prior to the underlying write
-        // to ensure we're in a sane state (i.e. internal buffer cleaned)
-        // if the underlying write throws up an exception
+        // Clear the buffer before writing so we stay in a sane state
+        // even if the underlying transport throws.
         $this->wBuf = '';
         $this->transport->write($out);
         $this->transport->flush();

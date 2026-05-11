@@ -44,25 +44,25 @@ class TMemoryBuffer extends TTransport
     {
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    public function open()
+    public function open(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->buf .= $buf;
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         $bufLength = strlen($this->buf);
 
@@ -87,17 +87,17 @@ class TMemoryBuffer extends TTransport
         return $ret;
     }
 
-    public function getBuffer()
+    public function getBuffer(): string
     {
         return $this->buf;
     }
 
-    public function available()
+    public function available(): int
     {
         return strlen($this->buf);
     }
 
-    public function putBack($data)
+    public function putBack(string $data): void
     {
         $this->buf = $data . $this->buf;
     }

@@ -108,18 +108,27 @@ class TSimpleJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONDouble($num)
+    private function writeJSONDouble(float $num): void
     {
         $isMapKey = $this->writeContext->isMapKey();
-
         $this->writeContext->write();
+
+        if (is_nan($num)) {
+            $this->trans->write(self::QUOTE . TJSONProtocol::TOKEN_NAN . self::QUOTE);
+            return;
+        }
+
+        if (is_infinite($num)) {
+            $token = $num > 0 ? TJSONProtocol::TOKEN_POS_INFINITY : TJSONProtocol::TOKEN_NEG_INFINITY;
+            $this->trans->write(self::QUOTE . $token . self::QUOTE);
+            return;
+        }
 
         if ($isMapKey) {
             $this->trans->write(self::QUOTE);
         }
 
-        #TODO add compatibility with NAN and INF
-        $this->trans->write(json_encode((float)$num));
+        $this->trans->write(json_encode($num));
 
         if ($isMapKey) {
             $this->trans->write(self::QUOTE);

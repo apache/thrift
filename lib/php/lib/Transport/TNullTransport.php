@@ -35,25 +35,25 @@ use Thrift\Exception\TTransportException;
  */
 class TNullTransport extends TTransport
 {
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    public function open()
+    public function open(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         throw new TTransportException("Can't read from TNullTransport.");
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
     }
 }
