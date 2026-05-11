@@ -20,9 +20,12 @@
 package thrift
 
 import (
+	"errors"
 	"io"
 	"net"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -122,4 +125,83 @@ func TestSocketConnNilSafe(t *testing.T) {
 	if sc.IsOpen() {
 		t.Error("Expected false for nil.IsOpen(), got true")
 	}
+}
+
+func TestSocketConnClose(t *testing.T) {
+	t.Run("concurrent calls", func(t *testing.T) {
+		c := &mockCloseCounterConn{}
+		sc := &socketConn{
+			Conn: c,
+		}
+
+		var g sync.WaitGroup
+		for range 4 {
+			g.Go(func() { sc.Close() })
+		}
+		g.Wait()
+
+		cnt := c.closeCounter.Load()
+		if cnt != 1 {
+			t.Errorf("Expected conn.Close() to be called once, got %d calls", cnt)
+		}
+	})
+
+	t.Run("socketConn nilSafe", func(t *testing.T) {
+		sc := (*socketConn)(nil)
+
+		err := sc.Close()
+
+		if !errors.Is(err, net.ErrClosed) {
+			t.Errorf("Expected %v, got %v ", net.ErrClosed, err)
+		}
+	})
+
+	t.Run("netConn nilSafe", func(t *testing.T) {
+		sc := &socketConn{
+			Conn: nil,
+		}
+
+		err := sc.Close()
+
+		if !errors.Is(err, net.ErrClosed) {
+			t.Errorf("Expected %v, got %v ", net.ErrClosed, err)
+		}
+	})
+}
+
+type mockCloseCounterConn struct {
+	closeCounter atomic.Int32
+}
+
+func (m *mockCloseCounterConn) Read(b []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (m *mockCloseCounterConn) Write(b []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (m *mockCloseCounterConn) Close() error {
+	m.closeCounter.Add(1)
+	return nil
+}
+
+func (m *mockCloseCounterConn) LocalAddr() net.Addr {
+	return nil
+}
+
+func (m *mockCloseCounterConn) RemoteAddr() net.Addr {
+	return nil
+}
+
+func (m *mockCloseCounterConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *mockCloseCounterConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *mockCloseCounterConn) SetWriteDeadline(t time.Time) error {
+	return nil
 }
