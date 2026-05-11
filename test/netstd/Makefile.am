@@ -39,6 +39,6 @@ EXTRA_DIST = \
 	Client \
 	README.md \
 	Server \
-	ThriftTest.sln \
+	ThriftTest.slnx \
 	build.cmd \
 	build.sh

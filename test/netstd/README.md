@@ -10,7 +10,7 @@ Tests for Thrift client library ported to Microsoft .NET Core
 
 # How to build on Windows
 - Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable
-- Open ThriftTest.sln in Visual Studio and build
+- Open ThriftTest.slnx in Visual Studio and build
 or 
 - Build with scripts
 

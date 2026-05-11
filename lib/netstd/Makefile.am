@@ -97,7 +97,7 @@ EXTRA_DIST = \
 	Thrift/Thrift.csproj \
 	Thrift/Transport \
 	Thrift/*.snk \
-	Thrift.sln \
+	Thrift.slnx \
 	build.cmd \
 	build.sh \
 	buildfuzzers.sh \

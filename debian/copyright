@@ -65,6 +65,7 @@ under the Apache 2.0 License:
   lib/netstd/Thrift/TApplicationException.cs
   lib/netstd/Thrift/Thrift.csproj
   lib/netstd/Thrift.sln
+  lib/netstd/Thrift.slnx
   lib/netstd/Thrift/Transport/Server/TServerSocketTransport.cs
   lib/netstd/Thrift/Transport/Server/TServerTransport.cs
   lib/netstd/Thrift/Transport/Client/TSocketTransport.cs

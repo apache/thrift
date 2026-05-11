@@ -39,7 +39,7 @@ EXTRA_DIST = \
 	Interfaces \
 	README.md \
 	Server \
-	Tutorial.sln \
+	Tutorial.slnx \
 	build.cmd \
 	build.sh
 			 

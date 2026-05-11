@@ -36,7 +36,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.7" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <!--
     <PackageReference Include="System.Threading" Version="[4.3,)" />
