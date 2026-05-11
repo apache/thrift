@@ -90,7 +90,7 @@ if ($argc > 2) {
 
 foreach ($argv as $arg) {
   if (substr($arg, 0, 7) == '--port=') {
-    $port = substr($arg, 7);
+    $port = (int) substr($arg, 7);
   } else if (substr($arg, 0, 12) == '--transport=') {
     $MODE = substr($arg, 12);
   } else if (substr($arg, 0, 11) == '--protocol=') {

@@ -21,6 +21,8 @@
  * @package thrift.transport
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Transport;
 
 use Thrift\Exception\TException;
@@ -46,10 +48,10 @@ class TPhpStream extends TTransport
 
     private bool $write = false;
 
-    public function __construct($mode)
+    public function __construct(int $mode)
     {
-        $this->read = $mode & self::MODE_R;
-        $this->write = $mode & self::MODE_W;
+        $this->read = (bool) ($mode & self::MODE_R);
+        $this->write = (bool) ($mode & self::MODE_W);
     }
 
     public function open()

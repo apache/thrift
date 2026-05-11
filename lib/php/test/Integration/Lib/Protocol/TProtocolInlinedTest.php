@@ -19,6 +19,8 @@
  * under the License.
  */
 
+declare(strict_types=1);
+
 namespace Test\Thrift\Integration\Lib\Protocol;
 
 use BasicInline\ThriftTest\Bonk;

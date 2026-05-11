@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
@@ -208,17 +210,14 @@ class TJSONProtocol extends TProtocol
         $this->context->write();
 
         if (is_numeric($b) && $this->context->escapeNum()) {
-            $this->trans->write(self::QUOTE);
+            $this->trans->write(self::QUOTE . $b . self::QUOTE);
+            return;
         }
 
         $this->trans->write(json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
-        if (is_numeric($b) && $this->context->escapeNum()) {
-            $this->trans->write(self::QUOTE);
-        }
     }
 
-    private function writeJSONInteger($num)
+    private function writeJSONInteger(int $num)
     {
         $this->context->write();
 
@@ -226,7 +225,7 @@ class TJSONProtocol extends TProtocol
             $this->trans->write(self::QUOTE);
         }
 
-        $this->trans->write($num);
+        $this->trans->write((string) $num);
 
         if ($this->context->escapeNum()) {
             $this->trans->write(self::QUOTE);
@@ -578,7 +577,7 @@ class TJSONProtocol extends TProtocol
         $this->writeJSONDouble($dub);
     }
 
-    public function writeString($str)
+    public function writeString(string $str)
     {
         $this->writeJSONString($str);
     }

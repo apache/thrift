@@ -24,6 +24,8 @@
  * @package thrift.classloader
  */
 
+declare(strict_types=1);
+
 namespace Thrift\ClassLoader;
 
 class ThriftClassLoader

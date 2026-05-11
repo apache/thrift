@@ -21,6 +21,8 @@
  * @package thrift.processor
  */
 
+declare(strict_types=1);
+
 namespace Thrift;
 
 use Thrift\Exception\TException;

@@ -21,6 +21,8 @@
  * @package thrift.protocol
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Protocol;
 
 use Thrift\Type\TType;
@@ -366,7 +368,7 @@ class TCompactProtocol extends TProtocol
         return 8;
     }
 
-    public function writeString($value)
+    public function writeString(string $value)
     {
         $len = strlen($value);
         $result = $this->writeVarint($len);

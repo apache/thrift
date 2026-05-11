@@ -19,6 +19,8 @@
  * under the License.
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Factory;
 
 use Thrift\Transport\TTransport;

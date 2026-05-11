@@ -21,6 +21,8 @@
  * @package thrift.transport
  */
 
+declare(strict_types=1);
+
 namespace Thrift\Transport;
 
 use Thrift\Exception\TException;
@@ -96,10 +98,7 @@ class TSocketPool extends TSocket
         }
 
         foreach ($hosts as $key => $host) {
-            $this->servers [] = [
-                'host' => $host,
-                'port' => $ports[$key]
-            ];
+            $this->addServer($host, $ports[$key]);
         }
 
         $this->useApcuCache = function_exists('apcu_fetch');
@@ -113,7 +112,7 @@ class TSocketPool extends TSocket
      * @param string $host hostname or IP
      * @param int $port port
      */
-    public function addServer($host, $port)
+    public function addServer(string $host, int $port)
     {
         $this->servers[] = ['host' => $host, 'port' => $port];
     }
