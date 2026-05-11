@@ -39,6 +39,8 @@ class TForkingServerTest extends TestCase
     use PHPMock;
     use ReflectionHelper;
 
+    private const NO_CONNECTION = 'no connection';
+
     private function createServer(
         $processor = null,
         $transport = null,
@@ -107,7 +109,7 @@ class TForkingServerTest extends TestCase
 
         $server = $this->createServer(null, $serverTransport);
 
-        // accept returns null (no connection), then on second call we stop
+        // accept throws TTransportException (no connection), then on second call we stop
         $callCount = 0;
         $serverTransport->method('accept')->willReturnCallback(
             function () use ($server, &$callCount) {
@@ -115,7 +117,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount >= 2) {
                     $this->setPropertyValue($server, 'stop', true);
                 }
-                return null;
+                throw new TTransportException(self::NO_CONNECTION);
             }
         );
 
@@ -144,7 +146,7 @@ class TForkingServerTest extends TestCase
                     return $clientTransport;
                 }
                 $this->setPropertyValue($server, 'stop', true);
-                return null;
+                throw new TTransportException(self::NO_CONNECTION);
             }
         );
 
@@ -201,7 +203,7 @@ class TForkingServerTest extends TestCase
                     throw new TTransportException('Connection reset');
                 }
                 $this->setPropertyValue($server, 'stop', true);
-                return null;
+                throw new TTransportException(self::NO_CONNECTION);
             }
         );
 

@@ -27,9 +27,5 @@ use Thrift\Transport\TTransport;
 
 interface TTransportFactoryInterface
 {
-    /**
-     * @param TTransport $transport
-     * @return TTransport
-     */
-    public function getTransport(TTransport $transport);
+    public function getTransport(TTransport $transport): TTransport;
 }

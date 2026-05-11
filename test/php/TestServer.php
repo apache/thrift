@@ -4,14 +4,6 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-class TBinaryProtocolAcceleratedFactory implements \Thrift\Factory\TProtocolFactory
-{
-    public function getProtocol($trans)
-    {
-        return new \Thrift\Protocol\TBinaryProtocolAccelerated($trans, false, true);
-    }
-}
-
 $opts = getopt(
     'h::',
     [
@@ -88,7 +80,7 @@ switch ($protocol) {
             fwrite(STDERR, "Acceleration extension is not loaded\n");
             exit(1);
         }
-        $protocolFactory = new TBinaryProtocolAcceleratedFactory();
+        $protocolFactory = new \Thrift\Factory\TBinaryProtocolAcceleratedFactory();
         break;
     case 'compact':
         $protocolFactory = new \Thrift\Factory\TCompactProtocolFactory();

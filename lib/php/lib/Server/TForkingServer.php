@@ -31,27 +31,22 @@ class TForkingServer extends TServer
      * Listens for new client using the supplied
      * transport. We fork when a new connection
      * arrives.
-     *
-     * @return void
      */
-    public function serve()
+    public function serve(): void
     {
         $this->transport->listen();
 
         while (!$this->stop) {
             try {
                 $transport = $this->transport->accept();
+                $pid = pcntl_fork();
 
-                if ($transport != null) {
-                    $pid = pcntl_fork();
-
-                    if ($pid > 0) {
-                        $this->handleParent($transport, $pid);
-                    } elseif ($pid === 0) {
-                        $this->handleChild($transport);
-                    } else {
-                        throw new TException('Failed to fork');
-                    }
+                if ($pid > 0) {
+                    $this->handleParent($transport, $pid);
+                } elseif ($pid === 0) {
+                    $this->handleChild($transport);
+                } else {
+                    throw new TException('Failed to fork');
                 }
             } catch (TTransportException $e) {
             }
@@ -62,23 +57,16 @@ class TForkingServer extends TServer
 
     /**
      * Code run by the parent
-     *
-     * @param TTransport $transport
-     * @param int $pid
-     * @return void
      */
-    private function handleParent(TTransport $transport, $pid)
+    private function handleParent(TTransport $transport, int $pid): void
     {
         $this->children[$pid] = $transport;
     }
 
     /**
      * Code run by the child.
-     *
-     * @param TTransport $transport
-     * @return void
      */
-    private function handleChild(TTransport $transport)
+    private function handleChild(TTransport $transport): void
     {
         try {
             $inputTransport = $this->inputTransportFactory->getTransport($transport);
@@ -94,12 +82,7 @@ class TForkingServer extends TServer
         exit(0);
     }
 
-    /**
-     * Collects any children we may have
-     *
-     * @return void
-     */
-    private function collectChildren()
+    private function collectChildren(): void
     {
         $status = null;
         foreach ($this->children as $pid => $transport) {
@@ -115,10 +98,8 @@ class TForkingServer extends TServer
     /**
      * Stops the server running. Kills the transport
      * and then stops the main serving loop
-     *
-     * @return void
      */
-    public function stop()
+    public function stop(): void
     {
         $this->transport->close();
         $this->stop = true;

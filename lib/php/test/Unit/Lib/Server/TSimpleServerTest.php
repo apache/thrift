@@ -29,6 +29,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Server\Fixture\TestProcessor;
 use Thrift\Factory\TProtocolFactory;
 use Thrift\Factory\TTransportFactoryInterface;
+use Thrift\Protocol\TProtocol;
 use Thrift\Server\TServerTransport;
 use Thrift\Server\TSimpleServer;
 use Thrift\Transport\TTransport;
@@ -111,17 +112,17 @@ class TSimpleServerTest extends TestCase
 
         $this->inputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createStub(TServerTransport::class));
+            ->willReturn($this->createStub(TTransport::class));
         $this->outputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createStub(TServerTransport::class));
+            ->willReturn($this->createStub(TTransport::class));
 
-        $inputProtocol = $this->createStub(TServerTransport::class);
+        $inputProtocol = $this->createStub(TProtocol::class);
         $this->inputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($inputProtocol);
 
-        $outputProtocol = $this->createStub(TServerTransport::class);
+        $outputProtocol = $this->createStub(TProtocol::class);
         $this->outputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($outputProtocol);
