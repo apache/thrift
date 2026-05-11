@@ -27,11 +27,11 @@ use Thrift\Server\TServer;
 
 class ServerStub extends TServer
 {
-    public function serve()
+    public function serve(): void
     {
     }
 
-    public function stop()
+    public function stop(): void
     {
     }
 }

@@ -55,44 +55,23 @@ class TServerSocket extends TServerTransport
     ) {
     }
 
-    /**
-     * Sets the accept timeout
-     *
-     * @param int $acceptTimeout
-     * @return void
-     */
-    public function setAcceptTimeout($acceptTimeout)
+    public function setAcceptTimeout(int $acceptTimeout): void
     {
         $this->acceptTimeout = $acceptTimeout;
     }
 
-    /**
-     * Opens a new socket server handle
-     *
-     * @return void
-     */
-    public function listen()
+    public function listen(): void
     {
         $this->listener = stream_socket_server('tcp://' . $this->host . ':' . $this->port);
     }
 
-    /**
-     * Closes the socket server handle
-     *
-     * @return void
-     */
-    public function close()
+    public function close(): void
     {
         @fclose($this->listener);
         $this->listener = null;
     }
 
-    /**
-     * Implementation of accept. If not client is accepted in the given time
-     *
-     * @return TSocket
-     */
-    protected function acceptImpl()
+    protected function acceptImpl(): ?TSocket
     {
         $handle = @stream_socket_accept($this->listener, $this->acceptTimeout / 1000.0);
         if (!$handle) {

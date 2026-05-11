@@ -14,11 +14,6 @@ use Thrift\Factory\TProtocolFactory;
  */
 abstract class TServer
 {
-    /**
-     * Sets up all the factories, etc
-     *
-     * @param TProcessor $processor
-     */
     public function __construct(
         protected $processor,
         protected TServerTransport $transport,
@@ -33,17 +28,8 @@ abstract class TServer
      * Serves the server. This should never return
      * unless a problem permits it to do so or it
      * is interrupted intentionally
-     *
-     * @abstract
-     * @return void
      */
-    abstract public function serve();
+    abstract public function serve(): void;
 
-    /**
-     * Stops the server serving
-     *
-     * @abstract
-     * @return void
-     */
-    abstract public function stop();
+    abstract public function stop(): void;
 }

@@ -14,43 +14,23 @@ use Thrift\Transport\TTransport;
  */
 abstract class TServerTransport
 {
-    /**
-     * List for new clients
-     *
-     * @abstract
-     * @return void
-     */
-    abstract public function listen();
+    abstract public function listen(): void;
+
+    abstract public function close(): void;
 
     /**
-     * Close the server
-     *
-     * @abstract
-     * @return void
+     * Subclasses implement accept here.
      */
-    abstract public function close();
+    abstract protected function acceptImpl(): ?TTransport;
 
     /**
-     * Subclasses should use this to implement
-     * accept.
-     *
-     * @abstract
-     * @return TTransport
+     * @throws TTransportException when no transport is available
      */
-    abstract protected function acceptImpl();
-
-    /**
-     * Uses the accept implemtation. If null is returned, an
-     * exception is thrown.
-     *
-     * @throws TTransportException
-     * @return TTransport
-     */
-    public function accept()
+    public function accept(): TTransport
     {
         $transport = $this->acceptImpl();
 
-        if ($transport == null) {
+        if ($transport === null) {
             throw new TTransportException("accept() may not return NULL");
         }
 

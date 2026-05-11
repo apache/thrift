@@ -54,12 +54,7 @@ class TSSLServerSocket extends TServerSocket
         $this->context = $context ?? stream_context_create();
     }
 
-    /**
-     * Opens a new socket server handle
-     *
-     * @return void
-     */
-    public function listen()
+    public function listen(): void
     {
         $this->listener = @stream_socket_server(
             $this->host . ':' . $this->port,
@@ -70,12 +65,7 @@ class TSSLServerSocket extends TServerSocket
         );
     }
 
-    /**
-     * Implementation of accept. If not client is accepted in the given time
-     *
-     * @return TSocket
-     */
-    protected function acceptImpl()
+    protected function acceptImpl(): ?TSSLSocket
     {
         $handle = @stream_socket_accept($this->listener, $this->acceptTimeout / 1000.0);
         if (!$handle) {

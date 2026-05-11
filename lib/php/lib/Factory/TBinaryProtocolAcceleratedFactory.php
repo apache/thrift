@@ -17,31 +17,34 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * @package thrift.protocol
  */
 
 declare(strict_types=1);
 
-namespace Test\Thrift\Unit\Lib\Server\Fixture;
+namespace Thrift\Factory;
 
-use Thrift\Server\TServerTransport;
+use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TTransport;
 
-class ServerTransportStub extends TServerTransport
+/**
+ * Accelerated Binary Protocol Factory.
+ *
+ * Produces TBinaryProtocolAccelerated, which dispatches read/write through
+ * the thrift_protocol C extension when available and falls back to
+ * TBinaryProtocol otherwise.
+ */
+class TBinaryProtocolAcceleratedFactory implements TProtocolFactory
 {
-    public function __construct(private ?TTransport $acceptedTransport)
-    {
+    public function __construct(
+        private bool $strictRead = false,
+        private bool $strictWrite = true,
+    ) {
     }
 
-    public function listen(): void
+    public function getProtocol(TTransport $trans): TBinaryProtocolAccelerated
     {
-    }
-
-    public function close(): void
-    {
-    }
-
-    protected function acceptImpl(): ?TTransport
-    {
-        return $this->acceptedTransport;
+        return new TBinaryProtocolAccelerated($trans, $this->strictRead, $this->strictWrite);
     }
 }

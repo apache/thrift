@@ -39,11 +39,7 @@ class TBinaryProtocolFactory implements TProtocolFactory
     ) {
     }
 
-    /**
-     * @param TTransport $trans
-     * @return TBinaryProtocol
-     */
-    public function getProtocol($trans)
+    public function getProtocol(TTransport $trans): TBinaryProtocol
     {
         return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
     }

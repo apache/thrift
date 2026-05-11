@@ -33,11 +33,7 @@ use Thrift\Transport\TTransport;
  */
 class TCompactProtocolFactory implements TProtocolFactory
 {
-    /**
-     * @param TTransport $trans
-     * @return TCompactProtocol
-     */
-    public function getProtocol($trans)
+    public function getProtocol(TTransport $trans): TCompactProtocol
     {
         return new TCompactProtocol($trans);
     }
