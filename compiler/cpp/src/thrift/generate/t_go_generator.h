@@ -243,6 +243,7 @@ public:
 
   std::string go_autogen_comment();
   std::string go_package();
+  void generate_go_docstring_comment(std::ostream& out, const std::string& contents);
   std::string go_imports_begin(bool consts);
   std::string go_imports_end();
   std::string render_includes(bool consts);
@@ -313,6 +314,8 @@ private:
   std::string package_dir_;
   std::unordered_map<std::string, std::string> package_identifiers_;
   std::set<std::string> package_identifiers_set_;
+  int last_const_block_;
+  bool types_file_has_declaration_;
   std::string read_method_name_;
   std::string write_method_name_;
   std::string equals_method_name_;
@@ -328,7 +331,9 @@ private:
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
+  static std::string package_name_to_go_name(const std::string& value);
   static bool omit_initialization(t_field* tfield);
+  void begin_types_declaration();
 };
 
 #endif

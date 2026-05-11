@@ -202,12 +202,53 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Run gofmt
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
+
+      - name: Configure
+        run: |
+          ./bootstrap.sh
+          # shellcheck disable=SC2086
+          ./configure $(echo $CONFIG_ARGS_FOR_SCA | sed 's/without-go/with-go/')
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run gofmt on checked-in Go files
         # Args:
         # -s: Simplify code
-        # -d: Display changes, and exit non-zero when changes present
+        # -l: List files that would change
         # -e: Report all errors instead of only the first 10
-        run: gofmt -s -d -e $(git ls-files | grep "\.go$")
+        run: |
+          git ls-files '*.go' > /tmp/go-files.txt
+          xargs -r gofmt -s -l -e < /tmp/go-files.txt > /tmp/gofmt-files.txt
+          cat /tmp/gofmt-files.txt
+          test ! -s /tmp/gofmt-files.txt
+
+      - name: Run gofmt on generated Go files
+        run: |
+          chmod a+x compiler/cpp/thrift
+          thrift_compiler="$PWD/compiler/cpp/thrift"
+
+          make -C lib/go/test THRIFT="$thrift_compiler" gopath
+          make -C test/go THRIFT="$thrift_compiler" gopath
+          make -C tutorial/go THRIFT="$thrift_compiler" all-local
+
+          {
+            find lib/go/test/gopath/src \
+              -path lib/go/test/gopath/src/dontexportrwtest -prune -o \
+              -name '*.go' -type f -print
+            find test/go/src/gen tutorial/go/gen-go -name '*.go' -type f -print
+          } > /tmp/generated-go-files.txt
+
+          xargs -r gofmt -l -e < /tmp/generated-go-files.txt > /tmp/generated-gofmt-files.txt
+          cat /tmp/generated-gofmt-files.txt
+          test ! -s /tmp/generated-gofmt-files.txt
 
   lib-python:
     needs: compiler
