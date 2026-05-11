@@ -60,7 +60,7 @@ class TSSLSocket extends TSocket
     /**
      * Connects the socket.
      */
-    public function open()
+    public function open(): void
     {
         if ($this->isOpen()) {
             throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);

@@ -53,8 +53,7 @@ class TBufferedTransportTest extends TestCase
 
         $transport
             ->expects($this->once())
-            ->method('open')
-            ->willReturn(null);
+            ->method('open');
 
         $this->assertNull($bufferedTransport->open());
     }
@@ -66,8 +65,7 @@ class TBufferedTransportTest extends TestCase
 
         $transport
             ->expects($this->once())
-            ->method('close')
-            ->willReturn(null);
+            ->method('close');
 
         $this->assertNull($bufferedTransport->close());
     }
@@ -209,8 +207,7 @@ class TBufferedTransportTest extends TestCase
         $transport
             ->expects($this->exactly($bufferedTransportCall))
             ->method('write')
-            ->with($writeData)
-            ->willReturn(null);
+            ->with($writeData);
 
         $this->assertNull($bufferedTransport->write($writeData));
 
@@ -244,13 +241,11 @@ class TBufferedTransportTest extends TestCase
         $transport
             ->expects(!empty($writeBuffer) ? $this->once() : $this->never())
             ->method('write')
-            ->with($writeBuffer)
-            ->willReturn(null);
+            ->with($writeBuffer);
 
         $transport
             ->expects($this->once())
-            ->method('flush')
-            ->willReturn(null);
+            ->method('flush');
 
         $this->assertNull($bufferedTransport->flush());
 

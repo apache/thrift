@@ -112,57 +112,32 @@ class TSocketPool extends TSocket
      * @param string $host hostname or IP
      * @param int $port port
      */
-    public function addServer(string $host, int $port)
+    public function addServer(string $host, int $port): void
     {
         $this->servers[] = ['host' => $host, 'port' => $port];
     }
 
-    /**
-     * Sets how many time to keep retrying a host in the connect function.
-     *
-     * @param int $numRetries
-     */
-    public function setNumRetries($numRetries)
+    public function setNumRetries(int $numRetries): void
     {
         $this->numRetries = $numRetries;
     }
 
-    /**
-     * Sets how long to wait until retrying a host if it was marked down
-     *
-     * @param int $numRetries
-     */
-    public function setRetryInterval($retryInterval)
+    public function setRetryInterval(int $retryInterval): void
     {
         $this->retryInterval = $retryInterval;
     }
 
-    /**
-     * Sets how many time to keep retrying a host before marking it as down.
-     *
-     * @param int $numRetries
-     */
-    public function setMaxConsecutiveFailures($maxConsecutiveFailures)
+    public function setMaxConsecutiveFailures(int $maxConsecutiveFailures): void
     {
         $this->maxConsecutiveFailures = $maxConsecutiveFailures;
     }
 
-    /**
-     * Turns randomization in connect order on or off.
-     *
-     * @param bool $randomize
-     */
-    public function setRandomize($randomize)
+    public function setRandomize(bool $randomize): void
     {
         $this->randomize = $randomize;
     }
 
-    /**
-     * Whether to always try the last server.
-     *
-     * @param bool $alwaysTryLast
-     */
-    public function setAlwaysTryLast($alwaysTryLast)
+    public function setAlwaysTryLast(bool $alwaysTryLast): void
     {
         $this->alwaysTryLast = $alwaysTryLast;
     }
@@ -171,7 +146,7 @@ class TSocketPool extends TSocket
      * Connects the socket by iterating through all the servers in the pool
      * and trying to find one that works.
      */
-    public function open()
+    public function open(): void
     {
         // Check if we want order randomization
         if ($this->randomize) {

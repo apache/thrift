@@ -54,8 +54,7 @@ class TFramedTransportTest extends TestCase
 
         $transport
             ->expects($this->once())
-            ->method('open')
-            ->willReturn(null);
+            ->method('open');
 
         $this->assertNull($framedTransport->open());
     }
@@ -67,8 +66,7 @@ class TFramedTransportTest extends TestCase
 
         $transport
             ->expects($this->once())
-            ->method('close')
-            ->willReturn(null);
+            ->method('close');
 
         $this->assertNull($framedTransport->close());
     }
@@ -169,8 +167,7 @@ class TFramedTransportTest extends TestCase
         $transport
             ->expects($writeAllowed ? $this->never() : $this->once())
             ->method('write')
-            ->with('12345', 5)
-            ->willReturn(5);
+            ->with('12345');
 
         $framedTransport->write($writeData, $writeLength);
 
@@ -216,8 +213,7 @@ class TFramedTransportTest extends TestCase
         $transport
             ->expects($writeAllowed && !empty($writeBuffer) ? $this->once() : $this->never())
             ->method('write')
-            ->with($lowLevelTransportWrite)
-            ->willReturn(null);
+            ->with($lowLevelTransportWrite);
 
         $this->assertNull($framedTransport->flush());
     }

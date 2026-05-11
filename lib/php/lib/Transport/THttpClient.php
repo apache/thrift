@@ -52,11 +52,9 @@ class THttpClient extends TTransport
     protected $handle = null;
 
     /**
-     * Read timeout
-     *
-     * @var float|int|null
+     * Read timeout in seconds.
      */
-    protected $timeout = null;
+    protected ?float $timeout = null;
 
     /**
      * http headers
@@ -80,39 +78,21 @@ class THttpClient extends TTransport
         $this->uri = ($uri === '' || str_starts_with($uri, '/')) ? $uri : '/' . $uri;
     }
 
-    /**
-     * Set read timeout
-     *
-     * @param float $timeout
-     */
-    public function setTimeoutSecs($timeout)
+    public function setTimeoutSecs(?float $timeout): void
     {
         $this->timeout = $timeout;
     }
 
-    /**
-     * Whether this transport is open.
-     *
-     * @return boolean true if open
-     */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    /**
-     * Open the transport for reading/writing
-     *
-     * @throws TTransportException if cannot open
-     */
-    public function open()
+    public function open(): void
     {
     }
 
-    /**
-     * Close the transport.
-     */
-    public function close()
+    public function close(): void
     {
         if ($this->handle) {
             @fclose($this->handle);
@@ -121,13 +101,9 @@ class THttpClient extends TTransport
     }
 
     /**
-     * Read some data into the array.
-     *
-     * @param int $len How much to read
-     * @return string The data that has been read
      * @throws TTransportException if cannot read any more data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         $data = @fread($this->handle, $len);
         if ($data === false || $data === '') {
@@ -151,12 +127,9 @@ class THttpClient extends TTransport
     }
 
     /**
-     * Writes some data into the pending buffer
-     *
-     * @param string $buf The data to write
      * @throws TTransportException if writing fails
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->buf .= $buf;
     }
@@ -166,7 +139,7 @@ class THttpClient extends TTransport
      *
      * @throws TTransportException if a writing error occurs
      */
-    public function flush()
+    public function flush(): void
     {
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
@@ -216,7 +189,10 @@ class THttpClient extends TTransport
         }
     }
 
-    public function addHeaders($headers)
+    /**
+     * @param array<string, string|int> $headers
+     */
+    public function addHeaders(array $headers): void
     {
         $this->headers = array_merge($this->headers, $headers);
     }

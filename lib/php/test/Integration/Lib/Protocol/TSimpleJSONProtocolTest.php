@@ -148,21 +148,19 @@ class TSimpleJSONProtocolTest extends TestCase
             ],
             'expected' => '{"thing":3.1415926535898}',
         ];
-        #TODO Should be fixed in future
         yield 'double Nan' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testDouble_args::class,
             'argsValues' => [
                 'thing' => NAN,
             ],
-            'expected' => '{"thing":}',
+            'expected' => '{"thing":"NaN"}',
         ];
-        #TODO Should be fixed in future
         yield 'double Infinity' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testDouble_args::class,
             'argsValues' => [
                 'thing' => INF,
             ],
-            'expected' => '{"thing":}',
+            'expected' => '{"thing":"Infinity"}',
         ];
         yield 'byte' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testByte_args::class,

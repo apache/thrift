@@ -54,7 +54,7 @@ class TPhpStream extends TTransport
         $this->write = (bool) ($mode & self::MODE_W);
     }
 
-    public function open()
+    public function open(): void
     {
         if ($this->read) {
             $this->inStream = @fopen($this->inStreamName(), 'r');
@@ -70,7 +70,7 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function close()
+    public function close(): void
     {
         if ($this->read) {
             @fclose($this->inStream);
@@ -82,14 +82,14 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return
             (!$this->read || is_resource($this->inStream)) &&
             (!$this->write || is_resource($this->outStream));
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         $data = @fread($this->inStream, $len);
         if ($data === false || $data === '') {
@@ -99,7 +99,7 @@ class TPhpStream extends TTransport
         return $data;
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
         while (strlen($buf) > 0) {
             $got = @fwrite($this->outStream, $buf);
@@ -112,12 +112,12 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function flush()
+    public function flush(): void
     {
         @fflush($this->outStream);
     }
 
-    private function inStreamName()
+    private function inStreamName(): string
     {
         if (php_sapi_name() == 'cli') {
             return 'php://stdin';

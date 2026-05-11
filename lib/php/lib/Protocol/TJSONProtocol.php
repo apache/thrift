@@ -78,6 +78,11 @@ class TJSONProtocol extends TProtocol
     public const NAME_SET = "set";
     public const NAME_UUID = "uid";
 
+    /** Quoted tokens used to round-trip non-finite doubles through the JSON protocol. */
+    public const TOKEN_NAN = "NaN";
+    public const TOKEN_POS_INFINITY = "Infinity";
+    public const TOKEN_NEG_INFINITY = "-Infinity";
+
     private function getTypeNameForTypeID($typeID)
     {
         switch ($typeID) {
@@ -232,15 +237,25 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONDouble($num)
+    private function writeJSONDouble(float $num): void
     {
         $this->context->write();
+
+        if (is_nan($num)) {
+            $this->trans->write(self::QUOTE . self::TOKEN_NAN . self::QUOTE);
+            return;
+        }
+
+        if (is_infinite($num)) {
+            $token = $num > 0 ? self::TOKEN_POS_INFINITY : self::TOKEN_NEG_INFINITY;
+            $this->trans->write(self::QUOTE . $token . self::QUOTE);
+            return;
+        }
 
         if ($this->context->escapeNum()) {
             $this->trans->write(self::QUOTE);
         }
 
-        #TODO add compatibility with NAN and INF
         $this->trans->write(json_encode($num));
 
         if ($this->context->escapeNum()) {
@@ -398,10 +413,12 @@ class TJSONProtocol extends TProtocol
         if (substr($this->reader->peek(), 0, 1) == self::QUOTE) {
             $arr = $this->readJSONString(true);
 
-            if ($arr == "NaN") {
+            if ($arr === self::TOKEN_NAN) {
                 return NAN;
-            } elseif ($arr == "Infinity") {
+            } elseif ($arr === self::TOKEN_POS_INFINITY) {
                 return INF;
+            } elseif ($arr === self::TOKEN_NEG_INFINITY) {
+                return -INF;
             } elseif (!$this->context->escapeNum()) {
                 throw new TProtocolException(
                     "Numeric data unexpectedly quoted " . $arr,

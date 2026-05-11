@@ -324,8 +324,8 @@ class TCurlClientTest extends TestCase
         yield 'timeout' => array_merge(
             $default,
             [
-                'timeout' => 10,
-                'connectionTimeout' => 10,
+                'timeout' => 10.0,
+                'connectionTimeout' => 10.0,
                 'curlSetOptCalls' => [
                     [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                     [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
@@ -341,8 +341,8 @@ class TCurlClientTest extends TestCase
                             'Content-Length: ' . strlen($request),
                         ],
                     ],
-                    [Assert::anything(), CURLOPT_TIMEOUT, 10],
-                    [Assert::anything(), CURLOPT_CONNECTTIMEOUT, 10],
+                    [Assert::anything(), CURLOPT_TIMEOUT, 10.0],
+                    [Assert::anything(), CURLOPT_CONNECTTIMEOUT, 10.0],
                     [Assert::anything(), CURLOPT_POSTFIELDS, $request],
                     [Assert::anything(), CURLOPT_URL, 'http://localhost'],
                 ],

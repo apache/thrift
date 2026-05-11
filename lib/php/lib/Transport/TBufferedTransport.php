@@ -56,27 +56,22 @@ class TBufferedTransport extends TTransport
     ) {
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return $this->transport->isOpen();
     }
 
-    /**
-     * @inheritdoc
-     *
-     * @throws TTransportException
-     */
-    public function open()
+    public function open(): void
     {
         $this->transport->open();
     }
 
-    public function close()
+    public function close(): void
     {
         $this->transport->close();
     }
 
-    public function putBack($data)
+    public function putBack(string $data): void
     {
         if (strlen($this->rBuf) === 0) {
             $this->rBuf = $data;
@@ -93,10 +88,8 @@ class TBufferedTransport extends TTransport
      *
      * Therefore, use the readAll method of the wrapped transport inside
      * the buffered readAll.
-     *
-     * @throws TTransportException
      */
-    public function readAll($len)
+    public function readAll(int $len): string
     {
         $have = strlen($this->rBuf);
         if ($have == 0) {
@@ -116,14 +109,7 @@ class TBufferedTransport extends TTransport
         return $data;
     }
 
-    /**
-     * @inheritdoc
-     *
-     * @param int $len
-     * @return string
-     * @throws TTransportException
-     */
-    public function read($len)
+    public function read(int $len): string
     {
         if (strlen($this->rBuf) === 0) {
             $this->rBuf = $this->transport->read($this->rBufSize);
@@ -142,39 +128,26 @@ class TBufferedTransport extends TTransport
         return $ret;
     }
 
-    /**
-     * @inheritdoc
-     *
-     * @param string $buf
-     * @throws TTransportException
-     */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->wBuf .= $buf;
         if (strlen($this->wBuf) >= $this->wBufSize) {
             $out = $this->wBuf;
 
-            // Note that we clear the internal wBuf_ prior to the underlying write
-            // to ensure we're in a sane state (i.e. internal buffer cleaned)
-            // if the underlying write throws up an exception
+            // Clear the buffer before writing so we stay in a sane state
+            // even if the underlying transport throws.
             $this->wBuf = '';
             $this->transport->write($out);
         }
     }
 
-    /**
-     * @inheritdoc
-     *
-     * @throws TTransportException
-     */
-    public function flush()
+    public function flush(): void
     {
         if (strlen($this->wBuf) > 0) {
             $out = $this->wBuf;
 
-            // Note that we clear the internal wBuf_ prior to the underlying write
-            // to ensure we're in a sane state (i.e. internal buffer cleaned)
-            // if the underlying write throws up an exception
+            // Clear the buffer before writing so we stay in a sane state
+            // even if the underlying transport throws.
             $this->wBuf = '';
             $this->transport->write($out);
         }

@@ -53,18 +53,14 @@ class TCurlClient extends TTransport
     protected string|false|null $response = null;
 
     /**
-     * Read timeout
-     *
-     * @var float|int|null
+     * Read timeout in seconds.
      */
-    protected $timeout = null;
+    protected ?float $timeout = null;
 
     /**
-     * Connection timeout
-     *
-     * @var float|int|null
+     * Connection timeout in seconds.
      */
-    protected $connectionTimeout = null;
+    protected ?float $connectionTimeout = null;
 
     /**
      * http headers
@@ -85,81 +81,54 @@ class TCurlClient extends TTransport
         $this->uri = ($uri === '' || str_starts_with($uri, '/')) ? $uri : '/' . $uri;
     }
 
-    /**
-     * Set read timeout
-     *
-     * @param float $timeout
-     */
-    public function setTimeoutSecs($timeout)
+    public function setTimeoutSecs(?float $timeout): void
     {
         $this->timeout = $timeout;
     }
 
-    /**
-     * Set connection timeout
-     *
-     * @param float $connectionTimeout
-     */
-    public function setConnectionTimeoutSecs($connectionTimeout)
+    public function setConnectionTimeoutSecs(?float $connectionTimeout): void
     {
         $this->connectionTimeout = $connectionTimeout;
     }
 
-    /**
-     * Whether this transport is open.
-     *
-     * @return boolean true if open
-     */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    /**
-     * Open the transport for reading/writing
-     *
-     * @throws TTransportException if cannot open
-     */
-    public function open()
+    public function open(): void
     {
     }
 
-    /**
-     * Close the transport.
-     */
-    public function close()
+    public function close(): void
     {
         $this->request = '';
         $this->response = null;
     }
 
     /**
-     * Read some data into the array.
-     *
-     * @param int $len How much to read
-     * @return string The data that has been read
      * @throws TTransportException if cannot read any more data
      */
-    public function read($len)
+    public function read(int $len): string
     {
-        if ($len >= strlen($this->response)) {
-            return $this->response;
-        } else {
-            $ret = substr($this->response, 0, $len);
-            $this->response = substr($this->response, $len);
-
-            return $ret;
+        $response = (string) $this->response;
+        if ($len >= strlen($response)) {
+            return $response;
         }
+
+        $ret = substr($response, 0, $len);
+        $this->response = substr($response, $len);
+
+        return $ret;
     }
 
     /**
      * Guarantees that the full amount of data is read. Since TCurlClient gets entire payload at
      * once, parent readAll cannot be used.
      *
-     * @return string The data, of exact length
      * @throws TTransportException if cannot read data
      */
-    public function readAll($len)
+    public function readAll(int $len): string
     {
         $data = $this->read($len);
 
@@ -171,12 +140,9 @@ class TCurlClient extends TTransport
     }
 
     /**
-     * Writes some data into the pending buffer
-     *
-     * @param string $buf The data to write
      * @throws TTransportException if writing fails
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->request .= $buf;
     }
@@ -186,7 +152,7 @@ class TCurlClient extends TTransport
      *
      * @throws TTransportException if a writing error occurs
      */
-    public function flush()
+    public function flush(): void
     {
         if (!self::$curlHandle) {
             register_shutdown_function(['Thrift\\Transport\\TCurlClient', 'closeCurlHandle']);
@@ -254,7 +220,7 @@ class TCurlClient extends TTransport
         }
     }
 
-    public static function closeCurlHandle()
+    public static function closeCurlHandle(): void
     {
         try {
             if (self::$curlHandle) {
@@ -269,7 +235,10 @@ class TCurlClient extends TTransport
         }
     }
 
-    public function addHeaders($headers)
+    /**
+     * @param array<string, string|int> $headers
+     */
+    public function addHeaders(array $headers): void
     {
         $this->headers = array_merge($this->headers, $headers);
     }

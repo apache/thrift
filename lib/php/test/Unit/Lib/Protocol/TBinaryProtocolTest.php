@@ -190,8 +190,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', TType::STOP), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', TType::STOP), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeFieldStop());
     }
@@ -330,8 +329,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', (int)$value), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', (int)$value), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeBool($value));
     }
@@ -345,8 +343,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', $value), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', $value), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeByte($value));
     }
@@ -360,8 +357,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('n', $value), 2) #writeI16
-            ->willReturn(2);
+            ->with(pack('n', $value), 2); #writeI16
 
         $this->assertEquals(2, $protocol->writeI16($value));
     }
@@ -375,8 +371,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N', $value), 4) #writeI32
-            ->willReturn(4);
+            ->with(pack('N', $value), 4); #writeI32
 
         $this->assertEquals(4, $protocol->writeI32($value));
     }
@@ -413,8 +408,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(4);
+            ->with(pack('N2', $hi, $lo), 8); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -434,8 +428,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(8);
+            ->with(pack('N2', $hi, $lo), 8); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -449,8 +442,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(strrev(pack('d', $value)), 8) #writeDouble
-            ->willReturn(8);
+            ->with(strrev(pack('d', $value)), 8); #writeDouble
 
         $this->assertEquals(8, $protocol->writeDouble($value));
     }
@@ -495,8 +487,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16)
-            ->willReturn(16);
+            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16);
 
         $this->assertEquals(16, $protocol->writeUuid($uuid));
     }
@@ -985,8 +976,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(4);
+            ->with(pack('N2', $hi, $lo), 8); #writeI64
 
         $this->assertEquals(8, $protocol->readI64($value));
         $this->assertEquals($expectedValue, $value);

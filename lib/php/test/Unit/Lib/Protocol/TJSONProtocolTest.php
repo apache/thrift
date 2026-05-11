@@ -284,6 +284,24 @@ class TJSONProtocolTest extends TestCase
             'value' => 1.0e-10,
             'readMethod' => 'readDouble',
         ];
+        yield 'double NaN round-trips via "NaN" token' => [
+            'fieldType' => TType::DOUBLE,
+            'writeMethod' => 'writeDouble',
+            'value' => NAN,
+            'readMethod' => 'readDouble',
+        ];
+        yield 'double +Infinity round-trips via "Infinity" token' => [
+            'fieldType' => TType::DOUBLE,
+            'writeMethod' => 'writeDouble',
+            'value' => INF,
+            'readMethod' => 'readDouble',
+        ];
+        yield 'double -Infinity round-trips via "-Infinity" token' => [
+            'fieldType' => TType::DOUBLE,
+            'writeMethod' => 'writeDouble',
+            'value' => -INF,
+            'readMethod' => 'readDouble',
+        ];
         yield 'string empty' => [
             'fieldType' => TType::STRING,
             'writeMethod' => 'writeString',

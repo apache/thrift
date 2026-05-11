@@ -99,74 +99,49 @@ class TSocket extends TTransport
 
     /**
      * @param resource $handle
-     * @return void
      */
-    public function setHandle($handle)
+    public function setHandle($handle): void
     {
         $this->handle = $handle;
         stream_set_blocking($this->handle, false);
     }
 
     /**
-     * Sets the send timeout.
-     *
      * @param int $timeout Timeout in milliseconds.
      */
-    public function setSendTimeout($timeout)
+    public function setSendTimeout(int $timeout): void
     {
-        $this->sendTimeoutSec = floor($timeout / 1000);
+        $this->sendTimeoutSec = intdiv($timeout, 1000);
         $this->sendTimeoutUsec =
             ($timeout - ($this->sendTimeoutSec * 1000)) * 1000;
     }
 
     /**
-     * Sets the receive timeout.
-     *
      * @param int $timeout Timeout in milliseconds.
      */
-    public function setRecvTimeout($timeout)
+    public function setRecvTimeout(int $timeout): void
     {
-        $this->recvTimeoutSec = floor($timeout / 1000);
+        $this->recvTimeoutSec = intdiv($timeout, 1000);
         $this->recvTimeoutUsec =
             ($timeout - ($this->recvTimeoutSec * 1000)) * 1000;
     }
 
-    /**
-     * Sets debugging output on or off
-     *
-     * @param bool $debug
-     */
-    public function setDebug($debug)
+    public function setDebug(bool $debug): void
     {
         $this->debug = $debug;
     }
 
-    /**
-     * Get the host that this socket is connected to
-     *
-     * @return string host
-     */
-    public function getHost()
+    public function getHost(): string
     {
         return $this->host;
     }
 
-    /**
-     * Get the remote port that this socket is connected to
-     *
-     * @return int port
-     */
-    public function getPort()
+    public function getPort(): int
     {
         return $this->port;
     }
 
-    /**
-     * Tests whether this is open
-     *
-     * @return bool true if the socket is open
-     */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return is_resource($this->handle);
     }
@@ -174,7 +149,7 @@ class TSocket extends TTransport
     /**
      * Connects the socket.
      */
-    public function open()
+    public function open(): void
     {
         if ($this->isOpen()) {
             throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);
@@ -225,10 +200,7 @@ class TSocket extends TTransport
         }
     }
 
-    /**
-     * Closes the socket.
-     */
-    public function close()
+    public function close(): void
     {
         @fclose($this->handle);
         $this->handle = null;
@@ -239,11 +211,8 @@ class TSocket extends TTransport
      *
      * This method will not wait for all the requested data, it will return as
      * soon as any data is received.
-     *
-     * @param int $len Maximum number of bytes to read.
-     * @return string Binary data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         $null = null;
         $read = [$this->handle];
@@ -276,10 +245,8 @@ class TSocket extends TTransport
 
     /**
      * Write to the socket.
-     *
-     * @param string $buf The data to write
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $null = null;
         $write = [$this->handle];
@@ -321,16 +288,11 @@ class TSocket extends TTransport
     }
 
     /**
-     * Flush output to the socket.
-     *
      * Since read(), readAll() and write() operate on the sockets directly,
-     * this is a no-op
-     *
-     * If you wish to have flushable buffering behaviour, wrap this TSocket
-     * in a TBufferedTransport.
+     * this is a no-op. Wrap this TSocket in a TBufferedTransport if you
+     * need flushable buffering.
      */
-    public function flush()
+    public function flush(): void
     {
-        // no-op
     }
 }
