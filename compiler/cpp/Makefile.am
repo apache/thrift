@@ -111,7 +111,7 @@ thrift_CXXFLAGS = -Wall -Wextra -pedantic -Werror
 thrift_LDADD = @LEXLIB@ src/thrift/libparse.a
 
 WINDOWS_DIST = \
-             compiler.sln \
+             compiler.slnx \
              compiler.vcxproj \
              compiler.vcxproj.filters
 

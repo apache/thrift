@@ -15,7 +15,7 @@
 
   Instructions for building a nuget package:
 
-  1. Open Thrift.sln in lib\netstd and build the release version of
+  1. Open Thrift.slnx in lib\netstd and build the release version of
      the "Thrift" project.
   2. nuget setApiKey <your-api-key>
   3. nuget pack ApacheThrift.nuspec -Symbols -SymbolPackageFormat snupkg

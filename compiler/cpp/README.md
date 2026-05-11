@@ -136,7 +136,7 @@ Place these binaries somewhere in the path and rename win_flex.exe and win_bison
 
 If this doesn't work on a system, try these manual pre-build steps.
 
-Open compiler.sln and remove the Pre-build commands under the project's: Properties -> Build Events -> Pre-Build Events.
+Open compiler.slnx and remove the Pre-build commands under the project's: Properties -> Build Events -> Pre-Build Events.
 
 From a command prompt:
 ```
