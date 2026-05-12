@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Thrift\Exception;
 
+use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 
 class TApplicationException extends TException
@@ -53,17 +54,17 @@ class TApplicationException extends TException
     public const INVALID_PROTOCOL = 9;
     public const UNSUPPORTED_CLIENT_TYPE = 10;
 
-    public function __construct($message = null, $code = 0)
+    public function __construct(?string $message = null, int $code = 0)
     {
         parent::__construct($message, $code);
     }
 
-    public function read($output)
+    public function read(TProtocol $input): int
     {
-        return $this->readStruct('TApplicationException', self::$tspec, $output);
+        return $this->readStruct('TApplicationException', self::$tspec, $input);
     }
 
-    public function write($output)
+    public function write(TProtocol $output): int
     {
         $xfer = 0;
         $xfer += $output->writeStructBegin('TApplicationException');

@@ -38,13 +38,13 @@ use Thrift\Base\TBase;
  * Can be called with standard Exception constructor (message, code) or with
  * Thrift Base object constructor (spec, vals).
  *
- * @param mixed $p1 Message (string) or type-spec (array)
- * @param mixed $p2 Code (integer) or values (array)
+ * @param string|array|null $p1 Message (string) or type-spec (array)
+ * @param int|array          $p2 Code (integer) or values (array)
  */
 #[\AllowDynamicProperties]
 class TException extends \Exception
 {
-    public function __construct($p1 = null, $p2 = 0)
+    public function __construct(string|array|null $p1 = null, int|array $p2 = 0)
     {
         if (is_array($p1) && is_array($p2)) {
             $spec = $p1;
@@ -56,7 +56,7 @@ class TException extends \Exception
                 }
             }
         } else {
-            parent::__construct((string)$p1, $p2);
+            parent::__construct($p1 ?? '', $p2);
         }
     }
 

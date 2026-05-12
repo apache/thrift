@@ -46,7 +46,7 @@ class TProtocolException extends TException
     public const NOT_IMPLEMENTED = 5;
     public const DEPTH_LIMIT = 6;
 
-    public function __construct($message = null, $code = 0)
+    public function __construct(?string $message = null, int $code = 0)
     {
         parent::__construct($message, $code);
     }
