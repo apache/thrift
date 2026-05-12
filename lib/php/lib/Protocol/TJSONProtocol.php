@@ -317,7 +317,7 @@ class TJSONProtocol extends TProtocol
         return json_decode($jsonString);
     }
 
-    private function isJSONNumeric($b)
+    private function isJSONNumeric(string $b): bool
     {
         switch ($b) {
             case '+':
@@ -463,155 +463,183 @@ class TJSONProtocol extends TProtocol
     }
 
     /**
-     * Writes the message header
-     *
-     * @param string $name Function name
-     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
-     * @param int $seqid The sequence id of this message
+     * Note on return values:
+     * TJSONProtocol does not track precise byte counts for read/write
+     * operations; it instead matches the historical contract that
+     * generated callers accumulate via `$xfer += $protocol->readX(...)`.
+     * Methods that previously returned `true` (cast to 1 in accumulation)
+     * keep returning `1`; methods that previously returned nothing or
+     * `0` keep returning `0`. Recomputing actual byte counts would
+     * require threading through the writeJSON* helpers and is out of
+     * scope for the typing pass.
      */
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         $this->writeJSONArrayStart();
         $this->writeJSONInteger(self::VERSION);
         $this->writeJSONString($name);
         $this->writeJSONInteger($type);
         $this->writeJSONInteger($seqid);
+
+        return 0;
     }
 
-    /**
-     * Close the message
-     */
-    public function writeMessageEnd()
+    public function writeMessageEnd(): int
     {
         $this->writeJSONArrayEnd();
+
+        return 0;
     }
 
     /**
-     * Writes a struct header.
-     *
-     * @param  string $name Struct name
      * @throws TException on write error
-     * @return int        How many bytes written
      */
-    public function writeStructBegin($name)
+    public function writeStructBegin(string $name): int
     {
         $this->writeJSONObjectStart();
+
+        return 0;
     }
 
     /**
-     * Close a struct.
-     *
      * @throws TException on write error
-     * @return int        How many bytes written
      */
-    public function writeStructEnd()
+    public function writeStructEnd(): int
     {
         $this->writeJSONObjectEnd();
+
+        return 0;
     }
 
-    public function writeFieldBegin($fieldName, $fieldType, $fieldId)
+    public function writeFieldBegin(string $fieldName, int $fieldType, int $fieldId): int
     {
         $this->writeJSONInteger($fieldId);
         $this->writeJSONObjectStart();
         $this->writeJSONString($this->getTypeNameForTypeID($fieldType));
+
+        return 0;
     }
 
-    public function writeFieldEnd()
+    public function writeFieldEnd(): int
     {
         $this->writeJsonObjectEnd();
+
+        return 0;
     }
 
-    public function writeFieldStop()
+    public function writeFieldStop(): int
     {
+        return 0;
     }
 
-    public function writeMapBegin($keyType, $valType, $size)
+    public function writeMapBegin(int $keyType, int $valType, int $size): int
     {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($keyType));
         $this->writeJSONString($this->getTypeNameForTypeID($valType));
         $this->writeJSONInteger($size);
         $this->writeJSONObjectStart();
+
+        return 0;
     }
 
-    public function writeMapEnd()
+    public function writeMapEnd(): int
     {
         $this->writeJSONObjectEnd();
         $this->writeJSONArrayEnd();
+
+        return 0;
     }
 
-    public function writeListBegin($elemType, $size)
+    public function writeListBegin(int $elemType, int $size): int
     {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($elemType));
         $this->writeJSONInteger($size);
+
+        return 0;
     }
 
-    public function writeListEnd()
+    public function writeListEnd(): int
     {
         $this->writeJSONArrayEnd();
+
+        return 0;
     }
 
-    public function writeSetBegin($elemType, $size)
+    public function writeSetBegin(int $elemType, int $size): int
     {
         $this->writeJSONArrayStart();
         $this->writeJSONString($this->getTypeNameForTypeID($elemType));
         $this->writeJSONInteger($size);
+
+        return 0;
     }
 
-    public function writeSetEnd()
+    public function writeSetEnd(): int
     {
         $this->writeJSONArrayEnd();
+
+        return 0;
     }
 
-    public function writeBool($bool)
+    public function writeBool(bool $bool): int
     {
         $this->writeJSONInteger($bool ? 1 : 0);
+
+        return 0;
     }
 
-    public function writeByte($byte)
+    public function writeByte(int $byte): int
     {
         $this->writeJSONInteger($byte);
+
+        return 0;
     }
 
-    public function writeI16($i16)
+    public function writeI16(int $i16): int
     {
         $this->writeJSONInteger($i16);
+
+        return 0;
     }
 
-    public function writeI32($i32)
+    public function writeI32(int $i32): int
     {
         $this->writeJSONInteger($i32);
+
+        return 0;
     }
 
-    public function writeI64($i64)
+    public function writeI64(int $i64): int
     {
         $this->writeJSONInteger($i64);
+
+        return 0;
     }
 
-    public function writeDouble($dub)
+    public function writeDouble(float $dub): int
     {
         $this->writeJSONDouble($dub);
+
+        return 0;
     }
 
-    public function writeString(string $str)
+    public function writeString(string $str): int
     {
         $this->writeJSONString($str);
+
+        return 0;
     }
 
-    public function writeUuid($uuid)
+    public function writeUuid(string $uuid): int
     {
         $this->writeJSONString($uuid);
+
+        return 0;
     }
 
-    /**
-     * Reads the message header
-     *
-     * @param string $name Function name
-     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
-     * @parem int $seqid The sequence id of this message
-     */
-    public function readMessageBegin(&$name, &$type, &$seqid)
+    public function readMessageBegin(?string &$name, ?int &$type, ?int &$seqid): int
     {
         $this->readJSONArrayStart();
 
@@ -623,30 +651,31 @@ class TJSONProtocol extends TProtocol
         $type = $this->readJSONInteger();
         $seqid = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    /**
-     * Read the close of message
-     */
-    public function readMessageEnd()
+    public function readMessageEnd(): int
     {
         $this->readJSONArrayEnd();
+
+        return 0;
     }
 
-    public function readStructBegin(&$name)
+    public function readStructBegin(?string &$name): int
     {
         $this->readJSONObjectStart();
 
         return 0;
     }
 
-    public function readStructEnd()
+    public function readStructEnd(): int
     {
         $this->readJSONObjectEnd();
+
+        return 0;
     }
 
-    public function readFieldBegin(&$name, &$fieldType, &$fieldId)
+    public function readFieldBegin(?string &$name, ?int &$fieldType, ?int &$fieldId): int
     {
         $ch = $this->reader->peek();
         $name = "";
@@ -658,85 +687,97 @@ class TJSONProtocol extends TProtocol
             $this->readJSONObjectStart();
             $fieldType = $this->getTypeIDForTypeName($this->readJSONString(false));
         }
+
+        return 0;
     }
 
-    public function readFieldEnd()
+    public function readFieldEnd(): int
     {
         $this->readJSONObjectEnd();
+
+        return 0;
     }
 
-    public function readMapBegin(&$keyType, &$valType, &$size)
+    public function readMapBegin(?int &$keyType, ?int &$valType, ?int &$size): int
     {
         $this->readJSONArrayStart();
         $keyType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $valType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
         $this->readJSONObjectStart();
+
+        return 0;
     }
 
-    public function readMapEnd()
+    public function readMapEnd(): int
     {
         $this->readJSONObjectEnd();
         $this->readJSONArrayEnd();
+
+        return 0;
     }
 
-    public function readListBegin(&$elemType, &$size)
+    public function readListBegin(?int &$elemType, ?int &$size): int
     {
         $this->readJSONArrayStart();
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    public function readListEnd()
+    public function readListEnd(): int
     {
         $this->readJSONArrayEnd();
+
+        return 0;
     }
 
-    public function readSetBegin(&$elemType, &$size)
+    public function readSetBegin(?int &$elemType, ?int &$size): int
     {
         $this->readJSONArrayStart();
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    public function readSetEnd()
+    public function readSetEnd(): int
     {
         $this->readJSONArrayEnd();
+
+        return 0;
     }
 
-    public function readBool(&$bool)
+    public function readBool(?bool &$bool): int
     {
         $bool = $this->readJSONInteger() == 0 ? false : true;
 
-        return true;
+        return 1;
     }
 
-    public function readByte(&$byte)
+    public function readByte(?int &$byte): int
     {
         $byte = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    public function readI16(&$i16)
+    public function readI16(?int &$i16): int
     {
         $i16 = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    public function readI32(&$i32)
+    public function readI32(?int &$i32): int
     {
         $i32 = $this->readJSONInteger();
 
-        return true;
+        return 1;
     }
 
-    public function readI64(&$i64)
+    public function readI64(?int &$i64): int
     {
         if (PHP_INT_SIZE === 4) {
             $i64 = $this->readJSONIntegerAsString();
@@ -744,27 +785,27 @@ class TJSONProtocol extends TProtocol
             $i64 = $this->readJSONInteger();
         }
 
-        return true;
+        return 1;
     }
 
-    public function readDouble(&$dub)
+    public function readDouble(?float &$dub): int
     {
         $dub = $this->readJSONDouble();
 
-        return true;
+        return 1;
     }
 
-    public function readString(&$str)
+    public function readString(?string &$str): int
     {
         $str = $this->readJSONString(false);
 
-        return true;
+        return 1;
     }
 
-    public function readUuid(&$uuid)
+    public function readUuid(?string &$uuid): int
     {
         $uuid = $this->readJSONString(false);
 
-        return true;
+        return 1;
     }
 }

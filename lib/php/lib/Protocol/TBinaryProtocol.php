@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Thrift\Protocol;
 
+use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 
@@ -38,14 +39,14 @@ class TBinaryProtocol extends TProtocol
     public const VERSION_1 = 0x80010000;
 
     public function __construct(
-        $trans,
+        TTransport $trans,
         protected bool $strictRead = false,
         protected bool $strictWrite = true,
     ) {
         parent::__construct($trans);
     }
 
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         if ($this->strictWrite) {
             $version = self::VERSION_1 | $type;
@@ -62,40 +63,39 @@ class TBinaryProtocol extends TProtocol
         }
     }
 
-    public function writeMessageEnd()
+    public function writeMessageEnd(): int
     {
         return 0;
     }
 
-    public function writeStructBegin($name)
+    public function writeStructBegin(string $name): int
     {
         return 0;
     }
 
-    public function writeStructEnd()
+    public function writeStructEnd(): int
     {
         return 0;
     }
 
-    public function writeFieldBegin($fieldName, $fieldType, $fieldId)
+    public function writeFieldBegin(string $fieldName, int $fieldType, int $fieldId): int
     {
         return
             $this->writeByte($fieldType) +
             $this->writeI16($fieldId);
     }
 
-    public function writeFieldEnd()
+    public function writeFieldEnd(): int
     {
         return 0;
     }
 
-    public function writeFieldStop()
+    public function writeFieldStop(): int
     {
-        return
-            $this->writeByte(TType::STOP);
+        return $this->writeByte(TType::STOP);
     }
 
-    public function writeMapBegin($keyType, $valType, $size)
+    public function writeMapBegin(int $keyType, int $valType, int $size): int
     {
         return
             $this->writeByte($keyType) +
@@ -103,81 +103,81 @@ class TBinaryProtocol extends TProtocol
             $this->writeI32($size);
     }
 
-    public function writeMapEnd()
+    public function writeMapEnd(): int
     {
         return 0;
     }
 
-    public function writeListBegin($elemType, $size)
+    public function writeListBegin(int $elemType, int $size): int
     {
         return
             $this->writeByte($elemType) +
             $this->writeI32($size);
     }
 
-    public function writeListEnd()
+    public function writeListEnd(): int
     {
         return 0;
     }
 
-    public function writeSetBegin($elemType, $size)
+    public function writeSetBegin(int $elemType, int $size): int
     {
         return
             $this->writeByte($elemType) +
             $this->writeI32($size);
     }
 
-    public function writeSetEnd()
+    public function writeSetEnd(): int
     {
         return 0;
     }
 
-    public function writeBool($value)
+    public function writeBool(bool $bool): int
     {
-        $data = pack('c', $value ? 1 : 0);
-        $this->trans->write($data, 1);
+        $data = pack('c', $bool ? 1 : 0);
+        $this->trans->write($data);
 
         return 1;
     }
 
-    public function writeByte($value)
+    public function writeByte(int $byte): int
     {
-        $data = pack('c', $value);
-        $this->trans->write($data, 1);
+        $data = pack('c', $byte);
+        $this->trans->write($data);
 
         return 1;
     }
 
-    public function writeI16($value)
+    public function writeI16(int $i16): int
     {
-        $data = pack('n', $value);
-        $this->trans->write($data, 2);
+        $data = pack('n', $i16);
+        $this->trans->write($data);
 
         return 2;
     }
 
-    public function writeI32($value)
+    public function writeI32(int $i32): int
     {
-        $data = pack('N', $value);
-        $this->trans->write($data, 4);
+        $data = pack('N', $i32);
+        $this->trans->write($data);
 
         return 4;
     }
 
-    public function writeI64($value)
+    public function writeI64(int $i64): int
     {
         // If we are on a 32bit architecture we have to explicitly deal with
         // 64-bit twos-complement arithmetic since PHP wants to treat all ints
         // as signed and any int over 2^31 - 1 as a float
         if (PHP_INT_SIZE == 4) {
-            $neg = $value < 0;
+            $neg = $i64 < 0;
 
             if ($neg) {
-                $value *= -1;
+                $i64 *= -1;
             }
 
-            $hi = (int)($value / 4294967296);
-            $lo = (int)$value;
+            $hi = (int)($i64 / 4294967296);
+            $lo = (int)$i64;
 
             if ($neg) {
                 $hi = ~$hi;
@@ -191,44 +191,44 @@ class TBinaryProtocol extends TProtocol
             }
             $data = pack('N2', $hi, $lo);
         } else {
-            $hi = $value >> 32;
-            $lo = $value & 0xFFFFFFFF;
+            $hi = $i64 >> 32;
+            $lo = $i64 & 0xFFFFFFFF;
             $data = pack('N2', $hi, $lo);
         }
 
-        $this->trans->write($data, 8);
+        $this->trans->write($data);
 
         return 8;
     }
 
-    public function writeDouble($value)
+    public function writeDouble(float $dub): int
     {
-        $data = pack('d', $value);
-        $this->trans->write(strrev($data), 8);
+        $data = pack('d', $dub);
+        $this->trans->write(strrev($data));
 
         return 8;
     }
 
-    public function writeString(string $value)
+    public function writeString(string $str): int
     {
-        $len = strlen($value);
+        $len = strlen($str);
         $result = $this->writeI32($len);
         if ($len) {
-            $this->trans->write($value, $len);
+            $this->trans->write($str);
         }
 
         return $result + $len;
     }
 
-    public function writeUuid($uuid)
+    public function writeUuid(string $uuid): int
     {
         $data = hex2bin(str_replace('-', '', $uuid));
-        $this->trans->write($data, 16);
+        $this->trans->write($data);
 
         return 16;
     }
 
-    public function readMessageBegin(&$name, &$type, &$seqid)
+    public function readMessageBegin(?string &$name, ?int &$type, ?int &$seqid): int
     {
         $result = $this->readI32($sz);
         if ($sz < 0) {
@@ -259,24 +259,24 @@ class TBinaryProtocol extends TProtocol
         return $result;
     }
 
-    public function readMessageEnd()
+    public function readMessageEnd(): int
     {
         return 0;
     }
 
-    public function readStructBegin(&$name)
+    public function readStructBegin(?string &$name): int
     {
         $name = '';
 
         return 0;
     }
 
-    public function readStructEnd()
+    public function readStructEnd(): int
     {
         return 0;
     }
 
-    public function readFieldBegin(&$name, &$fieldType, &$fieldId)
+    public function readFieldBegin(?string &$name, ?int &$fieldType, ?int &$fieldId): int
     {
         $result = $this->readByte($fieldType);
         if ($fieldType == TType::STOP) {
@@ -289,12 +289,12 @@ class TBinaryProtocol extends TProtocol
         return $result;
     }
 
-    public function readFieldEnd()
+    public function readFieldEnd(): int
     {
         return 0;
     }
 
-    public function readMapBegin(&$keyType, &$valType, &$size)
+    public function readMapBegin(?int &$keyType, ?int &$valType, ?int &$size): int
     {
         return
             $this->readByte($keyType) +
@@ -302,78 +302,78 @@ class TBinaryProtocol extends TProtocol
             $this->readI32($size);
     }
 
-    public function readMapEnd()
+    public function readMapEnd(): int
     {
         return 0;
     }
 
-    public function readListBegin(&$elemType, &$size)
+    public function readListBegin(?int &$elemType, ?int &$size): int
     {
         return
             $this->readByte($elemType) +
             $this->readI32($size);
     }
 
-    public function readListEnd()
+    public function readListEnd(): int
     {
         return 0;
     }
 
-    public function readSetBegin(&$elemType, &$size)
+    public function readSetBegin(?int &$elemType, ?int &$size): int
     {
         return
             $this->readByte($elemType) +
             $this->readI32($size);
     }
 
-    public function readSetEnd()
+    public function readSetEnd(): int
     {
         return 0;
     }
 
-    public function readBool(&$value)
+    public function readBool(?bool &$bool): int
     {
         $data = $this->trans->readAll(1);
         $arr = unpack('c', $data);
-        $value = $arr[1] == 1;
+        $bool = $arr[1] == 1;
 
         return 1;
     }
 
-    public function readByte(&$value)
+    public function readByte(?int &$byte): int
     {
         $data = $this->trans->readAll(1);
         $arr = unpack('c', $data);
-        $value = $arr[1];
+        $byte = $arr[1];
 
         return 1;
     }
 
-    public function readI16(&$value)
+    public function readI16(?int &$i16): int
     {
         $data = $this->trans->readAll(2);
         $arr = unpack('n', $data);
-        $value = $arr[1];
-        if ($value > 0x7fff) {
-            $value = 0 - (($value - 1) ^ 0xffff);
+        $i16 = $arr[1];
+        if ($i16 > 0x7fff) {
+            $i16 = 0 - (($i16 - 1) ^ 0xffff);
         }
 
         return 2;
     }
 
-    public function readI32(&$value)
+    public function readI32(?int &$i32): int
     {
         $data = $this->trans->readAll(4);
         $arr = unpack('N', $data);
-        $value = $arr[1];
-        if ($value > 0x7fffffff) {
-            $value = 0 - (($value - 1) ^ 0xffffffff);
+        $i32 = $arr[1];
+        if ($i32 > 0x7fffffff) {
+            $i32 = 0 - (($i32 - 1) ^ 0xffffffff);
         }
 
         return 4;
     }
 
-    public function readI64(&$value)
+    public function readI64(?int &$i64): int
     {
         $data = $this->trans->readAll(8);
 
@@ -413,10 +413,10 @@ class TBinaryProtocol extends TProtocol
                 $lo += 0x80000000;
             }
 
-            $value = $hi * 4294967296 + $lo;
+            $i64 = $hi * 4294967296 + $lo;
 
             if ($isNeg) {
-                $value = 0 - $value;
+                $i64 = 0 - $i64;
             }
         } else {
             // Upcast negatives in LSB bit
@@ -429,41 +429,41 @@ class TBinaryProtocol extends TProtocol
                 $arr[1] = $arr[1] & 0xffffffff;
                 $arr[1] = $arr[1] ^ 0xffffffff;
                 $arr[2] = $arr[2] ^ 0xffffffff;
-                $value = 0 - $arr[1] * 4294967296 - $arr[2] - 1;
+                $i64 = 0 - $arr[1] * 4294967296 - $arr[2] - 1;
             } else {
-                $value = $arr[1] * 4294967296 + $arr[2];
+                $i64 = $arr[1] * 4294967296 + $arr[2];
             }
         }
 
         return 8;
     }
 
-    public function readDouble(&$value)
+    public function readDouble(?float &$dub): int
     {
         $data = strrev($this->trans->readAll(8));
         $arr = unpack('d', $data);
-        $value = $arr[1];
+        $dub = $arr[1];
 
         return 8;
     }
 
-    public function readString(&$value)
+    public function readString(?string &$str): int
     {
         $result = $this->readI32($len);
         if ($len) {
-            $value = $this->trans->readAll($len);
+            $str = $this->trans->readAll($len);
         } else {
-            $value = '';
+            $str = '';
         }
 
         return $result + $len;
     }
 
-    public function readUuid(&$value)
+    public function readUuid(?string &$uuid): int
     {
         $data = $this->trans->readAll(16);
         $hex = bin2hex($data);
-        $value = substr($hex, 0, 8) . '-' .
+        $uuid = substr($hex, 0, 8) . '-' .
                  substr($hex, 8, 4) . '-' .
                  substr($hex, 12, 4) . '-' .
                  substr($hex, 16, 4) . '-' .

@@ -43,97 +43,46 @@ class TSimpleJSONProtocolTest extends TestCase
      * - use JSON instead
      *
      */
+    /**
+     * All read methods throw TException("Not implemented") in
+     * TSimpleJSONProtocol. The dispatch arity (count of by-ref output
+     * params, including nullable scalars) is all we need to invoke the
+     * typed signatures correctly before the exception propagates.
+     */
     #[DataProvider('readDataProvider')]
-    public function testRead(
-        $methodName,
-        $methodArguments
-    ) {
+    public function testRead(string $methodName, int $argCount): void
+    {
         $this->expectException(TException::class);
         $this->expectExceptionMessage("Not implemented");
 
         $transport = $this->createStub(TTransport::class);
         $protocol = new TSimpleJSONProtocol($transport);
-        $protocol->$methodName(...$methodArguments);
+
+        $args = array_fill(0, $argCount, null);
+        $protocol->$methodName(...$args);
     }
 
-    public static function readDataProvider()
+    public static function readDataProvider(): \Generator
     {
-        yield 'readMessageBegin' => [
-            'methodName' => 'readMessageBegin',
-            'methodArguments' => ['name', 'type', 'seqId'],
-        ];
-        yield 'readMessageEnd' => [
-            'methodName' => 'readMessageEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readStructBegin' => [
-            'methodName' => 'readStructBegin',
-            'methodArguments' => ['name'],
-        ];
-        yield 'readStructEnd' => [
-            'methodName' => 'readStructEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readFieldBegin' => [
-            'methodName' => 'readFieldBegin',
-            'methodArguments' => ['name', TType::STRING, 1],
-        ];
-        yield 'readFieldEnd' => [
-            'methodName' => 'readFieldEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readMapBegin' => [
-            'methodName' => 'readMapBegin',
-            'methodArguments' => [TType::STRING, TType::STRING, 1],
-        ];
-        yield 'readMapEnd' => [
-            'methodName' => 'readMapEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readListBegin' => [
-            'methodName' => 'readListBegin',
-            'methodArguments' => [TType::STRING, 1],
-        ];
-        yield 'readListEnd' => [
-            'methodName' => 'readListEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readSetBegin' => [
-            'methodName' => 'readSetBegin',
-            'methodArguments' => [TType::STRING, 1],
-        ];
-        yield 'readSetEnd' => [
-            'methodName' => 'readSetEnd',
-            'methodArguments' => [],
-        ];
-        yield 'readBool' => [
-            'methodName' => 'readBool',
-            'methodArguments' => [true],
-        ];
-        yield 'readByte' => [
-            'methodName' => 'readByte',
-            'methodArguments' => [0x01],
-        ];
-        yield 'readI16' => [
-            'methodName' => 'readI16',
-            'methodArguments' => [1],
-        ];
-        yield 'readI32' => [
-            'methodName' => 'readI32',
-            'methodArguments' => [1],
-        ];
-        yield 'readI64' => [
-            'methodName' => 'readI64',
-            'methodArguments' => [1],
-        ];
-        yield 'readDouble' => [
-            'methodName' => 'readDouble',
-            'methodArguments' => [0.1],
-        ];
-        yield 'readString' => [
-            'methodName' => 'readString',
-            'methodArguments' => ['string'],
-        ];
+        yield 'readMessageBegin' => ['readMessageBegin', 3];
+        yield 'readMessageEnd' => ['readMessageEnd', 0];
+        yield 'readStructBegin' => ['readStructBegin', 1];
+        yield 'readStructEnd' => ['readStructEnd', 0];
+        yield 'readFieldBegin' => ['readFieldBegin', 3];
+        yield 'readFieldEnd' => ['readFieldEnd', 0];
+        yield 'readMapBegin' => ['readMapBegin', 3];
+        yield 'readMapEnd' => ['readMapEnd', 0];
+        yield 'readListBegin' => ['readListBegin', 2];
+        yield 'readListEnd' => ['readListEnd', 0];
+        yield 'readSetBegin' => ['readSetBegin', 2];
+        yield 'readSetEnd' => ['readSetEnd', 0];
+        yield 'readBool' => ['readBool', 1];
+        yield 'readByte' => ['readByte', 1];
+        yield 'readI16' => ['readI16', 1];
+        yield 'readI32' => ['readI32', 1];
+        yield 'readI64' => ['readI64', 1];
+        yield 'readDouble' => ['readDouble', 1];
+        yield 'readString' => ['readString', 1];
     }
 
     #[DataProvider('writeScalarProvider')]

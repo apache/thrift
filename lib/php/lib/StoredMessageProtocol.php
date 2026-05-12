@@ -44,10 +44,12 @@ class StoredMessageProtocol extends TProtocolDecorator
         parent::__construct($protocol);
     }
 
-    public function readMessageBegin(&$name, &$type, &$seqid)
+    public function readMessageBegin(?string &$name, ?int &$type, ?int &$seqid): int
     {
         $name  = $this->fname;
         $type  = $this->mtype;
         $seqid = $this->rseqid;
+
+        return 0;
     }
 }

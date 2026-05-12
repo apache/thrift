@@ -60,18 +60,14 @@ class TMultiplexedProtocol extends TProtocolDecorator
     /**
      * Writes the message header.
      * Prepends the service name to the function name, separated by <code>TMultiplexedProtocol::SEPARATOR</code>.
-     *
-     * @param string $name  Function name.
-     * @param int    $type  Message type.
-     * @param int    $seqid The sequence id of this message.
      */
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         if ($type == TMessageType::CALL || $type == TMessageType::ONEWAY) {
             $nameWithService = $this->serviceName . self::SEPARATOR . $name;
-            parent::writeMessageBegin($nameWithService, $type, $seqid);
-        } else {
-            parent::writeMessageBegin($name, $type, $seqid);
+            return parent::writeMessageBegin($nameWithService, $type, $seqid);
         }
+
+        return parent::writeMessageBegin($name, $type, $seqid);
     }
 }

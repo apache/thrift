@@ -27,6 +27,7 @@ namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
 use Thrift\Exception\TProtocolException;
+use Thrift\Transport\TTransport;
 use Thrift\Protocol\SimpleJSON\Context;
 use Thrift\Protocol\SimpleJSON\ListContext;
 use Thrift\Protocol\SimpleJSON\StructContext;
@@ -138,153 +139,180 @@ class TSimpleJSONProtocol extends TProtocol
     /**
      * Constructor
      */
-    public function __construct($trans)
+    public function __construct(TTransport $trans)
     {
         parent::__construct($trans);
         $this->writeContext = new Context();
     }
 
     /**
-     * Writes the message header
-     *
-     * @param string $name  Function name
-     * @param int    $type  message type TMessageType::CALL or TMessageType::REPLY
-     * @param int    $seqid The sequence id of this message
+     * TSimpleJSONProtocol does not track precise byte counts; all write
+     * methods return 0 and read methods throw, since this protocol is
+     * write-only by design (see class docblock below).
      */
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         $this->writeJSONString($name);
         $this->writeJSONInteger($type);
         $this->writeJSONInteger($seqid);
+
+        return 0;
     }
 
-    /**
-     * Close the message
-     */
-    public function writeMessageEnd()
+    public function writeMessageEnd(): int
     {
         $this->popWriteContext();
         $this->trans->write(self::RBRACKET);
+
+        return 0;
     }
 
-    /**
-     * Writes a struct header.
-     *
-     * @param  string     $name Struct name
-     */
-    public function writeStructBegin($name)
+    public function writeStructBegin(string $name): int
     {
         $this->writeContext->write();
         $this->trans->write(self::LBRACE);
         $this->pushWriteContext(new StructContext($this));
+
+        return 0;
     }
 
-    /**
-     * Close a struct.
-     */
-    public function writeStructEnd()
+    public function writeStructEnd(): int
     {
         $this->popWriteContext();
         $this->trans->write(self::RBRACE);
+
+        return 0;
     }
 
-    public function writeFieldBegin($fieldName, $fieldType, $fieldId)
+    public function writeFieldBegin(string $fieldName, int $fieldType, int $fieldId): int
     {
         $this->writeJSONString($fieldName);
+
+        return 0;
     }
 
-    public function writeFieldEnd()
+    public function writeFieldEnd(): int
     {
+        return 0;
     }
 
-    public function writeFieldStop()
+    public function writeFieldStop(): int
     {
+        return 0;
     }
 
-    public function writeMapBegin($keyType, $valType, $size)
+    public function writeMapBegin(int $keyType, int $valType, int $size): int
     {
         $this->assertContextIsNotMapKey(self::NAME_MAP);
         $this->writeContext->write();
         $this->trans->write(self::LBRACE);
         $this->pushWriteContext(new MapContext($this));
+
+        return 0;
     }
 
-    public function writeMapEnd()
+    public function writeMapEnd(): int
     {
         $this->popWriteContext();
         $this->trans->write(self::RBRACE);
+
+        return 0;
     }
 
-    public function writeListBegin($elemType, $size)
+    public function writeListBegin(int $elemType, int $size): int
     {
         $this->assertContextIsNotMapKey(self::NAME_LIST);
         $this->writeContext->write();
         $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         // No metadata!
+
+        return 0;
     }
 
-    public function writeListEnd()
+    public function writeListEnd(): int
     {
         $this->popWriteContext();
         $this->trans->write(self::RBRACKET);
+
+        return 0;
     }
 
-    public function writeSetBegin($elemType, $size)
+    public function writeSetBegin(int $elemType, int $size): int
     {
         $this->assertContextIsNotMapKey(self::NAME_SET);
         $this->writeContext->write();
         $this->trans->write(self::LBRACKET);
         $this->pushWriteContext(new ListContext($this));
         // No metadata!
+
+        return 0;
     }
 
-    public function writeSetEnd()
+    public function writeSetEnd(): int
     {
         $this->popWriteContext();
         $this->trans->write(self::RBRACKET);
+
+        return 0;
     }
 
-    public function writeBool($bool)
+    public function writeBool(bool $bool): int
     {
         $this->writeJSONInteger($bool ? 1 : 0);
+
+        return 0;
     }
 
-    public function writeByte($byte)
+    public function writeByte(int $byte): int
     {
         $this->writeJSONInteger($byte);
+
+        return 0;
     }
 
-    public function writeI16($i16)
+    public function writeI16(int $i16): int
     {
         $this->writeJSONInteger($i16);
+
+        return 0;
     }
 
-    public function writeI32($i32)
+    public function writeI32(int $i32): int
     {
         $this->writeJSONInteger($i32);
+
+        return 0;
     }
 
-    public function writeI64($i64)
+    public function writeI64(int $i64): int
     {
         $this->writeJSONInteger($i64);
+
+        return 0;
     }
 
-    public function writeDouble($dub)
+    public function writeDouble(float $dub): int
     {
         $this->writeJSONDouble($dub);
+
+        return 0;
     }
 
-    public function writeString(string $str)
+    public function writeString(string $str): int
     {
         $this->writeJSONString($str);
+
+        return 0;
     }
 
-    public function writeUuid($uuid)
+    public function writeUuid(string $uuid): int
     {
         $this->writeJSONString($uuid);
+
+        return 0;
     }
 
     /**
@@ -295,102 +323,102 @@ class TSimpleJSONProtocol extends TProtocol
      * - use JSON instead
      */
 
-    public function readMessageBegin(&$name, &$type, &$seqid)
+    public function readMessageBegin(?string &$name, ?int &$type, ?int &$seqid): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readMessageEnd()
+    public function readMessageEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readStructBegin(&$name)
+    public function readStructBegin(?string &$name): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readStructEnd()
+    public function readStructEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readFieldBegin(&$name, &$fieldType, &$fieldId)
+    public function readFieldBegin(?string &$name, ?int &$fieldType, ?int &$fieldId): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readFieldEnd()
+    public function readFieldEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readMapBegin(&$keyType, &$valType, &$size)
+    public function readMapBegin(?int &$keyType, ?int &$valType, ?int &$size): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readMapEnd()
+    public function readMapEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readListBegin(&$elemType, &$size)
+    public function readListBegin(?int &$elemType, ?int &$size): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readListEnd()
+    public function readListEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readSetBegin(&$elemType, &$size)
+    public function readSetBegin(?int &$elemType, ?int &$size): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readSetEnd()
+    public function readSetEnd(): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readBool(&$bool)
+    public function readBool(?bool &$bool): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readByte(&$byte)
+    public function readByte(?int &$byte): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readI16(&$i16)
+    public function readI16(?int &$i16): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readI32(&$i32)
+    public function readI32(?int &$i32): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readI64(&$i64)
+    public function readI64(?int &$i64): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readDouble(&$dub)
+    public function readDouble(?float &$dub): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readString(&$str)
+    public function readString(?string &$str): int
     {
         throw new TException("Not implemented");
     }
 
-    public function readUuid(&$uuid)
+    public function readUuid(?string &$uuid): int
     {
         throw new TException("Not implemented");
     }
