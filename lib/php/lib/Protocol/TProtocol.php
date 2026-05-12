@@ -140,71 +140,74 @@ abstract class TProtocol
      */
     public function skip(int $type): int
     {
-        switch ($type) {
-            case TType::BOOL:
-                return $this->readBool($bool);
-            case TType::BYTE:
-                return $this->readByte($byte);
-            case TType::I16:
-                return $this->readI16($i16);
-            case TType::I32:
-                return $this->readI32($i32);
-            case TType::I64:
-                return $this->readI64($i64);
-            case TType::DOUBLE:
-                return $this->readDouble($dub);
-            case TType::STRING:
-                return $this->readString($str);
-            case TType::UUID:
-                return $this->readUuid($uuid);
-            case TType::STRUCT:
-                $result = $this->readStructBegin($name);
-                while (true) {
-                    $result += $this->readFieldBegin($name, $ftype, $fid);
-                    if ($ftype == TType::STOP) {
-                        break;
-                    }
-                    $result += $this->skip($ftype);
-                    $result += $this->readFieldEnd();
-                }
-                $result += $this->readStructEnd();
+        return match ($type) {
+            TType::BOOL => $this->readBool($bool),
+            TType::BYTE => $this->readByte($byte),
+            TType::I16 => $this->readI16($i16),
+            TType::I32 => $this->readI32($i32),
+            TType::I64 => $this->readI64($i64),
+            TType::DOUBLE => $this->readDouble($dub),
+            TType::STRING => $this->readString($str),
+            TType::UUID => $this->readUuid($uuid),
+            TType::STRUCT => $this->skipStruct(),
+            TType::MAP => $this->skipMap(),
+            TType::SET => $this->skipSet(),
+            TType::LST => $this->skipList(),
+            default => throw new TProtocolException(
+                'Unknown field type: ' . $type,
+                TProtocolException::INVALID_DATA
+            ),
+        };
+    }
 
-                return $result;
-
-            case TType::MAP:
-                $result = $this->readMapBegin($keyType, $valType, $size);
-                for ($i = 0; $i < $size; $i++) {
-                    $result += $this->skip($keyType);
-                    $result += $this->skip($valType);
-                }
-                $result += $this->readMapEnd();
-
-                return $result;
-
-            case TType::SET:
-                $result = $this->readSetBegin($elemType, $size);
-                for ($i = 0; $i < $size; $i++) {
-                    $result += $this->skip($elemType);
-                }
-                $result += $this->readSetEnd();
-
-                return $result;
-
-            case TType::LST:
-                $result = $this->readListBegin($elemType, $size);
-                for ($i = 0; $i < $size; $i++) {
-                    $result += $this->skip($elemType);
-                }
-                $result += $this->readListEnd();
-
-                return $result;
-
-            default:
-                throw new TProtocolException(
-                    'Unknown field type: ' . $type,
-                    TProtocolException::INVALID_DATA
-                );
+    private function skipStruct(): int
+    {
+        $result = $this->readStructBegin($name);
+        while (true) {
+            $result += $this->readFieldBegin($name, $ftype, $fid);
+            if ($ftype == TType::STOP) {
+                break;
+            }
+            $result += $this->skip($ftype);
+            $result += $this->readFieldEnd();
         }
+        $result += $this->readStructEnd();
+
+        return $result;
+    }
+
+    private function skipMap(): int
+    {
+        $result = $this->readMapBegin($keyType, $valType, $size);
+        for ($i = 0; $i < $size; $i++) {
+            $result += $this->skip($keyType);
+            $result += $this->skip($valType);
+        }
+        $result += $this->readMapEnd();
+
+        return $result;
+    }
+
+    private function skipSet(): int
+    {
+        $result = $this->readSetBegin($elemType, $size);
+        for ($i = 0; $i < $size; $i++) {
+            $result += $this->skip($elemType);
+        }
+        $result += $this->readSetEnd();
+
+        return $result;
+    }
+
+    private function skipList(): int
+    {
+        $result = $this->readListBegin($elemType, $size);
+        for ($i = 0; $i < $size; $i++) {
+            $result += $this->skip($elemType);
+        }
+        $result += $this->readListEnd();
+
+        return $result;
     }
 
     /**
@@ -212,113 +215,85 @@ abstract class TProtocol
      */
     public static function skipBinary(TTransport $itrans, int $type): int
     {
-        switch ($type) {
-            case TType::BOOL:
-                $itrans->readAll(1);
+        return match ($type) {
+            TType::BOOL, TType::BYTE => self::skipBinaryFixed($itrans, 1),
+            TType::I16 => self::skipBinaryFixed($itrans, 2),
+            TType::I32 => self::skipBinaryFixed($itrans, 4),
+            TType::I64, TType::DOUBLE => self::skipBinaryFixed($itrans, 8),
+            TType::UUID => self::skipBinaryFixed($itrans, 16),
+            TType::STRING => self::skipBinaryString($itrans),
+            TType::STRUCT => self::skipBinaryStruct($itrans),
+            TType::MAP => self::skipBinaryMap($itrans),
+            TType::SET, TType::LST => self::skipBinaryCollection($itrans),
+            default => throw new TProtocolException(
+                'Unknown field type: ' . $type,
+                TProtocolException::INVALID_DATA
+            ),
+        };
+    }
 
-                return 1;
-            case TType::BYTE:
-                $itrans->readAll(1);
+    private static function skipBinaryFixed(TTransport $itrans, int $bytes): int
+    {
+        $itrans->readAll($bytes);
 
-                return 1;
-            case TType::I16:
-                $itrans->readAll(2);
+        return $bytes;
+    }
 
-                return 2;
-            case TType::I32:
-                $itrans->readAll(4);
+    private static function skipBinaryString(TTransport $itrans): int
+    {
+        $len = self::readI32Signed($itrans);
+        $itrans->readAll($len);
 
-                return 4;
-            case TType::I64:
-                $itrans->readAll(8);
+        return 4 + $len;
+    }
 
-                return 8;
-            case TType::DOUBLE:
-                $itrans->readAll(8);
-
-                return 8;
-            case TType::UUID:
-                $itrans->readAll(16);
-
-                return 16;
-            case TType::STRING:
-                $len = unpack('N', $itrans->readAll(4));
-                $len = $len[1];
-                if ($len > 0x7fffffff) {
-                    $len = 0 - (($len - 1) ^ 0xffffffff);
-                }
-
-                $itrans->readAll($len);
-
-                return 4 + $len;
-
-            case TType::STRUCT:
-                $result = 0;
-                while (true) {
-                    $data = $itrans->readAll(1);
-                    $result += 1;
-                    $arr = unpack('c', $data);
-                    $ftype = $arr[1];
-                    if ($ftype == TType::STOP) {
-                        break;
-                    }
-                    // I16 field id
-                    $itrans->readAll(2);
-                    $result += 2;
-                    $result += self::skipBinary($itrans, $ftype);
-                }
-
-                return $result;
-
-            case TType::MAP:
-                // Ktype
-                $data = $itrans->readAll(1);
-                $arr = unpack('c', $data);
-                $ktype = $arr[1];
-                // Vtype
-                $data = $itrans->readAll(1);
-                $arr = unpack('c', $data);
-                $vtype = $arr[1];
-                // Size
-                $data = $itrans->readAll(4);
-                $arr = unpack('N', $data);
-                $size = $arr[1];
-                if ($size > 0x7fffffff) {
-                    $size = 0 - (($size - 1) ^ 0xffffffff);
-                }
-                $result = 6;
-                for ($i = 0; $i < $size; $i++) {
-                    $result += self::skipBinary($itrans, $ktype);
-                    $result += self::skipBinary($itrans, $vtype);
-                }
-
-                return $result;
-
-            case TType::SET:
-            case TType::LST:
-                // Vtype
-                $data = $itrans->readAll(1);
-                $arr = unpack('c', $data);
-                $vtype = $arr[1];
-                // Size
-                $data = $itrans->readAll(4);
-                $arr = unpack('N', $data);
-                $size = $arr[1];
-                if ($size > 0x7fffffff) {
-                    $size = 0 - (($size - 1) ^ 0xffffffff);
-                }
-                $result = 5;
-                for ($i = 0; $i < $size; $i++) {
-                    $result += self::skipBinary($itrans, $vtype);
-                }
-
-                return $result;
-
-            default:
-                throw new TProtocolException(
-                    'Unknown field type: ' . $type,
-                    TProtocolException::INVALID_DATA
-                );
+    private static function skipBinaryStruct(TTransport $itrans): int
+    {
+        $result = 0;
+        while (true) {
+            $ftype = unpack('c', $itrans->readAll(1))[1];
+            $result += 1;
+            if ($ftype == TType::STOP) {
+                break;
+            }
+            $itrans->readAll(2);
+            $result += 2;
+            $result += self::skipBinary($itrans, $ftype);
         }
+
+        return $result;
+    }
+
+    private static function skipBinaryMap(TTransport $itrans): int
+    {
+        $ktype = unpack('c', $itrans->readAll(1))[1];
+        $vtype = unpack('c', $itrans->readAll(1))[1];
+        $size = self::readI32Signed($itrans);
+        $result = 1 + 1 + 4;
+        for ($i = 0; $i < $size; $i++) {
+            $result += self::skipBinary($itrans, $ktype);
+            $result += self::skipBinary($itrans, $vtype);
+        }
+
+        return $result;
+    }
+
+    private static function skipBinaryCollection(TTransport $itrans): int
+    {
+        $vtype = unpack('c', $itrans->readAll(1))[1];
+        $size = self::readI32Signed($itrans);
+        $result = 1 + 4;
+        for ($i = 0; $i < $size; $i++) {
+            $result += self::skipBinary($itrans, $vtype);
+        }
+
+        return $result;
+    }
+
+    private static function readI32Signed(TTransport $itrans): int
+    {
+        $n = unpack('N', $itrans->readAll(4))[1];
+
+        return $n > 0x7fffffff ? 0 - (($n - 1) ^ 0xffffffff) : $n;
     }
 }
