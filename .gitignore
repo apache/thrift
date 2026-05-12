@@ -283,7 +283,7 @@ SKILL.md
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
-/lib/php/tests/Resources/packages/
+/lib/php/test/Resources/packages/
 /lib/php/test/test-log-junit.xml
 /lib/py/dist/
 /lib/erl/logs/

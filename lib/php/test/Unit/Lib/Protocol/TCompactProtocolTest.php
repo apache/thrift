@@ -138,7 +138,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with("\xe8\x07", 2);
+                  ->with("\xe8\x07");
 
         $protocol->writeVarint(1000);
     }
@@ -204,11 +204,11 @@ class TCompactProtocolTest extends TestCase
         $protocol = new TCompactProtocol($transport);
 
         $expectedWriteArgs = [
-            [pack('C', self::PROTOCOL_ID), 1], #protocal id
-            [pack('C', self::VERSION | ($type << TCompactProtocol::TYPE_SHIFT_AMOUNT)), 1], #version
-            ["\x01", 1], #seqid
-            ["\x08", 1], #field name length
-            ["testName", 8], #field name
+            [pack('C', self::PROTOCOL_ID)], #protocal id
+            [pack('C', self::VERSION | ($type << TCompactProtocol::TYPE_SHIFT_AMOUNT))], #version
+            ["\x01"], #seqid
+            ["\x08"], #field name length
+            ["testName"], #field name
         ];
         $writeReturns = [1, 1, 1, 1, 8];
         $transport
@@ -277,7 +277,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with("\x00", 1);
+                  ->with("\x00");
 
         $this->assertSame(1, $protocol->writeFieldStop());
     }
@@ -319,7 +319,7 @@ class TCompactProtocolTest extends TestCase
             'type' => TType::BOOL,
             'fid' => 1,
             'writeCallParams' => [
-                ["\x12", 1], #writeUByte(pack('C', ($delta << 4) | $type)),
+                ["\x12"], #writeUByte(pack('C', ($delta << 4) | $type)),
             ],
             'writeCallResult' => [
                 1,
@@ -330,8 +330,8 @@ class TCompactProtocolTest extends TestCase
             'type' => TType::LST,
             'fid' => 16,
             'writeCallParams' => [
-                ["\x0f", 1], #writeUByte(pack('C', ($delta << 4) | $type)),
-                [" ", 1], #writeI16($fid),
+                ["\x0f"], #writeUByte(pack('C', ($delta << 4) | $type)),
+                [" "], #writeI16($fid),
             ],
             'writeCallResult' => [
                 1,
@@ -398,13 +398,13 @@ class TCompactProtocolTest extends TestCase
             'fieldType' => TType::LST,
             'fieldId' => 1,
             'writeCallParams' => [
-                ["\x19", 1], #writeUByte(pack('C', ($delta << 4) | $type)),
+                ["\x19"], #writeUByte(pack('C', ($delta << 4) | $type)),
             ],
             'writeCallResult' => [
                 1,
             ],
             'expectedState' => self::STATE_VALUE_WRITE,
-            'expectedBoolFid' => null,
+            'expectedBoolFid' => 0,
             'expectedLastFid' => 1,
             'expectedResult' => 1,
         ];
@@ -465,7 +465,7 @@ class TCompactProtocolTest extends TestCase
             'etype' => TType::STRING,
             'size' => 1,
             'writeCallParams' => [
-                ["\x18", 1], #writeUByte(pack('C', ($size << 4 | self::$ctypes[$etype])),
+                ["\x18"], #writeUByte(pack('C', ($size << 4 | self::$ctypes[$etype])),
             ],
             'writeCallResult' => [
                 1,
@@ -480,8 +480,8 @@ class TCompactProtocolTest extends TestCase
             'etype' => TType::STRING,
             'size' => 16,
             'writeCallParams' => [
-                ["\xf8", 1], #writeUByte(pack('C', 0xf0 | self::$ctypes[$etype])),
-                ["\x10", 1], #writeVarint(16),
+                ["\xf8"], #writeUByte(pack('C', 0xf0 | self::$ctypes[$etype])),
+                ["\x10"], #writeVarint(16),
             ],
             'writeCallResult' => [
                 1,
@@ -542,7 +542,7 @@ class TCompactProtocolTest extends TestCase
             'valType' => TType::STRING,
             'size' => 0,
             'writeCallParams' => [
-                ["\x00", 1], #writeByte(0),
+                ["\x00"], #writeByte(0),
             ],
             'writeCallResult' => [
                 1,
@@ -557,8 +557,8 @@ class TCompactProtocolTest extends TestCase
             'valType' => TType::STRING,
             'size' => 16,
             'writeCallParams' => [
-                ["\x10", 1], #writeVarint(16),
-                ["\x88", 1], #writeUByte(pack('C', self::$ctypes[$key_type] << 4 | self::$ctypes[$val_type])),
+                ["\x10"], #writeVarint(16),
+                ["\x88"], #writeUByte(pack('C', self::$ctypes[$key_type] << 4 | self::$ctypes[$val_type])),
             ],
             'writeCallResult' => [
                 1,
@@ -577,7 +577,7 @@ class TCompactProtocolTest extends TestCase
 
         $protocol->expects($this->once())
                  ->method('writeCollectionBegin')
-                 ->with(TType::STRING, 1)
+                 ->with(TType::STRING)
                  ->willReturn(1);
 
         $this->assertSame(1, $protocol->writeListBegin(TType::STRING, 1));
@@ -600,7 +600,7 @@ class TCompactProtocolTest extends TestCase
 
         $protocol->expects($this->once())
                  ->method('writeCollectionBegin')
-                 ->with(TType::STRING, 1)
+                 ->with(TType::STRING)
                  ->willReturn(1);
 
         $this->assertSame(1, $protocol->writeSetBegin(TType::STRING, 1));
@@ -674,8 +674,8 @@ class TCompactProtocolTest extends TestCase
             'value' => true,
             'startState' => TCompactProtocol::STATE_BOOL_WRITE,
             'writeCallParams' => [
-                ["\x01", 1], #writeByte
-                ["\x00", 1], #writeI16
+                ["\x01"], #writeByte
+                ["\x00"], #writeI16
             ],
             'writeCallResult' => [
                 1,
@@ -690,8 +690,8 @@ class TCompactProtocolTest extends TestCase
             'value' => false,
             'startState' => TCompactProtocol::STATE_BOOL_WRITE,
             'writeCallParams' => [
-                ["\x02", 1], #writeByte
-                ["\x00", 1], #writeI16
+                ["\x02"], #writeByte
+                ["\x00"], #writeI16
             ],
             'writeCallResult' => [
                 1,
@@ -706,7 +706,7 @@ class TCompactProtocolTest extends TestCase
             'value' => true,
             'startState' => TCompactProtocol::STATE_CONTAINER_WRITE,
             'writeCallParams' => [
-                ["\x01", 1], #writeByte
+                ["\x01"], #writeByte
             ],
             'writeCallResult' => [
                 1,
@@ -727,7 +727,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with($expectedWriteCallParam, 1);
+                  ->with($expectedWriteCallParam);
 
         $this->assertSame(1, $protocol->writeByte($value));
     }
@@ -742,14 +742,6 @@ class TCompactProtocolTest extends TestCase
             'value' => 1,
             'expectedWriteCallParam' => "\x01",
         ];
-        yield 'lowercase' => [
-            'value' => 'a',
-            'expectedWriteCallParam' => "\x00",
-        ];
-        yield 'upercase' => [
-            'value' => 'A',
-            'expectedWriteCallParam' => "\x00",
-        ];
     }
 
     #[DataProvider('writeUByteDataProvider')]
@@ -762,7 +754,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with($expectedWriteCallParam, 1);
+                  ->with($expectedWriteCallParam);
 
         $this->assertSame(1, $protocol->writeUByte($value));
     }
@@ -777,14 +769,6 @@ class TCompactProtocolTest extends TestCase
             'value' => 1,
             'expectedWriteCallParam' => "\x01",
         ];
-        yield 'lowercase' => [
-            'value' => 'a',
-            'expectedWriteCallParam' => "\x00",
-        ];
-        yield 'upercase' => [
-            'value' => 'A',
-            'expectedWriteCallParam' => "\x00",
-        ];
     }
 
     public function testWriteI16()
@@ -794,7 +778,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with("\x00", 1);
+                  ->with("\x00");
 
         $this->assertSame(1, $protocol->writeI16(0));
     }
@@ -806,7 +790,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with("\x00", 1);
+                  ->with("\x00");
 
         $this->assertSame(1, $protocol->writeI32(0));
     }
@@ -818,7 +802,7 @@ class TCompactProtocolTest extends TestCase
 
         $transport->expects($this->once())
                   ->method('write')
-                  ->with(pack('d', 0), 8);
+                  ->with(pack('d', 0));
 
         $this->assertSame(8, $protocol->writeDouble(0));
     }
@@ -829,8 +813,8 @@ class TCompactProtocolTest extends TestCase
         $protocol = new TCompactProtocol($transport);
 
         $expectedWriteArgs = [
-            ["\x04", 1],
-            ["test", 4],
+            ["\x04"],
+            ["test"],
         ];
         $transport->expects($this->exactly(2))
                   ->method('write')
@@ -860,7 +844,7 @@ class TCompactProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16);
+            ->with(hex2bin('0123456789abcdef0123456789abcdef'));
 
         $this->assertSame(16, $protocol->writeUuid($uuid));
     }
@@ -900,27 +884,27 @@ class TCompactProtocolTest extends TestCase
     {
         yield 'simple' => [
             'value' => 0,
-            'expectedWriteCallParam' => ["\x00", 1],
+            'expectedWriteCallParam' => ["\x00"],
             'expectedResult' => 1,
         ];
         yield 'negative' => [
             'value' => -1,
-            'expectedWriteCallParam' => ["\x01", 1],
+            'expectedWriteCallParam' => ["\x01"],
             'expectedResult' => 1,
         ];
         yield 'big' => [
             'value' => 5000000000,
-            'expectedWriteCallParam' => [hex2bin("80c8afa025"), 5],
+            'expectedWriteCallParam' => [hex2bin("80c8afa025")],
             'expectedResult' => 5,
         ];
         yield 'small' => [
             'value' => -5000000000,
-            'expectedWriteCallParam' => [hex2bin("ffc7afa025"), 5],
+            'expectedWriteCallParam' => [hex2bin("ffc7afa025")],
             'expectedResult' => 5,
         ];
         yield 'max simple' => [
             'value' => 0xffffffff,
-            'expectedWriteCallParam' => [hex2bin("feffffff1f"), 5],
+            'expectedWriteCallParam' => [hex2bin("feffffff1f")],
             'expectedResult' => 5,
         ];
     }

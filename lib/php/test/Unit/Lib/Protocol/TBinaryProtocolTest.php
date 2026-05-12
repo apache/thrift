@@ -81,10 +81,10 @@ class TBinaryProtocolTest extends TestCase
             'type' => $type,
             'seqid' => $seqid,
             'writeCallsParams' => [
-                [pack('N', self::VERSION_1 | $type), 4], #writeI32
-                [pack('N', strlen('testName')), 4], #writeStringLen
-                ['testName', 8], #writeString
-                [pack('N', $seqid), 4], #writeI32
+                [pack('N', self::VERSION_1 | $type)], #writeI32
+                [pack('N', strlen('testName'))], #writeStringLen
+                ['testName'], #writeString
+                [pack('N', $seqid)], #writeI32
             ],
             'writeCallsResults' => [
                 4,
@@ -101,10 +101,10 @@ class TBinaryProtocolTest extends TestCase
             'type' => $type,
             'seqid' => $seqid,
             'writeCallsParams' => [
-                [pack('N', strlen('testName')), 4], #writeStringLen
-                ['testName', 8], #writeString
-                [pack('c', $type), 1], #writeByte
-                [pack('N', $seqid), 4], #writeI32
+                [pack('N', strlen('testName'))], #writeStringLen
+                ['testName'], #writeString
+                [pack('c', $type)], #writeByte
+                [pack('N', $seqid)], #writeI32
             ],
             'writeCallsResults' => [
                 4,
@@ -150,8 +150,8 @@ class TBinaryProtocolTest extends TestCase
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $expectedWriteArgs = [
-            [pack('c', $fieldType), 1], #writeByte
-            [pack('n', $fieldId), 2], #writeI16
+            [pack('c', $fieldType)], #writeByte
+            [pack('n', $fieldId)], #writeI16
         ];
         $writeReturns = [1, 2];
         $transport
@@ -190,7 +190,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', TType::STOP), 1); #writeByte
+            ->with(pack('c', TType::STOP)); #writeByte
 
         $this->assertEquals(1, $protocol->writeFieldStop());
     }
@@ -205,9 +205,9 @@ class TBinaryProtocolTest extends TestCase
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $expectedWriteArgs = [
-            [pack('c', $keyType), 1], #writeByte
-            [pack('c', $valType), 1], #writeByte
-            [pack('N', $size), 4], #writeI32
+            [pack('c', $keyType)], #writeByte
+            [pack('c', $valType)], #writeByte
+            [pack('N', $size)], #writeI32
         ];
         $writeReturns = [1, 1, 4];
         $transport
@@ -247,8 +247,8 @@ class TBinaryProtocolTest extends TestCase
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $expectedWriteArgs = [
-            [pack('c', $elemType), 1], #writeByte
-            [pack('N', $size), 4], #writeI32
+            [pack('c', $elemType)], #writeByte
+            [pack('N', $size)], #writeI32
         ];
         $writeReturns = [1, 4];
         $transport
@@ -288,8 +288,8 @@ class TBinaryProtocolTest extends TestCase
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $expectedWriteArgs = [
-            [pack('c', $elemType), 1], #writeByte
-            [pack('N', $size), 4], #writeI32
+            [pack('c', $elemType)], #writeByte
+            [pack('N', $size)], #writeI32
         ];
         $writeReturns = [1, 4];
         $transport
@@ -329,7 +329,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', (int)$value), 1); #writeByte
+            ->with(pack('c', (int)$value)); #writeByte
 
         $this->assertEquals(1, $protocol->writeBool($value));
     }
@@ -343,7 +343,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', $value), 1); #writeByte
+            ->with(pack('c', $value)); #writeByte
 
         $this->assertEquals(1, $protocol->writeByte($value));
     }
@@ -357,7 +357,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('n', $value), 2); #writeI16
+            ->with(pack('n', $value)); #writeI16
 
         $this->assertEquals(2, $protocol->writeI16($value));
     }
@@ -371,7 +371,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N', $value), 4); #writeI32
+            ->with(pack('N', $value)); #writeI32
 
         $this->assertEquals(4, $protocol->writeI32($value));
     }
@@ -408,7 +408,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8); #writeI64
+            ->with(pack('N2', $hi, $lo)); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -428,7 +428,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8); #writeI64
+            ->with(pack('N2', $hi, $lo)); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -442,7 +442,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(strrev(pack('d', $value)), 8); #writeDouble
+            ->with(strrev(pack('d', $value))); #writeDouble
 
         $this->assertEquals(8, $protocol->writeDouble($value));
     }
@@ -455,7 +455,7 @@ class TBinaryProtocolTest extends TestCase
 
         $expectedWriteArgs = [
             [pack('N', strlen($value))], #writeI32,
-            [$value, strlen($value)], #write,
+            [$value], #write,
         ];
         $writeReturns = [4, 6];
         $transport
@@ -487,7 +487,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(hex2bin('0123456789abcdef0123456789abcdef'), 16);
+            ->with(hex2bin('0123456789abcdef0123456789abcdef'));
 
         $this->assertEquals(16, $protocol->writeUuid($uuid));
     }
@@ -976,7 +976,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8); #writeI64
+            ->with(pack('N2', $hi, $lo)); #writeI64
 
         $this->assertEquals(8, $protocol->readI64($value));
         $this->assertEquals($expectedValue, $value);

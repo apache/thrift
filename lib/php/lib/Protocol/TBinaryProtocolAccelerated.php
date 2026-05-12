@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace Thrift\Protocol;
 
 use Thrift\Transport\TBufferedTransport;
+use Thrift\Transport\TTransport;
 
 /**
  * Accelerated binary protocol: used in conjunction with the thrift_protocol
@@ -33,7 +34,7 @@ use Thrift\Transport\TBufferedTransport;
  */
 class TBinaryProtocolAccelerated extends TBinaryProtocol
 {
-    public function __construct($trans, $strictRead = false, $strictWrite = true)
+    public function __construct(TTransport $trans, bool $strictRead = false, bool $strictWrite = true)
     {
         // If the transport doesn't implement putBack, wrap it in a
         // TBufferedTransport (which does)
@@ -58,12 +59,12 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol
         parent::__construct($trans, $strictRead, $strictWrite);
     }
 
-    public function isStrictRead()
+    public function isStrictRead(): bool
     {
         return $this->strictRead;
     }
 
-    public function isStrictWrite()
+    public function isStrictWrite(): bool
     {
         return $this->strictWrite;
     }

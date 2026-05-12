@@ -26,73 +26,97 @@ namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use Thrift\Protocol\TProtocol;
 use Thrift\Protocol\TProtocolDecorator;
 
 class TProtocolDecoratorTest extends TestCase
 {
-    #[DataProvider('methodDecorationDataProvider')]
-    public function testMethodDecoration(
-        $methodName,
-        $methodArguments
-    ) {
-        $concreteProtocol = $this->createMock(TProtocol::class);
-        $decorator = new class ($concreteProtocol) extends TProtocolDecorator {
+    private MockObject $concreteProtocol;
+    private TProtocolDecorator $decorator;
+
+    protected function setUp(): void
+    {
+        $this->concreteProtocol = $this->createMock(TProtocol::class);
+        $this->decorator = new class ($this->concreteProtocol) extends TProtocolDecorator {
             public function __construct(TProtocol $protocol)
             {
                 parent::__construct($protocol);
             }
         };
-
-        $concreteProtocol->expects($this->once())
-                         ->method($methodName)
-                         ->with(...$methodArguments);
-
-        $decorator->$methodName(...$methodArguments);
     }
 
-    public static function methodDecorationDataProvider()
+    #[DataProvider('writeMethodDecorationDataProvider')]
+    public function testWriteMethodDecoration(string $methodName, array $methodArguments): void
     {
-        yield 'writeMessageBegin' => ['writeMessageBegin', ['name', 'type', 'seqid']];
+        $this->concreteProtocol->expects($this->once())
+                               ->method($methodName)
+                               ->with(...$methodArguments);
+
+        $this->decorator->$methodName(...$methodArguments);
+    }
+
+    public static function writeMethodDecorationDataProvider(): \Generator
+    {
+        yield 'writeMessageBegin' => ['writeMessageBegin', ['name', 1, 0]];
         yield 'writeMessageEnd' => ['writeMessageEnd', []];
         yield 'writeStructBegin' => ['writeStructBegin', ['name']];
         yield 'writeStructEnd' => ['writeStructEnd', []];
-        yield 'writeFieldBegin' => ['writeFieldBegin', ['name', 'type', 'id']];
+        yield 'writeFieldBegin' => ['writeFieldBegin', ['name', 1, 1]];
         yield 'writeFieldEnd' => ['writeFieldEnd', []];
         yield 'writeFieldStop' => ['writeFieldStop', []];
-        yield 'writeMapBegin' => ['writeMapBegin', ['keyType', 'valType', 'size']];
+        yield 'writeMapBegin' => ['writeMapBegin', [1, 1, 0]];
         yield 'writeMapEnd' => ['writeMapEnd', []];
-        yield 'writeListBegin' => ['writeListBegin', ['elemType', 'size']];
+        yield 'writeListBegin' => ['writeListBegin', [1, 0]];
         yield 'writeListEnd' => ['writeListEnd', []];
-        yield 'writeSetBegin' => ['writeSetBegin', ['elemType', 'size']];
+        yield 'writeSetBegin' => ['writeSetBegin', [1, 0]];
         yield 'writeSetEnd' => ['writeSetEnd', []];
-        yield 'writeBool' => ['writeBool', ['value']];
-        yield 'writeByte' => ['writeByte', ['value']];
-        yield 'writeI16' => ['writeI16', ['value']];
-        yield 'writeI32' => ['writeI32', ['value']];
-        yield 'writeI64' => ['writeI64', ['value']];
-        yield 'writeDouble' => ['writeDouble', ['value']];
+        yield 'writeBool' => ['writeBool', [true]];
+        yield 'writeByte' => ['writeByte', [1]];
+        yield 'writeI16' => ['writeI16', [1]];
+        yield 'writeI32' => ['writeI32', [1]];
+        yield 'writeI64' => ['writeI64', [1]];
+        yield 'writeDouble' => ['writeDouble', [1.0]];
         yield 'writeString' => ['writeString', ['value']];
-        yield 'readMessageBegin' => ['readMessageBegin', ['name', 'type', 'seqid']];
-        yield 'readMessageEnd' => ['readMessageEnd', []];
-        yield 'readStructBegin' => ['readStructBegin', ['name']];
-        yield 'readStructEnd' => ['readStructEnd', []];
-        yield 'readFieldBegin' => ['readFieldBegin', ['name', 'type', 'id']];
-        yield 'readFieldEnd' => ['readFieldEnd', []];
-        yield 'readMapBegin' => ['readMapBegin', ['keyType', 'valType', 'size']];
-        yield 'readMapEnd' => ['readMapEnd', []];
-        yield 'readListBegin' => ['readListBegin', ['elemType', 'size']];
-        yield 'readListEnd' => ['readListEnd', []];
-        yield 'readSetBegin' => ['readSetBegin', ['elemType', 'size']];
-        yield 'readSetEnd' => ['readSetEnd', []];
-        yield 'readBool' => ['readBool', ['value']];
-        yield 'readByte' => ['readByte', ['value']];
-        yield 'readI16' => ['readI16', ['value']];
-        yield 'readI32' => ['readI32', ['value']];
-        yield 'readI64' => ['readI64', ['value']];
-        yield 'readDouble' => ['readDouble', ['value']];
-        yield 'readString' => ['readString', ['value']];
-        yield 'writeUuid' => ['writeUuid', ['value']];
-        yield 'readUuid' => ['readUuid', ['value']];
+        yield 'writeUuid' => ['writeUuid', ['00000000-0000-0000-0000-000000000000']];
+    }
+
+    /**
+     * Read methods take their results via nullable by-reference parameters
+     * (e.g. readMessageBegin(?string &$name, ?int &$type, ?int &$seqid)).
+     * Spreading an array preserves the by-ref binding into the array
+     * element, which is all this delegation test needs to assert.
+     */
+    #[DataProvider('readMethodDecorationDataProvider')]
+    public function testReadMethodDecoration(string $methodName, int $argCount): void
+    {
+        $this->concreteProtocol->expects($this->once())->method($methodName);
+
+        $args = array_fill(0, $argCount, null);
+        $this->decorator->$methodName(...$args);
+    }
+
+    public static function readMethodDecorationDataProvider(): \Generator
+    {
+        yield 'readMessageBegin' => ['readMessageBegin', 3];
+        yield 'readMessageEnd' => ['readMessageEnd', 0];
+        yield 'readStructBegin' => ['readStructBegin', 1];
+        yield 'readStructEnd' => ['readStructEnd', 0];
+        yield 'readFieldBegin' => ['readFieldBegin', 3];
+        yield 'readFieldEnd' => ['readFieldEnd', 0];
+        yield 'readMapBegin' => ['readMapBegin', 3];
+        yield 'readMapEnd' => ['readMapEnd', 0];
+        yield 'readListBegin' => ['readListBegin', 2];
+        yield 'readListEnd' => ['readListEnd', 0];
+        yield 'readSetBegin' => ['readSetBegin', 2];
+        yield 'readSetEnd' => ['readSetEnd', 0];
+        yield 'readBool' => ['readBool', 1];
+        yield 'readByte' => ['readByte', 1];
+        yield 'readI16' => ['readI16', 1];
+        yield 'readI32' => ['readI32', 1];
+        yield 'readI64' => ['readI64', 1];
+        yield 'readDouble' => ['readDouble', 1];
+        yield 'readString' => ['readString', 1];
+        yield 'readUuid' => ['readUuid', 1];
     }
 }
