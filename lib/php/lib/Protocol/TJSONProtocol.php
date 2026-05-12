@@ -182,9 +182,9 @@ class TJSONProtocol extends TProtocol
         $this->context = $c;
     }
 
-    private function popContext()
+    private function popContext(): void
     {
-        $this->context = array_pop($this->contextStack);
+        $this->context = array_pop($this->contextStack) ?? new BaseContext();
     }
 
     public function __construct($trans)
