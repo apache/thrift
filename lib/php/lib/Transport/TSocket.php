@@ -40,6 +40,8 @@ class TSocket extends TTransport
      */
     public const DEFAULT_DEBUG_HANDLER = 'error_log';
 
+    private static ?bool $hasSocketsExtension = null;
+
     /**
      * Handle to PHP socket
      *
@@ -191,13 +193,19 @@ class TSocket extends TTransport
             throw new TException($error);
         }
 
-        if (function_exists('socket_import_stream') && function_exists('socket_set_option')) {
+        if (self::hasSocketsExtension()) {
             // warnings silenced due to bug https://bugs.php.net/bug.php?id=70939
             $socket = socket_import_stream($this->handle);
             if ($socket !== false) {
                 @socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
             }
         }
+    }
+
+    private static function hasSocketsExtension(): bool
+    {
+        return self::$hasSocketsExtension ??=
+            function_exists('socket_import_stream') && function_exists('socket_set_option');
     }
 
     public function close(): void

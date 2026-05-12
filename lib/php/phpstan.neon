@@ -4,6 +4,8 @@ parameters:
         - lib
     bootstrapFiles:
         - test/bootstrap.php
+    scanFiles:
+        - src/ext/thrift_protocol/php_thrift_protocol.stub.php
     treatPhpDocTypesAsCertain: false
     excludePaths:
         - test/Resources/packages/*

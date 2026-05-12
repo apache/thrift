@@ -459,3 +459,4 @@ compiler/cpp/tests/bin/
 compiler/cpp/tests/*.a
 compiler/cpp/tests/build/
 compiler/cpp/build/
+/lib/php/coverage.xml

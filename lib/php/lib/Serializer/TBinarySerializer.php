@@ -36,6 +36,8 @@ use Thrift\Type\TMessageType;
  */
 class TBinarySerializer
 {
+    private static ?bool $hasAcceleratedProtocol = null;
+
     // NOTE(rmarin): Because thrift_protocol_write_binary
     // adds a begin message prefix, you cannot specify
     // a transport in which to serialize an object. It has to
@@ -45,7 +47,7 @@ class TBinarySerializer
     {
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocolAccelerated($transport);
-        if (function_exists('thrift_protocol_write_binary')) {
+        if (self::hasAcceleratedProtocol()) {
             thrift_protocol_write_binary(
                 $protocol,
                 $object->getName(),
@@ -68,7 +70,7 @@ class TBinarySerializer
     {
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocolAccelerated($transport);
-        if (function_exists('thrift_protocol_read_binary')) {
+        if (self::hasAcceleratedProtocol()) {
             // NOTE (t.heintz) TBinaryProtocolAccelerated internally wraps our TMemoryBuffer in a
             // TBufferedTransport, so we have to retrieve it again or risk losing data when writing
             // less than 512 bytes to the transport (see the comment there as well).
@@ -86,5 +88,12 @@ class TBinarySerializer
 
             return $object;
         }
+    }
+
+    private static function hasAcceleratedProtocol(): bool
+    {
+        return self::$hasAcceleratedProtocol ??=
+            function_exists('thrift_protocol_write_binary')
+            && function_exists('thrift_protocol_read_binary');
     }
 }

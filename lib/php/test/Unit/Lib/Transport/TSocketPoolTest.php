@@ -30,6 +30,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TException;
+use Thrift\Transport\TSocket;
 use Thrift\Transport\TSocketPool;
 
 class TSocketPoolTest extends TestCase
@@ -41,6 +42,11 @@ class TSocketPoolTest extends TestCase
     {
         #need to be defined before the TSocketPool class definition
         self::defineFunctionMock('Thrift\Transport', 'function_exists');
+
+        $this->getAccessibleProperty(TSocketPool::class, 'hasApcuCache')
+             ->setValue(null, null);
+        $this->getAccessibleProperty(TSocket::class, 'hasSocketsExtension')
+             ->setValue(null, null);
     }
 
     #[DataProvider('constructDataProvider')]
