@@ -261,6 +261,8 @@ public:
 
   void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
+  void emit_array_key_recast(std::ostream& out, t_type* ttype, const std::string& var);
+
   void generate_php_doc(std::ostream& out, t_doc* tdoc);
 
   void generate_php_doc(std::ostream& out, t_field* tfield);
@@ -567,7 +569,8 @@ void t_php_generator::emit_file_header(const t_program* program,
                                        std::ostream& file,
                                        const std::vector<std::string>& phpcs_disables) {
   file << "<?php" << '\n' << '\n'
-       << php_autogen_comment(phpcs_disables) << '\n';
+       << php_autogen_comment(phpcs_disables) << '\n'
+       << "declare(strict_types=1);" << '\n' << '\n';
   if (!php_namespace_suffix(program).empty()) {
     file << "namespace " << php_namespace_suffix(program) << ";" << '\n' << '\n';
   }
@@ -2654,6 +2657,26 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
 }
 
 /**
+ * PHP foreach yields keys with their stored array-key type — numeric strings
+ * are normalised to int at insertion (`['123' => x]` becomes `[123 => x]`),
+ * and bool keys collapse to int (`[true => x]` becomes `[1 => x]`). Under
+ * `declare(strict_types=1)` the typed `writeXxx()` library calls then refuse
+ * the coerced value. Emit a single-line cast back to the declared Thrift type
+ * before the write so the runtime contract holds.
+ *
+ * Reuses `type_to_cast`, which already maps every Thrift base type and enum
+ * to its PHP cast prefix; non-castable types (struct/container/void) yield
+ * an empty string and are skipped.
+ */
+void t_php_generator::emit_array_key_recast(ostream& out, t_type* ttype, const std::string& var) {
+  std::string cast = type_to_cast(get_true_type(ttype));
+  if (cast.empty()) {
+    return;
+  }
+  indent(out) << "$" << var << " = " << cast << "$" << var << ";" << '\n';
+}
+
+/**
  * Serializes the members of a map.
  *
  */
@@ -2661,6 +2684,11 @@ void t_php_generator::generate_serialize_map_element(ostream& out,
                                                      t_map* tmap,
                                                      string kiter,
                                                      string viter) {
+  // PHP arrays silently coerce numeric-string keys to int (e.g. '123' => 123).
+  // Cast back to the declared base type so the typed writeXxx() call sites in
+  // strict-types generated files accept the value.
+  emit_array_key_recast(out, tmap->get_key_type(), kiter);
+
   t_field kfield(tmap->get_key_type(), kiter);
   generate_serialize_field(out, &kfield, "");
 
@@ -2672,6 +2700,11 @@ void t_php_generator::generate_serialize_map_element(ostream& out,
  * Serializes the members of a set.
  */
 void t_php_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
+  // Set element used as PHP array key — same coercion concern as map keys;
+  // see comment on emit_array_key_recast. Helper no-ops for non-castable
+  // element types.
+  emit_array_key_recast(out, tset->get_elem_type(), iter);
+
   t_field efield(tset->get_elem_type(), iter);
   generate_serialize_field(out, &efield, "");
 }
