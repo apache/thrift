@@ -36,7 +36,7 @@ class TTransportException extends TException
     public const TIMED_OUT = 3;
     public const END_OF_FILE = 4;
 
-    public function __construct($message = null, $code = 0)
+    public function __construct(?string $message = null, int $code = 0)
     {
         parent::__construct($message, $code);
     }
