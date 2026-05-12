@@ -68,10 +68,7 @@ class TSocketPool extends TSocket
      */
     private bool $alwaysTryLast = true;
 
-    /**
-     * Use apcu cache
-     */
-    private bool $useApcuCache;
+    private static ?bool $hasApcuCache = null;
 
     /**
      * Socket pool constructor
@@ -100,8 +97,6 @@ class TSocketPool extends TSocket
         foreach ($hosts as $key => $host) {
             $this->addServer($host, $ports[$key]);
         }
-
-        $this->useApcuCache = function_exists('apcu_fetch');
     }
 
     /**
@@ -276,11 +271,16 @@ class TSocketPool extends TSocket
      */
     private function apcuFetch($key, &$success = null)
     {
-        return $this->useApcuCache ? apcu_fetch($key, $success) : false;
+        return self::hasApcuCache() ? apcu_fetch($key, $success) : false;
     }
 
     private function apcuStore($key, $var, $ttl = 0)
     {
-        return $this->useApcuCache ? apcu_store($key, $var, $ttl) : false;
+        return self::hasApcuCache() ? apcu_store($key, $var, $ttl) : false;
+    }
+
+    private static function hasApcuCache(): bool
+    {
+        return self::$hasApcuCache ??= function_exists('apcu_fetch');
     }
 }

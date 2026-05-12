@@ -36,6 +36,12 @@ class TSocketTest extends TestCase
     use PHPMock;
     use ReflectionHelper;
 
+    protected function setUp(): void
+    {
+        $this->getAccessibleProperty(TSocket::class, 'hasSocketsExtension')
+             ->setValue(null, null);
+    }
+
     #[DataProvider('openExceptionDataProvider')]
     public function testOpenException(
         $host,

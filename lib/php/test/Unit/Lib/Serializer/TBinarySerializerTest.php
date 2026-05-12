@@ -28,11 +28,21 @@ use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Fixture\TestSerializerStruct;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Serializer\TBinarySerializer;
 
 class TBinarySerializerTest extends TestCase
 {
     use PHPMock;
+    use ReflectionHelper;
+
+    protected function setUp(): void
+    {
+        self::defineFunctionMock('Thrift\Serializer', 'function_exists');
+
+        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+             ->setValue(null, null);
+    }
 
     #[DataProvider('serializeDeserializeDataProvider')]
     public function testSerializeAndDeserialize($stringVal, $intVal)
@@ -135,6 +145,9 @@ class TBinarySerializerTest extends TestCase
         $object->intField = 7;
 
         $serialized = TBinarySerializer::serialize($object);
+
+        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+             ->setValue(null, null);
 
         $funcExists = $this->getFunctionMock('Thrift\Serializer', 'function_exists');
         $funcExists->expects($this->atLeastOnce())
