@@ -70,10 +70,9 @@ class BoundaryValuesTest extends TestCase
             // doubles
             'double zero' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 0.0],
             'double negative zero' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => -0.0],
-            // TODO: replace literals with PHP_FLOAT_MAX/MIN/EPSILON when PHP 7.1 support is dropped (available since PHP 7.2)
-            'double max' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 1.7976931348623158e+308],
-            'double min' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 2.2250738585072014e-308],
-            'double epsilon' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 2.2204460492503131e-16],
+            'double max' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => PHP_FLOAT_MAX],
+            'double min' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => PHP_FLOAT_MIN],
+            'double epsilon' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => PHP_FLOAT_EPSILON],
             'double very small' => ['writeMethod' => 'writeDouble', 'readMethod' => 'readDouble', 'value' => 1e-300],
 
             // strings
