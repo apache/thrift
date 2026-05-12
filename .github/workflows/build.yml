@@ -172,6 +172,8 @@ jobs:
           ini-values: "error_reporting=E_ALL"
 
       - name: Install Dependencies
+        env:
+          COMPOSER_AUTH: '{}'
         run: composer install
 
       - name: Run bootstrap
@@ -964,6 +966,8 @@ jobs:
           ini-values: "error_reporting=E_ALL"
 
       - name: Install PHP dependencies
+        env:
+          COMPOSER_AUTH: '{}'
         run: composer install --no-progress --prefer-dist
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
