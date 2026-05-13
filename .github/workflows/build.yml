@@ -173,7 +173,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          composer config --global --unset github-oauth.github.com || true
+          rm -f ~/.composer/auth.json ~/.config/composer/auth.json
           composer install
 
       - name: Run bootstrap
@@ -967,7 +967,7 @@ jobs:
 
       - name: Install PHP dependencies
         run: |
-          composer config --global --unset github-oauth.github.com || true
+          rm -f ~/.composer/auth.json ~/.config/composer/auth.json
           composer install --no-progress --prefer-dist
 
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
