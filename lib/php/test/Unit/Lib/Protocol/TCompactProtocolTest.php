@@ -577,7 +577,7 @@ class TCompactProtocolTest extends TestCase
 
         $protocol->expects($this->once())
                  ->method('writeCollectionBegin')
-                 ->with(TType::STRING)
+                 ->with(TType::STRING, 1)
                  ->willReturn(1);
 
         $this->assertSame(1, $protocol->writeListBegin(TType::STRING, 1));
@@ -600,7 +600,7 @@ class TCompactProtocolTest extends TestCase
 
         $protocol->expects($this->once())
                  ->method('writeCollectionBegin')
-                 ->with(TType::STRING)
+                 ->with(TType::STRING, 1)
                  ->willReturn(1);
 
         $this->assertSame(1, $protocol->writeSetBegin(TType::STRING, 1));

@@ -568,7 +568,11 @@ class TCompactProtocol extends TProtocol
 
             return 0;
         } elseif ($this->state == TCompactProtocol::STATE_CONTAINER_READ) {
-            return $this->readByte($bool);
+            $byte = null;
+            $result = $this->readByte($byte);
+            $bool = (bool) $byte;
+
+            return $result;
         } else {
             throw new TProtocolException('Invalid state in compact protocol');
         }
