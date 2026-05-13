@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Base\Fixture;
 
 use Thrift\Base\TBase;
+use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 
 class NestedStruct extends TBase
@@ -37,12 +38,12 @@ class NestedStruct extends TBase
 
     public $value = null;
 
-    public function read($input)
+    public function read(TProtocol $input): int
     {
         return $this->readStruct(self::class, self::$tspec, $input);
     }
 
-    public function write($output)
+    public function write(TProtocol $output): int
     {
         return $this->writeStruct('NestedStruct', self::$tspec, $output);
     }

@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace Thrift\Base;
 
+use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 
 /**
@@ -49,9 +50,9 @@ abstract class TBase
         TType::UUID => 'Uuid'
     ];
 
-    abstract public function read($input);
+    abstract public function read(TProtocol $input): int;
 
-    abstract public function write($output);
+    abstract public function write(TProtocol $output): int;
 
     public function __construct($spec = null, $vals = null)
     {

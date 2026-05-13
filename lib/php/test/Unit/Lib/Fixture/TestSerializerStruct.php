@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Fixture;
 
 use Thrift\Base\TBase;
+use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 
 class TestSerializerStruct extends TBase
@@ -42,17 +43,17 @@ class TestSerializerStruct extends TBase
     public $stringField = null;
     public $intField = null;
 
-    public function getName()
+    public function getName(): string
     {
         return 'TestSerializerStruct';
     }
 
-    public function read($input)
+    public function read(TProtocol $input): int
     {
         return $this->readStruct(self::class, self::$tspec, $input);
     }
 
-    public function write($output)
+    public function write(TProtocol $output): int
     {
         return $this->writeStruct('TestSerializerStruct', self::$tspec, $output);
     }
