@@ -81,7 +81,15 @@ class TSSLServerSocket extends TServerSocket
     /**
      * Returns the host with an `ssl://` prefix when no transport-protocol
      * prefix is already present.
+     *
+     * @deprecated Prefix is now applied automatically by the constructor.
+     *             This method will be removed in a future release.
      */
+    public function getSSLHost(string $host): string
+    {
+        return $this->ensureSslHostPrefix($host);
+    }
+
     private function ensureSslHostPrefix(string $host): string
     {
         return str_contains($host, '://') ? $host : 'ssl://' . $host;
