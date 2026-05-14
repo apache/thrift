@@ -27,11 +27,11 @@ namespace Thrift\Protocol\SimpleJSON;
 
 class Context
 {
-    public function write()
+    public function write(): void
     {
     }
 
-    public function isMapKey()
+    public function isMapKey(): bool
     {
         return false;
     }
