@@ -506,6 +506,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y haxe
+          haxelib setup ~/haxelib
           haxe --version
 
       - name: Install Haxe dependencies
