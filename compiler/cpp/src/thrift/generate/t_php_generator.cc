@@ -282,6 +282,7 @@ public:
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_phpdoc(t_type* ttype);
+  std::string type_to_native(t_type* ttype);
 
   bool php_is_scalar(t_type *ttype) {
     ttype = ttype->get_true_type();
@@ -882,7 +883,7 @@ void t_php_generator::generate_php_type_spec(ostream& out, t_type* t) {
  * type information to generalize serialization routines.
  */
 void t_php_generator::generate_php_struct_spec(ostream& out, t_struct* tstruct) {
-  indent(out) << "public static $tspec = [" << '\n';
+  indent(out) << "public static array $tspec = [" << '\n';
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -899,7 +900,7 @@ void t_php_generator::generate_php_struct_spec(ostream& out, t_struct* tstruct) 
   }
 
   indent_down();
-  indent(out) << "];" << '\n' << '\n';
+  indent(out) << "];" << '\n';
 }
 /**
  * Generates necessary accessors and mutators for the fields
@@ -1005,25 +1006,36 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
       << "{" << '\n';
   indent_up();
 
-  out << indent() << "public static $isValidate = " << (validate_ ? "true" : "false") << ";" << '\n' << '\n';
+  out << indent() << "public static bool $isValidate = " << (validate_ ? "true" : "false") << ";" << '\n' << '\n';
 
   generate_php_struct_spec(out, tstruct);
+  out << '\n';
+
+  // Internal C-implementation slots on \Exception that PHP forbids
+  // subclasses from re-typing ("Type of … must not be defined").
+  static const std::set<std::string> kExceptionInheritedSlots = {
+      "message", "code", "file", "line"};
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
-    t_type* t = get_true_type((*m_iter)->get_type());
+    t_type* t = (*m_iter)->get_type()->get_true_type();
     if ((*m_iter)->get_value() != nullptr && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
     generate_php_doc(out, *m_iter);
     string access = (getters_setters_) ? "private" : "public";
-    indent(out) << access << " $" << (*m_iter)->get_name() << " = " << dval << ";" << '\n';
+    const string& fname = (*m_iter)->get_name();
+    bool inherits_untyped = is_exception && kExceptionInheritedSlots.count(fname);
+    string native = inherits_untyped ? "" : ("?" + type_to_native(t) + " ");
+    indent(out) << access << " " << native << "$" << fname << " = " << dval << ";" << '\n';
   }
 
-  out << '\n';
+  if (!members.empty()) {
+    out << '\n';
+  }
 
   // Generate constructor from array
-  string param = (members.size() > 0) ? "$vals = null" : "";
+  string param = (members.size() > 0) ? "?array $vals = null" : "";
   out << indent() << "public function __construct(" << param << ")"<< '\n'
       << indent() << "{" << '\n';
   indent_up();
@@ -1042,11 +1054,18 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
       out << indent() << "parent::__construct(self::$tspec, $vals);" << '\n';
     } else {
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << '\n';
+        const string& fname = (*m_iter)->get_name();
+        // Cast incoming scalar to the declared property type so `new X([...])`
+        // tolerates loose-typed user input (e.g. '1' -> true) the way PHP did
+        // before declare(strict_types=1) + typed properties became the contract.
+        // type_to_cast() returns "" for struct/container types, leaving them
+        // as straight assignments.
+        const string cast = type_to_cast((*m_iter)->get_type());
+        out << indent() << "if (isset($vals['" << fname << "'])) {" << '\n';
 
         indent_up();
-        out << indent() << "$this->" << (*m_iter)->get_name() << " = $vals['"
-            << (*m_iter)->get_name() << "'];" << '\n';
+        out << indent() << "$this->" << fname << " = " << cast << "$vals['"
+            << fname << "'];" << '\n';
 
         indent_down();
         out << indent() << "}" << '\n';
@@ -1208,6 +1227,7 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
     indent(out) << "$this->validateForRead();" << '\n';
   }
 
+  out << '\n';
   indent(out) << "return $xfer;" << '\n';
 
   indent_down();
@@ -1298,6 +1318,7 @@ void t_php_generator::generate_php_struct_writer(ostream& out, t_struct* tstruct
         << "$xfer += $output->writeStructEnd();" << '\n';
   }
 
+  out << '\n';
   out << indent() << "return $xfer;" << '\n';
 
   indent_down();
@@ -2229,12 +2250,14 @@ void t_php_generator::generate_deserialize_field(ostream& out,
                 << '\n';
             break;
           case t_base_type::TYPE_BOOL:
-            out << indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));"
-                << '\n' << indent() << "$" << name << " = (bool)$" << name << "[1];" << '\n';
+            // Stage through a local; the typed property would reject the
+            // intermediate `array|false` returned by unpack().
+            out << indent() << "$val = unpack('c', " << itrans << "->readAll(1));"
+                << '\n' << indent() << "$" << name << " = (bool)$val[1];" << '\n';
             break;
           case t_base_type::TYPE_I8:
-            out << indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));"
-                << '\n' << indent() << "$" << name << " = $" << name << "[1];" << '\n';
+            out << indent() << "$val = unpack('c', " << itrans << "->readAll(1));"
+                << '\n' << indent() << "$" << name << " = $val[1];" << '\n';
             break;
           case t_base_type::TYPE_I16:
             out << indent() << "$val = unpack('n', " << itrans << "->readAll(2));" << '\n'
@@ -2760,17 +2783,24 @@ void t_php_generator::generate_php_doc(ostream& out, t_doc* tdoc) {
  * Emits a PHPDoc comment for a field
  */
 void t_php_generator::generate_php_doc(ostream& out, t_field* field) {
-  stringstream ss;
-
-  // prepend free-style doc if available
-  if (field->has_doc()) {
-    ss << field->get_doc() << '\n';
+  t_type* type = field->get_type()->get_true_type();
+  // Native PHP property types already carry the type info for everything
+  // except containers (where `array` loses the element type). Only emit
+  // a docblock when it adds value: a user-written `.thrift` doc string,
+  // or an `@var` for a container with informative element type.
+  bool has_user_doc = field->has_doc();
+  bool var_adds_value = type->is_container();
+  if (!has_user_doc && !var_adds_value) {
+    return;
   }
 
-  // append @var tag
-  t_type* type = get_true_type(field->get_type());
-  ss << "@var " << type_to_phpdoc(type) << '\n';
-
+  stringstream ss;
+  if (has_user_doc) {
+    ss << field->get_doc() << '\n';
+  }
+  if (var_adds_value) {
+    ss << "@var " << type_to_phpdoc(type) << '\n';
+  }
   generate_php_docstring_comment(out, ss.str());
 }
 
@@ -3043,6 +3073,49 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+/**
+ * Renders a PHP native type declaration (without leading `?`) for the given
+ * Thrift type. Used for property and parameter type hints; callers add the
+ * nullable prefix since all Thrift fields default to null.
+ */
+string t_php_generator::type_to_native(t_type* type) {
+  type = type->get_true_type();
+
+  if (type->is_base_type()) {
+    switch (((t_base_type*)type)->get_base()) {
+    case t_base_type::TYPE_STRING:
+    case t_base_type::TYPE_UUID:
+      return "string";
+    case t_base_type::TYPE_BOOL:
+      return "bool";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "int";
+    case t_base_type::TYPE_DOUBLE:
+      return "float";
+    default:
+      throw "compiler error: unhandled base type in type_to_native";
+    }
+  } else if (type->is_enum()) {
+    return "int";
+  } else if (type->is_struct() || type->is_xception()) {
+    // Same-namespace references resolve via the file-level `namespace …;`
+    // declaration, so emit the short class name and let PHP resolve it.
+    // Cross-namespace references fall back to a fully-qualified name.
+    // php_namespace() already includes the leading backslash.
+    if (type->get_program() == get_program()) {
+      return type->get_name();
+    }
+    return php_namespace(type->get_program()) + type->get_name();
+  } else if (type->is_container()) {
+    return "array";
+  }
+
+  throw "INVALID TYPE IN type_to_native: " + type->get_name();
 }
 
 std::string t_php_generator::display_name() const {
