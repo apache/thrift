@@ -1566,7 +1566,7 @@ void t_haxe_generator::generate_field_value_meta_data(std::ostream& out, t_type*
  */
 void t_haxe_generator::generate_service(t_service* tservice) {
   // Make service interface file with only "normal" calls
-  string f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "_service.hx";
+  string f_service_name = package_dir_ + "/" + make_haxe_user_type_name(service_name_) + "_service.hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << haxe_package() << ";" << '\n';
@@ -1588,7 +1588,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_.close();
 
   // Client interface file with dual suppport ("normal" and "callback" style)
-  f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + ".hx";
+  f_service_name = package_dir_ + "/" + make_haxe_user_type_name(service_name_) + ".hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << haxe_package() << ";" << '\n';
@@ -1610,7 +1610,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_.close();
 
   // Now make the implementation/client file
-  f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "Impl.hx";
+  f_service_name = package_dir_ + "/" + make_haxe_user_type_name(service_name_) + "Impl.hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << haxe_package() << ";" << '\n' << '\n' << haxe_type_imports()
@@ -1633,7 +1633,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   generate_service_helpers(tservice);
 
   // Now make the processor/server file
-  f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "Processor.hx";
+  f_service_name = package_dir_ + "/" + make_haxe_user_type_name(service_name_) + "Processor.hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << haxe_package() << ";" << '\n'
@@ -1645,7 +1645,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
 
   if (!package_name_.empty()) {
     f_service_ << "import " << package_name_ << ".*;" << '\n';
-    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str() << "Impl;" << '\n';
+    f_service_ << "import " << package_name_ << "." << make_haxe_user_type_name(service_name_).c_str() << "Impl;" << '\n';
     f_service_ << '\n';
   }
 
@@ -1803,7 +1803,7 @@ void t_haxe_generator::generate_service_interface(t_service* tservice, bool comb
   generate_haxe_doc(f_service_, tservice);
   generate_rtti_decoration(f_service_);
   generate_macro_decoration(f_service_);
-  f_service_ << indent() << "interface " << get_cap_name(service_name_) << cbk_postfix << extends_iface << " {"
+  f_service_ << indent() << "interface " << make_haxe_user_type_name(service_name_) << cbk_postfix << extends_iface << " {"
              << '\n' << '\n';
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1845,8 +1845,8 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
 
   generate_rtti_decoration(f_service_);
   // build macro is inherited from interface
-  indent(f_service_) << "class " << get_cap_name(service_name_) << "Impl" << extends_client
-                     << " implements " << get_cap_name(service_name_) << " {" << '\n' << '\n';
+  indent(f_service_) << "class " << make_haxe_user_type_name(service_name_) << "Impl" << extends_client
+                     << " implements " << make_haxe_user_type_name(service_name_) << " {" << '\n' << '\n';
   indent_up();
 
   indent(f_service_) << "public function new( iprot : TProtocol, oprot : TProtocol = null)" << '\n';
@@ -2066,12 +2066,12 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   // Generate the header portion
   generate_rtti_decoration(f_service_);
   generate_macro_decoration(f_service_);
-  indent(f_service_) << "class " << get_cap_name(service_name_) << "Processor" << extends_processor
+  indent(f_service_) << "class " << make_haxe_user_type_name(service_name_) << "Processor" << extends_processor
                      << " implements TProcessor {" << '\n' << '\n';
   indent_up();
 
-  f_service_ << indent() << "private var " << get_cap_name(service_name_)
-             << "_iface_ : " << get_cap_name(service_name_) << "_service;" << '\n';
+  f_service_ << indent() << "private var " << make_haxe_user_type_name(service_name_)
+             << "_iface_ : " << make_haxe_user_type_name(service_name_) << "_service;" << '\n';
 
   if (extends.empty()) {
     f_service_ << indent()
@@ -2081,13 +2081,13 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
 
   f_service_ << '\n';
 
-  indent(f_service_) << "public function new( iface : " << get_cap_name(service_name_) << "_service)"
+  indent(f_service_) << "public function new( iface : " << make_haxe_user_type_name(service_name_) << "_service)"
                      << '\n';
   scope_up(f_service_);
   if (!extends.empty()) {
     f_service_ << indent() << "super(iface);" << '\n';
   }
-  f_service_ << indent() << get_cap_name(service_name_) << "_iface_ = iface;" << '\n';
+  f_service_ << indent() << make_haxe_user_type_name(service_name_) << "_iface_ = iface;" << '\n';
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ << indent() << "PROCESS_MAP.set(\"" << (*f_iter)->get_name() << "\", "
@@ -2215,7 +2215,7 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
   if (!(tfunction->is_oneway() || tfunction->get_returntype()->is_void())) {
     f_service_ << "result.success = ";
   }
-  f_service_ << get_cap_name(service_name_) << "_iface_." << escape_haxe_keyword(tfunction->get_name()) << "(";
+  f_service_ << make_haxe_user_type_name(service_name_) << "_iface_." << escape_haxe_keyword(tfunction->get_name()) << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
