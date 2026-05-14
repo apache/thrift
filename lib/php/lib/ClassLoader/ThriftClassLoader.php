@@ -116,10 +116,8 @@ class ThriftClassLoader
 
     /**
      * Find class in namespaces or definitions directories
-     * @param  string $class
-     * @return string
      */
-    public function findFile($class)
+    public function findFile(string $class): ?string
     {
         // Remove first backslash
         if ('\\' == $class[0]) {
@@ -158,8 +156,7 @@ class ThriftClassLoader
 
             // Ignore wrong call
             if (count($m) <= 1) {
-                #HOW TO TEST THIS? HOW TEST CASE SHOULD LOOK LIKE?
-                return;
+                return null;
             }
 
             $class = array_pop($m);
@@ -196,5 +193,7 @@ class ThriftClassLoader
                 }
             }
         }
+
+        return null;
     }
 }

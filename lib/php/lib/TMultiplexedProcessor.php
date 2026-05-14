@@ -64,12 +64,10 @@ class TMultiplexedProcessor
      * allows us to broker requests to individual services by using the service
      * name to select them at request time.
      *
-     * @param serviceName Name of a service, has to be identical to the name
-     * declared in the Thrift IDL, e.g. "WeatherReport".
-     * @param processor Implementation of a service, usually referred to
-     * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
+     * @param string $serviceName Must match the name declared in the Thrift IDL, e.g. "WeatherReport".
+     * @param object $processor Service implementation, e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
-    public function registerProcessor($serviceName, $processor)
+    public function registerProcessor(string $serviceName, object $processor): void
     {
         $this->serviceProcessorMap[$serviceName] = $processor;
     }

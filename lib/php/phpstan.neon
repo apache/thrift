@@ -1,5 +1,5 @@
 parameters:
-    level: 1
+    level: 5
     paths:
         - lib
     bootstrapFiles:

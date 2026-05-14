@@ -108,4 +108,10 @@ class ThriftClassLoaderTest extends TestCase
             'apcuPrefix' => 'APCU_PREFIX',
         ];
     }
+
+    public function testFindFileReturnsNullWhenClassHasNoBackslash(): void
+    {
+        $loader = new ThriftClassLoader();
+        $this->assertNull($loader->findFile('UnnamespacedClassName'));
+    }
 }
