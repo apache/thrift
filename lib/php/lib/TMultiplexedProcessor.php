@@ -89,7 +89,7 @@ class TMultiplexedProcessor
      *                    the service name was not found in the message, or if the service
      *                    name was not found in the service map.
      */
-    public function process(TProtocol $input, TProtocol $output)
+    public function process(TProtocol $input, TProtocol $output): mixed
     {
         /*
             Use the actual underlying protocol (e.g. TBinaryProtocol) to read the

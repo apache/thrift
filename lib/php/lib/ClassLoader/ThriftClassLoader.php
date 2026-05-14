@@ -56,10 +56,9 @@ class ThriftClassLoader
     /**
      * Registers a namespace.
      *
-     * @param string $namespace The namespace
-     * @param array|string $paths The location(s) of the namespace
+     * @param string|list<string> $paths The location(s) of the namespace
      */
-    public function registerNamespace($namespace, $paths)
+    public function registerNamespace(string $namespace, string|array $paths): void
     {
         $this->namespaces[$namespace] = (array)$paths;
     }
@@ -67,30 +66,25 @@ class ThriftClassLoader
     /**
      * Registers a Thrift definition namespace.
      *
-     * @param string $namespace The definition namespace
-     * @param array|string $paths The location(s) of the definition namespace
+     * @param string|list<string> $paths The location(s) of the definition namespace
      */
-    public function registerDefinition($namespace, $paths)
+    public function registerDefinition(string $namespace, string|array $paths): void
     {
         $this->definitions[$namespace] = (array)$paths;
     }
 
     /**
      * Registers this instance as an autoloader.
-     *
-     * @param Boolean $prepend Whether to prepend the autoloader or not
      */
-    public function register($prepend = false)
+    public function register(bool $prepend = false): void
     {
         spl_autoload_register([$this, 'loadClass'], true, $prepend);
     }
 
     /**
      * Loads the given class, definition or interface.
-     *
-     * @param string $class The name of the class
      */
-    public function loadClass($class)
+    public function loadClass(string $class): void
     {
         if (
             (true === $this->apcu && ($file = $this->findFileInApcu($class)))
@@ -102,16 +96,14 @@ class ThriftClassLoader
 
     /**
      * Loads the given class or interface in APCu.
-     * @param  string $class The name of the class
-     * @return string
      */
-    protected function findFileInApcu($class)
+    protected function findFileInApcu(string $class): ?string
     {
         if (false === $file = apcu_fetch($this->apcu_prefix . $class)) {
             apcu_store($this->apcu_prefix . $class, $file = $this->findFile($class));
         }
 
-        return $file;
+        return $file !== false ? $file : null;
     }
 
     /**
