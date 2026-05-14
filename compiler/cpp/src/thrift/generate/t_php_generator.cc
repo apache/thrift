@@ -532,6 +532,10 @@ string t_php_generator::php_includes() {
                     "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n"
                     "use Thrift\\Exception\\TApplicationException;\n";
 
+  if (binary_inline_) {
+    includes += "use Thrift\\Transport\\TTransport;\n";
+  }
+
   if (json_serializable_) {
     includes += "use JsonSerializable;\n"
                 "use stdClass;\n";
@@ -1054,7 +1058,7 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
   scope_down(out);
   out << '\n';
 
-  out << indent() << "public function getName()" << '\n'
+  out << indent() << "public function getName(): string" << '\n'
       << indent() << "{" << '\n';
 
   indent_up();
@@ -1093,7 +1097,12 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "public function read($input)" << '\n';
+  if (binary_inline_) {
+    // Inline mode reads from a raw TTransport (string buffer), not a TProtocol.
+    indent(out) << "public function read(TTransport $input): int" << '\n';
+  } else {
+    indent(out) << "public function read(TProtocol $input): int" << '\n';
+  }
   scope_up(out);
 
   if (oop_) {
@@ -1214,9 +1223,9 @@ void t_php_generator::generate_php_struct_writer(ostream& out, t_struct* tstruct
   vector<t_field*>::const_iterator f_iter;
 
   if (binary_inline_) {
-    indent(out) << "public function write(&$output)" << '\n';
+    indent(out) << "public function write(string &$output): int" << '\n';
   } else {
-    indent(out) << "public function write($output)" << '\n';
+    indent(out) << "public function write(TProtocol $output): int" << '\n';
   }
   indent(out) << "{" << '\n';
   indent_up();
@@ -1307,7 +1316,7 @@ void t_php_generator::generate_php_struct_required_validator(ostream& out,
                                                              t_struct* tstruct,
                                                              std::string method_name,
                                                              bool write_mode) {
-  indent(out) << "private function " << method_name << "()" << '\n';
+  indent(out) << "private function " << method_name << "(): void" << '\n';
   indent(out) << "{" << '\n';
   indent_up();
 
@@ -1337,8 +1346,7 @@ void t_php_generator::generate_php_struct_required_validator(ostream& out,
 void t_php_generator::generate_php_struct_json_serialize(ostream& out,
                                                          t_struct* tstruct,
                                                          bool is_result) {
-  indent(out) << "#[\\ReturnTypeWillChange]" << '\n';
-  indent(out) << "public function jsonSerialize()" << '\n';
+  indent(out) << "public function jsonSerialize(): mixed" << '\n';
   indent(out) << "{" << '\n';
   indent_up();
 
