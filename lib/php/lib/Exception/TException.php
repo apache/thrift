@@ -25,8 +25,9 @@ declare(strict_types=1);
 
 namespace Thrift\Exception;
 
-use Thrift\Type\TType;
 use Thrift\Base\TBase;
+use Thrift\Protocol\TProtocol;
+use Thrift\Type\TType;
 
 /**
  * NOTE(mcslee): This currently contains a ton of duplicated code from TBase
@@ -71,7 +72,7 @@ class TException extends \Exception
         TType::STRING => 'String'
     ];
 
-    private function readMap(&$var, $spec, $input)
+    private function readMap(mixed &$var, array $spec, TProtocol $input): int
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -139,7 +140,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function readList(&$var, $spec, $input, $set = false)
+    private function readList(mixed &$var, array $spec, TProtocol $input, bool $set = false): int
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -194,7 +195,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    protected function readStruct($class, $spec, $input)
+    protected function readStruct(string $class, array $spec, TProtocol $input): int
     {
         $xfer = 0;
         $fname = null;
@@ -245,7 +246,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function writeMap($var, $spec, $output)
+    private function writeMap(array $var, array $spec, TProtocol $output): int
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -305,7 +306,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    private function writeList($var, $spec, $output, $set = false)
+    private function writeList(array $var, array $spec, TProtocol $output, bool $set = false): int
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -350,7 +351,7 @@ class TException extends \Exception
         return $xfer;
     }
 
-    protected function writeStruct($class, $spec, $output)
+    protected function writeStruct(string $class, array $spec, TProtocol $output): int
     {
         $xfer = 0;
         $xfer += $output->writeStructBegin($class);
