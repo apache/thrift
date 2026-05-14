@@ -747,8 +747,15 @@ void t_netstd_generator::collect_extensions_types(t_type* ttype)
         {
             checked_extension_types[key] = ttype;    // prevent recursion
 
-            t_struct* tstruct = static_cast<t_struct*>(ttype);
-            collect_extensions_types(tstruct);
+            // Only recurse into structs defined in the current program. Structs from
+            // included programs are processed by those programs' own generators, which
+            // generate extension methods for their internal container types. Recursing
+            // into them here would duplicate those extension method signatures (CS0121).
+            if (ttype->get_program() == program_)
+            {
+                t_struct* tstruct = static_cast<t_struct*>(ttype);
+                collect_extensions_types(tstruct);
+            }
         }
         return;
     }
@@ -784,6 +791,7 @@ void t_netstd_generator::collect_extensions_types(t_type* ttype)
         return;
     }
 }
+
 
 void t_netstd_generator::generate_extensions_file()
 {
