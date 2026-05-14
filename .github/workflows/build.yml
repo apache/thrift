@@ -494,6 +494,41 @@ jobs:
             test/netstd/Server/bin/Release/
           retention-days: 3
 
+  lib-haxe-codegen:
+    needs: [compiler]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Haxe
+        uses: krdlab/setup-haxe@23a78f711bc4a623db38eac90d351ff0027f0116 # v2.0.2
+        with:
+          haxe-version: latest
+
+      - name: Install Haxe dependencies
+        run: |
+          haxelib install uuid --quiet
+          haxelib install crypto --quiet
+          haxelib dev thrift ${{ github.workspace }}/lib/haxe
+          haxelib path thrift
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run Haxe codegen tests
+        shell: pwsh
+        run: |
+          lib/haxe/codegen/run-Haxe-Codegen-Tests.ps1
+
   lib-swift:
     needs: compiler
     runs-on: ubuntu-24.04
