@@ -148,6 +148,7 @@ public:
 
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
+  std::string make_haxe_user_type_name(const std::string& name);
   std::string escape_haxe_keyword(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
@@ -197,8 +198,8 @@ public:
   std::string haxe_package();
   std::string haxe_type_imports();
   std::string haxe_thrift_imports();
-  void haxe_thrift_add_import(t_type* ttyp, string& imports);
-  void haxe_thrift_gen_imports(t_struct* tstruct, string& imports);
+  void haxe_thrift_add_import(t_type* ttyp, string& imports, const string& exclude_short_name = "");
+  void haxe_thrift_gen_imports(t_struct* tstruct, string& imports, const string& exclude_short_name = "");
   void haxe_thrift_gen_imports(t_service* tservice, string& imports);
   std::string haxe_thrift_gen_imports(t_service* tservice);
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
@@ -349,7 +350,7 @@ string t_haxe_generator::haxe_thrift_imports() {
  *
  * @return List of imports necessary for a given t_struct
  */
-void t_haxe_generator::haxe_thrift_add_import(t_type* ttyp, string& imports) {
+void t_haxe_generator::haxe_thrift_add_import(t_type* ttyp, string& imports, const string& exclude_short_name) {
   // Skip typedef aliases that resolve to base types — no Haxe class is generated for them.
   t_type* true_type = get_true_type(ttyp);
   if (true_type->is_base_type()) {
@@ -359,8 +360,19 @@ void t_haxe_generator::haxe_thrift_add_import(t_type* ttyp, string& imports) {
   if (program != nullptr && program != program_) {
     string package = make_package_name( program->get_namespace("haxe"));
     if (!package.empty()) {
+      string short_name = make_haxe_user_type_name(ttyp->get_name());
+      // Skip if the short name matches the entity being defined — the local definition takes
+      // precedence and an import of a same-named foreign type would shadow it (THRIFT-5320).
+      if (!exclude_short_name.empty() && short_name == exclude_short_name) {
+        return;
+      }
+      // Skip if a same-named type is already imported — two imports with the same short name
+      // produce an unresolvable ambiguity in Haxe.
+      if (imports.find("." + short_name + ";\n") != string::npos) {
+        return;
+      }
       if (imports.find(package + "." + ttyp->get_name()) == string::npos) {
-        imports.append("import " + package + "." + get_cap_name(ttyp->get_name()) + ";\n");
+        imports.append("import " + package + "." + short_name + ";\n");
       }
     }
   }
@@ -371,14 +383,14 @@ void t_haxe_generator::haxe_thrift_add_import(t_type* ttyp, string& imports) {
  *
  * @return List of imports necessary for a given t_struct
  */
-void t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& imports) {
+void t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& imports, const string& exclude_short_name) {
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
   // For each type check if it is from a different namespace
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    haxe_thrift_add_import( (*m_iter)->get_type(), imports);
+    haxe_thrift_add_import( (*m_iter)->get_type(), imports, exclude_short_name);
   }
 }
 
@@ -390,18 +402,20 @@ void t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& import
 void t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice, string& imports) {
   const vector<t_function*>& functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
+  // Exclude same-named foreign types to prevent them from shadowing the local service definition.
+  string exclude = make_haxe_user_type_name(tservice->get_name());
 
   // For each type check if it is from a different namespace
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    haxe_thrift_add_import( (*f_iter)->get_returntype(), imports);
+    haxe_thrift_add_import( (*f_iter)->get_returntype(), imports, exclude);
 
-    // args and exceptions structs	
-    haxe_thrift_gen_imports((*f_iter)->get_arglist(), imports);
-    haxe_thrift_gen_imports((*f_iter)->get_xceptions(), imports);
+    // args and exceptions structs
+    haxe_thrift_gen_imports((*f_iter)->get_arglist(), imports, exclude);
+    haxe_thrift_gen_imports((*f_iter)->get_xceptions(), imports, exclude);
   }
 
   // service implements / extends
-  haxe_thrift_add_import( tservice, imports);
+  haxe_thrift_add_import( tservice, imports, exclude);
   if (tservice->get_extends() != nullptr) {
     haxe_thrift_gen_imports( tservice->get_extends(), imports);
   }
@@ -442,7 +456,7 @@ void t_haxe_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_haxe_generator::generate_enum(t_enum* tenum) {
   // Make output file
-  string f_enum_name = package_dir_ + "/" + get_cap_name(tenum->get_name()) + ".hx";
+  string f_enum_name = package_dir_ + "/" + make_haxe_user_type_name(tenum->get_name()) + ".hx";
   ofstream_with_content_based_conditional_update f_enum;
   f_enum.open(f_enum_name.c_str());
 
@@ -454,7 +468,7 @@ void t_haxe_generator::generate_enum(t_enum* tenum) {
 
   generate_rtti_decoration(f_enum);
   generate_macro_decoration(f_enum);
-  indent(f_enum) << "class " << get_cap_name(tenum->get_name()) << " ";
+  indent(f_enum) << "class " << make_haxe_user_type_name(tenum->get_name()) << " ";
   scope_up(f_enum);
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -742,7 +756,7 @@ void t_haxe_generator::generate_xception(t_struct* txception) {
  */
 void t_haxe_generator::generate_haxe_struct(t_struct* tstruct, bool is_exception, bool is_result) {
   // Make output file
-  string f_struct_name = package_dir_ + "/" + get_cap_name(tstruct->get_name()) + ".hx";
+  string f_struct_name = package_dir_ + "/" + make_haxe_user_type_name(tstruct->get_name()) + ".hx";
   ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
@@ -751,7 +765,7 @@ void t_haxe_generator::generate_haxe_struct(t_struct* tstruct, bool is_exception
   f_struct << '\n';
 
   string imports;
-  haxe_thrift_gen_imports(tstruct, imports);
+  haxe_thrift_gen_imports(tstruct, imports, make_haxe_user_type_name(tstruct->get_name()));
 
   f_struct << haxe_type_imports() << haxe_thrift_imports()
            << imports << '\n';
@@ -777,7 +791,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
                                                        bool is_result) {
   generate_haxe_doc(out, tstruct);
 
-  string clsname = get_cap_name(tstruct->get_name());
+  string clsname = make_haxe_user_type_name(tstruct->get_name());
 
   generate_rtti_decoration(out);
   generate_macro_decoration(out);
@@ -2723,11 +2737,11 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   if (program != nullptr && program != program_) {
     string package = make_package_name( program->get_namespace("haxe"));
     if (!package.empty()) {
-      return package + "." + ttype->get_name();
+      return package + "." + make_haxe_user_type_name(ttype->get_name());
     }
   }
 
-  return ttype->get_name();
+  return make_haxe_user_type_name(ttype->get_name());
 }
 
 /**
@@ -3044,6 +3058,22 @@ std::string t_haxe_generator::get_cap_name(std::string name) {
   }
 
   return name;
+}
+
+// Like get_cap_name() but also renames user-defined types whose capitalized name would shadow a
+// Haxe base type (String, Bool, Float, Int, Void).  Must NOT be used for base-type annotations —
+// only for user-defined struct/enum/service identifiers (file names, class headers, imports).
+std::string t_haxe_generator::make_haxe_user_type_name(const std::string& name) {
+  std::string result = get_cap_name(name);
+  static const std::set<std::string> HAXE_BASE_TYPE_NAMES = {
+    "String", "Bool", "Float", "Int", "Void"
+  };
+  size_t dot = result.rfind('.');
+  std::string last_component = (dot != std::string::npos) ? result.substr(dot + 1) : result;
+  if (HAXE_BASE_TYPE_NAMES.count(last_component)) {
+    result += "_";
+  }
+  return result;
 }
 
 string t_haxe_generator::constant_name(string name) {
