@@ -194,7 +194,9 @@ public:
   std::string haxe_package();
   std::string haxe_type_imports();
   std::string haxe_thrift_imports();
-  std::string haxe_thrift_gen_imports(t_struct* tstruct, string& imports);
+  void haxe_thrift_add_import(t_type* ttyp, string& imports);
+  void haxe_thrift_gen_imports(t_struct* tstruct, string& imports);
+  void haxe_thrift_gen_imports(t_service* tservice, string& imports);
   std::string haxe_thrift_gen_imports(t_service* tservice);
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
   std::string base_type_name(t_base_type* tbase, bool in_container = false);
@@ -344,24 +346,57 @@ string t_haxe_generator::haxe_thrift_imports() {
  *
  * @return List of imports necessary for a given t_struct
  */
-string t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& imports) {
+void t_haxe_generator::haxe_thrift_add_import(t_type* ttyp, string& imports) {
+  t_program* program = ttyp->get_program();
+  if (program != nullptr && program != program_) {
+    string package = make_package_name( program->get_namespace("haxe"));
+    if (!package.empty()) {
+      if (imports.find(package + "." + ttyp->get_name()) == string::npos) {
+        imports.append("import " + package + "." + get_cap_name(ttyp->get_name()) + ";\n");
+      }
+    }
+  }
+}
+
+/**
+ * Prints imports needed for a given type
+ *
+ * @return List of imports necessary for a given t_struct
+ */
+void t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& imports) {
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
   // For each type check if it is from a different namespace
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_program* program = (*m_iter)->get_type()->get_program();
-    if (program != nullptr && program != program_) {
-      string package = make_package_name( program->get_namespace("haxe"));
-      if (!package.empty()) {
-        if (imports.find(package + "." + (*m_iter)->get_type()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + get_cap_name((*m_iter)->get_type()->get_name()) + ";\n");
-        }
-      }
-    }
+    haxe_thrift_add_import( (*m_iter)->get_type(), imports);
   }
-  return imports;
+}
+
+/**
+ * Prints imports needed for a given type
+ *
+ * @return List of imports necessary for a given t_service
+ */
+void t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice, string& imports) {
+  const vector<t_function*>& functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+
+  // For each type check if it is from a different namespace
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    haxe_thrift_add_import( (*f_iter)->get_returntype(), imports);
+
+    // args and exceptions structs	
+    haxe_thrift_gen_imports((*f_iter)->get_arglist(), imports);
+    haxe_thrift_gen_imports((*f_iter)->get_xceptions(), imports);
+  }
+
+  // service implements / extends
+  haxe_thrift_add_import( tservice, imports);
+  if (tservice->get_extends() != nullptr) {
+    haxe_thrift_gen_imports( tservice->get_extends(), imports);
+  }
 }
 
 /**
@@ -371,25 +406,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& impo
  */
 string t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice) {
   string imports;
-  const vector<t_function*>& functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-
-  // For each type check if it is from a different namespace
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    t_program* program = (*f_iter)->get_returntype()->get_program();
-    if (program != nullptr && program != program_) {
-      string package = make_package_name( program->get_namespace("haxe"));
-      if (!package.empty()) {
-        if (imports.find(package + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + get_cap_name((*f_iter)->get_returntype()->get_name())+ ";\n");
-        }
-      }
-    }
-
-    haxe_thrift_gen_imports((*f_iter)->get_arglist(), imports);
-    haxe_thrift_gen_imports((*f_iter)->get_xceptions(), imports);
-  }
-
+  haxe_thrift_gen_imports( tservice, imports);
   return imports;
 }
 
@@ -726,9 +743,10 @@ void t_haxe_generator::generate_haxe_struct(t_struct* tstruct, bool is_exception
   f_struct << '\n';
 
   string imports;
+  haxe_thrift_gen_imports(tstruct, imports);
 
   f_struct << haxe_type_imports() << haxe_thrift_imports()
-           << haxe_thrift_gen_imports(tstruct, imports) << '\n';
+           << imports << '\n';
 
   generate_haxe_struct_definition(f_struct, tstruct, is_exception, is_result);
 
