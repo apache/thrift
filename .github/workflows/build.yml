@@ -503,9 +503,10 @@ jobs:
           persist-credentials: false
 
       - name: Set up Haxe
-        uses: krdlab/setup-haxe@23a78f711bc4a623db38eac90d351ff0027f0116 # v2.0.2
-        with:
-          haxe-version: latest
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y haxe
+          haxe --version
 
       - name: Install Haxe dependencies
         run: |
@@ -522,6 +523,7 @@ jobs:
       - name: Run thrift-compiler
         run: |
           chmod a+x compiler/cpp/thrift
+          echo "$GITHUB_WORKSPACE/compiler/cpp" >> "$GITHUB_PATH"
           compiler/cpp/thrift -version
 
       - name: Run Haxe codegen tests
