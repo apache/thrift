@@ -616,7 +616,14 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
         if(in_static) {
           out << type_name(type) << " ";
         } else if(type->is_base_type()) {
-          out << "public const " << type_name(type) << " ";
+          // binary (byte[]) and uuid (Guid) cannot be C# `const`; use static readonly
+          t_base_type* bt = static_cast<t_base_type*>(type);
+          bool can_be_const = !bt->is_binary() && bt->get_base() != t_base_type::TYPE_UUID;
+          if(can_be_const) {
+            out << "public const " << type_name(type) << " ";
+          } else {
+            out << "public static " << (target_net_version >= 6 ? "readonly " : "") << type_name(type) << " ";
+          }
         } else  {
           out << "public static " << (target_net_version >= 6 ? "readonly " : "") << type_name(type) << " ";
         }
