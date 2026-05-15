@@ -165,7 +165,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # master
         with:
           php-version: ${{ matrix.php-version }}
           extensions: intl, xml, curl
@@ -1031,7 +1031,7 @@ jobs:
           python -m pip install "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # master
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # master
         with:
           php-version: "8.3"
           extensions: intl, xml, curl, sockets
