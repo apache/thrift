@@ -142,7 +142,8 @@ type
         EndOfFile,
         BadArgs,
         Interrupted,
-        CorruptedData
+        CorruptedData,
+        MessageSizeLimit
       );
   strict protected
     constructor HiddenCreate(const Msg: string);
@@ -197,6 +198,11 @@ type
 
   TTransportExceptionCorruptedData = class (TTransportExceptionSpecialized)
   protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionMessageSizeLimit = class (TTransportExceptionSpecialized)
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
@@ -594,7 +600,7 @@ begin
   // update only: message size can shrink, but not grow
   ASSERT( KnownMessageSize <= MaxMessageSize);
   if newSize > KnownMessageSize
-  then raise TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
+  then raise TTransportExceptionMessageSizeLimit.Create('ResetConsumedMessageSize: message size exceeds limit '+IntToStr(MaxMessageSize));
 
   FKnownMessageSize := newSize;
   FRemainingMessageSize := newSize;
@@ -616,7 +622,7 @@ procedure TEndpointTransportBase.CheckReadBytesAvailable( const numBytes : Int64
 // Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
 begin
   if (RemainingMessageSize < numBytes) or (numBytes < 0)
-  then raise TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
+  then raise TTransportExceptionMessageSizeLimit.Create('CheckReadBytesAvailable('+IntToStr(numBytes)+'): message size exceeds limit '+IntToStr(MaxMessageSize)+', only '+IntToStr(RemainingMessageSize)+' bytes available');
 end;
 
 
@@ -627,7 +633,7 @@ begin
   then Dec( FRemainingMessageSize, numBytes)
   else begin
     FRemainingMessageSize := 0;
-    raise TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
+    raise TTransportExceptionMessageSizeLimit.Create('CountConsumedMessageBytes('+IntToStr(numBytes)+'): message size exceeds limit '+IntToStr(MaxMessageSize));
   end;
 end;
 
@@ -692,12 +698,13 @@ end;
 class function TTransportException.Create(aType: TExceptionType; const msg: string): TTransportException;
 begin
   case aType of
-    TExceptionType.NotOpen:     Result := TTransportExceptionNotOpen.Create(msg);
-    TExceptionType.AlreadyOpen: Result := TTransportExceptionAlreadyOpen.Create(msg);
-    TExceptionType.TimedOut:    Result := TTransportExceptionTimedOut.Create(msg);
-    TExceptionType.EndOfFile:   Result := TTransportExceptionEndOfFile.Create(msg);
-    TExceptionType.BadArgs:     Result := TTransportExceptionBadArgs.Create(msg);
-    TExceptionType.Interrupted: Result := TTransportExceptionInterrupted.Create(msg);
+    TExceptionType.NotOpen:          Result := TTransportExceptionNotOpen.Create(msg);
+    TExceptionType.AlreadyOpen:      Result := TTransportExceptionAlreadyOpen.Create(msg);
+    TExceptionType.TimedOut:         Result := TTransportExceptionTimedOut.Create(msg);
+    TExceptionType.EndOfFile:        Result := TTransportExceptionEndOfFile.Create(msg);
+    TExceptionType.BadArgs:          Result := TTransportExceptionBadArgs.Create(msg);
+    TExceptionType.Interrupted:      Result := TTransportExceptionInterrupted.Create(msg);
+    TExceptionType.MessageSizeLimit: Result := TTransportExceptionMessageSizeLimit.Create(msg);
   else
     ASSERT( TExceptionType.Unknown = aType);
     Result := TTransportExceptionUnknown.Create(msg);
@@ -756,6 +763,11 @@ end;
 class function TTransportExceptionCorruptedData.GetType: TTransportException.TExceptionType;
 begin
   result := TExceptionType.CorruptedData;
+end;
+
+class function TTransportExceptionMessageSizeLimit.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.MessageSizeLimit;
 end;
 
 { TTransportFactoryImpl }
