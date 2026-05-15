@@ -36,13 +36,13 @@ class MapContext extends StructContext
         parent::__construct($protocol);
     }
 
-    public function write()
+    public function write(): void
     {
         parent::write();
         $this->isKey = !$this->isKey;
     }
 
-    public function isMapKey()
+    public function isMapKey(): bool
     {
         // we want to coerce map keys to json strings regardless
         // of their type

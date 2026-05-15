@@ -26,12 +26,13 @@ declare(strict_types=1);
 namespace Thrift\Protocol;
 
 use Thrift\Exception\TException;
-use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\JSON\BaseContext;
+use Thrift\Protocol\JSON\ListContext;
 use Thrift\Protocol\JSON\LookaheadReader;
 use Thrift\Protocol\JSON\PairContext;
-use Thrift\Protocol\JSON\ListContext;
+use Thrift\Transport\TTransport;
+use Thrift\Type\TType;
 
 /**
  * JSON implementation of thrift protocol, ported from Java.
@@ -83,7 +84,7 @@ class TJSONProtocol extends TProtocol
     public const TOKEN_POS_INFINITY = "Infinity";
     public const TOKEN_NEG_INFINITY = "-Infinity";
 
-    private function getTypeNameForTypeID($typeID)
+    private function getTypeNameForTypeID(int $typeID): string
     {
         switch ($typeID) {
             case TType::BOOL:
@@ -115,7 +116,7 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function getTypeIDForTypeName($name)
+    private function getTypeIDForTypeName(string $name): int
     {
         $result = TType::STOP;
 
@@ -176,7 +177,7 @@ class TJSONProtocol extends TProtocol
     private BaseContext $context;
     private LookaheadReader $reader;
 
-    private function pushContext($c)
+    private function pushContext(BaseContext $c): void
     {
         array_push($this->contextStack, $this->context);
         $this->context = $c;
@@ -187,21 +188,21 @@ class TJSONProtocol extends TProtocol
         $this->context = array_pop($this->contextStack) ?? new BaseContext();
     }
 
-    public function __construct($trans)
+    public function __construct(TTransport $trans)
     {
         parent::__construct($trans);
         $this->context = new BaseContext();
         $this->reader = new LookaheadReader($this);
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->contextStack = [];
         $this->context = new BaseContext();
         $this->reader = new LookaheadReader($this);
     }
 
-    public function readJSONSyntaxChar($b)
+    public function readJSONSyntaxChar(string $b): void
     {
         $ch = $this->reader->read();
 
@@ -210,7 +211,7 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONString($b)
+    private function writeJSONString(mixed $b): void
     {
         $this->context->write();
 
@@ -222,7 +223,7 @@ class TJSONProtocol extends TProtocol
         $this->trans->write(json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
-    private function writeJSONInteger(int $num)
+    private function writeJSONInteger(int $num): void
     {
         $this->context->write();
 
@@ -263,33 +264,33 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONObjectStart()
+    private function writeJSONObjectStart(): void
     {
         $this->context->write();
         $this->trans->write(self::LBRACE);
         $this->pushContext(new PairContext($this));
     }
 
-    private function writeJSONObjectEnd()
+    private function writeJSONObjectEnd(): void
     {
         $this->popContext();
         $this->trans->write(self::RBRACE);
     }
 
-    private function writeJSONArrayStart()
+    private function writeJSONArrayStart(): void
     {
         $this->context->write();
         $this->trans->write(self::LBRACKET);
         $this->pushContext(new ListContext($this));
     }
 
-    private function writeJSONArrayEnd()
+    private function writeJSONArrayEnd(): void
     {
         $this->popContext();
         $this->trans->write(self::RBRACKET);
     }
 
-    private function readJSONString($skipContext)
+    private function readJSONString(bool $skipContext): mixed
     {
         if (!$skipContext) {
             $this->context->read();
@@ -341,7 +342,7 @@ class TJSONProtocol extends TProtocol
         return false;
     }
 
-    private function readJSONNumericChars()
+    private function readJSONNumericChars(): string
     {
         $strbld = [];
 
@@ -358,7 +359,7 @@ class TJSONProtocol extends TProtocol
         return implode("", $strbld);
     }
 
-    private function readJSONInteger()
+    private function readJSONInteger(): int
     {
         $this->context->read();
 
@@ -385,7 +386,7 @@ class TJSONProtocol extends TProtocol
      * separate function?  So we don't have to force the rest of the
      * use cases through the extra conditional.
      */
-    private function readJSONIntegerAsString()
+    private function readJSONIntegerAsString(): string
     {
         $this->context->read();
 
@@ -406,7 +407,7 @@ class TJSONProtocol extends TProtocol
         return $str;
     }
 
-    private function readJSONDouble()
+    private function readJSONDouble(): float
     {
         $this->context->read();
 
@@ -436,27 +437,27 @@ class TJSONProtocol extends TProtocol
         }
     }
 
-    private function readJSONObjectStart()
+    private function readJSONObjectStart(): void
     {
         $this->context->read();
         $this->readJSONSyntaxChar(self::LBRACE);
         $this->pushContext(new PairContext($this));
     }
 
-    private function readJSONObjectEnd()
+    private function readJSONObjectEnd(): void
     {
         $this->readJSONSyntaxChar(self::RBRACE);
         $this->popContext();
     }
 
-    private function readJSONArrayStart()
+    private function readJSONArrayStart(): void
     {
         $this->context->read();
         $this->readJSONSyntaxChar(self::LBRACKET);
         $this->pushContext(new ListContext($this));
     }
 
-    private function readJSONArrayEnd()
+    private function readJSONArrayEnd(): void
     {
         $this->readJSONSyntaxChar(self::RBRACKET);
         $this->popContext();

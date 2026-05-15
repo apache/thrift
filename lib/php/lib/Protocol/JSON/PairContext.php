@@ -36,7 +36,7 @@ class PairContext extends BaseContext
     {
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first) {
             $this->first = false;
@@ -47,7 +47,7 @@ class PairContext extends BaseContext
         }
     }
 
-    public function read()
+    public function read(): void
     {
         if ($this->first) {
             $this->first = false;
@@ -58,7 +58,7 @@ class PairContext extends BaseContext
         }
     }
 
-    public function escapeNum()
+    public function escapeNum(): bool
     {
         return $this->colon;
     }

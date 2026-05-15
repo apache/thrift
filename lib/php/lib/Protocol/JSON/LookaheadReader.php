@@ -36,7 +36,7 @@ class LookaheadReader
     {
     }
 
-    public function read()
+    public function read(): string
     {
         if ($this->hasData) {
             $this->hasData = false;
@@ -47,7 +47,7 @@ class LookaheadReader
         return substr($this->data, 0, 1);
     }
 
-    public function peek()
+    public function peek(): string
     {
         if (!$this->hasData) {
             $this->data = $this->protocol->getTransport()->readAll(1);

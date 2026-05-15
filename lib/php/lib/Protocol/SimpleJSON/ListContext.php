@@ -35,7 +35,7 @@ class ListContext extends Context
     {
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first) {
             $this->first = false;

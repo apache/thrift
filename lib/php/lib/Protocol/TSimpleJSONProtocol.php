@@ -58,7 +58,7 @@ class TSimpleJSONProtocol extends TProtocol
     /**
      * Push a new write context onto the stack.
      */
-    protected function pushWriteContext(Context $c)
+    protected function pushWriteContext(Context $c): void
     {
         $this->writeContextStack[] = $this->writeContext;
         $this->writeContext = $c;
@@ -67,15 +67,15 @@ class TSimpleJSONProtocol extends TProtocol
     /**
      * Pop the last write context off the stack
      */
-    protected function popWriteContext()
+    protected function popWriteContext(): void
     {
-        $this->writeContext = array_pop($this->writeContextStack);
+        $this->writeContext = array_pop($this->writeContextStack) ?? new Context();
     }
 
     /**
      * Used to make sure that we are not encountering a map whose keys are containers
      */
-    protected function assertContextIsNotMapKey($invalidKeyType)
+    protected function assertContextIsNotMapKey(string $invalidKeyType): void
     {
         if ($this->writeContext->isMapKey()) {
             throw new CollectionMapKeyException(
@@ -85,14 +85,14 @@ class TSimpleJSONProtocol extends TProtocol
         }
     }
 
-    private function writeJSONString($b)
+    private function writeJSONString(mixed $b): void
     {
         $this->writeContext->write();
 
         $this->trans->write(json_encode((string)$b, JSON_UNESCAPED_SLASHES));
     }
 
-    private function writeJSONInteger(int $num)
+    private function writeJSONInteger(int $num): void
     {
         $isMapKey = $this->writeContext->isMapKey();
 

@@ -35,7 +35,7 @@ class ListContext extends BaseContext
     {
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first) {
             $this->first = false;
@@ -44,7 +44,7 @@ class ListContext extends BaseContext
         }
     }
 
-    public function read()
+    public function read(): void
     {
         if ($this->first) {
             $this->first = false;
