@@ -54,6 +54,10 @@ abstract class TBase
 
     abstract public function write(TProtocol $output): int;
 
+    /**
+     * @param array<int, array<string, mixed>>|null $spec
+     * @param array<string, mixed>|null             $vals
+     */
     public function __construct(?array $spec = null, ?array $vals = null)
     {
         if (is_array($spec) && is_array($vals)) {
@@ -68,9 +72,15 @@ abstract class TBase
 
     public function __wakeup(): void
     {
-        $this->__construct(get_object_vars($this));
+        // PHP restores instance state automatically on unserialize();
+        // re-invoking __construct() with get_object_vars() was a no-op
+        // (it would short-circuit because the second parameter is null)
+        // and tripped strict-mode type checks on the first parameter.
     }
 
+    /**
+     * @param array<string, mixed> $spec
+     */
     private function readMap(mixed &$var, array $spec, TProtocol $input): int
     {
         $xfer = 0;
@@ -139,6 +149,9 @@ abstract class TBase
         return $xfer;
     }
 
+    /**
+     * @param array<string, mixed> $spec
+     */
     private function readList(mixed &$var, array $spec, TProtocol $input, bool $set = false): int
     {
         $xfer = 0;
@@ -194,6 +207,9 @@ abstract class TBase
         return $xfer;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
     protected function readStruct(string $class, array $spec, TProtocol $input): int
     {
         $xfer = 0;
@@ -245,6 +261,10 @@ abstract class TBase
         return $xfer;
     }
 
+    /**
+     * @param array<int|string, mixed> $var
+     * @param array<string, mixed>     $spec
+     */
     private function writeMap(array $var, array $spec, TProtocol $output): int
     {
         $xfer = 0;
@@ -305,6 +325,10 @@ abstract class TBase
         return $xfer;
     }
 
+    /**
+     * @param array<int|string, mixed> $var
+     * @param array<string, mixed>     $spec
+     */
     private function writeList(array $var, array $spec, TProtocol $output, bool $set = false): int
     {
         $xfer = 0;
@@ -350,6 +374,9 @@ abstract class TBase
         return $xfer;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
     protected function writeStruct(string $class, array $spec, TProtocol $output): int
     {
         $xfer = 0;

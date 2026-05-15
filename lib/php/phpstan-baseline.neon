@@ -5,10 +5,10 @@ parameters:
 		# admit int|string keys so this arm is defensive dead code and
 		# unreachable at runtime.
 		-
-			message: "#^(Cannot call method write\\(\\) on \\(int\\|string\\)|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array, \\(int\\|string\\) given)\\.$#"
+			message: "#^(Cannot call method write\\(\\) on int\\|string|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array<int\\|string, mixed>, int\\|string given)\\.$#"
 			count: 4
 			path: lib/Base/TBase.php
 		-
-			message: "#^(Cannot call method write\\(\\) on \\(int\\|string\\)|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array, \\(int\\|string\\) given)\\.$#"
+			message: "#^(Cannot call method write\\(\\) on int\\|string|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array<int\\|string, mixed>, int\\|string given)\\.$#"
 			count: 4
 			path: lib/Exception/TException.php
