@@ -69,7 +69,8 @@ class TException extends \Exception
         TType::I32 => 'I32',
         TType::I64 => 'I64',
         TType::DOUBLE => 'Double',
-        TType::STRING => 'String'
+        TType::STRING => 'String',
+        TType::UUID => 'Uuid',
     ];
 
     private function readMap(mixed &$var, array $spec, TProtocol $input): int

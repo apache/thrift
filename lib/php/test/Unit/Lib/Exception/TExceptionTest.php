@@ -26,6 +26,7 @@ namespace Test\Thrift\Unit\Lib\Exception;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\Fixture\TestRichException;
+use Thrift\Base\TBase;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TMemoryBuffer;
@@ -33,6 +34,13 @@ use Thrift\Type\TType;
 
 class TExceptionTest extends TestCase
 {
+    public function testTmethodMirrorsTBase(): void
+    {
+        // Guard against future drift between the HackTown-duplicated
+        // serialization helpers on TBase and TException.
+        $this->assertSame(TBase::$tmethod, TException::$tmethod);
+    }
+
     public function testExceptionWithMessageAndCode()
     {
         $message = 'Test exception message';

@@ -54,7 +54,7 @@ abstract class TBase
 
     abstract public function write(TProtocol $output): int;
 
-    public function __construct($spec = null, $vals = null)
+    public function __construct(?array $spec = null, ?array $vals = null)
     {
         if (is_array($spec) && is_array($vals)) {
             foreach ($spec as $fid => $fspec) {
@@ -66,7 +66,7 @@ abstract class TBase
         }
     }
 
-    public function __wakeup()
+    public function __wakeup(): void
     {
         $this->__construct(get_object_vars($this));
     }

@@ -39,10 +39,8 @@ abstract class TConstant
 
     /**
      * Get a constant value
-     * @param  string $constant
-     * @return mixed
      */
-    public static function get($constant)
+    public static function get(string $constant): mixed
     {
         if (is_null(static::$$constant)) {
             static::$$constant = call_user_func(

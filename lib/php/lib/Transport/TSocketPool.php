@@ -269,14 +269,14 @@ class TSocketPool extends TSocket
      * installed, then these null functions will step in and act like cache
      * misses.
      */
-    private function apcuFetch($key, &$success = null)
+    private function apcuFetch(string $key, ?bool &$success = null): mixed
     {
         return self::hasApcuCache() ? apcu_fetch($key, $success) : false;
     }
 
-    private function apcuStore($key, $var, $ttl = 0)
+    private function apcuStore(string $key, mixed $var, int $ttl = 0): bool
     {
-        return self::hasApcuCache() ? apcu_store($key, $var, $ttl) : false;
+        return self::hasApcuCache() && apcu_store($key, $var, $ttl);
     }
 
     private static function hasApcuCache(): bool
