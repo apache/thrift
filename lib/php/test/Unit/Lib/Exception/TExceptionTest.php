@@ -111,6 +111,10 @@ class TExceptionTest extends TestCase
         yield 'bool true' => ['field' => 'boolField', 'value' => true];
         yield 'bool false' => ['field' => 'boolField', 'value' => false];
         yield 'double' => ['field' => 'doubleField', 'value' => 3.14];
+        // Guards THRIFT-6001: TException::$tmethod previously omitted
+        // TType::UUID, so UUID-typed fields in `exception` structs fell
+        // through to the slow recursive STRUCT path on write.
+        yield 'uuid' => ['field' => 'uuidField', 'value' => '12345678-1234-5678-1234-567812345678'];
 
         // containers
         yield 'map' => ['field' => 'mapField', 'value' => ['key1' => 100, 'key2' => 200]];

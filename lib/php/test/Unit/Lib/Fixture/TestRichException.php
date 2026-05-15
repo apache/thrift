@@ -39,6 +39,7 @@ class TestRichException extends TException
     public $mapField = null;
     public $listField = null;
     public $setField = null;
+    public $uuidField = null;
 
     public function __construct($vals = null)
     {
@@ -78,6 +79,10 @@ class TestRichException extends TException
                 'type' => TType::SET,
                 'etype' => TType::I32,
                 'elem' => ['type' => TType::I32],
+            ],
+            8 => [
+                'var' => 'uuidField',
+                'type' => TType::UUID,
             ],
         ];
 
