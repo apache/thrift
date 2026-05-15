@@ -8,6 +8,20 @@ notifications:
   jira_options: link label worklog
 
 github:
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "release/*"
+          - "rel/*"
+          - "0.*"      # existing release branches are all 0.xx.xx
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
   autolink_jira:
     - THRIFT
   enabled_merge_buttons:
