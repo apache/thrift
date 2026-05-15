@@ -1,6 +1,14 @@
 parameters:
 	ignoreErrors:
+		# The non-scalar map-key path in writeMap mirrors the Thrift IDL
+		# `map<Struct|Map|List|Set, V>` semantics, but PHP arrays only
+		# admit int|string keys so this arm is defensive dead code and
+		# unreachable at runtime.
 		-
-			message: "#^Method Thrift\\\\ClassLoader\\\\ThriftClassLoader\\:\\:findFile\\(\\) should return string but return statement is missing\\.$#"
-			count: 1
-			path: lib/ClassLoader/ThriftClassLoader.php
+			message: "#^(Cannot call method write\\(\\) on \\(int\\|string\\)|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array, \\(int\\|string\\) given)\\.$#"
+			count: 4
+			path: lib/Base/TBase.php
+		-
+			message: "#^(Cannot call method write\\(\\) on \\(int\\|string\\)|Parameter \\#1 \\$var of method Thrift\\\\(Base\\\\TBase|Exception\\\\TException)::write(Map|List)\\(\\) expects array, \\(int\\|string\\) given)\\.$#"
+			count: 4
+			path: lib/Exception/TException.php
