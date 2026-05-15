@@ -45,6 +45,10 @@ use Thrift\Type\TType;
 #[\AllowDynamicProperties]
 class TException extends \Exception
 {
+    /**
+     * @param string|array<int, array<string, mixed>>|null $p1
+     * @param int|array<string, mixed>                     $p2
+     */
     public function __construct(string|array|null $p1 = null, int|array $p2 = 0)
     {
         if (is_array($p1) && is_array($p2)) {
@@ -73,6 +77,9 @@ class TException extends \Exception
         TType::UUID => 'Uuid',
     ];
 
+    /**
+     * @param array<string, mixed> $spec
+     */
     private function readMap(mixed &$var, array $spec, TProtocol $input): int
     {
         $xfer = 0;
@@ -141,6 +148,9 @@ class TException extends \Exception
         return $xfer;
     }
 
+    /**
+     * @param array<string, mixed> $spec
+     */
     private function readList(mixed &$var, array $spec, TProtocol $input, bool $set = false): int
     {
         $xfer = 0;
@@ -196,6 +206,9 @@ class TException extends \Exception
         return $xfer;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
     protected function readStruct(string $class, array $spec, TProtocol $input): int
     {
         $xfer = 0;
@@ -247,6 +260,10 @@ class TException extends \Exception
         return $xfer;
     }
 
+    /**
+     * @param array<int|string, mixed> $var
+     * @param array<string, mixed>     $spec
+     */
     private function writeMap(array $var, array $spec, TProtocol $output): int
     {
         $xfer = 0;
@@ -307,6 +324,10 @@ class TException extends \Exception
         return $xfer;
     }
 
+    /**
+     * @param array<int|string, mixed> $var
+     * @param array<string, mixed>     $spec
+     */
     private function writeList(array $var, array $spec, TProtocol $output, bool $set = false): int
     {
         $xfer = 0;
@@ -352,6 +373,9 @@ class TException extends \Exception
         return $xfer;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
     protected function writeStruct(string $class, array $spec, TProtocol $output): int
     {
         $xfer = 0;

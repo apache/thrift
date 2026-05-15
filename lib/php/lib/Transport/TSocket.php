@@ -89,6 +89,8 @@ class TSocket extends TTransport
 
     /**
      * Socket constructor
+     *
+     * @param callable|string|null $debugHandler
      */
     public function __construct(
         protected string $host = 'localhost',

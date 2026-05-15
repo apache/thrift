@@ -15,7 +15,7 @@ use Thrift\Factory\TProtocolFactory;
 abstract class TServer
 {
     public function __construct(
-        protected $processor,
+        protected object $processor,
         protected TServerTransport $transport,
         protected TTransportFactoryInterface $inputTransportFactory,
         protected TTransportFactoryInterface $outputTransportFactory,

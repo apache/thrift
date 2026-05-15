@@ -53,16 +53,19 @@ class TJSONProtocol extends TProtocol
 
     public const VERSION = 1;
 
-    public static $JSON_CHAR_TABLE = [
+    /** @var array<int, int|string> */
+    public static array $JSON_CHAR_TABLE = [
         /*  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
         0, 0, 0, 0, 0, 0, 0, 0, 'b', 't', 'n', 0, 'f', 'r', 0, 0, // 0
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1
         1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 2
     ];
 
-    public static $ESCAPE_CHARS = ['"', '\\', '/', "b", "f", "n", "r", "t"];
+    /** @var list<string> */
+    public static array $ESCAPE_CHARS = ['"', '\\', '/', "b", "f", "n", "r", "t"];
 
-    public static $ESCAPE_CHAR_VALS = [
+    /** @var list<string> */
+    public static array $ESCAPE_CHAR_VALS = [
         '"', '\\', '/', "\x08", "\f", "\n", "\r", "\t",
     ];
 

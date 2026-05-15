@@ -45,7 +45,8 @@ class TSSLSocket extends TSocket
     /**
      * Socket constructor
      *
-     * @param resource|null $context Stream context
+     * @param resource|null        $context Stream context
+     * @param callable|string|null $debugHandler
      */
     public function __construct(
         string $host = 'localhost',

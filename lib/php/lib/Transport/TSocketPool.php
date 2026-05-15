@@ -73,15 +73,14 @@ class TSocketPool extends TSocket
     /**
      * Socket pool constructor
      *
-     * @param array $hosts List of remote hostnames
-     * @param mixed $ports Array of remote ports, or a single common port
-     * @param bool $persist Whether to use a persistent socket
-     * @param mixed $debugHandler Function for error logging
+     * @param list<string>           $hosts        List of remote hostnames
+     * @param int|list<int>          $ports        Array of remote ports, or a single common port
+     * @param callable|string|null   $debugHandler Function for error logging
      */
     public function __construct(
-        $hosts = ['localhost'],
-        $ports = [9090],
-        $persist = false,
+        array $hosts = ['localhost'],
+        int|array $ports = [9090],
+        bool $persist = false,
         $debugHandler = null
     ) {
         parent::__construct('', 0, $persist, $debugHandler);
