@@ -1,93 +1,101 @@
 <?php
 
-class Handler implements \ThriftTest\ThriftTestIf
+use Thrift\Exception\TException;
+use ThriftTest\Insanity;
+use ThriftTest\Numberz;
+use ThriftTest\ThriftTestIf;
+use ThriftTest\Xception;
+use ThriftTest\Xception2;
+use ThriftTest\Xtruct;
+use ThriftTest\Xtruct2;
+
+class Handler implements ThriftTestIf
 {
-    public function testVoid()
+    public function testVoid(): void
     {
-        return;
     }
 
-    public function testString($thing)
-    {
-        return $thing;
-    }
-
-    public function testBool($thing)
+    public function testString(?string $thing): ?string
     {
         return $thing;
     }
 
-    public function testByte($thing)
+    public function testBool(?bool $thing): ?bool
     {
         return $thing;
     }
 
-    public function testI32($thing)
+    public function testByte(?int $thing): ?int
     {
         return $thing;
     }
 
-    public function testI64($thing)
+    public function testI32(?int $thing): ?int
     {
         return $thing;
     }
 
-    public function testDouble($thing)
+    public function testI64(?int $thing): ?int
     {
         return $thing;
     }
 
-    public function testBinary($thing)
+    public function testDouble(?float $thing): ?float
     {
         return $thing;
     }
 
-    public function testUuid($thing)
+    public function testBinary(?string $thing): ?string
     {
         return $thing;
     }
 
-    public function testStruct(\ThriftTest\Xtruct $thing)
+    public function testUuid(?string $thing): ?string
     {
         return $thing;
     }
 
-    public function testNest(\ThriftTest\Xtruct2 $thing)
+    public function testStruct(?Xtruct $thing): ?Xtruct
     {
         return $thing;
     }
 
-    public function testMap(array $thing)
+    public function testNest(?Xtruct2 $thing): ?Xtruct2
     {
         return $thing;
     }
 
-    public function testStringMap(array $thing)
+    public function testMap(?array $thing): ?array
     {
         return $thing;
     }
 
-    public function testSet(array $thing)
+    public function testStringMap(?array $thing): ?array
     {
         return $thing;
     }
 
-    public function testList(array $thing)
+    public function testSet(?array $thing): ?array
     {
         return $thing;
     }
 
-    public function testEnum($thing)
+    public function testList(?array $thing): ?array
     {
         return $thing;
     }
 
-    public function testTypedef($thing)
+    public function testEnum(?int $thing): ?int
     {
         return $thing;
     }
 
-    public function testMapMap($hello)
+    public function testTypedef(?int $thing): ?int
+    {
+        return $thing;
+    }
+
+    public function testMapMap(?int $hello): ?array
     {
         return [
             -4 => [
@@ -105,24 +113,30 @@ class Handler implements \ThriftTest\ThriftTestIf
         ];
     }
 
-    public function testInsanity(\ThriftTest\Insanity $argument)
+    public function testInsanity(?Insanity $argument): ?array
     {
-        $looney = new \ThriftTest\Insanity();
+        $looney = new Insanity();
 
         return [
             1 => [
-                \ThriftTest\Numberz::TWO => $argument,
-                \ThriftTest\Numberz::THREE => $argument,
+                Numberz::TWO => $argument,
+                Numberz::THREE => $argument,
             ],
             2 => [
-                \ThriftTest\Numberz::SIX => $looney,
+                Numberz::SIX => $looney,
             ],
         ];
     }
 
-    public function testMulti($arg0, $arg1, $arg2, array $arg3, $arg4, $arg5)
-    {
-        $result = new \ThriftTest\Xtruct();
+    public function testMulti(
+        ?int $arg0,
+        ?int $arg1,
+        ?int $arg2,
+        ?array $arg3,
+        ?int $arg4,
+        ?int $arg5
+    ): ?Xtruct {
+        $result = new Xtruct();
         $result->string_thing = 'Hello2';
         $result->byte_thing = $arg0;
         $result->i32_thing = $arg1;
@@ -131,47 +145,47 @@ class Handler implements \ThriftTest\ThriftTestIf
         return $result;
     }
 
-    public function testException($arg)
+    public function testException(?string $arg): void
     {
         if ($arg === 'Xception') {
-            $exception = new \ThriftTest\Xception();
+            $exception = new Xception();
             $exception->errorCode = 1001;
             $exception->message = $arg;
             throw $exception;
         }
 
         if ($arg === 'TException') {
-            throw new \Thrift\Exception\TException('This is a TException');
+            throw new TException('This is a TException');
         }
     }
 
-    public function testMultiException($arg0, $arg1)
+    public function testMultiException(?string $arg0, ?string $arg1): ?Xtruct
     {
         if ($arg0 === 'Xception') {
-            $exception = new \ThriftTest\Xception();
+            $exception = new Xception();
             $exception->errorCode = 1001;
             $exception->message = 'This is an Xception';
             throw $exception;
         }
 
         if ($arg0 === 'Xception2') {
-            $exception = new \ThriftTest\Xception2();
+            $exception = new Xception2();
             $exception->errorCode = 2002;
-            $exception->struct_thing = new \ThriftTest\Xtruct();
+            $exception->struct_thing = new Xtruct();
             $exception->struct_thing->string_thing = 'This is an Xception2';
             throw $exception;
         }
 
-        $result = new \ThriftTest\Xtruct();
+        $result = new Xtruct();
         $result->string_thing = $arg1;
 
         return $result;
     }
 
-    public function testOneway($secondsToSleep)
+    public function testOneway(?int $secondsToSleep): void
     {
         // Keep the oneway test quick so the cross-test matrix measures fire-and-forget behavior,
         // not a full second of handler blocking in the single-threaded PHP test server.
-        usleep($secondsToSleep * 300000);
+        usleep((int)$secondsToSleep * 300000);
     }
 }
