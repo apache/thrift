@@ -22,6 +22,11 @@
 package thrift
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"io"
 	"net"
 	"testing"
@@ -29,6 +34,17 @@ import (
 )
 
 func TestSocketConnUnix(t *testing.T) {
+
+	t.Run("plain", func(t *testing.T) {
+		testSocketConn(t, nil)
+	})
+	t.Run("tls", func(t *testing.T) {
+		tlsCert := randomTLSCertificate(t)
+		testSocketConn(t, tlsCert)
+	})
+}
+
+func testSocketConn(t *testing.T, tlsCert *tls.Certificate) {
 	const (
 		interval = time.Millisecond * 10
 		first    = "hello"
@@ -47,16 +63,24 @@ func TestSocketConnUnix(t *testing.T) {
 			time.Sleep(interval)
 			writeFully(tb, sc, second)
 		},
+		tlsCert,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer ln.Close()
 
-	sc, err := createSocketConnFromReturn(net.Dial("tcp", ln.Addr().String()))
+	conn, err := net.Dial("tcp", ln.Addr().String())
 	if err != nil {
 		t.Fatal(err)
 	}
+	if tlsCert != nil {
+		conn = tls.Client(conn, &tls.Config{
+			InsecureSkipVerify: true,
+		})
+	}
+	sc := wrapSocketConn(conn)
+
 	buf := make([]byte, 1024)
 
 	if !sc.IsOpen() {
@@ -99,4 +123,47 @@ func TestSocketConnUnix(t *testing.T) {
 	if sc.IsOpen() {
 		t.Error("Expected sc to report not open, got true")
 	}
+}
+
+func randomTLSCertificate(t *testing.T) *tls.Certificate {
+	t.Helper()
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate private key: %v", err)
+	}
+
+	template := x509.Certificate{
+		Subject: pkix.Name{
+			CommonName: "localhost",
+		},
+		NotBefore: time.Now().Add(-time.Minute),
+		NotAfter:  time.Now().Add(time.Hour),
+
+		BasicConstraintsValid: true,
+
+		DNSNames: []string{"localhost"},
+		IPAddresses: []net.IP{
+			net.ParseIP("127.0.0.1"),
+			net.ParseIP("::1"),
+		},
+	}
+
+	derBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		&template,
+		&privateKey.PublicKey,
+		privateKey,
+	)
+	if err != nil {
+		t.Fatalf("create certificate: %v", err)
+	}
+
+	cert := tls.Certificate{
+		Certificate: [][]byte{derBytes},
+		PrivateKey:  privateKey,
+	}
+
+	return &cert
 }

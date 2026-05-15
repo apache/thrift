@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
 	"net"
@@ -32,12 +33,15 @@ import (
 
 type serverSocketConnCallback func(testing.TB, *socketConn)
 
-func serverSocketConn(tb testing.TB, f serverSocketConnCallback) (net.Listener, error) {
+func serverSocketConn(tb testing.TB, f serverSocketConnCallback, tlsCert *tls.Certificate) (net.Listener, error) {
 	tb.Helper()
 
 	ln, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, err
+	}
+	if tlsCert != nil {
+		ln = tls.NewListener(ln, &tls.Config{Certificates: []tls.Certificate{*tlsCert}})
 	}
 	go func() {
 		for {
@@ -86,6 +90,7 @@ func TestSocketConn(t *testing.T) {
 			time.Sleep(interval)
 			writeFully(tb, sc, second)
 		},
+		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
