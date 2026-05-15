@@ -279,6 +279,7 @@ public:
   std::string declare_field(t_field* tfield, bool init = false, bool obj = false);
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string argument_list(t_struct* tstruct, bool addTypeHints = true);
+  std::string type_to_return(t_type* ttype);
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_phpdoc(t_type* ttype);
@@ -1498,10 +1499,10 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   indent_up();
 
   if (extends.empty()) {
-    f_service_processor << indent() << "protected $handler_ = null;" << '\n';
+    f_service_processor << indent() << "protected ?object $handler_ = null;" << '\n';
   }
 
-  f_service_processor << indent() << "public function __construct($handler)"<< '\n'
+  f_service_processor << indent() << "public function __construct(object $handler)"<< '\n'
                       << indent() << "{" << '\n';
 
   indent_up();
@@ -1515,7 +1516,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   f_service_processor << indent() << "}" << '\n' << '\n';
 
   // Generate the server implementation
-  f_service_processor << indent() << "public function process($input, $output)" << '\n'
+  f_service_processor << indent() << "public function process(TProtocol $input, TProtocol $output): bool" << '\n'
                       << indent() << "{" << '\n';
   indent_up();
 
@@ -1551,7 +1552,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
                         << indent() << "$x->write($output);" << '\n'
                         << indent() << "$output->writeMessageEnd();" << '\n'
                         << indent() << "$output->getTransport()->flush();" << '\n'
-                        << indent() << "return;" << '\n';
+                        << indent() << "return false;" << '\n';
   }
 
   indent_down();
@@ -1582,7 +1583,8 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
  */
 void t_php_generator::generate_process_function(std::ostream& out, t_service* tservice, t_function* tfunction) {
   // Open function
-  out << indent() << "protected function process_" << tfunction->get_name() << "($seqid, $input, $output)" << '\n'
+  out << indent() << "protected function process_" << tfunction->get_name()
+      << "(int $seqid, TProtocol $input, TProtocol $output): void" << '\n'
       << indent() << "{" << '\n';
   indent_up();
 
@@ -1882,10 +1884,10 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
   indent_up();
 
   if (extends.empty()) {
-    f_service_rest << indent() << "protected $impl;" << '\n' << '\n';
+    f_service_rest << indent() << "protected object $impl;" << '\n' << '\n';
   }
 
-  f_service_rest << indent() << "public function __construct($impl)" << '\n'
+  f_service_rest << indent() << "public function __construct(object $impl)" << '\n'
                  << indent() << "{" << '\n'
                  << indent() << "    $this->impl = $impl;" << '\n'
                  << indent() << "}" << '\n' << '\n';
@@ -1893,7 +1895,8 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    indent(f_service_rest) << "public function " << (*f_iter)->get_name() << "($request)" << '\n';
+    indent(f_service_rest) << "public function " << (*f_iter)->get_name()
+                           << "(array $request)" << type_to_return((*f_iter)->get_returntype()) << '\n';
     indent(f_service_rest) << "{" << '\n';
     indent_up();
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
@@ -1927,7 +1930,8 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
                        << (*a_iter)->get_name() << ", true));" << '\n' << indent() << "}" << '\n';
       }
     }
-    f_service_rest << indent() << "return $this->impl->" << (*f_iter)->get_name() << "("
+    const std::string return_kw = (*f_iter)->get_returntype()->is_void() ? "" : "return ";
+    f_service_rest << indent() << return_kw << "$this->impl->" << (*f_iter)->get_name() << "("
                << argument_list((*f_iter)->get_arglist(), false) << ");" << '\n';
     indent_down();
     indent(f_service_rest) << "}" << '\n';
@@ -1970,13 +1974,13 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
   // Private members
   if (extends.empty()) {
-    f_service_client << indent() << "protected $input = null;" << '\n' << indent()
-               << "protected $output = null;" << '\n' << '\n';
-    f_service_client << indent() << "protected $seqid = 0;" << '\n' << '\n';
+    f_service_client << indent() << "protected ?TProtocol $input = null;" << '\n' << indent()
+               << "protected ?TProtocol $output = null;" << '\n' << '\n';
+    f_service_client << indent() << "protected int $seqid = 0;" << '\n' << '\n';
   }
 
   // Constructor function
-  f_service_client << indent() << "public function __construct($input, $output = null)" << '\n'
+  f_service_client << indent() << "public function __construct(TProtocol $input, ?TProtocol $output = null)" << '\n'
                    << indent() << "{" << '\n';
 
   indent_up();
@@ -2027,7 +2031,8 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     scope_down(f_service_client);
     f_service_client << '\n';
 
-    indent(f_service_client) << "public function send_" << function_signature(*f_iter) << '\n';
+    t_function send_function(g_type_void, "send_" + funname, (*f_iter)->get_arglist());
+    indent(f_service_client) << "public function " << function_signature(&send_function) << '\n';
     scope_up(f_service_client);
 
     std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_"
@@ -2905,7 +2910,9 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
  * @return String of rendered function definition
  */
 string t_php_generator::function_signature(t_function* tfunction, string prefix) {
-  return prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ")";
+  return prefix + tfunction->get_name()
+         + "(" + argument_list(tfunction->get_arglist()) + ")"
+         + type_to_return(tfunction->get_returntype());
 }
 
 /**
@@ -2926,22 +2933,28 @@ string t_php_generator::argument_list(t_struct* tstruct, bool addTypeHints) {
 
     t_type* type = (*f_iter)->get_type();
 
-    // Set type name
     if (addTypeHints) {
-      if (type->is_struct()) {
-        string className = php_namespace(type->get_program())
-                           + php_namespace_directory("Definition", false)
-                           + classify(type->get_name());
-
-        result += className + " ";
-      } else if (type->is_container()) {
-        result += "array ";
-      }
+      // Thrift fields admit null at construction (`?T`); same convention
+      // for service-method parameters keeps PHP callers BC-compatible
+      // while still narrowing accepted types under strict_types.
+      result += "?" + type_to_native(type) + " ";
     }
 
     result += "$" + (*f_iter)->get_name();
   }
   return result;
+}
+
+/**
+ * Renders a PHP return-type clause for the given Thrift type, e.g. ": void"
+ * for `void` returns or ": ?T" for value returns (nullable to allow the
+ * exception-result idiom). Used by function_signature.
+ */
+string t_php_generator::type_to_return(t_type* type) {
+  if (type->is_void()) {
+    return ": void";
+  }
+  return ": ?" + type_to_native(type);
 }
 
 /**
