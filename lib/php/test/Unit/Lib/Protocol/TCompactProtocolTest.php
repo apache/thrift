@@ -864,6 +864,42 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $value);
     }
 
+    /**
+     * Guards THRIFT-5987: in STATE_CONTAINER_READ, readBool() previously
+     * passed its `?bool &$bool` reference straight into readByte(?int &$byte),
+     * leaving the caller's variable holding the raw int instead of bool.
+     * The fix routes through a local int and casts (bool) before assignment.
+     *
+     * @dataProvider readBoolInContainerDataProvider
+     */
+    #[DataProvider('readBoolInContainerDataProvider')]
+    public function testReadBoolInContainerState(int $byteOnWire, bool $expected): void
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+        $this->setPropertyValue($protocol, 'state', TCompactProtocol::STATE_CONTAINER_READ);
+
+        $transport
+            ->expects($this->once())
+            ->method('readAll')
+            ->with(1)
+            ->willReturn(pack('c', $byteOnWire));
+
+        $value = null;
+        $protocol->readBool($value);
+
+        $this->assertIsBool($value);
+        $this->assertSame($expected, $value);
+    }
+
+    public static function readBoolInContainerDataProvider(): \Generator
+    {
+        yield 'wire 0 → false' => ['byteOnWire' => 0, 'expected' => false];
+        yield 'wire 1 → true' => ['byteOnWire' => 1, 'expected' => true];
+        // Anything non-zero is truthy under PHP's (bool) cast.
+        yield 'wire 0x7f → true' => ['byteOnWire' => 0x7f, 'expected' => true];
+    }
+
     #[DataProvider('writeI64DataProvider')]
     public function testWriteI64(
         $value,

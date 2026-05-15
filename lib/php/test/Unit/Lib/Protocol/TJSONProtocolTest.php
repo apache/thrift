@@ -26,7 +26,9 @@ namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Exception\TProtocolException;
+use Thrift\Protocol\JSON\BaseContext;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
 use Thrift\Type\TMessageType;
@@ -34,6 +36,8 @@ use Thrift\Type\TType;
 
 class TJSONProtocolTest extends TestCase
 {
+    use ReflectionHelper;
+
     #[DataProvider('writeAndReadMessageBeginDataProvider')]
     public function testWriteAndReadMessageBegin(string $name, int $type, int $seqid)
     {
@@ -722,5 +726,24 @@ class TJSONProtocolTest extends TestCase
         $this->assertSame('two', $val);
 
         $protocol->readMapEnd();
+    }
+
+    /**
+     * Guards the popContext underflow recovery added when the `$context`
+     * property was tightened to non-nullable: an empty stack now yields a
+     * default BaseContext instead of returning null and tripping the typed
+     * property assignment.
+     */
+    public function testPopContextOnEmptyStackFallsBackToBaseContext(): void
+    {
+        $protocol = new TJSONProtocol(new TMemoryBuffer());
+
+        // Reflect into the private popContext()/context to assert the
+        // underflow path completes without TypeError.
+        $popContext = $this->getAccessibleMethod($protocol, 'popContext');
+        $popContext->invoke($protocol);
+
+        $context = $this->getPropertyValue($protocol, 'context');
+        $this->assertInstanceOf(BaseContext::class, $context);
     }
 }
