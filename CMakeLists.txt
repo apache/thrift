@@ -128,6 +128,12 @@ if(BUILD_PYTHON)
     endif()
 endif()
 
+if(BUILD_CONTRIB)
+    if(BUILD_MAVEN_PLUGIN)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/contrib/thrift-maven-plugin)
+    endif()
+endif()
+
 # Create the uninstall target
 add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${PROJECT_SOURCE_DIR}/build/cmake/uninstall.cmake")
 
