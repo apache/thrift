@@ -26,7 +26,10 @@ namespace Test\Thrift\Unit\Lib\Transport;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
+use Test\Thrift\Unit\Lib\UserDeprecationCapture;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocket;
@@ -35,6 +38,7 @@ class TSocketTest extends TestCase
 {
     use PHPMock;
     use ReflectionHelper;
+    use UserDeprecationCapture;
 
     protected function setUp(): void
     {
@@ -195,13 +199,14 @@ class TSocketTest extends TestCase
                 }
             );
 
-        $transport = new TSocket(
-            $host,
-            $port,
-            $false,
-            $debugHandler
+        $transport = null;
+        $deprecations = self::captureUserDeprecations(
+            static function () use (&$transport, $host, $port, $false, $debugHandler): void {
+                $transport = new TSocket($host, $port, $false, $debugHandler);
+                $transport->setDebug(true);
+            },
         );
-        $transport->setDebug(true);
+        $this->assertCount(2, $deprecations);
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('TSocket: Could not connect to');
@@ -694,5 +699,87 @@ class TSocketTest extends TestCase
             $debugHandler
         );
         $this->assertNUll($transport->flush());
+    }
+
+    public function testDebugHandlerWithLoggerInterface(): void
+    {
+        $host = 'nonexistent-host';
+        $port = 9090;
+        $expectedMessage = 'TSocket: Could not connect to nonexistent-host:9090 (Connection refused [999])';
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+               ->method('log')
+               ->with(LogLevel::ERROR, $expectedMessage);
+
+        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
+            ->expects($this->once())
+            ->willReturnCallback(
+                function (
+                    string $hostname,
+                    int $port,
+                    &$error_code,
+                    &$error_message,
+                    ?float $timeout
+                ) {
+                    $error_code = 999;
+                    $error_message = 'Connection refused';
+
+                    return false;
+                }
+            );
+
+        $transport = new TSocket($host, $port, false, $logger);
+
+        $this->expectException(TException::class);
+        $transport->open();
+    }
+
+    public function testStringDebugHandlerTriggersDeprecation(): void
+    {
+        $errors = self::captureUserDeprecations(static function (): void {
+            new TSocket('localhost', 9090, false, 'error_log');
+        });
+
+        $this->assertCount(1, $errors);
+        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
+        $this->assertStringContainsString(
+            'Passing a callable as $debugHandler is deprecated',
+            $errors[0]['errstr'],
+        );
+    }
+
+    public function testClosureDebugHandlerTriggersDeprecation(): void
+    {
+        $errors = self::captureUserDeprecations(static function (): void {
+            new TSocket('localhost', 9090, false, static function (string $m): void {
+            });
+        });
+
+        $this->assertCount(1, $errors);
+        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
+        $this->assertStringContainsString(
+            'Passing a callable as $debugHandler is deprecated',
+            $errors[0]['errstr'],
+        );
+    }
+
+    public function testNullDebugHandlerDoesNotTriggerDeprecation(): void
+    {
+        $errors = self::captureUserDeprecations(static function (): void {
+            new TSocket('localhost', 9090, false, null);
+        });
+
+        $this->assertSame([], $errors);
+    }
+
+    public function testLoggerInterfaceDebugHandlerDoesNotTriggerDeprecation(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $errors = self::captureUserDeprecations(function () use ($logger): void {
+            new TSocket('localhost', 9090, false, $logger);
+        });
+
+        $this->assertSame([], $errors);
     }
 }

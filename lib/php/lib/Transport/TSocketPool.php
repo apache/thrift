@@ -25,6 +25,8 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Thrift\Exception\TException;
 
 /**
@@ -73,15 +75,16 @@ class TSocketPool extends TSocket
     /**
      * Socket pool constructor
      *
-     * @param list<string>           $hosts        List of remote hostnames
-     * @param int|list<int>          $ports        Array of remote ports, or a single common port
-     * @param callable|string|null   $debugHandler Function for error logging
+     * @param list<string>                         $hosts        List of remote hostnames
+     * @param int|list<int>                        $ports        Array of remote ports, or a single common port
+     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger or legacy callable;
+     *        see TSocket::__construct().
      */
     public function __construct(
         array $hosts = ['localhost'],
         int|array $ports = [9090],
         bool $persist = false,
-        $debugHandler = null
+        LoggerInterface|callable|string|null $debugHandler = null
     ) {
         parent::__construct('', 0, $persist, $debugHandler);
 
@@ -170,14 +173,12 @@ class TSocketPool extends TSocket
                 $elapsed = time() - $lastFailtime;
                 if ($elapsed > $this->retryInterval) {
                     $retryIntervalPassed = true;
-                    if ($this->debug) {
-                        call_user_func(
-                            $this->debugHandler,
-                            'TSocketPool: retryInterval ' .
-                            '(' . $this->retryInterval . ') ' .
-                            'has passed for host ' . $host . ':' . $port
-                        );
-                    }
+                    $this->log(
+                        LogLevel::DEBUG,
+                        'TSocketPool: retryInterval ' .
+                        '(' . $this->retryInterval . ') ' .
+                        'has passed for host ' . $host . ':' . $port
+                    );
                 }
             }
 
@@ -229,14 +230,12 @@ class TSocketPool extends TSocket
 
                 // Log and cache this failure
                 if ($consecfails >= $this->maxConsecutiveFailures) {
-                    if ($this->debug) {
-                        call_user_func(
-                            $this->debugHandler,
-                            'TSocketPool: marking ' . $host . ':' . $port .
-                            ' as down for ' . $this->retryInterval . ' secs ' .
-                            'after ' . $consecfails . ' failed attempts.'
-                        );
-                    }
+                    $this->log(
+                        LogLevel::WARNING,
+                        'TSocketPool: marking ' . $host . ':' . $port .
+                        ' as down for ' . $this->retryInterval . ' secs ' .
+                        'after ' . $consecfails . ' failed attempts.'
+                    );
                     // Store the failure time
                     $this->apcuStore($failtimeKey, time());
 
@@ -256,9 +255,7 @@ class TSocketPool extends TSocket
         }
         $hostlist = implode(',', $hosts);
         $error .= '(' . $hostlist . ')';
-        if ($this->debug) {
-            call_user_func($this->debugHandler, $error);
-        }
+        $this->log(LogLevel::ERROR, $error);
         throw new TException($error);
     }
 
