@@ -25,6 +25,10 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
+use Closure;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
+use Psr\Log\NullLogger;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 
@@ -37,6 +41,10 @@ class TSocket extends TTransport
 {
     /**
      * Default debug handler used when none is supplied to the constructor.
+     *
+     * @deprecated Callable / function-name debug handlers are deprecated and
+     *             will be removed in the next version. Pass a
+     *             Psr\Log\LoggerInterface to the constructor instead.
      */
     public const DEFAULT_DEBUG_HANDLER = 'error_log';
 
@@ -78,27 +86,61 @@ class TSocket extends TTransport
     protected int $recvTimeoutUsec = 750000;
 
     /**
-     * Debugging on?
+     * Debugging on? Gates the legacy callable $debugHandler. Has no effect
+     * when a Psr\Log\LoggerInterface is used — that path is always invoked
+     * and the logger is responsible for level filtering.
+     *
+     * @deprecated Used only with the legacy callable $debugHandler, which
+     *             is itself deprecated. Will be removed alongside it in
+     *             the next version.
      */
     protected bool $debug = false;
 
     /**
-     * Debug handler
+     * PSR-3 logger used for diagnostic output. Defaults to a NullLogger so the
+     * transport is silent unless the caller supplies a real logger.
      */
-    protected mixed $debugHandler;
+    protected LoggerInterface $logger;
+
+    /**
+     * Legacy debug callback. Only populated when the caller passed a callable
+     * (or, deprecated, a function-name string) instead of a LoggerInterface.
+     */
+    protected ?Closure $debugHandler = null;
 
     /**
      * Socket constructor
      *
-     * @param callable|string|null $debugHandler
+     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger
+     *        for diagnostic output. Passing a callable or function-name string
+     *        is deprecated and triggers E_USER_DEPRECATED; pass a
+     *        Psr\Log\LoggerInterface instead.
      */
     public function __construct(
         protected string $host = 'localhost',
         protected int $port = 9090,
         protected bool $persist = false,
-        $debugHandler = null,
+        LoggerInterface|callable|string|null $debugHandler = null,
     ) {
-        $this->debugHandler = $debugHandler ?? self::DEFAULT_DEBUG_HANDLER;
+        if ($debugHandler instanceof LoggerInterface) {
+            $this->logger = $debugHandler;
+            return;
+        }
+
+        $this->logger = new NullLogger();
+
+        if ($debugHandler === null) {
+            return;
+        }
+
+        trigger_error(
+            'Passing a callable as $debugHandler is deprecated and will be '
+            . 'removed in the next version; pass a Psr\\Log\\LoggerInterface '
+            . 'instead.',
+            E_USER_DEPRECATED,
+        );
+
+        $this->debugHandler = Closure::fromCallable($debugHandler);
     }
 
     /**
@@ -130,9 +172,55 @@ class TSocket extends TTransport
             ($timeout - ($this->recvTimeoutSec * 1000)) * 1000;
     }
 
+    /**
+     * Enables or disables emission via the legacy callable $debugHandler.
+     * Has no effect when a Psr\Log\LoggerInterface is in use — configure
+     * the logger's level filter instead.
+     *
+     * @deprecated The full LoggerInterface migration is planned for the
+     *             next version, at which point this gate becomes
+     *             redundant and will be removed. Pass a configured
+     *             Psr\Log\LoggerInterface to the constructor instead.
+     */
     public function setDebug(bool $debug): void
     {
+        trigger_error(
+            __METHOD__ . '() is deprecated; pass a Psr\\Log\\LoggerInterface '
+            . 'to the constructor and let the logger filter by level. This '
+            . 'method will be removed in the next version.',
+            E_USER_DEPRECATED,
+        );
+
         $this->debug = $debug;
+    }
+
+    /**
+     * Dispatches a diagnostic message.
+     *
+     * - Legacy callable $debugHandler: gated by setDebug() for BC.
+     * - User-supplied Psr\Log\LoggerInterface: always invoked; the logger
+     *   filters by level.
+     * - No handler supplied (default NullLogger): falls back to PHP's
+     *   error_log() when setDebug(true) is in effect, matching master.
+     */
+    protected function log(string $level, string $message): void
+    {
+        if ($this->debugHandler !== null) {
+            if (!$this->debug) {
+                return;
+            }
+            ($this->debugHandler)($message);
+            return;
+        }
+
+        if (!($this->logger instanceof NullLogger)) {
+            $this->logger->log($level, $message);
+            return;
+        }
+
+        if ($this->debug) {
+            error_log($message);
+        }
     }
 
     public function getHost(): string
@@ -189,9 +277,7 @@ class TSocket extends TTransport
         if ($this->handle === false) {
             $error = 'TSocket: Could not connect to ' .
                 $this->host . ':' . $this->port . ' (' . $errstr . ' [' . $errno . '])';
-            if ($this->debug) {
-                call_user_func($this->debugHandler, $error);
-            }
+            $this->log(LogLevel::ERROR, $error);
             throw new TException($error);
         }
 

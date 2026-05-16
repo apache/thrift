@@ -42,6 +42,9 @@ if ($GEN_DIR == 'gen-php') {
  * under the License.
  */
 
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+
 /** Include the Thrift base */
 /** Include the protocols */
 use Thrift\Protocol\TBinaryProtocol;
@@ -56,6 +59,24 @@ use Thrift\Transport\TSocketPool;
 /** Include the socket layer */
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TBufferedTransport;
+
+/**
+ * Minimal PSR-3 logger that forwards every message to PHP's error_log
+ * (stderr in CLI mode). Used here to exercise the new logger-aware
+ * debugHandler path on the cross-test client.
+ */
+final class StderrLogger extends AbstractLogger implements LoggerInterface
+{
+    /**
+     * @param string|\Stringable $level
+     * @param string|\Stringable $message
+     * @param array<mixed> $context
+     */
+    public function log($level, $message, array $context = []): void
+    {
+        error_log('[' . (string) $level . '] ' . (string) $message);
+    }
+}
 
 function makeProtocol($transport, $PROTO)
 {
@@ -100,9 +121,9 @@ foreach ($argv as $arg) {
 
 $hosts = array('localhost');
 
-$socket = new TSocket($host, $port);
-$socket = new TSocketPool($hosts, $port);
-$socket->setDebug(TRUE);
+$logger = new StderrLogger();
+$socket = new TSocket($host, $port, false, $logger);
+$socket = new TSocketPool($hosts, $port, false, $logger);
 
 if ($MODE == 'inline') {
   $transport = $socket;

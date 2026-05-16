@@ -83,10 +83,16 @@ class TSSLServerSocket extends TServerSocket
      * prefix is already present.
      *
      * @deprecated Prefix is now applied automatically by the constructor.
-     *             This method will be removed in a future release.
+     *             This method will be removed in the next version.
      */
     public function getSSLHost(string $host): string
     {
+        trigger_error(
+            __METHOD__ . '() is deprecated; the ssl:// prefix is applied automatically '
+            . 'by the constructor. This method will be removed in the next version.',
+            E_USER_DEPRECATED,
+        );
+
         return $this->ensureSslHostPrefix($host);
     }
 

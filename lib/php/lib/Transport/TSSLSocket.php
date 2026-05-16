@@ -25,6 +25,8 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 
@@ -45,14 +47,15 @@ class TSSLSocket extends TSocket
     /**
      * Socket constructor
      *
-     * @param resource|null        $context Stream context
-     * @param callable|string|null $debugHandler
+     * @param resource|null                        $context      Stream context
+     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger or
+     *        legacy callable; see TSocket::__construct().
      */
     public function __construct(
         string $host = 'localhost',
         int $port = 9090,
         $context = null,
-        $debugHandler = null,
+        LoggerInterface|callable|string|null $debugHandler = null,
     ) {
         parent::__construct($this->ensureSslHostPrefix($host), $port, false, $debugHandler);
         $this->context = $context ?? stream_context_create();
@@ -89,9 +92,7 @@ class TSSLSocket extends TSocket
         if ($this->handle === false) {
             $error = 'TSocket: Could not connect to ' .
                 $this->host . ':' . $this->port . ' (' . $errstr . ' [' . $errno . '])';
-            if ($this->debug) {
-                call_user_func($this->debugHandler, $error);
-            }
+            $this->log(LogLevel::ERROR, $error);
             throw new TException($error);
         }
     }
