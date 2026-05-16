@@ -193,7 +193,10 @@ public:
 
   void generate_deserialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ostream& out, t_set* tset, std::string prefix = "");
+  void generate_deserialize_set_element(std::ostream& out,
+                                        t_set* tset,
+                                        std::string prefix,
+                                        std::string seen);
 
   void generate_deserialize_map_element(std::ostream& out, t_map* tmap, std::string prefix = "");
 
@@ -2397,6 +2400,7 @@ void t_js_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct
 void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
   string size = tmp("_size");
   string rtmp3 = tmp("_rtmp3");
+  string seen; // populated only for sets; gives O(1) per-element dedup
 
   t_field fsize(g_type_i32, size);
 
@@ -2408,8 +2412,10 @@ void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype,
     out << indent() << js_const_type_ << size << " = " << rtmp3 << ".size || 0;" << '\n';
 
   } else if (ttype->is_set()) {
+    seen = tmp("_seen");
 
     out << indent() << prefix << " = [];" << '\n'
+        << indent() << js_const_type_ << seen << " = new Set();" << '\n'
         << indent() << js_const_type_ << rtmp3 << " = input.readSetBegin();" << '\n'
         << indent() << js_const_type_ << size << " = " << rtmp3 << ".size || 0;" << '\n';
 
@@ -2436,7 +2442,7 @@ void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype,
 
     generate_deserialize_map_element(out, (t_map*)ttype, prefix);
   } else if (ttype->is_set()) {
-    generate_deserialize_set_element(out, (t_set*)ttype, prefix);
+    generate_deserialize_set_element(out, (t_set*)ttype, prefix, seen);
   } else if (ttype->is_list()) {
     generate_deserialize_list_element(out, (t_list*)ttype, prefix);
   }
@@ -2471,7 +2477,10 @@ void t_js_generator::generate_deserialize_map_element(ostream& out, t_map* tmap,
   indent(out) << prefix << "[" << key << "] = " << val << ";" << '\n';
 }
 
-void t_js_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
+void t_js_generator::generate_deserialize_set_element(ostream& out,
+                                                      t_set* tset,
+                                                      string prefix,
+                                                      string seen) {
   string elem = tmp("elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -2479,7 +2488,15 @@ void t_js_generator::generate_deserialize_set_element(ostream& out, t_set* tset,
 
   generate_deserialize_field(out, &felem);
 
+  // O(1) dedup against a parallel Set, allocated once in the container header.
+  // SameValueZero on Set matches indexOf-with-=== for primitives and is
+  // equivalent (reference equality) for complex element types.
+  indent(out) << "if (!" << seen << ".has(" << elem << ")) {" << '\n';
+  indent_up();
+  indent(out) << seen << ".add(" << elem << ");" << '\n';
   indent(out) << prefix << ".push(" << elem << ");" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
 }
 
 void t_js_generator::generate_deserialize_list_element(ostream& out,
@@ -2589,6 +2606,7 @@ void t_js_generator::generate_serialize_container(ostream& out, t_type* ttype, s
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
                 << "Thrift.objectLength(" << prefix << "));" << '\n';
   } else if (ttype->is_set()) {
+    indent(out) << "Thrift.checkSetUniqueness(" << prefix << ");" << '\n';
     indent(out) << "output.writeSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", "
                 << prefix << ".length);" << '\n';
 
