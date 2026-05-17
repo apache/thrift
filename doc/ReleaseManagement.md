@@ -32,7 +32,7 @@ The authoritative repository for Apache Thrift is stored in [GitHub](https://git
 
 ### Branches
 
-All code (submitted via pull request or direct push) is committed to the `master` branch.  Until version 1.0 of Apache Thrift each release branch was named `<version>`, for example in version `0.12.0` there is a branch named the same.  For version 1.0 releases any beyond, releases will have a branch named `release/<version>`.
+All code (submitted via pull request or direct push) is committed to the `master` branch.  Former Apache Thrift release branches up to and including 0.23.0 were named `<version>`, for example in version `0.12.0` there is a branch named the same. Releases beyond 0.23.0 will have a branch named `release/<version>`.
 
 ### Tags
 
