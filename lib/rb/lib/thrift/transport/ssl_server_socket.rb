@@ -23,8 +23,8 @@ require 'socket'
 
 module Thrift
   class SSLServerSocket < ServerSocket
-    def initialize(host_or_port, port = nil, ssl_context = nil)
-      super(host_or_port, port)
+    def initialize(host_or_port, port = nil, ssl_context = nil, client_timeout: DEFAULT_CLIENT_TIMEOUT)
+      super(host_or_port, port, client_timeout: client_timeout)
       @ssl_context = ssl_context
     end
 

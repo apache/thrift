@@ -23,12 +23,14 @@ require 'socket'
 
 module Thrift
   class UNIXServerSocket < BaseServerTransport
-    def initialize(path)
+    def initialize(path, client_timeout: DEFAULT_CLIENT_TIMEOUT)
       @path = path
+      @client_timeout = client_timeout
       @handle = nil
     end
 
     attr_accessor :handle
+    attr_reader :client_timeout
 
     def listen
       @handle = ::UNIXServer.new(@path)
@@ -38,6 +40,7 @@ module Thrift
       unless @handle.nil?
         sock = @handle.accept
         trans = UNIXSocket.new(nil)
+        trans.timeout = @client_timeout
         trans.handle = sock
         trans
       end

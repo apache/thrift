@@ -23,8 +23,8 @@ require 'socket'
 
 module Thrift
   class ServerSocket < BaseServerTransport
-    # call-seq: initialize(host = nil, port)
-    def initialize(host_or_port, port = nil)
+    # call-seq: initialize(host = nil, port, client_timeout: DEFAULT_CLIENT_TIMEOUT)
+    def initialize(host_or_port, port = nil, client_timeout: DEFAULT_CLIENT_TIMEOUT)
       if port
         @host = host_or_port
         @port = port
@@ -32,10 +32,11 @@ module Thrift
         @host = nil
         @port = host_or_port
       end
+      @client_timeout = client_timeout
       @handle = nil
     end
 
-    attr_reader :handle
+    attr_reader :handle, :client_timeout
 
     def listen
       @handle = TCPServer.new(@host, @port)
@@ -46,6 +47,7 @@ module Thrift
         sock = @handle.accept
         sock.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
         trans = Socket.new
+        trans.timeout = @client_timeout
         trans.handle = sock
         trans
       end

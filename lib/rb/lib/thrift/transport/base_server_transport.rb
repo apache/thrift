@@ -21,6 +21,8 @@
 
 module Thrift
   class BaseServerTransport
+    DEFAULT_CLIENT_TIMEOUT = 5
+
     def listen
       raise NotImplementedError
     end
