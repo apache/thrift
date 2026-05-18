@@ -68,8 +68,23 @@ describe 'UNIXSocket' do
       expect(handle).to receive(:accept).and_return(sock)
       trans = double("UNIXSocket")
       expect(Thrift::UNIXSocket).to receive(:new).and_return(trans)
+      expect(trans).to receive(:timeout=).with(Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT)
       expect(trans).to receive(:handle=).with(sock)
       expect(@socket.accept).to eq(trans)
+    end
+
+    it "should default accepted sockets to a finite client timeout" do
+      expect(@socket.client_timeout).to eq(5)
+    end
+
+    it "should accept a custom client timeout" do
+      @socket = Thrift::UNIXServerSocket.new(@path, client_timeout: 2.5)
+      expect(@socket.client_timeout).to eq(2.5)
+    end
+
+    it "should allow blocking accepted sockets with nil or zero client timeout" do
+      expect(Thrift::UNIXServerSocket.new(@path, client_timeout: nil).client_timeout).to be_nil
+      expect(Thrift::UNIXServerSocket.new(@path, client_timeout: 0).client_timeout).to eq(0)
     end
 
     it "should close the handle when closed" do

@@ -48,8 +48,44 @@ describe 'Thrift::ServerSocket' do
       expect(handle).to receive(:accept).and_return(sock)
       trans = double("Socket")
       expect(Thrift::Socket).to receive(:new).and_return(trans)
+      expect(trans).to receive(:timeout=).with(Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT)
       expect(trans).to receive(:handle=).with(sock)
       expect(@socket.accept).to eq(trans)
+    end
+
+    it "should default accepted sockets to a finite client timeout" do
+      expect(@socket.client_timeout).to eq(5)
+    end
+
+    it "should accept a custom client timeout" do
+      @socket = Thrift::ServerSocket.new(1234, client_timeout: 2.5)
+      expect(@socket.client_timeout).to eq(2.5)
+    end
+
+    it "should allow blocking accepted sockets with nil or zero client timeout" do
+      expect(Thrift::ServerSocket.new(1234, client_timeout: nil).client_timeout).to be_nil
+      expect(Thrift::ServerSocket.new(1234, client_timeout: 0).client_timeout).to eq(0)
+    end
+
+    it "should use the accepted socket timeout for writes" do
+      handle = double("TCPServer")
+      allow(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
+      @socket.listen
+
+      sock = double("sock", :closed? => false)
+      allow(sock).to receive(:setsockopt)
+      allow(handle).to receive(:accept).and_return(sock)
+
+      transport = @socket.accept
+      expect(transport.timeout).to eq(Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT)
+
+      expect(sock).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
+      expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 105.1)
+      expect(IO).to receive(:select).with(nil, [sock], nil, 5.0).and_return(nil)
+
+      expect { transport.write("test data") }.to raise_error(Thrift::TransportException) do |e|
+        expect(e.type).to eq(Thrift::TransportException::TIMED_OUT)
+      end
     end
 
     it "should close the handle when closed" do

@@ -141,6 +141,13 @@ to handle `TIMED_OUT`. If you relied on `timeout = 0` meaning immediate failure
 or on repeated retries extending the effective timeout during TCP fallback or
 TLS handshake, update those call paths before upgrading.
 
+Ruby server socket transports now apply a 5-second timeout to accepted client
+sockets by default. This prevents stalled clients from blocking server threads
+indefinitely during response writes. Applications that intentionally require
+blocking accepted sockets can pass `client_timeout: nil` or `client_timeout: 0`
+when constructing `Thrift::ServerSocket`, `Thrift::SSLServerSocket`, or
+`Thrift::UNIXServerSocket`.
+
 Generated Ruby structs and unions now suffix field ID constants as
 `*_FIELD_ID` instead of exposing bare uppercased field names. For example,
 `MyStruct::FOO` becomes `MyStruct::FOO_FIELD_ID`. This avoids collisions with
