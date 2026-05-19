@@ -34,7 +34,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpServer::THttpServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config) 
+THttpServer::THttpServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config)
   : THttpTransport(transport, config) {
 
 }
@@ -159,7 +159,8 @@ std::string THttpServer::getTimeRFC1123() {
   struct tm tmb;
   THRIFT_GMTIME(tmb, t);
 
-  sprintf(buff,
+  snprintf(buff,
+          sizeof(buff),
           "%s, %d %s %d %d:%d:%d GMT",
           Days[tmb.tm_wday],
           tmb.tm_mday,
