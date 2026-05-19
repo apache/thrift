@@ -50,6 +50,7 @@ struct BasicTest {
         19: i8 Byte2 = 1 (vt.in = "1", vt.not_in = "2")
         20: double Double2 = 3.0 (vt.in = "3.0", vt.not_in = "4.0")
         21: EnumFoo Enum2 = EnumFoo.e2 (vt.in = "EnumFoo.e2", vt.not_in = "EnumFoo.e1")
+        22: optional string StringPattern (vt.pattern = "^[a-z]+$")
 }
 
 struct FieldReferenceTest {
@@ -83,6 +84,8 @@ struct FieldReferenceTest {
         28: binary Binary3 = "other binary"
         29: binary Binary4 = ".*"
         30: i64 MaxSize = 10
+        31: string StringPatternRef = "^[a-z]+$"
+        32: optional string StringPattern (vt.pattern = "$StringPatternRef")
 }
 
 struct ValidationFunctionTest {

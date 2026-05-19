@@ -26,6 +26,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,7 @@ class go_validator_generator {
 public:
   go_validator_generator(t_go_generator* gg) : go_generator(gg){};
   void generate_struct_validator(std::ostream& out, t_struct* tstruct);
+  void generate_regexp_vars(std::ostream& out);
 
   struct generator_context {
     std::string field_symbol;
@@ -42,6 +44,8 @@ public:
     t_type* type;
     std::vector<validation_rule*> rules;
   };
+
+  void set_struct_name(const std::string& name) { current_struct_name_ = name; }
 
 private:
   void generate_field_validator(std::ostream& out, const generator_context& context);
@@ -66,6 +70,8 @@ private:
 
   t_go_generator* go_generator;
 
+  std::string current_struct_name_;
+  std::vector<std::pair<std::string, std::string>> pattern_cache_;
   std::map<std::string, int> tmp_;
 };
 

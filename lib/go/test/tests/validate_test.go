@@ -191,6 +191,27 @@ func TestBasicValidator(t *testing.T) {
 	} else {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
+
+	t.Run("pattern-valid", func(t *testing.T) {
+		bt = validatetest.NewBasicTest()
+		bt.StringPattern = thrift.StringPtr("abcd")
+		if err := bt.Validate(); err != nil {
+			t.Errorf("Expected no error for StringPattern, but got %v", err)
+		}
+	})
+
+	t.Run("pattern-invalid", func(t *testing.T) {
+		bt = validatetest.NewBasicTest()
+		bt.StringPattern = thrift.StringPtr("1234")
+		err := bt.Validate()
+		if err == nil {
+			t.Error("Expected error for StringPattern, but got none")
+			return
+		}
+		if errors.As(err, &ve) && ve.Field() != "StringPattern" {
+			t.Errorf("Expected field StringPattern, but got %v", ve.Field())
+		}
+	})
 }
 
 func TestFieldReference(t *testing.T) {
@@ -321,6 +342,27 @@ func TestFieldReference(t *testing.T) {
 	} else {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
+
+	t.Run("pattern-valid", func(t *testing.T) {
+		frt = validatetest.NewFieldReferenceTest()
+		frt.StringPattern = thrift.StringPtr("abcd")
+		if err := frt.Validate(); err != nil {
+			t.Errorf("Expected no error for StringPattern, but got %v", err)
+		}
+	})
+
+	t.Run("pattern-invalid", func(t *testing.T) {
+		frt = validatetest.NewFieldReferenceTest()
+		frt.StringPattern = thrift.StringPtr("1234")
+		err := frt.Validate()
+		if err == nil {
+			t.Error("Expected error for StringPattern, but got none")
+			return
+		}
+		if errors.As(err, &ve) && ve.Field() != "StringPattern" {
+			t.Errorf("Expected field StringPattern, but got %v", ve.Field())
+		}
+	})
 }
 
 func TestValidationFunction(t *testing.T) {
