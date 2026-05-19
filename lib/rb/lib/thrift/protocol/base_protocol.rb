@@ -342,7 +342,8 @@ module Thrift
       end
     end
 
-    def skip(type)
+    def skip(type, max_depth = 64)
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum skip depth exceeded') if max_depth <= 0
       case type
       when Types::BOOL
         read_bool
@@ -365,27 +366,27 @@ module Thrift
         while true
           name, type, id = read_field_begin
           break if type == Types::STOP
-          skip(type)
+          skip(type, max_depth - 1)
           read_field_end
         end
         read_struct_end
       when Types::MAP
         ktype, vtype, size = read_map_begin
         size.times do
-          skip(ktype)
-          skip(vtype)
+          skip(ktype, max_depth - 1)
+          skip(vtype, max_depth - 1)
         end
         read_map_end
       when Types::SET
         etype, size = read_set_begin
         size.times do
-          skip(etype)
+          skip(etype, max_depth - 1)
         end
         read_set_end
       when Types::LIST
         etype, size = read_list_begin
         size.times do
-          skip(etype)
+          skip(etype, max_depth - 1)
         end
         read_list_end
       else
