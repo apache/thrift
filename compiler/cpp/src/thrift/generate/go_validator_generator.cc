@@ -679,15 +679,29 @@ void go_validator_generator::generate_string_field_validator(std::ostream& out,
       }
       out << ")";
     } else if (key == "vt.pattern") {
-      out << indent() << "if ok, _ := regexp.MatchString(" << target << ", ";
       if (values[0]->is_field_reference()) {
+        out << indent() << "if ok, _ := regexp.MatchString(";
         out << "string(";
         out << get_field_reference_name(values[0]->get_field_reference());
         out << ")";
+        out << ", " << target << "); !ok";
       } else {
-        out << "\"" << values[0]->get_string() << "\"";
+        std::string pattern = values[0]->get_string();
+        std::string var_name;
+        bool found = false;
+        for (auto& entry : pattern_cache_) {
+          if (entry.first == pattern) {
+            var_name = entry.second;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          var_name = "vtRe" + current_struct_name_ + std::to_string(pattern_cache_.size());
+          pattern_cache_.push_back({pattern, var_name});
+        }
+        out << indent() << "if !" << var_name << ".MatchString(" << target << ")";
       }
-      out << "); ok";
     } else if (key == "vt.prefix") {
       out << indent() << "if !strings.HasPrefix(" << target << ", ";
       if (values[0]->is_field_reference()) {
@@ -851,6 +865,25 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
       out << indent() << "}" << '\n';
     }
   }
+}
+
+void go_validator_generator::generate_regexp_vars(std::ostream& out) {
+  if (pattern_cache_.empty()) {
+    return;
+  }
+  out << "// Precompiled regex patterns for " << current_struct_name_ << " vt.pattern validation" << '\n';
+  if (pattern_cache_.size() == 1) {
+    out << "var " << pattern_cache_[0].second << " = regexp.MustCompile(`"
+        << pattern_cache_[0].first << "`)" << '\n' << '\n';
+    return;
+  }
+  out << "var (" << '\n';
+  indent_up();
+  for (auto& entry : pattern_cache_) {
+    out << indent() << entry.second << " = regexp.MustCompile(`" << entry.first << "`)" << '\n';
+  }
+  indent_down();
+  out << ")" << '\n' << '\n';
 }
 
 void go_validator_generator::generate_struct_field_validator(std::ostream& out,

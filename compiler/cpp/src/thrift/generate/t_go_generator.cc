@@ -1326,11 +1326,18 @@ void t_go_generator::generate_go_struct(t_struct* tstruct, bool is_exception) {
   // generate Validate function
   f_types_ << '\n';
   std::string tstruct_name(publicize(tstruct->get_name(), false));
-  f_types_ << "func (p *" << tstruct_name << ") Validate() error {" << '\n';
+
+  go_validator_generator validator_gen(this);
+  validator_gen.set_struct_name(tstruct_name);
+  std::ostringstream validate_body;
   indent_up();
-  go_validator_generator(this).generate_struct_validator(f_types_, tstruct);
-  f_types_ << indent() << "return nil" << '\n';
+  validator_gen.generate_struct_validator(validate_body, tstruct);
+  validate_body << indent() << "return nil" << '\n';
   indent_down();
+
+  validator_gen.generate_regexp_vars(f_types_);
+  f_types_ << "func (p *" << tstruct_name << ") Validate() error {" << '\n';
+  f_types_ << validate_body.str();
   f_types_ << "}" << '\n';
 }
 
