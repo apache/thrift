@@ -423,34 +423,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
           sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
 
-# This whole setup is getting worse: https://github.com/dotnet/core/discussions/9258
-      - name: Set up .NET SDK (via install script)
-        run: |
-          # remove any existing install
-          sudo apt remove dotnet*
-          # install key
-          sudo apt install gpg
-          wget https://dot.net/v1/dotnet-install.asc
-          gpg --import dotnet-install.asc
-          # download and verify
-          wget https://dot.net/v1/dotnet-install.sh
-          wget https://dot.net/v1/dotnet-install.sig
-          gpg --verify dotnet-install.sig dotnet-install.sh
-          # run install script
-          chmod +x dotnet-install.sh
-          ./dotnet-install.sh --channel 10.0
-          # export env vars
-          export DOTNET_ROOT=$HOME/.dotnet
-          export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
-          dotnet --list-sdks
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: "10.0.x"
 
-#      the sdk is installed by default, but keep this step for reference
-#      especially newer versions are NOT always pre-installed, so manually again
-#      - name: Set up .NET SDK
-#        run: |
-#          sudo add-apt-repository -y ppa:dotnet/backports
-#          sudo apt-get install -y --no-install-recommends dotnet-sdk-10.0
-#      end
+      - name: Show .NET SDKs
+        run: dotnet --list-sdks
 
       - name: Run bootstrap
         run: ./bootstrap.sh
