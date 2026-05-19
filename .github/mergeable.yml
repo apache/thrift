@@ -1,7 +1,7 @@
 version: 2
 mergeable:
   - when: pull_request.*
-    name: Add 'c_glib' label to PR if changeset includes changes to the lib/c_glib, test/c_glib, or tutorial/c_glib directories
+    name: Add 'c_glib' label to PR if changeset includes changes to c_glib library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -11,13 +11,15 @@ mergeable:
               regex: 'test/c_glib/.*'
           - must_include:
               regex: 'tutorial/c_glib/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_c_glib_generator\..*'
     pass:
       - do: labels
         labels: ['c_glib']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'c++' label to PR if changeset includes changes to the lib/cpp, test/cpp, or tutorial/cpp directories
+    name: Add 'c++' label to PR if changeset includes changes to C++ library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -27,13 +29,15 @@ mergeable:
               regex: 'test/cpp/.*'
           - must_include:
               regex: 'tutorial/cpp/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_cpp_generator\..*'
     pass:
       - do: labels
         labels: ['c++']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'dart' label to PR if changeset includes changes to the lib/dart, test/dart, or tutorial/dart directories
+    name: Add 'dart' label to PR if changeset includes changes to Dart library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -43,13 +47,33 @@ mergeable:
               regex: 'test/dart/.*'
           - must_include:
               regex: 'tutorial/dart/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_dart_generator\..*'
     pass:
       - do: labels
         labels: ['dart']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'delphi' label to PR if changeset includes changes to the lib/delphi, test/delphi, or tutorial/delphi directories
+    name: Add 'd' label to PR if changeset includes changes to D library, tutorial, package, or generator files
+    validate:
+      - do: changeset
+        or:
+          - must_include:
+              regex: 'lib/d/.*'
+          - must_include:
+              regex: 'tutorial/d/.*'
+          - must_include:
+              regex: '^dub\.json$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_d_generator\..*'
+    pass:
+      - do: labels
+        labels: ['d']
+        mode: 'add'
+
+  - when: pull_request.*
+    name: Add 'delphi' label to PR if changeset includes changes to Delphi library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -59,13 +83,15 @@ mergeable:
               regex: 'test/delphi/.*'
           - must_include:
               regex: 'tutorial/delphi/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_delphi_generator\..*'
     pass:
       - do: labels
         labels: ['delphi']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'erlang' label to PR if changeset includes changes to the lib/erl, test/erl, or tutorial/erl directories
+    name: Add 'erlang' label to PR if changeset includes changes to Erlang library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -75,13 +101,15 @@ mergeable:
               regex: 'test/erl/.*'
           - must_include:
               regex: 'tutorial/erl/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_erl_generator\..*'
     pass:
       - do: labels
         labels: ['erlang']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'golang' label to PR if changeset includes changes to the lib/go, test/go, or tutorial/go directories
+    name: Add 'golang' label to PR if changeset includes changes to Go library, tests, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -91,13 +119,19 @@ mergeable:
               regex: 'test/go/.*'
           - must_include:
               regex: 'tutorial/go/.*'
+          - must_include:
+              regex: '^go\.mod$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_go_generator\..*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/go_validator_generator\..*'
     pass:
       - do: labels
         labels: ['golang']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'haxe' label to PR if changeset includes changes to the lib/haxe, test/haxe, or tutorial/haxe directories
+    name: Add 'haxe' label to PR if changeset includes changes to Haxe library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -107,13 +141,15 @@ mergeable:
               regex: 'test/haxe/.*'
           - must_include:
               regex: 'tutorial/haxe/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_haxe_generator\..*'
     pass:
       - do: labels
         labels: ['haxe']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'java' label to PR if changeset includes changes to the lib/java, lib/javame, or tutorial/java directories
+    name: Add 'java' label to PR if changeset includes changes to Java library, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -123,13 +159,17 @@ mergeable:
               regex: 'lib/javame/.*'
           - must_include:
               regex: 'tutorial/java/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_java_generator\..*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_javame_generator\..*'
     pass:
       - do: labels
         labels: ['java']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'javascript' label to PR if changeset includes changes to the lib/js or tutorial/js directories
+    name: Add 'javascript' label to PR if changeset includes changes to JavaScript library, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -137,37 +177,45 @@ mergeable:
               regex: 'lib/js/.*'
           - must_include:
               regex: 'tutorial/js/.*'
+          - must_include:
+              regex: '^bower\.json$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_js_generator\..*'
     pass:
       - do: labels
         labels: ['javascript']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'json' label to PR if changeset includes changes to the lib/json directory
+    name: Add 'json' label to PR if changeset includes changes to the lib/json directory or JSON generator files
     validate:
       - do: changeset
         or:
           - must_include:
               regex: 'lib/json/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_json_generator\..*'
     pass:
       - do: labels
         labels: ['json']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'kotlin' label to PR if changeset includes changes to the lib/kotlin directory
+    name: Add 'kotlin' label to PR if changeset includes changes to the lib/kotlin directory or Kotlin generator files
     validate:
       - do: changeset
         or:
           - must_include:
               regex: 'lib/kotlin/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_kotlin_generator\..*'
     pass:
       - do: labels
         labels: ['kotlin']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'lua' label to PR if changeset includes changes to the lib/lua or test/lua directories
+    name: Add 'lua' label to PR if changeset includes changes to Lua library, tests, or generator files
     validate:
       - do: changeset
         or:
@@ -175,13 +223,15 @@ mergeable:
               regex: 'lib/lua/.*'
           - must_include:
               regex: 'test/lua/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_lua_generator\..*'
     pass:
       - do: labels
         labels: ['lua']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'c#' label to PR if changeset includes changes to the lib/netstd, test/netstd, or tutorial/netstd directories
+    name: Add 'c#' label to PR if changeset includes changes to .NET library, tests, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -191,13 +241,17 @@ mergeable:
               regex: 'test/netstd/.*'
           - must_include:
               regex: 'tutorial/netstd/.*'
+          - must_include:
+              regex: '^ApacheThrift\.nuspec$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_netstd_generator\..*'
     pass:
       - do: labels
         labels: ['c#']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'nodejs' label to PR if changeset includes changes to the lib/nodejs or tutorial/nodejs directories
+    name: Add 'nodejs' label to PR if changeset includes changes to Node.js library, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -205,13 +259,19 @@ mergeable:
               regex: 'lib/nodejs/.*'
           - must_include:
               regex: 'tutorial/nodejs/.*'
+          - must_include:
+              regex: '^package\.json$'
+          - must_include:
+              regex: '^package-lock\.json$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_js_generator\..*'
     pass:
       - do: labels
         labels: ['nodejs']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'typescript' label to PR if changeset includes changes to the lib/nodets or lib/ts directories
+    name: Add 'typescript' label to PR if changeset includes changes to TypeScript libraries, package, or generator files
     validate:
       - do: changeset
         or:
@@ -219,13 +279,19 @@ mergeable:
               regex: 'lib/nodets/.*'
           - must_include:
               regex: 'lib/ts/.*'
+          - must_include:
+              regex: '^package\.json$'
+          - must_include:
+              regex: '^package-lock\.json$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_js_generator\..*'
     pass:
       - do: labels
         labels: ['typescript']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'ocaml' label to PR if changeset includes changes to the lib/ocaml, test/ocaml, or tutorial/ocaml directories
+    name: Add 'ocaml' label to PR if changeset includes changes to OCaml library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -235,13 +301,15 @@ mergeable:
               regex: 'test/ocaml/.*'
           - must_include:
               regex: 'tutorial/ocaml/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_ocaml_generator\..*'
     pass:
       - do: labels
         labels: ['ocaml']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'perl' label to PR if changeset includes changes to the lib/perl, test/perl, or tutorial/perl directories
+    name: Add 'perl' label to PR if changeset includes changes to Perl library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -251,13 +319,15 @@ mergeable:
               regex: 'test/perl/.*'
           - must_include:
               regex: 'tutorial/perl/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_perl_generator\..*'
     pass:
       - do: labels
         labels: ['perl']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'php' label to PR if changeset includes changes to the lib/php, test/php, or tutorial/php directories
+    name: Add 'php' label to PR if changeset includes changes to PHP library, tests, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -267,13 +337,17 @@ mergeable:
               regex: 'test/php/.*'
           - must_include:
               regex: 'tutorial/php/.*'
+          - must_include:
+              regex: '^composer\.json$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_php_generator\..*'
     pass:
       - do: labels
         labels: ['php']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'python' label to PR if changeset includes changes to the lib/py, test/py, test/py.tornado, test/py.twisted, tutorial/py, tutorial/py.tornado, or tutorial/py.twisted directories
+    name: Add 'python' label to PR if changeset includes changes to Python library, tests, tutorials, or generator files
     validate:
       - do: changeset
         or:
@@ -291,13 +365,15 @@ mergeable:
               regex: 'tutorial/py.tornado/.*'
           - must_include:
               regex: 'tutorial/py.twisted/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_py_generator\..*'
     pass:
       - do: labels
         labels: ['python']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'ruby' label to PR if changeset includes changes to the lib/rb, test/rb, or tutorial/rb directories
+    name: Add 'ruby' label to PR if changeset includes changes to Ruby library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -307,13 +383,15 @@ mergeable:
               regex: 'test/rb/.*'
           - must_include:
               regex: 'tutorial/rb/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_rb_generator\..*'
     pass:
       - do: labels
         labels: ['ruby']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'rust' label to PR if changeset includes changes to the lib/rs, test/rs, or tutorial/rs directories
+    name: Add 'rust' label to PR if changeset includes changes to Rust library, tests, tutorial, or generator files
     validate:
       - do: changeset
         or:
@@ -323,13 +401,15 @@ mergeable:
               regex: 'test/rs/.*'
           - must_include:
               regex: 'tutorial/rs/.*'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_rs_generator\..*'
     pass:
       - do: labels
         labels: ['rust']
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'swift' label to PR if changeset includes changes to the lib/swift, test/swift, or tutorial/swift directories
+    name: Add 'swift' label to PR if changeset includes changes to Swift library, tests, tutorial, package, or generator files
     validate:
       - do: changeset
         or:
@@ -339,6 +419,12 @@ mergeable:
               regex: 'test/swift/.*'
           - must_include:
               regex: 'tutorial/swift/.*'
+          - must_include:
+              regex: '^Package\.swift$'
+          - must_include:
+              regex: '^Thrift\.podspec$'
+          - must_include:
+              regex: 'compiler/cpp/src/thrift/generate/t_swift_generator\..*'
     pass:
       - do: labels
         labels: ['swift']
