@@ -210,6 +210,17 @@ describe 'BaseProtocol' do
       expect(@prot).to receive(:read_list_end)
       real_skip.call(Thrift::Types::LIST)
     end
+
+    it "should raise DEPTH_LIMIT when max_depth is exhausted" do
+      expect { @prot.skip(Thrift::Types::STRUCT, 0) }.to raise_error(Thrift::ProtocolException) do |e|
+        expect(e.type).to eq(Thrift::ProtocolException::DEPTH_LIMIT)
+      end
+    end
+
+    it "should skip at max_depth=1 without raising" do
+      expect(@prot).to receive(:read_bool).once
+      expect { @prot.skip(Thrift::Types::BOOL, 1) }.not_to raise_error
+    end
   end
 
   describe Thrift::BaseProtocolFactory do
