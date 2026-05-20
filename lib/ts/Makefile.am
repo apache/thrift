@@ -30,7 +30,6 @@ check-local: prereq all
 	./node_modules/.bin/grunt
 
 doc: prereq
-	./node_modules/.bin/grunt jsdoc
 
 endif
 
