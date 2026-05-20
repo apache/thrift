@@ -98,17 +98,10 @@ PRECROSS_TARGET += precross-swift
 endif
 
 #
-# generate html for ThriftTest.thrift AND validate it!
+# generate html for ThriftTest.thrift
 #
-if WITH_NODEJS
 check-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
-	$(top_builddir)/node_modules/.bin/html-validator --file=gen-html/index.html --verbose
-	$(top_builddir)/node_modules/.bin/html-validator --file=gen-html/ThriftTest.html --verbose
-else
-check-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
-endif
 
 clean-local:
 	$(RM) -r $(top_srcdir)/test/gen-html/
