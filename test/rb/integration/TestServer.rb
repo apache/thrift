@@ -26,6 +26,7 @@ require 'test_helper'
 require 'thrift'
 require 'thrift_test'
 require 'thrift_test_types'
+require 'second_service'
 require 'logger'
 require 'optparse'
 
@@ -107,6 +108,12 @@ class SimpleHandler
 
 end
 
+class SecondHandler
+  def secondtestString(argument)
+    "testString(\"#{argument}\")"
+  end
+end
+
 options = {
   domain_socket: nil,
   port: 9090,
@@ -138,7 +145,7 @@ parser = OptionParser.new do |opts|
   end
   opts.on('--domain-socket=PATH', String, 'Unix domain socket path') { |v| options[:domain_socket] = v }
   opts.on('--port=PORT', Integer, 'Port number to listen (not valid with domain-socket)') { |v| options[:port] = v }
-  opts.on('--protocol=PROTO', String, 'protocol: accel, binary, compact, json, header') { |v| options[:protocol] = v }
+  opts.on('--protocol=PROTO', String, 'protocol: accel, binary, compact, json, header, multi, multic, multih, multij') { |v| options[:protocol] = v }
   opts.on('--ssl', 'use ssl (not valid with domain-socket)') { options[:ssl] = true }
   opts.on('--transport=TRANSPORT', String, 'transport: buffered, framed, header') { |v| options[:transport] = v }
   opts.on('--server-type=TYPE', String, 'type of server: simple, thread-pool, threaded, nonblocking') { |v| options[:server_type] = v }
@@ -170,7 +177,10 @@ if options[:ssl] && !options[:domain_socket].to_s.strip.empty?
   exit 1
 end
 
-protocol_factory = case options[:protocol].to_s.strip
+protocol = options[:protocol].to_s.strip
+multiplexed = protocol.start_with?('multi')
+
+protocol_factory = case protocol
 when '', 'binary'
   Thrift::BinaryProtocolFactory.new
 when 'compact'
@@ -181,6 +191,14 @@ when 'accel'
   Thrift::BinaryProtocolAcceleratedFactory.new
 when 'header'
   Thrift::HeaderProtocolFactory.new
+when 'multi'
+  Thrift::BinaryProtocolFactory.new
+when 'multic'
+  Thrift::CompactProtocolFactory.new
+when 'multih'
+  Thrift::HeaderProtocolFactory.new
+when 'multij'
+  Thrift::JsonProtocolFactory.new
 else
   raise "Unknown protocol type '#{options[:protocol]}'"
 end
@@ -202,6 +220,13 @@ end
 
 handler = SimpleHandler.new
 processor = Thrift::Test::ThriftTest::Processor.new(handler)
+if multiplexed
+  multiplexed_processor = Thrift::MultiplexedProcessor.new
+  multiplexed_processor.register_default(processor)
+  multiplexed_processor.register_processor('ThriftTest', processor)
+  multiplexed_processor.register_processor('SecondService', Thrift::Test::SecondService::Processor.new(SecondHandler.new))
+  processor = multiplexed_processor
+end
 
 transport = nil
 if options[:domain_socket].to_s.strip.empty?
