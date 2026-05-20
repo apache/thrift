@@ -1215,6 +1215,12 @@ Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa,
  * @return True, if "host" matches "pattern". False otherwise.
  */
 bool matchName(const char* host, const char* pattern, int size) {
+  // RFC 6125 §6.4.3: wildcard must not appear outside the leftmost label.
+  bool past_first_dot = false;
+  for (int k = 0; k < size; k++) {
+    if (pattern[k] == '.') { past_first_dot = true; continue; }
+    if (pattern[k] == '*' && past_first_dot) return false;
+  }
   bool match = false;
   int i = 0, j = 0;
   while (i < size && host[j] != '\0') {

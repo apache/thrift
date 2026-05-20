@@ -108,6 +108,7 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	link_test \
 	OpenSSLManualInitTest \
+	TSSLSocketMatchNameTest \
 	EnumTest \
 	RenderedDoubleConstantsTest \
 	AnnotationTest
@@ -408,6 +409,15 @@ OpenSSLManualInitTest_SOURCES = \
 	OpenSSLManualInitTest.cpp
 
 OpenSSLManualInitTest_LDADD = \
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD) \
+	$(OPENSSL_LDFLAGS) \
+	$(OPENSSL_LIBS)
+
+TSSLSocketMatchNameTest_SOURCES = \
+	TSSLSocketMatchNameTest.cpp
+
+TSSLSocketMatchNameTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(BOOST_TEST_LDADD) \
 	$(OPENSSL_LDFLAGS) \
