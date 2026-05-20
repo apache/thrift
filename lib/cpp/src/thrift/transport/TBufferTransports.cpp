@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 
 #include <thrift/transport/TBufferTransports.h>
@@ -34,7 +33,10 @@ uint32_t TBufferedTransport::readSlow(uint8_t* buf, uint32_t len) {
 
   // We should only take the slow path if we can't satisfy the read
   // with the data already in the buffer.
-  assert(have < len);
+  if (have >= len) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+                              "TBufferedTransport::readSlow invariant violated: buffer already satisfies read");
+  }
 
   // If we have some data in the buffer, copy it out and return it.
   // We have to return it without attempting to read more, since we aren't
@@ -66,7 +68,10 @@ void TBufferedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   auto space = static_cast<uint32_t>(wBound_ - wBase_);
   // We should only take the slow path if we can't accommodate the write
   // with the free space already in the buffer.
-  assert(wBound_ - wBase_ < static_cast<ptrdiff_t>(len));
+  if (wBound_ - wBase_ >= static_cast<ptrdiff_t>(len)) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+                              "TBufferedTransport::writeSlow invariant violated: buffer already satisfies write");
+  }
 
   // Now here's the tricky question: should we copy data from buf into our
   // internal buffer and write it from there, or should we just write out
@@ -104,7 +109,10 @@ void TBufferedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   transport_->write(wBuf_.get(), wBufSize_);
 
   // Copy the rest into our buffer.
-  assert(len < wBufSize_);
+  if (len >= wBufSize_) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+                              "TBufferedTransport::writeSlow: remaining length exceeds buffer size");
+  }
   memcpy(wBuf_.get(), buf, len);
   wBase_ = wBuf_.get() + len;
   return;
@@ -140,7 +148,10 @@ uint32_t TFramedTransport::readSlow(uint8_t* buf, uint32_t len) {
 
   // We should only take the slow path if we can't satisfy the read
   // with the data already in the buffer.
-  assert(have < want);
+  if (have >= want) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+                              "TFramedTransport::readSlow invariant violated: buffer already satisfies read");
+  }
 
   // If we have some data in the buffer, copy it out and return it.
   // We have to return it without attempting to read more, since we aren't
@@ -252,7 +263,10 @@ void TFramedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
 void TFramedTransport::flush() {
   resetConsumedMessageSize();
   int32_t sz_hbo, sz_nbo;
-  assert(wBufSize_ > sizeof(sz_nbo));
+  if (wBufSize_ <= sizeof(sz_nbo)) {
+    throw TTransportException(TTransportException::INTERNAL_ERROR,
+                              "TFramedTransport::flush: write buffer too small for frame header");
+  }
 
   // Slip the frame size into the start of the buffer.
   sz_hbo = static_cast<uint32_t>(wBase_ - (wBuf_.get() + sizeof(sz_nbo)));
