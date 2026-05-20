@@ -146,4 +146,30 @@ class TSSLServerSocketTest extends TestCase
         $socket->listen();
         $socket->accept();
     }
+
+    public function testGetSSLHostTriggersDeprecation(): void
+    {
+        $socket = new TSSLServerSocket();
+
+        $errors = [];
+        set_error_handler(
+            static function (int $errno, string $errstr) use (&$errors): bool {
+                $errors[] = ['errno' => $errno, 'errstr' => $errstr];
+
+                return true;
+            },
+            E_USER_DEPRECATED,
+        );
+
+        try {
+            $result = $socket->getSSLHost('example.com');
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame('ssl://example.com', $result);
+        $this->assertCount(1, $errors);
+        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
+        $this->assertStringContainsString('getSSLHost() is deprecated', $errors[0]['errstr']);
+    }
 }
