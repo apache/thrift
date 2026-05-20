@@ -110,15 +110,15 @@ shared_examples_for 'a binary protocol' do
     end
   end
 
-  it "should clip numbers out of signed range" do
-    (128..255).each do |i|
-      @prot.write_byte(i)
-      expect(@trans.read(1)).to eq([i].pack('c'))
+  it "should reject bytes outside the signed byte range" do
+    [-129, 128, 255, 2**65].each do |i|
+      expect { @prot.write_byte(i) }.to raise_error(RangeError)
     end
+    expect(@trans.available).to eq(0)
   end
 
-  it "errors out with a Bignum" do
-    expect { @prot.write_byte(2**65) }.to raise_error(RangeError)
+  it "should reject non-integer bytes" do
+    expect { @prot.write_byte(1.5) }.to raise_error(TypeError)
   end
 
   it "should error gracefully when trying to write a nil byte" do
@@ -131,13 +131,19 @@ shared_examples_for 'a binary protocol' do
     [-2**15, -1024, 17, 0, -10000, 1723, 2**15-1].each do |i|
       @prot.write_i16(i)
     end
-    # and try something out of signed range, it should clip
-    @prot.write_i16(2**15 + 5)
 
-    expect(@trans.read(@trans.available)).to eq("\200\000\374\000\000\021\000\000\330\360\006\273\177\377\200\005")
+    expect(@trans.read(@trans.available)).to eq("\200\000\374\000\000\021\000\000\330\360\006\273\177\377")
+  end
 
-    # a Bignum should error
-    # lambda { @prot.write_i16(2**65) }.should raise_error(RangeError)
+  it "should reject i16 values outside the signed i16 range" do
+    [-2**15 - 1, 2**15, 2**65].each do |i|
+      expect { @prot.write_i16(i) }.to raise_error(RangeError)
+    end
+    expect(@trans.available).to eq(0)
+  end
+
+  it "should reject non-integer i16 values" do
+    expect { @prot.write_i16(1.5) }.to raise_error(TypeError)
   end
 
   it "should error gracefully when trying to write a nil i16" do
@@ -150,11 +156,14 @@ shared_examples_for 'a binary protocol' do
     [-2**31, -123123, -2532, -3, 0, 2351235, 12331, 2**31-1].each do |i|
       @prot.write_i32(i)
     end
-    # try something out of signed range, it should clip
     expect(@trans.read(@trans.available)).to eq("\200\000\000\000" + "\377\376\037\r" + "\377\377\366\034" + "\377\377\377\375" + "\000\000\000\000" + "\000#\340\203" + "\000\0000+" + "\177\377\377\377")
-    [2 ** 31 + 5, 2 ** 65 + 5].each do |i|
+    [-2 ** 31 - 1, 2 ** 31, 2 ** 65 + 5].each do |i|
       expect { @prot.write_i32(i) }.to raise_error(RangeError)
     end
+  end
+
+  it "should reject non-integer i32 values" do
+    expect { @prot.write_i32(1.5) }.to raise_error(TypeError)
   end
 
   it "should error gracefully when trying to write a nil i32" do
@@ -167,7 +176,6 @@ shared_examples_for 'a binary protocol' do
     [-2**63, -12356123612323, -23512351, -234, 0, 1231, 2351236, 12361236213, 2**63-1].each do |i|
       @prot.write_i64(i)
     end
-    # try something out of signed range, it should clip
     expect(@trans.read(@trans.available)).to eq(["\200\000\000\000\000\000\000\000",
       "\377\377\364\303\035\244+]",
       "\377\377\377\377\376\231:\341",
@@ -177,11 +185,28 @@ shared_examples_for 'a binary protocol' do
       "\000\000\000\000\000#\340\204",
       "\000\000\000\002\340\311~\365",
       "\177\377\377\377\377\377\377\377"].join(""))
-    expect { @prot.write_i64(2 ** 65 + 5) }.to raise_error(RangeError)
+    [-2 ** 63 - 1, 2 ** 63, 2 ** 65 + 5].each do |i|
+      expect { @prot.write_i64(i) }.to raise_error(RangeError)
+    end
+  end
+
+  it "should reject non-integer i64 values" do
+    expect { @prot.write_i64(1.5) }.to raise_error(TypeError)
   end
 
   it "should error gracefully when trying to write a nil i64" do
     expect { @prot.write_i64(nil) }.to raise_error(StandardError, 'nil argument not allowed!')
+  end
+
+  it "should reject out-of-range field ids" do
+    expect { @prot.write_field_begin('foo', Thrift::Types::DOUBLE, -2**15 - 1) }.to raise_error(RangeError)
+    expect { @prot.write_field_begin('foo', Thrift::Types::DOUBLE, 2**15) }.to raise_error(RangeError)
+  end
+
+  it "should reject out-of-range container sizes" do
+    expect { @prot.write_map_begin(Thrift::Types::STRING, Thrift::Types::LIST, -1) }.to raise_error(RangeError)
+    expect { @prot.write_list_begin(Thrift::Types::I16, 2**31) }.to raise_error(RangeError)
+    expect { @prot.write_set_begin(Thrift::Types::I16, 2**31) }.to raise_error(RangeError)
   end
 
   it "should write a double" do

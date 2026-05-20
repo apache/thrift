@@ -155,6 +155,14 @@ the generated `FIELDS` metadata hash for field names such as `fields`, but it
 is a source-compatible break if your application referenced the old constants
 directly. Regenerate Ruby code and update those constant references atomically.
 
+Ruby binary protocol writers now enforce signed Thrift integer ranges before
+serializing values. `byte`, `i16`, `i32`, and `i64` writes reject values outside
+their declared signed ranges, and binary/string/container sizes must fit in a
+non-negative signed `i32` length. Older releases could silently wrap or clip
+some out-of-range values, such as writing `255` as a byte that read back as
+`-1`. This applies to both `Thrift::BinaryProtocol` and
+`Thrift::BinaryProtocolAccelerated`.
+
 ### 0.23.0
 
 The documented source-build flow now effectively requires Ruby `2.7+`.
