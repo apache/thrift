@@ -55,7 +55,6 @@
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.14.0",
-    "html-validator-cli": "^2.0.0",
     "jsdoc": "^4.0.2",
     "json-int64": "^1.0.2",
     "nyc": "^15.0.0",
