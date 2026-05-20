@@ -24,17 +24,26 @@ module Thrift
   class MultiplexedProcessor
     def initialize
       @actual_processors = {}
+      @default_processor = nil
     end
 
     def register_processor(service_name, processor)
       @actual_processors[service_name] = processor
     end
 
+    def register_default(processor)
+      @default_processor = processor
+    end
+
     def process(iprot, oprot)
       name, type, seqid = iprot.read_message_begin
       check_type(type)
-      check_separator(name)
-      service_name, method = name.split(':')
+      if name.count(':') < 1
+        check_default_processor(name)
+        return @default_processor.process(StoredMessageProtocol.new(iprot, [name, type, seqid]), oprot)
+      end
+
+      service_name, method = name.split(':', 2)
       processor(service_name).process(StoredMessageProtocol.new(iprot, [method, type, seqid]), oprot)
     end
 
@@ -54,8 +63,8 @@ module Thrift
       end
     end
 
-    def check_separator(name)
-      if name.count(':') < 1
+    def check_default_processor(name)
+      unless @default_processor
         raise Thrift::Exception.new("Service name not found in message name: #{name}. Did you forget to use a Thrift::Protocol::MultiplexedProtocol in your client?")
       end
     end

@@ -460,7 +460,11 @@
       "binary:accel",
       "compact",
       "json",
-      "header"
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
     ],
     "workdir": "rb/gen-rb"
   },

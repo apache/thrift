@@ -26,6 +26,7 @@ $:.push File.dirname(__FILE__) + '/..'
 require 'test_helper'
 require 'thrift'
 require 'thrift_test'
+require 'second_service'
 
 $domain_socket = nil
 $host = "localhost"
@@ -41,7 +42,7 @@ ARGV.each do|a|
     puts "\t--domain-socket arg (=) \t Unix domain socket path"
     puts "\t--host arg (=localhost) \t Host to connect \t not valid with domain-socket"
     puts "\t--port arg (=9090) \t Port number to listen \t not valid with domain-socket"
-    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json, header"
+    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json, header, multi, multic, multih, multij"
     puts "\t--ssl \t use ssl \t not valid with domain-socket"
     puts "\t--transport arg (=buffered) transport: buffered, framed, header, http"
     exit
@@ -94,6 +95,7 @@ class SimpleClientTest < Test::Unit::TestCase
         raise 'Unknown transport type'
       end
 
+      @protocol2 = nil
       if $protocolType == "binary"
         @protocol = Thrift::BinaryProtocol.new(transportFactory)
       elsif $protocolType == "compact"
@@ -105,10 +107,27 @@ class SimpleClientTest < Test::Unit::TestCase
       elsif $protocolType == "header"
         # HeaderProtocol wraps its own transport, so pass the selected transport
         @protocol = Thrift::HeaderProtocol.new(transportFactory)
+      elsif $protocolType == "multi"
+        protocol = Thrift::BinaryProtocol.new(transportFactory)
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+      elsif $protocolType == "multic"
+        protocol = Thrift::CompactProtocol.new(transportFactory)
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+      elsif $protocolType == "multih"
+        protocol = Thrift::HeaderProtocol.new(transportFactory)
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+      elsif $protocolType == "multij"
+        protocol = Thrift::JsonProtocol.new(transportFactory)
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
       else
         raise 'Unknown protocol type'
       end
       @client = Thrift::Test::ThriftTest::Client.new(@protocol)
+      @client2 = Thrift::Test::SecondService::Client.new(@protocol2) if @protocol2
       @socket.open
     end
   end
@@ -159,6 +178,13 @@ class SimpleClientTest < Test::Unit::TestCase
 
     result_string = @client.testString(test_string)
     assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
+  end
+
+  def test_multiplexed
+    return unless @client2
+
+    p 'test_multiplexed'
+    assert_equal('testString("foobar")', @client2.secondtestString('foobar'))
   end
 
   def test_bool
