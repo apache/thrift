@@ -24,6 +24,7 @@
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-jsdoc": "^2.4.1",
     "grunt-shell-spawn": "^0.3.12",
+    "jsdoc": "^3.6.7",
     "jslint": "^0.12.0",
     "node-int64": "^0.4.0",
     "phantom": "^6.0.3",
@@ -31,7 +32,6 @@
   },
   "dependencies": {
     "bufferutil": "^4.0.1",
-    "jsdoc": "^3.6.7",
     "json-int64": "^1.0.0",
     "nopt": "^4.0.1"
   },
