@@ -38,6 +38,7 @@ final class TZlibTransport : TBaseTransport {
   enum DEFAULT_CRBUF_SIZE = 1024;
   enum DEFAULT_UWBUF_SIZE = 128;
   enum DEFAULT_CWBUF_SIZE = 1024;
+  enum DEFAULT_MAX_DECOMPRESSED_SIZE = 100 * 1024 * 1024;
 
   /**
    * Constructs a new zlib transport.
@@ -48,15 +49,19 @@ final class TZlibTransport : TBaseTransport {
    *   crbufSize = The size of the compressed reading buffer, in bytes.
    *   uwbufSize = The size of the uncompressed writing buffer, in bytes.
    *   cwbufSize = The size of the compressed writing buffer, in bytes.
+   *   maxDecompressedSize = Maximum total decompressed bytes allowed per
+   *     read session; exceeding this limit raises a TTransportException.
    */
   this(
     TTransport transport,
     size_t urbufSize = DEFAULT_URBUF_SIZE,
     size_t crbufSize = DEFAULT_CRBUF_SIZE,
     size_t uwbufSize = DEFAULT_UWBUF_SIZE,
-    size_t cwbufSize = DEFAULT_CWBUF_SIZE
+    size_t cwbufSize = DEFAULT_CWBUF_SIZE,
+    size_t maxDecompressedSize = DEFAULT_MAX_DECOMPRESSED_SIZE
   ) {
     transport_ = transport;
+    maxDecompressedSize_ = maxDecompressedSize;
 
     enforce(uwbufSize >= MIN_DIRECT_DEFLATE_SIZE, new TTransportException(
       "TZLibTransport: uncompressed write buffer must be at least " ~
@@ -133,6 +138,10 @@ final class TZlibTransport : TBaseTransport {
       buf[0 .. give] = urbuf_[urpos_ .. urpos_ + give];
       buf = buf[give .. $];
       urpos_ += give;
+      bytesRead_ += give;
+      enforce(bytesRead_ <= maxDecompressedSize_, new TTransportException(
+        "Decompressed size exceeds maximum allowed size",
+        TTransportException.Type.UNKNOWN));
 
       auto need = buf.length;
       if (need == 0) {
@@ -340,6 +349,9 @@ private:
   z_stream* rstream_;
   z_stream* wstream_;
 
+  size_t maxDecompressedSize_;
+  size_t bytesRead_;
+
   /// Whether zlib has reached the end of the input stream.
   bool inputEnded_;
 
@@ -461,6 +473,28 @@ unittest {
   enforce(data == result);
 
   zlib.verifyChecksum();
+}
+
+// Make sure the decompressed size limit is enforced.
+unittest {
+  auto buf = new TMemoryBuffer;
+  auto zlib = new TZlibTransport(buf);
+
+  // 4096 identical bytes compress well, expanding back to 4096 on read.
+  immutable ubyte[] data = new ubyte[4096];
+  zlib.write(data);
+  zlib.finish();
+
+  auto reader = new TZlibTransport(buf,
+    TZlibTransport.DEFAULT_URBUF_SIZE,
+    TZlibTransport.DEFAULT_CRBUF_SIZE,
+    TZlibTransport.DEFAULT_UWBUF_SIZE,
+    TZlibTransport.DEFAULT_CWBUF_SIZE,
+    1024);
+
+  auto ex = collectException!TTransportException(reader.readAll(new ubyte[data.length]));
+  enforce(ex && ex.type == TTransportException.Type.UNKNOWN,
+    "expected TTransportException.Type.UNKNOWN for size limit");
 }
 
 // Make sure verifyChecksum() throws if we messed with the checksum.
