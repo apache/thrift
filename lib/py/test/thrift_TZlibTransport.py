@@ -24,6 +24,7 @@ import string
 import _import_local_thrift  # noqa
 from thrift.transport import TTransport
 from thrift.transport import TZlibTransport
+from thrift.transport.TTransport import TTransportException
 
 
 def generate_random_buff():
@@ -93,6 +94,40 @@ class TestTZlibTransport(unittest.TestCase):
             self.assertEqual(len(data_w_1) + len(data_w_2), len(data_r.decode('utf-8')))
         except AssertionError:
             raise
+
+
+    def test_decompressed_size_limit_exceeded(self):
+        data = b'a' * 4096  # highly compressible
+        buff_w = TTransport.TMemoryBuffer()
+        writer = TZlibTransport.TZlibTransport(TTransport.TBufferedTransportFactory().getTransport(buff_w))
+        writer.write(data)
+        writer.flush()
+
+        compressed = buff_w.getvalue()
+        buff_r = TTransport.TMemoryBuffer(compressed)
+        reader = TZlibTransport.TZlibTransport(
+            TTransport.TBufferedTransportFactory().getTransport(buff_r),
+            max_decompressed_size=1024,
+        )
+        with self.assertRaises(TTransportException) as ctx:
+            reader.read(4096)
+        self.assertEqual(ctx.exception.type, TTransportException.SIZE_LIMIT)
+
+    def test_decompressed_size_limit_not_exceeded(self):
+        data = b'hello thrift ' * 10  # 130 bytes
+        buff_w = TTransport.TMemoryBuffer()
+        writer = TZlibTransport.TZlibTransport(TTransport.TBufferedTransportFactory().getTransport(buff_w))
+        writer.write(data)
+        writer.flush()
+
+        compressed = buff_w.getvalue()
+        buff_r = TTransport.TMemoryBuffer(compressed)
+        reader = TZlibTransport.TZlibTransport(
+            TTransport.TBufferedTransportFactory().getTransport(buff_r),
+            max_decompressed_size=1024,
+        )
+        result = reader.read(len(data))
+        self.assertEqual(result, data)
 
 
 if __name__ == '__main__':
