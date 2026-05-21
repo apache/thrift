@@ -20,7 +20,9 @@
 package thrift
 
 import (
+	"bytes"
 	"compress/zlib"
+	"context"
 	"testing"
 )
 
@@ -59,4 +61,41 @@ func TestZlibFactoryTransportWithoutFactory(t *testing.T) {
 		t.Fatal(err)
 	}
 	TransportTest(t, trans, trans)
+}
+
+func TestZlibTransportMessageSizeLimit(t *testing.T) {
+	const dataSize = 4096
+	data := bytes.Repeat([]byte{'a'}, dataSize)
+
+	// Write and flush (not close) so TMemoryBuffer.Close() doesn't wipe the data.
+	writeBuf := NewTMemoryBuffer()
+	writer, err := NewTZlibTransport(writeBuf, zlib.BestCompression)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writer.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Flush(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	compressed := make([]byte, writeBuf.Len())
+	copy(compressed, writeBuf.Bytes())
+
+	readBuf := NewTMemoryBuffer()
+	readBuf.Write(compressed)
+	reader, err := NewTZlibTransport(readBuf, zlib.BestCompression)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader.SetTConfiguration(&TConfiguration{MaxMessageSize: 1024})
+
+	_, err = reader.Read(make([]byte, dataSize))
+	if err == nil {
+		t.Fatal("expected SIZE_LIMIT error, got nil")
+	}
+	protoEx, ok := err.(TProtocolException)
+	if !ok || protoEx.TypeId() != SIZE_LIMIT {
+		t.Fatalf("expected SIZE_LIMIT TProtocolException, got %T: %v", err, err)
+	}
 }
