@@ -26,7 +26,7 @@ import zlib
 from io import BytesIO
 
 from .TTransport import TTransportBase, CReadableTransport, TTransportException
-from .THeaderTransport import HARD_MAX_FRAME_SIZE
+from .THeaderTransport import DEFAULT_MAX_FRAME_SIZE
 
 
 class TZlibTransportFactory:
@@ -49,7 +49,7 @@ class TZlibTransportFactory:
     _last_z = None
 
     def getTransport(self, trans, compresslevel=9,
-                     max_decompressed_size=HARD_MAX_FRAME_SIZE):
+                     max_decompressed_size=DEFAULT_MAX_FRAME_SIZE):
         """Wrap a transport, trans, with the TZlibTransport
         compressed transport class, returning a new
         transport to the caller.
@@ -79,7 +79,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     DEFAULT_BUFFSIZE = 4096
 
     def __init__(self, trans, compresslevel=9,
-                 max_decompressed_size=HARD_MAX_FRAME_SIZE):
+                 max_decompressed_size=DEFAULT_MAX_FRAME_SIZE):
         """Create a new TZlibTransport, wrapping C{trans}, another
         TTransport derived object.
 
@@ -90,7 +90,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         @type compresslevel: int
         @param max_decompressed_size: Maximum total decompressed bytes
         allowed per session before a SIZE_LIMIT exception is raised.
-        Defaults to HARD_MAX_FRAME_SIZE (0x3FFFFFFF bytes).
+        Defaults to DEFAULT_MAX_FRAME_SIZE (16384000 bytes).
         @type max_decompressed_size: int
         """
         self.__trans = trans
