@@ -51,7 +51,7 @@
     "buffer-equals": "^1.0.4",
     "commander": "^13.0.0",
     "connect": "^3.6.6",
-    "eslint": "^9.18.0",
+    "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.14.0",
@@ -62,6 +62,14 @@
     "tape": "^4.9.0",
     "typescript": "^5.7.2",
     "utf-8-validate": "^5.0.0"
+  },
+  "overrides": {
+    "@babel/helpers": "^7.26.10",
+    "ajv": "^6.14.0",
+    "brace-expansion": "^2.0.3",
+    "debug": "^4.3.1",
+    "semver": "^7.5.2",
+    "underscore": "^1.13.8"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
