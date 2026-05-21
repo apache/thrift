@@ -85,17 +85,17 @@ For example, the integer 50399 is encoded as follows:
 
 ### Integer encoding
 
-Values of type `i8` are encoded as one byte.
+Values of type `i8` and `byte` are encoded as one byte.
 Values of type `i16`, `i32` and `i64` are first transformed to using [ZigZag](#zigzag-encoding)
 and that result is then [varint](#varint-encoding) encoded before being written.
 
 ### Enum encoding
 
-`Enum`s are encoded as their integer value as defined by the Thrift IDL.
+`enum`s are encoded as their integer value as defined by the Thrift IDL.
 
 ### Binary encoding
 
-Binary is sent as follows:
+`binary` is sent as follows:
 
 ```
 Binary protocol, binary data, 1+ bytes:
@@ -112,16 +112,17 @@ Where:
 
 ### String encoding
 
-Strings are written as [binary](#binary-encoding) and must be encoded as UTF-8. Strings do
+`string`s are written as [binary](#binary-encoding) and must be encoded as UTF-8. Strings do
  not include a NULL(0) terminator.
 
 ### Double encoding
 
-Values of type `double` are converted to little-endian and then encoded as if they were `i64` (the bytes are treated as the bytes of an 64-bit integer).
+Values of type `double` are written in IEEE 754 format (the standard representation on almost
+all systems) in little-endian byte order (8 bytes).
 
 ### Boolean encoding
 
-Booleans are encoded differently depending on whether a field value (in a struct) or an
+`bool`s are encoded differently depending on whether a field value (in a struct) or an
 element value (in a set, list or map). Field values are encoded directly in the field header.
 Element values of type `bool` are sent as an `i8`; true as `1` and false as `2`.
 
@@ -161,8 +162,9 @@ Message types are encoded with the following values:
 
 ### Struct
 
-A *Struct* is a sequence of zero or more fields, followed by a stop field. Each field other than a stop field  starts with a field header and
-is followed by the encoded field value. The encoding can be summarized by the following BNF:
+A `struct` is a sequence of zero or more fields, followed by a stop field. Each field
+other than a stop field starts with a field header and is followed by the encoded field value.
+The encoding can be summarized by the following BNF:
 
 ```
 struct        ::= ( field-header field-value )* stop-field
@@ -173,15 +175,15 @@ Because each field header contains the field-id (as defined by the Thrift IDL fi
 order. Thrift's type system is not extensible; you can only encode the primitive types and structs. Therefore it is also
 possible to handle unknown fields while decoding by ignoring them. The field type is used to determine how to decode field values.
 
-Note that the fields are identified by their integer value and not thier name.
+Note that the fields are identified by their integer value and not their name.
 
 The default Java implementation (Apache Thrift 0.9.1) has undefined behavior when it tries to decode a field that has
 another field-type than what is expected. Theoretically this could be detected at the cost of some additional checking.
 Other implementation may perform this check and then either ignore the field, or return a protocol exception.
 
-A *Union* is encoded the same as a struct with the additional restriction that at most 1 field may be encoded.
+A `union` is encoded the same as a struct with the additional restriction that at most 1 field may be encoded.
 
-An *Exception* is encoded exactly the same as a struct.
+An `exception` is encoded exactly the same as a struct.
 
 ### Struct encoding
 
@@ -234,7 +236,7 @@ length (0 bytes).
 
 ## List and Set
 
-List and sets are encoded the same: a header indicating the size and the element-type of
+`list`s and `set`s are encoded the same: a header indicating the size and the element-type of
 the elements, followed by the encoded elements.
 
 ```
