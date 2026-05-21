@@ -20,6 +20,7 @@ package org.apache.thrift.transport;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -27,9 +28,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
+import org.apache.thrift.TConfiguration;
 import org.junit.jupiter.api.Test;
 
 public class TestTZlibTransport {
@@ -143,5 +146,29 @@ public class TestTZlibTransport {
     }
 
     assertArrayEquals(byteSequence(0, 245), buf);
+  }
+
+  @Test
+  public void testMessageSizeLimit() throws Exception {
+    byte[] data = new byte[4096];
+    Arrays.fill(data, (byte) 'a');
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    TZlibTransport writer = new TZlibTransport(new TIOStreamTransport(baos));
+    writer.write(data);
+    writer.flush();
+    writer.close();
+
+    // Pass a TConfiguration with a 1 KB limit before constructing TZlibTransport
+    // so that remainingMessageSize is initialised from the correct limit.
+    TConfiguration cfg = new TConfiguration();
+    cfg.setMaxMessageSize(1024);
+    TZlibTransport reader =
+        new TZlibTransport(
+            new TIOStreamTransport(cfg, new ByteArrayInputStream(baos.toByteArray())));
+
+    TTransportException ex =
+        assertThrows(TTransportException.class, () -> reader.read(new byte[4096], 0, 4096));
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, ex.getType());
   }
 }

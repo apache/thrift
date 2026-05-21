@@ -70,6 +70,16 @@ public class TZlibTransport extends TIOStreamTransport {
   }
 
   @Override
+  public int read(byte[] buf, int off, int len) throws TTransportException {
+    checkReadBytesAvailable(len);
+    int bytesRead = super.read(buf, off, len);
+    if (bytesRead > 0) {
+      countConsumedMessageBytes(bytesRead);
+    }
+    return bytesRead;
+  }
+
+  @Override
   public boolean isOpen() {
     return transport_.isOpen();
   }
