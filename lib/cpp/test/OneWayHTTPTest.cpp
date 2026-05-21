@@ -222,6 +222,9 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
     blockable_transport->unblock() ;
     client.send_roundTripRPC() ;
     blockable_transport->flush() ;
+    uint8_t discard;
+    BOOST_CHECK_EQUAL(transport->read(&discard, 1), 0U);
+    BOOST_CHECK_EQUAL(transport->read(&discard, 1), 0U);
     try {
       client.recv_roundTripRPC() ;
     } catch (const TTransportException &e) {
@@ -234,6 +237,53 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 #ifdef ENABLE_STDERR_LOGGING
   cerr << "finished.\n";
 #endif
+}
+
+BOOST_AUTO_TEST_CASE( JSON_HTTP_OneWayWrapperDoesNotPoisonNextCall )
+{
+  std::shared_ptr<TServerSocket> ss = std::make_shared<TServerSocket>(0);
+  TThreadedServer server(
+    std::make_shared<onewaytest::OneWayServiceProcessorFactory>(
+      std::make_shared<OneWayServiceCloneFactory>()),
+    ss,
+    std::make_shared<THttpServerTransportFactory>(),
+    std::make_shared<TJSONProtocolFactory>());
+
+  std::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler);
+  server.setServerEventHandler(pEventHandler);
+
+  RPC0ThreadClass t(server);
+  boost::thread thread(&RPC0ThreadClass::Run, &t);
+
+  {
+    Synchronized sync(*(pEventHandler.get()));
+    while (!pEventHandler->isListening()) {
+      pEventHandler->wait();
+    }
+  }
+
+  {
+    std::shared_ptr<TSocket> socket(new TSocket("localhost", ss->getPort()));
+    socket->setRecvTimeout(10000);
+    std::shared_ptr<TTransport> transport(new THttpClient(socket, "localhost", "/service"));
+    std::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
+    onewaytest::OneWayServiceClient client(protocol);
+
+    transport->open();
+    client.roundTripRPC();
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 1U);
+    client.oneWayRPC();
+    try {
+      client.roundTripRPC();
+    } catch (const std::exception& e) {
+      BOOST_ERROR("roundTripRPC after oneWayRPC failed: " + std::string(e.what()));
+    }
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 1U);
+    transport->close();
+  }
+
+  server.stop();
+  thread.join();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

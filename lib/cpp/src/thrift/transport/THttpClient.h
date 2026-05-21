@@ -53,16 +53,24 @@ public:
 
   ~THttpClient() override;
 
+  void close() override;
+
   void flush() override;
+
+  void onewayComplete() override;
 
   void setPath(std::string path);
 
 protected:
   std::string host_;
   std::string path_;
+  bool onewayResponsePending_;
 
   void parseHeader(char* header) override;
   bool parseStatusLine(char* status) override;
+
+  void drainPendingOnewayResponse();
+  void discardResponseBody(uint32_t size);
 };
 }
 }

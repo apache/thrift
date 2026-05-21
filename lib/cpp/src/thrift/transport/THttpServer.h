@@ -34,6 +34,8 @@ public:
 
   void flush() override;
 
+  void onewayComplete() override;
+
 protected:
   virtual std::string getHeader(uint32_t len);
   void readHeaders();

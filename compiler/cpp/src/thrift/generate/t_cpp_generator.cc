@@ -3129,6 +3129,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         } else {
           out << "recv_" << funname << "(" << seqIdUse << ");" << '\n';
         }
+      } else {
+        out << indent() << _this << "oprot_->getTransport()->onewayComplete();" << '\n';
       }
     } else {
       if (!(*f_iter)->is_oneway()) {
@@ -3889,7 +3891,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (gen_templates_) {
       out << indent() << "template <class Protocol_>" << '\n';
     }
-    const bool unnamed_oprot_seqid = tfunction->is_oneway() && !(gen_templates_ && !specialized);
+    const bool unnamed_oprot_seqid = false;
     out << "void " << tservice->get_name() << "Processor" << class_suffix << "::"
         << "process_" << tfunction->get_name() << "("
         << "int32_t" << (unnamed_oprot_seqid ? ", " : " seqid, ") << prot_type << "* iprot, "
@@ -3901,7 +3903,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     string resultname = tservice->get_name() + "_" + tfunction->get_name() + "_result";
 
     if (tfunction->is_oneway() && !unnamed_oprot_seqid) {
-      out << indent() << "(void) seqid;" << '\n' << indent() << "(void) oprot;" << '\n';
+      out << indent() << "(void) seqid;" << '\n';
     }
 
     out << indent() << "void* ctx = nullptr;" << '\n' << indent()
@@ -3994,6 +3996,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           << "x.write(oprot);" << '\n' << indent() << "oprot->writeMessageEnd();" << '\n'
           << indent() << "oprot->getTransport()->writeEnd();" << '\n' << indent()
           << "oprot->getTransport()->flush();" << '\n';
+    } else {
+      out << '\n' << indent() << "oprot->getTransport()->onewayComplete();" << '\n';
     }
     out << indent() << "return;" << '\n';
     indent_down();
@@ -4003,7 +4007,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (tfunction->is_oneway()) {
       out << indent() << "if (this->eventHandler_.get() != nullptr) {" << '\n' << indent()
           << "  this->eventHandler_->asyncComplete(ctx, " << service_func_name << ");" << '\n'
-          << indent() << "}" << '\n' << '\n' << indent() << "return;" << '\n';
+          << indent() << "}" << '\n' << '\n' << indent()
+          << "oprot->getTransport()->onewayComplete();" << '\n' << indent() << "return;" << '\n';
       indent_down();
       out << "}" << '\n' << '\n';
       return;

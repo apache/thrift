@@ -243,6 +243,8 @@ public:
 
   void flush() override;
 
+  void onewayComplete() override { transport_->onewayComplete(); }
+
   /**
    * Returns the origin of the underlying transport
    */
@@ -374,6 +376,8 @@ public:
   void writeSlow(const uint8_t* buf, uint32_t len) override;
 
   void flush() override;
+
+  void onewayComplete() override { transport_->onewayComplete(); }
 
   uint32_t readEnd() override;
 

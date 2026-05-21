@@ -105,6 +105,8 @@ public:
   uint32_t readSlow(uint8_t* buf, uint32_t len) override;
   void flush() override;
 
+  void onewayComplete() override { outTransport_->onewayComplete(); }
+
   void resizeTransformBuffer(uint32_t additionalSize = 0);
 
   uint16_t getProtocolId() const;
