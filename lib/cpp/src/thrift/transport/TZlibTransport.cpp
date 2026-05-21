@@ -149,6 +149,7 @@ uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
     need -= give;
     buf += give;
     urpos_ += give;
+    countConsumedMessageBytes(give);
 
     // If they were satisfied, we are done.
     if (need == 0) {
