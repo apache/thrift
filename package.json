@@ -57,7 +57,7 @@
     "globals": "^15.14.0",
     "jsdoc": "^4.0.2",
     "json-int64": "^1.0.2",
-    "nyc": "^15.0.0",
+    "nyc": "^18.0.0",
     "prettier": "^3.4.2",
     "tape": "^4.9.0",
     "typescript": "^5.7.2",
@@ -68,6 +68,9 @@
     "ajv": "^6.14.0",
     "brace-expansion": "^2.0.3",
     "debug": "^4.3.1",
+    "istanbul-lib-processinfo": {
+      "uuid": "^11.1.1"
+    },
     "semver": "^7.5.2",
     "underscore": "^1.13.8"
   },
