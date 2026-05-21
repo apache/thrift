@@ -95,7 +95,6 @@ class TestTZlibTransport(unittest.TestCase):
         except AssertionError:
             raise
 
-
     def test_decompressed_size_limit_exceeded(self):
         data = b'a' * 4096  # highly compressible
         buff_w = TTransport.TMemoryBuffer()

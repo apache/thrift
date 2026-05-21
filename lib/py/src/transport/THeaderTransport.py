@@ -34,7 +34,8 @@ from thrift.transport.TTransport import (
 U16 = struct.Struct("!H")
 I32 = struct.Struct("!i")
 HEADER_MAGIC = 0x0FFF
-HARD_MAX_FRAME_SIZE = 0x3FFFFFFF
+DEFAULT_MAX_FRAME_SIZE = 16384000   # matches all other Thrift bindings
+HARD_MAX_FRAME_SIZE = 0x3FFFFFFF    # protocol hard cap (30-bit length field)
 
 
 class THeaderClientType(object):
@@ -99,8 +100,8 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         self.flags = 0
         self.sequence_id = 0
         self._protocol_id = default_protocol
-        self._max_frame_size = HARD_MAX_FRAME_SIZE
-        self._max_decompressed_size = HARD_MAX_FRAME_SIZE
+        self._max_frame_size = DEFAULT_MAX_FRAME_SIZE
+        self._max_decompressed_size = DEFAULT_MAX_FRAME_SIZE
 
     def isOpen(self):
         return self._transport.isOpen()
