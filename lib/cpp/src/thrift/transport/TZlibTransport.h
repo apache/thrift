@@ -153,6 +153,8 @@ public:
 
   void flush() override;
 
+  void onewayComplete() override { transport_->onewayComplete(); }
+
   /**
    * Finalize the zlib stream.
    *

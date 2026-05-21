@@ -189,6 +189,16 @@ public:
   }
 
   /**
+   * Called by generated code after a one-way method has been sent or handled.
+   * Transports that receive an out-of-band response can override this to mark
+   * it for discard without making one-way calls wait for a reply. Transports
+   * that must emit an out-of-band response can override this to send it.
+   */
+  virtual void onewayComplete() {
+    // default behaviour is to do nothing
+  }
+
+  /**
    * Attempts to return a pointer to \c len bytes, possibly copied into \c buf.
    * Does not consume the bytes read (i.e.: a later read will return the same
    * data).  This method is meant to support protocols that need to read

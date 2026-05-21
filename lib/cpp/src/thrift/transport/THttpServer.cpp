@@ -140,6 +140,10 @@ void THttpServer::flush() {
   readHeaders_ = true;
 }
 
+void THttpServer::onewayComplete() {
+  flush();
+}
+
 std::string THttpServer::getHeader(uint32_t len) {
   std::ostringstream h;
   h << "HTTP/1.1 200 OK" << CRLF << "Date: " << getTimeRFC1123() << CRLF << "Server: Thrift/"
