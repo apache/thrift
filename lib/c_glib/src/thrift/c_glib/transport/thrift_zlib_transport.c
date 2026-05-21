@@ -238,6 +238,10 @@ thrift_zlib_transport_read (ThriftTransport *transport, gpointer buf,
       break;
   }
 
+  if (!ttc->countConsumedMessageBytes (transport, i, error)) {
+    return -1;
+  }
+
   return len;
 }
 

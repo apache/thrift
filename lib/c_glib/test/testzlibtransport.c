@@ -214,6 +214,31 @@ thrift_server (const int port)
   g_object_unref (tsocket);
 }
 
+static void
+test_message_size_limit(void)
+{
+  ThriftSocket *tsocket = NULL;
+  ThriftTransport *transport = NULL;
+  gchar readbuf[4096];
+  GError *err = NULL;
+  gint32 ret;
+
+  /* checkReadBytesAvailable fires before any I/O, so the underlying transport
+   * does not need to be connected or contain data. */
+  tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
+                          "port", 9999, NULL);
+  transport = g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (tsocket),
+                            "remainingmessagesize", (glong) 1024,
+                            NULL);
+
+  ret = thrift_zlib_transport_read (transport, readbuf, sizeof (readbuf), &err);
+  g_assert (ret < 0);
+  if (err) g_error_free (err);
+  g_object_unref (transport);
+  g_object_unref (tsocket);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -226,6 +251,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testzlibtransport/CreateAndDestroy", test_create_and_destroy);
   g_test_add_func ("/testzlibtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testzlibtransport/ReadAndWrite", test_read_and_write);
+  g_test_add_func ("/testzlibtransport/MessageSizeLimit", test_message_size_limit);
 
   return g_test_run ();
 }
