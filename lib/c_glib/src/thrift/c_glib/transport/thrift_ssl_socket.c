@@ -422,6 +422,11 @@ thrift_ssl_socket_handle_handshake(ThriftTransport * transport, GError **error)
       if(ssl_socket->server){
 	  rc = SSL_accept(ssl_socket->ssl);
       }else{
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	  if (socket->hostname != NULL) {
+	      SSL_set1_host(ssl_socket->ssl, socket->hostname);
+	  }
+#endif
 	  rc = SSL_connect(ssl_socket->ssl);
       }
       if (rc <= 0) {
