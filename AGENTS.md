@@ -84,7 +84,25 @@ Per [`CONTRIBUTING.md § AI generated content`](CONTRIBUTING.md#ai-generated-con
 
 ---
 
-## 6. Quick Reference Checklist (before opening a PR)
+## 6. Security Work
+
+When assisting with security-sensitive changes (transport size limits, TLS configuration,
+authentication, serialization bounds, or anything flagged by the project's security team):
+
+- **Never** describe the change as a security fix in public-facing text — commit messages,
+  PR titles, PR descriptions, or inline comments.  Use neutral functional language:
+  *"add a configurable frame-size limit"* rather than *"fix DoS vulnerability"*.
+  Vulnerability details travel through the private ASF channel (`security@apache.org`);
+  AI tooling must not short-circuit that process.
+- Before proposing mitigations or defaults, consult
+  [`doc/thrift-threat-model.md`](doc/thrift-threat-model.md) for the project's documented
+  attack surface, trust boundaries, and per-binding security properties.
+- External reporters and AI reviewers alike should follow the instructions in
+  [`SECURITY.md`](SECURITY.md) for responsible disclosure.
+
+---
+
+## 7. Quick Reference Checklist (before opening a PR)
 
 - [ ] License of any new dependency checked against [ASF Category A/X list](https://www.apache.org/legal/resolved.html)
 - [ ] `LICENSE` and/or `NOTICE` updated if third-party attribution is required
@@ -95,3 +113,5 @@ Per [`CONTRIBUTING.md § AI generated content`](CONTRIBUTING.md#ai-generated-con
 - [ ] Tests added or updated
 - [ ] `make style` passes
 - [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable
+- [ ] Security-sensitive changes use neutral commit/PR language (no public vulnerability details)
+- [ ] Changes touching transport limits / TLS / auth cross-checked against `doc/thrift-threat-model.md`
