@@ -24,8 +24,17 @@ class TestStruct : public virtual ::apache::thrift::TBase {
 
   virtual ~TestStruct() noexcept;
   int32_t required_field;
+
+ private:
+  int32_t optional_field;
+
+ public:
   int32_t default_field;
 
+ private:
+  std::string optional_string;
+
+ public:
   _TestStruct__isset __isset;
 
   void __set_required_field(const int32_t val);
@@ -55,10 +64,6 @@ class TestStruct : public virtual ::apache::thrift::TBase {
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const override;
 
   virtual void printTo(std::ostream& out) const;
-
- private:
-  int32_t optional_field;
-  std::string optional_string;
 
   friend void swap(TestStruct &a, TestStruct &b) noexcept;
 

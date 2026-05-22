@@ -79,6 +79,7 @@ nodist_libprivateoptonaltestgencpp_la_SOURCES = \
 	src/ThriftTest_extras.cpp
 
 libprivateoptonaltestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
+libprivateoptonaltestgencpp_la_CXXFLAGS = $(AM_CXXFLAGS) -Werror=reorder
 
 nodist_libenumclasstestgencpp_la_SOURCES = \
 	gen-cpp-enumclass/ThriftTest_types.cpp \
@@ -108,6 +109,7 @@ nodist_libprivateopttemplstreamoptestgencpp_la_SOURCES = \
 	src/ThriftTest_extras.cpp
 
 libprivateopttemplstreamoptestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
+libprivateopttemplstreamoptestgencpp_la_CXXFLAGS = $(AM_CXXFLAGS) -Werror=reorder
 
 nodist_libstresstestgencpp_la_SOURCES = \
 	gen-cpp/StressTest_types.h \

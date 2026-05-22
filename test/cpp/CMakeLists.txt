@@ -40,6 +40,14 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp")
 include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
+function(enable_reorder_warnings_as_errors target_name)
+    if(MSVC)
+        target_compile_options(${target_name} PRIVATE /w15038 /we5038)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(Clang|GNU)$")
+        target_compile_options(${target_name} PRIVATE -Werror=reorder)
+    endif()
+endfunction()
+
 set(crosstestgencpp_SOURCES
     gen-cpp/SecondService.cpp
     gen-cpp/ThriftTest.cpp
@@ -125,6 +133,7 @@ set(privateoptonaltestgencpp_SOURCES
     src/ThriftTest_extras.cpp
 )
 add_library(privateoptonaltestgencpp STATIC ${privateoptonaltestgencpp_SOURCES})
+enable_reorder_warnings_as_errors(privateoptonaltestgencpp)
 target_include_directories(privateoptonaltestgencpp BEFORE PRIVATE 
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private"
     "${CMAKE_CURRENT_BINARY_DIR}"
@@ -194,6 +203,7 @@ set(privateopttemplstreamoptestgencpp_SOURCES
     src/ThriftTest_extras.cpp
 )
 add_library(privateopttemplstreamoptestgencpp STATIC ${privateopttemplstreamoptestgencpp_SOURCES})
+enable_reorder_warnings_as_errors(privateopttemplstreamoptestgencpp)
 target_include_directories(privateopttemplstreamoptestgencpp BEFORE PRIVATE 
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop"
     "${CMAKE_CURRENT_BINARY_DIR}"
