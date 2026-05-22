@@ -40,6 +40,27 @@ string extract_class_definition(const string& content, const string& class_name)
     return content.substr(class_start, class_end - class_start + 2);
 }
 
+// Helper function to extract the declaration and initializer list before a function body.
+string extract_function_header(const string& content, const string& function_signature) {
+    size_t function_start = content.find(function_signature);
+    if (function_start == string::npos) {
+        return "";
+    }
+
+    size_t function_body_start = content.find("{", function_start);
+    if (function_body_start == string::npos) {
+        return "";
+    }
+
+    return content.substr(function_start, function_body_start - function_start);
+}
+
+size_t require_ordered_text(const string& content, const string& expected, size_t after = 0) {
+    size_t position = content.find(expected, after);
+    REQUIRE(position != string::npos);
+    return position + expected.size();
+}
+
 TEST_CASE("t_cpp_generator default behavior generates all public fields", "[functional]")
 {
     string path = join_path(source_dir(), "test_private_optional.thrift");
@@ -71,7 +92,52 @@ TEST_CASE("t_cpp_generator default behavior generates all public fields", "[func
     REQUIRE(!expected_content.empty());
 
     REQUIRE(normalize_for_compare(class_def) == normalize_for_compare(expected_content));
-    
+
+}
+
+TEST_CASE("t_cpp_generator with private_optional preserves thrift field order", "[functional]")
+{
+    string path = join_path(source_dir(), "test_private_optional.thrift");
+    string name = "test_private_optional";
+    map<string, string> parsed_options = {{"private_optional", ""}};
+    string option_string = "";
+
+    std::unique_ptr<t_program> program(new t_program(path, name));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "cpp", parsed_options, option_string));
+    REQUIRE(gen != nullptr);
+
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    string generated_header = read_file("gen-cpp/test_private_optional_types.h");
+    REQUIRE(!generated_header.empty());
+
+    string class_def = extract_class_definition(generated_header, "TestStruct");
+    REQUIRE(!class_def.empty());
+
+    size_t member_position = 0;
+    member_position = require_ordered_text(class_def, "int32_t required_field;", member_position);
+    member_position = require_ordered_text(class_def, "int32_t optional_field;", member_position);
+    member_position = require_ordered_text(class_def, "int32_t default_field;", member_position);
+    require_ordered_text(class_def, "std::string optional_string;", member_position);
+
+    string generated_impl = read_file("gen-cpp/test_private_optional_types.cpp");
+    REQUIRE(!generated_impl.empty());
+
+    string constructor_header =
+        extract_function_header(generated_impl, "TestStruct::TestStruct() noexcept");
+    REQUIRE(!constructor_header.empty());
+
+    size_t initializer_position = 0;
+    initializer_position =
+        require_ordered_text(constructor_header, "required_field(0)", initializer_position);
+    initializer_position =
+        require_ordered_text(constructor_header, "optional_field(0)", initializer_position);
+    initializer_position =
+        require_ordered_text(constructor_header, "default_field(0)", initializer_position);
+    require_ordered_text(constructor_header, "optional_string()", initializer_position);
 }
 
 TEST_CASE("t_cpp_generator with private_optional generates private optional fields", "[functional]")
