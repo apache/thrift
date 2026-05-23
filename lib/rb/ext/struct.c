@@ -35,8 +35,8 @@ static ID sorted_field_ids_method_id;
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
 
-static VALUE new_container_array(int size) {
-  if (size < 0) {
+static void validate_container_size(int size) {
+  if (RB_UNLIKELY(size < 0)) {
     rb_exc_raise(
       get_protocol_exception(
         INT2FIX(PROTOERR_NEGATIVE_SIZE),
@@ -44,7 +44,10 @@ static VALUE new_container_array(int size) {
       )
     );
   }
+}
 
+static VALUE new_container_array(int size) {
+  validate_container_size(size);
   return rb_ary_new2(size > 1024 ? 1024 : size);
 }
 
@@ -540,9 +543,11 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
           rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
         }
       } else {
+        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
+      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
@@ -568,9 +573,11 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
 
         result = rb_class_new_instance(1, &items, rb_cSet);
       } else {
+        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
+      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 

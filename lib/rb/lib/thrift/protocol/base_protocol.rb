@@ -372,6 +372,7 @@ module Thrift
         read_struct_end
       when Types::MAP
         ktype, vtype, size = read_map_begin
+        validate_container_size(size)
         size.times do
           skip(ktype, max_depth - 1)
           skip(vtype, max_depth - 1)
@@ -379,12 +380,14 @@ module Thrift
         read_map_end
       when Types::SET
         etype, size = read_set_begin
+        validate_container_size(size)
         size.times do
           skip(etype, max_depth - 1)
         end
         read_set_end
       when Types::LIST
         etype, size = read_list_begin
+        validate_container_size(size)
         size.times do
           skip(etype, max_depth - 1)
         end
@@ -392,6 +395,10 @@ module Thrift
       else
         raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
       end
+    end
+
+    def validate_container_size(size)
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
     end
 
     def to_s

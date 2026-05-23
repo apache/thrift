@@ -712,6 +712,7 @@ module Thrift
       key_type = get_type_id_for_type_name(read_json_string)
       val_type = get_type_id_for_type_name(read_json_string)
       size = read_json_integer
+      validate_container_size(size)
       read_json_object_start
       [key_type, val_type, size]
     end
@@ -723,7 +724,10 @@ module Thrift
 
     def read_list_begin
       read_json_array_start
-      [get_type_id_for_type_name(read_json_string), read_json_integer]
+      type = get_type_id_for_type_name(read_json_string)
+      size = read_json_integer
+      validate_container_size(size)
+      [type, size]
     end
 
     def read_list_end
@@ -732,7 +736,10 @@ module Thrift
 
     def read_set_begin
       read_json_array_start
-      [get_type_id_for_type_name(read_json_string), read_json_integer]
+      type = get_type_id_for_type_name(read_json_string)
+      size = read_json_integer
+      validate_container_size(size)
+      [type, size]
     end
 
     def read_set_end

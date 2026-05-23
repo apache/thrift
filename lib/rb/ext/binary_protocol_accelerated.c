@@ -424,17 +424,24 @@ VALUE rb_thrift_binary_proto_read_field_begin(VALUE self) {
   }
 }
 
+#define CHECK_NEGATIVE_SIZE(size) \
+  if (RB_UNLIKELY((size) < 0)) { \
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_NEGATIVE_SIZE), rb_str_new2("Negative size"))); \
+  }
+
 VALUE rb_thrift_binary_proto_read_map_begin(VALUE self) {
   VALUE ktype = rb_thrift_binary_proto_read_byte(self);
   VALUE vtype = rb_thrift_binary_proto_read_byte(self);
-  VALUE size = rb_thrift_binary_proto_read_i32(self);
-  return rb_ary_new3(3, ktype, vtype, size);
+  int size = read_i32_direct(self);
+  CHECK_NEGATIVE_SIZE(size);
+  return rb_ary_new3(3, ktype, vtype, INT2NUM(size));
 }
 
 VALUE rb_thrift_binary_proto_read_list_begin(VALUE self) {
   VALUE etype = rb_thrift_binary_proto_read_byte(self);
-  VALUE size = rb_thrift_binary_proto_read_i32(self);
-  return rb_ary_new3(2, etype, size);
+  int size = read_i32_direct(self);
+  CHECK_NEGATIVE_SIZE(size);
+  return rb_ary_new3(2, etype, INT2NUM(size));
 }
 
 VALUE rb_thrift_binary_proto_read_set_begin(VALUE self) {
@@ -478,6 +485,7 @@ VALUE rb_thrift_binary_proto_read_string(VALUE self) {
 
 VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
   int size = read_i32_direct(self);
+  CHECK_NEGATIVE_SIZE(size);
   return READ(self, size);
 }
 

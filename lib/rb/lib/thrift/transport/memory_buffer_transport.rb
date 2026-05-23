@@ -71,6 +71,12 @@ module Thrift
       data
     end
 
+    def read_all(size)
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+
+      read(size)
+    end
+
     def read_byte
       raise EOFError.new("Not enough bytes remain in buffer") if @index >= @buf.size
       val = Bytes.get_string_byte(@buf, @index)
