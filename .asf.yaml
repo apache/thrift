@@ -2,8 +2,8 @@
 # See https://github.com/apache/infrastructure-asfyaml/blob/main/README.md
 notifications:
   commits: commits@thrift.apache.org
-  issues: dev@thrift.apache.org
-  pullrequests_status: dev@thrift.apache.org
+  issues: notifications@thrift.apache.org
+  pullrequests_status: notifications@thrift.apache.org
   pullrequests_comment: notifications@thrift.apache.org
   jira_options: link label worklog
 
