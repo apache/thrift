@@ -28,11 +28,15 @@ ID index_ivar_id;
 ID slice_method_id;
 
 int GARBAGE_BUFFER_SIZE;
+static VALUE transport_exception_class;
+static VALUE transport_negative_size;
+static ID new_method_id;
 
 #define GET_BUF(self) rb_ivar_get(self, buf_ivar_id)
 
 VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str);
 VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value);
+VALUE rb_thrift_memory_buffer_read_all(VALUE self, VALUE length_value);
 VALUE rb_thrift_memory_buffer_read_byte(VALUE self);
 VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value);
 
@@ -65,6 +69,33 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
   if (RSTRING_LEN(data) < length) {
     rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
   }
+
+  return data;
+}
+
+VALUE rb_thrift_memory_buffer_read_all(VALUE self, VALUE length_value) {
+  int length = FIX2INT(length_value);
+
+  if (RB_UNLIKELY(length < 0)) {
+    rb_exc_raise(rb_funcall(transport_exception_class, new_method_id, 2, transport_negative_size, rb_str_new2("Negative size")));
+  }
+
+  VALUE index_value = rb_ivar_get(self, index_ivar_id);
+  int index = FIX2INT(index_value);
+  VALUE buf = GET_BUF(self);
+
+  if (RB_UNLIKELY(length > RSTRING_LEN(buf) - index)) {
+    rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
+  }
+
+  VALUE data = rb_str_subseq(buf, index, length);
+
+  index += length;
+  if (index >= GARBAGE_BUFFER_SIZE) {
+    rb_ivar_set(self, buf_ivar_id, rb_str_subseq(buf, index, RSTRING_LEN(buf) - index));
+    index = 0;
+  }
+  rb_ivar_set(self, index_ivar_id, INT2FIX(index));
 
   return data;
 }
@@ -122,6 +153,7 @@ void Init_memory_buffer(void) {
   VALUE thrift_memory_buffer_class = rb_const_get(thrift_module, rb_intern("MemoryBufferTransport"));
   rb_define_method(thrift_memory_buffer_class, "write", rb_thrift_memory_buffer_write, 1);
   rb_define_method(thrift_memory_buffer_class, "read", rb_thrift_memory_buffer_read, 1);
+  rb_define_method(thrift_memory_buffer_class, "read_all", rb_thrift_memory_buffer_read_all, 1);
   rb_define_method(thrift_memory_buffer_class, "read_byte", rb_thrift_memory_buffer_read_byte, 0);
   rb_define_method(thrift_memory_buffer_class, "read_into_buffer", rb_thrift_memory_buffer_read_into_buffer, 2);
 
@@ -129,6 +161,11 @@ void Init_memory_buffer(void) {
   index_ivar_id = rb_intern("@index");
 
   slice_method_id = rb_intern("slice");
+  new_method_id = rb_intern("new");
 
   GARBAGE_BUFFER_SIZE = FIX2INT(rb_const_get(thrift_memory_buffer_class, rb_intern("GARBAGE_BUFFER_SIZE")));
+  transport_exception_class = rb_const_get(thrift_module, rb_intern("TransportException"));
+  transport_negative_size = rb_const_get(transport_exception_class, rb_intern("NEGATIVE_SIZE"));
+  rb_global_variable(&transport_exception_class);
+  rb_global_variable(&transport_negative_size);
 }

@@ -178,18 +178,21 @@ module Thrift
       ktype = read_byte
       vtype = read_byte
       size = read_i32
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
       [ktype, vtype, size]
     end
 
     def read_list_begin
       etype = read_byte
       size = read_i32
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
       [etype, size]
     end
 
     def read_set_begin
       etype = read_byte
       size = read_i32
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
       [etype, size]
     end
 
@@ -249,7 +252,11 @@ module Thrift
 
     def read_binary
       size = read_i32
-      trans.read_all(size)
+      if size >= 0
+        trans.read_all(size)
+      else
+        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size')
+      end
     end
 
     def read_uuid

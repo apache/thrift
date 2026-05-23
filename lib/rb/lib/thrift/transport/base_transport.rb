@@ -26,6 +26,7 @@ module Thrift
     ALREADY_OPEN = 2
     TIMED_OUT = 3
     END_OF_FILE = 4
+    NEGATIVE_SIZE = 5
 
     attr_reader :type
 
@@ -81,7 +82,8 @@ module Thrift
     end
 
     def read_all(size)
-      return Bytes.empty_byte_buffer if size <= 0
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      return Bytes.empty_byte_buffer if size == 0
       buf = Bytes.force_binary_encoding(read(size))
       while (buf.length < size)
         chunk = read(size - buf.length)

@@ -320,6 +320,13 @@ shared_examples_for 'a binary protocol' do
     expect(@prot.read_map_begin).to eq([Thrift::Types::DOUBLE, Thrift::Types::I64, 42])
   end
 
+  it "should reject a negative map size" do
+    @trans.write([Thrift::Types::DOUBLE, Thrift::Types::I64, 0xffffffff].pack("ccN"))
+    expect { @prot.read_map_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+    end
+  end
+
   # map footer is a noop
 
   it "should read a list header" do
@@ -327,11 +334,25 @@ shared_examples_for 'a binary protocol' do
     expect(@prot.read_list_begin).to eq([Thrift::Types::STRING, 17])
   end
 
+  it "should reject a negative list size" do
+    @trans.write([Thrift::Types::STRING, 0xffffffff].pack("cN"))
+    expect { @prot.read_list_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+    end
+  end
+
   # list footer is a noop
 
   it "should read a set header" do
     @trans.write([Thrift::Types::STRING, 17].pack("cN"))
     expect(@prot.read_set_begin).to eq([Thrift::Types::STRING, 17])
+  end
+
+  it "should reject a negative set size" do
+    @trans.write([Thrift::Types::STRING, 0xffffffff].pack("cN"))
+    expect { @prot.read_set_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+    end
   end
 
   # set footer is a noop
@@ -405,6 +426,13 @@ shared_examples_for 'a binary protocol' do
     a = @prot.read_binary
     expect(a).to eq([0x00, 0x01, 0x02, 0x03].pack('C*'))
     expect(a.encoding).to eq(Encoding::BINARY)
+  end
+
+  it "should reject a negative binary size" do
+    @trans.write([0xff, 0xff, 0xff, 0xff].pack('C*'))
+    expect { @prot.read_binary }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+      expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+    end
   end
 
   it "should perform a complete rpc with no args or return" do

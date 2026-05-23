@@ -48,6 +48,15 @@ describe 'BaseTransport' do
       expect(buf.encoding).to eq(Encoding::BINARY)
     end
 
+    it "should reject negative read sizes" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).not_to receive(:read)
+
+      expect { transport.read_all(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |e|
+        expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
+      end
+    end
+
     it "should stub out the rest of the methods" do
       # can't test for stubbiness, so just make sure they're defined
       [:open?, :open, :close, :read, :write, :flush].each do |sym|
@@ -370,6 +379,12 @@ describe 'BaseTransport' do
 
       @buffer.reset_buffer("1234")
       expect{ @buffer.read(5) }.to raise_error(EOFError)
+    end
+
+    it "should reject negative read_all sizes" do
+      expect { @buffer.read_all(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |e|
+        expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
+      end
     end
   end
 

@@ -443,6 +443,13 @@ describe 'JsonProtocol' do
       expect(@prot.read_map_begin).to eq([12, 15, 2])
     end
 
+    it "should reject a negative map size" do
+      @trans.write("[\"rec\",\"lst\",-1,{")
+      expect { @prot.read_map_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+        expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+      end
+    end
+
     it "should read map end" do
       @trans.write("}]")
       expect(@prot.read_map_end).to eq(nil)
@@ -453,6 +460,13 @@ describe 'JsonProtocol' do
       expect(@prot.read_list_begin).to eq([12, 2])
     end
 
+    it "should reject a negative list size" do
+      @trans.write("[\"rec\",-1\"\"")
+      expect { @prot.read_list_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+        expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+      end
+    end
+
     it "should read list end" do
       @trans.write("]")
       expect(@prot.read_list_end).to eq(nil)
@@ -461,6 +475,13 @@ describe 'JsonProtocol' do
     it "should read set begin" do
       @trans.write("[\"rec\",2\"\"")
       expect(@prot.read_set_begin).to eq([12, 2])
+    end
+
+    it "should reject a negative set size" do
+      @trans.write("[\"rec\",-1\"\"")
+      expect { @prot.read_set_begin }.to raise_error(Thrift::ProtocolException, "Negative size") do |e|
+        expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
+      end
     end
 
     it "should read set end" do
