@@ -712,6 +712,10 @@ def generate_changes(args):
             # Skip this commit if at least one of its tickets was found in JIRA
             if any(t.upper() in jira_data for t in c["tickets"]):
                 continue
+            # Skip commits that have neither a ticket reference nor a PR number;
+            # a bare SHA link adds no useful context to the changelog.
+            if not c["tickets"] and c["pr_num"] is None:
+                continue
             sha = c["sha"]
             subject_clean = clean_subject(c["subject"])
             if c["pr_num"] is not None:
