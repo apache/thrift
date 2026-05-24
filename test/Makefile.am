@@ -98,18 +98,21 @@ PRECROSS_TARGET += precross-swift
 endif
 
 #
-# generate html for ThriftTest.thrift
+# generate html and markdown for ThriftTest.thrift
 #
 check-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
+	$(top_builddir)/compiler/cpp/thrift --gen markdown -r $(top_srcdir)/test/ThriftTest.thrift
 
 clean-local:
 	$(RM) -r $(top_srcdir)/test/gen-html/
+	$(RM) -r $(top_srcdir)/test/gen-markdown/
 	find . -type d -name "__pycache__" | xargs rm -rf
 	find . -type f -name "*.pyc" | xargs rm -f
 
 dist-hook:
 	$(RM) -r $(distdir)/gen-html/
+	$(RM) -r $(distdir)/gen-markdown/
 	find $(distdir) -type d -name "__pycache__" | xargs rm -rf
 	find $(distdir) -type f -name "*.pyc" | xargs rm -f
 
