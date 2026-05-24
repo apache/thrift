@@ -129,10 +129,9 @@ private:
  */
 std::string t_markdown_generator::str_to_id(const std::string& s) {
   std::string id;
-  for(auto chr=s.begin();chr<=s.end(); ++chr) {
-    if(*chr == '.' || *chr == 0)
-      continue;
-    id += tolower(*chr);
+  for (char c : s) {
+    if (c != '.')
+      id += tolower(c);
   }
   return id;
 }
