@@ -132,7 +132,7 @@ export function ThriftTestDriverPromise(
     var checkRecursively = makeRecursiveCheck(assert);
 
     function fail(msg: string) {
-      return function (error, response) {
+      return function (error) {
         if (error !== null) {
           assert.fail(msg);
         }
