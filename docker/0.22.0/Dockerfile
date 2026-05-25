@@ -62,8 +62,8 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/thrift/bin/thrift /usr/local/bin/thrift
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY tests/smoke.thrift /tmp/smoke.thrift
+COPY ../docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY ../tests/smoke.thrift /tmp/smoke.thrift
 
 RUN set -eux; \
 	thrift --version | grep -F "$THRIFT_VERSION"; \
