@@ -23,15 +23,14 @@
 import ttypes = require("./gen-nodejs/ThriftTest_types");
 import thrift = require("thrift");
 import Thrift = thrift.Thrift;
-import Q = require("q");
 import Int64 = require("node-int64");
 import { v4 as uuid } from "uuid";
 type uuid = string;
 
 export class SyncThriftTestHandler {
-  testVoid(): Q.IPromise<void> {
+  testVoid(): Promise<void> {
     //console.log('testVoid()');
-    return Q.resolve<void>(undefined);
+    return Promise.resolve();
   }
   testMapMap(hello: number) {
     //console.log('testMapMap(' + hello + ')');
@@ -46,9 +45,9 @@ export class SyncThriftTestHandler {
     mapmap[4] = pos;
     mapmap[-4] = neg;
 
-    return Q.resolve(mapmap);
+    return Promise.resolve(mapmap);
   }
-  testInsanity(argument: ttypes.Insanity): Q.IPromise<{ [k: number]: any }> {
+  testInsanity(argument: ttypes.Insanity): Promise<{ [k: number]: any }> {
     const first_map: { [k: number]: any } = [];
     const second_map: { [k: number]: any } = [];
 
@@ -62,7 +61,7 @@ export class SyncThriftTestHandler {
     insane[1] = first_map;
     insane[2] = second_map;
 
-    return Q.resolve(insane);
+    return Promise.resolve(insane);
   }
   testMulti(
     arg0: any,
@@ -77,9 +76,9 @@ export class SyncThriftTestHandler {
     hello.byte_thing = arg0;
     hello.i32_thing = arg1;
     hello.i64_thing = arg2;
-    return Q.resolve(hello);
+    return Promise.resolve(hello);
   }
-  testException(arg: string): Q.IPromise<void> {
+  testException(arg: string): Promise<void> {
     if (arg === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
@@ -88,7 +87,7 @@ export class SyncThriftTestHandler {
     } else if (arg === "TException") {
       throw new Thrift.TException(arg);
     } else {
-      return Q.resolve();
+      return Promise.resolve();
     }
   }
   testMultiException(arg0: string, arg1: string) {
@@ -107,57 +106,57 @@ export class SyncThriftTestHandler {
 
     var res = new ttypes.Xtruct();
     res.string_thing = arg1;
-    return Q.resolve(res);
+    return Promise.resolve(res);
   }
   testOneway(sleepFor: number) {}
 
   testString(thing: string) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testBool(thing: boolean) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testByte(thing: number) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testI32(thing: number) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testI64(thing: number) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testDouble(thing: number) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testBinary(thing: Buffer) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testUuid(thing: uuid) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testStruct(thing: ttypes.Xtruct) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testNest(thing: ttypes.Xtruct2) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testMap(thing: { [k: number]: number }) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testStringMap(thing: { [k: string]: string }) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testSet(thing: number[]) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testList(thing: number[]) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testEnum(thing: ttypes.Numberz) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
   testTypedef(thing: number) {
-    return Q.resolve(thing);
+    return Promise.resolve(thing);
   }
 }
 
@@ -167,9 +166,9 @@ export class AsyncThriftTestHandler {
     this.syncHandler = new SyncThriftTestHandler();
   }
 
-  testVoid(callback: (result: void) => void): Q.IPromise<void> {
+  testVoid(callback: (result: void) => void): Promise<void> {
     callback(undefined);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testMapMap(
     hello: number,
@@ -177,7 +176,7 @@ export class AsyncThriftTestHandler {
       err: any,
       result: { [k: number]: { [k: number]: number } },
     ) => void,
-  ): Q.IPromise<{ [k: number]: { [k: number]: number } }> {
+  ): Promise<void> {
     var mapmap: { [key: number]: { [key: number]: number } } = [];
     var pos: { [key: number]: number } = [];
     var neg: { [key: number]: number } = [];
@@ -189,12 +188,12 @@ export class AsyncThriftTestHandler {
     mapmap[-4] = neg;
 
     callback(null, mapmap);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testInsanity(
     argument: ttypes.Insanity,
     callback?: (err: any, result: { [k: number]: any }) => void,
-  ): Q.IPromise<{ [k: number]: any }> {
+  ): Promise<void> {
     const first_map: { [k: number]: any } = [];
     const second_map: { [k: number]: any } = [];
 
@@ -211,7 +210,7 @@ export class AsyncThriftTestHandler {
     if (callback !== undefined) {
       callback(null, insane);
     }
-    return Q.resolve();
+    return Promise.resolve();
   }
   testMulti(
     arg0: any,
@@ -221,12 +220,12 @@ export class AsyncThriftTestHandler {
     arg4: ttypes.Numberz,
     arg5: number,
     result: Function,
-  ): Q.IPromise<ttypes.Xtruct> {
+  ): Promise<void> {
     var hello = this.syncHandler.testMulti(arg0, arg1, arg2, arg3, arg4, arg5);
     hello.then((hello) => result(null, hello));
-    return Q.resolve();
+    return Promise.resolve();
   }
-  testException(arg: string, result: (err: any) => void): Q.IPromise<void> {
+  testException(arg: string, result: (err: any) => void): Promise<void> {
     if (arg === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
@@ -237,13 +236,13 @@ export class AsyncThriftTestHandler {
     } else {
       result(null);
     }
-    return Q.resolve();
+    return Promise.resolve();
   }
   testMultiException(
     arg0: string,
     arg1: string,
     result: (err: any, res?: ttypes.Xtruct) => void,
-  ): Q.IPromise<ttypes.Xtruct> {
+  ): Promise<void> {
     if (arg0 === "Xception") {
       var x = new ttypes.Xception();
       x.errorCode = 1001;
@@ -260,7 +259,7 @@ export class AsyncThriftTestHandler {
       res.string_thing = arg1;
       result(null, res);
     }
-    return Q.resolve();
+    return Promise.resolve();
   }
   testOneway(sleepFor: number, result: Function) {
     this.syncHandler.testOneway(sleepFor);
@@ -268,113 +267,113 @@ export class AsyncThriftTestHandler {
   testString(
     thing: string,
     callback: (err: any, result: string) => void,
-  ): Q.IPromise<string> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testByte(
     thing: number,
     callback: (err: any, result: number) => void,
-  ): Q.IPromise<number> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testBool(
     thing: boolean,
     callback: (err: any, result: boolean) => void,
-  ): Q.IPromise<boolean> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testI32(
     thing: number,
     callback: (err: any, result: number) => void,
-  ): Q.IPromise<number> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testI64(
     thing: number,
     callback: (err: any, result: number) => void,
-  ): Q.IPromise<number> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testDouble(
     thing: number,
     callback: (err: any, result: number) => void,
-  ): Q.IPromise<number> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testBinary(
     thing: Buffer,
     callback: (err: any, result: Buffer) => void,
-  ): Q.IPromise<Buffer> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testUuid(
     thing: uuid,
     callback: (err: any, result: uuid) => void,
-  ): Q.IPromise<uuid> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testStruct(
     thing: ttypes.Xtruct,
     callback: (err: any, result: ttypes.Xtruct) => void,
-  ): Q.IPromise<ttypes.Xtruct> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testNest(
     thing: ttypes.Xtruct2,
     callback: (err: any, result: ttypes.Xtruct2) => void,
-  ): Q.IPromise<ttypes.Xtruct2> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testMap(
     thing: { [k: number]: number },
     callback: (err: any, result: { [k: number]: number }) => void,
-  ): Q.IPromise<{ [k: number]: number }> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testStringMap(
     thing: { [k: string]: string },
     callback: (err: any, result: { [k: string]: string }) => void,
-  ): Q.IPromise<{ [k: string]: string }> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testSet(
     thing: number[],
     callback: (err: any, result: number[]) => void,
-  ): Q.IPromise<number[]> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testList(
     thing: number[],
     callback: (err: any, result: number[]) => void,
-  ): Q.IPromise<number[]> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testEnum(
     thing: ttypes.Numberz,
     callback: (err: any, result: ttypes.Numberz) => void,
-  ): Q.IPromise<ttypes.Numberz> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
   testTypedef(
     thing: number,
     callback: (err: any, result: number) => void,
-  ): Q.IPromise<number> {
+  ): Promise<void> {
     callback(null, thing);
-    return Q.resolve();
+    return Promise.resolve();
   }
 }

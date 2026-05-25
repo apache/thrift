@@ -39,7 +39,6 @@
     "browser-or-node": "^1.2.1",
     "isomorphic-ws": "^4.0.1",
     "node-int64": "^0.4.0",
-    "q": "^1.5.0",
     "uuid": "^14.0.0",
     "ws": "^8.21.0"
   },
@@ -47,7 +46,6 @@
     "@eslint/js": "^9.18.0",
     "@types/node": "^22.10.5",
     "@types/node-int64": "^0.4.29",
-    "@types/q": "^1.5.1",
     "buffer-equals": "^1.0.4",
     "commander": "^13.0.0",
     "connect": "^3.6.6",

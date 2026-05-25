@@ -30,7 +30,6 @@ import test = require("tape");
 import ttypes = require("./gen-nodejs/ThriftTest_types");
 import ThriftTest = require("./gen-nodejs/ThriftTest");
 import thrift = require("thrift");
-import Q = thrift.Q;
 import TException = thrift.Thrift.TException;
 var Int64 = require("node-int64");
 import testCases = require("./test-cases");
@@ -129,11 +128,11 @@ export function ThriftTestDriverPromise(
   client: ThriftTest.Client,
   callback: (status: string) => void,
 ) {
-  test("Q Promise Client Tests", function (assert) {
+  test("Promise Client Tests", function (assert) {
     var checkRecursively = makeRecursiveCheck(assert);
 
     function fail(msg: string) {
-      return function (error, response) {
+      return function (error) {
         if (error !== null) {
           assert.fail(msg);
         }
@@ -149,7 +148,7 @@ export function ThriftTestDriverPromise(
           .then(function (actual: any) {
             assertionFn(actual, expected, fnName);
           })
-          .fail(fail("fnName"));
+          .catch(fail(fnName));
       };
     }
 
@@ -161,58 +160,58 @@ export function ThriftTestDriverPromise(
     );
     testCases.deep.forEach(makeAsserter(assert.deepEqual));
 
-    Q.resolve(client.testStruct(testCases.out))
+    Promise.resolve(client.testStruct(testCases.out))
       .then(function (response) {
         checkRecursively(testCases.out, response, "testStruct");
       })
-      .fail(fail("testStruct"));
+      .catch(fail("testStruct"));
 
-    Q.resolve(client.testNest(testCases.out2))
+    Promise.resolve(client.testNest(testCases.out2))
       .then(function (response) {
         checkRecursively(testCases.out2, response, "testNest");
       })
-      .fail(fail("testNest"));
+      .catch(fail("testNest"));
 
-    Q.resolve(client.testInsanity(testCases.crazy))
+    Promise.resolve(client.testInsanity(testCases.crazy))
       .then(function (response) {
         checkRecursively(testCases.insanity, response, "testInsanity");
       })
-      .fail(fail("testInsanity"));
+      .catch(fail("testInsanity"));
 
-    Q.resolve(client.testException("TException"))
+    Promise.resolve(client.testException("TException"))
       .then(function (response) {
-        fail("testException: TException");
+        assert.fail("testException: TException");
       })
-      .fail(function (err) {
+      .catch(function (err) {
         assert.ok(err instanceof TException);
       });
 
-    Q.resolve(client.testException("Xception"))
+    Promise.resolve(client.testException("Xception"))
       .then(function (response) {
-        fail("testException: Xception");
+        assert.fail("testException: Xception");
       })
-      .fail(function (err) {
+      .catch(function (err) {
         assert.ok(err instanceof ttypes.Xception);
         assert.equal(err.errorCode, 1001);
         assert.equal("Xception", err.message);
       });
 
-    Q.resolve(client.testException("no Exception"))
+    Promise.resolve(client.testException("no Exception"))
       .then(function (response) {
         assert.equal(undefined, response); //void
       })
-      .fail(fail("testException"));
+      .catch(fail("testException"));
 
     client.testOneway(0, fail("testOneway: should not answer"));
 
     checkOffByOne(function (done) {
-      Q.resolve(client.testI32(-1))
+      Promise.resolve(client.testI32(-1))
         .then(function (response) {
           assert.equal(-1, response);
           assert.end();
           done();
         })
-        .fail(fail("checkOffByOne"));
+        .catch(fail("checkOffByOne"));
     }, callback);
   });
 }

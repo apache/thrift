@@ -70,6 +70,7 @@ public:
     gen_es6_ = false;
     gen_esm_ = false;
     gen_episode_file_ = false;
+    gen_native_promise_ = true;
 
     bool with_ns_ = false;
 
@@ -90,6 +91,12 @@ public:
         parse_imports(program, iter->second);
       } else if (iter->first.compare("thrift_package_output_directory") == 0) {
         parse_thrift_package_output_directory(iter->second);
+      } else if (iter->first.compare("native_promise") == 0) {
+        if (iter->second == "false" || iter->second == "0" || iter->second == "no") {
+          gen_native_promise_ = false;
+        } else {
+          gen_native_promise_ = true;
+        }
       } else {
         throw std::invalid_argument("unknown option js:" + iter->first);
       }
@@ -389,6 +396,12 @@ private:
   bool gen_episode_file_;
 
   /**
+   * True (default) if generated code should use native Promise; false to emit
+   * the legacy Q-based output (Q.fcall / Q.defer and imports from the 'q' package).
+   */
+  bool gen_native_promise_;
+
+  /**
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
@@ -530,11 +543,11 @@ string t_js_generator::js_includes() {
       result += js_const_type_ + "thrift = require('thrift');\n"
           + js_const_type_ + "Thrift = thrift.Thrift;\n";
     }
-    if (!gen_es6_) {
+    if (!gen_native_promise_ && !gen_es6_) {
       if (gen_esm_) {
-        result += "import { Q } from 'thrift';\n";
+        result += "import Q from 'q';\n";
       } else {
-        result += js_const_type_ + "Q = thrift.Q;\n";
+        result += js_const_type_ + "Q = require('q');\n";
       }
     }
     if (gen_esm_) {
@@ -556,13 +569,17 @@ string t_js_generator::js_includes() {
  */
 string t_js_generator::ts_includes() {
   if (gen_node_) {
-    return string(
+    string result =
         "import thrift = require('thrift');\n"
-        "import Thrift = thrift.Thrift;\n"
-        "import Q = thrift.Q;\n"
+        "import Thrift = thrift.Thrift;\n";
+    if (!gen_native_promise_) {
+      result += "import Q = require('q');\n";
+    }
+    result +=
         "import Int64 = require('node-int64');\n"
         "import { v4 as uuid } from 'uuid';\n"
-        "type uuid = string;");
+        "type uuid = string;";
+    return result;
   }
   return string(
     "import Int64 = require('node-int64');\n"
@@ -575,11 +592,14 @@ string t_js_generator::ts_includes() {
  */
 string t_js_generator::ts_service_includes() {
   if (gen_node_) {
-    return string(
+    string result =
         "import thrift = require('thrift');\n"
-        "import Thrift = thrift.Thrift;\n"
-        "import Q = thrift.Q;\n"
-        "import Int64 = require('node-int64');");
+        "import Thrift = thrift.Thrift;\n";
+    if (!gen_native_promise_) {
+      result += "import Q = require('q');\n";
+    }
+    result += "import Int64 = require('node-int64');";
+    return result;
   }
   return string("import Int64 = require('node-int64');");
 }
@@ -1594,6 +1614,10 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
 
   if (gen_es6_) {
     indent(f_service_) << "new Promise((resolve) => resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << '\n';
+  } else if (gen_native_promise_) {
+    // Non-ES6 native Promise: use function expression with explicit `this`
+    // binding so we don't rely on arrow-function lexical `this`.
+    indent(f_service_) << "new Promise(function(resolve) { resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << '\n';
   } else {
     string maybeComma = (fields.size() > 0 ? "," : "");
     indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name() << ".bind(this._handler)"
@@ -1609,6 +1633,8 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
 
   if (gen_es6_) {
     indent(f_service_) << "))).then(result => {" << '\n';
+  } else if (gen_native_promise_) {
+    indent(f_service_) << ")); }.bind(this)).then(function(result) {" << '\n';
   } else {
     indent(f_service_) << ").then(function(result) {" << '\n';
   }
@@ -1973,22 +1999,44 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "this._seqid = this.new_seqid();" << '\n' << indent()
                  << "if (callback === undefined) {" << '\n';
       indent_up();
-      f_service_ << indent() << js_const_type_ << "_defer = Q.defer();" << '\n' << indent()
-                 << "this._reqs[this.seqid()] = function(error, result) {" << '\n';
-      indent_up();
-      indent(f_service_) << "if (error) {" << '\n';
-      indent_up();
-      indent(f_service_) << "_defer.reject(error);" << '\n';
-      indent_down();
-      indent(f_service_) << "} else {" << '\n';
-      indent_up();
-      indent(f_service_) << "_defer.resolve(result);" << '\n';
-      indent_down();
-      indent(f_service_) << "}" << '\n';
-      indent_down();
-      indent(f_service_) << "};" << '\n';
-      f_service_ << indent() << "this.send_" << funname << "(" << arglist << ");" << '\n'
-                 << indent() << "return _defer.promise;" << '\n';
+      if (gen_native_promise_) {
+        f_service_ << indent() << js_const_type_ << "self = this;" << '\n' << indent()
+                   << "return new Promise(function(resolve, reject) {" << '\n';
+        indent_up();
+        f_service_ << indent() << "self._reqs[self.seqid()] = function(error, result) {" << '\n';
+        indent_up();
+        indent(f_service_) << "if (error) {" << '\n';
+        indent_up();
+        indent(f_service_) << "reject(error);" << '\n';
+        indent_down();
+        indent(f_service_) << "} else {" << '\n';
+        indent_up();
+        indent(f_service_) << "resolve(result);" << '\n';
+        indent_down();
+        indent(f_service_) << "}" << '\n';
+        indent_down();
+        indent(f_service_) << "};" << '\n';
+        f_service_ << indent() << "self.send_" << funname << "(" << arglist << ");" << '\n';
+        indent_down();
+        indent(f_service_) << "});" << '\n';
+      } else {
+        f_service_ << indent() << js_const_type_ << "_defer = Q.defer();" << '\n' << indent()
+                   << "this._reqs[this.seqid()] = function(error, result) {" << '\n';
+        indent_up();
+        indent(f_service_) << "if (error) {" << '\n';
+        indent_up();
+        indent(f_service_) << "_defer.reject(error);" << '\n';
+        indent_down();
+        indent(f_service_) << "} else {" << '\n';
+        indent_up();
+        indent(f_service_) << "_defer.resolve(result);" << '\n';
+        indent_down();
+        indent(f_service_) << "}" << '\n';
+        indent_down();
+        indent(f_service_) << "};" << '\n';
+        f_service_ << indent() << "this.send_" << funname << "(" << arglist << ");" << '\n'
+                   << indent() << "return _defer.promise;" << '\n';
+      }
       indent_down();
       indent(f_service_) << "} else {" << '\n';
       indent_up();
@@ -3154,6 +3202,9 @@ THRIFT_REGISTER_GENERATOR(js,
                           "    ts:              Generate TypeScript definition files.\n"
                           "    with_ns:         Create global namespace objects when using node.js\n"
                           "    es6:             Create ES6 code with Promises\n"
+                          "    native_promise=[true|false]:\n"
+                          "                     Use native Promise (default true). Set to false to\n"
+                          "                     emit legacy Q-based output (requires the 'q' package).\n"
                           "    thrift_package_output_directory=<path>:\n"
                           "                     Generate episode file and use the <path> as prefix\n"
                           "    imports=<paths_to_modules>:\n"
