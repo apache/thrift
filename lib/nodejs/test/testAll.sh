@@ -86,7 +86,7 @@ testEpisodicCompilation()
 
 TESTOK=0
 
-# generating Thrift code
+# generating Thrift code (legacy node-int64 — the default for js:node).
 
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/ThriftTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
@@ -103,6 +103,10 @@ ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FIL
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Int64Test.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Include.thrift
+
+# Opt-in BigInt codegen — only Int64Test.thrift is exercised by int64_bigint.test.js.
+mkdir ${DIR}/gen-nodejs-bigint
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-bigint --gen js:node,es6,bigint ${THRIFT_FILES_DIR}/Int64Test.thrift
 
 # generate episodic compilation test code
 TYPES_PACKAGE=${EPISODIC_DIR}/node_modules/types-package
@@ -131,9 +135,11 @@ fi
 # unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/bigint_helpers.test.js || TESTOK=1
 node ${DIR}/check_set_uniqueness.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
+node ${DIR}/int64_bigint.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 node ${DIR}/recursion_depth.test.js || TESTOK=1
 node ${DIR}/generated-exceptions.test.js || TESTOK=1
