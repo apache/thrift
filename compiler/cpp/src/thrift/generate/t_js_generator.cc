@@ -71,6 +71,11 @@ public:
     gen_esm_ = false;
     gen_episode_file_ = false;
     gen_native_promise_ = true;
+    // Opt-in: when present (and `node` is also in the option list), int64
+    // values are emitted as native BigInt literals and the node-int64 import
+    // is omitted. Off by default so regenerated stubs stay byte-compatible
+    // with existing consumers.
+    gen_bigint_ = false;
 
     bool with_ns_ = false;
 
@@ -97,9 +102,18 @@ public:
         } else {
           gen_native_promise_ = true;
         }
+      } else if (iter->first.compare("bigint") == 0) {
+        gen_bigint_ = true;
       } else {
         throw std::invalid_argument("unknown option js:" + iter->first);
       }
+    }
+
+    // BigInt-mode code generation is only meaningful for the node generator.
+    // Force it off for plain browser-JS so passing `js:bigint` alongside
+    // (or via shared option strings) doesn't affect plain `--gen js`.
+    if (!gen_node_) {
+      gen_bigint_ = false;
     }
 
     if (gen_es6_ && gen_jquery_) {
@@ -391,6 +405,14 @@ private:
   bool gen_esm_;
 
   /**
+   * True if int64 values should be generated as native BigInt literals
+   * (opt-in via `js:bigint`). Off by default — when false, the generator
+   * emits the legacy `new Int64(...)` from node-int64. Only meaningful
+   * when gen_node_ is true.
+   */
+  bool gen_bigint_;
+
+  /**
    * True if we will generate an episode file.
    */
   bool gen_episode_file_;
@@ -538,7 +560,15 @@ string t_js_generator::js_includes() {
     string result;
 
     if (gen_esm_) {
-      result += "import { Thrift } from 'thrift';\n";
+      if (gen_bigint_) {
+        // Bigint codegen references `thrift.toBigInt` / `thrift.fromBigInt`
+        // at deserialize / serialize sites, so the ESM include path needs a
+        // namespace binding alongside the named `Thrift` import.
+        result += "import * as thrift from 'thrift';\n";
+        result += "const { Thrift } = thrift;\n";
+      } else {
+        result += "import { Thrift } from 'thrift';\n";
+      }
     } else {
       result += js_const_type_ + "thrift = require('thrift');\n"
           + js_const_type_ + "Thrift = thrift.Thrift;\n";
@@ -551,10 +581,14 @@ string t_js_generator::js_includes() {
       }
     }
     if (gen_esm_) {
-      result += "import Int64 from 'node-int64';\n";
+      if (!gen_bigint_) {
+        result += "import Int64 from 'node-int64';\n";
+      }
       result += "import { v4 as uuid } from 'uuid';";
     } else {
-      result += js_const_type_ + "Int64 = require('node-int64');\n";
+      if (!gen_bigint_) {
+        result += js_const_type_ + "Int64 = require('node-int64');\n";
+      }
       result += js_const_type_ + "uuid = require('uuid').v4;\n";
     }
     return result;
@@ -575,8 +609,10 @@ string t_js_generator::ts_includes() {
     if (!gen_native_promise_) {
       result += "import Q = require('q');\n";
     }
+    if (!gen_bigint_) {
+      result += "import Int64 = require('node-int64');\n";
+    }
     result +=
-        "import Int64 = require('node-int64');\n"
         "import { v4 as uuid } from 'uuid';\n"
         "type uuid = string;";
     return result;
@@ -594,11 +630,13 @@ string t_js_generator::ts_service_includes() {
   if (gen_node_) {
     string result =
         "import thrift = require('thrift');\n"
-        "import Thrift = thrift.Thrift;\n";
+        "import Thrift = thrift.Thrift;";
     if (!gen_native_promise_) {
-      result += "import Q = require('q');\n";
+      result += "\nimport Q = require('q');";
     }
-    result += "import Int64 = require('node-int64');";
+    if (!gen_bigint_) {
+      result += "\nimport Int64 = require('node-int64');";
+    }
     return result;
   }
   return string("import Int64 = require('node-int64');");
@@ -799,7 +837,10 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     case t_base_type::TYPE_I64:
       {
         int64_t const& integer_value = value->get_integer();
-        if (integer_value <= max_safe_integer && integer_value >= min_safe_integer) {
+        if (gen_bigint_) {
+          // Native BigInt literal — handles the full signed 64-bit range.
+          out << integer_value << "n";
+        } else if (integer_value <= max_safe_integer && integer_value >= min_safe_integer) {
           out << "new Int64(" << integer_value << ")";
         } else {
           out << "new Int64('" << std::hex << integer_value << std::dec << "')";
@@ -2405,7 +2446,18 @@ void t_js_generator::generate_deserialize_field(ostream& out,
   } else if (type->is_container()) {
     generate_deserialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
-    indent(out) << name << " = input.";
+    // In bigint mode the protocol still returns a node-int64 Int64; wrap
+    // the read site in `thrift.toBigInt(...)` so the assigned value matches
+    // the generated `bigint` type. gen_bigint_ is only true when gen_node_
+    // is true, so the `.value` branch below is never reached in this mode.
+    bool wrap_i64_bigint = gen_bigint_ && type->is_base_type() &&
+        ((t_base_type*)type)->get_base() == t_base_type::TYPE_I64;
+
+    indent(out) << name << " = ";
+    if (wrap_i64_bigint) {
+      out << "thrift.toBigInt(";
+    }
+    out << "input.";
 
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -2442,6 +2494,10 @@ void t_js_generator::generate_deserialize_field(ostream& out,
       }
     } else if (type->is_enum()) {
       out << "readI32()";
+    }
+
+    if (wrap_i64_bigint) {
+      out << ")";
     }
 
     if (!gen_node_) {
@@ -2635,7 +2691,14 @@ void t_js_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         out << "writeI32(" << name << ")";
         break;
       case t_base_type::TYPE_I64:
-        out << "writeI64(" << name << ")";
+        // In bigint mode the generated field holds a `bigint`; convert
+        // back to a node-int64 Int64 before handing to `writeI64`, which
+        // expects either an Int64 or a Number.
+        if (gen_bigint_) {
+          out << "writeI64(thrift.fromBigInt(" << name << "))";
+        } else {
+          out << "writeI64(" << name << ")";
+        }
         break;
       case t_base_type::TYPE_DOUBLE:
         out << "writeDouble(" << name << ")";
@@ -2936,7 +2999,7 @@ string t_js_generator::ts_get_type(t_type* type) {
       ts_type = "number";
       break;
     case t_base_type::TYPE_I64:
-      ts_type = "Int64";
+      ts_type = gen_bigint_ ? "bigint" : "Int64";
       break;
     case t_base_type::TYPE_VOID:
       ts_type = "void";
@@ -2981,6 +3044,11 @@ string t_js_generator::ts_get_type(t_type* type) {
 
     if (ktype == "number" || ktype == "string" ) {
       ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
+    } else if (ktype == "bigint") {
+      // TS index signatures only support string / number / symbol — JS
+      // coerces object keys to strings at runtime, so a `map<i64, …>` is
+      // really a string-keyed object even in bigint mode.
+      ts_type = "{ [k: string /*bigint*/]: " + vtype + "; }";
     } else if ((((t_map*)type)->get_key_type())->is_enum()) {
       // Not yet supported (enum map): https://github.com/Microsoft/TypeScript/pull/2652
       //ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
