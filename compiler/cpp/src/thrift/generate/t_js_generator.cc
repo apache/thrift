@@ -70,6 +70,7 @@ public:
     gen_es6_ = false;
     gen_esm_ = false;
     gen_episode_file_ = false;
+    gen_native_uuid_ = true;
 
     bool with_ns_ = false;
 
@@ -90,6 +91,12 @@ public:
         parse_imports(program, iter->second);
       } else if (iter->first.compare("thrift_package_output_directory") == 0) {
         parse_thrift_package_output_directory(iter->second);
+      } else if (iter->first.compare("native_uuid") == 0) {
+        if (iter->second == "false" || iter->second == "0" || iter->second == "no") {
+          gen_native_uuid_ = false;
+        } else {
+          gen_native_uuid_ = true;
+        }
       } else {
         throw std::invalid_argument("unknown option js:" + iter->first);
       }
@@ -389,6 +396,13 @@ private:
   bool gen_episode_file_;
 
   /**
+   * True if generated code should use the runtime's native UUID generator
+   * (crypto.randomUUID) instead of importing the third-party uuid package.
+   * Defaults to true.
+   */
+  bool gen_native_uuid_;
+
+  /**
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
@@ -539,15 +553,31 @@ string t_js_generator::js_includes() {
     }
     if (gen_esm_) {
       result += "import Int64 from 'node-int64';\n";
-      result += "import { v4 as uuid } from 'uuid';";
+      if (gen_native_uuid_) {
+        result += "import { randomUUID as uuid } from 'crypto';";
+      } else {
+        result += "import { v4 as uuid } from 'uuid';";
+      }
     } else {
       result += js_const_type_ + "Int64 = require('node-int64');\n";
-      result += js_const_type_ + "uuid = require('uuid').v4;\n";
+      if (gen_native_uuid_) {
+        result += js_const_type_ + "uuid = require('crypto').randomUUID;\n";
+      } else {
+        result += js_const_type_ + "uuid = require('uuid').v4;\n";
+      }
     }
     return result;
   }
   string result = "if (typeof Int64 === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "Int64 = require('node-int64');\n}\n";
-  result += "if (typeof uuid === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "uuid = require('uuid').v4;\n}\n";
+  if (gen_native_uuid_) {
+    result += "if (typeof uuid === 'undefined') {\n";
+    result += "  " + js_const_type_ + "uuid = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID.bind(crypto)\n";
+    result += "    : (typeof require === 'function') ? require('crypto').randomUUID\n";
+    result += "    : undefined;\n";
+    result += "}\n";
+  } else {
+    result += "if (typeof uuid === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "uuid = require('uuid').v4;\n}\n";
+  }
   return result;
 }
 
@@ -555,19 +585,21 @@ string t_js_generator::js_includes() {
  * Prints standard ts imports
  */
 string t_js_generator::ts_includes() {
+  string uuid_import = gen_native_uuid_
+      ? "import { randomUUID as uuid } from 'crypto';\n"
+      : "import { v4 as uuid } from 'uuid';\n";
   if (gen_node_) {
     return string(
         "import thrift = require('thrift');\n"
         "import Thrift = thrift.Thrift;\n"
         "import Q = thrift.Q;\n"
-        "import Int64 = require('node-int64');\n"
-        "import { v4 as uuid } from 'uuid';\n"
-        "type uuid = string;");
+        "import Int64 = require('node-int64');\n")
+        + uuid_import
+        + "type uuid = string;";
   }
-  return string(
-    "import Int64 = require('node-int64');\n"
-    "import { v4 as uuid } from 'uuid';\n"
-    "type uuid = string;");
+  return string("import Int64 = require('node-int64');\n")
+      + uuid_import
+      + "type uuid = string;";
 }
 
 /**
@@ -3132,6 +3164,10 @@ THRIFT_REGISTER_GENERATOR(js,
                           "    ts:              Generate TypeScript definition files.\n"
                           "    with_ns:         Create global namespace objects when using node.js\n"
                           "    es6:             Create ES6 code with Promises\n"
+                          "    native_uuid[=false]:\n"
+                          "                     Use the runtime's native UUID generator (crypto.randomUUID)\n"
+                          "                     instead of importing the third-party 'uuid' package. Defaults to true;\n"
+                          "                     pass native_uuid=false to keep the legacy 'uuid' import.\n"
                           "    thrift_package_output_directory=<path>:\n"
                           "                     Generate episode file and use the <path> as prefix\n"
                           "    imports=<paths_to_modules>:\n"
