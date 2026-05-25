@@ -148,7 +148,7 @@ export function ThriftTestDriverPromise(
           .then(function (actual: any) {
             assertionFn(actual, expected, fnName);
           })
-          .catch(fail("fnName"));
+          .catch(fail(fnName));
       };
     }
 
@@ -180,7 +180,7 @@ export function ThriftTestDriverPromise(
 
     Promise.resolve(client.testException("TException"))
       .then(function (response) {
-        fail("testException: TException");
+        assert.fail("testException: TException");
       })
       .catch(function (err) {
         assert.ok(err instanceof TException);
@@ -188,7 +188,7 @@ export function ThriftTestDriverPromise(
 
     Promise.resolve(client.testException("Xception"))
       .then(function (response) {
-        fail("testException: Xception");
+        assert.fail("testException: Xception");
       })
       .catch(function (err) {
         assert.ok(err instanceof ttypes.Xception);

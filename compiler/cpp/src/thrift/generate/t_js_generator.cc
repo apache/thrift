@@ -1590,8 +1590,12 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
              << ".length === " << fields.size() << ") {" << '\n';
   indent_up();
 
-  if (gen_es6_ || gen_native_promise_) {
+  if (gen_es6_) {
     indent(f_service_) << "new Promise((resolve) => resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << '\n';
+  } else if (gen_native_promise_) {
+    // Non-ES6 native Promise: use function expression with explicit `this`
+    // binding so we don't rely on arrow-function lexical `this`.
+    indent(f_service_) << "new Promise(function(resolve) { resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << '\n';
   } else {
     string maybeComma = (fields.size() > 0 ? "," : "");
     indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name() << ".bind(this._handler)"
@@ -1608,7 +1612,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   if (gen_es6_) {
     indent(f_service_) << "))).then(result => {" << '\n';
   } else if (gen_native_promise_) {
-    indent(f_service_) << "))).then(function(result) {" << '\n';
+    indent(f_service_) << ")); }.bind(this)).then(function(result) {" << '\n';
   } else {
     indent(f_service_) << ").then(function(result) {" << '\n';
   }
