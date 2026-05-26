@@ -87,6 +87,13 @@ class TSocket extends TTransport
     protected int $sendTimeoutUsec = 100000;
 
     /**
+     * True once a caller invoked setSendTimeout(). Used to fire a deprecation
+     * notice in open() when the caller relies on the send-timeout-as-
+     * connect-timeout coupling that this class used to enforce.
+     */
+    private bool $sendTimeoutCustomized = false;
+
+    /**
      * Recv timeout in seconds
      *
      * Combined with recvTimeoutUsec this is used for recv timeouts.
@@ -192,6 +199,7 @@ class TSocket extends TTransport
         $this->sendTimeoutSec = intdiv($timeout, 1000);
         $this->sendTimeoutUsec =
             ($timeout - ($this->sendTimeoutSec * 1000)) * 1000;
+        $this->sendTimeoutCustomized = true;
     }
 
     /**
@@ -287,9 +295,19 @@ class TSocket extends TTransport
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
-        $connectTimeout = $this->connectTimeoutSec !== null
-            ? $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000)
-            : $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
+        if ($this->connectTimeoutSec !== null) {
+            $connectTimeout = $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000);
+        } else {
+            if ($this->sendTimeoutCustomized) {
+                trigger_error(
+                    'TSocket::open() reusing setSendTimeout() for the connect '
+                    . 'step is deprecated and will be removed in the next '
+                    . 'version; call setConnectTimeout() explicitly.',
+                    E_USER_DEPRECATED,
+                );
+            }
+            $connectTimeout = $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
+        }
 
         if ($this->persist) {
             $this->handle = @pfsockopen(

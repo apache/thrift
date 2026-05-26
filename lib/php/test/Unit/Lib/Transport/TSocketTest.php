@@ -800,7 +800,28 @@ class TSocketTest extends TestCase
         $socket = new TSocket('localhost', 9090, false, null);
         $socket->setSendTimeout(2500);
 
-        $socket->open();
+        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
+            $socket->open();
+        });
+
+        $this->assertCount(1, $deprecations);
+        $this->assertStringContainsString('setConnectTimeout()', $deprecations[0]);
+    }
+
+    public function testOpenWithDefaultTimeoutsDoesNotTriggerDeprecation(): void
+    {
+        $handle = fopen('php://memory', 'r+');
+        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
+             ->expects($this->once())
+             ->willReturn($handle);
+
+        $socket = new TSocket('localhost', 9090, false, null);
+
+        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
+            $socket->open();
+        });
+
+        $this->assertSame([], $deprecations);
     }
 
     public function testConnectTimeoutOverridesSendTimeoutDuringOpen(): void
@@ -821,6 +842,10 @@ class TSocketTest extends TestCase
         $socket->setSendTimeout(5000);
         $socket->setConnectTimeout(750);
 
-        $socket->open();
+        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
+            $socket->open();
+        });
+
+        $this->assertSame([], $deprecations);
     }
 }
