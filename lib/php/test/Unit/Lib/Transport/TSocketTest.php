@@ -782,4 +782,45 @@ class TSocketTest extends TestCase
 
         $this->assertSame([], $errors);
     }
+
+    public function testSendTimeoutUsedForConnectWhenConnectTimeoutNotSet(): void
+    {
+        $handle = fopen('php://memory', 'r+');
+        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
+             ->expects($this->once())
+             ->with(
+                 'localhost',
+                 9090,
+                 $this->anything(),
+                 $this->anything(),
+                 2.5, // 2500ms send timeout (no connect timeout set)
+             )
+             ->willReturn($handle);
+
+        $socket = new TSocket('localhost', 9090, false, null);
+        $socket->setSendTimeout(2500);
+
+        $socket->open();
+    }
+
+    public function testConnectTimeoutOverridesSendTimeoutDuringOpen(): void
+    {
+        $handle = fopen('php://memory', 'r+');
+        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
+             ->expects($this->once())
+             ->with(
+                 'localhost',
+                 9090,
+                 $this->anything(),
+                 $this->anything(),
+                 0.75, // 750ms connect timeout, NOT the 5s sendTimeout below
+             )
+             ->willReturn($handle);
+
+        $socket = new TSocket('localhost', 9090, false, null);
+        $socket->setSendTimeout(5000);
+        $socket->setConnectTimeout(750);
+
+        $socket->open();
+    }
 }

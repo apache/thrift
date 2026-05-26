@@ -58,6 +58,21 @@ class TSocket extends TTransport
     protected $handle = null;
 
     /**
+     * Connect timeout in seconds.
+     *
+     * Combined with connectTimeoutUsec this is used for the fsockopen()
+     * timeout. Null means "use the send timeout" for backwards compatibility
+     * with callers that only configure setSendTimeout().
+     */
+    protected ?int $connectTimeoutSec = null;
+
+    /**
+     * Connect timeout in microseconds. Only consulted when connectTimeoutSec
+     * is non-null.
+     */
+    protected int $connectTimeoutUsec = 0;
+
+    /**
      * Send timeout in seconds.
      *
      * Combined with sendTimeoutUsec this is used for send timeouts.
@@ -150,6 +165,23 @@ class TSocket extends TTransport
     {
         $this->handle = $handle;
         stream_set_blocking($this->handle, false);
+    }
+
+    /**
+     * Sets the timeout used while establishing the TCP connection (the
+     * `timeout` argument passed to fsockopen()/pfsockopen()).
+     *
+     * When unset, the send timeout is used for the connect step too, for
+     * backwards compatibility with callers that only ever set
+     * setSendTimeout().
+     *
+     * @param int $timeout Timeout in milliseconds.
+     */
+    public function setConnectTimeout(int $timeout): void
+    {
+        $this->connectTimeoutSec = intdiv($timeout, 1000);
+        $this->connectTimeoutUsec =
+            ($timeout - ($this->connectTimeoutSec * 1000)) * 1000;
     }
 
     /**
@@ -255,13 +287,17 @@ class TSocket extends TTransport
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
+        $connectTimeout = $this->connectTimeoutSec !== null
+            ? $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000)
+            : $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
+
         if ($this->persist) {
             $this->handle = @pfsockopen(
                 $this->host,
                 $this->port,
                 $errno,
                 $errstr,
-                $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000)
+                $connectTimeout
             );
         } else {
             $this->handle = @fsockopen(
@@ -269,7 +305,7 @@ class TSocket extends TTransport
                 $this->port,
                 $errno,
                 $errstr,
-                $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000)
+                $connectTimeout
             );
         }
 
