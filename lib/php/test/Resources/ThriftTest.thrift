@@ -26,6 +26,17 @@ union UnionOfStrings {
   2: string bb;
 }
 
+// Regression for THRIFT-1209: PHP reserved words must round-trip through the
+// generator as class constants. PHP 7.1+ permits reserved identifiers as
+// class constants (except `class`); the generator must not mangle or reject
+// them. See lib/php/test/Unit/Compiler/ReservedKeywordEnumTest.php.
+enum ReservedKeywordEnum {
+  GLOBAL = 1,
+  STATIC = 2,
+  LIST = 3,
+  RETURN = 4,
+}
+
 service TestService {
     void test() throws(1: ThriftTest.Xception xception);
 }
