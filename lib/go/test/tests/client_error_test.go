@@ -20,7 +20,6 @@
 package tests
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -55,84 +54,84 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 	if failAt == 0 {
 		err = failWith
 	}
-	last := protocol.EXPECT().WriteMessageBegin(context.Background(), "testStruct", thrift.CALL, int32(1)).Return(err)
+	last := protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testStruct", thrift.CALL, int32(1)).Return(err)
 	if failAt == 0 {
 		return true
 	}
 	if failAt == 1 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteStructBegin(context.Background(), "testStruct_args").Return(err).After(last)
+	last = protocol.EXPECT().WriteStructBegin(gomock.Any(), "testStruct_args").Return(err).After(last)
 	if failAt == 1 {
 		return true
 	}
 	if failAt == 2 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "thing", thrift.TType(thrift.STRUCT), int16(1)).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "thing", thrift.TType(thrift.STRUCT), int16(1)).Return(err).After(last)
 	if failAt == 2 {
 		return true
 	}
 	if failAt == 3 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteStructBegin(context.Background(), "TestStruct").Return(err).After(last)
+	last = protocol.EXPECT().WriteStructBegin(gomock.Any(), "TestStruct").Return(err).After(last)
 	if failAt == 3 {
 		return true
 	}
 	if failAt == 4 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "m", thrift.TType(thrift.MAP), int16(1)).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "m", thrift.TType(thrift.MAP), int16(1)).Return(err).After(last)
 	if failAt == 4 {
 		return true
 	}
 	if failAt == 5 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteMapBegin(context.Background(), thrift.TType(thrift.STRING), thrift.TType(thrift.STRING), 0).Return(err).After(last)
+	last = protocol.EXPECT().WriteMapBegin(gomock.Any(), thrift.TType(thrift.STRING), thrift.TType(thrift.STRING), 0).Return(err).After(last)
 	if failAt == 5 {
 		return true
 	}
 	if failAt == 6 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteMapEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteMapEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 6 {
 		return true
 	}
 	if failAt == 7 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 7 {
 		return true
 	}
 	if failAt == 8 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "l", thrift.TType(thrift.LIST), int16(2)).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "l", thrift.TType(thrift.LIST), int16(2)).Return(err).After(last)
 	if failAt == 8 {
 		return true
 	}
 	if failAt == 9 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteListBegin(context.Background(), thrift.TType(thrift.STRING), 0).Return(err).After(last)
+	last = protocol.EXPECT().WriteListBegin(gomock.Any(), thrift.TType(thrift.STRING), 0).Return(err).After(last)
 	if failAt == 9 {
 		return true
 	}
 	if failAt == 10 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteListEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteListEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 10 {
 		return true
 	}
 	if failAt == 11 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 11 {
 		return true
 	}
@@ -140,266 +139,266 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 		err = failWith
 	}
 
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.SET), int16(3)).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.SET), int16(3)).Return(err).After(last)
 	if failAt == 12 {
 		return true
 	}
 	if failAt == 13 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteSetBegin(context.Background(), thrift.TType(thrift.STRING), 0).Return(err).After(last)
+	last = protocol.EXPECT().WriteSetBegin(gomock.Any(), thrift.TType(thrift.STRING), 0).Return(err).After(last)
 	if failAt == 13 {
 		return true
 	}
 	if failAt == 14 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteSetEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteSetEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 14 {
 		return true
 	}
 	if failAt == 15 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 15 {
 		return true
 	}
 	if failAt == 16 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "i", thrift.TType(thrift.I32), int16(4)).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "i", thrift.TType(thrift.I32), int16(4)).Return(err).After(last)
 	if failAt == 16 {
 		return true
 	}
 	if failAt == 17 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteI32(context.Background(), int32(3)).Return(err).After(last)
+	last = protocol.EXPECT().WriteI32(gomock.Any(), int32(3)).Return(err).After(last)
 	if failAt == 17 {
 		return true
 	}
 	if failAt == 18 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 18 {
 		return true
 	}
 	if failAt == 19 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldStop(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldStop(gomock.Any()).Return(err).After(last)
 	if failAt == 19 {
 		return true
 	}
 	if failAt == 20 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteStructEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteStructEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 20 {
 		return true
 	}
 	if failAt == 21 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 21 {
 		return true
 	}
 	if failAt == 22 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteFieldStop(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteFieldStop(gomock.Any()).Return(err).After(last)
 	if failAt == 22 {
 		return true
 	}
 	if failAt == 23 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteStructEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteStructEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 23 {
 		return true
 	}
 	if failAt == 24 {
 		err = failWith
 	}
-	last = protocol.EXPECT().WriteMessageEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().WriteMessageEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 24 {
 		return true
 	}
 	if failAt == 25 {
 		err = failWith
 	}
-	last = protocol.EXPECT().Flush(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().Flush(gomock.Any()).Return(err).After(last)
 	if failAt == 25 {
 		return true
 	}
 	if failAt == 26 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testStruct", thrift.REPLY, int32(1), err).After(last)
+	last = protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testStruct", thrift.REPLY, int32(1), err).After(last)
 	if failAt == 26 {
 		return true
 	}
 	if failAt == 27 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructBegin(context.Background()).Return("testStruct_args", err).After(last)
+	last = protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("testStruct_args", err).After(last)
 	if failAt == 27 {
 		return true
 	}
 	if failAt == 28 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STRUCT), int16(0), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STRUCT), int16(0), err).After(last)
 	if failAt == 28 {
 		return true
 	}
 	if failAt == 29 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructBegin(context.Background()).Return("TestStruct", err).After(last)
+	last = protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("TestStruct", err).After(last)
 	if failAt == 29 {
 		return true
 	}
 	if failAt == 30 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("m", thrift.TType(thrift.MAP), int16(1), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("m", thrift.TType(thrift.MAP), int16(1), err).After(last)
 	if failAt == 30 {
 		return true
 	}
 	if failAt == 31 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadMapBegin(context.Background()).Return(thrift.TType(thrift.STRING), thrift.TType(thrift.STRING), 0, err).After(last)
+	last = protocol.EXPECT().ReadMapBegin(gomock.Any()).Return(thrift.TType(thrift.STRING), thrift.TType(thrift.STRING), 0, err).After(last)
 	if failAt == 31 {
 		return true
 	}
 	if failAt == 32 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadMapEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadMapEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 32 {
 		return true
 	}
 	if failAt == 33 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 33 {
 		return true
 	}
 	if failAt == 34 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("l", thrift.TType(thrift.LIST), int16(2), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("l", thrift.TType(thrift.LIST), int16(2), err).After(last)
 	if failAt == 34 {
 		return true
 	}
 	if failAt == 35 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadListBegin(context.Background()).Return(thrift.TType(thrift.STRING), 0, err).After(last)
+	last = protocol.EXPECT().ReadListBegin(gomock.Any()).Return(thrift.TType(thrift.STRING), 0, err).After(last)
 	if failAt == 35 {
 		return true
 	}
 	if failAt == 36 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadListEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadListEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 36 {
 		return true
 	}
 	if failAt == 37 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 37 {
 		return true
 	}
 	if failAt == 38 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("s", thrift.TType(thrift.SET), int16(3), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("s", thrift.TType(thrift.SET), int16(3), err).After(last)
 	if failAt == 38 {
 		return true
 	}
 	if failAt == 39 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadSetBegin(context.Background()).Return(thrift.TType(thrift.STRING), 0, err).After(last)
+	last = protocol.EXPECT().ReadSetBegin(gomock.Any()).Return(thrift.TType(thrift.STRING), 0, err).After(last)
 	if failAt == 39 {
 		return true
 	}
 	if failAt == 40 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadSetEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadSetEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 40 {
 		return true
 	}
 	if failAt == 41 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 41 {
 		return true
 	}
 	if failAt == 42 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("i", thrift.TType(thrift.I32), int16(4), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("i", thrift.TType(thrift.I32), int16(4), err).After(last)
 	if failAt == 42 {
 		return true
 	}
 	if failAt == 43 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadI32(context.Background()).Return(int32(3), err).After(last)
+	last = protocol.EXPECT().ReadI32(gomock.Any()).Return(int32(3), err).After(last)
 	if failAt == 43 {
 		return true
 	}
 	if failAt == 44 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 44 {
 		return true
 	}
 	if failAt == 45 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(5), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(5), err).After(last)
 	if failAt == 45 {
 		return true
 	}
 	if failAt == 46 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 46 {
 		return true
 	}
 	if failAt == 47 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 47 {
 		return true
 	}
 	if failAt == 48 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(1), err).After(last)
 	if failAt == 48 {
 		return true
 	}
 	if failAt == 49 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 49 {
 		return true
 	}
@@ -407,7 +406,7 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 		err = failWith
 	}
 	//lint:ignore SA4006 to keep it consistent with other checks above
-	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadMessageEnd(gomock.Any()).Return(err).After(last)
 	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 50 {
 		return true
@@ -549,84 +548,84 @@ func prepareClientCallException(protocol *MockTProtocol, failAt int, failWith er
 	var err error = nil
 
 	// No need to test failure in this block, because it is covered in other test cases
-	last := protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1))
-	last = protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args").After(last)
-	last = protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)).After(last)
-	last = protocol.EXPECT().WriteString(context.Background(), "test").After(last)
-	last = protocol.EXPECT().WriteFieldEnd(context.Background()).After(last)
-	last = protocol.EXPECT().WriteFieldStop(context.Background()).After(last)
-	last = protocol.EXPECT().WriteStructEnd(context.Background()).After(last)
-	last = protocol.EXPECT().WriteMessageEnd(context.Background()).After(last)
-	last = protocol.EXPECT().Flush(context.Background()).After(last)
+	last := protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1))
+	last = protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args").After(last)
+	last = protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)).After(last)
+	last = protocol.EXPECT().WriteString(gomock.Any(), "test").After(last)
+	last = protocol.EXPECT().WriteFieldEnd(gomock.Any()).After(last)
+	last = protocol.EXPECT().WriteFieldStop(gomock.Any()).After(last)
+	last = protocol.EXPECT().WriteStructEnd(gomock.Any()).After(last)
+	last = protocol.EXPECT().WriteMessageEnd(gomock.Any()).After(last)
+	last = protocol.EXPECT().Flush(gomock.Any()).After(last)
 
 	// Reading the exception, might fail.
 	if failAt == 0 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testString", thrift.EXCEPTION, int32(1), err).After(last)
+	last = protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testString", thrift.EXCEPTION, int32(1), err).After(last)
 	if failAt == 0 {
 		return true
 	}
 	if failAt == 1 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructBegin(context.Background()).Return("TApplicationException", err).After(last)
+	last = protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("TApplicationException", err).After(last)
 	if failAt == 1 {
 		return true
 	}
 	if failAt == 2 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("message", thrift.TType(thrift.STRING), int16(1), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("message", thrift.TType(thrift.STRING), int16(1), err).After(last)
 	if failAt == 2 {
 		return true
 	}
 	if failAt == 3 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadString(context.Background()).Return("test", err).After(last)
+	last = protocol.EXPECT().ReadString(gomock.Any()).Return("test", err).After(last)
 	if failAt == 3 {
 		return true
 	}
 	if failAt == 4 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 4 {
 		return true
 	}
 	if failAt == 5 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("type", thrift.TType(thrift.I32), int16(2), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("type", thrift.TType(thrift.I32), int16(2), err).After(last)
 	if failAt == 5 {
 		return true
 	}
 	if failAt == 6 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadI32(context.Background()).Return(int32(thrift.PROTOCOL_ERROR), err).After(last)
+	last = protocol.EXPECT().ReadI32(gomock.Any()).Return(int32(thrift.PROTOCOL_ERROR), err).After(last)
 	if failAt == 6 {
 		return true
 	}
 	if failAt == 7 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 7 {
 		return true
 	}
 	if failAt == 8 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(2), err).After(last)
+	last = protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(2), err).After(last)
 	if failAt == 8 {
 		return true
 	}
 	if failAt == 9 {
 		err = failWith
 	}
-	last = protocol.EXPECT().ReadStructEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(err).After(last)
 	if failAt == 9 {
 		return true
 	}
@@ -634,7 +633,7 @@ func prepareClientCallException(protocol *MockTProtocol, failAt int, failWith er
 		err = failWith
 	}
 	//lint:ignore SA4006 to keep it consistent with other checks above
-	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	last = protocol.EXPECT().ReadMessageEnd(gomock.Any()).Return(err).After(last)
 	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 10 {
 		return true
@@ -719,16 +718,16 @@ func TestClientSeqIdMismatch(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testString", thrift.REPLY, int32(2), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testString", thrift.REPLY, int32(2), nil),
 	)
 
 	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
@@ -750,16 +749,16 @@ func TestClientSeqIdMismatchLegeacy(t *testing.T) {
 	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testString", thrift.REPLY, int32(2), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testString", thrift.REPLY, int32(2), nil),
 	)
 
 	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
@@ -779,16 +778,16 @@ func TestClientWrongMethodName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("unknown", thrift.REPLY, int32(1), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("unknown", thrift.REPLY, int32(1), nil),
 	)
 
 	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
@@ -810,16 +809,16 @@ func TestClientWrongMethodNameLegacy(t *testing.T) {
 	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("unknown", thrift.REPLY, int32(1), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("unknown", thrift.REPLY, int32(1), nil),
 	)
 
 	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
@@ -839,16 +838,16 @@ func TestClientWrongMessageType(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testString", thrift.INVALID_TMESSAGE_TYPE, int32(1), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testString", thrift.INVALID_TMESSAGE_TYPE, int32(1), nil),
 	)
 
 	client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
@@ -870,16 +869,16 @@ func TestClientWrongMessageTypeLegacy(t *testing.T) {
 	transport := thrift.NewTMemoryBuffer()
 	protocol := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		protocol.EXPECT().WriteMessageBegin(context.Background(), "testString", thrift.CALL, int32(1)),
-		protocol.EXPECT().WriteStructBegin(context.Background(), "testString_args"),
-		protocol.EXPECT().WriteFieldBegin(context.Background(), "s", thrift.TType(thrift.STRING), int16(1)),
-		protocol.EXPECT().WriteString(context.Background(), "test"),
-		protocol.EXPECT().WriteFieldEnd(context.Background()),
-		protocol.EXPECT().WriteFieldStop(context.Background()),
-		protocol.EXPECT().WriteStructEnd(context.Background()),
-		protocol.EXPECT().WriteMessageEnd(context.Background()),
-		protocol.EXPECT().Flush(context.Background()),
-		protocol.EXPECT().ReadMessageBegin(context.Background()).Return("testString", thrift.INVALID_TMESSAGE_TYPE, int32(1), nil),
+		protocol.EXPECT().WriteMessageBegin(gomock.Any(), "testString", thrift.CALL, int32(1)),
+		protocol.EXPECT().WriteStructBegin(gomock.Any(), "testString_args"),
+		protocol.EXPECT().WriteFieldBegin(gomock.Any(), "s", thrift.TType(thrift.STRING), int16(1)),
+		protocol.EXPECT().WriteString(gomock.Any(), "test"),
+		protocol.EXPECT().WriteFieldEnd(gomock.Any()),
+		protocol.EXPECT().WriteFieldStop(gomock.Any()),
+		protocol.EXPECT().WriteStructEnd(gomock.Any()),
+		protocol.EXPECT().WriteMessageEnd(gomock.Any()),
+		protocol.EXPECT().Flush(gomock.Any()),
+		protocol.EXPECT().ReadMessageBegin(gomock.Any()).Return("testString", thrift.INVALID_TMESSAGE_TYPE, int32(1), nil),
 	)
 
 	client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)

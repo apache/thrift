@@ -1769,6 +1769,13 @@ void t_go_generator::generate_go_struct_reader(ostream& out,
   out << indent() << "func (p *" << tstruct_name << ") " << read_method_name_ << "(ctx context.Context, iprot thrift.TProtocol) error {"
       << '\n';
   indent_up();
+  out << indent() << "ctx, err := thrift.CheckRecursionDepth(ctx)" << '\n';
+  out << indent() << "if err != nil {" << '\n';
+  indent_up();
+  out << indent() << "return err" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
+  out << indent() << "defer thrift.DecrementRecursionDepth(ctx)" << '\n';
   out << indent() << "if _, err := iprot.ReadStructBegin(ctx); err != nil {" << '\n';
   indent_up();
   out << indent() << "return thrift.PrependError(fmt.Sprintf(\"%T read error: \", p), err)"
@@ -1946,6 +1953,13 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
   vector<t_field*>::const_iterator f_iter;
   indent(out) << "func (p *" << tstruct_name << ") " << write_method_name_ << "(ctx context.Context, oprot thrift.TProtocol) error {" << '\n';
   indent_up();
+  out << indent() << "ctx, err := thrift.CheckRecursionDepth(ctx)" << '\n';
+  out << indent() << "if err != nil {" << '\n';
+  indent_up();
+  out << indent() << "return err" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
+  out << indent() << "defer thrift.DecrementRecursionDepth(ctx)" << '\n';
   if (tstruct->is_union() && uses_countsetfields) {
     std::string tstruct_name(publicize(tstruct->get_name()));
     out << indent() << "if c := p.CountSetFields" << tstruct_name << "(); c != 1 {" << '\n';
