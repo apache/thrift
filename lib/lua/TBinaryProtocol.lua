@@ -188,6 +188,9 @@ function TBinaryProtocol:readMapBegin()
   local ktype = self:readByte()
   local vtype = self:readByte()
   local size = self:readI32()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   return ktype, vtype, size
 end
 
@@ -197,6 +200,9 @@ end
 function TBinaryProtocol:readListBegin()
   local etype = self:readByte()
   local size = self:readI32()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   return etype, size
 end
 
@@ -206,6 +212,9 @@ end
 function TBinaryProtocol:readSetBegin()
   local etype = self:readByte()
   local size = self:readI32()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   return etype, size
 end
 
@@ -258,6 +267,9 @@ end
 
 function TBinaryProtocol:readString()
   local len = self:readI32()
+  if len < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   local str = self.trans:readAll(len)
   return str
 end

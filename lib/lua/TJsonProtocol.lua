@@ -646,6 +646,9 @@ function TJSONProtocol:readMapBegin()
   typeName = self:readJSONString()
   local vtype = StringToTType[typeName]
   local size = self:readJSONInteger()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   self:readJSONObjectBegin()
   return ktype, vtype, size
 end
@@ -660,6 +663,9 @@ function TJSONProtocol:readListBegin()
   local typeName = self:readJSONString()
   local etype = StringToTType[typeName]
   local size = self:readJSONInteger()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   return etype, size
 end
 

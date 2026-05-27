@@ -332,6 +332,9 @@ end
 
 function TCompactProtocol:readMapBegin()
   local size = self:readVarint32()
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
   local kvtype = 0
   if size > 0 then
     kvtype = self:readSignByte()
@@ -351,7 +354,7 @@ function TCompactProtocol:readListBegin()
     size = self:readVarint32()
   end
   if size < 0 then
-    return nil,nil
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
   local etype = self:getTType(libluabitwise.band(size_and_type, 0x0f))
   return etype, size
@@ -437,7 +440,10 @@ end
 
 function TCompactProtocol:readBinary()
   local size = self:readVarint32()
-  if size <= 0 then
+  if size < 0 then
+    terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
+  end
+  if size == 0 then
     return ""
   end
   return self.trans:readAll(size)
