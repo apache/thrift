@@ -26,7 +26,8 @@ public struct TBinaryProtocolVersion {
 
 public class TBinaryProtocol: TProtocol {
   public var messageSizeLimit: UInt32  = 0
-  
+  public var recursionDepth: Int = 0
+
   public var transport: TTransport
   
   // class level properties for setting global config (useful for server in lieu of Factory design)

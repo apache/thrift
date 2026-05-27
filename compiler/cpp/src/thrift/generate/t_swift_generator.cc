@@ -1044,6 +1044,8 @@ void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstr
   indent(out) << "public static func read(from proto: TProtocol) throws -> "
               << tstruct->get_name();
   block_open(out);
+  indent(out) << "try proto.incrementRecursionDepth()" << '\n';
+  indent(out) << "defer { proto.decrementRecursionDepth() }" << '\n';
   indent(out) << "_ = try proto.readStructBegin()" << '\n';
 
   indent(out) << "var ret: " << tstruct->get_name() << "?";
@@ -1139,6 +1141,8 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
                << tstruct->get_name();
 
     block_open(out);
+    indent(out) << "try proto.incrementRecursionDepth()" << '\n';
+    indent(out) << "defer { proto.decrementRecursionDepth() }" << '\n';
     indent(out) << "_ = try proto.readStructBegin()" << '\n';
 
     const vector<t_field*>& fields = tstruct->get_members();

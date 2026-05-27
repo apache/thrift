@@ -24,4 +24,5 @@ XCTMain([
      testCase(ThriftTests.allTests),
      testCase(TBinaryProtocolTests.allTests),
      testCase(TCompactProtocolTests.allTests),
+     testCase(TRecursionDepthTests.allTests),
 ])

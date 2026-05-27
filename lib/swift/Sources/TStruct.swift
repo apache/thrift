@@ -33,6 +33,8 @@ public extension TStruct {
   static var thriftType: TType { return .struct }
   
   func write(to proto: TProtocol) throws {
+    try proto.incrementRecursionDepth()
+    defer { proto.decrementRecursionDepth() }
     // Write struct name first
     try proto.writeStructBegin(name: Self.structName)
     

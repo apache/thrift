@@ -24,6 +24,11 @@ class TProtocolDecorator: TProtocol {
   private let proto: TProtocol
   var transport: TTransport
 
+  var recursionDepth: Int {
+    get { proto.recursionDepth }
+    set { proto.recursionDepth = newValue }
+  }
+
   init(proto: TProtocol) {
     self.proto = proto
     self.transport = proto.transport

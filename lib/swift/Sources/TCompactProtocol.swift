@@ -50,6 +50,7 @@ public class TCompactProtocol: TProtocol {
   static let maxVarintBytes = 10 // ceil(64/7); matches protobuf wire format
 
   public var transport: TTransport
+  public var recursionDepth: Int = 0
   
   var lastField: [UInt8] = []
   var lastFieldId: UInt8 = 0

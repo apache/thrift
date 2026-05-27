@@ -35,6 +35,11 @@ open class TWrappedProtocol<Protocol: TProtocol> : TProtocol {
     }
   }
 
+  public var recursionDepth: Int {
+    get { concreteProtocol.recursionDepth }
+    set { concreteProtocol.recursionDepth = newValue }
+  }
+
   public required init(on transport: TTransport) {
     self.concreteProtocol = Protocol(on: transport)
   }

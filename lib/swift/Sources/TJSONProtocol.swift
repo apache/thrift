@@ -29,6 +29,7 @@ public class TJSONProtocol: TProtocol {
     static let Version: Int = 1
 
     public var transport: TTransport
+    public var recursionDepth: Int = 0
 
     // Temporary buffer used by several methods
     private var tempBuffer: [UInt8] = [0,0,0,0]

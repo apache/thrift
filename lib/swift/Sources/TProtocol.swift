@@ -43,8 +43,9 @@ public enum TType: Int32 {
   case uuid     = 16
 }
 
-public protocol TProtocol {
+public protocol TProtocol: AnyObject {
   var transport: TTransport { get set }
+  var recursionDepth: Int { get set }
   init(on transport: TTransport)
   // Reading Methods
   
@@ -132,6 +133,18 @@ public extension TProtocol {
     try writeMessageEnd()
   }
   
+  func incrementRecursionDepth() throws {
+    recursionDepth += 1
+    if recursionDepth > 64 {
+      recursionDepth -= 1
+      throw TProtocolError(error: .depthLimit, message: "Maximum recursion depth exceeded")
+    }
+  }
+
+  func decrementRecursionDepth() {
+    recursionDepth -= 1
+  }
+
   func skip(type: TType) throws {
     try skip(type: type, depth: 0)
   }
