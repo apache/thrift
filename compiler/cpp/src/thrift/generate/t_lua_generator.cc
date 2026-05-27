@@ -421,6 +421,9 @@ void t_lua_generator::generate_lua_struct_reader(ostream& out, t_struct* tstruct
   indent(out) << '\n' << '\n' << "function " << tstruct->get_name() << ":read(iprot)" << '\n';
   indent_up();
 
+  indent(out) << "iprot:incrementRecursionDepth()" << '\n';
+  indent(out) << "local ok, err = pcall(function()" << '\n';
+  indent_up();
   indent(out) << "iprot:readStructBegin()" << '\n';
 
   // while: Read in fields
@@ -460,6 +463,10 @@ void t_lua_generator::generate_lua_struct_reader(ostream& out, t_struct* tstruct
   indent_down();
   indent(out) << "end" << '\n';
   indent(out) << "iprot:readStructEnd()" << '\n';
+  indent_down();
+  indent(out) << "end)" << '\n';
+  indent(out) << "iprot:decrementRecursionDepth()" << '\n';
+  indent(out) << "if not ok then error(err, 0) end" << '\n';
 
   // end function
   indent_down();
@@ -478,6 +485,9 @@ void t_lua_generator::generate_lua_struct_writer(ostream& out, t_struct* tstruct
   indent(out) << '\n' << '\n' << "function " << tstruct->get_name() << ":write(oprot)" << '\n';
   indent_up();
 
+  indent(out) << "oprot:incrementRecursionDepth()" << '\n';
+  indent(out) << "local ok, err = pcall(function()" << '\n';
+  indent_up();
   indent(out) << "oprot:writeStructBegin('" << tstruct->get_name() << "')" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     // To check element of self whether nil or not.
@@ -497,6 +507,10 @@ void t_lua_generator::generate_lua_struct_writer(ostream& out, t_struct* tstruct
   }
   indent(out) << "oprot:writeFieldStop()" << '\n';
   indent(out) << "oprot:writeStructEnd()" << '\n';
+  indent_down();
+  indent(out) << "end)" << '\n';
+  indent(out) << "oprot:decrementRecursionDepth()" << '\n';
+  indent(out) << "if not ok then error(err, 0) end" << '\n';
 
   // end function
   indent_down();

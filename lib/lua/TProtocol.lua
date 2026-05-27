@@ -48,6 +48,8 @@ function TProtocolException:__errorCodeToString()
   end
 end
 
+DEFAULT_RECURSION_DEPTH = 64
+
 TProtocolBase = __TObject:new{
   __type = 'TProtocolBase',
   trans
@@ -63,7 +65,23 @@ function TProtocolBase:new(obj)
     error('You must provide ' .. ttype(self) .. ' with a trans')
   end
 
+  obj.recursionDepth = 0
   return __TObject.new(self, obj)
+end
+
+function TProtocolBase:incrementRecursionDepth()
+  self.recursionDepth = self.recursionDepth + 1
+  if self.recursionDepth > DEFAULT_RECURSION_DEPTH then
+    self.recursionDepth = self.recursionDepth - 1
+    terror(TProtocolException:new{
+      message = 'Maximum recursion depth exceeded',
+      errorCode = TProtocolException.DEPTH_LIMIT
+    })
+  end
+end
+
+function TProtocolBase:decrementRecursionDepth()
+  self.recursionDepth = self.recursionDepth - 1
 end
 
 function TProtocolBase:writeMessageBegin(name, ttype, seqid) end
