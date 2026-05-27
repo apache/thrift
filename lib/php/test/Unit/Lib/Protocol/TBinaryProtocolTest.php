@@ -1160,4 +1160,64 @@ class TBinaryProtocolTest extends TestCase
             'expectedValue' => 'string',
         ];
     }
+
+    public function testReadMapBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TBinaryProtocol($transport, false, false);
+
+        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+            pack('c', TType::I32),
+            pack('c', TType::STRING),
+            pack('N', 0xffffffff)
+        );
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readMapBegin($keyType, $valType, $size);
+    }
+
+    public function testReadListBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TBinaryProtocol($transport, false, false);
+
+        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+            pack('c', TType::I32),
+            pack('N', 0xffffffff)
+        );
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readListBegin($elemType, $size);
+    }
+
+    public function testReadSetBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TBinaryProtocol($transport, false, false);
+
+        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+            pack('c', TType::I32),
+            pack('N', 0xffffffff)
+        );
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readSetBegin($elemType, $size);
+    }
+
+    public function testReadStringRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TBinaryProtocol($transport, false, false);
+
+        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+            pack('N', 0xffffffff)
+        );
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readString($value);
+    }
 }

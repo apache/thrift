@@ -296,10 +296,14 @@ class TBinaryProtocol extends TProtocol
 
     public function readMapBegin(?int &$keyType, ?int &$valType, ?int &$size): int
     {
-        return
+        $result =
             $this->readByte($keyType) +
             $this->readByte($valType) +
             $this->readI32($size);
+        if ($size < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
+        return $result;
     }
 
     public function readMapEnd(): int
@@ -309,9 +313,13 @@ class TBinaryProtocol extends TProtocol
 
     public function readListBegin(?int &$elemType, ?int &$size): int
     {
-        return
+        $result =
             $this->readByte($elemType) +
             $this->readI32($size);
+        if ($size < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
+        return $result;
     }
 
     public function readListEnd(): int
@@ -321,9 +329,13 @@ class TBinaryProtocol extends TProtocol
 
     public function readSetBegin(?int &$elemType, ?int &$size): int
     {
-        return
+        $result =
             $this->readByte($elemType) +
             $this->readI32($size);
+        if ($size < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
+        return $result;
     }
 
     public function readSetEnd(): int
@@ -450,6 +462,9 @@ class TBinaryProtocol extends TProtocol
     public function readString(?string &$str): int
     {
         $result = $this->readI32($len);
+        if ($len < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
         if ($len) {
             $str = $this->trans->readAll($len);
         } else {
