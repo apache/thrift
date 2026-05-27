@@ -23,11 +23,13 @@ THRIFT_GO_ARGS_BASE = thrift_import=github.com/apache/thrift/lib/go/thrift,packa
 
 THRIFTARGS = -out gopath/src/ --gen go:$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+RECURSIVE = $(top_srcdir)/test/Recursive.thrift
 
 THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) $(THRIFTTEST) \
+				$(RECURSIVE) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
 				MultiplexedProtocolTest.thrift \
@@ -66,6 +68,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				StringParseAllocationTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
+	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
 	$(THRIFT) $(THRIFTARGS) BinaryKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS) MultiplexedProtocolTest.thrift

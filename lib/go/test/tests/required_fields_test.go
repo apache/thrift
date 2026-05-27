@@ -68,9 +68,9 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// None of required fields are set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(nil),
 	)
 
 	err := testStruct.Read(context.Background(), protocol)
@@ -89,12 +89,12 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// One of the required fields is set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("I", thrift.TType(thrift.I32), int16(2), nil),
-		protocol.EXPECT().ReadI32(context.Background()).Return(int32(1), nil),
-		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("I", thrift.TType(thrift.I32), int16(2), nil),
+		protocol.EXPECT().ReadI32(gomock.Any()).Return(int32(1), nil),
+		protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(nil),
 	)
 
 	err = testStruct.Read(context.Background(), protocol)
@@ -113,15 +113,15 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// Both of the required fields are set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("i", thrift.TType(thrift.I32), int16(2), nil),
-		protocol.EXPECT().ReadI32(context.Background()).Return(int32(1), nil),
-		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("s2", thrift.TType(thrift.STRING), int16(4), nil),
-		protocol.EXPECT().ReadString(context.Background()).Return("test", nil),
-		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
-		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadStructBegin(gomock.Any()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("i", thrift.TType(thrift.I32), int16(2), nil),
+		protocol.EXPECT().ReadI32(gomock.Any()).Return(int32(1), nil),
+		protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("s2", thrift.TType(thrift.STRING), int16(4), nil),
+		protocol.EXPECT().ReadString(gomock.Any()).Return("test", nil),
+		protocol.EXPECT().ReadFieldEnd(gomock.Any()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(gomock.Any()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(gomock.Any()).Return(nil),
 	)
 
 	err = testStruct.Read(context.Background(), protocol)

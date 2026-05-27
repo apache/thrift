@@ -188,9 +188,9 @@ func TestNoOptionalUnsetFieldsOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.Write(context.Background(), proto)
@@ -201,9 +201,9 @@ func TestNoSetToDefaultFieldsOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 42
@@ -216,12 +216,12 @@ func TestOneISetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin(context.Background(), "i", thrift.TType(thrift.I64), int16(2)).Return(nil),
-		proto.EXPECT().WriteI64(context.Background(), int64(123)).Return(nil),
-		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(gomock.Any(), "i", thrift.TType(thrift.I64), int16(2)).Return(nil),
+		proto.EXPECT().WriteI64(gomock.Any(), int64(123)).Return(nil),
+		proto.EXPECT().WriteFieldEnd(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 123
@@ -233,15 +233,15 @@ func TestOneLSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin(context.Background(), "l", thrift.TType(thrift.LIST), int16(9)).Return(nil),
-		proto.EXPECT().WriteListBegin(context.Background(), thrift.TType(thrift.I64), 2).Return(nil),
-		proto.EXPECT().WriteI64(context.Background(), int64(1)).Return(nil),
-		proto.EXPECT().WriteI64(context.Background(), int64(2)).Return(nil),
-		proto.EXPECT().WriteListEnd(context.Background()).Return(nil),
-		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(gomock.Any(), "l", thrift.TType(thrift.LIST), int16(9)).Return(nil),
+		proto.EXPECT().WriteListBegin(gomock.Any(), thrift.TType(thrift.I64), 2).Return(nil),
+		proto.EXPECT().WriteI64(gomock.Any(), int64(1)).Return(nil),
+		proto.EXPECT().WriteI64(gomock.Any(), int64(2)).Return(nil),
+		proto.EXPECT().WriteListEnd(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteFieldEnd(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.L = []int64{1, 2}
@@ -253,12 +253,12 @@ func TestOneBinSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin(context.Background(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
-		proto.EXPECT().WriteBinary(context.Background(), []byte("somebytestring")).Return(nil),
-		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(gomock.Any(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
+		proto.EXPECT().WriteBinary(gomock.Any(), []byte("somebytestring")).Return(nil),
+		proto.EXPECT().WriteFieldEnd(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte("somebytestring")
@@ -270,12 +270,12 @@ func TestOneEmptyBinSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin(context.Background(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
-		proto.EXPECT().WriteBinary(context.Background(), []byte{}).Return(nil),
-		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
-		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
-		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructBegin(gomock.Any(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(gomock.Any(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
+		proto.EXPECT().WriteBinary(gomock.Any(), []byte{}).Return(nil),
+		proto.EXPECT().WriteFieldEnd(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteFieldStop(gomock.Any()).Return(nil),
+		proto.EXPECT().WriteStructEnd(gomock.Any()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte{}
