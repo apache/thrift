@@ -126,6 +126,7 @@ object (self)
     self#readByte = 1
   method readString =
     let sz = Int32.to_int (self#readI32) in
+    if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
     let buf = String.create sz in
       ignore (trans#readAll buf 0 sz);
       buf
@@ -152,15 +153,21 @@ object (self)
   method readMapBegin =
     let kt = vt (self#readByte) in
     let vt = vt (self#readByte) in
-      (kt,vt, Int32.to_int self#readI32)
+    let sz = Int32.to_int self#readI32 in
+    if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    (kt,vt, sz)
   method readMapEnd = ()
   method readListBegin =
     let t = vt (self#readByte) in
-    (t, Int32.to_int self#readI32)
+    let sz = Int32.to_int self#readI32 in
+    if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    (t, sz)
   method readListEnd = ()
   method readSetBegin =
     let t = vt (self#readByte) in
-    (t, Int32.to_int self#readI32);
+    let sz = Int32.to_int self#readI32 in
+    if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    (t, sz);
   method readSetEnd = ()
 end
 
