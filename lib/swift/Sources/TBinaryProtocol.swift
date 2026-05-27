@@ -128,13 +128,15 @@ public class TBinaryProtocol: TProtocol {
     guard let keyType = TType(rawValue: raw) else {
       throw TProtocolError(message: "Unknown value for keyType TType: \(raw)")
     }
-    
+
     raw = Int32(try read() as UInt8)
     guard let valueType = TType(rawValue: raw) else {
       throw TProtocolError(message: "Unknown value for valueType TType: \(raw)")
     }
     let size: Int32 = try read()
-    
+    if size < 0 {
+      throw TProtocolError(error: .negativeSize, message: "Negative size")
+    }
     return (keyType, valueType, size)
   }
   
@@ -147,9 +149,11 @@ public class TBinaryProtocol: TProtocol {
     guard let elementType = TType(rawValue: raw) else {
       throw TProtocolError(message: "Unknown value for elementType TType: \(raw)")
     }
-    
+
     let size: Int32 = try read()
-    
+    if size < 0 {
+      throw TProtocolError(error: .negativeSize, message: "Negative size")
+    }
     return (elementType, size)
   }
   
@@ -163,7 +167,9 @@ public class TBinaryProtocol: TProtocol {
       throw TProtocolError(message: "Unknown value for elementType TType: \(raw)")
     }
     let size: Int32 = try read()
-    
+    if size < 0 {
+      throw TProtocolError(error: .negativeSize, message: "Negative size")
+    }
     return (elementType, size)
   }
   
@@ -248,11 +254,14 @@ public class TBinaryProtocol: TProtocol {
   
   public func read() throws -> Data {
     let size = Int(try read() as Int32)
+    if size < 0 {
+      throw TProtocolError(error: .negativeSize, message: "Negative size")
+    }
     var data = Data()
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Read Failed")) {
       data = try self.transport.readAll(size: size)
     }
-    
+
     return data
   }
   
