@@ -54,14 +54,34 @@ sub new {
 package Thrift::Protocol;
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
+use constant DEFAULT_RECURSION_DEPTH => 64;
+
 sub new {
     my $classname = shift;
     my $self      = {};
 
     my $trans     = shift;
-    $self->{trans}= $trans;
+    $self->{trans}        = $trans;
+    $self->{recursionDepth} = 0;
 
     return bless($self,$classname);
+}
+
+sub incrementRecursionDepth {
+    my $self = shift;
+    $self->{recursionDepth}++;
+    if ($self->{recursionDepth} > DEFAULT_RECURSION_DEPTH) {
+        $self->{recursionDepth}--;
+        die Thrift::TProtocolException->new(
+            'Maximum recursion depth exceeded',
+            Thrift::TProtocolException::DEPTH_LIMIT
+        );
+    }
+}
+
+sub decrementRecursionDepth {
+    my $self = shift;
+    $self->{recursionDepth}--;
 }
 
 sub getTransport
