@@ -386,6 +386,67 @@ void main() {
     });
 
     group('shared tests', sharedTests);
+
+    test('readMapBegin rejects negative size', () async {
+      final trans = TBufferedTransport();
+      final proto = TBinaryProtocol(trans);
+      // ktype=I32(8), vtype=STRING(11), size=-1 (0xffffffff big-endian)
+      final bytes = Uint8List.fromList([8, 11, 0xff, 0xff, 0xff, 0xff]);
+      trans.write(bytes, 0, bytes.length);
+      await trans.flush();
+      expect(
+        () => proto.readMapBegin(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.NEGATIVE_SIZE)));
+    });
+
+    test('readListBegin rejects negative size', () async {
+      final trans = TBufferedTransport();
+      final proto = TBinaryProtocol(trans);
+      final bytes = Uint8List.fromList([11, 0xff, 0xff, 0xff, 0xff]);
+      trans.write(bytes, 0, bytes.length);
+      await trans.flush();
+      expect(
+        () => proto.readListBegin(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.NEGATIVE_SIZE)));
+    });
+
+    test('readSetBegin rejects negative size', () async {
+      final trans = TBufferedTransport();
+      final proto = TBinaryProtocol(trans);
+      final bytes = Uint8List.fromList([11, 0xff, 0xff, 0xff, 0xff]);
+      trans.write(bytes, 0, bytes.length);
+      await trans.flush();
+      expect(
+        () => proto.readSetBegin(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.NEGATIVE_SIZE)));
+    });
+
+    test('readString rejects negative size', () async {
+      final trans = TBufferedTransport();
+      final proto = TBinaryProtocol(trans);
+      final bytes = Uint8List.fromList([0xff, 0xff, 0xff, 0xff]);
+      trans.write(bytes, 0, bytes.length);
+      await trans.flush();
+      expect(
+        () => proto.readString(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.NEGATIVE_SIZE)));
+    });
+
+    test('readBinary rejects negative size', () async {
+      final trans = TBufferedTransport();
+      final proto = TBinaryProtocol(trans);
+      final bytes = Uint8List.fromList([0xff, 0xff, 0xff, 0xff]);
+      trans.write(bytes, 0, bytes.length);
+      await trans.flush();
+      expect(
+        () => proto.readBinary(),
+        throwsA(isA<TProtocolError>().having(
+          (e) => e.type, 'type', TProtocolErrorType.NEGATIVE_SIZE)));
+    });
   });
 
   group('compact', () {
