@@ -1144,6 +1144,9 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
 
   // Declare stack tmp variables
   if (!binary_inline_) {
+    indent(out) << "$input->incrementRecursionDepth();" << '\n';
+    indent(out) << "try {" << '\n';
+    indent_up();
     indent(out) << "$xfer += $input->readStructBegin($fname);" << '\n';
   }
 
@@ -1222,6 +1225,12 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
 
   if (!binary_inline_) {
     indent(out) << "$xfer += $input->readStructEnd();" << '\n';
+    indent_down();
+    indent(out) << "} finally {" << '\n';
+    indent_up();
+    indent(out) << "$input->decrementRecursionDepth();" << '\n';
+    indent_down();
+    indent(out) << "}" << '\n';
   }
 
   if (needs_php_read_validator(tstruct, is_result)) {
@@ -1265,6 +1274,9 @@ void t_php_generator::generate_php_struct_writer(ostream& out, t_struct* tstruct
   indent(out) << "$xfer = 0;" << '\n';
 
   if (!binary_inline_) {
+    indent(out) << "$output->incrementRecursionDepth();" << '\n';
+    indent(out) << "try {" << '\n';
+    indent_up();
     indent(out) << "$xfer += $output->writeStructBegin('" << name << "');" << '\n';
   }
 
@@ -1317,6 +1329,12 @@ void t_php_generator::generate_php_struct_writer(ostream& out, t_struct* tstruct
   } else {
     out << indent() << "$xfer += $output->writeFieldStop();" << '\n' << indent()
         << "$xfer += $output->writeStructEnd();" << '\n';
+    indent_down();
+    out << indent() << "} finally {" << '\n';
+    indent_up();
+    out << indent() << "$output->decrementRecursionDepth();" << '\n';
+    indent_down();
+    out << indent() << "}" << '\n';
   }
 
   out << '\n';

@@ -12,6 +12,8 @@ $loader->registerNamespace('BasicInline', __DIR__ . '/Resources/packages/phpi');
 $loader->registerNamespace('Validate', __DIR__ . '/Resources/packages/phpv');
 $loader->registerNamespace('ValidateOop', __DIR__ . '/Resources/packages/phpvo');
 $loader->registerNamespace('Json', __DIR__ . '/Resources/packages/phpjs');
+$loader->registerNamespace('PhpRec', __DIR__ . '/Resources/packages/phprec');
+$loader->registerNamespace('PhpRecOop', __DIR__ . '/Resources/packages/phprecoop');
 
 #do not load this namespace here, it will be loaded in ClassLoaderTest
 //$loader->registerNamespace('Server', __DIR__ . '/Resources/packages/phpcm');
