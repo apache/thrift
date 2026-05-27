@@ -171,6 +171,46 @@ class TBinaryProtocolTests: XCTestCase {
     
   }
   
+  func makeProtoWithBytes(_ bytes: [UInt8]) -> TBinaryProtocol {
+    let t = TMemoryBufferTransport(flushHandler: { $0.reset(readBuffer: $1) })
+    let p = TBinaryProtocol(on: t)
+    t.reset(readBuffer: Data(bytes))
+    return p
+  }
+
+  func testReadMapBeginRejectsNegativeSize() {
+    // ktype=I32(8), vtype=STRING(11), size=-1 (0xffffffff big-endian)
+    let proto = makeProtoWithBytes([8, 11, 0xff, 0xff, 0xff, 0xff])
+    XCTAssertThrowsError(try proto.readMapBegin()) { error in
+      guard let pe = error as? TProtocolError else { return XCTFail("wrong error type") }
+      XCTAssertEqual(pe.error.thriftErrorCode, TProtocolError.Code.negativeSize.thriftErrorCode)
+    }
+  }
+
+  func testReadListBeginRejectsNegativeSize() {
+    let proto = makeProtoWithBytes([11, 0xff, 0xff, 0xff, 0xff])
+    XCTAssertThrowsError(try proto.readListBegin()) { error in
+      guard let pe = error as? TProtocolError else { return XCTFail("wrong error type") }
+      XCTAssertEqual(pe.error.thriftErrorCode, TProtocolError.Code.negativeSize.thriftErrorCode)
+    }
+  }
+
+  func testReadSetBeginRejectsNegativeSize() {
+    let proto = makeProtoWithBytes([11, 0xff, 0xff, 0xff, 0xff])
+    XCTAssertThrowsError(try proto.readSetBegin()) { error in
+      guard let pe = error as? TProtocolError else { return XCTFail("wrong error type") }
+      XCTAssertEqual(pe.error.thriftErrorCode, TProtocolError.Code.negativeSize.thriftErrorCode)
+    }
+  }
+
+  func testReadDataRejectsNegativeSize() {
+    let proto = makeProtoWithBytes([0xff, 0xff, 0xff, 0xff])
+    XCTAssertThrowsError(try proto.read() as Data) { error in
+      guard let pe = error as? TProtocolError else { return XCTFail("wrong error type") }
+      XCTAssertEqual(pe.error.thriftErrorCode, TProtocolError.Code.negativeSize.thriftErrorCode)
+    }
+  }
+
   static var allTests : [(String, (TBinaryProtocolTests) -> () throws -> Void)] {
     return [
       ("testInt8WriteRead", testInt8WriteRead),
@@ -182,7 +222,11 @@ class TBinaryProtocolTests: XCTestCase {
       ("testStringWriteRead", testStringWriteRead),
       ("testDataWriteRead", testDataWriteRead),
       ("testStructWriteRead", testStructWriteRead),
-      ("testUnsafeBitcastUpdate", testUnsafeBitcastUpdate)
+      ("testUnsafeBitcastUpdate", testUnsafeBitcastUpdate),
+      ("testReadMapBeginRejectsNegativeSize", testReadMapBeginRejectsNegativeSize),
+      ("testReadListBeginRejectsNegativeSize", testReadListBeginRejectsNegativeSize),
+      ("testReadSetBeginRejectsNegativeSize", testReadSetBeginRejectsNegativeSize),
+      ("testReadDataRejectsNegativeSize", testReadDataRejectsNegativeSize)
     ]
   }
 }
