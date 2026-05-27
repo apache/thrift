@@ -257,16 +257,25 @@ readInt: size
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/24/2007 19:57'!
 readListBegin
+	| etype sz |
+	etype := self readByte.
+	sz := self readI32.
+	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
 	^ TList new
-		elemType: self readByte;
-		size: self readI32! !
+		elemType: etype;
+		size: sz! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/24/2007 19:58'!
 readMapBegin
+	| ktype vtype sz |
+	ktype := self readByte.
+	vtype := self readByte.
+	sz := self readI32.
+	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
 	^ TMap new
-		keyType: self readByte;
-		valueType: self readByte;
-		size: self readI32! !
+		keyType: ktype;
+		valueType: vtype;
+		size: sz! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 04:22'!
 readMessageBegin
@@ -287,15 +296,19 @@ readRawInt: size
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 00:59'!
 readSetBegin
-	"element type, size"
+	| etype sz |
+	etype := self readByte.
+	sz := self readI32.
+	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
 	^ TSet new
-		elemType: self readByte;
-		size: self readI32! !
+		elemType: etype;
+		size: sz! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 02/07/2009 19:00'!
 readString
 	| sz |
 	sz := self readI32.
+	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
 	^ sz > 0 ifTrue: [(transport read: sz) asString] ifFalse: ['']! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 04:22'!
