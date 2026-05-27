@@ -215,47 +215,52 @@ class TException extends \Exception
         $fname = null;
         $ftype = 0;
         $fid = 0;
-        $xfer += $input->readStructBegin($fname);
-        while (true) {
-            $xfer += $input->readFieldBegin($fname, $ftype, $fid);
-            if ($ftype == TType::STOP) {
-                break;
-            }
-            if (isset($spec[$fid])) {
-                $fspec = $spec[$fid];
-                $var = $fspec['var'];
-                if ($ftype == $fspec['type']) {
-                    $xfer = 0;
-                    if (isset(TBase::$tmethod[$ftype])) {
-                        $func = 'read' . TBase::$tmethod[$ftype];
-                        $xfer += $input->$func($this->$var);
-                    } else {
-                        switch ($ftype) {
-                            case TType::STRUCT:
-                                $class = $fspec['class'];
-                                $this->$var = new $class();
-                                $xfer += $this->$var->read($input);
-                                break;
-                            case TType::MAP:
-                                $xfer += $this->readMap($this->$var, $fspec, $input);
-                                break;
-                            case TType::LST:
-                                $xfer += $this->readList($this->$var, $fspec, $input, false);
-                                break;
-                            case TType::SET:
-                                $xfer += $this->readList($this->$var, $fspec, $input, true);
-                                break;
+        $input->incrementRecursionDepth();
+        try {
+            $xfer += $input->readStructBegin($fname);
+            while (true) {
+                $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+                if ($ftype == TType::STOP) {
+                    break;
+                }
+                if (isset($spec[$fid])) {
+                    $fspec = $spec[$fid];
+                    $var = $fspec['var'];
+                    if ($ftype == $fspec['type']) {
+                        $xfer = 0;
+                        if (isset(TBase::$tmethod[$ftype])) {
+                            $func = 'read' . TBase::$tmethod[$ftype];
+                            $xfer += $input->$func($this->$var);
+                        } else {
+                            switch ($ftype) {
+                                case TType::STRUCT:
+                                    $class = $fspec['class'];
+                                    $this->$var = new $class();
+                                    $xfer += $this->$var->read($input);
+                                    break;
+                                case TType::MAP:
+                                    $xfer += $this->readMap($this->$var, $fspec, $input);
+                                    break;
+                                case TType::LST:
+                                    $xfer += $this->readList($this->$var, $fspec, $input, false);
+                                    break;
+                                case TType::SET:
+                                    $xfer += $this->readList($this->$var, $fspec, $input, true);
+                                    break;
+                            }
                         }
+                    } else {
+                        $xfer += $input->skip($ftype);
                     }
                 } else {
                     $xfer += $input->skip($ftype);
                 }
-            } else {
-                $xfer += $input->skip($ftype);
+                $xfer += $input->readFieldEnd();
             }
-            $xfer += $input->readFieldEnd();
+            $xfer += $input->readStructEnd();
+        } finally {
+            $input->decrementRecursionDepth();
         }
-        $xfer += $input->readStructEnd();
 
         return $xfer;
     }
@@ -379,36 +384,41 @@ class TException extends \Exception
     protected function writeStruct(string $class, array $spec, TProtocol $output): int
     {
         $xfer = 0;
-        $xfer += $output->writeStructBegin($class);
-        foreach ($spec as $fid => $fspec) {
-            $var = $fspec['var'];
-            if ($this->$var !== null) {
-                $ftype = $fspec['type'];
-                $xfer += $output->writeFieldBegin($var, $ftype, $fid);
-                if (isset(TBase::$tmethod[$ftype])) {
-                    $func = 'write' . TBase::$tmethod[$ftype];
-                    $xfer += $output->$func($this->$var);
-                } else {
-                    switch ($ftype) {
-                        case TType::STRUCT:
-                            $xfer += $this->$var->write($output);
-                            break;
-                        case TType::MAP:
-                            $xfer += $this->writeMap($this->$var, $fspec, $output);
-                            break;
-                        case TType::LST:
-                            $xfer += $this->writeList($this->$var, $fspec, $output, false);
-                            break;
-                        case TType::SET:
-                            $xfer += $this->writeList($this->$var, $fspec, $output, true);
-                            break;
+        $output->incrementRecursionDepth();
+        try {
+            $xfer += $output->writeStructBegin($class);
+            foreach ($spec as $fid => $fspec) {
+                $var = $fspec['var'];
+                if ($this->$var !== null) {
+                    $ftype = $fspec['type'];
+                    $xfer += $output->writeFieldBegin($var, $ftype, $fid);
+                    if (isset(TBase::$tmethod[$ftype])) {
+                        $func = 'write' . TBase::$tmethod[$ftype];
+                        $xfer += $output->$func($this->$var);
+                    } else {
+                        switch ($ftype) {
+                            case TType::STRUCT:
+                                $xfer += $this->$var->write($output);
+                                break;
+                            case TType::MAP:
+                                $xfer += $this->writeMap($this->$var, $fspec, $output);
+                                break;
+                            case TType::LST:
+                                $xfer += $this->writeList($this->$var, $fspec, $output, false);
+                                break;
+                            case TType::SET:
+                                $xfer += $this->writeList($this->$var, $fspec, $output, true);
+                                break;
+                        }
                     }
+                    $xfer += $output->writeFieldEnd();
                 }
-                $xfer += $output->writeFieldEnd();
             }
+            $xfer += $output->writeFieldStop();
+            $xfer += $output->writeStructEnd();
+        } finally {
+            $output->decrementRecursionDepth();
         }
-        $xfer += $output->writeFieldStop();
-        $xfer += $output->writeStructEnd();
 
         return $xfer;
     }

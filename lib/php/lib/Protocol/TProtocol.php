@@ -35,6 +35,10 @@ use Thrift\Exception\TProtocolException;
  */
 abstract class TProtocol
 {
+    public const DEFAULT_RECURSION_DEPTH = 64;
+
+    private int $recursionDepth = 0;
+
     protected function __construct(protected TTransport $trans)
     {
     }
@@ -42,6 +46,20 @@ abstract class TProtocol
     public function getTransport(): TTransport
     {
         return $this->trans;
+    }
+
+    public function incrementRecursionDepth(): void
+    {
+        ++$this->recursionDepth;
+        if ($this->recursionDepth > self::DEFAULT_RECURSION_DEPTH) {
+            --$this->recursionDepth;
+            throw new TProtocolException('Maximum recursion depth exceeded', TProtocolException::DEPTH_LIMIT);
+        }
+    }
+
+    public function decrementRecursionDepth(): void
+    {
+        --$this->recursionDepth;
     }
 
     abstract public function writeMessageBegin(string $name, int $type, int $seqid): int;
