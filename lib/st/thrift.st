@@ -69,6 +69,10 @@ sizeLimit
 unknown
 	^ 0! !
 
+!TProtocolError class methodsFor: 'as yet unclassified'!
+depthLimit
+	^ 6! !
+
 TError subclass: #TTransportError
 	instanceVariableNames: ''
 	classVariableNames: ''
@@ -191,7 +195,7 @@ type: anInteger
 	type := anInteger! !
 
 Object subclass: #TProtocol
-	instanceVariableNames: 'transport'
+	instanceVariableNames: 'transport recursionDepth'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Thrift-Protocol'!
@@ -506,6 +510,17 @@ transport
 !TProtocol methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 17:28'!
 transport: aTransport
 	transport := aTransport! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+incrementRecursionDepth
+	recursionDepth := (recursionDepth ifNil: [0]) + 1.
+	recursionDepth > 64 ifTrue: [
+		recursionDepth := recursionDepth - 1.
+		TProtocolError signal: 'Maximum recursion depth exceeded']! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+decrementRecursionDepth
+	recursionDepth := (recursionDepth ifNil: [0]) - 1! !
 
 !TProtocol methodsFor: 'writing' stamp: 'pc 10/24/2007 19:37'!
 writeBool: aBool! !
