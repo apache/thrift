@@ -27,24 +27,30 @@ object (self)
       let _new = Oo.copy self in
     _new
   method write (oprot : Protocol.t) =
-    oprot#writeStructBegin "ping_args";
-    oprot#writeFieldStop;
-    oprot#writeStructEnd
+    oprot#increment_recursion_depth;
+    Fun.protect ~finally:(fun () -> oprot#decrement_recursion_depth) (fun () ->
+      oprot#writeStructBegin "ping_args";
+      oprot#writeFieldStop;
+      oprot#writeStructEnd
+    )
 end
 let rec read_ping_args (iprot : Protocol.t) =
   let _str2 = new ping_args in
-    ignore(iprot#readStructBegin);
-    (try while true do
-        let (_,_t3,_id4) = iprot#readFieldBegin in
-        if _t3 = Protocol.T_STOP then
-          raise Break
-        else ();
-        (match _id4 with 
-          | _ -> iprot#skip _t3);
-        iprot#readFieldEnd;
-      done; ()
-    with Break -> ());
-    iprot#readStructEnd;
+    iprot#increment_recursion_depth;
+    (Fun.protect ~finally:(fun () -> iprot#decrement_recursion_depth) (fun () ->
+      ignore(iprot#readStructBegin);
+      (try while true do
+          let (_,_t3,_id4) = iprot#readFieldBegin in
+          if _t3 = Protocol.T_STOP then
+            raise Break
+          else ();
+          (match _id4 with 
+            | _ -> iprot#skip _t3);
+          iprot#readFieldEnd;
+        done; ()
+      with Break -> ());
+      iprot#readStructEnd
+    ));
     _str2
 
 class ping_result =
@@ -62,33 +68,39 @@ object (self)
         _new#set_serverError self#grab_serverError#copy;
     _new
   method write (oprot : Protocol.t) =
-    oprot#writeStructBegin "ping_result";
-    (match _serverError with None -> () | Some _v -> 
-      oprot#writeFieldBegin("serverError",Protocol.T_STRUCT,1);
-      _v#write(oprot);
-      oprot#writeFieldEnd
-    );
-    oprot#writeFieldStop;
-    oprot#writeStructEnd
+    oprot#increment_recursion_depth;
+    Fun.protect ~finally:(fun () -> oprot#decrement_recursion_depth) (fun () ->
+      oprot#writeStructBegin "ping_result";
+      (match _serverError with None -> () | Some _v -> 
+        oprot#writeFieldBegin("serverError",Protocol.T_STRUCT,1);
+        _v#write(oprot);
+        oprot#writeFieldEnd
+      );
+      oprot#writeFieldStop;
+      oprot#writeStructEnd
+    )
 end
 let rec read_ping_result (iprot : Protocol.t) =
   let _str8 = new ping_result in
-    ignore(iprot#readStructBegin);
-    (try while true do
-        let (_,_t9,_id10) = iprot#readFieldBegin in
-        if _t9 = Protocol.T_STOP then
-          raise Break
-        else ();
-        (match _id10 with 
-          | 1 -> (if _t9 = Protocol.T_STRUCT then
-              _str8#set_serverError (Errors_types.read_serverError iprot)
-            else
-              iprot#skip _t9)
-          | _ -> iprot#skip _t9);
-        iprot#readFieldEnd;
-      done; ()
-    with Break -> ());
-    iprot#readStructEnd;
+    iprot#increment_recursion_depth;
+    (Fun.protect ~finally:(fun () -> iprot#decrement_recursion_depth) (fun () ->
+      ignore(iprot#readStructBegin);
+      (try while true do
+          let (_,_t9,_id10) = iprot#readFieldBegin in
+          if _t9 = Protocol.T_STOP then
+            raise Break
+          else ();
+          (match _id10 with 
+            | 1 -> (if _t9 = Protocol.T_STRUCT then
+                _str8#set_serverError (Errors_types.read_serverError iprot)
+              else
+                iprot#skip _t9)
+            | _ -> iprot#skip _t9);
+          iprot#readFieldEnd;
+        done; ()
+      with Break -> ());
+      iprot#readStructEnd
+    ));
     _str8
 
 class virtual iface =

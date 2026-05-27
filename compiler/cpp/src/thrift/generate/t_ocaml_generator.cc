@@ -761,6 +761,9 @@ void t_ocaml_generator::generate_ocaml_struct_reader(ostream& out, t_struct* tst
   indent_up();
   indent(out) << "let " << str << " = new " << sname << " in" << '\n';
   indent_up();
+  indent(out) << "iprot#increment_recursion_depth;" << '\n';
+  indent(out) << "(Fun.protect ~finally:(fun () -> iprot#decrement_recursion_depth) (fun () ->" << '\n';
+  indent_up();
   indent(out) << "ignore(iprot#readStructBegin);" << '\n';
 
   // Loop over reading in fields
@@ -803,7 +806,9 @@ void t_ocaml_generator::generate_ocaml_struct_reader(ostream& out, t_struct* tst
   indent_down();
   indent(out) << "with Break -> ());" << '\n';
 
-  indent(out) << "iprot#readStructEnd;" << '\n';
+  indent(out) << "iprot#readStructEnd" << '\n';
+  indent_down();
+  indent(out) << "));" << '\n';
 
   indent(out) << str << '\n' << '\n';
   indent_down();
@@ -818,6 +823,9 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
   string f = tmp("_f");
 
   indent(out) << "method write (oprot : Protocol.t) =" << '\n';
+  indent_up();
+  indent(out) << "oprot#increment_recursion_depth;" << '\n';
+  indent(out) << "Fun.protect ~finally:(fun () -> oprot#decrement_recursion_depth) (fun () ->" << '\n';
   indent_up();
   indent(out) << "oprot#writeStructBegin \"" << name << "\";" << '\n';
 
@@ -878,6 +886,8 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ostream& out, t_struct* tst
 
   // Write the struct map
   out << indent() << "oprot#writeFieldStop;" << '\n' << indent() << "oprot#writeStructEnd" << '\n';
+  indent_down();
+  indent(out) << ")" << '\n';
 
   indent_down();
 }
