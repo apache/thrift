@@ -90,6 +90,7 @@ TESTOK=0
 
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/ThriftTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsRecursionDepthTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Include.thrift
 mkdir ${DIR}/gen-nodejs-es6
@@ -134,6 +135,7 @@ node ${DIR}/check_set_uniqueness.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
+node ${DIR}/recursion_depth.test.js || TESTOK=1
 node ${DIR}/generated-exceptions.test.js || TESTOK=1
 node ${DIR}/include.test.mjs || TESTOK=1
 node ${DIR}/thrift_4987_xhr_protocol.test.mjs || TESTOK=1

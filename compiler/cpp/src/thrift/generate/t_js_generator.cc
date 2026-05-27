@@ -1142,6 +1142,10 @@ void t_js_generator::generate_js_struct_reader(ostream& out, t_struct* tstruct) 
 
   indent_up();
 
+  indent(out) << "input.incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
+
   indent(out) << "input.readStructBegin();" << '\n';
 
   // Loop over reading in fields
@@ -1204,6 +1208,13 @@ void t_js_generator::generate_js_struct_reader(ostream& out, t_struct* tstruct) 
 
   indent(out) << "input.readStructEnd();" << '\n';
 
+  indent_down();
+  indent(out) << "} finally {" << '\n';
+  indent_up();
+  indent(out) << "input.decrementRecursionDepth();" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
+
   indent(out) << "return;" << '\n';
 
   indent_down();
@@ -1232,6 +1243,10 @@ void t_js_generator::generate_js_struct_writer(ostream& out, t_struct* tstruct) 
 
   indent_up();
 
+  indent(out) << "output.incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
+
   indent(out) << "output.writeStructBegin('" << name << "');" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1254,6 +1269,13 @@ void t_js_generator::generate_js_struct_writer(ostream& out, t_struct* tstruct) 
 
   out << indent() << "output.writeFieldStop();" << '\n' << indent() << "output.writeStructEnd();"
       << '\n';
+
+  indent_down();
+  out << indent() << "} finally {" << '\n';
+  indent_up();
+  out << indent() << "output.decrementRecursionDepth();" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
 
   out << indent() << "return;" << '\n';
 
