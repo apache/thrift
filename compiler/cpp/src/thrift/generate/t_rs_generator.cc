@@ -53,9 +53,24 @@ static const string SYNC_CLIENT_GENERIC_BOUNDS("where IP: TInputProtocol, OP: TO
 
 class t_rs_generator : public t_generator {
 public:
-  t_rs_generator(t_program* program, const std::map<std::string, std::string>&, const std::string&)
+  t_rs_generator(t_program* program,
+                 const std::map<std::string, std::string>& parsed_options,
+                 const std::string&)
     : t_generator(program) {
     gen_dir_ = get_out_dir();
+    crate_prefix_ = "crate";
+
+    std::map<std::string, std::string>::const_iterator iter;
+    for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if (iter->first.compare("crate_prefix") == 0) {
+        if (iter->second.empty()) {
+          throw std::string("crate_prefix requires a non-empty value, e.g. rs:crate_prefix=super");
+        }
+        crate_prefix_ = iter->second;
+      } else {
+        throw "unknown option rs:" + iter->first;
+      }
+    }
 
     fprintf(stderr, "We are sorry, but for the lack of active maintainers, the RUST compiler target is being deprecated and may be removed in the next version. Feel free to contact the dev mailing list (dev@thrift.apache.org) for further details.\n");
 
@@ -90,6 +105,10 @@ private:
 
   // Directory to which generated code is written.
   string gen_dir_;
+
+  // Rust path prefix for cross-file imports (default: "crate").
+  // Use --gen rs:crate_prefix=super when generated files are in a submodule.
+  string crate_prefix_;
 
   // File to which generated code is written.
   ofstream_with_content_based_conditional_update f_gen_;
@@ -617,10 +636,10 @@ void t_rs_generator::render_attributes_and_includes() {
       string_replace(module_namespace, ".", "::");
 
       if (module_namespace.empty()) {
-        f_gen_ << "use crate::" << rust_snake_case(module_name) << ";" << '\n';
+        f_gen_ << "use " << crate_prefix_ << "::" << rust_snake_case(module_name) << ";" << '\n';
       } else {
-        f_gen_ << "use crate::" << module_namespace << "::" << rust_snake_case(module_name) << ";"
-               << '\n';
+        f_gen_ << "use " << crate_prefix_ << "::" << module_namespace << "::"
+               << rust_snake_case(module_name) << ";" << '\n';
       }
     }
     f_gen_ << '\n';
@@ -3384,4 +3403,9 @@ std::string t_rs_generator::display_name() const {
   return "Rust";
 }
 
-THRIFT_REGISTER_GENERATOR(rs, "Rust", "\n") // no Rust-generator-specific options
+THRIFT_REGISTER_GENERATOR(
+    rs,
+    "Rust",
+    "    crate_prefix=p:  Rust path prefix for cross-file imports (default: crate).\n"
+    "                     Use 'super' when generated files are in a submodule.\n"
+)
