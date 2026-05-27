@@ -185,3 +185,19 @@ struct NestedMapInMapKey {
 struct NestedMapInMapValue {
   2: map<byte, map<byte, byte>> value
 }
+
+# Recursive types for the struct/union/exception recursion-depth limit specs (THRIFT-6045).
+struct RecTree {
+  1: list<RecTree> children
+  2: i16 item
+}
+
+union RecUnion {
+  1: list<RecUnion> children
+  2: i32 leaf
+}
+
+exception RecError {
+  1: list<RecError> children
+  2: i32 leaf
+}
