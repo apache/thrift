@@ -706,9 +706,10 @@ string t_st_generator::struct_writer(t_struct* tstruct, string sname) {
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator fld_iter;
 
-  out << "[oprot writeStructBegin: "
-      << "(TStruct new name: '" + tstruct->get_name() + "')." << '\n';
+  out << "[oprot incrementRecursionDepth." << '\n';
   indent_up();
+  out << indent() << "[oprot writeStructBegin: "
+      << "(TStruct new name: '" + tstruct->get_name() + "')." << '\n';
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
     bool optional = (*fld_iter)->get_req() == t_field::T_OPTIONAL;
@@ -735,7 +736,8 @@ string t_st_generator::struct_writer(t_struct* tstruct, string sname) {
     out << "." << '\n';
   }
 
-  out << indent() << "oprot writeFieldStop; writeStructEnd] value";
+  out << indent()
+      << "oprot writeFieldStop; writeStructEnd] ensure: [oprot decrementRecursionDepth]] value";
   indent_down();
 
   return out.str();
@@ -759,10 +761,11 @@ string t_st_generator::struct_reader(t_struct* tstruct, string clsName = "") {
   // This is nasty, but without it we'll break things by prefixing TResult.
   string name = ((capitalize(clsName) == "TResult") ? capitalize(clsName) : prefix(clsName));
   out << indent() << val << " := " << name << " new." << '\n';
+  out << indent() << "iprot incrementRecursionDepth." << '\n';
 
-  out << indent() << "iprot readStructBegin." << '\n' << indent() << "[" << desc
-      << " := iprot readFieldBegin." << '\n' << indent() << desc
-      << " type = TType stop] whileFalse: [|" << found << "|" << '\n';
+  out << indent() << "[iprot readStructBegin." << '\n'
+      << indent() << "[" << desc << " := iprot readFieldBegin." << '\n'
+      << indent() << desc << " type = TType stop] whileFalse: [|" << found << "|" << '\n';
   indent_up();
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
@@ -779,7 +782,8 @@ string t_st_generator::struct_reader(t_struct* tstruct, string clsName = "") {
   out << indent() << found << " ifNil: [iprot skip: " << desc << " type]]." << '\n';
   indent_down();
 
-  out << indent() << "oprot readStructEnd." << '\n' << indent() << val << "] value";
+  out << indent() << "iprot readStructEnd] ensure: [iprot decrementRecursionDepth]." << '\n'
+      << indent() << val << "] value";
   indent_down();
 
   return out.str();
