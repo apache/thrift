@@ -220,6 +220,7 @@ read(This0, map_begin) ->
     {This1, {ok, Ktype}} = read(This0, byte),
     {This2, {ok, Vtype}} = read(This1, byte),
     {This3, {ok, Size}} = read(This2, i32),
+    if Size < 0 -> error({protocol_error, negative_size}); true -> ok end,
     {This3, #protocol_map_begin{
         ktype = Ktype,
         vtype = Vtype,
@@ -230,6 +231,7 @@ read(This, map_end) ->
 read(This0, list_begin) ->
     {This1, {ok, Etype}} = read(This0, byte),
     {This2, {ok, Size}} = read(This1, i32),
+    if Size < 0 -> error({protocol_error, negative_size}); true -> ok end,
     {This2, #protocol_list_begin{
         etype = Etype,
         size = Size
@@ -239,6 +241,7 @@ read(This, list_end) ->
 read(This0, set_begin) ->
     {This1, {ok, Etype}} = read(This0, byte),
     {This2, {ok, Size}} = read(This1, i32),
+    if Size < 0 -> error({protocol_error, negative_size}); true -> ok end,
     {This2, #protocol_set_begin{
         etype = Etype,
         size = Size
@@ -298,6 +301,7 @@ read(This0, double) ->
 % returns a binary directly, call binary_to_list if necessary
 read(This0, string) ->
     {This1, {ok, Sz}} = read(This0, i32),
+    if Sz < 0 -> error({protocol_error, negative_size}); true -> ok end,
     read_data(This1, Sz).
 
 -spec read_data(#binary_protocol{}, non_neg_integer()) ->
