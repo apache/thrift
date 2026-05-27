@@ -321,10 +321,14 @@ sub readMapBegin
     my $self = shift;
     my ($keyType, $valType, $size) = @_;
 
-    return
+    my $result =
         $self->readByte($keyType) +
         $self->readByte($valType) +
         $self->readI32($size);
+    if ($$size < 0) {
+        die Thrift::TProtocolException->new('Negative size', Thrift::TProtocolException::NEGATIVE_SIZE);
+    }
+    return $result;
 }
 
 sub readMapEnd()
@@ -338,9 +342,13 @@ sub readListBegin
     my $self = shift;
     my ($elemType, $size) = @_;
 
-    return
+    my $result =
         $self->readByte($elemType) +
         $self->readI32($size);
+    if ($$size < 0) {
+        die Thrift::TProtocolException->new('Negative size', Thrift::TProtocolException::NEGATIVE_SIZE);
+    }
+    return $result;
 }
 
 sub readListEnd
@@ -354,9 +362,13 @@ sub readSetBegin
     my $self = shift;
     my ($elemType, $size) = @_;
 
-    return
+    my $result =
         $self->readByte($elemType) +
         $self->readI32($size);
+    if ($$size < 0) {
+        die Thrift::TProtocolException->new('Negative size', Thrift::TProtocolException::NEGATIVE_SIZE);
+    }
+    return $result;
 }
 
 sub readSetEnd
@@ -467,6 +479,9 @@ sub readString
     my $len;
     my $result = $self->readI32(\$len);
 
+    if ($len < 0) {
+        die Thrift::TProtocolException->new('Negative size', Thrift::TProtocolException::NEGATIVE_SIZE);
+    }
     if ($len) {
       $$value = $self->{trans}->readAll($len);
     }
@@ -483,6 +498,9 @@ sub readStringBody
     my $value = shift;
     my $len   = shift;
 
+    if ($len < 0) {
+        die Thrift::TProtocolException->new('Negative size', Thrift::TProtocolException::NEGATIVE_SIZE);
+    }
     if ($len) {
       $$value = $self->{trans}->readAll($len);
     }

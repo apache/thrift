@@ -43,7 +43,7 @@ use constant DEPTH_LIMIT     => 6;
 sub new {
     my $classname = shift;
 
-    my $self = $classname->SUPER::new();
+    my $self = $classname->SUPER::new(@_);
 
     return bless($self,$classname);
 }
