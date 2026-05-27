@@ -232,7 +232,9 @@ class TBinaryProtocol extends TProtocol {
     int keyType = readByte();
     int valueType = readByte();
     int length = readI32();
-
+    if (length < 0) {
+      throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
+    }
     return TMap(keyType, valueType, length);
   }
 
@@ -243,7 +245,9 @@ class TBinaryProtocol extends TProtocol {
   TList readListBegin() {
     int elementType = readByte();
     int length = readI32();
-
+    if (length < 0) {
+      throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
+    }
     return TList(elementType, length);
   }
 
@@ -254,7 +258,9 @@ class TBinaryProtocol extends TProtocol {
   TSet readSetBegin() {
     int elementType = readByte();
     int length = readI32();
-
+    if (length < 0) {
+      throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
+    }
     return TSet(elementType, length);
   }
 
@@ -308,6 +314,9 @@ class TBinaryProtocol extends TProtocol {
   @override
   String readString() {
     int size = readI32();
+    if (size < 0) {
+      throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
+    }
     return _readString(size);
   }
 
@@ -320,6 +329,9 @@ class TBinaryProtocol extends TProtocol {
   @override
   Uint8List readBinary() {
     int length = readI32();
+    if (length < 0) {
+      throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
+    }
     Uint8List binaryIn = Uint8List(length);
     transport.readAll(binaryIn, 0, length);
     return binaryIn;
