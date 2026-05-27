@@ -545,6 +545,9 @@ void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstru
       << indent() << "my $fname;" << '\n' << indent() << "my $ftype = 0;" << '\n' << indent()
       << "my $fid   = 0;" << '\n';
 
+  indent(out) << "$input->incrementRecursionDepth();" << '\n';
+  indent(out) << "eval {" << '\n';
+  indent_up();
   indent(out) << "$xfer += $input->readStructBegin(\\$fname);" << '\n';
 
   // Loop over reading in fields
@@ -594,6 +597,12 @@ void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstru
 
   indent(out) << "$xfer += $input->readStructEnd();" << '\n';
 
+  indent_down();
+  indent(out) << "};" << '\n';
+  indent(out) << "my $err = $@;" << '\n';
+  indent(out) << "$input->decrementRecursionDepth();" << '\n';
+  indent(out) << "die $err if $err;" << '\n';
+
   indent(out) << "return $xfer;" << '\n';
 
   indent_down();
@@ -614,6 +623,9 @@ void t_perl_generator::generate_perl_struct_writer(ostream& out, t_struct* tstru
   indent(out) << "my ($self, $output) = @_;" << '\n';
   indent(out) << "my $xfer   = 0;" << '\n';
 
+  indent(out) << "$output->incrementRecursionDepth();" << '\n';
+  indent(out) << "eval {" << '\n';
+  indent_up();
   indent(out) << "$xfer += $output->writeStructBegin('" << name << "');" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -635,6 +647,12 @@ void t_perl_generator::generate_perl_struct_writer(ostream& out, t_struct* tstru
 
   out << indent() << "$xfer += $output->writeFieldStop();" << '\n' << indent()
       << "$xfer += $output->writeStructEnd();" << '\n';
+
+  indent_down();
+  out << indent() << "};" << '\n';
+  out << indent() << "my $err = $@;" << '\n';
+  out << indent() << "$output->decrementRecursionDepth();" << '\n';
+  out << indent() << "die $err if $err;" << '\n';
 
   out << indent() << "return $xfer;" << '\n';
 
