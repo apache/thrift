@@ -20,4 +20,4 @@
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
-EXTRA_DIST = memory_buffer.t processor.t multiplex.t
+EXTRA_DIST = binary_protocol_negative_size.t memory_buffer.t processor.t multiplex.t
