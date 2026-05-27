@@ -2013,7 +2013,7 @@ void t_rs_generator::render_list_sync_read(t_list* tlist, const string& list_var
     string read_call(resolved_type + "::read_from_in_protocol(i_prot)");
     f_gen_ << indent() << "match " << read_call << " {" << '\n';
     indent_up();
-    f_gen_ << indent() << "Ok(val) => { " << list_var << ".push(val); }," << '\n';
+    f_gen_ << indent() << "Ok(elem) => { " << list_var << ".push(Box::new(elem)); }," << '\n';
     f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.kind == ProtocolErrorKind::UnknownUnionVariant => { continue; }," << '\n';
     f_gen_ << indent() << "Err(e) => return Err(e)," << '\n';
     indent_down();
@@ -2048,7 +2048,7 @@ void t_rs_generator::render_set_sync_read(t_set* tset, const string& set_var) {
     string read_call(resolved_type + "::read_from_in_protocol(i_prot)");
     f_gen_ << indent() << "match " << read_call << " {" << '\n';
     indent_up();
-    f_gen_ << indent() << "Ok(val) => { " << set_var << ".insert(val); }," << '\n';
+    f_gen_ << indent() << "Ok(elem) => { " << set_var << ".insert(Box::new(elem)); }," << '\n';
     f_gen_ << indent() << "Err(thrift::Error::Protocol(ref e)) if e.kind == ProtocolErrorKind::UnknownUnionVariant => { continue; }," << '\n';
     f_gen_ << indent() << "Err(e) => return Err(e)," << '\n';
     indent_down();
