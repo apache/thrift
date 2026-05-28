@@ -1304,7 +1304,11 @@ void t_javame_generator::generate_java_struct_reader(ostream& out, t_struct* tst
   vector<t_field*>::const_iterator f_iter;
 
   // Declare stack tmp variables and read struct header
-  out << indent() << "TField field;" << '\n' << indent() << "iprot.readStructBegin();" << '\n';
+  out << indent() << "TField field;" << '\n';
+  indent(out) << "iprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
+  out << indent() << "iprot.readStructBegin();" << '\n';
 
   // Loop over reading in fields
   indent(out) << "while (true)" << '\n';
@@ -1359,6 +1363,13 @@ void t_javame_generator::generate_java_struct_reader(ostream& out, t_struct* tst
   indent(out) << "validate();" << '\n';
 
   indent_down();
+  indent(out) << "} finally {" << '\n';
+  indent_up();
+  indent(out) << "iprot.decrementRecursionDepth();" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
+
+  indent_down();
   out << indent() << "}" << '\n' << '\n';
 }
 
@@ -1400,6 +1411,9 @@ void t_javame_generator::generate_java_struct_writer(ostream& out, t_struct* tst
   // performs various checks (e.g. check that all required fields are set)
   indent(out) << "validate();" << '\n' << '\n';
 
+  indent(out) << "oprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
   indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1437,6 +1451,13 @@ void t_javame_generator::generate_java_struct_writer(ostream& out, t_struct* tst
       << '\n';
 
   indent_down();
+  indent(out) << "} finally {" << '\n';
+  indent_up();
+  indent(out) << "oprot.decrementRecursionDepth();" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
+
+  indent_down();
   out << indent() << "}" << '\n' << '\n';
 }
 
@@ -1456,6 +1477,9 @@ void t_javame_generator::generate_java_struct_result_writer(ostream& out, t_stru
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
+  indent(out) << "oprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
   indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << '\n';
 
   bool first = true;
@@ -1486,6 +1510,13 @@ void t_javame_generator::generate_java_struct_result_writer(ostream& out, t_stru
   // Write the struct map
   out << '\n' << indent() << "oprot.writeFieldStop();" << '\n' << indent()
       << "oprot.writeStructEnd();" << '\n';
+
+  indent_down();
+  indent(out) << "} finally {" << '\n';
+  indent_up();
+  indent(out) << "oprot.decrementRecursionDepth();" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
 
   indent_down();
   out << indent() << "}" << '\n' << '\n';

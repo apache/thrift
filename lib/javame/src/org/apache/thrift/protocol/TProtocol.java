@@ -38,6 +38,11 @@ public abstract class TProtocol {
    */
   protected TTransport trans_;
 
+  /** Current recursion depth during struct serialization */
+  private int recursionDepth_ = 0;
+
+  private static final int DEFAULT_RECURSION_DEPTH = 64;
+
   /**
    * Constructor
    */
@@ -50,6 +55,24 @@ public abstract class TProtocol {
    */
   public TTransport getTransport() {
     return trans_;
+  }
+
+  /**
+   * Increment recursion depth, checking against the limit.
+   *
+   * @throws TProtocolException with DEPTH_LIMIT if the limit is exceeded
+   */
+  public void incrementRecursionDepth() throws TProtocolException {
+    if (recursionDepth_ >= DEFAULT_RECURSION_DEPTH) {
+      throw new TProtocolException(
+          TProtocolException.DEPTH_LIMIT, "Maximum recursion depth exceeded");
+    }
+    ++recursionDepth_;
+  }
+
+  /** Decrement recursion depth. Must be called in a finally block. */
+  public void decrementRecursionDepth() {
+    --recursionDepth_;
   }
 
   /**
