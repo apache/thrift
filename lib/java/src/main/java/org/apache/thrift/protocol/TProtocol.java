@@ -153,9 +153,14 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   }
 
   public final void writeStruct(TStruct struct, WriteCallback<Void> callback) throws TException {
-    writeStructBegin(struct);
-    callback.call(null);
-    writeStructEnd();
+    incrementRecursionDepth();
+    try {
+      writeStructBegin(struct);
+      callback.call(null);
+      writeStructEnd();
+    } finally {
+      decrementRecursionDepth();
+    }
   }
 
   public final void writeMessage(TMessage message, WriteCallback<Void> callback) throws TException {
@@ -190,10 +195,15 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
    * @throws TException when any sub-operation failed
    */
   public final <T> T readStruct(ReadCallback<TStruct, T> callback) throws TException {
-    TStruct tStruct = readStructBegin();
-    T t = callback.accept(tStruct);
-    readStructEnd();
-    return t;
+    incrementRecursionDepth();
+    try {
+      TStruct tStruct = readStructBegin();
+      T t = callback.accept(tStruct);
+      readStructEnd();
+      return t;
+    } finally {
+      decrementRecursionDepth();
+    }
   }
 
   /**
