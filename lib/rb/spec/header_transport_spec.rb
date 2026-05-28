@@ -159,6 +159,50 @@ describe 'HeaderTransport' do
       end
     end
 
+    describe "decompressed size limits" do
+      it "should accept a valid max_decompressed_size" do
+        expect { @trans.set_max_decompressed_size(1024) }.not_to raise_error
+        expect { @trans.set_max_decompressed_size(Thrift::HeaderTransport::MAX_FRAME_SIZE) }.not_to raise_error
+      end
+
+      it "should reject invalid max_decompressed_size" do
+        expect { @trans.set_max_decompressed_size(0) }.to raise_error(ArgumentError)
+        expect { @trans.set_max_decompressed_size(-1) }.to raise_error(ArgumentError)
+        expect { @trans.set_max_decompressed_size(Thrift::HeaderTransport::MAX_FRAME_SIZE + 1) }.to raise_error(ArgumentError)
+      end
+
+      it "should decompress ZLIB payload within the limit" do
+        write_buf = Thrift::MemoryBufferTransport.new
+        writer = Thrift::HeaderTransport.new(write_buf)
+        writer.add_transform(Thrift::HeaderTransformID::ZLIB)
+        writer.write("A" * 1_000)
+        writer.flush
+
+        written_data = write_buf.read(write_buf.available)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(written_data))
+        read_trans.set_max_decompressed_size(2_000)
+
+        expect(read_trans.read(1_000)).to eq("A" * 1_000)
+      end
+
+      it "should raise SIZE_LIMIT TransportException when decompressed output exceeds the limit" do
+        write_buf = Thrift::MemoryBufferTransport.new
+        writer = Thrift::HeaderTransport.new(write_buf)
+        writer.add_transform(Thrift::HeaderTransformID::ZLIB)
+        writer.write("A" * 10_000)
+        writer.flush
+
+        written_data = write_buf.read(write_buf.available)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(written_data))
+        read_trans.set_max_decompressed_size(100)
+
+        expect { read_trans.read(1) }.to raise_error(Thrift::TransportException) do |e|
+          expect(e.type).to eq(Thrift::TransportException::SIZE_LIMIT)
+          expect(e.message).to match(/limit/)
+        end
+      end
+    end
+
     describe "read and frame detection" do
       it "should detect Header format" do
         # Write a Header frame

@@ -74,6 +74,12 @@ module Thrift
     # Maximum frame size (~1GB)
     MAX_FRAME_SIZE = 0x3FFFFFFF
 
+    # Default decompressed-size cap for ZLIB transform (~15.6 MB, matches other Thrift bindings)
+    DEFAULT_MAX_DECOMPRESSED_SIZE = 16_384_000
+
+    # Chunk size for streaming inflate loop
+    ZLIB_INFLATE_CHUNK_SIZE = 16_384
+
     # Binary protocol version mask and version 1
     BINARY_VERSION_MASK = 0xffff0000
     BINARY_VERSION_1 = 0x80010000
@@ -113,6 +119,7 @@ module Thrift
       @sequence_id = 0
       @flags = 0
       @max_frame_size = MAX_FRAME_SIZE
+      @max_decompressed_size = DEFAULT_MAX_DECOMPRESSED_SIZE
     end
 
     def sequence_id=(sequence_id)
@@ -171,6 +178,14 @@ module Thrift
         raise ArgumentError, "max_frame_size must be > 0 and <= #{MAX_FRAME_SIZE}"
       end
       @max_frame_size = size
+    end
+
+    # Sets the maximum allowed decompressed size for ZLIB transforms
+    def set_max_decompressed_size(size)
+      if size <= 0 || size > MAX_FRAME_SIZE
+        raise ArgumentError, "max_decompressed_size must be > 0 and <= #{MAX_FRAME_SIZE}"
+      end
+      @max_decompressed_size = size
     end
 
     def read(sz)
@@ -370,11 +385,41 @@ module Thrift
       payload = buf.read
       transforms.each do |transform_id|
         if transform_id == HeaderTransformID::ZLIB
-          payload = Zlib::Inflate.inflate(payload)
+          payload = bounded_inflate(payload)
         end
       end
 
       StringIO.new(payload)
+    end
+
+    # Inflates +compressed+ with a running byte-count check against @max_decompressed_size.
+    # Raises TransportException::SIZE_LIMIT if the decompressed output would exceed the limit.
+    def bounded_inflate(compressed)
+      inflater = Zlib::Inflate.new
+      buffer = Bytes.empty_byte_buffer
+      offset = 0
+      begin
+        while offset < compressed.bytesize
+          buffer << inflater.inflate(compressed.byteslice(offset, ZLIB_INFLATE_CHUNK_SIZE))
+          if buffer.bytesize > @max_decompressed_size
+            raise TransportException.new(
+              TransportException::SIZE_LIMIT,
+              "Decompressed size exceeds limit of #{@max_decompressed_size}"
+            )
+          end
+          offset += ZLIB_INFLATE_CHUNK_SIZE
+        end
+        buffer << inflater.finish
+        if buffer.bytesize > @max_decompressed_size
+          raise TransportException.new(
+            TransportException::SIZE_LIMIT,
+            "Decompressed size exceeds limit of #{@max_decompressed_size}"
+          )
+        end
+        buffer
+      ensure
+        inflater.close rescue nil
+      end
     end
 
     # Flushes data in Header format
