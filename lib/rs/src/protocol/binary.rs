@@ -365,6 +365,8 @@ where
 {
     strict: bool,
     pub transport: T, // FIXME: do not make public; only public for testing!
+    config: TConfiguration,
+    recursion_depth: usize,
 }
 
 impl<T> TBinaryOutputProtocol<T>
@@ -376,7 +378,32 @@ where
     /// Set `strict` to `true` if all outgoing messages should contain the
     /// protocol version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryOutputProtocol<T> {
-        TBinaryOutputProtocol { strict, transport }
+        Self::with_config(transport, strict, TConfiguration::default())
+    }
+
+    pub fn with_config(
+        transport: T,
+        strict: bool,
+        config: TConfiguration,
+    ) -> TBinaryOutputProtocol<T> {
+        TBinaryOutputProtocol {
+            strict,
+            transport,
+            config,
+            recursion_depth: 0,
+        }
+    }
+
+    fn check_recursion_depth(&self) -> crate::Result<()> {
+        if let Some(limit) = self.config.max_recursion_depth() {
+            if self.recursion_depth >= limit {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::DepthLimit,
+                    format!("Maximum recursion depth {} exceeded", limit),
+                )));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -403,10 +430,13 @@ where
     }
 
     fn write_struct_begin(&mut self, _: &TStructIdentifier) -> crate::Result<()> {
+        self.check_recursion_depth()?;
+        self.recursion_depth += 1;
         Ok(())
     }
 
     fn write_struct_end(&mut self) -> crate::Result<()> {
+        self.recursion_depth -= 1;
         Ok(())
     }
 
@@ -753,7 +783,15 @@ mod tests {
 
     #[test]
     fn must_write_struct_end() {
-        assert_no_write(|o| o.write_struct_end(), true);
+        // write_struct_end now balances the recursion-depth counter against
+        // write_struct_begin, so pair them (both still emit no bytes).
+        assert_no_write(
+            |o| {
+                o.write_struct_begin(&TStructIdentifier::new("foo"))?;
+                o.write_struct_end()
+            },
+            true,
+        );
     }
 
     #[test]

@@ -265,4 +265,237 @@ mod tests {
             "field following a suppressed union must not be silently dropped due to stream corruption"
         );
     }
+
+    // ---- Recursion depth limiting (THRIFT-6057) ----
+    //
+    // These exercise the generated read/write recursion guard (a thread-local
+    // DepthGuard acquired at the top of every struct/union read_from_in_protocol
+    // and write_to_out_protocol) through full round-trips over the recursive
+    // types in test/Recursive.thrift, not by poking the guard directly.
+    //
+    // NB: both skip() and the struct-read guard raise ProtocolErrorKind::DepthLimit,
+    // so a crafted over-limit payload must use the *known* recursive field (id 1,
+    // a struct) which the generated reader matches-and-recurses into -- an unknown
+    // field would be skip()-ed and trip the unrelated skip guard. The over-limit
+    // assertions therefore also rely on the master baseline (no DepthGuard emitted)
+    // to confirm the new guard -- not skip -- is what fires.
+
+    const LIMIT: usize = 64;
+
+    fn build_co_rec(depth: usize) -> recursive::CoRec {
+        if depth <= 1 {
+            recursive::CoRec { other: None }
+        } else {
+            recursive::CoRec {
+                other: Some(Box::new(build_co_rec2(depth - 1))),
+            }
+        }
+    }
+
+    fn build_co_rec2(depth: usize) -> recursive::CoRec2 {
+        if depth <= 1 {
+            recursive::CoRec2 { other: None }
+        } else {
+            recursive::CoRec2 {
+                other: Some(build_co_rec(depth - 1)),
+            }
+        }
+    }
+
+    fn build_co_error(depth: usize) -> recursive::CoError {
+        if depth <= 1 {
+            recursive::CoError { other: None }
+        } else {
+            recursive::CoError {
+                other: Some(Box::new(build_co_error2(depth - 1))),
+            }
+        }
+    }
+
+    fn build_co_error2(depth: usize) -> recursive::CoError2 {
+        if depth <= 1 {
+            recursive::CoError2 { other: None }
+        } else {
+            recursive::CoError2 {
+                other: Some(build_co_error(depth - 1)),
+            }
+        }
+    }
+
+    // Write a `depth`-deep nesting of structs that each carry the recursive
+    // field (id 1, a struct) using raw protocol calls, so no write-side guard is
+    // involved -- reading it back through a generated reader is what must trip
+    // the read-side guard.
+    fn write_nested_chain(prot: &mut dyn thrift::protocol::TOutputProtocol, depth: usize) {
+        use thrift::protocol::{TFieldIdentifier, TOutputProtocol, TStructIdentifier, TType};
+        prot.write_struct_begin(&TStructIdentifier {
+            name: "Rec".to_owned(),
+        })
+        .unwrap();
+        if depth > 1 {
+            prot.write_field_begin(&TFieldIdentifier {
+                name: None,
+                field_type: TType::Struct,
+                id: Some(1),
+            })
+            .unwrap();
+            write_nested_chain(prot, depth - 1);
+            prot.write_field_end().unwrap();
+        }
+        prot.write_field_stop().unwrap();
+        prot.write_struct_end().unwrap();
+    }
+
+    fn assert_depth_limit<T: std::fmt::Debug>(result: thrift::Result<T>) {
+        match result {
+            Err(thrift::Error::Protocol(pe)) => assert_eq!(
+                pe.kind,
+                thrift::ProtocolErrorKind::DepthLimit,
+                "expected DepthLimit, got {:?}",
+                pe
+            ),
+            other => panic!("expected DepthLimit protocol error, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn recursion_depth_struct_round_trip_and_limit() {
+        use std::io::Cursor;
+        use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TSerializable};
+
+        // A chain exactly at the limit round-trips and is value-preserving.
+        let original = build_co_rec(LIMIT);
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut o = TBinaryOutputProtocol::new(Cursor::new(&mut buf), false);
+            original
+                .write_to_out_protocol(&mut o)
+                .expect("at-limit write must succeed");
+        }
+        let read_back = recursive::CoRec::read_from_in_protocol(&mut TBinaryInputProtocol::new(
+            Cursor::new(buf),
+            false,
+        ))
+        .expect("at-limit read must succeed");
+        assert_eq!(original, read_back);
+
+        // One level past the limit: the write is rejected (counter restored on drop).
+        let mut o = TBinaryOutputProtocol::new(Cursor::new(Vec::new()), false);
+        assert_depth_limit(build_co_rec(LIMIT + 1).write_to_out_protocol(&mut o));
+
+        // One level past the limit: a crafted payload is rejected on read.
+        let mut deep: Vec<u8> = Vec::new();
+        {
+            // craft with an unbounded writer so the bound is exercised only on read
+            let mut o = TBinaryOutputProtocol::with_config(
+                Cursor::new(&mut deep),
+                false,
+                thrift::TConfiguration::no_limits(),
+            );
+            write_nested_chain(&mut o, LIMIT + 1);
+        }
+        assert_depth_limit(recursive::CoRec::read_from_in_protocol(
+            &mut TBinaryInputProtocol::new(Cursor::new(deep), false),
+        ));
+    }
+
+    #[test]
+    fn recursion_depth_exception_round_trip_and_limit() {
+        use std::io::Cursor;
+        use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TSerializable};
+
+        let original = build_co_error(LIMIT);
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut o = TBinaryOutputProtocol::new(Cursor::new(&mut buf), false);
+            original
+                .write_to_out_protocol(&mut o)
+                .expect("at-limit write must succeed");
+        }
+        let read_back = recursive::CoError::read_from_in_protocol(&mut TBinaryInputProtocol::new(
+            Cursor::new(buf),
+            false,
+        ))
+        .expect("at-limit read must succeed");
+        assert_eq!(original, read_back);
+
+        let mut o = TBinaryOutputProtocol::new(Cursor::new(Vec::new()), false);
+        assert_depth_limit(build_co_error(LIMIT + 1).write_to_out_protocol(&mut o));
+
+        let mut deep: Vec<u8> = Vec::new();
+        {
+            // craft with an unbounded writer so the bound is exercised only on read
+            let mut o = TBinaryOutputProtocol::with_config(
+                Cursor::new(&mut deep),
+                false,
+                thrift::TConfiguration::no_limits(),
+            );
+            write_nested_chain(&mut o, LIMIT + 1);
+        }
+        assert_depth_limit(recursive::CoError::read_from_in_protocol(
+            &mut TBinaryInputProtocol::new(Cursor::new(deep), false),
+        ));
+    }
+
+    #[test]
+    fn recursion_depth_union_read_limit() {
+        use std::io::Cursor;
+        use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TSerializable};
+
+        // CoUnion has only the recursive variant (no leaf), so a finite value
+        // cannot be constructed/written; exercise the union read guard with a
+        // crafted over-limit payload.
+        let mut deep: Vec<u8> = Vec::new();
+        {
+            // craft with an unbounded writer so the bound is exercised only on read
+            let mut o = TBinaryOutputProtocol::with_config(
+                Cursor::new(&mut deep),
+                false,
+                thrift::TConfiguration::no_limits(),
+            );
+            write_nested_chain(&mut o, LIMIT + 1);
+        }
+        assert_depth_limit(recursive::CoUnion::read_from_in_protocol(
+            &mut TBinaryInputProtocol::new(Cursor::new(deep), false),
+        ));
+    }
+
+    // The bound lives in the protocol's struct read/write, so it applies to every
+    // generated type uniformly; the binary tests above cover struct/union/exception
+    // routing. This confirms the compact protocol enforces the same bound.
+    #[test]
+    fn recursion_depth_compact_round_trip_and_limit() {
+        use std::io::Cursor;
+        use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol, TSerializable};
+
+        let original = build_co_rec(LIMIT);
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut o = TCompactOutputProtocol::new(Cursor::new(&mut buf));
+            original
+                .write_to_out_protocol(&mut o)
+                .expect("at-limit write must succeed");
+        }
+        let read_back = recursive::CoRec::read_from_in_protocol(&mut TCompactInputProtocol::new(
+            Cursor::new(buf),
+        ))
+        .expect("at-limit read must succeed");
+        assert_eq!(original, read_back);
+
+        let mut o = TCompactOutputProtocol::new(Cursor::new(Vec::new()));
+        assert_depth_limit(build_co_rec(LIMIT + 1).write_to_out_protocol(&mut o));
+
+        let mut deep: Vec<u8> = Vec::new();
+        {
+            // craft with an unbounded writer so the bound is exercised only on read
+            let mut o = TCompactOutputProtocol::with_config(
+                Cursor::new(&mut deep),
+                thrift::TConfiguration::no_limits(),
+            );
+            write_nested_chain(&mut o, LIMIT + 1);
+        }
+        assert_depth_limit(recursive::CoRec::read_from_in_protocol(
+            &mut TCompactInputProtocol::new(Cursor::new(deep)),
+        ));
+    }
 }
