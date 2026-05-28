@@ -30,6 +30,13 @@ github:
     # Linear history and squashed commits are preferred.
     # See https://thrift.apache.org/docs/HowToContribute
     merge: false
+  pull_requests:
+    # allow auto-merge => We ALWAYS want a human reviewer acting intentionally on any PR
+    allow_auto_merge: false
+    # enable updating head branches of pull requests => that sometimes gives weird history even on rebase, not recommended
+    allow_update_branch: false
+    # auto-delete head branches after being merged => highly useful
+    del_branch_on_merge: true 
   features:
     # We use thrift-website repo for documentation
     # See https://github.com/apache/thrift-website
