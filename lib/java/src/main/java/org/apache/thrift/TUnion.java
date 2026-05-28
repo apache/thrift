@@ -231,21 +231,26 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
       struct.setField_ = null;
       struct.value_ = null;
 
-      iprot.readStructBegin();
+      iprot.incrementRecursionDepth();
+      try {
+        iprot.readStructBegin();
 
-      TField field = iprot.readFieldBegin();
+        TField field = iprot.readFieldBegin();
 
-      struct.value_ = struct.standardSchemeReadValue(iprot, field);
-      if (struct.value_ != null) {
-        struct.setField_ = struct.enumForId(field.id);
+        struct.value_ = struct.standardSchemeReadValue(iprot, field);
+        if (struct.value_ != null) {
+          struct.setField_ = struct.enumForId(field.id);
+        }
+
+        iprot.readFieldEnd();
+        // this is so that we will eat the stop byte. we could put a check here to
+        // make sure that it actually *is* the stop byte, but it's faster to do it
+        // this way.
+        iprot.readFieldBegin();
+        iprot.readStructEnd();
+      } finally {
+        iprot.decrementRecursionDepth();
       }
-
-      iprot.readFieldEnd();
-      // this is so that we will eat the stop byte. we could put a check here to
-      // make sure that it actually *is* the stop byte, but it's faster to do it
-      // this way.
-      iprot.readFieldBegin();
-      iprot.readStructEnd();
     }
 
     @Override
@@ -253,12 +258,17 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
       if (struct.getSetField() == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
-      oprot.writeStructBegin(struct.getStructDesc());
-      oprot.writeFieldBegin(struct.getFieldDesc(struct.setField_));
-      struct.standardSchemeWriteValue(oprot);
-      oprot.writeFieldEnd();
-      oprot.writeFieldStop();
-      oprot.writeStructEnd();
+      oprot.incrementRecursionDepth();
+      try {
+        oprot.writeStructBegin(struct.getStructDesc());
+        oprot.writeFieldBegin(struct.getFieldDesc(struct.setField_));
+        struct.standardSchemeWriteValue(oprot);
+        oprot.writeFieldEnd();
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      } finally {
+        oprot.decrementRecursionDepth();
+      }
     }
   }
 
@@ -274,10 +284,15 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     public void read(TProtocol iprot, TUnion struct) throws TException {
       struct.setField_ = null;
       struct.value_ = null;
-      short fieldID = iprot.readI16();
-      struct.value_ = struct.tupleSchemeReadValue(iprot, fieldID);
-      if (struct.value_ != null) {
-        struct.setField_ = struct.enumForId(fieldID);
+      iprot.incrementRecursionDepth();
+      try {
+        short fieldID = iprot.readI16();
+        struct.value_ = struct.tupleSchemeReadValue(iprot, fieldID);
+        if (struct.value_ != null) {
+          struct.setField_ = struct.enumForId(fieldID);
+        }
+      } finally {
+        iprot.decrementRecursionDepth();
       }
     }
 
@@ -286,8 +301,13 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
       if (struct.getSetField() == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
-      oprot.writeI16(struct.setField_.getThriftFieldId());
-      struct.tupleSchemeWriteValue(oprot);
+      oprot.incrementRecursionDepth();
+      try {
+        oprot.writeI16(struct.setField_.getThriftFieldId());
+        struct.tupleSchemeWriteValue(oprot);
+      } finally {
+        oprot.decrementRecursionDepth();
+      }
     }
   }
 }
