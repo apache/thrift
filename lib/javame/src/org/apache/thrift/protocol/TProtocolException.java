@@ -35,6 +35,7 @@ public class TProtocolException extends TException {
   public static final int SIZE_LIMIT = 3;
   public static final int BAD_VERSION = 4;
   public static final int NOT_IMPLEMENTED = 5;
+  public static final int DEPTH_LIMIT = 6;
 
   protected int type_ = UNKNOWN;
 
