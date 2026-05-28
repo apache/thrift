@@ -501,6 +501,8 @@ where
     pending_write_bool_field_identifier: Option<TFieldIdentifier>,
     // Underlying transport used for byte-level operations.
     transport: T,
+    config: TConfiguration,
+    recursion_depth: usize,
 }
 
 impl<T> TCompactOutputProtocol<T>
@@ -509,12 +511,30 @@ where
 {
     /// Create a `TCompactOutputProtocol` that writes bytes to `transport`.
     pub fn new(transport: T) -> TCompactOutputProtocol<T> {
+        Self::with_config(transport, TConfiguration::default())
+    }
+
+    pub fn with_config(transport: T, config: TConfiguration) -> TCompactOutputProtocol<T> {
         TCompactOutputProtocol {
             last_write_field_id: 0,
             write_field_id_stack: Vec::new(),
             pending_write_bool_field_identifier: None,
             transport,
+            config,
+            recursion_depth: 0,
         }
+    }
+
+    fn check_recursion_depth(&self) -> crate::Result<()> {
+        if let Some(limit) = self.config.max_recursion_depth() {
+            if self.recursion_depth >= limit {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::DepthLimit,
+                    format!("Maximum recursion depth {} exceeded", limit),
+                )));
+            }
+        }
+        Ok(())
     }
 
     // FIXME: field_type as unconstrained u8 is bad
@@ -578,6 +598,8 @@ where
     }
 
     fn write_struct_begin(&mut self, _: &TStructIdentifier) -> crate::Result<()> {
+        self.check_recursion_depth()?;
+        self.recursion_depth += 1;
         self.write_field_id_stack.push(self.last_write_field_id);
         self.last_write_field_id = 0;
         Ok(())
@@ -589,6 +611,7 @@ where
             .write_field_id_stack
             .pop()
             .expect("should have previous field ids");
+        self.recursion_depth -= 1;
         Ok(())
     }
 
