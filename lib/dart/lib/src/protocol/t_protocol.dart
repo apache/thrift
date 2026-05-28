@@ -20,7 +20,22 @@ part of thrift;
 abstract class TProtocol {
   final TTransport transport;
 
+  int _recursionDepth = 0;
+  static const int _defaultRecursionDepth = 64;
+
   TProtocol(this.transport);
+
+  void incrementRecursionDepth() {
+    if (_recursionDepth >= _defaultRecursionDepth) {
+      throw TProtocolError(
+          TProtocolErrorType.DEPTH_LIMIT, "Maximum recursion depth exceeded");
+    }
+    _recursionDepth++;
+  }
+
+  void decrementRecursionDepth() {
+    _recursionDepth--;
+  }
 
   /// Write
   void writeMessageBegin(TMessage message);

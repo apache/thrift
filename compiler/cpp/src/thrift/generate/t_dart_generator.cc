@@ -889,6 +889,9 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
 
   // Declare stack tmp variables and read struct header
   indent(out) << "TField field;" << '\n';
+  indent(out) << "iprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try";
+  scope_up(out);
   indent(out) << "iprot.readStructBegin();" << '\n';
 
   // Loop over reading in fields
@@ -963,7 +966,12 @@ void t_dart_generator::generate_dart_struct_reader(ostream& out, t_struct* tstru
   // performs various checks (e.g. check that all required fields are set)
   indent(out) << "validate();" << '\n';
 
-  scope_down(out, "\n\n");
+  scope_down(out, " finally"); // close try, begin finally
+  scope_up(out);
+  indent(out) << "iprot.decrementRecursionDepth();" << '\n';
+  scope_down(out); // close finally
+
+  scope_down(out, "\n\n"); // close read() function
 }
 
 // generates dart method to perform various checks
@@ -1029,6 +1037,9 @@ void t_dart_generator::generate_dart_struct_writer(ostream& out, t_struct* tstru
   // performs various checks (e.g. check that all required fields are set)
   indent(out) << "validate();" << '\n' << '\n';
 
+  indent(out) << "oprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try";
+  scope_up(out);
   indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1064,7 +1075,12 @@ void t_dart_generator::generate_dart_struct_writer(ostream& out, t_struct* tstru
   indent(out) << "oprot.writeFieldStop();" << '\n' << indent() << "oprot.writeStructEnd();"
       << '\n';
 
-  scope_down(out, "\n\n");
+  scope_down(out, " finally"); // close try, begin finally
+  scope_up(out);
+  indent(out) << "oprot.decrementRecursionDepth();" << '\n';
+  scope_down(out); // close finally
+
+  scope_down(out, "\n\n"); // close write() function
 }
 
 /**
@@ -1082,6 +1098,9 @@ void t_dart_generator::generate_dart_struct_result_writer(ostream& out, t_struct
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
+  indent(out) << "oprot.incrementRecursionDepth();" << '\n';
+  indent(out) << "try";
+  scope_up(out);
   indent(out) << "oprot.writeStructBegin(_STRUCT_DESC);" << '\n' << '\n';
 
   bool first = true;
@@ -1113,7 +1132,12 @@ void t_dart_generator::generate_dart_struct_result_writer(ostream& out, t_struct
   indent(out) << "oprot.writeFieldStop();" << '\n' << indent()
       << "oprot.writeStructEnd();" << '\n';
 
-  scope_down(out, "\n\n");
+  scope_down(out, " finally"); // close try, begin finally
+  scope_up(out);
+  indent(out) << "oprot.decrementRecursionDepth();" << '\n';
+  scope_down(out); // close finally
+
+  scope_down(out, "\n\n"); // close write() function
 }
 
 void t_dart_generator::generate_generic_field_getters(std::ostream& out,
