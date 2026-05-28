@@ -37,6 +37,11 @@ github:
     allow_update_branch: false
     # auto-delete head branches after being merged => highly useful
     del_branch_on_merge: true 
+  copilot_code_review:
+    # lets find out how good it is
+    enabled: true
+    review_drafts: false
+    review_on_push: true	
   features:
     # We use thrift-website repo for documentation
     # See https://github.com/apache/thrift-website
