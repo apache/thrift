@@ -31,6 +31,8 @@ uses
   TestConstants,
   TestLogger,
   ConsoleHelper,
+  Recursive,
+  UnitTestTransportFactory,
   Thrift,
   Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
@@ -51,6 +53,9 @@ type
   strict private
     FLogger : ITestLogger;
 
+    class function MakeNestedRecs(  nRecs : Integer) : ICoRec;  static;
+    class function MakeNestedCoRec2( nRecs : Integer) : ICoRec2;  static;
+
   strict protected
     // Helper
     procedure StartTestGroup( const aGroup : string; const aTest : TClientTestGroup); inline;
@@ -58,6 +63,7 @@ type
 
     // Test impl
     procedure JSONProtocolReadWriteTest;
+    procedure RecursionDepthTest;
     procedure HashSetTest;
     {$IFDEF Win64}
     procedure UseInterlockedExchangeAdd64;
@@ -112,6 +118,7 @@ begin
   {$ENDIF}
 
   JSONProtocolReadWriteTest;
+  RecursionDepthTest;
   HashSetTest;
 end;
 
@@ -282,6 +289,105 @@ begin
 end;
 
 
+class function TQuickUnitTests.MakeNestedRecs( nRecs : Integer) : ICoRec;
+begin
+  if nRecs <= 0 then Exit(nil);
+  Dec(nRecs);
+
+  result := TCoRecImpl.Create;
+  result.Other := MakeNestedCoRec2( nRecs);
+end;
+
+
+class function TQuickUnitTests.MakeNestedCoRec2( nRecs : Integer) : ICoRec2;
+begin
+  if nRecs <= 0 then Exit(nil);
+  Dec(nRecs);
+
+  result := TCoRec2Impl.Create;
+  result.Other := MakeNestedRecs( nRecs);
+end;
+
+
+procedure TQuickUnitTests.RecursionDepthTest;
+var config  : IThriftConfiguration;
+    stack   : TTransportProtocolStack;
+    buffer  : TMemoryStream;
+    data    : ICoRec;
+    bThrown : Boolean;
+    ptyp    : TKnownProtocol;
+const
+  TEST_LIMIT = 5;
+begin
+  StartTestGroup( 'RecursionDepthTest', test_Unknown);
+
+  // Test enforcement of the limit at the expected level.
+  // If it throws too early or too late the test fails as well.
+
+  config := TThriftConfigurationImpl.Create;
+
+  buffer := nil;
+  for ptyp in [Low(TKnownProtocol) .. High(TKnownProtocol)] do begin
+    // ensure LIMIT is set properly for each round
+    config.RecursionLimit := TEST_LIMIT;
+
+    // below limit should succeed
+    data  := MakeNestedRecs( TEST_LIMIT - 1);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, true, buffer);
+    data.Write(stack.Proto);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, false, buffer);
+    data.Read(stack.Proto);
+
+    // at the limit should succeed
+    data  := MakeNestedRecs( TEST_LIMIT);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, true, buffer);
+    data.Write(stack.Proto);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, false, buffer);
+    data.Read(stack.Proto);
+
+    // write over limit should fail with the expected error
+    data := MakeNestedRecs( TEST_LIMIT + 1);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, true, buffer);
+    bThrown := FALSE;
+    try
+      data.Write(stack.Proto);
+    except
+      on TProtocolExceptionDepthLimit do bThrown := TRUE;
+    end;
+    Expect( bThrown, 'Expected '+TProtocolExceptionDepthLimit.ClassName);
+
+    // read over limit should fail with the expected error
+    config.RecursionLimit := TEST_LIMIT + 1;
+    data  := MakeNestedRecs( TEST_LIMIT + 1);
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, true, buffer);
+    data.Write(stack.Proto);
+    config.RecursionLimit := TEST_LIMIT;
+    stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, false, buffer);
+    bThrown := FALSE;
+    try
+      data.Read(stack.Proto);
+    except
+      on TProtocolExceptionDepthLimit do bThrown := TRUE;
+    end;
+    Expect( bThrown, 'Expected '+TProtocolExceptionDepthLimit.ClassName);
+
+    // Bonus test: endless recursion should fail with the expected error
+    bThrown := FALSE;
+    try
+      data := MakeNestedRecs( 2) as ICoRec;
+      data.Other.Other := data;      // this is evil
+      stack := MakeTransportProtocolStack( TKnownProtocol.prot_Binary, TLayeredTransport.trns_None, config, true, buffer);
+      data.Write(stack.Proto);
+    except
+      on TProtocolExceptionDepthLimit do bThrown := TRUE;
+    end;
+    Expect( bThrown, 'Expected '+TProtocolExceptionDepthLimit.ClassName);
+  end;
+
+  FLogger.StartTestGroup( '', test_Unknown);  // no more tests here
+end;
+
+
 procedure TQuickUnitTests.HashSetTest;
 var container : IThriftHashSet<Integer>;
     testdata : array of Integer;
@@ -339,10 +445,6 @@ begin
   container.Clear;
   Expect( container.Count = 0, 'count=0 after clear');
 end;
-
-
-
-
 
 
 
