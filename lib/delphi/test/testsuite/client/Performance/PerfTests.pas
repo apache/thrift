@@ -30,6 +30,7 @@ uses
   Thrift.Stream,
   ConsoleHelper,
   TestConstants,
+  UnitTestTransportFactory,
   DataFactory;
 
 type
@@ -118,39 +119,11 @@ end;
 
 
 function TPerformanceTests.GenericProtocolFactory(const ptyp : TKnownProtocol; const layered : TLayeredTransport; const forWrite : Boolean) : IProtocol;
-var newBuf : TMemoryStream;
-    stream : IThriftStream;
-    trans  : IStreamTransport;
-const COPY_ENTIRE_STREAM = 0;
+var stack : TTransportProtocolStack;
 begin
-  // read happens after write here, so let's take over the written bytes
-  newBuf := TMemoryStream.Create;
-  if not forWrite then newBuf.CopyFrom( FMemBuffer, COPY_ENTIRE_STREAM);
-  FMemBuffer := newBuf;
-  FMemBuffer.Position := 0;
-
-  //  layered transports anyone?
-  stream := TThriftStreamAdapterDelphi.Create( newBuf, TRUE);
-  if forWrite
-  then trans := TStreamTransportImpl.Create( nil, stream, FConfig)
-  else trans := TStreamTransportImpl.Create( stream, nil, FConfig);
-  case layered of
-    trns_Framed   :  FTransport := TFramedTransportImpl.Create( trans);
-    trns_Buffered :  FTransport := TBufferedTransportImpl.Create( trans);
-  else
-    FTransport := trans;
-  end;
-
-  if not FTransport.IsOpen
-  then FTransport.Open;
-
-  case ptyp of
-    prot_Binary  :  result := TBinaryProtocolImpl.Create(trans);
-    prot_Compact :  result := TCompactProtocolImpl.Create(trans);
-    prot_JSON    :  result := TJSONProtocolImpl.Create(trans);
-  else
-    ASSERT(FALSE);
-  end;
+  stack := MakeTransportProtocolStack( ptyp, layered, FConfig, forWrite, FMemBuffer);
+  FTransport := stack.Trans;
+  result := stack.Proto;
 end;
 
 
