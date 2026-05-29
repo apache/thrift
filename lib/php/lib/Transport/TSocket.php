@@ -58,6 +58,21 @@ class TSocket extends TTransport
     protected $handle = null;
 
     /**
+     * Connect timeout in seconds.
+     *
+     * Combined with connectTimeoutUsec this is used for the fsockopen()
+     * timeout. Null means "use the send timeout" for backwards compatibility
+     * with callers that only configure setSendTimeout().
+     */
+    protected ?int $connectTimeoutSec = null;
+
+    /**
+     * Connect timeout in microseconds. Only consulted when connectTimeoutSec
+     * is non-null.
+     */
+    protected int $connectTimeoutUsec = 0;
+
+    /**
      * Send timeout in seconds.
      *
      * Combined with sendTimeoutUsec this is used for send timeouts.
@@ -70,6 +85,13 @@ class TSocket extends TTransport
      * Combined with sendTimeoutSec this is used for send timeouts.
      */
     protected int $sendTimeoutUsec = 100000;
+
+    /**
+     * True once a caller invoked setSendTimeout(). Used to fire a deprecation
+     * notice in open() when the caller relies on the send-timeout-as-
+     * connect-timeout coupling that this class used to enforce.
+     */
+    private bool $sendTimeoutCustomized = false;
 
     /**
      * Recv timeout in seconds
@@ -153,6 +175,23 @@ class TSocket extends TTransport
     }
 
     /**
+     * Sets the timeout used while establishing the TCP connection (the
+     * `timeout` argument passed to fsockopen()/pfsockopen()).
+     *
+     * When unset, the send timeout is used for the connect step too, for
+     * backwards compatibility with callers that only ever set
+     * setSendTimeout().
+     *
+     * @param int $timeout Timeout in milliseconds.
+     */
+    public function setConnectTimeout(int $timeout): void
+    {
+        $this->connectTimeoutSec = intdiv($timeout, 1000);
+        $this->connectTimeoutUsec =
+            ($timeout - ($this->connectTimeoutSec * 1000)) * 1000;
+    }
+
+    /**
      * @param int $timeout Timeout in milliseconds.
      */
     public function setSendTimeout(int $timeout): void
@@ -160,6 +199,7 @@ class TSocket extends TTransport
         $this->sendTimeoutSec = intdiv($timeout, 1000);
         $this->sendTimeoutUsec =
             ($timeout - ($this->sendTimeoutSec * 1000)) * 1000;
+        $this->sendTimeoutCustomized = true;
     }
 
     /**
@@ -255,13 +295,27 @@ class TSocket extends TTransport
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
+        if ($this->connectTimeoutSec !== null) {
+            $connectTimeout = $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000);
+        } else {
+            if ($this->sendTimeoutCustomized) {
+                trigger_error(
+                    'TSocket::open() reusing setSendTimeout() for the connect '
+                    . 'step is deprecated and will be removed in the next '
+                    . 'version; call setConnectTimeout() explicitly.',
+                    E_USER_DEPRECATED,
+                );
+            }
+            $connectTimeout = $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
+        }
+
         if ($this->persist) {
             $this->handle = @pfsockopen(
                 $this->host,
                 $this->port,
                 $errno,
                 $errstr,
-                $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000)
+                $connectTimeout
             );
         } else {
             $this->handle = @fsockopen(
@@ -269,7 +323,7 @@ class TSocket extends TTransport
                 $this->port,
                 $errno,
                 $errstr,
-                $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000)
+                $connectTimeout
             );
         }
 
