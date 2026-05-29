@@ -1166,11 +1166,16 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
-        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+        $readAllReturns = [
             pack('c', TType::I32),
             pack('c', TType::STRING),
-            pack('N', 0xffffffff)
-        );
+            pack('N', 0xffffffff),
+        ];
+        $transport->method('readAll')
+            ->willReturnCallback(function () use ($readAllReturns) {
+                static $iteration = 0;
+                return $readAllReturns[$iteration++];
+            });
 
         $this->expectException(TProtocolException::class);
         $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
@@ -1182,10 +1187,15 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
-        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+        $readAllReturns = [
             pack('c', TType::I32),
-            pack('N', 0xffffffff)
-        );
+            pack('N', 0xffffffff),
+        ];
+        $transport->method('readAll')
+            ->willReturnCallback(function () use ($readAllReturns) {
+                static $iteration = 0;
+                return $readAllReturns[$iteration++];
+            });
 
         $this->expectException(TProtocolException::class);
         $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
@@ -1197,10 +1207,15 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
-        $transport->method('readAll')->willReturnOnConsecutiveCalls(
+        $readAllReturns = [
             pack('c', TType::I32),
-            pack('N', 0xffffffff)
-        );
+            pack('N', 0xffffffff),
+        ];
+        $transport->method('readAll')
+            ->willReturnCallback(function () use ($readAllReturns) {
+                static $iteration = 0;
+                return $readAllReturns[$iteration++];
+            });
 
         $this->expectException(TProtocolException::class);
         $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
@@ -1212,9 +1227,8 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
-        $transport->method('readAll')->willReturnOnConsecutiveCalls(
-            pack('N', 0xffffffff)
-        );
+        $transport->method('readAll')
+            ->willReturn(pack('N', 0xffffffff));
 
         $this->expectException(TProtocolException::class);
         $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
