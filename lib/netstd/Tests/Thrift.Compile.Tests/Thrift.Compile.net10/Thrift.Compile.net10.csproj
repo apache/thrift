@@ -78,6 +78,7 @@
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../name_conflicts.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../../../../../test/ThriftTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../../../../../test/ExceptionStruct.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../../../../../test/Recursive.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../../../../../contrib/fb303/if/fb303.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../Thrift5253.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net10 -r ../Thrift5320.thrift" />
