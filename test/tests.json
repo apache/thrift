@@ -555,7 +555,8 @@
     "server": {
       "transports": [
         "buffered",
-        "framed"
+        "framed",
+        "http"
       ],
       "sockets": [
         "ip"
@@ -583,7 +584,8 @@
       "timeout": 6,
       "transports": [
         "buffered",
-        "framed"
+        "framed",
+        "http"
       ],
       "sockets": [
         "ip"

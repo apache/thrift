@@ -31,6 +31,7 @@
         "php-mock/php-mock-phpunit": "^2.10",
         "phpstan/phpstan": "^1.12",
         "nyholm/psr7": "^1.8",
+        "guzzlehttp/guzzle": "^7.8",
         "ext-json": "*",
         "ext-xml": "*",
         "ext-curl": "*",
