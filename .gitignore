@@ -304,6 +304,7 @@ SKILL.md
 /lib/ocaml/*/*.mldylib
 /lib/ocaml/Makefile
 /lib/ocaml/OCamlMakefile
+/lib/rb/vendor/
 /lib/rs/target/
 /lib/rs/Cargo.lock
 /lib/rs/test/Cargo.lock
@@ -377,6 +378,7 @@ SKILL.md
 /test/hs/TestServer
 /test/php/php_ext_dir/
 /test/py.twisted/_trial_temp/
+/test/rb/vendor/
 /test/netstd/**/bin
 /test/netstd/**/obj
 /test/netstd/**/launchSettings.json

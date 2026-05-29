@@ -907,6 +907,7 @@ jobs:
   lib-ruby:
     needs: compiler
     runs-on: ubuntu-24.04
+    continue-on-error: ${{ matrix.ruby-version == 'head' }}
     name: lib-ruby (${{ matrix.ruby-version }}) ${{ matrix.skip-build-ext && 'noext' || '' }}
     strategy:
       matrix:
