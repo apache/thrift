@@ -44,7 +44,7 @@ union CoUnion2 {
 }
 
 exception CoError {
-  1: CoError2 other
+  1: CoError2 & other
 }
 
 exception CoError2 {
