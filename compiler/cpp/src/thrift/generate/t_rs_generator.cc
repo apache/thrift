@@ -1840,7 +1840,20 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
     f_gen_ << indent() << rust_safe_field_id(member->get_key()) << " => {" << '\n';
     indent_up();
     if (member_is_union) {
+      // Use the resolved (non-Box) type since Box<T>::read_from_in_protocol()
+      // isn't valid syntax; a recursive union variant is stored as Box<T>, so the
+      // value read via the resolved type is re-boxed here. Mirrors the struct
+      // reader (see render_struct_sync_read).
       string member_type = to_rust_type(member_resolved);
+      bool is_boxed = false;
+      {
+        t_type* t = member->get_type();
+        while (t->is_typedef()) {
+          if (((t_typedef*)t)->is_forward_typedef()) { is_boxed = true; break; }
+          t = ((t_typedef*)t)->get_type();
+        }
+      }
+      string val_expr = is_boxed ? "Box::new(val)" : "val";
       string member_read(member_type + "::read_from_in_protocol(i_prot)");
       f_gen_ << indent() << "match " << member_read << " {" << '\n';
       indent_up();
@@ -1849,7 +1862,7 @@ void t_rs_generator::render_union_sync_read(const string& union_name, t_struct* 
       f_gen_ << indent() << "if ret.is_none() {" << '\n';
       indent_up();
       f_gen_ << indent() << "ret = Some(" << union_name << "::" << rust_union_field_name(member)
-             << "(val));" << '\n';
+             << "(" << val_expr << "));" << '\n';
       indent_down();
       f_gen_ << indent() << "}" << '\n';
       f_gen_ << indent() << "received_field_count += 1;" << '\n';
