@@ -334,4 +334,9 @@ impl recursive::TestServiceSyncHandler for RecursiveTestServerHandler {
         println!("{:?}", item);
         Ok(item)
     }
+
+    fn handle_echo_co_union(&self, item: recursive::CoUnion) -> thrift::Result<recursive::CoUnion> {
+        println!("{:?}", item);
+        Ok(item)
+    }
 }
