@@ -1107,6 +1107,93 @@ unittest {
   }
 }
 
+// The recursion guard applies to exceptions as well: a generated Thrift
+// exception is a `class : TException` carrying the same `mixin TStructHelpers`,
+// so its read()/write() forward to the same guarded readStruct/writeStruct as a
+// struct. (Thrift unions generate as plain structs in D, so the struct case
+// above already covers them.) RecError nests through a list for the same reason
+// RecTree does -- a by-value self-reference is not expressible as a D aggregate.
+unittest {
+  import std.exception : collectException;
+  import thrift.protocol.binary : tBinaryProtocol;
+  import thrift.transport.memory : TMemoryBuffer;
+
+  static class RecError : TException {
+    RecError[] children;
+    short item;
+    mixin TStructHelpers!([
+      TFieldMeta("children", 1, TReq.OPTIONAL),
+      TFieldMeta("item", 2, TReq.OPTIONAL),
+    ]);
+  }
+
+  RecError makeChain(uint depth) {
+    auto node = new RecError();
+    node.item = cast(short)depth;
+    if (depth > 1) node.children = [makeChain(depth - 1)];
+    return node;
+  }
+
+  ubyte[] writeError(RecError err) {
+    auto buf = new TMemoryBuffer();
+    err.write(tBinaryProtocol(buf));
+    return buf.getContents().dup;
+  }
+  void readError(in ubyte[] bytes) {
+    auto buf = new TMemoryBuffer(bytes);
+    auto err = new RecError();
+    err.read(tBinaryProtocol(buf));
+  }
+
+  // Keep the test hermetic with respect to the thread-local counter.
+  uint savedDepth = currentRecursionDepth_;
+  scope(exit) currentRecursionDepth_ = savedDepth;
+  currentRecursionDepth_ = 0;
+
+  // A chain exactly at the limit round-trips (off-by-one / no double-count).
+  {
+    auto err = makeChain(DEFAULT_MAX_RECURSION_DEPTH);
+    readError(writeError(err));
+    assert(currentRecursionDepth_ == 0, "counter must unwind to 0");
+  }
+
+  // Writing a chain one level over the limit is rejected with DEPTH_LIMIT.
+  {
+    auto err = makeChain(DEFAULT_MAX_RECURSION_DEPTH + 1);
+    auto ex = collectException!TProtocolException(writeError(err));
+    assert(ex !is null, "writing past the limit must throw");
+    assert(ex.type == TProtocolException.Type.DEPTH_LIMIT);
+    assert(currentRecursionDepth_ == 0, "counter must unwind after a throw");
+  }
+
+  // Reading a too-deep payload is likewise rejected. A normal write() of an
+  // over-limit chain would itself be rejected, so craft the payload with raw
+  // protocol primitives. Field id 1 / TType.LIST matches RecError.children, so
+  // the reader recurses through the guarded readStruct and not the (separate,
+  // unbounded) skip() path.
+  {
+    auto buf = new TMemoryBuffer();
+    auto p = tBinaryProtocol(buf);
+    void emit(uint d) {
+      p.writeStructBegin(TStruct("RecError"));
+      if (d > 1) {
+        p.writeFieldBegin(TField("children", TType.LIST, 1));
+        p.writeListBegin(TList(TType.STRUCT, 1));
+        emit(d - 1);
+        p.writeListEnd();
+        p.writeFieldEnd();
+      }
+      p.writeFieldStop();
+      p.writeStructEnd();
+    }
+    emit(DEFAULT_MAX_RECURSION_DEPTH + 1);
+
+    auto ex = collectException!TProtocolException(readError(buf.getContents().dup));
+    assert(ex !is null, "reading past the limit must throw");
+    assert(ex.type == TProtocolException.Type.DEPTH_LIMIT);
+  }
+}
+
 private {
   /*
    * Returns a D code string containing the matching TType value for a passed
