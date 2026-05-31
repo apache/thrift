@@ -35,16 +35,12 @@ struct CoRec2 {
   1: CoRec other
 }
 
-struct CoUnion {
+union CoUnion {
   1:  CoUnion2 & other
 }
 
-struct CoUnion2 {
+union CoUnion2 {
   1: CoUnion other
-}
-
-struct VectorTest {
-  1: list<RecList> lister;
 }
 
 exception CoError {
@@ -53,6 +49,10 @@ exception CoError {
 
 exception CoError2 {
   1: CoError other
+}
+
+struct VectorTest {
+  1: list<RecList> lister;
 }
 
 service TestService
