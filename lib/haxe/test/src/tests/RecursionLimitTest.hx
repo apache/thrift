@@ -45,7 +45,6 @@ import CoError2;
 class RecursionLimitTest extends tests.TestBase {
 
     private static inline var LIMIT : Int = TConfiguration.DEFAULT_RECURSION_DEPTH; // 64
-    private static inline var tmpfile : String = "recursion.tmp";
 
     // ---- builders (alternating Co* / Co*2, null leaf) ----
     private static function buildCoRec(d : Int) : CoRec {
@@ -87,14 +86,13 @@ class RecursionLimitTest extends tests.TestBase {
         return n;
     }
 
-    private static function oprot() : TProtocol {
-        if (sys.FileSystem.exists(tmpfile)) sys.FileSystem.deleteFile(tmpfile);
-        var stream = new TFileStream(tmpfile, CreateNew);
-        return new TBinaryProtocol(new TStreamTransport(null, stream, new TConfiguration()));
+    // A single growable in-memory stream backs both directions: write into it,
+    // rewind (Position = 0), then read back -- no temporary file required.
+    private static function newStream() : TMemoryStream {
+        return new TMemoryStream();
     }
-    private static function iprot() : TProtocol {
-        var stream = new TFileStream(tmpfile, Read);
-        return new TBinaryProtocol(new TStreamTransport(stream, null, new TConfiguration()));
+    private static function protOf(s : TMemoryStream) : TProtocol {
+        return new TBinaryProtocol(new TStreamTransport(s, s, new TConfiguration()));
     }
 
     // Raw nested struct (field id 1, type STRUCT) written with the unguarded protocol
@@ -116,90 +114,66 @@ class RecursionLimitTest extends tests.TestBase {
             && (cast(e, TProtocolException).errorID == TProtocolException.DEPTH_LIMIT);
     }
 
-    // Close a protocol's transport, ignoring errors, so the underlying file
-    // handle is always released. Windows refuses to delete or re-create a file
-    // that still has an open handle (POSIX allows it), so a read/write that
-    // throws DEPTH_LIMIT must not leave the stream open for the next case.
-    private static function closeQuietly(p : TProtocol) : Void {
-        try {
-            p.getTransport().close();
-        } catch (e : Dynamic) {
-            // ignore
-        }
-    }
-
     public static function Run(server : Bool) : Void {
-        try {
-            // ---- struct (CoRec) ----
-            var op = oprot();
-            buildCoRec(LIMIT).write(op);
-            closeQuietly(op);
-            var back = new CoRec();
-            var ip = iprot();
-            back.read(ip);
-            closeQuietly(ip);
-            TestBase.Expect(depthCoRec(back) == LIMIT, 'struct: $LIMIT-deep round-trip preserves depth');
+        // ---- struct (CoRec) ----
+        var s = newStream();
+        var p = protOf(s);
+        buildCoRec(LIMIT).write(p);
+        s.Position = 0;
+        var back = new CoRec();
+        back.read(p);
+        TestBase.Expect(depthCoRec(back) == LIMIT, 'struct: $LIMIT-deep round-trip preserves depth');
 
-            ExpectDepthLimitOnWrite(buildCoRec(LIMIT + 1), 'struct');
-            ExpectDepthLimitOnRead(function(p) return new CoRec().read(p), 'struct');
+        ExpectDepthLimitOnWrite(buildCoRec(LIMIT + 1), 'struct');
+        ExpectDepthLimitOnRead(function(pr) return new CoRec().read(pr), 'struct');
 
-            // ---- union (CoUnion) ----
-            var op2 = oprot();
-            buildCoUnion(LIMIT).write(op2);
-            closeQuietly(op2);
-            var ip2 = iprot();
-            new CoUnion().read(ip2);
-            closeQuietly(ip2);
-            TestBase.Expect(true, 'union: $LIMIT-deep round-trip succeeds');
+        // ---- union (CoUnion) ----
+        var s2 = newStream();
+        var p2 = protOf(s2);
+        buildCoUnion(LIMIT).write(p2);
+        s2.Position = 0;
+        new CoUnion().read(p2);
+        TestBase.Expect(true, 'union: $LIMIT-deep round-trip succeeds');
 
-            ExpectDepthLimitOnWrite(buildCoUnion(LIMIT + 1), 'union');
-            ExpectDepthLimitOnRead(function(p) return new CoUnion().read(p), 'union');
+        ExpectDepthLimitOnWrite(buildCoUnion(LIMIT + 1), 'union');
+        ExpectDepthLimitOnRead(function(pr) return new CoUnion().read(pr), 'union');
 
-            // ---- exception (CoError) ----
-            var op3 = oprot();
-            buildCoError(LIMIT).write(op3);
-            closeQuietly(op3);
-            var ip3 = iprot();
-            new CoError().read(ip3);
-            closeQuietly(ip3);
-            TestBase.Expect(true, 'exception: $LIMIT-deep round-trip succeeds');
+        // ---- exception (CoError) ----
+        var s3 = newStream();
+        var p3 = protOf(s3);
+        buildCoError(LIMIT).write(p3);
+        s3.Position = 0;
+        new CoError().read(p3);
+        TestBase.Expect(true, 'exception: $LIMIT-deep round-trip succeeds');
 
-            ExpectDepthLimitOnWrite(buildCoError(LIMIT + 1), 'exception');
-            ExpectDepthLimitOnRead(function(p) return new CoError().read(p), 'exception');
-
-            if (sys.FileSystem.exists(tmpfile)) sys.FileSystem.deleteFile(tmpfile);
-        } catch (e : Dynamic) {
-            if (sys.FileSystem.exists(tmpfile)) sys.FileSystem.deleteFile(tmpfile);
-            throw e;
-        }
+        ExpectDepthLimitOnWrite(buildCoError(LIMIT + 1), 'exception');
+        ExpectDepthLimitOnRead(function(pr) return new CoError().read(pr), 'exception');
     }
 
     private static function ExpectDepthLimitOnWrite(obj : TBase, what : String) : Void {
         var threw = false;
-        var op = oprot();
+        var p = protOf(newStream());
         try {
-            obj.write(op);
+            obj.write(p);
         } catch (e : Dynamic) {
             threw = isDepthLimit(e);
         }
-        closeQuietly(op); // close even when write threw, so the file can be reused/deleted
         TestBase.Expect(threw, '$what: write ${LIMIT + 1}-deep throws DEPTH_LIMIT');
     }
 
     private static function ExpectDepthLimitOnRead(readInto : TProtocol -> Void, what : String) : Void {
         // craftDeep uses raw primitives (no depth guard on write), so the write side
         // does not throw; only the guarded read below trips the limit.
-        var op = oprot();
-        craftDeep(op, LIMIT + 1);
-        closeQuietly(op);
+        var s = newStream();
+        var p = protOf(s);
+        craftDeep(p, LIMIT + 1);
+        s.Position = 0;
         var threw = false;
-        var ip = iprot();
         try {
-            readInto(ip);
+            readInto(p);
         } catch (e : Dynamic) {
             threw = isDepthLimit(e);
         }
-        closeQuietly(ip); // close even when read threw, so the file can be reused/deleted
         TestBase.Expect(threw, '$what: read ${LIMIT + 1}-deep throws DEPTH_LIMIT');
     }
 
