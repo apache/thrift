@@ -76,6 +76,53 @@ class StreamTest extends tests.TestBase {
         return data;
     }
 
+    // Round-trip the same data through a single in-memory TMemoryStream (no temp
+    // file): the stream is written, rewound (Position = 0) and read back, which
+    // only works if TMemoryStream grows on write.
+    public static function WriteReadViaMemory() : { written : Xtruct, read : Xtruct }
+    {
+        var config : TConfiguration = new TConfiguration();
+        var stream = new TMemoryStream();
+        var trans : TTransport = new TStreamTransport( stream, stream, config);
+        var prot = new TJSONProtocol( trans);
+
+        var written = MakeTestData();
+        written.write(prot);
+
+        stream.Position = 0;  // rewind to read back what was just written
+        var read : Xtruct = new Xtruct();
+        read.read(prot);
+
+        return { written : written, read : read };
+    }
+
+    // A fresh TMemoryStream must grow as bytes are appended and return them
+    // intact after rewinding (directly exercises the grow-on-write path).
+    private static function MemoryStreamGrows() : Bool
+    {
+        var stream = new TMemoryStream();
+        var n = 1000;
+        for ( i in 0...n) {
+            var one = haxe.io.Bytes.alloc(1);
+            one.set( 0, i & 0xFF);
+            stream.Write( one, 0, 1);
+        }
+        if ( stream.Position != n) {
+            return false;
+        }
+        stream.Position = 0;
+        var back = haxe.io.Bytes.alloc(n);
+        if ( stream.Read( back, 0, n) != n) {
+            return false;
+        }
+        for ( i in 0...n) {
+            if ( back.get(i) != (i & 0xFF)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static function Run(server : Bool) : Void
     {
         try {
@@ -87,6 +134,13 @@ class StreamTest extends tests.TestBase {
             tests.TestBase.Expect( read.byte_thing == written.byte_thing, "byte data");
             tests.TestBase.Expect( read.i32_thing == written.i32_thing, "i32 data");
             tests.TestBase.Expect( Int64.compare( read.i64_thing, written.i64_thing) == 0, "i64 data");
+
+            var mem = WriteReadViaMemory();
+            tests.TestBase.Expect( mem.read.string_thing == mem.written.string_thing, "memory: string data");
+            tests.TestBase.Expect( mem.read.byte_thing == mem.written.byte_thing, "memory: byte data");
+            tests.TestBase.Expect( mem.read.i32_thing == mem.written.i32_thing, "memory: i32 data");
+            tests.TestBase.Expect( Int64.compare( mem.read.i64_thing, mem.written.i64_thing) == 0, "memory: i64 data");
+            tests.TestBase.Expect( MemoryStreamGrows(), "memory: grows across many writes");
 
         } catch(e:Dynamic) {
             FileSystem.deleteFile(tmpfile);
