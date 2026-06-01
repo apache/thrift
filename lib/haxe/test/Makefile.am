@@ -21,6 +21,8 @@ THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 AGGR = $(top_srcdir)/contrib/async-test/aggr.thrift
 BENCHMARK = $(top_srcdir)/lib/rb/benchmark/Benchmark.thrift
+RECURSIVE = $(top_srcdir)/test/Recursive.thrift
+CONSTANTSDEMO = $(top_srcdir)/test/ConstantsDemo.thrift
 
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
@@ -34,6 +36,12 @@ gen-haxe/thrift/test/Aggr.hx: $(AGGR)
 gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
 	$(THRIFTCMD) $(BENCHMARK)
 
+gen-haxe/CoRec.hx: $(RECURSIVE)
+	$(THRIFTCMD) $(RECURSIVE)
+
+gen-haxe/constantsDemo/ConstantsDemoConstants.hx: $(CONSTANTSDEMO)
+	$(THRIFTCMD) $(CONSTANTSDEMO)
+
 all-local: $(BIN_CPP) $(BIN_PHP)
 
 $(BIN_CPP): \
@@ -41,7 +49,9 @@ $(BIN_CPP): \
 		../src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx \
 		gen-haxe/thrift/test/Aggr.hx \
-		gen-haxe/thrift/test/BenchmarkService.hx
+		gen-haxe/thrift/test/BenchmarkService.hx \
+		gen-haxe/CoRec.hx \
+		gen-haxe/constantsDemo/ConstantsDemoConstants.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 $(BIN_PHP): \
@@ -49,7 +59,9 @@ $(BIN_PHP): \
 		../src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx \
 		gen-haxe/thrift/test/Aggr.hx \
-		gen-haxe/thrift/test/BenchmarkService.hx
+		gen-haxe/thrift/test/BenchmarkService.hx \
+		gen-haxe/CoRec.hx \
+		gen-haxe/constantsDemo/ConstantsDemoConstants.hx
 	$(HAXE) --cwd .  php.hxml
 
 
