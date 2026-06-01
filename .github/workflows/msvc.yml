@@ -68,6 +68,31 @@ jobs:
           $hash = (Get-FileHash -Algorithm SHA256 'build/docker/msvc/Dockerfile').Hash.ToLower().Substring(0, 12)
           "IMAGE_TAG=msvc-$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Wait for Docker daemon
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          # GitHub-hosted Windows runners occasionally have the Docker engine not
+          # yet ready when the job starts (the named pipe
+          # \\.\pipe\docker_engine is not listening). The subsequent docker
+          # pull/run then fails instantly with "failed to connect to the docker
+          # API", which previously surfaced as a confusing "LastTest.log not
+          # found". Poll until the daemon answers (or fail with a clear message).
+          $deadline = (Get-Date).AddMinutes(4)
+          while ($true) {
+            docker version --format '{{.Server.Version}}' 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Docker daemon is ready."
+              break
+            }
+            if ((Get-Date) -gt $deadline) {
+              Write-Error "Docker daemon did not become ready within the timeout."
+              exit 1
+            }
+            Write-Host "Docker daemon not ready yet; retrying in 5s..."
+            Start-Sleep -Seconds 5
+          }
+
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
         shell: pwsh
@@ -94,20 +119,28 @@ jobs:
             exit 1
           }
 
-          Write-Host "Attempting to pull hash-based tag: $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
-          $output = docker pull "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" 2>&1
-          $output | Out-Host
+          $maxAttempts = 3
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Attempting to pull hash-based tag (attempt $attempt/$maxAttempts): $($env:DOCKER_IMAGE):$($env:IMAGE_TAG)"
+            $output = docker pull "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" 2>&1
+            $output | Out-Host
 
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Successfully pulled cached image with hash tag"
-            $needBuild = $false
-          } elseif ($output -match 'not found|does not exist|404|manifest unknown') {
-            Write-Host "Image not found in registry, will build from scratch."
-            $needBuild = $true
-          } else {
-            Write-Host "##[error]Docker pull failed with unexpected error. Check logs above."
-            Write-Host "This may indicate an authentication issue, registry problem, or network error."
-            exit 1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Successfully pulled cached image with hash tag"
+              $needBuild = $false
+              break
+            } elseif ($output -match 'not found|does not exist|404|manifest unknown') {
+              Write-Host "Image not found in registry, will build from scratch."
+              $needBuild = $true
+              break
+            } elseif ($attempt -lt $maxAttempts) {
+              Write-Host "##[warning]Docker pull failed (attempt $attempt/$maxAttempts) - transient registry/network/daemon error; retrying in 10s..."
+              Start-Sleep -Seconds 10
+            } else {
+              Write-Host "##[error]Docker pull failed after $maxAttempts attempts. Check logs above."
+              Write-Host "This may indicate an authentication issue, registry problem, or network error."
+              exit 1
+            }
           }
 
           Write-Host "Setting outputs: need_build=$needBuild"
@@ -144,10 +177,29 @@ jobs:
         timeout-minutes: 120
         shell: pwsh
         run: |
-          docker run -v c:\src\thrift:C:\Thrift -v "${env:THRIFT_BUILD_DIR}:C:\build" --rm -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" c:\thrift\build\docker\msvc\build.bat
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Container build failed with exit code $LASTEXITCODE"
-            exit $LASTEXITCODE
+          $maxAttempts = 3
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Running build container (attempt $attempt/$maxAttempts)..."
+            # Tee so the build log streams live AND is captured for the
+            # daemon-error check below.
+            docker run -v c:\src\thrift:C:\Thrift -v "${env:THRIFT_BUILD_DIR}:C:\build" --rm -t "$($env:DOCKER_IMAGE):$($env:IMAGE_TAG)" c:\thrift\build\docker\msvc\build.bat 2>&1 | Tee-Object -Variable output
+            $code = $LASTEXITCODE
+            if ($code -eq 0) {
+              break
+            }
+
+            # Retry only when the daemon was unreachable / the container never
+            # started; a genuine build or test failure must NOT trigger a costly
+            # rebuild and is propagated to the "Check test results" step.
+            $daemonError = ($output -join "`n") -match 'pipe/docker_engine|error during connect|cannot connect to the Docker daemon|failed to connect to the docker API'
+            if ($daemonError -and $attempt -lt $maxAttempts) {
+              Write-Host "##[warning]Docker daemon not reachable (attempt $attempt/$maxAttempts); retrying in 10s..."
+              Start-Sleep -Seconds 10
+              continue
+            }
+
+            Write-Error "Container build failed with exit code $code"
+            exit $code
           }
 
       - name: Check test results
