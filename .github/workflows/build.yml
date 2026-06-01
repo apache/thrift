@@ -545,6 +545,29 @@ jobs:
         run: |
           lib/haxe/codegen/run-Haxe-Codegen-Tests.ps1
 
+      # The autotools `make check` path for the Haxe library is disabled
+      # (--without-haxe) because it drives the cpp/php hxml targets; run the
+      # library unit tests directly on the lightweight neko target instead,
+      # reusing the toolchain (Haxe+neko, uuid, thrift compiler) set up above.
+      # The harness throws and Sys.exit(1)s on a failed assertion, so a failing
+      # test fails this step.
+      #
+      # Only the standalone "Normal" mode (StreamTest + RecursionLimitTest) is
+      # run. Multiplex needs a client+server; "constants" (ConstantsTest) is
+      # omitted for now because it constructs a TMemoryStream, which currently
+      # fails on the neko target -- run it here once that is fixed.
+      - name: Run Haxe library unit tests (neko)
+        run: |
+          cd lib/haxe/test
+          rm -rf gen-haxe bin
+          thrift --gen haxe -r ../../../test/ThriftTest.thrift
+          thrift --gen haxe -r ../../../contrib/async-test/aggr.thrift
+          thrift --gen haxe -r ../../../lib/rb/benchmark/Benchmark.thrift
+          thrift --gen haxe -r ../../../test/Recursive.thrift
+          thrift --gen haxe -r ../../../test/ConstantsDemo.thrift
+          haxe --cwd . neko.hxml
+          neko bin/Test.n
+
   lib-swift:
     needs: compiler
     runs-on: ubuntu-24.04
