@@ -68,8 +68,8 @@ for version, meta in maintained:
     print(f"Tags: {', '.join(debian_tags)}")
     print("Architectures: amd64, arm64v8")
     print(f"GitCommit: {git_commit}")
-    print("Directory: docker")
-    print(f"File: {version}/Dockerfile")
+    print(f"Directory: docker/{version}")
+    print("File: Dockerfile")
     print()
 
     alpine_tags = [f"{version}-alpine{alpine}"]
@@ -86,8 +86,8 @@ for version, meta in maintained:
     print(f"Tags: {', '.join(alpine_tags)}")
     print("Architectures: amd64, arm64v8")
     print(f"GitCommit: {git_commit}")
-    print("Directory: docker")
-    print(f"File: {version}/Dockerfile.alpine")
+    print(f"Directory: docker/{version}")
+    print("File: Dockerfile.alpine")
     if version != maintained[-1][0]:
         print()
 PY

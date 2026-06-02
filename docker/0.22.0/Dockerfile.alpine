@@ -58,11 +58,11 @@ RUN set -eux; \
 	apk add --no-cache libstdc++
 
 COPY --from=builder /opt/thrift/bin/thrift /usr/local/bin/thrift
-COPY ../docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY ../tests/smoke.thrift /tmp/smoke.thrift
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN set -eux; \
 	thrift --version | grep -F "$THRIFT_VERSION"; \
+	echo 'struct Ping { 1: string message }' > /tmp/smoke.thrift; \
 	mkdir -p /tmp/smoke-out; \
 	thrift --gen json -o /tmp/smoke-out /tmp/smoke.thrift; \
 	find /tmp/smoke-out -type f | grep -q .; \

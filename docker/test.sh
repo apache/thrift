@@ -110,16 +110,18 @@ for version in $(maintained_versions); do
 		for variant in debian alpine; do
 			case "$variant" in
 				debian)
-					dockerfile="$version/Dockerfile"
+					context="$version"
+					dockerfile="Dockerfile"
 					;;
 				alpine)
-					dockerfile="$version/Dockerfile.alpine"
+					context="$version"
+					dockerfile="Dockerfile.alpine"
 					;;
 			esac
 
 			image="$(image_tag "$version" "$variant" "$platform")"
 			echo "Building $image for $platform"
-			docker buildx build --platform "$platform" --load -t "$image" -f "$dockerfile" .
+			docker buildx build --platform "$platform" --load -t "$image" -f "$context/$dockerfile" "$context"
 			echo "Testing $image for $platform"
 			smoke_image "$image" "$platform" "$version" "$variant"
 		done
