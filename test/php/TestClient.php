@@ -1,28 +1,5 @@
 <?php
 
-namespace test\php;
-
-/** @var \Composer\Autoload\ClassLoader $loader */
-$loader = require __DIR__ . '/../../vendor/autoload.php';
-
-use Thrift\ClassLoader\ThriftClassLoader;
-
-if (!isset($GEN_DIR)) {
-  $GEN_DIR = 'gen-php';
-}
-if (!isset($MODE)) {
-  $MODE = 'normal';
-}
-
-
-if ($GEN_DIR == 'gen-php') {
-  $loader->addPsr4('', $GEN_DIR);
-} else {
-  $loader = new ThriftClassLoader();
-  $loader->registerDefinition('ThriftTest', $GEN_DIR);
-  $loader->register();
-}
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -42,23 +19,35 @@ if ($GEN_DIR == 'gen-php') {
  * under the License.
  */
 
+namespace test\php;
+
 use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
-
-/** Include the Thrift base */
-/** Include the protocols */
-use Thrift\Protocol\TBinaryProtocol;
-use Thrift\Protocol\TBinaryProtocolAccelerated;
-use Thrift\Protocol\TCompactProtocol;
-use Thrift\Protocol\TJSONProtocol;
-
-/** Include the socket layer */
-use Thrift\Transport\TSocket;
+use Thrift\ClassLoader\ThriftClassLoader;
+use Thrift\Transport\TBufferedTransport;
+use Thrift\Transport\TFramedTransport;
+use Thrift\Transport\TPsrHttpClient;
 use Thrift\Transport\TSocketPool;
 
-/** Include the socket layer */
-use Thrift\Transport\TFramedTransport;
-use Thrift\Transport\TBufferedTransport;
+/** @var \Composer\Autoload\ClassLoader $loader */
+$loader = require __DIR__ . '/../../vendor/autoload.php';
+
+if (!isset($GEN_DIR)) {
+    $GEN_DIR = 'gen-php';
+}
+if (!isset($MODE)) {
+    $MODE = 'normal';
+}
+
+if ($GEN_DIR == 'gen-php') {
+    $loader->addPsr4('', $GEN_DIR);
+} else {
+    $loader = new ThriftClassLoader();
+    $loader->registerDefinition('ThriftTest', $GEN_DIR);
+    $loader->register();
+}
+
+require_once __DIR__ . '/protocols.php';
 
 /**
  * Minimal PSR-3 logger that forwards every message to PHP's error_log
@@ -78,67 +67,33 @@ final class StderrLogger extends AbstractLogger implements LoggerInterface
     }
 }
 
-function makeProtocol($transport, $PROTO)
-{
-  if ($PROTO == 'binary') {
-    return new TBinaryProtocol($transport);
-  } else if ($PROTO == 'compact') {
-    return new TCompactProtocol($transport);
-  } else if ($PROTO == 'json') {
-    return new TJSONProtocol($transport);
-  } else if ($PROTO == 'accel') {
-    if (!function_exists('thrift_protocol_write_binary')) {
-      echo "Acceleration extension is not loaded\n";
-      exit(1);
-    }
-    return new TBinaryProtocolAccelerated($transport);
-  }
-
-  echo "--protocol must be one of {binary|compact|json|accel}\n";
-  exit(1);
-}
-
-$host = 'localhost';
 $port = 9090;
 
-if ($argc > 1) {
-  $host = $argv[0];
-}
-
-if ($argc > 2) {
-  $host = $argv[1];
-}
-
 foreach ($argv as $arg) {
-  if (substr($arg, 0, 7) == '--port=') {
-    $port = (int) substr($arg, 7);
-  } else if (substr($arg, 0, 12) == '--transport=') {
-    $MODE = substr($arg, 12);
-  } else if (substr($arg, 0, 11) == '--protocol=') {
-    $PROTO = substr($arg, 11);
-  }
+    if (substr($arg, 0, 7) == '--port=') {
+        $port = (int) substr($arg, 7);
+    } elseif (substr($arg, 0, 12) == '--transport=') {
+        $MODE = substr($arg, 12);
+    } elseif (substr($arg, 0, 11) == '--protocol=') {
+        $PROTO = substr($arg, 11);
+    }
 }
 
-$hosts = array('localhost');
+// TPsrHttpClient buffers internally, so no framed/buffered wrapper is needed.
+// Inline mode passes the raw transport to the generated client without a
+// protocol wrapper, matching the legacy code path.
+$transport = match ($MODE) {
+    'http' => new TPsrHttpClient(sprintf('http://127.0.0.1:%d/', $port)),
+    default => new TSocketPool(['localhost'], $port, false, new StderrLogger()),
+};
+$transport = match ($MODE) {
+    'framed' => new TFramedTransport($transport),
+    'http', 'inline' => $transport,
+    default => new TBufferedTransport($transport, 1024, 1024),
+};
 
-$logger = new StderrLogger();
-$socket = new TSocket($host, $port, false, $logger);
-$socket = new TSocketPool($hosts, $port, false, $logger);
-
-if ($MODE == 'inline') {
-  $transport = $socket;
-  $testClient = new \ThriftTest\ThriftTestClient($transport);
-} else if ($MODE == 'framed') {
-  $framedSocket = new TFramedTransport($socket);
-  $transport = $framedSocket;
-  $protocol = makeProtocol($transport, $PROTO);
-  $testClient = new \ThriftTest\ThriftTestClient($protocol);
-} else {
-  $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
-  $transport = $bufferedSocket;
-  $protocol = makeProtocol($transport, $PROTO);
-  $testClient = new \ThriftTest\ThriftTestClient($protocol);
-}
+$protocol = $MODE === 'inline' ? null : thrift_test_protocol_factory($PROTO)->getProtocol($transport);
+$testClient = new \ThriftTest\ThriftTestClient($protocol ?? $transport);
 
 $transport->open();
 
@@ -150,6 +105,7 @@ define('ERR_CONTAINERS', 4);
 define('ERR_EXCEPTIONS', 8);
 define('ERR_UNKNOWN', 64);
 $exitcode = 0;
+
 /**
  * VOID TEST
  */
@@ -157,15 +113,16 @@ print_r("testVoid()");
 $testClient->testVoid();
 print_r(" = void\n");
 
-function roundtrip($testClient, $method, $value) {
-  global $exitcode;
-  print_r("$method($value)");
-  $ret = $testClient->$method($value);
-  print_r(" = \"$ret\"\n");
-  if ($value !== $ret) {
-    print_r("*** FAILED ***\n");
-    $exitcode |= ERR_BASETYPES;
-  }
+function roundtrip($testClient, $method, $value)
+{
+    global $exitcode;
+    print_r("$method($value)");
+    $ret = $testClient->$method($value);
+    print_r(" = \"$ret\"\n");
+    if ($value !== $ret) {
+        print_r("*** FAILED ***\n");
+        $exitcode |= ERR_BASETYPES;
+    }
 }
 
 /**
@@ -234,10 +191,10 @@ $out->byte_thing = 1;
 $out->i32_thing = -3;
 $out->i64_thing = -5;
 $in = $testClient->testStruct($out);
-print_r(" = {\"".$in->string_thing."\", ".
-        $in->byte_thing.", ".
-        $in->i32_thing.", ".
-        $in->i64_thing."}\n");
+print_r(" = {\"" . $in->string_thing . "\", " .
+        $in->byte_thing . ", " .
+        $in->i32_thing . ", " .
+        $in->i64_thing . "}\n");
 
 if ($in != $out) {
     echo "**FAILED**\n";
@@ -254,12 +211,12 @@ $out2->struct_thing = $out;
 $out2->i32_thing = 5;
 $in2 = $testClient->testNest($out2);
 $in = $in2->struct_thing;
-print_r(" = {".$in2->byte_thing.", {\"".
-        $in->string_thing."\", ".
-        $in->byte_thing.", ".
-        $in->i32_thing.", ".
-        $in->i64_thing."}, ".
-        $in2->i32_thing."}\n");
+print_r(" = {" . $in2->byte_thing . ", {\"" .
+        $in->string_thing . "\", " .
+        $in->byte_thing . ", " .
+        $in->i32_thing . ", " .
+        $in->i64_thing . "}, " .
+        $in2->i32_thing . "}\n");
 
 if ($in2 != $out2) {
     echo "**FAILED**\n";
@@ -269,19 +226,19 @@ if ($in2 != $out2) {
 /**
  * MAP TEST
  */
-$mapout = array();
+$mapout = [];
 for ($i = 0; $i < 5; ++$i) {
-  $mapout[$i] = $i-10;
+    $mapout[$i] = $i - 10;
 }
 print_r("testMap({");
 $first = true;
 foreach ($mapout as $key => $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r("$key => $val");
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r("$key => $val");
 }
 print_r("})");
 
@@ -289,12 +246,12 @@ $mapin = $testClient->testMap($mapout);
 print_r(" = {");
 $first = true;
 foreach ($mapin as $key => $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r("$key => $val");
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r("$key => $val");
 }
 print_r("}\n");
 
@@ -303,31 +260,31 @@ if ($mapin != $mapout) {
     $exitcode |= ERR_CONTAINERS;
 }
 
-$mapout = array();
+$mapout = [];
 for ($i = 0; $i < 10; $i++) {
     $mapout["key$i"] = "val$i";
 }
 print_r('testStringMap({');
 $first = true;
 foreach ($mapout as $key => $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r("\"$key\" => \"$val\"");
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r("\"$key\" => \"$val\"");
 }
 print_r("})");
 $mapin = $testClient->testStringMap($mapout);
 print_r(" = {");
 $first = true;
 foreach ($mapin as $key => $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r("\"$key\" => \"$val\"");
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r("\"$key\" => \"$val\"");
 }
 print_r("}\n");
 ksort($mapin);
@@ -339,9 +296,9 @@ if ($mapin != $mapout) {
 /**
  * SET TEST
  */
-$setout = array();;
+$setout = [];
 for ($i = -2; $i < 3; ++$i) {
-  $setout[$i]= true;
+    $setout[$i] = true;
 }
 print_r("testSet({");
 echo implode(',', array_keys($setout));
@@ -365,31 +322,31 @@ if ($setin[2] !== $setout[2] || is_int($setin[2])) {
 /**
  * LIST TEST
  */
-$listout = array();
+$listout = [];
 for ($i = -2; $i < 3; ++$i) {
-  $listout []= $i;
+    $listout[] = $i;
 }
 print_r("testList({");
 $first = true;
 foreach ($listout as $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r($val);
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r($val);
 }
 print_r("})");
 $listin = $testClient->testList($listout);
 print_r(" = {");
 $first = true;
 foreach ($listin as $val) {
-  if ($first) {
-    $first = false;
-  } else {
-    print_r(", ");
-  }
-  print_r($val);
+    if ($first) {
+        $first = false;
+    } else {
+        print_r(", ");
+    }
+    print_r($val);
 }
 print_r("}\n");
 if ($listin !== $listout) {
@@ -458,16 +415,16 @@ print_r("testMapMap(1)");
 $mm = $testClient->testMapMap(1);
 print_r(" = {");
 foreach ($mm as $key => $val) {
-  print_r("$key => {");
-  foreach ($val as $k2 => $v2) {
-    print_r("$k2 => $v2, ");
-  }
-  print_r("}, ");
+    print_r("$key => {");
+    foreach ($val as $k2 => $v2) {
+        print_r("$k2 => $v2, ");
+    }
+    print_r("}, ");
 }
 print_r("}\n");
 $expected_mm = [
-  -4 => [-4 => -4, -3 => -3, -2 => -2, -1 => -1],
-  4 => [4 => 4, 3 => 3, 2 => 2, 1 => 1],
+    -4 => [-4 => -4, -3 => -3, -2 => -2, -1 => -1],
+    4 => [4 => 4, 3 => 3, 2 => 2, 1 => 1],
 ];
 if ($mm != $expected_mm) {
     echo "**FAILED**\n";
@@ -484,36 +441,36 @@ $truck->string_thing = "Truck";
 $truck->byte_thing = 8;
 $truck->i32_thing = 8;
 $truck->i64_thing = 8;
-$insane->xtructs []= $truck;
+$insane->xtructs[] = $truck;
 print_r("testInsanity()");
 $whoa = $testClient->testInsanity($insane);
 print_r(" = {");
 foreach ($whoa as $key => $val) {
-  print_r("$key => {");
-  foreach ($val as $k2 => $v2) {
-    print_r("$k2 => {");
-    $userMap = $v2->userMap;
-    print_r("{");
-    if (is_array($userMap)) {
-      foreach ($userMap as $k3 => $v3) {
-        print_r("$k3 => $v3, ");
-      }
+    print_r("$key => {");
+    foreach ($val as $k2 => $v2) {
+        print_r("$k2 => {");
+        $userMap = $v2->userMap;
+        print_r("{");
+        if (is_array($userMap)) {
+            foreach ($userMap as $k3 => $v3) {
+                print_r("$k3 => $v3, ");
+            }
+        }
+        print_r("}, ");
+
+        $xtructs = $v2->xtructs;
+        print_r("{");
+        if (is_array($xtructs)) {
+            foreach ($xtructs as $x) {
+                print_r("{\"" . $x->string_thing . "\", " .
+                        $x->byte_thing . ", " . $x->i32_thing . ", " . $x->i64_thing . "}, ");
+            }
+        }
+        print_r("}");
+
+        print_r("}, ");
     }
     print_r("}, ");
-
-    $xtructs = $v2->xtructs;
-    print_r("{");
-    if (is_array($xtructs)) {
-      foreach ($xtructs as $x) {
-        print_r("{\"".$x->string_thing."\", ".
-                $x->byte_thing.", ".$x->i32_thing.", ".$x->i64_thing."}, ");
-      }
-    }
-    print_r("}");
-
-    print_r("}, ");
-  }
-  print_r("}, ");
 }
 print_r("}\n");
 
@@ -522,30 +479,30 @@ print_r("}\n");
  */
 print_r("testException('Xception')");
 try {
-  $testClient->testException('Xception');
-  print_r("  void\nFAILURE\n");
-  $exitcode |= ERR_EXCEPTIONS;
+    $testClient->testException('Xception');
+    print_r("  void\nFAILURE\n");
+    $exitcode |= ERR_EXCEPTIONS;
 } catch (\ThriftTest\Xception $x) {
-  print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
+    print_r(' caught xception ' . $x->errorCode . ': ' . $x->message . "\n");
 }
 
 // Regression test for THRIFT-4263
 print_r("testBinarySerializer_Deserialize('foo')");
 try {
-  \Thrift\Serializer\TBinarySerializer::deserialize(base64_decode('foo'), \ThriftTest\Xtruct2::class);
-  echo "**FAILED**\n";
-  $exitcode |= ERR_STRUCTS;
+    \Thrift\Serializer\TBinarySerializer::deserialize(base64_decode('foo'), \ThriftTest\Xtruct2::class);
+    echo "**FAILED**\n";
+    $exitcode |= ERR_STRUCTS;
 } catch (\Thrift\Exception\TTransportException $happy_exception) {
-  // We expected this due to binary data of base64_decode('foo') is less then 4
-  // bytes and it tries to find thrift version number in the transport by
-  // reading i32() at the beginning.  Casting to string validates that
-  // exception is still accessible in memory and not corrupted.  Without patch,
-  // PHP will error log that the exception doesn't have any tostring method,
-  // which is a lie due to corrupted memory.
-  for($i=99; $i > 0; $i--) {
-    (string)$happy_exception;
-  }
-  print_r("  SUCCESS\n");
+    // We expected this due to binary data of base64_decode('foo') is less then 4
+    // bytes and it tries to find thrift version number in the transport by
+    // reading i32() at the beginning.  Casting to string validates that
+    // exception is still accessible in memory and not corrupted.  Without patch,
+    // PHP will error log that the exception doesn't have any tostring method,
+    // which is a lie due to corrupted memory.
+    for ($i = 99; $i > 0; $i--) {
+        (string) $happy_exception;
+    }
+    print_r("  SUCCESS\n");
 }
 
 /**
@@ -553,14 +510,14 @@ try {
  */
 
 $stop = microtime(true);
-$elp = round(1000*($stop - $start), 0);
+$elp = round(1000 * ($stop - $start), 0);
 print_r("Total time: $elp ms\n");
 
 /**
  * Extraneous "I don't trust PHP to pack/unpack integer" tests
  */
 
-if ($protocol instanceof TBinaryProtocolAccelerated) {
+if ($protocol instanceof \Thrift\Protocol\TBinaryProtocolAccelerated) {
     // Regression check: check that method name is not double-freed
     // Method name should not be an interned string.
     $method_name = "Void";
@@ -570,7 +527,6 @@ if ($protocol instanceof TBinaryProtocolAccelerated) {
     $args = new \ThriftTest\ThriftTest_testVoid_args();
     thrift_protocol_write_binary($protocol, $method_name, \Thrift\Type\TMessageType::CALL, $args, $seqid, $protocol->isStrictWrite());
     $testClient->recv_testVoid();
-
 }
 
 // Max I32
