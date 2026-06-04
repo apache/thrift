@@ -79,6 +79,7 @@ FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compil
 FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
 FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
+FILES[lib/netstd/Thrift.AspNetCore/Thrift.AspNetCore.csproj]=simpleReplace
 FILES[lib/ocaml/_oasis]=simpleReplace
 FILES[lib/perl/lib/Thrift.pm]=simpleReplace
 FILES[lib/py/setup.py]=simpleReplace

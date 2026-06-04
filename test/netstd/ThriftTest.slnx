@@ -30,6 +30,7 @@
   <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj" />
+  <Project Path="../../lib/netstd/Thrift.AspNetCore/Thrift.AspNetCore.csproj" />
   <Project Path="../../lib/netstd/Thrift/Thrift.csproj" />
   <Project Path="Client/Client.csproj" />
   <Project Path="Server/Server.csproj" />

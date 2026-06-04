@@ -35,4 +35,5 @@
     <Project Path="Tests/Thrift.Tests/Thrift.Tests.csproj" />
   </Folder>
   <Project Path="Thrift/Thrift.csproj" />
+  <Project Path="Thrift.AspNetCore/Thrift.AspNetCore.csproj" />
 </Solution>
