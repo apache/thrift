@@ -7,9 +7,9 @@
     to you under the Apache License, Version 2.0 (the
     "License"); you may not use this file except in compliance
     with the License. You may obtain a copy of the License at
-    
+
   	  http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing,
     software distributed under the License is distributed on an
     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -20,8 +20,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
-    <AssemblyName>Thrift</AssemblyName>
-    <PackageId>ApacheThrift</PackageId>
+    <AssemblyName>Thrift.AspNetCore</AssemblyName>
+    <PackageId>ApacheThrift.AspNetCore</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
@@ -38,18 +38,18 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\Thrift\thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <Title>Apache Thrift 0.24.0</Title>
+    <Title>Apache Thrift ASP.NET Core 0.24.0</Title>
     <Version>0.24.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <Authors>Apache Thrift Developers</Authors>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
+    <PackageDescription>ASP.NET Core server transport (THttpServerTransport middleware) for the Apache Thrift RPC system. Reference this package only when you host Thrift over ASP.NET Core; the core ApacheThrift package no longer pulls in the ASP.NET Core stack.</PackageDescription>
     <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.24.0/CHANGES.md</PackageReleaseNotes>
-    <PackageTags>Apache Thrift RPC</PackageTags>
+    <PackageTags>Apache Thrift RPC AspNetCore HTTP Server</PackageTags>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -58,12 +58,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Only the logging abstractions are used (ILogger/ILoggerFactory in the TServer hierarchy);
-         concrete providers (Console/Debug) and the ASP.NET Core stack are no longer referenced here.
-         The ASP.NET Core HTTP server middleware lives in the separate ApacheThrift.AspNetCore package. -->
+    <ProjectReference Include="..\Thrift\Thrift.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
-    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'false'" />
   </ItemGroup>
 
   <ItemGroup>

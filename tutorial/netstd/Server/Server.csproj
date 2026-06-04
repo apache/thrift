@@ -35,6 +35,8 @@
   <ItemGroup>
     <ProjectReference Include="../Interfaces/Interfaces.csproj" />
     <ProjectReference Include="../../../lib/netstd/Thrift/Thrift.csproj" />
+    <!-- THttpServerTransport (ASP.NET Core middleware) now lives in the separate ApacheThrift.AspNetCore package. -->
+    <ProjectReference Include="../../../lib/netstd/Thrift.AspNetCore/Thrift.AspNetCore.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">

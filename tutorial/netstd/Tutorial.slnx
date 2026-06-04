@@ -23,6 +23,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="../../lib/netstd/Thrift.AspNetCore/Thrift.AspNetCore.csproj" />
   <Project Path="../../lib/netstd/Thrift/Thrift.csproj" />
   <Project Path="Client/Client.csproj" />
   <Project Path="Interfaces/Interfaces.csproj" />

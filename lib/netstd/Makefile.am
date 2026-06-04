@@ -46,6 +46,8 @@ build-fuzzers:
 clean-local:
 	$(RM) -r Thrift/bin
 	$(RM) -r Thrift/obj
+	$(RM) -r Thrift.AspNetCore/bin
+	$(RM) -r Thrift.AspNetCore/obj
 	$(RM) -r Benchmarks/Thrift.Benchmarks/bin
 	$(RM) -r Benchmarks/Thrift.Benchmarks/obj
 	$(RM) -r Tests/Thrift.Tests/bin
@@ -97,6 +99,9 @@ EXTRA_DIST = \
 	Thrift/Thrift.csproj \
 	Thrift/Transport \
 	Thrift/*.snk \
+	Thrift.AspNetCore/.editorconfig \
+	Thrift.AspNetCore/THttpServerTransport.cs \
+	Thrift.AspNetCore/Thrift.AspNetCore.csproj \
 	Thrift.slnx \
 	build.cmd \
 	build.sh \
