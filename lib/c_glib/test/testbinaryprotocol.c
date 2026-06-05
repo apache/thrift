@@ -36,6 +36,8 @@
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
+#include <thrift/c_glib/thrift_configuration.h>
 
 #define TEST_BOOL TRUE
 #define TEST_BYTE 123
@@ -839,6 +841,90 @@ thrift_server_many_frames (const int port)
   g_object_unref (tsocket);
 }
 
+/* skip should stop recursing once it has descended past the configured
+   recursion limit, rather than running off the stack on a deeply nested
+   message. */
+static void
+test_skip_recursion_depth (void)
+{
+  ThriftConfiguration *configuration = NULL;
+  ThriftMemoryBuffer *tbuffer = NULL;
+  ThriftBinaryProtocol *tb = NULL;
+  ThriftProtocol *protocol = NULL;
+  GError *error = NULL;
+  gint i;
+  const gint recursion_limit = 8;
+
+  /* a memory buffer carrying a small recursion limit */
+  configuration = g_object_new (THRIFT_TYPE_CONFIGURATION,
+                                "recursion_limit", recursion_limit, NULL);
+  tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                          "buf_size", 1024,
+                          "configuration", configuration, NULL);
+  tb = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", tbuffer, NULL);
+  protocol = THRIFT_PROTOCOL (tb);
+
+  /* nest struct field headers a good way past the limit */
+  for (i = 0; i < recursion_limit + 10; i++)
+  {
+    g_assert (thrift_binary_protocol_write_field_begin (protocol, NULL,
+                                                        T_STRUCT, 1, NULL) > 0);
+  }
+
+  /* skipping the outermost struct must bail out with a depth-limit error
+     instead of recursing without bound */
+  g_assert (thrift_protocol_skip (protocol, T_STRUCT, &error) == -1);
+  g_assert (error != NULL);
+  g_assert (error->domain == THRIFT_PROTOCOL_ERROR);
+  g_assert (error->code == THRIFT_PROTOCOL_ERROR_DEPTH_LIMIT);
+  g_error_free (error);
+  error = NULL;
+
+  g_object_unref (tb);
+  g_object_unref (tbuffer);
+  g_object_unref (configuration);
+}
+
+/* a struct nested within the limit should still skip cleanly */
+static void
+test_skip_within_limit (void)
+{
+  ThriftConfiguration *configuration = NULL;
+  ThriftMemoryBuffer *tbuffer = NULL;
+  ThriftBinaryProtocol *tb = NULL;
+  ThriftProtocol *protocol = NULL;
+  GError *error = NULL;
+  gint i;
+  const gint depth = 3;
+
+  configuration = g_object_new (THRIFT_TYPE_CONFIGURATION,
+                                "recursion_limit", 8, NULL);
+  tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                          "buf_size", 1024,
+                          "configuration", configuration, NULL);
+  tb = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", tbuffer, NULL);
+  protocol = THRIFT_PROTOCOL (tb);
+
+  /* depth struct fields, each closed off with a stop, plus the innermost
+     empty struct's stop */
+  for (i = 0; i < depth; i++)
+  {
+    g_assert (thrift_binary_protocol_write_field_begin (protocol, NULL,
+                                                        T_STRUCT, 1, NULL) > 0);
+  }
+  for (i = 0; i < depth + 1; i++)
+  {
+    g_assert (thrift_binary_protocol_write_field_stop (protocol, NULL) > 0);
+  }
+
+  g_assert (thrift_protocol_skip (protocol, T_STRUCT, &error) > 0);
+  g_assert (error == NULL);
+
+  g_object_unref (tb);
+  g_object_unref (tbuffer);
+  g_object_unref (configuration);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -854,6 +940,10 @@ main(int argc, char *argv[])
   g_test_add_func ("/testbinaryprotocol/ReadAndWriteComplexTypes", test_read_and_write_complex_types);
   g_test_add_func ("/testbinaryprotocol/ReadAndWriteManyFrames",
                    test_read_and_write_many_frames);
+  g_test_add_func ("/testbinaryprotocol/SkipRecursionDepth",
+                   test_skip_recursion_depth);
+  g_test_add_func ("/testbinaryprotocol/SkipWithinLimit",
+                   test_skip_within_limit);
 
   return g_test_run ();
 }
