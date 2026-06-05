@@ -433,9 +433,26 @@ thrift_protocol_get_min_serialized_size (ThriftProtocol *protocol, ThriftType ty
     (_RES) += _x; \
   }
 
-gint32
-thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
+static gint32
+thrift_protocol_skip_impl (ThriftProtocol *protocol, ThriftType type,
+                           gint32 recursion_depth, GError **error)
 {
+  gint32 recursion_limit = DEFAULT_RECURSION_DEPTH;
+
+  if (protocol->transport != NULL &&
+      protocol->transport->configuration != NULL)
+  {
+    recursion_limit = protocol->transport->configuration->recursionLimit_;
+  }
+
+  if (recursion_depth > recursion_limit)
+  {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_DEPTH_LIMIT,
+                 "Maximum skip depth exceeded");
+    return -1;
+  }
+
   switch (type)
   {
     case T_BOOL:
@@ -497,7 +514,8 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
             break;
           }
           THRIFT_SKIP_RESULT_OR_RETURN(result,
-            thrift_protocol_skip (protocol, ftype, error))
+            thrift_protocol_skip_impl (protocol, ftype, recursion_depth + 1,
+                                       error))
           THRIFT_SKIP_RESULT_OR_RETURN(result,
             thrift_protocol_read_field_end (protocol, error))
         }
@@ -516,7 +534,8 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
         for (i = 0; i < size; i++)
         {
           THRIFT_SKIP_RESULT_OR_RETURN(result,
-            thrift_protocol_skip (protocol, elem_type, error))
+            thrift_protocol_skip_impl (protocol, elem_type, recursion_depth + 1,
+                                       error))
         }
         THRIFT_SKIP_RESULT_OR_RETURN(result,
           thrift_protocol_read_set_end (protocol, error))
@@ -534,9 +553,11 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
         for (i = 0; i < size; i++)
         {
           THRIFT_SKIP_RESULT_OR_RETURN(result,
-            thrift_protocol_skip (protocol, key_type, error))
+            thrift_protocol_skip_impl (protocol, key_type, recursion_depth + 1,
+                                       error))
           THRIFT_SKIP_RESULT_OR_RETURN(result,
-            thrift_protocol_skip (protocol, elem_type, error))
+            thrift_protocol_skip_impl (protocol, elem_type, recursion_depth + 1,
+                                       error))
         }
         THRIFT_SKIP_RESULT_OR_RETURN(result,
           thrift_protocol_read_map_end (protocol, error))
@@ -553,7 +574,8 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
         for (i = 0; i < size; i++)
         {
           THRIFT_SKIP_RESULT_OR_RETURN(result,
-          thrift_protocol_skip (protocol, elem_type, error))
+          thrift_protocol_skip_impl (protocol, elem_type, recursion_depth + 1,
+                                     error))
         }
         THRIFT_SKIP_RESULT_OR_RETURN(result,
           thrift_protocol_read_list_end (protocol, error))
@@ -567,6 +589,12 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
                THRIFT_PROTOCOL_ERROR_INVALID_DATA,
                "unrecognized type");
   return -1;
+}
+
+gint32
+thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
+{
+  return thrift_protocol_skip_impl (protocol, type, 0, error);
 }
 
 /* define the GError domain for Thrift protocols */
