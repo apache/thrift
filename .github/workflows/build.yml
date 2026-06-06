@@ -575,7 +575,6 @@ jobs:
   lib-swift:
     needs: compiler
     runs-on: ubuntu-24.04
-    if: false                     # swift is currently broken and no maintainers around -> see THRIFT-5864
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -1007,7 +1006,7 @@ jobs:
     needs:
       - lib-php
       - lib-java-kotlin
-      #- lib-swift                     # currently broken and no maintainers around -> see THRIFT-5864
+      - lib-swift
       - lib-rust
       - lib-go
       - lib-python
@@ -1017,11 +1016,10 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        # swift is currently broken and no maintainers around -> see THRIFT-5864
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets', 'swift']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp,py,php,nodejs,nodets,rb']
+        client_lang: ['java,kotlin', 'go,rs,cpp,py,php,nodejs,nodets,rb', 'swift']
       fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1085,7 +1083,6 @@ jobs:
 
       - name: Download swift precross artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        if: false   # currently broken and no maintainers around -> see THRIFT-5864
         with:
           name: swift-precross
           path: test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug
@@ -1143,7 +1140,7 @@ jobs:
           chmod a+x lib/java/build/run*
           chmod a+x lib/kotlin/cross-test-client/build/install/TestClient/bin/*
           chmod a+x lib/kotlin/cross-test-server/build/install/TestServer/bin/*
-          # THRIFT-5864  chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
+          chmod a+x test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/*
           chmod a+x test/rs/bin/*
           chmod a+x test/go/bin/*
           chmod a+x test/cpp/*

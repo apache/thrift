@@ -30,8 +30,8 @@ import Foundation
 /// Uses C fopen/fread/fwrite,
 /// provided by Glibc in linux and Darwin on OSX/iOS
 public class TFileTransport: TTransport {
-  var fileHandle: UnsafeMutablePointer<FILE>? = nil
-  
+  let fileHandle: UnsafeMutablePointer<FILE>
+
   public init (fileHandle: UnsafeMutablePointer<FILE>) {
     self.fileHandle = fileHandle
   }
