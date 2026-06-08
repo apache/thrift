@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     permissions:
       contents: read
       packages: write
@@ -70,15 +70,17 @@ jobs:
 
       - name: Wait for Docker daemon
         shell: pwsh
-        timeout-minutes: 5
+        timeout-minutes: 8
         run: |
-          # GitHub-hosted Windows runners occasionally have the Docker engine not
-          # yet ready when the job starts (the named pipe
-          # \\.\pipe\docker_engine is not listening). The subsequent docker
-          # pull/run then fails instantly with "failed to connect to the docker
-          # API", which previously surfaced as a confusing "LastTest.log not
-          # found". Poll until the daemon answers (or fail with a clear message).
-          $deadline = (Get-Date).AddMinutes(4)
+          # GitHub-hosted Windows runners (especially windows-2025-vs2026) have
+          # the Docker Engine installed but not always auto-started. Kick it
+          # explicitly, then poll until the daemon answers.
+          $svc = Get-Service -Name Docker -ErrorAction SilentlyContinue
+          if ($svc -and $svc.Status -ne 'Running') {
+            Write-Host "Starting Docker service..."
+            Start-Service -Name Docker -ErrorAction SilentlyContinue
+          }
+          $deadline = (Get-Date).AddMinutes(6)
           while ($true) {
             docker version --format '{{.Server.Version}}' 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) {
