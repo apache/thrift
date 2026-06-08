@@ -25,4 +25,4 @@ default = ["server"]
 server = ["threadpool", "log"]
 
 [dev-dependencies]
-uuid = { version = "*", features = ["v4"] }
+uuid = { version = "1", features = ["v4"] }

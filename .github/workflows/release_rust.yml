@@ -20,9 +20,8 @@
 name: Release Rust Packages
 
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [published]
   pull_request:
     branches:
       - master
@@ -31,9 +30,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Rust 1.85
+        # The repo-pinned toolchain (rust-toolchain: 1.83) predates edition2024 support
+        # required by transitive dependencies (getrandom >= 0.4); 1.85 is the minimum
+        # that passes. Pin explicitly for reproducibility.
+        run: rustup toolchain install 1.85 --profile minimal
+
+      - name: Dry run
+        working-directory: lib/rs
+        run: cargo publish --dry-run
+        env:
+          RUSTUP_TOOLCHAIN: "1.85"
+
   publish:
     runs-on: ubuntu-latest
-    if: false   # currently broken and no maintainers around -> see THRIFT-5917        
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    environment: release
     permissions:
       contents: read
       id-token: write
@@ -41,20 +62,29 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Dryrun
-        working-directory: lib/rs
-        run: cargo publish --dry-run
+
+      - name: Verify crate version matches release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          CRATE_VERSION=$(awk -F'"' '/^version/{print $2; exit}' lib/rs/Cargo.toml)
+          TAG_VERSION=$(echo "$RELEASE_TAG" | sed 's/^v//')
+          if [ "$CRATE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Version mismatch: Cargo.toml=$CRATE_VERSION, tag=$TAG_VERSION"
+            exit 1
+          fi
+          echo "Version check passed: $CRATE_VERSION"
+
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85 --profile minimal
 
       - name: Authenticate to crates.io
-        # Only publish if it's a tag and the tag is not a pre-release
-        if: ${{ startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-') }}
         id: crates-io-auth
         uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
 
       - name: Publish
         working-directory: lib/rs
-        # Only publish if it's a tag and the tag is not a pre-release
-        if: ${{ startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-') }}
         run: cargo publish
         env:
+          RUSTUP_TOOLCHAIN: "1.85"
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
