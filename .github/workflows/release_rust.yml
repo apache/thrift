@@ -64,9 +64,11 @@ jobs:
           persist-credentials: false
 
       - name: Verify crate version matches release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           CRATE_VERSION=$(awk -F'"' '/^version/{print $2; exit}' lib/rs/Cargo.toml)
-          TAG_VERSION=$(echo "${{ github.event.release.tag_name }}" | sed 's/^v//')
+          TAG_VERSION=$(echo "$RELEASE_TAG" | sed 's/^v//')
           if [ "$CRATE_VERSION" != "$TAG_VERSION" ]; then
             echo "Version mismatch: Cargo.toml=$CRATE_VERSION, tag=$TAG_VERSION"
             exit 1
