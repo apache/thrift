@@ -23,6 +23,7 @@
 #include <thrift/Thrift.h>
 #include <thrift/TConfiguration.h>
 #include <thrift/transport/TTransportException.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -282,7 +283,7 @@ public:
    *
    * @param numBytes  numBytes bytes of data
    */
-  void checkReadBytesAvailable(long int numBytes)
+  void checkReadBytesAvailable(int64_t numBytes)
   {
     if (remainingMessageSize_ < numBytes || numBytes < 0)
       throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");

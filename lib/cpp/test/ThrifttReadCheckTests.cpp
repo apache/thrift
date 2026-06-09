@@ -242,6 +242,54 @@ BOOST_AUTO_TEST_CASE(test_tthriftcompactprotocol_read_check_pass) {
   BOOST_CHECK_NO_THROW(protocol->readString(eleven));
 }
 
+BOOST_AUTO_TEST_CASE(test_tthriftbinaryprotocol_container_size_overflow) {
+  std::shared_ptr<TConfiguration> config (new TConfiguration(1024));
+  std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
+  std::shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport));
+
+  uint32_t val = 0;
+  TType elemType = apache::thrift::protocol::T_STOP;
+  // 0x40000000 elements of min size 4 require 4 GiB; the product wraps to 0 in
+  // 32-bit math and used to slip past the MaxMessageSize check.
+  TList list(T_I32, 0x40000000);
+  protocol->writeListBegin(list.elemType_, list.size_);
+  protocol->writeListEnd();
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
+  protocol->readListEnd();
+}
+
+BOOST_AUTO_TEST_CASE(test_tthriftcompactprotocol_container_size_overflow) {
+  std::shared_ptr<TConfiguration> config (new TConfiguration(1024));
+  std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
+  std::shared_ptr<TCompactProtocol> protocol(new TCompactProtocol(transport));
+
+  uint32_t val = 0;
+  TType elemType = apache::thrift::protocol::T_STOP;
+  // 0x10000000 elements of min size 16 (UUID) require 4 GiB; the product wraps
+  // to 0 in 32-bit math and used to slip past the MaxMessageSize check.
+  TList list(T_UUID, 0x10000000);
+  protocol->writeListBegin(list.elemType_, list.size_);
+  protocol->writeListEnd();
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
+  protocol->readListEnd();
+}
+
+BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_container_size_overflow) {
+  std::shared_ptr<TConfiguration> config (new TConfiguration(1024));
+  std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
+  std::shared_ptr<TJSONProtocol> protocol(new TJSONProtocol(transport));
+
+  uint32_t val = 0;
+  TType elemType = apache::thrift::protocol::T_STOP;
+  // 0x10000000 elements of min size 16 (UUID) require 4 GiB; the product wraps
+  // to 0 in 32-bit math and used to slip past the MaxMessageSize check.
+  TList list(T_UUID, 0x10000000);
+  protocol->writeListBegin(list.elemType_, list.size_);
+  protocol->writeListEnd();
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
+  protocol->readListEnd();
+}
+
 BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
   std::shared_ptr<TConfiguration> config (new TConfiguration(MAX_MESSAGE_SIZE));
   std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));

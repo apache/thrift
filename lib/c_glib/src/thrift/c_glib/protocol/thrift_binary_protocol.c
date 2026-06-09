@@ -577,9 +577,9 @@ thrift_binary_protocol_read_map_begin (ThriftProtocol *protocol,
     return -1;
   }
 
-  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport), 
-                                    sizei * thrift_binary_protocol_get_min_serialized_size(protocol, k, error) + 
-                                    sizei * thrift_binary_protocol_get_min_serialized_size(protocol, v, error),
+  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport),
+                                    (gint64) sizei * thrift_binary_protocol_get_min_serialized_size(protocol, k, error) +
+                                    (gint64) sizei * thrift_binary_protocol_get_min_serialized_size(protocol, v, error),
                                     error))
   {
     return -1;
@@ -642,8 +642,8 @@ thrift_binary_protocol_read_list_begin (ThriftProtocol *protocol,
     return -1;
   }
 
-  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport), 
-                                    (sizei * thrift_binary_protocol_get_min_serialized_size(protocol, e, error)),
+  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT(tp->transport),
+                                    ((gint64) sizei * thrift_binary_protocol_get_min_serialized_size(protocol, e, error)),
                                     error))
   {
     return -1;
