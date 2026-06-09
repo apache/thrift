@@ -83,7 +83,7 @@ struct _ThriftTransportClass
   gint32 (*read_all) (ThriftTransport *transport, gpointer buf,
                       guint32 len, GError **error);
   gboolean (*updateKnownMessageSize) (ThriftTransport *transport, glong size, GError **error);
-  gboolean (*checkReadBytesAvailable) (ThriftTransport *transport, glong numBytes, GError **error);
+  gboolean (*checkReadBytesAvailable) (ThriftTransport *transport, gint64 numBytes, GError **error);
   gboolean (*resetConsumedMessageSize) (ThriftTransport *transport, glong newSize, GError **error);
   gboolean (*countConsumedMessageBytes) (ThriftTransport *transport, glong numBytes, GError **error);
 };

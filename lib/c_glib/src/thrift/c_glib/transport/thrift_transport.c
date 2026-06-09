@@ -160,7 +160,7 @@ thrift_transport_updateKnownMessageSize(ThriftTransport *transport, glong size, 
 }
 
 gboolean
-thrift_transport_checkReadBytesAvailable(ThriftTransport *transport, glong numBytes, GError **error)
+thrift_transport_checkReadBytesAvailable(ThriftTransport *transport, gint64 numBytes, GError **error)
 {
   gboolean boolean = TRUE;
   ThriftTransport *tt = THRIFT_TRANSPORT (transport);

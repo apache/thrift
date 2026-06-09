@@ -604,18 +604,18 @@ protected:
 
   virtual void checkReadBytesAvailable(TSet& set)
   {
-      ptrans_->checkReadBytesAvailable(set.size_ * getMinSerializedSize(set.elemType_));
+      ptrans_->checkReadBytesAvailable(static_cast<int64_t>(set.size_) * getMinSerializedSize(set.elemType_));
   }
 
   virtual void checkReadBytesAvailable(TList& list)
   {
-      ptrans_->checkReadBytesAvailable(list.size_ * getMinSerializedSize(list.elemType_));
+      ptrans_->checkReadBytesAvailable(static_cast<int64_t>(list.size_) * getMinSerializedSize(list.elemType_));
   }
 
   virtual void checkReadBytesAvailable(TMap& map)
   {
       int elmSize = getMinSerializedSize(map.keyType_) + getMinSerializedSize(map.valueType_);
-      ptrans_->checkReadBytesAvailable(map.size_ * elmSize);
+      ptrans_->checkReadBytesAvailable(static_cast<int64_t>(map.size_) * elmSize);
   }
 
   std::shared_ptr<TTransport> ptrans_;
