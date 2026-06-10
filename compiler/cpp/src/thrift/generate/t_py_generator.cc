@@ -1119,6 +1119,9 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
   }
   indent_down();
 
+  indent(out) << "iprot.increment_recursion_depth()" << '\n';
+  indent(out) << "try:" << '\n';
+  indent_up();
   indent(out) << "iprot.readStructBegin()" << '\n';
 
   if (is_immutable(tstruct)) {
@@ -1194,6 +1197,12 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
   }
 
   indent_down();
+  indent(out) << "finally:" << '\n';
+  indent_up();
+  indent(out) << "iprot.decrement_recursion_depth()" << '\n';
+  indent_down();
+
+  indent_down();
   out << '\n';
 }
 
@@ -1214,6 +1223,9 @@ void t_py_generator::generate_py_struct_writer(ostream& out, t_struct* tstruct) 
   indent(out) << "return" << '\n';
   indent_down();
 
+  indent(out) << "oprot.increment_recursion_depth()" << '\n';
+  indent(out) << "try:" << '\n';
+  indent_up();
   indent(out) << "oprot.writeStructBegin('" << name << "')" << '\n';
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1236,6 +1248,12 @@ void t_py_generator::generate_py_struct_writer(ostream& out, t_struct* tstruct) 
   // Write the struct map
   out << indent() << "oprot.writeFieldStop()" << '\n' << indent() << "oprot.writeStructEnd()"
       << '\n';
+
+  indent_down();
+  indent(out) << "finally:" << '\n';
+  indent_up();
+  indent(out) << "oprot.decrement_recursion_depth()" << '\n';
+  indent_down();
 
   out << '\n';
 

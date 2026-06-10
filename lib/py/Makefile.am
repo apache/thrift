@@ -31,6 +31,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
 	$(PYTHON3) test/thrift_TSerializer.py
+	$(PYTHON3) test/test_recursion_depth.py
 else
 py3-build:
 py3-test:
@@ -40,6 +41,7 @@ all-local: py3-build
 	$(PYTHON) setup.py build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
 	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
+	${THRIFT} --gen py ../../test/Recursive.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
@@ -59,6 +61,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/thrift_TSerializer.py
 	$(PYTHON) test/test_compiler/test_keyword_escape.py
+	$(PYTHON) test/test_recursion_depth.py
 
 
 clean-local:

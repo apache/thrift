@@ -43,10 +43,23 @@ class TProtocolException(TException):
 class TProtocolBase(object):
     """Base class for Thrift protocol driver."""
 
+    DEFAULT_RECURSION_DEPTH = 64
+
     def __init__(self, trans):
         self.trans = trans
         self._fast_decode = None
         self._fast_encode = None
+        self._recursion_depth = 0
+
+    def increment_recursion_depth(self):
+        self._recursion_depth += 1
+        if self._recursion_depth > self.DEFAULT_RECURSION_DEPTH:
+            self._recursion_depth -= 1
+            raise TProtocolException(TProtocolException.DEPTH_LIMIT,
+                                     "Maximum recursion depth exceeded")
+
+    def decrement_recursion_depth(self):
+        self._recursion_depth -= 1
 
     @staticmethod
     def _check_length(limit, length):
