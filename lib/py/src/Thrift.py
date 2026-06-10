@@ -137,38 +137,46 @@ class TApplicationException(TException):
             return 'Default (unknown) TApplicationException'
 
     def read(self, iprot):
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == 1:
-                if ftype == TType.STRING:
-                    self.message = iprot.readString()
+        iprot.increment_recursion_depth()
+        try:
+            iprot.readStructBegin()
+            while True:
+                (fname, ftype, fid) = iprot.readFieldBegin()
+                if ftype == TType.STOP:
+                    break
+                if fid == 1:
+                    if ftype == TType.STRING:
+                        self.message = iprot.readString()
+                    else:
+                        iprot.skip(ftype)
+                elif fid == 2:
+                    if ftype == TType.I32:
+                        self.type = iprot.readI32()
+                    else:
+                        iprot.skip(ftype)
                 else:
                     iprot.skip(ftype)
-            elif fid == 2:
-                if ftype == TType.I32:
-                    self.type = iprot.readI32()
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
+                iprot.readFieldEnd()
+            iprot.readStructEnd()
+        finally:
+            iprot.decrement_recursion_depth()
 
     def write(self, oprot):
-        oprot.writeStructBegin('TApplicationException')
-        if self.message is not None:
-            oprot.writeFieldBegin('message', TType.STRING, 1)
-            oprot.writeString(self.message)
-            oprot.writeFieldEnd()
-        if self.type is not None:
-            oprot.writeFieldBegin('type', TType.I32, 2)
-            oprot.writeI32(self.type)
-            oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
+        oprot.increment_recursion_depth()
+        try:
+            oprot.writeStructBegin('TApplicationException')
+            if self.message is not None:
+                oprot.writeFieldBegin('message', TType.STRING, 1)
+                oprot.writeString(self.message)
+                oprot.writeFieldEnd()
+            if self.type is not None:
+                oprot.writeFieldBegin('type', TType.I32, 2)
+                oprot.writeI32(self.type)
+                oprot.writeFieldEnd()
+            oprot.writeFieldStop()
+            oprot.writeStructEnd()
+        finally:
+            oprot.decrement_recursion_depth()
 
 
 class TFrozenDict(dict):

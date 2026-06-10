@@ -63,7 +63,7 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   }
   return PycStringIO->cread(buf, output, len);
 }
-}
+} // namespace detail
 
 template <typename Impl>
 inline ProtocolBase<Impl>::~ProtocolBase() {
@@ -147,7 +147,7 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   buf2->pos = (std::min)(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
   return static_cast<int>(buf2->pos - pos0);
 }
-}
+} // namespace detail
 
 template <typename Impl>
 inline ProtocolBase<Impl>::~ProtocolBase() {
@@ -207,6 +207,18 @@ DECLARE_OP_SCOPE(WriteStruct, writeStruct)
 DECLARE_OP_SCOPE(ReadStruct, readStruct)
 #undef DECLARE_OP_SCOPE
 
+template <typename Impl>
+struct RecursionGuard {
+  ProtocolBase<Impl>* proto;
+  bool valid;
+  explicit RecursionGuard(ProtocolBase<Impl>* p) : proto(p), valid(p->checkDepthLimit()) {}
+  ~RecursionGuard() {
+    if (valid)
+      proto->decrementDepth();
+  }
+  operator bool() const { return valid; }
+};
+
 inline bool check_ssize_t_32(Py_ssize_t len) {
   // error from getting the int
   if (INT_CONV_ERROR_OCCURRED(len)) {
@@ -218,7 +230,7 @@ inline bool check_ssize_t_32(Py_ssize_t len) {
   }
   return true;
 }
-}
+} // namespace detail
 
 template <typename T>
 bool parse_pyint(PyObject* o, T* ret, int32_t min, int32_t max) {
@@ -253,6 +265,31 @@ bool ProtocolBase<Impl>::checkLengthLimit(int32_t len, long limit) {
   }
   if (len > limit) {
     PyErr_Format(PyExc_OverflowError, "size exceeded specified limit: %ld", limit);
+    return false;
+  }
+  return true;
+}
+
+template <typename Impl>
+bool ProtocolBase<Impl>::checkDepthLimit() {
+  recursionDepth_++;
+  if (recursionDepth_ > kDefaultRecursionDepth) {
+    recursionDepth_--;
+    static PyObject* TProtocolExceptionCls = nullptr;
+    if (!TProtocolExceptionCls) {
+      PyObject* mod = PyImport_ImportModule("thrift.protocol.TProtocol");
+      if (!mod)
+        return false;
+      TProtocolExceptionCls = PyObject_GetAttrString(mod, "TProtocolException");
+      Py_DECREF(mod);
+      if (!TProtocolExceptionCls)
+        return false;
+    }
+    ScopedPyObject exc(
+        PyObject_CallFunction(TProtocolExceptionCls, "is", 6, "Maximum recursion depth exceeded"));
+    if (!exc)
+      return false;
+    PyErr_SetObject(TProtocolExceptionCls, exc.get());
     return false;
   }
   return true;
@@ -502,6 +539,11 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       return false;
     }
 
+    detail::RecursionGuard<Impl> rec(this);
+    if (!rec) {
+      return false;
+    }
+
     Py_ssize_t nspec = PyTuple_Size(parsedargs.spec);
     if (nspec == -1) {
       PyErr_SetString(PyExc_TypeError, "spec is not a tuple");
@@ -545,17 +587,17 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_UUID: {
     ScopedPyObject instval(PyObject_GetAttr(value, INTERN_STRING(bytes)));
     if (!instval) {
-        return false;
+      return false;
     }
 
     Py_ssize_t size;
     char* buffer;
     if (PyBytes_AsStringAndSize(instval.get(), &buffer, &size) < 0) {
-        return false;
+      return false;
     }
     if (size != 16) {
-        PyErr_SetString(PyExc_TypeError, "uuid.bytes must be exactly 16 bytes long");
-        return false;
+      PyErr_SetString(PyExc_TypeError, "uuid.bytes must be exactly 16 bytes long");
+      return false;
     }
     impl()->writeUuid(buffer);
     return true;
@@ -836,11 +878,11 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
 
   case T_UUID: {
     char* buf = nullptr;
-    if(!impl()->readUuid(&buf)) {
+    if (!impl()->readUuid(&buf)) {
       return nullptr;
     }
 
-    if(!UuidModule) {
+    if (!UuidModule) {
       UuidModule = PyImport_ImportModule("uuid");
       if (!UuidModule)
         return nullptr;
@@ -848,12 +890,12 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
 
     ScopedPyObject cls(PyObject_GetAttr(UuidModule, INTERN_STRING(UUID)));
     if (!cls) {
-        return nullptr;
+      return nullptr;
     }
 
     ScopedPyObject pyBytes(PyBytes_FromStringAndSize(buf, 16));
     if (!pyBytes) {
-        return nullptr;
+      return nullptr;
     }
 
     ScopedPyObject args(PyTuple_New(0));
@@ -900,7 +942,7 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     //   1. "frozen2" mode: classes inherit from TFrozenBase
     //   2. "python.immutable" annotation: classes get a __setattr__ that raises TypeError
     immutable = PyObject_IsSubclass(klass, TFrozenBase)
-        || reinterpret_cast<PyTypeObject*>(klass)->tp_setattro != PyObject_GenericSetAttr;
+                || reinterpret_cast<PyTypeObject*>(klass)->tp_setattro != PyObject_GenericSetAttr;
 
     if (immutable) {
       kwargs.reset(PyDict_New());
@@ -915,6 +957,11 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
       }
       output = created_output.get();
     }
+  }
+
+  detail::RecursionGuard<Impl> rec(this);
+  if (!rec) {
+    return nullptr;
   }
 
   detail::ReadStructScope<Impl> scope = detail::readStructScope(this);
@@ -980,7 +1027,7 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
   Py_INCREF(output);
   return output;
 }
-}
-}
-}
+} // namespace py
+} // namespace thrift
+} // namespace apache
 #endif // THRIFT_PY_PROTOCOL_H
