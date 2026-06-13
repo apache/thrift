@@ -31,6 +31,7 @@
 #include <memory>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/THeaderTransport.h>
 #include <thrift/transport/TSimpleFileTransport.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/protocol/TEnum.h>
@@ -315,6 +316,28 @@ BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
   protocol->writeMapEnd();
   BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
   protocol->readMapEnd();
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_header_size_exceeds_frame) {
+  using apache::thrift::transport::THeaderTransport;
+  // Header-format frame whose declared header size (3 * 4 = 12) leaves fewer
+  // than the 10 common-header bytes inside the 14-byte frame. The trailing
+  // varint bytes are all continuation bytes, so the reader used to run off the
+  // end of the receive buffer.
+  uint8_t frame[] = {
+      0x00, 0x00, 0x00, 0x0E, // frame length = 14
+      0x0F, 0xFF, 0x00, 0x00, // header magic
+      0x00, 0x00, 0x00, 0x00, // seqId
+      0x00, 0x03,             // header size field (3 -> 12 bytes)
+      0x02,                   // protocol id varint
+      0x00,                   // num transforms = 0
+      0x80, 0x80              // info-header varint, all continuation
+  };
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(frame, sizeof(frame)));
+  std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
+
+  uint8_t out[1];
+  BOOST_CHECK_THROW(trans->read(out, sizeof(out)), TTransportException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
