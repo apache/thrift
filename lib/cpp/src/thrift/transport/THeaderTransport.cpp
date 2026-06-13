@@ -222,7 +222,10 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
   }
   headerSize *= 4;
   const uint8_t* const headerBoundary = ptr + headerSize;
-  if (headerSize > sz) {
+  // ptr already skips the 10-byte common header, so the header section has to
+  // fit in the remaining sz - 10 bytes; comparing against sz alone let the
+  // boundary sit up to 10 bytes past the receive buffer.
+  if (headerSize > sz - 10) {
     throw TTransportException(TTransportException::CORRUPTED_DATA,
                               "Header size is larger than frame");
   }
