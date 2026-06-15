@@ -432,8 +432,23 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
     increase the suffix. (_1, _2, ...) and upload another.  You cannot replace a release on CPAN.
 * [php] @jfarrell, @bufferoverflow, @jeking3 are the only ones who can do this right now.
   * Once the release is tagged, one just has to hit the "Update" button to pick it up.
-* [pypi] @jfarrell is the only one who can do this right now.
-    https://issues.apache.org/jira/browse/THRIFT-4687
+* [pypi] The `PyPI publishing` GitHub Actions workflow publishes the Python
+  package when the GitHub release is published. It builds the source
+  distribution and platform wheel distributions, then publishes them from a
+  separate job using PyPI Trusted Publishing.
+  * Before publishing, verify that the PyPI `thrift` project has a trusted
+    publisher configured for the `apache/thrift` repository, the
+    `.github/workflows/pypi.yml` workflow, and the `release` environment.
+  * After publishing the GitHub release, verify that the workflow completed and
+    that the PyPI release contains both the `.tar.gz` source distribution and
+    the `.whl` Linux manylinux, Linux musllinux, macOS, and Windows wheel
+    distributions. The manylinux wheels are built on the manylinux2014
+    baseline for glibc 2.17+ compatibility.
+  * Do not upload release candidates, prereleases, branch builds, nightlies, or
+    continuous builds to PyPI.
+  * PyPI distribution filenames are immutable. If an artifact was published with
+    the wrong contents, prepare a new Apache Thrift release rather than trying
+    to replace the existing PyPI file.
 * [rust] Any thrift project committer is allowed to upload a new crate.
 
 If you have any questions email `dev@thrift.apache.org`.

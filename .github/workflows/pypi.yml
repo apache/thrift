@@ -22,16 +22,26 @@ name: "PyPI publishing"
 on:
   release:
     types: [published]
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/pypi.yml"
+      - "doc/ReleaseManagement.md"
+      - "lib/py/MANIFEST.in"
+      - "lib/py/pyproject.toml"
+      - "lib/py/setup.cfg"
+      - "lib/py/setup.py"
+      - "lib/py/compat/win32/**"
+      - "lib/py/src/ext/**"
+  workflow_dispatch:
 
 jobs:
-  pypi-publish:
-    name: Publish release to PyPI
+  build-sdist:
+    name: Build Python source distribution
     runs-on: ubuntu-latest
-    # Specifying a GitHub environment is optional, but strongly encouraged
-    environment: release
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -40,14 +50,126 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.8"
+          python-version: "3.12"
 
-      - name: Build
-        run: |
-          cd lib/py
-          python setup.py sdist
+      - name: Install build tools
+        run: python -m pip install --upgrade build twine
+
+      - name: Build source distribution
+        working-directory: lib/py
+        run: python -m build --sdist --outdir dist
+
+      - name: Check source distribution
+        working-directory: lib/py
+        run: python -m twine check dist/*
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-sdist
+          if-no-files-found: error
+          path: lib/py/dist/*.tar.gz
+          retention-days: 3
+
+  build-wheels:
+    name: Build Python wheels (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: manylinux-x86_64
+            runner: ubuntu-latest
+            archs: x86_64
+            build: "cp310-manylinux_* cp311-manylinux_* cp312-manylinux_* cp313-manylinux_* cp314-manylinux_*"
+          - platform: manylinux-aarch64
+            runner: ubuntu-24.04-arm
+            archs: aarch64
+            build: "cp310-manylinux_* cp311-manylinux_* cp312-manylinux_* cp313-manylinux_* cp314-manylinux_*"
+          - platform: musllinux-x86_64
+            runner: ubuntu-latest
+            archs: x86_64
+            build: "cp310-musllinux_* cp311-musllinux_* cp312-musllinux_* cp313-musllinux_* cp314-musllinux_*"
+          - platform: musllinux-aarch64
+            runner: ubuntu-24.04-arm
+            archs: aarch64
+            build: "cp310-musllinux_* cp311-musllinux_* cp312-musllinux_* cp313-musllinux_* cp314-musllinux_*"
+          - platform: macos-x86_64
+            runner: macos-15-intel
+            archs: x86_64
+            build: "cp310-macosx_* cp311-macosx_* cp312-macosx_* cp313-macosx_* cp314-macosx_*"
+          - platform: macos-arm64
+            runner: macos-15
+            archs: arm64
+            build: "cp310-macosx_* cp311-macosx_* cp312-macosx_* cp313-macosx_* cp314-macosx_*"
+          - platform: windows-amd64
+            runner: windows-latest
+            archs: AMD64
+            build: "cp310-win_* cp311-win_* cp312-win_* cp313-win_* cp314-win_*"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: python -m pip install --upgrade cibuildwheel==4.1.0 twine
+
+      - name: Build wheels
+        run: python -m cibuildwheel lib/py --output-dir wheelhouse
+        env:
+          CIBW_ARCHS: ${{ matrix.archs }}
+          CIBW_BUILD: ${{ matrix.build }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          CIBW_TEST_COMMAND: python -c "import thrift; import thrift.protocol.fastbinary"
+
+      - name: Check wheels
+        run: >
+          python -c "import glob, subprocess, sys;
+          sys.exit(subprocess.call([sys.executable, '-m', 'twine', 'check',
+          *glob.glob('wheelhouse/*.whl')]))"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-wheels-${{ matrix.platform }}
+          if-no-files-found: error
+          path: wheelhouse/*.whl
+          retention-days: 3
+
+  pypi-publish:
+    name: Publish release to PyPI
+    needs:
+      - build-sdist
+      - build-wheels
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    # Specifying a GitHub environment is optional, but strongly encouraged
+    environment: release
+    permissions:
+      contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: Download package distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: python-*
+          path: python-dist
+          merge-multiple: true
+
+      - name: List package distributions
+        run: ls -l python-dist
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
-          packages-dir: lib/py/dist/
+          packages-dir: python-dist/
