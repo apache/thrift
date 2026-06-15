@@ -96,6 +96,9 @@ set(UnitTest_SOURCES
 add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 target_link_libraries(UnitTests thrift)
+if(WITH_ZLIB)
+    target_link_libraries(UnitTests thriftz)
+endif()
 add_test(NAME UnitTests COMMAND UnitTests)
 if(MSVC)
     # Disable C4503: decorated name length exceeded, name was truncated

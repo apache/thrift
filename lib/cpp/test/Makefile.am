@@ -146,6 +146,7 @@ UnitTests_SOURCES = \
 
 UnitTests_LDADD = \
   libtestgencpp.la \
+  $(top_builddir)/lib/cpp/libthriftz.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
   $(BOOST_THREAD_LDADD)
