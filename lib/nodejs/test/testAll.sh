@@ -142,6 +142,7 @@ node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/int64_bigint.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 node ${DIR}/recursion_depth.test.js || TESTOK=1
+node ${DIR}/transport_receiver.test.js || TESTOK=1
 node ${DIR}/generated-exceptions.test.js || TESTOK=1
 node ${DIR}/include.test.mjs || TESTOK=1
 node ${DIR}/thrift_4987_xhr_protocol.test.mjs || TESTOK=1
