@@ -791,3 +791,24 @@ func TestJSONContextStack(t *testing.T) {
 func TestTSimpleJSONProtocolUnmatchedBeginEnd(t *testing.T) {
 	UnmatchedBeginEndProtocolTest(t, NewTSimpleJSONProtocolFactory())
 }
+
+func TestReadSimpleJSONProtocolMapBeginSizeLimit(t *testing.T) {
+	ctx := context.Background()
+	trans := NewTMemoryBuffer()
+	wp := NewTSimpleJSONProtocol(trans)
+	if err := wp.WriteMapBegin(ctx, STRING, STRING, 1<<30); err != nil {
+		t.Fatal(err)
+	}
+	if err := wp.Flush(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	rp := NewTSimpleJSONProtocolConf(trans, &TConfiguration{MaxMessageSize: 1024})
+	_, _, size, err := rp.ReadMapBegin(ctx)
+	if err == nil {
+		t.Fatalf("expected size-limit error reading oversized map, got nil with size %d", size)
+	}
+	if terr, ok := err.(TProtocolException); !ok || terr.TypeId() != SIZE_LIMIT {
+		t.Errorf("expected SIZE_LIMIT protocol exception, got %v", err)
+	}
+}
