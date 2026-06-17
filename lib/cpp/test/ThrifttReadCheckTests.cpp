@@ -340,4 +340,27 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_header_size_exceeds_frame) {
   BOOST_CHECK_THROW(trans->read(out, sizeof(out)), TTransportException);
 }
 
+BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_roundtrip) {
+  using apache::thrift::transport::THeaderTransport;
+  // A run of identical bytes compresses to far fewer bytes than it occupies
+  // once expanded again, so the result of the zlib transform is much larger
+  // than the frame section it is read from.  This drives the full write/read
+  // round trip through the zlib transform path.  Keep the payload small enough
+  // to stay within the transform buffer the reader sizes from its write buffer.
+  const std::size_t N = 700;
+  std::vector<uint8_t> payload(N, 0x42);
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<THeaderTransport> writer(new THeaderTransport(buffer));
+  writer->setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer->write(payload.data(), static_cast<uint32_t>(payload.size()));
+  writer->flush();
+
+  std::shared_ptr<THeaderTransport> reader(new THeaderTransport(buffer));
+  std::vector<uint8_t> out(N, 0x00);
+  reader->readAll(out.data(), static_cast<uint32_t>(out.size()));
+
+  BOOST_CHECK(out == payload);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

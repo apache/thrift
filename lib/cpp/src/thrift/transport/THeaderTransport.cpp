@@ -317,7 +317,13 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
                                     "Error while zlib deflateEnd");
       }
 
-      memcpy(ptr, tBuf_.get(), sz);
+      // The result now lives in tBuf_ and is typically larger than the source
+      // section it was read from, so it does not fit back into the receive
+      // buffer at ptr.  Swap the transform buffer in as the receive buffer and
+      // continue from its start instead of copying the result back in place.
+      rBuf_.swap(tBuf_);
+      std::swap(rBufSize_, tBufSize_);
+      ptr = rBuf_.get();
     } else {
       throw TApplicationException(TApplicationException::MISSING_RESULT, "Unknown transform");
     }
