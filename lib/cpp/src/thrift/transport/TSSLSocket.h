@@ -23,6 +23,7 @@
 // Put this first to avoid WIN32 build failure
 #include <thrift/transport/TSocket.h>
 
+#include <functional>
 #include <openssl/ssl.h>
 #include <string>
 #include <thrift/concurrency/Mutex.h>
@@ -33,9 +34,10 @@ namespace transport {
 
 class AccessManager;
 class SSLContext;
+typedef std::function<std::shared_ptr<SSLContext>()> SSLContextFactory;
 
 enum SSLProtocol {
-  SSLTLS  = 0,  // Supports SSLv2 and SSLv3 handshake but only negotiates at TLSv1_0 or later.
+  SSLTLS  = 0,  // Supports version-flexible TLS negotiation with TLSv1_2 as the default floor.
 //SSLv2   = 1,  // HORRIBLY INSECURE!
   SSLv3   = 2,  // Supports SSLv3 only - also horribly insecure!
   TLSv1_0 = 3,  // Supports TLSv1_0 or later.
@@ -210,6 +212,12 @@ public:
    * @param protocol The SSL/TLS protocol to use.
    */
   TSSLSocketFactory(SSLProtocol protocol = SSLTLS);
+  /**
+   * Constructor
+   *
+   * @param contextFactory Function invoked during construction to return a custom OpenSSL context.
+   */
+  TSSLSocketFactory(const SSLContextFactory& contextFactory);
   virtual ~TSSLSocketFactory();
   /**
    * Create an instance of TSSLSocket with a fresh new socket.
@@ -328,6 +336,8 @@ private:
   static uint64_t count_;
   static bool manualOpenSSLInitialization_;
   static bool didWeInitializeOpenSSL_;  // in that case we also perform de-init
+  void initializeOpenSSLState();
+  void cleanupOpenSSLState();
   void setup(std::shared_ptr<TSSLSocket> ssl);
   static int passwordCallback(char* password, int size, int, void* data);
 };

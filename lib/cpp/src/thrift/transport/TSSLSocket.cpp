@@ -204,11 +204,12 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
   }
   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
 
-  // Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
-  // with older clients so they get a graceful denial.
+  // Keep version-flexible negotiation for current protocol versions while setting
+  // the default protocol floor at TLSv1.2.
   if (protocol == SSLTLS) {
-      SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
-      SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv3);   // THRIFT-3164
+    SSL_CTX_set_options(ctx_,
+                        SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1
+                            | SSL_OP_NO_TLSv1_1);
   }
 }
 
@@ -884,6 +885,33 @@ bool TSSLSocketFactory::manualOpenSSLInitialization_ = false;
 bool TSSLSocketFactory::didWeInitializeOpenSSL_ = false;
 
 TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
+  initializeOpenSSLState();
+  try {
+    ctx_ = std::make_shared<SSLContext>(protocol);
+  } catch (...) {
+    cleanupOpenSSLState();
+    throw;
+  }
+}
+
+TSSLSocketFactory::TSSLSocketFactory(const SSLContextFactory& contextFactory) : server_(false) {
+  if (!contextFactory) {
+    throw TSSLException("SSLContextFactory must not be empty");
+  }
+  initializeOpenSSLState();
+  try {
+    std::shared_ptr<SSLContext> ctx = contextFactory();
+    if (ctx == nullptr) {
+      throw TSSLException("SSLContextFactory must not return null");
+    }
+    ctx_ = ctx;
+  } catch (...) {
+    cleanupOpenSSLState();
+    throw;
+  }
+}
+
+void TSSLSocketFactory::initializeOpenSSLState() {
   Guard guard(mutex_);
   if (count_ == 0) {
     if (!manualOpenSSLInitialization_) {
@@ -893,13 +921,18 @@ TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
     randomize();
   }
   count_++;
-  ctx_ = std::make_shared<SSLContext>(protocol);
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
+  cleanupOpenSSLState();
+}
+
+void TSSLSocketFactory::cleanupOpenSSLState() {
   Guard guard(mutex_);
   ctx_.reset();
-  count_--;
+  if (count_ > 0) {
+    count_--;
+  }
   if (count_ == 0 && didWeInitializeOpenSSL_) {
     cleanupOpenSSL();
     didWeInitializeOpenSSL_ = false;
