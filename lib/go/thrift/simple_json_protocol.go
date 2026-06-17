@@ -432,7 +432,7 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 	if err != nil {
 		return keyType, valueType, 0, err
 	}
-	err = checkSizeForProtocol(int32(size), p.cfg)
+	err = checkSizeForProtocol(int32(iSize), p.cfg)
 	if err != nil {
 		return keyType, valueType, 0, err
 	}
