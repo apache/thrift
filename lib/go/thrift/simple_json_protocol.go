@@ -1117,6 +1117,12 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 	if err != nil {
 		return elemType, 0, err
 	}
+	if nSize > math.MaxInt32 {
+		return elemType, 0, NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("size exceeded max allowed: %d", nSize),
+		)
+	}
 	err = checkSizeForProtocol(int32(nSize), p.cfg)
 	if err != nil {
 		return elemType, 0, err
