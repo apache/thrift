@@ -812,3 +812,23 @@ func TestReadSimpleJSONProtocolMapBeginSizeLimit(t *testing.T) {
 		t.Errorf("expected SIZE_LIMIT protocol exception, got %v", err)
 	}
 }
+
+func TestReadSimpleJSONProtocolMapBeginSizeOverflow(t *testing.T) {
+	// iSize = 1<<32 + 1; int32 narrowing wraps it to 1, which would pass checkSizeForProtocol.
+	// The map header is written directly as raw JSON to avoid int-width issues on 32-bit platforms.
+	overflowSize := int64(math.MaxInt32)*2 + 3 // = 4294967297 = 1<<32 + 1
+	buf := NewTMemoryBuffer()
+	buf.WriteString(fmt.Sprintf("[%d,%d,%d]", I32, I32, overflowSize))
+	proto := NewTSimpleJSONProtocolConf(buf, &TConfiguration{MaxMessageSize: 1024})
+	_, _, _, err := proto.ReadMapBegin(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	tpe, ok := err.(TProtocolException)
+	if !ok {
+		t.Fatalf("expected TProtocolException, got %T: %v", err, err)
+	}
+	if tpe.TypeId() != SIZE_LIMIT {
+		t.Errorf("expected SIZE_LIMIT, got %d: %v", tpe.TypeId(), err)
+	}
+}

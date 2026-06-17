@@ -432,6 +432,12 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 	if err != nil {
 		return keyType, valueType, 0, err
 	}
+	if iSize > math.MaxInt32 {
+		return keyType, valueType, 0, NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("size exceeded max allowed: %d", iSize),
+		)
+	}
 	err = checkSizeForProtocol(int32(iSize), p.cfg)
 	if err != nil {
 		return keyType, valueType, 0, err
