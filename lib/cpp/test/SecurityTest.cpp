@@ -34,6 +34,8 @@
 #endif
 
 using apache::thrift::transport::TSSLServerSocket;
+using apache::thrift::transport::SSLContextFactory;
+using apache::thrift::transport::TSSLException;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TSSLSocket;
 using apache::thrift::transport::TSSLSocketFactory;
@@ -226,6 +228,78 @@ struct SecurityFixture
 
 BOOST_FIXTURE_TEST_SUITE(BOOST_TEST_MODULE, SecurityFixture)
 
+BOOST_AUTO_TEST_CASE(default_ssl_context_options)
+{
+    apache::thrift::transport::SSLContext context;
+    const auto options = SSL_CTX_get_options(context.get());
+
+    if (SSL_OP_NO_SSLv2 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_SSLv2) != 0);
+    }
+    if (SSL_OP_NO_SSLv3 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_SSLv3) != 0);
+    }
+    if (SSL_OP_NO_TLSv1 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_TLSv1) != 0);
+    }
+    if (SSL_OP_NO_TLSv1_1 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_TLSv1_1) != 0);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(custom_ssl_context_options)
+{
+    class CustomSSLContext : public apache::thrift::transport::SSLContext
+    {
+    public:
+        CustomSSLContext() : SSLContext()
+        {
+            SSL_CTX_clear_options(get(), SSL_OP_NO_TLSv1_1);
+        }
+    };
+
+    std::shared_ptr<apache::thrift::transport::SSLContext> context;
+    TSSLSocketFactory factory([&context]() {
+        context = std::make_shared<CustomSSLContext>();
+        return context;
+    });
+    const auto options = SSL_CTX_get_options(context->get());
+
+    if (SSL_OP_NO_TLSv1 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_TLSv1) != 0);
+    }
+    if (SSL_OP_NO_TLSv1_1 != 0) {
+        BOOST_CHECK((options & SSL_OP_NO_TLSv1_1) == 0);
+    }
+    context.reset();
+}
+
+BOOST_AUTO_TEST_CASE(custom_ssl_context_factory_validation)
+{
+    try
+    {
+        SSLContextFactory contextFactory;
+        TSSLSocketFactory factory(contextFactory);
+        BOOST_FAIL("Expected empty SSLContextFactory to throw");
+    }
+    catch (const TSSLException& ex)
+    {
+        BOOST_CHECK_EQUAL("SSLContextFactory must not be empty", std::string(ex.what()));
+    }
+
+    try
+    {
+        TSSLSocketFactory factory([]() {
+            return std::shared_ptr<apache::thrift::transport::SSLContext>();
+        });
+        BOOST_FAIL("Expected null SSLContextFactory result to throw");
+    }
+    catch (const TSSLException& ex)
+    {
+        BOOST_CHECK_EQUAL("SSLContextFactory must not return null", std::string(ex.what()));
+    }
+}
+
 BOOST_AUTO_TEST_CASE(ssl_security_matrix)
 {
     try
@@ -236,11 +310,11 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
         {
     //   server    = SSLTLS   SSLv2    SSLv3    TLSv1_0  TLSv1_1  TLSv1_2
     // client
-    /* SSLTLS  */  { true,    false,   false,   true,    true,    true    },
+    /* SSLTLS  */  { true,    false,   false,   false,   false,   true    },
     /* SSLv2   */  { false,   false,   false,   false,   false,   false   },
     /* SSLv3   */  { false,   false,   true,    false,   false,   false   },
-    /* TLSv1_0 */  { true,    false,   false,   true,    false,   false   },
-    /* TLSv1_1 */  { true,    false,   false,   false,   true,    false   },
+    /* TLSv1_0 */  { false,   false,   false,   true,    false,   false   },
+    /* TLSv1_1 */  { false,   false,   false,   false,   true,    false   },
     /* TLSv1_2 */  { true,    false,   false,   false,   false,   true    }
         };
 

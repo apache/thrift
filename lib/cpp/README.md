@@ -135,6 +135,11 @@ TSimpleServer, TThreadedServer, and TThreadPoolServer.
 There are two main classes TSSLSocketFactory and TSSLSocket. Instances of
 TSSLSocket are always created from TSSLSocketFactory.
 
+The default TSSLSocketFactory context uses OpenSSL's version-flexible TLS
+method and sets TLS 1.2 as the minimum negotiated protocol version. Applications
+that need a different protocol range can provide a custom SSLContext factory and
+adjust the OpenSSL context options before creating sockets.
+
 ## How to use SSL APIs
 
 See the TestClient.cpp and TestServer.cpp files for examples.
@@ -319,4 +324,3 @@ assertion or a core instead of undefined behavior.  The lifetime of a TSSLSocket
 up too early.  If the static boolean is set to disable openssl initialization and
 cleanup and leave it up to the consuming application, this requirement is not needed.
 (THRIFT-4164)
-
