@@ -140,7 +140,6 @@ THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" OFF)
 THRIFT_ADD_COMPILER(rb      "Enable compiler for Ruby" ON)
 THRIFT_ADD_COMPILER(rs      "Enable compiler for Rust" OFF)
 THRIFT_ADD_COMPILER(st      "Enable compiler for Smalltalk" OFF)
-THRIFT_ADD_COMPILER(swift   "Enable compiler for Swift" OFF)
 THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" OFF)
 THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" OFF)
 

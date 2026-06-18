@@ -265,21 +265,6 @@ RUN `# Rust dependencies` \
 ENV PATH=/home/${user}/.cargo/bin:$PATH
 USER root
 
-# Swift on Linux for cross tests
-RUN apt-get install -yq \
-  libedit-dev \
-  libz3-dev \
-  python3-flake8 \
-  libxml2-dev && \
-  cd / && \
-  wget --quiet https://download.swift.org/swift-6.1-release/ubuntu2404/swift-6.1-RELEASE/swift-6.1-RELEASE-ubuntu24.04.tar.gz && \
-  tar xf swift-6.1-RELEASE-ubuntu24.04.tar.gz && \
-  mv swift-6.1-RELEASE-ubuntu24.04 /usr/share/swift && \
-  rm swift-6.1-RELEASE-ubuntu24.04.tar.gz
-
-ENV PATH=/usr/share/swift/usr/bin:$PATH
-RUN swift --version
-
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
   `# Locale dependencies` \

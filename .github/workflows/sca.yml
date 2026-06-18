@@ -20,7 +20,6 @@ env:
     --without-netstd
     --without-nodejs
     --without-nodets
-    --without-swift
     --without-go
     --without-dart
     --without-erlang
