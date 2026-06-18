@@ -29,6 +29,10 @@ if WITH_TUTORIAL
 SUBDIRS += tutorial
 endif
 
+if WITH_CONTRIB
+SUBDIRS += contrib
+endif
+
 clean-local:
 	$(RM) -r vendor/
 
