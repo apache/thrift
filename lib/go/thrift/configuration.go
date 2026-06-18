@@ -345,6 +345,12 @@ func checkContainerSizeForProtocol(size int64, minElemSize int32, cfg *TConfigur
 			fmt.Errorf("negative size: %d", size),
 		)
 	}
+	if size > math.MaxInt32 {
+		return NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("size exceeded max allowed: %d", size),
+		)
+	}
 	totalMinSize := size * int64(minElemSize)
 	if totalMinSize > math.MaxInt32 {
 		return NewTProtocolExceptionWithType(

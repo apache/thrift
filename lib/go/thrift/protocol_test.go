@@ -709,6 +709,43 @@ func TestReadContainerSizeOverflow(t *testing.T) {
 			})
 		})
 	}
+
+	// TJSONProtocol reads the element count as a 64-bit value, so the count can
+	// exceed int32 on the wire. WriteMapBegin takes a platform int (too narrow on
+	// 32-bit builds) to carry such a count, so place it on the wire with the
+	// lower-level writers, mirroring WriteMapBegin.
+	t.Run("json/map", func(t *testing.T) {
+		// 0x4000000000000000 * 2 (min size of a map<bool,bool> entry) stays
+		// outside int32 range when kept in 64 bits.
+		const jsonOverflowSize int64 = 0x4000000000000000
+		trans := NewTMemoryBuffer()
+		w := NewTJSONProtocol(trans)
+		if err := w.OutputListBegin(); err != nil {
+			t.Fatal(err)
+		}
+		ks, _ := w.TypeIdToString(BOOL)
+		if err := w.WriteString(ctx, ks); err != nil {
+			t.Fatal(err)
+		}
+		vs, _ := w.TypeIdToString(BOOL)
+		if err := w.WriteString(ctx, vs); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.WriteI64(ctx, jsonOverflowSize); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.OutputObjectBegin(); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.Flush(ctx); err != nil {
+			t.Fatal(err)
+		}
+		r := NewTJSONProtocol(trans)
+		r.SetTConfiguration(&TConfiguration{})
+		if _, _, _, err := r.ReadMapBegin(ctx); err == nil {
+			t.Error("expected error reading oversized map header, got nil")
+		}
+	})
 }
 
 func TestCheckContainerSizeForProtocol(t *testing.T) {
@@ -725,6 +762,9 @@ func TestCheckContainerSizeForProtocol(t *testing.T) {
 		// JSON reads the count as int64; a count past int32 must be rejected
 		// rather than reduced to a small product.
 		{"int64-count", 0x100000000, 2, true},
+		// A count near math.MaxInt64/minElem keeps the 64-bit product itself
+		// outside int32 range; it must be rejected by the count range check.
+		{"int64-product", 0x4000000000000000, 2, true},
 	} {
 		t.Run(c.label, func(t *testing.T) {
 			err := checkContainerSizeForProtocol(c.size, c.minElem, &TConfiguration{})
