@@ -21,6 +21,7 @@ package org.apache.thrift.protocol;
 
 import org.apache.thrift.*;
 import org.apache.thrift.transport.TTransport;
+import haxe.Int64;
 
 
 class TProtocolImplBase {
@@ -66,18 +67,18 @@ class TProtocolImplBase {
 
 	private function CheckReadBytesAvailableSet(set : TSet) : Void
 	{
-		Transport.CheckReadBytesAvailable(set.size * GetMinSerializedSize(set.elemType));
+		Transport.CheckReadBytesAvailable(Int64.ofInt(set.size) * Int64.ofInt(GetMinSerializedSize(set.elemType)));
 	}
 
 	private function CheckReadBytesAvailableList(list : TList) : Void
 	{
-		Transport.CheckReadBytesAvailable(list.size * GetMinSerializedSize(list.elemType));
+		Transport.CheckReadBytesAvailable(Int64.ofInt(list.size) * Int64.ofInt(GetMinSerializedSize(list.elemType)));
 	}
 
 	private function CheckReadBytesAvailableMap (map : TMap) : Void
 	{
 		var elmSize = GetMinSerializedSize(map.keyType) + GetMinSerializedSize(map.valueType);
-		Transport.CheckReadBytesAvailable(map.size * elmSize);
+		Transport.CheckReadBytesAvailable(Int64.ofInt(map.size) * Int64.ofInt(elmSize));
 	}
 
 	// Returns the minimum amount of bytes needed to store the smallest possible instance of TType.

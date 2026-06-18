@@ -699,13 +699,13 @@ end;
 
 procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftList);
 begin
-  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+  FTrans.CheckReadBytesAvailable( Int64(value.Count) * GetMinSerializedSize(value.ElementType));
 end;
 
 
 procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftSet);
 begin
-  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+  FTrans.CheckReadBytesAvailable( Int64(value.Count) * GetMinSerializedSize(value.ElementType));
 end;
 
 
@@ -713,7 +713,7 @@ procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftMap);
 var nPairSize : Integer;
 begin
   nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
-  FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
+  FTrans.CheckReadBytesAvailable( Int64(value.Count) * nPairSize);
 end;
 
 
