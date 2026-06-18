@@ -18,6 +18,7 @@
 # under the License.
 #
 require 'spec_helper'
+require 'openssl'
 
 describe 'Server' do
   describe Thrift::BaseServer do
@@ -81,6 +82,30 @@ describe 'Server' do
       expect(@serverTrans).to receive(:close).ordered
       expect { @server.serve }.to throw_symbol(:stop)
     end
+
+    it "should continue serving after accept raises Errno::ECONNRESET" do
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).ordered.and_raise(Errno::ECONNRESET)
+      expect(@serverTrans).to receive(:accept).ordered.and_return(@client)
+      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+      expect(@trans).to receive(:close).once
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
+    end
+
+    it "should continue serving after accept raises OpenSSL::SSL::SSLError" do
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).ordered.and_raise(OpenSSL::SSL::SSLError)
+      expect(@serverTrans).to receive(:accept).ordered.and_return(@client)
+      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+      expect(@trans).to receive(:close).once
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
+    end
   end
 
   describe Thrift::ThreadedServer do
@@ -115,6 +140,32 @@ describe 'Server' do
         end
       end
       expect(@trans).to receive(:close).exactly(3).times
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
+    end
+
+    it "should continue serving after accept raises Errno::ECONNRESET" do
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).ordered.and_raise(Errno::ECONNRESET)
+      expect(@serverTrans).to receive(:accept).ordered.and_return(@client)
+      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+      expect(Thread).to receive(:new).with(@prot, @trans).once.and_yield(@prot, @trans)
+      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+      expect(@trans).to receive(:close).once
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
+    end
+
+    it "should continue serving after accept raises OpenSSL::SSL::SSLError" do
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).ordered.and_raise(OpenSSL::SSL::SSLError)
+      expect(@serverTrans).to receive(:accept).ordered.and_return(@client)
+      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+      expect(Thread).to receive(:new).with(@prot, @trans).once.and_yield(@prot, @trans)
+      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+      expect(@trans).to receive(:close).once
       expect(@serverTrans).to receive(:close).ordered
       expect { @server.serve }.to throw_symbol(:stop)
     end
