@@ -23,7 +23,6 @@ We currently maintain fuzzers for the following languages:
 - Python
 - Ruby
 - Rust
-- Swift
 - netstd (only supported locally, and not on oss-fuzz)
 
 ## Fuzzer Types

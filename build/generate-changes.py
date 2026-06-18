@@ -128,7 +128,6 @@ JIRA_COMPONENT_MAP = {
     "Python": "Python",
     "Ruby": "Ruby",
     "Rust": "Rust",
-    "Swift": "Swift",
     "TypeScript": "nodets",
 }
 
@@ -170,7 +169,6 @@ CLIENT_SECTION_MAP = {
     "rs": "Rust",
     "ruby": "Ruby",
     "rust": "Rust",
-    "swift": "Swift",
     "ts": "nodets",
 }
 
@@ -200,7 +198,6 @@ GITHUB_LABEL_MAP = {
     "python": "Python",
     "ruby": "Ruby",
     "rust": "Rust",
-    "swift": "Swift",
     "typescript": "nodets",
     "releng": "Build Process",
 }

@@ -92,11 +92,6 @@ SUBDIRS += rs
 PRECROSS_TARGET += precross-rs
 endif
 
-if WITH_SWIFT
-SUBDIRS += swift
-PRECROSS_TARGET += precross-swift
-endif
-
 #
 # generate html, graphviz, mermaid and markdown for ThriftTest.thrift
 #
@@ -144,7 +139,6 @@ EXTRA_DIST = \
 	py.twisted \
 	rb \
 	rs \
-	swift \
 	threads \
 	partial \
 	AnnotationTest.thrift \

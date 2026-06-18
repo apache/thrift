@@ -50,7 +50,7 @@ Thrift is not a monolith; each row below has a measurably different threat profi
 | **Python runtime** (`lib/py/`) | `thrift.protocol.TBinaryProtocol`, `thrift.transport.TSocket`, `thrift.server.*` | Sockets, TLS via `ssl` stdlib, optional Tornado / asyncio variants. | **In model.** Memory-safe; deserializer DoS bugs still relevant. |
 | **Go runtime** (`lib/go/`) | `thrift.NewTBinaryProtocol`, `thrift.NewTSocket`, `thrift.NewTSimpleServer` | Sockets, TLS via `crypto/tls`. | **In model.** Memory-safe; past stack-overflow on recursive skip *(documented — THRIFT-5469)*. |
 | **Rust runtime** (`lib/rs/`) | `thrift::protocol::*`, `thrift::transport::*`, `thrift::server::*` | Sockets, TLS where wired up. | **In model.** Memory-safe; past capacity-overflow on server side *(documented — THRIFT-5812)*. |
-| **Other language runtimes** (`lib/{netstd,cl,d,dart,delphi,erl,haxe,javame,js,kotlin,lua,nodejs,nodets,ocaml,perl,php,rb,st,swift,ts}/`) | Per-binding `T*Protocol` / `T*Transport` / `T*Server` | Each: language-stdlib sockets + TLS. | **In model.** Per-binding threat surface; assumed analogous to the canonical four (C++/Java/Python/Go) but not identical. See §14 Q26-Q30. *(maintainer — Jens 2026-05-20: list re-swept against `apache/thrift/lib/` HEAD; `cl`, `delphi`, `haxe`, `nodets`, `ts` added; `hs` removed; `dlang` renamed to `d`; `swift-pkg` consolidated into `swift`; `ts-js` renamed to `ts`.)* |
+| **Other language runtimes** (`lib/{netstd,cl,d,dart,delphi,erl,haxe,javame,js,kotlin,lua,nodejs,nodets,ocaml,perl,php,rb,st,ts}/`) | Per-binding `T*Protocol` / `T*Transport` / `T*Server` | Each: language-stdlib sockets + TLS. | **In model.** Per-binding threat surface; assumed analogous to the canonical four (C++/Java/Python/Go) but not identical. See §14 Q26-Q30. *(maintainer — Jens 2026-05-20: list re-swept against `apache/thrift/lib/` HEAD; `cl`, `delphi`, `haxe`, `nodets`, `ts` added; `hs` removed; `dlang` renamed to `d`; `swift-pkg` consolidated into `swift`; `ts-js` renamed to `ts`. Jens 2026-06-18: `swift` removed — binding dropped per THRIFT-5864.)* |
 | **Generated code** (output of `thrift -gen <lang>`) | `XService.Iface`, `XService.Client`, `XService.Processor`, struct `read()`/`write()` | Whatever the generator emits — typically pure (no I/O) deserializer + dispatcher glue. | **In model**, but threat profile is "whatever the generator templates produce"; bugs in *generated* code that vanish on regeneration are still in-model. |
 | **Wire protocols (specs)** (`doc/specs/thrift-binary-protocol.md`, `…-compact-protocol.md`, `…-json-protocol.md`, `…-rpc.md`) | N/A — these define the encoding. | N/A. | **In model** as the contract that all runtimes must implement; ambiguity in the spec is a model-level concern. |
 | **Test, tutorial, contrib** (`test/`, `tutorial/`, `contrib/`) | Example clients/servers, cross-language test driver, third-party utilities. | Yes — they open sockets, read files. | **Out of model** *(maintainer — Q3)*. See §3. |
@@ -432,7 +432,7 @@ Each property below states: (1) the property and conditions; (2) the violation s
 
 ### Properties tracked indirectly via fuzzing
 
-The OSS-Fuzz integration *(documented — `FUZZING.md`)* exercises the deserializer + round-trip path in 10 bindings (Go, c_glib partial, C++, Java/JVM, JavaScript, Python, Ruby, Rust, Swift, netstd). Any property the fuzzers test is implicitly claimed by the project: **deserializing arbitrary bytes does not crash the runtime**. A finding from a fuzzer corpus is therefore `VALID` by default, modulo the resource-bound caveat in P10 (a "test case takes 90 seconds" finding on an unbounded read is `BY-DESIGN: property-disclaimed` per §9).
+The OSS-Fuzz integration *(documented — `FUZZING.md`)* exercises the deserializer + round-trip path in 9 bindings (Go, c_glib partial, C++, Java/JVM, JavaScript, Python, Ruby, Rust, netstd). Any property the fuzzers test is implicitly claimed by the project: **deserializing arbitrary bytes does not crash the runtime**. A finding from a fuzzer corpus is therefore `VALID` by default, modulo the resource-bound caveat in P10 (a "test case takes 90 seconds" finding on an unbounded read is `BY-DESIGN: property-disclaimed` per §9).
 
 ---
 
@@ -620,7 +620,7 @@ These are the patterns a scanner, fuzzer, AI-assisted reviewer, or human reviewe
 
 ### Fuzzing-scope seed (per `FUZZING.md`)
 
-OSS-Fuzz currently covers: **Go, c_glib (partial), C++, Java/JVM, JavaScript, Python, Ruby, Rust, Swift, netstd (local only)** *(documented — `FUZZING.md`)*. For each binding × protocol the fuzz coverage exists, the following dispositions apply:
+OSS-Fuzz currently covers: **Go, c_glib (partial), C++, Java/JVM, JavaScript, Python, Ruby, Rust, netstd (local only)** *(documented — `FUZZING.md`)*. For each binding × protocol the fuzz coverage exists, the following dispositions apply:
 
 - **Deserializer fuzzer corpus crashes the runtime → `VALID`.** Memory-safety on fuzzed inputs is implicit in P1/P2.
 - **Round-trip fuzzer detects mismatch → `VALID`** against P3.
@@ -811,7 +811,7 @@ I/O, no library hooks.
 
 All other bindings
 
-Java, Python, Ruby, Perl, Rust, PHP, JavaScript/Node.js, netstd, Haxe, Kotlin, Swift: no process-wide initialization side effects found. SSL in these bindings delegates
+Java, Python, Ruby, Perl, Rust, PHP, JavaScript/Node.js, netstd, Haxe, Kotlin: no process-wide initialization side effects found. SSL in these bindings delegates
 entirely to the runtime's standard TLS stack (javax.net.ssl, Python's ssl module, IO::Socket::SSL, etc.), which do not require explicit library init calls.
 
 ---
@@ -883,7 +883,7 @@ MiB limit. The other languages always default to 100 MiB regardless of how the o
 
 Bindings without TConfiguration / maxMessageSize (no enforced limit)
 
-Python, Ruby, PHP, JavaScript (lib/js), Node.js, TypeScript (nodets/ts), Perl, Erlang, D, Lua, Common Lisp, Kotlin, Smalltalk, OCaml, Dart, Swift, Java ME.
+Python, Ruby, PHP, JavaScript (lib/js), Node.js, TypeScript (nodets/ts), Perl, Erlang, D, Lua, Common Lisp, Kotlin, Smalltalk, OCaml, Dart, Java ME.
 
 
 **Q39.** 
@@ -1033,17 +1033,6 @@ Python
 └────────────────┴────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Swift
-
-```
-┌───────────┬─────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  Option   │ Default │                                                                       Effect                                                                        │
-├───────────┼─────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ no_strict │ off     │ Parsed but never referenced in code generation — 3 occurrences in t_swift_generator.cc (init, parse, field declaration), zero in output logic. The   │
-│           │         │ option is a documented no-op: operators who set it believing it relaxes strict mode are silently misled. This is itself a bug.                       │
-└───────────┴─────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
 netstd (C#)
 
 ```
@@ -1084,8 +1073,7 @@ Go (t_rs_generator.cc has no option parsing at all beyond the language name), Ha
 old_names, constprefix, events, xmldoc, async, com_types, rtti, guid_v4 — none wire-affecting beyond COM type registration).
 
 ---
-Bottom line: The two genuine security risks in current code are Java unsafe_binaries (raw buffer exposure) and Java reuse_objects (message state bleed). Swift no_strict is a
-latent documentation bug — it promises an effect it does not deliver.
+Bottom line: The two genuine security risks in current code are Java unsafe_binaries (raw buffer exposure) and Java reuse_objects (message state bleed).
 
 
 ---

@@ -198,4 +198,3 @@ Last updated: May 2, 2026
 | ruby      | 2.7.0p0       | 3.0.2p107     |               |       |
 | rust      | 1.83.0        | 1.83.0        |               |       |
 | smalltalk |               |               |               | Not in CI |
-| swift     | 5.7           | 5.7           | 6.1           |       |

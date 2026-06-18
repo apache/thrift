@@ -409,28 +409,6 @@ mergeable:
         mode: 'add'
 
   - when: pull_request.*
-    name: Add 'swift' label to PR if changeset includes changes to Swift library, tests, tutorial, package, or generator files
-    validate:
-      - do: changeset
-        or:
-          - must_include:
-              regex: 'lib/swift/.*'
-          - must_include:
-              regex: 'test/swift/.*'
-          - must_include:
-              regex: 'tutorial/swift/.*'
-          - must_include:
-              regex: '^Package\.swift$'
-          - must_include:
-              regex: '^Thrift\.podspec$'
-          - must_include:
-              regex: 'compiler/cpp/src/thrift/generate/t_swift_generator\..*'
-    pass:
-      - do: labels
-        labels: ['swift']
-        mode: 'add'
-
-  - when: pull_request.*
     name: Add 'compiler' label to PR if changeset includes changes to the compiler/cpp directory
     validate:
       - do: changeset

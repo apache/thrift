@@ -101,6 +101,10 @@
 - [THRIFT-5928](https://issues.apache.org/jira/browse/THRIFT-5928) - skip() call on unknown binary field fails deserialization instead of graceful skipping over field
 - [THRIFT-5739](https://issues.apache.org/jira/browse/THRIFT-5739) - set_nodelay should be enabled for TTcpChannel
 
+### Swift
+
+- [THRIFT-5864](https://issues.apache.org/jira/browse/THRIFT-5864) - Remove Swift binding (compiler generator, library, tests, and tutorial)
+
 
 ## 0.22.0
 

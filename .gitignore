@@ -329,7 +329,6 @@ SKILL.md
 /lib/rs/test_recursive/bin/
 /lib/rs/*.iml
 /lib/rs/**/*.iml
-/lib/swift/.build
 /lib/ts/test/build/
 /lib/ts/test/gen-*
 /libtool
@@ -396,7 +395,6 @@ SKILL.md
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
-/test/swift/CrossTests/.build
 /lib/cl/backport-update.zip
 /lib/cl/lib
 /tutorial/cl/quicklisp.lisp
