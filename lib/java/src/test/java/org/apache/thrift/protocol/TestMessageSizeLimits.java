@@ -106,6 +106,20 @@ public class TestMessageSizeLimits {
   }
 
   @Test
+  public void testCompactProtocol_stringLengthLimitEnforcedForBinary() throws Exception {
+    // binary uses the same varint-length encoding as a string on the wire
+    byte[] buf = encodeCompactString(repeat('A', 100));
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+
+    TCompactProtocol proto = new TCompactProtocol(transport, 10L, -1L);
+
+    assertThrows(
+        TProtocolException.class,
+        proto::readBinary,
+        "TCompactProtocol stringLengthLimit must also gate readBinary, not just readString");
+  }
+
+  @Test
   public void testConsumeBuffer_decrementsRemainingMessageSize() throws Exception {
     // 20-byte transport; updateKnownMessageSize sets remainingMessageSize = 20
     byte[] buf = new byte[20];
