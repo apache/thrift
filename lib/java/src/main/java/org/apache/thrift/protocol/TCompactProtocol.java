@@ -680,7 +680,7 @@ public class TCompactProtocol extends TProtocol {
     if (length == 0) {
       return EMPTY_BUFFER;
     }
-    getTransport().checkReadBytesAvailable(length);
+    checkStringReadLength(length);
     if (trans_.getBytesRemainingInBuffer() >= length) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
       trans_.consumeBuffer(length);
