@@ -29,6 +29,7 @@
 #include <cStringIO.h>
 #else
 #include <algorithm>
+#include <cstring>
 #endif
 
 namespace apache {
@@ -120,8 +121,10 @@ inline bool input_check(PyObject* input) {
 
 inline EncodeBuffer* new_encode_buffer(size_t size) {
   EncodeBuffer* buffer = new EncodeBuffer;
-  buffer->buf.reserve(size);
-  buffer->pos = 0;
+  if (!buffer->init(size)) {
+    delete buffer;
+    return nullptr;
+  }
   return buffer;
 }
 
@@ -165,21 +168,18 @@ inline bool ProtocolBase<Impl>::isUtf8(PyObject* typeargs) {
 
 template <typename Impl>
 PyObject* ProtocolBase<Impl>::getEncodedValue() {
-  return PyBytes_FromStringAndSize(output_->buf.data(), output_->buf.size());
+  return PyBytes_FromStringAndSize(output_->data, output_->size);
 }
 
 template <typename Impl>
 inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
-  size_t need = size + output_->pos;
-  if (output_->buf.capacity() < need) {
-    try {
-      output_->buf.reserve(need);
-    } catch (std::bad_alloc&) {
-      PyErr_SetString(PyExc_MemoryError, "Failed to allocate write buffer");
-      return false;
-    }
+  if (!output_->ensure(size)) {
+    PyErr_SetString(PyExc_MemoryError, "Failed to allocate write buffer");
+    return false;
   }
-  std::copy(data, data + size, std::back_inserter(output_->buf));
+
+  memcpy(output_->data + output_->size, data, size);
+  output_->size += size;
   return true;
 }
 

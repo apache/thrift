@@ -22,7 +22,9 @@ import unittest
 import uuid
 
 import _import_local_thrift  # noqa
+from thrift.Thrift import TApplicationException
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.transport import TTransport
 
@@ -167,6 +169,13 @@ def testField(type, data):
     protocol.readStructEnd()
 
 
+APPLICATION_EXCEPTION_THRIFT_SPEC = (
+    None,
+    (1, 11, "message", "UTF8", None),
+    (2, 8, "type", None, None),
+)
+
+
 def testMessage(data, strict=True):
     message = {}
     message['name'] = data[0]
@@ -195,6 +204,13 @@ def testMessage(data, strict=True):
 
 
 class TestTBinaryProtocol(unittest.TestCase):
+
+    def setUp(self):
+        try:
+            from thrift.protocol import fastbinary  # noqa: F401
+            self._has_fastbinary = True
+        except ImportError:
+            self._has_fastbinary = False
 
     def test_TBinaryProtocol_write_read(self):
         try:
@@ -279,6 +295,33 @@ class TestTBinaryProtocol(unittest.TestCase):
         except Exception as e:
             print("Assertion fail")
             raise e
+
+    def test_accelerated_large_message_roundtrip(self):
+        if not self._has_fastbinary:
+            self.skipTest("C extension not available")
+
+        original = TApplicationException(
+            type=TApplicationException.INTERNAL_ERROR,
+            message="x" * 8192,
+        )
+
+        otrans = TTransport.TMemoryBuffer()
+        oproto = TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(otrans)
+        oproto.trans.write(oproto._fast_encode(
+            original,
+            [TApplicationException, APPLICATION_EXCEPTION_THRIFT_SPEC],
+        ))
+
+        itrans = TTransport.TMemoryBuffer(otrans.getvalue())
+        iproto = TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(itrans)
+        decoded = iproto._fast_decode(
+            None,
+            iproto,
+            [TApplicationException, APPLICATION_EXCEPTION_THRIFT_SPEC],
+        )
+
+        self.assertEqual(decoded.message, original.message)
+        self.assertEqual(decoded.type, original.type)
 
     def test_TBinaryProtocol_no_strict_write_read(self):
         TMessageType = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}

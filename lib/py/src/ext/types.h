@@ -31,6 +31,8 @@
 #if PY_MAJOR_VERSION >= 3
 
 #include <vector>
+#include <limits>
+#include <stdlib.h>
 
 // TODO: better macros
 #define PyInt_AsLong(v) PyLong_AsLong(v)
@@ -131,8 +133,65 @@ typedef PyObject EncodeBuffer;
 #else
 extern const char* refill_signature;
 struct EncodeBuffer {
-  std::vector<char> buf;
-  size_t pos;
+  char* data;
+  size_t size;
+  size_t capacity;
+
+  EncodeBuffer() : data(nullptr), size(0), capacity(0) {}
+  EncodeBuffer(const EncodeBuffer&) = delete;
+  EncodeBuffer& operator=(const EncodeBuffer&) = delete;
+
+  ~EncodeBuffer() {
+    if (data) {
+      free(data);
+    }
+  }
+
+  bool init(size_t initial_capacity) {
+    if (initial_capacity == 0) {
+      data = nullptr;
+      size = 0;
+      capacity = 0;
+      return true;
+    }
+
+    data = static_cast<char*>(malloc(initial_capacity));
+    if (!data) {
+      return false;
+    }
+    size = 0;
+    capacity = initial_capacity;
+    return true;
+  }
+
+  bool ensure(size_t additional) {
+    if (additional > (std::numeric_limits<size_t>::max)() - size) {
+      return false;
+    }
+
+    size_t needed = size + additional;
+    if (needed <= capacity) {
+      return true;
+    }
+
+    size_t new_capacity = capacity == 0 ? needed : capacity;
+    while (new_capacity < needed) {
+      if (new_capacity > (std::numeric_limits<size_t>::max)() / 2) {
+        new_capacity = needed;
+        break;
+      }
+      new_capacity *= 2;
+    }
+
+    char* new_data = static_cast<char*>(realloc(data, new_capacity));
+    if (!new_data) {
+      return false;
+    }
+
+    data = new_data;
+    capacity = new_capacity;
+    return true;
+  }
 };
 #endif
 
