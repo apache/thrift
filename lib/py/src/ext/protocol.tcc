@@ -89,7 +89,7 @@ PyObject* ProtocolBase<Impl>::getEncodedValue() {
 }
 
 template <typename Impl>
-inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
+inline bool ProtocolBase<Impl>::writeBuffer(const char* data, size_t size) {
   if (!PycStringIO) {
     PycString_IMPORT;
   }
@@ -169,7 +169,7 @@ PyObject* ProtocolBase<Impl>::getEncodedValue() {
 }
 
 template <typename Impl>
-inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
+inline bool ProtocolBase<Impl>::writeBuffer(const char* data, size_t size) {
   size_t need = size + output_->pos;
   if (output_->buf.capacity() < need) {
     try {
@@ -456,18 +456,32 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
 
   case T_STRING: {
     ScopedPyObject nval;
+    Py_ssize_t len;
 
     if (PyUnicode_Check(value)) {
+#if PY_VERSION_HEX >= 0x03030000
+      const char* str = PyUnicode_AsUTF8AndSize(value, &len);
+      if (!str) {
+        return false;
+      }
+      if (!detail::check_ssize_t_32(len)) {
+        return false;
+      }
+
+      impl()->writeString(str, static_cast<int32_t>(len));
+      return true;
+#else
       nval.reset(PyUnicode_AsUTF8String(value));
       if (!nval) {
         return false;
       }
+#endif
     } else {
       Py_INCREF(value);
       nval.reset(value);
     }
 
-    Py_ssize_t len = PyBytes_Size(nval.get());
+    len = PyBytes_Size(nval.get());
     if (!detail::check_ssize_t_32(len)) {
       return false;
     }

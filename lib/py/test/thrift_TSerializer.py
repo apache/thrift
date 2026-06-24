@@ -70,6 +70,17 @@ class TestSerializer(unittest.TestCase):
         factory = TCompactProtocolAcceleratedFactory()
         self.verify(self.compact_serialized, factory)
 
+    def test_TCompactProtocolAccelerated_unicode_matches_python(self):
+        message = Message("é", 42)
+        expected = serialize(message, TCompactProtocolFactory())
+        actual = serialize(message, TCompactProtocolAcceleratedFactory())
+
+        self.assertEqual(expected, actual)
+        self.assertEqual(
+            message.body,
+            deserialize(Message(), actual, TCompactProtocolAcceleratedFactory()).body,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

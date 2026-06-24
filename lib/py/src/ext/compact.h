@@ -61,6 +61,11 @@ public:
     writeBuffer(PyBytes_AS_STRING(value), len);
   }
 
+  void writeString(const char* value, int32_t len) {
+    writeVarint(len);
+    writeBuffer(value, len);
+  }
+
   bool writeListBegin(PyObject* value, const SetListTypeArgs& args, int32_t len) {
     int ctype = toCompactType(args.element_type);
     if (len <= 14) {
@@ -104,7 +109,7 @@ public:
 
   void writeFieldStop() { writeByte(0); }
 
-  void writeUuid(char* value) {
+  void writeUuid(const char* value) {
     writeBuffer(value, 16);
   }
 
