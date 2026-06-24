@@ -302,7 +302,7 @@ class TestTBinaryProtocol(unittest.TestCase):
 
         original = TApplicationException(
             type=TApplicationException.PROTOCOL_ERROR,
-            message=("snowman-\u2603-rocket-\U0001F680-" * 32),
+            message=(u"snowman-\u2603-rocket-\U0001F680-" * 32),
         )
 
         typeargs = [TApplicationException, APPLICATION_EXCEPTION_THRIFT_SPEC]

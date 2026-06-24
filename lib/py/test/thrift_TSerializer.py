@@ -71,7 +71,7 @@ class TestSerializer(unittest.TestCase):
         self.verify(self.compact_serialized, factory)
 
     def test_TCompactProtocolAccelerated_unicode_matches_python(self):
-        message = Message("é", 42)
+        message = Message(u"\u00e9", 42)
         expected = serialize(message, TCompactProtocolFactory())
         actual = serialize(message, TCompactProtocolAcceleratedFactory())
 
