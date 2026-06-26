@@ -21,10 +21,13 @@
     "grunt-contrib-uglify": "~4.0",
     "grunt-jsdoc": "~2.4",
     "grunt-shell-spawn": "~0.4",
-    "jsdoc": "^3.6.7",
+    "jsdoc": "^4.0.0",
     "jslint": "~0.12.1",
     "json-int64": "~1.0.2",
     "node-int64": "~0.4.0",
     "nopt": "~4.0"
+  },
+  "overrides": {
+    "jsdoc": "^4.0.0"
   }
 }
