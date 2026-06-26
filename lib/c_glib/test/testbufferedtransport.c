@@ -25,6 +25,7 @@
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_server_transport.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
@@ -306,6 +307,51 @@ test_write_fail(void)
     }
 }
 
+/* A read larger than the bytes already sitting in the read buffer takes the
+   read_slow() path with have > 0. That leftover used to be copied from the
+   GByteArray structure itself rather than its data member, which corrupted the
+   result and over-read the small struct allocation once more than a handful of
+   bytes were buffered. Pre-load the buffer and drive the read through a memory
+   buffer so the path is exercised without a socket peer. */
+static void
+test_read_across_buffer (void)
+{
+  ThriftBufferedTransport *bt;
+  ThriftTransport *transport;
+  ThriftMemoryBuffer *membuf;
+  guchar leftover[96];
+  guchar tail[4];
+  guchar buf[100];
+  gint32 got;
+  guint i;
+
+  for (i = 0; i < sizeof (leftover); i++)
+    leftover[i] = (guchar) (0x10 + i);
+  for (i = 0; i < sizeof (tail); i++)
+    tail[i] = (guchar) (0xc0 + i);
+
+  membuf = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 1024, NULL);
+  thrift_transport_write (THRIFT_TRANSPORT (membuf), tail, sizeof (tail), NULL);
+
+  transport = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (membuf), NULL);
+
+  /* leave 96 bytes already buffered, more than sizeof(GByteArray) */
+  bt = THRIFT_BUFFERED_TRANSPORT (transport);
+  g_byte_array_append (bt->r_buf, leftover, sizeof (leftover));
+
+  /* this read exceeds the buffered bytes and must return the real buffered
+     data followed by the freshly read tail, not the GByteArray structure */
+  got = thrift_transport_read (transport, buf, 100, NULL);
+  g_assert (got == 100);
+  g_assert (memcmp (buf, leftover, 96) == 0);
+  g_assert (memcmp (buf + 96, tail, 4) == 0);
+
+  thrift_transport_read_end (transport, NULL);
+  g_object_unref (transport);
+  g_object_unref (membuf);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -319,6 +365,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testbufferedtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testbufferedtransport/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testbufferedtransport/WriteFail", test_write_fail);
+  g_test_add_func ("/testbufferedtransport/ReadAcrossBuffer", test_read_across_buffer);
 
   return g_test_run ();
 }
