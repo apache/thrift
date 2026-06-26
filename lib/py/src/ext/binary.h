@@ -67,6 +67,11 @@ public:
     writeBuffer(PyBytes_AS_STRING(value), len);
   }
 
+  void writeString(const char* value, int32_t len) {
+    writeI32(len);
+    writeBuffer(value, len);
+  }
+
   bool writeListBegin(PyObject* value, const SetListTypeArgs& parsedargs, int32_t len) {
     writeByte(parsedargs.element_type);
     writeI32(len);
@@ -88,7 +93,7 @@ public:
     return encodeValue(value, parsedspec.type, parsedspec.typeargs);
   }
 
-  void writeUuid(char* value) {
+  void writeUuid(const char* value) {
     writeBuffer(value, 16);
   }
 

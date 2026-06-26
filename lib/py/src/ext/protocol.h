@@ -71,7 +71,7 @@ protected:
     return true;
   }
 
-  bool writeBuffer(char* data, size_t len);
+  bool writeBuffer(const char* data, size_t len);
 
   void writeByte(uint8_t val) { writeBuffer(reinterpret_cast<char*>(&val), 1); }
 
