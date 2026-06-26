@@ -24,6 +24,7 @@
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_server_transport.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
@@ -305,6 +306,66 @@ thrift_server (const int port)
   g_object_unref (tsocket);
 }
 
+/* append a framed message (4-byte big-endian size header + body) */
+static void
+append_frame (GByteArray *wire, const guchar *data, guint32 len)
+{
+  guint32 netlen = htonl (len);
+  g_byte_array_append (wire, (const guchar *) &netlen, 4);
+  g_byte_array_append (wire, data, len);
+}
+
+/* A read whose length crosses a frame boundary takes the read_slow() path
+   while bytes are still buffered from the previous frame. That leftover used
+   to be copied from the GByteArray structure itself rather than its data
+   member, corrupting the result and over-reading the heap once more than a
+   handful of bytes remained. Drive it through a memory buffer so the path is
+   exercised without a socket peer. */
+static void
+test_read_across_frames (void)
+{
+  guchar f1[100];
+  guchar f2[100];
+  guchar buf[100];
+  gint32 got;
+  guint i;
+
+  for (i = 0; i < sizeof (f1); i++)
+    {
+      f1[i] = (guchar) (0x10 + i);
+      f2[i] = (guchar) (0xc0 + i);
+    }
+
+  GByteArray *wire = g_byte_array_new ();
+  append_frame (wire, f1, sizeof (f1));
+  append_frame (wire, f2, sizeof (f2));
+
+  ThriftMemoryBuffer *membuf = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                                             "buf", wire,
+                                             "buf_size", (guint32) 0,
+                                             NULL);
+  ThriftTransport *transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                                             "transport",
+                                             THRIFT_TRANSPORT (membuf),
+                                             NULL);
+
+  /* consume part of the first frame so 96 bytes stay buffered */
+  got = thrift_transport_read (transport, buf, 4, NULL);
+  g_assert (got == 4);
+  g_assert (memcmp (buf, f1, 4) == 0);
+
+  /* this read spans into the second frame and must return the real buffered
+     bytes, not the bytes of the GByteArray structure */
+  got = thrift_transport_read (transport, buf, 100, NULL);
+  g_assert (got == 100);
+  g_assert (memcmp (buf, f1 + 4, 96) == 0);
+  g_assert (memcmp (buf + 96, f2, 4) == 0);
+
+  thrift_transport_read_end (transport, NULL);
+  g_object_unref (transport);
+  g_object_unref (membuf);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -318,6 +379,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testframedtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testframedtransport/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testframedtransport/ReadAfterPeerClose", test_read_after_peer_close);
+  g_test_add_func ("/testframedtransport/ReadAcrossFrames", test_read_across_frames);
 
   return g_test_run ();
 }
