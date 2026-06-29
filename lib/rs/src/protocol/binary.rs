@@ -137,6 +137,17 @@ where
                 // is the message name. strings (byte arrays) are length-prefixed,
                 // so we've just read the length in the first 4 bytes
                 let name_size = BigEndian::read_i32(&first_bytes) as usize;
+                if let Some(max_size) = self.config.max_string_size() {
+                    if name_size > max_size {
+                        return Err(crate::Error::Protocol(ProtocolError::new(
+                            ProtocolErrorKind::SizeLimit,
+                            format!(
+                                "Message name size {} exceeds maximum allowed size of {}",
+                                name_size, max_size
+                            ),
+                        )));
+                    }
+                }
                 let mut name_buf: Vec<u8> = vec![0; name_size];
                 self.transport.read_exact(&mut name_buf)?;
                 let name = String::from_utf8(name_buf)?;
@@ -1263,6 +1274,56 @@ mod tests {
             }
             _ => panic!("Expected protocol error with SizeLimit"),
         }
+    }
+
+    #[test]
+    fn must_enforce_string_size_limit_on_non_strict_message_name() {
+        let mem = TBufferChannel::with_capacity(100, 100);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_string_size(Some(1000))
+            .build()
+            .unwrap();
+        // non-strict: the first 4 bytes are the (positive) message-name length
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, false, config);
+
+        w_mem.set_readable_bytes(&[0x00, 0x00, 0x07, 0xD0]);
+
+        let result = i_prot.read_message_begin();
+        assert!(result.is_err());
+        match result {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
+                assert!(e
+                    .message
+                    .contains("Message name size 2000 exceeds maximum allowed size of 1000"));
+            }
+            _ => panic!("Expected protocol error with SizeLimit"),
+        }
+    }
+
+    #[test]
+    fn must_allow_non_strict_message_name_at_limit() {
+        let mem = TBufferChannel::with_capacity(100, 100);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+
+        let config = TConfiguration::builder()
+            .max_string_size(Some(5))
+            .build()
+            .unwrap();
+        // non-strict: the first 4 bytes are the (positive) message-name length
+        let mut i_prot = TBinaryInputProtocol::with_config(r_mem, false, config);
+
+        // name length 5 (== limit), name "hello", message type Call, sequence 0
+        w_mem.set_readable_bytes(&[
+            0x00, 0x00, 0x00, 0x05, b'h', b'e', b'l', b'l', b'o', 0x01, 0x00, 0x00, 0x00, 0x00,
+        ]);
+
+        let ident = i_prot.read_message_begin().unwrap();
+        assert_eq!(ident.name, "hello");
+        assert_eq!(ident.message_type, TMessageType::Call);
+        assert_eq!(ident.sequence_number, 0);
     }
 
     #[test]
