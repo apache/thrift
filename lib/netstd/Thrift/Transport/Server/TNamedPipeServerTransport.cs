@@ -249,7 +249,7 @@ namespace Thrift.Transport.Server
 
                     pipesec.SetOwner(sidOwner);
                     pipesec.AddAccessRule(new PipeAccessRule(sidOwner, PipeAccessRights.FullControl, AccessControlType.Allow));
-                    pipesec.AddAccessRule(new PipeAccessRule(sidWorld, PipeAccessRights.ReadWrite, AccessControlType.Allow));
+                    //pipesec.AddAccessRule(new PipeAccessRule(sidWorld, PipeAccessRights.ReadWrite, AccessControlType.Allow));
                 }
 
                 // create a security descriptor and assign it to the security attribs
