@@ -318,18 +318,17 @@ string t_haxe_generator::haxe_package() {
  * @return List of imports for haxe types that are used in here
  */
 string t_haxe_generator::haxe_type_imports() {
-  return string()
-       + "import org.apache.thrift.helper.*;\n"
-       + "import haxe.io.Bytes;\n"
-       + "import haxe.ds.IntMap;\n"
-       + "import haxe.ds.StringMap;\n"
-       + "import haxe.ds.ObjectMap;\n"
-       + "import org.apache.thrift.helper.ObjectSet;\n"
-       + "\n"
-       + "#if flash\n"
-       + "import flash.errors.ArgumentError;\n"
-       + "#end\n"
-       + "\n";
+  return "import org.apache.thrift.helper.*;\n"
+         "import haxe.io.Bytes;\n"
+         "import haxe.ds.IntMap;\n"
+         "import haxe.ds.StringMap;\n"
+         "import haxe.ds.ObjectMap;\n"
+         "import org.apache.thrift.helper.ObjectSet;\n"
+         "\n"
+         "#if flash\n"
+         "import flash.errors.ArgumentError;\n"
+         "#end\n"
+         "\n";
 }
 
 /**
@@ -338,11 +337,10 @@ string t_haxe_generator::haxe_type_imports() {
  * @return List of imports necessary for thrift
  */
 string t_haxe_generator::haxe_thrift_imports() {
-  return string()
-       + "import org.apache.thrift.*;\n"
-       + "import org.apache.thrift.meta_data.*;\n"
-       + "import org.apache.thrift.protocol.*;\n"
-       + "\n";
+  return "import org.apache.thrift.*;\n"
+         "import org.apache.thrift.meta_data.*;\n"
+         "import org.apache.thrift.protocol.*;\n"
+         "\n";
 }
 
 /**

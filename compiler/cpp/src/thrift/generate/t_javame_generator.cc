@@ -289,8 +289,9 @@ string t_javame_generator::java_package() {
  * @return List of imports for Java types that are used in here
  */
 string t_javame_generator::java_type_imports() {
-  return string() + "import java.util.Hashtable;\n" + "import java.util.Vector;\n"
-         + "import java.util.Enumeration;\n\n";
+  return "import java.util.Hashtable;\n"
+         "import java.util.Vector;\n"
+         "import java.util.Enumeration;\n\n";
 }
 
 /**
@@ -299,8 +300,10 @@ string t_javame_generator::java_type_imports() {
  * @return List of imports necessary for thrift
  */
 string t_javame_generator::java_thrift_imports() {
-  return string() + "import org.apache.thrift.*;\n" + "import org.apache.thrift.meta_data.*;\n"
-         + "import org.apache.thrift.transport.*;\n" + "import org.apache.thrift.protocol.*;\n\n";
+  return "import org.apache.thrift.*;\n"
+         "import org.apache.thrift.meta_data.*;\n"
+         "import org.apache.thrift.transport.*;\n"
+         "import org.apache.thrift.protocol.*;\n\n";
 }
 
 /**
