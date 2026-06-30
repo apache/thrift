@@ -199,13 +199,17 @@ void THeaderTransport::readString(uint8_t*& ptr,
   int32_t strLen;
 
   uint32_t bytes = readVarint32(ptr, &strLen, headerBoundary);
-  if (strLen > headerBoundary - ptr) {
+  // Bound the string against the header bytes that remain once the length varint
+  // itself is accounted for, and reject a negative length so the size_t
+  // conversion in assign() below stays within the buffer. ptr is only advanced
+  // once these checks pass, keeping the "advances on success" contract above.
+  uint8_t* strStart = ptr + bytes;
+  if (strLen < 0 || strLen > headerBoundary - strStart) {
     throw TTransportException(TTransportException::CORRUPTED_DATA,
                               "Info header length exceeds header size");
   }
-  ptr += bytes;
-  str.assign(reinterpret_cast<const char*>(ptr), strLen);
-  ptr += strLen;
+  str.assign(reinterpret_cast<const char*>(strStart), strLen);
+  ptr = strStart + strLen;
 }
 
 void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
