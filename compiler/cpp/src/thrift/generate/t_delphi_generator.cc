@@ -236,6 +236,15 @@ public:
                                          t_struct* tstruct);
   void generate_delphi_exception_definition(std::ostream& out,
                                             t_struct* tstruct);
+  void generate_delphi_struct_equality_impl(std::ostream& out,
+                                            std::string cls_prefix,
+                                            t_struct* tstruct,
+                                            bool is_exception);
+  std::string generate_equal_container(std::ostream& code,
+                                       std::ostream& vars,
+                                       t_type* ttype,
+                                       const std::string& lhs,
+                                       const std::string& rhs);
 
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
@@ -1488,6 +1497,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
   generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, false);
   generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, false);
   generate_delphi_struct_tostring_impl(out, cls_prefix, tstruct, false);
+  generate_delphi_struct_equality_impl(out, cls_prefix, tstruct, false);
 }
 
 void t_delphi_generator::generate_delphi_exception_impl(ostream& out, 
@@ -1592,6 +1602,16 @@ void t_delphi_generator::generate_delphi_exception_impl(ostream& out,
   generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, true);
   generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, true);
   generate_delphi_struct_tostring_impl(out, cls_prefix, tstruct, true);
+
+  // Equals override for exception wrapper class
+  indent_impl(out) << "function " << cls_prefix << cls_nm << ".Equals(Obj: TObject): System.Boolean;" << '\n';
+  indent_impl(out) << "begin" << '\n';
+  indent_up_impl();
+  indent_impl(out) << "if Obj is " << cls_nm << '\n';
+  indent_impl(out) << "then Result := FData.Equal(" << cls_nm << "(Obj).FData)" << '\n';
+  indent_impl(out) << "else Result := inherited Equals(Obj);" << '\n';
+  indent_down_impl();
+  indent_impl(out) << "end;" << '\n' << '\n';
 }
 
 void t_delphi_generator::print_delphi_struct_type_factory_func(ostream& out, t_struct* tstruct) {
@@ -1690,6 +1710,9 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     }
   }
 
+  out << '\n';
+  indent(out) << "function Equal(const other: IInterface): System.Boolean;" << '\n';
+
   indent_down();
   indent(out) << "end;"
               << render_deprecation_attribute(tstruct->annotations_, " {", "}")
@@ -1755,6 +1778,8 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
 
   out << '\n';
   indent(out) << "function ToString: string; override;" << '\n';
+  indent(out) << "function Equal(const other: IInterface): System.Boolean;" << '\n';
+  indent(out) << "function Equals(Obj: TObject): System.Boolean; override;" << '\n';
 
   out << '\n';
   indent(out) << "// IBase" << '\n';
@@ -1850,6 +1875,7 @@ void t_delphi_generator::generate_delphi_exception_definition(ostream& out,
   out << '\n';
   indent(out) << "property ExceptionData : " << struct_intf_name << " read FData;" << '\n';
   indent(out) << "function ToString: string; override;" << '\n';
+  indent(out) << "function Equals(Obj: TObject): System.Boolean; override;" << '\n';
 
   out << '\n';
   indent(out) << "// IBase" << '\n';
@@ -4068,6 +4094,316 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
   indent_down_impl();
   indent_impl(out) << "end;" << '\n';
 
+  indent_down_impl();
+  indent_impl(out) << "end;" << '\n' << '\n';
+}
+
+// Emit comparison code for a container or binary field into `code`, with any new locals
+// accumulated into `vars` (2-space prefix, level-independent). Returns the name of the Boolean
+// result variable that is set by the generated code.
+std::string t_delphi_generator::generate_equal_container(ostream& code,
+                                                          ostream& vars,
+                                                          t_type* ttype,
+                                                          const string& lhs,
+                                                          const string& rhs) {
+  ttype = ttype->get_true_type();
+  string eq_var = tmp("_eq");
+  vars << "  " << eq_var << " : System.Boolean;" << '\n';
+  indent_impl(code) << eq_var << " := True;" << '\n';
+
+  if (ttype->is_struct() || ttype->is_xception()) {
+    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else if " << lhs << " <> nil then " << eq_var << " := " << lhs << ".Equal(" << rhs << ");" << '\n';
+
+  } else if (ttype->is_binary()) {
+    if (com_types_) {
+      // IThriftBytes — nullable interface
+      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
+      indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
+      indent_impl(code) << "else if " << lhs << ".Count > 0 then" << '\n';
+      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
+                        << lhs << ".QueryRawDataPtr, " << rhs << ".QueryRawDataPtr, " << lhs << ".Count);" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';
+    } else if (rtti_) {
+      // TThriftBytes — packed record with .data and .Length
+      indent_impl(code) << "if " << lhs << ".Length <> " << rhs << ".Length then " << eq_var << " := False" << '\n';
+      indent_impl(code) << "else if " << lhs << ".Length > 0 then" << '\n';
+      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
+                        << "@" << lhs << ".data[0], @" << rhs << ".data[0], " << lhs << ".Length);" << '\n';
+    } else {
+      // SysUtils.TBytes — dynamic array
+      indent_impl(code) << "if System.Length(" << lhs << ") <> System.Length(" << rhs << ") then " << eq_var << " := False" << '\n';
+      indent_impl(code) << "else if System.Length(" << lhs << ") > 0 then" << '\n';
+      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
+                        << "PByte(" << lhs << "), PByte(" << rhs << "), System.Length(" << lhs << "));" << '\n';
+    }
+
+  } else if (ttype->is_list()) {
+    t_list* tlist = (t_list*)ttype;
+    t_type* elem_type = tlist->get_elem_type()->get_true_type();
+    string i_var = tmp("_i");
+    vars << "  " << i_var << " : System.Integer;" << '\n';
+
+    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+    indent_up_impl();
+    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else begin" << '\n';
+    indent_up_impl();
+    indent_impl(code) << "for " << i_var << " := 0 to " << lhs << ".Count - 1 do begin" << '\n';
+    indent_up_impl();
+
+    bool elem_needs_helper = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
+    if (!elem_needs_helper) {
+      if (elem_type->is_base_type() && ((t_base_type*)elem_type)->get_base() == t_base_type::TYPE_UUID) {
+        indent_impl(code) << "if not SysUtils.IsEqualGUID(" << lhs << "[" << i_var << "], "
+                          << rhs << "[" << i_var << "]) then begin " << eq_var << " := False; break; end;" << '\n';
+      } else {
+        indent_impl(code) << "if " << lhs << "[" << i_var << "] <> " << rhs << "[" << i_var
+                          << "] then begin " << eq_var << " := False; break; end;" << '\n';
+      }
+    } else {
+      string inner = generate_equal_container(code, vars, elem_type,
+                                              lhs + "[" + i_var + "]", rhs + "[" + i_var + "]");
+      indent_impl(code) << "if not " << inner << " then begin " << eq_var << " := False; break; end;" << '\n';
+    }
+
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end for
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+
+  } else if (ttype->is_set()) {
+    t_set* tset = (t_set*)ttype;
+    t_type* elem_type = tset->get_elem_type()->get_true_type();
+    bool elem_needs_scan = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
+
+    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+    indent_up_impl();
+    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else begin" << '\n';
+    indent_up_impl();
+
+    string e_var = tmp("_e");
+    vars << "  " << e_var << " : " << type_name(elem_type) << ";" << '\n';
+
+    if (!elem_needs_scan) {
+      // Scalar elements: value-based hash equality in Contains is correct
+      indent_impl(code) << "for " << e_var << " in " << lhs << " do" << '\n';
+      indent_impl(code) << "  if not " << rhs << ".Contains(" << e_var
+                        << ") then begin " << eq_var << " := False; break; end;" << '\n';
+    } else {
+      // Interface-typed elements: O(n²) scan
+      string e2_var = tmp("_e");
+      string found_var = tmp("_found");
+      vars << "  " << e2_var << " : " << type_name(elem_type) << ";" << '\n';
+      vars << "  " << found_var << " : System.Boolean;" << '\n';
+
+      indent_impl(code) << "for " << e_var << " in " << lhs << " do begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << found_var << " := False;" << '\n';
+      indent_impl(code) << "for " << e2_var << " in " << rhs << " do begin" << '\n';
+      indent_up_impl();
+      string inner_eq = generate_equal_container(code, vars, elem_type, e_var, e2_var);
+      indent_impl(code) << "if " << inner_eq << " then begin " << found_var << " := True; break; end;" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end inner for
+      indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end outer for
+    }
+
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+
+  } else if (ttype->is_map()) {
+    t_map* tmap = (t_map*)ttype;
+    t_type* ktype = tmap->get_key_type()->get_true_type();
+    t_type* vtype = tmap->get_val_type()->get_true_type();
+    bool key_needs_scan = type_can_be_null(ktype) || ktype->is_binary() || ktype->is_container();
+    bool val_needs_helper = type_can_be_null(vtype) || vtype->is_binary() || vtype->is_container();
+
+    string k_var = tmp("_k");
+    vars << "  " << k_var << " : " << type_name(ktype) << ";" << '\n';
+
+    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+    indent_up_impl();
+    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
+    indent_impl(code) << "else begin" << '\n';
+    indent_up_impl();
+
+    if (!key_needs_scan) {
+      // Scalar key: use ContainsKey then compare values
+      indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << "if not " << rhs << ".ContainsKey(" << k_var << ") then begin "
+                        << eq_var << " := False; break; end;" << '\n';
+
+      string vl = lhs + "[" + k_var + "]";
+      string vr = rhs + "[" + k_var + "]";
+
+      if (!val_needs_helper) {
+        if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
+          indent_impl(code) << "if not SysUtils.IsEqualGUID(" << vl << ", " << vr
+                            << ") then begin " << eq_var << " := False; break; end;" << '\n';
+        } else {
+          indent_impl(code) << "if " << vl << " <> " << vr << " then begin "
+                            << eq_var << " := False; break; end;" << '\n';
+        }
+      } else {
+        string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
+        indent_impl(code) << "if not " << val_inner << " then begin " << eq_var << " := False; break; end;" << '\n';
+      }
+
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end for keys
+
+    } else {
+      // Interface-typed key: O(n²) scan over key pairs
+      string k2_var = tmp("_k");
+      string found_var = tmp("_found");
+      vars << "  " << k2_var << " : " << type_name(ktype) << ";" << '\n';
+      vars << "  " << found_var << " : System.Boolean;" << '\n';
+
+      indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << found_var << " := False;" << '\n';
+      indent_impl(code) << "for " << k2_var << " in " << rhs << ".Keys do begin" << '\n';
+      indent_up_impl();
+      string key_inner = generate_equal_container(code, vars, ktype, k_var, k2_var);
+      indent_impl(code) << "if " << key_inner << " then begin" << '\n';
+      indent_up_impl();
+      // Keys match: compare values
+      string vl = lhs + "[" + k_var + "]";
+      string vr = rhs + "[" + k2_var + "]";
+      if (!val_needs_helper) {
+        if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
+          indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr
+                            << ") then begin " << found_var << " := True; break; end;" << '\n';
+        } else {
+          indent_impl(code) << "if " << vl << " = " << vr << " then begin "
+                            << found_var << " := True; break; end;" << '\n';
+        }
+      } else {
+        string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
+        indent_impl(code) << "if " << val_inner << " then begin " << found_var << " := True; break; end;" << '\n';
+      }
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end if key_inner
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end for k2_var
+      indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end for k_var
+    }
+
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+  }
+
+  return eq_var;
+}
+
+void t_delphi_generator::generate_delphi_struct_equality_impl(ostream& out,
+                                                               string cls_prefix,
+                                                               t_struct* tstruct,
+                                                               bool is_exception) {
+  ostringstream local_vars;
+  ostringstream code_block;
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  string cls_nm;
+  string intf_nm = type_name(tstruct, false, false);
+  if (is_exception) {
+    cls_nm = type_name(tstruct, true, true);
+  } else {
+    cls_nm = type_name(tstruct, true, false);
+  }
+
+  indent_impl(code_block) << "begin" << '\n';
+  indent_up_impl();
+
+  indent_impl(code_block) << "if not Supports(other, " << intf_nm << ", _eq_other) then Exit(False);" << '\n';
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    t_type* ftype = field->get_type()->get_true_type();
+    bool is_optional = (field->get_req() != t_field::T_REQUIRED);
+    bool null_allowed = type_can_be_null(ftype);
+    bool is_bin = ftype->is_base_type() && ((t_base_type*)ftype)->is_binary();
+    bool needs_helper = null_allowed || is_bin || ftype->is_container();
+
+    string self_prop = "Self." + prop_name(field, is_exception);
+    string other_prop = "_eq_other." + prop_name(field, false);
+    string isset_self = prop_name(field, is_exception, "__isset_");
+    string isset_other = "_eq_other." + prop_name(field, false, "__isset_");
+
+    if (is_optional) {
+      indent_impl(code_block) << "if " << isset_self << " <> " << isset_other
+                              << " then Exit(False);" << '\n';
+      indent_impl(code_block) << "if " << isset_self << " then begin" << '\n';
+      indent_up_impl();
+    }
+
+    if (!needs_helper) {
+      if (ftype->is_base_type() && ((t_base_type*)ftype)->get_base() == t_base_type::TYPE_UUID) {
+        indent_impl(code_block) << "if not SysUtils.IsEqualGUID(" << self_prop << ", " << other_prop
+                                << ") then Exit(False);" << '\n';
+      } else {
+        indent_impl(code_block) << "if " << self_prop << " <> " << other_prop
+                                << " then Exit(False);" << '\n';
+      }
+    } else {
+      string eq_var = generate_equal_container(code_block, local_vars, ftype, self_prop, other_prop);
+      indent_impl(code_block) << "if not " << eq_var << " then Exit(False);" << '\n';
+    }
+
+    if (is_optional) {
+      indent_down_impl();
+      indent_impl(code_block) << "end;" << '\n';
+    }
+  }
+
+  indent_impl(code_block) << "Result := True;" << '\n';
+  indent_down_impl();
+  indent_impl(code_block) << "end;" << '\n' << '\n';
+
+  // Equal(other: IInterface): Boolean
+  indent_impl(out) << "function " << cls_prefix << cls_nm << ".Equal(const other: IInterface): System.Boolean;" << '\n';
+  indent_impl(out) << "var" << '\n';
+  indent_up_impl();
+  indent_impl(out) << "_eq_other : " << intf_nm << ";" << '\n';
+  indent_down_impl();
+  if (!local_vars.str().empty()) {
+    out << local_vars.str();
+  }
+  out << code_block.str();
+
+  // Equals(Obj: TObject): Boolean override
+  string intf_var = tmp("_intf");
+  indent_impl(out) << "function " << cls_prefix << cls_nm << ".Equals(Obj: TObject): System.Boolean;" << '\n';
+  indent_impl(out) << "var" << '\n';
+  indent_up_impl();
+  indent_impl(out) << intf_var << " : IInterface;" << '\n';
+  indent_down_impl();
+  indent_impl(out) << "begin" << '\n';
+  indent_up_impl();
+  indent_impl(out) << "if Supports(Obj, IInterface, " << intf_var << ")" << '\n';
+  indent_impl(out) << "then Result := Equal(" << intf_var << ")" << '\n';
+  indent_impl(out) << "else Result := inherited Equals(Obj);" << '\n';
   indent_down_impl();
   indent_impl(out) << "end;" << '\n' << '\n';
 }

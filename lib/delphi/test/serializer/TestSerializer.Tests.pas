@@ -85,6 +85,7 @@ type
     procedure Test_Serializer_Deserializer;
     procedure Test_COM_Types;
     procedure Test_ThriftBytesCTORs;
+    procedure Test_Equal;
 
     procedure Test_OneOfEach(       const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
     procedure Test_CompactStruct(   const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
@@ -506,12 +507,244 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_Equal;
+var
+  bonk1, bonk2       : IBonk;
+  innerBonk1,
+  innerBonk2         : IBonk;
+  nesting1, nesting2 : INesting;
+  tuple1, tuple2     : ITupleProtocolTestStruct;
+  ooe1, ooe2         : IOneOfEach;
+  byteList1,
+  byteList2          : IThriftList<System.ShortInt>;
+  implA, implB       : TBonkImpl;
+  intfA, intfB       : IBonk;
+  cpst1, cpst2       : ICompactProtoTestStruct;
+  i32Set1,
+  i32Set2            : IThriftHashSet<System.Integer>;
+  structSet1,
+  structSet2         : IThriftHashSet<IEmpty>;
+  map1, map2         : IThriftDictionary<System.ShortInt, System.ShortInt>;
+  b64a, b64b         : IBase64;
+  exc1, exc2         : TMutableException;
+  dummyObj           : TObject;
+begin
+  // --- Bonk: required scalars with implicit isset ---
+  bonk1 := TBonkImpl.Create;
+  bonk1.&Type := 42;
+  bonk1.Message := 'hello';
+
+  ASSERT( not bonk1.Equal(nil));    // nil other -> False
+  ASSERT( bonk1.Equal(bonk1));      // self -> True
+
+  bonk2 := TBonkImpl.Create;
+  bonk2.&Type := 42;
+  bonk2.Message := 'hello';
+  ASSERT( bonk1.Equal(bonk2));      // equal values -> True
+
+  bonk2.Message := 'world';
+  ASSERT( not bonk1.Equal(bonk2));  // message mismatch -> False
+
+  bonk2.Message := 'hello';
+  bonk2.&Type := 99;
+  ASSERT( not bonk1.Equal(bonk2));  // type mismatch -> False
+
+  // --- TupleProtocolTestStruct: optional fields and isset semantics ---
+  tuple1 := TTupleProtocolTestStructImpl.Create;
+  tuple2 := TTupleProtocolTestStructImpl.Create;
+  ASSERT( tuple1.Equal(tuple2));    // both Field1 unset -> True
+
+  tuple1.Field1 := 1;               // sets Field1 and its isset flag
+  ASSERT( not tuple1.Equal(tuple2)); // isset mismatch -> False
+
+  tuple2.Field1 := 1;
+  ASSERT( tuple1.Equal(tuple2));    // both set, same value -> True
+
+  tuple2.Field1 := 99;
+  ASSERT( not tuple1.Equal(tuple2)); // both set, different value -> False
+
+  // --- Nesting: nested struct field ---
+  innerBonk1 := TBonkImpl.Create;
+  innerBonk1.&Type := 7;
+  innerBonk1.Message := 'inner';
+  innerBonk2 := TBonkImpl.Create;
+  innerBonk2.&Type := 7;
+  innerBonk2.Message := 'inner';
+
+  nesting1 := TNestingImpl.Create;
+  nesting1.My_bonk := innerBonk1;
+  nesting2 := TNestingImpl.Create;
+  nesting2.My_bonk := innerBonk2;
+  ASSERT( nesting1.Equal(nesting2));          // equal nested structs -> True
+
+  innerBonk2.Message := 'different';
+  ASSERT( not nesting1.Equal(nesting2));      // nested struct mismatch -> False
+
+  nesting2.My_bonk := nil;
+  ASSERT( not nesting1.Equal(nesting2));      // nil vs non-nil nested struct -> False
+
+  // --- OneOfEach: list<i8> field ---
+  byteList1 := TThriftListImpl<System.ShortInt>.Create;
+  byteList1.Add(1);
+  byteList1.Add(2);
+  byteList2 := TThriftListImpl<System.ShortInt>.Create;
+  byteList2.Add(1);
+  byteList2.Add(2);
+
+  ooe1 := TOneOfEachImpl.Create;
+  ooe1.Byte_list := byteList1;
+  ooe2 := TOneOfEachImpl.Create;
+  ooe2.Byte_list := byteList2;
+  ASSERT( ooe1.Equal(ooe2));        // same list -> True
+
+  byteList2.Add(3);
+  ASSERT( not ooe1.Equal(ooe2));    // count mismatch -> False
+
+  byteList2 := TThriftListImpl<System.ShortInt>.Create;
+  byteList2.Add(1);
+  byteList2.Add(9);
+  ooe2.Byte_list := byteList2;
+  ASSERT( not ooe1.Equal(ooe2));    // element mismatch -> False
+
+  // --- CompactProtoTestStruct: set<i32> (scalar elements use Contains) ---
+  cpst1 := TCompactProtoTestStructImpl.Create;
+  cpst2 := TCompactProtoTestStructImpl.Create;
+  i32Set1 := TThriftHashSetImpl<System.Integer>.Create;
+  i32Set1.Add(10);
+  i32Set1.Add(20);
+  cpst1.I32_set := i32Set1;
+  i32Set2 := TThriftHashSetImpl<System.Integer>.Create;
+  i32Set2.Add(10);
+  i32Set2.Add(20);
+  cpst2.I32_set := i32Set2;
+  ASSERT( cpst1.Equal(cpst2));        // same set -> True
+
+  i32Set2 := TThriftHashSetImpl<System.Integer>.Create;
+  i32Set2.Add(10);
+  cpst2.I32_set := i32Set2;
+  ASSERT( not cpst1.Equal(cpst2));    // count mismatch -> False
+
+  i32Set2 := TThriftHashSetImpl<System.Integer>.Create;
+  i32Set2.Add(10);
+  i32Set2.Add(99);
+  cpst2.I32_set := i32Set2;
+  ASSERT( not cpst1.Equal(cpst2));    // element mismatch -> False
+
+  // --- CompactProtoTestStruct: set<Empty> (interface elements use O(n^2) scan) ---
+  cpst1 := TCompactProtoTestStructImpl.Create;
+  cpst2 := TCompactProtoTestStructImpl.Create;
+  structSet1 := TThriftHashSetImpl<IEmpty>.Create;
+  structSet1.Add(TEmptyImpl.Create);
+  cpst1.Struct_set := structSet1;
+  structSet2 := TThriftHashSetImpl<IEmpty>.Create;
+  structSet2.Add(TEmptyImpl.Create);
+  cpst2.Struct_set := structSet2;
+  ASSERT( cpst1.Equal(cpst2));        // both contain one Empty -> True
+
+  cpst2.Struct_set := nil;
+  ASSERT( not cpst1.Equal(cpst2));    // nil vs non-nil set -> False
+
+  // --- CompactProtoTestStruct: map<i8,i8> (scalar keys use ContainsKey) ---
+  cpst1 := TCompactProtoTestStructImpl.Create;
+  cpst2 := TCompactProtoTestStructImpl.Create;
+  map1 := TThriftDictionaryImpl<System.ShortInt, System.ShortInt>.Create;
+  map1.AddOrSetValue(1, 10);
+  map1.AddOrSetValue(2, 20);
+  cpst1.Byte_byte_map := map1;
+  map2 := TThriftDictionaryImpl<System.ShortInt, System.ShortInt>.Create;
+  map2.AddOrSetValue(1, 10);
+  map2.AddOrSetValue(2, 20);
+  cpst2.Byte_byte_map := map2;
+  ASSERT( cpst1.Equal(cpst2));        // same map -> True
+
+  map2 := TThriftDictionaryImpl<System.ShortInt, System.ShortInt>.Create;
+  map2.AddOrSetValue(1, 10);
+  cpst2.Byte_byte_map := map2;
+  ASSERT( not cpst1.Equal(cpst2));    // missing key -> False
+
+  map2 := TThriftDictionaryImpl<System.ShortInt, System.ShortInt>.Create;
+  map2.AddOrSetValue(1, 10);
+  map2.AddOrSetValue(2, 99);
+  cpst2.Byte_byte_map := map2;
+  ASSERT( not cpst1.Equal(cpst2));    // value mismatch -> False
+
+  // --- Base64 struct: binary field ---
+  b64a := TBase64Impl.Create;
+  b64b := TBase64Impl.Create;
+  {$IF cDebugProtoTest_Option_COM_types}
+  b64a.B1 := TThriftBytesImpl.Create( TBytes.Create(1, 2, 3));
+  b64b.B1 := TThriftBytesImpl.Create( TBytes.Create(1, 2, 3));
+  ASSERT( b64a.Equal(b64b));          // same binary -> True
+  b64b.B1 := TThriftBytesImpl.Create( TBytes.Create(1, 2, 4));
+  ASSERT( not b64a.Equal(b64b));      // content mismatch -> False
+  b64b.B1 := TThriftBytesImpl.Create( TBytes.Create(1, 2));
+  ASSERT( not b64a.Equal(b64b));      // length mismatch -> False
+  {$ELSE}
+  b64a.B1 := TBytes.Create(1, 2, 3);
+  b64b.B1 := TBytes.Create(1, 2, 3);
+  ASSERT( b64a.Equal(b64b));          // same binary -> True
+  b64b.B1 := TBytes.Create(1, 2, 4);
+  ASSERT( not b64a.Equal(b64b));      // content mismatch -> False
+  b64b.B1 := TBytes.Create(1, 2);
+  ASSERT( not b64a.Equal(b64b));      // length mismatch -> False
+  {$IFEND}
+
+  // --- Equals(TObject) ---
+  implA := TBonkImpl.Create;
+  intfA := implA;                   // ref count -> 1: implA managed by intfA
+  implA.&Type := 5;
+  implA.Message := 'eq_test';
+
+  implB := TBonkImpl.Create;
+  intfB := implB;                   // ref count -> 1: implB managed by intfB
+  implB.&Type := 5;
+  implB.Message := 'eq_test';
+  ASSERT( implA.Equals(implB));     // same values, compatible type -> True
+
+  implB.Message := 'other';
+  ASSERT( not implA.Equals(implB)); // value mismatch -> False
+
+  dummyObj := TObject.Create;
+  try
+    ASSERT( not implA.Equals(dummyObj)); // incompatible type -> False
+  finally
+    dummyObj.Free;
+  end;
+
+  intfA := nil;                     // releases implA (ref count -> 0)
+  intfB := nil;                     // releases implB
+
+  // --- Exception wrapper: TMutableException.Equals ---
+  exc1 := TMutableException.Create;
+  exc2 := TMutableException.Create;
+  try
+    exc1.Msg := 'same';
+    exc2.Msg := 'same';
+    ASSERT( exc1.Equals(exc2));      // same field values -> True
+
+    exc2.Msg := 'different';
+    ASSERT( not exc1.Equals(exc2));  // field value mismatch -> False
+
+    dummyObj := TObject.Create;
+    try
+      ASSERT( not exc1.Equals(dummyObj)); // incompatible type -> False
+    finally
+      dummyObj.Free;
+    end;
+  finally
+    FreeAndNil(exc1);
+    FreeAndNil(exc2);
+  end;
+end;
+
+
 procedure TTestSerializer.RunTests;
 begin
   try
     Test_Serializer_Deserializer;
     Test_COM_Types;
     Test_ThriftBytesCTORs;
+    Test_Equal;
   except
     on e:Exception do begin
       Writeln( e.ClassName+': '+ e.Message);
