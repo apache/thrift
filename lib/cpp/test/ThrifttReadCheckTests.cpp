@@ -340,6 +340,58 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_header_size_exceeds_frame) {
   BOOST_CHECK_THROW(trans->read(out, sizeof(out)), TTransportException);
 }
 
+BOOST_AUTO_TEST_CASE(test_theadertransport_info_header_string_overrun) {
+  using apache::thrift::transport::THeaderTransport;
+  // Header-format frame whose info-header key length (4) does not fit within the
+  // header bytes that remain once the length varint itself is accounted for. The
+  // header section (8 bytes) exactly fills the frame, so the boundary sits at the
+  // buffer end; the key length has to be bounded against the remaining bytes and
+  // rejected.
+  uint8_t frame[] = {
+      0x00, 0x00, 0x00, 0x12, // frame length = 18
+      0x0F, 0xFF, 0x00, 0x00, // header magic
+      0x00, 0x00, 0x00, 0x00, // seqId
+      0x00, 0x02,             // header size field (2 -> 8 bytes)
+      0x02,                   // protocol id varint
+      0x00,                   // num transforms = 0
+      0x01,                   // info id = key/value
+      0x01,                   // one key/value pair
+      0x04,                   // key length = 4 (only 3 bytes remain)
+      0xAA, 0xBB, 0xCC        // key bytes
+  };
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(frame, sizeof(frame)));
+  std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
+
+  uint8_t out[1];
+  BOOST_CHECK_THROW(trans->read(out, sizeof(out)), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_info_header_string_negative_length) {
+  using apache::thrift::transport::THeaderTransport;
+  // Header-format frame whose info-header key length varint decodes to a
+  // negative int32 (top bit set). The length has to be treated as out of range
+  // rather than converted to a size_t, so the read is rejected instead of
+  // reaching the string assignment. The three trailing bytes only pad the
+  // header section out to its declared size and are never reached.
+  uint8_t frame[] = {
+      0x00, 0x00, 0x00, 0x16,             // frame length = 22
+      0x0F, 0xFF, 0x00, 0x00,             // header magic
+      0x00, 0x00, 0x00, 0x00,             // seqId
+      0x00, 0x03,                         // header size field (3 -> 12 bytes)
+      0x02,                               // protocol id varint
+      0x00,                               // num transforms = 0
+      0x01,                               // info id = key/value
+      0x01,                               // one key/value pair
+      0x80, 0x80, 0x80, 0x80, 0x08,       // key length varint = INT32_MIN
+      0x00, 0x00, 0x00                    // padding to fill the header section
+  };
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(frame, sizeof(frame)));
+  std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
+
+  uint8_t out[1];
+  BOOST_CHECK_THROW(trans->read(out, sizeof(out)), TTransportException);
+}
+
 BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_roundtrip) {
   using apache::thrift::transport::THeaderTransport;
   // A run of identical bytes compresses to far fewer bytes than it occupies
