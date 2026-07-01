@@ -238,8 +238,7 @@ public:
                                             t_struct* tstruct);
   void generate_delphi_struct_equality_impl(std::ostream& out,
                                             std::string cls_prefix,
-                                            t_struct* tstruct,
-                                            bool is_exception);
+                                            t_struct* tstruct);
   std::string generate_equal_container(std::ostream& code,
                                        std::ostream& vars,
                                        t_type* ttype,
@@ -1497,7 +1496,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
   generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, false);
   generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, false);
   generate_delphi_struct_tostring_impl(out, cls_prefix, tstruct, false);
-  generate_delphi_struct_equality_impl(out, cls_prefix, tstruct, false);
+  generate_delphi_struct_equality_impl(out, cls_prefix, tstruct);
 }
 
 void t_delphi_generator::generate_delphi_exception_impl(ostream& out, 
@@ -4228,23 +4227,24 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "for " << e_var << " in " << lhs << " do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
-      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << arr_var << ") - 1 do begin" << '\n';
+      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << arr_var
+                        << ") - 1 do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
       indent_up_impl();
-      string inner_eq = generate_equal_container(code, vars, elem_type, e_var,
-                                                  arr_var + "[" + idx_var + "]");
+      string inner_eq
+          = generate_equal_container(code, vars, elem_type, e_var, arr_var + "[" + idx_var + "]");
       indent_impl(code) << "if " << inner_eq << " then begin" << '\n';
       indent_up_impl();
       indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
       indent_impl(code) << found_var << " := True;" << '\n';
       indent_impl(code) << "break;" << '\n';
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end if matched
+      indent_impl(code) << "end;" << '\n'; // end if matched
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end if not yet used
+      indent_impl(code) << "end;" << '\n'; // end if not yet used
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end scan for
+      indent_impl(code) << "end;" << '\n'; // end scan for
       indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end outer for
@@ -4326,12 +4326,13 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
-      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << karr_var << ") - 1 do begin" << '\n';
+      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << karr_var
+                        << ") - 1 do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
       indent_up_impl();
-      string key_inner = generate_equal_container(code, vars, ktype, k_var,
-                                                   karr_var + "[" + idx_var + "]");
+      string key_inner
+          = generate_equal_container(code, vars, ktype, k_var, karr_var + "[" + idx_var + "]");
       indent_impl(code) << "if " << key_inner << " then begin" << '\n';
       indent_up_impl();
       // Keys match: compare values, and only consume the rhs key/mark found if the
@@ -4340,7 +4341,8 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       string vr = rhs + "[" + karr_var + "[" + idx_var + "]]";
       if (!val_needs_helper) {
         if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
-          indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr << ") then begin" << '\n';
+          indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr << ") then begin"
+                            << '\n';
         } else {
           indent_impl(code) << "if " << vl << " = " << vr << " then begin" << '\n';
         }
@@ -4349,7 +4351,7 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
         indent_impl(code) << found_var << " := True;" << '\n';
         indent_impl(code) << "break;" << '\n';
         indent_down_impl();
-        indent_impl(code) << "end;" << '\n';  // end if value matches
+        indent_impl(code) << "end;" << '\n'; // end if value matches
       } else {
         string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
         indent_impl(code) << "if " << val_inner << " then begin" << '\n';
@@ -4358,14 +4360,14 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
         indent_impl(code) << found_var << " := True;" << '\n';
         indent_impl(code) << "break;" << '\n';
         indent_down_impl();
-        indent_impl(code) << "end;" << '\n';  // end if val_inner
+        indent_impl(code) << "end;" << '\n'; // end if val_inner
       }
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end if key_inner
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end if not yet used
+      indent_impl(code) << "end;" << '\n'; // end if not yet used
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end scan for
+      indent_impl(code) << "end;" << '\n'; // end scan for
       indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end for k_var
@@ -4381,22 +4383,16 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
 }
 
 void t_delphi_generator::generate_delphi_struct_equality_impl(ostream& out,
-                                                               string cls_prefix,
-                                                               t_struct* tstruct,
-                                                               bool is_exception) {
+                                                              string cls_prefix,
+                                                              t_struct* tstruct) {
   ostringstream local_vars;
   ostringstream code_block;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  string cls_nm;
+  string cls_nm = type_name(tstruct, true, false);
   string intf_nm = type_name(tstruct, false, false);
-  if (is_exception) {
-    cls_nm = type_name(tstruct, true, true);
-  } else {
-    cls_nm = type_name(tstruct, true, false);
-  }
 
   indent_impl(code_block) << "begin" << '\n';
   indent_up_impl();
@@ -4411,9 +4407,9 @@ void t_delphi_generator::generate_delphi_struct_equality_impl(ostream& out,
     bool is_bin = ftype->is_base_type() && ((t_base_type*)ftype)->is_binary();
     bool needs_helper = null_allowed || is_bin || ftype->is_container();
 
-    string self_prop = "Self." + prop_name(field, is_exception);
+    string self_prop = "Self." + prop_name(field, false);
     string other_prop = "_eq_other." + prop_name(field, false);
-    string isset_self = prop_name(field, is_exception, "__isset_");
+    string isset_self = prop_name(field, false, "__isset_");
     string isset_other = "_eq_other." + prop_name(field, false, "__isset_");
 
     if (is_optional) {
