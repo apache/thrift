@@ -47,6 +47,6 @@ jobs:
           working-directory: lib/rb
 
       # Release
-      - uses: rubygems/release-gem@6317d8d1f7e28c24d28f6eff169ea854948bd9f7 # v1.2.0
+      - uses: rubygems/release-gem@052cc82692552de3ef2b81fd670e41d13cba8092 # v1.4.0
         with:
           working-directory: lib/rb
