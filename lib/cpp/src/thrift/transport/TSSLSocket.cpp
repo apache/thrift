@@ -213,6 +213,12 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
   }
 }
 
+SSLContext::SSLContext(SSL_CTX* ctx) : ctx_(ctx) {
+  if (ctx_ == nullptr) {
+    throw TSSLException("SSLContext: ctx must not be null");
+  }
+}
+
 SSLContext::~SSLContext() {
   if (ctx_ != nullptr) {
     SSL_CTX_free(ctx_);

@@ -365,6 +365,21 @@ public:
 class SSLContext {
 public:
   SSLContext(const SSLProtocol& protocol = SSLTLS);
+  /**
+   * Wrap an existing OpenSSL SSL_CTX.
+   *
+   * Takes ownership of @a ctx; the caller must not call SSL_CTX_free on it.
+   * The context must remain valid for the lifetime of this SSLContext and any
+   * TSSLSocket instances created from it (see TSSLSocketFactory lifetime notes).
+   *
+   * Unlike SSLContext(SSLProtocol) with the default SSLTLS protocol, this
+   * constructor does not apply a minimum TLS version (no SSL_OP_NO_TLSv1*).
+   * Configure protocol options on @a ctx before wrapping if a version floor
+   * is required.
+   *
+   * @param ctx  OpenSSL context to wrap (ownership transferred)
+   */
+  explicit SSLContext(SSL_CTX* ctx);
   virtual ~SSLContext();
   SSL* createSSL();
   SSL_CTX* get() { return ctx_; }

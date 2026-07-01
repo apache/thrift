@@ -34,6 +34,7 @@
 #endif
 
 using apache::thrift::transport::TSSLServerSocket;
+using apache::thrift::transport::SSLContext;
 using apache::thrift::transport::SSLContextFactory;
 using apache::thrift::transport::TSSLException;
 using apache::thrift::transport::TServerTransport;
@@ -272,6 +273,34 @@ BOOST_AUTO_TEST_CASE(custom_ssl_context_options)
         BOOST_CHECK((options & SSL_OP_NO_TLSv1_1) == 0);
     }
     context.reset();
+}
+
+BOOST_AUTO_TEST_CASE(wrapped_ssl_context)
+{
+    SSL_CTX* raw = SSL_CTX_new(TLS_method());
+    BOOST_REQUIRE(raw != nullptr);
+    SSL_CTX_set_mode(raw, SSL_MODE_AUTO_RETRY);
+
+    std::shared_ptr<SSLContext> context;
+    TSSLSocketFactory factory([&context, raw]() {
+        context = std::make_shared<SSLContext>(raw);
+        return context;
+    });
+    BOOST_CHECK(context->get() == raw);
+    context.reset();
+}
+
+BOOST_AUTO_TEST_CASE(wrapped_ssl_context_null)
+{
+    try
+    {
+        std::make_shared<SSLContext>(nullptr);
+        BOOST_FAIL("Expected null SSL_CTX to throw");
+    }
+    catch (const TSSLException& ex)
+    {
+        BOOST_CHECK_EQUAL("SSLContext: ctx must not be null", std::string(ex.what()));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(custom_ssl_context_factory_validation)

@@ -138,7 +138,11 @@ TSSLSocket are always created from TSSLSocketFactory.
 The default TSSLSocketFactory context uses OpenSSL's version-flexible TLS
 method and sets TLS 1.2 as the minimum negotiated protocol version. Applications
 that need a different protocol range can provide a custom SSLContext factory and
-adjust the OpenSSL context options before creating sockets.
+adjust the OpenSSL context options before creating sockets. Applications that
+link against an OpenSSL-compatible TLS library can also create and configure an
+SSL_CTX externally, wrap it with `SSLContext`, and pass it through the factory
+(for example, protocol-specific or dual-certificate setups that the default
+factory methods cannot express).
 
 ## How to use SSL APIs
 
