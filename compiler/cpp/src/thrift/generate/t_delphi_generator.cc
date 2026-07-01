@@ -4199,21 +4199,52 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "  if not " << rhs << ".Contains(" << e_var
                         << ") then begin " << eq_var << " := False; break; end;" << '\n';
     } else {
-      // Interface-typed elements: O(n²) scan
-      string e2_var = tmp("_e");
+      // Struct/binary/container elements: O(n²) scan that marks matched rhs elements
+      // as consumed, so a single rhs element cannot satisfy more than one lhs element.
+      // This matters because the underlying set may legitimately hold multiple elements
+      // that are .Equal() to one another but distinct by reference (the collection's own
+      // uniqueness check is reference-based for non-scalar element types).
+      string arr_var = tmp("_arr");
+      string used_var = tmp("_used");
+      string idx_var = tmp("_i");
       string found_var = tmp("_found");
-      vars << "  " << e2_var << " : " << type_name(elem_type) << ";" << '\n';
+      string e2_var = tmp("_e");
+      vars << "  " << arr_var << " : array of " << type_name(elem_type) << ";" << '\n';
+      vars << "  " << used_var << " : array of System.Boolean;" << '\n';
+      vars << "  " << idx_var << " : System.Integer;" << '\n';
       vars << "  " << found_var << " : System.Boolean;" << '\n';
+      vars << "  " << e2_var << " : " << type_name(elem_type) << ";" << '\n';
+
+      indent_impl(code) << "System.SetLength(" << arr_var << ", " << rhs << ".Count);" << '\n';
+      indent_impl(code) << "System.SetLength(" << used_var << ", " << rhs << ".Count);" << '\n';
+      indent_impl(code) << idx_var << " := 0;" << '\n';
+      indent_impl(code) << "for " << e2_var << " in " << rhs << " do begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << arr_var << "[" << idx_var << "] := " << e2_var << ";" << '\n';
+      indent_impl(code) << "System.Inc(" << idx_var << ");" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';
 
       indent_impl(code) << "for " << e_var << " in " << lhs << " do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
-      indent_impl(code) << "for " << e2_var << " in " << rhs << " do begin" << '\n';
+      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << arr_var << ") - 1 do begin" << '\n';
       indent_up_impl();
-      string inner_eq = generate_equal_container(code, vars, elem_type, e_var, e2_var);
-      indent_impl(code) << "if " << inner_eq << " then begin " << found_var << " := True; break; end;" << '\n';
+      indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
+      indent_up_impl();
+      string inner_eq = generate_equal_container(code, vars, elem_type, e_var,
+                                                  arr_var + "[" + idx_var + "]");
+      indent_impl(code) << "if " << inner_eq << " then begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
+      indent_impl(code) << found_var << " := True;" << '\n';
+      indent_impl(code) << "break;" << '\n';
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end inner for
+      indent_impl(code) << "end;" << '\n';  // end if matched
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end if not yet used
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end scan for
       indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end outer for
@@ -4268,39 +4299,73 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "end;" << '\n';  // end for keys
 
     } else {
-      // Interface-typed key: O(n²) scan over key pairs
-      string k2_var = tmp("_k");
+      // Struct/binary/container key: O(n²) scan over key pairs that marks matched rhs
+      // keys as consumed, so a single rhs key cannot satisfy more than one lhs key
+      // (same rationale as the analogous set case above).
+      string karr_var = tmp("_karr");
+      string used_var = tmp("_used");
+      string idx_var = tmp("_i");
       string found_var = tmp("_found");
-      vars << "  " << k2_var << " : " << type_name(ktype) << ";" << '\n';
+      string k2_var = tmp("_k");
+      vars << "  " << karr_var << " : array of " << type_name(ktype) << ";" << '\n';
+      vars << "  " << used_var << " : array of System.Boolean;" << '\n';
+      vars << "  " << idx_var << " : System.Integer;" << '\n';
       vars << "  " << found_var << " : System.Boolean;" << '\n';
+      vars << "  " << k2_var << " : " << type_name(ktype) << ";" << '\n';
+
+      indent_impl(code) << "System.SetLength(" << karr_var << ", " << rhs << ".Count);" << '\n';
+      indent_impl(code) << "System.SetLength(" << used_var << ", " << rhs << ".Count);" << '\n';
+      indent_impl(code) << idx_var << " := 0;" << '\n';
+      indent_impl(code) << "for " << k2_var << " in " << rhs << ".Keys do begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << karr_var << "[" << idx_var << "] := " << k2_var << ";" << '\n';
+      indent_impl(code) << "System.Inc(" << idx_var << ");" << '\n';
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';
 
       indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
-      indent_impl(code) << "for " << k2_var << " in " << rhs << ".Keys do begin" << '\n';
+      indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << karr_var << ") - 1 do begin" << '\n';
       indent_up_impl();
-      string key_inner = generate_equal_container(code, vars, ktype, k_var, k2_var);
+      indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
+      indent_up_impl();
+      string key_inner = generate_equal_container(code, vars, ktype, k_var,
+                                                   karr_var + "[" + idx_var + "]");
       indent_impl(code) << "if " << key_inner << " then begin" << '\n';
       indent_up_impl();
-      // Keys match: compare values
+      // Keys match: compare values, and only consume the rhs key/mark found if the
+      // value matches too (a key-only match with a differing value must keep scanning).
       string vl = lhs + "[" + k_var + "]";
-      string vr = rhs + "[" + k2_var + "]";
+      string vr = rhs + "[" + karr_var + "[" + idx_var + "]]";
       if (!val_needs_helper) {
         if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
-          indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr
-                            << ") then begin " << found_var << " := True; break; end;" << '\n';
+          indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr << ") then begin" << '\n';
         } else {
-          indent_impl(code) << "if " << vl << " = " << vr << " then begin "
-                            << found_var << " := True; break; end;" << '\n';
+          indent_impl(code) << "if " << vl << " = " << vr << " then begin" << '\n';
         }
+        indent_up_impl();
+        indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
+        indent_impl(code) << found_var << " := True;" << '\n';
+        indent_impl(code) << "break;" << '\n';
+        indent_down_impl();
+        indent_impl(code) << "end;" << '\n';  // end if value matches
       } else {
         string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
-        indent_impl(code) << "if " << val_inner << " then begin " << found_var << " := True; break; end;" << '\n';
+        indent_impl(code) << "if " << val_inner << " then begin" << '\n';
+        indent_up_impl();
+        indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
+        indent_impl(code) << found_var << " := True;" << '\n';
+        indent_impl(code) << "break;" << '\n';
+        indent_down_impl();
+        indent_impl(code) << "end;" << '\n';  // end if val_inner
       }
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end if key_inner
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end for k2_var
+      indent_impl(code) << "end;" << '\n';  // end if not yet used
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n';  // end scan for
       indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';  // end for k_var

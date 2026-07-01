@@ -525,6 +525,9 @@ var
   structSet1,
   structSet2         : IThriftHashSet<IEmpty>;
   map1, map2         : IThriftDictionary<System.ShortInt, System.ShortInt>;
+  eqc1, eqc2         : IEqualityItemContainers;
+  eqItemA, eqItemB,
+  eqItemC            : IEqualityItem;
   b64a, b64b         : IBase64;
   exc1, exc2         : TMutableException;
   dummyObj           : TObject;
@@ -667,6 +670,68 @@ begin
   map2.AddOrSetValue(2, 99);
   cpst2.Byte_byte_map := map2;
   ASSERT( not cpst1.Equal(cpst2));    // value mismatch -> False
+
+  // --- EqualityItemContainers.Items (set<EqualityItem>): duplicate-value regression ---
+  // Two distinct EqualityItem instances with the same value can legitimately both
+  // land in one set (TThriftHashSetImpl<T>'s default comparer is reference-based for
+  // interface-typed T, so it does not dedup by value). A set-equality scan that does
+  // not mark matched rhs entries as consumed could let one rhs entry satisfy two
+  // different lhs entries, incorrectly reporting equality when the sets differ
+  // (THRIFT-6075 review finding).
+  eqc1 := TEqualityItemContainersImpl.Create;
+  eqc1.Items := TThriftHashSetImpl<IEqualityItem>.Create;
+  eqItemA := TEqualityItemImpl.Create;
+  eqItemA.Value := 5;
+  eqItemB := TEqualityItemImpl.Create;
+  eqItemB.Value := 5;                       // distinct instance, same value as eqItemA
+  eqc1.Items.Add(eqItemA);
+  eqc1.Items.Add(eqItemB);
+  eqc1.ItemMap := TThriftDictionaryImpl<IEqualityItem, System.Integer>.Create;
+
+  eqc2 := TEqualityItemContainersImpl.Create;
+  eqc2.Items := TThriftHashSetImpl<IEqualityItem>.Create;
+  eqItemC := TEqualityItemImpl.Create;
+  eqItemC.Value := 5;                       // matches eqItemA/eqItemB by value
+  eqc2.Items.Add(eqItemC);
+  eqItemC := TEqualityItemImpl.Create;
+  eqItemC.Value := 7;                       // no counterpart in eqc1 -> sets differ
+  eqc2.Items.Add(eqItemC);
+  eqc2.ItemMap := TThriftDictionaryImpl<IEqualityItem, System.Integer>.Create;
+
+  ASSERT( not eqc1.Equal(eqc2));  // counts match (2=2) but eqc2 holds a value (7) eqc1 lacks
+
+  // Sanity check: a genuinely equal pair (no extra/duplicate values) still passes.
+  eqc1.Items := TThriftHashSetImpl<IEqualityItem>.Create;
+  eqItemA := TEqualityItemImpl.Create;
+  eqItemA.Value := 9;
+  eqc1.Items.Add(eqItemA);
+
+  eqc2.Items := TThriftHashSetImpl<IEqualityItem>.Create;
+  eqItemC := TEqualityItemImpl.Create;
+  eqItemC.Value := 9;
+  eqc2.Items.Add(eqItemC);
+  ASSERT( eqc1.Equal(eqc2));       // single matching value on both sides -> True
+
+  // --- EqualityItemContainers.ItemMap (map<EqualityItem,i32>): same duplicate-key scenario ---
+  eqc1.ItemMap := TThriftDictionaryImpl<IEqualityItem, System.Integer>.Create;
+  eqItemA := TEqualityItemImpl.Create;
+  eqItemA.Value := 5;
+  eqItemB := TEqualityItemImpl.Create;
+  eqItemB.Value := 5;                       // distinct key instance, same value as eqItemA
+  eqc1.ItemMap.AddOrSetValue(eqItemA, 100);
+  eqc1.ItemMap.AddOrSetValue(eqItemB, 100);
+
+  eqc2.ItemMap := TThriftDictionaryImpl<IEqualityItem, System.Integer>.Create;
+  eqItemC := TEqualityItemImpl.Create;
+  eqItemC.Value := 5;
+  eqc2.ItemMap.AddOrSetValue(eqItemC, 100);
+  eqItemC := TEqualityItemImpl.Create;
+  eqItemC.Value := 7;
+  eqc2.ItemMap.AddOrSetValue(eqItemC, 999);
+
+  // eqc1.Items/eqc2.Items are still equal from the sanity check above (both single
+  // value 9), so this isolates the mismatch to ItemMap.
+  ASSERT( not eqc1.Equal(eqc2));   // counts match (2=2) but eqc2 holds a key/value (7->999) eqc1 lacks
 
   // --- Base64 struct: binary field ---
   b64a := TBase64Impl.Create;
