@@ -374,16 +374,16 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_info_header_string_negative_length) {
   // reaching the string assignment. The three trailing bytes only pad the
   // header section out to its declared size and are never reached.
   uint8_t frame[] = {
-      0x00, 0x00, 0x00, 0x16,             // frame length = 22
-      0x0F, 0xFF, 0x00, 0x00,             // header magic
-      0x00, 0x00, 0x00, 0x00,             // seqId
-      0x00, 0x03,                         // header size field (3 -> 12 bytes)
-      0x02,                               // protocol id varint
-      0x00,                               // num transforms = 0
-      0x01,                               // info id = key/value
-      0x01,                               // one key/value pair
-      0x80, 0x80, 0x80, 0x80, 0x08,       // key length varint = INT32_MIN
-      0x00, 0x00, 0x00                    // padding to fill the header section
+      0x00, 0x00, 0x00, 0x16,       // frame length = 22
+      0x0F, 0xFF, 0x00, 0x00,       // header magic
+      0x00, 0x00, 0x00, 0x00,       // seqId
+      0x00, 0x03,                   // header size field (3 -> 12 bytes)
+      0x02,                         // protocol id varint
+      0x00,                         // num transforms = 0
+      0x01,                         // info id = key/value
+      0x01,                         // one key/value pair
+      0x80, 0x80, 0x80, 0x80, 0x08, // key length varint = INT32_MIN
+      0x00, 0x00, 0x00              // padding to fill the header section
   };
   std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(frame, sizeof(frame)));
   std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
