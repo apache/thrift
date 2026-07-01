@@ -242,8 +242,10 @@ public:
   std::string generate_equal_container(std::ostream& code,
                                        std::ostream& vars,
                                        t_type* ttype,
-                                       const std::string& lhs,
-                                       const std::string& rhs);
+                                       const std::string& lhs_in,
+                                       const std::string& rhs_in,
+                                       bool exit_on_fail,
+                                       bool already_local);
 
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
@@ -4097,47 +4099,150 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
   indent_impl(out) << "end;" << '\n' << '\n';
 }
 
-// Emit comparison code for a container or binary field into `code`, with any new locals
-// accumulated into `vars` (2-space prefix, level-independent). Returns the name of the Boolean
-// result variable that is set by the generated code.
+// Emit comparison code for a struct, binary or container value into `code`, with any new
+// locals accumulated into `vars` (2-space prefix, level-independent).
+//
+// In exit mode (exit_on_fail = true) a mismatch leaves the generated Equal function directly
+// via Exit(False) and an empty string is returned. In trial mode a mismatch only records the
+// outcome: a fresh Boolean variable, whose name is returned, is set to False and control falls
+// through, so the caller can keep probing other candidates. The set/map consume-scans below
+// rely on that to test rhs candidates without aborting the whole comparison.
+//
+// Unless already_local is set, both operands are captured into fresh locals first, so property
+// getters, GetItem calls and hash lookups are evaluated once instead of once per mention.
 std::string t_delphi_generator::generate_equal_container(ostream& code,
-                                                          ostream& vars,
-                                                          t_type* ttype,
-                                                          const string& lhs,
-                                                          const string& rhs) {
+                                                         ostream& vars,
+                                                         t_type* ttype,
+                                                         const string& lhs_in,
+                                                         const string& rhs_in,
+                                                         bool exit_on_fail,
+                                                         bool already_local) {
   ttype = ttype->get_true_type();
-  string eq_var = tmp("_eq");
-  vars << "  " << eq_var << " : System.Boolean;" << '\n';
-  indent_impl(code) << eq_var << " := True;" << '\n';
+
+  string lhs = lhs_in;
+  string rhs = rhs_in;
+  if (!already_local) {
+    lhs = tmp("_l");
+    rhs = tmp("_r");
+    vars << "  " << lhs << " : " << type_name(ttype) << ";" << '\n';
+    vars << "  " << rhs << " : " << type_name(ttype) << ";" << '\n';
+    indent_impl(code) << lhs << " := " << lhs_in << ";" << '\n';
+    indent_impl(code) << rhs << " := " << rhs_in << ";" << '\n';
+  }
+
+  string eq_var;
+  if (!exit_on_fail) {
+    eq_var = tmp("_eq");
+    vars << "  " << eq_var << " : System.Boolean;" << '\n';
+    indent_impl(code) << eq_var << " := True;" << '\n';
+  }
+
+  // Mismatch action for statements inside the per-element loops below.
+  const string fail_stmt
+      = exit_on_fail ? "Exit(False);" : "begin " + eq_var + " := False; break; end;";
+
+  // Shared nil/Count guards around the per-element loops of list/set/map.
+  auto container_prolog = [&]() {
+    if (exit_on_fail) {
+      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then Exit(False);"
+                        << '\n';
+      indent_impl(code) << "if " << lhs << " <> nil then begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then Exit(False);"
+                        << '\n';
+    } else {
+      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var
+                        << " := False" << '\n';
+      indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+      indent_up_impl();
+      indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var
+                        << " := False" << '\n';
+      indent_impl(code) << "else begin" << '\n';
+      indent_up_impl();
+    }
+  };
+  auto container_epilog = [&]() {
+    if (!exit_on_fail) {
+      indent_down_impl();
+      indent_impl(code) << "end;" << '\n'; // end else (counts equal)
+    }
+    indent_down_impl();
+    indent_impl(code) << "end;" << '\n'; // end if lhs <> nil
+  };
 
   if (ttype->is_struct() || ttype->is_xception()) {
-    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else if " << lhs << " <> nil then " << eq_var << " := " << lhs << ".Equal(" << rhs << ");" << '\n';
+    if (exit_on_fail) {
+      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then Exit(False);"
+                        << '\n';
+      indent_impl(code) << "if (" << lhs << " <> nil) and not " << lhs << ".Equal(" << rhs
+                        << ") then Exit(False);" << '\n';
+    } else {
+      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var
+                        << " := False" << '\n';
+      indent_impl(code) << "else if " << lhs << " <> nil then " << eq_var << " := " << lhs
+                        << ".Equal(" << rhs << ");" << '\n';
+    }
 
   } else if (ttype->is_binary()) {
     if (com_types_) {
       // IThriftBytes — nullable interface
-      indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
-      indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
-      indent_up_impl();
-      indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
-      indent_impl(code) << "else if " << lhs << ".Count > 0 then" << '\n';
-      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
-                        << lhs << ".QueryRawDataPtr, " << rhs << ".QueryRawDataPtr, " << lhs << ".Count);" << '\n';
-      indent_down_impl();
-      indent_impl(code) << "end;" << '\n';
+      if (exit_on_fail) {
+        indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then Exit(False);"
+                          << '\n';
+        indent_impl(code) << "if " << lhs << " <> nil then begin" << '\n';
+        indent_up_impl();
+        indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then Exit(False);"
+                          << '\n';
+        indent_impl(code) << "if (" << lhs << ".Count > 0) and not SysUtils.CompareMem(" << lhs
+                          << ".QueryRawDataPtr, " << rhs << ".QueryRawDataPtr, " << lhs
+                          << ".Count) then Exit(False);" << '\n';
+        indent_down_impl();
+        indent_impl(code) << "end;" << '\n';
+      } else {
+        indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var
+                          << " := False" << '\n';
+        indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
+        indent_up_impl();
+        indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var
+                          << " := False" << '\n';
+        indent_impl(code) << "else if " << lhs << ".Count > 0 then" << '\n';
+        indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem(" << lhs
+                          << ".QueryRawDataPtr, " << rhs << ".QueryRawDataPtr, " << lhs
+                          << ".Count);" << '\n';
+        indent_down_impl();
+        indent_impl(code) << "end;" << '\n';
+      }
     } else if (rtti_) {
       // TThriftBytes — packed record with .data and .Length
-      indent_impl(code) << "if " << lhs << ".Length <> " << rhs << ".Length then " << eq_var << " := False" << '\n';
-      indent_impl(code) << "else if " << lhs << ".Length > 0 then" << '\n';
-      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
-                        << "@" << lhs << ".data[0], @" << rhs << ".data[0], " << lhs << ".Length);" << '\n';
+      if (exit_on_fail) {
+        indent_impl(code) << "if " << lhs << ".Length <> " << rhs << ".Length then Exit(False);"
+                          << '\n';
+        indent_impl(code) << "if (" << lhs << ".Length > 0) and not SysUtils.CompareMem(@" << lhs
+                          << ".data[0], @" << rhs << ".data[0], " << lhs
+                          << ".Length) then Exit(False);" << '\n';
+      } else {
+        indent_impl(code) << "if " << lhs << ".Length <> " << rhs << ".Length then " << eq_var
+                          << " := False" << '\n';
+        indent_impl(code) << "else if " << lhs << ".Length > 0 then" << '\n';
+        indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem(@" << lhs << ".data[0], @"
+                          << rhs << ".data[0], " << lhs << ".Length);" << '\n';
+      }
     } else {
       // SysUtils.TBytes — dynamic array
-      indent_impl(code) << "if System.Length(" << lhs << ") <> System.Length(" << rhs << ") then " << eq_var << " := False" << '\n';
-      indent_impl(code) << "else if System.Length(" << lhs << ") > 0 then" << '\n';
-      indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
-                        << "PByte(" << lhs << "), PByte(" << rhs << "), System.Length(" << lhs << "));" << '\n';
+      if (exit_on_fail) {
+        indent_impl(code) << "if System.Length(" << lhs << ") <> System.Length(" << rhs
+                          << ") then Exit(False);" << '\n';
+        indent_impl(code) << "if (System.Length(" << lhs << ") > 0) and not SysUtils.CompareMem("
+                          << "PByte(" << lhs << "), PByte(" << rhs << "), System.Length(" << lhs
+                          << ")) then Exit(False);" << '\n';
+      } else {
+        indent_impl(code) << "if System.Length(" << lhs << ") <> System.Length(" << rhs << ") then "
+                          << eq_var << " := False" << '\n';
+        indent_impl(code) << "else if System.Length(" << lhs << ") > 0 then" << '\n';
+        indent_impl(code) << "  " << eq_var << " := SysUtils.CompareMem("
+                          << "PByte(" << lhs << "), PByte(" << rhs << "), System.Length(" << lhs
+                          << "));" << '\n';
+      }
     }
 
   } else if (ttype->is_list()) {
@@ -4145,49 +4250,45 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
     t_type* elem_type = tlist->get_elem_type()->get_true_type();
     string i_var = tmp("_i");
     vars << "  " << i_var << " : System.Integer;" << '\n';
+    bool elem_needs_helper
+        = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
 
-    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
-    indent_up_impl();
-    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else begin" << '\n';
-    indent_up_impl();
+    container_prolog();
     indent_impl(code) << "for " << i_var << " := 0 to " << lhs << ".Count - 1 do begin" << '\n';
     indent_up_impl();
 
-    bool elem_needs_helper = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
     if (!elem_needs_helper) {
-      if (elem_type->is_base_type() && ((t_base_type*)elem_type)->get_base() == t_base_type::TYPE_UUID) {
-        indent_impl(code) << "if not SysUtils.IsEqualGUID(" << lhs << "[" << i_var << "], "
-                          << rhs << "[" << i_var << "]) then begin " << eq_var << " := False; break; end;" << '\n';
+      if (elem_type->is_base_type()
+          && ((t_base_type*)elem_type)->get_base() == t_base_type::TYPE_UUID) {
+        indent_impl(code) << "if not SysUtils.IsEqualGUID(" << lhs << "[" << i_var << "], " << rhs
+                          << "[" << i_var << "]) then " << fail_stmt << '\n';
       } else {
         indent_impl(code) << "if " << lhs << "[" << i_var << "] <> " << rhs << "[" << i_var
-                          << "] then begin " << eq_var << " := False; break; end;" << '\n';
+                          << "] then " << fail_stmt << '\n';
       }
     } else {
-      string inner = generate_equal_container(code, vars, elem_type,
-                                              lhs + "[" + i_var + "]", rhs + "[" + i_var + "]");
-      indent_impl(code) << "if not " << inner << " then begin " << eq_var << " := False; break; end;" << '\n';
+      // recursion captures the elements into locals (already_local = false)
+      if (exit_on_fail) {
+        generate_equal_container(code, vars, elem_type, lhs + "[" + i_var + "]",
+                                 rhs + "[" + i_var + "]", true, false);
+      } else {
+        string inner = generate_equal_container(code, vars, elem_type, lhs + "[" + i_var + "]",
+                                                rhs + "[" + i_var + "]", false, false);
+        indent_impl(code) << "if not " << inner << " then " << fail_stmt << '\n';
+      }
     }
 
     indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end for
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+    indent_impl(code) << "end;" << '\n'; // end for
+    container_epilog();
 
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     t_type* elem_type = tset->get_elem_type()->get_true_type();
-    bool elem_needs_scan = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
+    bool elem_needs_scan
+        = type_can_be_null(elem_type) || elem_type->is_binary() || elem_type->is_container();
 
-    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
-    indent_up_impl();
-    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else begin" << '\n';
-    indent_up_impl();
+    container_prolog();
 
     string e_var = tmp("_e");
     vars << "  " << e_var << " : " << type_name(elem_type) << ";" << '\n';
@@ -4195,8 +4296,8 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
     if (!elem_needs_scan) {
       // Scalar elements: value-based hash equality in Contains is correct
       indent_impl(code) << "for " << e_var << " in " << lhs << " do" << '\n';
-      indent_impl(code) << "  if not " << rhs << ".Contains(" << e_var
-                        << ") then begin " << eq_var << " := False; break; end;" << '\n';
+      indent_impl(code) << "  if not " << rhs << ".Contains(" << e_var << ") then " << fail_stmt
+                        << '\n';
     } else {
       // Struct/binary/container elements: O(n²) scan that marks matched rhs elements
       // as consumed, so a single rhs element cannot satisfy more than one lhs element.
@@ -4232,8 +4333,9 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_up_impl();
       indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
       indent_up_impl();
-      string inner_eq
-          = generate_equal_container(code, vars, elem_type, e_var, arr_var + "[" + idx_var + "]");
+      // the candidate probe must not abort the function -> always trial mode
+      string inner_eq = generate_equal_container(code, vars, elem_type, e_var,
+                                                 arr_var + "[" + idx_var + "]", false, true);
       indent_impl(code) << "if " << inner_eq << " then begin" << '\n';
       indent_up_impl();
       indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
@@ -4245,15 +4347,12 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "end;" << '\n'; // end if not yet used
       indent_down_impl();
       indent_impl(code) << "end;" << '\n'; // end scan for
-      indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
+      indent_impl(code) << "if not " << found_var << " then " << fail_stmt << '\n';
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end outer for
+      indent_impl(code) << "end;" << '\n'; // end outer for
     }
 
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+    container_epilog();
 
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
@@ -4261,69 +4360,76 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
     t_type* vtype = tmap->get_val_type()->get_true_type();
     bool key_needs_scan = type_can_be_null(ktype) || ktype->is_binary() || ktype->is_container();
     bool val_needs_helper = type_can_be_null(vtype) || vtype->is_binary() || vtype->is_container();
+    bool val_is_uuid
+        = vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID;
 
-    string k_var = tmp("_k");
-    vars << "  " << k_var << " : " << type_name(ktype) << ";" << '\n';
+    string pair_type
+        = "Generics.Collections.TPair<" + type_name(ktype) + ", " + type_name(vtype) + ">";
+    string pair_var = tmp("_pair");
+    vars << "  " << pair_var << " : " << pair_type << ";" << '\n';
 
-    indent_impl(code) << "if (" << lhs << " = nil) <> (" << rhs << " = nil) then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else if " << lhs << " <> nil then begin" << '\n';
-    indent_up_impl();
-    indent_impl(code) << "if " << lhs << ".Count <> " << rhs << ".Count then " << eq_var << " := False" << '\n';
-    indent_impl(code) << "else begin" << '\n';
-    indent_up_impl();
+    container_prolog();
 
     if (!key_needs_scan) {
-      // Scalar key: use ContainsKey then compare values
-      indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
+      // Scalar key: iterate the lhs pairs, fetch the rhs value with a single lookup
+      string v_var = tmp("_v");
+      vars << "  " << v_var << " : " << type_name(vtype) << ";" << '\n';
+
+      indent_impl(code) << "for " << pair_var << " in " << lhs << " do begin" << '\n';
       indent_up_impl();
-      indent_impl(code) << "if not " << rhs << ".ContainsKey(" << k_var << ") then begin "
-                        << eq_var << " := False; break; end;" << '\n';
+      indent_impl(code) << "if not " << rhs << ".TryGetValue(" << pair_var << ".Key, " << v_var
+                        << ") then " << fail_stmt << '\n';
 
-      string vl = lhs + "[" + k_var + "]";
-      string vr = rhs + "[" + k_var + "]";
-
+      string vl = pair_var + ".Value";
       if (!val_needs_helper) {
-        if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
-          indent_impl(code) << "if not SysUtils.IsEqualGUID(" << vl << ", " << vr
-                            << ") then begin " << eq_var << " := False; break; end;" << '\n';
+        if (val_is_uuid) {
+          indent_impl(code) << "if not SysUtils.IsEqualGUID(" << vl << ", " << v_var << ") then "
+                            << fail_stmt << '\n';
         } else {
-          indent_impl(code) << "if " << vl << " <> " << vr << " then begin "
-                            << eq_var << " := False; break; end;" << '\n';
+          indent_impl(code) << "if " << vl << " <> " << v_var << " then " << fail_stmt << '\n';
         }
       } else {
-        string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
-        indent_impl(code) << "if not " << val_inner << " then begin " << eq_var << " := False; break; end;" << '\n';
+        if (exit_on_fail) {
+          generate_equal_container(code, vars, vtype, vl, v_var, true, true);
+        } else {
+          string val_inner = generate_equal_container(code, vars, vtype, vl, v_var, false, true);
+          indent_impl(code) << "if not " << val_inner << " then " << fail_stmt << '\n';
+        }
       }
 
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end for keys
+      indent_impl(code) << "end;" << '\n'; // end for pairs
 
     } else {
-      // Struct/binary/container key: O(n²) scan over key pairs that marks matched rhs
-      // keys as consumed, so a single rhs key cannot satisfy more than one lhs key
-      // (same rationale as the analogous set case above).
+      // Struct/binary/container key: O(n²) scan over a rhs key/value snapshot that marks
+      // matched rhs keys as consumed, so a single rhs key cannot satisfy more than one
+      // lhs key (same rationale as the analogous set case above).
+      string rpair_var = tmp("_pair");
       string karr_var = tmp("_karr");
+      string varr_var = tmp("_varr");
       string used_var = tmp("_used");
       string idx_var = tmp("_i");
       string found_var = tmp("_found");
-      string k2_var = tmp("_k");
+      vars << "  " << rpair_var << " : " << pair_type << ";" << '\n';
       vars << "  " << karr_var << " : array of " << type_name(ktype) << ";" << '\n';
+      vars << "  " << varr_var << " : array of " << type_name(vtype) << ";" << '\n';
       vars << "  " << used_var << " : array of System.Boolean;" << '\n';
       vars << "  " << idx_var << " : System.Integer;" << '\n';
       vars << "  " << found_var << " : System.Boolean;" << '\n';
-      vars << "  " << k2_var << " : " << type_name(ktype) << ";" << '\n';
 
       indent_impl(code) << "System.SetLength(" << karr_var << ", " << rhs << ".Count);" << '\n';
+      indent_impl(code) << "System.SetLength(" << varr_var << ", " << rhs << ".Count);" << '\n';
       indent_impl(code) << "System.SetLength(" << used_var << ", " << rhs << ".Count);" << '\n';
       indent_impl(code) << idx_var << " := 0;" << '\n';
-      indent_impl(code) << "for " << k2_var << " in " << rhs << ".Keys do begin" << '\n';
+      indent_impl(code) << "for " << rpair_var << " in " << rhs << " do begin" << '\n';
       indent_up_impl();
-      indent_impl(code) << karr_var << "[" << idx_var << "] := " << k2_var << ";" << '\n';
+      indent_impl(code) << karr_var << "[" << idx_var << "] := " << rpair_var << ".Key;" << '\n';
+      indent_impl(code) << varr_var << "[" << idx_var << "] := " << rpair_var << ".Value;" << '\n';
       indent_impl(code) << "System.Inc(" << idx_var << ");" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';
 
-      indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
+      indent_impl(code) << "for " << pair_var << " in " << lhs << " do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
       indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << karr_var
@@ -4331,16 +4437,17 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_up_impl();
       indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
       indent_up_impl();
-      string key_inner
-          = generate_equal_container(code, vars, ktype, k_var, karr_var + "[" + idx_var + "]");
+      // the candidate probe must not abort the function -> always trial mode
+      string key_inner = generate_equal_container(code, vars, ktype, pair_var + ".Key",
+                                                  karr_var + "[" + idx_var + "]", false, true);
       indent_impl(code) << "if " << key_inner << " then begin" << '\n';
       indent_up_impl();
       // Keys match: compare values, and only consume the rhs key/mark found if the
       // value matches too (a key-only match with a differing value must keep scanning).
-      string vl = lhs + "[" + k_var + "]";
-      string vr = rhs + "[" + karr_var + "[" + idx_var + "]]";
+      string vl = pair_var + ".Value";
+      string vr = varr_var + "[" + idx_var + "]";
       if (!val_needs_helper) {
-        if (vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID) {
+        if (val_is_uuid) {
           indent_impl(code) << "if SysUtils.IsEqualGUID(" << vl << ", " << vr << ") then begin"
                             << '\n';
         } else {
@@ -4353,7 +4460,7 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
         indent_down_impl();
         indent_impl(code) << "end;" << '\n'; // end if value matches
       } else {
-        string val_inner = generate_equal_container(code, vars, vtype, vl, vr);
+        string val_inner = generate_equal_container(code, vars, vtype, vl, vr, false, true);
         indent_impl(code) << "if " << val_inner << " then begin" << '\n';
         indent_up_impl();
         indent_impl(code) << used_var << "[" << idx_var << "] := True;" << '\n';
@@ -4363,20 +4470,17 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
         indent_impl(code) << "end;" << '\n'; // end if val_inner
       }
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end if key_inner
+      indent_impl(code) << "end;" << '\n'; // end if key_inner
       indent_down_impl();
       indent_impl(code) << "end;" << '\n'; // end if not yet used
       indent_down_impl();
       indent_impl(code) << "end;" << '\n'; // end scan for
-      indent_impl(code) << "if not " << found_var << " then begin " << eq_var << " := False; break; end;" << '\n';
+      indent_impl(code) << "if not " << found_var << " then " << fail_stmt << '\n';
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n';  // end for k_var
+      indent_impl(code) << "end;" << '\n'; // end for pair_var
     }
 
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else (counts equal)
-    indent_down_impl();
-    indent_impl(code) << "end;" << '\n';  // end else if lhs <> nil
+    container_epilog();
   }
 
   return eq_var;
@@ -4428,8 +4532,7 @@ void t_delphi_generator::generate_delphi_struct_equality_impl(ostream& out,
                                 << " then Exit(False);" << '\n';
       }
     } else {
-      string eq_var = generate_equal_container(code_block, local_vars, ftype, self_prop, other_prop);
-      indent_impl(code_block) << "if not " << eq_var << " then Exit(False);" << '\n';
+      generate_equal_container(code_block, local_vars, ftype, self_prop, other_prop, true, false);
     }
 
     if (is_optional) {
