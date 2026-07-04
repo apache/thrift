@@ -40,15 +40,15 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <Title>Apache Thrift 0.24.0</Title>
-    <Version>0.24.0.0</Version>
+    <Title>Apache Thrift 0.25.0</Title>
+    <Version>0.25.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <Authors>Apache Thrift Developers</Authors>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
-    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.24.0/CHANGES.md</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.25.0/CHANGES.md</PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC</PackageTags>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>

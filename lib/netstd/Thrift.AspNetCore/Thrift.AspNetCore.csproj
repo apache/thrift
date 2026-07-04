@@ -40,15 +40,15 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Thrift\thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
-    <Title>Apache Thrift ASP.NET Core 0.24.0</Title>
-    <Version>0.24.0.0</Version>
+    <Title>Apache Thrift ASP.NET Core 0.25.0</Title>
+    <Version>0.25.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <Authors>Apache Thrift Developers</Authors>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageDescription>ASP.NET Core server transport (THttpServerTransport middleware) for the Apache Thrift RPC system. Reference this package only when you host Thrift over ASP.NET Core; the core ApacheThrift package no longer pulls in the ASP.NET Core stack.</PackageDescription>
-    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.24.0/CHANGES.md</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.25.0/CHANGES.md</PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC AspNetCore HTTP Server</PackageTags>
     <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
