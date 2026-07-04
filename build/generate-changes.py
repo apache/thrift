@@ -199,6 +199,12 @@ GITHUB_LABEL_MAP = {
     "ruby": "Ruby",
     "rust": "Rust",
     "typescript": "nodets",
+    "doc": "Documentation",
+    # dependabot and workflow-file PRs carry these labels; they have no Client:
+    # trailer we could use instead, so route them to the build/CI section.
+    "github_actions": "Build Process",
+    "dependencies": "Build Process",
+    "testsuite": "Build Process",
     "releng": "Build Process",
 }
 
@@ -447,6 +453,19 @@ def fetch_jira_by_fixversion(fix_version):
 # GitHub helpers
 # ---------------------------------------------------------------------------
 
+def labels_to_sections(label_names):
+    """Map GitHub label names to a deduplicated, order-preserving list of
+    canonical CHANGES.md section headings.  Labels with no mapping are ignored."""
+    sections = []
+    seen = set()
+    for name in label_names:
+        section = GITHUB_LABEL_MAP.get(name.lower())
+        if section and section not in seen:
+            seen.add(section)
+            sections.append(section)
+    return sections
+
+
 def fetch_pr_labels(pr_numbers, repo, github_token=None):
     """Return a dict mapping PR number (int) → list of canonical section names.
 
@@ -475,14 +494,9 @@ def fetch_pr_labels(pr_numbers, repo, github_token=None):
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read())
-            sections: list = []
-            seen: set = set()
-            for label in data.get("labels", []):
-                section = GITHUB_LABEL_MAP.get(label["name"].lower())
-                if section and section not in seen:
-                    seen.add(section)
-                    sections.append(section)
-            result[pr_num] = sections
+            result[pr_num] = labels_to_sections(
+                label["name"] for label in data.get("labels", [])
+            )
         except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
             print(f"Warning: GitHub PR #{pr_num} label fetch failed: {exc}", file=sys.stderr)
 
@@ -553,6 +567,60 @@ def version_from_configure(repo_root):
 def section_sort_key(name):
     """Alphabetical, but LATE_SECTIONS sort last."""
     return (1 if name in LATE_SECTIONS else 0, name.lower())
+
+
+# ---------------------------------------------------------------------------
+# Section assignment helpers
+# ---------------------------------------------------------------------------
+
+def build_ticket_trailer_sections(commit_meta):
+    """Map ticket id (uppercase) -> ordered, deduplicated list of sections
+    derived from the Client: trailer(s) of commits that reference the ticket.
+
+    Used as a fallback for JIRA tickets that have no usable component."""
+    result: dict = defaultdict(list)
+    for c in commit_meta:
+        for ticket in c["tickets"]:
+            key = ticket.upper()
+            for section in c["sections"]:
+                if section not in result[key]:
+                    result[key].append(section)
+    return result
+
+
+def resolve_ticket_sections(ticket_id, jira_sections, trailer_sections):
+    """Return the section list a JIRA-backed ticket should be filed under.
+
+    JIRA components win when present; when JIRA has no component (the
+    "(No Section)" sentinel) fall back to the commit Client: trailer."""
+    if jira_sections == ["(No Section)"]:
+        fallback = trailer_sections.get(ticket_id.upper())
+        if fallback:
+            return fallback
+    return jira_sections
+
+
+def pr_label_fetch_candidates(commit_meta, jira_data):
+    """Return commits whose section should be resolved from GitHub PR labels:
+    a PR number is known, the commit has no Client: trailer section, and none
+    of its tickets is already covered by JIRA."""
+    return [
+        c
+        for c in commit_meta
+        if c["pr_num"] is not None
+        and not c["sections"]
+        and not any(t.upper() in jira_data for t in c["tickets"])
+    ]
+
+
+def apply_pr_label_sections(candidates, pr_label_data):
+    """Assign fetched PR-label sections to every candidate commit sharing a PR
+    number.  Rebase-merged PRs land several commits under one PR, so a single
+    PR's labels must propagate to all of its section-less commits."""
+    for c in candidates:
+        sections = pr_label_data.get(c["pr_num"])
+        if sections:
+            c["sections"] = list(sections)
 
 
 # ---------------------------------------------------------------------------
@@ -661,13 +729,8 @@ def generate_changes(args):
     # Only done when commits are included in output; skips commits already
     # covered by JIRA or that already have sections from the trailer.
     if not args.no_commits:
-        pr_nums_to_fetch = [
-            c["pr_num"]
-            for c in commit_meta
-            if c["pr_num"] is not None
-            and not c["sections"]
-            and not any(t.upper() in jira_data for t in c["tickets"])
-        ]
+        label_candidates = pr_label_fetch_candidates(commit_meta, jira_data)
+        pr_nums_to_fetch = sorted({c["pr_num"] for c in label_candidates})
         if pr_nums_to_fetch:
             print(
                 f"Fetching GitHub labels for {len(pr_nums_to_fetch)} PRs "
@@ -677,16 +740,9 @@ def generate_changes(args):
             pr_label_data = fetch_pr_labels(
                 pr_nums_to_fetch, args.repo, args.github_token
             )
-            # Propagate fetched sections back into commit_meta in-place so the
-            # section-building loop below picks them up transparently.
-            pr_meta_by_num = {
-                c["pr_num"]: c
-                for c in commit_meta
-                if c["pr_num"] is not None
-            }
-            for pr_num, sections in pr_label_data.items():
-                if sections and pr_num in pr_meta_by_num:
-                    pr_meta_by_num[pr_num]["sections"] = sections
+            # Propagate fetched sections to every section-less commit sharing the
+            # PR, so rebase-merged PRs (several commits, one PR) are all covered.
+            apply_pr_label_sections(label_candidates, pr_label_data)
 
     # --- Build per-section entry lists ---
     # sections_jira[section]   = list of (ticket_num, line)
@@ -698,12 +754,18 @@ def generate_changes(args):
     emitted_ticket: dict = defaultdict(set)   # section -> {ticket_id}
     emitted_commit: dict = defaultdict(set)   # section -> {sha}
 
+    # Ticket -> Client: trailer sections, used to file a JIRA ticket that has
+    # no usable component under the section named by its commit(s) instead.
+    trailer_sections = build_ticket_trailer_sections(commit_meta)
+
     # JIRA-backed entries
     for ticket_id, info in jira_data.items():
         ticket_num = int(re.search(r"\d+", ticket_id).group())
         ticket_url = f"{JIRA_BASE}/browse/{ticket_id}"
         line = f"- [{ticket_id}]({ticket_url}) - {info['summary']}"
-        for section in info["sections"]:
+        for section in resolve_ticket_sections(
+            ticket_id, info["sections"], trailer_sections
+        ):
             if ticket_id not in emitted_ticket[section]:
                 emitted_ticket[section].add(ticket_id)
                 sections_jira[section].append((ticket_num, line))
