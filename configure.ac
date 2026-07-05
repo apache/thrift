@@ -388,7 +388,7 @@ if test "$with_go" = "yes";  then
       ax_go118_version="1.18"
 
       AC_MSG_CHECKING([for Go version])
-      golang_version=`$GO version 2>&1 | $SED -e 's/\(go \)\(version \)\(go\)\(@<:@0-9@:>@.@<:@0-9@:>@.@<:@0-9@:>@\)\(@<:@\*@:>@*\).*/\4/'`
+      golang_version=`$GO version 2>&1 | $SED -n -e 's/^go version go\(@<:@0-9@:>@@<:@0-9.@:>@*\).*/\1/p'`
       AC_MSG_RESULT($golang_version)
       AC_SUBST([golang_version],[$golang_version])
       AX_COMPARE_VERSION([$ax_go_version],[le],[$golang_version],[
@@ -431,7 +431,7 @@ if test "$with_rs" = "yes";  then
       min_rustc_version="1.13"
 
       AC_MSG_CHECKING([for rustc version])
-      rustc_version=`$RUSTC --version 2>&1 | $SED -e 's/\(rustc \)\([0-9]\)\.\([0-9][0-9]*\)\.\([0-9][0-9]*\).*/\2.\3/'`
+      rustc_version=`$RUSTC --version 2>&1 | $SED -n -e 's/^rustc \(@<:@0-9@:>@@<:@0-9.@:>@*\).*/\1/p'`
       AC_MSG_RESULT($rustc_version)
       AC_SUBST([rustc_version],[$rustc_version])
 
