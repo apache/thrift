@@ -178,5 +178,4 @@ EXTRA_DIST = \
 	phpcs.xml.dist \
 	README.md \
 	rust-toolchain \
-	sonar-project.properties \
-	Thrift.podspec
+	sonar-project.properties
