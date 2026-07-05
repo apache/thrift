@@ -151,16 +151,15 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     1. In the clean copy of the release branch, build the container image:
 	
         ```bash
-        docker build -t thrift build/docker/ubuntu-jammy
+        docker build -t thrift:jammy build/docker/ubuntu-jammy
         ```
 	
     1. Run the container and `make dist`:
 	
         ```bash
-        docker run -v $(pwd):/thrift/src -it thrift /bin/bash
-        root@8b4101188aa2:/thrift/src# ./bootstrap.sh && ./configure && make dist
+        docker run -v $(pwd):/thrift/src -it --rm thrift:jammy /bin/bash -c "./bootstrap.sh && ./configure && make dist"
         ```
-
+		
         The result will be a file named `thrift-1.0.0.tar.gz`.  Check the size and make sure it is roughly 4MB.  It could get larger over time, but it shouldn't jump by orders of magnitude.  Once satisfied you can exit the docker container with `exit`.
 
     1. Validate the contents of the tarball
@@ -178,7 +177,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         sha1sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.sha1
         sha256sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.sha256
 
-1. Generate the Windows Thrift Compiler.  This is a statically linked compiler that is portable and folks find it useful to be able to download one, especially if they are using third-party distributed runtime libraries for interpreted languages on Windows.  There are two ways to generate this:
+1. Generate the Windows Thrift Compiler.  The compiler is portable and folks find it useful to be able to download one, especially if they are using third-party distributed runtime libraries for interpreted languages on Windows. It requires Visual C++ Runtime due to ASF regulations.  There are two ways to generate this:
 
     - Using a Development VM
 
