@@ -260,6 +260,10 @@ style-local:
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
+# The gen-cpp* trees are nodist generated sources; drop them from the dist.
+dist-hook:
+	find $(distdir) -type d -name 'gen-cpp*' -prune -exec rm -rf {} +
+
 EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \

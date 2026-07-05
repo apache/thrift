@@ -140,6 +140,8 @@ EXTRA_DIST = \
 	src/ext/thrift_protocol/php_thrift_protocol_arginfo.h \
 	coding_standards.md \
 	thrift_protocol.ini \
+	phpstan.neon \
+	phpstan-baseline.neon \
 	phpunit.xml \
 	README.apache.md \
 	README.md \

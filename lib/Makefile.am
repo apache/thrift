@@ -101,6 +101,12 @@ endif
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
+# The libs below ship as whole directories, which sweeps in generated code and
+# build output present in a built tree.  Strip those from the distribution.
+dist-hook:
+	rm -rf $(distdir)/haxe/test/bin $(distdir)/haxe/test/gen-haxe
+	rm -rf $(distdir)/javame/gen-javame
+
 EXTRA_DIST = \
 	d \
 	dart \

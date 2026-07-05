@@ -67,10 +67,16 @@ clean-local:
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
+# Several test/benchmark projects ship as whole directories; strip the build
+# output and generated code that a built tree leaves behind.
+dist-hook:
+	find $(distdir) -type d \( -name bin -o -name obj -o -name gen-netstd \) -prune -exec rm -rf {} +
+
 EXTRA_DIST = \
 	README.md \
 	Directory.Build.props \
 	Benchmarks/Thrift.Benchmarks \
+	Tests/codegen/run-NetStd-Codegen-Tests.ps1 \
 	Tests/Thrift.IntegrationTests/Protocols \
 	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
 	Tests/Thrift.Compile.Tests \

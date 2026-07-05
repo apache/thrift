@@ -66,6 +66,9 @@ dist-hook:
 	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 	find $(distdir) -type d -name node_modules -prune -exec rm -rf {} +
+	find $(distdir) -type d -name __pycache__ -prune -exec rm -rf {} +
+	find $(distdir) -type f -name "*.pyc" -exec rm -f {} +
+	rm -f $(distdir)/doc/thrift-threat-model.md
 
 print-version:
 	@echo $(PACKAGE_VERSION)
@@ -143,13 +146,6 @@ EXTRA_DIST = \
 	.flake8 \
 	.gitattributes \
 	.gitignore \
-	.github/dependabot.yml \
-	.github/pull_request_template.md \
-	.github/stale.yml \
-	.github/workflows/build.yml \
-	.github/workflows/cmake.yml \
-	.github/workflows/pypi.yml \
-	.github/workflows/release_rust.yml \
 	.travis.yml \
 	ApacheThrift.nuspec \
 	AGENTS.md \
@@ -178,5 +174,6 @@ EXTRA_DIST = \
 	package-lock.json \
 	phpcs.xml.dist \
 	README.md \
+	SECURITY.md \
 	rust-toolchain \
 	sonar-project.properties
