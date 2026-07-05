@@ -100,7 +100,7 @@ EXTRA_DIST = \
 	Thrift/Transport \
 	Thrift/*.snk \
 	Thrift.AspNetCore/.editorconfig \
-	Thrift.AspNetCore/THttpServerTransport.cs \
+	Thrift.AspNetCore/Transport \
 	Thrift.AspNetCore/Thrift.AspNetCore.csproj \
 	Thrift.slnx \
 	build.cmd \
