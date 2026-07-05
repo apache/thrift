@@ -65,6 +65,7 @@ dist-hook:
 	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -f
 	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
+	find $(distdir) -type d -name node_modules -prune -exec rm -rf {} +
 
 print-version:
 	@echo $(PACKAGE_VERSION)
