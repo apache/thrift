@@ -252,13 +252,13 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     sha256: 
 
 
-    A prebuilt statically-linked Windows compiler is available at:
+    A prebuilt Windows compiler is available at:
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe
 
-    Prebuilt statically-linked Windows compiler GPG signature:
+    Prebuilt Windows compiler GPG signature:
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe.asc
 
-    Prebuilt statically-linked Windows compiler checksums are:
+    Prebuilt Windows compiler checksums are:
     md5: 
     sha1: 
     sha256: 
@@ -346,7 +346,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).
 
-    Attach the statically built Windows thrift compiler as a binary here.
+    Attach the Windows thrift compiler as a binary here.
 
     You may find it useful to use the button that automates release notes.
 
