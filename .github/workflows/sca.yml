@@ -94,10 +94,15 @@ jobs:
           # suppress *:thrift/thriftl.cc -> flex-generated lexer triggers false null pointer paths.
           # suppress syntaxError:thrift/thrifty.cc -> bison-generated parser is not fully parseable.
           # suppress normalCheckLevelMaxBranches:compiler/cpp/src/* -> avoid info-only branch limit noise.
+          # suppress danglingTempReference:.../t_cpp_generator.cc -> ternary between
+          # derived (ofstream_with_content_based_conditional_update) and base (ostream)
+          # lvalues is valid, not dangling.
           cppcheck --force --quiet --inline-suppr \
             --suppress="*:thrift/thriftl.cc" \
             --suppress="syntaxError:thrift/thrifty.cc" \
             --suppress="normalCheckLevelMaxBranches:compiler/cpp/src/*" \
+            --suppress="danglingTempReference:compiler/cpp/src/thrift/generate/t_cpp_generator.cc" \
+            -I compiler/cpp/src \
             --error-exitcode=1 -j2 compiler/cpp/src
 
   lib-cpp:
