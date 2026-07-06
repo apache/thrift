@@ -63,64 +63,79 @@ end
 
 class SimpleClientTest < Test::Unit::TestCase
   def setup
-    unless @socket
-      if $domain_socket.to_s.strip.empty?
-        if $ssl
-          # the working directory for ruby crosstest is test/rb/gen-rb
-          keysDir = File.join(File.dirname(File.dirname(Dir.pwd)), "keys")
-          ctx = OpenSSL::SSL::SSLContext.new
-          ctx.ca_file = File.join(keysDir, "CA.pem")
-          ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "client.crt")))
-          ctx.cert_store = OpenSSL::X509::Store.new
-          ctx.cert_store.add_file(File.join(keysDir, 'server.pem'))
-          ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "client.key")))
-          ctx.options = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
-          ctx.ssl_version = :SSLv23
-          ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
-          @socket = Thrift::SSLSocket.new($host, $port, nil, ctx)
-        else
-          @socket = Thrift::Socket.new($host, $port)
+    unless @transport
+      if $transport == "http"
+        if !$domain_socket.to_s.strip.empty?
+          raise 'transport http is not valid with --domain-socket'
         end
+
+        scheme = $ssl ? 'https' : 'http'
+        options = {}
+        if $ssl
+          keys_dir = File.join(File.dirname(File.dirname(Dir.pwd)), 'keys')
+          options[:ssl_ca_file] = File.join(keys_dir, 'CA.pem')
+        end
+        @transport = Thrift::HTTPClientTransport.new("#{scheme}://#{$host}:#{$port}/test", options)
+      elsif $domain_socket.to_s.strip.empty?
+        socket =
+          if $ssl
+            # the working directory for ruby crosstest is test/rb/gen-rb
+            keysDir = File.join(File.dirname(File.dirname(Dir.pwd)), "keys")
+            ctx = OpenSSL::SSL::SSLContext.new
+            ctx.ca_file = File.join(keysDir, "CA.pem")
+            ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "client.crt")))
+            ctx.cert_store = OpenSSL::X509::Store.new
+            ctx.cert_store.add_file(File.join(keysDir, 'server.pem'))
+            ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "client.key")))
+            ctx.options = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+            ctx.ssl_version = :SSLv23
+            ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            Thrift::SSLSocket.new($host, $port, nil, ctx)
+          else
+            Thrift::Socket.new($host, $port)
+          end
       else
-        @socket = Thrift::UNIXSocket.new($domain_socket)
+        socket = Thrift::UNIXSocket.new($domain_socket)
       end
 
-      if $transport == "buffered"
-        transportFactory = Thrift::BufferedTransport.new(@socket)
-      elsif $transport == "framed"
-        transportFactory = Thrift::FramedTransport.new(@socket)
-      elsif $transport == "header"
-        transportFactory = Thrift::HeaderTransport.new(@socket)
-      else
-        raise 'Unknown transport type'
+      unless @transport
+        if $transport == "buffered"
+          @transport = Thrift::BufferedTransport.new(socket)
+        elsif $transport == "framed"
+          @transport = Thrift::FramedTransport.new(socket)
+        elsif $transport == "header"
+          @transport = Thrift::HeaderTransport.new(socket)
+        else
+          raise 'Unknown transport type'
+        end
       end
 
       @protocol2 = nil
       if $protocolType == "binary"
-        @protocol = Thrift::BinaryProtocol.new(transportFactory)
+        @protocol = Thrift::BinaryProtocol.new(@transport)
       elsif $protocolType == "compact"
-        @protocol = Thrift::CompactProtocol.new(transportFactory)
+        @protocol = Thrift::CompactProtocol.new(@transport)
       elsif $protocolType == "json"
-        @protocol = Thrift::JsonProtocol.new(transportFactory)
+        @protocol = Thrift::JsonProtocol.new(@transport)
       elsif $protocolType == "accel"
-        @protocol = Thrift::BinaryProtocolAccelerated.new(transportFactory)
+        @protocol = Thrift::BinaryProtocolAccelerated.new(@transport)
       elsif $protocolType == "header"
         # HeaderProtocol wraps its own transport, so pass the selected transport
-        @protocol = Thrift::HeaderProtocol.new(transportFactory)
+        @protocol = Thrift::HeaderProtocol.new(@transport)
       elsif $protocolType == "multi"
-        protocol = Thrift::BinaryProtocol.new(transportFactory)
+        protocol = Thrift::BinaryProtocol.new(@transport)
         @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
         @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
       elsif $protocolType == "multic"
-        protocol = Thrift::CompactProtocol.new(transportFactory)
+        protocol = Thrift::CompactProtocol.new(@transport)
         @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
         @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
       elsif $protocolType == "multih"
-        protocol = Thrift::HeaderProtocol.new(transportFactory)
+        protocol = Thrift::HeaderProtocol.new(@transport)
         @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
         @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
       elsif $protocolType == "multij"
-        protocol = Thrift::JsonProtocol.new(transportFactory)
+        protocol = Thrift::JsonProtocol.new(@transport)
         @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
         @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
       else
@@ -128,12 +143,12 @@ class SimpleClientTest < Test::Unit::TestCase
       end
       @client = Thrift::Test::ThriftTest::Client.new(@protocol)
       @client2 = Thrift::Test::SecondService::Client.new(@protocol2) if @protocol2
-      @socket.open
+      @transport.open
     end
   end
 
   def teardown
-    @socket.close
+    @transport.close
   end
 
   def test_void
@@ -411,6 +426,8 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_oneway
     p 'test_oneway'
+    omit('oneway behavior is server-specific over HTTP') if $transport == 'http'
+
     time1 = Time.now.to_f
     @client.testOneway(1)
     time2 = Time.now.to_f

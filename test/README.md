@@ -36,6 +36,11 @@ Java TBinaryProtocol:
 
     test/test.py --regex "java.*binary"
 
+Use `--dry-run` to print the selected test names without running them. All
+other filters still apply:
+
+    test/test.py --dry-run --client rb --regex "_http-"
+
 ## Test case definition file
 
 The cross test cases are defined in [tests.json](tests.json).
@@ -81,8 +86,15 @@ definition root:
       }
     }
 
+List values in `client` and `server` definitions are appended to matching
+root values. They do not replace them. Some targets need combinations that
+cannot share the same lists. Such targets may use more than one definition
+with the same `name`. The runner treats those definitions as one target. Each
+test name includes its protocol, transport, and socket, so reports and known
+failures still identify the exact case. Use `--regex` to select one profile.
+
 For the complete list of supported keys and their effect, see source code
-comment at the opt of [crossrunner/collect.py](crossrunner/collect.py).
+comment at the top of [crossrunner/collect.py](crossrunner/collect.py).
 
 
 ## List of known failures

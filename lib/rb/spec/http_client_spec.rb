@@ -156,5 +156,28 @@ describe 'Thrift::HTTPClientTransport' do
       client.flush
       expect(client.read(4)).to eq("data")
     end
+
+    it "should set the SSL CA file when specified" do
+      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}",
+          :ssl_ca_file => "/path/to/ca.pem")
+
+      client.write "test"
+      expect(Net::HTTP).to receive(:new).with("my.domain.com", 443) do
+        double("Net::HTTP").tap do |http|
+          expect(http).to receive(:use_ssl=).with(true)
+          expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+          expect(http).to receive(:ca_file=).with("/path/to/ca.pem")
+          expect(http).to receive(:post).with(@service_path, "test",
+              {"Content-Type" => "application/x-thrift"}) do
+            double("Net::HTTPOK").tap do |response|
+              expect(response).to receive(:body).and_return "data"
+              expect(response).to receive(:code).and_return "200"
+            end
+          end
+        end
+      end
+      client.flush
+      expect(client.read(4)).to eq("data")
+    end
   end
 end

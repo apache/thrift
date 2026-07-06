@@ -956,7 +956,7 @@ jobs:
 
       - name: Upload ruby precross artifacts
         # has to match the version used in cross-test
-        if: matrix.ruby-version == '2.7' && matrix.skip-build-ext == false
+        if: matrix.ruby-version == '4.0' && matrix.skip-build-ext == false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rb-precross
@@ -980,10 +980,12 @@ jobs:
     strategy:
       matrix:
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'php', 'nodejs', 'nodets']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'rb.thin', 'rb.puma', 'rb.falcon', 'php', 'nodejs', 'nodets']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
         client_lang: ['java,kotlin', 'go,rs,cpp,py,php,nodejs,nodets,rb']
       fail-fast: false
+    env:
+      BUNDLE_WITH: falcon_http_server
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -1019,7 +1021,7 @@ jobs:
 
       - uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
         with:
-          ruby-version: "2.7"
+          ruby-version: "4.0"
           bundler-cache: true
           working-directory: test/rb
 

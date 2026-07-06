@@ -33,6 +33,7 @@ module Thrift
       @headers = {'Content-Type' => 'application/x-thrift'}
       @outbuf = Bytes.empty_byte_buffer
       @ssl_verify_mode = opts.fetch(:ssl_verify_mode, OpenSSL::SSL::VERIFY_PEER)
+      @ssl_ca_file = opts[:ssl_ca_file]
     end
 
     def open?; true end
@@ -46,7 +47,10 @@ module Thrift
     def flush
       http = Net::HTTP.new @url.host, @url.port
       http.use_ssl = @url.scheme == 'https'
-      http.verify_mode = @ssl_verify_mode if @url.scheme == 'https'
+      if @url.scheme == 'https'
+        http.verify_mode = @ssl_verify_mode
+        http.ca_file = @ssl_ca_file if @ssl_ca_file
+      end
       resp = http.post(@url.request_uri, @outbuf, @headers)
       raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{@url}, HTTP status code #{resp.code.to_i}") unless (200..299).include?(resp.code.to_i)
 
