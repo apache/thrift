@@ -5,10 +5,19 @@ source "https://rubygems.org"
 gem 'thrift', path: '../../lib/rb'
 
 gem 'rack', '~> 2.2', '>= 2.2.23'
+gem 'puma', '~> 6.6'
 gem 'test-unit', '~> 3.2', '>= 3.2.7'
+
+# Only required for tests with Rack 2.x on Ruby 4.0+
+gem 'cgi'
+gem 'ostruct'
 
 group :thin_http_server do
   gem 'thin', '~> 1.7', '>= 1.7.2'
+end
+
+group :falcon_http_server, optional: true do
+  gem 'falcon', '~> 0.51'
 end
 
 eval_gemfile "../../lib/rb/Gemfile.linters"

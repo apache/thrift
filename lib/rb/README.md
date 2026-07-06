@@ -97,6 +97,31 @@ server = Thrift::ThreadedServer.new(processor, server_transport,
 server.serve
 ```
 
+## Rack HTTP Endpoint
+
+Ruby HTTP transport can be mounted as a Rack application, so applications can
+run Thrift on an existing Rack server such as Puma or Falcon.
+The examples below use the generated `Calculator::Processor` and the
+`CalculatorHandler` from [Basic Server Usage](#basic-server-usage).
+
+```ruby
+# config.ru
+require 'thrift'
+require 'thrift/server/rack_application'
+
+processor = Calculator::Processor.new(CalculatorHandler.new)
+run Thrift::RackApplication.new(processor)
+```
+
+For Rails or another Rack router, mount the endpoint at the route that should
+receive Thrift HTTP requests:
+
+```ruby
+# config/routes.rb
+processor = Calculator::Processor.new(CalculatorHandler.new)
+mount Thrift::RackApplication.new(processor) => "/thrift"
+```
+
 ## Development and Tests
 
 - `bundle exec rake spec` runs the Ruby specs. It expects a built Thrift
@@ -116,6 +141,21 @@ server.serve
 - Cross-language and integration tests: `test/rb`
 
 ## Breaking Changes
+
+### 0.25.0
+
+Ruby HTTP servers now share one Rack endpoint. Run `Thrift::RackApplication`
+as a Rack app, or mount it at one path in an app such as Rails. The
+cross-language HTTP tests now cover Puma and Falcon.
+
+`Thrift::MongrelHTTPServer` has been removed because Mongrel no longer works
+with supported Ruby versions. To migrate, mount `Thrift::RackApplication` in
+a supported Rack server. See [Rack HTTP Endpoint](#rack-http-endpoint).
+
+`Thrift::ThinHTTPServer` is deprecated because Thin is no longer maintained.
+Its EventMachine dependency also does not build on new Ruby development
+versions. Creating a Thin server now prints a warning. Move to
+`Thrift::RackApplication` with a supported Rack server such as Puma or Falcon.
 
 ### 0.24.0
 

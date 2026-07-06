@@ -50,7 +50,14 @@ FEATURE_DIR_RELATIVE = os.path.join(TEST_DIR_RELATIVE, 'features')
 CONFIG_FILE = 'tests.json'
 
 
-def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_known_failures, retry_count, regex):
+def print_test_names(tests):
+    for test in sorted(tests, key=lambda t: crossrunner.test_name(**t)):
+        print(crossrunner.test_name(**test))
+    return True
+
+
+def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_known_failures, retry_count, regex,
+                    dry_run):
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
     with open(os.path.join(TEST_DIR, CONFIG_FILE), 'r') as fp:
@@ -69,6 +76,8 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(TEST_DIR)
         tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+    if dry_run:
+        return print_test_names(tests)
 
     dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
     logger.debug('Executing %d tests' % len(tests))
@@ -83,7 +92,8 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_
         return False
 
 
-def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, only_known_failures, retry_count, regex):
+def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, only_known_failures, retry_count, regex,
+                      dry_run):
     basedir = os.path.join(ROOT_DIR, FEATURE_DIR_RELATIVE)
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
@@ -105,6 +115,8 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, on
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(basedir)
         tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+    if dry_run:
+        return print_test_names(tests)
 
     dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
     logger.debug('Executing %d tests' % len(tests))
@@ -145,6 +157,8 @@ def main(argv):
     parser.add_argument('-j', '--jobs', type=int,
                         default=default_concurrency(),
                         help='number of concurrent test executions')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='print selected test names without executing them')
 
     g = parser.add_argument_group(title='Advanced')
     g.add_argument('-v', '--verbose', action='store_const',
@@ -178,11 +192,11 @@ def main(argv):
         features = options.features or ['.*']
         res = run_feature_tests(server_match, features, options.jobs,
                                 options.skip_known_failures, options.only_known_failures,
-                                options.retry_count, options.regex)
+                                options.retry_count, options.regex, options.dry_run)
     else:
         res = run_cross_tests(server_match, client_match, options.jobs,
                               options.skip_known_failures, options.only_known_failures,
-                              options.retry_count, options.regex)
+                              options.retry_count, options.regex, options.dry_run)
     return 0 if res else 1
 
 

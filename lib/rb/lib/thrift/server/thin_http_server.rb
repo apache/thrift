@@ -20,9 +20,12 @@
 
 require 'rack'
 require 'thin'
+require 'thrift/server/rack_application'
 
 ##
 # Wraps the Thin web server to provide a Thrift server over HTTP.
+# <b>DEPRECATED:</b> Use <tt>Thrift::RackApplication</tt> with a maintained Rack
+# server instead.
 module Thrift
   class ThinHTTPServer < BaseServer
 
@@ -33,13 +36,26 @@ module Thrift
     # * :ip
     # * :path
     # * :protocol_factory
+    # * :ssl
+    # * :ssl_options
     def initialize(processor, options = {})
+      Kernel.warn "[DEPRECATION WARNING] `Thrift::ThinHTTPServer` is deprecated because Thin is no longer maintained. Please use `Thrift::RackApplication` with a maintained Rack server instead."
       port = options[:port] || 80
       ip = options[:ip] || "0.0.0.0"
       path = options[:path] || "/"
       protocol_factory = options[:protocol_factory] || BinaryProtocolFactory.new
-      app = RackApplication.for(path, processor, protocol_factory)
+      endpoint = RackApplication.mapped(path, processor, protocol_factory)
+      app = Rack::Builder.new do
+        use Rack::CommonLogger
+        use Rack::ShowExceptions
+        use Rack::Lint
+        run endpoint
+      end
       @server = Thin::Server.new(ip, port, app)
+      if options[:ssl]
+        @server.ssl = true
+        @server.ssl_options = options[:ssl_options] || {}
+      end
     end
 
     ##
@@ -48,45 +64,6 @@ module Thrift
       @server.start
     end
 
-    class RackApplication
-
-      THRIFT_HEADER = "application/x-thrift"
-
-      def self.for(path, processor, protocol_factory)
-        Rack::Builder.new do
-          use Rack::CommonLogger
-          use Rack::ShowExceptions
-          use Rack::Lint
-          map path do
-            run lambda { |env|
-              request = Rack::Request.new(env)
-              if RackApplication.valid_thrift_request?(request)
-                RackApplication.successful_request(request, processor, protocol_factory).finish
-              else
-                RackApplication.failed_request.finish
-              end
-            }
-          end
-        end
-      end
-
-      def self.successful_request(rack_request, processor, protocol_factory)
-        response = Rack::Response.new([], 200, {'Content-Type' => THRIFT_HEADER})
-        transport = IOStreamTransport.new rack_request.body, response
-        protocol = protocol_factory.get_protocol transport
-        processor.process protocol, protocol
-        response
-      end
-
-      def self.failed_request
-        Rack::Response.new(['Not Found'], 404, {'Content-Type' => THRIFT_HEADER})
-      end
-
-      def self.valid_thrift_request?(rack_request)
-        rack_request.post? && rack_request.env["CONTENT_TYPE"] == THRIFT_HEADER
-      end
-
-    end
-
+    RackApplication = Thrift::RackApplication
   end
 end

@@ -32,7 +32,21 @@ thin_dependency = defined?(Thin) ? {} : { :skip => "thin not available" }
 describe 'Thrift::ThinHTTPServer', thin_dependency do
   let(:processor) { double('processor') }
 
+  before do
+    allow(Kernel).to receive(:warn)
+  end
+
   describe "#initialize" do
+    it "warns that ThinHTTPServer is deprecated" do
+      allow(Thin::Server).to receive(:new)
+
+      expect(Kernel).to receive(:warn).with(
+        "[DEPRECATION WARNING] `Thrift::ThinHTTPServer` is deprecated because Thin is no longer maintained. Please use `Thrift::RackApplication` with a maintained Rack server instead."
+      )
+
+      Thrift::ThinHTTPServer.new(processor)
+    end
+
     context "when using the defaults" do
       it "binds to port 80, with host 0.0.0.0, a path of '/'" do
         expect(Thin::Server).to receive(:new).with('0.0.0.0', 80, an_instance_of(Rack::Builder))
@@ -40,7 +54,18 @@ describe 'Thrift::ThinHTTPServer', thin_dependency do
       end
 
       it 'creates a ThinHTTPServer::RackApplicationContext' do
-        expect(Thrift::ThinHTTPServer::RackApplication).to receive(:for).with("/", processor, an_instance_of(Thrift::BinaryProtocolFactory)).and_return(anything)
+        expect(Thrift::ThinHTTPServer::RackApplication).to receive(:mapped).with("/", processor, an_instance_of(Thrift::BinaryProtocolFactory)).and_return(anything)
+        Thrift::ThinHTTPServer.new(processor)
+      end
+
+      it 'retains the historical Rack middleware' do
+        allow(Thin::Server).to receive(:new) do |_ip, _port, app|
+          expect(Rack::CommonLogger).to receive(:new).and_call_original
+          expect(Rack::ShowExceptions).to receive(:new).and_call_original
+          expect(Rack::Lint).to receive(:new).and_call_original
+          app.to_app
+        end
+
         Thrift::ThinHTTPServer.new(processor)
       end
 
@@ -63,9 +88,23 @@ describe 'Thrift::ThinHTTPServer', thin_dependency do
       end
 
       it 'creates a ThinHTTPServer::RackApplicationContext with a different protocol factory' do
-        expect(Thrift::ThinHTTPServer::RackApplication).to receive(:for).with("/", processor, an_instance_of(Thrift::JsonProtocolFactory)).and_return(anything)
+        expect(Thrift::ThinHTTPServer::RackApplication).to receive(:mapped).with("/", processor, an_instance_of(Thrift::JsonProtocolFactory)).and_return(anything)
         Thrift::ThinHTTPServer.new(processor,
                            :protocol_factory => Thrift::JsonProtocolFactory.new)
+      end
+
+      it 'configures SSL' do
+        ssl_options = {
+          :private_key_file => '/path/to/server.key',
+          :cert_chain_file => '/path/to/server.crt'
+        }
+        underlying_thin_server = double('thin server')
+        allow(Thin::Server).to receive(:new).and_return(underlying_thin_server)
+
+        expect(underlying_thin_server).to receive(:ssl=).with(true)
+        expect(underlying_thin_server).to receive(:ssl_options=).with(ssl_options)
+
+        Thrift::ThinHTTPServer.new(processor, :ssl => true, :ssl_options => ssl_options)
       end
     end
   end
@@ -88,10 +127,9 @@ describe 'Thrift::ThinHTTPServer::RackApplication', thin_dependency do
 
   let(:processor) { double('processor') }
   let(:protocol_factory) { double('protocol factory') }
+  let(:protocol) { double('protocol') }
 
-  def app
-    Thrift::ThinHTTPServer::RackApplication.for("/", processor, protocol_factory)
-  end
+  subject(:app) { Thrift::ThinHTTPServer::RackApplication.mapped("/", processor, protocol_factory) }
 
   context "404 response" do
     it 'receives a non-POST' do
@@ -109,13 +147,13 @@ describe 'Thrift::ThinHTTPServer::RackApplication', thin_dependency do
 
   context "200 response" do
     before do
-      allow(protocol_factory).to receive(:get_protocol)
+      allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       allow(processor).to receive(:process)
     end
 
     it 'creates an IOStreamTransport' do
       header('Content-Type', "application/x-thrift")
-      expect(Thrift::IOStreamTransport).to receive(:new).with(an_instance_of(Rack::Lint::InputWrapper), an_instance_of(Rack::Response))
+      expect(Thrift::IOStreamTransport).to receive(:new).with(an_object_responding_to(:read), an_instance_of(Rack::Response))
       post "/"
     end
 

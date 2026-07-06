@@ -469,6 +469,131 @@
     "workdir": "rb/gen-rb"
   },
   {
+    "name": "rb",
+    "client": {
+      "timeout": 10,
+      "command": [
+        "ruby",
+        "../integration/TestClient.rb",
+        "--"
+      ]
+    },
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "binary:accel",
+      "compact",
+      "json",
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
+    ],
+    "workdir": "rb/gen-rb"
+  },
+  {
+    "name": "rb.thin",
+    "stop_signal": 2,
+    "server": {
+      "command": [
+        "bundle",
+        "exec",
+        "ruby",
+        "../integration/TestServer.rb"
+      ],
+      "extra_args": ["thin"]
+    },
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "binary:accel",
+      "compact",
+      "json",
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
+    ],
+    "workdir": "rb/gen-rb"
+  },
+  {
+    "name": "rb.puma",
+    "stop_signal": 2,
+    "server": {
+      "command": [
+        "bundle",
+        "exec",
+        "ruby",
+        "../integration/TestServer.rb"
+      ],
+      "extra_args": ["puma"]
+    },
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "binary:accel",
+      "compact",
+      "json",
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
+    ],
+    "workdir": "rb/gen-rb"
+  },
+  {
+    "name": "rb.falcon",
+    "server": {
+      "command": [
+        "bundle",
+        "exec",
+        "ruby",
+        "../integration/TestServer.rb"
+      ],
+      "extra_args": ["falcon"]
+    },
+    "transports": [
+      "http"
+    ],
+    "sockets": [
+      "ip",
+      "ip-ssl"
+    ],
+    "protocols": [
+      "binary",
+      "binary:accel",
+      "compact",
+      "json",
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
+    ],
+    "workdir": "rb/gen-rb"
+  },
+  {
     "name": "netstd",
     "transports": [
       "buffered",
