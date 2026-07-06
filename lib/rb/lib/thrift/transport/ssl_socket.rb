@@ -19,15 +19,18 @@
 # under the License.
 
 require 'io/wait'
+require 'ipaddr'
 
 module Thrift
   class SSLSocket < Socket
-    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil)
+    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil, server_hostname: host)
       super(host, port, timeout)
       @ssl_context = ssl_context
+      @server_hostname = server_hostname
     end
 
     attr_accessor :ssl_context
+    attr_accessor :server_hostname
 
     def open
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout unless @timeout.nil? || @timeout == 0
@@ -35,6 +38,7 @@ module Thrift
 
       begin
         ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, @ssl_context)
+        ssl_socket.hostname = @server_hostname if send_server_hostname?
         ssl_socket.sync_close = true
         @handle = ssl_socket
 
@@ -63,7 +67,7 @@ module Thrift
           @handle.connect
         end
 
-        @handle.post_connection_check(@host)
+        @handle.post_connection_check(server_hostname_for_verification)
         @handle
       rescue TransportException
         close_socket(@handle)
@@ -78,6 +82,21 @@ module Thrift
 
     def to_s
       "ssl(#{super.to_s})"
+    end
+
+    private
+
+    def send_server_hostname?
+      return false if @server_hostname.nil? || @server_hostname.empty?
+
+      IPAddr.new(@server_hostname)
+      false
+    rescue IPAddr::InvalidAddressError
+      true
+    end
+
+    def server_hostname_for_verification
+      @server_hostname.nil? || @server_hostname.empty? ? @host : @server_hostname
     end
   end
 end
