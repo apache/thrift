@@ -37,6 +37,7 @@ describe 'SSLSocket' do
       allow(@handle).to receive(:connect).and_return(true)
       allow(@handle).to receive(:connect_nonblock).and_return(@handle)
       allow(@handle).to receive(:close)
+      allow(@handle).to receive(:hostname=)
       allow(@handle).to receive(:post_connection_check)
       allow(@handle).to receive(:sync_close=)
       allow(@handle).to receive(:to_io).and_return(@simple_socket_handle)
@@ -60,6 +61,7 @@ describe 'SSLSocket' do
     it "should open a ::Socket with default args" do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, nil).and_return(@handle)
+      expect(@handle).to receive(:hostname=).with('localhost')
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
       expect(@handle).to receive(:post_connection_check).with('localhost')
@@ -74,6 +76,7 @@ describe 'SSLSocket' do
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(timeout: 6000).and_return(handle)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(handle, nil).and_return(@handle)
+      expect(@handle).to receive(:hostname=).with('my.domain')
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).and_return(@handle)
       expect(@handle).to receive(:post_connection_check).with('my.domain')
@@ -86,6 +89,41 @@ describe 'SSLSocket' do
 
     it "should accept an optional context" do
       expect(Thrift::SSLSocket.new('localhost', 8080, 5, @context).ssl_context).to eq(@context)
+    end
+
+    it "should accept an optional server hostname" do
+      socket = Thrift::SSLSocket.new('127.0.0.1', 8080, 5, @context, server_hostname: 'service.example.com')
+      expect(socket.server_hostname).to eq('service.example.com')
+    end
+
+    it "should use the server hostname for SNI and certificate verification" do
+      expect(Addrinfo).to receive(:foreach).with("127.0.0.1", 9090, nil, :STREAM).and_yield(@addrinfo)
+      expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      expect(@handle).to receive(:hostname=).with('service.example.com')
+      expect(@handle).to receive(:connect).and_return(true)
+      expect(@handle).to receive(:post_connection_check).with('service.example.com')
+
+      Thrift::SSLSocket.new('127.0.0.1', 9090, nil, nil, server_hostname: 'service.example.com').open
+    end
+
+    it "should not send SNI for an IP literal hostname" do
+      expect(Addrinfo).to receive(:foreach).with("127.0.0.1", 9090, nil, :STREAM).and_yield(@addrinfo)
+      expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      expect(@handle).not_to receive(:hostname=)
+      expect(@handle).to receive(:connect).and_return(true)
+      expect(@handle).to receive(:post_connection_check).with('127.0.0.1')
+
+      Thrift::SSLSocket.new('127.0.0.1').open
+    end
+
+    it "should allow SNI to be disabled while still checking the connection host" do
+      expect(Addrinfo).to receive(:foreach).with("my.domain", 9090, nil, :STREAM).and_yield(@addrinfo)
+      expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      expect(@handle).not_to receive(:hostname=)
+      expect(@handle).to receive(:connect).and_return(true)
+      expect(@handle).to receive(:post_connection_check).with('my.domain')
+
+      Thrift::SSLSocket.new('my.domain', 9090, nil, nil, server_hostname: nil).open
     end
 
     it "should treat zero timeout as blocking for open and handshake" do
