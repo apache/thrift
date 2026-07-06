@@ -34,8 +34,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rack-test',          '~> 0.8.3'
   s.add_development_dependency 'rake',               '~> 13.3'
   s.add_development_dependency 'rspec',              '~> 3.7'
-  s.add_development_dependency 'srv',                '~> 1.0'
-  s.add_development_dependency 'thin',               '~> 1.7'
 
   s.metadata = {
     'bug_tracker_uri' => 'https://issues.apache.org/jira/browse/THRIFT',

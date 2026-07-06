@@ -907,6 +907,7 @@ jobs:
     env:
       SKIP_BUILD_EXT: ${{ matrix.skip-build-ext && '1' || '' }}
       BUNDLER_VERSION: ${{ case(matrix.ruby-version == 'head', '0', '2.2.34') }} # Bundler version is managed via setup-ruby action, not Bundler itself
+      BUNDLE_WITHOUT: ${{ case(matrix.ruby-version == 'head', 'thin_http_server', '') }} # thin pulls in eventmachine, which does not compile on Ruby 4.1+
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

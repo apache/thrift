@@ -7,4 +7,8 @@ gemspec
 gem 'cgi'
 gem 'ostruct'
 
+group :thin_http_server do
+  gem 'thin', '~> 1.7'
+end
+
 eval_gemfile "Gemfile.linters"

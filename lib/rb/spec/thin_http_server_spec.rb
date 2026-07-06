@@ -20,9 +20,16 @@
 
 require 'spec_helper'
 require 'rack/test'
-require 'thrift/server/thin_http_server'
 
-describe Thrift::ThinHTTPServer do
+begin
+  require 'thrift/server/thin_http_server'
+rescue LoadError
+  # The thin gem is optional and may be excluded on unsupported Ruby versions.
+end
+
+thin_dependency = defined?(Thin) ? {} : { :skip => "thin not available" }
+
+describe 'Thrift::ThinHTTPServer', thin_dependency do
   let(:processor) { double('processor') }
 
   describe "#initialize" do
@@ -76,7 +83,7 @@ describe Thrift::ThinHTTPServer do
   end
 end
 
-describe Thrift::ThinHTTPServer::RackApplication do
+describe 'Thrift::ThinHTTPServer::RackApplication', thin_dependency do
   include Rack::Test::Methods
 
   let(:processor) { double('processor') }
