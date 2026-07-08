@@ -43,6 +43,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
+import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -518,6 +519,11 @@ public class TestTSaslTransports {
       readBuffer.reset(badHeader);
     }
 
+    public MockTTransport(byte[] data, TConfiguration config) throws TTransportException {
+      readBuffer = new TMemoryInputTransport(config);
+      readBuffer.reset(data);
+    }
+
     @Override
     public boolean isOpen() {
       return true;
@@ -577,5 +583,30 @@ public class TestTSaslTransports {
     } catch (TTransportException e) {
       assertEquals(e.getMessage(), "Invalid payload header length: 1677721600");
     }
+  }
+
+  @Test
+  public void testReadFrameSizeLimit() throws Exception {
+    // After the SASL handshake completes, a data frame declaring a size larger than the
+    // configured max frame size must be rejected before the payload buffer is allocated,
+    // consistent with the negotiation phase and with TFramedTransport.
+    TConfiguration config =
+        new TConfiguration(
+            TConfiguration.DEFAULT_MAX_MESSAGE_SIZE, 1024, TConfiguration.DEFAULT_RECURSION_DEPTH);
+    byte[] lenBuf = new byte[4];
+    EncodingUtils.encodeBigEndian(config.getMaxFrameSize() + 1, lenBuf, 0);
+
+    TSaslTransport saslTransport = new TSaslServerTransport(new MockTTransport(lenBuf, config));
+    // Mark the SASL exchange complete so read() proceeds to the post-authentication data path.
+    AnonymousServer completedServer = new AnonymousServer();
+    completedServer.evaluateResponse(new byte[0]);
+    saslTransport.setSaslServer(completedServer);
+
+    byte[] out = new byte[16];
+    TTransportException e =
+        assertThrows(TTransportException.class, () -> saslTransport.read(out, 0, out.length));
+    assertTrue(
+        e.getMessage().contains("larger than max length"),
+        "Expected max-frame-size rejection, but got: " + e.getMessage());
   }
 }

@@ -403,6 +403,13 @@ abstract class TSaslTransport extends TEndpointTransport {
     if (dataLength < 0)
       throw new TTransportException("Read a negative frame size (" + dataLength + ")!");
 
+    int maxFrameSize = getConfiguration().getMaxFrameSize();
+    if (dataLength > maxFrameSize) {
+      throw new TTransportException(
+          TTransportException.CORRUPTED_DATA,
+          "Frame size (" + dataLength + ") larger than max length (" + maxFrameSize + ")!");
+    }
+
     byte[] buff = new byte[dataLength];
     LOGGER.debug("{}: reading data length: {}", getRole(), dataLength);
     underlyingTransport.readAll(buff, 0, dataLength);
