@@ -51,7 +51,13 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   public boolean read(TTransport transport) throws TSaslNegotiationException, TTransportException {
     if (!header.isComplete()) {
       if (readHeader(transport)) {
-        payload = ByteBuffer.allocate(header.payloadSize());
+        int payloadSize = header.payloadSize();
+        int maxFrameSize = transport.getConfiguration().getMaxFrameSize();
+        if (payloadSize > maxFrameSize) {
+          throw new TInvalidSaslFrameException(
+              "Frame size (" + payloadSize + ") larger than max length (" + maxFrameSize + ")!");
+        }
+        payload = ByteBuffer.allocate(payloadSize);
       } else {
         return false;
       }

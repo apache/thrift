@@ -21,9 +21,11 @@ package org.apache.thrift.transport.sasl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.Test;
@@ -66,5 +68,20 @@ public class TestDataFrameReader {
         buffer,
         ByteBuffer.wrap(dataFrameReader.getPayload()),
         "Payload should be the same as from the transport");
+  }
+
+  @Test
+  public void testReadPayloadSizeExceedingMaxFrameSize() throws TTransportException {
+    // A data frame header declaring a payload larger than the configured max frame size must be
+    // rejected before the payload buffer is allocated, so read() throws rather than allocating a
+    // buffer of the declared size.
+    int maxFrameSize = 1024;
+    TConfiguration config = new TConfiguration();
+    config.setMaxFrameSize(maxFrameSize);
+    ByteBuffer buffer = ByteBuffer.allocate(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES);
+    buffer.putInt(maxFrameSize + 1);
+    TMemoryInputTransport transport = new TMemoryInputTransport(config, buffer.array());
+    DataFrameReader dataFrameReader = new DataFrameReader();
+    assertThrows(TInvalidSaslFrameException.class, () -> dataFrameReader.read(transport));
   }
 }

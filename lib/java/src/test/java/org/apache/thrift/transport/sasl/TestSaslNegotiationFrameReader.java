@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.Test;
@@ -67,5 +68,21 @@ public class TestSaslNegotiationFrameReader {
         () -> {
           negotiationReader.read(transport);
         });
+  }
+
+  @Test
+  public void testReadPayloadSizeExceedingMaxFrameSize() throws TTransportException {
+    // A negotiation header declaring a payload larger than the configured max frame size must be
+    // rejected before the payload buffer is allocated, so read() throws rather than allocating a
+    // buffer of the declared size.
+    int maxFrameSize = 1024;
+    TConfiguration config = new TConfiguration();
+    config.setMaxFrameSize(maxFrameSize);
+    ByteBuffer buffer = ByteBuffer.allocate(5);
+    buffer.put(0, NegotiationStatus.START.getValue());
+    buffer.putInt(1, maxFrameSize + 1);
+    TMemoryInputTransport transport = new TMemoryInputTransport(config, buffer.array());
+    SaslNegotiationFrameReader negotiationReader = new SaslNegotiationFrameReader();
+    assertThrows(TSaslNegotiationException.class, () -> negotiationReader.read(transport));
   }
 }
