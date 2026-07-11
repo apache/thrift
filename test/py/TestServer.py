@@ -368,11 +368,13 @@ def main(options):
                         logging.info('Terminating worker: %s' % worker)
                     worker.terminate()
                 if options.verbose > 0:
-                    logging.info('Requesting server to stop()')
-                try:
-                    server.stop()
-                except Exception:
-                    pass
+                    logging.info('Shutting down server')
+                # server.stop() would deadlock here: it calls Condition.notify()
+                # reentrantly on the same thread that's blocked in serve()'s
+                # Condition.wait(), which can never post the wake ack notify()
+                # is waiting for (THRIFT-6082). Workers are already terminated,
+                # so just exit directly.
+                os._exit(0)
             signal.signal(signal.SIGALRM, clean_shutdown)
             signal.alarm(4)
         set_alarm()
