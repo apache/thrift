@@ -641,6 +641,7 @@ jobs:
   lib-python:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
       matrix:
         python-version: &python_versions ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -722,6 +723,7 @@ jobs:
         python-version: *python_versions
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
