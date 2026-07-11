@@ -623,10 +623,6 @@ namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
 
-  string testDir = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
-  string certPath = testDir + "/keys/server.crt";
-  string keyPath = testDir + "/keys/server.key";
-
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -768,6 +764,18 @@ int main(int argc, char** argv) {
   std::shared_ptr<TServerSocket> serverSocket;
 
   if (ssl) {
+    boost::filesystem::path testDir = boost::filesystem::system_complete(argv[0]).parent_path();
+    while (!boost::filesystem::exists(testDir / "keys" / "server.crt")) {
+      boost::filesystem::path parent = testDir.parent_path();
+      if (parent == testDir) {
+        cerr << "Unable to locate test/keys from " << argv[0] << '\n';
+        return 1;
+      }
+      testDir = parent;
+    }
+    string certPath = (testDir / "keys" / "server.crt").string();
+    string keyPath = (testDir / "keys" / "server.key").string();
+
     sslSocketFactory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     sslSocketFactory->loadCertificate(certPath.c_str());
     sslSocketFactory->loadPrivateKey(keyPath.c_str());

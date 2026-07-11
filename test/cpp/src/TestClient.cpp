@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
@@ -204,11 +205,6 @@ BOOST_CONSTEXPR_OR_CONST int ERR_UNKNOWN = 64;
 int main(int argc, char** argv) {
   cout.precision(19);
 
-  string testDir  = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
-  string caPath   = testDir + "/keys/CA.pem";
-  string certPath = testDir + "/keys/client.crt";
-  string keyPath  = testDir + "/keys/client.key";
-
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -322,12 +318,25 @@ int main(int argc, char** argv) {
   std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
+    boost::filesystem::path testDir = boost::filesystem::system_complete(argv[0]).parent_path();
+    while (!boost::filesystem::exists(testDir / "keys" / "CA.pem")) {
+      boost::filesystem::path parent = testDir.parent_path();
+      if (parent == testDir) {
+        cerr << "Unable to locate test/keys from " << argv[0] << '\n';
+        return ERR_UNKNOWN;
+      }
+      testDir = parent;
+    }
+    string caPath = (testDir / "keys" / "CA.pem").string();
+    string certPath = (testDir / "keys" / "client.crt").string();
+    string keyPath = (testDir / "keys" / "client.key").string();
+
     auto fileExists = [](const std::string& path) {
       std::ifstream f(path.c_str());
       return f.good();
     };
 
-    cout << "Client Path            : " << testDir  << '\n';
+    cout << "Client Path            : " << testDir.string() << '\n';
     cout << "Client Certificate File: " << certPath << " (" << std::boolalpha << fileExists(certPath) << ")"<< '\n';
     cout << "Client Key         File: " << keyPath  << " (" << std::boolalpha << fileExists(keyPath) << ")"<< '\n';
     cout << "CA                 File: " << caPath   << " (" << std::boolalpha << fileExists(caPath) << ")"<< '\n';
