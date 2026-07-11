@@ -39,6 +39,7 @@ check: deps
 clean-local:
 	$(RM) -r test/gen-*
 	$(RM) -r test/fuzz/gen-*
+	$(RM) -r test/node_modules
 	$(RM) -r $(top_srcdir)/node_modules
 	$(RM) -r test/episodic-code-generation-test/gen*
 	$(RM) -r test/episodic-code-generation-test/node_modules

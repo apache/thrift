@@ -73,4 +73,6 @@ EXTRA_DIST = \
 		TProtocol.lua \
 		TServer.lua \
 		TSocket.lua \
-		TTransport.lua
+		TTransport.lua \
+		test/RecursionDepth.thrift \
+		test/test_recursion_depth.lua

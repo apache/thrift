@@ -34,6 +34,12 @@ clean-local:
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
+# The projects ship as whole directories; strip the generated code and build
+# output a built tree leaves behind, keeping the tracked project scaffolding.
+dist-hook:
+	rm -rf $(distdir)/Interfaces/shared $(distdir)/Interfaces/tutorial
+	find $(distdir) -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+
 EXTRA_DIST = \
 	Client \
 	Interfaces \

@@ -158,6 +158,7 @@ EXTRA_DIST = \
 	index.html \
 	Int64Test.thrift \
 	JsDeepConstructorTest.thrift \
+	JsRecursionDepthTest.thrift \
 	keys/keygen/.gitignore \
 	known_failures_Linux.json \
 	ManyOptionals.thrift \
