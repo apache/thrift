@@ -27,6 +27,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_transport.py
 	$(PYTHON3) test/test_sslsocket.py
 	$(PYTHON3) test/thrift_TBinaryProtocol.py
+	$(PYTHON3) test/thrift_THeaderProtocol.py
 	$(PYTHON3) test/thrift_TZlibTransport.py
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
@@ -56,6 +57,7 @@ check-local: all py3-test
 	$(PYTHON) test/test_sslsocket.py
 	$(PYTHON) test/test_socket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py
+	$(PYTHON) test/thrift_THeaderProtocol.py
 	$(PYTHON) test/thrift_TZlibTransport.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
@@ -88,4 +90,3 @@ EXTRA_DIST = \
 	src \
 	test \
 	README.md
-	
