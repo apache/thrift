@@ -139,6 +139,9 @@ class THeaderProtocol(TProtocolBase):
     def writeBinary(self, str_val):
         return self._protocol.writeBinary(str_val)
 
+    def writeUuid(self, uuid):
+        return self._protocol.writeUuid(uuid)
+
     def _set_protocol(self):
         try:
             protocol_cls = PROTOCOLS_BY_ID[self.trans.protocol_id]
@@ -217,6 +220,9 @@ class THeaderProtocol(TProtocolBase):
 
     def readBinary(self):
         return self._protocol.readBinary()
+
+    def readUuid(self):
+        return self._protocol.readUuid()
 
 
 class THeaderProtocolFactory(TProtocolFactory):

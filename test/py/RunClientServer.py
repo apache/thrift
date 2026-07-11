@@ -56,6 +56,7 @@ PROTOS = [
     'compact',
     'json',
     'header',
+    'multih',
 ]
 
 
