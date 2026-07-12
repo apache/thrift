@@ -99,10 +99,23 @@ authentication, serialization bounds, or anything flagged by the project's secur
   attack surface, trust boundaries, and per-binding security properties.
 - External reporters and AI reviewers alike should follow the instructions in
   [`SECURITY.md`](SECURITY.md) for responsible disclosure.
+- When asserting a security claim or identifying which component a bug affects, 
+  verify reachability/exploitability empirically against the specific released version before stating it as fact.
 
 ---
 
-## 7. Quick Reference Checklist (before opening a PR)
+## 7. Code Changes, Git & PR Workflow
+
+- When fixing a bug or addressing an issue, scope the change to ONLY that issue. 
+  Do not touch CHANGES.md, version files, or unrelated entries unless explicitly asked.
+- Ship bug fixes as standalone pull requests by default. Do not commit directly to master 
+  or mix fixes into existing/unrelated work unless told otherwise.
+- Follow a strict test-first workflow: write or update tests demonstrating the bug BEFORE applying the fix, 
+  and inspect any generated code before changing it.
+
+---
+
+## 8. Quick Reference Checklist (before opening a PR)
 
 - [ ] License of any new dependency checked against [ASF Category A/X list](https://www.apache.org/legal/resolved.html)
 - [ ] `LICENSE` and/or `NOTICE` updated if third-party attribution is required
