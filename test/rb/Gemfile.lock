@@ -96,7 +96,7 @@ GEM
       protocol-http (~> 0.58)
       rack (>= 1.0)
     protocol-url (0.4.0)
-    puma (6.6.1)
+    puma (7.2.1)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (2.2.23)
@@ -149,7 +149,7 @@ DEPENDENCIES
   cgi
   falcon (~> 0.51)
   ostruct
-  puma (~> 6.6)
+  puma (~> 7.2)
   rack (~> 2.2, >= 2.2.23)
   rubocop (~> 1.82.0)
   rubocop-performance (~> 1.26.1)
