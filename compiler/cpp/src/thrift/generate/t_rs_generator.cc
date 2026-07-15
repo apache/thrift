@@ -71,9 +71,6 @@ public:
         throw "unknown option rs:" + iter->first;
       }
     }
-
-    fprintf(stderr, "We are sorry, but for the lack of active maintainers, the RUST compiler target is being deprecated and may be removed in the next version. Feel free to contact the dev mailing list (dev@thrift.apache.org) for further details.\n");
-
   }
 
   /**
