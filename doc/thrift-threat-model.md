@@ -1308,10 +1308,13 @@ The claim is correct for Go: validation is on by default, and the system store i
 InsecureSkipVerify: true in their *tls.Config, which is outside Thrift's control.
 
 ---
-Rust — No TLS support
+Rust — Validation is controlled by the supplied rustls configuration
 
-The Rust library (lib/rs/src/transport/socket.rs) implements only plain TCP via TcpStream. There is no TSSLSocket type, no TLS transport, and no SSL dependency. The claim is
-inapplicable.
+When the optional `rustls` feature is enabled, `TTlsClientChannel` requires the caller to supply an `Arc<ClientConfig>` and a `ServerName`. `connect()` completes the TLS
+handshake according to that configuration before returning. Chain validation and server-name verification are controlled by the configuration's verifier. `TTlsServerChannel`
+and `TServer::listen_tls()` similarly require an `Arc<ServerConfig>`; client-certificate authentication is whatever that configuration selects. Thrift does not construct a
+default configuration or automatically load system roots, so there is no implicit trust-store fallback. Applications may also supply rustls custom verifiers; their behavior is
+outside Thrift's control.
 
 ---
 Summary table
@@ -1333,7 +1336,7 @@ Summary table
 │ Go      │ crypto/tls enforces (default            │ System root CA pool if RootCAs=nil        │ Yes (system pool)  │ Caller can bypass by setting InsecureSkipVerify:    │
 │         │ InsecureSkipVerify=false)               │                                           │                    │ true                                                │
 ├─────────┼─────────────────────────────────────────┼───────────────────────────────────────────┼────────────────────┼─────────────────────────────────────────────────────┤
-│ Rust    │ N/A                                     │ N/A                                       │ N/A                │ No TLS transport exists                             │
+│ Rust    │ Caller-configured rustls verifier       │ Caller-supplied ClientConfig              │ No                 │ No default config or implicit trust-store loading   │
 └─────────┴─────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────┴─────────────────────────────────────────────────────┘
 ```
 
@@ -1503,7 +1506,7 @@ not recommended. THRIFT-5926 (crash on None initial DIGEST-MD5 response) is a co
 mechanism removal. If the crash is reachable pre-authentication, it qualifies as a remotely-triggerable DoS and will be treated accordingly.
 
 **Q42.** 
-Thrift sets no project-wide TLS version floor. Each binding delegates version negotiation to its underlying TLS library (OpenSSL, JSSE, crypto/tls, etc.).
+Thrift sets no project-wide TLS version floor. Each binding delegates version negotiation to its underlying TLS library (OpenSSL, JSSE, crypto/tls, rustls, etc.).
 THRIFT-5743/5876 added TLS 1.3 capability where it was absent. Operators are responsible for configuring a version floor in the underlying library; TLS 1.2
 minimum is recommended. A finding that TLS 1.0 or 1.1 is negotiable is a deployment or library-configuration concern, not a Thrift vulnerability. (Note: verify
 whether the C++ binding explicitly disables SSLv2/v3 via SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3; if so, state that floor explicitly for the C++ binding.)

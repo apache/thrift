@@ -21,6 +21,9 @@ use std::net::{TcpListener, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
+#[cfg(feature = "rustls")]
+use rustls::ServerConfig;
+
 #[cfg(unix)]
 use std::os::unix::net::UnixListener;
 #[cfg(unix)]
@@ -29,6 +32,8 @@ use std::path::Path;
 use crate::protocol::{
     TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory,
 };
+#[cfg(feature = "rustls")]
+use crate::transport::TTlsServerChannel;
 use crate::transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportFactory};
 use crate::{ApplicationError, ApplicationErrorKind};
 
@@ -196,6 +201,41 @@ where
         Err(crate::Error::Application(ApplicationError {
             kind: ApplicationErrorKind::Unknown,
             message: "aborted listen loop".into(),
+        }))
+    }
+
+    /// Listen for incoming TLS connections on `listen_address`.
+    ///
+    /// `config` controls certificate selection, client authentication, crypto
+    /// provider, and protocol policy. Accepted connections are handed to a
+    /// worker before the TLS handshake begins, so the accept loop does not
+    /// block on a peer that connects without completing a handshake.
+    #[cfg(feature = "rustls")]
+    pub fn listen_tls<A: ToSocketAddrs>(
+        &mut self,
+        listen_address: A,
+        config: Arc<ServerConfig>,
+    ) -> crate::Result<()> {
+        let listener = TcpListener::bind(listen_address)?;
+        for stream in listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    stream.set_nodelay(true).ok();
+                    let channel = TTlsServerChannel::with_stream(stream, Arc::clone(&config))?;
+                    self.handle_stream(channel)?;
+                }
+                Err(error) => {
+                    warn!(
+                        "failed to accept remote TLS connection with error {:?}",
+                        error
+                    );
+                }
+            }
+        }
+
+        Err(crate::Error::Application(ApplicationError {
+            kind: ApplicationErrorKind::Unknown,
+            message: "aborted TLS listen loop".into(),
         }))
     }
 

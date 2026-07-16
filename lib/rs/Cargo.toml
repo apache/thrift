@@ -19,10 +19,13 @@ uuid = "1"
 log = {version = "0.4", optional = true}
 ordered-float = "3.0"
 threadpool = {version = "1.7", optional = true}
+rustls = { version = "0.23.42", default-features = false, features = ["std", "tls12"], optional = true }
 
 [features]
 default = ["server"]
 server = ["threadpool", "log"]
+rustls = ["dep:rustls"]
 
 [dev-dependencies]
 uuid = { version = "1", features = ["v4"] }
+rustls = { version = "0.23.42", default-features = false, features = ["ring", "std", "tls12"] }

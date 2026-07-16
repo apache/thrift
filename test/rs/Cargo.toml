@@ -11,7 +11,10 @@ clap = "~2.33"
 bitflags = "=1.2"
 env_logger = "0.8"
 log = "0.4"
+rustls = { version = "0.23.42", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pemfile = "2.2"
 uuid = "1"
 
 [dependencies.thrift]
 path = "../../lib/rs"
+features = ["rustls"]
