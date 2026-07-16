@@ -44,7 +44,10 @@ macro_rules! assert_eq_transport_written_bytes {
 mod buffered;
 mod framed;
 mod mem;
+mod shared;
 mod socket;
+#[cfg(feature = "rustls")]
+mod tls;
 
 pub use self::buffered::{
     TBufferedReadTransport, TBufferedReadTransportFactory, TBufferedWriteTransport,
@@ -55,7 +58,10 @@ pub use self::framed::{
     TFramedWriteTransportFactory,
 };
 pub use self::mem::TBufferChannel;
+pub use self::shared::TSharedChannel;
 pub use self::socket::TTcpChannel;
+#[cfg(feature = "rustls")]
+pub use self::tls::{TTlsClientChannel, TTlsServerChannel};
 
 /// Identifies a transport used by a `TInputProtocol` to receive bytes.
 pub trait TReadTransport: Read {}

@@ -17,10 +17,16 @@
 
 use clap::{clap_app, value_t};
 use log::*;
+use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
+use rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
+use rustls::sign::{CertifiedKey, SingleCertAndKey};
+use rustls::{ClientConfig, DigitallySignedStruct, Error as RustlsError, SignatureScheme};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
+use std::io::Cursor;
 use std::net::{TcpStream, ToSocketAddrs};
+use std::sync::Arc;
 
 #[cfg(unix)]
 use std::os::unix::net::UnixStream;
@@ -33,10 +39,13 @@ use thrift::protocol::{
 };
 use thrift::transport::{
     TBufferedReadTransport, TBufferedWriteTransport, TFramedReadTransport, TFramedWriteTransport,
-    TIoChannel, TReadTransport, TTcpChannel, TWriteTransport,
+    TIoChannel, TReadTransport, TTcpChannel, TTlsClientChannel, TWriteTransport,
 };
 use thrift::OrderedFloat;
 use thrift_test::*;
+
+const CLIENT_CERT: &[u8] = include_bytes!("../../../keys/client.crt");
+const CLIENT_KEY: &[u8] = include_bytes!("../../../keys/client.key");
 
 type ThriftClientPair = (
     ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>,
@@ -61,7 +70,6 @@ fn run() -> thrift::Result<()> {
     // unsupported options:
     // --pipe
     // --anon-pipes
-    // --ssl
     // --threads
     let matches = clap_app!(rust_test_client =>
         (version: "1.0")
@@ -70,6 +78,7 @@ fn run() -> thrift::Result<()> {
         (@arg host: --host +takes_value "Host on which the Thrift test server is located")
         (@arg port: --port +takes_value "Port on which the Thrift test server is listening")
         (@arg domain_socket: --("domain-socket") +takes_value "Unix Domain Socket on which the Thrift test server is listening")
+        (@arg ssl: --ssl "Use TLS")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\", \"multi\", \"multic\")")
         (@arg transport: --transport +takes_value "Thrift transport implementation to use (\"buffered\", \"framed\")")
         (@arg testloops: -n --testloops +takes_value "Number of times to run tests")
@@ -79,6 +88,7 @@ fn run() -> thrift::Result<()> {
     let host = matches.value_of("host").unwrap_or("127.0.0.1");
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
     let domain_socket = matches.value_of("domain_socket");
+    let ssl = matches.is_present("ssl");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let testloops = value_t!(matches, "testloops", u8).unwrap_or(1);
@@ -87,10 +97,20 @@ fn run() -> thrift::Result<()> {
         None => {
             let listen_address = format!("{}:{}", host, port);
             info!(
-                "Client binds to {} with {}+{} stack",
-                listen_address, protocol, transport
+                "Client connects to {} with {}+{}{} stack",
+                listen_address,
+                protocol,
+                transport,
+                if ssl { "+tls" } else { "" }
             );
-            bind(listen_address.as_str(), protocol, transport)?
+            let tls = if ssl {
+                let server_name = ServerName::try_from(host.to_owned())
+                    .map_err(|e| format!("invalid TLS server name {host:?}: {e}"))?;
+                Some((server_name, tls_config()))
+            } else {
+                None
+            };
+            bind(listen_address.as_str(), tls, protocol, transport)?
         }
         Some(domain_socket) => {
             info!(
@@ -110,9 +130,28 @@ fn run() -> thrift::Result<()> {
 
 fn bind<A: ToSocketAddrs>(
     listen_address: A,
+    tls: Option<(ServerName<'static>, Arc<ClientConfig>)>,
     protocol: &str,
     transport: &str,
 ) -> Result<ThriftClientPair, thrift::Error> {
+    if let Some((server_name, tls_config)) = tls {
+        let shared_channel = TTlsClientChannel::connect(listen_address, server_name, tls_config)?;
+
+        let second_service_client = if protocol.starts_with("multi") {
+            let (i_prot, o_prot) =
+                build(shared_channel.clone(), transport, protocol, "SecondService")?;
+            Some(SecondServiceSyncClient::new(i_prot, o_prot))
+        } else {
+            None
+        };
+
+        let (i_prot, o_prot) = build(shared_channel, transport, protocol, "ThriftTest")?;
+        return Ok((
+            ThriftTestSyncClient::new(i_prot, o_prot),
+            second_service_client,
+        ));
+    }
+
     // create a TCPStream that will be shared by all Thrift clients
     // service calls from multiple Thrift clients will be interleaved over the same connection
     // this isn't a problem for us because we're single-threaded and all calls block to completion
@@ -134,6 +173,93 @@ fn bind<A: ToSocketAddrs>(
     };
 
     Ok((thrift_test_client, second_service_client))
+}
+
+fn tls_config() -> Arc<ClientConfig> {
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let verifier = Arc::new(CrossTestServerVerifier(Arc::clone(&provider)));
+
+    // The shared cross-test client certificate is X.509 v1. rustls can send
+    // it, but its convenience builder cannot pre-parse it to confirm that the
+    // public key matches. Build the same single-certificate resolver directly;
+    // a mismatch would still fail the TLS CertificateVerify signature.
+    let signing_key = provider
+        .key_provider
+        .load_private_key(private_key(CLIENT_KEY))
+        .unwrap();
+    let certified_key = CertifiedKey::new(certificates(CLIENT_CERT), signing_key);
+
+    let config = ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .unwrap()
+        .dangerous()
+        .with_custom_certificate_verifier(verifier)
+        .with_client_cert_resolver(Arc::new(SingleCertAndKey::from(certified_key)));
+
+    Arc::new(config)
+}
+
+/// Disables peer authentication for the cross-test client, matching the test
+/// configuration used by other language bindings. TLS handshake signatures
+/// are still verified. This is never used by the Thrift runtime library.
+#[derive(Debug)]
+struct CrossTestServerVerifier(Arc<rustls::crypto::CryptoProvider>);
+
+impl ServerCertVerifier for CrossTestServerVerifier {
+    fn verify_server_cert(
+        &self,
+        _end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _server_name: &ServerName<'_>,
+        _ocsp_response: &[u8],
+        _now: UnixTime,
+    ) -> Result<ServerCertVerified, RustlsError> {
+        Ok(ServerCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        certificate: &CertificateDer<'_>,
+        signature: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, RustlsError> {
+        rustls::crypto::verify_tls12_signature(
+            message,
+            certificate,
+            signature,
+            &self.0.signature_verification_algorithms,
+        )
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        certificate: &CertificateDer<'_>,
+        signature: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, RustlsError> {
+        rustls::crypto::verify_tls13_signature(
+            message,
+            certificate,
+            signature,
+            &self.0.signature_verification_algorithms,
+        )
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        self.0.signature_verification_algorithms.supported_schemes()
+    }
+}
+
+fn certificates(pem: &[u8]) -> Vec<CertificateDer<'static>> {
+    rustls_pemfile::certs(&mut Cursor::new(pem))
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap()
+}
+
+fn private_key(pem: &[u8]) -> PrivateKeyDer<'static> {
+    rustls_pemfile::private_key(&mut Cursor::new(pem))
+        .unwrap()
+        .unwrap()
 }
 
 #[cfg(unix)]

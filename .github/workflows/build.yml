@@ -616,8 +616,10 @@ jobs:
       - name: Run make for rust
         run: make -C lib/rs
 
-      - name: Run make check for rust
-        run: make -C lib/rs check
+      - name: Run make checks for rust
+        run: |
+          make -C lib/rs check
+          make -C lib/rs check-rustls
 
       - name: Run make test for rust
         run: make -C lib/rs/test check

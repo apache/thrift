@@ -41,6 +41,12 @@ all-local:
 	$(CARGO) clippy --all -- -D warnings
 	$(CARGO) build
 
+.PHONY: check-rustls
+check-rustls:
+	$(CARGO) clippy --all --all-features -- -D warnings
+	$(CARGO) check --no-default-features --features rustls
+	$(CARGO) test --all-features
+
 clean-local:
 	$(CARGO) clean
 	-$(RM) Cargo.lock
@@ -50,6 +56,7 @@ distdir:
 
 EXTRA_DIST = \
 	src \
+	tests \
 	Cargo.toml \
 	README.md \
 	release.sh \
@@ -57,4 +64,3 @@ EXTRA_DIST = \
 	NOTICE \
 	LICENSE \
 	RELEASING.md
-

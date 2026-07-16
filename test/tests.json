@@ -893,6 +893,7 @@
     },
     "sockets": [
       "ip",
+      "ip-ssl",
       "domain"
     ],
     "transports": [

@@ -33,14 +33,33 @@ types and services by writing their own code on top.
 Add `thrift = "x.y.z"` to your `Cargo.toml`, where `x.y.z` is the version of the
 Thrift compiler you're using.
 
+### TLS
+
+TLS client and server channels are available through the optional `rustls`
+feature:
+
+```toml
+[dependencies]
+thrift = { version = "x.y.z", features = ["rustls"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+```
+
+Applications construct a rustls `ClientConfig` or `ServerConfig` and pass it to
+`TTlsClientChannel::connect` or `TServer::listen_tls`. Thrift does not choose a
+crypto provider, load a system trust store, or read certificate files. This
+keeps trust anchors, client authentication, protocol versions, and certificate
+selection under application control.
+
 ## API Documentation
 
 Full [Rustdoc](https://docs.rs/thrift/)
 
 ## Compatibility
 
-The Rust library and auto-generated code targets Rust versions 1.28+.
-It does not currently use any Rust 2021 features.
+The Rust library and auto-generated code target Rust versions 1.65+. The
+minimum was raised from Rust 1.28 by THRIFT-5158, when the library and generator
+moved to Rust 2021-only output. Enabling the optional `rustls` feature requires
+Rust 1.71+.
 
 ### Breaking Changes
 
