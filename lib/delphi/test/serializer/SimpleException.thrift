@@ -27,6 +27,18 @@ exception Error {
   3: uuid   ExceptionData = '00000000-4444-CCCC-ffff-0123456789ab'    
 }
 
+// Fixtures for TTestSerializer.Test_Equal: a struct with a non-trivial field,
+// used as a set element / map key so tests can construct reference-distinct
+// but value-equal instances (Empty, used elsewhere, cannot express this).
+struct EqualityItem {
+  1: required i32 Value;
+}
+
+struct EqualityItemContainers {
+  1: required set<EqualityItem>      Items;
+  2: required map<EqualityItem, i32> ItemMap;
+}
+
 
 
 // EOF
