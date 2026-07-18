@@ -469,6 +469,13 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	if err != nil {
 		return err
 	}
+	// transformCount is an element count read straight off the wire, not a
+	// buffer length, so the frame-size and header-length checks above do not
+	// bound it. Validate it the same way every other wire-supplied container
+	// count (list/set/map sizes) is validated, before it sizes any allocation.
+	if err = checkContainerSizeForProtocol(int64(transformCount), 1, t.cfg); err != nil {
+		return err
+	}
 	if transformCount > 0 {
 		reader := NewTransformReaderWithCapacity(
 			t.frameBuffer,

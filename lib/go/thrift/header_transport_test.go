@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"strings"
@@ -374,4 +375,76 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestTHeaderTransportTransformCountBounded builds a frame by hand where the
+// header declares a transformCount that is not backed by anywhere near that
+// many transform ID entries -- the shape of an element count read straight
+// off the wire, as opposed to a real transform list. It must be rejected by
+// the same size check every other wire-supplied container count goes
+// through, before it is used to size any allocation.
+//
+// The declared count (1000) is intentionally small enough that even without
+// the fix, sizing allocations from it cannot exhaust memory; unpatched code
+// still fails, but only later, via EOF from the transform-ID read loop
+// running out of header bytes. A configured MaxMessageSize well below 1000
+// distinguishes the two: fixed code rejects with SIZE_LIMIT before touching
+// the read loop, unpatched code gets there and fails with EOF instead.
+func TestTHeaderTransportTransformCountBounded(t *testing.T) {
+	headers := NewTMemoryBuffer()
+	hp := NewTCompactProtocol(headers)
+	if _, err := hp.writeVarint32(int32(THeaderProtocolCompact)); err != nil {
+		t.Fatalf("writeVarint32(protoID) returned error: %v", err)
+	}
+	const declaredTransformCount = 1000
+	if _, err := hp.writeVarint32(declaredTransformCount); err != nil {
+		t.Fatalf("writeVarint32(transformCount) returned error: %v", err)
+	}
+	// No transform ID entries follow, unlike a legitimate frame.
+
+	if padding := 4 - headers.Len()%4; padding < 4 {
+		if _, err := headers.Write(make([]byte, padding)); err != nil {
+			t.Fatalf("headers.Write(padding) returned error: %v", err)
+		}
+	}
+
+	meta := headerMeta{
+		MagicFlags:   THeaderHeaderMagic,
+		SequenceID:   0,
+		HeaderLength: uint16(headers.Len() / 4),
+	}
+	frame := NewTMemoryBuffer()
+	if err := binary.Write(frame, binary.BigEndian, meta); err != nil {
+		t.Fatalf("binary.Write(meta) returned error: %v", err)
+	}
+	if _, err := io.Copy(frame, headers); err != nil {
+		t.Fatalf("io.Copy(headers) returned error: %v", err)
+	}
+
+	trans := NewTMemoryBuffer()
+	frameSizeBuf := make([]byte, size32)
+	binary.BigEndian.PutUint32(frameSizeBuf, uint32(frame.Len()))
+	if _, err := trans.Write(frameSizeBuf); err != nil {
+		t.Fatalf("trans.Write(frameSize) returned error: %v", err)
+	}
+	if _, err := io.Copy(trans, frame); err != nil {
+		t.Fatalf("io.Copy(trans, frame) returned error: %v", err)
+	}
+
+	reader := NewTHeaderTransportConf(trans, &TConfiguration{
+		MaxMessageSize: 64,
+	})
+	err := reader.ReadFrame(context.Background())
+	if err == nil {
+		t.Fatal("ReadFrame with an over-limit transformCount unexpectedly succeeded")
+	}
+	terr, ok := err.(TProtocolException)
+	if !ok || terr.TypeId() != SIZE_LIMIT {
+		t.Fatalf(
+			"ReadFrame returned %v, want a TProtocolException with TypeId SIZE_LIMIT (%d); "+
+				"an EOF-shaped error here means transformCount was not bounds-checked "+
+				"before being used to size an allocation",
+			err, SIZE_LIMIT,
+		)
+	}
 }
