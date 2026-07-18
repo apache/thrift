@@ -4363,24 +4363,26 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
     bool val_is_uuid
         = vtype->is_base_type() && ((t_base_type*)vtype)->get_base() == t_base_type::TYPE_UUID;
 
-    string pair_type
-        = "Generics.Collections.TPair<" + type_name(ktype) + ", " + type_name(vtype) + ">";
-    string pair_var = tmp("_pair");
-    vars << "  " << pair_var << " : " << pair_type << ";" << '\n';
-
     container_prolog();
 
+    // NB: iterate the dictionary's .Keys (and look values up by key) rather than using
+    // "for pair in dict". For-in over the TPair enumerator returned through the
+    // IThriftDictionary interface miscompiles on some Delphi versions (bad result pointer
+    // in TPairEnumerator.GetCurrent -> access violation); .Keys enumeration is safe and is
+    // the same pattern the generated Read/Write code uses.
     if (!key_needs_scan) {
-      // Scalar key: iterate the lhs pairs, fetch the rhs value with a single lookup
+      // Scalar key: iterate the lhs keys, fetch the rhs value with a single lookup
+      string k_var = tmp("_key");
       string v_var = tmp("_v");
+      vars << "  " << k_var << " : " << type_name(ktype) << ";" << '\n';
       vars << "  " << v_var << " : " << type_name(vtype) << ";" << '\n';
 
-      indent_impl(code) << "for " << pair_var << " in " << lhs << " do begin" << '\n';
+      indent_impl(code) << "for " << k_var << " in " << lhs << ".Keys do begin" << '\n';
       indent_up_impl();
-      indent_impl(code) << "if not " << rhs << ".TryGetValue(" << pair_var << ".Key, " << v_var
+      indent_impl(code) << "if not " << rhs << ".TryGetValue(" << k_var << ", " << v_var
                         << ") then " << fail_stmt << '\n';
 
-      string vl = pair_var + ".Value";
+      string vl = lhs + "[" + k_var + "]";
       if (!val_needs_helper) {
         if (val_is_uuid) {
           indent_impl(code) << "if not SysUtils.IsEqualGUID(" << vl << ", " << v_var << ") then "
@@ -4398,19 +4400,21 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       }
 
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n'; // end for pairs
+      indent_impl(code) << "end;" << '\n'; // end for keys
 
     } else {
       // Struct/binary/container key: O(n²) scan over a rhs key/value snapshot that marks
       // matched rhs keys as consumed, so a single rhs key cannot satisfy more than one
       // lhs key (same rationale as the analogous set case above).
-      string rpair_var = tmp("_pair");
+      string kl_var = tmp("_key");
+      string kr_var = tmp("_key");
       string karr_var = tmp("_karr");
       string varr_var = tmp("_varr");
       string used_var = tmp("_used");
       string idx_var = tmp("_i");
       string found_var = tmp("_found");
-      vars << "  " << rpair_var << " : " << pair_type << ";" << '\n';
+      vars << "  " << kl_var << " : " << type_name(ktype) << ";" << '\n';
+      vars << "  " << kr_var << " : " << type_name(ktype) << ";" << '\n';
       vars << "  " << karr_var << " : array of " << type_name(ktype) << ";" << '\n';
       vars << "  " << varr_var << " : array of " << type_name(vtype) << ";" << '\n';
       vars << "  " << used_var << " : array of System.Boolean;" << '\n';
@@ -4421,15 +4425,16 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "System.SetLength(" << varr_var << ", " << rhs << ".Count);" << '\n';
       indent_impl(code) << "System.SetLength(" << used_var << ", " << rhs << ".Count);" << '\n';
       indent_impl(code) << idx_var << " := 0;" << '\n';
-      indent_impl(code) << "for " << rpair_var << " in " << rhs << " do begin" << '\n';
+      indent_impl(code) << "for " << kr_var << " in " << rhs << ".Keys do begin" << '\n';
       indent_up_impl();
-      indent_impl(code) << karr_var << "[" << idx_var << "] := " << rpair_var << ".Key;" << '\n';
-      indent_impl(code) << varr_var << "[" << idx_var << "] := " << rpair_var << ".Value;" << '\n';
+      indent_impl(code) << karr_var << "[" << idx_var << "] := " << kr_var << ";" << '\n';
+      indent_impl(code) << varr_var << "[" << idx_var << "] := " << rhs << "[" << kr_var << "];"
+                        << '\n';
       indent_impl(code) << "System.Inc(" << idx_var << ");" << '\n';
       indent_down_impl();
       indent_impl(code) << "end;" << '\n';
 
-      indent_impl(code) << "for " << pair_var << " in " << lhs << " do begin" << '\n';
+      indent_impl(code) << "for " << kl_var << " in " << lhs << ".Keys do begin" << '\n';
       indent_up_impl();
       indent_impl(code) << found_var << " := False;" << '\n';
       indent_impl(code) << "for " << idx_var << " := 0 to System.Length(" << karr_var
@@ -4438,13 +4443,13 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "if not " << used_var << "[" << idx_var << "] then begin" << '\n';
       indent_up_impl();
       // the candidate probe must not abort the function -> always trial mode
-      string key_inner = generate_equal_container(code, vars, ktype, pair_var + ".Key",
+      string key_inner = generate_equal_container(code, vars, ktype, kl_var,
                                                   karr_var + "[" + idx_var + "]", false, true);
       indent_impl(code) << "if " << key_inner << " then begin" << '\n';
       indent_up_impl();
       // Keys match: compare values, and only consume the rhs key/mark found if the
       // value matches too (a key-only match with a differing value must keep scanning).
-      string vl = pair_var + ".Value";
+      string vl = lhs + "[" + kl_var + "]";
       string vr = varr_var + "[" + idx_var + "]";
       if (!val_needs_helper) {
         if (val_is_uuid) {
@@ -4477,7 +4482,7 @@ std::string t_delphi_generator::generate_equal_container(ostream& code,
       indent_impl(code) << "end;" << '\n'; // end scan for
       indent_impl(code) << "if not " << found_var << " then " << fail_stmt << '\n';
       indent_down_impl();
-      indent_impl(code) << "end;" << '\n'; // end for pair_var
+      indent_impl(code) << "end;" << '\n'; // end for lhs keys
     }
 
     container_epilog();
