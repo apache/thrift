@@ -93,6 +93,7 @@ check_PROGRAMS = \
 	UnitTestsUuidNoDirective \
 	TFDTransportTest \
 	TPipedTransportTest \
+	TTransportFactoryConfigTest \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
@@ -286,6 +287,17 @@ TPipedTransportTest_LDADD = \
 	$(BOOST_TEST_LDADD) \
 	$(BOOST_SYSTEM_LDADD) \
 	$(BOOST_THREAD_LDADD)
+
+#
+# TTransportFactoryConfigTest
+#
+TTransportFactoryConfigTest_SOURCES = \
+	TTransportFactoryConfigTest.cpp
+
+TTransportFactoryConfigTest_LDADD =  \
+	$(top_builddir)/lib/cpp/libthrift.la \
+	$(top_builddir)/lib/cpp/libthriftz.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # AllProtocolsTest

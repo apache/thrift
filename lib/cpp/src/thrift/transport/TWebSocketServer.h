@@ -390,7 +390,7 @@ public:
    * Wraps the transport into a buffered one.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new TWebSocketServer<true>(trans));
+    return std::shared_ptr<TTransport>(new TWebSocketServer<true>(trans, trans->getConfiguration()));
   }
 };
 
@@ -407,7 +407,7 @@ public:
    * Wraps the transport into a buffered one.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new TWebSocketServer<false>(trans));
+    return std::shared_ptr<TTransport>(new TWebSocketServer<false>(trans, trans->getConfiguration()));
   }
 };
 } // namespace transport

@@ -305,7 +305,7 @@ public:
    * Wraps the transport into a buffered one.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new TBufferedTransport(trans));
+    return std::shared_ptr<TTransport>(new TBufferedTransport(trans, trans->getConfiguration()));
   }
 };
 
@@ -450,7 +450,7 @@ public:
    * Wraps the transport into a framed one.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new TFramedTransport(trans));
+    return std::shared_ptr<TTransport>(new TFramedTransport(trans, trans->getConfiguration()));
   }
 };
 

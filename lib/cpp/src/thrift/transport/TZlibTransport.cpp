@@ -408,9 +408,22 @@ TZlibTransportFactory::TZlibTransportFactory(std::shared_ptr<TTransportFactory> 
 
 std::shared_ptr<TTransport> TZlibTransportFactory::getTransport(std::shared_ptr<TTransport> trans) {
   if (transportFactory_) {
-    return std::shared_ptr<TTransport>(new TZlibTransport(transportFactory_->getTransport(trans)));
+    std::shared_ptr<TTransport> inner = transportFactory_->getTransport(trans);
+    return std::shared_ptr<TTransport>(new TZlibTransport(inner,
+                                                            TZlibTransport::DEFAULT_URBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_CRBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_UWBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_CWBUF_SIZE,
+                                                            Z_DEFAULT_COMPRESSION,
+                                                            inner->getConfiguration()));
   } else {
-    return std::shared_ptr<TTransport>(new TZlibTransport(trans));
+    return std::shared_ptr<TTransport>(new TZlibTransport(trans,
+                                                            TZlibTransport::DEFAULT_URBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_CRBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_UWBUF_SIZE,
+                                                            TZlibTransport::DEFAULT_CWBUF_SIZE,
+                                                            Z_DEFAULT_COMPRESSION,
+                                                            trans->getConfiguration()));
   }
 }
 }

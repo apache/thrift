@@ -220,6 +220,16 @@ target_link_libraries(TPipedTransportTest
 target_link_libraries(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
+add_executable(TTransportFactoryConfigTest TTransportFactoryConfigTest.cpp)
+target_link_libraries(TTransportFactoryConfigTest
+    ${Boost_LIBRARIES}
+)
+target_link_libraries(TTransportFactoryConfigTest thrift)
+if(WITH_ZLIB)
+    target_link_libraries(TTransportFactoryConfigTest thriftz)
+endif()
+add_test(NAME TTransportFactoryConfigTest COMMAND TTransportFactoryConfigTest)
+
 set(AllProtocolsTest_SOURCES
     AllProtocolTests.cpp
     AllProtocolTests.tcc

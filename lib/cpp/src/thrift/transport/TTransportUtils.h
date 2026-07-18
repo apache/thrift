@@ -221,7 +221,7 @@ public:
    * Wraps the base transport into a piped transport.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
-    return std::shared_ptr<TTransport>(new TPipedTransport(srcTrans, dstTrans_));
+    return std::shared_ptr<TTransport>(new TPipedTransport(srcTrans, dstTrans_, srcTrans->getConfiguration()));
   }
 
   virtual void initializeTargetTransport(std::shared_ptr<TTransport> dstTrans) {
@@ -309,7 +309,7 @@ public:
   std::shared_ptr<TFileReaderTransport> getFileReaderTransport(
       std::shared_ptr<TFileReaderTransport> srcTrans) {
     return std::shared_ptr<TFileReaderTransport>(
-        new TPipedFileReaderTransport(srcTrans, dstTrans_));
+        new TPipedFileReaderTransport(srcTrans, dstTrans_, srcTrans->getConfiguration()));
   }
 };
 }

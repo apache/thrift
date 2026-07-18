@@ -265,7 +265,7 @@ public:
    * Wraps the transport into a header one.
    */
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new THeaderTransport(trans));
+    return std::shared_ptr<TTransport>(new THeaderTransport(trans, trans->getConfiguration()));
   }
 };
 }
