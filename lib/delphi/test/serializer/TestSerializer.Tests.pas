@@ -647,7 +647,7 @@ begin
   cpst2.Struct_set := nil;
   ASSERT( not cpst1.Equal(cpst2));    // nil vs non-nil set -> False
 
-  // --- CompactProtoTestStruct: map<i8,i8> (scalar keys use ContainsKey) ---
+  // --- CompactProtoTestStruct: map<i8,i8> (scalar keys use TryGetValue) ---
   cpst1 := TCompactProtoTestStructImpl.Create;
   cpst2 := TCompactProtoTestStructImpl.Create;
   map1 := TThriftDictionaryImpl<System.ShortInt, System.ShortInt>.Create;

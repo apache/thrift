@@ -61,6 +61,7 @@ struct Struct_lists {
   4: list<Struct_simple> field_;
   5: list<Struct_simple> tracker;
   6: list<Struct_simple> Self;
+  7: list<Struct_simple> Equal;
 }
 
 struct Struct_structs {
@@ -70,6 +71,7 @@ struct Struct_structs {
   4: Struct_simple field_;
   5: Struct_simple tracker;
   6: Struct_simple Self;
+  7: Struct_simple Equal;
 }
 
 struct Struct_simple {
@@ -79,6 +81,7 @@ struct Struct_simple {
   4: bool field_;
   5: bool tracker;
   6: bool Self;
+  7: bool Equal;
 }
 
 struct Struct_strings {
@@ -88,6 +91,7 @@ struct Struct_strings {
   4: string field_;
   5: string tracker;
   6: string Self;
+  7: string Equal;
 }
 
 struct Struct_binary {
@@ -97,6 +101,7 @@ struct Struct_binary {
   4: binary field_;
   5: binary tracker;
   6: binary Self;
+  7: binary Equal;
 }
 
 

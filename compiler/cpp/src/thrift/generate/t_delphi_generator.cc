@@ -414,9 +414,9 @@ private:
   };
 
   // reserved method names (lowercase!)
-  const std::string DELPHI_RESERVED_METHOD[31] = {
+  const std::string DELPHI_RESERVED_METHOD[32] = {
     "afterconstruction", "beforedestruction", "classinfo", "classname", "classnameis", "classparent",
-    "classtype", "cleanupinstance", "create", "defaulthandler", "destroy", "dispatch", "equals",
+    "classtype", "cleanupinstance", "create", "defaulthandler", "destroy", "dispatch", "equal", "equals",
     "fieldaddress", "free", "freeinstance", "gethashcode", "getinterface", "getinterfaceentry",
     "getinterfacetable", "inheritsfrom", "initinstance", "instancesize", "methodaddress", "methodname",
     "newinstance", "read", "safecallexception", "tostring", "unitname", "write"
