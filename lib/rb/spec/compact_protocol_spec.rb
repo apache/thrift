@@ -122,6 +122,20 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should report malformed message headers consistently" do
+    {
+      [0x00] => "Expected protocol id -126 but got 0",
+      [0x82, 0x00] => "Expected version 1 but got 0"
+    }.each do |bytes, expected_message|
+      trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.read_message_begin }.to raise_error(Thrift::ProtocolException, expected_message) do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::BAD_VERSION)
+      end
+    end
+  end
+
   it "should decode i32 minima from direct canonical zigzag bytes" do
     trans = Thrift::MemoryBufferTransport.new
     trans.write(INTEGER_MINIMUM_ENCODINGS[:i32].pack("C*"))

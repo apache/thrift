@@ -235,13 +235,19 @@ module Thrift
     def read_message_begin
       protocol_id = read_byte()
       if protocol_id != PROTOCOL_ID
-        raise ProtocolException.new("Expected protocol id #{PROTOCOL_ID} but got #{protocol_id}")
+        raise ProtocolException.new(
+          ProtocolException::BAD_VERSION,
+          "Expected protocol id #{PROTOCOL_ID} but got #{protocol_id}"
+        )
       end
 
       version_and_type = read_byte()
       version = version_and_type & VERSION_MASK
       if (version != VERSION)
-        raise ProtocolException.new("Expected version #{VERSION} but got #{version}");
+        raise ProtocolException.new(
+          ProtocolException::BAD_VERSION,
+          "Expected version #{VERSION} but got #{version}"
+        )
       end
 
       type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS
