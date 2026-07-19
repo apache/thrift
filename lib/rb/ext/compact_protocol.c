@@ -264,7 +264,7 @@ VALUE rb_thrift_compact_proto_write_set_begin(VALUE self, VALUE etype, VALUE siz
 }
 
 VALUE rb_thrift_compact_proto_write_bool(VALUE self, VALUE b) {
-  int8_t type = b == Qtrue ? CTYPE_BOOLEAN_TRUE : CTYPE_BOOLEAN_FALSE;
+  int8_t type = RTEST(b) ? CTYPE_BOOLEAN_TRUE : CTYPE_BOOLEAN_FALSE;
   VALUE boolean_field = rb_ivar_get(self, boolean_field_id);
   if (NIL_P(boolean_field)) {
     // we're not part of a field, so just write the value.

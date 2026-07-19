@@ -185,6 +185,7 @@ module Thrift
     end
 
     def write_bool(bool)
+      # Preserve Ruby truthiness: only false and nil encode as false.
       type = bool ? CompactTypes::BOOLEAN_TRUE : CompactTypes::BOOLEAN_FALSE
       unless @boolean_field.nil?
         # we haven't written the field header yet
