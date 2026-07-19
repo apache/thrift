@@ -398,6 +398,25 @@ describe 'BaseTransport' do
       expect(@buffer.available).to eq(0)
     end
 
+    it "should not mutate or consume input when reading into a frozen buffer" do
+      ["xy".freeze, ("x" * 100).freeze].each do |destination|
+        @buffer.reset_buffer("ab")
+
+        expect { @buffer.read_into_buffer(destination, 2) }.to raise_error(FrozenError)
+        expect(destination).to eq(destination.length == 2 ? "xy" : "x" * 100)
+        expect(@buffer.available).to eq(2)
+      end
+    end
+
+    it "should allow a zero-length read into a frozen buffer" do
+      destination = "x".freeze
+      @buffer.reset_buffer("a")
+
+      expect(@buffer.read_into_buffer(destination, 0)).to eq(0)
+      expect(destination).to eq("x")
+      expect(@buffer.available).to eq(1)
+    end
+
     it "should reject negative read_all sizes" do
       expect { @buffer.read_all(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |e|
         expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
