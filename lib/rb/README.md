@@ -157,6 +157,12 @@ Its EventMachine dependency also does not build on new Ruby development
 versions. Creating a Thin server now prints a warning. Move to
 `Thrift::RackApplication` with a supported Rack server such as Puma or Falcon.
 
+`Thrift::SSLSocket` now verifies peers by default, including when given a
+blank SSL context. It preserves configured certificate authorities and uses
+the system certificate store when no trust source is configured. Applications
+that intentionally connect without peer identity checks must pass
+`verify_peer: false` explicitly.
+
 ### 0.24.0
 
 Connect timeout handling changed for both `Thrift::Socket` and
@@ -259,6 +265,9 @@ best-effort, not guaranteed.
 
 ## Migration Notes
 
+- If you upgrade to `0.25.0`, note that `Thrift::SSLSocket` now verifies peers
+  by default. Applications that intentionally connect without peer identity
+  checks must pass `verify_peer: false` explicitly.
 - If you upgrade to `0.24.0`, treat `timeout` on `Thrift::Socket` and
   `Thrift::SSLSocket` as one budget for the whole open path. For
   `Thrift::SSLSocket`, that includes both the TCP connect and the TLS
@@ -297,5 +306,9 @@ best-effort, not guaranteed.
 - Client and server must agree on transport and protocol choices. If you
   switch to SSL, HTTP, header transport, compact protocol, or namespaced
   generated code, update both ends together.
-- HTTPS client transport verifies peers by default, and `Thrift::SSLSocket`
-  performs a hostname check against the host you pass in.
+- HTTPS client transport and `Thrift::SSLSocket` verify peers by default.
+  `Thrift::SSLSocket` preserves trust sources configured on a supplied SSL
+  context and otherwise uses the system certificate store. It also checks the
+  certificate against `server_hostname` (or the connection host by default).
+  Pass `verify_peer: false` only when peer identity checks are intentionally
+  disabled.
