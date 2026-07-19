@@ -60,12 +60,14 @@ describe 'SSLSocket' do
 
     it "should open a ::Socket with default args" do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, nil).and_return(@handle)
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, kind_of(OpenSSL::SSL::SSLContext)).and_return(@handle)
       expect(@handle).to receive(:hostname=).with('localhost')
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
       expect(@handle).to receive(:post_connection_check).with('localhost')
       @socket.open
+      expect(@socket.ssl_context.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER)
+      expect(@socket.ssl_context.cert_store).to be_a(OpenSSL::X509::Store)
     end
 
     it "should accept host/port options" do
@@ -75,7 +77,7 @@ describe 'SSLSocket' do
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(timeout: 6000).and_return(handle)
-      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(handle, nil).and_return(@handle)
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(handle, kind_of(OpenSSL::SSL::SSLContext)).and_return(@handle)
       expect(@handle).to receive(:hostname=).with('my.domain')
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).and_return(@handle)
@@ -94,6 +96,31 @@ describe 'SSLSocket' do
     it "should accept an optional server hostname" do
       socket = Thrift::SSLSocket.new('127.0.0.1', 8080, 5, @context, server_hostname: 'service.example.com')
       expect(socket.server_hostname).to eq('service.example.com')
+    end
+
+    it "should accept an optional peer verification setting" do
+      socket = Thrift::SSLSocket.new('localhost', 8080, 5, @context, verify_peer: false)
+      expect(socket.verify_peer).to be(false)
+    end
+
+    it "should enable peer verification when a blank context reports no verify mode" do
+      allow(@context).to receive(:verify_mode).and_return(nil)
+      expect(@context).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+
+      Thrift::SSLSocket.new('localhost', 9090, nil, @context).open
+    end
+
+    it "should disable peer identity checks only when explicitly requested" do
+      @context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, @context).and_return(@handle)
+      expect(@handle).to receive(:sync_close=).with(true)
+      expect(@handle).to receive(:connect).and_return(true)
+      expect(@handle).not_to receive(:post_connection_check)
+
+      socket = Thrift::SSLSocket.new('localhost', 9090, nil, @context, verify_peer: false)
+      expect(socket.open).to eq(@handle)
+      expect(@context.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE)
     end
 
     it "should use the server hostname for SNI and certificate verification" do
@@ -226,7 +253,7 @@ describe 'SSLSocket' do
       expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 101.0)
       expect(@addrinfo).to receive(:connect).with(timeout: 4.0).and_return(@simple_socket_handle)
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, nil).and_raise(StandardError.new("ssl init failed"))
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, kind_of(OpenSSL::SSL::SSLContext)).and_raise(StandardError.new("ssl init failed"))
       expect(@simple_socket_handle).to receive(:close)
 
       expect { @socket.open }.to raise_error(Thrift::TransportException) do |e|
@@ -281,6 +308,72 @@ describe 'SSLSocket' do
 
     it "should provide a reasonable to_s" do
       expect(Thrift::SSLSocket.new('myhost', 8090).to_s).to eq("ssl(socket(myhost:8090))")
+    end
+  end
+
+  describe "peer certificate verification" do
+    before(:each) do
+      @tcp_server = TCPServer.new('127.0.0.1', 0)
+      ssl_server = OpenSSL::SSL::SSLServer.new(@tcp_server, server_context)
+      @server_thread = Thread.new do
+        ssl_server.accept.close
+      rescue OpenSSL::SSL::SSLError, IOError, Errno::EBADF
+        nil
+      end
+      @server_thread.report_on_exception = false
+    end
+
+    after(:each) do
+      @client&.close
+      @tcp_server.close
+      @server_thread.join(1)
+      @server_thread.kill if @server_thread.alive?
+      @server_thread.join
+    end
+
+    it "should validate the server certificate with a blank client context" do
+      @client = build_client(OpenSSL::SSL::SSLContext.new)
+
+      expect { @client.open }.to raise_error(Thrift::TransportException) do |error|
+        expect(error.type).to eq(Thrift::TransportException::NOT_OPEN)
+        expect(error.cause).to be_a(OpenSSL::SSL::SSLError)
+      end
+    end
+
+    it "should use a configured certificate authority" do
+      context = OpenSSL::SSL::SSLContext.new
+      context.ca_file = File.join(ssl_keys_dir, 'server.crt')
+      @client = build_client(context)
+
+      expect(@client.open).to be_a(OpenSSL::SSL::SSLSocket)
+    end
+
+    it "should allow peer certificate verification to be disabled explicitly" do
+      @client = build_client(OpenSSL::SSL::SSLContext.new, verify_peer: false)
+
+      expect(@client.open).to be_a(OpenSSL::SSL::SSLSocket)
+    end
+
+    def build_client(context, verify_peer: true)
+      Thrift::SSLSocket.new(
+        '127.0.0.1',
+        @tcp_server.local_address.ip_port,
+        1,
+        context,
+        server_hostname: 'localhost',
+        verify_peer: verify_peer
+      )
+    end
+
+    def server_context
+      OpenSSL::SSL::SSLContext.new.tap do |context|
+        context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'server.crt')))
+        context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'server.key')))
+      end
+    end
+
+    def ssl_keys_dir
+      File.expand_path('../../../test/keys', __dir__)
     end
   end
 end
