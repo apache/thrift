@@ -398,6 +398,24 @@ describe 'BaseTransport' do
       expect(@buffer.available).to eq(0)
     end
 
+    it "should consume bytes copied before the destination is exhausted" do
+      destination = +"x"
+      @buffer.reset_buffer("ab")
+
+      expect { @buffer.read_into_buffer(destination, 2) }.to raise_error(IndexError, "index 1 out of string")
+      expect(destination).to eq("a")
+      expect(@buffer.available).to eq(1)
+    end
+
+    it "should consume bytes copied before input is exhausted" do
+      destination = +"xx"
+      @buffer.reset_buffer("a")
+
+      expect { @buffer.read_into_buffer(destination, 2) }.to raise_error(EOFError)
+      expect(destination).to eq("ax")
+      expect(@buffer.available).to eq(0)
+    end
+
     it "should not mutate or consume input when reading into a frozen buffer" do
       ["xy".freeze, ("x" * 100).freeze].each do |destination|
         @buffer.reset_buffer("ab")
@@ -415,6 +433,24 @@ describe 'BaseTransport' do
       expect(@buffer.read_into_buffer(destination, 0)).to eq(0)
       expect(destination).to eq("x")
       expect(@buffer.available).to eq(1)
+    end
+
+    it "should report EOF before modifying a frozen destination" do
+      destination = "xx".freeze
+      @buffer.reset_buffer("")
+
+      expect { @buffer.read_into_buffer(destination, 1) }.to raise_error(EOFError)
+      expect(destination).to eq("xx")
+    end
+
+    it "should not mutate strings sharing the destination storage" do
+      original = "x" * 256
+      destination = original.byteslice(1, 128)
+      @buffer.reset_buffer("ab")
+
+      expect(@buffer.read_into_buffer(destination, 2)).to eq(2)
+      expect(destination).to eq("ab" + ("x" * 126))
+      expect(original).to eq("x" * 256)
     end
 
     it "should reject negative read_all sizes" do
