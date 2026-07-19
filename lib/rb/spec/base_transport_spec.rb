@@ -398,6 +398,13 @@ describe 'BaseTransport' do
       expect(@buffer.available).to eq(0)
     end
 
+    it "should return unsigned byte values" do
+      [0x00, 0x7f, 0x80, 0xff].each do |byte|
+        @buffer.reset_buffer([byte].pack("C"))
+        expect(@buffer.read_byte).to eq(byte)
+      end
+    end
+
     it "should consume bytes copied before the destination is exhausted" do
       destination = +"x"
       @buffer.reset_buffer("ab")
