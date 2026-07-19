@@ -608,19 +608,19 @@ VALUE rb_thrift_compact_proto_read_i64(VALUE self) {
 VALUE rb_thrift_compact_proto_read_double(VALUE self) {
   union {
     double f;
-    int64_t l;
+    uint64_t l;
   } transfer;
   VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
   rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(8));
-  uint32_t lo = ((uint8_t)(RSTRING_PTR(rbuf)[0]))
-    | (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 8)
-    | (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 16)
-    | (((uint8_t)(RSTRING_PTR(rbuf)[3])) << 24);
-  uint64_t hi = (((uint8_t)(RSTRING_PTR(rbuf)[4])))
-    | (((uint8_t)(RSTRING_PTR(rbuf)[5])) << 8)
-    | (((uint8_t)(RSTRING_PTR(rbuf)[6])) << 16)
-    | (((uint8_t)(RSTRING_PTR(rbuf)[7])) << 24);
-  transfer.l = (hi << 32) | lo;
+  const uint8_t* bytes = (const uint8_t*)RSTRING_PTR(rbuf);
+  transfer.l = (uint64_t)bytes[0]
+    | ((uint64_t)bytes[1] << 8)
+    | ((uint64_t)bytes[2] << 16)
+    | ((uint64_t)bytes[3] << 24)
+    | ((uint64_t)bytes[4] << 32)
+    | ((uint64_t)bytes[5] << 40)
+    | ((uint64_t)bytes[6] << 48)
+    | ((uint64_t)bytes[7] << 56);
 
   return rb_float_new(transfer.f);
 }

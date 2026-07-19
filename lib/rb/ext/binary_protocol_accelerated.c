@@ -331,33 +331,62 @@ static char read_byte_direct(VALUE self) {
   return (char)(FIX2INT(byte));
 }
 
+static int16_t uint16_to_int16(uint16_t value) {
+  if (value <= INT16_MAX) {
+    return (int16_t)value;
+  }
+  return (int16_t)((int32_t)value - ((int32_t)UINT16_MAX + 1));
+}
+
+static int32_t uint32_to_int32(uint32_t value) {
+  if (value <= INT32_MAX) {
+    return (int32_t)value;
+  }
+  return (int32_t)((int64_t)value - (INT64_C(1) << 32));
+}
+
+static int64_t uint64_to_int64(uint64_t value) {
+  if (value <= INT64_MAX) {
+    return (int64_t)value;
+  }
+  return -(int64_t)(~value) - INT64_C(1);
+}
+
 static int16_t read_i16_direct(VALUE self) {
   VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
   rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(2));
-  return (int16_t)(((uint8_t)(RSTRING_PTR(rbuf)[1])) | ((uint16_t)((RSTRING_PTR(rbuf)[0]) << 8)));
+  const uint8_t* bytes = (const uint8_t*)RSTRING_PTR(rbuf);
+  uint16_t value = ((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1];
+  return uint16_to_int16(value);
 }
 
 static int32_t read_i32_direct(VALUE self) {
   VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
   rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(4));
-  return ((uint8_t)(RSTRING_PTR(rbuf)[3])) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 8) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 16) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[0])) << 24);
+  const uint8_t* bytes = (const uint8_t*)RSTRING_PTR(rbuf);
+  uint32_t value = ((uint32_t)bytes[0] << 24) |
+    ((uint32_t)bytes[1] << 16) |
+    ((uint32_t)bytes[2] << 8) |
+    (uint32_t)bytes[3];
+  return uint32_to_int32(value);
+}
+
+static uint64_t read_u64_direct(VALUE self) {
+  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
+  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(8));
+  const uint8_t* bytes = (const uint8_t*)RSTRING_PTR(rbuf);
+  return ((uint64_t)bytes[0] << 56) |
+    ((uint64_t)bytes[1] << 48) |
+    ((uint64_t)bytes[2] << 40) |
+    ((uint64_t)bytes[3] << 32) |
+    ((uint64_t)bytes[4] << 24) |
+    ((uint64_t)bytes[5] << 16) |
+    ((uint64_t)bytes[6] << 8) |
+    (uint64_t)bytes[7];
 }
 
 static int64_t read_i64_direct(VALUE self) {
-  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
-  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(8));
-  uint64_t hi = ((uint8_t)(RSTRING_PTR(rbuf)[3])) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 8) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 16) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[0])) << 24);
-  uint32_t lo = ((uint8_t)(RSTRING_PTR(rbuf)[7])) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[6])) << 8) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[5])) << 16) |
-    (((uint8_t)(RSTRING_PTR(rbuf)[4])) << 24);
-  return (hi << 32) | lo;
+  return uint64_to_int64(read_u64_direct(self));
 }
 
 VALUE rb_thrift_binary_proto_read_message_end(VALUE self) {
@@ -472,9 +501,9 @@ VALUE rb_thrift_binary_proto_read_i64(VALUE self) {
 VALUE rb_thrift_binary_proto_read_double(VALUE self) {
   union {
     double f;
-    int64_t t;
+    uint64_t t;
   } transfer;
-  transfer.t = read_i64_direct(self);
+  transfer.t = read_u64_direct(self);
   return rb_float_new(transfer.f);
 }
 
