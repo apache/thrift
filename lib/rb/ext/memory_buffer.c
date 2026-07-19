@@ -131,6 +131,11 @@ VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, V
   int index;
   VALUE buf = GET_BUF(self);
 
+  if (size > 0) {
+    Check_Type(buffer_value, T_STRING);
+    rb_str_modify(buffer_value);
+  }
+
   index = FIX2INT(rb_ivar_get(self, index_ivar_id));
   while (i < size) {
     if (index >= RSTRING_LEN(buf)) {
