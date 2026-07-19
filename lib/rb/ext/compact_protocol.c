@@ -507,18 +507,16 @@ VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
   int8_t protocol_id = read_byte_direct(self);
   if (protocol_id != PROTOCOL_ID) {
     char buf[100];
-    int len = sprintf(buf, "Expected protocol id %d but got %d", PROTOCOL_ID, protocol_id);
-    buf[len] = 0;
-    rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
+    snprintf(buf, sizeof(buf), "Expected protocol id %d but got %d", PROTOCOL_ID, protocol_id);
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_BAD_VERSION), rb_str_new2(buf)));
   }
 
   int8_t version_and_type = read_byte_direct(self);
   int8_t version = version_and_type & VERSION_MASK;
   if (version != VERSION) {
     char buf[100];
-    int len = sprintf(buf, "Expected version id %d but got %d", version, VERSION);
-    buf[len] = 0;
-    rb_exc_raise(get_protocol_exception(INT2FIX(-1), rb_str_new2(buf)));
+    snprintf(buf, sizeof(buf), "Expected version %d but got %d", VERSION, version);
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_BAD_VERSION), rb_str_new2(buf)));
   }
 
   int8_t type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS;
