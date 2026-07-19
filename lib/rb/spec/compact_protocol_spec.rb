@@ -138,6 +138,18 @@ describe Thrift::CompactProtocol do
     expect(proto.read_i64).to eq(INTEGER_BOUNDARY_TESTS[:i64].first)
   end
 
+  it "should preserve fixed-width double edge byte patterns" do
+    [
+      [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00],
+      [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]
+    ].each do |bytes|
+      trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect([proto.read_double].pack("G").reverse.bytes).to eq(bytes)
+    end
+  end
+
   it "should read binary values with multi-byte varint32 lengths" do
     payload = "x" * 128
     trans = Thrift::MemoryBufferTransport.new

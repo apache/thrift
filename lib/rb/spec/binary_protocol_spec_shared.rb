@@ -394,6 +394,28 @@ shared_examples_for 'a binary protocol' do
     end
   end
 
+  it "should decode fixed-width signed edge byte patterns" do
+    {
+      :read_i16 => {
+        [0x80, 0x00] => -(2**15),
+        [0xff, 0xff] => -1
+      },
+      :read_i32 => {
+        [0x80, 0x00, 0x00, 0x00] => -(2**31),
+        [0xff, 0xff, 0xff, 0xff] => -1
+      },
+      :read_i64 => {
+        [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] => -(2**63),
+        [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff] => -1
+      }
+    }.each do |reader, cases|
+      cases.each do |bytes, expected|
+        @trans.write(bytes.pack("C*"))
+        expect(@prot.public_send(reader)).to eq(expected)
+      end
+    end
+  end
+
   it "should read a double" do
     # try a random scattering of values, including min/max
     [Float::MIN, -231231.12351, -323.233513, 0, 123.2351235, 2351235.12351235, Float::MAX].each do |f|
