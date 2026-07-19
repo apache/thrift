@@ -315,7 +315,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     if (TYPE(value) == T_ARRAY) {
       items = value;
     } else {
-      if (rb_cSet == CLASS_OF(value)) {
+      if (rb_obj_is_kind_of(value, rb_cSet)) {
         items = rb_funcall(value, entries_method_id, 0);
       } else {
         Check_Type(value, T_HASH);

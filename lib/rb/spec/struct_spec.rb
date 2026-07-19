@@ -246,6 +246,15 @@ describe 'Struct' do
       struct.write(prot)
     end
 
+    it "should serialize subclasses of Set like Set" do
+      set_subclass = Class.new(Set)
+      regular = SpecNamespace::Foo.new(:shorts => Set.new([5, 17, 239]))
+      subclassed = SpecNamespace::Foo.new(:shorts => set_subclass.new([5, 17, 239]))
+      serializer = Thrift::Serializer.new(Thrift::BinaryProtocolFactory.new)
+
+      expect(serializer.serialize(subclassed)).to eq(serializer.serialize(regular))
+    end
+
     it "should raise an exception if presented with an unknown container" do
       # yeah this is silly, but I'm going for code coverage here
       struct = SpecNamespace::Foo.new
