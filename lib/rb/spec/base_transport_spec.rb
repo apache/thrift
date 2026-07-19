@@ -381,6 +381,23 @@ describe 'BaseTransport' do
       expect{ @buffer.read(5) }.to raise_error(EOFError)
     end
 
+    it "should reject negative read sizes without consuming input" do
+      @buffer.reset_buffer("abc")
+
+      expect { @buffer.read(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |error|
+        expect(error.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
+      end
+      expect(@buffer.available).to eq(3)
+    end
+
+    it "should handle maximum read sizes without overflowing" do
+      @buffer.reset_buffer("abcd")
+
+      expect(@buffer.read(1)).to eq("a")
+      expect { @buffer.read((2**31) - 1) }.to raise_error(EOFError)
+      expect(@buffer.available).to eq(0)
+    end
+
     it "should reject negative read_all sizes" do
       expect { @buffer.read_all(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |e|
         expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)

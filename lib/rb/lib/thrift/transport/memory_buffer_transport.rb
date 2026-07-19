@@ -58,6 +58,8 @@ module Thrift
     end
 
     def read(len)
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless len >= 0
+
       data = @buf.slice(@index, len)
       @index += len
       @index = @buf.size if @index > @buf.size

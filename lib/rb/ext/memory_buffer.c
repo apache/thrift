@@ -50,15 +50,20 @@ VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
 VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
   int length = FIX2INT(length_value);
 
+  if (RB_UNLIKELY(length < 0)) {
+    rb_exc_raise(rb_funcall(transport_exception_class, new_method_id, 2, transport_negative_size, rb_str_new2("Negative size")));
+  }
+
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
   int index = FIX2INT(index_value);
 
   VALUE buf = GET_BUF(self);
   VALUE data = rb_funcall(buf, slice_method_id, 2, index_value, length_value);
 
-  index += length;
-  if (index > RSTRING_LEN(buf)) {
+  if (length > RSTRING_LEN(buf) - index) {
     index = (int)RSTRING_LEN(buf);
+  } else {
+    index += length;
   }
   if (index >= GARBAGE_BUFFER_SIZE) {
     rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(RSTRING_LEN(buf) - 1)));
