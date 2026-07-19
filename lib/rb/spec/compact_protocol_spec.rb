@@ -104,6 +104,24 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should use Ruby truthiness when writing bools" do
+    {
+      true => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
+      false => Thrift::CompactProtocol::CompactTypes::BOOLEAN_FALSE,
+      nil => Thrift::CompactProtocol::CompactTypes::BOOLEAN_FALSE,
+      0 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
+      1 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
+      Object.new => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE
+    }.each do |value, expected|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.write_bool(value)
+
+      expect(trans.read_byte).to eq(expected)
+    end
+  end
+
   it "should decode i32 minima from direct canonical zigzag bytes" do
     trans = Thrift::MemoryBufferTransport.new
     trans.write(INTEGER_MINIMUM_ENCODINGS[:i32].pack("C*"))
