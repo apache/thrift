@@ -38,6 +38,18 @@ describe 'BaseProtocol' do
       expect(@prot.trans).to eql(@trans)
     end
 
+    it "should report native capability without writing to stdout or stderr" do
+      binary = Thrift::BinaryProtocol.new(Thrift::MemoryBufferTransport.new)
+      compact = Thrift::CompactProtocol.new(Thrift::MemoryBufferTransport.new)
+      expected_compact_native = defined?(Thrift::BinaryProtocolAccelerated) ? true : false
+
+      expect do
+        expect(@prot.native?).to be(false)
+        expect(binary.native?).to be(false)
+        expect(compact.native?).to eq(expected_compact_native)
+      end.to output("").to_stdout.and output("").to_stderr
+    end
+
     it 'should write out a field nicely (deprecated write_field signature)' do
       expect(@prot).to receive(:write_field_begin).with('field', 'type', 'fid').ordered
       expect(@prot).to receive(:write_type).with({:name => 'field', :type => 'type'}, 'value').ordered

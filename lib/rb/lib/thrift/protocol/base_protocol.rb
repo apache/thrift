@@ -49,7 +49,6 @@ module Thrift
     end
 
     def native?
-      puts "wrong method is being called!"
       false
     end
 
