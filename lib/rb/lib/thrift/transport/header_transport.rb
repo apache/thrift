@@ -268,7 +268,11 @@ module Thrift
       @read_headers = {}
 
       # Read first 4 bytes - could be frame length or protocol magic
-      first_word = @transport.read_all(4)
+      begin
+        first_word = @transport.read_all(4)
+      rescue EOFError
+        raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame size")
+      end
       frame_size = first_word.unpack('N').first
 
       # Check for unframed binary protocol
@@ -292,9 +296,16 @@ module Thrift
       if frame_size > @max_frame_size
         raise TransportException.new(TransportException::UNKNOWN, "Frame size #{frame_size} exceeds maximum #{@max_frame_size}")
       end
+      if frame_size < 4
+        raise TransportException.new(TransportException::UNKNOWN, "Frame size #{frame_size} is too small")
+      end
 
       # Read the complete frame
-      frame_data = @transport.read_all(frame_size)
+      begin
+        frame_data = @transport.read_all(frame_size)
+      rescue EOFError
+        raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame")
+      end
       frame_buf = StringIO.new(frame_data)
 
       # Check the second word for protocol type

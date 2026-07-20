@@ -393,6 +393,54 @@ describe 'HeaderTransport' do
     end
 
     describe "header parsing protections" do
+      it "rejects frame sizes shorter than a protocol signature" do
+        (0..3).each do |frame_size|
+          frame = [frame_size].pack('N') + ("\x00" * frame_size)
+          read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+
+          expect { read_trans.read(1) }.to raise_error(
+            Thrift::TransportException,
+            "Frame size #{frame_size} is too small"
+          ) do |error|
+            expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
+          end
+        end
+      end
+
+      it "reports EOF when the frame size is fragmented" do
+        (0..3).each do |available_size|
+          read_trans = Thrift::HeaderTransport.new(
+            Thrift::MemoryBufferTransport.new("\x00" * available_size)
+          )
+
+          expect { read_trans.read(1) }.to raise_error(
+            Thrift::TransportException,
+            "Unexpected EOF reading frame size"
+          ) do |error|
+            expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+          end
+        end
+      end
+
+      it "reports EOF when the declared frame is fragmented" do
+        frame = [4].pack('N') + "\x80\x01\x00".b
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+
+        expect { read_trans.read(1) }.to raise_error(
+          Thrift::TransportException,
+          "Unexpected EOF reading frame"
+        ) do |error|
+          expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+        end
+      end
+
+      it "accepts a four-byte framed binary protocol signature" do
+        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new([payload.bytesize].pack('N') + payload))
+
+        expect(read_trans.read(payload.bytesize)).to eq(payload)
+      end
+
       it "should reject unreasonable header sizes" do
         frame = build_header_frame("", Thrift::Bytes.empty_byte_buffer, header_words: 16_384)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
