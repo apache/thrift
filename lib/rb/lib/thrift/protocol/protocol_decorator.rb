@@ -29,7 +29,7 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
-      @protocol.write_message_begin
+      @protocol.write_message_begin(name, type, seqid)
     end
 
     def write_message_end
