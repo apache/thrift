@@ -165,6 +165,10 @@ responsible for its verification mode and trust sources. A newly constructed
 a trust source alone does not enable certificate chain verification. The server
 certificate must still match the connection hostname.
 
+`Thrift::Socket#open` now raises
+`Thrift::TransportException::ALREADY_OPEN` when the TCP transport is already
+open. Close the transport before opening it again.
+
 ### 0.24.0
 
 Connect timeout handling changed for both `Thrift::Socket` and
@@ -272,6 +276,9 @@ best-effort, not guaranteed.
   unchanged and must configure their own verification mode and trust sources.
   A blank supplied context defaults to `OpenSSL::SSL::VERIFY_NONE`. Hostname
   checking is performed for both supplied and default contexts.
+- If you upgrade to `0.25.0`, close a `Thrift::Socket` before calling `open`
+  again. A duplicate open now raises
+  `Thrift::TransportException::ALREADY_OPEN`.
 - If you upgrade to `0.24.0`, treat `timeout` on `Thrift::Socket` and
   `Thrift::SSLSocket` as one budget for the whole open path. For
   `Thrift::SSLSocket`, that includes both the TCP connect and the TLS

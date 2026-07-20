@@ -34,6 +34,8 @@ module Thrift
     attr_accessor :handle, :timeout
 
     def open
+      raise TransportException.new(TransportException::ALREADY_OPEN, "Socket already open") if open?
+
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout unless @timeout.nil? || @timeout == 0
       @handle = connect_socket(deadline)
     end

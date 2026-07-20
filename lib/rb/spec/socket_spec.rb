@@ -52,6 +52,30 @@ describe 'Socket' do
       @socket.open
     end
 
+    it "should reject a second open without orphaning the live connection" do
+      allow(Addrinfo).to receive(:foreach).and_call_original
+      server = TCPServer.new('127.0.0.1', 0)
+      socket = Thrift::Socket.new('127.0.0.1', server.addr[1])
+      peer = nil
+
+      socket.open
+      peer = server.accept
+      first_handle = socket.handle
+
+      expect { socket.open }.to raise_error(Thrift::TransportException, /already open/) do |error|
+        expect(error.type).to eq(Thrift::TransportException::ALREADY_OPEN)
+      end
+      expect(socket.handle).to equal(first_handle)
+
+      socket.close
+      expect(peer.read).to eq('')
+    ensure
+      socket&.close
+      first_handle&.close unless first_handle&.closed?
+      peer&.close
+      server&.close
+    end
+
     it "should accept host/port options" do
       handle = double("Handle", :closed? => false)
       allow(handle).to receive(:close)
