@@ -107,12 +107,17 @@ module Thrift
         @num_threads = num
         @logger = logger
         @connections = []
+        @readable_connections = []
         @buffers = Hash.new { |h, k| h[k] = Bytes.empty_byte_buffer }
+        @response_queues = {}
         @signal_queue = Queue.new
         @signal_pipes = IO.pipe
         @signal_pipes[1].sync = true
         @worker_queue = Queue.new
         @shutdown_queue = Queue.new
+        @capacity_callback = method(:response_capacity_available)
+        @error_callback = method(:response_write_failed)
+        @full_callback = method(:pause_connection)
       end
 
       def add_connection(socket)
@@ -153,7 +158,7 @@ module Thrift
         spin_worker_threads
 
         loop do
-          rd, = select([@signal_pipes[0], *@connections])
+          rd = select_readable
           if rd.delete @signal_pipes[0]
             break if read_signals == :shutdown
           end
@@ -164,7 +169,8 @@ module Thrift
               else
                 read_connection fd
               end
-            rescue Errno::ECONNRESET
+            rescue IOError, SystemCallError, TransportException => e
+              @logger.debug "#{self} could not read connection: #{e.inspect}"
               remove_connection fd
             end
           end
@@ -174,11 +180,41 @@ module Thrift
         @shutdown_queue.push :shutdown
       end
 
+      def select_readable
+        select([@signal_pipes[0], *@readable_connections]).first
+      rescue IOError, SystemCallError, TransportException => e
+        @logger.debug "#{self} discarded closed connections after select failed: #{e.inspect}"
+        raise if remove_closed_connections == 0
+
+        retry
+      end
+
+      def remove_closed_connections
+        closed = @connections.select do |fd|
+          @response_queues[fd]&.closed? || !fd.open?
+        rescue IOError, SystemCallError, TransportException
+          true
+        end
+        closed.each { |fd| remove_connection(fd) }
+        closed.length
+      end
+
       def read_connection(fd)
         @buffers[fd] << fd.read(DEFAULT_BUFFER)
-        while(frame = slice_frame!(@buffers[fd]))
+        dispatch_frames(fd)
+      end
+
+      def dispatch_frames(fd)
+        response_queue = @response_queues[fd]
+        return unless response_queue
+
+        while (frame_size = complete_frame_size(@buffers[fd]))
+          sequence = response_queue.reserve
+          break if sequence.nil?
+
           @logger.debug "#{self} is processing a frame"
-          @worker_queue.push [:frame, fd, frame]
+          frame = @buffers[fd].slice!(0, frame_size)
+          @worker_queue.push [:frame, response_queue, sequence, frame]
         end
       end
 
@@ -211,6 +247,15 @@ module Thrift
             case signal
             when :connection
               @connections << obj
+              @readable_connections << obj
+              @response_queues[obj] = new_response_queue(obj)
+            when :capacity
+              if @response_queues.key?(obj)
+                @readable_connections << obj unless @readable_connections.include?(obj)
+                dispatch_frames(obj)
+              end
+            when :disconnect
+              remove_connection(obj)
             when :shutdown
               @shutdown_timeout = obj
               return :shutdown
@@ -226,9 +271,37 @@ module Thrift
       end
 
       def remove_connection(fd)
-        # don't explicitly close it, a thread may still be writing to it
         @connections.delete fd
+        @readable_connections.delete fd
         @buffers.delete fd
+        @response_queues.delete(fd)&.close
+        fd.close
+      rescue IOError, SystemCallError, TransportException
+      end
+
+      def new_response_queue(fd)
+        ResponseQueue.new(
+          fd,
+          @logger,
+          max_in_flight: [@num_threads, 1].max,
+          on_full: @full_callback,
+          on_capacity: @capacity_callback,
+          on_error: @error_callback
+        )
+      end
+
+      def response_capacity_available(fd)
+        signal [:capacity, fd]
+      rescue IOError, SystemCallError
+      end
+
+      def response_write_failed(fd, _error)
+        signal [:disconnect, fd]
+      rescue IOError, SystemCallError
+      end
+
+      def pause_connection(fd)
+        @readable_connections.delete(fd)
       end
 
       def join_worker_threads(shutdown_timeout)
@@ -253,13 +326,11 @@ module Thrift
       end
 
       def close_connections
-        @connections.each do |fd|
-          begin
-            fd.close
-          rescue IOError, SystemCallError, TransportException
-          end
-        end
+        @connections.dup.each { |fd| remove_connection(fd) }
+        @response_queues.each_value(&:close)
+        @response_queues.clear
         @connections.clear
+        @readable_connections.clear
         @buffers.clear
       end
 
@@ -272,16 +343,193 @@ module Thrift
         end
       end
 
-      def slice_frame!(buf)
-        if buf.length >= 4
-          size = buf.unpack('N').first
-          if buf.length >= size + 4
-            buf.slice!(0, size + 4)
+      def complete_frame_size(buf)
+        return if buf.length < 4
+
+        frame_size = buf.unpack1('N') + 4
+        frame_size if buf.length >= frame_size
+      end
+
+      class ResponseBufferTransport < BaseTransport # :nodoc:
+        def initialize
+          reset
+        end
+
+        def reset
+          @data = nil
+        end
+
+        def write(buf, size = nil)
+          chunk = if size && size < buf.bytesize
+            buf.byteslice(0, size)
           else
-            nil
+            buf
           end
-        else
-          nil
+          if @data.nil?
+            @data = chunk
+          elsif @data.is_a?(Array)
+            @data << chunk
+          else
+            @data = [@data, chunk]
+          end
+        end
+
+        def flush; end
+
+        def data
+          case @data
+          when nil
+            Bytes.empty_byte_buffer
+          when Array
+            @data.join
+          else
+            @data
+          end
+        end
+
+        def take
+          response = data
+          reset
+          response
+        end
+      end
+
+      class ResponseQueue # :nodoc:
+        # A connection owns one queue. It bounds outstanding responses and publishes
+        # only contiguous request sequences to the connection's transport.
+        def initialize(transport, logger, max_in_flight: nil, on_full: nil, on_capacity: nil, on_error: nil)
+          if max_in_flight && max_in_flight < 1
+            raise ArgumentError, 'max_in_flight must be at least 1'
+          end
+
+          @transport = transport
+          @logger = logger
+          @max_in_flight = max_in_flight
+          @on_full = on_full
+          @on_capacity = on_capacity
+          @on_error = on_error
+          @mutex = Mutex.new
+          @next_sequence = 0
+          @next_to_publish = 0
+          @in_flight = 0
+          @completed = nil
+          @closed = false
+        end
+
+        def reserve
+          became_full = false
+          sequence = @mutex.synchronize do
+            return unless accepting_without_lock?
+
+            sequence = @next_sequence
+            @next_sequence += 1
+            @in_flight += 1
+            became_full = full?
+            sequence
+          end
+          @on_full&.call(@transport) if became_full
+          sequence
+        end
+
+        def closed?
+          @mutex.synchronize { @closed }
+        end
+
+        def complete(sequence, response)
+          error = nil
+          capacity_available = false
+
+          @mutex.synchronize do
+            return if @closed || sequence < @next_to_publish
+
+            was_full = full?
+            begin
+              publish_response(sequence, response)
+              capacity_available = was_full && accepting_without_lock?
+            rescue IOError, SystemCallError, TransportException => e
+              @logger.debug "#{self} could not write response: #{e.inspect}"
+              close_without_lock
+              error = e
+            end
+          end
+
+          if error
+            @on_error&.call(@transport, error)
+          elsif capacity_available
+            @on_capacity&.call(@transport)
+          end
+        end
+
+        def close
+          @mutex.synchronize { close_without_lock }
+        end
+
+        private
+
+        def accepting_without_lock?
+          !@closed && !full?
+        end
+
+        def full?
+          @max_in_flight && @in_flight >= @max_in_flight
+        end
+
+        def close_without_lock
+          @closed = true
+          @in_flight = 0
+          @completed = nil
+        end
+
+        def publish_response(sequence, response)
+          unless sequence == @next_to_publish
+            (@completed ||= {})[sequence] = response
+            return
+          end
+
+          write_response(response)
+          while @completed&.key?(@next_to_publish)
+            response = @completed.delete(@next_to_publish)
+            write_response(response)
+          end
+          @completed = nil if @completed&.empty?
+        end
+
+        def write_response(response)
+          unless response.nil? || response.empty?
+            @transport.write(response)
+            @transport.flush
+          end
+          @next_to_publish += 1
+          @in_flight -= 1
+        end
+      end
+
+      class OnewayAwareProtocol < BaseProtocol # :nodoc:
+        include ProtocolDecorator
+
+        def initialize
+          @protocol = nil
+          @oneway = false
+        end
+
+        def reset(protocol, response_queue, sequence)
+          @protocol = protocol
+          @response_queue = response_queue
+          @sequence = sequence
+          @oneway = false
+        end
+
+        def read_message_begin
+          message_begin = @protocol.read_message_begin
+          if !@oneway && message_begin[1] == MessageTypes::ONEWAY
+            @oneway = true
+            @response_queue.complete(@sequence, nil)
+          end
+          message_begin
+        end
+
+        def oneway?
+          @oneway
         end
       end
 
@@ -292,6 +540,8 @@ module Thrift
           @protocol_factory = protocol_factory
           @logger = logger
           @queue = queue
+          @response = ResponseBufferTransport.new
+          @request_protocol = OnewayAwareProtocol.new
         end
 
         def spawn
@@ -311,16 +561,27 @@ module Thrift
               @logger.debug "#{self} is shutting down, goodbye"
               break
             when :frame
-              fd, frame = args
+              response_queue, sequence, frame = args
+              next if response_queue.closed?
+
+              @response.reset
+              @request_protocol.reset(nil, response_queue, sequence)
               begin
-                otrans = @transport_factory.get_transport(fd)
+                otrans = @transport_factory.get_transport(@response)
                 oprot = @protocol_factory.get_protocol(otrans)
                 membuf = MemoryBufferTransport.new(frame)
                 itrans = @transport_factory.get_transport(membuf)
                 iprot = @protocol_factory.get_protocol(itrans)
-                @processor.process(iprot, oprot)
+                @request_protocol.reset(iprot, response_queue, sequence)
+                @processor.process(@request_protocol, oprot)
               rescue => e
                 @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
+              ensure
+                if @request_protocol.oneway?
+                  @response.reset
+                else
+                  response_queue.complete(sequence, @response.take)
+                end
               end
             end
           end
