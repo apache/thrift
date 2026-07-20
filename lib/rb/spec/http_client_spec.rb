@@ -27,7 +27,26 @@ describe 'Thrift::HTTPClientTransport' do
     end
 
     it "should provide a reasonable to_s" do
-      @client.to_s == "http://my.domain.com/path/to/service?param=value"
+      expect(@client.to_s).to eq("http(my.domain.com:80/path/to/service)")
+    end
+
+    it "should include the root path in its endpoint label" do
+      client = Thrift::HTTPClientTransport.new("http://my.domain.com")
+
+      expect(client.to_s).to eq("http(my.domain.com:80/)")
+    end
+
+    it "should distinguish an IPv6 host from its port" do
+      client = Thrift::HTTPClientTransport.new("https://[2001:db8::1]:8443/path/to/service")
+
+      expect(client.to_s).to eq("https([2001:db8::1]:8443/path/to/service)")
+    end
+
+    it "should not include userinfo in its endpoint label" do
+      client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/path/to/service?token=secret")
+
+      expect(client.to_s).to eq("https(my.domain.com:443/path/to/service)")
+      expect(client.to_s).not_to include("user", "secret", "token")
     end
 
     it "should always be open" do
@@ -104,6 +123,23 @@ describe 'Thrift::HTTPClientTransport' do
       end
 
       expect { @client.flush }.to raise_error(Thrift::TransportException)
+    end
+
+    it 'should omit URL secrets from HTTP failure messages' do
+      client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/path/to/service?token=secret")
+      client.write "test"
+      http = double("Net::HTTP")
+      response = double("HTTP response", :code => "503")
+
+      expect(Net::HTTP).to receive(:new).with("my.domain.com", 443).and_return(http)
+      expect(http).to receive(:use_ssl=).with(true)
+      expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      expect(http).to receive(:post).with("/path/to/service?token=secret", "test", {"Content-Type" => "application/x-thrift"}).and_return(response)
+
+      expect { client.flush }.to raise_error(Thrift::TransportException) do |error|
+        expect(error.message).to include("https(my.domain.com:443/path/to/service)")
+        expect(error.message).not_to include("user", "secret", "token")
+      end
     end
   end
 
