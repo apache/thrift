@@ -52,7 +52,7 @@ module Thrift
         http.ca_file = @ssl_ca_file if @ssl_ca_file
       end
       resp = http.post(@url.request_uri, @outbuf, @headers)
-      raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{@url}, HTTP status code #{resp.code.to_i}") unless (200..299).include?(resp.code.to_i)
+      raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{to_s}, HTTP status code #{resp.code.to_i}") unless (200..299).include?(resp.code.to_i)
 
       data = resp.body
       data = Bytes.force_binary_encoding(data)
@@ -62,7 +62,9 @@ module Thrift
     end
 
     def to_s
-      "@{self.url}"
+      path = @url.path.to_s
+      path = '/' if path.empty?
+      "#{@url.scheme}(#{@url.host}:#{@url.port}#{path})"
     end
   end
 end
