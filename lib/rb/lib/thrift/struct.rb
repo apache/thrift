@@ -115,7 +115,7 @@ module Thrift
     end
 
     def ==(other)
-      return false if other.nil?
+      return false unless other.instance_of?(self.class)
       each_field do |fid, field_info|
         name = field_info[:name]
         return false unless other.respond_to?(name) && self.send(name) == other.send(name)

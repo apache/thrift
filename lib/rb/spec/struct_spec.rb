@@ -20,6 +20,33 @@
 
 require 'spec_helper'
 
+module StructEqualityFixtures
+  class Narrow
+    include Thrift::Struct, Thrift::Struct_Union
+
+    FIELDS = {1 => {type: Thrift::Types::STRING, name: 'shared'}}
+
+    def struct_fields; FIELDS; end
+    def validate; end
+
+    Thrift::Struct.generate_accessors self
+  end
+
+  class Wide
+    include Thrift::Struct, Thrift::Struct_Union
+
+    FIELDS = {
+      1 => {type: Thrift::Types::STRING, name: 'shared'},
+      2 => {type: Thrift::Types::STRING, name: 'extra'}
+    }
+
+    def struct_fields; FIELDS; end
+    def validate; end
+
+    Thrift::Struct.generate_accessors self
+  end
+end
+
 describe 'Struct' do
   describe Thrift::Struct do
     it "should iterate over all fields properly" do
@@ -67,6 +94,21 @@ describe 'Struct' do
       expect(SpecNamespace::Foo.new).not_to eq(SpecNamespace::Hello.new)
       expect(SpecNamespace::Foo.new).to eq(SpecNamespace::Foo.new)
       expect(SpecNamespace::Foo.new(:simple => 52)).not_to eq(SpecNamespace::Foo.new)
+    end
+
+    it 'compares only structs of the same generated class' do
+      narrow = StructEqualityFixtures::Narrow.new(shared: 'value')
+      wide = StructEqualityFixtures::Wide.new(shared: 'value', extra: 'different')
+      same_narrow = StructEqualityFixtures::Narrow.new(shared: 'value')
+
+      expect(narrow == wide).to be(false)
+      expect(wide == narrow).to be(false)
+      expect(narrow).to eq(same_narrow)
+      expect(narrow).to eql(same_narrow)
+      expect(narrow.hash).to eq(same_narrow.hash)
+
+      expect({narrow => :value}[wide]).to be_nil
+      expect(Set.new([narrow])).not_to include(wide)
     end
 
     it "should print enum value names in inspect" do
