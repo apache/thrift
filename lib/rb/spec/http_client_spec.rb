@@ -73,6 +73,57 @@ describe 'Thrift::HTTPClientTransport' do
       expect(@client.read(10)).to eq("data")
     end
 
+    it "should report successful HTTP responses without a Thrift payload when read" do
+      {'204' => nil, '200' => ''}.each do |status, body|
+        client = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
+        client.write("request")
+        http = instance_double(Net::HTTP)
+        response = instance_double(Net::HTTPResponse, :code => status, :body => body)
+
+        expect(Net::HTTP).to receive(:new).with("my.domain.com", 80).and_return(http)
+        expect(http).to receive(:use_ssl=).with(false)
+        expect(http).to receive(:post).with("/service", "request", {"Content-Type" => "application/x-thrift"}).and_return(response)
+
+        expect { client.flush }.not_to raise_error
+        expect { client.read_all(1) }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+          expect(error.message).to eq("Thrift::HTTPClientTransport reached EOF reading response from http(my.domain.com:80/service), HTTP status code #{status}")
+        end
+      end
+    end
+
+    it "should allow oneway calls with successful empty HTTP responses" do
+      {'200' => '', '204' => nil}.each do |status, body|
+        transport = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
+        client = SpecNamespace::NonblockingService::Client.new(Thrift::BinaryProtocol.new(transport))
+        http = instance_double(Net::HTTP)
+        response = instance_double(Net::HTTPResponse, :code => status, :body => body)
+
+        expect(Net::HTTP).to receive(:new).with("my.domain.com", 80).and_return(http)
+        expect(http).to receive(:use_ssl=).with(false)
+        expect(http).to receive(:post).with("/service", kind_of(String), {"Content-Type" => "application/x-thrift"}).and_return(response)
+
+        expect { client.shutdown }.not_to raise_error
+      end
+    end
+
+    it "should include a safe endpoint and status in empty response errors" do
+      client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/service?token=secret")
+      client.write("request")
+      http = instance_double(Net::HTTP)
+      response = instance_double(Net::HTTPNoContent, :code => "204", :body => nil)
+
+      expect(Net::HTTP).to receive(:new).with("my.domain.com", 443).and_return(http)
+      expect(http).to receive(:use_ssl=).with(true)
+      expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      expect(http).to receive(:post).with("/service?token=secret", "request", {"Content-Type" => "application/x-thrift"}).and_return(response)
+
+      expect { client.flush }.not_to raise_error
+      expect { client.read_all(1) }.to raise_error(Thrift::TransportException) do |error|
+        expect(error.message).to eq("Thrift::HTTPClientTransport reached EOF reading response from https(my.domain.com:443/service), HTTP status code 204")
+      end
+    end
+
     it "should send custom headers if defined" do
       @client.write "test"
       custom_headers = {"Cookie" => "Foo"}

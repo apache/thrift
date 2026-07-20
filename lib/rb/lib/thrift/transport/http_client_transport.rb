@@ -37,7 +37,12 @@ module Thrift
     end
 
     def open?; true end
-    def read(sz); @inbuf.read sz end
+    def read(sz)
+      data = @inbuf.read sz
+      return data unless data.nil?
+
+      raise TransportException.new(TransportException::END_OF_FILE, "#{self.class.name} reached EOF reading response from #{to_s}, HTTP status code #{@response_code}")
+    end
     def write(buf); @outbuf << Bytes.force_binary_encoding(buf) end
 
     def add_headers(headers)
@@ -52,10 +57,11 @@ module Thrift
         http.ca_file = @ssl_ca_file if @ssl_ca_file
       end
       resp = http.post(@url.request_uri, @outbuf, @headers)
-      raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{to_s}, HTTP status code #{resp.code.to_i}") unless (200..299).include?(resp.code.to_i)
+      response_code = resp.code.to_i
+      raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{to_s}, HTTP status code #{response_code}") unless (200..299).include?(response_code)
 
-      data = resp.body
-      data = Bytes.force_binary_encoding(data)
+      @response_code = response_code
+      data = Bytes.force_binary_encoding(resp.body || Bytes.empty_byte_buffer)
       @inbuf = StringIO.new data
     ensure
       @outbuf = Bytes.empty_byte_buffer
