@@ -305,12 +305,26 @@ describe 'BaseTransport' do
       expect(@buffer.to_s).to eq("memory")
     end
 
-    it "should accept a buffer on input and use it directly" do
-      s = +"this is a test"
-      @buffer = Thrift::MemoryBufferTransport.new(s)
-      expect(@buffer.read(4)).to eq("this")
-      s.slice!(-4..-1)
-      expect(@buffer.read(@buffer.available)).to eq(" is a ")
+    it "should privately own a buffer passed on input" do
+      source = +"this is a test"
+      @buffer = Thrift::MemoryBufferTransport.new(source)
+
+      expect(source.encoding).to eq(Encoding::UTF_8)
+      source.replace("caller changed")
+      @buffer.write("!")
+
+      expect(source).to eq("caller changed")
+      expect(@buffer.read(@buffer.available)).to eq("this is a test!".b)
+    end
+
+    it "should allow writes and resets after receiving a frozen buffer" do
+      @buffer = Thrift::MemoryBufferTransport.new("abc".b.freeze)
+
+      @buffer.write("d")
+      expect(@buffer.read(4)).to eq("abcd")
+
+      @buffer.reset_buffer("xy")
+      expect(@buffer.read(2)).to eq("xy")
     end
 
     it "should always remain open" do
