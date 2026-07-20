@@ -17,29 +17,19 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'thrift/protocol/protocol_decorator'
+require 'spec_helper'
 
-module Thrift
-  class MultiplexedProtocol < BaseProtocol
+describe Thrift::MultiplexedProtocol do
+  it 'keeps its configured service name when formatted for diagnostics' do
+    transport = Thrift::MemoryBufferTransport.new
+    protocol = Thrift::MultiplexedProtocol.new(Thrift::BinaryProtocol.new(transport), 'Calculator')
 
-    include ProtocolDecorator
+    expect(protocol.to_s).to eq('multiplexed(binary(memory))')
+    expect(protocol.to_s).to eq('multiplexed(binary(memory))')
 
-    def initialize(protocol, service_name)
-      super(protocol)
-      @service_name = service_name
-    end
+    protocol.write_message_begin('add', Thrift::MessageTypes::CALL, 7)
 
-    def write_message_begin(name, type, seqid)
-      case type
-      when MessageTypes::CALL, MessageTypes::ONEWAY
-        @protocol.write_message_begin("#{@service_name}:#{name}", type, seqid)
-      else
-        @protocol.write_message_begin(name, type, seqid)
-      end
-    end
-
-    def to_s
-      "multiplexed(#{@protocol})"
-    end
+    name, type, seqid = Thrift::BinaryProtocol.new(transport).read_message_begin
+    expect([name, type, seqid]).to eq(['Calculator:add', Thrift::MessageTypes::CALL, 7])
   end
 end
