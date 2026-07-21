@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     Licensed to the Apache Software Foundation(ASF) under one
     or more contributor license agreements.See the NOTICE file
@@ -61,9 +61,9 @@
     <!-- Only the logging abstractions are used (ILogger/ILoggerFactory in the TServer hierarchy);
          concrete providers (Console/Debug) and the ASP.NET Core stack are no longer referenced here.
          The ASP.NET Core HTTP server middleware lives in the separate ApacheThrift.AspNetCore package. -->
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" Condition="'$(TargetFramework.StartsWith(`netstandard2.`))' == 'true'" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.7" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>
