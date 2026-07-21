@@ -63,12 +63,12 @@ class TSocketTest(unittest.TestCase):
         # https://docs.python.org/3/library/socket.html#notes-on-socket-timeouts
         # https://docs.python.org/3/library/socket.html#socket.socket.settimeout
         timeouts = [
-            None,  # blocking mode
-            0,  # non-blocking mode
-            1.0,  # timeout mode
+            (None, None),  # blocking mode
+            (0, 0.0),  # non-blocking mode
+            (1000, 1.0),  # timeout mode: Thrift milliseconds, socket seconds
         ]
 
-        for timeout in timeouts:
+        for timeout, expected_socket_timeout in timeouts:
             acc = ServerAcceptor(TServerSocket(port=0))
             acc.start()
 
@@ -76,6 +76,7 @@ class TSocketTest(unittest.TestCase):
             self.assertFalse(sock.isOpen())
             sock.open()
             sock.setTimeout(timeout)
+            self.assertEqual(sock.handle.gettimeout(), expected_socket_timeout)
 
             # the socket shows as open immediately after connecting
             self.assertTrue(sock.isOpen())
