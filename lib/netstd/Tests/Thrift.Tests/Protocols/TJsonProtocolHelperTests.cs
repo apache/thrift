@@ -49,7 +49,7 @@ namespace Thrift.Tests.Protocols
 
             foreach (var t in sets)
             {
-                Assert.AreEqual(t.Item2, TJSONProtocolHelper.GetTypeNameForTypeId(t.Item1), $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
+                Assert.AreSequenceEqual(t.Item2, TJSONProtocolHelper.GetTypeNameForTypeId(t.Item1), $"Wrong mapping of TypeName {t.Item2} to TType: {t.Item1}");
             }
         }
 
