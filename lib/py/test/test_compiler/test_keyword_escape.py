@@ -92,6 +92,27 @@ def find_unescaped_all_entries(init_files):
     return problems
 
 
+def find_keyword_literal_except_types(py_files):
+    """
+    "True"/"False"/"None" are valid Python expression atoms (unlike most
+    other reserved words), so an unescaped "except True as e:" parses fine
+    -- it just silently tries to catch the literal bool/None instead of the
+    intended exception class, and would raise a runtime TypeError once hit.
+    py_compile can't see this; walk the AST instead.
+    """
+    problems = []
+    for py_file in py_files:
+        with open(py_file) as f:
+            try:
+                tree = ast.parse(f.read(), filename=py_file)
+            except SyntaxError:
+                continue  # already reported by the compile check
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ExceptHandler) and isinstance(node.type, ast.Constant):
+                problems.append((py_file, node.lineno, repr(node.type.value)))
+    return problems
+
+
 def test_keyword_escape_compilation():
     """
     Test that the Python generator produces valid Python code
@@ -156,6 +177,13 @@ def test_keyword_escape_compilation():
                   " (breaks \"from package import *\"):")
             for file_path, lineno, name in bad_all_entries:
                 print("  " + file_path + ":" + str(lineno) + ": " + repr(name))
+            return 1
+
+        keyword_literal_excepts = find_keyword_literal_except_types(py_files)
+        if keyword_literal_excepts:
+            print("ERROR: Generated code catches a keyword literal instead of an exception class:")
+            for file_path, lineno, value in keyword_literal_excepts:
+                print("  " + file_path + ":" + str(lineno) + ": except " + value + " as ...")
             return 1
 
         print("OK: All " + str(len(all_files)) + " generated Python files compile successfully")

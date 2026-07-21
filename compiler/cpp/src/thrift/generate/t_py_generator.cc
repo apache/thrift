@@ -1298,7 +1298,7 @@ void t_py_generator::generate_service(t_service* tservice) {
   if (tservice->get_extends() != nullptr) {
     f_service_ << "import "
                << get_real_py_module(tservice->get_extends()->get_program(), gen_twisted_, package_prefix_) << "."
-               << tservice->get_extends()->get_name() << '\n';
+               << maybe_escape_identifier(tservice->get_extends()->get_name()) << '\n';
   }
 
   f_service_ << "import logging" << '\n'
@@ -2877,12 +2877,12 @@ string t_py_generator::type_name(t_type* ttype) {
 
   t_program* program = ttype->get_program();
   if (ttype->is_service()) {
-    return get_real_py_module(program, gen_twisted_, package_prefix_) + "." + ttype->get_name();
+    return get_real_py_module(program, gen_twisted_, package_prefix_) + "." + maybe_escape_identifier(ttype->get_name());
   }
   if (program != nullptr && program != program_) {
-    return get_real_py_module(program, gen_twisted_, package_prefix_) + ".ttypes." + ttype->get_name();
+    return get_real_py_module(program, gen_twisted_, package_prefix_) + ".ttypes." + maybe_escape_identifier(ttype->get_name());
   }
-  return ttype->get_name();
+  return maybe_escape_identifier(ttype->get_name());
 }
 
 string t_py_generator::arg_hint(t_type* type) {
