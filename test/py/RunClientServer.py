@@ -47,7 +47,6 @@ SCRIPTS = [
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
 SKIP_SSL = ['THttpServer']
-EXTRA_DELAY = dict(TProcessPoolServer=5.5)
 
 PROTOS = [
     'accel',
@@ -76,6 +75,49 @@ def default_servers():
 
 def relfile(fname):
     return os.path.join(SCRIPT_DIR, fname)
+
+
+def terminate_process_group(process, timeout=5):
+    """Terminate a test server, killing it if graceful shutdown times out."""
+    if platform.system() == 'Windows':
+        if process.poll() is not None:
+            return
+        process.terminate()
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        return
+
+    process_group = process.pid
+    try:
+        os.killpg(process_group, signal.SIGTERM)
+    except ProcessLookupError:
+        process.wait()
+        return
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        process.poll()
+        try:
+            os.killpg(process_group, 0)
+        except ProcessLookupError:
+            process.wait()
+            return
+        except PermissionError:
+            # macOS can report EPERM briefly while group members are exiting.
+            pass
+        time.sleep(0.01)
+
+    try:
+        os.killpg(process_group, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        if process.poll() is None:
+            process.kill()
+    process.wait()
 
 
 def setup_pypath(libdir, gendir):
@@ -182,22 +224,7 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
                 ensureServerAlive()
             except Exception as exc:
                 cleanup_exc = exc
-            extra_sleep = EXTRA_DELAY.get(server_class, 0)
-            if extra_sleep > 0 and verbose > 0:
-                print('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
-                      'processes to terminate via alarm'
-                      % (server_class, proto, use_zlib, use_ssl, extra_sleep))
-                time.sleep(extra_sleep)
-            sig = signal.SIGKILL if platform.system() != 'Windows' else signal.SIGABRT
-            try:
-                if platform.system() == 'Windows':
-                    os.kill(serverproc.pid, sig)
-                else:
-                    # POSIX: kill the whole process group to reap forked children.
-                    os.killpg(serverproc.pid, sig)
-            except OSError:
-                pass
-            serverproc.wait()
+            terminate_process_group(serverproc)
         try:
             os.unlink(port_file)
         except OSError:

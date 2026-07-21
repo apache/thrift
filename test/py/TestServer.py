@@ -413,28 +413,14 @@ def main(options):
     if server_type == "TNonblockingServer":
         server = TNonblockingServer.TNonblockingServer(processor, transport, inputProtocolFactory=pfactory)
     elif server_type == "TProcessPoolServer":
-        import signal
         from thrift.server import TProcessPoolServer
         server = TProcessPoolServer.TProcessPoolServer(processor, transport, tfactory, pfactory)
         server.setNumWorkers(5)
 
-        def set_alarm():
-            def clean_shutdown(signum, frame):
-                for worker in server.workers:
-                    if options.verbose > 0:
-                        logging.info('Terminating worker: %s' % worker)
-                    worker.terminate()
-                if options.verbose > 0:
-                    logging.info('Shutting down server')
-                # server.stop() would deadlock here: it calls Condition.notify()
-                # reentrantly on the same thread that's blocked in serve()'s
-                # Condition.wait(), which can never post the wake ack notify()
-                # is waiting for (THRIFT-6082). Workers are already terminated,
-                # so just exit directly.
-                os._exit(0)
-            signal.signal(signal.SIGALRM, clean_shutdown)
-            signal.alarm(4)
-        set_alarm()
+        def stop_process_pool(signum, frame):
+            raise SystemExit
+
+        signal.signal(signal.SIGTERM, stop_process_pool)
     else:
         # look up server class dynamically to instantiate server
         ServerClass = getattr(TServer, server_type)
