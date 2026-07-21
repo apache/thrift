@@ -113,6 +113,53 @@ def find_keyword_literal_except_types(py_files):
     return problems
 
 
+# Several of the bugs this test catches only fire under non-default generator
+# options (gen_enum_/gen_type_hints_/gen_twisted_ gate specific codegen
+# branches), so a single default "-gen py" run isn't enough coverage.
+GENERATION_MODES = ['py', 'py:type_hints,enum', 'py:twisted']
+
+
+def check_generated_output(tmpdir):
+    """
+    Run every static check against one directory of generated output.
+    Returns (error_message_or_None, files_checked_count).
+    """
+    py_files = glob.glob(os.path.join(tmpdir, '**', '*.py'), recursive=True)
+    # The generated "<service>-remote" CLI helper script is Python too, but has no
+    # .py suffix (matching every other language's convention for this file), so it
+    # needs its own glob to be included in the compile check below.
+    remote_files = glob.glob(os.path.join(tmpdir, '**', '*-remote'), recursive=True)
+    all_files = py_files + remote_files
+
+    if not all_files:
+        return "no Python files generated", 0
+
+    failed = []
+    for py_file in all_files:
+        try:
+            py_compile.compile(py_file, doraise=True)
+        except py_compile.PyCompileError as e:
+            failed.append("  " + py_file + ": " + str(e))
+    if failed:
+        return "generated Python files have syntax errors:\n" + "\n".join(failed), 0
+
+    init_files = glob.glob(os.path.join(tmpdir, '**', '__init__.py'), recursive=True)
+    bad_all_entries = find_unescaped_all_entries(init_files)
+    if bad_all_entries:
+        lines = ["  " + f + ":" + str(lineno) + ": " + repr(n) for f, lineno, n in bad_all_entries]
+        return ("__all__ lists a name that isn't a valid, non-keyword identifier"
+                " (breaks \"from package import *\"):\n" + "\n".join(lines)), 0
+
+    keyword_literal_excepts = find_keyword_literal_except_types(py_files)
+    if keyword_literal_excepts:
+        lines = ["  " + f + ":" + str(lineno) + ": except " + v + " as ..."
+                 for f, lineno, v in keyword_literal_excepts]
+        return ("generated code catches a keyword literal instead of an exception class:\n" +
+                "\n".join(lines)), 0
+
+    return None, len(all_files)
+
+
 def test_keyword_escape_compilation():
     """
     Test that the Python generator produces valid Python code
@@ -133,61 +180,30 @@ def test_keyword_escape_compilation():
         print("(In CI, thrift should be available via THRIFT env var)")
         return 0  # Skip gracefully rather than fail
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        result = subprocess.run(
-            [thrift_bin, '-r', '-gen', 'py', '-out', tmpdir, thrift_file],
-            capture_output=True,
-            text=True
-        )
+    total_checked = 0
+    for mode in GENERATION_MODES:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = subprocess.run(
+                [thrift_bin, '-r', '-gen', mode, '-out', tmpdir, thrift_file],
+                capture_output=True,
+                text=True
+            )
 
-        if result.returncode != 0:
-            print("ERROR: thrift compiler failed")
-            print("stdout: " + result.stdout)
-            print("stderr: " + result.stderr)
-            return 1
+            if result.returncode != 0:
+                print("ERROR: thrift compiler failed for -gen " + mode)
+                print("stdout: " + result.stdout)
+                print("stderr: " + result.stderr)
+                return 1
 
-        py_files = glob.glob(os.path.join(tmpdir, '**', '*.py'), recursive=True)
-        # The generated "<service>-remote" CLI helper script is Python too, but has no
-        # .py suffix (matching every other language's convention for this file), so it
-        # needs its own glob to be included in the compile check below.
-        remote_files = glob.glob(os.path.join(tmpdir, '**', '*-remote'), recursive=True)
-        all_files = py_files + remote_files
+            error, checked = check_generated_output(tmpdir)
+            if error:
+                print("ERROR (-gen " + mode + "): " + error)
+                return 1
+            total_checked += checked
 
-        if not all_files:
-            print("ERROR: No Python files generated")
-            return 1
-
-        failed = []
-        for py_file in all_files:
-            try:
-                py_compile.compile(py_file, doraise=True)
-            except py_compile.PyCompileError as e:
-                failed.append((py_file, str(e)))
-
-        if failed:
-            print("ERROR: Generated Python files have syntax errors:")
-            for file_path, error in failed:
-                print("  " + file_path + ": " + error)
-            return 1
-
-        init_files = glob.glob(os.path.join(tmpdir, '**', '__init__.py'), recursive=True)
-        bad_all_entries = find_unescaped_all_entries(init_files)
-        if bad_all_entries:
-            print("ERROR: __all__ lists a name that isn't a valid, non-keyword identifier"
-                  " (breaks \"from package import *\"):")
-            for file_path, lineno, name in bad_all_entries:
-                print("  " + file_path + ":" + str(lineno) + ": " + repr(name))
-            return 1
-
-        keyword_literal_excepts = find_keyword_literal_except_types(py_files)
-        if keyword_literal_excepts:
-            print("ERROR: Generated code catches a keyword literal instead of an exception class:")
-            for file_path, lineno, value in keyword_literal_excepts:
-                print("  " + file_path + ":" + str(lineno) + ": except " + value + " as ...")
-            return 1
-
-        print("OK: All " + str(len(all_files)) + " generated Python files compile successfully")
-        return 0
+    print("OK: All " + str(total_checked) + " generated Python files (across " +
+          str(len(GENERATION_MODES)) + " generation modes) compile successfully")
+    return 0
 
 
 if __name__ == '__main__':

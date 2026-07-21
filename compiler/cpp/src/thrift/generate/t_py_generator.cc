@@ -592,7 +592,7 @@ void t_py_generator::generate_enum(t_enum* tenum) {
  */
 void t_py_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
-  string name = tconst->get_name();
+  string name = maybe_escape_identifier(tconst->get_name());
   t_const_value* value = tconst->get_value();
 
   indent(f_consts_) << name << " = " << render_const_value(type, value);
@@ -644,7 +644,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     int64_t int_val = value->get_integer();
     if (gen_enum_) {
       t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
-      out << type_name(type) << "." << enum_val->get_name();
+      out << type_name(type) << "." << maybe_escape_identifier(enum_val->get_name());
     } else {
       out << int_val;
     }
@@ -852,7 +852,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
   if (gen_type_hints_ && is_immutable(tstruct) && members.size() > 0) {
     out << '\n';
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      indent(out) << (*m_iter)->get_name()
+      indent(out) << maybe_escape_identifier((*m_iter)->get_name())
                   << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << '\n';
     }
   }
@@ -922,7 +922,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
           indent(out) << "super(" << maybe_escape_identifier(tstruct->get_name()) << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << maybe_escape_identifier((*m_iter)->get_name())
                       << " if hasattr(" << maybe_escape_identifier((*m_iter)->get_name()) << ", 'value') else "
-                      << type_name(type) << ".__members__.get(" << (*m_iter)->get_name() << "))" << '\n';
+                      << type_name(type) << ".__members__.get(" << maybe_escape_identifier((*m_iter)->get_name()) << "))" << '\n';
         } else if (gen_newstyle_ || gen_dynamic_) {
           indent(out) << "super(" << maybe_escape_identifier(tstruct->get_name()) << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << maybe_escape_identifier((*m_iter)->get_name()) << ")" << '\n';
@@ -1273,7 +1273,7 @@ void t_py_generator::generate_py_struct_required_validator(ostream& out, t_struc
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* field = (*f_iter);
       if (field->get_req() == t_field::T_REQUIRED) {
-        indent(out) << "if self." << field->get_name() << " is None:" << '\n';
+        indent(out) << "if self." << maybe_escape_identifier(field->get_name()) << " is None:" << '\n';
         indent(out) << indent_str() << "raise TProtocolException(message='Required field "
                     << field->get_name() << " is unset!')" << '\n';
       }
@@ -2177,10 +2177,10 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     if (!tfunction->is_oneway()) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         const string& xname = (*x_iter)->get_name();
-        f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << " as " << xname
+        f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << " as " << maybe_escape_identifier(xname)
                    << ":" << '\n';
         indent_up();
-        f_service_ << indent() << "result." << xname << " = " << xname << '\n';
+        f_service_ << indent() << "result." << maybe_escape_identifier(xname) << " = " << maybe_escape_identifier(xname) << '\n';
         indent_down();
       }
     }
