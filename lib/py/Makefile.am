@@ -62,7 +62,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/thrift_TSerializer.py
-	$(PYTHON) test/test_compiler/test_keyword_escape.py
+	THRIFT=${THRIFT} $(PYTHON) test/test_compiler/test_keyword_escape.py
 	$(PYTHON) test/test_recursion_depth.py
 
 
