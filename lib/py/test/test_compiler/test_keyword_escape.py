@@ -16,6 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import ast
+import keyword
 import os
 import sys
 import subprocess
@@ -61,6 +63,35 @@ def find_thrift():
     return None
 
 
+def find_unescaped_all_entries(init_files):
+    """
+    __all__ = ['ttypes', 'constants', 'continue', ...] is a plain string
+    list, so a keyword-colliding entry compiles fine -- py_compile can't
+    see the bug. It only surfaces at "from package import *" time, where
+    Python tries to import the listed name as a submodule and fails
+    because the actual (escaped) filename doesn't match. Check statically
+    instead of needing a real import.
+    """
+    problems = []
+    for init_file in init_files:
+        with open(init_file) as f:
+            try:
+                tree = ast.parse(f.read(), filename=init_file)
+            except SyntaxError:
+                continue  # already reported by the compile check
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Assign) and
+                    any(isinstance(t, ast.Name) and t.id == '__all__' for t in node.targets) and
+                    isinstance(node.value, ast.List)):
+                continue
+            for elt in node.value.elts:
+                if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                    name = elt.value
+                    if not name.isidentifier() or keyword.iskeyword(name):
+                        problems.append((init_file, node.lineno, name))
+    return problems
+
+
 def test_keyword_escape_compilation():
     """
     Test that the Python generator produces valid Python code
@@ -95,13 +126,18 @@ def test_keyword_escape_compilation():
             return 1
 
         py_files = glob.glob(os.path.join(tmpdir, '**', '*.py'), recursive=True)
+        # The generated "<service>-remote" CLI helper script is Python too, but has no
+        # .py suffix (matching every other language's convention for this file), so it
+        # needs its own glob to be included in the compile check below.
+        remote_files = glob.glob(os.path.join(tmpdir, '**', '*-remote'), recursive=True)
+        all_files = py_files + remote_files
 
-        if not py_files:
+        if not all_files:
             print("ERROR: No Python files generated")
             return 1
 
         failed = []
-        for py_file in py_files:
+        for py_file in all_files:
             try:
                 py_compile.compile(py_file, doraise=True)
             except py_compile.PyCompileError as e:
@@ -113,7 +149,16 @@ def test_keyword_escape_compilation():
                 print("  " + file_path + ": " + error)
             return 1
 
-        print("OK: All " + str(len(py_files)) + " generated Python files compile successfully")
+        init_files = glob.glob(os.path.join(tmpdir, '**', '__init__.py'), recursive=True)
+        bad_all_entries = find_unescaped_all_entries(init_files)
+        if bad_all_entries:
+            print("ERROR: __all__ lists a name that isn't a valid, non-keyword identifier"
+                  " (breaks \"from package import *\"):")
+            for file_path, lineno, name in bad_all_entries:
+                print("  " + file_path + ":" + str(lineno) + ": " + repr(name))
+            return 1
+
+        print("OK: All " + str(len(all_files)) + " generated Python files compile successfully")
         return 0
 
 

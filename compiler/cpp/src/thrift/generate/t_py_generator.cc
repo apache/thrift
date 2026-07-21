@@ -435,7 +435,7 @@ void t_py_generator::init_generator() {
   vector<t_service*> services = program_->get_services();
   vector<t_service*>::iterator sv_iter;
   for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
-    f_init << ", '" << (*sv_iter)->get_name() << "'";
+    f_init << ", '" << maybe_escape_identifier((*sv_iter)->get_name()) << "'";
   }
   f_init << "]" << '\n';
   f_init.close();
@@ -1290,7 +1290,7 @@ void t_py_generator::generate_py_struct_required_validator(ostream& out, t_struc
  * @param tservice The service definition
  */
 void t_py_generator::generate_service(t_service* tservice) {
-  string f_service_name = package_dir_ + "/" + service_name_ + ".py";
+  string f_service_name = package_dir_ + "/" + maybe_escape_identifier(service_name_) + ".py";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << py_autogen_comment() << '\n' << py_imports() << '\n';
@@ -1790,7 +1790,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "from thrift.protocol.TBinaryProtocol import TBinaryProtocol" << '\n' << '\n';
 
   f_remote <<
-    "from " << module_ << " import " << service_name_ << '\n' <<
+    "from " << module_ << " import " << maybe_escape_identifier(service_name_) << '\n' <<
     "from " << module_ << ".ttypes import *" << '\n' << '\n';
 
   f_remote <<
@@ -1893,7 +1893,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
            << indent_str() << "else:" << '\n'
            << indent_str() << indent_str() << "transport = TTransport.TBufferedTransport(socket)" << '\n'
            << "protocol = TBinaryProtocol(transport)" << '\n'
-           << "client = " << service_name_ << ".Client(protocol)" << '\n'
+           << "client = " << maybe_escape_identifier(service_name_) << ".Client(protocol)" << '\n'
            << "transport.open()" << '\n'
            << '\n';
 
@@ -1917,7 +1917,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
              << indent() << indent_str() << "print('" << (*f_iter)->get_name() << " requires " << num_args
              << " args')" << '\n'
              << indent() << indent_str() << "sys.exit(1)" << '\n'
-             << indent() << "pp.pprint(client." << (*f_iter)->get_name() << "(";
+             << indent() << "pp.pprint(client." << maybe_escape_identifier((*f_iter)->get_name()) << "(";
     indent_down();
     bool first_arg = true;
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
