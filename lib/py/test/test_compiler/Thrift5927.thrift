@@ -17,9 +17,11 @@
 
 namespace py thrift5927
 
-enum Lambda { 
-	None = 0, 
-	FluxCapacitor = 1 
+include "thrift5927include.thrift"
+
+enum Lambda {
+	None = 0,
+	FluxCapacitor = 1
 }
 
 struct False {
@@ -37,5 +39,22 @@ exception True {
 
 service continue {
 	import return(1: False while) throws (1: True yield)
+}
+
+# Exercises type_name()'s cross-module branch: a field typed with a struct
+# defined in an included file, where that struct's name is a keyword.
+struct UsesIncluded {
+	1: thrift5927include.except item
+}
+
+# Exercises the extends import/base-class code path with a keyword-named
+# parent service defined in the same file.
+service AlsoDerived extends continue {
+}
+
+# Exercises type_name()'s service branch for both "extends" (import of the
+# parent's module + base class reference) and the cross-module include path
+# at once, since the parent service's name is also a keyword.
+service Derived extends thrift5927include.class {
 }
 
