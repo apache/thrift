@@ -46,14 +46,14 @@ def find_thrift():
 
     # Check if we're in the source tree with built compiler
     possible_build_thrift = os.path.join(
-        os.path.dirname(__file__), '..', '..', '..',
+        os.path.dirname(__file__), '..', '..', '..', '..',
         'build', 'compiler', 'cpp', 'bin', 'thrift')
     if os.path.exists(possible_build_thrift):
         return possible_build_thrift
 
     # Check for cpp compiler location
     possible_cpp_thrift = os.path.join(
-        os.path.dirname(__file__), '..', '..', '..',
+        os.path.dirname(__file__), '..', '..', '..', '..',
         'compiler', 'cpp', 'thrift')
     if os.path.exists(possible_cpp_thrift):
         return possible_cpp_thrift
