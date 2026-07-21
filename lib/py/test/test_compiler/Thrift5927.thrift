@@ -58,3 +58,26 @@ service AlsoDerived extends continue {
 service Derived extends thrift5927include.class {
 }
 
+# Exercises a plain top-level const whose own name is a keyword.
+const i32 break = 42
+
+# Exercises render_const_value()'s enum branch (an unescaped enum *value*
+# reference, e.g. "Lambda.None"), reached both from a top-level const like
+# this one and from any field's default value (they share the same
+# rendering code), together with a keyword-named const.
+const Lambda del = Lambda.None
+
+# Exercises the required-field self-check ("if self.<field> is None:").
+struct RequiredKw {
+	1: required i32 pass
+}
+
+# Exercises two gen_type_hints_/is_immutable-gated code paths at once: the
+# class-level type-hint annotation (-gen py:type_hints,enum) and the
+# __setattr__ override's "EnumType.__members__.get(<field>)" call
+# (-gen py:enum), both keyed on the same keyword-named, enum-typed,
+# default-valued field.
+struct ImmutableEnumField {
+	1: Lambda with = Lambda.None
+} (python.immutable = "")
+
