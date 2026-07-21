@@ -23,23 +23,22 @@ require 'ipaddr'
 
 module Thrift
   class SSLSocket < Socket
-    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil, server_hostname: host, verify_peer: true)
+    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil, server_hostname: host)
       super(host, port, timeout)
       @ssl_context = ssl_context
       @server_hostname = server_hostname
-      @verify_peer = verify_peer
     end
 
     attr_accessor :ssl_context
     attr_accessor :server_hostname
-    attr_reader :verify_peer
 
     def open
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout unless @timeout.nil? || @timeout == 0
       socket = connect_socket(deadline)
 
       begin
-        ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, configured_ssl_context)
+        ssl_context = configured_ssl_context
+        ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, ssl_context)
         ssl_socket.hostname = @server_hostname if send_server_hostname?
         ssl_socket.sync_close = true
         @handle = ssl_socket
@@ -69,7 +68,7 @@ module Thrift
           @handle.connect
         end
 
-        @handle.post_connection_check(server_hostname_for_verification) if @verify_peer
+        @handle.post_connection_check(server_hostname_for_verification)
         @handle
       rescue TransportException
         close_socket(@handle)
@@ -89,23 +88,10 @@ module Thrift
     private
 
     def configured_ssl_context
-      @ssl_context ||= OpenSSL::SSL::SSLContext.new
-
-      if @verify_peer
-        verify_mode = @ssl_context.verify_mode || OpenSSL::SSL::VERIFY_NONE
-        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER if verify_mode == OpenSSL::SSL::VERIFY_NONE
-        configure_default_cert_store
-      elsif @ssl_context.verify_mode != OpenSSL::SSL::VERIFY_NONE
-        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      @ssl_context ||= OpenSSL::SSL::SSLContext.new.tap do |context|
+        context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        context.cert_store = OpenSSL::X509::Store.new.tap(&:set_default_paths)
       end
-
-      @ssl_context
-    end
-
-    def configure_default_cert_store
-      return if @ssl_context.ca_file || @ssl_context.ca_path || @ssl_context.cert_store
-
-      @ssl_context.cert_store = OpenSSL::X509::Store.new.tap(&:set_default_paths)
     end
 
     def send_server_hostname?
