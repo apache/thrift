@@ -157,11 +157,13 @@ Its EventMachine dependency also does not build on new Ruby development
 versions. Creating a Thin server now prints a warning. Move to
 `Thrift::RackApplication` with a supported Rack server such as Puma or Falcon.
 
-`Thrift::SSLSocket` now verifies peers by default, including when given a
-blank SSL context. It preserves configured certificate authorities and uses
-the system certificate store when no trust source is configured. Applications
-that intentionally connect without peer identity checks must pass
-`verify_peer: false` explicitly.
+`Thrift::SSLSocket` now verifies peers by default when no SSL context is
+provided. It creates a context that uses the system certificate store. A
+supplied SSL context is not reconfigured by Thrift, so the application is
+responsible for its verification mode and trust sources. A newly constructed
+`OpenSSL::SSL::SSLContext` defaults to `OpenSSL::SSL::VERIFY_NONE`; configuring
+a trust source alone does not enable certificate chain verification. The server
+certificate must still match the connection hostname.
 
 ### 0.24.0
 
@@ -266,8 +268,10 @@ best-effort, not guaranteed.
 ## Migration Notes
 
 - If you upgrade to `0.25.0`, note that `Thrift::SSLSocket` now verifies peers
-  by default. Applications that intentionally connect without peer identity
-  checks must pass `verify_peer: false` explicitly.
+  by default when it creates the SSL context. Supplied contexts are used
+  unchanged and must configure their own verification mode and trust sources.
+  A blank supplied context defaults to `OpenSSL::SSL::VERIFY_NONE`. Hostname
+  checking is performed for both supplied and default contexts.
 - If you upgrade to `0.24.0`, treat `timeout` on `Thrift::Socket` and
   `Thrift::SSLSocket` as one budget for the whole open path. For
   `Thrift::SSLSocket`, that includes both the TCP connect and the TLS
@@ -307,8 +311,17 @@ best-effort, not guaranteed.
   switch to SSL, HTTP, header transport, compact protocol, or namespaced
   generated code, update both ends together.
 - HTTPS client transport and `Thrift::SSLSocket` verify peers by default.
-  `Thrift::SSLSocket` preserves trust sources configured on a supplied SSL
-  context and otherwise uses the system certificate store. It also checks the
-  certificate against `server_hostname` (or the connection host by default).
-  Pass `verify_peer: false` only when peer identity checks are intentionally
-  disabled.
+  When no SSL context is provided, `Thrift::SSLSocket` creates one with peer
+  verification and the system certificate store. Thrift passes a supplied
+  context to OpenSSL without reconfiguring it. `Thrift::SSLSocket` always
+  checks the certificate against `server_hostname` (or the connection host by
+  default). `OpenSSL::SSL::SSLContext.new` defaults to
+  `OpenSSL::SSL::VERIFY_NONE`, and setting `ca_file`, `ca_path`, or `cert_store`
+  does not enable verification by itself. Set `verify_mode` explicitly when
+  supplying a context. For example, to disable certificate chain verification:
+
+  ```ruby
+  context = OpenSSL::SSL::SSLContext.new
+  context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+  socket = Thrift::SSLSocket.new(host, port, nil, context)
+  ```

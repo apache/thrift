@@ -98,29 +98,34 @@ describe 'SSLSocket' do
       expect(socket.server_hostname).to eq('service.example.com')
     end
 
-    it "should accept an optional peer verification setting" do
-      socket = Thrift::SSLSocket.new('localhost', 8080, 5, @context, verify_peer: false)
-      expect(socket.verify_peer).to be(false)
-    end
+    it "should pass a supplied SSL context through unchanged" do
+      verify_mode = @context.verify_mode
+      cert_store = @context.cert_store
 
-    it "should enable peer verification when a blank context reports no verify mode" do
-      allow(@context).to receive(:verify_mode).and_return(nil)
-      expect(@context).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-
-      Thrift::SSLSocket.new('localhost', 9090, nil, @context).open
-    end
-
-    it "should disable peer identity checks only when explicitly requested" do
-      @context.verify_mode = OpenSSL::SSL::VERIFY_PEER
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, @context).and_return(@handle)
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).not_to receive(:post_connection_check)
+      expect(@handle).to receive(:post_connection_check).with('localhost')
 
-      socket = Thrift::SSLSocket.new('localhost', 9090, nil, @context, verify_peer: false)
+      socket = Thrift::SSLSocket.new('localhost', 9090, nil, @context)
       expect(socket.open).to eq(@handle)
-      expect(@context.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE)
+      expect(@context.verify_mode).to eq(verify_mode)
+      expect(@context.cert_store).to equal(cert_store)
+    end
+
+    it "should check the hostname when the supplied context verifies peers" do
+      @context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      cert_store = @context.cert_store
+
+      expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, @context).and_return(@handle)
+      expect(@handle).to receive(:sync_close=).with(true)
+      expect(@handle).to receive(:connect).and_return(true)
+      expect(@handle).to receive(:post_connection_check).with('localhost')
+
+      expect(Thrift::SSLSocket.new('localhost', 9090, nil, @context).open).to eq(@handle)
+      expect(@context.cert_store).to equal(cert_store)
     end
 
     it "should use the server hostname for SNI and certificate verification" do
@@ -331,8 +336,8 @@ describe 'SSLSocket' do
       @server_thread.join
     end
 
-    it "should validate the server certificate with a blank client context" do
-      @client = build_client(OpenSSL::SSL::SSLContext.new)
+    it "should validate the server certificate with the default client context" do
+      @client = build_client
 
       expect { @client.open }.to raise_error(Thrift::TransportException) do |error|
         expect(error.type).to eq(Thrift::TransportException::NOT_OPEN)
@@ -342,26 +347,29 @@ describe 'SSLSocket' do
 
     it "should use a configured certificate authority" do
       context = OpenSSL::SSL::SSLContext.new
+      context.verify_mode = OpenSSL::SSL::VERIFY_PEER
       context.ca_file = File.join(ssl_keys_dir, 'server.crt')
       @client = build_client(context)
 
       expect(@client.open).to be_a(OpenSSL::SSL::SSLSocket)
     end
 
-    it "should allow peer certificate verification to be disabled explicitly" do
-      @client = build_client(OpenSSL::SSL::SSLContext.new, verify_peer: false)
+    it "should leave peer verification disabled on a blank supplied context" do
+      context = OpenSSL::SSL::SSLContext.new
+      verify_mode = context.verify_mode
+      @client = build_client(context)
 
       expect(@client.open).to be_a(OpenSSL::SSL::SSLSocket)
+      expect(context.verify_mode).to eq(verify_mode)
     end
 
-    def build_client(context, verify_peer: true)
+    def build_client(context = nil)
       Thrift::SSLSocket.new(
         '127.0.0.1',
         @tcp_server.local_address.ip_port,
         1,
         context,
-        server_hostname: 'localhost',
-        verify_peer: verify_peer
+        server_hostname: 'localhost'
       )
     end
 
