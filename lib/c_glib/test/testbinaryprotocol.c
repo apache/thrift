@@ -925,6 +925,79 @@ test_skip_within_limit (void)
   g_object_unref (configuration);
 }
 
+/* A non-versioned (old-style) binary message: the leading int32 is the method
+   name length rather than a version word. read_message_begin must populate the
+   name, message type and sequence id for it — previously the sz >= 0 branch
+   returned success without touching them, leaving the caller with an
+   uninitialized method-name pointer. */
+static void
+test_read_message_begin_nonversioned (void)
+{
+  ThriftMemoryBuffer *tbuffer = NULL;
+  ThriftBinaryProtocol *tb = NULL;
+  ThriftProtocol *protocol = NULL;
+  gchar *name = NULL;
+  ThriftMessageType mtype = 0;
+  gint32 seqid = 0;
+  guint8 message[] = { 0x00, 0x00, 0x00, 0x05,   /* name length = 5      */
+                       'h', 'e', 'l', 'l', 'o',   /* method name "hello"  */
+                       0x01,                       /* message type T_CALL  */
+                       0x00, 0x00, 0x00, 0x2a };   /* sequence id 42       */
+
+  tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 1024, NULL);
+  tb = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", tbuffer, NULL);
+  protocol = THRIFT_PROTOCOL (tb);
+
+  g_assert (thrift_transport_write (THRIFT_TRANSPORT (tbuffer),
+                                    message, sizeof (message), NULL));
+
+  g_assert (thrift_binary_protocol_read_message_begin (protocol, &name, &mtype,
+                                                       &seqid, NULL) > 0);
+  g_assert (name != NULL);
+  g_assert_cmpstr (name, ==, "hello");
+  g_assert_cmpint (mtype, ==, T_CALL);
+  g_assert_cmpint (seqid, ==, 42);
+
+  g_free (name);
+  g_object_unref (tb);
+  g_object_unref (tbuffer);
+}
+
+/* An old-style message declares its method-name length in the leading int32.
+   That length must be bounded by the configured string limit the same way the
+   length-prefixed string read is, rather than blindly allocated. */
+static void
+test_read_message_begin_nonversioned_oversized_name (void)
+{
+  ThriftMemoryBuffer *tbuffer = NULL;
+  ThriftBinaryProtocol *tb = NULL;
+  ThriftProtocol *protocol = NULL;
+  gchar *name = NULL;
+  ThriftMessageType mtype = 0;
+  gint32 seqid = 0;
+  GError *error = NULL;
+  guint8 message[] = { 0x00, 0x00, 0x00, 0x64 };   /* name length = 100 */
+
+  tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 1024, NULL);
+  tb = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", tbuffer,
+                     "string_limit", 10, NULL);
+  protocol = THRIFT_PROTOCOL (tb);
+
+  g_assert (thrift_transport_write (THRIFT_TRANSPORT (tbuffer),
+                                    message, sizeof (message), NULL));
+
+  g_assert (thrift_binary_protocol_read_message_begin (protocol, &name, &mtype,
+                                                       &seqid, &error) < 0);
+  g_assert (error != NULL);
+  g_assert (error->domain == THRIFT_PROTOCOL_ERROR);
+  g_assert (error->code == THRIFT_PROTOCOL_ERROR_SIZE_LIMIT);
+  g_assert (name == NULL);
+  g_error_free (error);
+
+  g_object_unref (tb);
+  g_object_unref (tbuffer);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -944,6 +1017,10 @@ main(int argc, char *argv[])
                    test_skip_recursion_depth);
   g_test_add_func ("/testbinaryprotocol/SkipWithinLimit",
                    test_skip_within_limit);
+  g_test_add_func ("/testbinaryprotocol/ReadMessageBeginNonVersioned",
+                   test_read_message_begin_nonversioned);
+  g_test_add_func ("/testbinaryprotocol/ReadMessageBeginNonVersionedOversizedName",
+                   test_read_message_begin_nonversioned_oversized_name);
 
   return g_test_run ();
 }
