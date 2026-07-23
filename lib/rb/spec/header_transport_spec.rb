@@ -191,10 +191,98 @@ describe 'HeaderTransport' do
     end
 
     describe "frame size limits" do
-      it "should reject payloads larger than max frame size" do
+      it "should enforce the limit against the complete Header frame" do
+        {
+          5 => 19,
+          6 => 20
+        }.each do |payload_size, declared_size|
+          underlying = Thrift::MemoryBufferTransport.new
+          trans = Thrift::HeaderTransport.new(underlying)
+          trans.set_max_frame_size(20)
+          trans.write("x" * payload_size)
+          trans.flush
+
+          frame = underlying.read(underlying.available)
+          expect(frame.unpack1('N')).to eq(declared_size)
+
+          reader = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+          reader.set_max_frame_size(20)
+          expect(reader.read(payload_size)).to eq("x" * payload_size)
+        end
+
+        @trans.set_max_frame_size(20)
+        @trans.write("x" * 7)
+        expect { @trans.flush }.to raise_error(
+          Thrift::TransportException,
+          "Frame size 21 exceeds maximum 20"
+        )
+        expect(@underlying.available).to eq(0)
+      end
+
+      it "should include metadata and padding in the emitted frame limit" do
+        headers = {"a" => "one", "longer-key" => "two"}
+        reference_buffer = Thrift::MemoryBufferTransport.new
+        reference = Thrift::HeaderTransport.new(reference_buffer)
+        headers.each { |key, value| reference.set_header(key, value) }
+        reference.write("payload")
+        reference.flush
+        frame = reference_buffer.read(reference_buffer.available)
+        declared_size = frame.unpack1('N')
+
+        accepted_buffer = Thrift::MemoryBufferTransport.new
+        accepted = Thrift::HeaderTransport.new(accepted_buffer)
+        accepted.set_max_frame_size(declared_size)
+        headers.each { |key, value| accepted.set_header(key, value) }
+        accepted.write("payload")
+        expect { accepted.flush }.not_to raise_error
+
+        rejected_buffer = Thrift::MemoryBufferTransport.new
+        rejected = Thrift::HeaderTransport.new(rejected_buffer)
+        rejected.set_max_frame_size(declared_size - 1)
+        headers.each { |key, value| rejected.set_header(key, value) }
+        rejected.write("payload")
+        expect { rejected.flush }.to raise_error(
+          Thrift::TransportException,
+          "Frame size #{declared_size} exceeds maximum #{declared_size - 1}"
+        )
+
+        rejected.set_max_frame_size(declared_size)
+        rejected.write("payload")
+        rejected.flush
+        retry_frame = rejected_buffer.read(rejected_buffer.available)
+        reader = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(retry_frame))
+        expect(reader.read(7)).to eq("payload")
+        expect(reader.get_headers).to eq(headers)
+      end
+
+      it "should enforce the limit after applying transforms" do
+        payload = "a" * 1_000
+        reference_buffer = Thrift::MemoryBufferTransport.new
+        reference = Thrift::HeaderTransport.new(reference_buffer)
+        reference.add_transform(Thrift::HeaderTransformID::ZLIB)
+        reference.write(payload)
+        reference.flush
+        frame = reference_buffer.read(reference_buffer.available)
+        declared_size = frame.unpack1('N')
+        expect(declared_size).to be < payload.bytesize
+
+        accepted_buffer = Thrift::MemoryBufferTransport.new
+        accepted = Thrift::HeaderTransport.new(accepted_buffer)
+        accepted.add_transform(Thrift::HeaderTransformID::ZLIB)
+        accepted.set_max_frame_size(declared_size)
+        accepted.write(payload)
+        expect { accepted.flush }.not_to raise_error
+
+        accepted_frame = accepted_buffer.read(accepted_buffer.available)
+        reader = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(accepted_frame))
+        reader.set_max_frame_size(declared_size)
+        expect(reader.read(payload.bytesize)).to eq(payload)
+      end
+
+      it "should reject Header frames larger than max frame size" do
         @trans.set_max_frame_size(4)
         @trans.write("12345")
-        expect { @trans.flush }.to raise_error(Thrift::TransportException, /frame that is too large/)
+        expect { @trans.flush }.to raise_error(Thrift::TransportException, "Frame size 19 exceeds maximum 4")
       end
 
       {
