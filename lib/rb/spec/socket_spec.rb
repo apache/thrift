@@ -194,5 +194,26 @@ describe 'Socket' do
         expect(e.message).to eq("Could not connect to localhost:9090")
       end
     end
+
+    it "should close the descriptor and notify its peer after a partial read timeout" do
+      local, peer = ::Socket.pair(:UNIX, :STREAM, 0)
+      socket = Thrift::Socket.new
+      socket.handle = local
+      socket.timeout = 1
+      peer.write("A")
+
+      expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 101.0)
+
+      expect { socket.read_all(2) }.to raise_error(Thrift::TransportException) { |error|
+        expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
+      }
+      expect(socket).not_to be_open
+      expect(IO.select([peer], nil, nil, 1)).not_to be_nil
+      expect(peer.read).to eq("")
+    ensure
+      socket&.close
+      local&.close unless local&.closed?
+      peer&.close
+    end
   end
 end
