@@ -130,6 +130,14 @@ module Thrift
       @sequence_id = sequence_id
     end
 
+    def protocol_id=(protocol_id)
+      unless [HeaderSubprotocolID::BINARY, HeaderSubprotocolID::COMPACT].include?(protocol_id)
+        raise ArgumentError, "Unknown protocol ID: #{protocol_id}"
+      end
+
+      @protocol_id = protocol_id
+    end
+
     def open?
       @transport.open?
     end

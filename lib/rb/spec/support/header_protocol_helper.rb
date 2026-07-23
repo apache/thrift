@@ -33,7 +33,7 @@ module HeaderProtocolHelper
     bytes.pack('C*')
   end
 
-  def build_header_frame(header_data, payload = Thrift::Bytes.empty_byte_buffer, header_words: nil)
+  def build_header_frame(header_data, payload = Thrift::Bytes.empty_byte_buffer, header_words: nil, sequence_id: 0)
     header_data = header_data.b
     if header_words.nil?
       padding = (4 - (header_data.bytesize % 4)) % 4
@@ -46,7 +46,7 @@ module HeaderProtocolHelper
     frame << [frame_size].pack('N')
     frame << [Thrift::HeaderTransport::HEADER_MAGIC].pack('n')
     frame << [0].pack('n')
-    frame << [0].pack('N')
+    frame << [sequence_id].pack('N')
     frame << [header_words].pack('n')
     frame << header_data
     frame << payload
