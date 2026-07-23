@@ -64,9 +64,13 @@ module ProtocolBenchmark
     rb-cmp-write-small rb-cmp-read-small rb-json-write-small rb-json-read-small
     hdr-bin-write-small hdr-bin-read-small hdr-cmp-write-small hdr-cmp-read-small
     hdr-zlib-write-small hdr-zlib-read-small
+    rb-bin-read-defaults-full rb-bin-read-defaults-omitted
+    c-bin-read-defaults-full c-bin-read-defaults-omitted
+    rb-cmp-read-defaults-full rb-cmp-read-defaults-omitted
   ].freeze
   NATIVE_SCENARIO_IDS = %w[
     c-bin-write-large c-bin-read-large c-bin-write-small c-bin-read-small
+    c-bin-read-defaults-full c-bin-read-defaults-omitted
   ].freeze
 
   module_function
@@ -330,6 +334,32 @@ module ProtocolBenchmark
       scenario("hdr-zlib-write-small", "header zlib write #{small_runs} small structures") { write(header_zlib, one_of_each, count: small_runs) },
       scenario("hdr-zlib-read-small", "header zlib read #{small_runs} small structures") { deserialize(header_zlib, Fixtures::Structs::OneOfEach, header_zlib_payload, count: small_runs) },
     ]
+
+    defaults_ids = ALL_SCENARIO_IDS.grep(/-read-defaults-/)
+    with_scenario_selected(scenario_ids, *defaults_ids) do
+      fixture = File.expand_path("../gen-rb/small_test_types.rb", __dir__)
+      unless File.file?(fixture)
+        raise ArgumentError, "defaulted struct benchmarks require generated fixtures; run `make stubs` in test/rb first." if scenario_ids
+        warn "Skipping defaulted struct benchmarks: run `make stubs` in test/rb first."
+        next
+      end
+      require fixture
+      full = TestNamespace::Hello.new(complexer: {1 => {2 => 3}})
+      omitted = TestNamespace::Hello.new(complex: nil, thinz: nil, complexer: {1 => {2 => 3}})
+      builders = {"rb-bin" => ruby_binary, "rb-cmp" => ruby_compact}
+      builders["c-bin"] = accelerated_binary if native_available
+      builders.each do |family, builder|
+        {"full" => full, "omitted" => omitted}.each do |shape, value|
+          id = "#{family}-read-defaults-#{shape}"
+          with_scenario_selected(scenario_ids, id) do
+            payload = serialize(builder, value, count: small_runs)
+            scenario_list << scenario(id, "#{family} read #{small_runs} defaulted structs (#{shape})") do
+              deserialize(builder, TestNamespace::Hello, payload, count: small_runs)
+            end
+          end
+        end
+      end
+    end
 
     select_scenarios(scenario_list, scenario_ids, native_available: native_available)
   end

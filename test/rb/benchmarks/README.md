@@ -20,6 +20,10 @@ This runs the full benchmark set:
 - Header zlib
 - C binary, if `thrift_native.so` loads
 
+The defaults jobs need generated test structs. Run `make stubs` in `test/rb`
+to include them. Without these files, the default run skips those jobs with a
+warning. Selecting a defaults job by ID instead reports how to build the files.
+
 ## Options
 Use flags or env vars to tune a run.
 
@@ -50,16 +54,18 @@ Use `--scenarios` or `THRIFT_BENCHMARK_SCENARIOS` to run only part of the matrix
 ruby test/rb/benchmarks/protocol_benchmark.rb --scenarios rb-bin-write-large,rb-json-read-large,hdr-zlib-read-small
 ```
 
-Each ID has four parts:
+Each ID starts with three parts:
 
 - family: `rb`, `c`, or `hdr`
 - protocol: `bin`, `cmp`, `json`, or `zlib`
 - operation: `write` or `read`
-- size: `large` or `small`
+
+The rest names the workload: `large`, `small`, `defaults-full`, or
+`defaults-omitted`.
 
 ### Full Table
 
-| ID | Family | Protocol | Operation | Size |
+| ID | Family | Protocol | Operation | Workload |
 | --- | --- | --- | --- | --- |
 | `rb-bin-write-large` | Ruby | binary | write | large |
 | `rb-bin-read-large` | Ruby | binary | read | large |
@@ -83,6 +89,12 @@ Each ID has four parts:
 | `hdr-cmp-read-small` | Header | compact | read | small |
 | `hdr-zlib-write-small` | Header | zlib | write | small |
 | `hdr-zlib-read-small` | Header | zlib | read | small |
+| `rb-bin-read-defaults-full` | Ruby | binary | read | all fields present |
+| `rb-bin-read-defaults-omitted` | Ruby | binary | read | two defaulted fields omitted |
+| `c-bin-read-defaults-full` | C native | binary | read | all fields present |
+| `c-bin-read-defaults-omitted` | C native | binary | read | two defaulted fields omitted |
+| `rb-cmp-read-defaults-full` | Ruby | compact | read | all fields present |
+| `rb-cmp-read-defaults-omitted` | Ruby | compact | read | two defaulted fields omitted |
 
 > [!NOTE]
 > Native-only IDs fail if `thrift_native.so` is not available.
@@ -95,6 +107,18 @@ Each ID has four parts:
 - Small jobs serialize and deserialize many `OneOfEach` payloads.
 - Read jobs use payloads built before timing so they measure read cost, not payload construction.
 - Header jobs flush after each struct so reads benchmark framed messages, not a buffered write that was never emitted.
+- Defaults jobs use the compiler-generated `Hello` from `test/SmallTest.thrift`.
+  Generate it with `make stubs` in `test/rb` before running these scenarios.
+  The full case sends all five fields, including the map and nested-struct defaults.
+  The omitted case sets those two defaulted fields to `nil`, so they are absent on
+  the wire and the reader copies their defaults again after construction. Both
+  cases deserialize `--small-runs` structs; serialization is outside timing.
+
+Run the defaults workload check with plain Ruby too:
+
+```sh
+ruby test/rb/benchmarks/test_protocol_benchmark.rb
+```
 
 ### Files
 
