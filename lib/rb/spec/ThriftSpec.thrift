@@ -79,6 +79,27 @@ struct Foo2 {
   1: binary my_binary
 }
 
+struct NestedDefaults {
+  1: list<list<i32>> nested_list = [[1]]
+  2: map<string, list<string>> nested_map = {"key": ["value"]}
+  3: set<list<i32>> nested_set = [[1]]
+  4: Hello child = {"greeting": "child"}
+  5: string text = "fixed"
+  6: i32 scalar = 7
+  7: list<list<i32>> frozen_list = [[1]]
+  8: binary data = "binary"
+  9: uuid token = "00112233-4455-6677-8899-aabbccddeeff"
+}
+
+struct UnionDefaults {
+  1: TestUnion choice = {"string_field": "choice"}
+}
+
+struct DefaultCopyNames {
+  1: string copy_default_value = "literal"
+  2: Hello copy_struct_default = {"greeting": "child"}
+}
+
 struct BoolStruct {
   1: bool yesno = 1
 }
