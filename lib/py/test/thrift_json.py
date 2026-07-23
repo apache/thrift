@@ -20,7 +20,7 @@
 import unittest
 
 import _import_local_thrift  # noqa
-from thrift.protocol.TJSONProtocol import TJSONProtocol
+from thrift.protocol.TJSONProtocol import TJSONProtocol, TJSONProtocolFactory
 from thrift.transport import TTransport
 
 #
@@ -107,6 +107,99 @@ class TestJSONString(unittest.TestCase):
         result_read[u_11] = u_12
 
         self.assertEqual(eval(expected), result_read)
+
+
+class TestJSONStringSizeLimit(unittest.TestCase):
+    """A JSON string/number is quote- or character-delimited, so unlike a
+    length-prefixed binary field there is no declared size to reject up front.
+    TJSONProtocol must therefore honor the same string_length_limit that
+    TBinaryProtocol/TCompactProtocol already enforce, bounding a single decoded
+    field as it is read."""
+
+    @staticmethod
+    def _protocol(data, **kwargs):
+        buf = TTransport.TMemoryBuffer(data)
+        transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+        return TJSONProtocol(transport, **kwargs)
+
+    def test_string_within_limit_is_read(self):
+        # A string comfortably under the limit is returned unchanged.
+        proto = self._protocol(b'"' + b'A' * 512 + b'"', string_length_limit=1024)
+        self.assertEqual(proto.readString(), 'A' * 512)
+
+    def test_string_exceeding_limit_is_rejected(self):
+        # A single string larger than the configured limit is rejected as it grows.
+        proto = self._protocol(b'"' + b'A' * 4096 + b'"', string_length_limit=1024)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto.readString()
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+
+    def test_number_exceeding_limit_is_rejected(self):
+        # The same char-by-char, no-declared-length reasoning applies to numeric
+        # literals via readJSONNumericChars(). Terminate the run with a
+        # non-numeric byte so that, absent the bound, the read would stop cleanly
+        # rather than on buffer exhaustion -- isolating the limit check.
+        proto = self._protocol(b'1' * 4096 + b' ', string_length_limit=1024)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto.readI64()
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+
+    def test_default_has_no_string_limit(self):
+        # Parity with binary/compact: the limit is opt-in. With no limit set the
+        # same large string is read successfully, confirming the rejections above
+        # are the configured limit firing, not malformed input.
+        proto = self._protocol(b'"' + b'A' * 4096 + b'"')
+        self.assertEqual(proto.readString(), 'A' * 4096)
+
+    def test_limit_enforced_via_factory(self):
+        # The limit must be threaded through TJSONProtocolFactory, not only the
+        # direct constructor -- servers build protocols through the factory.
+        buf = TTransport.TMemoryBuffer(b'"' + b'A' * 4096 + b'"')
+        proto = TJSONProtocolFactory(string_length_limit=1024).getProtocol(buf)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto.readString()
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+
+    def test_limit_counts_bytes_not_characters(self):
+        # 100 three-byte UTF-8 characters = 300 wire bytes but only 100 decoded
+        # characters. A limit of 200 must reject it, which only a byte count (not
+        # a character count) does -- keeping parity with the byte-length limit
+        # TBinaryProtocol enforces.
+        data = b'"' + '\u0e01'.encode('utf-8') * 100 + b'"'
+        proto = self._protocol(data, string_length_limit=200)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto.readString()
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+
+    def test_multibyte_run_read_is_bounded(self):
+        # A single unbroken run of multibyte (>= 0x80) bytes is consumed in one
+        # inner decode loop; it must be rejected as it grows, not buffered in
+        # full first, so the bytes actually read stay bounded by the limit.
+        limit = 1024
+        trans = _ByteCountingTransport(b'"' + b'\xc2\xa0' * 50000 + b'"')
+        proto = TJSONProtocol(trans, string_length_limit=limit)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto.readString()
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+        self.assertLess(trans.bytes_read, limit + 100)
+
+
+class _ByteCountingTransport(TTransport.TTransportBase):
+    """Reads from an in-memory buffer while recording how many bytes were
+    actually consumed, so a test can assert an oversized field is rejected as it
+    grows rather than buffered in full."""
+
+    def __init__(self, data):
+        self._buf = TTransport.TMemoryBuffer(data)
+        self.bytes_read = 0
+
+    def isOpen(self):
+        return True
+
+    def read(self, sz):
+        chunk = self._buf.read(sz)
+        self.bytes_read += len(chunk)
+        return chunk
 
 
 if __name__ == '__main__':

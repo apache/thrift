@@ -173,18 +173,22 @@ class LookaheadReader():
 
 class TJSONProtocolBase(TProtocolBase):
 
-    def __init__(self, trans):
+    def __init__(self, trans, string_length_limit=None):
         TProtocolBase.__init__(self, trans)
+        # JSON strings/numbers are delimited, not length-prefixed, so there is no
+        # declared size to reject up front. The per-string limit is enforced as
+        # the field is read (see readJSONString/readJSONNumericChars); it defaults
+        # to None (unbounded), matching TBinaryProtocol/TCompactProtocol.
+        self.string_length_limit = string_length_limit
         self.resetWriteContext()
         self.resetReadContext()
 
-    # We don't have length limit implementation for JSON protocols
-    @property
-    def string_length_limit(senf):
-        return None
+    def _check_string_length(self, length):
+        self._check_length(self.string_length_limit, length)
 
+    # A length limit is not implemented for JSON container reads.
     @property
-    def container_length_limit(senf):
+    def container_length_limit(self):
         return None
 
     def resetWriteContext(self):
@@ -272,17 +276,21 @@ class TJSONProtocolBase(TProtocolBase):
     def readJSONString(self, skipContext):
         highSurrogate = None
         string = []
+        length = 0
         if skipContext is False:
             self.context.read()
         self.readJSONSyntaxChar(QUOTE)
         while True:
             character = self.reader.read()
+            length += 1
             if character == QUOTE:
                 break
             if ord(character) == ESCSEQ0:
                 character = self.reader.read()
+                length += 1
                 if ord(character) == ESCSEQ1:
                     character = self.trans.read(4).decode('ascii')
+                    length += 4
                     codeunit = int(character, 16)
                     if self._isHighSurrogate(codeunit):
                         if highSurrogate:
@@ -313,8 +321,13 @@ class TJSONProtocolBase(TProtocolBase):
                 utf8_bytes = bytearray([ord(character)])
                 while ord(self.reader.peek()) >= 0x80:
                     utf8_bytes.append(ord(self.reader.read()))
+                    length += 1
+                    # A run of continuation bytes is consumed in this inner loop,
+                    # so bound it here too rather than only once per character.
+                    self._check_string_length(length)
                 character = utf8_bytes.decode('utf-8')
             string.append(character)
+            self._check_string_length(length)
 
             if highSurrogate:
                 raise TProtocolException(TProtocolException.INVALID_DATA,
@@ -330,11 +343,14 @@ class TJSONProtocolBase(TProtocolBase):
 
     def readJSONNumericChars(self):
         numeric = []
+        length = 0
         while True:
             character = self.reader.peek()
             if self.isJSONNumeric(character) is False:
                 break
             numeric.append(self.reader.read())
+            length += 1
+            self._check_string_length(length)
         return b''.join(numeric).decode('ascii')
 
     def readJSONInteger(self):
@@ -578,15 +594,15 @@ class TJSONProtocol(TJSONProtocolBase):
 
 
 class TJSONProtocolFactory(TProtocolFactory):
+    def __init__(self, string_length_limit=None):
+        self.string_length_limit = string_length_limit
+
     def getProtocol(self, trans):
-        return TJSONProtocol(trans)
+        return TJSONProtocol(trans, string_length_limit=self.string_length_limit)
 
+    # A length limit is not implemented for JSON container reads.
     @property
-    def string_length_limit(senf):
-        return None
-
-    @property
-    def container_length_limit(senf):
+    def container_length_limit(self):
         return None
 
 
