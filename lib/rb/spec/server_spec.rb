@@ -234,5 +234,22 @@ describe 'Server' do
       expect(@server_trans).to receive(:close)
       expect { @server.serve }.to(throw_symbol(:stop))
     end
+
+    it "should not enqueue TLS accept errors" do
+      exception_q = @server.instance_variable_get(:@exception_q)
+      expect(@server_trans).to receive(:listen).ordered
+      expect(@server_trans).to receive(:accept).ordered.and_raise(OpenSSL::SSL::SSLError)
+      expect(@server_trans).to receive(:accept).ordered.and_return(@client)
+      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+      allow(Thread).to receive(:new).and_yield
+      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+      expect(@trans).to receive(:close).once
+      expect(@server_trans).to receive(:close)
+
+      catch(:stop) { @server.serve }
+
+      expect(exception_q).to be_empty
+    end
   end
 end

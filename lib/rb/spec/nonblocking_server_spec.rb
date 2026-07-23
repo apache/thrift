@@ -265,6 +265,33 @@ describe 'NonblockingServer' do
     end
   end
 
+  describe "NonblockingServer accept errors" do
+    it "preserves the original error when OpenSSL is not loaded" do
+      hide_const("OpenSSL")
+      error = RuntimeError.new("plain accept failed")
+      server_transport = double(
+        "server transport",
+        :listen => nil,
+        :closed? => false,
+        :close => nil
+      )
+      allow(server_transport).to receive(:accept).and_raise(error)
+      io_manager = double("IOManager", :ensure_closed => nil)
+      server = Thrift::NonblockingServer.new(
+        double("processor"),
+        server_transport,
+        nil,
+        nil,
+        1,
+        Logger.new(IO::NULL)
+      )
+      allow(server).to receive(:start_io_manager).and_return(io_manager)
+      allow(server).to receive(:select).and_return([[server_transport], nil, nil])
+
+      expect { server.serve }.to raise_error(error)
+    end
+  end
+
   describe Thrift::NonblockingServer::IOManager do
     def build_io_manager
       logger = Logger.new(IO::NULL)
@@ -330,11 +357,18 @@ describe 'NonblockingServer' do
   end
 
   describe "#{Thrift::NonblockingServer} with TLS transport" do
+    let(:client_timeout) { Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT }
+
     before(:each) do
       @port = available_port
       handler = Handler.new
       processor = SpecNamespace::NonblockingService::Processor.new(handler)
-      @transport = Thrift::SSLServerSocket.new('localhost', @port, create_server_ssl_context)
+      @transport = Thrift::SSLServerSocket.new(
+        'localhost',
+        @port,
+        create_server_ssl_context,
+        client_timeout: client_timeout
+      )
       transport_factory = Thrift::FramedTransportFactory.new
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
@@ -355,7 +389,7 @@ describe 'NonblockingServer' do
 
     after(:each) do
       @clients.each(&:close)
-      @server.shutdown if @server
+      @server.shutdown if @server && @server_thread&.alive?
       @server_thread.join(2) if @server_thread
       @transport.close if @transport
     end
@@ -368,6 +402,22 @@ describe 'NonblockingServer' do
 
       @server.shutdown
       expect(@server_thread.join(2)).to be_an_instance_of(Thread)
+    end
+
+    context "when a TLS handshake times out" do
+      let(:client_timeout) { 0.1 }
+
+      it "continues accepting connections" do
+        stalled_client = TCPSocket.new('localhost', @port)
+
+        expect(Timeout.timeout(1) { stalled_client.read(1) }).to be_nil
+        expect(@server_thread).to be_alive
+
+        client = setup_tls_client
+        expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
+      ensure
+        stalled_client&.close
+      end
     end
 
     def setup_tls_client

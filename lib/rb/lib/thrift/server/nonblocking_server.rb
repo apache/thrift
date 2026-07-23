@@ -53,7 +53,12 @@ module Thrift
             break
           end
           next if rd.nil?
-          socket = @server_transport.accept
+          begin
+            socket = @server_transport.accept
+          rescue => e
+            next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+            raise
+          end
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
