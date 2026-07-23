@@ -56,6 +56,61 @@ module SerializerFailureFixtures
   end
 end
 
+module DeserializerResetFixtures
+  class ResetFieldsStruct
+    include Thrift::Struct, Thrift::Struct_Union
+
+    FIELDS = {
+      1 => {type: Thrift::Types::STRING, name: 'reset_fields', optional: true}
+    }.freeze
+
+    def struct_fields
+      FIELDS
+    end
+
+    def validate
+    end
+
+    Thrift::Struct.generate_accessors(self)
+  end
+
+  class RequiredStruct
+    include Thrift::Struct, Thrift::Struct_Union
+
+    FIELDS = {
+      1 => {type: Thrift::Types::STRING, name: 'required_value'}
+    }.freeze
+
+    def struct_fields
+      FIELDS
+    end
+
+    def validate
+      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, 'Required field required_value is unset!') unless @required_value
+    end
+
+    Thrift::Struct.generate_accessors(self)
+  end
+
+  class ResetFieldsUnion < Thrift::Union
+    include Thrift::Struct_Union
+
+    FIELDS = {
+      1 => {type: Thrift::Types::STRING, name: 'reset_fields', optional: true}
+    }.freeze
+
+    def struct_fields
+      FIELDS
+    end
+
+    def validate
+      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, 'Union fields are not set.') if get_set_field.nil? || get_value.nil?
+    end
+
+    Thrift::Union.generate_accessors(self)
+  end
+end
+
 describe 'Serializer' do
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
@@ -138,6 +193,150 @@ describe 'Serializer' do
       allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       deserializer = Thrift::Deserializer.new(protocol_factory)
       expect(deserializer.deserialize(SpecNamespace::Hello.new, "")).to eq(SpecNamespace::Hello.new(:greeting => "Good day"))
+    end
+
+    it "resets absent struct fields and restores defaults before reuse" do
+      target = SpecNamespace::Foo.new
+      first_payload = binary_payload do |protocol|
+        protocol.write_field_begin("simple", Thrift::Types::I32, 1)
+        protocol.write_i32(99)
+        protocol.write_field_end
+        protocol.write_field_begin("opt_string", Thrift::Types::STRING, 7)
+        protocol.write_string("old")
+        protocol.write_field_end
+      end
+      deserializer = Thrift::Deserializer.new
+
+      deserializer.deserialize(target, first_payload)
+      expect(target.simple).to eq(99)
+      expect(target.opt_string).to eq("old")
+      target.ints << 99
+      target.complex = {1 => {"old" => 1.0}}
+
+      mismatched_payload = binary_payload do |protocol|
+        protocol.write_field_begin("simple", Thrift::Types::STRING, 1)
+        protocol.write_string("ignored")
+        protocol.write_field_end
+      end
+      deserializer.deserialize(target, mismatched_payload)
+
+      expect(target.simple).to eq(53)
+      expect(target.ints).to eq([1, 2, 2, 3])
+      expect(target.complex).to be_nil
+      expect(target.opt_string).to be_nil
+    end
+
+    it "does not retain previous struct state when reading fails" do
+      target = SpecNamespace::Foo.new(:simple => 99, :opt_string => "old")
+      payload = binary_payload(finish: false) do |protocol, transport|
+        protocol.write_field_begin("opt_string", Thrift::Types::STRING, 7)
+        transport.write([5].pack('N'))
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(EOFError)
+      expect(target.simple).to eq(53)
+      expect(target.opt_string).to be_nil
+    end
+
+    it "resets fields even when an accessor has the same name as the reset operation" do
+      target = DeserializerResetFixtures::ResetFieldsStruct.new(:reset_fields => "old")
+
+      Thrift::Deserializer.new.deserialize(target, binary_payload)
+
+      expect(target.reset_fields).to be_nil
+    end
+
+    it "does not deserialize into a frozen struct" do
+      target = DeserializerResetFixtures::ResetFieldsStruct.new.freeze
+      payload = binary_payload do |protocol|
+        protocol.write_field_begin("reset_fields", Thrift::Types::STRING, 1)
+        protocol.write_string("new")
+        protocol.write_field_end
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(FrozenError)
+    end
+
+    it "does not satisfy required-field validation with a value from the previous read" do
+      target = DeserializerResetFixtures::RequiredStruct.new(:required_value => "old")
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, binary_payload)
+      }.to raise_error(Thrift::ProtocolException, "Required field required_value is unset!")
+      expect(target.required_value).to be_nil
+    end
+
+    it "does not retain a union variant when the next value has an unknown field" do
+      target = SpecNamespace::TestUnion.new(:string_field, "old")
+      payload = binary_payload do |protocol|
+        protocol.write_field_begin("future", Thrift::Types::I32, 99)
+        protocol.write_i32(1)
+        protocol.write_field_end
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(Thrift::ProtocolException, "Union fields are not set.")
+      expect(target.get_set_field).to be_nil
+      expect(target.get_value).to be_nil
+    end
+
+    it "resets a union when an accessor has the same name as the reset operation" do
+      target = DeserializerResetFixtures::ResetFieldsUnion.new(:reset_fields, "old")
+      payload = binary_payload do |protocol|
+        protocol.write_field_begin("future", Thrift::Types::I32, 99)
+        protocol.write_i32(1)
+        protocol.write_field_end
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(Thrift::ProtocolException, "Union fields are not set.")
+      expect(target.get_set_field).to be_nil
+      expect(target.get_value).to be_nil
+    end
+
+    it "does not deserialize into a frozen union" do
+      target = DeserializerResetFixtures::ResetFieldsUnion.new.freeze
+      payload = binary_payload do |protocol|
+        protocol.write_field_begin("future", Thrift::Types::I32, 99)
+        protocol.write_i32(1)
+        protocol.write_field_end
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(FrozenError)
+    end
+
+    it "does not retain the previous union variant when reading fails" do
+      target = SpecNamespace::TestUnion.new(:string_field, "old")
+      payload = binary_payload(finish: false) do |protocol, transport|
+        protocol.write_field_begin("string_field", Thrift::Types::STRING, 1)
+        transport.write([5].pack('N'))
+      end
+
+      expect {
+        Thrift::Deserializer.new.deserialize(target, payload)
+      }.to raise_error(EOFError)
+      expect(target.get_set_field).to be_nil
+      expect(target.get_value).to be_nil
+    end
+
+    def binary_payload(finish: true)
+      transport = Thrift::MemoryBufferTransport.new
+      protocol = Thrift::BinaryProtocol.new(transport)
+      protocol.write_struct_begin("value")
+      yield protocol, transport if block_given?
+      if finish
+        protocol.write_field_stop
+        protocol.write_struct_end
+      end
+      transport.read(transport.available)
     end
   end
 end

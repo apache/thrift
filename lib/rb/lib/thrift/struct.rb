@@ -82,6 +82,16 @@ module Thrift
     end
 
     def read(iprot)
+      unless instance_variables.empty?
+        defaults = fields_with_default_values
+        struct_fields.each_value do |field_info|
+          instance_variable_set("@#{field_info[:name]}", nil)
+        end
+        defaults.each do |name, default_value|
+          instance_variable_set("@#{name}", (default_value.dup rescue default_value))
+        end
+      end
+
       iprot.read_struct_begin
       loop do
         fname, ftype, fid = iprot.read_field_begin

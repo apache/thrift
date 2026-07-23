@@ -55,6 +55,9 @@ module Thrift
     end
 
     def read(iprot)
+      @setfield = nil
+      @value = nil
+
       iprot.read_struct_begin
       fname, ftype, fid = iprot.read_field_begin
       handle_message(iprot, fid, ftype)
