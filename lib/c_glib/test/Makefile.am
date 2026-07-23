@@ -133,6 +133,7 @@ testbinaryprotocol_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_memory_buffer.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o 
 
 testcompactprotocol_SOURCES = testcompactprotocol.c
