@@ -23,6 +23,8 @@ require 'spec_helper'
 
 describe Thrift::CompactProtocol do
   INTEGER_BOUNDARY_TESTS = {
+    :byte => [-(2**7), (2**7) - 1],
+    :i16 => [-(2**15), (2**15) - 1],
     :i32 => [-(2**31), (2**31) - 1],
     :i64 => [-(2**63), (2**63) - 1]
   }
@@ -98,6 +100,129 @@ describe Thrift::CompactProtocol do
         expect(proto.send(reader(primitive_type))).to eq(value)
       end
     end
+  end
+
+  it "rejects fixed-width integers outside their declared ranges without writing" do
+    INTEGER_BOUNDARY_TESTS.each do |primitive_type, (minimum, maximum)|
+      [minimum - 1, maximum + 1].each do |value|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect { proto.send(writer(primitive_type), value) }.to raise_error(RangeError)
+        expect(trans.available).to eq(0)
+      end
+    end
+  end
+
+  it "rejects non-integer fixed-width values consistently without writing" do
+    INTEGER_BOUNDARY_TESTS.each_key do |primitive_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.send(writer(primitive_type), 1.5) }.to raise_error(TypeError, "integer argument expected")
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "rejects nil fixed-width values consistently without writing" do
+    INTEGER_BOUNDARY_TESTS.each_key do |primitive_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.send(writer(primitive_type), nil) }.to raise_error(StandardError, "nil argument not allowed!")
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "validates field ids before changing protocol state or wire bytes" do
+    [-2**15 - 1, 2**15, 1.5, nil].each do |field_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      proto.write_struct_begin("Value")
+
+      expected_error = field_id.nil? ? StandardError : field_id.is_a?(Integer) ? RangeError : TypeError
+      expect {
+        proto.write_field_begin("value", Thrift::Types::I32, field_id)
+      }.to raise_error(expected_error)
+      expect(trans.available).to eq(0)
+    end
+
+    [-2**15, (2**15) - 1].each do |field_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      proto.write_struct_begin("Value")
+      expect { proto.write_field_begin("value", Thrift::Types::I32, field_id) }.not_to raise_error
+    end
+  end
+
+  it "validates message sequence ids before writing the envelope" do
+    [-2**31 - 1, 2**31, 1.5, nil].each do |sequence_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      expected_error = sequence_id.nil? ? StandardError : sequence_id.is_a?(Integer) ? RangeError : TypeError
+
+      expect {
+        proto.write_message_begin("value", Thrift::MessageTypes::CALL, sequence_id)
+      }.to raise_error(expected_error)
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "writes message types with their exact envelope bytes" do
+    {
+      Thrift::MessageTypes::CALL => 0x21,
+      Thrift::MessageTypes::REPLY => 0x41,
+      Thrift::MessageTypes::EXCEPTION => 0x61,
+      Thrift::MessageTypes::ONEWAY => 0x81,
+      140 => 0x81
+    }.each do |message_type, version_and_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.write_message_begin("", message_type, 0)
+
+      expect(trans.read(trans.available).bytes).to eq([0x82, version_and_type, 0, 0])
+    end
+  end
+
+  it "validates collection sizes before writing their headers" do
+    writers = [
+      [:write_map_begin, [Thrift::Types::STRING, Thrift::Types::I32]],
+      [:write_list_begin, [Thrift::Types::I16]],
+      [:write_set_begin, [Thrift::Types::I16]]
+    ]
+
+    writers.each do |method, arguments|
+      [-1, 2**31, 1.5, nil].each do |size|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+        expected_error = size.nil? ? StandardError : size.is_a?(Integer) ? RangeError : TypeError
+
+        expect { proto.public_send(method, *arguments, size) }.to raise_error(expected_error)
+        expect(trans.available).to eq(0)
+      end
+
+      [0, (2**31) - 1].each do |size|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+        expect { proto.public_send(method, *arguments, size) }.not_to raise_error
+      end
+    end
+  end
+
+  it "does not append rejected integers after field and collection headers" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+    proto.write_struct_begin("Value")
+    proto.write_field_begin("value", Thrift::Types::I16, 1)
+    field_header_size = trans.available
+    expect { proto.write_i16(2**15) }.to raise_error(RangeError)
+    expect(trans.available).to eq(field_header_size)
+
+    proto.write_list_begin(Thrift::Types::I32, 1)
+    list_header_size = trans.available
+    expect { proto.write_i32(2**31) }.to raise_error(RangeError)
+    expect(trans.available).to eq(list_header_size)
   end
 
   it "should encode signed integer minima with the canonical zigzag varint bytes" do
@@ -331,6 +456,15 @@ describe Thrift::CompactProtocol do
     struct2 = Thrift::Test::SingleMapTestStruct.new
     deser.deserialize(struct2, bytes)
     expect(struct).to eq(struct2)
+  end
+
+  it "should not resolve omitted types when writing an empty map" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+
+    proto.write_map_begin(nil, nil, 0)
+
+    expect(trans.read(trans.available)).to eq("\x00".b)
   end
 
   it "should provide a reasonable to_s" do

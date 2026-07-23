@@ -29,6 +29,14 @@ module Thrift
     TYPE_SHIFT_AMOUNT = 5
     MAX_VARINT32_BYTES = 5  # ceil(32/7); matches protobuf wire format
     MAX_VARINT_BYTES = 10   # ceil(64/7); matches protobuf wire format
+    BYTE_MIN = -(2**7)
+    BYTE_MAX = (2**7) - 1
+    I16_MIN = -(2**15)
+    I16_MAX = (2**15) - 1
+    I32_MIN = -(2**31)
+    I32_MAX = (2**31) - 1
+    I64_MIN = -(2**63)
+    I64_MAX = (2**63) - 1
 
     TSTOP = [nil, Types::STOP, 0]
 
@@ -119,8 +127,14 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
-      write_byte(PROTOCOL_ID)
-      write_byte((VERSION & VERSION_MASK) | ((type << TYPE_SHIFT_AMOUNT) & TYPE_MASK))
+      unless seqid.is_a?(Integer)
+        raise 'nil argument not allowed!' if seqid.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if seqid < I32_MIN || seqid > I32_MAX
+
+      write_byte_direct(PROTOCOL_ID)
+      write_byte_direct((VERSION & VERSION_MASK) | ((type << TYPE_SHIFT_AMOUNT) & TYPE_MASK))
       write_varint32(message_seqid_to_varint32(seqid))
       write_string(name)
       nil
@@ -137,6 +151,12 @@ module Thrift
     end
 
     def write_field_begin(name, type, id)
+      unless id.is_a?(Integer)
+        raise 'nil argument not allowed!' if id.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if id < I16_MIN || id > I16_MAX
+
       if type == Types::BOOL
         # we want to possibly include the value, so we'll wait.
         @boolean_field = [type, id]
@@ -155,16 +175,16 @@ module Thrift
       last_id = @last_field.pop
 
       # if there's a type override, use that.
-      typeToWrite = type_override || CompactTypes.get_compact_type(type)
+      type_to_write = type_override || CompactTypes.get_compact_type(type)
 
       # check if we can use delta encoding for the field id
       if id > last_id && id - last_id <= 15
         # write them together
-        write_byte((id - last_id) << 4 | typeToWrite)
+        write_byte_direct((id - last_id) << 4 | type_to_write)
       else
         # write them separate
-        write_byte(typeToWrite)
-        write_i16(id)
+        write_byte_direct(type_to_write)
+        write_varint32(int_to_zig_zag(id))
       end
 
       @last_field.push(id)
@@ -172,15 +192,16 @@ module Thrift
     end
 
     def write_field_stop
-      write_byte(Types::STOP)
+      write_byte_direct(Types::STOP)
     end
 
     def write_map_begin(ktype, vtype, size)
+      size = validate_size(size)
       if (size == 0)
-        write_byte(0)
+        write_byte_direct(0)
       else
         write_varint32(size)
-        write_byte(CompactTypes.get_compact_type(ktype) << 4 | CompactTypes.get_compact_type(vtype))
+        write_byte_direct(CompactTypes.get_compact_type(ktype) << 4 | CompactTypes.get_compact_type(vtype))
       end
     end
 
@@ -201,23 +222,47 @@ module Thrift
         @boolean_field = nil
       else
         # we're not part of a field, so just write the value.
-        write_byte(type)
+        write_byte_direct(type)
       end
     end
 
     def write_byte(byte)
-      @trans.write([byte].pack('c'))
+      unless byte.is_a?(Integer)
+        raise 'nil argument not allowed!' if byte.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if byte < BYTE_MIN || byte > BYTE_MAX
+
+      write_byte_direct(byte)
     end
 
     def write_i16(i16)
+      unless i16.is_a?(Integer)
+        raise 'nil argument not allowed!' if i16.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if i16 < I16_MIN || i16 > I16_MAX
+
       write_varint32(int_to_zig_zag(i16))
     end
 
     def write_i32(i32)
+      unless i32.is_a?(Integer)
+        raise 'nil argument not allowed!' if i32.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if i32 < I32_MIN || i32 > I32_MAX
+
       write_varint32(int_to_zig_zag(i32))
     end
 
     def write_i64(i64)
+      unless i64.is_a?(Integer)
+        raise 'nil argument not allowed!' if i64.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if i64 < I64_MIN || i64 > I64_MAX
+
       write_varint64(long_to_zig_zag(i64))
     end
 
@@ -231,7 +276,8 @@ module Thrift
     end
 
     def write_binary(buf)
-      write_varint32(buf.bytesize)
+      size = validate_size(buf.bytesize)
+      write_varint32(size)
       @trans.write(buf)
     end
 
@@ -389,44 +435,51 @@ module Thrift
     # the wire differ only by the type indicator.
     #
     def write_collection_begin(elem_type, size)
+      size = validate_size(size)
+      compact_type = CompactTypes.get_compact_type(elem_type)
       if size <= 14
-        write_byte(size << 4 | CompactTypes.get_compact_type(elem_type))
+        write_byte_direct(size << 4 | compact_type)
       else
-        write_byte(0xf0 | CompactTypes.get_compact_type(elem_type))
+        write_byte_direct(0xf0 | compact_type)
         write_varint32(size)
       end
     end
 
+    def write_byte_direct(byte)
+      @trans.write([byte].pack('C'))
+    end
+
     def write_varint32(n)
-      # int idx = 0;
-      while true
-        if (n & ~0x7F) == 0
-          # i32buf[idx++] = (byte)n;
-          write_byte(n)
-          break
-          # return;
-        else
-          # i32buf[idx++] = (byte)((n & 0x7F) | 0x80);
-          write_byte((n & 0x7F) | 0x80)
-          n = n >> 7
-        end
+      if (n & ~0x7F) == 0
+        write_byte_direct(n)
+        return
       end
-      # trans_.write(i32buf, 0, idx);
+
+      buffer = String.new(capacity: MAX_VARINT32_BYTES, encoding: Encoding::BINARY)
+      while (n & ~0x7F) != 0
+        buffer << ((n & 0x7F) | 0x80)
+        n >>= 7
+      end
+      buffer << n
+      @trans.write(buffer)
     end
 
     SEVEN_BIT_MASK = 0x7F
     EVERYTHING_ELSE_MASK = ~SEVEN_BIT_MASK
 
     def write_varint64(n)
-      while true
-        if (n & EVERYTHING_ELSE_MASK) == 0 # TODO need to find a way to make this into a long...
-          write_byte(n)
-          break
-        else
-          write_byte((n & SEVEN_BIT_MASK) | 0x80)
-          n >>= 7
-        end
+      if (n & EVERYTHING_ELSE_MASK) == 0
+        write_byte_direct(n)
+        return
       end
+
+      buffer = String.new(capacity: MAX_VARINT_BYTES, encoding: Encoding::BINARY)
+      while (n & EVERYTHING_ELSE_MASK) != 0
+        buffer << ((n & SEVEN_BIT_MASK) | 0x80)
+        n >>= 7
+      end
+      buffer << n
+      @trans.write(buffer)
     end
 
     def read_varint32()
@@ -471,11 +524,17 @@ module Thrift
     end
 
     def message_seqid_to_varint32(seqid)
-      if seqid < -(2**31) || seqid > (2**31) - 1
-        raise RangeError, "seqid must be a signed int32"
-      end
-
       seqid < 0 ? seqid + (2**32) : seqid
+    end
+
+    def validate_size(size)
+      unless size.is_a?(Integer)
+        raise 'nil argument not allowed!' if size.nil?
+        raise ::TypeError, 'integer argument expected'
+      end
+      raise RangeError if size < 0 || size > I32_MAX
+
+      size
     end
 
     def message_seqid_from_varint32(seqid)
