@@ -136,6 +136,35 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should reject unknown field and container types as invalid protocol data" do
+    {
+      :read_field_begin => [0x1e],
+      :read_list_begin => [0x1e]
+    }.each do |reader_method, bytes|
+      trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.public_send(reader_method) }.to raise_error(Thrift::ProtocolException, "Unknown compact type: 14") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+    end
+  end
+
+  it "should report the original unknown type when writing fields and containers" do
+    {
+      :write_field_begin => [nil, 99, 1],
+      :write_list_begin => [99, 1]
+    }.each do |writer_method, args|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.public_send(writer_method, *args) }.to raise_error(Thrift::ProtocolException, "Unknown compact type: 99") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+      expect(trans.available).to eq(0)
+    end
+  end
+
   it "should decode i32 minima from direct canonical zigzag bytes" do
     trans = Thrift::MemoryBufferTransport.new
     trans.write(INTEGER_MINIMUM_ENCODINGS[:i32].pack("C*"))

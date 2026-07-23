@@ -89,14 +89,22 @@ module Thrift
 
       def self.get_ttype(compact_type)
         val = COMPACT_TO_TTYPE[compact_type & 0x0f]
-        raise "don't know what type: #{compact_type & 0x0f}" unless val
-        val
+        return val if val
+
+        raise ProtocolException.new(
+          ProtocolException::INVALID_DATA,
+          "Unknown compact type: #{compact_type & 0x0f}"
+        )
       end
 
       def self.get_compact_type(ttype)
         val = TTYPE_TO_COMPACT[ttype]
-        raise "don't know what type: #{ttype & 0x0f}" unless val
-        val
+        return val if val
+
+        raise ProtocolException.new(
+          ProtocolException::INVALID_DATA,
+          "Unknown compact type: #{ttype}"
+        )
       end
     end
 

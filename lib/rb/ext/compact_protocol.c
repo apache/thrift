@@ -92,10 +92,11 @@ static int get_compact_type(VALUE type_value) {
   } else if (type == TTYPE_UUID) {
     return CTYPE_UUID;
   } else {
-    char str[50];
-    sprintf(str, "don't know what type: %d", type);
-    rb_raise(rb_eStandardError, "%s", str);
-    return 0;
+    rb_exc_raise(get_protocol_exception(
+      INT2FIX(PROTOERR_INVALID_DATA),
+      rb_sprintf("Unknown compact type: %d", type)
+    ));
+    return 0; /* unreachable */
   }
 }
 
@@ -416,10 +417,11 @@ static int8_t get_ttype(int8_t ctype) {
   } else if (ctype == CTYPE_UUID) {
     return TTYPE_UUID;
   } else {
-    char str[50];
-    sprintf(str, "don't know what type: %d", ctype);
-    rb_raise(rb_eStandardError, "%s", str);
-    return 0;
+    rb_exc_raise(get_protocol_exception(
+      INT2FIX(PROTOERR_INVALID_DATA),
+      rb_sprintf("Unknown compact type: %d", ctype)
+    ));
+    return 0; /* unreachable */
   }
 }
 

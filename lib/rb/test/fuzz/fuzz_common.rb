@@ -31,16 +31,11 @@ require 'ruzzy'
 
 def ignorable_fuzz_exception?(error)
   return true if error.is_a?(Thrift::ProtocolException) ||
-    error.is_a?(EOFError) ||
-    error.is_a?(Encoding::UndefinedConversionError)
+    error.is_a?(EOFError)
 
   [
-    /don't know what (?:c)?type/,
-    /Too many fields for union/,
     /too big to convert to '(?:int|long)'/,
-    /bignum too big to convert into 'long'/,
-    /negative array size/,
-    /Union fields are not set/
+    /bignum too big to convert into 'long'/
   ].any? { |pattern| error.message =~ pattern }
 end
 

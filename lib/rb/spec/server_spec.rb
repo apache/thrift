@@ -19,6 +19,7 @@
 #
 require 'spec_helper'
 require 'openssl'
+require 'timeout'
 
 describe 'Server' do
   describe Thrift::BaseServer do
@@ -49,6 +50,31 @@ describe 'Server' do
   end
 
   describe Thrift::SimpleServer do
+    class EphemeralServerSocket < Thrift::ServerSocket
+      def initialize(ready)
+        super('127.0.0.1', 0)
+        @ready = ready
+      end
+
+      def listen
+        super
+        @ready << handle.addr[1]
+      end
+    end
+
+    class StopAfterVoidHandler
+      attr_reader :calls
+
+      def initialize
+        @calls = 0
+      end
+
+      def voidMethod
+        @calls += 1
+        throw :stop
+      end
+    end
+
     before(:each) do
       @processor = double("Processor")
       @serverTrans = double("ServerTransport")
@@ -105,6 +131,62 @@ describe 'Server' do
       expect(@trans).to receive(:close).once
       expect(@serverTrans).to receive(:close).ordered
       expect { @server.serve }.to throw_symbol(:stop)
+    end
+
+    {
+      Thrift::CompactProtocolFactory.new => proc do
+        trans = Thrift::MemoryBufferTransport.new
+        prot = Thrift::CompactProtocol.new(trans)
+        prot.write_message_begin('unknown', Thrift::MessageTypes::CALL, 1)
+        trans.write([0x1e, 0].pack('C*'))
+        trans.read(trans.available)
+      end,
+      Thrift::JsonProtocolFactory.new => proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }
+    }.each do |protocol_factory, malformed_request|
+      it "closes a malformed #{protocol_factory} connection and continues accepting clients" do
+        ready = Queue.new
+        errors = Queue.new
+        server_transport = EphemeralServerSocket.new(ready)
+        handler = StopAfterVoidHandler.new
+        processor = Thrift::Test::Srv::Processor.new(handler)
+        server = Thrift::SimpleServer.new(processor, server_transport, nil, protocol_factory)
+        server_thread = Thread.new do
+          catch(:stop) { server.serve }
+        rescue StandardError, ScriptError => error
+          errors << error
+        end
+        server_thread.report_on_exception = false
+
+        port = Timeout.timeout(2) { ready.pop }
+        malformed_client = TCPSocket.new('127.0.0.1', port)
+        malformed_client.write(malformed_request.call)
+        malformed_client.close_write
+
+        expect(IO.select([malformed_client], nil, nil, 2)).not_to be_nil
+        peer_closed = begin
+          malformed_client.readpartial(1)
+          false
+        rescue EOFError, Errno::ECONNRESET
+          true
+        end
+        expect(peer_closed).to be(true)
+        expect(server_thread).to be_alive
+
+        valid_transport = Thrift::Socket.new('127.0.0.1', port)
+        valid_transport.open
+        valid_protocol = protocol_factory.get_protocol(valid_transport)
+        Thrift::Test::Srv::Client.new(valid_protocol).send_voidMethod
+
+        expect(server_thread.join(2)).to eq(server_thread)
+        expect(handler.calls).to eq(1)
+        expect(errors).to be_empty
+      ensure
+        malformed_client&.close
+        valid_transport&.close
+        server_transport&.close
+        server_thread&.kill
+        server_thread&.join
+      end
     end
   end
 
