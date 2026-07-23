@@ -229,9 +229,9 @@ describe "The maximum string size in the JSON protocol" do
   end
 
   it "reads a number at the maximum" do
-    digits = "1" * 32
+    digits = ((2**63) - 1).to_s
     trans = transport_with(digits + " ")
-    expect(Thrift::JsonProtocol.new(trans, max_string_size: 32).read_i64).to eq(digits.to_i)
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: digits.bytesize).read_i64).to eq(digits.to_i)
   end
 
   it "refuses a base64 value over a lowered maximum near the maximum" do

@@ -440,13 +440,97 @@ describe "JsonProtocol" do
     end
 
     it "should write i32" do
-      @prot.write_i32(3000000000)
-      expect(@trans.read(@trans.available)).to eq("3000000000")
+      @prot.write_i32(2_000_000_000)
+      expect(@trans.read(@trans.available)).to eq("2000000000")
     end
 
     it "should write i64" do
       @prot.write_i64(6000000000)
       expect(@trans.read(@trans.available)).to eq("6000000000")
+    end
+
+    it "enforces signed Thrift integer ranges before writing" do
+      {
+        write_byte: [-(2**7), (2**7) - 1],
+        write_i16: [-(2**15), (2**15) - 1],
+        write_i32: [-(2**31), (2**31) - 1],
+        write_i64: [-(2**63), (2**63) - 1],
+      }.each do |method, (minimum, maximum)|
+        [minimum, maximum].each do |value|
+          trans = Thrift::MemoryBufferTransport.new
+          protocol = Thrift::JsonProtocol.new(trans)
+
+          protocol.public_send(method, value)
+
+          expect(trans.read(trans.available)).to eq(value.to_s)
+        end
+
+        [minimum - 1, maximum + 1].each do |value|
+          trans = Thrift::MemoryBufferTransport.new
+          protocol = Thrift::JsonProtocol.new(trans)
+
+          expect { protocol.public_send(method, value) }.to raise_error(RangeError)
+          expect(trans.available).to eq(0)
+        end
+      end
+    end
+
+    it "does not advance field or collection output after rejecting an integer" do
+      @prot.write_struct_begin("Struct")
+      @prot.write_field_begin("value", Thrift::Types::I16, 1)
+      field_bytes = @trans.available
+
+      expect { @prot.write_i16(2**15) }.to raise_error(RangeError)
+      expect(@trans.available).to eq(field_bytes)
+
+      trans = Thrift::MemoryBufferTransport.new
+      protocol = Thrift::JsonProtocol.new(trans)
+      protocol.write_list_begin(Thrift::Types::I16, 1)
+      collection_bytes = trans.available
+
+      expect { protocol.write_i16(-(2**15) - 1) }.to raise_error(RangeError)
+      expect(trans.available).to eq(collection_bytes)
+    end
+
+    {nil: nil, string: "1", float: 1.0, boolean: true, object: Object.new}.each do |label, value|
+      it "rejects #{label} integer arguments with Ruby TypeError before writing" do
+        calls = [
+          [:write_byte, []], [:write_i16, []], [:write_i32, []], [:write_i64, []],
+          [:write_message_begin, ["method", Thrift::MessageTypes::CALL]],
+          [:write_field_begin, ["field", Thrift::Types::I16]],
+          [:write_map_begin, [Thrift::Types::I16, Thrift::Types::I16]],
+          [:write_list_begin, [Thrift::Types::I16]],
+          [:write_set_begin, [Thrift::Types::I16]],
+        ]
+        calls.each do |method, arguments|
+          transport = Thrift::MemoryBufferTransport.new
+          protocol = Thrift::JsonProtocol.new(transport)
+
+          expect { protocol.public_send(method, *arguments, value) }.to raise_error(::TypeError) do |error|
+            expect(error.class).to eq(::TypeError)
+            expect(error.message).to eq("integer argument expected")
+          end
+          expect(transport.available).to eq(0)
+        end
+      end
+    end
+
+    it "validates integer metadata ranges before writing any output" do
+      [
+        [:write_message_begin, ["method", Thrift::MessageTypes::CALL], -(2**31), (2**31) - 1],
+        [:write_field_begin, ["field", Thrift::Types::I16], -(2**15), (2**15) - 1],
+        [:write_map_begin, [Thrift::Types::I16, Thrift::Types::I16], 0, (2**31) - 1],
+        [:write_list_begin, [Thrift::Types::I16], 0, (2**31) - 1],
+        [:write_set_begin, [Thrift::Types::I16], 0, (2**31) - 1],
+      ].each do |method, arguments, minimum, maximum|
+        [minimum - 1, maximum + 1].each do |value|
+          transport = Thrift::MemoryBufferTransport.new
+          protocol = Thrift::JsonProtocol.new(transport)
+
+          expect { protocol.public_send(method, *arguments, value) }.to raise_error(RangeError)
+          expect(transport.available).to eq(0)
+        end
+      end
     end
 
     it "should write double" do
@@ -712,6 +796,90 @@ describe "JsonProtocol" do
       expect(@prot.read_json_integer).to eq(1453)
     end
 
+    it "rejects non-canonical JSON integer spellings" do
+      %w[+1 01 00 -01 -00 - --1 1.0 1e2 .5 1+2].each do |wire|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{wire}]"))
+
+        expect { protocol.read_json_integer }.to raise_error(Thrift::ProtocolException) do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        end
+      end
+    end
+
+    it "accepts the complete JSON number grammar for doubles" do
+      {
+        "0" => 0.0,
+        "-0" => -0.0,
+        "0.0" => 0.0,
+        "1.25" => 1.25,
+        "1e2" => 100.0,
+        "1e+2" => 100.0,
+        "-1.25E-3" => -0.00125,
+      }.each do |wire, value|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{wire}]"))
+
+        expect(protocol.read_json_double).to eq(value)
+      end
+    end
+
+    it "rejects non-JSON double spellings" do
+      %w[+1 01 00 -01 -00 .5 1. 1e 1e+ --1 1..2 1e2e3].each do |wire|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{wire}]"))
+
+        expect { protocol.read_json_double }.to raise_error(Thrift::ProtocolException) do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        end
+      end
+    end
+
+    it "preserves quoted JSON numbers for map keys" do
+      @trans.write('["i16","i16",1,{"1":2}]')
+
+      expect(@prot.read_map_begin).to eq([Thrift::Types::I16, Thrift::Types::I16, 1])
+      expect(@prot.read_i16).to eq(1)
+      expect(@prot.read_i16).to eq(2)
+      expect(@prot.read_map_end).to be_nil
+    end
+
+    it "validates the grammar of quoted integer and double map keys" do
+      {
+        "i16" => [:read_i16, %w[+1 01 1.0 1e2]],
+        "dbl" => [:read_double, %w[+1 01 .5 1. 1e+]],
+      }.each do |type, (method, invalid_keys)|
+        invalid_keys.each do |key|
+          protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("[\"#{type}\",\"i16\",1,{\"#{key}\":2}]"))
+          protocol.read_map_begin
+
+          expect { protocol.public_send(method) }.to raise_error(Thrift::ProtocolException) do |error|
+            expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+          end
+        end
+      end
+
+      @trans.write('["dbl","i16",1,{"-1.25E+2":2}]')
+      @prot.read_map_begin
+      expect(@prot.read_double).to eq(-125.0)
+      expect(@prot.read_i16).to eq(2)
+      expect(@prot.read_map_end).to be_nil
+    end
+
+    it "can resume at the next list value after rejecting a malformed number" do
+      @trans.write('["i16",2,+1,2]')
+      expect(@prot.read_list_begin).to eq([Thrift::Types::I16, 2])
+
+      expect { @prot.read_i16 }.to raise_error(Thrift::ProtocolException)
+      expect(@prot.read_i16).to eq(2)
+      expect(@prot.read_list_end).to be_nil
+    end
+
+    it "rejects a malformed number terminator when the enclosing value ends" do
+      @trans.write('["i16",1,1x]')
+      expect(@prot.read_list_begin).to eq([Thrift::Types::I16, 1])
+      expect(@prot.read_i16).to eq(1)
+
+      expect { @prot.read_list_end }.to raise_error(Thrift::ProtocolException)
+    end
+
     it "should read json double" do
       @trans.write("1.45e3e01\"\"")
       expect { @prot.read_json_double }.to raise_error(Thrift::ProtocolException)
@@ -860,12 +1028,11 @@ describe "JsonProtocol" do
     end
 
     it "should read bool" do
-      @trans.write("0\"\"")
-      expect(@prot.read_bool).to eq(false)
-      @prot.read_string
+      [0, 1, -1, 128, -129].each do |value|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{value}]"))
 
-      @trans.write("1\"\"")
-      expect(@prot.read_bool).to eq(true)
+        expect(protocol.read_bool).to eq(value != 0)
+      end
     end
 
     it "should read byte" do
@@ -879,13 +1046,77 @@ describe "JsonProtocol" do
     end
 
     it "should read i32" do
-      @trans.write("3000000000\"\"")
-      expect(@prot.read_i32).to eq(3000000000)
+      @trans.write("2000000000\"\"")
+      expect(@prot.read_i32).to eq(2000000000)
     end
 
     it "should read i64" do
       @trans.write("6000000000\"\"")
       expect(@prot.read_i64).to eq(6000000000)
+    end
+
+    it "enforces signed Thrift integer ranges while reading" do
+      {
+        read_byte: [-(2**7), (2**7) - 1],
+        read_i16: [-(2**15), (2**15) - 1],
+        read_i32: [-(2**31), (2**31) - 1],
+        read_i64: [-(2**63), (2**63) - 1],
+      }.each do |method, (minimum, maximum)|
+        [minimum, maximum].each do |value|
+          protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{value}]"))
+
+          expect(protocol.public_send(method)).to eq(value)
+        end
+
+        [minimum - 1, maximum + 1].each do |value|
+          protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("#{value}]"))
+
+          expect { protocol.public_send(method) }.to raise_error(Thrift::ProtocolException) do |error|
+            expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+          end
+        end
+      end
+    end
+
+    it "preserves the typed errors for invalid collection sizes" do
+      {
+        read_map_begin: '["i16","i16",%d,{}]',
+        read_list_begin: '["i16",%d]',
+        read_set_begin: '["i16",%d]',
+      }.each do |method, wire|
+        {
+          -(2**31) - 1 => Thrift::ProtocolException::NEGATIVE_SIZE,
+          -1 => Thrift::ProtocolException::NEGATIVE_SIZE,
+          2**31 => Thrift::ProtocolException::SIZE_LIMIT,
+        }.each do |size, type|
+          protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire % size))
+
+          expect { protocol.public_send(method) }.to raise_error(Thrift::ProtocolException) do |error|
+            expect(error.type).to eq(type)
+          end
+        end
+      end
+    end
+
+    it "validates field and sequence IDs at their declared widths" do
+      [-32768, 32767].each do |id|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("{\"#{id}\":{\"i16\":0}}"))
+        protocol.read_struct_begin
+        expect(protocol.read_field_begin).to eq([nil, Thrift::Types::I16, id])
+      end
+      [-32769, 32768].each do |id|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("{\"#{id}\":{\"i16\":0}}"))
+        protocol.read_struct_begin
+        expect { protocol.read_field_begin }.to raise_error(Thrift::ProtocolException)
+      end
+      [-(2**31), (2**31) - 1].each do |seqid|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("[1,\"method\",1,#{seqid},{}]"))
+        expect(protocol.read_message_begin).to eq(["method", Thrift::MessageTypes::CALL, seqid])
+      end
+      [-(2**31) - 1, 2**31].each do |seqid|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new("[1,\"method\",1,#{seqid},{}]"))
+        expect { protocol.read_message_begin }.to raise_error(Thrift::ProtocolException)
+      end
     end
 
     it "should read double" do
