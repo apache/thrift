@@ -49,7 +49,12 @@ module Thrift
           Thread.new do
             begin
               loop do
-                client = @server_transport.accept
+                begin
+                  client = @server_transport.accept
+                rescue => e
+                  next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+                  raise
+                end
                 trans = @transport_factory.get_transport(client)
                 prot = @protocol_factory.get_protocol(trans)
                 begin
