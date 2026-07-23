@@ -20,6 +20,42 @@
 
 require 'spec_helper'
 
+module SerializerFailureFixtures
+  class Value
+    def initialize(stage, error)
+      @stage = stage
+      @error = error
+    end
+
+    def write(protocol)
+      case @stage
+      when :message
+        protocol.write_message_begin("broken", Thrift::MessageTypes::CALL, 1)
+      when :struct
+        protocol.write_struct_begin("Broken")
+      when :field
+        protocol.write_struct_begin("Broken")
+        protocol.write_field_begin("value", Thrift::Types::STRING, 1)
+      when :list
+        protocol.write_struct_begin("Broken")
+        protocol.write_field_begin("value", Thrift::Types::LIST, 1)
+        protocol.write_list_begin(Thrift::Types::STRING, 1)
+      when :set
+        protocol.write_struct_begin("Broken")
+        protocol.write_field_begin("value", Thrift::Types::SET, 1)
+        protocol.write_set_begin(Thrift::Types::STRING, 1)
+      when :nested_map
+        protocol.write_struct_begin("Broken")
+        protocol.write_field_begin("value", Thrift::Types::MAP, 1)
+        protocol.write_map_begin(Thrift::Types::STRING, Thrift::Types::LIST, 1)
+        protocol.write_string("key")
+        protocol.write_list_begin(Thrift::Types::STRING, 1)
+      end
+      raise @error
+    end
+  end
+end
+
 describe 'Serializer' do
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
@@ -40,6 +76,46 @@ describe 'Serializer' do
       allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       serializer = Thrift::Serializer.new(protocol_factory)
       serializer.serialize(SpecNamespace::Hello.new(:greeting => "Good day"))
+    end
+
+    [:message, :struct, :field, :list, :set, :nested_map].each do |stage|
+      it "isolates JSON protocol state after a #{stage} write failure" do
+        serializer = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new)
+        value = SpecNamespace::Hello.new(:greeting => "Good day")
+        expected = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value)
+        error = RuntimeError.new("failed at #{stage}")
+
+        expect {
+          serializer.serialize(SerializerFailureFixtures::Value.new(stage, error))
+        }.to raise_error { |raised| expect(raised).to equal(error) }
+
+        2.times do
+          data = serializer.serialize(value)
+          expect(data).to eq(expected)
+          expect(
+            Thrift::Deserializer.new(Thrift::JsonProtocolFactory.new).deserialize(
+              SpecNamespace::Hello.new,
+              data
+            )
+          ).to eq(value)
+        end
+      end
+    end
+
+    it "recovers after repeated JSON serialization failures" do
+      serializer = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new)
+      value = SpecNamespace::Hello.new(:greeting => "recovered")
+
+      [:field, :nested_map].each do |stage|
+        error = RuntimeError.new("failed at #{stage}")
+        expect {
+          serializer.serialize(SerializerFailureFixtures::Value.new(stage, error))
+        }.to raise_error { |raised| expect(raised).to equal(error) }
+      end
+
+      expect(serializer.serialize(value)).to eq(
+        Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value)
+      )
     end
   end
 

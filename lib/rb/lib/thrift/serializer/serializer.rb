@@ -21,14 +21,19 @@
 module Thrift
   class Serializer
     def initialize(protocol_factory = BinaryProtocolFactory.new)
+      @protocol_factory = protocol_factory
       @transport = MemoryBufferTransport.new
       @protocol = protocol_factory.get_protocol(@transport)
     end
 
     def serialize(base)
       @transport.reset_buffer
+      @protocol ||= @protocol_factory.get_protocol(@transport)
       base.write(@protocol)
       @transport.read(@transport.available)
+    rescue
+      @protocol = nil
+      raise
     end
   end
 end
