@@ -158,6 +158,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   /**
    * Program-level generation functions
@@ -470,7 +472,17 @@ private:
    * Whether to generate getters and setters
    */
   bool getters_setters_;
+
+  const std::string gen_name_ = "php";
 };
+
+const std::string& t_php_generator::get_gen_name() const {
+  return gen_name_;
+}
+
+std::string t_php_generator::get_namespace(t_type *type) {
+  return php_namespace(type->get_program());
+}
 
 std::set<std::string> t_php_generator::lang_keywords_for_validation() const {
   std::string keywords[] = { "BEGIN", "END", "__CLASS__", "__DIR__", "__FILE__", "__FUNCTION__",

@@ -160,6 +160,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   /**
    * Program-level generation functions
@@ -478,7 +479,13 @@ private:
   ofstream_with_content_based_conditional_update f_service_;
   ofstream_with_content_based_conditional_update f_types_ts_;
   ofstream_with_content_based_conditional_update f_service_ts_;
+
+  const std::string gen_name_ = "js";
 };
+
+const std::string& t_js_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

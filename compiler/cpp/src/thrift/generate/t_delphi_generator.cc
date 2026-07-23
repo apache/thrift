@@ -110,6 +110,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -359,7 +360,6 @@ public:
            " *)\n";
   }
 
-  string replace_all(string contents, string search, string replace);
   string xml_encode(string contents);
   string xmldoc_encode(string contents);
   string xmlattrib_encode(string contents);
@@ -468,24 +468,12 @@ private:
     return ind;
   };
   std::ostream& indent_impl(std::ostream& os) { return os << indent_impl(); };
+
+  const std::string gen_name_ = "delphi";
 };
 
-string t_delphi_generator::replace_all(string contents, string search, string repl) {
-  string str(contents);
-
-  size_t slen = search.length();
-  size_t rlen = repl.length();
-  size_t incr = (rlen > 0) ? rlen : 1;
-
-  if (slen > 0) {
-    size_t found = str.find(search);
-    while ((found != string::npos) && (found < str.length())) {
-      str.replace(found, slen, repl);
-      found = str.find(search, found + incr);
-    }
-  }
-
-  return str;
+const std::string& t_delphi_generator::get_gen_name() const {
+  return gen_name_;
 }
 
 // XML encoding

@@ -68,6 +68,7 @@ public:
     out_dir_base_ = "gen-d";
   }
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
 protected:
 
@@ -367,6 +368,9 @@ protected:
   }
 
 private:
+
+  const std::string gen_name_ = "d";
+  
   /**
    * Writes a server skeleton for the passed service to out.
    */
@@ -778,5 +782,9 @@ std::string t_d_generator::display_name() const {
   return "D";
 }
 
+
+const std::string& t_d_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 THRIFT_REGISTER_GENERATOR(d, "D", "")

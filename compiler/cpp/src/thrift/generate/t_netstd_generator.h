@@ -78,6 +78,7 @@ public:
   void generate_struct(t_struct* tstruct) override;
   void generate_xception(t_struct* txception) override;
   void generate_service(t_service* tservice) override;
+  const std::string& get_gen_name() const override;
 
   // additional files
   void generate_extensions_file();
@@ -226,4 +227,6 @@ private:
   string nullable_field_suffix(t_field* tfield);  // depends on field type
   string nullable_field_suffix(t_type* ttype);  // depends on field type
   string nullable_value_access(t_type* ttype);  // depends on field type
+
+  const std::string gen_name_ = "netstd";
 };

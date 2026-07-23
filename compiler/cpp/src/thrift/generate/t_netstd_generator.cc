@@ -47,6 +47,10 @@ using std::vector;
 //TODO: check for indentation
 //TODO: Do we need seqId_ in generation?
 
+const std::string& t_netstd_generator::get_gen_name() const {
+    return gen_name_;
+}
+
 t_netstd_generator::t_netstd_generator(t_program* program, const map<string, string>& parsed_options, const string& option_string)
     : t_oop_generator(program)
 {
@@ -3958,6 +3962,21 @@ void t_netstd_generator::generate_netstd_doc(ostream& out, t_function* tfunction
                 ps << str;
             }
             ps << "</param>";
+        }
+
+        const vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+        vector<t_field*>::const_iterator e_iter;
+        for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter)
+        {
+            t_field* e = *e_iter;
+            ps << '\n' << "<exception cref=\"" << type_name(e->get_type()) << "\">";
+            if (e->has_doc())
+            {
+                string str = e->get_doc();
+                str.erase(remove(str.begin(), str.end(), '\n'), str.end());
+                ps << str;
+            }
+            ps << "</exception>";
         }
 
         docstring_comment(out,

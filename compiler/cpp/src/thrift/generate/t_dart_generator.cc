@@ -95,25 +95,6 @@ public:
     indent(out) << "}" << postfix;
   }
 
-  string replace_all(string contents, string search, string repl) {
-    string str(contents);
-
-    size_t slen = search.length();
-    size_t rlen = repl.length();
-    size_t incr = (rlen > 0) ? rlen : 1;
-
-    if (slen > 0) {
-      size_t found = str.find(search);
-      while ((found != string::npos) && (found < str.length())) {
-        str.replace(found, slen, repl);
-        found = str.find(search, found + incr);
-      }
-    }
-
-    return str;
-  }
-
-
   /**
    * Init and close methods
    */
@@ -121,6 +102,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   void export_class_to_library(string file_name, string class_name);
 
@@ -279,7 +261,13 @@ private:
   std::string base_dir_;
   std::string src_dir_;
   std::string library_exports_;
+  
+  const std::string gen_name_ = "dart";
 };
+
+const std::string& t_dart_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

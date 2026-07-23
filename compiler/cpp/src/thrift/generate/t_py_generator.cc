@@ -250,6 +250,10 @@ public:
                                  t_doc* tdoc,
                                  t_struct* tstruct,
                                  const char* subheader);
+  void generate_python_params_docstring(ostream& ss,
+                                        t_struct* tstruct,
+                                        bool* has_doc,
+                                        const char* subheader);
 
   void generate_python_docstring(std::ostream& out, t_doc* tdoc);
 
@@ -2722,7 +2726,17 @@ void t_py_generator::generate_python_docstring(ostream& out, t_struct* tstruct) 
  * Generates the docstring for a given function.
  */
 void t_py_generator::generate_python_docstring(ostream& out, t_function* tfunction) {
-  generate_python_docstring(out, tfunction, tfunction->get_arglist(), "Parameters");
+  bool has_doc = false;
+  stringstream ss;
+  if (tfunction->has_doc()) {
+    has_doc = true;
+    ss << tfunction->get_doc();
+  }
+  generate_python_params_docstring(ss, tfunction->get_arglist(), &has_doc, "Parameters");
+  generate_python_params_docstring(ss, tfunction->get_xceptions(), &has_doc, "Raises");
+  if (has_doc) {
+    generate_docstring_comment(out, "\"\"\"\n", "", ss.str(), "\"\"\"\n");
+  }
 }
 
 /**
@@ -2738,28 +2752,36 @@ void t_py_generator::generate_python_docstring(ostream& out,
     has_doc = true;
     ss << tdoc->get_doc();
   }
+  generate_python_params_docstring(ss, tstruct, &has_doc, subheader);
+  if (has_doc) {
+    generate_docstring_comment(out, "\"\"\"\n", "", ss.str(), "\"\"\"\n");
+  }
+}
 
+void t_py_generator::generate_python_params_docstring(ostream& ss,
+                                                      t_struct* tstruct,
+                                                      bool* has_doc,
+                                                      const char* subheader) {
   const vector<t_field*>& fields = tstruct->get_members();
   if (fields.size() > 0) {
-    if (has_doc) {
+    if (*has_doc) {
       ss << '\n';
     }
-    has_doc = true;
+    *has_doc = true;
     ss << subheader << ":\n";
     vector<t_field*>::const_iterator p_iter;
     for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
       t_field* p = *p_iter;
       ss << " - " << p->get_name();
+      if (gen_type_hints_) {
+        ss << " (" << p->get_type()->get_name() << ")";
+      }
       if (p->has_doc()) {
         ss << ": " << p->get_doc();
       } else {
         ss << '\n';
       }
     }
-  }
-
-  if (has_doc) {
-    generate_docstring_comment(out, "\"\"\"\n", "", ss.str(), "\"\"\"\n");
   }
 }
 

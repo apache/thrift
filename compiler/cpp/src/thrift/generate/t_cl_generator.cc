@@ -73,6 +73,7 @@ class t_cl_generator : public t_oop_generator {
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   void generate_typedef     (t_typedef*  ttypedef) override;
   void generate_enum        (t_enum*     tenum) override;
@@ -116,8 +117,13 @@ class t_cl_generator : public t_oop_generator {
 
   bool no_asd;
   std::string system_prefix;
+
+  const std::string gen_name_ = "cl";
 };
 
+const std::string& t_cl_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 void t_cl_generator::init_generator() {
   MKDIR(get_out_dir().c_str());

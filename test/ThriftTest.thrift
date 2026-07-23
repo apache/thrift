@@ -314,7 +314,11 @@ service ThriftTest
    * else do not throw anything
    * @return Xtruct - an Xtruct with string_thing = arg1
    */
-  Xtruct testMultiException(1: string arg0, 2: string arg1) throws(1: Xception err1, 2: Xception2 err2)
+  Xtruct testMultiException(1: string arg0, 2: string arg1) throws(
+    /** Thrown when a bad thing happens */
+    1: Xception err1,
+    /** Thrown when the input is in incorrect format, for example */
+    2: Xception2 err2)
 
   /**
    * Print 'testOneway(%d): Sleeping...' with secondsToSleep as '%d'

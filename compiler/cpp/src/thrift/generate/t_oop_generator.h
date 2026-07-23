@@ -37,6 +37,12 @@ class t_oop_generator : public t_generator {
 public:
   t_oop_generator(t_program* program) : t_generator(program) {}
 
+  virtual const std::string& get_gen_name() const = 0;
+
+  virtual std::string get_namespace(t_type* type) {
+    return type->get_program()->get_namespace(get_gen_name()) + ".";
+  }
+
   /**
    * Scoping, using curly braces!
    */
@@ -104,8 +110,42 @@ public:
           ss << " " << p->get_doc();
         }
       }
+      
+      ss << '\n';
+
+      const std::vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+      std::vector<t_field*>::const_iterator e_iter;
+      for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter) {
+        t_field* e = *e_iter;
+        ss << "\n@throws " << get_namespace(e->get_type()) << e->get_type()->get_name();
+        if (e->has_doc()) {
+          std::string doc_string = e->get_doc();
+          doc_string.erase(remove(doc_string.begin(), doc_string.end(), '\n'), doc_string.end());
+          ss << " " << doc_string;
+        }
+      }
       generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
     }
+  }
+
+
+
+  static std::string replace_all(std::string contents, std::string search, std::string repl) {
+    std::string str(contents);
+
+    size_t slen = search.length();
+    size_t rlen = repl.length();
+    size_t incr = (rlen > 0) ? rlen : 1;
+
+    if (slen > 0) {
+      size_t found = str.find(search);
+      while ((found != std::string::npos) && (found < str.length())) {
+        str.replace(found, slen, repl);
+        found = str.find(search, found + incr);
+      }
+    }
+
+    return str;
   }
 };
 

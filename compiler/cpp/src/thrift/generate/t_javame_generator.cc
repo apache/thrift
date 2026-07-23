@@ -66,6 +66,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -188,8 +190,6 @@ public:
 
   void generate_java_doc(std::ostream& out, t_doc* tdoc) override;
 
-  void generate_java_doc(std::ostream& out, t_function* tdoc) override;
-
   void generate_java_docstring_comment(std::ostream& out, string contents) override;
 
   void generate_deep_copy_container(std::ostream& out,
@@ -242,7 +242,18 @@ private:
   std::string package_name_;
   ofstream_with_content_based_conditional_update f_service_;
   std::string package_dir_;
+
+  const std::string gen_name_ = "javame";
 };
+
+
+const std::string& t_javame_generator::get_gen_name() const {
+  return gen_name_;
+}
+
+std::string t_javame_generator::get_namespace(t_type *type) {
+  return type->get_program()->get_namespace("java");
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
@@ -3051,26 +3062,6 @@ void t_javame_generator::generate_java_doc(ostream& out, t_field* field) {
 void t_javame_generator::generate_java_doc(ostream& out, t_doc* tdoc) {
   if (tdoc->has_doc()) {
     generate_java_docstring_comment(out, tdoc->get_doc());
-  }
-}
-
-/**
- * Emits a JavaDoc comment if the provided function object has a doc in Thrift
- */
-void t_javame_generator::generate_java_doc(ostream& out, t_function* tfunction) {
-  if (tfunction->has_doc()) {
-    stringstream ss;
-    ss << tfunction->get_doc();
-    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-    vector<t_field*>::const_iterator p_iter;
-    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
-      t_field* p = *p_iter;
-      ss << "\n@param " << p->get_name();
-      if (p->has_doc()) {
-        ss << " " << p->get_doc();
-      }
-    }
-    generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
   }
 }
 
