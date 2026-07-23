@@ -21,9 +21,12 @@ package org.apache.thrift.protocol;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.AutoExpandingBufferReadTransport;
+import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.jupiter.api.Test;
@@ -206,5 +209,47 @@ public class TestMessageSizeLimits {
         TTransportException.class,
         () -> readBuf.checkReadBytesAvailable(11),
         "remaining budget after fill-reset and 70-byte consume should be exactly 10");
+  }
+
+  /**
+   * Builds a TJSONProtocol reading from a small-maxMessageSize TIOStreamTransport. TIOStreamTransport
+   * does no per-read message-size accounting (unlike TMemoryInputTransport, whose own decrement
+   * already bounds a read), so it both isolates TJSONProtocol's own bound and is the real network
+   * read path on which a delimited JSON string is otherwise unbounded.
+   */
+  private TJSONProtocol jsonProtoReading(String json, int maxSize) throws Exception {
+    TConfiguration config = TConfiguration.custom().setMaxMessageSize(maxSize).build();
+    TIOStreamTransport transport =
+        new TIOStreamTransport(
+            config, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+    return new TJSONProtocol(transport);
+  }
+
+  @Test
+  public void testJSONProtocol_stringWithinMaxMessageSize() throws Exception {
+    TJSONProtocol proto = jsonProtoReading("\"" + repeat('A', 512) + "\"", 4096);
+    assertDoesNotThrow(proto::readString, "a JSON string within maxMessageSize must be readable");
+  }
+
+  @Test
+  public void testJSONProtocol_stringExceedsMaxMessageSize() throws Exception {
+    // A quote-delimited JSON string carries no declared length to reject up front,
+    // so this exercises the running byte-count bound in readJSONString().
+    TJSONProtocol proto = jsonProtoReading("\"" + repeat('A', 4096) + "\"", 1024);
+    assertThrows(
+        TTransportException.class,
+        proto::readString,
+        "an oversized JSON string must be bounded by maxMessageSize");
+  }
+
+  @Test
+  public void testJSONProtocol_numberExceedsMaxMessageSize() throws Exception {
+    // Terminate the numeric run with a non-numeric byte so the unpatched path stops
+    // cleanly at the terminator rather than on EOF, isolating the size bound.
+    TJSONProtocol proto = jsonProtoReading(repeat('1', 4096) + " ", 1024);
+    assertThrows(
+        TTransportException.class,
+        proto::readI64,
+        "an oversized JSON numeric literal must be bounded by maxMessageSize");
   }
 }
