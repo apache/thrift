@@ -136,6 +136,14 @@ bool THeaderTransport::readFrame() {
                                 "Header transport frame is too large");
     }
 
+    // Also honour the operator-configured TConfiguration::maxFrameSize here,
+    // matching TFramedTransport::readFrame(); MAX_FRAME_SIZE alone is just the
+    // internal upper ceiling and is independent of the configured limit.
+    if (sz > maxFrameSize_) {
+      throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                "Received an oversized frame");
+    }
+
     ensureReadBuffer(sz);
 
     // We can use readAll here, because it would be an invalid frame otherwise
@@ -314,6 +322,14 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
                                     "Error while zlib deflate");
       }
       sz = stream.total_out;
+
+      // Apply the configured frame-size limit to the post-transform payload as
+      // well: the decompressed data is what the caller ultimately reads, so it
+      // is bounded the same way an untransformed frame is in readFrame().
+      if (sz > maxFrameSize_) {
+        throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                  "Received an oversized frame after transform");
+      }
 
       err = inflateEnd(&stream);
       if (err != Z_OK) {

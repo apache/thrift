@@ -34,6 +34,7 @@
 // not otherwise need.
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <thrift/transport/TBufferTransports.h>
@@ -134,4 +135,118 @@ BOOST_AUTO_TEST_CASE(test_framed_transport_factory_enforces_custom_max_frame_siz
     BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
   }
   BOOST_CHECK(caught);
+}
+
+// Behavioral coverage for THeaderTransport: like TFramedTransport, the header
+// receive path must reject a frame larger than the caller-configured
+// maxFrameSize, not only the internal MAX_FRAME_SIZE ceiling (~1 GiB). The
+// frame below is a well-formed framed-binary frame (4-byte length prefix, a
+// TBinaryProtocol VERSION_1 magic word, then padding to the declared length);
+// an unfixed reader accepts it, so a rejection here is specifically the
+// configured maxFrameSize check and not an incidental parse failure.
+BOOST_AUTO_TEST_CASE(test_header_transport_enforces_custom_max_frame_size) {
+  const int kMaxFrameSize = 64;
+  auto config
+      = std::make_shared<TConfiguration>(TConfiguration::DEFAULT_MAX_MESSAGE_SIZE, kMaxFrameSize);
+
+  const uint32_t declaredFrameSize = 1024; // well beyond kMaxFrameSize
+  const uint32_t version1 = 0x80010000u;   // TBinaryProtocol::VERSION_1
+  std::vector<uint8_t> frame = {
+      static_cast<uint8_t>((declaredFrameSize >> 24) & 0xFF),
+      static_cast<uint8_t>((declaredFrameSize >> 16) & 0xFF),
+      static_cast<uint8_t>((declaredFrameSize >> 8) & 0xFF),
+      static_cast<uint8_t>(declaredFrameSize & 0xFF),
+      static_cast<uint8_t>((version1 >> 24) & 0xFF),
+      static_cast<uint8_t>((version1 >> 16) & 0xFF),
+      static_cast<uint8_t>((version1 >> 8) & 0xFF),
+      static_cast<uint8_t>(version1 & 0xFF),
+  };
+  // Pad the remainder of the declared frame body (magic already accounts for 4).
+  frame.resize(frame.size() + declaredFrameSize - 4, 0x00);
+
+  auto endpoint = std::make_shared<TMemoryBuffer>(frame.data(),
+                                                  static_cast<uint32_t>(frame.size()),
+                                                  TMemoryBuffer::COPY,
+                                                  config);
+  auto transport = std::make_shared<THeaderTransport>(endpoint, config);
+
+  uint8_t dummy = 0;
+  bool caught = false;
+  try {
+    transport->read(&dummy, 1);
+  } catch (const TTransportException& e) {
+    caught = true;
+    BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
+  }
+  BOOST_CHECK(caught);
+}
+
+// Behavioral coverage for the post-transform path: a small ZLIB-compressed
+// header frame that inflates beyond the configured maxFrameSize must be
+// rejected, so a compressed frame cannot deliver a larger payload than an
+// uncompressed frame would be permitted to. The frame is produced by the real
+// header write path, so its framing and zlib stream are genuine.
+BOOST_AUTO_TEST_CASE(test_header_transport_enforces_max_frame_size_after_transform) {
+  auto writeBuffer = std::make_shared<TMemoryBuffer>();
+  THeaderTransport writer(writeBuffer);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  const std::string payload(600, 'B');
+  writer.write(reinterpret_cast<const uint8_t*>(payload.data()),
+               static_cast<uint32_t>(payload.size()));
+  writer.flush();
+  const std::string frame = writeBuffer->getBufferAsString();
+
+  // The compressed frame must be admitted by the size gate (so it is smaller
+  // than kMaxFrameSize) while the 600-byte inflated payload exceeds it, leaving
+  // the post-transform check as the only thing that can reject the frame.
+  const int kMaxFrameSize = 256;
+  BOOST_REQUIRE_LT(frame.size(), static_cast<size_t>(kMaxFrameSize));
+  BOOST_REQUIRE_GT(payload.size(), static_cast<size_t>(kMaxFrameSize));
+
+  auto config
+      = std::make_shared<TConfiguration>(TConfiguration::DEFAULT_MAX_MESSAGE_SIZE, kMaxFrameSize);
+  auto endpoint
+      = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(const_cast<char*>(frame.data())),
+                                        static_cast<uint32_t>(frame.size()),
+                                        TMemoryBuffer::COPY,
+                                        config);
+  auto reader = std::make_shared<THeaderTransport>(endpoint, config);
+
+  uint8_t dummy = 0;
+  bool caught = false;
+  try {
+    reader->read(&dummy, 1);
+  } catch (const TTransportException& e) {
+    caught = true;
+    BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
+  }
+  BOOST_CHECK(caught);
+}
+
+// Positive control: the same compressed frame read under a generous limit (the
+// library default maxFrameSize) must still round-trip. This guards against the
+// rejection tests above passing vacuously -- if maxFrameSize_ were left at 0
+// for THeaderTransport, every frame would be rejected and those tests would
+// still pass. Here the default limit (~15.6 MiB) is far above the 600-byte
+// inflated payload, so a correct implementation must accept and deliver it.
+BOOST_AUTO_TEST_CASE(test_header_transport_accepts_frame_within_max_frame_size) {
+  auto writeBuffer = std::make_shared<TMemoryBuffer>();
+  THeaderTransport writer(writeBuffer);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  const std::string payload(600, 'B');
+  writer.write(reinterpret_cast<const uint8_t*>(payload.data()),
+               static_cast<uint32_t>(payload.size()));
+  writer.flush();
+  const std::string frame = writeBuffer->getBufferAsString();
+
+  // Default configuration -> default maxFrameSize; no custom limit is set.
+  auto endpoint
+      = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(const_cast<char*>(frame.data())),
+                                        static_cast<uint32_t>(frame.size()),
+                                        TMemoryBuffer::COPY);
+  auto reader = std::make_shared<THeaderTransport>(endpoint);
+
+  uint8_t first = 0;
+  BOOST_CHECK_NO_THROW(reader->readAll(&first, 1));
+  BOOST_CHECK_EQUAL(first, static_cast<uint8_t>('B'));
 }
