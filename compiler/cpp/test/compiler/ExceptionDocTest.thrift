@@ -17,27 +17,37 @@
  * under the License.
  */
 
-namespace java com.incl
+namespace cpp main_ns
+namespace haxe com.main
+namespace java com.main
+namespace netstd Main.Ns
+namespace py main
 
-const string foo = "bar"
+include "./Included.thrift"
 
-struct a_struct {
-  1: bool im_true,
-  2: bool im_false,
-  3: i8 a_bite,
-  4: i16 integer16,
-  5: i32 integer32,
-  6: i64 integer64,
-  7: double double_precision,
-  8: string some_characters,
-  9: string zomg_unicode,
-  10: bool what_who,
-}
-
-exception IncludedExc {
+exception native {
   1: string message
 }
 
-service AService {
-  i32 a_procedure(1: i32 arg)
+exception object {
+  1: string message
+}
+
+service ExceptionDocTest {
+  /** Method documentation uses x < y && y > z. */
+  void documented(
+    /** Parameter documentation uses a < b && c > d. */
+    1: i32 value
+  ) throws (1: object object_error),
+
+  void undocumented() throws (
+    /** First line of the explanation
+     * second line uses a < b && c > d
+     */
+    1: native native_error,
+    /** Kotlin reserved identifier. */
+    2: object object_error,
+    /** Included exception */
+    3: Included.IncludedExc included_exc
+  )
 }
