@@ -754,6 +754,11 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   while (true) {
     ch = reader_.read();
     ++result;
+    // JSON strings are quote-delimited rather than length-prefixed, so there is
+    // no declared size to pre-check the way TBinaryProtocol::readStringBody()
+    // does. Bound the running byte count against the configured message size
+    // instead, so a single string cannot grow past the limit.
+    trans_->checkReadBytesAvailable(result);
     if (ch == kJSONStringDelimiter) {
       break;
     }
@@ -844,6 +849,9 @@ uint32_t TJSONProtocol::readJSONNumericChars(std::string& str) {
     reader_.read();
     str += ch;
     ++result;
+    // Numeric literals are also read char-by-char with no declared length;
+    // bound the running count against the configured message size as well.
+    trans_->checkReadBytesAvailable(result);
   }
   return result;
 }
