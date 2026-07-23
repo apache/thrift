@@ -62,9 +62,43 @@ static int CTYPE_MAP            = 0x0B;
 static int CTYPE_STRUCT         = 0x0C;
 static int CTYPE_UUID           = 0x0D;
 
-VALUE rb_thrift_compact_proto_write_i16(VALUE self, VALUE i16);
+static uint32_t int_to_zig_zag(int32_t n);
+static void write_varint32(VALUE transport, uint32_t n);
 
-// TODO: implement this
+static int64_t checked_integer_range(VALUE value, int64_t min, int64_t max) {
+  CHECK_NIL(value);
+  if (RB_UNLIKELY(!RB_INTEGER_TYPE_P(value))) {
+    rb_raise(rb_eTypeError, "integer argument expected");
+  }
+
+  int64_t integer = NUM2LL(value);
+  if (RB_UNLIKELY(integer < min || integer > max)) {
+    rb_raise(rb_eRangeError, "integer out of bounds");
+  }
+
+  return integer;
+}
+
+static int8_t checked_byte_value(VALUE value) {
+  return (int8_t)checked_integer_range(value, INT8_MIN, INT8_MAX);
+}
+
+static int16_t checked_i16_value(VALUE value) {
+  return (int16_t)checked_integer_range(value, INT16_MIN, INT16_MAX);
+}
+
+static int32_t checked_i32_value(VALUE value) {
+  return (int32_t)checked_integer_range(value, INT32_MIN, INT32_MAX);
+}
+
+static int32_t checked_size_value(VALUE value) {
+  return (int32_t)checked_integer_range(value, 0, INT32_MAX);
+}
+
+static int64_t checked_i64_value(VALUE value) {
+  return checked_integer_range(value, INT64_MIN, INT64_MAX);
+}
+
 static int get_compact_type(VALUE type_value) {
   int type = FIX2INT(type_value);
   if (type == TTYPE_BOOL) {
@@ -104,13 +138,11 @@ static void write_byte_direct(VALUE transport, int8_t b) {
   WRITE(transport, (char*)&b, 1);
 }
 
-static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, VALUE type_override) {
-  int id = FIX2INT(id_value);
+static void write_field_begin_internal(VALUE self, VALUE type, int16_t id, int8_t type_override) {
+  int8_t type_to_write = type_override == 0 ? get_compact_type(type) : type_override;
   int last_id = LAST_ID(self);
   VALUE transport = GET_TRANSPORT(self);
 
-  // if there's a type override, use that.
-  int8_t type_to_write = RTEST(type_override) ? FIX2INT(type_override) : get_compact_type(type);
   // check if we can use delta encoding for the field id
   int diff = id - last_id;
   if (diff > 0 && diff <= 15) {
@@ -119,10 +151,10 @@ static void write_field_begin_internal(VALUE self, VALUE type, VALUE id_value, V
   } else {
     // write them separate
     write_byte_direct(transport, type_to_write & 0x0f);
-    rb_thrift_compact_proto_write_i16(self, id_value);
+    write_varint32(transport, int_to_zig_zag(id));
   }
 
-  SET_LAST_ID(self, id_value);
+  SET_LAST_ID(self, INT2FIX(id));
 }
 
 static uint32_t int_to_zig_zag(int32_t n) {
@@ -166,11 +198,12 @@ static void write_varint64(VALUE transport, uint64_t n) {
 }
 
 static void write_collection_begin(VALUE transport, VALUE elem_type, VALUE size_value) {
-  int size = FIX2INT(size_value);
+  int size = checked_size_value(size_value);
+  int compact_type = get_compact_type(elem_type);
   if (size <= 14) {
-    write_byte_direct(transport, size << 4 | get_compact_type(elem_type));
+    write_byte_direct(transport, size << 4 | compact_type);
   } else {
-    write_byte_direct(transport, 0xf0 | get_compact_type(elem_type));
+    write_byte_direct(transport, 0xf0 | compact_type);
     write_varint32(transport, size);
   }
 }
@@ -217,9 +250,10 @@ VALUE rb_thrift_compact_proto_write_set_end(VALUE self) {
 
 VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE type, VALUE seqid) {
   VALUE transport = GET_TRANSPORT(self);
-  int32_t seqid_value = FIX2INT(seqid);
+  uint32_t type_value = (uint32_t)FIX2INT(type);
+  int32_t seqid_value = checked_i32_value(seqid);
   write_byte_direct(transport, PROTOCOL_ID);
-  write_byte_direct(transport, (VERSION & VERSION_MASK) | ((FIX2INT(type) << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
+  write_byte_direct(transport, (VERSION & VERSION_MASK) | ((type_value << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
   write_varint32(transport, message_seqid_to_varint32(seqid_value));
   rb_thrift_compact_proto_write_string(self, name);
 
@@ -227,11 +261,12 @@ VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE 
 }
 
 VALUE rb_thrift_compact_proto_write_field_begin(VALUE self, VALUE name, VALUE type, VALUE id) {
+  int16_t field_id = checked_i16_value(id);
   if (FIX2INT(type) == TTYPE_BOOL) {
     // we want to possibly include the value, so we'll wait.
-    rb_ivar_set(self, boolean_field_id, rb_ary_new3(2, type, id));
+    rb_ivar_set(self, boolean_field_id, rb_ary_new3(2, type, INT2FIX(field_id)));
   } else {
-    write_field_begin_internal(self, type, id, Qnil);
+    write_field_begin_internal(self, type, field_id, 0);
   }
 
   return Qnil;
@@ -243,7 +278,7 @@ VALUE rb_thrift_compact_proto_write_field_stop(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_write_map_begin(VALUE self, VALUE ktype, VALUE vtype, VALUE size_value) {
-  int size = FIX2INT(size_value);
+  int size = checked_size_value(size_value);
   VALUE transport = GET_TRANSPORT(self);
   if (size == 0) {
     write_byte_direct(transport, 0);
@@ -272,32 +307,29 @@ VALUE rb_thrift_compact_proto_write_bool(VALUE self, VALUE b) {
     write_byte_direct(GET_TRANSPORT(self), type);
   } else {
     // we haven't written the field header yet
-    write_field_begin_internal(self, rb_ary_entry(boolean_field, 0), rb_ary_entry(boolean_field, 1), INT2FIX(type));
+    write_field_begin_internal(self, rb_ary_entry(boolean_field, 0), FIX2INT(rb_ary_entry(boolean_field, 1)), type);
     rb_ivar_set(self, boolean_field_id, Qnil);
   }
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_byte(VALUE self, VALUE byte) {
-  CHECK_NIL(byte);
-  write_byte_direct(GET_TRANSPORT(self), FIX2INT(byte));
+  write_byte_direct(GET_TRANSPORT(self), checked_byte_value(byte));
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_i16(VALUE self, VALUE i16) {
-  rb_thrift_compact_proto_write_i32(self, i16);
+  write_varint32(GET_TRANSPORT(self), int_to_zig_zag(checked_i16_value(i16)));
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_i32(VALUE self, VALUE i32) {
-  CHECK_NIL(i32);
-  write_varint32(GET_TRANSPORT(self), int_to_zig_zag(NUM2INT(i32)));
+  write_varint32(GET_TRANSPORT(self), int_to_zig_zag(checked_i32_value(i32)));
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_i64(VALUE self, VALUE i64) {
-  CHECK_NIL(i64);
-  write_varint64(GET_TRANSPORT(self), ll_to_zig_zag(NUM2LL(i64)));
+  write_varint64(GET_TRANSPORT(self), ll_to_zig_zag(checked_i64_value(i64)));
   return Qnil;
 }
 
@@ -331,8 +363,12 @@ VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
 VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
   buf = force_binary_encoding(buf);
   VALUE transport = GET_TRANSPORT(self);
-  write_varint32(transport, (uint32_t)RSTRING_LEN(buf));
-  WRITE(transport, StringValuePtr(buf), RSTRING_LEN(buf));
+  long size = RSTRING_LEN(buf);
+  if (RB_UNLIKELY(size > INT32_MAX)) {
+    rb_raise(rb_eRangeError, "integer out of bounds");
+  }
+  write_varint32(transport, (uint32_t)size);
+  WRITE(transport, StringValuePtr(buf), size);
   return Qnil;
 }
 
