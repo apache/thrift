@@ -48,6 +48,62 @@ describe 'BaseTransport' do
       expect(buf.encoding).to eq(Encoding::BINARY)
     end
 
+    it "treats an empty initial read as end of file without retrying" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(3).once.and_return(+'')
+
+      expect { transport.read_all(3) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "treats an empty read after partial progress as end of file without retrying" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return(+'ab')
+      expect(transport).to receive(:read).with(2).ordered.once.and_return(+'')
+
+      expect { transport.read_all(4) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "treats a nil read as end of file" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(1).once.and_return(nil)
+
+      expect { transport.read_all(1) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "allows repeated short reads while every read makes progress" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return('a')
+      expect(transport).to receive(:read).with(3).ordered.and_return('b')
+      expect(transport).to receive(:read).with(2).ordered.and_return('c')
+      expect(transport).to receive(:read).with(1).ordered.and_return('d')
+
+      expect(transport.read_all(4)).to eq('abcd')
+    end
+
+    it "allows a frozen binary string as the first short read" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return('ab'.b.freeze)
+      expect(transport).to receive(:read).with(2).ordered.and_return('cd')
+
+      expect(transport.read_all(4)).to eq('abcd')
+    end
+
+    it "returns an empty binary string for a zero-size read without reading" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).not_to receive(:read)
+
+      result = transport.read_all(0)
+
+      expect(result).to eq('')
+      expect(result.encoding).to eq(Encoding::BINARY)
+    end
+
     it "should reject negative read sizes" do
       transport = Thrift::BaseTransport.new
       expect(transport).not_to receive(:read)
