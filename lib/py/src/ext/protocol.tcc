@@ -301,9 +301,18 @@ bool ProtocolBase<Impl>::readBytes(char** output, int len) {
     PyErr_Format(PyExc_ValueError, "attempted to read negative length: %d", len);
     return false;
   }
-  // TODO(dreiss): Don't fear the malloc.  Think about taking a copy of
-  //               the partial read instead of forcing the transport
-  //               to prepend it to its buffer.
+
+  if (input_.direct_buf) {
+    size_t requested = static_cast<size_t>(len);
+    if (input_.direct_pos > input_.direct_size || requested > (input_.direct_size - input_.direct_pos)) {
+      PyErr_SetString(PyExc_EOFError, "read past end of buffer");
+      return false;
+    }
+
+    *output = const_cast<char*>(input_.direct_buf + input_.direct_pos);
+    input_.direct_pos += requested;
+    return true;
+  }
 
   int rlen = detail::read_buffer(input_.stringiobuf.get(), output, len);
 
@@ -338,7 +347,7 @@ bool ProtocolBase<Impl>::readBytes(char** output, int len) {
 
 template <typename Impl>
 bool ProtocolBase<Impl>::prepareDecodeBufferFromTransport(PyObject* trans) {
-  if (input_.stringiobuf) {
+  if (input_.stringiobuf || input_.direct_buf) {
     PyErr_SetString(PyExc_ValueError, "decode buffer is already initialized");
     return false;
   }
@@ -363,6 +372,27 @@ bool ProtocolBase<Impl>::prepareDecodeBufferFromTransport(PyObject* trans) {
 
   input_.stringiobuf.swap(stringiobuf);
   input_.refill_callable.swap(refill_callable);
+  return true;
+}
+
+template <typename Impl>
+bool ProtocolBase<Impl>::prepareDecodeBufferFromBytes(PyObject* bytes_obj) {
+  if (input_.stringiobuf || input_.direct_buf) {
+    PyErr_SetString(PyExc_ValueError, "decode buffer is already initialized");
+    return false;
+  }
+
+  char* buf = nullptr;
+  Py_ssize_t len = 0;
+  if (PyBytes_AsStringAndSize(bytes_obj, &buf, &len) < 0) {
+    return false;
+  }
+
+  Py_INCREF(bytes_obj);
+  input_.direct_source.reset(bytes_obj);
+  input_.direct_buf = buf;
+  input_.direct_size = static_cast<size_t>(len);
+  input_.direct_pos = 0;
   return true;
 }
 
