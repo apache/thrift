@@ -37,6 +37,24 @@ class t_oop_generator : public t_generator {
 public:
   t_oop_generator(t_program* program) : t_generator(program) {}
 
+  virtual std::string get_doc_type_name(t_type* type) {
+    std::string package = type->get_program()->get_namespace("java");
+    return (package.empty() ? "" : package + ".") + type->get_name();
+  }
+
+  void generate_throws_doc(std::ostream& out, t_function* function) {
+    for (auto* exception : function->get_xceptions()->get_members()) {
+      out << "\n@throws " << get_doc_type_name(exception->get_type());
+      if (exception->has_doc()) {
+        std::string doc = exception->get_doc();
+        while (!doc.empty() && (doc.back() == '\n' || doc.back() == '\r')) {
+          doc.pop_back();
+        }
+        out << " " << doc;
+      }
+    }
+  }
+
   /**
    * Scoping, using curly braces!
    */
@@ -92,8 +110,8 @@ public:
    * Emits a JavaDoc comment if the provided function object has a doc in Thrift
    */
   virtual void generate_java_doc(std::ostream& out, t_function* tfunction) {
+    std::stringstream ss;
     if (tfunction->has_doc()) {
-      std::stringstream ss;
       ss << tfunction->get_doc();
       const std::vector<t_field*>& fields = tfunction->get_arglist()->get_members();
       std::vector<t_field*>::const_iterator p_iter;
@@ -104,7 +122,13 @@ public:
           ss << " " << p->get_doc();
         }
       }
-      generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
+    }
+
+    generate_throws_doc(ss, tfunction);
+
+    const std::string result_doc = ss.str();
+    if (!result_doc.empty()) {
+      generate_java_docstring_comment(out, result_doc);
     }
   }
 
