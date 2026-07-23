@@ -23,6 +23,14 @@ require 'spec_helper'
 describe 'Processor' do
   class ProcessorSpec
     include Thrift::Processor
+
+    attr_reader :processed
+
+    def process_work(seqid, iprot, _oprot)
+      iprot.skip(Thrift::Types::STRUCT)
+      iprot.read_message_end
+      @processed = seqid
+    end
   end
 
   describe Thrift::Processor do
@@ -39,10 +47,91 @@ describe 'Processor' do
       end
     end
 
+    def input_protocol(name, type, seqid, args = nil)
+      transport = Thrift::MemoryBufferTransport.new
+      protocol = Thrift::BinaryProtocol.new(transport)
+      protocol.write_message_begin(name, type, seqid)
+      if args
+        args.write(protocol)
+      else
+        protocol.write_struct_begin("args")
+        protocol.write_field_stop
+        protocol.write_struct_end
+      end
+      protocol.write_message_end
+      Thrift::BinaryProtocol.new(transport)
+    end
+
+    def output_protocol
+      transport = Thrift::MemoryBufferTransport.new
+      [transport, Thrift::BinaryProtocol.new(transport)]
+    end
+
     it "should call process_<message> when it receives that message" do
       expect(@prot).to receive(:read_message_begin).ordered.and_return ['testMessage', Thrift::MessageTypes::CALL, 17]
       expect(@processor).to receive(:process_testMessage).with(17, @prot, @prot).ordered
       expect(@processor.process(@prot, @prot)).to eq(true)
+    end
+
+    [Thrift::MessageTypes::REPLY, Thrift::MessageTypes::EXCEPTION].each do |message_type|
+      it "rejects message type #{message_type} before dispatching" do
+        input = input_protocol("work", message_type, 11)
+        output_transport, output = output_protocol
+
+        expect(@processor.process(input, output)).to be false
+        expect(@processor.processed).to be_nil
+
+        response = Thrift::BinaryProtocol.new(output_transport)
+        name, type, seqid = response.read_message_begin
+        exception = Thrift::ApplicationException.new
+        exception.read(response)
+        response.read_message_end
+
+        expect(name).to eq("work")
+        expect(type).to eq(Thrift::MessageTypes::EXCEPTION)
+        expect(seqid).to eq(11)
+        expect(exception.type).to eq(Thrift::ApplicationException::INVALID_MESSAGE_TYPE)
+        expect(exception.message).to eq("Invalid message type #{message_type} for function work")
+      end
+    end
+
+    [Thrift::MessageTypes::CALL, Thrift::MessageTypes::ONEWAY].each do |message_type|
+      it "dispatches valid message type #{message_type}" do
+        input = input_protocol("work", message_type, 12)
+        output_transport, output = output_protocol
+
+        expect(@processor.process(input, output)).to be true
+        expect(@processor.processed).to eq(12)
+        expect(output_transport.available).to eq(0)
+      end
+    end
+
+    it "keeps generated oneway behavior when its envelope is CALL" do
+      handler = double("Handler")
+      expect(handler).to receive(:unblock).with(9)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      args = SpecNamespace::NonblockingService::Unblock_args.new(:n => 9)
+      input = input_protocol("unblock", Thrift::MessageTypes::CALL, 13, args)
+      output_transport, output = output_protocol
+
+      expect(processor.process(input, output)).to be true
+      expect(output_transport.available).to eq(0)
+    end
+
+    it "keeps generated reply behavior when a normal method envelope is ONEWAY" do
+      handler = double("Handler")
+      expect(handler).to receive(:sleep).with(3.0)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      args = SpecNamespace::NonblockingService::Sleep_args.new(:seconds => 3.0)
+      input = input_protocol("sleep", Thrift::MessageTypes::ONEWAY, 14, args)
+      output_transport, output = output_protocol
+
+      expect(processor.process(input, output)).to be true
+
+      response = Thrift::BinaryProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq(["sleep", Thrift::MessageTypes::REPLY, 14])
+      response.skip(Thrift::Types::STRUCT)
+      response.read_message_end
     end
 
     it "should raise an ApplicationException when the received message cannot be processed" do
