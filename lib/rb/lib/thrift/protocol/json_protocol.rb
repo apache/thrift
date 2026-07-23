@@ -183,42 +183,27 @@ module Thrift
       when Types::UUID
         "uid"
       else
-        raise NotImplementedError
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Unknown type id: #{id}")
       end
     end
 
     def get_type_id_for_type_name(name)
-      if (name == "tf")
-        result = Types::BOOL
-      elsif (name == "i8")
-        result = Types::BYTE
-      elsif (name == "i16")
-        result = Types::I16
-      elsif (name == "i32")
-        result = Types::I32
-      elsif (name == "i64")
-        result = Types::I64
-      elsif (name == "dbl")
-        result = Types::DOUBLE
-      elsif (name == "str")
-        result = Types::STRING
-      elsif (name == "rec")
-        result = Types::STRUCT
-      elsif (name == "map")
-        result = Types::MAP
-      elsif (name == "set")
-        result = Types::SET
-      elsif (name == "lst")
-        result = Types::LIST
-      elsif (name == "uid")
-        result = Types::UUID
+      case name
+      when "tf" then Types::BOOL
+      when "i8" then Types::BYTE
+      when "i16" then Types::I16
+      when "i32" then Types::I32
+      when "i64" then Types::I64
+      when "dbl" then Types::DOUBLE
+      when "str" then Types::STRING
+      when "rec" then Types::STRUCT
+      when "map" then Types::MAP
+      when "set" then Types::SET
+      when "lst" then Types::LIST
+      when "uid" then Types::UUID
       else
-        result = Types::STOP
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Unknown type name: #{name.inspect}")
       end
-      if (result == Types::STOP)
-        raise NotImplementedError
-      end
-      return result
     end
 
     # Static helper functions

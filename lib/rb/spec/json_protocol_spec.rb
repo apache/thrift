@@ -283,8 +283,8 @@ describe 'JsonProtocol' do
     end
 
     it "should get type name for type id" do
-      expect { @prot.get_type_name_for_type_id(Thrift::Types::STOP) }.to raise_error(NotImplementedError)
-      expect { @prot.get_type_name_for_type_id(Thrift::Types::VOID) }.to raise_error(NotImplementedError)
+      expect { @prot.get_type_name_for_type_id(Thrift::Types::STOP) }.to raise_error(Thrift::ProtocolException, "Unknown type id: 0")
+      expect { @prot.get_type_name_for_type_id(Thrift::Types::VOID) }.to raise_error(Thrift::ProtocolException, "Unknown type id: 1")
       expect(@prot.get_type_name_for_type_id(Thrift::Types::BOOL)).to eq("tf")
       expect(@prot.get_type_name_for_type_id(Thrift::Types::BYTE)).to eq("i8")
       expect(@prot.get_type_name_for_type_id(Thrift::Types::DOUBLE)).to eq("dbl")
@@ -299,7 +299,7 @@ describe 'JsonProtocol' do
     end
 
     it "should get type id for type name" do
-      expect { @prot.get_type_id_for_type_name("pp") }.to raise_error(NotImplementedError)
+      expect { @prot.get_type_id_for_type_name("pp") }.to raise_error(Thrift::ProtocolException, 'Unknown type name: "pp"')
       expect(@prot.get_type_id_for_type_name("tf")).to eq(Thrift::Types::BOOL)
       expect(@prot.get_type_id_for_type_name("i8")).to eq(Thrift::Types::BYTE)
       expect(@prot.get_type_id_for_type_name("dbl")).to eq(Thrift::Types::DOUBLE)
@@ -311,6 +311,20 @@ describe 'JsonProtocol' do
       expect(@prot.get_type_id_for_type_name("map")).to eq(Thrift::Types::MAP)
       expect(@prot.get_type_id_for_type_name("set")).to eq(Thrift::Types::SET)
       expect(@prot.get_type_id_for_type_name("lst")).to eq(Thrift::Types::LIST)
+    end
+
+    it "should reject unknown field and container types as invalid protocol data" do
+      @trans.write('{"1":{"wat":0}}')
+      @prot.read_struct_begin
+      expect { @prot.read_field_begin }.to raise_error(Thrift::ProtocolException, 'Unknown type name: "wat"') do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+
+      trans = Thrift::MemoryBufferTransport.new('["wat",0]')
+      prot = Thrift::JsonProtocol.new(trans)
+      expect { prot.read_list_begin }.to raise_error(Thrift::ProtocolException, 'Unknown type name: "wat"') do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
     end
 
     it "should read json syntax char" do
