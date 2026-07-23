@@ -95,25 +95,6 @@ public:
     indent(out) << "}" << postfix;
   }
 
-  string replace_all(string contents, string search, string repl) {
-    string str(contents);
-
-    size_t slen = search.length();
-    size_t rlen = repl.length();
-    size_t incr = (rlen > 0) ? rlen : 1;
-
-    if (slen > 0) {
-      size_t found = str.find(search);
-      while ((found != string::npos) && (found < str.length())) {
-        str.replace(found, slen, repl);
-        found = str.find(search, found + incr);
-      }
-    }
-
-    return str;
-  }
-
-
   /**
    * Init and close methods
    */

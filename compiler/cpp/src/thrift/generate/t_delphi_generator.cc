@@ -359,7 +359,6 @@ public:
            " *)\n";
   }
 
-  string replace_all(string contents, string search, string replace);
   string xml_encode(string contents);
   string xmldoc_encode(string contents);
   string xmlattrib_encode(string contents);
@@ -469,24 +468,6 @@ private:
   };
   std::ostream& indent_impl(std::ostream& os) { return os << indent_impl(); };
 };
-
-string t_delphi_generator::replace_all(string contents, string search, string repl) {
-  string str(contents);
-
-  size_t slen = search.length();
-  size_t rlen = repl.length();
-  size_t incr = (rlen > 0) ? rlen : 1;
-
-  if (slen > 0) {
-    size_t found = str.find(search);
-    while ((found != string::npos) && (found < str.length())) {
-      str.replace(found, slen, repl);
-      found = str.find(search, found + incr);
-    }
-  }
-
-  return str;
-}
 
 // XML encoding
 string t_delphi_generator::xml_encode(string contents) {
