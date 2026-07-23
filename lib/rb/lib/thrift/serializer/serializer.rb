@@ -30,6 +30,7 @@ module Thrift
       @transport.reset_buffer
       @protocol ||= @protocol_factory.get_protocol(@transport)
       base.write(@protocol)
+      @protocol.trans.flush
       @transport.read(@transport.available)
     rescue
       @protocol = nil
