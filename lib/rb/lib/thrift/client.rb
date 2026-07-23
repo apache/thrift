@@ -31,30 +31,15 @@ module Thrift
     end
 
     def send_message(name, args_class, args = {})
-      seqid = next_seqid!
-      @oprot.write_message_begin(name, MessageTypes::CALL, seqid)
-      send_message_args(args_class, args)
-      @pending_seqids << seqid
+      write_message(name, MessageTypes::CALL, args_class, args)
     end
 
     def send_oneway_message(name, args_class, args = {})
-      @oprot.write_message_begin(name, MessageTypes::ONEWAY, next_seqid!)
-      send_message_args(args_class, args)
+      write_message(name, MessageTypes::ONEWAY, args_class, args)
     end
 
     def send_message_args(args_class, args)
-      data = args_class.new
-      args.each do |k, v|
-        data.send("#{k.to_s}=", v)
-      end
-      begin
-        data.write(@oprot)
-      rescue StandardError => e
-        @oprot.trans.close
-        raise e
-      end
-      @oprot.write_message_end
-      @oprot.trans.flush
+      write_message(nil, nil, args_class, args)
     end
 
     def receive_message_begin()
@@ -99,6 +84,30 @@ module Thrift
     end
 
     private
+
+    def write_message(name, type, args_class, args)
+      data = args_class.new
+      args.each do |k, v|
+        data.send("#{k}=", v)
+      end
+      seqid = next_seqid! unless name.nil?
+
+      flush_result = begin
+        @oprot.write_message_begin(name, type, seqid) unless name.nil?
+        data.write(@oprot)
+        @oprot.write_message_end
+        @oprot.trans.flush
+      rescue StandardError
+        begin
+          @oprot.trans.close
+        rescue StandardError
+          # Preserve the original send error.
+        end
+        raise
+      end
+
+      type == MessageTypes::CALL ? @pending_seqids << seqid : flush_result
+    end
 
     def next_seqid!
       seqid = @seqid

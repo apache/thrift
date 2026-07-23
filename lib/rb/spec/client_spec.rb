@@ -30,6 +30,44 @@ describe 'Client' do
     end
   end
 
+  class PartialMessageBeginProtocol < Thrift::BinaryProtocol
+    def write_message_begin(_name, _type, _seqid)
+      trans.write("partial")
+      raise IOError, "message begin failed"
+    end
+  end
+
+  class RecordingTransport < Thrift::BaseTransport
+    attr_accessor :write_error, :flush_error, :close_error
+    attr_reader :writes, :flushes
+
+    def initialize
+      @writes = []
+      @flushes = 0
+      @closed = false
+    end
+
+    def open?
+      !@closed
+    end
+
+    def write(data)
+      raise @write_error if @write_error
+
+      @writes << data
+    end
+
+    def flush
+      @flushes += 1
+      raise @flush_error if @flush_error
+    end
+
+    def close
+      @closed = true
+      raise @close_error if @close_error
+    end
+  end
+
   before(:each) do
     @prot = double("MockProtocol")
     @client = ClientSpec.new(@prot)
@@ -162,6 +200,87 @@ describe 'Client' do
       expect(trans).to receive(:close)
       klass = double("TestMessage_args", :new => mock_args)
       expect { @client.send_message("testMessage", klass) }.to raise_error(StandardError)
+    end
+
+    it "should prepare arguments before writing any message bytes" do
+      transport = RecordingTransport.new
+      client = ClientSpec.new(Thrift::BinaryProtocol.new(transport))
+      error = ArgumentError.new("invalid argument")
+      args_class = Class.new do
+        define_method(:initialize) { raise error }
+      end
+
+      expect { client.send_message("testMessage", args_class) }.to raise_error(error)
+      expect(transport.writes).to be_empty
+      expect(transport).to be_open
+      expect(client.instance_variable_get(:@seqid)).to eq(0)
+    end
+
+    it "should close the transport when message begin fails after writing" do
+      transport = RecordingTransport.new
+      client = ClientSpec.new(PartialMessageBeginProtocol.new(transport))
+
+      expect { client.send_message("testMessage", EmptyArgs) }.to raise_error(IOError, "message begin failed")
+      expect(transport.writes).to eq(["partial"])
+      expect(transport).not_to be_open
+      expect(client.instance_variable_get(:@pending_seqids)).to be_empty
+    end
+
+    it "should close the transport when argument serialization fails after message begin" do
+      transport = RecordingTransport.new
+      protocol = Thrift::BinaryProtocol.new(transport)
+      client = ClientSpec.new(protocol)
+      error = IOError.new("write failed")
+      args_class = Class.new do
+        define_method(:write) do |args_protocol|
+          transport.write_error = error
+          args_protocol.write_i32(1)
+        end
+      end
+
+      expect { client.send_message("testMessage", args_class) }.to raise_error(error)
+      expect(transport.writes).not_to be_empty
+      expect(transport).not_to be_open
+      expect(client.instance_variable_get(:@pending_seqids)).to be_empty
+    end
+
+    it "should close the transport when message end fails" do
+      transport = RecordingTransport.new
+      protocol = double("Protocol", :trans => transport)
+      error = IOError.new("message end failed")
+      expect(protocol).to receive(:write_message_begin)
+      expect(protocol).to receive(:write_message_end).and_raise(error)
+      client = ClientSpec.new(protocol)
+
+      expect { client.send_message("testMessage", EmptyArgs) }.to raise_error(error)
+      expect(transport).not_to be_open
+      expect(client.instance_variable_get(:@pending_seqids)).to be_empty
+    end
+
+    [:send_message, :send_oneway_message].each do |send_method|
+      it "should close after #{send_method} flush fails with delivered bytes" do
+        transport = RecordingTransport.new
+        error = Thrift::TransportException.new(Thrift::TransportException::UNKNOWN, "flush failed")
+        transport.flush_error = error
+        client = ClientSpec.new(Thrift::BinaryProtocol.new(transport))
+
+        expect { client.public_send(send_method, "testMessage", EmptyArgs) }.to raise_error(error)
+        expect(transport.writes).not_to be_empty
+        expect(transport.flushes).to eq(1)
+        expect(transport).not_to be_open
+        expect(client.instance_variable_get(:@pending_seqids)).to be_empty
+      end
+    end
+
+    it "should preserve the send error when closing also fails" do
+      transport = RecordingTransport.new
+      send_error = IOError.new("flush failed")
+      transport.flush_error = send_error
+      transport.close_error = IOError.new("close failed")
+      client = ClientSpec.new(Thrift::BinaryProtocol.new(transport))
+
+      expect { client.send_message("testMessage", EmptyArgs) }.to raise_error(send_error)
+      expect(transport).not_to be_open
     end
   end
 end
