@@ -262,21 +262,48 @@ describe 'HeaderProtocol' do
     end
 
     describe "unknown protocol handling" do
-      it "should write an exception response on unknown protocol id" do
-        header_data = +""
-        header_data << varint32(0x10)
-        header_data << varint32(0)
-        frame = build_header_frame(header_data)
+      [Thrift::HeaderSubprotocolID::BINARY, Thrift::HeaderSubprotocolID::COMPACT].each do |fallback|
+        it "writes a parseable #{fallback} exception response for an unknown protocol id" do
+          header_data = +""
+          header_data << varint32(0x10)
+          header_data << varint32(0)
+          frame = build_header_frame(header_data, sequence_id: 77)
 
+          buffer = Thrift::MemoryBufferTransport.new(frame)
+          protocol = Thrift::HeaderProtocol.new(buffer, nil, fallback)
+
+          expect { protocol.read_message_begin }.to raise_error(Thrift::ProtocolException) do |error|
+            expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+            expect(error.message).to eq("Unknown protocol ID: 16")
+          end
+
+          response = buffer.read(buffer.available)
+          read_protocol = Thrift::HeaderProtocol.new(Thrift::MemoryBufferTransport.new(response))
+          name, type, seqid = read_protocol.read_message_begin
+          application_exception = Thrift::ApplicationException.new
+          application_exception.read(read_protocol)
+          read_protocol.read_message_end
+
+          expect(name).to eq("")
+          expect(type).to eq(Thrift::MessageTypes::EXCEPTION)
+          expect(seqid).to eq(77)
+          expect(application_exception.type).to eq(Thrift::ApplicationException::INVALID_PROTOCOL)
+          expect(application_exception.message).to eq("Unknown protocol ID: 16")
+          expect(response[8, 4].unpack1('N')).to eq(77)
+        end
+      end
+
+      it "does not recursively write a response for a malformed Header" do
+        header_data = [0x80, 0x80, 0x80, 0x80].pack('C*')
+        frame = build_header_frame(header_data, sequence_id: 77)
         buffer = Thrift::MemoryBufferTransport.new(frame)
         protocol = Thrift::HeaderProtocol.new(buffer)
 
-        expect { protocol.read_message_begin }.to raise_error(Thrift::ProtocolException)
-
-        response = buffer.read(buffer.available)
-        expect(response.bytesize).to be > 0
-        magic = response[4, 2].unpack('n').first
-        expect(magic).to eq(Thrift::HeaderTransport::HEADER_MAGIC)
+        expect { protocol.read_message_begin }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
+          expect(error.message).to eq("Trying to read past header boundary")
+        end
+        expect(buffer.available).to eq(0)
       end
     end
 

@@ -178,8 +178,9 @@ module Thrift
         @header_transport.reset_protocol
         reset_protocol_if_needed
       rescue ProtocolException => ex
+        use_default_protocol
         app_ex = ApplicationException.new(ApplicationException::INVALID_PROTOCOL, ex.message)
-        write_message_begin("", MessageTypes::EXCEPTION, 0)
+        write_message_begin("", MessageTypes::EXCEPTION, @header_transport.sequence_id)
         app_ex.write(self)
         write_message_end
         @header_transport.flush
@@ -281,6 +282,12 @@ module Thrift
         @protocol = create_protocol(new_protocol_id)
         @current_protocol_id = new_protocol_id
       end
+    end
+
+    def use_default_protocol
+      @protocol = create_protocol(@default_protocol)
+      @current_protocol_id = @default_protocol
+      @header_transport.protocol_id = @default_protocol
     end
 
     # Creates a protocol instance based on protocol ID
