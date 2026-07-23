@@ -301,9 +301,10 @@ module Thrift
 
     # Write out the contents of the string str as a JSON string, escaping characters as appropriate.
     def write_json_string(str)
+      str = normalize_json_string(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      str.split('').each do |ch|
+      str.each_char do |ch|
         write_json_char(ch)
       end
       trans.write(@@kJSONStringDelimiter)
@@ -494,18 +495,25 @@ module Thrift
       JsonProtocol::read_syntax_char(@reader, ch)
     end
 
-    # Decodes the four hex parts of a JSON escaped string character and returns
-    # the character via out.
-    #
-    # Note - this only supports Unicode characters in the BMP (U+0000 to U+FFFF);
-    # characters above the BMP are encoded as two escape sequences (surrogate pairs),
-    # which is not yet implemented
     def read_json_escape_char
-      str = +@reader.read
-      str << @reader.read
-      str << @reader.read
-      str << @reader.read
-      str.hex.chr(Encoding::UTF_8)
+      code_unit = read_unicode_code_unit
+
+      if code_unit.between?(0xD800, 0xDBFF)
+        slash = @reader.read
+        marker = @reader.read
+        invalid_unicode!("Unpaired UTF-16 high surrogate") unless slash == '\\' && marker == 'u'
+
+        low_surrogate = read_unicode_code_unit
+        invalid_unicode!("Unpaired UTF-16 high surrogate") unless low_surrogate.between?(0xDC00, 0xDFFF)
+        codepoint = 0x10000 + ((code_unit - 0xD800) << 10) + (low_surrogate - 0xDC00)
+        [codepoint].pack('U')
+      elsif code_unit.between?(0xDC00, 0xDFFF)
+        invalid_unicode!("Unpaired UTF-16 low surrogate")
+      else
+        [code_unit].pack('U')
+      end
+    rescue EOFError
+      invalid_unicode!("Incomplete Unicode escape")
     end
 
     # Decodes a JSON string, including unescaping, and returns the string via str
@@ -525,7 +533,7 @@ module Thrift
         @context.read(@reader)
       end
       read_json_syntax_char(@@kJSONStringDelimiter)
-      str = +''
+      str = Bytes.empty_byte_buffer
       while (true)
         ch = @reader.read
         if (ch == @@kJSONStringDelimiter)
@@ -543,9 +551,9 @@ module Thrift
             ch = escape_char_vals[pos]
           end
         end
-        str << ch
+        str << Bytes.force_binary_encoding(ch)
       end
-      return str
+      decode_json_string(str)
     end
 
     # Reads a block of base64 characters, decoding it, and returns via str
@@ -788,6 +796,41 @@ module Thrift
 
     def to_s
       "json(#{super.to_s})"
+    end
+
+    private
+
+    def normalize_json_string(str)
+      utf8 = if str.encoding == Encoding::UTF_8
+        str
+      elsif str.encoding == Encoding::BINARY
+        str.ascii_only? ? str : str.dup.force_encoding(Encoding::UTF_8)
+      else
+        str.encode(Encoding::UTF_8)
+      end
+      invalid_unicode!("Invalid UTF-8 string") unless utf8.valid_encoding?
+      utf8
+    rescue EncodingError
+      invalid_unicode!("Invalid UTF-8 string")
+    end
+
+    def decode_json_string(bytes)
+      bytes.force_encoding(Encoding::UTF_8)
+      invalid_unicode!("Invalid UTF-8 string") unless bytes.valid_encoding?
+      bytes
+    end
+
+    def read_unicode_code_unit
+      hex = Bytes.empty_byte_buffer
+      4.times { hex << @reader.read }
+      invalid_unicode!("Invalid Unicode escape") unless hex.match?(/\A[0-9a-fA-F]{4}\z/)
+      hex.to_i(16)
+    rescue EOFError
+      invalid_unicode!("Incomplete Unicode escape")
+    end
+
+    def invalid_unicode!(message)
+      raise ProtocolException.new(ProtocolException::INVALID_DATA, message)
     end
   end
 

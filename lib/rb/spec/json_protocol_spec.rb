@@ -235,6 +235,38 @@ describe 'JsonProtocol' do
       expect(a.encoding).to eq(Encoding::BINARY)
     end
 
+    it "transcodes non-UTF-8 strings before writing JSON" do
+      value = +"caf\xE9"
+      value.force_encoding(Encoding::ISO_8859_1)
+
+      @prot.write_string(value)
+      data = @trans.read(@trans.available)
+
+      expect(data).to eq("\"caf\u00E9\"".encode(Encoding::UTF_8).b)
+      expect(data.dup.force_encoding(Encoding::UTF_8)).to be_valid_encoding
+      expect(value.encoding).to eq(Encoding::ISO_8859_1)
+    end
+
+    it "writes valid UTF-8 stored in a binary string" do
+      value = "caf\xC3\xA9".b
+
+      @prot.write_string(value)
+      data = @trans.read(@trans.available)
+
+      expect(data).to eq("\"caf\xC3\xA9\"".b)
+      expect(value.encoding).to eq(Encoding::BINARY)
+    end
+
+    it "rejects invalid UTF-8 before writing any JSON bytes" do
+      value = "\xC3\x28".b.force_encoding(Encoding::UTF_8)
+
+      expect { @prot.write_string(value) }.to raise_error(Thrift::ProtocolException) do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        expect(error.message).to eq("Invalid UTF-8 string")
+      end
+      expect(@trans.available).to eq(0)
+    end
+
     it "should write binary" do
       @prot.write_binary("this is a base64 string")
       expect(@trans.read(@trans.available)).to eq("\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\"")
@@ -315,6 +347,54 @@ describe 'JsonProtocol' do
 
       @trans.write("\"\\t\"")
       expect(@prot.read_json_string(false)).to eq("\t")
+    end
+
+    it "decodes BMP and supplementary Unicode escapes" do
+      {
+        '"\u20AC"' => "\u20AC",
+        '"\uD83D\uDE00"' => "\u{1F600}",
+        '"\ud83d\uDe00"' => "\u{1F600}"
+      }.each do |wire, value|
+        trans = Thrift::MemoryBufferTransport.new(wire.b)
+        protocol = Thrift::JsonProtocol.new(trans)
+
+        expect(protocol.read_json_string).to eq(value)
+      end
+    end
+
+    it "decodes mixed raw UTF-8 and escaped Unicode" do
+      @trans.write("\"raw \u{1F600} and \\u20AC\"".encode(Encoding::UTF_8).b)
+
+      value = @prot.read_json_string
+
+      expect(value).to eq("raw \u{1F600} and \u20AC")
+      expect(value.encoding).to eq(Encoding::UTF_8)
+      expect(value).to be_valid_encoding
+    end
+
+    it "rejects malformed Unicode escapes and unpaired surrogates" do
+      [
+        '"\u12G4"',
+        '"\u123"',
+        '"\uD83D"',
+        '"\uD83D\u0041"',
+        '"\uDE00"'
+      ].each do |wire|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire.b))
+
+        expect { protocol.read_json_string }.to raise_error(Thrift::ProtocolException) do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        end
+      end
+    end
+
+    it "rejects invalid raw UTF-8 in JSON strings" do
+      @trans.write("\"\xC3\x28\"".b)
+
+      expect { @prot.read_json_string }.to raise_error(Thrift::ProtocolException) do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        expect(error.message).to eq("Invalid UTF-8 string")
+      end
     end
 
     it "should read json string" do
