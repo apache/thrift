@@ -31,6 +31,7 @@ ID setvalue_id;
 ID to_s_method_id;
 ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
+static VALUE default_sym;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
@@ -239,15 +240,17 @@ static VALUE rb_thrift_union_write (VALUE self, VALUE protocol);
 static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol);
 static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info);
 
-VALUE get_field_value(VALUE obj, VALUE field_name) {
+static inline ID field_ivar_id(VALUE field_name) {
   char name_buf[RSTRING_LEN(field_name) + 2];
 
   name_buf[0] = '@';
   strlcpy(&name_buf[1], RSTRING_PTR(field_name), RSTRING_LEN(field_name) + 1);
 
-  VALUE value = rb_ivar_get(obj, rb_intern(name_buf));
+  return rb_intern(name_buf);
+}
 
-  return value;
+VALUE get_field_value(VALUE obj, VALUE field_name) {
+  return rb_ivar_get(obj, field_ivar_id(field_name));
 }
 
 static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol) {
@@ -430,13 +433,44 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol);
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
-static void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
-  char name_buf[RSTRING_LEN(field_name) + 2];
+static inline void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
+  rb_ivar_set(obj, field_ivar_id(field_name), value);
+}
 
-  name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING_PTR(field_name), RSTRING_LEN(field_name)+1);
+/* Ruby's rescue and iteration APIs require addressable callback functions. */
+static VALUE duplicate_default_value(VALUE value) {
+  return rb_obj_dup(value);
+}
 
-  rb_ivar_set(obj, rb_intern(name_buf), value);
+static VALUE retain_default_value(VALUE value, VALUE exception) {
+  (void)exception;
+  return value;
+}
+
+static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
+  (void)field_id;
+
+  VALUE field_name = rb_hash_aref(field_info, name_sym);
+  ID ivar_id = field_ivar_id(field_name);
+  VALUE default_value = rb_hash_aref(field_info, default_sym);
+
+  if (NIL_P(default_value)) {
+    if (!NIL_P(rb_ivar_get(self, ivar_id))) {
+      rb_ivar_set(self, ivar_id, Qnil);
+    }
+  } else {
+    VALUE value = rb_rescue2(
+      duplicate_default_value,
+      default_value,
+      retain_default_value,
+      default_value,
+      rb_eStandardError,
+      (VALUE)0
+    );
+    rb_ivar_set(self, ivar_id, value);
+  }
+
+  return ST_CONTINUE;
 }
 
 // Helper method to skip the contents of a map (assumes the map header has been read).
@@ -590,10 +624,15 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
 }
 
 static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
+  VALUE struct_fields = STRUCT_FIELDS(self);
+
+  if (RHASH_SIZE(struct_fields) > 0 && rb_ivar_count(self) > 0) {
+    rb_check_frozen(self);
+    rb_hash_foreach(struct_fields, reset_struct_field, self);
+  }
+
   // read struct begin
   default_read_struct_begin(protocol);
-
-  VALUE struct_fields = STRUCT_FIELDS(self);
 
   // read each field
   while (true) {
@@ -640,6 +679,15 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
 // --------------------------------
 
 static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
+  rb_check_frozen(self);
+
+  if (!NIL_P(rb_ivar_get(self, setfield_id))) {
+    rb_ivar_set(self, setfield_id, Qnil);
+  }
+  if (!NIL_P(rb_ivar_get(self, setvalue_id))) {
+    rb_ivar_set(self, setvalue_id, Qnil);
+  }
+
   // read struct begin
   default_read_struct_begin(protocol);
 
@@ -657,8 +705,9 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
     if (field_type == specified_type) {
       // read the value
       VALUE name = rb_hash_aref(field_info, name_sym);
+      VALUE value = read_anything(protocol, field_type, field_info);
       rb_iv_set(self, "@setfield", rb_str_intern(name));
-      rb_iv_set(self, "@value", read_anything(protocol, field_type, field_info));
+      rb_iv_set(self, "@value", value);
     } else {
       rb_funcall(protocol, skip_method_id, 1, field_type_value);
     }
@@ -748,4 +797,7 @@ void Init_struct(void) {
 
   sorted_field_ids_method_id = rb_intern("sorted_field_ids");
   rb_global_variable(&sorted_field_ids_method_id);
+
+  default_sym = ID2SYM(rb_intern("default"));
+  rb_global_variable(&default_sym);
 }
