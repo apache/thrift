@@ -48,6 +48,27 @@ describe 'HeaderTransport' do
   end
 
   describe Thrift::HeaderTransport do
+    def header_frame(payload, headers = {})
+      buffer = Thrift::MemoryBufferTransport.new
+      writer = Thrift::HeaderTransport.new(buffer)
+      headers.each { |key, value| writer.set_header(key, value) }
+      writer.write(payload)
+      writer.flush
+      buffer.read(buffer.available)
+    end
+
+    def binary_message
+      [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
+    end
+
+    def compact_message
+      [0x82, 0x21, 0, 0].pack('C*')
+    end
+
+    def framed(message)
+      [message.bytesize].pack('N') + message
+    end
+
     before(:each) do
       @underlying = Thrift::MemoryBufferTransport.new
       @trans = Thrift::HeaderTransport.new(@underlying)
@@ -282,6 +303,63 @@ describe 'HeaderTransport' do
         read_trans.read(7)
         headers = read_trans.get_headers
         expect(headers["request-id"]).to eq("12345")
+      end
+
+      {
+        "framed binary" => [:binary_message, true],
+        "unframed binary" => [:binary_message, false],
+        "framed compact" => [:compact_message, true],
+        "unframed compact" => [:compact_message, false]
+      }.each do |legacy_name, (legacy_message, is_framed)|
+        it "does not carry Header metadata through a #{legacy_name} protocol switch" do
+          legacy_payload = public_send(legacy_message)
+          bytes = header_frame("A", "request-id" => "first")
+          bytes << (is_framed ? framed(legacy_payload) : legacy_payload)
+          bytes << header_frame("B", "request-id" => "second")
+          read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(bytes))
+
+          expect(read_trans.read(1)).to eq("A")
+          expect(read_trans.get_headers).to eq("request-id" => "first")
+
+          read_trans.reset_protocol
+          expect(read_trans.read(4)).to eq(legacy_payload)
+          expect(read_trans.get_headers).to eq({})
+
+          read_trans.reset_protocol
+          expect(read_trans.read(1)).to eq("B")
+          expect(read_trans.get_headers).to eq("request-id" => "second")
+        end
+      end
+
+      it "keeps metadata empty across multiple legacy frames" do
+        bytes = header_frame("A", "request-id" => "first")
+        bytes << framed(binary_message)
+        bytes << framed(binary_message)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(bytes))
+
+        expect(read_trans.read(1)).to eq("A")
+        expect(read_trans.get_headers).to eq("request-id" => "first")
+
+        2.times do
+          read_trans.reset_protocol
+          expect(read_trans.read(4)).to eq(binary_message)
+          expect(read_trans.get_headers).to eq({})
+        end
+      end
+
+      it "clears metadata before reporting a malformed following frame" do
+        malformed_frame = [4].pack('N') + "nope"
+        bytes = header_frame("A", "request-id" => "first") + malformed_frame
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(bytes))
+
+        expect(read_trans.read(1)).to eq("A")
+        expect(read_trans.get_headers).to eq("request-id" => "first")
+
+        expect { read_trans.reset_protocol }.to raise_error(
+          Thrift::TransportException,
+          "Could not detect client transport type"
+        )
+        expect(read_trans.get_headers).to eq({})
       end
 
       it "should decode signed sequence ids from Header frames" do
