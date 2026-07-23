@@ -268,6 +268,8 @@ module Thrift
 
     # Reads the next frame, detecting client type on first read
     def read_frame(req_sz)
+      @read_headers = {}
+
       # Read first 4 bytes - could be frame length or protocol magic
       first_word = @transport.read_all(4)
       frame_size = first_word.unpack('N').first
@@ -370,7 +372,6 @@ module Thrift
         transforms << transform_id
       end
       # Read info headers
-      @read_headers = {}
       while buf.pos < end_of_headers
         info_type = read_varint32(buf, end_of_headers)
         if info_type == 0
