@@ -80,12 +80,14 @@ describe 'Thrift::ServerSocket' do
       expect(transport.timeout).to eq(Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT)
 
       expect(sock).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
+      expect(sock).to receive(:close)
       expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 105.1)
       expect(IO).to receive(:select).with(nil, [sock], nil, 5.0).and_return(nil)
 
       expect { transport.write("test data") }.to raise_error(Thrift::TransportException) do |e|
         expect(e.type).to eq(Thrift::TransportException::TIMED_OUT)
       end
+      expect(transport).not_to be_open
     end
 
     it "should close the handle when closed" do

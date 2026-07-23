@@ -66,12 +66,11 @@ module Thrift
 
           len
         end
-      rescue TransportException => e
-        # pass this on
-        raise e
+      rescue TransportException
+        close
+        raise
       rescue StandardError => e
-        close_socket(@handle)
-        @handle = nil
+        close
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
     end
@@ -95,12 +94,11 @@ module Thrift
             end
           end
         end
-      rescue TransportException => e
-        # don't let this get caught by the StandardError handler
-        raise e
+      rescue TransportException
+        close
+        raise
       rescue StandardError => e
-        close_socket(@handle)
-        @handle = nil
+        close
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
       if (data.nil? || data.length == 0)
