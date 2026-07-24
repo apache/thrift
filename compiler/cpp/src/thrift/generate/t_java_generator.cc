@@ -148,6 +148,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -467,7 +468,14 @@ private:
   bool unsafe_binaries_;
   bool annotations_as_metadata_;
   bool jakarta_annotations_;
+
+  const std::string gen_name_ = "java";
 };
+
+
+const std::string& t_java_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

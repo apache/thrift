@@ -103,6 +103,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   /* generation functions */
   void generate_typedef(t_typedef* ttypedef) override;
@@ -124,6 +126,8 @@ private:
   string nspace_u;
   string nspace_uc;
   string nspace_lc;
+
+  const string gen_name_ = "c_glib";
 
   /* helper functions */
   bool is_complex_type(t_type* ttype);
@@ -214,6 +218,14 @@ private:
   string generate_hash_func_from_type(t_type* ttype);
   string generate_cmp_func_from_type(t_type* ttype);
 };
+
+const string& t_c_glib_generator::get_gen_name() const {
+  return gen_name_;
+}
+
+std::string t_c_glib_generator::get_namespace(t_type*) {
+  return nspace;
+}
 
 /**
  * Prepare for file generation by opening up the necessary file

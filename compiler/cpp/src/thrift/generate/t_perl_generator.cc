@@ -67,6 +67,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   /**
    * Program-level generation functions
@@ -216,7 +218,17 @@ private:
   ofstream_with_content_based_conditional_update f_service_;
 
   bool f_types_use_includes_emitted_;
+
+  const std::string gen_name_ = "perl";
 };
+
+const std::string& t_perl_generator::get_gen_name() const {
+  return gen_name_;
+}
+
+std::string t_perl_generator::get_namespace(t_type* type) {
+  return perl_namespace(type->get_program());
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

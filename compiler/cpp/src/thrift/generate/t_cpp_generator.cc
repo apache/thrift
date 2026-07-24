@@ -120,6 +120,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -434,6 +436,8 @@ private:
   std::string ns_open_;
   std::string ns_close_;
 
+  const std::string gen_name_ = "cpp";
+
   /**
    * File streams, stored here to avoid passing them as parameters to every
    * function.
@@ -454,6 +458,15 @@ private:
   // themselves.
   friend class ProcessorGenerator;
 };
+
+const std::string& t_cpp_generator::get_gen_name() const {
+  return gen_name_;
+}
+
+std::string t_cpp_generator::get_namespace(t_type *type) {
+  std::string namespace_str = type->get_program()->get_namespace(get_gen_name());
+  return replace_all(namespace_str, ".", "::") + "::";
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

@@ -18,6 +18,7 @@
  */
 
 #include <sstream>
+#include <string>
 #include "thrift/platform.h"
 #include "thrift/generate/t_oop_generator.h"
 
@@ -58,6 +59,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   /**
    * Program-level generation functions
@@ -167,7 +169,13 @@ private:
   ofstream_with_content_based_conditional_update f_types_;
   ofstream_with_content_based_conditional_update f_consts_;
   ofstream_with_content_based_conditional_update f_service_;
+
+  const std::string gen_name_ = "lua";
 };
+
+const std::string& t_lua_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Init and close methods

@@ -104,7 +104,8 @@ BOOST_AUTO_TEST_CASE(test_piped_transport_factory_preserves_configuration) {
 // failing on a truncated buffer.
 BOOST_AUTO_TEST_CASE(test_framed_transport_factory_enforces_custom_max_frame_size) {
   const int kMaxFrameSize = 64;
-  auto config = std::make_shared<TConfiguration>(TConfiguration::DEFAULT_MAX_MESSAGE_SIZE, kMaxFrameSize);
+  const int kMaxMessageSize = TConfiguration::DEFAULT_MAX_MESSAGE_SIZE;
+  auto config = std::make_shared<TConfiguration>(kMaxMessageSize, kMaxFrameSize);
 
   // A 4-byte big-endian frame-length prefix declaring a 1024-byte frame,
   // well beyond kMaxFrameSize, followed by 1024 bytes of payload.

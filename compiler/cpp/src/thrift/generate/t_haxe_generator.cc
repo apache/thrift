@@ -74,6 +74,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -253,7 +254,13 @@ private:
   std::string package_name_;
   ofstream_with_content_based_conditional_update f_service_;
   std::string package_dir_;
+
+  const std::string gen_name_ = "haxe";
 };
+
+const std::string& t_haxe_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
@@ -3148,6 +3155,17 @@ void t_haxe_generator::generate_haxe_doc(ostream& out, t_function* tfunction) {
         ss << " " << p->get_doc();
       }
     }
+
+    const vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+    vector<t_field*>::const_iterator e_iter;
+    for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter) {
+      t_field* e = *e_iter;
+      ss << "\n@throws " << type_name(e->get_type()) << " " << e->get_name();
+      if (e->has_doc()) {
+        ss << " " << e->get_doc();
+      }
+    }
+
     generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
   }
 }

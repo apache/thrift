@@ -104,6 +104,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  const std::string& get_gen_name() const override;
 
   /**
    * Program-level generation functions
@@ -252,7 +253,13 @@ private:
   bool types_need_separator_;
   bool consts_need_separator_;
   bool service_need_separator_;
+
+  const std::string gen_name_ = "rb";
 };
+
+const std::string& t_rb_generator::get_gen_name() const {
+  return gen_name_;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
