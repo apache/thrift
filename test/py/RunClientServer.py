@@ -23,9 +23,9 @@ import platform
 import copy
 import os
 import signal
-import socket
 import subprocess
 import sys
+import tempfile
 import time
 from optparse import OptionParser
 
@@ -103,14 +103,6 @@ def runScriptTest(libdir, genbase, genpydir, script):
         raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
 
 
-def pick_unused_port():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
-
-
 def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zlib, use_ssl, verbose):
     env = setup_pypath(libdir, os.path.join(genbase, genpydir))
     # Build command line arguments
@@ -118,7 +110,6 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
     cli_args = [sys.executable, relfile('TestClient.py')]
     for which in (server_args, cli_args):
         which.append('--protocol=%s' % proto)  # accel, binary, compact or json
-        which.append('--port=%d' % port)  # default to 9090
         if use_zlib:
             which.append('--zlib')
         if use_ssl:
@@ -127,6 +118,10 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             which.append('-q')
         if verbose == 2:
             which.append('-v')
+    fd, port_file = tempfile.mkstemp(prefix='thrift-test-port-')
+    os.close(fd)
+    server_args.append('--port=%d' % port)
+    server_args.append('--port-file=%s' % port_file)
     # server-specific option to select server class
     server_args.append(server_class)
     # client-specific cmdline options
@@ -145,7 +140,7 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         popen_kwargs['start_new_session'] = True
-    serverproc = subprocess.Popen(server_args, **popen_kwargs)
+    serverproc = None
 
     def ensureServerAlive():
         if serverproc.poll() is not None:
@@ -154,28 +149,22 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             raise Exception('Server subprocess %s died, args: %s'
                             % (server_class, ' '.join(server_args)))
 
-    # Wait for the server to start accepting connections on the given port.
-    sleep_time = 0.1  # Seconds
-    max_attempts = 100
-    attempt = 0
-    while True:
-        sock4 = socket.socket()
-        sock6 = socket.socket(socket.AF_INET6)
-        try:
-            if sock4.connect_ex(('127.0.0.1', port)) == 0 \
-                    or sock6.connect_ex(('::1', port)) == 0:
-                break
-            attempt += 1
-            if attempt >= max_attempts:
-                raise Exception("TestServer not ready on port %d after %.2f seconds"
-                                % (port, sleep_time * attempt))
-            ensureServerAlive()
-            time.sleep(sleep_time)
-        finally:
-            sock4.close()
-            sock6.close()
-
     try:
+        serverproc = subprocess.Popen(server_args, **popen_kwargs)
+
+        deadline = time.monotonic() + 10
+        while True:
+            ensureServerAlive()
+            try:
+                with open(port_file) as input_file:
+                    port = int(input_file.read())
+                break
+            except (OSError, ValueError):
+                if time.monotonic() >= deadline:
+                    raise Exception("TestServer did not report its port after 10 seconds")
+                time.sleep(0.1)
+
+        cli_args.append('--port=%d' % port)
         if verbose > 0:
             print('Testing client: %s' % (' '.join(cli_args)))
         ret = subprocess.call(cli_args, env=env)
@@ -185,28 +174,32 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             print('PY_GEN: %s' % genpydir, file=sys.stderr)
             raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
     finally:
-        # check that server didn't die, but still attempt cleanup
         cleanup_exc = None
+        if serverproc is not None:
+            try:
+                ensureServerAlive()
+            except Exception as exc:
+                cleanup_exc = exc
+            extra_sleep = EXTRA_DELAY.get(server_class, 0)
+            if extra_sleep > 0 and verbose > 0:
+                print('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
+                      'processes to terminate via alarm'
+                      % (server_class, proto, use_zlib, use_ssl, extra_sleep))
+                time.sleep(extra_sleep)
+            sig = signal.SIGKILL if platform.system() != 'Windows' else signal.SIGABRT
+            try:
+                if platform.system() == 'Windows':
+                    os.kill(serverproc.pid, sig)
+                else:
+                    # POSIX: kill the whole process group to reap forked children.
+                    os.killpg(serverproc.pid, sig)
+            except OSError:
+                pass
+            serverproc.wait()
         try:
-            ensureServerAlive()
-        except Exception as exc:
-            cleanup_exc = exc
-        extra_sleep = EXTRA_DELAY.get(server_class, 0)
-        if extra_sleep > 0 and verbose > 0:
-            print('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
-                  'processes to terminate via alarm'
-                  % (server_class, proto, use_zlib, use_ssl, extra_sleep))
-            time.sleep(extra_sleep)
-        sig = signal.SIGKILL if platform.system() != 'Windows' else signal.SIGABRT
-        try:
-            if platform.system() == 'Windows':
-                os.kill(serverproc.pid, sig)
-            else:
-                # POSIX: kill the whole process group to reap forked children.
-                os.killpg(serverproc.pid, sig)
+            os.unlink(port_file)
         except OSError:
             pass
-        serverproc.wait()
         if cleanup_exc:
             raise cleanup_exc
 
@@ -248,8 +241,8 @@ class TestCases(object):
         if self.verbose > 0:
             print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                   % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-        port = self.port if self.port else pick_unused_port()
-        runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, port, with_zlib, with_ssl, self.verbose)
+        runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto,
+                       self.port, with_zlib, with_ssl, self.verbose)
         if self.verbose > 0:
             print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                   % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -285,8 +278,9 @@ class TestCases(object):
                             if self.verbose > 0:
                                 print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                                       % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-                            port = self.port if self.port else pick_unused_port()
-                            runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, port, with_zlib, with_ssl, self.verbose)
+                            runServiceTest(self.libdir, self.genbase, genpydir,
+                                           try_server, try_proto, self.port,
+                                           with_zlib, with_ssl, self.verbose)
                             if self.verbose > 0:
                                 print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                                       % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
