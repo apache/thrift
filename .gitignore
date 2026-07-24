@@ -60,6 +60,7 @@ SKILL.md
 .vs
 
 /.claude
+/.ai
 /aclocal/libtool.m4
 /aclocal/lt*.m4
 /autoscan.log
