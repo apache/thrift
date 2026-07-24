@@ -1366,10 +1366,19 @@ The pre-allocation (immediately follows the check):
 - Java: new ArrayList<>(declaredCount) → same pattern (NestedListsI32x3.java:350)
 - Go: make([]T, 0, declaredCount) → allocates backing array of that capacity
 
-C++ cumulative vs. Go per-field:
+Per-transport message-size accounting — C++/Java are not uniformly "cumulative":
 
-C++/Java use a decreasing remainingMessageSize_ counter — each wire byte consumed reduces the budget. Go's checkSizeForProtocol compares against the full maxMessageSize each
-time (configuration.go:319–333), not a running remainder. A Go struct with k list fields can each declare maxMessageSize / 1 elements independently.
+The remainingMessageSize_ counter is only *decremented* by some transports, and not on the primary network read path. In C++, countConsumedMessageBytes() (the decrement) is
+protected and reached from only three places: the in-memory buffer's consume()/borrow path (TBufferTransports.h), TZlibTransport, and the framed updateKnownMessageSize() reset.
+A plain TSocket::read() — and likewise TSSLSocket, THttpTransport, TFDTransport, TPipe — calls checkReadBytesAvailable(len) against the full maxMessageSize before each read but
+never decrements, so remainingMessageSize_ stays pegged at maxMessageSize for the whole message. In Java, TIOStreamTransport.read() (the socket/stream base) performs no per-read
+accounting at all — it neither checks nor decrements; only TMemoryInputTransport / AutoExpandingBufferReadTransport and the framed path decrement.
+
+Consequently, on the default socket path the size cap for both C++ and Java is enforced by the *protocol-level* guard — checkReadBytesAvailable(fieldSize) — comparing each field
+against the full, undecremented maxMessageSize (exactly the "checkReadBytesAvailable(N × 1) passes when N ≤ M" behaviour clause 2 relies on below). That is structurally
+per-field, the same as Go — not a cumulative running remainder. Go's checkSizeForProtocol likewise compares against the full maxMessageSize each time (configuration.go:319–333);
+a struct with k list fields can each declare maxMessageSize / 1 elements independently — and, per the above, C++/Java over a plain socket permit that same per-field independence.
+The cumulative-remainder behaviour applies only to the in-memory buffer, zlib, and framed transports, where the counter is actually drawn down.
 
 ---
 Evaluation of the three clauses
@@ -1440,8 +1449,9 @@ The policy is acceptable as a categorical line with three required qualification
 1. Carve out O(N log N) for ordered containers (std::map/std::set CPU): this is inherent data structure complexity, not a Thrift amplification bug.
 2. Note that "constant-factor" is schema-dependent and can be 100–10,000× for struct-element collections under binary protocol; container_limit_ (C++) is the additional lever,
 not just maxMessageSize.
-3. Note framed transports cannot hang on this path regardless of cap setting, and that Go's cap check is per-field (not cumulative), which the policy's "single field" framing
-happens to fit but for different structural reasons than C++/Java.
+3. Note framed transports cannot hang on this path regardless of cap setting, and that Go's cap check is per-field (not cumulative) — as is the C++/Java check on a plain socket,
+where nothing decrements remainingMessageSize_ (see "Per-transport message-size accounting" above); only the in-memory/zlib/framed transports of C++/Java draw the budget down
+cumulatively. The policy's "single field" framing fits all three.
 
 
 **Q60.** **(Codegen determinism.)** 
