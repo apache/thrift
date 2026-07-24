@@ -428,9 +428,21 @@ namespace Thrift.Protocol
 
                 await ReadJsonSyntaxCharAsync(TJSONProtocolConstants.Quote, cancellationToken);
 
+                // A JSON string is quote-delimited, so unlike a length-prefixed binary
+                // string there is no declared size to reject up front. Bound the running
+                // byte count against the configured max message size so a single string
+                // cannot grow without bound, independent of any transport-level accounting.
+                long maxSize = Trans.Configuration.MaxMessageSize;
+                long count = 0;
+
                 while (true)
                 {
                     var ch = await Reader.ReadAsync(cancellationToken);
+                    count++;
+                    if (count > maxSize)
+                    {
+                        throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "Message size exceeds limit: " + maxSize);
+                    }
                     if (ch == TJSONProtocolConstants.Quote[0])
                     {
                         break;
@@ -450,6 +462,7 @@ namespace Thrift.Protocol
 
                     // distinguish between \uXXXX and \?
                     ch = await Reader.ReadAsync(cancellationToken);
+                    count++;
                     if (ch != TJSONProtocolConstants.EscSequences[1]) // control chars like \n
                     {
                         var off = Array.IndexOf(TJSONProtocolConstants.EscapeChars, (char) ch);
@@ -470,6 +483,7 @@ namespace Thrift.Protocol
                     // it's \uXXXX
                     Trans.CheckReadBytesAvailable(4);
                     await Trans.ReadAllAsync(_tempBuffer, 0, 4, cancellationToken);
+                    count += 4;
 
                     var wch = (short) ((TJSONProtocolHelper.ToHexVal(_tempBuffer[0]) << 12) +
                                        (TJSONProtocolHelper.ToHexVal(_tempBuffer[1]) << 8) +
@@ -527,8 +541,17 @@ namespace Thrift.Protocol
         private async ValueTask<string> ReadJsonNumericCharsAsync(CancellationToken cancellationToken)
         {
             var strbld = new StringBuilder();
+            long maxSize = Trans.Configuration.MaxMessageSize;
             while (true)
             {
+                // Numeric literals carry no declared length either; bound the running
+                // count against the configured max message size as digits accumulate.
+                // Checked before the try/catch below, which would otherwise swallow this
+                // size-limit exception via its TTransportException handler.
+                if (strbld.Length > maxSize)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.MessageSizeLimit, "Message size exceeds limit: " + maxSize);
+                }
                 //TODO: workaround for primitive types with TJsonProtocol, think - how to rewrite into more easy form without exceptions
                 try
                 {
