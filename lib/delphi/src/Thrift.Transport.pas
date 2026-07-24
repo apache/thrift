@@ -504,6 +504,71 @@ const
 implementation
 
 
+type
+  // Presents an endpoint transport as an input-only IThriftStream, so that a
+  // buffered transport's read buffer refills via ITransport.Read (which draws
+  // the endpoint's message-size budget down) instead of reading the endpoint's
+  // raw input stream directly, which would bypass that accounting.
+  TTransportInputStreamImpl = class( TThriftStreamImpl)
+  strict private
+    FTransport : ITransport;
+  strict protected
+    function  Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
+    procedure Open; override;
+    procedure Close; override;
+    procedure Flush; override;
+    function  IsOpen: Boolean; override;
+    function  ToArray: TBytes; override;
+  public
+    constructor Create( const aTransport : ITransport);
+  end;
+
+
+constructor TTransportInputStreamImpl.Create( const aTransport : ITransport);
+begin
+  inherited Create;
+  FTransport := aTransport;
+end;
+
+function TTransportInputStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
+begin
+  if FTransport <> nil
+  then result := FTransport.Read( pBuf, buflen, offset, count)
+  else result := 0;
+end;
+
+procedure TTransportInputStreamImpl.Write( const pBuf : Pointer; offset: Integer; count: Integer);
+begin
+  raise TTransportExceptionUnknown.Create( ClassName+' is read-only');
+end;
+
+procedure TTransportInputStreamImpl.Open;
+begin
+  if FTransport <> nil then FTransport.Open;
+end;
+
+procedure TTransportInputStreamImpl.Close;
+begin
+  FTransport := nil;
+end;
+
+procedure TTransportInputStreamImpl.Flush;
+begin
+  // nothing to flush on the input side
+end;
+
+function TTransportInputStreamImpl.IsOpen: Boolean;
+begin
+  result := (FTransport <> nil) and FTransport.IsOpen;
+end;
+
+function TTransportInputStreamImpl.ToArray: TBytes;
+begin
+  SetLength( result, 0);
+end;
+
+
 { TTransportBase }
 
 procedure TTransportBase.Flush;
@@ -1334,7 +1399,10 @@ end;
 procedure TBufferedTransportImpl.InitBuffers;
 begin
   if InnerTransport.InputStream <> nil then begin
-    FInputBuffer := TBufferedStreamImpl.Create( InnerTransport.InputStream, FBufSize );
+    // Buffer over the inner transport (not its raw input stream) so that refills
+    // go through ITransport.Read and draw the endpoint message-size budget down;
+    // reading the stream directly would leave the budget unenforced on this path.
+    FInputBuffer := TBufferedStreamImpl.Create( TTransportInputStreamImpl.Create( InnerTransport), FBufSize );
   end;
   if InnerTransport.OutputStream <> nil then begin
     FOutputBuffer := TBufferedStreamImpl.Create( InnerTransport.OutputStream, FBufSize );
