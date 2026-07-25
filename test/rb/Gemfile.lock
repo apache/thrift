@@ -68,7 +68,7 @@ GEM
     io-endpoint (0.17.2)
     io-event (1.19.1)
     io-stream (0.13.1)
-    json (2.19.2)
+    json (2.19.9)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     localhost (1.8.0)
