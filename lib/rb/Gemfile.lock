@@ -12,7 +12,7 @@ GEM
     daemons (1.4.1)
     diff-lcs (1.6.2)
     eventmachine (1.2.7)
-    json (2.19.2)
+    json (2.19.9)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
