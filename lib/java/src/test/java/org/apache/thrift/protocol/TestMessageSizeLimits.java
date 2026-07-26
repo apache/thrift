@@ -212,10 +212,10 @@ public class TestMessageSizeLimits {
   }
 
   /**
-   * Builds a TJSONProtocol reading from a small-maxMessageSize TIOStreamTransport. TIOStreamTransport
-   * does no per-read message-size accounting (unlike TMemoryInputTransport, whose own decrement
-   * already bounds a read), so it both isolates TJSONProtocol's own bound and is the real network
-   * read path on which a delimited JSON string is otherwise unbounded.
+   * Builds a TJSONProtocol reading from a small-maxMessageSize TIOStreamTransport.
+   * TIOStreamTransport does no per-read message-size accounting (unlike TMemoryInputTransport,
+   * whose own decrement already bounds a read), so it both isolates TJSONProtocol's own bound and
+   * is the real network read path on which a delimited JSON string is otherwise unbounded.
    */
   private TJSONProtocol jsonProtoReading(String json, int maxSize) throws Exception {
     TConfiguration config = TConfiguration.custom().setMaxMessageSize(maxSize).build();

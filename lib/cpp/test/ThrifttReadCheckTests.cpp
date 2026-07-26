@@ -292,26 +292,34 @@ BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_container_size_overflow) {
 }
 
 BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
-  std::shared_ptr<TConfiguration> config (new TConfiguration(MAX_MESSAGE_SIZE));
+  // Unlike the length-prefixed protocols, the JSON container header
+  // ("[\"i32\",<n>") is itself read through the message-size-bounded string and
+  // number readers, so a limit as small as MAX_MESSAGE_SIZE would already be hit
+  // while reading the element type name. Use a limit that leaves room for the
+  // header but stays far below the declared container payload, which is what
+  // this test exercises.
+  const int JSON_MAX_MESSAGE_SIZE = 64;
+  const int CONTAINER_SIZE = 1024;
+  std::shared_ptr<TConfiguration> config (new TConfiguration(JSON_MAX_MESSAGE_SIZE));
   std::shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer(config));
   std::shared_ptr<TJSONProtocol> protocol(new TJSONProtocol(transport));
 
   uint32_t val = 0;
   TType elemType = apache::thrift::protocol::T_STOP;
   TType elemType1 = apache::thrift::protocol::T_STOP;
-  TList list(T_I32, 8);
+  TList list(T_I32, CONTAINER_SIZE);
   protocol->writeListBegin(list.elemType_, list.size_);
   protocol->writeListEnd();
   BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
   protocol->readListEnd();
 
-  TSet set(T_I32, 8);
+  TSet set(T_I32, CONTAINER_SIZE);
   protocol->writeSetBegin(set.elemType_, set.size_);
   protocol->writeSetEnd();
   BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException);
   protocol->readSetEnd();
 
-  TMap map(T_I32, T_I32, 8);
+  TMap map(T_I32, T_I32, CONTAINER_SIZE);
   protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
   protocol->writeMapEnd();
   BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
