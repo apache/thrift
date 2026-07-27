@@ -90,6 +90,16 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
       return FALSE;
   }
 
+  /* A message the protocol did not name carries no service to route it to,
+     so there is nothing to split into tokens */
+  if(fname == NULL) {
+      g_set_error (error,
+		   THRIFT_MULTIPLEXED_PROCESSOR_ERROR,
+		   THRIFT_MULTIPLEXED_PROCESSOR_ERROR_MESSAGE_WRONGLY_MULTIPLEXED,
+		   "the message has no method name");
+      return FALSE;
+  }
+
   if(!(message_type == T_CALL || message_type == T_ONEWAY)) {
       g_set_error (error,
 		   THRIFT_MULTIPLEXED_PROCESSOR_ERROR,
