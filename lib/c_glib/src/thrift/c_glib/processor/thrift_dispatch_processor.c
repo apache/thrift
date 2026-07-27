@@ -31,7 +31,7 @@ thrift_dispatch_processor_process (ThriftProcessor *processor,
                                    ThriftProtocol *out,
                                    GError **error)
 {
-  gchar *fname;
+  gchar *fname = NULL;
   ThriftMessageType mtype;
   gint32 seqid;
   ThriftDispatchProcessor *dispatch_processor =
@@ -44,11 +44,17 @@ thrift_dispatch_processor_process (ThriftProcessor *processor,
                                           &seqid,
                                           error) < 0) {
     g_warning ("error reading start of message: %s",
-               (error != NULL) ? (*error)->message : "(null)");
+               (error != NULL && *error != NULL) ? (*error)->message : "(null)");
+    g_free (fname);
+    return FALSE;
+  }
+  else if (fname == NULL) {
+    g_warning ("no method name in the message read from client");
     return FALSE;
   }
   else if (mtype != T_CALL && mtype != T_ONEWAY) {
     g_warning ("received invalid message type %d from client", mtype);
+    g_free (fname);
     return FALSE;
   }
 
@@ -75,6 +81,8 @@ thrift_dispatch_processor_real_dispatch_call (ThriftDispatchProcessor *self,
   gchar *message;
   gint32 result;
   gboolean dispatch_result = FALSE;
+  /* A caller that has no method name to pass on still gets an answer */
+  const gchar *method_name = (fname != NULL) ? fname : "";
 
   THRIFT_UNUSED_VAR (self);
 
@@ -82,23 +90,30 @@ thrift_dispatch_processor_real_dispatch_call (ThriftDispatchProcessor *self,
      method name is not recognized. */
 
   if ((thrift_protocol_skip (in, T_STRUCT, error) < 0) ||
-      (thrift_protocol_read_message_end (in, error) < 0))
+      (thrift_protocol_read_message_end (in, error) < 0)) {
+    g_free (fname);
     return FALSE;
+  }
 
   g_object_get (in, "transport", &transport, NULL);
   result = thrift_transport_read_end (transport, error);
   g_object_unref (transport);
-  if (result < 0)
+  if (result < 0) {
+    g_free (fname);
     return FALSE;
+  }
 
   if (thrift_protocol_write_message_begin (out,
-                                           fname,
+                                           method_name,
                                            T_EXCEPTION,
                                            seqid,
-                                           error) < 0)
+                                           error) < 0) {
+    g_free (fname);
     return FALSE;
-  message = g_strconcat ("Invalid method name: '", fname, "'", NULL);
+  }
+  message = g_strconcat ("Invalid method name: '", method_name, "'", NULL);
   g_free (fname);
+  method_name = NULL;
   xception =
     g_object_new (THRIFT_TYPE_APPLICATION_EXCEPTION,
                   "type",    THRIFT_APPLICATION_EXCEPTION_ERROR_UNKNOWN_METHOD,
