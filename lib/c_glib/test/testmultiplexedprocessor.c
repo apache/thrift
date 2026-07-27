@@ -28,6 +28,73 @@
 
 #define TEST_SERVICE_NAME "aService"
 
+/* A protocol that reports success for a message header without ever writing
+   the method name, the shape a protocol takes when it does not handle every
+   message encoding. */
+
+#define TEST_TYPE_NAMELESS_PROTOCOL (test_nameless_protocol_get_type ())
+
+struct _TestNamelessProtocol
+{
+  ThriftProtocol parent;
+};
+typedef struct _TestNamelessProtocol TestNamelessProtocol;
+
+struct _TestNamelessProtocolClass
+{
+  ThriftProtocolClass parent;
+};
+typedef struct _TestNamelessProtocolClass TestNamelessProtocolClass;
+
+G_DEFINE_TYPE (TestNamelessProtocol, test_nameless_protocol,
+               THRIFT_TYPE_PROTOCOL)
+
+static gint32
+test_nameless_protocol_read_message_begin (ThriftProtocol *protocol,
+                                           gchar **name,
+                                           ThriftMessageType *message_type,
+                                           gint32 *seqid, GError **error)
+{
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (name);
+  THRIFT_UNUSED_VAR (error);
+
+  *message_type = T_CALL;
+  *seqid = 1;
+
+  return 4;
+}
+
+/* The base class points every unimplemented read at its own dispatcher, so the
+   one call the test can reach beyond the message header is answered here. */
+static gint32
+test_nameless_protocol_read_struct_begin (ThriftProtocol *protocol,
+                                          gchar **name, GError **error)
+{
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (name);
+
+  g_set_error (error, THRIFT_PROTOCOL_ERROR,
+               THRIFT_PROTOCOL_ERROR_INVALID_DATA,
+               "stub protocol reads no message body");
+  return -1;
+}
+
+static void
+test_nameless_protocol_init (TestNamelessProtocol *protocol)
+{
+  THRIFT_UNUSED_VAR (protocol);
+}
+
+static void
+test_nameless_protocol_class_init (TestNamelessProtocolClass *klass)
+{
+  THRIFT_PROTOCOL_CLASS (klass)->read_message_begin =
+    test_nameless_protocol_read_message_begin;
+  THRIFT_PROTOCOL_CLASS (klass)->read_struct_begin =
+    test_nameless_protocol_read_struct_begin;
+}
+
 /* A processor that records whether it was handed the call */
 
 static gboolean sub_processor_called = FALSE;
@@ -137,6 +204,64 @@ run_message (const gchar *message_name, GError **error)
   return result;
 }
 
+/* Runs one message through a multiplexed processor whose input protocol
+   reports success for the header without naming the method. */
+static gboolean
+run_nameless_message (GError **error)
+{
+  ThriftMultiplexedProcessor *processor = NULL;
+  TestSubProcessor *sub_processor = NULL;
+  TestNamelessProtocol *in_protocol = NULL;
+  ThriftMemoryBuffer *out_transport = NULL;
+  ThriftBinaryProtocol *out_protocol = NULL;
+  gboolean result;
+
+  sub_processor_called = FALSE;
+
+  processor = g_object_new (THRIFT_TYPE_MULTIPLEXED_PROCESSOR, NULL);
+  sub_processor = g_object_new (TEST_TYPE_SUB_PROCESSOR, NULL);
+  g_assert (THRIFT_MULTIPLEXED_PROCESSOR_GET_CLASS (processor)
+            ->register_processor (THRIFT_PROCESSOR (processor),
+                                  TEST_SERVICE_NAME,
+                                  THRIFT_PROCESSOR (sub_processor), NULL));
+
+  in_protocol = g_object_new (TEST_TYPE_NAMELESS_PROTOCOL, NULL);
+  out_transport = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 1024,
+                                NULL);
+  out_protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport",
+                               out_transport, NULL);
+
+  result = thrift_processor_process (THRIFT_PROCESSOR (processor),
+                                     THRIFT_PROTOCOL (in_protocol),
+                                     THRIFT_PROTOCOL (out_protocol),
+                                     error);
+
+  g_object_unref (in_protocol);
+  g_object_unref (out_protocol);
+  g_object_unref (out_transport);
+  g_object_unref (sub_processor);
+  g_object_unref (processor);
+
+  return result;
+}
+
+/* A message the protocol did not name carries no service to route it to, so
+   it must be rejected rather than split into tokens. */
+static void
+test_message_without_name (void)
+{
+  GError *error = NULL;
+
+  g_assert (run_nameless_message (&error) == FALSE);
+  g_assert (sub_processor_called == FALSE);
+  g_assert (error != NULL);
+  g_assert (error->domain == THRIFT_MULTIPLEXED_PROCESSOR_ERROR);
+  g_assert_cmpint (error->code, ==,
+                   THRIFT_MULTIPLEXED_PROCESSOR_ERROR_MESSAGE_WRONGLY_MULTIPLEXED);
+
+  g_clear_error (&error);
+}
+
 /* A method name carrying both the service and the function is routed to the
    registered service. */
 static void
@@ -196,6 +321,8 @@ main (int argc, char *argv[])
 
   g_test_init (&argc, &argv, NULL);
 
+  g_test_add_func ("/testmultiplexedprocessor/MessageWithoutName",
+                   test_message_without_name);
   g_test_add_func ("/testmultiplexedprocessor/MultiplexedMessage",
                    test_multiplexed_message);
   g_test_add_func ("/testmultiplexedprocessor/MessageWithoutFunctionName",
