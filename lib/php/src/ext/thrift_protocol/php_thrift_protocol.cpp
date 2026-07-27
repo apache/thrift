@@ -23,6 +23,7 @@
 #include "php.h"
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
+#include "zend_smart_str.h"
 #include "php_thrift_protocol.h"
 
 #if PHP_VERSION_ID >= 70000
@@ -33,6 +34,10 @@
 #include <cstdint>
 #include <stdexcept>
 #include <algorithm>
+
+// Wire-supplied string lengths are read in steps of this size, so the buffer
+// grows with the data that actually arrives.
+#define STRING_READ_CHUNK_SIZE 8192
 
 #ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
@@ -644,10 +649,26 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
     case T_STRING: {
       uint32_t size = transport.readU32();
       if (size) {
-        char strbuf[size+1];
-        transport.readBytes(strbuf, size);
-        strbuf[size] = '\0';
-        ZVAL_STRINGL(return_value, strbuf, size);
+        // The length comes off the wire, so the result is built on the heap as
+        // the bytes actually arrive: nothing is placed on the stack, the length
+        // takes part in no expression that can wrap, and a length the peer does
+        // not back with data costs only what it does send.
+        smart_str strbuf = {0};
+        try {
+          char chunk[STRING_READ_CHUNK_SIZE];
+          uint32_t remaining = size;
+          while (remaining > 0) {
+            uint32_t chunk_len = (std::min)(remaining, (uint32_t)sizeof(chunk));
+            transport.readBytes(chunk, chunk_len);
+            smart_str_appendl(&strbuf, chunk, chunk_len);
+            remaining -= chunk_len;
+          }
+        } catch (...) {
+          smart_str_free(&strbuf);
+          throw;
+        }
+        smart_str_0(&strbuf);
+        ZVAL_NEW_STR(return_value, strbuf.s);
       } else {
         ZVAL_EMPTY_STRING(return_value);
       }
