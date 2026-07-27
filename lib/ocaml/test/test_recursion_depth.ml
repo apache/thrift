@@ -343,6 +343,35 @@ let run_suite label ~build ~write ~read ~depth_of ~craft =
      check (Printf.sprintf "%s: read %d-deep raises DEPTH_LIMIT" label (limit + 1))
        (is_depth_limit e))
 
+(* A payload nested under a field id no reader declares, so every level is
+   handed to skip(), which descends it on its own. *)
+let rec craft_unknown (oprot : Protocol.t) n =
+  oprot#writeStructBegin "Rec";
+  if n > 1 then begin
+    oprot#writeFieldBegin ("unknown", Protocol.T_STRUCT, 99);
+    craft_unknown oprot (n - 1);
+    oprot#writeFieldEnd
+  end;
+  oprot#writeFieldStop;
+  oprot#writeStructEnd
+
+let skip_suite () =
+  (let proto = new mem_protocol (new null_transport) in
+   craft_unknown proto (limit + 5);
+   try
+     ignore (read_rec_struct proto);
+     check "skip: reading past the limit raises DEPTH_LIMIT" false
+   with e ->
+     check "skip: reading past the limit raises DEPTH_LIMIT" (is_depth_limit e));
+
+  (let proto = new mem_protocol (new null_transport) in
+   craft_unknown proto (limit - 2);
+   try
+     ignore (read_rec_struct proto);
+     check "skip: reading within the limit succeeds" true
+   with _ ->
+     check "skip: reading within the limit succeeds" false)
+
 let () =
   run_suite "struct"
     ~build:build_struct
@@ -362,6 +391,8 @@ let () =
     ~read:read_rec_error
     ~depth_of:depth_error
     ~craft:craft_error;
+
+  skip_suite ();
 
   (* The exception wrapper itself is exercised so the generated
      "exception E of cls" shape is covered as well. *)

@@ -224,7 +224,14 @@ struct
     method virtual readString : string
     method virtual readBinary : string
         (* skippage *)
+    (* Skipping descends through nested structs and containers the same way
+       reading them does, so it draws on the same depth budget. *)
     method skip typ =
+      self#increment_recursion_depth;
+      Fun.protect ~finally:(fun () -> self#decrement_recursion_depth)
+        (fun () -> self#skip_type typ)
+
+    method private skip_type typ =
       match typ with
         | T_BOOL -> ignore self#readBool
         | T_BYTE
