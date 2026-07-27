@@ -29,6 +29,23 @@ if test "$PHP_THRIFT_PROTOCOL" != "no"; then
   PHP_SUBST(THRIFT_PROTOCOL_SHARED_LIBADD)
   CXXFLAGS="$CXXFLAGS -std=c++11"
 
+  dnl Probe for stack-clash protection rather than assuming it: the option
+  dnl needs GCC 8 / Clang 11 and is not implemented on every target, so ask the
+  dnl compiler at hand whether it accepts and links with it.
+  AC_MSG_CHECKING([whether $CXX accepts -fstack-clash-protection])
+  thrift_saved_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fstack-clash-protection -Werror"
+  AC_LANG_PUSH([C++])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+    [thrift_stack_clash=yes],
+    [thrift_stack_clash=no])
+  AC_LANG_POP([C++])
+  CXXFLAGS="$thrift_saved_CXXFLAGS"
+  AC_MSG_RESULT([$thrift_stack_clash])
+  if test "$thrift_stack_clash" = "yes"; then
+    CXXFLAGS="$CXXFLAGS -fstack-clash-protection"
+  fi
+
   PHP_NEW_EXTENSION(thrift_protocol, php_thrift_protocol.cpp, $ext_shared)
 fi
 
