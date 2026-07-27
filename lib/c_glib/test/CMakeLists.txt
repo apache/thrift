@@ -96,6 +96,10 @@ add_executable(testsimpleserver testsimpleserver.c)
 target_link_libraries(testsimpleserver thrift_c_glib)
 add_test(NAME testsimpleserver COMMAND testsimpleserver)
 
+add_executable(testmultiplexedprocessor testmultiplexedprocessor.c)
+target_link_libraries(testmultiplexedprocessor thrift_c_glib)
+add_test(NAME testmultiplexedprocessor COMMAND testmultiplexedprocessor)
+
 add_executable(testdebugproto testdebugproto.c)
 target_link_libraries(testdebugproto testgenc)
 add_test(NAME testdebugproto COMMAND testdebugproto)

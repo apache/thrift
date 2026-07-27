@@ -64,7 +64,7 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
   gboolean token_error = FALSE;
   ThriftApplicationException *xception;
   ThriftStoredMessageProtocol *stored_message_protocol = NULL;
-  ThriftMessageType message_type;
+  ThriftMessageType message_type = (ThriftMessageType) 0;
   ThriftMultiplexedProcessor *self = THRIFT_MULTIPLEXED_PROCESSOR(processor);
   ThriftProcessor *multiplexed_processor = NULL;
   ThriftTransport *transport;
@@ -72,17 +72,23 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
   int token_index=0;
   char *state=NULL;
   gchar *fname=NULL;
-  gint32 seqid, result;
+  gint32 seqid = 0, result;
 
   /* FIXME It seems that previous processor is not managing error correctly */
-  if(*error!=NULL) {
+  if(error != NULL && *error != NULL) {
       g_debug ("thrift_multiplexed_processor: last error not removed: %s",
-      		   *error != NULL ? (*error)->message : "(null)");
+      		   (*error)->message);
       g_clear_error (error);
   }
 
 
-  THRIFT_PROTOCOL_GET_CLASS(in)->read_message_begin(in, &fname, &message_type, &seqid, error);
+  /* The message type and sequence id are only meaningful once the header has
+     actually been read, so a failure here ends the request */
+  if(THRIFT_PROTOCOL_GET_CLASS(in)->read_message_begin(in, &fname, &message_type,
+						       &seqid, error) < 0) {
+      g_free (fname);
+      return FALSE;
+  }
 
   if(!(message_type == T_CALL || message_type == T_ONEWAY)) {
       g_set_error (error,
@@ -150,7 +156,7 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
       if(stored_message_protocol!=NULL && multiplexed_processor!=NULL){
 	  retval = THRIFT_PROCESSOR_GET_CLASS (multiplexed_processor)->process (multiplexed_processor, (ThriftProtocol *) stored_message_protocol, out, error) ;
       }else{
-	  if(!error)
+	  if(error != NULL && *error == NULL)
 	  g_set_error (error,
 		       THRIFT_MULTIPLEXED_PROCESSOR_ERROR,
 		       THRIFT_MULTIPLEXED_PROCESSOR_ERROR_SERVICE_UNAVAILABLE,
@@ -167,8 +173,11 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
       /* Copied from dispach processor */
 
       if ((thrift_protocol_skip (in, T_STRUCT, error) < 0) ||
-	  (thrift_protocol_read_message_end (in, error) < 0))
-	return retval;
+	  (thrift_protocol_read_message_end (in, error) < 0)) {
+	  /* We must free fname */
+	  g_free(fname);
+	  return retval;
+      }
 
       g_object_get (in, "transport", &transport, NULL);
       result = thrift_transport_read_end (transport, error);
@@ -194,8 +203,12 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
       xception =
 	  g_object_new (THRIFT_TYPE_APPLICATION_EXCEPTION,
 			"type",    THRIFT_APPLICATION_EXCEPTION_ERROR_UNKNOWN_METHOD,
-			"message", (*error)->message,
+			"message", (error != NULL && *error != NULL) ?
+				       (*error)->message : "unknown error",
 			NULL);
+      /* We must free fname */
+      g_free(fname);
+
       result = thrift_struct_write (THRIFT_STRUCT (xception),
 				    out,
 				    error);

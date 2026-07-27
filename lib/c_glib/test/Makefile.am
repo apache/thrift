@@ -58,6 +58,7 @@ check_PROGRAMS = \
   testmemorybuffer \
   teststruct \
   testsimpleserver \
+  testmultiplexedprocessor \
   testdebugproto \
   testoptionalrequired \
   testthrifttest \
@@ -203,6 +204,22 @@ testsimpleserver_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/server/libthrift_c_glib_la-thrift_server.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o 
+
+testmultiplexedprocessor_SOURCES = testmultiplexedprocessor.c
+testmultiplexedprocessor_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/processor/libthrift_c_glib_la-thrift_multiplexed_processor.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/processor/libthrift_c_glib_la-thrift_processor.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol_decorator.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_stored_message_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_multiplexed_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_memory_buffer.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_application_exception.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_struct.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o
 
 testdebugproto_SOURCES = testdebugproto.c
 testdebugproto_LDADD = libtestgenc.la
