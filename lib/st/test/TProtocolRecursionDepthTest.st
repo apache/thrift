@@ -124,6 +124,27 @@ craftReplyOfDepth: n
 	proto writeMessageEnd.
 	^ transport! !
 
+!TProtocolRecursionDepthTest methodsFor: 'support'!
+craftUnknownFieldReplyOfDepth: n
+	"Craft an echo_result REPLY whose success value nests n structs deep under a
+	 field id the generated reader does not declare, so every level is handed to
+	 skip: instead of the generated struct reader."
+	| transport proto emit |
+	transport := TMemoryBuffer new.
+	proto := TBinaryProtocol new transport: transport.
+	proto writeMessageBegin: (TCallMessage new name: 'echo'; seqid: 0; yourself).
+	proto writeFieldBegin: (TField new name: 'success'; type: TType struct; id: 0).
+	emit := nil.
+	emit := [:i |
+		i < n ifTrue: [
+			proto writeFieldBegin: (TField new name: 'unknown'; type: TType struct; id: 99).
+			emit value: i + 1].
+		proto writeFieldStop].
+	emit value: 1.
+	proto writeFieldStop.
+	proto writeMessageEnd.
+	^ transport! !
+
 !TProtocolRecursionDepthTest methodsFor: 'tests'!
 testWriteAtLimitRoundTrips
 	"A chain exactly at the limit serializes without error."
@@ -150,4 +171,19 @@ testReadOverLimitIsRejected
 	"A payload nested past the limit is rejected with TProtocolError on read."
 	self
 		should: [(self clientOn: (self craftReplyOfDepth: self recursionLimit + 6)) recvEcho]
+		raise: TProtocolError! !
+
+!TProtocolRecursionDepthTest methodsFor: 'tests'!
+testSkipWithinLimitRoundTrips
+	"Nesting a skip: can carry is read back without error."
+	self
+		shouldnt: [(self clientOn: (self craftUnknownFieldReplyOfDepth: 3)) recvEcho]
+		raise: TProtocolError! !
+
+!TProtocolRecursionDepthTest methodsFor: 'tests'!
+testSkipOverLimitIsRejected
+	"Nesting past the limit under a field no reader declares reaches skip:,
+	 which is bounded by the same limit."
+	self
+		should: [(self clientOn: (self craftUnknownFieldReplyOfDepth: self recursionLimit + 6)) recvEcho]
 		raise: TProtocolError! !

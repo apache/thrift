@@ -469,8 +469,15 @@ readStructBegin
 !TProtocol methodsFor: 'reading' stamp: 'pc 10/24/2007 19:40'!
 readStructEnd! !
 
-!TProtocol methodsFor: 'reading' stamp: 'pc 10/26/2007 21:34'!
+!TProtocol methodsFor: 'reading'!
 skip: aType
+	"Skipping descends through nested structs and containers the same way
+	 reading them does, so it draws on the same depth budget."
+	self incrementRecursionDepth.
+	^ [self skipType: aType] ensure: [self decrementRecursionDepth]! !
+
+!TProtocol methodsFor: 'reading' stamp: 'pc 10/26/2007 21:34'!
+skipType: aType
 	aType = TType stop ifTrue: [^ self].
 	aType = TType bool ifTrue: [^ self readBool].
 	aType = TType byte ifTrue: [^ self readByte].
