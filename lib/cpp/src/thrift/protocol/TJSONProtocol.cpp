@@ -748,17 +748,22 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
 uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
+  // JSON strings are quote-delimited rather than length-prefixed, so there is no
+  // declared size to pre-check the way TBinaryProtocol::readStringBody() does.
+  // Bound the running byte count instead, so a single string cannot grow past
+  // the limit. The count is measured against the configured maximum rather than
+  // the message size still remaining, which a transport that draws the budget
+  // down as it reads has already reduced by these same bytes.
+  const int64_t maxSize = trans_->getConfiguration()->getMaxMessageSize();
   std::vector<uint16_t> codeunits;
   uint8_t ch;
   str.clear();
   while (true) {
     ch = reader_.read();
     ++result;
-    // JSON strings are quote-delimited rather than length-prefixed, so there is
-    // no declared size to pre-check the way TBinaryProtocol::readStringBody()
-    // does. Bound the running byte count against the configured message size
-    // instead, so a single string cannot grow past the limit.
-    trans_->checkReadBytesAvailable(result);
+    if (static_cast<int64_t>(result) > maxSize) {
+      throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+    }
     if (ch == kJSONStringDelimiter) {
       break;
     }
@@ -840,6 +845,9 @@ uint32_t TJSONProtocol::readJSONBase64(std::string& str) {
 // a valid JSON numeric character.
 uint32_t TJSONProtocol::readJSONNumericChars(std::string& str) {
   uint32_t result = 0;
+  // Numeric literals are also read char-by-char with no declared length; bound
+  // the running count the same way, and for the same reason.
+  const int64_t maxSize = trans_->getConfiguration()->getMaxMessageSize();
   str.clear();
   while (true) {
     uint8_t ch = reader_.peek();
@@ -849,9 +857,9 @@ uint32_t TJSONProtocol::readJSONNumericChars(std::string& str) {
     reader_.read();
     str += ch;
     ++result;
-    // Numeric literals are also read char-by-char with no declared length;
-    // bound the running count against the configured message size as well.
-    trans_->checkReadBytesAvailable(result);
+    if (static_cast<int64_t>(result) > maxSize) {
+      throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+    }
   }
   return result;
 }
