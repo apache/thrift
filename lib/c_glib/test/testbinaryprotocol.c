@@ -345,7 +345,10 @@ test_read_and_write_complex_types (void)
     /* invalid version */
     g_assert (thrift_binary_protocol_write_i32 (protocol, -1, NULL) > 0);
 
-    /* sz > 0 for a message */
+    /* a non-versioned (old-style) message: the leading int32 is the length of
+       the method name, followed by the message type and the sequence id */
+    g_assert (thrift_binary_protocol_write_string (protocol, "test", NULL) > 0);
+    g_assert (thrift_binary_protocol_write_byte (protocol, T_CALL, NULL) > 0);
     g_assert (thrift_binary_protocol_write_i32 (protocol, 1, NULL) > 0);
 
     /* send a valid message */
@@ -717,10 +720,14 @@ thrift_server_complex_types (const int port)
                                                      &message_type, &seqid,
                                                      NULL) == -1);
 
-  /* sz > 0 */
+  /* a non-versioned (old-style) message */
   g_assert (thrift_binary_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) > 0);
+  g_assert_cmpstr (message_name, ==, "test");
+  g_assert_cmpint (message_type, ==, T_CALL);
+  g_assert_cmpint (seqid, ==, 1);
+  g_free (message_name);
 
   /* read a valid message */
   g_assert (thrift_binary_protocol_read_message_begin (protocol, &message_name,
