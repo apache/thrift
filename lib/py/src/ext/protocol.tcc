@@ -630,6 +630,13 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
 
 template <typename Impl>
 bool ProtocolBase<Impl>::skip(TType type) {
+  // Skipping descends through nested structs and containers just like reading
+  // them does, so it is bounded the same way.
+  detail::RecursionGuard<Impl> rec(this);
+  if (!rec) {
+    return false;
+  }
+
   switch (type) {
   case T_BOOL:
     return impl()->skipBool();
@@ -993,7 +1000,9 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     }
     if (tag < 0 || tag >= spec_seq_len) {
       if (!skip(type)) {
-        PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
+        if (!PyErr_Occurred()) {
+          PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
+        }
         return nullptr;
       }
       continue;
@@ -1002,7 +1011,9 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     PyObject* item_spec = PyTuple_GET_ITEM(spec_seq, tag);
     if (item_spec == Py_None) {
       if (!skip(type)) {
-        PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
+        if (!PyErr_Occurred()) {
+          PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
+        }
         return nullptr;
       }
       continue;
@@ -1013,8 +1024,10 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     }
     if (parsedspec.type != type) {
       if (!skip(type)) {
-        PyErr_Format(PyExc_TypeError, "struct field had wrong type: expected %d but got %d",
-                     parsedspec.type, type);
+        if (!PyErr_Occurred()) {
+          PyErr_Format(PyExc_TypeError, "struct field had wrong type: expected %d but got %d",
+                       parsedspec.type, type);
+        }
         return nullptr;
       }
       continue;

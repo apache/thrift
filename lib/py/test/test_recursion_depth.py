@@ -72,6 +72,16 @@ def make_binary_payload(depth):
     return payload
 
 
+def make_skip_payload(depth):
+    """Raw TBinaryProtocol payload nesting 'depth' structs under a field id no
+    spec declares, so every level is read through the protocol's skip path."""
+    payload = b"\x00"  # innermost struct: STOP
+    for _ in range(depth):
+        # field id=7 type=STRUCT, the nested struct, then STOP for this level
+        payload = b"\x0c\x00\x07" + payload + b"\x00"
+    return payload
+
+
 def make_compact_payload(depth):
     """Compact-protocol payload for a chain of 'depth' nested RecTree nodes."""
     buf = TTransport.TMemoryBuffer()
@@ -127,6 +137,17 @@ class RecursionDepthBinaryTest(unittest.TestCase):
             make_error_chain(LIMIT + 1).write(TBinaryProtocol(TTransport.TMemoryBuffer()))
         self.assertEqual(ctx.exception.type, TProtocolException.DEPTH_LIMIT)
 
+    def test_skip_under_limit(self):
+        result = RecTree()
+        result.read(TBinaryProtocol(TTransport.TMemoryBuffer(make_skip_payload(LIMIT - 1))))
+        self.assertIsNotNone(result)
+
+    def test_skip_over_limit(self):
+        with self.assertRaises(TProtocolException) as ctx:
+            result = RecTree()
+            result.read(TBinaryProtocol(TTransport.TMemoryBuffer(make_skip_payload(LIMIT + 1))))
+        self.assertEqual(ctx.exception.type, TProtocolException.DEPTH_LIMIT)
+
     def test_depth_restored_after_exception(self):
         """Depth counter must return to 0 after a caught overflow so the protocol is reusable."""
         proto = TBinaryProtocol(TTransport.TMemoryBuffer())
@@ -164,6 +185,31 @@ class RecursionDepthAcceleratedTest(unittest.TestCase):
             result.read(
                 TBinaryProtocolAccelerated(
                     TTransport.TMemoryBuffer(make_binary_payload(LIMIT + 1))
+                )
+            )
+        self.assertEqual(ctx.exception.type, TProtocolException.DEPTH_LIMIT)
+
+    def test_skip_under_limit(self):
+        """Fields the spec does not declare are read through skip, which the
+        accelerated decoder must bound the same way it bounds a struct read."""
+        if not self.has_fastbinary:
+            self.skipTest("fastbinary not built")
+        result = RecTree()
+        result.read(
+            TBinaryProtocolAccelerated(
+                TTransport.TMemoryBuffer(make_skip_payload(LIMIT - 1))
+            )
+        )
+        self.assertIsNotNone(result)
+
+    def test_skip_over_limit(self):
+        if not self.has_fastbinary:
+            self.skipTest("fastbinary not built")
+        with self.assertRaises(TProtocolException) as ctx:
+            result = RecTree()
+            result.read(
+                TBinaryProtocolAccelerated(
+                    TTransport.TMemoryBuffer(make_skip_payload(LIMIT + 1))
                 )
             )
         self.assertEqual(ctx.exception.type, TProtocolException.DEPTH_LIMIT)
