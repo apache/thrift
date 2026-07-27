@@ -126,7 +126,18 @@ function TProtocolBase:readDouble() end
 function TProtocolBase:readString() end
 function TProtocolBase:readUuid() end
 
+-- Skipping descends through nested structs and containers the same way reading
+-- them does, so it draws on the same depth budget.
 function TProtocolBase:skip(ttype)
+  self:incrementRecursionDepth()
+  local ok, err = pcall(self.skipType, self, ttype)
+  self:decrementRecursionDepth()
+  if not ok then
+    error(err, 0)
+  end
+end
+
+function TProtocolBase:skipType(ttype)
   if ttype == TType.BOOL then
     self:readBool()
   elseif ttype == TType.BYTE then

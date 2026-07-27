@@ -102,15 +102,16 @@ local function chain_depth(node)
   return depth
 end
 
--- Serialize an over-limit payload with raw protocol primitives so the reader
--- recurses through the guarded struct path (field id 1 = list<self>), not the
--- separate (unbounded) skip() path.
-local function write_deep(oprot, depth)
+-- Serialize a nested payload with raw protocol primitives. Field id 1 is the
+-- recursive field, so the reader descends through the generated struct path;
+-- an id no spec declares sends the same shape through skip() instead.
+local function write_deep(oprot, depth, field_id)
+  field_id = field_id or 1
   oprot:writeStructBegin('Rec')
   if depth > 1 then
-    oprot:writeFieldBegin('children', TType.LIST, 1)
+    oprot:writeFieldBegin('children', TType.LIST, field_id)
     oprot:writeListBegin(TType.STRUCT, 1)
-    write_deep(oprot, depth - 1)
+    write_deep(oprot, depth - 1, field_id)
     oprot:writeListEnd()
     oprot:writeFieldEnd()
   end
@@ -167,6 +168,31 @@ for _, case in ipairs(cases) do
     local rok, rerr = pcall(function() decoded:read(proto) end)
     ok(not rok, kind .. ': reading past the limit throws')
     ok(is_depth_error(rerr), kind .. ': ... with a recursion-depth error', rerr)
+  end
+end
+
+-- 4. The same nesting under a field no spec declares goes through skip(),
+--    which draws on the same budget. Each level is a list holding a struct and
+--    skip charges a level for each, so it carries half the nesting the
+--    generated struct reader does.
+for _, case in ipairs(cases) do
+  local kind, class = case.kind, case.class
+
+  do
+    local proto = new_proto()
+    write_deep(proto, LIMIT + 5, 99)
+    local decoded = class:new{}
+    local rok, rerr = pcall(function() decoded:read(proto) end)
+    ok(not rok, kind .. ': skipping past the limit throws')
+    ok(is_depth_error(rerr), kind .. ': ... with a recursion-depth error', rerr)
+  end
+
+  do
+    local proto = new_proto()
+    write_deep(proto, math.floor(LIMIT / 2) - 1, 99)
+    local decoded = class:new{}
+    local rok, rerr = pcall(function() decoded:read(proto) end)
+    ok(rok, kind .. ': skipping within the limit succeeds', rerr)
   end
 end
 
