@@ -60,16 +60,17 @@ sub chain_depth {
     return $depth;
 }
 
-# Serialize an over-limit payload using raw protocol primitives so that the
-# reader recurses through the guarded struct path (field id 1 = list<self>),
-# rather than through the separate (unbounded) skip() path.
+# Serialize a nested payload using raw protocol primitives. Field id 1 is the
+# recursive field, so the reader descends through the generated struct path; an
+# id no spec declares sends the same shape through skip() instead.
 sub write_deep {
-    my ($proto, $struct_name, $depth) = @_;
+    my ($proto, $struct_name, $depth, $field_id) = @_;
+    $field_id = 1 unless defined $field_id;
     $proto->writeStructBegin($struct_name);
     if ($depth > 1) {
-        $proto->writeFieldBegin('children', Thrift::TType::LIST, 1);
+        $proto->writeFieldBegin('children', Thrift::TType::LIST, $field_id);
         $proto->writeListBegin(Thrift::TType::STRUCT, 1);
-        write_deep($proto, $struct_name, $depth - 1);
+        write_deep($proto, $struct_name, $depth - 1, $field_id);
         $proto->writeListEnd();
         $proto->writeFieldEnd();
     }
@@ -137,6 +138,37 @@ for my $case (@cases) {
             "$kind: reading past the limit throws TProtocolException");
         is(ref($err) ? $err->{code} : undef, Thrift::TProtocolException::DEPTH_LIMIT,
             "$kind: ... with the DEPTH_LIMIT code");
+    }
+}
+
+# 4. The same nesting under a field no spec declares goes through skip(),
+#    which draws on the same budget. Each level here is a list holding a
+#    struct and skip charges a level for each, so the nesting it can carry is
+#    half of what the generated struct reader carries.
+for my $case (@cases) {
+    my ($kind, $class, $name) = @{$case}{qw(kind class name)};
+
+    {
+        my $buffer = Thrift::MemoryBuffer->new();
+        my $proto  = Thrift::BinaryProtocol->new($buffer);
+        write_deep($proto, $name, LIMIT + 5, 99);
+
+        my $decoded = $class->new();
+        my $err = caught(sub { $decoded->read($proto) });
+        ok(ref($err) && $err->isa('Thrift::TProtocolException'),
+            "$kind: skipping past the limit throws TProtocolException");
+        is(ref($err) ? $err->{code} : undef, Thrift::TProtocolException::DEPTH_LIMIT,
+            "$kind: ... with the DEPTH_LIMIT code");
+    }
+
+    {
+        my $buffer = Thrift::MemoryBuffer->new();
+        my $proto  = Thrift::BinaryProtocol->new($buffer);
+        write_deep($proto, $name, int(LIMIT / 2) - 1, 99);
+
+        my $decoded = $class->new();
+        lives_ok { $decoded->read($proto) }
+            "$kind: skipping within the limit succeeds";
     }
 }
 

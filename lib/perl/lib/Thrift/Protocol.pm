@@ -351,6 +351,22 @@ sub skip
     my $self = shift;
     my $type = shift;
 
+    # Skipping descends through nested structs and containers the same way
+    # reading them does, so it draws on the same depth budget.
+    $self->incrementRecursionDepth();
+    my $result = eval { $self->_skipType($type) };
+    my $error  = $@;
+    $self->decrementRecursionDepth();
+    die $error if $error;
+
+    return $result;
+}
+
+sub _skipType
+{
+    my $self = shift;
+    my $type = shift;
+
     my $ref;
     my $result;
     my $i;
