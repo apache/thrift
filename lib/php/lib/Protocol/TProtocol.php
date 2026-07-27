@@ -158,6 +158,19 @@ abstract class TProtocol
      */
     public function skip(int $type): int
     {
+        // Skipping descends through nested structs and containers the same way
+        // reading them does, so it draws on the same depth budget.
+        $this->incrementRecursionDepth();
+
+        try {
+            return $this->skipType($type);
+        } finally {
+            $this->decrementRecursionDepth();
+        }
+    }
+
+    private function skipType(int $type): int
+    {
         return match ($type) {
             TType::BOOL => $this->readBool($bool),
             TType::BYTE => $this->readByte($byte),

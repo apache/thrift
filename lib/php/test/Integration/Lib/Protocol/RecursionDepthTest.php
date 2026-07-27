@@ -121,6 +121,46 @@ class RecursionDepthTest extends TestCase
         $this->assertSame(TProtocolException::DEPTH_LIMIT, $error->getCode());
     }
 
+    #[DataProvider('caseProvider')]
+    public function testSkippingPastTheDepthLimitThrows(
+        string $protocolClass,
+        string $class,
+        string $leafField
+    ): void {
+        // Field id 99 is in no spec, so the generated reader hands it to
+        // skip(), which descends the nesting on its own.
+        $writeBuffer = new TMemoryBuffer();
+        $this->writeDeepStruct(new $protocolClass($writeBuffer), self::LIMIT + 5, 99);
+
+        $readProtocol = new $protocolClass(new TMemoryBuffer($writeBuffer->getBuffer()));
+        $error = $this->captureThrowable(function () use ($readProtocol, $class) {
+            (new $class())->read($readProtocol);
+        });
+
+        $this->assertInstanceOf(TProtocolException::class, $error);
+        $this->assertSame(TProtocolException::DEPTH_LIMIT, $error->getCode());
+    }
+
+    #[DataProvider('caseProvider')]
+    public function testSkippingWithinTheDepthLimitSucceeds(
+        string $protocolClass,
+        string $class,
+        string $leafField
+    ): void {
+        // Each level of this payload is a list holding a struct, and skip()
+        // charges a level for each of them, so the nesting a skip can carry is
+        // half of what the generated struct reader carries.
+        $writeBuffer = new TMemoryBuffer();
+        $this->writeDeepStruct(new $protocolClass($writeBuffer), intdiv(self::LIMIT, 2) - 1, 99);
+
+        $readProtocol = new $protocolClass(new TMemoryBuffer($writeBuffer->getBuffer()));
+        $decoded = new $class();
+        $decoded->read($readProtocol);
+
+        // the unknown field was skipped, leaving an otherwise empty struct
+        $this->assertSame(1, $this->chainDepth($decoded));
+    }
+
     private function makeChain(string $class, string $leafField, int $depth): object
     {
         $node = new $class([$leafField => 1]);
@@ -143,15 +183,15 @@ class RecursionDepthTest extends TestCase
     }
 
     /**
-     * Emit "$levels" nested structs whose recursive field (id 1, list<struct>)
-     * holds exactly one child, so a generated reader recurses $levels deep
-     * through the guarded struct path.
+     * Emit "$levels" nested structs whose recursive field (list<struct>) holds
+     * exactly one child, so a generated reader recurses $levels deep. Field id
+     * 1 takes the generated struct path; an id no spec declares takes skip().
      */
-    private function writeDeepStruct(TProtocol $output, int $levels): void
+    private function writeDeepStruct(TProtocol $output, int $levels, int $fieldId = 1): void
     {
         for ($i = 0; $i < $levels - 1; $i++) {
             $output->writeStructBegin('Rec');
-            $output->writeFieldBegin('children', TType::LST, 1);
+            $output->writeFieldBegin('children', TType::LST, $fieldId);
             $output->writeListBegin(TType::STRUCT, 1);
         }
         $output->writeStructBegin('Rec');
