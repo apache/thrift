@@ -39,6 +39,10 @@
 // grows with the data that actually arrives.
 #define STRING_READ_CHUNK_SIZE 8192
 
+// How deeply structs and containers may nest while being read, matching the
+// limit the PHP library applies to generated read() implementations.
+#define MAX_RECURSION_DEPTH 64
+
 #ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
                         (((uint64_t)(x) << 40) & 0xff000000000000ULL) | \
@@ -444,7 +448,8 @@ protected:
 };
 
 static
-void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec);
+void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec,
+                             int depth);
 static
 void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable* spec);
 static
@@ -500,7 +505,11 @@ void throw_zend_exception_from_std_exception(const std::exception& ex) {
 }
 
 static
-void skip_element(long thrift_typeID, PHPInputTransport& transport) {
+void skip_element(long thrift_typeID, PHPInputTransport& transport, int depth) {
+  if (depth > MAX_RECURSION_DEPTH) {
+    throw_tprotocolexception("Maximum recursion depth exceeded", INVALID_DATA);
+  }
+
   switch (thrift_typeID) {
     case T_STOP:
     case T_VOID:
@@ -510,7 +519,7 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
         int8_t ttype = transport.readI8(); // get field type
         if (ttype == T_STOP) break;
         transport.skip(2); // skip field number, I16
-        skip_element(ttype, transport); // skip field payload
+        skip_element(ttype, transport, depth + 1); // skip field payload
       }
       return;
     case T_BOOL:
@@ -542,8 +551,8 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
       int8_t valtype = transport.readI8();
       uint32_t size = transport.readU32();
       for (uint32_t i = 0; i < size; ++i) {
-        skip_element(keytype, transport);
-        skip_element(valtype, transport);
+        skip_element(keytype, transport, depth + 1);
+        skip_element(valtype, transport, depth + 1);
       }
     } return;
     case T_LIST:
@@ -551,7 +560,7 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
       int8_t valtype = transport.readI8();
       uint32_t size = transport.readU32();
       for (uint32_t i = 0; i < size; ++i) {
-        skip_element(valtype, transport);
+        skip_element(valtype, transport, depth + 1);
       }
     } return;
   };
@@ -567,7 +576,12 @@ bool zval_is_bool(zval* v) {
 }
 
 static
-void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval* return_value, HashTable* fieldspec) {
+void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval* return_value,
+                        HashTable* fieldspec, int depth) {
+  if (depth > MAX_RECURSION_DEPTH) {
+    throw_tprotocolexception("Maximum recursion depth exceeded", INVALID_DATA);
+  }
+
   ZVAL_NULL(return_value);
 
   switch (thrift_typeID) {
@@ -579,7 +593,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       zval* val_ptr = zend_hash_str_find(fieldspec, "class", sizeof("class")-1);
       if (val_ptr == nullptr) {
         throw_tprotocolexception("no class type in spec", INVALID_DATA);
-        skip_element(T_STRUCT, transport);
+        skip_element(T_STRUCT, transport, depth + 1);
         RETURN_NULL();
       }
 
@@ -588,7 +602,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       createObject(structType, return_value);
       if (Z_TYPE_P(return_value) == IS_NULL) {
         // unable to create class entry
-        skip_element(T_STRUCT, transport);
+        skip_element(T_STRUCT, transport, depth + 1);
         RETURN_NULL();
       }
 
@@ -605,7 +619,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         throw_tprotocolexception(errbuf, INVALID_DATA);
         RETURN_NULL();
       }
-      binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
+      binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec), depth + 1);
       return;
     } break;
     case T_BOOL: {
@@ -697,8 +711,8 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
 
-        binary_deserialize(types[0], transport, &key, keyspec);
-        binary_deserialize(types[1], transport, &value, valspec);
+        binary_deserialize(types[0], transport, &key, keyspec, depth + 1);
+        binary_deserialize(types[1], transport, &value, valspec, depth + 1);
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
@@ -718,7 +732,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       array_init(return_value);
       for (uint32_t s = 0; s < size; ++s) {
         zval value;
-        binary_deserialize(type, transport, &value, elemspec);
+        binary_deserialize(type, transport, &value, elemspec, depth + 1);
         zend_hash_next_index_insert(Z_ARR_P(return_value), &value);
       }
       return;
@@ -738,7 +752,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         zval key, value;
         ZVAL_TRUE(&value);
 
-        binary_deserialize(type, transport, &key, elemspec);
+        binary_deserialize(type, transport, &key, elemspec, depth + 1);
 
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
@@ -1027,7 +1041,12 @@ void validate_thrift_object(zval* object) {
 }
 
 static
-void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec) {
+void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTable* spec,
+                             int depth) {
+  if (depth > MAX_RECURSION_DEPTH) {
+    throw_tprotocolexception("Maximum recursion depth exceeded", INVALID_DATA);
+  }
+
   // SET and LIST have 'elem' => array('type', [optional] 'class')
   // MAP has 'val' => array('type', [optiona] 'class')
   zend_class_entry* ce = Z_OBJCE_P(zthis);
@@ -1055,15 +1074,15 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
         zval rv;
         ZVAL_UNDEF(&rv);
 
-        binary_deserialize(ttype, transport, &rv, fieldspec);
+        binary_deserialize(ttype, transport, &rv, fieldspec, depth + 1);
         zend_update_property(ce, Z4_OBJ_P(zthis), varname, strlen(varname), &rv);
 
         zval_ptr_dtor(&rv);
       } else {
-        skip_element(ttype, transport);
+        skip_element(ttype, transport, depth + 1);
       }
     } else {
-      skip_element(ttype, transport);
+      skip_element(ttype, transport, depth + 1);
     }
   }
 }
@@ -1200,7 +1219,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
         EG(exception) = nullptr;
         throw PHPExceptionWrapper(ex);
       }
-      binary_deserialize_spec(&ex, transport, Z_ARRVAL_P(spec));
+      binary_deserialize_spec(&ex, transport, Z_ARRVAL_P(spec), 0);
       throw PHPExceptionWrapper(&ex);
     }
 
@@ -1212,7 +1231,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     if (!spec || Z_TYPE_P(spec) != IS_ARRAY) {
       throw_tprotocolexception("Attempt deserialize to non-Thrift object", INVALID_DATA);
     }
-    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
+    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec), 0);
   } catch (const PHPExceptionWrapper& ex) {
     // ex will be destructed, so copy to a zval that zend_throw_exception_object can ownership of
     zval myex;
@@ -1243,7 +1262,7 @@ PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin) {
     createObject(ZSTR_VAL(obj_typename), return_value);
     zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), ZEND_STRL("tspec"), false);
     ZVAL_DEREF(spec);
-    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
+    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec), 0);
   } catch (const PHPExceptionWrapper& ex) {
     // ex will be destructed, so copy to a zval that zend_throw_exception_object can take ownership of
     zval myex;
