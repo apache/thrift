@@ -77,9 +77,6 @@ module Thrift
     # Default decompressed-size cap for ZLIB transform (~15.6 MB, matches other Thrift bindings)
     DEFAULT_MAX_DECOMPRESSED_SIZE = 16_384_000
 
-    # Chunk size for streaming inflate loop
-    ZLIB_INFLATE_CHUNK_SIZE = 16_384
-
     # Binary protocol version mask and version 1
     BINARY_VERSION_MASK = 0xffff0000
     BINARY_VERSION_1 = 0x80010000
@@ -408,25 +405,19 @@ module Thrift
     def bounded_inflate(compressed)
       inflater = Zlib::Inflate.new
       buffer = Bytes.empty_byte_buffer
-      offset = 0
-      begin
-        while offset < compressed.bytesize
-          buffer << inflater.inflate(compressed.byteslice(offset, ZLIB_INFLATE_CHUNK_SIZE))
-          if buffer.bytesize > @max_decompressed_size
-            raise TransportException.new(
-              TransportException::SIZE_LIMIT,
-              "Decompressed size exceeds limit of #{@max_decompressed_size}"
-            )
-          end
-          offset += ZLIB_INFLATE_CHUNK_SIZE
-        end
-        buffer << inflater.finish
-        if buffer.bytesize > @max_decompressed_size
+      append_chunk = lambda do |chunk|
+        if buffer.bytesize + chunk.bytesize > @max_decompressed_size
           raise TransportException.new(
             TransportException::SIZE_LIMIT,
             "Decompressed size exceeds limit of #{@max_decompressed_size}"
           )
         end
+
+        buffer << chunk
+      end
+      begin
+        inflater.inflate(compressed, &append_chunk)
+        inflater.finish(&append_chunk)
         buffer
       ensure
         inflater.close rescue nil

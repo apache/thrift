@@ -201,6 +201,31 @@ describe 'HeaderTransport' do
           expect(e.message).to match(/limit/)
         end
       end
+
+      it "should stream oversized ZLIB output before enforcing the limit" do
+        write_buf = Thrift::MemoryBufferTransport.new
+        writer = Thrift::HeaderTransport.new(write_buf)
+        writer.add_transform(Thrift::HeaderTransformID::ZLIB)
+        writer.write("A" * 8_000_000)
+        writer.flush
+
+        written_data = write_buf.read(write_buf.available)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(written_data))
+        read_trans.set_max_decompressed_size(100)
+
+        expect(Zlib::Inflate).to receive(:new).and_wrap_original do |new, *args|
+          inflater = new.call(*args)
+          expect(inflater).to receive(:inflate).and_wrap_original do |inflate, compressed, &block|
+            expect(block).not_to be_nil
+            inflate.call(compressed, &block)
+          end
+          inflater
+        end
+
+        expect { read_trans.read(1) }.to raise_error(Thrift::TransportException) do |e|
+          expect(e.type).to eq(Thrift::TransportException::SIZE_LIMIT)
+        end
+      end
     end
 
     describe "read and frame detection" do
