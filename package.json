@@ -39,7 +39,7 @@
     "browser-or-node": "^1.2.1",
     "isomorphic-ws": "^4.0.1",
     "node-int64": "^0.4.0",
-    "uuid": "^14.0.0",
+    "uuid": "^11.1.1",
     "ws": "^8.21.0"
   },
   "devDependencies": {
