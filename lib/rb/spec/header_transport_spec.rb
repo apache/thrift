@@ -320,6 +320,34 @@ describe 'HeaderTransport' do
         expect { read_trans.read(1) }.to raise_error(Thrift::TransportException, /header boundary/)
       end
 
+      it "should reject varints longer than uint32" do
+        header_data = "\x80".b * 65_532
+        frame = build_header_frame(header_data)
+        read_transport = Thrift::MemoryBufferTransport.new(frame)
+        read_trans = Thrift::HeaderTransport.new(read_transport)
+
+        expect { read_trans.read(1) }.to raise_error(Thrift::TransportException, /over 5 bytes/)
+      end
+
+      it "should reject uint32 varints with an overflowing fifth byte" do
+        header_data = ([0x80] * 4 + [0x10]).pack('C*')
+        frame = build_header_frame(header_data)
+        read_transport = Thrift::MemoryBufferTransport.new(frame)
+        read_trans = Thrift::HeaderTransport.new(read_transport)
+
+        expect { read_trans.read(1) }.to raise_error(Thrift::TransportException, /overflows uint32/)
+      end
+
+      it "should accept uint32 varints with a valid fifth byte" do
+        header_data = ([0x80] * 4 + [0x0f, 0]).pack('C*')
+        frame = build_header_frame(header_data)
+        read_transport = Thrift::MemoryBufferTransport.new(frame)
+        read_trans = Thrift::HeaderTransport.new(read_transport)
+
+        expect(read_trans.read(1)).to eq(Thrift::Bytes.empty_byte_buffer)
+        expect(read_trans.protocol_id).to eq(0xf0000000)
+      end
+
       it "should reject strings that exceed header boundary" do
         header_data = +""
         header_data << varint32(Thrift::HeaderSubprotocolID::BINARY)

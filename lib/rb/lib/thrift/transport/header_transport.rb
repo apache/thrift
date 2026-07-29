@@ -89,6 +89,9 @@ module Thrift
     COMPACT_VERSION_MASK = 0x1f
     COMPACT_VERSION = 0x01
 
+    MAX_VARINT32_BYTES = 5
+    MAX_VARINT32_LAST_BYTE = 0x0f
+
     attr_reader :protocol_id, :sequence_id, :flags
 
     # Creates a new HeaderTransport wrapping the given transport.
@@ -500,11 +503,20 @@ module Thrift
         end
         byte = io.getbyte
         raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading varint") if byte.nil?
+
+        if shift == (MAX_VARINT32_BYTES - 1) * 7
+          if (byte & 0x80) != 0
+            raise TransportException.new(TransportException::UNKNOWN, "Variable-length int over 5 bytes.")
+          end
+          if (byte & ~MAX_VARINT32_LAST_BYTE) != 0
+            raise TransportException.new(TransportException::UNKNOWN, "Variable-length int overflows uint32.")
+          end
+        end
+
         result |= (byte & 0x7f) << shift
-        break if (byte & 0x80) == 0
+        return result if (byte & 0x80) == 0
         shift += 7
       end
-      result
     end
 
     # Writes a varint32 to the given IO
