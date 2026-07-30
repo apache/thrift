@@ -394,7 +394,7 @@ describe 'BaseTransport' do
       @buffer.reset_buffer("abcd")
 
       expect(@buffer.read(1)).to eq("a")
-      expect { @buffer.read((2**31) - 1) }.to raise_error(EOFError)
+      expect { @buffer.read(2**31) }.to raise_error(EOFError)
       expect(@buffer.available).to eq(0)
     end
 
@@ -464,6 +464,12 @@ describe 'BaseTransport' do
       expect { @buffer.read_all(-1) }.to raise_error(Thrift::TransportException, "Negative size") do |e|
         expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
       end
+    end
+
+    it "should handle oversized read_all sizes without overflowing" do
+      @buffer.reset_buffer("x")
+
+      expect { @buffer.read_all(3_397_380_576) }.to raise_error(EOFError)
     end
   end
 
