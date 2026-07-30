@@ -86,6 +86,7 @@ my $gVerbose = 0;
 #functions
 sub auditBreakingChanges;
 sub auditNonBreakingChanges;
+sub auditConfigurableChanges;
 
 main();
 
@@ -94,6 +95,60 @@ sub main
     parseOptions();
     auditBreakingChanges();
     auditNonBreakingChanges();
+    auditConfigurableChanges();
+}
+
+sub auditConfigurableChanges
+{
+    my @cases = (
+        ["optional field removal is rejected by default",
+         "optional_field_old.thrift", "optional_field_removed.thrift", "", 2],
+        ["optional field removal is allowed by option",
+         "optional_field_old.thrift", "optional_field_removed.thrift",
+         "--audit-allow-optional-field-removal", 0],
+        ["optional field removal from the middle is allowed by option",
+         "optional_field_middle_old.thrift", "optional_field_middle_removed.thrift",
+         "--audit-allow-optional-field-removal", 0],
+        ["default field removal remains rejected by optional removal option",
+         "default_field_old.thrift", "optional_field_removed.thrift",
+         "--audit-allow-optional-field-removal", 2],
+        ["required field removal remains rejected by optional removal option",
+         "required_field_old.thrift", "optional_field_removed.thrift",
+         "--audit-allow-optional-field-removal", 2],
+        ["required to default is rejected by default",
+         "required_to_default_old.thrift", "required_to_default_new.thrift", "", 2],
+        ["required to default is allowed by option",
+         "required_to_default_old.thrift", "required_to_default_new.thrift",
+         "--audit-allow-required-field-to-default", 0],
+        ["default to required remains rejected by required-to-default option",
+         "required_to_default_new.thrift", "required_to_default_old.thrift",
+         "--audit-allow-required-field-to-default", 2],
+        ["required to optional remains rejected by required-to-default option",
+         "required_to_default_old.thrift", "required_to_optional_new.thrift",
+         "--audit-allow-required-field-to-default", 2],
+        ["service argument required to default is rejected by default",
+         "required_argument_old.thrift", "required_argument_default.thrift", "", 2],
+        ["service argument required to default is allowed by option",
+         "required_argument_old.thrift", "required_argument_default.thrift",
+         "--audit-allow-required-field-to-default", 0],
+    );
+
+    foreach my $case (@cases)
+    {
+        my ($name, $oldFile, $newFile, $option, $expectedExitCode) = @$case;
+        my $oldPath = $gThriftFileFolder."/".$oldFile;
+        my $newPath = $gThriftFileFolder."/".$newFile;
+        my $arguments = $oldPath." ".$option." ".$newPath;
+        my ($exitCode, $output) = callThriftAuditTool($arguments);
+        print $output if $gVerbose eq 1;
+
+        if($exitCode != $expectedExitCode)
+        {
+            print $output;
+            die "\nTEST FAILURE: $name: expected exit code $expectedExitCode, got $exitCode\n";
+        }
+        print "Test Pass: $name\n";
+    }
 }
 
 sub parseOptions
@@ -109,7 +164,9 @@ sub parseOptions
         }
         else
         {
-            die "Missing Folder containing thrift files\n";
+            $gThriftFileFolder = $ENV{'THRIFT_AUDIT_TEST_FIXTURES'};
+            die "Missing Folder containing thrift files\n" unless $gThriftFileFolder;
+            $gPreviousThriftPath = $gThriftFileFolder."/test.thrift";
         }
 
         if($options{'t'})
@@ -118,7 +175,8 @@ sub parseOptions
         }
         else
         {
-            die "Audit Tool Path required \n";
+            $gAuditToolPath = $ENV{'THRIFT_AUDIT_TEST_COMPILER'};
+            die "Audit Tool Path required \n" unless $gAuditToolPath;
         }
 
         if ($options{'v'})

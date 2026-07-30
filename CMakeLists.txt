@@ -84,6 +84,10 @@ elseif(EXISTS ${THRIFT_COMPILER})
     set_property(TARGET thrift-compiler PROPERTY IMPORTED_LOCATION ${THRIFT_COMPILER})
 endif()
 
+if(BUILD_TESTING AND TARGET thrift-compiler)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/audit)
+endif()
+
 if(BUILD_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
     if(BUILD_TUTORIALS)

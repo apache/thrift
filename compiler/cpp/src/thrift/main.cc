@@ -153,6 +153,8 @@ bool gen_recurse = false;
  * Flags to control thrift audit
  */
 bool g_audit = false;
+bool g_audit_allow_optional_field_removal = false;
+bool g_audit_allow_required_field_to_default = false;
 
 /**
  * Flag to control return status
@@ -712,6 +714,11 @@ void help() {
   fprintf(stderr, "\n");
   fprintf(stderr, "Options related to audit operation\n");
   fprintf(stderr, "   --audit OldFile   Old Thrift file to be audited with 'file'\n");
+  fprintf(stderr, "   --audit-allow-optional-field-removal\n");
+  fprintf(stderr, "                Allow explicitly optional fields to be removed\n");
+  fprintf(stderr, "   --audit-allow-required-field-to-default\n");
+  fprintf(stderr, "                Allow required fields to use default requiredness\n");
+  fprintf(stderr, "                Binding-dependent; includes service method arguments\n");
   fprintf(stderr, "  -Iold dir    Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives for old thrift file\n");
   fprintf(stderr, "  -Inew dir    Add a directory to the list of directories\n");
@@ -1189,6 +1196,10 @@ int main(int argc, char** argv) {
         old_input_file = string(old_thrift_file_rp);
       } else if (strcmp(arg, "-audit-nofatal") == 0) {
         g_audit_fatal = false;
+      } else if (strcmp(arg, "-audit-allow-optional-field-removal") == 0) {
+        g_audit_allow_optional_field_removal = true;
+      } else if (strcmp(arg, "-audit-allow-required-field-to-default") == 0) {
+        g_audit_allow_required_field_to_default = true;
       } else if (strcmp(arg, "-Iold") == 0) {
         arg = argv[++i];
         if (arg == nullptr) {
