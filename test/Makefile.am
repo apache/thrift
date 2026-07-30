@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = features
+SUBDIRS = audit features
 PRECROSS_TARGET =
 
 if WITH_C_GLIB
@@ -121,7 +121,6 @@ distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
-	audit \
 	c_glib \
 	cl \
 	cpp \
