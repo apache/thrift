@@ -18,6 +18,8 @@
 # under the License.
 #
 require 'set'
+require 'thrift/exceptions'
+require 'thrift/types'
 
 module Thrift
   module Struct_Union
@@ -49,11 +51,12 @@ module Thrift
       end
     end
 
-    def read_field(iprot, field = {})
+    def read_field(iprot, field = {}, remaining_depth = DEFAULT_RECURSION_DEPTH)
       case field[:type]
       when Types::STRUCT
+        remaining_depth -= 1
         value = field[:class].new
-        value.read(iprot)
+        value.read(iprot, remaining_depth)
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
         raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
@@ -67,8 +70,8 @@ module Thrift
         else
           value = {}
           size.times do
-            k = read_field(iprot, field_info(field[:key]))
-            v = read_field(iprot, field_info(field[:value]))
+            k = read_field(iprot, field_info(field[:key]), remaining_depth)
+            v = read_field(iprot, field_info(field[:value]), remaining_depth)
             value[k] = v
           end
         end
@@ -85,7 +88,7 @@ module Thrift
         else
           value = []
           size.times do
-            value << read_field(iprot, field_info(field[:element]))
+            value << read_field(iprot, field_info(field[:element]), remaining_depth)
           end
         end
         iprot.read_list_end
@@ -100,7 +103,7 @@ module Thrift
         else
           value = Set.new
           size.times do
-            element = read_field(iprot, field_info(field[:element]))
+            element = read_field(iprot, field_info(field[:element]), remaining_depth)
             value << element
           end
         end
@@ -111,33 +114,36 @@ module Thrift
       value
     end
 
-    def write_data(oprot, value, field)
+    def write_data(oprot, value, field, remaining_depth = DEFAULT_RECURSION_DEPTH)
       if is_container? field[:type]
-        write_container(oprot, value, field)
+        write_container(oprot, value, field, remaining_depth)
+      elsif field[:type] == Types::STRUCT
+        remaining_depth -= 1
+        value.write(oprot, remaining_depth)
       else
         oprot.write_type(field, value)
       end
     end
 
-    def write_container(oprot, value, field = {})
+    def write_container(oprot, value, field = {}, remaining_depth = DEFAULT_RECURSION_DEPTH)
       case field[:type]
       when Types::MAP
         oprot.write_map_begin(field[:key][:type], field[:value][:type], value.size)
         value.each do |k, v|
-          write_data(oprot, k, field[:key])
-          write_data(oprot, v, field[:value])
+          write_data(oprot, k, field[:key], remaining_depth)
+          write_data(oprot, v, field[:value], remaining_depth)
         end
         oprot.write_map_end
       when Types::LIST
         oprot.write_list_begin(field[:element][:type], value.size)
         value.each do |elem|
-          write_data(oprot, elem, field[:element])
+          write_data(oprot, elem, field[:element], remaining_depth)
         end
         oprot.write_list_end
       when Types::SET
         oprot.write_set_begin(field[:element][:type], value.size)
         value.each do |v,| # the , is to preserve compatibility with the old Hash-style sets
-          write_data(oprot, v, field[:element])
+          write_data(oprot, v, field[:element], remaining_depth)
         end
         oprot.write_set_end
       else
@@ -193,5 +199,6 @@ module Thrift
       end
       "[" + buf.join(", ") + "]"
     end
+
   end
 end

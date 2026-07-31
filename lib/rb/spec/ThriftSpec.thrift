@@ -192,6 +192,10 @@ struct RecTree {
   2: i16 item
 }
 
+struct RecStruct {
+  1: optional RecStruct child
+}
+
 union RecUnion {
   1: list<RecUnion> children
   2: i32 leaf

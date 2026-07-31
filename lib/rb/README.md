@@ -169,6 +169,18 @@ certificate must still match the connection hostname.
 `Thrift::TransportException::ALREADY_OPEN` when the TCP transport is already
 open. Close the transport before opening it again.
 
+Ruby struct, union, and exception serialization methods now accept an optional
+remaining struct depth: `read(protocol, depth = 64)` and
+`write(protocol, depth = 64)`.
+Unknown and mismatched fields remain independently bounded by
+`Thrift::BaseProtocol#skip`. The `write_field` and `write_type` helpers accept
+an optional `remaining_depth`: custom writers must use
+`write_field(field_info, fid, value, remaining_depth)` or
+`write_type(field_info, value, remaining_depth)` for struct values. Custom
+protocols and custom struct, union, or exception serialization overrides with
+exact argument counts must accept and forward the optional depth argument (or
+use `*args`) before upgrading.
+
 ### 0.24.0
 
 Connect timeout handling changed for both `Thrift::Socket` and

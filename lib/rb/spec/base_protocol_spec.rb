@@ -52,16 +52,24 @@ describe 'BaseProtocol' do
 
     it 'should write out a field nicely (deprecated write_field signature)' do
       expect(@prot).to receive(:write_field_begin).with('field', 'type', 'fid').ordered
-      expect(@prot).to receive(:write_type).with({:name => 'field', :type => 'type'}, 'value').ordered
+      expect(@prot).to receive(:write_type).with({:name => 'field', :type => 'type'}, 'value', nil).ordered
       expect(@prot).to receive(:write_field_end).ordered
       @prot.write_field('field', 'type', 'fid', 'value')
     end
 
     it 'should write out a field nicely' do
       expect(@prot).to receive(:write_field_begin).with('field', 'type', 'fid').ordered
-      expect(@prot).to receive(:write_type).with({:name => 'field', :type => 'type', :binary => false}, 'value').ordered
+      expect(@prot).to receive(:write_type).with({:name => 'field', :type => 'type', :binary => false}, 'value', nil).ordered
       expect(@prot).to receive(:write_field_end).ordered
       @prot.write_field({:name => 'field', :type => 'type', :binary => false}, 'fid', 'value')
+    end
+
+    it 'should pass the remaining depth through write_field' do
+      field = {:name => 'field', :type => 'type'}
+      expect(@prot).to receive(:write_field_begin).with('field', 'type', 'fid').ordered
+      expect(@prot).to receive(:write_type).with(field, 'value', 7).ordered
+      expect(@prot).to receive(:write_field_end).ordered
+      @prot.write_field(field, 'fid', 'value', 7)
     end
 
     it 'should write out the different types (deprecated write_type signature)' do
@@ -112,6 +120,13 @@ describe 'BaseProtocol' do
       [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP, Thrift::Types::SET, Thrift::Types::LIST].each do |type|
         expect { @prot.write_type({:type => type}, type.to_s) }.to raise_error(NotImplementedError)
       end
+    end
+
+    it 'should consume depth when writing a struct type' do
+      struct = double('Struct')
+      expect(struct).to receive(:write).with(@prot, 6)
+
+      @prot.write_type({:type => Thrift::Types::STRUCT}, struct, 7)
     end
 
     it 'should read the different types (deprecated read_type signature)' do

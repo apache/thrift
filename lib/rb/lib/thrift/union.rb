@@ -18,6 +18,8 @@
 # under the License.
 #
 
+require 'thrift/struct_union'
+
 module Thrift
   class Union
     def initialize(name = nil, value = nil)
@@ -54,13 +56,14 @@ module Thrift
       end
     end
 
-    def read(iprot)
+    def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
       @setfield = nil
       @value = nil
 
       iprot.read_struct_begin
       fname, ftype, fid = iprot.read_field_begin
-      handle_message(iprot, fid, ftype)
+      handle_message(iprot, fid, ftype, remaining_depth)
       iprot.read_field_end
 
       fname, ftype, fid = iprot.read_field_begin
@@ -72,7 +75,8 @@ module Thrift
       validate
     end
 
-    def write(oprot)
+    def write(oprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
       validate
       oprot.write_struct_begin(self.class.name)
 
@@ -86,8 +90,10 @@ module Thrift
       type = field_info[:type]
       if is_container? type
         oprot.write_field_begin(@setfield, type, fid)
-        write_container(oprot, @value, field_info)
+        write_container(oprot, @value, field_info, remaining_depth)
         oprot.write_field_end
+      elsif type == Types::STRUCT
+        oprot.write_field(field_info, fid, @value, remaining_depth)
       else
         oprot.write_field(@setfield, type, fid, @value)
       end
@@ -172,10 +178,10 @@ module Thrift
 
     protected
 
-    def handle_message(iprot, fid, ftype)
+    def handle_message(iprot, fid, ftype, remaining_depth)
       field = struct_fields[fid]
       if field and field[:type] == ftype
-        @value = read_field(iprot, field)
+        @value = read_field(iprot, field, remaining_depth)
         name = field[:name].to_sym
         @setfield = name
       else
