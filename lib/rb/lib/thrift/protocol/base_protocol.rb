@@ -20,6 +20,7 @@
 
 # this require is to make generated struct definitions happy
 require 'set'
+require 'thrift/exceptions'
 
 module Thrift
   class ProtocolException < Exception
@@ -236,25 +237,19 @@ module Thrift
     #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
     # fid        - The ID of the field.
     # value      - The field's value to write; object type varies based on :type.
+    # remaining_depth - The optional recursion budget of the enclosing struct.
     #
     # Returns nothing.
-    def write_field(*args)
-      if args.size == 3
-        # handles the documented method signature - write_field(field_info, fid, value)
-        field_info = args[0]
-        fid = args[1]
-        value = args[2]
-      elsif args.size == 4
-        # handles the deprecated method signature - write_field(name, type, fid, value)
-        field_info = {:name => args[0], :type => args[1]}
-        fid = args[2]
-        value = args[3]
-      else
-        raise ArgumentError, "wrong number of arguments (#{args.size} for 3)"
+    def write_field(field_info, fid, value, remaining_depth = nil)
+      unless field_info.is_a?(Hash)
+        field_info = {:name => field_info, :type => fid}
+        fid = value
+        value = remaining_depth
+        remaining_depth = nil
       end
 
       write_field_begin(field_info[:name], field_info[:type], fid)
-      write_type(field_info, value)
+      write_type(field_info, value, remaining_depth)
       write_field_end
     end
 
@@ -264,9 +259,10 @@ module Thrift
     #              :type   - The Thrift::Types constant that determines how the value is written.
     #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
     # value      - The field's value to write; object type varies based on field_info[:type].
+    # remaining_depth - The optional recursion budget of the enclosing struct.
     #
     # Returns nothing.
-    def write_type(field_info, value)
+    def write_type(field_info, value, remaining_depth = nil)
       # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
       if field_info.is_a? Integer
@@ -295,7 +291,11 @@ module Thrift
       when Types::UUID
         write_uuid(value)
       when Types::STRUCT
-        value.write(self)
+        if remaining_depth
+          value.write(self, remaining_depth - 1)
+        else
+          value.write(self)
+        end
       else
         raise NotImplementedError
       end
