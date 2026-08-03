@@ -32,6 +32,12 @@ describe Thrift::CompactProtocol do
     :i64 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
   }
 
+  CONTAINER_SIZE_ENCODINGS = {
+    (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
+    2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
+    (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f]
+  }
+
   TESTS = {
     :byte => (-127..127).to_a,
     :i16 => (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
@@ -146,6 +152,36 @@ describe Thrift::CompactProtocol do
 
       expect { proto.public_send(reader_method) }.to raise_error(Thrift::ProtocolException, "Unknown compact type: 14") do |error|
         expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+    end
+  end
+
+  it "should accept container sizes within the signed 32-bit range" do
+    bytes = [0xf5, *CONTAINER_SIZE_ENCODINGS.fetch((2**31) - 1)]
+    trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+
+    expect(proto.read_list_begin).to eq([Thrift::Types::I32, (2**31) - 1])
+  end
+
+  it "should reject container sizes above the signed 32-bit range" do
+    {
+      :read_map_begin => [0x55],
+      :read_list_begin => [0xf5],
+      :read_set_begin => [0xf5]
+    }.each do |reader_method, container_header|
+      [2**31, (2**32) - 1].each do |size|
+        bytes = if reader_method == :read_map_begin
+                  [*CONTAINER_SIZE_ENCODINGS.fetch(size), *container_header]
+                else
+                  [*container_header, *CONTAINER_SIZE_ENCODINGS.fetch(size)]
+                end
+        trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect { proto.public_send(reader_method) }.to raise_error(Thrift::ProtocolException, "Container size limit exceeded") do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+        end
       end
     end
   end

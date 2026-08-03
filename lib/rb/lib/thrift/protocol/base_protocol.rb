@@ -43,6 +43,8 @@ module Thrift
 
   class BaseProtocol
 
+    MAX_CONTAINER_SIZE = (1 << 31) - 1
+
     attr_reader :trans
 
     def initialize(trans)
@@ -398,6 +400,7 @@ module Thrift
 
     def validate_container_size(size)
       raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      raise ProtocolException.new(ProtocolException::SIZE_LIMIT, 'Container size limit exceeded') if size > MAX_CONTAINER_SIZE
     end
 
     def to_s

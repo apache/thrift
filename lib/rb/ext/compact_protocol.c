@@ -425,6 +425,15 @@ static int8_t get_ttype(int8_t ctype) {
   }
 }
 
+static inline void validate_container_size(uint32_t size) {
+  if (RB_UNLIKELY(size > INT32_MAX)) {
+    rb_exc_raise(get_protocol_exception(
+      INT2FIX(PROTOERR_SIZE_LIMIT),
+      rb_str_new2("Container size limit exceeded")
+    ));
+  }
+}
+
 static char read_byte_direct(VALUE self) {
   VALUE byte = rb_funcall(GET_TRANSPORT(self), read_byte_method_id, 0);
   return (char)(FIX2INT(byte));
@@ -561,6 +570,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
 
 VALUE rb_thrift_compact_proto_read_map_begin(VALUE self) {
   uint32_t size = read_varint32(self);
+  validate_container_size(size);
   uint8_t key_and_value_type = size == 0 ? 0 : read_byte_direct(self);
   return rb_ary_new3(3, INT2FIX(get_ttype(key_and_value_type >> 4)), INT2FIX(get_ttype(key_and_value_type & 0xf)), UINT2NUM(size));
 }
@@ -571,6 +581,7 @@ VALUE rb_thrift_compact_proto_read_list_begin(VALUE self) {
   if (size == 15) {
     size = read_varint32(self);
   }
+  validate_container_size(size);
   uint8_t type = get_ttype(size_and_type & 0x0f);
   return rb_ary_new3(2, INT2FIX(type), UINT2NUM(size));
 }

@@ -308,6 +308,7 @@ module Thrift
 
     def read_map_begin
       size = read_varint32()
+      validate_container_size(size)
       key_and_value_type = size == 0 ? 0 : read_byte()
       [CompactTypes.get_ttype(key_and_value_type >> 4), CompactTypes.get_ttype(key_and_value_type & 0xf), size]
     end
@@ -318,6 +319,7 @@ module Thrift
       if size == 15
         size = read_varint32()
       end
+      validate_container_size(size)
       type = CompactTypes.get_ttype(size_and_type)
       [type, size]
     end

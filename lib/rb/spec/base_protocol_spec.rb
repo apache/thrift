@@ -256,6 +256,14 @@ describe 'BaseProtocol' do
         expect(e.type).to eq(Thrift::ProtocolException::NEGATIVE_SIZE)
       end
     end
+
+    it "should reject container sizes above the signed 32-bit range while skipping" do
+      expect(@prot).to receive(:read_list_begin).and_return([Thrift::Types::I32, 1 << 31])
+
+      expect { @prot.skip(Thrift::Types::LIST) }.to raise_error(Thrift::ProtocolException, "Container size limit exceeded") do |e|
+        expect(e.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+      end
+    end
   end
 
   describe Thrift::BaseProtocolFactory do

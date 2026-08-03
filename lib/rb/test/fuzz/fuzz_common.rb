@@ -30,13 +30,7 @@ require 'ruzzy'
 # Ruzzy.enable_branch_coverage_hooks
 
 def ignorable_fuzz_exception?(error)
-  return true if error.is_a?(Thrift::ProtocolException) ||
-    error.is_a?(EOFError)
-
-  [
-    /too big to convert to '(?:int|long)'/,
-    /bignum too big to convert into 'long'/
-  ].any? { |pattern| error.message =~ pattern }
+  error.is_a?(Thrift::ProtocolException) || error.is_a?(EOFError)
 end
 
 def read_fuzz_test(protocol, read_message_begin)

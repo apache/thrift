@@ -59,7 +59,7 @@ module Thrift
         value.read(iprot, remaining_depth)
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the map contents if the declared key or value types don't match the expected ones.
         if (size != 0 && (key_type != field[:key][:type] || val_type != field[:value][:type]))
           size.times do
@@ -78,7 +78,7 @@ module Thrift
         iprot.read_map_end
       when Types::LIST
         e_type, size = iprot.read_list_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the list contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do
@@ -94,7 +94,7 @@ module Thrift
         iprot.read_list_end
       when Types::SET
         e_type, size = iprot.read_set_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the set contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do

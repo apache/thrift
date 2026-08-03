@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <stdint.h>
+
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
@@ -31,6 +33,7 @@ ID setvalue_id;
 ID to_s_method_id;
 ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
+static ID validate_container_size_method_id;
 static VALUE default_sym;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
@@ -60,19 +63,33 @@ static int parse_recursive_args(int argc, const VALUE *argv, VALUE *protocol) {
   return remaining_depth;
 }
 
-static void validate_container_size(int size) {
-  if (RB_UNLIKELY(size < 0)) {
-    rb_exc_raise(
-      get_protocol_exception(
-        INT2FIX(PROTOERR_NEGATIVE_SIZE),
-        rb_str_new2("Negative container size")
-      )
-    );
+static int container_size(VALUE protocol, VALUE size) {
+  if (RB_LIKELY(FIXNUM_P(size))) {
+    long value = FIX2LONG(size);
+    if (RB_UNLIKELY(value < 0)) {
+      rb_exc_raise(
+        get_protocol_exception(
+          INT2FIX(PROTOERR_NEGATIVE_SIZE),
+          rb_str_new2("Negative size")
+        )
+      );
+    }
+    if (RB_UNLIKELY((unsigned long)value > INT32_MAX)) {
+      rb_exc_raise(
+        get_protocol_exception(
+          INT2FIX(PROTOERR_SIZE_LIMIT),
+          rb_str_new2("Container size limit exceeded")
+        )
+      );
+    }
+    return (int)value;
   }
+
+  rb_funcall(protocol, validate_container_size_method_id, 1, size);
+  return NUM2INT(size);
 }
 
 static VALUE new_container_array(int size) {
-  validate_container_size(size);
   return rb_ary_new2(size > 1024 ? 1024 : size);
 }
 
@@ -562,11 +579,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
     VALUE map_header = default_read_map_begin(protocol);
     int key_ttype = FIX2INT(rb_ary_entry(map_header, 0));
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
-    int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
-
-    if (num_entries < 0) {
-      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_NEGATIVE_SIZE), rb_str_new2("Negative container size")));
-    }
+    int num_entries = container_size(protocol, rb_ary_entry(map_header, 2));
 
     // Check the declared key and value types against the expected ones and skip the map contents
     // if the types don't match.
@@ -598,7 +611,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
   } else if (ttype == TTYPE_LIST) {
     VALUE list_header = default_read_list_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
-    int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
+    int num_elements = container_size(protocol, rb_ary_entry(list_header, 1));
 
     // Check the declared element type against the expected one and skip the list contents
     // if the types don't match.
@@ -612,11 +625,9 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
           rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym), remaining_depth));
         }
       } else {
-        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
-      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
@@ -626,7 +637,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
 
     VALUE set_header = default_read_set_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
-    int num_elements = FIX2INT(rb_ary_entry(set_header, 1));
+    int num_elements = container_size(protocol, rb_ary_entry(set_header, 1));
 
     // Check the declared element type against the expected one and skip the set contents
     // if the types don't match.
@@ -642,11 +653,9 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
 
         result = rb_class_new_instance(1, &items, rb_cSet);
       } else {
-        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
-      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
@@ -855,6 +864,8 @@ void Init_struct(void) {
 
   sorted_field_ids_method_id = rb_intern("sorted_field_ids");
   rb_global_variable(&sorted_field_ids_method_id);
+
+  validate_container_size_method_id = rb_intern("validate_container_size");
 
   default_sym = ID2SYM(rb_intern("default"));
   rb_global_variable(&default_sym);
