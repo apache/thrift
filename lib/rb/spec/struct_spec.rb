@@ -212,6 +212,26 @@ describe 'Struct' do
       }.to raise_error(sentinel)
     end
 
+    [
+      ['map', Thrift::Types::MAP, 5, :read_map_begin, [Thrift::Types::I32, Thrift::Types::MAP]],
+      ['list', Thrift::Types::LIST, 4, :read_list_begin, [Thrift::Types::I32]],
+      ['set', Thrift::Types::SET, 6, :read_set_begin, [Thrift::Types::I16]]
+    ].each do |name, field_type, field_id, begin_method, header|
+      it "rejects #{name} sizes above the signed 32-bit range" do
+        struct = SpecNamespace::Foo.new
+        prot = Thrift::BaseProtocol.new(double("transport"))
+        declared_size = 1 << 31
+
+        expect(prot).to receive(:read_struct_begin)
+        expect(prot).to receive(:read_field_begin).and_return([name, field_type, field_id])
+        expect(prot).to receive(begin_method).and_return([*header, declared_size])
+
+        expect { struct.read(prot) }.to raise_error(Thrift::ProtocolException, "Container size limit exceeded") do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+        end
+      end
+    end
+
     it "should serialize false boolean fields correctly" do
       b = SpecNamespace::BoolStruct.new(:yesno => false)
       prot = Thrift::BinaryProtocol.new(Thrift::MemoryBufferTransport.new)
