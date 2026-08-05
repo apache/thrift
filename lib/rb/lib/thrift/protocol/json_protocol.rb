@@ -774,7 +774,6 @@ module Thrift
 
     def read_uuid
       uuid = read_json_string
-      raise EOFError.new if uuid.length < 36
       UUID.validate_uuid!(uuid)
       uuid.tap(&:downcase!)
     end

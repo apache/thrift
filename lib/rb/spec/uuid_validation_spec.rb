@@ -21,15 +21,16 @@
 require 'spec_helper'
 
 describe 'UUID Validation' do
-  protocols = [
+  fixed_width_protocols = [
     ['BinaryProtocol', Thrift::BinaryProtocol],
   ]
 
   if defined?(Thrift::BinaryProtocolAccelerated)
-    protocols << ['BinaryProtocolAccelerated', Thrift::BinaryProtocolAccelerated]
+    fixed_width_protocols << ['BinaryProtocolAccelerated', Thrift::BinaryProtocolAccelerated]
   end
 
-  protocols << ['CompactProtocol', Thrift::CompactProtocol]
+  fixed_width_protocols << ['CompactProtocol', Thrift::CompactProtocol]
+  protocols = fixed_width_protocols.dup
   protocols << ['JsonProtocol', Thrift::JsonProtocol]
 
   protocols.each do |protocol_name, protocol_class|
@@ -134,42 +135,6 @@ describe 'UUID Validation' do
         end
       end
 
-      context 'malformed binary data on read' do
-        it 'should raise error on truncated data' do
-          @trans = Thrift::MemoryBufferTransport.new
-          @prot = protocol_class.new(@trans)
-
-          # Write only 10 bytes instead of 16
-          if protocol_class == Thrift::JsonProtocol
-            @trans.write('"00000000-0000-0000-0000"')
-          else
-            @trans.write("\x00" * 10)
-          end
-
-          expect { @prot.read_uuid }.to raise_error(EOFError)
-        end
-
-        it 'should raise error on 15 bytes (one byte short)' do
-          @trans = Thrift::MemoryBufferTransport.new
-          @prot = protocol_class.new(@trans)
-
-          if protocol_class == Thrift::JsonProtocol
-            @trans.write('"00000000-0000-0000-0000-000000000"')
-          else
-            @trans.write("\x00" * 15)
-          end
-
-          expect { @prot.read_uuid }.to raise_error(EOFError)
-        end
-
-        it 'should raise error on empty buffer' do
-          @trans = Thrift::MemoryBufferTransport.new
-          @prot = protocol_class.new(@trans)
-
-          expect { @prot.read_uuid }.to raise_error(EOFError)
-        end
-      end
-
       context 'multiple UUIDs in sequence' do
         it 'should handle 10 UUIDs in sequence' do
           uuids = 10.times.map { |i| sprintf('%08x-0000-0000-0000-000000000000', i) }
@@ -232,6 +197,65 @@ describe 'UUID Validation' do
 
           name, type, id = @prot.read_field_begin
           expect(type).to eq(Thrift::Types::STOP)
+        end
+      end
+    end
+  end
+
+  describe 'fixed-width UUID protocols' do
+    fixed_width_protocols.each do |protocol_name, protocol_class|
+      describe protocol_name do
+        [10, 15].each do |available_bytes|
+          it "raises EOFError when only #{available_bytes} of 16 UUID bytes are available" do
+            trans = Thrift::MemoryBufferTransport.new("\x00" * available_bytes)
+            prot = protocol_class.new(trans)
+
+            expect { prot.read_uuid }.to raise_error(EOFError)
+          end
+        end
+
+        it 'raises EOFError when no UUID bytes are available' do
+          trans = Thrift::MemoryBufferTransport.new
+          prot = protocol_class.new(trans)
+
+          expect { prot.read_uuid }.to raise_error(EOFError)
+        end
+      end
+    end
+  end
+
+  describe Thrift::JsonProtocol do
+    it 'raises EOFError when the JSON string is missing its closing quote' do
+      uuid = '00000000-0000-0000-0000-000000000000'
+      json_without_closing_quote = '"' + uuid
+      trans = Thrift::MemoryBufferTransport.new(json_without_closing_quote)
+      prot = described_class.new(trans)
+
+      expect { prot.read_uuid }.to raise_error(EOFError)
+    end
+
+    it 'raises EOFError when no JSON UUID data is available' do
+      trans = Thrift::MemoryBufferTransport.new
+      prot = described_class.new(trans)
+
+      expect { prot.read_uuid }.to raise_error(EOFError)
+    end
+
+    context 'with a complete malformed UUID string' do
+      [
+        '00000000-0000-0000-0000',
+        '00000000-0000-0000-0000-000000000'
+      ].each do |uuid|
+        it "rejects a #{uuid.length}-character UUID" do
+          trans = Thrift::MemoryBufferTransport.new("\"#{uuid}\"")
+          prot = described_class.new(trans)
+
+          expect { prot.read_uuid }.to raise_error(
+            Thrift::ProtocolException,
+            'Invalid UUID format'
+          ) do |error|
+            expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+          end
         end
       end
     end
