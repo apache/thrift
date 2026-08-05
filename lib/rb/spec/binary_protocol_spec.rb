@@ -63,7 +63,8 @@ describe 'BinaryProtocol' do
 
   describe Thrift::BinaryProtocolFactory do
     it "should create a BinaryProtocol" do
-      expect(Thrift::BinaryProtocolFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::BinaryProtocol)
+      transport = Thrift::MemoryBufferTransport.new
+      expect(Thrift::BinaryProtocolFactory.new.get_protocol(transport)).to be_instance_of(Thrift::BinaryProtocol)
     end
 
     it "should provide a reasonable to_s" do

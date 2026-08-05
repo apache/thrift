@@ -551,6 +551,10 @@ VALUE rb_thrift_compact_proto_read_set_end(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_read_message_begin(VALUE self) {
+  if (RTEST(rb_ivar_get(self, reset_message_size_ivar_id))) {
+    rb_funcall(GET_TRANSPORT(self), reset_message_size_method_id, 0);
+  }
+
   int8_t protocol_id = read_byte_direct(self);
   if (protocol_id != PROTOCOL_ID) {
     char buf[100];

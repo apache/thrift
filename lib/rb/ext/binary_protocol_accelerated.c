@@ -422,6 +422,10 @@ VALUE rb_thrift_binary_proto_read_message_begin(VALUE self) {
   VALUE name, seqid;
   int type;
 
+  if (RTEST(rb_ivar_get(self, reset_message_size_ivar_id))) {
+    rb_funcall(GET_TRANSPORT(self), reset_message_size_method_id, 0);
+  }
+
   int version = read_i32_direct(self);
 
   if (version < 0) {
