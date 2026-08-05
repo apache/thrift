@@ -196,6 +196,10 @@ module Thrift
       @protocol.read_binary
     end
 
+    def skip_string
+      @protocol.skip_string
+    end
+
     def read_uuid
       @protocol.read_uuid
     end

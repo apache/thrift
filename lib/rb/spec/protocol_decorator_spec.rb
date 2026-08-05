@@ -30,4 +30,15 @@ describe Thrift::ProtocolDecorator do
     expect(protocol).to receive(:write_message_begin).with('method', Thrift::MessageTypes::CALL, 42)
     decorator.write_message_begin('method', Thrift::MessageTypes::CALL, 42)
   end
+
+  it 'forwards skipped strings to the decorated protocol' do
+    decorator_class = Class.new(Thrift::BaseProtocol) do
+      include Thrift::ProtocolDecorator
+    end
+    protocol = double('Protocol')
+    decorator = decorator_class.new(protocol)
+
+    expect(protocol).to receive(:skip_string)
+    decorator.skip(Thrift::Types::STRING)
+  end
 end

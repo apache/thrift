@@ -44,6 +44,13 @@ describe 'HeaderProtocol' do
       expect(protocol.trans).to equal(header_trans)
     end
 
+    it "should delegate skipped strings to the selected protocol" do
+      selected_protocol = @protocol.instance_variable_get(:@protocol)
+      expect(selected_protocol).to receive(:skip_string)
+
+      @protocol.skip(Thrift::Types::STRING)
+    end
+
     describe "header management delegation" do
       it "should delegate get_headers" do
         # Write with headers and read back to populate read headers

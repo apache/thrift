@@ -255,6 +255,16 @@ shared_examples_for 'a binary protocol' do
     expect(a.unpack('C*')).to eq([0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03])
   end
 
+  it 'should skip strings as binary values' do
+    @prot.write_binary('value')
+    expect(@prot).to receive(:read_binary).and_call_original
+    expect(@prot).not_to receive(:read_string)
+
+    @prot.skip(Thrift::Types::STRING)
+
+    expect(@trans.available).to eq(0)
+  end
+
   it 'should write a frozen non-binary string without mutating the input' do
     buffer = "abc \u20AC".encode('UTF-8').freeze
     @prot.write_binary(buffer)

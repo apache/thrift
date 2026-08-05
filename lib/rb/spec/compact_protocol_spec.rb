@@ -66,6 +66,18 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should skip strings as binary values" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+    proto.write_binary("value")
+    expect(proto).to receive(:read_binary).and_call_original
+    expect(proto).not_to receive(:read_string)
+
+    proto.skip(Thrift::Types::STRING)
+
+    expect(trans.available).to eq(0)
+  end
+
   it "should encode and decode primitives in fields correctly" do
     TESTS.each_pair do |primitive_type, test_values|
       final_primitive_type = primitive_type == :binary ? :string : primitive_type
