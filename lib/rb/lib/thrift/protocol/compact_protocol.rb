@@ -241,6 +241,8 @@ module Thrift
     end
 
     def read_message_begin
+      trans.reset_message_size if trans.respond_to?(:reset_message_size)
+
       protocol_id = read_byte()
       if protocol_id != PROTOCOL_ID
         raise ProtocolException.new(

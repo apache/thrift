@@ -69,6 +69,24 @@ describe 'HeaderTransport' do
       [message.bytesize].pack('N') + message
     end
 
+    def unframed_message(protocol_class, name = "legacy_unframed")
+      buffer = Thrift::MemoryBufferTransport.new
+      protocol = protocol_class.new(buffer)
+      protocol.write_message_begin(name, Thrift::MessageTypes::CALL, 1)
+      protocol.write_struct_begin("Args")
+      protocol.write_field_stop
+      protocol.write_struct_end
+      protocol.write_message_end
+      buffer.read(buffer.available)
+    end
+
+    def read_unframed_message(protocol)
+      name = protocol.read_message_begin.first
+      protocol.skip(Thrift::Types::STRUCT)
+      protocol.read_message_end
+      name
+    end
+
     before(:each) do
       @underlying = Thrift::MemoryBufferTransport.new
       @trans = Thrift::HeaderTransport.new(@underlying)
@@ -177,6 +195,85 @@ describe 'HeaderTransport' do
         @trans.set_max_frame_size(4)
         @trans.write("12345")
         expect { @trans.flush }.to raise_error(Thrift::TransportException, /frame that is too large/)
+      end
+
+      {
+        "binary" => Thrift::BinaryProtocol,
+        "compact" => Thrift::CompactProtocol
+      }.each do |protocol_name, protocol_class|
+        it "enforces max frame size for unframed #{protocol_name} messages" do
+          payload = unframed_message(protocol_class)
+
+          exact_limit = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(payload))
+          exact_limit.set_max_frame_size(payload.bytesize)
+          expect(read_unframed_message(Thrift::HeaderProtocol.new(exact_limit))).to eq("legacy_unframed")
+
+          over_limit = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(payload))
+          over_limit.set_max_frame_size(payload.bytesize - 1)
+          protocol = Thrift::HeaderProtocol.new(over_limit)
+          expect { read_unframed_message(protocol) }.to raise_error(
+            Thrift::TransportException,
+            "Unframed message size exceeds maximum #{payload.bytesize - 1}"
+          ) do |error|
+            expect(error.type).to eq(Thrift::TransportException::SIZE_LIMIT)
+          end
+        end
+      end
+
+      it "rejects an unframed protocol signature larger than the configured limit" do
+        payload = unframed_message(Thrift::BinaryProtocol)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(payload))
+        read_trans.set_max_frame_size(3)
+
+        expect { read_trans.read(1) }.to raise_error(
+          Thrift::TransportException,
+          "Unframed message size exceeds maximum 3"
+        ) do |error|
+          expect(error.type).to eq(Thrift::TransportException::SIZE_LIMIT)
+        end
+      end
+
+      it "counts bytes actually returned by partial unframed reads" do
+        payload = unframed_message(Thrift::BinaryProtocol)
+        chunked_transport = Class.new(Thrift::BaseTransport) do
+          def initialize(data)
+            @data = data.dup
+          end
+
+          def read(size)
+            @data.slice!(0, [size, 2].min)
+          end
+        end
+        read_trans = Thrift::HeaderTransport.new(chunked_transport.new(payload))
+        read_trans.set_max_frame_size(payload.bytesize)
+
+        expect(read_unframed_message(Thrift::HeaderProtocol.new(read_trans))).to eq("legacy_unframed")
+      end
+
+      protocol_pairs = {
+        "binary" => [Thrift::BinaryProtocol, Thrift::BinaryProtocol],
+        "compact" => [Thrift::CompactProtocol, Thrift::CompactProtocol]
+      }
+      if defined?(Thrift::BinaryProtocolAccelerated)
+        protocol_pairs["accelerated binary"] = [
+          Thrift::BinaryProtocol,
+          Thrift::BinaryProtocolAccelerated
+        ]
+      end
+
+      protocol_pairs.each do |protocol_name, (writer_class, reader_class)|
+        it "resets the unframed size budget between #{protocol_name} messages" do
+          first = unframed_message(writer_class, "first")
+          second = unframed_message(writer_class, "second")
+          read_trans = Thrift::HeaderTransport.new(
+            Thrift::MemoryBufferTransport.new(first + second)
+          )
+          read_trans.set_max_frame_size([first.bytesize, second.bytesize].max)
+          protocol = reader_class.new(read_trans)
+
+          expect(read_unframed_message(protocol)).to eq("first")
+          expect(read_unframed_message(protocol)).to eq("second")
+        end
       end
     end
 

@@ -77,6 +77,7 @@ extern ID skip_method_id;
 extern ID write_method_id;
 extern ID read_all_method_id;
 extern ID read_into_buffer_method_id;
+extern ID reset_message_size_method_id;
 extern ID force_binary_encoding_id;
 extern ID convert_to_utf8_byte_buffer_id;
 extern ID convert_to_string_id;
