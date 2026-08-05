@@ -133,17 +133,18 @@ describe 'Server' do
       expect { @server.serve }.to throw_symbol(:stop)
     end
 
-    {
-      Thrift::CompactProtocolFactory.new => proc do
+    [
+      ["compact unknown type", Thrift::CompactProtocolFactory.new, proc do
         trans = Thrift::MemoryBufferTransport.new
         prot = Thrift::CompactProtocol.new(trans)
         prot.write_message_begin('unknown', Thrift::MessageTypes::CALL, 1)
         trans.write([0x1e, 0].pack('C*'))
         trans.read(trans.available)
-      end,
-      Thrift::JsonProtocolFactory.new => proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }
-    }.each do |protocol_factory, malformed_request|
-      it "closes a malformed #{protocol_factory} connection and continues accepting clients" do
+      end],
+      ["JSON unknown type", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }],
+      ["short JSON UUID", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"uid":"x"}}]' }]
+    ].each do |failure_type, protocol_factory, malformed_request|
+      it "closes a malformed #{failure_type} connection and continues accepting clients" do
         ready = Queue.new
         errors = Queue.new
         server_transport = EphemeralServerSocket.new(ready)
