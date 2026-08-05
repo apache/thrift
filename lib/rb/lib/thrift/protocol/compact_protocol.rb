@@ -110,6 +110,7 @@ module Thrift
 
     def initialize(transport)
       super(transport)
+      @reset_message_size = transport.message_boundaries?
 
       @last_field = [0]
       @boolean_value = nil
@@ -241,6 +242,8 @@ module Thrift
     end
 
     def read_message_begin
+      trans.reset_message_size if @reset_message_size
+
       protocol_id = read_byte()
       if protocol_id != PROTOCOL_ID
         raise ProtocolException.new(

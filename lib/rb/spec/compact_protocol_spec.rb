@@ -395,7 +395,8 @@ end
 
 describe Thrift::CompactProtocolFactory do
   it "should create a CompactProtocol" do
-    expect(Thrift::CompactProtocolFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::CompactProtocol)
+    transport = Thrift::MemoryBufferTransport.new
+    expect(Thrift::CompactProtocolFactory.new.get_protocol(transport)).to be_instance_of(Thrift::CompactProtocol)
   end
 
   it "should provide a reasonable to_s" do

@@ -36,6 +36,7 @@ module Thrift
 
     def initialize(trans, strict_read = true, strict_write = true)
       super(trans)
+      @reset_message_size = trans.message_boundaries?
       @strict_read = strict_read
       @strict_write = strict_write
 
@@ -142,6 +143,8 @@ module Thrift
     end
 
     def read_message_begin
+      trans.reset_message_size if @reset_message_size
+
       version = read_i32
       if version < 0
         if (version & VERSION_MASK != VERSION_1)

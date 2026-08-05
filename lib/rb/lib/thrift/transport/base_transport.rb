@@ -56,6 +56,11 @@ module Thrift
 
     def close; end
 
+    # Returns true when the transport needs protocol message boundary notifications.
+    def message_boundaries?
+      false
+    end
+
     # Reads a number of bytes from the transports. The String returned will have a BINARY (aka ASCII-8BIT) encoding.
     #
     # sz - The number of bytes to read from the transport.
