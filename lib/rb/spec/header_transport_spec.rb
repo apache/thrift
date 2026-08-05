@@ -206,6 +206,28 @@ describe 'HeaderTransport' do
         expect(read_trans.read(1_000)).to eq("A" * 1_000)
       end
 
+      {
+        "invalid" => "not-zlib",
+        "truncated" => Zlib::Deflate.deflate("valid payload")[0...-1]
+      }.each do |failure_type, payload|
+        it "adapts #{failure_type} ZLIB payloads to the transport exception boundary" do
+          header_data = [
+            Thrift::HeaderSubprotocolID::BINARY,
+            1,
+            Thrift::HeaderTransformID::ZLIB
+          ].pack('C*')
+          frame = build_header_frame(header_data, payload)
+          read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+
+          expect { read_trans.read(1) }.to raise_error(
+            Thrift::TransportException,
+            "Invalid ZLIB payload"
+          ) do |error|
+            expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
+          end
+        end
+      end
+
       it "should raise SIZE_LIMIT TransportException when decompressed output exceeds the limit" do
         write_buf = Thrift::MemoryBufferTransport.new
         writer = Thrift::HeaderTransport.new(write_buf)
