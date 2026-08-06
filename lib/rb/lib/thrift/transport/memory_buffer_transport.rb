@@ -23,13 +23,9 @@ module Thrift
   class MemoryBufferTransport < BaseTransport
     GARBAGE_BUFFER_SIZE = 4*(2**10) # 4kB
 
-    # If you pass a string to this, you should #dup that string
-    # unless you want it to be modified by #read and #write
-    #--
-    # this behavior is no longer required. If you wish to change it
-    # go ahead, just make sure the specs pass
+    # The transport copies the input buffer and keeps its own mutable storage.
     def initialize(buffer = nil)
-      @buf = buffer ? Bytes.force_binary_encoding(buffer) : Bytes.empty_byte_buffer
+      @buf = buffer ? Bytes.force_binary_encoding(buffer.dup) : Bytes.empty_byte_buffer
       @index = 0
     end
 
