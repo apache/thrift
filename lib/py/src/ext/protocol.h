@@ -40,6 +40,7 @@ public:
   inline virtual ~ProtocolBase();
 
   bool prepareDecodeBufferFromTransport(PyObject* trans);
+  bool prepareDecodeBufferFromBytes(PyObject* bytes_obj);
 
   PyObject* readStruct(PyObject* output, PyObject* klass, PyObject* spec_seq);
 
