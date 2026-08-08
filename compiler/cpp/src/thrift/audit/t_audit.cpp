@@ -26,6 +26,8 @@
 extern int g_warn;
 extern std::string g_curpath;
 extern bool g_return_failure;
+extern bool g_audit_allow_optional_field_removal;
+extern bool g_audit_allow_required_field_to_default;
 
 void thrift_audit_warning(int level, const char* fmt, ...) {
    if (g_warn < level) {
@@ -47,6 +49,19 @@ void thrift_audit_failure(const char* fmt, ...) {
   va_end(args);
   fprintf(stderr, "\n");
   g_return_failure = true;
+}
+
+static bool is_allowed_field_removal(const t_field* oldField) {
+  return g_audit_allow_optional_field_removal
+         && oldField->get_req() == t_field::T_OPTIONAL;
+}
+
+static void report_field_removal(const t_field* oldField, const std::string& structName) {
+  if (!is_allowed_field_removal(oldField)) {
+    thrift_audit_failure("Struct Field removed for Id = %d in %s \n",
+                         oldField->get_key(),
+                         structName.c_str());
+  }
 }
 
 void compare_namespace(t_program* newProgram, t_program* oldProgram)
@@ -226,7 +241,12 @@ void compare_struct_field(t_field* newField, t_field* oldField, std::string oldS
    bool newStructFieldOptional = (newField->get_req() != t_field::T_REQUIRED);
    bool oldStructFieldOptional = (oldField->get_req() != t_field::T_REQUIRED);
 
-   if(newStructFieldOptional != oldStructFieldOptional)
+   bool requiredToDefaultAllowed =
+       g_audit_allow_required_field_to_default
+       && oldField->get_req() == t_field::T_REQUIRED
+       && newField->get_req() == t_field::T_OPT_IN_REQ_OUT;
+
+   if(newStructFieldOptional != oldStructFieldOptional && !requiredToDefaultAllowed)
    {
       thrift_audit_failure("Struct Field Requiredness Changed for Id = %d in %s \n", newField->get_key(), oldStructName.c_str());
    }
@@ -261,7 +281,7 @@ void compare_single_struct(t_struct* newStruct, t_struct* oldStruct, const std::
       if(newStructMemberIt == newStructMembersInIdOrder.end() && oldStructMemberIt != oldStructMembersInIdOrder.end())
       {
          // A field ID has been removed from the end.
-         thrift_audit_failure("Struct Field removed for Id = %d in %s \n", (*oldStructMemberIt)->get_key(), structName.c_str());
+         report_field_removal(*oldStructMemberIt, structName);
          oldStructMemberIt++;
       }
       else if(newStructMemberIt != newStructMembersInIdOrder.end() && oldStructMemberIt == oldStructMembersInIdOrder.end())
@@ -291,7 +311,7 @@ void compare_single_struct(t_struct* newStruct, t_struct* oldStruct, const std::
       else if((*newStructMemberIt)->get_key() > (*oldStructMemberIt)->get_key())
       {
          //A field is deleted in newStruct.
-         thrift_audit_failure("Struct Field removed for Id = %d in %s \n",  (*oldStructMemberIt)->get_key(), structName.c_str());
+         report_field_removal(*oldStructMemberIt, structName);
          oldStructMemberIt++;
       }
 
