@@ -120,6 +120,7 @@ module Thrift
       @flags = 0
       @max_frame_size = MAX_FRAME_SIZE
       @max_decompressed_size = DEFAULT_MAX_DECOMPRESSED_SIZE
+      @unframed_bytes_read = 0
     end
 
     def sequence_id=(sequence_id)
@@ -207,7 +208,7 @@ module Thrift
       # Handle unframed passthrough - read directly from underlying transport
       if @client_type == HeaderClientType::UNFRAMED_BINARY ||
          @client_type == HeaderClientType::UNFRAMED_COMPACT
-        return data + @transport.read(bytes_left)
+        return data + read_unframed(bytes_left)
       end
 
       # Need to read the next frame
@@ -253,6 +254,13 @@ module Thrift
       read_frame(0)
     end
 
+    # Starts a new protocol message without forcing client-type detection.
+    def reset_message_size
+      return unless @read_buffer.nil? || @read_buffer.eof?
+
+      @unframed_bytes_read = 0
+    end
+
     private
 
     # Sets the client type after validation
@@ -266,6 +274,7 @@ module Thrift
     # Reads the next frame, detecting client type on first read
     def read_frame(req_sz)
       @read_headers = {}
+      @unframed_bytes_read = 0
 
       # Read first 4 bytes - could be frame length or protocol magic
       begin
@@ -336,13 +345,31 @@ module Thrift
 
     # Handles unframed protocol - puts first_word back in buffer
     def handle_unframed(first_word, req_sz)
+      @unframed_bytes_read = first_word.bytesize
+      raise_unframed_size_limit if @unframed_bytes_read > @max_frame_size
+
       bytes_left = req_sz - 4
       if bytes_left > 0
-        rest = @transport.read(bytes_left)
+        rest = read_unframed(bytes_left)
         @read_buffer = StringIO.new(first_word + rest)
       else
         @read_buffer = StringIO.new(first_word)
       end
+    end
+
+    def read_unframed(size)
+      raise_unframed_size_limit if @unframed_bytes_read + size > @max_frame_size
+
+      data = @transport.read(size)
+      @unframed_bytes_read += data.bytesize
+      data
+    end
+
+    def raise_unframed_size_limit
+      raise TransportException.new(
+        TransportException::SIZE_LIMIT,
+        "Unframed message size exceeds maximum #{@max_frame_size}"
+      )
     end
 
     # Parses a Header format frame

@@ -92,6 +92,7 @@ ID skip_method_id;
 ID write_method_id;
 ID read_all_method_id;
 ID read_into_buffer_method_id;
+ID reset_message_size_method_id;
 ID force_binary_encoding_id;
 ID convert_to_utf8_byte_buffer_id;
 ID convert_to_string_id;
@@ -200,6 +201,7 @@ RUBY_FUNC_EXPORTED void Init_thrift_native(void) {
   write_method_id = rb_intern("write");
   read_all_method_id = rb_intern("read_all");
   read_into_buffer_method_id = rb_intern("read_into_buffer");
+  reset_message_size_method_id = rb_intern("reset_message_size");
   force_binary_encoding_id = rb_intern("force_binary_encoding");
   convert_to_utf8_byte_buffer_id = rb_intern("convert_to_utf8_byte_buffer");
   convert_to_string_id = rb_intern("convert_to_string");
