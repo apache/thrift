@@ -120,6 +120,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -454,6 +455,11 @@ private:
   // themselves.
   friend class ProcessorGenerator;
 };
+
+std::string t_cpp_generator::get_namespace(t_type *type) {
+  std::string namespace_str = type->get_program()->get_namespace("cpp");
+  return replace_all(namespace_str, ".", "::") + "::";
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output

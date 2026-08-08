@@ -3148,6 +3148,17 @@ void t_haxe_generator::generate_haxe_doc(ostream& out, t_function* tfunction) {
         ss << " " << p->get_doc();
       }
     }
+
+    const vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+    vector<t_field*>::const_iterator e_iter;
+    for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter) {
+      t_field* e = *e_iter;
+      ss << "\n@throws " << type_name(e->get_type()) << " " << e->get_name();
+      if (e->has_doc()) {
+        ss << " " << e->get_doc();
+      }
+    }
+
     generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
   }
 }

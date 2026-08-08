@@ -77,6 +77,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_namespace(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -172,6 +173,15 @@ private:
 
   void generate_kotlin_union(t_struct* tstruct);
 };
+
+std::string t_kotlin_generator::get_namespace(t_type *type) {
+  std::string namespace_str = type->get_program()->get_namespace("kotlin");
+  if (namespace_str.empty()) {
+    namespace_str = type->get_program()->get_namespace("java");
+  }
+
+  return namespace_str + ".";
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
@@ -1420,7 +1430,7 @@ void t_kotlin_generator::generate_service_interface(t_service* tservice) {
   out << "interface " << tservice->get_name() << " {" << '\n';
   indent_up();
   for (auto tfunc : tservice->get_functions()) {
-    generate_kdoc_comment(out, tfunc);
+    generate_java_doc(out, tfunc);
     indent(out) << function_signature(tfunc) << '\n';
   }
   scope_down(out);

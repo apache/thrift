@@ -37,6 +37,16 @@ class t_oop_generator : public t_generator {
 public:
   t_oop_generator(t_program* program) : t_generator(program) {}
 
+  virtual std::string get_namespace(t_type* type) {
+    std::string package = type->get_program()->get_namespace("java");
+
+    if (package.empty()) {
+      return "";
+    }
+
+    return package + ".";
+  }
+
   /**
    * Scoping, using curly braces!
    */
@@ -102,6 +112,20 @@ public:
         ss << "\n@param " << p->get_name();
         if (p->has_doc()) {
           ss << " " << p->get_doc();
+        }
+      }
+      
+      const std::vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+      if (!exceptions.empty()) {
+        std::vector<t_field*>::const_iterator e_iter;
+        for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter) {
+          t_field* e = *e_iter;
+          ss << "\n@throws " << get_namespace(get_true_type(e->get_type())) << get_true_type(e->get_type())->get_name();
+          if (e->has_doc()) {
+            std::string doc_string = e->get_doc();
+            doc_string.erase(remove(doc_string.begin(), doc_string.end(), '\n'), doc_string.end());
+            ss << " " << doc_string;
+          }
         }
       }
       generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
