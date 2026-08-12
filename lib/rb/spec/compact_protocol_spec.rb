@@ -34,7 +34,7 @@ describe Thrift::CompactProtocol do
     :i64 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
   }
 
-  CONTAINER_SIZE_ENCODINGS = {
+  VARINT32_SIZE_ENCODINGS = {
     (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
     2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
     (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f]
@@ -282,7 +282,7 @@ describe Thrift::CompactProtocol do
   end
 
   it "should accept container sizes within the signed 32-bit range" do
-    bytes = [0xf5, *CONTAINER_SIZE_ENCODINGS.fetch((2**31) - 1)]
+    bytes = [0xf5, *VARINT32_SIZE_ENCODINGS.fetch((2**31) - 1)]
     trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
     proto = Thrift::CompactProtocol.new(trans)
 
@@ -297,9 +297,9 @@ describe Thrift::CompactProtocol do
     }.each do |reader_method, container_header|
       [2**31, (2**32) - 1].each do |size|
         bytes = if reader_method == :read_map_begin
-                  [*CONTAINER_SIZE_ENCODINGS.fetch(size), *container_header]
+                  [*VARINT32_SIZE_ENCODINGS.fetch(size), *container_header]
                 else
-                  [*container_header, *CONTAINER_SIZE_ENCODINGS.fetch(size)]
+                  [*container_header, *VARINT32_SIZE_ENCODINGS.fetch(size)]
                 end
         trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
         proto = Thrift::CompactProtocol.new(trans)
@@ -362,6 +362,26 @@ describe Thrift::CompactProtocol do
 
     proto = Thrift::CompactProtocol.new(trans)
     expect(proto.read_binary).to eq(payload)
+  end
+
+  it "should accept binary sizes through the signed 32-bit range" do
+    trans = Thrift::MemoryBufferTransport.new(VARINT32_SIZE_ENCODINGS.fetch((2**31) - 1).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect(trans).to receive(:read_all).with((2**31) - 1).and_return("payload")
+
+    expect(proto.read_binary).to eq("payload")
+  end
+
+  it "should reject binary sizes above the signed 32-bit range before reading the payload" do
+    [2**31, (2**32) - 1].each do |size|
+      trans = Thrift::MemoryBufferTransport.new(VARINT32_SIZE_ENCODINGS.fetch(size).pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+      expect(trans).not_to receive(:read_all)
+
+      expect { proto.read_binary }.to raise_error(Thrift::ProtocolException, "Binary size limit exceeded") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+      end
+    end
   end
 
   it "should write a uuid" do
@@ -510,6 +530,17 @@ describe Thrift::CompactProtocol do
     trans = Thrift::MemoryBufferTransport.new((([0x80] * 4) + [0x0f]).pack("C*"))
     proto = Thrift::CompactProtocol.new(trans)
     expect { proto.read_i32 }.not_to raise_error
+  end
+
+  it "should reject 32-bit varints with overflowing fifth-byte payload bits" do
+    [0x10, 0x7f].each do |terminal_byte|
+      trans = Thrift::MemoryBufferTransport.new((([0x80] * 4) + [terminal_byte]).pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.read_i32 }.to raise_error(Thrift::ProtocolException, "Variable-length int overflows uint32.") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+    end
   end
 
   class JankyHandler

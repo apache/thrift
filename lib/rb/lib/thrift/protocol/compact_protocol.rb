@@ -28,6 +28,8 @@ module Thrift
     TYPE_BITS = 0x07
     TYPE_SHIFT_AMOUNT = 5
     MAX_VARINT32_BYTES = 5  # ceil(32/7); matches protobuf wire format
+    VARINT32_PREFIX_BYTES = MAX_VARINT32_BYTES - 1
+    MAX_VARINT32_LAST_BYTE = 0x0f
     MAX_VARINT_BYTES = 10   # ceil(64/7); matches protobuf wire format
     BYTE_MIN = -(2**7)
     BYTE_MAX = (2**7) - 1
@@ -420,6 +422,9 @@ module Thrift
 
     def read_binary
       size = read_varint32()
+      if size > I32_MAX
+        raise ProtocolException.new(ProtocolException::SIZE_LIMIT, 'Binary size limit exceeded')
+      end
       trans.read_all(size)
     end
 
@@ -488,13 +493,22 @@ module Thrift
     def read_varint32()
       shift = 0
       result = 0
-      MAX_VARINT32_BYTES.times do
+      VARINT32_PREFIX_BYTES.times do
         b = read_byte()
         result |= (b & 0x7f) << shift
         return result if (b & 0x80) != 0x80
         shift += 7
       end
-      raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 5 bytes.')
+
+      b = read_byte()
+      if (b & 0x80) != 0
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 5 bytes.')
+      end
+      if (b & ~MAX_VARINT32_LAST_BYTE) != 0
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int overflows uint32.')
+      end
+
+      result | (b << shift)
     end
 
     def read_varint64()
