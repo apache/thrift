@@ -484,6 +484,7 @@ static int32_t zig_zag_to_int(uint32_t n) {
 }
 
 #define MAX_VARINT32_BYTES 5  /* ceil(32/7); matches protobuf wire format */
+#define MAX_VARINT32_LAST_BYTE 0x0f
 #define MAX_VARINT64_BYTES 10 /* ceil(64/7); matches protobuf wire format */
 
 static uint64_t read_varint64(VALUE self) {
@@ -504,7 +505,7 @@ static uint64_t read_varint64(VALUE self) {
 static uint32_t read_varint32(VALUE self) {
   int i, shift = 0;
   uint32_t result = 0;
-  for (i = 0; i < MAX_VARINT32_BYTES; i++) {
+  for (i = 0; i < MAX_VARINT32_BYTES - 1; i++) {
     int8_t b = read_byte_direct(self);
     result |= ((uint32_t)(b & 0x7f) << shift);
     if ((b & 0x80) != 0x80) {
@@ -512,8 +513,15 @@ static uint32_t read_varint32(VALUE self) {
     }
     shift += 7;
   }
-  rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Variable-length int over 5 bytes.")));
-  return 0; /* unreachable */
+
+  int8_t b = read_byte_direct(self);
+  if (RB_UNLIKELY((b & 0x80) != 0)) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Variable-length int over 5 bytes.")));
+  }
+  if (RB_UNLIKELY((b & ~MAX_VARINT32_LAST_BYTE) != 0)) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_INVALID_DATA), rb_str_new2("Variable-length int overflows uint32.")));
+  }
+  return result | ((uint32_t)b << shift);
 }
 
 static int16_t read_i16(VALUE self) {
@@ -683,6 +691,9 @@ VALUE rb_thrift_compact_proto_read_string(VALUE self) {
 
 VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
   uint32_t size = read_varint32(self);
+  if (RB_UNLIKELY(size > INT32_MAX)) {
+    rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_SIZE_LIMIT), rb_str_new2("Binary size limit exceeded")));
+  }
   return rb_funcall(GET_TRANSPORT(self), read_all_method_id, 1, UINT2NUM(size));
 }
 
