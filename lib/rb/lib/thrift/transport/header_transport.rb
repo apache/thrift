@@ -226,16 +226,15 @@ module Thrift
       @write_buffer = StringIO.new(Bytes.empty_byte_buffer)
 
       return if payload.empty?
-      if payload.bytesize > @max_frame_size
-        raise TransportException.new(TransportException::UNKNOWN, "Attempting to send frame that is too large")
-      end
 
       case @client_type
       when HeaderClientType::HEADERS
         flush_header_format(payload)
       when HeaderClientType::FRAMED_BINARY, HeaderClientType::FRAMED_COMPACT
+        validate_frame_size!(payload.bytesize)
         flush_framed(payload)
       when HeaderClientType::UNFRAMED_BINARY, HeaderClientType::UNFRAMED_COMPACT
+        validate_frame_size!(payload.bytesize)
         @transport.write(payload)
         @transport.flush
       else
@@ -497,7 +496,6 @@ module Thrift
           write_varstring(header_buf, key)
           write_varstring(header_buf, value)
         end
-        @write_headers = {}
       end
 
       # Pad header to 4-byte boundary
@@ -508,6 +506,8 @@ module Thrift
       # Calculate total frame size (excludes the 4-byte length field itself)
       # Frame = magic(2) + flags(2) + seqid(4) + header_len(2) + header_data + payload
       frame_size = 2 + 2 + 4 + 2 + header_data.bytesize + payload.bytesize
+      validate_frame_size!(frame_size)
+      @write_headers = {}
 
       # Write complete frame
       frame = Bytes.empty_byte_buffer
@@ -521,6 +521,15 @@ module Thrift
 
       @transport.write(frame)
       @transport.flush
+    end
+
+    def validate_frame_size!(frame_size)
+      return if frame_size <= @max_frame_size
+
+      raise TransportException.new(
+        TransportException::UNKNOWN,
+        "Frame size #{frame_size} exceeds maximum #{@max_frame_size}"
+      )
     end
 
     # Flushes data in simple framed format (for legacy compatibility)
