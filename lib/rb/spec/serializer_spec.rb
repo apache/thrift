@@ -111,6 +111,29 @@ module DeserializerResetFixtures
   end
 end
 
+module SerializerFixtures
+  class HeaderMessage
+    def initialize(value, sequence_id)
+      @value = value
+      @sequence_id = sequence_id
+    end
+
+    def write(protocol)
+      protocol.set_header("request-id", "abc")
+      protocol.add_transform(Thrift::HeaderTransformID::ZLIB)
+      protocol.write_message_begin("serialize", Thrift::MessageTypes::CALL, @sequence_id)
+      @value.write(protocol)
+      protocol.write_message_end
+    end
+  end
+
+  class FramedBinaryProtocolFactory
+    def get_protocol(transport)
+      Thrift::BinaryProtocol.new(Thrift::FramedTransport.new(transport))
+    end
+  end
+end
+
 describe 'Serializer' do
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
@@ -120,13 +143,15 @@ describe 'Serializer' do
     end
 
     it "should serialize structs to the given protocol" do
-      protocol = Thrift::BaseProtocol.new(double("transport"))
+      transport = double("transport")
+      protocol = Thrift::BaseProtocol.new(transport)
       expect(protocol).to receive(:write_struct_begin).with("SpecNamespace::Hello")
       expect(protocol).to receive(:write_field_begin).with("greeting", Thrift::Types::STRING, 1)
       expect(protocol).to receive(:write_string).with("Good day")
       expect(protocol).to receive(:write_field_end)
       expect(protocol).to receive(:write_field_stop)
       expect(protocol).to receive(:write_struct_end)
+      expect(transport).to receive(:flush)
       protocol_factory = double("ProtocolFactory")
       allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       serializer = Thrift::Serializer.new(protocol_factory)
@@ -171,6 +196,53 @@ describe 'Serializer' do
       expect(serializer.serialize(value)).to eq(
         Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value)
       )
+    end
+
+    it "keeps ordinary protocol output byte-for-byte stable" do
+      value = SpecNamespace::Hello.new(:greeting => "Good day")
+      expected = {
+        Thrift::BinaryProtocolFactory => "\v\x00\x01\x00\x00\x00\bGood day\x00".b,
+        Thrift::CompactProtocolFactory => "\x18\bGood day\x00".b,
+        Thrift::JsonProtocolFactory => "{\"1\":{\"str\":\"Good day\"}}"
+      }
+
+      expected.each do |factory_class, bytes|
+        expect(Thrift::Serializer.new(factory_class.new).serialize(value)).to eq(bytes)
+      end
+    end
+
+    it "finalizes and round-trips framed transport output" do
+      value = SpecNamespace::Hello.new(:greeting => "Good day")
+      factory = SerializerFixtures::FramedBinaryProtocolFactory.new
+
+      data = Thrift::Serializer.new(factory).serialize(value)
+
+      expect(data.unpack1('N')).to eq(data.bytesize - 4)
+      decoded = SpecNamespace::Hello.new
+      decoded.read(factory.get_protocol(Thrift::MemoryBufferTransport.new(data)))
+      expect(decoded).to eq(value)
+    end
+
+    [
+      Thrift::HeaderSubprotocolID::BINARY,
+      Thrift::HeaderSubprotocolID::COMPACT
+    ].each do |protocol_id|
+      it "finalizes and round-trips Header protocol #{protocol_id}" do
+        value = SpecNamespace::NonblockingService::Shutdown_args.new
+        message = SerializerFixtures::HeaderMessage.new(value, 42)
+        factory = Thrift::HeaderProtocolFactory.new(nil, protocol_id)
+
+        data = Thrift::Serializer.new(factory).serialize(message)
+
+        expect(data).not_to be_empty
+        reader = factory.get_protocol(Thrift::MemoryBufferTransport.new(data))
+        expect(reader.read_message_begin).to eq(["serialize", Thrift::MessageTypes::CALL, 42])
+        expect(reader.get_headers).to eq("request-id" => "abc")
+        decoded = SpecNamespace::NonblockingService::Shutdown_args.new
+        decoded.read(reader)
+        reader.read_message_end
+        expect(decoded).to eq(value)
+      end
     end
   end
 
