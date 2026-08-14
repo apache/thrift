@@ -19,13 +19,13 @@
 # under the License.
 #
 
-$:.push('gen-rb')
-$:.unshift '../../lib/rb/lib'
+$:.push("gen-rb")
+$:.unshift "../../lib/rb/lib"
 
-require 'thrift'
+require "thrift"
 
-require 'calculator'
-require 'shared_types'
+require "calculator"
+require "shared_types"
 
 class CalculatorHandler
   def initialize()

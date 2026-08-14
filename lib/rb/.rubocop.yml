@@ -116,3 +116,11 @@ Style/FrozenStringLiteralComment:
 
 Style/MethodDefParentheses:
   Enabled: true
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  Enabled: true
+  EnforcedStyle: double_quotes

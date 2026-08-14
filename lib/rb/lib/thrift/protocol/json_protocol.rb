@@ -51,7 +51,7 @@ module Thrift
   # implementations
   #
   class JSONContext
-    @@kJSONElemSeparator = ','
+    @@kJSONElemSeparator = ","
     #
     # Write context data to the trans. Default is to do nothing.
     #
@@ -75,7 +75,7 @@ module Thrift
 
   # Context class for object member key-value pairs
   class JSONPairContext < JSONContext
-    @@kJSONPairSeparator = ':'
+    @@kJSONPairSeparator = ":"
 
     def initialize
       @first = true
@@ -135,12 +135,12 @@ module Thrift
 
   class JsonProtocol < BaseProtocol
 
-    @@kJSONObjectStart = '{'
-    @@kJSONObjectEnd = '}'
-    @@kJSONArrayStart = '['
-    @@kJSONArrayEnd = ']'
+    @@kJSONObjectStart = "{"
+    @@kJSONObjectEnd = "}"
+    @@kJSONArrayStart = "["
+    @@kJSONArrayEnd = "]"
     @@kJSONNewline = '\n'
-    @@kJSONBackslash = '\\'
+    @@kJSONBackslash = "\\"
     @@kJSONStringDelimiter = '"'
 
     @@kThriftVersion1 = 1
@@ -220,7 +220,7 @@ module Thrift
    # Return true if the character ch is in [-+0-9.Ee]; false otherwise
     def is_json_numeric(ch)
       case ch
-      when '+', '-', '.', '0' .. '9', 'E', "e"
+      when "+", "-", ".", "0" .. "9", "E", "e"
         return true
       else
         return false
@@ -243,7 +243,7 @@ module Thrift
       if (ch_value.kind_of? String)
         ch_value = ch.bytes.first
       end
-      trans.write(ch_value.to_s(16).rjust(4, '0'))
+      trans.write(ch_value.to_s(16).rjust(4, "0"))
     end
 
     # Write the character ch as part of a JSON string, escaping as appropriate.
@@ -254,7 +254,7 @@ module Thrift
       # <other> : escape using "\<other>" notation
       kJSONCharTable = [
           # 0 1 2 3 4 5 6 7 8 9 A B C D E F
-          0, 0, 0, 0, 0, 0, 0, 0, 'b', 't', 'n', 0, 'f', 'r', 0, 0, # 0
+          0, 0, 0, 0, 0, 0, 0, 0, "b", "t", "n", 0, "f", "r", 0, 0, # 0
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
           1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
       ]
@@ -300,7 +300,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      trans.write([str].pack('m0'))
+      trans.write([str].pack("m0"))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -486,16 +486,16 @@ module Thrift
       if code_unit.between?(0xD800, 0xDBFF)
         slash = @reader.read
         marker = @reader.read
-        invalid_unicode!("Unpaired UTF-16 high surrogate") unless slash == '\\' && marker == 'u'
+        invalid_unicode!("Unpaired UTF-16 high surrogate") unless slash == "\\" && marker == "u"
 
         low_surrogate = read_unicode_code_unit
         invalid_unicode!("Unpaired UTF-16 high surrogate") unless low_surrogate.between?(0xDC00, 0xDFFF)
         codepoint = 0x10000 + ((code_unit - 0xD800) << 10) + (low_surrogate - 0xDC00)
-        [codepoint].pack('U')
+        [codepoint].pack("U")
       elsif code_unit.between?(0xDC00, 0xDFFF)
         invalid_unicode!("Unpaired UTF-16 low surrogate")
       else
-        [code_unit].pack('U')
+        [code_unit].pack("U")
       end
     rescue EOFError
       invalid_unicode!("Incomplete Unicode escape")
@@ -526,7 +526,7 @@ module Thrift
         end
         if (ch == @@kJSONBackslash)
           ch = @reader.read
-          if (ch == 'u')
+          if (ch == "u")
             ch = read_json_escape_char
           else
             pos = escape_chars.index(ch);
@@ -548,10 +548,10 @@ module Thrift
       if m != 0
         # Add missing padding
         (4 - m).times do
-          str += '='
+          str += "="
         end
       end
-      str.unpack1('m0')
+      str.unpack1("m0")
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
@@ -660,7 +660,7 @@ module Thrift
       read_json_array_start
       version = read_json_integer
       if (version != @@kThriftVersion1)
-        raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Message contained bad version.')
+        raise ProtocolException.new(ProtocolException::BAD_VERSION, "Message contained bad version.")
       end
       name = read_json_string
       message_type = read_json_integer

@@ -18,9 +18,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-require File.expand_path('../../test_helper', __dir__)
-require 'thrift'
-require 'thread'
+require File.expand_path("../../test_helper", __dir__)
+require "thrift"
+require "thread"
 
 class TestJsonProtocol < Test::Unit::TestCase
   def test_different_data_types
@@ -108,7 +108,7 @@ class TestJsonProtocol < Test::Unit::TestCase
 
     server_ready.pop
 
-    socket = Thrift::Socket.new('localhost', port)
+    socket = Thrift::Socket.new("localhost", port)
     transport = Thrift::BufferedTransport.new(socket)
     transport.open
     protocol = Thrift::JsonProtocol.new(transport)
@@ -134,7 +134,7 @@ class TestJsonProtocol < Test::Unit::TestCase
     transport.flush
 
     # acc_message
-    protocol.write_message_begin('hello_world', 4, 455536)
+    protocol.write_message_begin("hello_world", 4, 455536)
     protocol.write_message_end
     transport.flush
 
@@ -208,7 +208,7 @@ class TestJsonProtocol < Test::Unit::TestCase
     protocol.write_json_object_start
     val = (0...256).reverse_each.to_a
     # acc_binary
-    protocol.write_binary(val.pack('C*'))
+    protocol.write_binary(val.pack("C*"))
     protocol.write_json_object_end
     transport.flush
 

@@ -18,6 +18,6 @@
 # under the License.
 #
 
-require_relative 'fuzz_tracer'
+require_relative "fuzz_tracer"
 
 trace_fuzz_target(__FILE__)

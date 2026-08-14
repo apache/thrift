@@ -92,7 +92,7 @@ module Thrift
     def flush
       return @transport.flush unless @write
 
-      out = [@wbuf.length].pack('N')
+      out = [@wbuf.length].pack("N")
       # Array#pack should return a BINARY encoded String, so it shouldn't be necessary to force encoding
       out << @wbuf
       @transport.write(out)
@@ -107,7 +107,7 @@ module Thrift
     private
 
     def read_frame
-      sz = @transport.read_all(4).unpack('N').first
+      sz = @transport.read_all(4).unpack("N").first
 
       @index = 0
       @rbuf = @transport.read_all(sz)

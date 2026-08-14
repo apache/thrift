@@ -18,10 +18,10 @@
 # under the License.
 #
 
-THRIFT_BENCHMARK_SKIP_NATIVE = ENV.fetch('THRIFT_BENCHMARK_SKIP_NATIVE', '').match?(/\A(?:1|true|yes|on)\z/i)
+THRIFT_BENCHMARK_SKIP_NATIVE = ENV.fetch("THRIFT_BENCHMARK_SKIP_NATIVE", "").match?(/\A(?:1|true|yes|on)\z/i)
 
-lib_path = File.expand_path('../../../lib/rb/lib', __dir__)
-ext_path = File.expand_path('../../../lib/rb/ext', __dir__)
+lib_path = File.expand_path("../../../lib/rb/lib", __dir__)
+ext_path = File.expand_path("../../../lib/rb/ext", __dir__)
 
 $LOAD_PATH.unshift lib_path unless $LOAD_PATH.include?(lib_path)
 
@@ -32,27 +32,27 @@ else
 end
 
 if THRIFT_BENCHMARK_SKIP_NATIVE
-  File.open(File::NULL, 'w') do |null_stdout|
+  File.open(File::NULL, "w") do |null_stdout|
     original_stdout = $stdout
     $stdout = null_stdout
     begin
-      require 'thrift'
+      require "thrift"
     ensure
       $stdout = original_stdout
     end
   end
 else
-  require 'thrift'
+  require "thrift"
 end
 
-require 'benchmark'
-require 'json'
-require 'optparse'
+require "benchmark"
+require "json"
+require "optparse"
 
 # require 'ruby-debug'
 # require 'ruby-prof'
 
-require File.expand_path('../fixtures/structs', __dir__)
+require File.expand_path("../fixtures/structs", __dir__)
 
 module ProtocolBenchmark
   DEFAULT_LARGE_RUNS = 1
@@ -73,22 +73,22 @@ module ProtocolBenchmark
 
   def parse_run_options(argv = ARGV, env: ENV)
     options = {
-      large_runs: env.fetch('THRIFT_BENCHMARK_LARGE_RUNS', DEFAULT_LARGE_RUNS),
-      small_runs: env.fetch('THRIFT_BENCHMARK_SMALL_RUNS', DEFAULT_SMALL_RUNS),
-      scenarios: env['THRIFT_BENCHMARK_SCENARIOS'],
+      large_runs: env.fetch("THRIFT_BENCHMARK_LARGE_RUNS", DEFAULT_LARGE_RUNS),
+      small_runs: env.fetch("THRIFT_BENCHMARK_SMALL_RUNS", DEFAULT_SMALL_RUNS),
+      scenarios: env["THRIFT_BENCHMARK_SCENARIOS"],
       json: false
     }
 
     OptionParser.new do |parser|
-      parser.on('--large-runs N', Integer) { |value| options[:large_runs] = value }
-      parser.on('--small-runs N', Integer) { |value| options[:small_runs] = value }
-      parser.on('--scenarios IDS', String) { |value| options[:scenarios] = value }
-      parser.on('--json') { options[:json] = true }
+      parser.on("--large-runs N", Integer) { |value| options[:large_runs] = value }
+      parser.on("--small-runs N", Integer) { |value| options[:small_runs] = value }
+      parser.on("--scenarios IDS", String) { |value| options[:scenarios] = value }
+      parser.on("--json") { options[:json] = true }
     end.parse!(argv.dup)
 
     {
-      large_runs: normalize_run_count(options[:large_runs], 'large runs'),
-      small_runs: normalize_run_count(options[:small_runs], 'small runs'),
+      large_runs: normalize_run_count(options[:large_runs], "large runs"),
+      small_runs: normalize_run_count(options[:small_runs], "small runs"),
       scenarios: normalize_scenarios(options[:scenarios]),
       json: options[:json]
     }
@@ -102,7 +102,7 @@ module ProtocolBenchmark
   end
 
   def large_run_label(count)
-    count == 1 ? 'once' : "#{count} times"
+    count == 1 ? "once" : "#{count} times"
   end
 
   def normalize_scenarios(value)
@@ -198,7 +198,7 @@ module ProtocolBenchmark
     ooe.integer32 = 1 << 24
     ooe.integer64 = 6000 * 1000 * 1000
     ooe.double_precision = Math::PI
-    ooe.some_characters = 'Debug THIS!'
+    ooe.some_characters = "Debug THIS!"
     ooe.zomg_unicode = "\u00D7\n\a\t"
 
     n1 = Fixtures::Structs::Nested1.new
@@ -206,28 +206,28 @@ module ProtocolBenchmark
     n1.i32_map = {1234 => ooe, 46_345 => ooe, -34_264 => ooe}
     n1.i64_map = {43_534_986_783_945 => ooe, -32_434_639_875_122 => ooe}
     n1.dbl_map = {324.65469834 => ooe, -9_458_672_340.49868 => ooe}
-    n1.str_map = {'sdoperuix' => ooe, 'pwoerxclmn' => ooe}
+    n1.str_map = {"sdoperuix" => ooe, "pwoerxclmn" => ooe}
 
     n2 = Fixtures::Structs::Nested2.new
     n2.a_list = [n1, n1, n1, n1, n1]
     n2.i32_map = {398_345 => n1, -2345 => n1, 12_312 => n1}
     n2.i64_map = {2_349_843_765_934 => n1, -123_234_985_495 => n1, 0 => n1}
     n2.dbl_map = {23_345_345.38927834 => n1, -1_232_349.5489345 => n1, -234_984_574.23498726 => n1}
-    n2.str_map = {'' => n1, 'sdflkertpioux' => n1, 'sdfwepwdcjpoi' => n1}
+    n2.str_map = {"" => n1, "sdflkertpioux" => n1, "sdfwepwdcjpoi" => n1}
 
     n3 = Fixtures::Structs::Nested3.new
     n3.a_list = [n2, n2, n2, n2, n2]
     n3.i32_map = {398_345 => n2, -2345 => n2, 12_312 => n2}
     n3.i64_map = {2_349_843_765_934 => n2, -123_234_985_495 => n2, 0 => n2}
     n3.dbl_map = {23_345_345.38927834 => n2, -1_232_349.5489345 => n2, -234_984_574.23498726 => n2}
-    n3.str_map = {'' => n2, 'sdflkertpioux' => n2, 'sdfwepwdcjpoi' => n2}
+    n3.str_map = {"" => n2, "sdflkertpioux" => n2, "sdfwepwdcjpoi" => n2}
 
     n4 = Fixtures::Structs::Nested4.new
     n4.a_list = [n3]
     n4.i32_map = {-2345 => n3}
     n4.i64_map = {2_349_843_765_934 => n3}
     n4.dbl_map = {-1_232_349.5489345 => n3}
-    n4.str_map = {'' => n3}
+    n4.str_map = {"" => n3}
 
     [ooe, n4]
   end
@@ -252,11 +252,11 @@ module ProtocolBenchmark
     return scenarios if requested_ids.nil?
 
     unknown_ids = requested_ids - ALL_SCENARIO_IDS
-    raise ArgumentError, "unknown scenarios: #{unknown_ids.join(', ')}" if unknown_ids.any?
+    raise ArgumentError, "unknown scenarios: #{unknown_ids.join(", ")}" if unknown_ids.any?
 
     unavailable_native_ids = requested_ids & NATIVE_SCENARIO_IDS unless native_available
     if unavailable_native_ids&.any?
-      raise ArgumentError, "native-only scenarios unavailable without thrift_native: #{unavailable_native_ids.join(', ')}"
+      raise ArgumentError, "native-only scenarios unavailable without thrift_native: #{unavailable_native_ids.join(", ")}"
     end
 
     scenarios.select { |entry| requested_ids.include?(entry[:id]) }
@@ -264,7 +264,7 @@ module ProtocolBenchmark
 
   def build_scenarios(large_runs:, small_runs:, scenario_ids: nil)
     unknown_ids = scenario_ids ? scenario_ids - ALL_SCENARIO_IDS : []
-    raise ArgumentError, "unknown scenarios: #{unknown_ids.join(', ')}" if unknown_ids.any?
+    raise ArgumentError, "unknown scenarios: #{unknown_ids.join(", ")}" if unknown_ids.any?
 
     one_of_each, nested4 = build_sample_structs
 
@@ -279,62 +279,62 @@ module ProtocolBenchmark
     native_available = native_available?
     unavailable_native_ids = native_available ? [] : (scenario_ids || []) & NATIVE_SCENARIO_IDS
     if unavailable_native_ids.any?
-      raise ArgumentError, "native-only scenarios unavailable without thrift_native: #{unavailable_native_ids.join(', ')}"
+      raise ArgumentError, "native-only scenarios unavailable without thrift_native: #{unavailable_native_ids.join(", ")}"
     end
 
     native_scenarios = []
 
-    ruby_large_payload = with_scenario_selected(scenario_ids, 'rb-bin-read-large') { serialize(ruby_binary, nested4, count: large_runs) }
-    ruby_small_payload = with_scenario_selected(scenario_ids, 'rb-bin-read-small') { serialize(ruby_binary, one_of_each, count: small_runs) }
-    compact_large_payload = with_scenario_selected(scenario_ids, 'rb-cmp-read-large') { serialize(ruby_compact, nested4, count: large_runs) }
-    compact_small_payload = with_scenario_selected(scenario_ids, 'rb-cmp-read-small') { serialize(ruby_compact, one_of_each, count: small_runs) }
-    json_large_payload = with_scenario_selected(scenario_ids, 'rb-json-read-large') { serialize(ruby_json, nested4, count: large_runs) }
-    json_small_payload = with_scenario_selected(scenario_ids, 'rb-json-read-small') { serialize(ruby_json, one_of_each, count: small_runs) }
-    header_binary_payload = with_scenario_selected(scenario_ids, 'hdr-bin-read-small') { serialize(header_binary, one_of_each, count: small_runs) }
-    header_compact_payload = with_scenario_selected(scenario_ids, 'hdr-cmp-read-small') { serialize(header_compact, one_of_each, count: small_runs) }
-    header_zlib_payload = with_scenario_selected(scenario_ids, 'hdr-zlib-read-small') { serialize(header_zlib, one_of_each, count: small_runs) }
+    ruby_large_payload = with_scenario_selected(scenario_ids, "rb-bin-read-large") { serialize(ruby_binary, nested4, count: large_runs) }
+    ruby_small_payload = with_scenario_selected(scenario_ids, "rb-bin-read-small") { serialize(ruby_binary, one_of_each, count: small_runs) }
+    compact_large_payload = with_scenario_selected(scenario_ids, "rb-cmp-read-large") { serialize(ruby_compact, nested4, count: large_runs) }
+    compact_small_payload = with_scenario_selected(scenario_ids, "rb-cmp-read-small") { serialize(ruby_compact, one_of_each, count: small_runs) }
+    json_large_payload = with_scenario_selected(scenario_ids, "rb-json-read-large") { serialize(ruby_json, nested4, count: large_runs) }
+    json_small_payload = with_scenario_selected(scenario_ids, "rb-json-read-small") { serialize(ruby_json, one_of_each, count: small_runs) }
+    header_binary_payload = with_scenario_selected(scenario_ids, "hdr-bin-read-small") { serialize(header_binary, one_of_each, count: small_runs) }
+    header_compact_payload = with_scenario_selected(scenario_ids, "hdr-cmp-read-small") { serialize(header_compact, one_of_each, count: small_runs) }
+    header_zlib_payload = with_scenario_selected(scenario_ids, "hdr-zlib-read-small") { serialize(header_zlib, one_of_each, count: small_runs) }
 
     if native_available
-      accelerated_large_payload = with_scenario_selected(scenario_ids, 'c-bin-read-large') { serialize(accelerated_binary, nested4, count: large_runs) }
-      accelerated_small_payload = with_scenario_selected(scenario_ids, 'c-bin-read-small') { serialize(accelerated_binary, one_of_each, count: small_runs) }
+      accelerated_large_payload = with_scenario_selected(scenario_ids, "c-bin-read-large") { serialize(accelerated_binary, nested4, count: large_runs) }
+      accelerated_small_payload = with_scenario_selected(scenario_ids, "c-bin-read-small") { serialize(accelerated_binary, one_of_each, count: small_runs) }
 
       native_scenarios = [
-        scenario('c-bin-write-large', "c binary write large (1MB) structure #{large_run_label(large_runs)}") { write(accelerated_binary, nested4, count: large_runs) },
-        scenario('c-bin-read-large', "c binary read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(accelerated_binary, Fixtures::Structs::Nested4, accelerated_large_payload, count: large_runs) },
-        scenario('c-bin-write-small', "c binary write #{small_runs} small structures") { write(accelerated_binary, one_of_each, count: small_runs) },
-        scenario('c-bin-read-small', "c binary read #{small_runs} small structures") { deserialize(accelerated_binary, Fixtures::Structs::OneOfEach, accelerated_small_payload, count: small_runs) }
+        scenario("c-bin-write-large", "c binary write large (1MB) structure #{large_run_label(large_runs)}") { write(accelerated_binary, nested4, count: large_runs) },
+        scenario("c-bin-read-large", "c binary read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(accelerated_binary, Fixtures::Structs::Nested4, accelerated_large_payload, count: large_runs) },
+        scenario("c-bin-write-small", "c binary write #{small_runs} small structures") { write(accelerated_binary, one_of_each, count: small_runs) },
+        scenario("c-bin-read-small", "c binary read #{small_runs} small structures") { deserialize(accelerated_binary, Fixtures::Structs::OneOfEach, accelerated_small_payload, count: small_runs) }
       ]
     elsif !THRIFT_BENCHMARK_SKIP_NATIVE && with_scenario_selected(scenario_ids, *NATIVE_SCENARIO_IDS)
-      warn 'Skipping accelerated binary protocol benchmarks: thrift_native extension is unavailable.'
+      warn "Skipping accelerated binary protocol benchmarks: thrift_native extension is unavailable."
     end
 
     scenario_list = [
-      scenario('rb-bin-write-large', "ruby binary write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_binary, nested4, count: large_runs) },
-      scenario('rb-bin-read-large', "ruby binary read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_binary, Fixtures::Structs::Nested4, ruby_large_payload, count: large_runs) },
+      scenario("rb-bin-write-large", "ruby binary write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_binary, nested4, count: large_runs) },
+      scenario("rb-bin-read-large", "ruby binary read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_binary, Fixtures::Structs::Nested4, ruby_large_payload, count: large_runs) },
       *native_scenarios.first(2),
-      scenario('rb-cmp-write-large', "ruby compact write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_compact, nested4, count: large_runs) },
-      scenario('rb-cmp-read-large', "ruby compact read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_compact, Fixtures::Structs::Nested4, compact_large_payload, count: large_runs) },
-      scenario('rb-json-write-large', "ruby json write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_json, nested4, count: large_runs) },
-      scenario('rb-json-read-large', "ruby json read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_json, Fixtures::Structs::Nested4, json_large_payload, count: large_runs) },
-      scenario('rb-bin-write-small', "ruby binary write #{small_runs} small structures") { write(ruby_binary, one_of_each, count: small_runs) },
-      scenario('rb-bin-read-small', "ruby binary read #{small_runs} small structures") { deserialize(ruby_binary, Fixtures::Structs::OneOfEach, ruby_small_payload, count: small_runs) },
+      scenario("rb-cmp-write-large", "ruby compact write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_compact, nested4, count: large_runs) },
+      scenario("rb-cmp-read-large", "ruby compact read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_compact, Fixtures::Structs::Nested4, compact_large_payload, count: large_runs) },
+      scenario("rb-json-write-large", "ruby json write large (1MB) structure #{large_run_label(large_runs)}") { write(ruby_json, nested4, count: large_runs) },
+      scenario("rb-json-read-large", "ruby json read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(ruby_json, Fixtures::Structs::Nested4, json_large_payload, count: large_runs) },
+      scenario("rb-bin-write-small", "ruby binary write #{small_runs} small structures") { write(ruby_binary, one_of_each, count: small_runs) },
+      scenario("rb-bin-read-small", "ruby binary read #{small_runs} small structures") { deserialize(ruby_binary, Fixtures::Structs::OneOfEach, ruby_small_payload, count: small_runs) },
       *native_scenarios.drop(2),
-      scenario('rb-cmp-write-small', "ruby compact write #{small_runs} small structures") { write(ruby_compact, one_of_each, count: small_runs) },
-      scenario('rb-cmp-read-small', "ruby compact read #{small_runs} small structures") { deserialize(ruby_compact, Fixtures::Structs::OneOfEach, compact_small_payload, count: small_runs) },
-      scenario('rb-json-write-small', "ruby json write #{small_runs} small structures") { write(ruby_json, one_of_each, count: small_runs) },
-      scenario('rb-json-read-small', "ruby json read #{small_runs} small structures") { deserialize(ruby_json, Fixtures::Structs::OneOfEach, json_small_payload, count: small_runs) },
-      scenario('hdr-bin-write-small', "header binary write #{small_runs} small structures") { write(header_binary, one_of_each, count: small_runs) },
-      scenario('hdr-bin-read-small', "header binary read #{small_runs} small structures") { deserialize(header_binary, Fixtures::Structs::OneOfEach, header_binary_payload, count: small_runs) },
-      scenario('hdr-cmp-write-small', "header compact write #{small_runs} small structures") { write(header_compact, one_of_each, count: small_runs) },
-      scenario('hdr-cmp-read-small', "header compact read #{small_runs} small structures") { deserialize(header_compact, Fixtures::Structs::OneOfEach, header_compact_payload, count: small_runs) },
-      scenario('hdr-zlib-write-small', "header zlib write #{small_runs} small structures") { write(header_zlib, one_of_each, count: small_runs) },
-      scenario('hdr-zlib-read-small', "header zlib read #{small_runs} small structures") { deserialize(header_zlib, Fixtures::Structs::OneOfEach, header_zlib_payload, count: small_runs) }
+      scenario("rb-cmp-write-small", "ruby compact write #{small_runs} small structures") { write(ruby_compact, one_of_each, count: small_runs) },
+      scenario("rb-cmp-read-small", "ruby compact read #{small_runs} small structures") { deserialize(ruby_compact, Fixtures::Structs::OneOfEach, compact_small_payload, count: small_runs) },
+      scenario("rb-json-write-small", "ruby json write #{small_runs} small structures") { write(ruby_json, one_of_each, count: small_runs) },
+      scenario("rb-json-read-small", "ruby json read #{small_runs} small structures") { deserialize(ruby_json, Fixtures::Structs::OneOfEach, json_small_payload, count: small_runs) },
+      scenario("hdr-bin-write-small", "header binary write #{small_runs} small structures") { write(header_binary, one_of_each, count: small_runs) },
+      scenario("hdr-bin-read-small", "header binary read #{small_runs} small structures") { deserialize(header_binary, Fixtures::Structs::OneOfEach, header_binary_payload, count: small_runs) },
+      scenario("hdr-cmp-write-small", "header compact write #{small_runs} small structures") { write(header_compact, one_of_each, count: small_runs) },
+      scenario("hdr-cmp-read-small", "header compact read #{small_runs} small structures") { deserialize(header_compact, Fixtures::Structs::OneOfEach, header_compact_payload, count: small_runs) },
+      scenario("hdr-zlib-write-small", "header zlib write #{small_runs} small structures") { write(header_zlib, one_of_each, count: small_runs) },
+      scenario("hdr-zlib-read-small", "header zlib read #{small_runs} small structures") { deserialize(header_zlib, Fixtures::Structs::OneOfEach, header_zlib_payload, count: small_runs) }
     ]
 
     select_scenarios(scenario_list, scenario_ids, native_available: native_available)
   end
 
-  def measure_job(job, label: '')
+  def measure_job(job, label: "")
     result = Benchmark.measure(label, &job)
     {
       user: result.utime,

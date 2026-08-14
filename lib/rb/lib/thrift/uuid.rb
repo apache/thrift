@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'thrift/protocol/base_protocol'
+require "thrift/protocol/base_protocol"
 
 module Thrift
   module UUID
@@ -26,24 +26,24 @@ module Thrift
 
     def self.validate_uuid!(uuid)
       unless uuid.is_a?(String)
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'UUID must be a string')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "UUID must be a string")
       end
 
       unless UUID_REGEX.match?(uuid)
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid UUID format')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid UUID format")
       end
     end
 
     def self.uuid_bytes(uuid)
-      [uuid.delete('-')].pack('H*')
+      [uuid.delete("-")].pack("H*")
     end
 
     def self.uuid_from_bytes(bytes)
       unless bytes.bytesize == 16
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid UUID data length')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid UUID data length")
       end
 
-      hex = bytes.unpack('H*').first
+      hex = bytes.unpack("H*").first
       "#{hex[0, 8]}-#{hex[8, 4]}-#{hex[12, 4]}-#{hex[16, 4]}-#{hex[20, 12]}"
     end
   end

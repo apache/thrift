@@ -18,12 +18,12 @@
 # under the License.
 #
 
-$:.unshift File.dirname(__FILE__) + '/../lib'
-$:.unshift File.dirname(__FILE__) + '/../ext'
-require 'thrift'
-require 'openssl'
+$:.unshift File.dirname(__FILE__) + "/../lib"
+$:.unshift File.dirname(__FILE__) + "/../ext"
+require "thrift"
+require "openssl"
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'benchmark_service'
+require "benchmark_service"
 
 module Server
   include Thrift
@@ -41,15 +41,15 @@ module Server
 
   def self.create_factories(protocol_type)
     case protocol_type
-    when 'binary'
+    when "binary"
       [FramedTransportFactory.new, BinaryProtocolFactory.new]
-    when 'compact'
+    when "compact"
       [FramedTransportFactory.new, CompactProtocolFactory.new]
-    when 'header'
+    when "header"
       [HeaderTransportFactory.new, HeaderProtocolFactory.new]
-    when 'header-compact'
+    when "header-compact"
       [HeaderTransportFactory.new, HeaderProtocolFactory.new(nil, HeaderSubprotocolID::COMPACT)]
-    when 'header-zlib'
+    when "header-zlib"
       # Note: Server doesn't add transforms - it mirrors client's transforms
       [HeaderTransportFactory.new, HeaderProtocolFactory.new]
     else
@@ -69,7 +69,7 @@ module Server
         ctx.ca_file = File.join(keys_dir, "CA.pem")
         ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keys_dir, "server.crt")))
         ctx.cert_store = OpenSSL::X509::Store.new
-        ctx.cert_store.add_file(File.join(keys_dir, 'client.pem'))
+        ctx.cert_store.add_file(File.join(keys_dir, "client.pem"))
         ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keys_dir, "server.key")))
       end
 
@@ -77,7 +77,7 @@ module Server
     else
       ServerSocket.new(host, port)
     end
-    transport_factory, protocol_factory = create_factories(protocol_type || 'binary')
+    transport_factory, protocol_factory = create_factories(protocol_type || "binary")
     args = [processor, transport, transport_factory, protocol_factory, 20]
     if serverClass == NonblockingServer
       logger = Logger.new(STDERR)
@@ -102,10 +102,10 @@ module Server
 end
 
 def resolve_const(const)
-  const and const.split('::').inject(Object) { |k, c| k.const_get(c) }
+  const and const.split("::").inject(Object) { |k, c| k.const_get(c) }
 end
 
-tls = true if ARGV[0] == '-tls' and ARGV.shift
+tls = true if ARGV[0] == "-tls" and ARGV.shift
 
 host, port, serverklass, protocol_type = ARGV
 

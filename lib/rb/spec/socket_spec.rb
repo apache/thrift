@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'Socket' do
+describe "Socket" do
   describe Thrift::Socket do
     before(:each) do
       @socket = Thrift::Socket.new
@@ -54,8 +54,8 @@ describe 'Socket' do
 
     it "should reject a second open without orphaning the live connection" do
       allow(Addrinfo).to receive(:foreach).and_call_original
-      server = TCPServer.new('127.0.0.1', 0)
-      socket = Thrift::Socket.new('127.0.0.1', server.addr[1])
+      server = TCPServer.new("127.0.0.1", 0)
+      socket = Thrift::Socket.new("127.0.0.1", server.addr[1])
       peer = nil
 
       socket.open
@@ -68,7 +68,7 @@ describe 'Socket' do
       expect(socket.handle).to equal(first_handle)
 
       socket.close
-      expect(peer.read).to eq('')
+      expect(peer.read).to eq("")
     ensure
       socket&.close
       first_handle&.close unless first_handle&.closed?
@@ -82,16 +82,16 @@ describe 'Socket' do
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(no_args).and_return(handle)
-      @socket = Thrift::Socket.new('my.domain', 1234).open
+      @socket = Thrift::Socket.new("my.domain", 1234).open
       @socket.to_s == "socket(my.domain:1234)"
     end
 
     it "should accept an optional timeout" do
-      expect(Thrift::Socket.new('localhost', 8080, 5).timeout).to eq(5)
+      expect(Thrift::Socket.new("localhost", 8080, 5).timeout).to eq(5)
     end
 
     it "should provide a reasonable to_s" do
-      expect(Thrift::Socket.new('myhost', 8090).to_s).to eq("socket(myhost:8090)")
+      expect(Thrift::Socket.new("myhost", 8090).to_s).to eq("socket(myhost:8090)")
     end
 
     it "should pass the remaining timeout to each address attempt" do

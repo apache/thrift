@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'thrift/struct_union'
+require "thrift/struct_union"
 
 module Thrift
   class Union
@@ -57,7 +57,7 @@ module Thrift
     end
 
     def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       @setfield = nil
       @value = nil
 
@@ -76,7 +76,7 @@ module Thrift
     end
 
     def write(oprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       validate
       oprot.write_struct_begin(self.class.name)
 

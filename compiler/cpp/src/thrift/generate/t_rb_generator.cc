@@ -298,8 +298,8 @@ void t_rb_generator::init_generator() {
   begin_namespace(f_types_, modules);
   types_need_separator_ = !have_modules;
 
-  f_consts_ << rb_autogen_comment() << '\n' << render_require_thrift() << "require '"
-            << require_prefix_ << underscore(program_name_) << "_types'" << '\n';
+  f_consts_ << rb_autogen_comment() << '\n' << render_require_thrift() << "require \""
+            << require_prefix_ << underscore(program_name_) << "_types\"" << '\n';
   if (have_modules) {
     f_consts_ << '\n';
   }
@@ -312,9 +312,9 @@ void t_rb_generator::init_generator() {
  */
 string t_rb_generator::render_require_thrift() {
   if (require_rubygems_) {
-    return "require 'rubygems'\nrequire 'thrift'\n";
+    return "require \"rubygems\"\nrequire \"thrift\"\n";
   } else {
-    return "require 'thrift'\n";
+    return "require \"thrift\"\n";
   }
 }
 
@@ -330,9 +330,9 @@ string t_rb_generator::render_includes() {
       std::string included_require_prefix
           = rb_namespace_to_path_prefix(included->get_namespace("rb"));
       std::string included_name = included->get_name();
-      result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+      result += "require \"" + included_require_prefix + underscore(included_name) + "_types\"\n";
     } else {
-      result += "require '" + underscore(include->get_name()) + "_types'\n";
+      result += "require \"" + underscore(include->get_name()) + "_types\"\n";
     }
   }
   return result;
@@ -755,7 +755,7 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out,
   out << "{:type => " << type_to_enum(field_type);
 
   if (!field_name.empty()) {
-    out << ", :name => '" << field_name << "'";
+    out << ", :name => \"" << field_name << "\"";
   }
 
   if (field_value != nullptr) {
@@ -826,16 +826,16 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != nullptr) {
     if (namespaced_) {
-      f_service_ << "require '" << rb_namespace_to_path_prefix(
+      f_service_ << "require \"" << rb_namespace_to_path_prefix(
                                        tservice->get_extends()->get_program()->get_namespace("rb"))
-                 << underscore(tservice->get_extends()->get_name()) << "'" << '\n';
+                 << underscore(tservice->get_extends()->get_name()) << "\"" << '\n';
     } else {
-      f_service_ << "require '" << require_prefix_
-                 << underscore(tservice->get_extends()->get_name()) << "'" << '\n';
+      f_service_ << "require \"" << require_prefix_
+                 << underscore(tservice->get_extends()->get_name()) << "\"" << '\n';
     }
   }
 
-  f_service_ << "require '" << require_prefix_ << underscore(program_name_) << "_types'" << '\n'
+  f_service_ << "require \"" << require_prefix_ << underscore(program_name_) << "_types\"" << '\n'
              << '\n';
 
   begin_namespace(f_service_, modules);
@@ -958,7 +958,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     std::string argsname = capitalize((*f_iter)->get_name() + "_args");
     std::string messageSendProc = (*f_iter)->is_oneway() ? "send_oneway_message" : "send_message";
 
-    f_service_.indent() << messageSendProc << "('" << funname << "', " << argsname;
+    f_service_.indent() << messageSendProc << "(\"" << funname << "\", " << argsname;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
@@ -982,7 +982,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent_up();
 
       f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << '\n';
-      f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, '" << funname << "')"
+      f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, \"" << funname << "\")"
                           << '\n';
 
       f_service_.indent() << "result = receive_message(" << resultname << ")" << '\n';
@@ -1006,8 +1006,8 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       } else {
         f_service_.indent() << "raise "
                                "::Thrift::ApplicationException.new(::Thrift::ApplicationException::"
-                               "MISSING_RESULT, '" << (*f_iter)->get_name()
-                            << " failed: unknown result')" << '\n';
+                               "MISSING_RESULT, \"" << (*f_iter)->get_name()
+                            << " failed: unknown result\")" << '\n';
       }
 
       // Close function
@@ -1129,7 +1129,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
     return;
   }
 
-  f_service_.indent() << "write_result(result, oprot, '" << tfunction->get_name() << "', seqid)"
+  f_service_.indent() << "write_result(result, oprot, \"" << tfunction->get_name() << "\", seqid)"
                       << '\n';
 
   // Close function
@@ -1302,7 +1302,7 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out, t
     t_field* field = (*f_iter);
     if (field->get_req() == t_field::T_REQUIRED) {
       out.indent() << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Required field " << field->get_name() << " is unset!')";
+                      "\"Required field " << field->get_name() << " is unset!\")";
       if (field->get_type()->is_bool()) {
         out << " if @" << field->get_name() << ".nil?";
       } else {
@@ -1322,7 +1322,7 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out, t
                    << field->get_name() << ")" << '\n';
       out.indent_up();
       out.indent() << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Invalid value of field " << field->get_name() << "!')" << '\n';
+                      "\"Invalid value of field " << field->get_name() << "!\")" << '\n';
       out.indent_down();
       out.indent() << "end" << '\n';
     }
@@ -1341,7 +1341,7 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
 
   out.indent()
       << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-         "'Union fields are not set.') if get_set_field.nil? || get_value.nil?"
+         "\"Union fields are not set.\") if get_set_field.nil? || get_value.nil?"
       << '\n';
 
   // if field is an enum, check that its value is valid
@@ -1352,7 +1352,7 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
       out.indent() << "if get_set_field == :" << field->get_name() << '\n';
       out.indent() << "  raise "
                       "::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Invalid value of field " << field->get_name() << "!') unless "
+                      "\"Invalid value of field " << field->get_name() << "!\") unless "
                    << full_type_name(field->get_type()) << "::VALID_VALUES.include?(get_value)"
                    << '\n';
       out.indent() << "end" << '\n';

@@ -18,13 +18,13 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 module StructEqualityFixtures
   class Narrow
     include Thrift::Struct, Thrift::Struct_Union
 
-    FIELDS = {1 => {type: Thrift::Types::STRING, name: 'shared'}}
+    FIELDS = {1 => {type: Thrift::Types::STRING, name: "shared"}}
 
     def struct_fields; FIELDS; end
     def validate; end
@@ -36,8 +36,8 @@ module StructEqualityFixtures
     include Thrift::Struct, Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: 'shared'},
-      2 => {type: Thrift::Types::STRING, name: 'extra'}
+      1 => {type: Thrift::Types::STRING, name: "shared"},
+      2 => {type: Thrift::Types::STRING, name: "extra"}
     }
 
     def struct_fields; FIELDS; end
@@ -47,7 +47,7 @@ module StructEqualityFixtures
   end
 end
 
-describe 'Struct' do
+describe "Struct" do
   describe Thrift::Struct do
     it "should iterate over all fields properly" do
       fields = {}
@@ -68,7 +68,7 @@ describe 'Struct' do
     def validate_default_arguments(object)
       expect(object.simple).to eq(53)
       expect(object.words).to eq("words")
-      expect(object.hello).to eq(SpecNamespace::Hello.new(:greeting => 'hello, world!'))
+      expect(object.hello).to eq(SpecNamespace::Hello.new(:greeting => "hello, world!"))
       expect(object.ints).to eq([1, 2, 2, 3])
       expect(object.complex).to be_nil
       expect(object.shorts).to eq(Set.new([5, 17, 239]))
@@ -96,10 +96,10 @@ describe 'Struct' do
       expect(SpecNamespace::Foo.new(:simple => 52)).not_to eq(SpecNamespace::Foo.new)
     end
 
-    it 'compares only structs of the same generated class' do
-      narrow = StructEqualityFixtures::Narrow.new(shared: 'value')
-      wide = StructEqualityFixtures::Wide.new(shared: 'value', extra: 'different')
-      same_narrow = StructEqualityFixtures::Narrow.new(shared: 'value')
+    it "compares only structs of the same generated class" do
+      narrow = StructEqualityFixtures::Narrow.new(shared: "value")
+      wide = StructEqualityFixtures::Wide.new(shared: "value", extra: "different")
+      same_narrow = StructEqualityFixtures::Narrow.new(shared: "value")
 
       expect(narrow == wide).to be(false)
       expect(wide == narrow).to be(false)
@@ -144,14 +144,14 @@ describe 'Struct' do
       expect(prot).to receive(:read_struct_begin).twice
       expect(prot).to receive(:read_struct_end).twice
       expect(prot).to receive(:read_field_begin).and_return(
-        ['complex', Thrift::Types::MAP, 5], # Foo
-        ['words', Thrift::Types::STRING, 2], # Foo
-        ['hello', Thrift::Types::STRUCT, 3], # Foo
-          ['greeting', Thrift::Types::STRING, 1], # Hello
+        ["complex", Thrift::Types::MAP, 5], # Foo
+        ["words", Thrift::Types::STRING, 2], # Foo
+        ["hello", Thrift::Types::STRUCT, 3], # Foo
+          ["greeting", Thrift::Types::STRING, 1], # Hello
           [nil, Thrift::Types::STOP, 0], # Hello
-        ['simple', Thrift::Types::I32, 1], # Foo
-        ['ints', Thrift::Types::LIST, 4], # Foo
-        ['shorts', Thrift::Types::SET, 6], # Foo
+        ["simple", Thrift::Types::I32, 1], # Foo
+        ["ints", Thrift::Types::LIST, 4], # Foo
+        ["shorts", Thrift::Types::SET, 6], # Foo
         [nil, Thrift::Types::STOP, 0] # Hello
       )
       expect(prot).to receive(:read_field_end).exactly(7).times
@@ -213,9 +213,9 @@ describe 'Struct' do
     end
 
     [
-      ['map', Thrift::Types::MAP, 5, :read_map_begin, [Thrift::Types::I32, Thrift::Types::MAP]],
-      ['list', Thrift::Types::LIST, 4, :read_list_begin, [Thrift::Types::I32]],
-      ['set', Thrift::Types::SET, 6, :read_set_begin, [Thrift::Types::I16]]
+      ["map", Thrift::Types::MAP, 5, :read_map_begin, [Thrift::Types::I32, Thrift::Types::MAP]],
+      ["list", Thrift::Types::LIST, 4, :read_list_begin, [Thrift::Types::I32]],
+      ["set", Thrift::Types::SET, 6, :read_set_begin, [Thrift::Types::I16]]
     ].each do |name, field_type, field_id, begin_method, header|
       it "rejects #{name} sizes above the signed 32-bit range" do
         struct = SpecNamespace::Foo.new
@@ -245,11 +245,11 @@ describe 'Struct' do
       expect(prot).to receive(:read_struct_begin)
       expect(prot).to receive(:read_struct_end)
       expect(prot).to receive(:read_field_begin).and_return(
-        ['simple', Thrift::Types::I32, 1],
-        ['complex', Thrift::Types::STRUCT, 5],
-        ['thinz', Thrift::Types::MAP, 7],
-        ['foobar', Thrift::Types::I32, 3],
-        ['words', Thrift::Types::STRING, 2],
+        ["simple", Thrift::Types::I32, 1],
+        ["complex", Thrift::Types::STRUCT, 5],
+        ["thinz", Thrift::Types::MAP, 7],
+        ["foobar", Thrift::Types::I32, 3],
+        ["words", Thrift::Types::STRING, 2],
         [nil, Thrift::Types::STOP, 0]
       )
       expect(prot).to receive(:read_field_end).exactly(5).times
@@ -265,7 +265,7 @@ describe 'Struct' do
       expect(struct.simple).to eq(42)
       expect(struct.complex).to be_nil
       expect(struct.words).to eq("foobar")
-      expect(struct.hello).to eq(SpecNamespace::Hello.new(:greeting => 'hello, world!'))
+      expect(struct.hello).to eq(SpecNamespace::Hello.new(:greeting => "hello, world!"))
       expect(struct.ints).to eq([1, 2, 2, 3])
       expect(struct.shorts).to eq(Set.new([5, 17, 239]))
     end
@@ -275,25 +275,25 @@ describe 'Struct' do
       expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Foo")
       expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Hello")
       expect(prot).to receive(:write_struct_end).twice
-      expect(prot).to receive(:write_field_begin).with('ints', Thrift::Types::LIST, 4)
+      expect(prot).to receive(:write_field_begin).with("ints", Thrift::Types::LIST, 4)
       expect(prot).to receive(:write_i32).with(1)
       expect(prot).to receive(:write_i32).with(2).twice
       expect(prot).to receive(:write_i32).with(3)
-      expect(prot).to receive(:write_field_begin).with('complex', Thrift::Types::MAP, 5)
+      expect(prot).to receive(:write_field_begin).with("complex", Thrift::Types::MAP, 5)
       expect(prot).to receive(:write_i32).with(5)
-      expect(prot).to receive(:write_string).with('foo')
+      expect(prot).to receive(:write_string).with("foo")
       expect(prot).to receive(:write_double).with(1.23)
-      expect(prot).to receive(:write_field_begin).with('shorts', Thrift::Types::SET, 6)
+      expect(prot).to receive(:write_field_begin).with("shorts", Thrift::Types::SET, 6)
       expect(prot).to receive(:write_i16).with(5)
       expect(prot).to receive(:write_i16).with(17)
       expect(prot).to receive(:write_i16).with(239)
       expect(prot).to receive(:write_field_stop).twice
       expect(prot).to receive(:write_field_end).exactly(6).times
-      expect(prot).to receive(:write_field_begin).with('simple', Thrift::Types::I32, 1)
+      expect(prot).to receive(:write_field_begin).with("simple", Thrift::Types::I32, 1)
       expect(prot).to receive(:write_i32).with(53)
-      expect(prot).to receive(:write_field_begin).with('hello', Thrift::Types::STRUCT, 3)
-      expect(prot).to receive(:write_field_begin).with('greeting', Thrift::Types::STRING, 1)
-      expect(prot).to receive(:write_string).with('hello, world!')
+      expect(prot).to receive(:write_field_begin).with("hello", Thrift::Types::STRUCT, 3)
+      expect(prot).to receive(:write_field_begin).with("greeting", Thrift::Types::STRING, 1)
+      expect(prot).to receive(:write_string).with("hello, world!")
       expect(prot).to receive(:write_map_begin).with(Thrift::Types::I32, Thrift::Types::MAP, 1)
       expect(prot).to receive(:write_map_begin).with(Thrift::Types::STRING, Thrift::Types::DOUBLE, 1)
       expect(prot).to receive(:write_map_end).twice
@@ -345,7 +345,7 @@ describe 'Struct' do
     end
 
     it "should raise an exception when unknown types are given to Thrift::Struct.new" do
-      expect { SpecNamespace::Hello.new(:fish => 'salmon') }.to raise_error(Exception, "Unknown key given to SpecNamespace::Hello.new: fish")
+      expect { SpecNamespace::Hello.new(:fish => "salmon") }.to raise_error(Exception, "Unknown key given to SpecNamespace::Hello.new: fish")
     end
 
     it "should support `raise Xception, 'message'` for Exception structs" do
@@ -358,9 +358,9 @@ describe 'Struct' do
         prot = Thrift::BaseProtocol.new(double("trans"))
         expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
         expect(prot).to receive(:write_struct_end)
-        expect(prot).to receive(:write_field_begin).with('message', Thrift::Types::STRING, 1)
+        expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
         expect(prot).to receive(:write_string).with("something happened")
-        expect(prot).to receive(:write_field_begin).with('code', Thrift::Types::I32, 2)
+        expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
         expect(prot).to receive(:write_i32).with(1)
         expect(prot).to receive(:write_field_stop)
         expect(prot).to receive(:write_field_end).twice
@@ -378,9 +378,9 @@ describe 'Struct' do
         prot = Thrift::BaseProtocol.new(double("trans"))
         expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
         expect(prot).to receive(:write_struct_end)
-        expect(prot).to receive(:write_field_begin).with('message', Thrift::Types::STRING, 1)
+        expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
         expect(prot).to receive(:write_string).with("something happened")
-        expect(prot).to receive(:write_field_begin).with('code', Thrift::Types::I32, 2)
+        expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
         expect(prot).to receive(:write_i32).with(5)
         expect(prot).to receive(:write_field_stop)
         expect(prot).to receive(:write_field_end).twice
@@ -392,8 +392,8 @@ describe 'Struct' do
     it "should handle UUID fields in structs" do
       struct = SpecNamespace::Foo.new(
         simple: 42,
-        words: 'test',
-        opt_uuid: '550e8400-e29b-41d4-a716-446655440000'
+        words: "test",
+        opt_uuid: "550e8400-e29b-41d4-a716-446655440000"
       )
 
       trans = Thrift::MemoryBufferTransport.new
@@ -405,18 +405,18 @@ describe 'Struct' do
       result.read(prot)
 
       expect(result.simple).to eq(42)
-      expect(result.words).to eq('test')
-      expect(result.opt_uuid).to eq('550e8400-e29b-41d4-a716-446655440000')
+      expect(result.words).to eq("test")
+      expect(result.opt_uuid).to eq("550e8400-e29b-41d4-a716-446655440000")
     end
 
     it "should handle optional UUID fields when unset" do
-      struct = SpecNamespace::Foo.new(simple: 42, words: 'test')
+      struct = SpecNamespace::Foo.new(simple: 42, words: "test")
       expect(struct.opt_uuid).to be_nil
       expect(struct.opt_uuid?).to be_falsey
     end
 
     it "should handle list of UUIDs in SimpleList" do
-      uuids = ['550e8400-e29b-41d4-a716-446655440000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8']
+      uuids = ["550e8400-e29b-41d4-a716-446655440000", "6ba7b810-9dad-11d1-80b4-00c04fd430c8"]
       struct = SpecNamespace::SimpleList.new(uuids: uuids)
 
       trans = Thrift::MemoryBufferTransport.new
@@ -431,7 +431,7 @@ describe 'Struct' do
     end
 
     it "should normalize UUID case to lowercase" do
-      struct = SpecNamespace::Foo.new(opt_uuid: '550E8400-E29B-41D4-A716-446655440000')
+      struct = SpecNamespace::Foo.new(opt_uuid: "550E8400-E29B-41D4-A716-446655440000")
 
       trans = Thrift::MemoryBufferTransport.new
       prot = Thrift::BinaryProtocol.new(trans)
@@ -441,15 +441,15 @@ describe 'Struct' do
       result = SpecNamespace::Foo.new
       result.read(prot)
 
-      expect(result.opt_uuid).to eq('550e8400-e29b-41d4-a716-446655440000')
+      expect(result.opt_uuid).to eq("550e8400-e29b-41d4-a716-446655440000")
     end
 
     it "should handle UUID alongside other types in SimpleList" do
       struct = SpecNamespace::SimpleList.new(
         bools: [true, false],
         i32s: [1, 2, 3],
-        strings: ['hello', 'world'],
-        uuids: ['550e8400-e29b-41d4-a716-446655440000', '00000000-0000-0000-0000-000000000000']
+        strings: ["hello", "world"],
+        uuids: ["550e8400-e29b-41d4-a716-446655440000", "00000000-0000-0000-0000-000000000000"]
       )
 
       trans = Thrift::MemoryBufferTransport.new
@@ -462,8 +462,8 @@ describe 'Struct' do
 
       expect(result.bools).to eq([true, false])
       expect(result.i32s).to eq([1, 2, 3])
-      expect(result.strings).to eq(['hello', 'world'])
-      expect(result.uuids).to eq(['550e8400-e29b-41d4-a716-446655440000', '00000000-0000-0000-0000-000000000000'])
+      expect(result.strings).to eq(["hello", "world"])
+      expect(result.uuids).to eq(["550e8400-e29b-41d4-a716-446655440000", "00000000-0000-0000-0000-000000000000"])
     end
   end
 end

@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'Thrift::HTTPClientTransport' do
+describe "Thrift::HTTPClientTransport" do
   describe Thrift::HTTPClientTransport do
     before(:each) do
       @client = Thrift::HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
@@ -74,7 +74,7 @@ describe 'Thrift::HTTPClientTransport' do
     end
 
     it "should report successful HTTP responses without a Thrift payload when read" do
-      {'204' => nil, '200' => ''}.each do |status, body|
+      {"204" => nil, "200" => ""}.each do |status, body|
         client = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
         client.write("request")
         http = instance_double(Net::HTTP)
@@ -93,7 +93,7 @@ describe 'Thrift::HTTPClientTransport' do
     end
 
     it "should allow oneway calls with successful empty HTTP responses" do
-      {'200' => '', '204' => nil}.each do |status, body|
+      {"200" => "", "204" => nil}.each do |status, body|
         transport = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
         client = SpecNamespace::NonblockingService::Client.new(Thrift::BinaryProtocol.new(transport))
         http = instance_double(Net::HTTP)
@@ -144,7 +144,7 @@ describe 'Thrift::HTTPClientTransport' do
       @client.flush
     end
 
-    it 'should reset the outbuf on HTTP failures' do
+    it "should reset the outbuf on HTTP failures" do
       @client.write "test"
 
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 80) do
@@ -158,7 +158,7 @@ describe 'Thrift::HTTPClientTransport' do
       expect(@client.instance_variable_get(:@outbuf)).to eq(Thrift::Bytes.empty_byte_buffer)
     end
 
-    it 'should raise TransportError on HTTP failures' do
+    it "should raise TransportError on HTTP failures" do
       @client.write "test"
 
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 80) do
@@ -176,7 +176,7 @@ describe 'Thrift::HTTPClientTransport' do
       expect { @client.flush }.to raise_error(Thrift::TransportException)
     end
 
-    it 'should omit URL secrets from HTTP failure messages' do
+    it "should omit URL secrets from HTTP failure messages" do
       client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/path/to/service?token=secret")
       client.write "test"
       http = double("Net::HTTP")
@@ -194,7 +194,7 @@ describe 'Thrift::HTTPClientTransport' do
     end
   end
 
-  describe 'ssl enabled' do
+  describe "ssl enabled" do
     before(:each) do
       @service_path = "/path/to/service?param=value"
       @server_uri = "https://my.domain.com"

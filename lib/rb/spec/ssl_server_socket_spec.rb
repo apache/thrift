@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'SSLServerSocket' do
+describe "SSLServerSocket" do
   describe Thrift::SSLServerSocket do
     before(:each) do
       @socket = Thrift::SSLServerSocket.new(1234)
@@ -100,7 +100,7 @@ describe 'SSLServerSocket' do
 
     it "times out and closes a TCP client that sends no TLS handshake" do
       server = build_server(client_timeout: 0.05)
-      client = TCPSocket.new('127.0.0.1', server.to_io.local_address.ip_port)
+      client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
       accept_thread = capture_accept(server)
 
       expect(accept_thread.join(1)).not_to be_nil
@@ -117,7 +117,7 @@ describe 'SSLServerSocket' do
 
     it "uses the same timeout for a stalled partial TLS handshake" do
       server = build_server(client_timeout: 0.05)
-      client = TCPSocket.new('127.0.0.1', server.to_io.local_address.ip_port)
+      client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
       client.write("\x16\x03\x01\x00".b)
       accept_thread = capture_accept(server)
 
@@ -141,7 +141,7 @@ describe 'SSLServerSocket' do
         handshake_waiting << true
         wait_for_handshake.call(*args)
       end
-      client = TCPSocket.new('127.0.0.1', server.to_io.local_address.ip_port)
+      client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
       client.write("\x16\x03\x01\x00".b)
       accept_thread = Thread.new { server.accept }
 
@@ -222,8 +222,8 @@ describe 'SSLServerSocket' do
 
       client_context = OpenSSL::SSL::SSLContext.new
       client_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      client_context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'client.crt')))
-      client_context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'client.key')))
+      client_context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "client.crt")))
+      client_context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "client.key")))
       client_context.min_version = OpenSSL::SSL::TLS1_2_VERSION
       client_context.max_version = OpenSSL::SSL::TLS1_2_VERSION
       client_context.session_cache_mode = OpenSSL::SSL::SSLContext::SESSION_CACHE_CLIENT
@@ -258,18 +258,18 @@ describe 'SSLServerSocket' do
     end
 
     def build_server(client_timeout:, context: server_context)
-      Thrift::SSLServerSocket.new('127.0.0.1', 0, context, client_timeout: client_timeout).tap(&:listen)
+      Thrift::SSLServerSocket.new("127.0.0.1", 0, context, client_timeout: client_timeout).tap(&:listen)
     end
 
     def server_context
       context = OpenSSL::SSL::SSLContext.new
-      context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'server.crt')))
-      context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'server.key')))
+      context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "server.crt")))
+      context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "server.key")))
       context
     end
 
     def build_ssl_client(server, context, session = nil)
-      tcp_client = TCPSocket.new('127.0.0.1', server.to_io.local_address.ip_port)
+      tcp_client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
       OpenSSL::SSL::SSLSocket.new(tcp_client, context).tap do |ssl_client|
         ssl_client.sync_close = true
         ssl_client.session = session unless session.nil?
@@ -277,7 +277,7 @@ describe 'SSLServerSocket' do
     end
 
     def connect_ssl_client(server)
-      tcp_client = TCPSocket.new('127.0.0.1', server.to_io.local_address.ip_port)
+      tcp_client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
       ssl_client = OpenSSL::SSL::SSLSocket.new(tcp_client, OpenSSL::SSL::SSLContext.new)
       ssl_client.sync_close = true
       ssl_client.connect
@@ -304,7 +304,7 @@ describe 'SSLServerSocket' do
     end
 
     def ssl_keys_dir
-      File.expand_path('../../../test/keys', __dir__)
+      File.expand_path("../../../test/keys", __dir__)
     end
   end
 end

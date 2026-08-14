@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
-require 'recursive_types'
+require File.join(File.dirname(__FILE__), "../test_helper")
+require "recursive_types"
 
 class TestRecursiveGeneration < Test::Unit::TestCase
   CHILD_ITEM = "child item"

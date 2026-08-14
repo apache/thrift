@@ -17,25 +17,25 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'spec_helper'
+require "spec_helper"
 
 describe Thrift::ProtocolDecorator do
-  it 'forwards message begin values to the decorated protocol' do
+  it "forwards message begin values to the decorated protocol" do
     decorator_class = Class.new(Thrift::BaseProtocol) do
       include Thrift::ProtocolDecorator
     end
-    protocol = double('Protocol')
+    protocol = double("Protocol")
     decorator = decorator_class.new(protocol)
 
-    expect(protocol).to receive(:write_message_begin).with('method', Thrift::MessageTypes::CALL, 42)
-    decorator.write_message_begin('method', Thrift::MessageTypes::CALL, 42)
+    expect(protocol).to receive(:write_message_begin).with("method", Thrift::MessageTypes::CALL, 42)
+    decorator.write_message_begin("method", Thrift::MessageTypes::CALL, 42)
   end
 
-  it 'forwards skipped strings to the decorated protocol' do
+  it "forwards skipped strings to the decorated protocol" do
     decorator_class = Class.new(Thrift::BaseProtocol) do
       include Thrift::ProtocolDecorator
     end
-    protocol = double('Protocol')
+    protocol = double("Protocol")
     decorator = decorator_class.new(protocol)
 
     expect(protocol).to receive(:skip_string)

@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 describe Thrift::Types do
   before(:each) do
@@ -29,7 +29,7 @@ describe Thrift::Types do
     Thrift.type_checking = false
   end
 
-  context 'type checking' do
+  context "type checking" do
     it "should return the proper name for each type" do
       expect(Thrift.type_name(Thrift::Types::I16)).to eq("Types::I16")
       expect(Thrift.type_name(Thrift::Types::VOID)).to eq("Types::VOID")

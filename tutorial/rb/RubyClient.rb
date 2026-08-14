@@ -19,17 +19,17 @@
 # under the License.
 #
 
-$:.push('gen-rb')
-$:.unshift '../../lib/rb/lib'
+$:.push("gen-rb")
+$:.unshift "../../lib/rb/lib"
 
-require 'thrift'
+require "thrift"
 
-require 'calculator'
+require "calculator"
 
 begin
   port = ARGV[0] || 9090
 
-  transport = Thrift::BufferedTransport.new(Thrift::Socket.new('localhost', port))
+  transport = Thrift::BufferedTransport.new(Thrift::Socket.new("localhost", port))
   protocol = Thrift::BinaryProtocol.new(transport)
   client = Calculator::Client.new(protocol)
 
@@ -71,5 +71,5 @@ begin
   transport.close()
 
 rescue Thrift::Exception => tx
-  print 'Thrift::Exception: ', tx.message, "\n"
+  print "Thrift::Exception: ", tx.message, "\n"
 end

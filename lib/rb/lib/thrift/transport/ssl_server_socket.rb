@@ -19,8 +19,8 @@
 # under the License.
 #
 
-require 'io/wait'
-require 'socket'
+require "io/wait"
+require "socket"
 
 module Thrift
   class SSLServerSocket < ServerSocket

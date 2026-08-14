@@ -52,7 +52,7 @@ module Thrift
     end
 
     def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       iprot.read_struct_begin
       while true
         fname, ftype, fid = iprot.read_field_begin
@@ -72,15 +72,15 @@ module Thrift
     end
 
     def write(oprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
-      oprot.write_struct_begin('Thrift::ApplicationException')
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
+      oprot.write_struct_begin("Thrift::ApplicationException")
       unless @message.nil?
-        oprot.write_field_begin('message', Types::STRING, 1)
+        oprot.write_field_begin("message", Types::STRING, 1)
         oprot.write_string(@message)
         oprot.write_field_end
       end
       unless @type.nil?
-        oprot.write_field_begin('type', Types::I32, 2)
+        oprot.write_field_begin("type", Types::I32, 2)
         oprot.write_i32(@type)
         oprot.write_field_end
       end

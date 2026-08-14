@@ -19,8 +19,8 @@
 # under the License.
 #
 
-require 'stringio'
-require 'zlib'
+require "stringio"
+require "zlib"
 
 module Thrift
   # Client type constants for Header protocol
@@ -285,7 +285,7 @@ module Thrift
       rescue EOFError
         raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame size")
       end
-      frame_size = first_word.unpack('N').first
+      frame_size = first_word.unpack("N").first
 
       # Check for unframed binary protocol
       if (frame_size & BINARY_VERSION_MASK) == BINARY_VERSION_1
@@ -324,7 +324,7 @@ module Thrift
       second_word = frame_buf.read(4)
       frame_buf.rewind
 
-      magic = second_word.unpack('n').first
+      magic = second_word.unpack("n").first
 
       if magic == HEADER_MAGIC
         if frame_size < 10
@@ -332,7 +332,7 @@ module Thrift
         end
         set_client_type(HeaderClientType::HEADERS)
         @read_buffer = parse_header_format(frame_buf)
-      elsif (second_word.unpack('N').first & BINARY_VERSION_MASK) == BINARY_VERSION_1
+      elsif (second_word.unpack("N").first & BINARY_VERSION_MASK) == BINARY_VERSION_1
         set_client_type(HeaderClientType::FRAMED_BINARY)
         @protocol_id = HeaderSubprotocolID::BINARY
         @read_buffer = frame_buf
@@ -382,11 +382,11 @@ module Thrift
       buf.read(2)
 
       # Read flags and sequence ID
-      @flags = buf.read(2).unpack('n').first
-      @sequence_id = signed_int32(buf.read(4).unpack('N').first)
+      @flags = buf.read(2).unpack("n").first
+      @sequence_id = signed_int32(buf.read(4).unpack("N").first)
 
       # Read header length (in 32-bit words)
-      header_words = buf.read(2).unpack('n').first
+      header_words = buf.read(2).unpack("n").first
       if header_words >= 16_384
         raise TransportException.new(TransportException::UNKNOWN, "Header size is unreasonable")
       end
@@ -511,11 +511,11 @@ module Thrift
 
       # Write complete frame
       frame = Bytes.empty_byte_buffer
-      frame << [frame_size].pack('N')               # Length
-      frame << [HEADER_MAGIC].pack('n')             # Magic
-      frame << [@flags].pack('n')                   # Flags
-      frame << [unsigned_int32(@sequence_id)].pack('N') # Sequence ID
-      frame << [header_data.bytesize / 4].pack('n') # Header length (in 32-bit words)
+      frame << [frame_size].pack("N")               # Length
+      frame << [HEADER_MAGIC].pack("n")             # Magic
+      frame << [@flags].pack("n")                   # Flags
+      frame << [unsigned_int32(@sequence_id)].pack("N") # Sequence ID
+      frame << [header_data.bytesize / 4].pack("n") # Header length (in 32-bit words)
       frame << header_data                          # Header data
       frame << payload                              # Payload
 
@@ -534,7 +534,7 @@ module Thrift
 
     # Flushes data in simple framed format (for legacy compatibility)
     def flush_framed(payload)
-      frame = [payload.bytesize].pack('N') + payload
+      frame = [payload.bytesize].pack("N") + payload
       @transport.write(frame)
       @transport.flush
     end
@@ -569,10 +569,10 @@ module Thrift
     def write_varint32(io, n)
       loop do
         if (n & ~0x7F) == 0
-          io.write([n].pack('C'))
+          io.write([n].pack("C"))
           break
         else
-          io.write([(n & 0x7F) | 0x80].pack('C'))
+          io.write([(n & 0x7F) | 0x80].pack("C"))
           n >>= 7
         end
       end

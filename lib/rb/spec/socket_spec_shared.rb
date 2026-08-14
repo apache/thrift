@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 shared_examples_for "a socket" do
   it "should open a socket" do

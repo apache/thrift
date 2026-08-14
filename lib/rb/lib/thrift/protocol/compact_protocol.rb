@@ -21,7 +21,7 @@
 module Thrift
   class CompactProtocol < BaseProtocol
 
-    PROTOCOL_ID = [0x82].pack('c').unpack('c').first
+    PROTOCOL_ID = [0x82].pack("c").unpack("c").first
     VERSION = 1
     VERSION_MASK = 0x1f
     TYPE_MASK = 0xE0
@@ -131,8 +131,8 @@ module Thrift
 
     def write_message_begin(name, type, seqid)
       unless seqid.is_a?(Integer)
-        raise 'nil argument not allowed!' if seqid.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if seqid.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if seqid < I32_MIN || seqid > I32_MAX
 
@@ -155,8 +155,8 @@ module Thrift
 
     def write_field_begin(name, type, id)
       unless id.is_a?(Integer)
-        raise 'nil argument not allowed!' if id.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if id.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if id < I16_MIN || id > I16_MAX
 
@@ -231,8 +231,8 @@ module Thrift
 
     def write_byte(byte)
       unless byte.is_a?(Integer)
-        raise 'nil argument not allowed!' if byte.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if byte.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if byte < BYTE_MIN || byte > BYTE_MAX
 
@@ -241,8 +241,8 @@ module Thrift
 
     def write_i16(i16)
       unless i16.is_a?(Integer)
-        raise 'nil argument not allowed!' if i16.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if i16.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if i16 < I16_MIN || i16 > I16_MAX
 
@@ -251,8 +251,8 @@ module Thrift
 
     def write_i32(i32)
       unless i32.is_a?(Integer)
-        raise 'nil argument not allowed!' if i32.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if i32.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if i32 < I32_MIN || i32 > I32_MAX
 
@@ -261,8 +261,8 @@ module Thrift
 
     def write_i64(i64)
       unless i64.is_a?(Integer)
-        raise 'nil argument not allowed!' if i64.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if i64.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if i64 < I64_MIN || i64 > I64_MAX
 
@@ -411,7 +411,7 @@ module Thrift
 
     def read_double
       trans.read_into_buffer(@rbuf, 8)
-      val = @rbuf.reverse.unpack('G').first
+      val = @rbuf.reverse.unpack("G").first
       val
     end
 
@@ -423,7 +423,7 @@ module Thrift
     def read_binary
       size = read_varint32()
       if size > I32_MAX
-        raise ProtocolException.new(ProtocolException::SIZE_LIMIT, 'Binary size limit exceeded')
+        raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "Binary size limit exceeded")
       end
       trans.read_all(size)
     end
@@ -458,7 +458,7 @@ module Thrift
     end
 
     def write_byte_direct(byte)
-      @trans.write([byte].pack('C'))
+      @trans.write([byte].pack("C"))
     end
 
     def write_varint32(n)
@@ -506,10 +506,10 @@ module Thrift
 
       b = read_byte()
       if (b & 0x80) != 0
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 5 bytes.')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Variable-length int over 5 bytes.")
       end
       if (b & ~MAX_VARINT32_LAST_BYTE) != 0
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int overflows uint32.')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Variable-length int overflows uint32.")
       end
 
       result | (b << shift)
@@ -524,7 +524,7 @@ module Thrift
         return result if (b & 0x80) != 0x80
         shift += 7
       end
-      raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Variable-length int over 10 bytes.')
+      raise ProtocolException.new(ProtocolException::INVALID_DATA, "Variable-length int over 10 bytes.")
     end
 
     def int_to_zig_zag(n)
@@ -550,8 +550,8 @@ module Thrift
 
     def validate_size(size)
       unless size.is_a?(Integer)
-        raise 'nil argument not allowed!' if size.nil?
-        raise ::TypeError, 'integer argument expected'
+        raise "nil argument not allowed!" if size.nil?
+        raise ::TypeError, "integer argument expected"
       end
       raise RangeError if size < 0 || size > I32_MAX
 

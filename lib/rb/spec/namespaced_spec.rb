@@ -18,11 +18,11 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'namespaced generation' do
+describe "namespaced generation" do
   before do
-    require 'namespaced_spec_namespace/namespaced_nonblocking_service'
+    require "namespaced_spec_namespace/namespaced_nonblocking_service"
   end
 
   it "generated the right files" do

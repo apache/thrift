@@ -18,13 +18,13 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
+require File.join(File.dirname(__FILE__), "../test_helper")
 
-require 'thrift'
+require "thrift"
 
 class TestThriftTransport < Test::Unit::TestCase
   def test_accelerated_protocol
-    return if ENV['SKIP_BUILD_EXT'] == '1'
+    return if ENV["SKIP_BUILD_EXT"] == "1"
     assert defined?(Thrift::BinaryProtocolAccelerated)
   end
 end

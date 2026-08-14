@@ -17,9 +17,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-require 'set'
-require 'thrift/exceptions'
-require 'thrift/types'
+require "set"
+require "thrift/exceptions"
+require "thrift/types"
 
 module Thrift
   module Struct_Union

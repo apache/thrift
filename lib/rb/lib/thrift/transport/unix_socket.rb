@@ -19,7 +19,7 @@
 # under the License.
 #
 
-require 'socket'
+require "socket"
 
 module Thrift
   class UNIXSocket < Socket
