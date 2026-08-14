@@ -23,15 +23,15 @@ require "spec_helper"
 
 describe Thrift::CompactProtocol do
   INTEGER_BOUNDARY_TESTS = {
-    :byte => [-(2**7), (2**7) - 1],
-    :i16 => [-(2**15), (2**15) - 1],
-    :i32 => [-(2**31), (2**31) - 1],
-    :i64 => [-(2**63), (2**63) - 1]
+    byte: [-(2**7), (2**7) - 1],
+    i16: [-(2**15), (2**15) - 1],
+    i32: [-(2**31), (2**31) - 1],
+    i64: [-(2**63), (2**63) - 1]
   }
 
   INTEGER_MINIMUM_ENCODINGS = {
-    :i32 => [0xff, 0xff, 0xff, 0xff, 0x0f],
-    :i64 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
+    i32: [0xff, 0xff, 0xff, 0xff, 0x0f],
+    i64: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
   }
 
   VARINT32_SIZE_ENCODINGS = {
@@ -41,14 +41,14 @@ describe Thrift::CompactProtocol do
   }
 
   TESTS = {
-    :byte => (-127..127).to_a,
-    :i16 => (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :i32 => (0..30).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :i64 => (0..62).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :string => ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
-    :binary => ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
-    :double => [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0/0.0, -1.0/0.0],
-    :bool => [true, false]
+    byte: (-127..127).to_a,
+    i16: (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    i32: (0..30).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    i64: (0..62).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    string: ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
+    binary: ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
+    double: [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0/0.0, -1.0/0.0],
+    bool: [true, false]
   }
 
   it "should encode and decode naked primitives correctly" do
@@ -281,8 +281,8 @@ describe Thrift::CompactProtocol do
 
   it "should reject unknown field and container types as invalid protocol data" do
     {
-      :read_field_begin => [0x1e],
-      :read_list_begin => [0x1e]
+      read_field_begin: [0x1e],
+      read_list_begin: [0x1e]
     }.each do |reader_method, bytes|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -303,9 +303,9 @@ describe Thrift::CompactProtocol do
 
   it "should reject container sizes above the signed 32-bit range" do
     {
-      :read_map_begin => [0x55],
-      :read_list_begin => [0xf5],
-      :read_set_begin => [0xf5]
+      read_map_begin: [0x55],
+      read_list_begin: [0xf5],
+      read_set_begin: [0xf5]
     }.each do |reader_method, container_header|
       [2**31, (2**32) - 1].each do |size|
         bytes = if reader_method == :read_map_begin
@@ -325,8 +325,8 @@ describe Thrift::CompactProtocol do
 
   it "should report the original unknown type when writing fields and containers" do
     {
-      :write_field_begin => [nil, 99, 1],
-      :write_list_begin => [99, 1]
+      write_field_begin: [nil, 99, 1],
+      write_list_begin: [99, 1]
     }.each do |writer_method, args|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -465,11 +465,11 @@ describe Thrift::CompactProtocol do
 
   it "should deal with fields following fields that have non-delta ids" do
     brcp = Thrift::Test::BreaksRubyCompactProtocol.new(
-      :field1 => "blah",
-      :field2 => Thrift::Test::BigFieldIdStruct.new(
-        :field1 => "string1",
-        :field2 => "string2"),
-      :field3 => 3)
+      field1: "blah",
+      field2: Thrift::Test::BigFieldIdStruct.new(
+        field1: "string1",
+        field2: "string2"),
+      field3: 3)
     ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
     bytes = ser.serialize(brcp)
 
@@ -480,7 +480,7 @@ describe Thrift::CompactProtocol do
   end
 
   it "should deserialize an empty map to an empty hash" do
-    struct = Thrift::Test::SingleMapTestStruct.new(:i32_map => {})
+    struct = Thrift::Test::SingleMapTestStruct.new(i32_map: {})
     ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
     bytes = ser.serialize(struct)
 

@@ -27,7 +27,7 @@ rescue LoadError
   # The thin gem is optional and may be excluded on unsupported Ruby versions.
 end
 
-thin_dependency = defined?(Thin) ? {} : { :skip => "thin not available" }
+thin_dependency = defined?(Thin) ? {} : { skip: "thin not available" }
 
 describe "Thrift::ThinHTTPServer", thin_dependency do
   let(:processor) { double("processor") }
@@ -81,22 +81,18 @@ describe "Thrift::ThinHTTPServer", thin_dependency do
         port = 3000
         path = "/thin"
         expect(Thin::Server).to receive(:new).with(ip, port, an_instance_of(Rack::Builder))
-        Thrift::ThinHTTPServer.new(processor,
-                           :ip => ip,
-                           :port => port,
-                           :path => path)
+        Thrift::ThinHTTPServer.new(processor, {ip: ip, port: port, path: path})
       end
 
       it "creates a ThinHTTPServer::RackApplicationContext with a different protocol factory" do
         expect(Thrift::ThinHTTPServer::RackApplication).to receive(:mapped).with("/", processor, an_instance_of(Thrift::JsonProtocolFactory)).and_return(anything)
-        Thrift::ThinHTTPServer.new(processor,
-                           :protocol_factory => Thrift::JsonProtocolFactory.new)
+        Thrift::ThinHTTPServer.new(processor, {protocol_factory: Thrift::JsonProtocolFactory.new})
       end
 
       it "configures SSL" do
         ssl_options = {
-          :private_key_file => "/path/to/server.key",
-          :cert_chain_file => "/path/to/server.crt"
+          private_key_file: "/path/to/server.key",
+          cert_chain_file: "/path/to/server.crt"
         }
         underlying_thin_server = double("thin server")
         allow(Thin::Server).to receive(:new).and_return(underlying_thin_server)
@@ -104,14 +100,14 @@ describe "Thrift::ThinHTTPServer", thin_dependency do
         expect(underlying_thin_server).to receive(:ssl=).with(true)
         expect(underlying_thin_server).to receive(:ssl_options=).with(ssl_options)
 
-        Thrift::ThinHTTPServer.new(processor, :ssl => true, :ssl_options => ssl_options)
+        Thrift::ThinHTTPServer.new(processor, {ssl: true, ssl_options: ssl_options})
       end
     end
   end
 
   describe "#serve" do
     it "starts the Thin server" do
-      underlying_thin_server = double("thin server", :start => true)
+      underlying_thin_server = double("thin server", start: true)
       allow(Thin::Server).to receive(:new).and_return(underlying_thin_server)
 
       thin_thrift_server = Thrift::ThinHTTPServer.new(processor)

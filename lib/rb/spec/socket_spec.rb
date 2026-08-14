@@ -26,7 +26,7 @@ describe "Socket" do
     before(:each) do
       @socket = Thrift::Socket.new
       @addrinfo = double("Addrinfo")
-      @handle = double("Handle", :closed? => false)
+      @handle = double("Handle", closed?: false)
       allow(@handle).to receive(:close)
       allow(@handle).to receive(:setsockopt)
       allow(@addrinfo).to receive(:connect).and_return(@handle)
@@ -77,7 +77,7 @@ describe "Socket" do
     end
 
     it "should accept host/port options" do
-      handle = double("Handle", :closed? => false)
+      handle = double("Handle", closed?: false)
       allow(handle).to receive(:close)
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
@@ -173,7 +173,7 @@ describe "Socket" do
     it "should close a connected candidate before falling back when socket setup fails" do
       first_addrinfo = @addrinfo
       second_addrinfo = double("Addrinfo")
-      first_handle = double("Handle", :closed? => false)
+      first_handle = double("Handle", closed?: false)
       allow(first_handle).to receive(:close)
 
       expect(Addrinfo).to receive(:foreach).with("localhost", 9090, nil, :STREAM).and_yield(first_addrinfo).and_yield(second_addrinfo)

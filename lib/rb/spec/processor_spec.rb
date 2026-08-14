@@ -110,7 +110,7 @@ describe "Processor" do
       handler = double("Handler")
       expect(handler).to receive(:unblock).with(9)
       processor = SpecNamespace::NonblockingService::Processor.new(handler)
-      args = SpecNamespace::NonblockingService::Unblock_args.new(:n => 9)
+      args = SpecNamespace::NonblockingService::Unblock_args.new(n: 9)
       input = input_protocol("unblock", Thrift::MessageTypes::CALL, 13, args)
       output_transport, output = output_protocol
 
@@ -122,7 +122,7 @@ describe "Processor" do
       handler = double("Handler")
       expect(handler).to receive(:sleep).with(3.0)
       processor = SpecNamespace::NonblockingService::Processor.new(handler)
-      args = SpecNamespace::NonblockingService::Sleep_args.new(:seconds => 3.0)
+      args = SpecNamespace::NonblockingService::Sleep_args.new(seconds: 3.0)
       input = input_protocol("sleep", Thrift::MessageTypes::ONEWAY, 14, args)
       output_transport, output = output_protocol
 

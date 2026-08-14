@@ -52,20 +52,20 @@ describe "BaseProtocol" do
 
     it "should write out a field nicely (deprecated write_field signature)" do
       expect(@prot).to receive(:write_field_begin).with("field", "type", "fid").ordered
-      expect(@prot).to receive(:write_type).with({:name => "field", :type => "type"}, "value", nil).ordered
+      expect(@prot).to receive(:write_type).with({name: "field", type: "type"}, "value", nil).ordered
       expect(@prot).to receive(:write_field_end).ordered
       @prot.write_field("field", "type", "fid", "value")
     end
 
     it "should write out a field nicely" do
       expect(@prot).to receive(:write_field_begin).with("field", "type", "fid").ordered
-      expect(@prot).to receive(:write_type).with({:name => "field", :type => "type", :binary => false}, "value", nil).ordered
+      expect(@prot).to receive(:write_type).with({name: "field", type: "type", binary: false}, "value", nil).ordered
       expect(@prot).to receive(:write_field_end).ordered
-      @prot.write_field({:name => "field", :type => "type", :binary => false}, "fid", "value")
+      @prot.write_field({name: "field", type: "type", binary: false}, "fid", "value")
     end
 
     it "should pass the remaining depth through write_field" do
-      field = {:name => "field", :type => "type"}
+      field = {name: "field", type: "type"}
       expect(@prot).to receive(:write_field_begin).with("field", "type", "fid").ordered
       expect(@prot).to receive(:write_type).with(field, "value", 7).ordered
       expect(@prot).to receive(:write_field_end).ordered
@@ -107,18 +107,18 @@ describe "BaseProtocol" do
       expect(@prot).to receive(:write_binary).with("binary").ordered
       struct = double("Struct")
       expect(struct).to receive(:write).with(@prot).ordered
-      @prot.write_type({:type => Thrift::Types::BOOL}, "bool")
-      @prot.write_type({:type => Thrift::Types::BYTE}, "byte")
-      @prot.write_type({:type => Thrift::Types::DOUBLE}, "double")
-      @prot.write_type({:type => Thrift::Types::I16}, "i16")
-      @prot.write_type({:type => Thrift::Types::I32}, "i32")
-      @prot.write_type({:type => Thrift::Types::I64}, "i64")
-      @prot.write_type({:type => Thrift::Types::STRING}, "string")
-      @prot.write_type({:type => Thrift::Types::STRING, :binary => true}, "binary")
-      @prot.write_type({:type => Thrift::Types::STRUCT}, struct)
+      @prot.write_type({type: Thrift::Types::BOOL}, "bool")
+      @prot.write_type({type: Thrift::Types::BYTE}, "byte")
+      @prot.write_type({type: Thrift::Types::DOUBLE}, "double")
+      @prot.write_type({type: Thrift::Types::I16}, "i16")
+      @prot.write_type({type: Thrift::Types::I32}, "i32")
+      @prot.write_type({type: Thrift::Types::I64}, "i64")
+      @prot.write_type({type: Thrift::Types::STRING}, "string")
+      @prot.write_type({type: Thrift::Types::STRING, binary: true}, "binary")
+      @prot.write_type({type: Thrift::Types::STRUCT}, struct)
       # all other types are not implemented
       [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP, Thrift::Types::SET, Thrift::Types::LIST].each do |type|
-        expect { @prot.write_type({:type => type}, type.to_s) }.to raise_error(NotImplementedError)
+        expect { @prot.write_type({type: type}, type.to_s) }.to raise_error(NotImplementedError)
       end
     end
 
@@ -126,7 +126,7 @@ describe "BaseProtocol" do
       struct = double("Struct")
       expect(struct).to receive(:write).with(@prot, 6)
 
-      @prot.write_type({:type => Thrift::Types::STRUCT}, struct, 7)
+      @prot.write_type({type: Thrift::Types::STRUCT}, struct, 7)
     end
 
     it "should read the different types (deprecated read_type signature)" do
@@ -160,18 +160,18 @@ describe "BaseProtocol" do
       expect(@prot).to receive(:read_double).ordered
       expect(@prot).to receive(:read_string).ordered
       expect(@prot).to receive(:read_binary).ordered
-      @prot.read_type({:type => Thrift::Types::BOOL})
-      @prot.read_type({:type => Thrift::Types::BYTE})
-      @prot.read_type({:type => Thrift::Types::I16})
-      @prot.read_type({:type => Thrift::Types::I32})
-      @prot.read_type({:type => Thrift::Types::I64})
-      @prot.read_type({:type => Thrift::Types::DOUBLE})
-      @prot.read_type({:type => Thrift::Types::STRING})
-      @prot.read_type({:type => Thrift::Types::STRING, :binary => true})
+      @prot.read_type({type: Thrift::Types::BOOL})
+      @prot.read_type({type: Thrift::Types::BYTE})
+      @prot.read_type({type: Thrift::Types::I16})
+      @prot.read_type({type: Thrift::Types::I32})
+      @prot.read_type({type: Thrift::Types::I64})
+      @prot.read_type({type: Thrift::Types::DOUBLE})
+      @prot.read_type({type: Thrift::Types::STRING})
+      @prot.read_type({type: Thrift::Types::STRING, binary: true})
       # all other types are not implemented
       [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
        Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT].each do |type|
-        expect { @prot.read_type({:type => type}) }.to raise_error(NotImplementedError)
+        expect { @prot.read_type({type: type}) }.to raise_error(NotImplementedError)
       end
     end
 

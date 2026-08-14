@@ -90,11 +90,40 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     const string generated_content = read_file("gen-rb/test_field_id_conflict_types.rb");
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("FIELDS_FIELD_ID = 1") != string::npos);
-    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {:type => ::Thrift::Types::STRING, :name => \"fields\"}")
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {type: ::Thrift::Types::STRING, name: \"fields\"}")
             != string::npos);
     REQUIRE(generated_content.find("FIELDS = 1") == string::npos);
-    REQUIRE(generated_content.find("FIELDS => {:type => ::Thrift::Types::STRING, :name => \"fields\"}")
+    REQUIRE(generated_content.find("FIELDS => {type: ::Thrift::Types::STRING, name: \"fields\"}")
             == string::npos);
+
+    std::remove(thrift_path.c_str());
+}
+
+TEST_CASE("t_rb_generator emits service arguments as a positional hash", "[functional]")
+{
+    const string thrift_path = "test_service_arguments.thrift";
+    const string thrift_source =
+        "service PingService {\n"
+        "  oneway void ping(1: i32 n)\n"
+        "}\n";
+
+    {
+        std::ofstream thrift_file(thrift_path, std::ios::binary);
+        REQUIRE(thrift_file.is_open());
+        thrift_file << thrift_source;
+    }
+
+    map<string, string> parsed_options;
+    std::unique_ptr<t_program> program(new t_program(thrift_path, "test_service_arguments"));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "rb", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    const string service = read_file("gen-rb/ping_service.rb");
+    REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
 
     std::remove(thrift_path.c_str());
 }

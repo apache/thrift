@@ -26,7 +26,7 @@ describe "UNIXSocket" do
     before(:each) do
       @path = "/tmp/thrift_spec_socket"
       @socket = Thrift::UNIXSocket.new(@path)
-      @handle = double("Handle", :closed? => false)
+      @handle = double("Handle", closed?: false)
       allow(@handle).to receive(:close)
       allow(::UNIXSocket).to receive(:new).and_return(@handle)
     end
@@ -88,7 +88,7 @@ describe "UNIXSocket" do
     end
 
     it "should close the handle when closed" do
-      handle = double("UNIXServer", :closed? => false)
+      handle = double("UNIXServer", closed?: false)
       expect(UNIXServer).to receive(:new).with(@path).and_return(handle)
       @socket.listen
       expect(handle).to receive(:close)
@@ -97,7 +97,7 @@ describe "UNIXSocket" do
     end
 
     it "should delete the socket when closed" do
-      handle = double("UNIXServer", :closed? => false)
+      handle = double("UNIXServer", closed?: false)
       expect(UNIXServer).to receive(:new).with(@path).and_return(handle)
       @socket.listen
       allow(handle).to receive(:close)
@@ -110,7 +110,7 @@ describe "UNIXSocket" do
     end
 
     it "should return true for closed? when appropriate" do
-      handle = double("UNIXServer", :closed? => false)
+      handle = double("UNIXServer", closed?: false)
       allow(UNIXServer).to receive(:new).and_return(handle)
       allow(File).to receive(:delete)
       @socket.listen

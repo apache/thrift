@@ -68,7 +68,7 @@ describe "Struct" do
     def validate_default_arguments(object)
       expect(object.simple).to eq(53)
       expect(object.words).to eq("words")
-      expect(object.hello).to eq(SpecNamespace::Hello.new(:greeting => "hello, world!"))
+      expect(object.hello).to eq(SpecNamespace::Hello.new(greeting: "hello, world!"))
       expect(object.ints).to eq([1, 2, 2, 3])
       expect(object.complex).to be_nil
       expect(object.shorts).to eq(Set.new([5, 17, 239]))
@@ -86,14 +86,14 @@ describe "Struct" do
     end
 
     it "should properly initialize boolean values" do
-      struct = SpecNamespace::BoolStruct.new(:yesno => false)
+      struct = SpecNamespace::BoolStruct.new(yesno: false)
       expect(struct.yesno).to be_falsey
     end
 
     it "should have proper == semantics" do
       expect(SpecNamespace::Foo.new).not_to eq(SpecNamespace::Hello.new)
       expect(SpecNamespace::Foo.new).to eq(SpecNamespace::Foo.new)
-      expect(SpecNamespace::Foo.new(:simple => 52)).not_to eq(SpecNamespace::Foo.new)
+      expect(SpecNamespace::Foo.new(simple: 52)).not_to eq(SpecNamespace::Foo.new)
     end
 
     it "compares only structs of the same generated class" do
@@ -112,25 +112,25 @@ describe "Struct" do
     end
 
     it "should print enum value names in inspect" do
-      expect(SpecNamespace::StructWithSomeEnum.new(:some_enum => SpecNamespace::SomeEnum::ONE).inspect).to eq("<SpecNamespace::StructWithSomeEnum some_enum:ONE (0)>")
+      expect(SpecNamespace::StructWithSomeEnum.new(some_enum: SpecNamespace::SomeEnum::ONE).inspect).to eq("<SpecNamespace::StructWithSomeEnum some_enum:ONE (0)>")
 
-      expect(SpecNamespace::StructWithEnumMap.new(:my_map => {SpecNamespace::SomeEnum::ONE => [SpecNamespace::SomeEnum::TWO]}).inspect).to eq("<SpecNamespace::StructWithEnumMap my_map:{ONE (0): [TWO (1)]}>")
+      expect(SpecNamespace::StructWithEnumMap.new(my_map: {SpecNamespace::SomeEnum::ONE => [SpecNamespace::SomeEnum::TWO]}).inspect).to eq("<SpecNamespace::StructWithEnumMap my_map:{ONE (0): [TWO (1)]}>")
     end
 
     it "should pretty print binary fields" do
-      expect(SpecNamespace::Foo2.new(:my_binary => "\001\002\003").inspect).to eq("<SpecNamespace::Foo2 my_binary:010203>")
+      expect(SpecNamespace::Foo2.new(my_binary: "\001\002\003").inspect).to eq("<SpecNamespace::Foo2 my_binary:010203>")
     end
 
     it "should offer field? methods" do
       expect(SpecNamespace::Foo.new.opt_string?).to be_falsey
-      expect(SpecNamespace::Foo.new(:simple => 52).simple?).to be_truthy
-      expect(SpecNamespace::Foo.new(:my_bool => false).my_bool?).to be_truthy
-      expect(SpecNamespace::Foo.new(:my_bool => true).my_bool?).to be_truthy
+      expect(SpecNamespace::Foo.new(simple: 52).simple?).to be_truthy
+      expect(SpecNamespace::Foo.new(my_bool: false).my_bool?).to be_truthy
+      expect(SpecNamespace::Foo.new(my_bool: true).my_bool?).to be_truthy
     end
 
     it "should be comparable" do
-      s1 = SpecNamespace::StructWithSomeEnum.new(:some_enum => SpecNamespace::SomeEnum::ONE)
-      s2 = SpecNamespace::StructWithSomeEnum.new(:some_enum => SpecNamespace::SomeEnum::TWO)
+      s1 = SpecNamespace::StructWithSomeEnum.new(some_enum: SpecNamespace::SomeEnum::ONE)
+      s2 = SpecNamespace::StructWithSomeEnum.new(some_enum: SpecNamespace::SomeEnum::TWO)
 
       expect(s1 <=> s2).to eq(-1)
       expect(s2 <=> s1).to eq(1)
@@ -178,7 +178,7 @@ describe "Struct" do
 
       expect(struct.simple).to eq(42)
       expect(struct.complex).to eq({1 => {"pi" => Math::PI, "e" => Math::E}, 14 => {"feigenbaum" => 4.669201609}})
-      expect(struct.hello).to eq(SpecNamespace::Hello.new(:greeting => "what's up?"))
+      expect(struct.hello).to eq(SpecNamespace::Hello.new(greeting: "what's up?"))
       expect(struct.words).to eq("apple banana")
       expect(struct.ints).to eq([4, 23, 4, 29])
       expect(struct.shorts).to eq(Set.new([3, 2]))
@@ -233,7 +233,7 @@ describe "Struct" do
     end
 
     it "should serialize false boolean fields correctly" do
-      b = SpecNamespace::BoolStruct.new(:yesno => false)
+      b = SpecNamespace::BoolStruct.new(yesno: false)
       prot = Thrift::BinaryProtocol.new(Thrift::MemoryBufferTransport.new)
       expect(prot).to receive(:write_bool).with(false)
       b.write(prot)
@@ -265,7 +265,7 @@ describe "Struct" do
       expect(struct.simple).to eq(42)
       expect(struct.complex).to be_nil
       expect(struct.words).to eq("foobar")
-      expect(struct.hello).to eq(SpecNamespace::Hello.new(:greeting => "hello, world!"))
+      expect(struct.hello).to eq(SpecNamespace::Hello.new(greeting: "hello, world!"))
       expect(struct.ints).to eq([1, 2, 2, 3])
       expect(struct.shorts).to eq(Set.new([5, 17, 239]))
     end
@@ -310,8 +310,8 @@ describe "Struct" do
 
     it "should serialize subclasses of Set like Set" do
       set_subclass = Class.new(Set)
-      regular = SpecNamespace::Foo.new(:shorts => Set.new([5, 17, 239]))
-      subclassed = SpecNamespace::Foo.new(:shorts => set_subclass.new([5, 17, 239]))
+      regular = SpecNamespace::Foo.new(shorts: Set.new([5, 17, 239]))
+      subclassed = SpecNamespace::Foo.new(shorts: set_subclass.new([5, 17, 239]))
       serializer = Thrift::Serializer.new(Thrift::BinaryProtocolFactory.new)
 
       expect(serializer.serialize(subclassed)).to eq(serializer.serialize(regular))
@@ -320,17 +320,17 @@ describe "Struct" do
     it "should raise an exception if presented with an unknown container" do
       # yeah this is silly, but I'm going for code coverage here
       struct = SpecNamespace::Foo.new
-      expect { struct.send :write_container, nil, nil, {:type => "foo"} }.to raise_error(StandardError, "Not a container type: foo")
+      expect { struct.send :write_container, nil, nil, {type: "foo"} }.to raise_error(StandardError, "Not a container type: foo")
     end
 
     it "should support optional type-checking in Thrift::Struct.new" do
       Thrift.type_checking = true
       begin
-        expect { SpecNamespace::Hello.new(:greeting => 3) }.to raise_error(Thrift::TypeError, "Expected Types::STRING, received Integer for field greeting")
+        expect { SpecNamespace::Hello.new(greeting: 3) }.to raise_error(Thrift::TypeError, "Expected Types::STRING, received Integer for field greeting")
       ensure
         Thrift.type_checking = false
       end
-      expect { SpecNamespace::Hello.new(:greeting => 3) }.not_to raise_error
+      expect { SpecNamespace::Hello.new(greeting: 3) }.not_to raise_error
     end
 
     it "should support optional type-checking in field accessors" do
@@ -345,7 +345,7 @@ describe "Struct" do
     end
 
     it "should raise an exception when unknown types are given to Thrift::Struct.new" do
-      expect { SpecNamespace::Hello.new(:fish => "salmon") }.to raise_error(Exception, "Unknown key given to SpecNamespace::Hello.new: fish")
+      expect { SpecNamespace::Hello.new(fish: "salmon") }.to raise_error(Exception, "Unknown key given to SpecNamespace::Hello.new: fish")
     end
 
     it "should support `raise Xception, 'message'` for Exception structs" do
@@ -371,7 +371,7 @@ describe "Struct" do
 
     it "should support the regular initializer for exception structs" do
       begin
-        raise SpecNamespace::Xception, :message => "something happened", :code => 5
+        raise SpecNamespace::Xception, {message: "something happened", code: 5}
       rescue Thrift::Exception => e
         expect(e.message).to eq("something happened")
         expect(e.code).to eq(5)

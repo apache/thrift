@@ -138,7 +138,7 @@ describe "Serializer" do
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
       serializer = Thrift::Serializer.new(Thrift::BinaryProtocolAcceleratedFactory.new)
-      data = serializer.serialize(SpecNamespace::Hello.new(:greeting => "'Ello guv'nor!"))
+      data = serializer.serialize(SpecNamespace::Hello.new(greeting: "'Ello guv'nor!"))
       expect(data).to eq("\x0B\x00\x01\x00\x00\x00\x0E'Ello guv'nor!\x00")
     end
 
@@ -155,13 +155,13 @@ describe "Serializer" do
       protocol_factory = double("ProtocolFactory")
       allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       serializer = Thrift::Serializer.new(protocol_factory)
-      serializer.serialize(SpecNamespace::Hello.new(:greeting => "Good day"))
+      serializer.serialize(SpecNamespace::Hello.new(greeting: "Good day"))
     end
 
     [:message, :struct, :field, :list, :set, :nested_map].each do |stage|
       it "isolates JSON protocol state after a #{stage} write failure" do
         serializer = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new)
-        value = SpecNamespace::Hello.new(:greeting => "Good day")
+        value = SpecNamespace::Hello.new(greeting: "Good day")
         expected = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value)
         error = RuntimeError.new("failed at #{stage}")
 
@@ -184,7 +184,7 @@ describe "Serializer" do
 
     it "recovers after repeated JSON serialization failures" do
       serializer = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new)
-      value = SpecNamespace::Hello.new(:greeting => "recovered")
+      value = SpecNamespace::Hello.new(greeting: "recovered")
 
       [:field, :nested_map].each do |stage|
         error = RuntimeError.new("failed at #{stage}")
@@ -199,7 +199,7 @@ describe "Serializer" do
     end
 
     it "keeps ordinary protocol output byte-for-byte stable" do
-      value = SpecNamespace::Hello.new(:greeting => "Good day")
+      value = SpecNamespace::Hello.new(greeting: "Good day")
       expected = {
         Thrift::BinaryProtocolFactory => "\v\x00\x01\x00\x00\x00\bGood day\x00".b,
         Thrift::CompactProtocolFactory => "\x18\bGood day\x00".b,
@@ -212,7 +212,7 @@ describe "Serializer" do
     end
 
     it "finalizes and round-trips framed transport output" do
-      value = SpecNamespace::Hello.new(:greeting => "Good day")
+      value = SpecNamespace::Hello.new(greeting: "Good day")
       factory = SerializerFixtures::FramedBinaryProtocolFactory.new
 
       data = Thrift::Serializer.new(factory).serialize(value)
@@ -250,7 +250,7 @@ describe "Serializer" do
     it "should deserialize structs from binary by default" do
       deserializer = Thrift::Deserializer.new
       data = "\x0B\x00\x01\x00\x00\x00\x0E'Ello guv'nor!\x00"
-      expect(deserializer.deserialize(SpecNamespace::Hello.new, data)).to eq(SpecNamespace::Hello.new(:greeting => "'Ello guv'nor!"))
+      expect(deserializer.deserialize(SpecNamespace::Hello.new, data)).to eq(SpecNamespace::Hello.new(greeting: "'Ello guv'nor!"))
     end
 
     it "should deserialize structs from the given protocol" do
@@ -264,7 +264,7 @@ describe "Serializer" do
       protocol_factory = double("ProtocolFactory")
       allow(protocol_factory).to receive(:get_protocol).and_return(protocol)
       deserializer = Thrift::Deserializer.new(protocol_factory)
-      expect(deserializer.deserialize(SpecNamespace::Hello.new, "")).to eq(SpecNamespace::Hello.new(:greeting => "Good day"))
+      expect(deserializer.deserialize(SpecNamespace::Hello.new, "")).to eq(SpecNamespace::Hello.new(greeting: "Good day"))
     end
 
     it "resets absent struct fields and restores defaults before reuse" do
@@ -299,7 +299,7 @@ describe "Serializer" do
     end
 
     it "does not retain previous struct state when reading fails" do
-      target = SpecNamespace::Foo.new(:simple => 99, :opt_string => "old")
+      target = SpecNamespace::Foo.new(simple: 99, opt_string: "old")
       payload = binary_payload(finish: false) do |protocol, transport|
         protocol.write_field_begin("opt_string", Thrift::Types::STRING, 7)
         transport.write([5].pack("N"))
@@ -313,7 +313,7 @@ describe "Serializer" do
     end
 
     it "resets fields even when an accessor has the same name as the reset operation" do
-      target = DeserializerResetFixtures::ResetFieldsStruct.new(:reset_fields => "old")
+      target = DeserializerResetFixtures::ResetFieldsStruct.new(reset_fields: "old")
 
       Thrift::Deserializer.new.deserialize(target, binary_payload)
 
@@ -334,7 +334,7 @@ describe "Serializer" do
     end
 
     it "does not satisfy required-field validation with a value from the previous read" do
-      target = DeserializerResetFixtures::RequiredStruct.new(:required_value => "old")
+      target = DeserializerResetFixtures::RequiredStruct.new(required_value: "old")
 
       expect {
         Thrift::Deserializer.new.deserialize(target, binary_payload)

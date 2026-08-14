@@ -78,7 +78,7 @@ describe "Thrift::HTTPClientTransport" do
         client = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
         client.write("request")
         http = instance_double(Net::HTTP)
-        response = instance_double(Net::HTTPResponse, :code => status, :body => body)
+        response = instance_double(Net::HTTPResponse, code: status, body: body)
 
         expect(Net::HTTP).to receive(:new).with("my.domain.com", 80).and_return(http)
         expect(http).to receive(:use_ssl=).with(false)
@@ -97,7 +97,7 @@ describe "Thrift::HTTPClientTransport" do
         transport = Thrift::HTTPClientTransport.new("http://my.domain.com/service")
         client = SpecNamespace::NonblockingService::Client.new(Thrift::BinaryProtocol.new(transport))
         http = instance_double(Net::HTTP)
-        response = instance_double(Net::HTTPResponse, :code => status, :body => body)
+        response = instance_double(Net::HTTPResponse, code: status, body: body)
 
         expect(Net::HTTP).to receive(:new).with("my.domain.com", 80).and_return(http)
         expect(http).to receive(:use_ssl=).with(false)
@@ -111,7 +111,7 @@ describe "Thrift::HTTPClientTransport" do
       client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/service?token=secret")
       client.write("request")
       http = instance_double(Net::HTTP)
-      response = instance_double(Net::HTTPNoContent, :code => "204", :body => nil)
+      response = instance_double(Net::HTTPNoContent, code: "204", body: nil)
 
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 443).and_return(http)
       expect(http).to receive(:use_ssl=).with(true)
@@ -180,7 +180,7 @@ describe "Thrift::HTTPClientTransport" do
       client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/path/to/service?token=secret")
       client.write "test"
       http = double("Net::HTTP")
-      response = double("HTTP response", :code => "503")
+      response = double("HTTP response", code: "503")
 
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 443).and_return(http)
       expect(http).to receive(:use_ssl=).with(true)
@@ -223,8 +223,7 @@ describe "Thrift::HTTPClientTransport" do
     end
 
     it "should set SSL verify mode when specified" do
-      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}",
-          :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE)
+      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}", {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE})
 
       client.write "test"
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 443) do
@@ -245,8 +244,7 @@ describe "Thrift::HTTPClientTransport" do
     end
 
     it "should set the SSL CA file when specified" do
-      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}",
-          :ssl_ca_file => "/path/to/ca.pem")
+      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}", {ssl_ca_file: "/path/to/ca.pem"})
 
       client.write "test"
       expect(Net::HTTP).to receive(:new).with("my.domain.com", 443) do

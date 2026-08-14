@@ -114,6 +114,10 @@ Performance/UriDefaultParser:
 Style/FrozenStringLiteralComment:
   Enabled: true
 
+Style/HashSyntax:
+  Enabled: true
+  EnforcedShorthandSyntax: either
+
 Style/MethodDefParentheses:
   Enabled: true
 

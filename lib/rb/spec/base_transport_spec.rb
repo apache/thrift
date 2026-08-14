@@ -545,8 +545,8 @@ describe "BaseTransport" do
 
   describe Thrift::IOStreamTransport do
     before(:each) do
-      @input = double("Input", :closed? => false)
-      @output = double("Output", :closed? => false)
+      @input = double("Input", closed?: false)
+      @output = double("Output", closed?: false)
       @trans = Thrift::IOStreamTransport.new(@input, @output)
     end
 

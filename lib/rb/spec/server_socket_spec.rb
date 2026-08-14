@@ -72,7 +72,7 @@ describe "Thrift::ServerSocket" do
       allow(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
 
-      sock = double("sock", :closed? => false)
+      sock = double("sock", closed?: false)
       allow(sock).to receive(:setsockopt)
       allow(handle).to receive(:accept).and_return(sock)
 
@@ -91,7 +91,7 @@ describe "Thrift::ServerSocket" do
     end
 
     it "should close the handle when closed" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", closed?: false)
       expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       expect(handle).to receive(:close)
@@ -103,7 +103,7 @@ describe "Thrift::ServerSocket" do
     end
 
     it "should return true for closed? when appropriate" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", closed?: false)
       allow(TCPServer).to receive(:new).and_return(handle)
       @socket.listen
       expect(@socket).not_to be_closed

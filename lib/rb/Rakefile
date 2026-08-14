@@ -26,8 +26,8 @@ require "bundler/gem_tasks"
 
 THRIFT = "../../compiler/cpp/thrift"
 
-task :default => [:gem]
-task :spec => [:'gen-rb', :build_ext, :realspec]
+task default: [:gem]
+task spec: [:'gen-rb', :build_ext, :realspec]
 
 RSpec::Core::RakeTask.new(:realspec) do |t|
   t.rspec_opts = ["--color", "--format d"]
@@ -40,7 +40,7 @@ RSpec::Core::RakeTask.new(:'spec:rcov') do |t|
 end
 
 desc "Compile the .thrift files for the specs"
-task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:flat_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto', :'gen-rb:constants_demo', :'gen-rb:fuzz']
+task 'gen-rb': [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:flat_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto', :'gen-rb:constants_demo', :'gen-rb:fuzz']
 namespace :'gen-rb' do
   task :'spec' do
     dir = File.dirname(__FILE__) + "/spec"
@@ -83,7 +83,7 @@ namespace :'gen-rb' do
 end
 
 desc "Build the native library"
-task :build_ext => :'gen-rb' do
+task build_ext: :'gen-rb' do
    next if defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby"
    next if ENV["SKIP_BUILD_EXT"] == "1"
    Dir::chdir(File::dirname("ext/extconf.rb")) do
@@ -107,7 +107,7 @@ task :test do
 end
 
 desc "Run benchmarking of NonblockingServer"
-task :benchmark => [:'gen-rb:benchmark'] do
+task benchmark: [:'gen-rb:benchmark'] do
   ruby "benchmark/benchmark.rb"
 end
 
@@ -119,7 +119,7 @@ rescue LoadError
 end
 
 desc "Builds the thrift gem"
-task :gem => [:spec, :build_ext] do
+task gem: [:spec, :build_ext] do
   unless sh "gem", "build", "thrift.gemspec"
     $stderr.puts "Failed to build thrift gem"
     break
@@ -127,7 +127,7 @@ task :gem => [:spec, :build_ext] do
 end
 
 desc "Install the thrift gem"
-task :install => [:gem] do
+task install: [:gem] do
   unless sh "gem", "install", Dir.glob("thrift-*.gem").last
     $stderr.puts "Failed to install thrift gem"
     break

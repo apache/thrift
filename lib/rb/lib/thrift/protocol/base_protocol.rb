@@ -248,7 +248,7 @@ module Thrift
     # Returns nothing.
     def write_field(field_info, fid, value, remaining_depth = nil)
       unless field_info.is_a?(Hash)
-        field_info = {:name => field_info, :type => fid}
+        field_info = {name: field_info, type: fid}
         fid = value
         value = remaining_depth
         remaining_depth = nil
@@ -272,7 +272,7 @@ module Thrift
       # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
       if field_info.is_a? Integer
-        field_info = {:type => field_info}
+        field_info = {type: field_info}
       end
 
       case field_info[:type]
@@ -318,7 +318,7 @@ module Thrift
       # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
       if field_info.is_a? Integer
-        field_info = {:type => field_info}
+        field_info = {type: field_info}
       end
 
       case field_info[:type]
