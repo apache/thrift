@@ -137,14 +137,14 @@ describe 'UUID Validation' do
 
       context 'multiple UUIDs in sequence' do
         it 'should handle 10 UUIDs in sequence' do
-          uuids = 10.times.map { |i| sprintf('%08x-0000-0000-0000-000000000000', i) }
+          uuids = Array.new(10) { |i| sprintf('%08x-0000-0000-0000-000000000000', i) }
 
           @trans = Thrift::MemoryBufferTransport.new
           @prot = protocol_class.new(@trans)
 
           uuids.each { |uuid| @prot.write_uuid(uuid) }
 
-          results = 10.times.map { @prot.read_uuid }
+          results = Array.new(10) { @prot.read_uuid }
           expect(results).to eq(uuids)
         end
 

@@ -29,7 +29,7 @@ module Thrift
         raise ProtocolException.new(ProtocolException::INVALID_DATA, 'UUID must be a string')
       end
 
-      unless uuid =~ UUID_REGEX
+      unless UUID_REGEX.match?(uuid)
         raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid UUID format')
       end
     end

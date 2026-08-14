@@ -196,7 +196,6 @@ class BenchmarkManager
     @report[:longest_call] = longest_call
     @report[:longest_client] = longest_client
     @report[:total_benchmark_time] = @benchmark_end - @benchmark_start
-    @report[:fastthread] = $".include?('fastthread.bundle')
   end
 
   def report_output
@@ -210,8 +209,7 @@ class BenchmarkManager
              [["Socket class", "%s"], socket_class],
              ["Number of processes", @num_processes],
              ["Clients per process", @clients_per_process],
-             ["Calls per client", @calls_per_client],
-             [["Using fastthread", "%s"], @report[:fastthread] ? "yes" : "no"]
+             ["Calls per client", @calls_per_client]
     puts
     failures = (@report[:connection_failures] > 0)
     tabulate fmt,
