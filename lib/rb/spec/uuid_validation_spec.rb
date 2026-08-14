@@ -244,7 +244,7 @@ describe "UUID Validation" do
     context "with a complete malformed UUID string" do
       [
         "00000000-0000-0000-0000",
-        "00000000-0000-0000-0000-000000000"
+        "00000000-0000-0000-0000-000000000",
       ].each do |uuid|
         it "rejects a #{uuid.length}-character UUID" do
           trans = Thrift::MemoryBufferTransport.new("\"#{uuid}\"")
@@ -252,7 +252,7 @@ describe "UUID Validation" do
 
           expect { prot.read_uuid }.to raise_error(
             Thrift::ProtocolException,
-            "Invalid UUID format"
+            "Invalid UUID format",
           ) do |error|
             expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
           end

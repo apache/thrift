@@ -90,10 +90,10 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     const string generated_content = read_file("gen-rb/test_field_id_conflict_types.rb");
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("FIELDS_FIELD_ID = 1") != string::npos);
-    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {type: ::Thrift::Types::STRING, name: \"fields\"}")
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {type: ::Thrift::Types::STRING, name: \"fields\"},")
             != string::npos);
     REQUIRE(generated_content.find("FIELDS = 1") == string::npos);
-    REQUIRE(generated_content.find("FIELDS => {type: ::Thrift::Types::STRING, name: \"fields\"}")
+    REQUIRE(generated_content.find("FIELDS => {type: ::Thrift::Types::STRING, name: \"fields\"},")
             == string::npos);
 
     std::remove(thrift_path.c_str());
@@ -124,6 +124,47 @@ TEST_CASE("t_rb_generator emits service arguments as a positional hash", "[funct
 
     const string service = read_file("gen-rb/ping_service.rb");
     REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
+
+    std::remove(thrift_path.c_str());
+}
+
+TEST_CASE("t_rb_generator formats multiline Ruby literals, calls, and field metadata", "[functional]")
+{
+    const string thrift_path = "test_multiline_layout.thrift";
+    const string thrift_source =
+        "struct Item {\n"
+        "  1: string value\n"
+        "}\n"
+        "const Item ITEM = {\"value\": \"one\"}\n"
+        "const set<i32> IDS = [1, 2]\n"
+        "struct Defaults {\n"
+        "  1: list<i32> values = [1, 2]\n"
+        "}\n";
+
+    {
+        std::ofstream thrift_file(thrift_path, std::ios::binary);
+        REQUIRE(thrift_file.is_open());
+        thrift_file << thrift_source;
+    }
+
+    map<string, string> parsed_options;
+    std::unique_ptr<t_program> program(new t_program(thrift_path, "test_multiline_layout"));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "rb", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    const string constants = read_file("gen-rb/test_multiline_layout_constants.rb");
+    REQUIRE(constants.find("ITEM = ::Item.new({\n  %q\"value\" => %q\"one\",\n})")
+            != string::npos);
+    REQUIRE(constants.find("IDS = Set.new([\n  1,\n  2,\n])") != string::npos);
+
+    const string types = read_file("gen-rb/test_multiline_layout_types.rb");
+    REQUIRE(types.find("VALUES_FIELD_ID => {\n      type: ::Thrift::Types::LIST,\n")
+            != string::npos);
+    REQUIRE(types.find("default: [\n        1,\n        2,\n      ],\n") != string::npos);
 
     std::remove(thrift_path.c_str());
 }

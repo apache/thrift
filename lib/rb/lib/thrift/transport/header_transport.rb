@@ -106,7 +106,7 @@ module Thrift
         HeaderClientType::FRAMED_BINARY,
         HeaderClientType::UNFRAMED_BINARY,
         HeaderClientType::FRAMED_COMPACT,
-        HeaderClientType::UNFRAMED_COMPACT
+        HeaderClientType::UNFRAMED_COMPACT,
       ]
 
       @read_buffer = StringIO.new(Bytes.empty_byte_buffer)
@@ -372,7 +372,7 @@ module Thrift
     def raise_unframed_size_limit
       raise TransportException.new(
         TransportException::SIZE_LIMIT,
-        "Unframed message size exceeds maximum #{@max_frame_size}"
+        "Unframed message size exceeds maximum #{@max_frame_size}",
       )
     end
 
@@ -452,7 +452,7 @@ module Thrift
         if buffer.bytesize + chunk.bytesize > @max_decompressed_size
           raise TransportException.new(
             TransportException::SIZE_LIMIT,
-            "Decompressed size exceeds limit of #{@max_decompressed_size}"
+            "Decompressed size exceeds limit of #{@max_decompressed_size}",
           )
         end
 
@@ -528,7 +528,7 @@ module Thrift
 
       raise TransportException.new(
         TransportException::UNKNOWN,
-        "Frame size #{frame_size} exceeds maximum #{@max_frame_size}"
+        "Frame size #{frame_size} exceeds maximum #{@max_frame_size}",
       )
     end
 

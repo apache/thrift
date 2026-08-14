@@ -106,10 +106,14 @@ describe Thrift::Types do
       field = {type: Thrift::Types::LIST, element: {type: Thrift::Types::STRING}}
       expect { Thrift.check_type([3], field, :foo) }.to raise_error(Thrift::TypeError, msg)
       msg = "Expected Types::I32, received NilClass for field foo.element.key"
-      field = {type: Thrift::Types::LIST,
-               element: {type: Thrift::Types::MAP,
-                            key: {type: Thrift::Types::I32},
-                            value: {type: Thrift::Types::I32}}}
+      field = {
+        type: Thrift::Types::LIST,
+        element: {
+          type: Thrift::Types::MAP,
+          key: {type: Thrift::Types::I32},
+          value: {type: Thrift::Types::I32},
+        },
+      }
       expect { Thrift.check_type([{nil => 3}], field, :foo) }.to raise_error(Thrift::TypeError, msg)
       msg = "Expected Types::I32, received NilClass for field foo.element.value"
       expect { Thrift.check_type([{1 => nil}], field, :foo) }.to raise_error(Thrift::TypeError, msg)

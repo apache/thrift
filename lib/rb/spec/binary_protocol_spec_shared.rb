@@ -176,7 +176,8 @@ shared_examples_for "a binary protocol" do
     [-2**63, -12356123612323, -23512351, -234, 0, 1231, 2351236, 12361236213, 2**63-1].each do |i|
       @prot.write_i64(i)
     end
-    expect(@trans.read(@trans.available)).to eq(["\200\000\000\000\000\000\000\000",
+    expect(@trans.read(@trans.available)).to eq([
+      "\200\000\000\000\000\000\000\000",
       "\377\377\364\303\035\244+]",
       "\377\377\377\377\376\231:\341",
       "\377\377\377\377\377\377\377\026",
@@ -184,7 +185,8 @@ shared_examples_for "a binary protocol" do
       "\000\000\000\000\000\000\004\317",
       "\000\000\000\000\000#\340\204",
       "\000\000\000\002\340\311~\365",
-      "\177\377\377\377\377\377\377\377"].join(""))
+      "\177\377\377\377\377\377\377\377",
+    ].join(""))
     [-2 ** 63 - 1, 2 ** 63, 2 ** 65 + 5].each do |i|
       expect { @prot.write_i64(i) }.to raise_error(RangeError)
     end
@@ -235,8 +237,10 @@ shared_examples_for "a binary protocol" do
     @prot.write_string(str)
     a = @trans.read(@trans.available)
     expect(a.encoding).to eq(Encoding::BINARY)
-    expect(a.unpack("C*")).to eq([0x00, 0x00, 0x00, 0x0B, 0x61, 0x62, 0x63, 0x20,
-                              0xE2, 0x82, 0xAC, 0x20, 0xE2, 0x82, 0xAD])
+    expect(a.unpack("C*")).to eq([
+      0x00, 0x00, 0x00, 0x0B, 0x61, 0x62, 0x63, 0x20,
+      0xE2, 0x82, 0xAC, 0x20, 0xE2, 0x82, 0xAD,
+    ])
   end
 
   it "should write should write a string with unicode characters and transcoding" do
@@ -408,16 +412,16 @@ shared_examples_for "a binary protocol" do
     {
       read_i16: {
         [0x80, 0x00] => -(2**15),
-        [0xff, 0xff] => -1
+        [0xff, 0xff] => -1,
       },
       read_i32: {
         [0x80, 0x00, 0x00, 0x00] => -(2**31),
-        [0xff, 0xff, 0xff, 0xff] => -1
+        [0xff, 0xff, 0xff, 0xff] => -1,
       },
       read_i64: {
         [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] => -(2**63),
-        [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff] => -1
-      }
+        [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff] => -1,
+      },
     }.each do |reader, cases|
       cases.each do |bytes, expected|
         @trans.write(bytes.pack("C*"))
@@ -470,14 +474,14 @@ shared_examples_for "a binary protocol" do
   it "should perform a complete rpc with no args or return" do
     srv_test(
       proc { |client| client.send_voidMethod() },
-      proc { |client| expect(client.recv_voidMethod).to eq(nil) }
+      proc { |client| expect(client.recv_voidMethod).to eq(nil) },
     )
   end
 
   it "should perform a complete rpc with a primitive return type" do
     srv_test(
       proc { |client| client.send_primitiveMethod() },
-      proc { |client| expect(client.recv_primitiveMethod).to eq(1) }
+      proc { |client| expect(client.recv_primitiveMethod).to eq(1) },
     )
   end
 
@@ -489,7 +493,7 @@ shared_examples_for "a binary protocol" do
         result.set_byte_map = nil
         result.map_byte_map = nil
         expect(result).to eq(Fixtures::COMPACT_PROTOCOL_TEST_STRUCT)
-      }
+      },
     )
   end
 

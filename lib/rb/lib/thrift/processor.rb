@@ -39,7 +39,7 @@ module Thrift
         iprot.read_message_end
         x = ApplicationException.new(
           ApplicationException::INVALID_MESSAGE_TYPE,
-          "Invalid message type #{type} for function #{name}"
+          "Invalid message type #{type} for function #{name}",
         )
         write_error(x, oprot, name, seqid)
         return false

@@ -304,7 +304,7 @@ module Thrift
       else
         raise ProtocolException.new(
           ProtocolException::INVALID_DATA,
-          "Unknown protocol ID: #{protocol_id}"
+          "Unknown protocol ID: #{protocol_id}",
         )
       end
     end

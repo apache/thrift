@@ -26,7 +26,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::BOOL, name: "bool"}
+        1 => {type: Thrift::Types::BOOL, name: "bool"},
       }
 
       def struct_fields; FIELDS; end
@@ -41,7 +41,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::BYTE, name: "byte"}
+        1 => {type: Thrift::Types::BYTE, name: "byte"},
       }
 
       def struct_fields; FIELDS; end
@@ -56,7 +56,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::I16, name: "i16"}
+        1 => {type: Thrift::Types::I16, name: "i16"},
       }
 
       def struct_fields; FIELDS; end
@@ -71,7 +71,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::I32, name: "i32"}
+        1 => {type: Thrift::Types::I32, name: "i32"},
       }
 
       def struct_fields; FIELDS; end
@@ -86,7 +86,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::I64, name: "i64"}
+        1 => {type: Thrift::Types::I64, name: "i64"},
       }
 
       def struct_fields; FIELDS; end
@@ -101,7 +101,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::DOUBLE, name: "double"}
+        1 => {type: Thrift::Types::DOUBLE, name: "double"},
       }
 
       def struct_fields; FIELDS; end
@@ -116,7 +116,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::STRING, name: "string"}
+        1 => {type: Thrift::Types::STRING, name: "string"},
       }
 
       def struct_fields; FIELDS; end
@@ -131,7 +131,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::MAP, name: "map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRING}}
+        1 => {type: Thrift::Types::MAP, name: "map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRING}},
       }
 
       def struct_fields; FIELDS; end
@@ -146,7 +146,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        0 => {type: Thrift::Types::MAP, name: "map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::MAP, key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::I32}}}
+        0 => {type: Thrift::Types::MAP, name: "map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::MAP, key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::I32}}},
       }
 
       def struct_fields; FIELDS; end
@@ -161,7 +161,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::LIST, name: "list", element: {type: Thrift::Types::STRING}}
+        1 => {type: Thrift::Types::LIST, name: "list", element: {type: Thrift::Types::STRING}},
       }
 
       def struct_fields; FIELDS; end
@@ -176,7 +176,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        0 => {type: Thrift::Types::LIST, name: "list", element: {type: Thrift::Types::LIST, element: { type: Thrift::Types::I32 } } }
+        0 => {type: Thrift::Types::LIST, name: "list", element: {type: Thrift::Types::LIST, element: { type: Thrift::Types::I32 } } },
       }
 
       def struct_fields; FIELDS; end
@@ -191,7 +191,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::SET, name: "set", element: {type: Thrift::Types::STRING}}
+        1 => {type: Thrift::Types::SET, name: "set", element: {type: Thrift::Types::STRING}},
       }
 
       def struct_fields; FIELDS; end
@@ -206,7 +206,7 @@ module Fixtures
       include Thrift::Struct, Thrift::Struct_Union
 
       FIELDS = {
-        1 => {type: Thrift::Types::SET, name: "set", element: {type: Thrift::Types::SET, element: { type: Thrift::Types::STRING } }}
+        1 => {type: Thrift::Types::SET, name: "set", element: {type: Thrift::Types::SET, element: { type: Thrift::Types::STRING } }},
       }
 
       def struct_fields; FIELDS; end
@@ -244,7 +244,7 @@ module Fixtures
         8 => {type: Thrift::Types::STRING, name: "some_characters"},
         9 => {type: Thrift::Types::STRING, name: "zomg_unicode"},
         10 => {type: Thrift::Types::BOOL, name: "what_who"},
-        11 => {type: Thrift::Types::STRING, name: "base64", binary: true}
+        11 => {type: Thrift::Types::STRING, name: "base64", binary: true},
       }
 
       def struct_fields; FIELDS; end
@@ -270,7 +270,7 @@ module Fixtures
         2 => {type: Thrift::Types::MAP, name: "i32_map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::STRUCT, class: OneOfEach}},
         3 => {type: Thrift::Types::MAP, name: "i64_map", key: {type: Thrift::Types::I64}, value: {type: Thrift::Types::STRUCT, class: OneOfEach}},
         4 => {type: Thrift::Types::MAP, name: "dbl_map", key: {type: Thrift::Types::DOUBLE}, value: {type: Thrift::Types::STRUCT, class: OneOfEach}},
-        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: OneOfEach}}
+        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: OneOfEach}},
       }
 
       def struct_fields; FIELDS; end
@@ -296,7 +296,7 @@ module Fixtures
         2 => {type: Thrift::Types::MAP, name: "i32_map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::STRUCT, class: Nested1}},
         3 => {type: Thrift::Types::MAP, name: "i64_map", key: {type: Thrift::Types::I64}, value: {type: Thrift::Types::STRUCT, class: Nested1}},
         4 => {type: Thrift::Types::MAP, name: "dbl_map", key: {type: Thrift::Types::DOUBLE}, value: {type: Thrift::Types::STRUCT, class: Nested1}},
-        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested1}}
+        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested1}},
       }
 
       def struct_fields; FIELDS; end
@@ -322,7 +322,7 @@ module Fixtures
         2 => {type: Thrift::Types::MAP, name: "i32_map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::STRUCT, class: Nested2}},
         3 => {type: Thrift::Types::MAP, name: "i64_map", key: {type: Thrift::Types::I64}, value: {type: Thrift::Types::STRUCT, class: Nested2}},
         4 => {type: Thrift::Types::MAP, name: "dbl_map", key: {type: Thrift::Types::DOUBLE}, value: {type: Thrift::Types::STRUCT, class: Nested2}},
-        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested2}}
+        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested2}},
       }
 
       def struct_fields; FIELDS; end
@@ -348,7 +348,7 @@ module Fixtures
         2 => {type: Thrift::Types::MAP, name: "i32_map", key: {type: Thrift::Types::I32}, value: {type: Thrift::Types::STRUCT, class: Nested3}},
         3 => {type: Thrift::Types::MAP, name: "i64_map", key: {type: Thrift::Types::I64}, value: {type: Thrift::Types::STRUCT, class: Nested3}},
         4 => {type: Thrift::Types::MAP, name: "dbl_map", key: {type: Thrift::Types::DOUBLE}, value: {type: Thrift::Types::STRUCT, class: Nested3}},
-        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested3}}
+        5 => {type: Thrift::Types::MAP, name: "str_map", key: {type: Thrift::Types::STRING}, value: {type: Thrift::Types::STRUCT, class: Nested3}},
       }
 
       def struct_fields; FIELDS; end

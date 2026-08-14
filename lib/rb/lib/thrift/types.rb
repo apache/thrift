@@ -48,27 +48,27 @@ module Thrift
   def self.check_type(value, field, name, skip_nil = true)
     return if value.nil? and skip_nil
     klasses = case field[:type]
-              when Types::VOID
-                NilClass
-              when Types::BOOL
-                [TrueClass, FalseClass]
-              when Types::BYTE, Types::I16, Types::I32, Types::I64
-                Integer
-              when Types::DOUBLE
-                Float
-              when Types::STRING
-                String
-              when Types::UUID
-                String
-              when Types::STRUCT
-                [Struct, Union]
-              when Types::MAP
-                Hash
-              when Types::SET
-                Set
-              when Types::LIST
-                Array
-              end
+    when Types::VOID
+      NilClass
+    when Types::BOOL
+      [TrueClass, FalseClass]
+    when Types::BYTE, Types::I16, Types::I32, Types::I64
+      Integer
+    when Types::DOUBLE
+      Float
+    when Types::STRING
+      String
+    when Types::UUID
+      String
+    when Types::STRUCT
+      [Struct, Union]
+    when Types::MAP
+      Hash
+    when Types::SET
+      Set
+    when Types::LIST
+      Array
+    end
     valid = klasses && [*klasses].any? { |klass| klass === value }
     raise TypeError, "Expected #{type_name(field[:type])}, received #{value.class} for field #{name}" unless valid
     # check elements now

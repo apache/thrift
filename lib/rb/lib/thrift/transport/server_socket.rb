@@ -54,8 +54,8 @@ module Thrift
     end
 
     def close
-     @handle.close unless @handle.nil? or @handle.closed?
-     @handle = nil
+      @handle.close unless @handle.nil? or @handle.closed?
+      @handle = nil
     end
 
     def closed?

@@ -237,7 +237,7 @@ describe "HeaderProtocol" do
         @protocol = Thrift::HeaderProtocol.new(
           @buffer,
           nil,
-          Thrift::HeaderSubprotocolID::COMPACT
+          Thrift::HeaderSubprotocolID::COMPACT,
         )
       end
 

@@ -26,18 +26,18 @@ describe Thrift::CompactProtocol do
     byte: [-(2**7), (2**7) - 1],
     i16: [-(2**15), (2**15) - 1],
     i32: [-(2**31), (2**31) - 1],
-    i64: [-(2**63), (2**63) - 1]
+    i64: [-(2**63), (2**63) - 1],
   }
 
   INTEGER_MINIMUM_ENCODINGS = {
     i32: [0xff, 0xff, 0xff, 0xff, 0x0f],
-    i64: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
+    i64: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01],
   }
 
   VARINT32_SIZE_ENCODINGS = {
     (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
     2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
-    (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f]
+    (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f],
   }
 
   TESTS = {
@@ -48,7 +48,7 @@ describe Thrift::CompactProtocol do
     string: ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
     binary: ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
     double: [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0/0.0, -1.0/0.0],
-    bool: [true, false]
+    bool: [true, false],
   }
 
   it "should encode and decode naked primitives correctly" do
@@ -186,7 +186,7 @@ describe Thrift::CompactProtocol do
       Thrift::MessageTypes::REPLY => 0x41,
       Thrift::MessageTypes::EXCEPTION => 0x61,
       Thrift::MessageTypes::ONEWAY => 0x81,
-      140 => 0x81
+      140 => 0x81,
     }.each do |message_type, version_and_type|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -201,7 +201,7 @@ describe Thrift::CompactProtocol do
     writers = [
       [:write_map_begin, [Thrift::Types::STRING, Thrift::Types::I32]],
       [:write_list_begin, [Thrift::Types::I16]],
-      [:write_set_begin, [Thrift::Types::I16]]
+      [:write_set_begin, [Thrift::Types::I16]],
     ]
 
     writers.each do |method, arguments|
@@ -254,7 +254,7 @@ describe Thrift::CompactProtocol do
       nil => Thrift::CompactProtocol::CompactTypes::BOOLEAN_FALSE,
       0 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
       1 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
-      Object.new => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE
+      Object.new => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
     }.each do |value, expected|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -268,7 +268,7 @@ describe Thrift::CompactProtocol do
   it "should report malformed message headers consistently" do
     {
       [0x00] => "Expected protocol id -126 but got 0",
-      [0x82, 0x00] => "Expected version 1 but got 0"
+      [0x82, 0x00] => "Expected version 1 but got 0",
     }.each do |bytes, expected_message|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -282,7 +282,7 @@ describe Thrift::CompactProtocol do
   it "should reject unknown field and container types as invalid protocol data" do
     {
       read_field_begin: [0x1e],
-      read_list_begin: [0x1e]
+      read_list_begin: [0x1e],
     }.each do |reader_method, bytes|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -305,14 +305,14 @@ describe Thrift::CompactProtocol do
     {
       read_map_begin: [0x55],
       read_list_begin: [0xf5],
-      read_set_begin: [0xf5]
+      read_set_begin: [0xf5],
     }.each do |reader_method, container_header|
       [2**31, (2**32) - 1].each do |size|
         bytes = if reader_method == :read_map_begin
-                  [*VARINT32_SIZE_ENCODINGS.fetch(size), *container_header]
-                else
-                  [*container_header, *VARINT32_SIZE_ENCODINGS.fetch(size)]
-                end
+          [*VARINT32_SIZE_ENCODINGS.fetch(size), *container_header]
+        else
+          [*container_header, *VARINT32_SIZE_ENCODINGS.fetch(size)]
+        end
         trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
         proto = Thrift::CompactProtocol.new(trans)
 
@@ -326,7 +326,7 @@ describe Thrift::CompactProtocol do
   it "should report the original unknown type when writing fields and containers" do
     {
       write_field_begin: [nil, 99, 1],
-      write_list_begin: [99, 1]
+      write_list_begin: [99, 1],
     }.each do |writer_method, args|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -357,7 +357,7 @@ describe Thrift::CompactProtocol do
   it "should preserve fixed-width double edge byte patterns" do
     [
       [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00],
-      [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]
+      [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80],
     ].each do |bytes|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -468,8 +468,10 @@ describe Thrift::CompactProtocol do
       field1: "blah",
       field2: Thrift::Test::BigFieldIdStruct.new(
         field1: "string1",
-        field2: "string2"),
-      field3: 3)
+        field2: "string2",
+      ),
+      field3: 3,
+    )
     ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
     bytes = ser.serialize(brcp)
 

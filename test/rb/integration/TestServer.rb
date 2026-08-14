@@ -31,9 +31,11 @@ require "logger"
 require "optparse"
 
 class SimpleHandler
-  [:testVoid, :testString, :testBool, :testByte, :testI32, :testI64, :testDouble, :testBinary,
-   :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testEnum, :testTypedef,
-   :testEnum, :testTypedef, :testMultiException, :testUuid].each do |meth|
+  [
+    :testVoid, :testString, :testBool, :testByte, :testI32, :testI64, :testDouble, :testBinary,
+    :testStruct, :testMap, :testStringMap, :testSet, :testList, :testNest, :testEnum, :testTypedef,
+    :testMultiException, :testUuid,
+  ].each do |meth|
     define_method(meth) do |thing|
       p meth
       p thing
@@ -48,11 +50,11 @@ class SimpleHandler
     return {
       1 => {
         2 => thing,
-        3 => thing
+        3 => thing,
       },
       2 => {
-        6 => Thrift::Test::Insanity::new()
-      }
+        6 => Thrift::Test::Insanity::new(),
+      },
     }
   end
 
@@ -69,7 +71,7 @@ class SimpleHandler
         3 => 3,
         2 => 2,
         1 => 1,
-      }
+      },
     }
   end
 
@@ -281,7 +283,7 @@ when "thin"
     thin_options[:ssl_options] = {
       private_key_file: File.join(keys_dir, "server.key"),
       cert_chain_file: File.join(keys_dir, "server.crt"),
-      verify_peer: false
+      verify_peer: false,
     }
   end
   Thrift::ThinHTTPServer.new(processor, thin_options)
@@ -296,7 +298,7 @@ when "puma"
     app: rack_app,
     server: "puma",
     Host: host,
-    Port: options[:port]
+    Port: options[:port],
   )
 when "falcon"
   require "falcon"
@@ -311,7 +313,7 @@ when "falcon"
     ssl_context.min_version = :TLS1_2
     endpoint = Falcon::Endpoint.parse(
       "https://0.0.0.0:#{options[:port]}",
-      ssl_context: ssl_context
+      ssl_context: ssl_context,
     )
     Falcon::Server.new(Protocol::Rack::Adapter.new(rack_app), endpoint)
   else
@@ -319,7 +321,7 @@ when "falcon"
       app: rack_app,
       server: "falcon",
       Host: "0.0.0.0",
-      Port: options[:port]
+      Port: options[:port],
     )
   end
 when "simple"

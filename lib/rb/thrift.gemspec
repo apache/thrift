@@ -40,6 +40,6 @@ Gem::Specification.new do |s|
     "documentation_uri" => "https://thrift.apache.org/docs/",
     "homepage_uri" => "https://thrift.apache.org",
     "mailing_list_uri" => "https://thrift.apache.org/mailing",
-    "source_code_uri" => "https://github.com/apache/thrift/"
+    "source_code_uri" => "https://github.com/apache/thrift/",
   }
 end

@@ -78,23 +78,23 @@ module Thrift
         SET           => Types::SET,
         MAP           => Types::MAP,
         STRUCT        => Types::STRUCT,
-        UUID          => Types::UUID
+        UUID          => Types::UUID,
       }
 
       TTYPE_TO_COMPACT = {
-        Types::STOP           => Types::STOP,
-        Types::BOOL           => BOOLEAN_TRUE,
-        Types::BYTE           => BYTE,
-        Types::I16            => I16,
-        Types::I32            => I32,
-        Types::I64            => I64,
-        Types::DOUBLE         => DOUBLE,
-        Types::STRING         => BINARY,
-        Types::LIST           => LIST,
-        Types::SET            => SET,
-        Types::MAP            => MAP,
-        Types::STRUCT         => STRUCT,
-        Types::UUID           => UUID
+        Types::STOP   => Types::STOP,
+        Types::BOOL   => BOOLEAN_TRUE,
+        Types::BYTE   => BYTE,
+        Types::I16    => I16,
+        Types::I32    => I32,
+        Types::I64    => I64,
+        Types::DOUBLE => DOUBLE,
+        Types::STRING => BINARY,
+        Types::LIST   => LIST,
+        Types::SET    => SET,
+        Types::MAP    => MAP,
+        Types::STRUCT => STRUCT,
+        Types::UUID   => UUID,
       }
 
       def self.get_ttype(compact_type)
@@ -103,7 +103,7 @@ module Thrift
 
         raise ProtocolException.new(
           ProtocolException::INVALID_DATA,
-          "Unknown compact type: #{compact_type & 0x0f}"
+          "Unknown compact type: #{compact_type & 0x0f}",
         )
       end
 
@@ -113,7 +113,7 @@ module Thrift
 
         raise ProtocolException.new(
           ProtocolException::INVALID_DATA,
-          "Unknown compact type: #{ttype}"
+          "Unknown compact type: #{ttype}",
         )
       end
     end
@@ -296,7 +296,7 @@ module Thrift
       if protocol_id != PROTOCOL_ID
         raise ProtocolException.new(
           ProtocolException::BAD_VERSION,
-          "Expected protocol id #{PROTOCOL_ID} but got #{protocol_id}"
+          "Expected protocol id #{PROTOCOL_ID} but got #{protocol_id}",
         )
       end
 
@@ -305,7 +305,7 @@ module Thrift
       if (version != VERSION)
         raise ProtocolException.new(
           ProtocolException::BAD_VERSION,
-          "Expected version #{VERSION} but got #{version}"
+          "Expected version #{VERSION} but got #{version}",
         )
       end
 

@@ -235,7 +235,7 @@ class BenchmarkManager
     blue: 34,
     magenta: 35,
     cyan: 36,
-    white: 37
+    white: 37,
   }
 
   def tabulate(fmt, *labels_and_values)

@@ -221,7 +221,8 @@ describe "Union" do
         [1,   1,  0,  -1, -1, -1],
         [1,   1,  1,  0,  -1, -1],
         [1,   1,  1,  1,  0,  -1],
-        [1,   1,  1,  1,  1,  0]]
+        [1,   1,  1,  1,  1,  0],
+      ]
 
       objs = [
         SpecNamespace::TestUnion.new(:string_field, "blah"),
@@ -229,7 +230,8 @@ describe "Union" do
         SpecNamespace::TestUnion.new(:i32_field, 1),
         SpecNamespace::TestUnion.new(:uuid_field, "550e8400-e29b-41d4-a716-446655440000"),
         SpecNamespace::TestUnion.new(:uuid_field, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
-        SpecNamespace::TestUnion.new()]
+        SpecNamespace::TestUnion.new(),
+      ]
 
       objs.size.times do |y|
         objs.size.times do |x|

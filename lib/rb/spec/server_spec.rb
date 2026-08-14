@@ -134,15 +134,17 @@ describe "Server" do
     end
 
     [
-      ["compact unknown type", Thrift::CompactProtocolFactory.new, proc do
-        trans = Thrift::MemoryBufferTransport.new
-        prot = Thrift::CompactProtocol.new(trans)
-        prot.write_message_begin("unknown", Thrift::MessageTypes::CALL, 1)
-        trans.write([0x1e, 0].pack("C*"))
-        trans.read(trans.available)
-      end],
+      [
+        "compact unknown type", Thrift::CompactProtocolFactory.new, proc do
+          trans = Thrift::MemoryBufferTransport.new
+          prot = Thrift::CompactProtocol.new(trans)
+          prot.write_message_begin("unknown", Thrift::MessageTypes::CALL, 1)
+          trans.write([0x1e, 0].pack("C*"))
+          trans.read(trans.available)
+        end,
+      ],
       ["JSON unknown type", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }],
-      ["short JSON UUID", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"uid":"x"}}]' }]
+      ["short JSON UUID", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"uid":"x"}}]' }],
     ].each do |failure_type, protocol_factory, malformed_request|
       it "closes a malformed #{failure_type} connection and continues accepting clients" do
         ready = Queue.new

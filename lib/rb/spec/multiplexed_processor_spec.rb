@@ -60,7 +60,7 @@ describe Thrift::MultiplexedProcessor do
 
     expect { @processor.process(@iprot, @oprot) }.to raise_error(
       Thrift::Exception,
-      "Service name not found in message name: testVoid. Did you forget to use a Thrift::Protocol::MultiplexedProtocol in your client?"
+      "Service name not found in message name: testVoid. Did you forget to use a Thrift::Protocol::MultiplexedProtocol in your client?",
     )
   end
 
@@ -69,7 +69,7 @@ describe Thrift::MultiplexedProcessor do
 
     expect { @processor.process(@iprot, @oprot) }.to raise_error(
       Thrift::Exception,
-      "Service name not found: Missing. Did you forget to call Thrift::MultiplexedProcessor#register_processor?"
+      "Service name not found: Missing. Did you forget to call Thrift::MultiplexedProcessor#register_processor?",
     )
   end
 end
