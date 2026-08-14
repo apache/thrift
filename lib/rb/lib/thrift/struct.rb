@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require 'set'
-require 'thrift/struct_union'
+require "set"
+require "thrift/struct_union"
 
 module Thrift
   module Struct
@@ -83,7 +83,7 @@ module Thrift
     end
 
     def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       unless instance_variables.empty?
         defaults = fields_with_default_values
         struct_fields.each_value do |field_info|
@@ -106,7 +106,7 @@ module Thrift
     end
 
     def write(oprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum recursion depth exceeded') if remaining_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       validate
       oprot.write_struct_begin(self.class.name)
       each_field do |fid, field_info|

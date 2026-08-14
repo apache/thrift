@@ -32,7 +32,7 @@ module Thrift
       if (size && size > 0)
         "\0".b * size
       else
-        ''.b
+        "".b
       end
     end
 

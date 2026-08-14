@@ -18,12 +18,12 @@
 # under the License.
 #
 
-$:.unshift File.dirname(__FILE__) + '/../lib'
-$:.unshift File.dirname(__FILE__) + '/../ext'
-require 'thrift'
-require 'openssl'
+$:.unshift File.dirname(__FILE__) + "/../lib"
+$:.unshift File.dirname(__FILE__) + "/../ext"
+require "thrift"
+require "openssl"
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'benchmark_service'
+require "benchmark_service"
 
 class Client
   def initialize(host, port, clients_per_process, calls_per_client, log_exceptions, tls, protocol_type)
@@ -33,22 +33,22 @@ class Client
     @calls_per_client = calls_per_client
     @log_exceptions = log_exceptions
     @tls = tls
-    @protocol_type = protocol_type || 'binary'
+    @protocol_type = protocol_type || "binary"
   end
 
   def create_protocol(socket)
     case @protocol_type
-    when 'binary'
+    when "binary"
       transport = Thrift::FramedTransport.new(socket)
       Thrift::BinaryProtocol.new(transport)
-    when 'compact'
+    when "compact"
       transport = Thrift::FramedTransport.new(socket)
       Thrift::CompactProtocol.new(transport)
-    when 'header'
+    when "header"
       Thrift::HeaderProtocol.new(socket)
-    when 'header-compact'
+    when "header-compact"
       Thrift::HeaderProtocol.new(socket, nil, Thrift::HeaderSubprotocolID::COMPACT)
-    when 'header-zlib'
+    when "header-zlib"
       protocol = Thrift::HeaderProtocol.new(socket)
       protocol.add_transform(Thrift::HeaderTransformID::ZLIB)
       protocol
@@ -69,7 +69,7 @@ class Client
           ctx.ca_file = File.join(keys_dir, "CA.pem")
           ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keys_dir, "client.crt")))
           ctx.cert_store = OpenSSL::X509::Store.new
-          ctx.cert_store.add_file(File.join(keys_dir, 'server.pem'))
+          ctx.cert_store.add_file(File.join(keys_dir, "server.pem"))
           ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keys_dir, "client.key")))
         end
 
@@ -110,8 +110,8 @@ class Client
   end
 end
 
-log_exceptions = true if ARGV[0] == '-log-exceptions' and ARGV.shift
-tls = true if ARGV[0] == '-tls' and ARGV.shift
+log_exceptions = true if ARGV[0] == "-log-exceptions" and ARGV.shift
+tls = true if ARGV[0] == "-tls" and ARGV.shift
 
 host, port, clients_per_process, calls_per_client, protocol_type = ARGV
 

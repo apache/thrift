@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
-require 'timeout'
+require "spec_helper"
+require "timeout"
 
-describe 'NonblockingServer' do
+describe "NonblockingServer" do
   class Handler
     def initialize
       @queue = Queue.new
@@ -106,7 +106,7 @@ describe 'NonblockingServer' do
       handler = Handler.new
       processor = SpecNamespace::NonblockingService::Processor.new(handler)
       queue = Queue.new
-      @transport = SpecServerSocket.new('localhost', @port, queue)
+      @transport = SpecServerSocket.new("localhost", @port, queue)
       transport_factory = Thrift::FramedTransportFactory.new
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
@@ -138,7 +138,7 @@ describe 'NonblockingServer' do
     end
 
     def setup_client(queue = nil)
-      transport = SpecTransport.new(Thrift::FramedTransport.new(Thrift::Socket.new('localhost', @port)), queue)
+      transport = SpecTransport.new(Thrift::FramedTransport.new(Thrift::Socket.new("localhost", @port)), queue)
       protocol = Thrift::BinaryProtocol.new(transport)
       client = SpecNamespace::NonblockingService::Client.new(protocol)
       transport.open
@@ -181,7 +181,7 @@ describe 'NonblockingServer' do
     it "should handle basic message passing" do
       client = setup_client
       expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
-      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => 'Aloha!'))
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => "Aloha!"))
       @server.shutdown
     end
 
@@ -222,7 +222,7 @@ describe 'NonblockingServer' do
       4.times { expect(result.pop).to be_truthy }
       queues[2] << :hello
       expect(result.pop).to eq(SpecNamespace::Hello.new)
-      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => 'Aloha!'))
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => "Aloha!"))
       7.times { queues.shift << :exit }
       expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       @server.shutdown
@@ -297,8 +297,8 @@ describe 'NonblockingServer' do
       logger = Logger.new(IO::NULL)
       logger.level = Logger::FATAL
       Thrift::NonblockingServer::IOManager.new(
-        double('processor'),
-        double('server_transport'),
+        double("processor"),
+        double("server_transport"),
         Thrift::BaseTransportFactory.new,
         Thrift::BinaryProtocolFactory.new,
         1,
@@ -308,12 +308,12 @@ describe 'NonblockingServer' do
 
     it "closes tracked connections and signal pipes during forced cleanup" do
       io_manager = build_io_manager
-      connection = double('connection', :close => nil)
-      pipe_a = double('pipe_a', :closed? => false, :close => nil)
-      pipe_b = double('pipe_b', :closed? => false, :close => nil)
+      connection = double("connection", :close => nil)
+      pipe_a = double("pipe_a", :closed? => false, :close => nil)
+      pipe_b = double("pipe_b", :closed? => false, :close => nil)
 
       io_manager.instance_variable_set(:@connections, [connection])
-      io_manager.instance_variable_set(:@buffers, { connection => 'frame' })
+      io_manager.instance_variable_set(:@buffers, { connection => "frame" })
       io_manager.instance_variable_set(:@signal_pipes, [pipe_a, pipe_b])
       io_manager.instance_variable_set(:@worker_threads, [])
 
@@ -328,8 +328,8 @@ describe 'NonblockingServer' do
 
     it "continues closing remaining signal pipes when one close raises" do
       io_manager = build_io_manager
-      pipe_a = double('pipe_a', :closed? => false)
-      pipe_b = double('pipe_b', :closed? => false, :close => nil)
+      pipe_a = double("pipe_a", :closed? => false)
+      pipe_b = double("pipe_b", :closed? => false, :close => nil)
 
       allow(pipe_a).to receive(:close).and_raise(IOError)
 
@@ -344,10 +344,10 @@ describe 'NonblockingServer' do
 
     it "drops removed connections from bookkeeping" do
       io_manager = build_io_manager
-      connection = double('connection', :close => nil)
+      connection = double("connection", :close => nil)
 
       io_manager.instance_variable_set(:@connections, [connection])
-      io_manager.instance_variable_set(:@buffers, { connection => 'frame' })
+      io_manager.instance_variable_set(:@buffers, { connection => "frame" })
 
       io_manager.send(:remove_connection, connection)
 
@@ -364,7 +364,7 @@ describe 'NonblockingServer' do
       handler = Handler.new
       processor = SpecNamespace::NonblockingService::Processor.new(handler)
       @transport = Thrift::SSLServerSocket.new(
-        'localhost',
+        "localhost",
         @port,
         create_server_ssl_context,
         client_timeout: client_timeout
@@ -408,7 +408,7 @@ describe 'NonblockingServer' do
       let(:client_timeout) { 0.1 }
 
       it "continues accepting connections" do
-        stalled_client = TCPSocket.new('localhost', @port)
+        stalled_client = TCPSocket.new("localhost", @port)
 
         expect(Timeout.timeout(1) { stalled_client.read(1) }).to be_nil
         expect(@server_thread).to be_alive
@@ -422,7 +422,7 @@ describe 'NonblockingServer' do
 
     def setup_tls_client
       transport = Thrift::FramedTransport.new(
-        Thrift::SSLSocket.new('localhost', @port, nil, create_client_ssl_context)
+        Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context)
       )
       protocol = Thrift::BinaryProtocol.new(transport)
       client = SpecNamespace::NonblockingService::Client.new(protocol)
@@ -432,7 +432,7 @@ describe 'NonblockingServer' do
     end
 
     def ssl_keys_dir
-      File.expand_path('../../../test/keys', __dir__)
+      File.expand_path("../../../test/keys", __dir__)
     end
 
     def create_server_ssl_context
@@ -441,11 +441,11 @@ describe 'NonblockingServer' do
         if ctx.respond_to?(:min_version=) && OpenSSL::SSL.const_defined?(:TLS1_2_VERSION)
           ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
         end
-        ctx.ca_file = File.join(ssl_keys_dir, 'CA.pem')
-        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'server.crt')))
+        ctx.ca_file = File.join(ssl_keys_dir, "CA.pem")
+        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "server.crt")))
         ctx.cert_store = OpenSSL::X509::Store.new
-        ctx.cert_store.add_file(File.join(ssl_keys_dir, 'client.pem'))
-        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'server.key')))
+        ctx.cert_store.add_file(File.join(ssl_keys_dir, "client.pem"))
+        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "server.key")))
       end
     end
 
@@ -455,11 +455,11 @@ describe 'NonblockingServer' do
         if ctx.respond_to?(:min_version=) && OpenSSL::SSL.const_defined?(:TLS1_2_VERSION)
           ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
         end
-        ctx.ca_file = File.join(ssl_keys_dir, 'CA.pem')
-        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'client.crt')))
+        ctx.ca_file = File.join(ssl_keys_dir, "CA.pem")
+        ctx.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "client.crt")))
         ctx.cert_store = OpenSSL::X509::Store.new
-        ctx.cert_store.add_file(File.join(ssl_keys_dir, 'server.pem'))
-        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'client.key')))
+        ctx.cert_store.add_file(File.join(ssl_keys_dir, "server.pem"))
+        ctx.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "client.key")))
       end
     end
   end
@@ -474,6 +474,6 @@ describe 'NonblockingServer' do
   end
 
   def available_port
-    TCPServer.open('localhost', 0) { |server| server.addr[1] }
+    TCPServer.open("localhost", 0) { |server| server.addr[1] }
   end
 end

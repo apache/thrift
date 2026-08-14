@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 module SerializerFailureFixtures
   class Value
@@ -61,7 +61,7 @@ module DeserializerResetFixtures
     include Thrift::Struct, Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: 'reset_fields', optional: true}
+      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true}
     }.freeze
 
     def struct_fields
@@ -78,7 +78,7 @@ module DeserializerResetFixtures
     include Thrift::Struct, Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: 'required_value'}
+      1 => {type: Thrift::Types::STRING, name: "required_value"}
     }.freeze
 
     def struct_fields
@@ -86,7 +86,7 @@ module DeserializerResetFixtures
     end
 
     def validate
-      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, 'Required field required_value is unset!') unless @required_value
+      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, "Required field required_value is unset!") unless @required_value
     end
 
     Thrift::Struct.generate_accessors(self)
@@ -96,7 +96,7 @@ module DeserializerResetFixtures
     include Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: 'reset_fields', optional: true}
+      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true}
     }.freeze
 
     def struct_fields
@@ -104,7 +104,7 @@ module DeserializerResetFixtures
     end
 
     def validate
-      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, 'Union fields are not set.') if get_set_field.nil? || get_value.nil?
+      raise Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, "Union fields are not set.") if get_set_field.nil? || get_value.nil?
     end
 
     Thrift::Union.generate_accessors(self)
@@ -134,7 +134,7 @@ module SerializerFixtures
   end
 end
 
-describe 'Serializer' do
+describe "Serializer" do
   describe Thrift::Serializer do
     it "should serialize structs to binary by default" do
       serializer = Thrift::Serializer.new(Thrift::BinaryProtocolAcceleratedFactory.new)
@@ -217,7 +217,7 @@ describe 'Serializer' do
 
       data = Thrift::Serializer.new(factory).serialize(value)
 
-      expect(data.unpack1('N')).to eq(data.bytesize - 4)
+      expect(data.unpack1("N")).to eq(data.bytesize - 4)
       decoded = SpecNamespace::Hello.new
       decoded.read(factory.get_protocol(Thrift::MemoryBufferTransport.new(data)))
       expect(decoded).to eq(value)
@@ -302,7 +302,7 @@ describe 'Serializer' do
       target = SpecNamespace::Foo.new(:simple => 99, :opt_string => "old")
       payload = binary_payload(finish: false) do |protocol, transport|
         protocol.write_field_begin("opt_string", Thrift::Types::STRING, 7)
-        transport.write([5].pack('N'))
+        transport.write([5].pack("N"))
       end
 
       expect {
@@ -389,7 +389,7 @@ describe 'Serializer' do
       target = SpecNamespace::TestUnion.new(:string_field, "old")
       payload = binary_payload(finish: false) do |protocol, transport|
         protocol.write_field_begin("string_field", Thrift::Types::STRING, 1)
-        transport.write([5].pack('N'))
+        transport.write([5].pack("N"))
       end
 
       expect {

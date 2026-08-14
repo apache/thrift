@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'rack'
-require 'thin'
-require 'thrift/server/rack_application'
+require "rack"
+require "thin"
+require "thrift/server/rack_application"
 
 ##
 # Wraps the Thin web server to provide a Thrift server over HTTP.

@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
-require_relative 'support/header_protocol_helper'
+require "spec_helper"
+require_relative "support/header_protocol_helper"
 
-describe 'HeaderProtocol' do
+describe "HeaderProtocol" do
   include HeaderProtocolHelper
 
   describe Thrift::HeaderProtocol do
@@ -116,7 +116,7 @@ describe 'HeaderProtocol' do
         @protocol.trans.flush
 
         data = @buffer.read(@buffer.available)
-        expect(data[8, 4].unpack('N').first).to eq(123)
+        expect(data[8, 4].unpack("N").first).to eq(123)
       end
 
       it "should write and read structs" do
@@ -296,12 +296,12 @@ describe 'HeaderProtocol' do
           expect(seqid).to eq(77)
           expect(application_exception.type).to eq(Thrift::ApplicationException::INVALID_PROTOCOL)
           expect(application_exception.message).to eq("Unknown protocol ID: 16")
-          expect(response[8, 4].unpack1('N')).to eq(77)
+          expect(response[8, 4].unpack1("N")).to eq(77)
         end
       end
 
       it "does not recursively write a response for a malformed Header" do
-        header_data = [0x80, 0x80, 0x80, 0x80].pack('C*')
+        header_data = [0x80, 0x80, 0x80, 0x80].pack("C*")
         frame = build_header_frame(header_data, sequence_id: 77)
         buffer = Thrift::MemoryBufferTransport.new(frame)
         protocol = Thrift::HeaderProtocol.new(buffer)
@@ -326,7 +326,7 @@ describe 'HeaderProtocol' do
         write_protocol.write_message_end
 
         payload = write_buffer.read(write_buffer.available)
-        framed = [payload.bytesize].pack('N') + payload
+        framed = [payload.bytesize].pack("N") + payload
 
         read_buffer = Thrift::MemoryBufferTransport.new(framed)
         protocol = Thrift::HeaderProtocol.new(read_buffer)

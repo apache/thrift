@@ -17,19 +17,19 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'spec_helper'
+require "spec_helper"
 
 describe Thrift::MultiplexedProtocol do
-  it 'keeps its configured service name when formatted for diagnostics' do
+  it "keeps its configured service name when formatted for diagnostics" do
     transport = Thrift::MemoryBufferTransport.new
-    protocol = Thrift::MultiplexedProtocol.new(Thrift::BinaryProtocol.new(transport), 'Calculator')
+    protocol = Thrift::MultiplexedProtocol.new(Thrift::BinaryProtocol.new(transport), "Calculator")
 
-    expect(protocol.to_s).to eq('multiplexed(binary(memory))')
-    expect(protocol.to_s).to eq('multiplexed(binary(memory))')
+    expect(protocol.to_s).to eq("multiplexed(binary(memory))")
+    expect(protocol.to_s).to eq("multiplexed(binary(memory))")
 
-    protocol.write_message_begin('add', Thrift::MessageTypes::CALL, 7)
+    protocol.write_message_begin("add", Thrift::MessageTypes::CALL, 7)
 
     name, type, seqid = Thrift::BinaryProtocol.new(transport).read_message_begin
-    expect([name, type, seqid]).to eq(['Calculator:add', Thrift::MessageTypes::CALL, 7])
+    expect([name, type, seqid]).to eq(["Calculator:add", Thrift::MessageTypes::CALL, 7])
   end
 end

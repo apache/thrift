@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
-require 'small_service'
+require File.join(File.dirname(__FILE__), "../test_helper")
+require "small_service"
 
 class TestStructGeneration < Test::Unit::TestCase
 
@@ -30,7 +30,7 @@ class TestStructGeneration < Test::Unit::TestCase
     assert_nil(hello.complexer)
 
     assert_equal(hello.simple, 53)
-    assert_equal(hello.words, 'words')
+    assert_equal(hello.words, "words")
 
     assert_kind_of(TestNamespace::Goodbyez, hello.thinz)
     assert_equal(hello.thinz.val, 36632)

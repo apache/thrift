@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'Union' do
+describe "Union" do
   describe Thrift::Union do
     it "should return nil value in unset union" do
       union = SpecNamespace::My_union.new
@@ -63,7 +63,7 @@ describe 'Union' do
 
     it "should not be equal with an empty String" do
       union = SpecNamespace::My_union.new
-      expect(union).not_to eq('')
+      expect(union).not_to eq("")
     end
 
     it "should not equate two different unions, i32 vs. string" do
@@ -94,20 +94,20 @@ describe 'Union' do
     end
 
     it "should equate two unions with the same UUID value" do
-      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
-      other_union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
+      union = SpecNamespace::My_union.new(:unique_id, "550e8400-e29b-41d4-a716-446655440000")
+      other_union = SpecNamespace::My_union.new(:unique_id, "550e8400-e29b-41d4-a716-446655440000")
       expect(union).to eq(other_union)
     end
 
     it "should not equate two unions with different UUID values" do
-      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
-      other_union = SpecNamespace::My_union.new(:unique_id, '6ba7b810-9dad-11d1-80b4-00c04fd430c8')
+      union = SpecNamespace::My_union.new(:unique_id, "550e8400-e29b-41d4-a716-446655440000")
+      other_union = SpecNamespace::My_union.new(:unique_id, "6ba7b810-9dad-11d1-80b4-00c04fd430c8")
       expect(union).not_to eq(other_union)
     end
 
     it "should not equate UUID union with different field type" do
-      union = SpecNamespace::My_union.new(:unique_id, '550e8400-e29b-41d4-a716-446655440000')
-      other_union = SpecNamespace::My_union.new(:some_characters, '550e8400-e29b-41d4-a716-446655440000')
+      union = SpecNamespace::My_union.new(:unique_id, "550e8400-e29b-41d4-a716-446655440000")
+      other_union = SpecNamespace::My_union.new(:some_characters, "550e8400-e29b-41d4-a716-446655440000")
       expect(union).not_to eq(other_union)
     end
 
@@ -227,8 +227,8 @@ describe 'Union' do
         SpecNamespace::TestUnion.new(:string_field, "blah"),
         SpecNamespace::TestUnion.new(:string_field, "blahblah"),
         SpecNamespace::TestUnion.new(:i32_field, 1),
-        SpecNamespace::TestUnion.new(:uuid_field, '550e8400-e29b-41d4-a716-446655440000'),
-        SpecNamespace::TestUnion.new(:uuid_field, '6ba7b810-9dad-11d1-80b4-00c04fd430c8'),
+        SpecNamespace::TestUnion.new(:uuid_field, "550e8400-e29b-41d4-a716-446655440000"),
+        SpecNamespace::TestUnion.new(:uuid_field, "6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
         SpecNamespace::TestUnion.new()]
 
       objs.size.times do |y|
@@ -241,7 +241,7 @@ describe 'Union' do
 
     it "should handle UUID as union value" do
       union = SpecNamespace::My_union.new
-      union.unique_id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+      union.unique_id = "ffffffff-ffff-ffff-ffff-ffffffffffff"
 
       trans = Thrift::MemoryBufferTransport.new
       prot = Thrift::CompactProtocol.new(trans)
@@ -251,13 +251,13 @@ describe 'Union' do
       result = SpecNamespace::My_union.new
       result.read(prot)
 
-      expect(result.unique_id).to eq('ffffffff-ffff-ffff-ffff-ffffffffffff')
+      expect(result.unique_id).to eq("ffffffff-ffff-ffff-ffff-ffffffffffff")
       expect(result.get_set_field).to eq(:unique_id)
     end
 
     it "should normalize UUID case in union" do
       union = SpecNamespace::My_union.new
-      union.unique_id = '550E8400-E29B-41D4-A716-446655440000'
+      union.unique_id = "550E8400-E29B-41D4-A716-446655440000"
 
       trans = Thrift::MemoryBufferTransport.new
       prot = Thrift::BinaryProtocol.new(trans)
@@ -267,7 +267,7 @@ describe 'Union' do
       result = SpecNamespace::My_union.new
       result.read(prot)
 
-      expect(result.unique_id).to eq('550e8400-e29b-41d4-a716-446655440000')
+      expect(result.unique_id).to eq("550e8400-e29b-41d4-a716-446655440000")
     end
   end
 end

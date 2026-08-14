@@ -88,12 +88,12 @@ module Thrift
     end
 
     def read_all(size)
-      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, "Negative size") unless size >= 0
       return Bytes.empty_byte_buffer if size == 0
 
       buf = read(size)
       if buf.nil? || buf.empty?
-        raise TransportException.new(TransportException::END_OF_FILE, 'No more data available')
+        raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
       end
 
       buf = Bytes.force_binary_encoding(buf)
@@ -103,7 +103,7 @@ module Thrift
       while (buf.length < size)
         chunk = read(size - buf.length)
         if chunk.nil? || chunk.empty?
-          raise TransportException.new(TransportException::END_OF_FILE, 'No more data available')
+          raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
         end
 
         buf << Bytes.force_binary_encoding(chunk)

@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
+require File.join(File.dirname(__FILE__), "../test_helper")
 
-require 'thrift'
+require "thrift"
 
 class TestThriftException < Test::Unit::TestCase
   def test_has_accessible_message

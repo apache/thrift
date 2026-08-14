@@ -3,17 +3,17 @@
 $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
-  s.name        = 'thrift'
-  s.version     = '0.25.0'
-  s.authors     = ['Apache Thrift Developers']
-  s.email       = ['dev@thrift.apache.org']
-  s.homepage    = 'https://thrift.apache.org'
+  s.name        = "thrift"
+  s.version     = "0.25.0"
+  s.authors     = ["Apache Thrift Developers"]
+  s.email       = ["dev@thrift.apache.org"]
+  s.homepage    = "https://thrift.apache.org"
   s.summary     = %q{Ruby bindings for Apache Thrift}
   s.description = %q{Ruby bindings for the Apache Thrift RPC system}
-  s.license     = 'Apache-2.0'
-  s.extensions  = ['ext/extconf.rb']
+  s.license     = "Apache-2.0"
+  s.extensions  = ["ext/extconf.rb"]
 
-  s.required_ruby_version = '>= 2.7.0'
+  s.required_ruby_version = ">= 2.7.0"
 
   s.rdoc_options = %w[--line-numbers --inline-source --title Thrift --main README]
 
@@ -26,20 +26,20 @@ Gem::Specification.new do |s|
 
   s.require_paths = %w[lib ext]
 
-  s.add_dependency 'logger'
+  s.add_dependency "logger"
 
-  s.add_development_dependency 'bundler',            '>= 2.2.34'
-  s.add_development_dependency 'rack',               '>= 2.2.23'
-  s.add_development_dependency 'rack-test',          '~> 0.8.3'
-  s.add_development_dependency 'rake',               '~> 13.3'
-  s.add_development_dependency 'rspec',              '~> 3.7'
+  s.add_development_dependency "bundler",            ">= 2.2.34"
+  s.add_development_dependency "rack",               ">= 2.2.23"
+  s.add_development_dependency "rack-test",          "~> 0.8.3"
+  s.add_development_dependency "rake",               "~> 13.3"
+  s.add_development_dependency "rspec",              "~> 3.7"
 
   s.metadata = {
-    'bug_tracker_uri' => 'https://issues.apache.org/jira/browse/THRIFT',
-    'changelog_uri' => 'https://github.com/apache/thrift/blob/master/CHANGES.md',
-    'documentation_uri' => 'https://thrift.apache.org/docs/',
-    'homepage_uri' => 'https://thrift.apache.org',
-    'mailing_list_uri' => 'https://thrift.apache.org/mailing',
-    'source_code_uri' => 'https://github.com/apache/thrift/'
+    "bug_tracker_uri" => "https://issues.apache.org/jira/browse/THRIFT",
+    "changelog_uri" => "https://github.com/apache/thrift/blob/master/CHANGES.md",
+    "documentation_uri" => "https://thrift.apache.org/docs/",
+    "homepage_uri" => "https://thrift.apache.org",
+    "mailing_list_uri" => "https://thrift.apache.org/mailing",
+    "source_code_uri" => "https://github.com/apache/thrift/"
   }
 end

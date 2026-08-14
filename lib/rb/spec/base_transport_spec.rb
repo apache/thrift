@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'BaseTransport' do
+describe "BaseTransport" do
   describe Thrift::TransportException do
     it "should make type accessible" do
       exc = Thrift::TransportException.new(Thrift::TransportException::ALREADY_OPEN, "msg")
@@ -40,17 +40,17 @@ describe 'BaseTransport' do
 
     it "should coerce reads to binary encoding" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(3).and_return(+'abc')
+      expect(transport).to receive(:read).with(3).and_return(+"abc")
 
       buf = transport.read_all(3)
 
-      expect(buf).to eq('abc')
+      expect(buf).to eq("abc")
       expect(buf.encoding).to eq(Encoding::BINARY)
     end
 
     it "treats an empty initial read as end of file without retrying" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(3).once.and_return(+'')
+      expect(transport).to receive(:read).with(3).once.and_return(+"")
 
       expect { transport.read_all(3) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
         expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
@@ -59,8 +59,8 @@ describe 'BaseTransport' do
 
     it "treats an empty read after partial progress as end of file without retrying" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(4).ordered.and_return(+'ab')
-      expect(transport).to receive(:read).with(2).ordered.once.and_return(+'')
+      expect(transport).to receive(:read).with(4).ordered.and_return(+"ab")
+      expect(transport).to receive(:read).with(2).ordered.once.and_return(+"")
 
       expect { transport.read_all(4) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
         expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
@@ -78,20 +78,20 @@ describe 'BaseTransport' do
 
     it "allows repeated short reads while every read makes progress" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(4).ordered.and_return('a')
-      expect(transport).to receive(:read).with(3).ordered.and_return('b')
-      expect(transport).to receive(:read).with(2).ordered.and_return('c')
-      expect(transport).to receive(:read).with(1).ordered.and_return('d')
+      expect(transport).to receive(:read).with(4).ordered.and_return("a")
+      expect(transport).to receive(:read).with(3).ordered.and_return("b")
+      expect(transport).to receive(:read).with(2).ordered.and_return("c")
+      expect(transport).to receive(:read).with(1).ordered.and_return("d")
 
-      expect(transport.read_all(4)).to eq('abcd')
+      expect(transport.read_all(4)).to eq("abcd")
     end
 
     it "allows a frozen binary string as the first short read" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(4).ordered.and_return('ab'.b.freeze)
-      expect(transport).to receive(:read).with(2).ordered.and_return('cd')
+      expect(transport).to receive(:read).with(4).ordered.and_return("ab".b.freeze)
+      expect(transport).to receive(:read).with(2).ordered.and_return("cd")
 
-      expect(transport.read_all(4)).to eq('abcd')
+      expect(transport.read_all(4)).to eq("abcd")
     end
 
     it "returns an empty binary string for a zero-size read without reading" do
@@ -100,7 +100,7 @@ describe 'BaseTransport' do
 
       result = transport.read_all(0)
 
-      expect(result).to eq('')
+      expect(result).to eq("")
       expect(result.encoding).to eq(Encoding::BINARY)
     end
 

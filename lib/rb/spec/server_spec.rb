@@ -17,11 +17,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-require 'spec_helper'
-require 'openssl'
-require 'timeout'
+require "spec_helper"
+require "openssl"
+require "timeout"
 
-describe 'Server' do
+describe "Server" do
   describe Thrift::BaseServer do
     before(:each) do
       @processor = double("Processor")
@@ -52,7 +52,7 @@ describe 'Server' do
   describe Thrift::SimpleServer do
     class EphemeralServerSocket < Thrift::ServerSocket
       def initialize(ready)
-        super('127.0.0.1', 0)
+        super("127.0.0.1", 0)
         @ready = ready
       end
 
@@ -137,8 +137,8 @@ describe 'Server' do
       ["compact unknown type", Thrift::CompactProtocolFactory.new, proc do
         trans = Thrift::MemoryBufferTransport.new
         prot = Thrift::CompactProtocol.new(trans)
-        prot.write_message_begin('unknown', Thrift::MessageTypes::CALL, 1)
-        trans.write([0x1e, 0].pack('C*'))
+        prot.write_message_begin("unknown", Thrift::MessageTypes::CALL, 1)
+        trans.write([0x1e, 0].pack("C*"))
         trans.read(trans.available)
       end],
       ["JSON unknown type", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }],
@@ -159,7 +159,7 @@ describe 'Server' do
         server_thread.report_on_exception = false
 
         port = Timeout.timeout(2) { ready.pop }
-        malformed_client = TCPSocket.new('127.0.0.1', port)
+        malformed_client = TCPSocket.new("127.0.0.1", port)
         malformed_client.write(malformed_request.call)
         malformed_client.close_write
 
@@ -173,7 +173,7 @@ describe 'Server' do
         expect(peer_closed).to be(true)
         expect(server_thread).to be_alive
 
-        valid_transport = Thrift::Socket.new('127.0.0.1', port)
+        valid_transport = Thrift::Socket.new("127.0.0.1", port)
         valid_transport.open
         valid_protocol = protocol_factory.get_protocol(valid_transport)
         Thrift::Test::Srv::Client.new(valid_protocol).send_voidMethod
@@ -275,20 +275,20 @@ describe 'Server' do
     it "should serve inside a thread" do
       exception_q = @server.instance_variable_get(:@exception_q)
       expect_any_instance_of(described_class).to receive(:serve) do
-        exception_q.push(StandardError.new('ERROR'))
+        exception_q.push(StandardError.new("ERROR"))
       end
-      expect { @server.rescuable_serve }.to(raise_error('ERROR'))
+      expect { @server.rescuable_serve }.to(raise_error("ERROR"))
       sleep(0.15)
     end
 
     it "should avoid running the server twice when retrying rescuable_serve" do
       exception_q = @server.instance_variable_get(:@exception_q)
       expect_any_instance_of(described_class).to receive(:serve) do
-        exception_q.push(StandardError.new('ERROR1'))
-        exception_q.push(StandardError.new('ERROR2'))
+        exception_q.push(StandardError.new("ERROR1"))
+        exception_q.push(StandardError.new("ERROR2"))
       end
-      expect { @server.rescuable_serve }.to(raise_error('ERROR1'))
-      expect { @server.rescuable_serve }.to(raise_error('ERROR2'))
+      expect { @server.rescuable_serve }.to(raise_error("ERROR1"))
+      expect { @server.rescuable_serve }.to(raise_error("ERROR2"))
     end
 
     it "should serve using a thread pool" do

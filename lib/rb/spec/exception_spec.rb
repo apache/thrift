@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'Exception' do
+describe "Exception" do
   describe Thrift::Exception do
     it "should have an accessible message" do
       e = Thrift::Exception.new("test message")

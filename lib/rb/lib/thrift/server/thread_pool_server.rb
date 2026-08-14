@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'thread'
+require "thread"
 
 module Thrift
   class ThreadPoolServer < BaseServer

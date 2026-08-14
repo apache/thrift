@@ -19,9 +19,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'JsonProtocol' do
+describe "JsonProtocol" do
   describe Thrift::JsonProtocol do
     before(:each) do
       @trans = Thrift::MemoryBufferTransport.new
@@ -41,13 +41,13 @@ describe 'JsonProtocol' do
       expect(@trans.read(@trans.available)).to eq('\\n')
 
       @prot.write_json_char(" ")
-      expect(@trans.read(@trans.available)).to eq(' ')
+      expect(@trans.read(@trans.available)).to eq(" ")
 
       @prot.write_json_char("\\")
       expect(@trans.read(@trans.available)).to eq("\\\\")
 
       @prot.write_json_char("@")
-      expect(@trans.read(@trans.available)).to eq('@')
+      expect(@trans.read(@trans.available)).to eq("@")
     end
 
     it "should write json string" do
@@ -221,14 +221,14 @@ describe 'JsonProtocol' do
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
-    it 'should write string' do
-      @prot.write_string('this is a test string')
+    it "should write string" do
+      @prot.write_string("this is a test string")
       a = @trans.read(@trans.available)
       expect(a).to eq('"this is a test string"'.b)
       expect(a.encoding).to eq(Encoding::BINARY)
     end
 
-    it 'should write string with unicode characters' do
+    it "should write string with unicode characters" do
       @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
       a = @trans.read(@trans.available)
       expect(a).to eq("\"this is a test string with unicode characters: \u20AC \u20AD\"".b)
@@ -273,7 +273,7 @@ describe 'JsonProtocol' do
     end
 
     it "should write long binary" do
-      @prot.write_binary((0...256).to_a.pack('C*'))
+      @prot.write_binary((0...256).to_a.pack("C*"))
       expect(@trans.read(@trans.available)).to eq("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
     end
 
@@ -328,15 +328,15 @@ describe 'JsonProtocol' do
     end
 
     it "should read json syntax char" do
-      @trans.write('F')
-      expect { @prot.read_json_syntax_char('G') }.to raise_error(Thrift::ProtocolException)
-      @trans.write('H')
-      @prot.read_json_syntax_char('H')
+      @trans.write("F")
+      expect { @prot.read_json_syntax_char("G") }.to raise_error(Thrift::ProtocolException)
+      @trans.write("H")
+      @prot.read_json_syntax_char("H")
     end
 
     it "should read json escape char" do
-      @trans.write('0054')
-      expect(@prot.read_json_escape_char).to eq('T')
+      @trans.write("0054")
+      expect(@prot.read_json_escape_char).to eq("T")
 
       @trans.write("\"\\\"\"")
       expect(@prot.read_json_string(false)).to eq("\"")
@@ -638,14 +638,14 @@ describe 'JsonProtocol' do
       expect(@prot.read_double).to eq(12.23)
     end
 
-    it 'should read string' do
+    it "should read string" do
       @trans.write('"this is a test string"'.b)
       a = @prot.read_string
-      expect(a).to eq('this is a test string')
+      expect(a).to eq("this is a test string")
       expect(a.encoding).to eq(Encoding::UTF_8)
     end
 
-    it 'should read string with unicode characters' do
+    it "should read string with unicode characters" do
       @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.b)
       a = @prot.read_string
       expect(a).to eq("this is a test string with unicode characters: \u20AC \u20AD")

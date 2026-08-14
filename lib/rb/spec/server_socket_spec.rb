@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'Thrift::ServerSocket' do
+describe "Thrift::ServerSocket" do
   describe Thrift::ServerSocket do
     before(:each) do
       @socket = Thrift::ServerSocket.new(1234)
@@ -33,8 +33,8 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should accept an optional host argument" do
-      @socket = Thrift::ServerSocket.new('localhost', 1234)
-      expect(TCPServer).to receive(:new).with('localhost', 1234)
+      @socket = Thrift::ServerSocket.new("localhost", 1234)
+      expect(TCPServer).to receive(:new).with("localhost", 1234)
       @socket.to_s == "server(localhost:1234)"
       @socket.listen
     end

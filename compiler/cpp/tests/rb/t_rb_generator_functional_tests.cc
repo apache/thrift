@@ -90,10 +90,10 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     const string generated_content = read_file("gen-rb/test_field_id_conflict_types.rb");
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("FIELDS_FIELD_ID = 1") != string::npos);
-    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {:type => ::Thrift::Types::STRING, :name => \"fields\"}")
             != string::npos);
     REQUIRE(generated_content.find("FIELDS = 1") == string::npos);
-    REQUIRE(generated_content.find("FIELDS => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+    REQUIRE(generated_content.find("FIELDS => {:type => ::Thrift::Types::STRING, :name => \"fields\"}")
             == string::npos);
 
     std::remove(thrift_path.c_str());

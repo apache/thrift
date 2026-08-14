@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'set'
+require "set"
 
 module Thrift
   module Types

@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
-require_relative 'support/header_protocol_helper'
+require "spec_helper"
+require_relative "support/header_protocol_helper"
 
-describe 'HeaderTransport' do
+describe "HeaderTransport" do
   include HeaderProtocolHelper
 
   describe Thrift::HeaderClientType do
@@ -58,15 +58,15 @@ describe 'HeaderTransport' do
     end
 
     def binary_message
-      [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
+      [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack("N")
     end
 
     def compact_message
-      [0x82, 0x21, 0, 0].pack('C*')
+      [0x82, 0x21, 0, 0].pack("C*")
     end
 
     def framed(message)
-      [message.bytesize].pack('N') + message
+      [message.bytesize].pack("N") + message
     end
 
     def unframed_message(protocol_class, name = "legacy_unframed")
@@ -151,11 +151,11 @@ describe 'HeaderTransport' do
         expect(data.bytesize).to be > 16
 
         # First 4 bytes are frame length
-        frame_size = data[0, 4].unpack('N').first
+        frame_size = data[0, 4].unpack("N").first
         expect(frame_size).to eq(data.bytesize - 4)
 
         # Next 2 bytes should be header magic
-        magic = data[4, 2].unpack('n').first
+        magic = data[4, 2].unpack("n").first
         expect(magic).to eq(Thrift::HeaderTransport::HEADER_MAGIC)
       end
 
@@ -175,7 +175,7 @@ describe 'HeaderTransport' do
         @trans.flush
 
         data = @underlying.read(@underlying.available)
-        expect(data[8, 4].unpack('N').first).to eq(456)
+        expect(data[8, 4].unpack("N").first).to eq(456)
       end
 
       it "should apply ZLIB transform" do
@@ -203,7 +203,7 @@ describe 'HeaderTransport' do
           trans.flush
 
           frame = underlying.read(underlying.available)
-          expect(frame.unpack1('N')).to eq(declared_size)
+          expect(frame.unpack1("N")).to eq(declared_size)
 
           reader = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
           reader.set_max_frame_size(20)
@@ -227,7 +227,7 @@ describe 'HeaderTransport' do
         reference.write("payload")
         reference.flush
         frame = reference_buffer.read(reference_buffer.available)
-        declared_size = frame.unpack1('N')
+        declared_size = frame.unpack1("N")
 
         accepted_buffer = Thrift::MemoryBufferTransport.new
         accepted = Thrift::HeaderTransport.new(accepted_buffer)
@@ -263,7 +263,7 @@ describe 'HeaderTransport' do
         reference.write(payload)
         reference.flush
         frame = reference_buffer.read(reference_buffer.available)
-        declared_size = frame.unpack1('N')
+        declared_size = frame.unpack1("N")
         expect(declared_size).to be < payload.bytesize
 
         accepted_buffer = Thrift::MemoryBufferTransport.new
@@ -432,7 +432,7 @@ describe 'HeaderTransport' do
             Thrift::HeaderSubprotocolID::BINARY,
             1,
             Thrift::HeaderTransformID::ZLIB
-          ].pack('C*')
+          ].pack("C*")
           frame = build_header_frame(header_data, payload)
           read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
 
@@ -505,9 +505,9 @@ describe 'HeaderTransport' do
 
       it "should detect framed binary protocol" do
         # Create a framed binary message
-        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
+        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack("N")
         payload << "test"
-        frame = [payload.bytesize].pack('N') + payload
+        frame = [payload.bytesize].pack("N") + payload
 
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
@@ -518,7 +518,7 @@ describe 'HeaderTransport' do
 
       it "should detect unframed binary protocol" do
         # Create an unframed binary message (version word first)
-        message = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
+        message = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack("N")
         message << "test"
 
         read_transport = Thrift::MemoryBufferTransport.new(message)
@@ -587,7 +587,7 @@ describe 'HeaderTransport' do
       end
 
       it "clears metadata before reporting a malformed following frame" do
-        malformed_frame = [4].pack('N') + "nope"
+        malformed_frame = [4].pack("N") + "nope"
         bytes = header_frame("A", "request-id" => "first") + malformed_frame
         read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(bytes))
 
@@ -634,7 +634,7 @@ describe 'HeaderTransport' do
     describe "header parsing protections" do
       it "rejects frame sizes shorter than a protocol signature" do
         (0..3).each do |frame_size|
-          frame = [frame_size].pack('N') + ("\x00" * frame_size)
+          frame = [frame_size].pack("N") + ("\x00" * frame_size)
           read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
 
           expect { read_trans.read(1) }.to raise_error(
@@ -662,7 +662,7 @@ describe 'HeaderTransport' do
       end
 
       it "reports EOF when the declared frame is fragmented" do
-        frame = [4].pack('N') + "\x80\x01\x00".b
+        frame = [4].pack("N") + "\x80\x01\x00".b
         read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
 
         expect { read_trans.read(1) }.to raise_error(
@@ -674,8 +674,8 @@ describe 'HeaderTransport' do
       end
 
       it "accepts a four-byte framed binary protocol signature" do
-        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
-        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new([payload.bytesize].pack('N') + payload))
+        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack("N")
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new([payload.bytesize].pack("N") + payload))
 
         expect(read_trans.read(payload.bytesize)).to eq(payload)
       end
@@ -690,11 +690,11 @@ describe 'HeaderTransport' do
 
       it "should reject header frames that are too small" do
         frame = Thrift::Bytes.empty_byte_buffer
-        frame << [9].pack('N')
-        frame << [Thrift::HeaderTransport::HEADER_MAGIC].pack('n')
-        frame << [0].pack('n')
-        frame << [0].pack('N')
-        frame << [0].pack('n')
+        frame << [9].pack("N")
+        frame << [Thrift::HeaderTransport::HEADER_MAGIC].pack("n")
+        frame << [0].pack("n")
+        frame << [0].pack("N")
+        frame << [0].pack("n")
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
 
@@ -702,7 +702,7 @@ describe 'HeaderTransport' do
       end
 
       it "should reject varints that cross header boundary" do
-        header_data = [0x80, 0x80, 0x80, 0x80].pack('C*')
+        header_data = [0x80, 0x80, 0x80, 0x80].pack("C*")
         frame = build_header_frame(header_data)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
@@ -720,7 +720,7 @@ describe 'HeaderTransport' do
       end
 
       it "should reject uint32 varints with an overflowing fifth byte" do
-        header_data = ([0x80] * 4 + [0x10]).pack('C*')
+        header_data = ([0x80] * 4 + [0x10]).pack("C*")
         frame = build_header_frame(header_data)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
@@ -729,7 +729,7 @@ describe 'HeaderTransport' do
       end
 
       it "should accept uint32 varints with a valid fifth byte" do
-        header_data = ([0x80] * 4 + [0x0f, 0]).pack('C*')
+        header_data = ([0x80] * 4 + [0x0f, 0]).pack("C*")
         frame = build_header_frame(header_data)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
@@ -813,8 +813,8 @@ describe 'HeaderTransport' do
         allowed = [Thrift::HeaderClientType::HEADERS]
 
         # Create framed binary message
-        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack('N')
-        frame = [payload.bytesize].pack('N') + payload
+        payload = [Thrift::BinaryProtocol::VERSION_1 | Thrift::MessageTypes::CALL].pack("N")
+        frame = [payload.bytesize].pack("N") + payload
 
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport, allowed)

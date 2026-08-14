@@ -18,11 +18,11 @@
 # under the License.
 #
 
-require 'ruzzy'
+require "ruzzy"
 
 def trace_fuzz_target(script_path)
   harness_path = File.expand_path(
-    "#{File.basename(script_path, '.rb')}_harness.rb",
+    "#{File.basename(script_path, ".rb")}_harness.rb",
     File.dirname(script_path)
   )
   Ruzzy.trace(harness_path)

@@ -18,11 +18,11 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared")
 
-describe 'BinaryProtocol' do
-  it_should_behave_like 'a binary protocol'
+describe "BinaryProtocol" do
+  it_should_behave_like "a binary protocol"
 
   def protocol_class
     Thrift::BinaryProtocol
@@ -35,15 +35,15 @@ describe 'BinaryProtocol' do
     end
 
     it "should read a message header" do
-      @trans.write([protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::REPLY].pack('N'))
-      @trans.write([42].pack('N'))
-      expect(@prot).to receive(:read_string).and_return('testMessage')
-      expect(@prot.read_message_begin).to eq(['testMessage', Thrift::MessageTypes::REPLY, 42])
+      @trans.write([protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::REPLY].pack("N"))
+      @trans.write([42].pack("N"))
+      expect(@prot).to receive(:read_string).and_return("testMessage")
+      expect(@prot.read_message_begin).to eq(["testMessage", Thrift::MessageTypes::REPLY, 42])
     end
 
     it "should raise an exception if the message header has the wrong version" do
       expect(@prot).to receive(:read_i32).and_return(-1)
-      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, 'Missing version identifier') do |e|
+      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, "Missing version identifier") do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end
@@ -51,7 +51,7 @@ describe 'BinaryProtocol' do
     it "should raise an exception if the message header does not exist and strict_read is enabled" do
       expect(@prot).to receive(:read_i32).and_return(42)
       expect(@prot).to receive(:strict_read).and_return(true)
-      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|
+      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, "No version identifier, old protocol client?") do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end

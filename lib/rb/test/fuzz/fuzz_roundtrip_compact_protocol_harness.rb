@@ -18,6 +18,6 @@
 # under the License.
 #
 
-require_relative 'fuzz_common'
+require_relative "fuzz_common"
 
 Ruzzy.fuzz(create_roundtrip_fuzzer(Thrift::CompactProtocolFactory))

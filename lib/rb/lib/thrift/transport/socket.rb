@@ -19,11 +19,11 @@
 # under the License.
 #
 
-require 'socket'
+require "socket"
 
 module Thrift
   class Socket < BaseTransport
-    def initialize(host = 'localhost', port = 9090, timeout = nil)
+    def initialize(host = "localhost", port = 9090, timeout = nil)
       @host = host
       @port = port
       @timeout = timeout
@@ -113,7 +113,7 @@ module Thrift
     end
 
     def to_io
-      @handle&.to_io || raise(IOError, 'closed stream')
+      @handle&.to_io || raise(IOError, "closed stream")
     end
 
     def to_s

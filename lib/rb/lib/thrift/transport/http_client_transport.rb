@@ -19,18 +19,18 @@
 # under the License.
 #
 
-require 'net/http'
-require 'net/https'
-require 'openssl'
-require 'uri'
-require 'stringio'
+require "net/http"
+require "net/https"
+require "openssl"
+require "uri"
+require "stringio"
 
 module Thrift
   class HTTPClientTransport < BaseTransport
 
     def initialize(url, opts = {})
       @url = URI url
-      @headers = {'Content-Type' => 'application/x-thrift'}
+      @headers = {"Content-Type" => "application/x-thrift"}
       @outbuf = Bytes.empty_byte_buffer
       @ssl_verify_mode = opts.fetch(:ssl_verify_mode, OpenSSL::SSL::VERIFY_PEER)
       @ssl_ca_file = opts[:ssl_ca_file]
@@ -51,8 +51,8 @@ module Thrift
 
     def flush
       http = Net::HTTP.new @url.host, @url.port
-      http.use_ssl = @url.scheme == 'https'
-      if @url.scheme == 'https'
+      http.use_ssl = @url.scheme == "https"
+      if @url.scheme == "https"
         http.verify_mode = @ssl_verify_mode
         http.ca_file = @ssl_ca_file if @ssl_ca_file
       end
@@ -69,7 +69,7 @@ module Thrift
 
     def to_s
       path = @url.path.to_s
-      path = '/' if path.empty?
+      path = "/" if path.empty?
       "#{@url.scheme}(#{@url.host}:#{@url.port}#{path})"
     end
   end

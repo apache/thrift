@@ -18,76 +18,76 @@
 # under the License.
 #
 
-require 'rubygems'
-require 'rake'
-require 'rake/clean'
-require 'rspec/core/rake_task'
-require 'bundler/gem_tasks'
+require "rubygems"
+require "rake"
+require "rake/clean"
+require "rspec/core/rake_task"
+require "bundler/gem_tasks"
 
-THRIFT = '../../compiler/cpp/thrift'
+THRIFT = "../../compiler/cpp/thrift"
 
 task :default => [:gem]
 task :spec => [:'gen-rb', :build_ext, :realspec]
 
 RSpec::Core::RakeTask.new(:realspec) do |t|
-  t.rspec_opts = ['--color', '--format d']
+  t.rspec_opts = ["--color", "--format d"]
 end
 
 RSpec::Core::RakeTask.new(:'spec:rcov') do |t|
-  t.rspec_opts = ['--color', '--format d']
+  t.rspec_opts = ["--color", "--format d"]
   t.rcov = true
-  t.rcov_opts = ['--exclude', '^spec,/gems/']
+  t.rcov_opts = ["--exclude", "^spec,/gems/"]
 end
 
-desc 'Compile the .thrift files for the specs'
+desc "Compile the .thrift files for the specs"
 task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:flat_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto', :'gen-rb:constants_demo', :'gen-rb:fuzz']
 namespace :'gen-rb' do
   task :'spec' do
-    dir = File.dirname(__FILE__) + '/spec'
-    sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/ThriftSpec.thrift"
+    dir = File.dirname(__FILE__) + "/spec"
+    sh THRIFT, "--gen", "rb", "-o", dir, "#{dir}/ThriftSpec.thrift"
   end
 
   task :'namespaced_spec' do
-    dir = File.dirname(__FILE__) + '/spec'
-    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/ThriftNamespacedSpec.thrift"
-    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/BaseService.thrift"
-    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "#{dir}/ExtendedService.thrift"
+    dir = File.dirname(__FILE__) + "/spec"
+    sh THRIFT, "--gen", "rb:namespaced", "--recurse", "-o", dir, "#{dir}/ThriftNamespacedSpec.thrift"
+    sh THRIFT, "--gen", "rb:namespaced", "--recurse", "-o", dir, "#{dir}/BaseService.thrift"
+    sh THRIFT, "--gen", "rb:namespaced", "--recurse", "-o", dir, "#{dir}/ExtendedService.thrift"
   end
 
   task :'flat_spec' do
-    dir = File.dirname(__FILE__) + '/spec'
+    dir = File.dirname(__FILE__) + "/spec"
     FileUtils.mkdir_p("#{dir}/gen-rb/flat")
-    sh THRIFT, '--gen', 'rb', '--recurse', '-out', "#{dir}/gen-rb/flat", "#{dir}/ThriftNamespacedSpec.thrift"
+    sh THRIFT, "--gen", "rb", "--recurse", "-out", "#{dir}/gen-rb/flat", "#{dir}/ThriftNamespacedSpec.thrift"
   end
 
   task :'benchmark' do
-    dir = File.dirname(__FILE__) + '/benchmark'
-    sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/Benchmark.thrift"
+    dir = File.dirname(__FILE__) + "/benchmark"
+    sh THRIFT, "--gen", "rb", "-o", dir, "#{dir}/Benchmark.thrift"
   end
 
   task :'debug_proto' do
     sh "mkdir", "-p", "test/debug_proto"
-    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/DebugProtoTest.thrift"
+    sh THRIFT, "--gen", "rb", "-o", "test/debug_proto", "../../test/DebugProtoTest.thrift"
   end
 
   task :'constants_demo' do
-    dir = File.dirname(__FILE__) + '/spec'
-    sh THRIFT, '--gen', 'rb:namespaced', '--recurse', '-o', dir, "../../test/ConstantsDemo.thrift"
+    dir = File.dirname(__FILE__) + "/spec"
+    sh THRIFT, "--gen", "rb:namespaced", "--recurse", "-o", dir, "../../test/ConstantsDemo.thrift"
   end
 
   task :'fuzz' do
-    dir = File.dirname(__FILE__) + '/test/fuzz'
+    dir = File.dirname(__FILE__) + "/test/fuzz"
     sh "mkdir", "-p", dir
-    sh THRIFT, '--gen', 'rb', '-o', dir, "../../test/FuzzTest.thrift"
+    sh THRIFT, "--gen", "rb", "-o", dir, "../../test/FuzzTest.thrift"
   end
 end
 
 desc "Build the native library"
 task :build_ext => :'gen-rb' do
-   next if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
-   next if ENV['SKIP_BUILD_EXT'] == '1'
-   Dir::chdir(File::dirname('ext/extconf.rb')) do
-      unless sh "ruby #{File::basename('ext/extconf.rb')}"
+   next if defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby"
+   next if ENV["SKIP_BUILD_EXT"] == "1"
+   Dir::chdir(File::dirname("ext/extconf.rb")) do
+      unless sh "ruby #{File::basename("ext/extconf.rb")}"
         $stderr.puts "Failed to run extconf"
         break
       end
@@ -98,17 +98,17 @@ task :build_ext => :'gen-rb' do
     end
 end
 
-desc 'Run the compiler tests (requires full thrift checkout)'
+desc "Run the compiler tests (requires full thrift checkout)"
 task :test do
   # ensure this is a full thrift checkout and not a tarball of the ruby libs
-  cmd = 'head -1 ../../README.md 2>/dev/null | grep Thrift >/dev/null 2>/dev/null'
+  cmd = "head -1 ../../README.md 2>/dev/null | grep Thrift >/dev/null 2>/dev/null"
   system(cmd) or fail "rake test requires a full thrift checkout"
-  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb", "check"
+  sh "make", "-C", File.dirname(__FILE__) + "/../../test/rb", "check"
 end
 
-desc 'Run benchmarking of NonblockingServer'
+desc "Run benchmarking of NonblockingServer"
 task :benchmark => [:'gen-rb:benchmark'] do
-  ruby 'benchmark/benchmark.rb'
+  ruby "benchmark/benchmark.rb"
 end
 
 begin
@@ -118,24 +118,24 @@ rescue LoadError
   task(:rubocop) { abort "Install the rubocop gem to run a static analysis" }
 end
 
-desc 'Builds the thrift gem'
+desc "Builds the thrift gem"
 task :gem => [:spec, :build_ext] do
-  unless sh 'gem', 'build', 'thrift.gemspec'
+  unless sh "gem", "build", "thrift.gemspec"
     $stderr.puts "Failed to build thrift gem"
     break
   end
 end
 
-desc 'Install the thrift gem'
+desc "Install the thrift gem"
 task :install => [:gem] do
-  unless sh 'gem', 'install', Dir.glob('thrift-*.gem').last
+  unless sh "gem", "install", Dir.glob("thrift-*.gem").last
     $stderr.puts "Failed to install thrift gem"
     break
   end
 end
 
 CLEAN.include [
-  '.bundle', 'benchmark/gen-rb', 'coverage', 'ext/*.{o,bundle,so,dll}', 'ext/mkmf.log',
-  'ext/Makefile', 'ext/conftest.dSYM', 'ext/thrift_native.bundle.dSYM', 'mkmf.log',
-  'pkg', 'spec/gen-rb', 'test/debug_proto/gen-rb', 'thrift-*.gem'
+  ".bundle", "benchmark/gen-rb", "coverage", "ext/*.{o,bundle,so,dll}", "ext/mkmf.log",
+  "ext/Makefile", "ext/conftest.dSYM", "ext/thrift_native.bundle.dSYM", "mkmf.log",
+  "pkg", "spec/gen-rb", "test/debug_proto/gen-rb", "thrift-*.gem"
 ]

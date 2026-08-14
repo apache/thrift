@@ -19,9 +19,9 @@
 # under the License.
 #
 
-require File.expand_path('../../test_helper', __dir__)
-require 'thrift'
-require 'thread'
+require File.expand_path("../../test_helper", __dir__)
+require "thrift"
+require "thread"
 
 class TestCompactProtocol < Test::Unit::TestCase
   def test_different_data_types
@@ -80,7 +80,7 @@ class TestCompactProtocol < Test::Unit::TestCase
 
     server_ready.pop
 
-    socket = Thrift::Socket.new('localhost', port)
+    socket = Thrift::Socket.new("localhost", port)
     transport = Thrift::BufferedTransport.new(socket)
     transport.open
     protocol = Thrift::CompactProtocol.new(transport)
@@ -119,7 +119,7 @@ class TestCompactProtocol < Test::Unit::TestCase
 
     val = (0...256).reverse_each.to_a
     # acc_binary
-    protocol.write_binary(val.pack('C*'))
+    protocol.write_binary(val.pack("C*"))
     transport.flush
 
     # acc_message

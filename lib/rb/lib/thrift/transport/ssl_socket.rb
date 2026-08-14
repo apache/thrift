@@ -18,12 +18,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'io/wait'
-require 'ipaddr'
+require "io/wait"
+require "ipaddr"
 
 module Thrift
   class SSLSocket < Socket
-    def initialize(host = 'localhost', port = 9090, timeout = nil, ssl_context = nil, server_hostname: host)
+    def initialize(host = "localhost", port = 9090, timeout = nil, ssl_context = nil, server_hostname: host)
       super(host, port, timeout)
       @ssl_context = ssl_context
       @server_hostname = server_hostname

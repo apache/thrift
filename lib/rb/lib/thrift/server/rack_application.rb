@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require 'rack'
-require 'thrift/transport/io_stream_transport'
+require "rack"
+require "thrift/transport/io_stream_transport"
 
 module Thrift
   class RackApplication
@@ -59,7 +59,7 @@ module Thrift
     end
 
     def self.failed_request
-      Rack::Response.new(['Not Found'], 404, {Rack::CONTENT_TYPE => THRIFT_HEADER})
+      Rack::Response.new(["Not Found"], 404, {Rack::CONTENT_TYPE => THRIFT_HEADER})
     end
 
     def self.valid_thrift_request?(rack_request)

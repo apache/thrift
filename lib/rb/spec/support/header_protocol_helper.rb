@@ -30,7 +30,7 @@ module HeaderProtocolHelper
         n >>= 7
       end
     end
-    bytes.pack('C*')
+    bytes.pack("C*")
   end
 
   def build_header_frame(header_data, payload = Thrift::Bytes.empty_byte_buffer, header_words: nil, sequence_id: 0)
@@ -43,11 +43,11 @@ module HeaderProtocolHelper
 
     frame_size = 2 + 2 + 4 + 2 + header_data.bytesize + payload.bytesize
     frame = Thrift::Bytes.empty_byte_buffer
-    frame << [frame_size].pack('N')
-    frame << [Thrift::HeaderTransport::HEADER_MAGIC].pack('n')
-    frame << [0].pack('n')
-    frame << [sequence_id].pack('N')
-    frame << [header_words].pack('n')
+    frame << [frame_size].pack("N")
+    frame << [Thrift::HeaderTransport::HEADER_MAGIC].pack("n")
+    frame << [0].pack("n")
+    frame << [sequence_id].pack("N")
+    frame << [header_words].pack("n")
     frame << header_data
     frame << payload
     frame

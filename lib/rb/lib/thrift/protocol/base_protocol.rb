@@ -19,8 +19,8 @@
 #
 
 # this require is to make generated struct definitions happy
-require 'set'
-require 'thrift/exceptions'
+require "set"
+require "thrift/exceptions"
 
 module Thrift
   class ProtocolException < Exception
@@ -348,7 +348,7 @@ module Thrift
     end
 
     def skip(type, max_depth = 64)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum skip depth exceeded') if max_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum skip depth exceeded") if max_depth <= 0
       case type
       when Types::BOOL
         read_bool
@@ -398,13 +398,13 @@ module Thrift
         end
         read_list_end
       else
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid data")
       end
     end
 
     def validate_container_size(size)
-      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
-      raise ProtocolException.new(ProtocolException::SIZE_LIMIT, 'Container size limit exceeded') if size > MAX_CONTAINER_SIZE
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, "Negative size") unless size >= 0
+      raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "Container size limit exceeded") if size > MAX_CONTAINER_SIZE
     end
 
     def to_s

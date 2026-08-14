@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'Processor' do
+describe "Processor" do
   class ProcessorSpec
     include Thrift::Processor
 
@@ -68,7 +68,7 @@ describe 'Processor' do
     end
 
     it "should call process_<message> when it receives that message" do
-      expect(@prot).to receive(:read_message_begin).ordered.and_return ['testMessage', Thrift::MessageTypes::CALL, 17]
+      expect(@prot).to receive(:read_message_begin).ordered.and_return ["testMessage", Thrift::MessageTypes::CALL, 17]
       expect(@processor).to receive(:process_testMessage).with(17, @prot, @prot).ordered
       expect(@processor.process(@prot, @prot)).to eq(true)
     end
@@ -135,10 +135,10 @@ describe 'Processor' do
     end
 
     it "should raise an ApplicationException when the received message cannot be processed" do
-      expect(@prot).to receive(:read_message_begin).ordered.and_return ['testMessage', Thrift::MessageTypes::CALL, 4]
+      expect(@prot).to receive(:read_message_begin).ordered.and_return ["testMessage", Thrift::MessageTypes::CALL, 4]
       expect(@prot).to receive(:skip).with(Thrift::Types::STRUCT).ordered
       expect(@prot).to receive(:read_message_end).ordered
-      expect(@prot).to receive(:write_message_begin).with('testMessage', Thrift::MessageTypes::EXCEPTION, 4).ordered
+      expect(@prot).to receive(:write_message_begin).with("testMessage", Thrift::MessageTypes::EXCEPTION, 4).ordered
       e = double(Thrift::ApplicationException)
       expect(e).to receive(:write).with(@prot).ordered
       expect(Thrift::ApplicationException).to receive(:new).with(Thrift::ApplicationException::UNKNOWN_METHOD, "Unknown function testMessage").and_return(e)
@@ -158,12 +158,12 @@ describe 'Processor' do
     end
 
     it "should write out a reply when asked" do
-      expect(@prot).to receive(:write_message_begin).with('testMessage', Thrift::MessageTypes::REPLY, 23).ordered
+      expect(@prot).to receive(:write_message_begin).with("testMessage", Thrift::MessageTypes::REPLY, 23).ordered
       result = double("MockResult")
       expect(result).to receive(:write).with(@prot).ordered
       expect(@prot).to receive(:write_message_end).ordered
       mock_trans(@prot)
-      @processor.write_result(result, @prot, 'testMessage', 23)
+      @processor.write_result(result, @prot, "testMessage", 23)
     end
   end
 end

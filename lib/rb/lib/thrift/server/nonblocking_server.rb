@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require 'logger'
-require 'thread'
+require "logger"
+require "thread"
 
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
@@ -279,7 +279,7 @@ module Thrift
 
       def slice_frame!(buf)
         if buf.length >= 4
-          size = buf.unpack('N').first
+          size = buf.unpack("N").first
           if buf.length >= size + 4
             buf.slice!(0, size + 4)
           else
