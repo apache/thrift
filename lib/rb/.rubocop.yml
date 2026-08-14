@@ -30,7 +30,13 @@ Layout/LeadingEmptyLines:
 Layout/SpaceAfterComma:
   Enabled: true
 
+Layout/SpaceAroundKeyword:
+  Enabled: true
+
 Layout/SpaceAroundEqualsInParameterDefault:
+  Enabled: true
+
+Layout/SpaceBeforeComma:
   Enabled: true
 
 Layout/SpaceInsideBlockBraces:
@@ -45,8 +51,68 @@ Layout/TrailingWhitespace:
 Lint/OrderedMagicComments:
   Enabled: true
 
+Lint/UnreachableCode:
+  Enabled: true
+
+Performance/BindCall:
+  Enabled: true
+
+Performance/BlockGivenWithExplicitBlock:
+  Enabled: true
+
+Performance/CompareWithBlock:
+  Enabled: true
+
+Performance/Count:
+  Enabled: true
+
+Performance/Detect:
+  Enabled: true
+
+Performance/DoubleStartEndWith:
+  Enabled: true
+
+Performance/EndWith:
+  Enabled: true
+
+Performance/FixedSize:
+  Enabled: true
+
+Performance/FlatMap:
+  Enabled: true
+
+Performance/RangeInclude:
+  Enabled: true
+
+Performance/RegexpMatch:
+  Enabled: true
+
+Performance/ReverseEach:
+  Enabled: true
+
+Performance/Size:
+  Enabled: true
+
+Performance/StartWith:
+  Enabled: true
+
+Performance/StringInclude:
+  Enabled: true
+
+Performance/StringReplacement:
+  Enabled: true
+
+Performance/TimesMap:
+  Enabled: true
+
 Performance/UnfreezeString:
   Enabled: true
 
+Performance/UriDefaultParser:
+  Enabled: true
+
 Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Style/MethodDefParentheses:
   Enabled: true

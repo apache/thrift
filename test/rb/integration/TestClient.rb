@@ -35,7 +35,7 @@ $protocolType = "binary"
 $ssl = false
 $transport = "buffered"
 
-ARGV.each do|a|
+ARGV.each do |a|
   if a == "--help"
     puts "Allowed options:"
     puts "\t -h [ --help ] \t produce help message"
