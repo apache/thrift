@@ -772,6 +772,10 @@ module Thrift
       read_json_base64
     end
 
+    def skip_string
+      read_string
+    end
+
     def read_uuid
       uuid = read_json_string
       UUID.validate_uuid!(uuid)

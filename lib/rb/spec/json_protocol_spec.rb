@@ -583,6 +583,27 @@ describe 'JsonProtocol' do
       expect(@prot.read_set_end).to eq(nil)
     end
 
+    it "should skip unknown string fields without base64 decoding" do
+      prot = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new('{"2":{"str":"%"}}'))
+      hello = SpecNamespace::Hello.new
+
+      expect {
+        hello.read(prot)
+      }.not_to raise_error
+      expect(hello.greeting).to eq("hello world")
+    end
+
+    it "should skip unknown string fields through protocol decorators" do
+      trans = Thrift::MemoryBufferTransport.new('{"2":{"str":"%"}}')
+      prot = Thrift::MultiplexedProtocol.new(Thrift::JsonProtocol.new(trans), "service")
+      hello = SpecNamespace::Hello.new
+
+      expect {
+        hello.read(prot)
+      }.not_to raise_error
+      expect(hello.greeting).to eq("hello world")
+    end
+
     it "should read bool" do
       @trans.write("0\"\"")
       expect(@prot.read_bool).to eq(false)

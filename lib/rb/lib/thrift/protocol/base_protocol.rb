@@ -231,6 +231,10 @@ module Thrift
       raise NotImplementedError
     end
 
+    def skip_string
+      read_string
+    end
+
     # Writes a field based on the field information, field ID and value.
     #
     # field_info - A Hash containing the definition of the field:
@@ -359,7 +363,7 @@ module Thrift
       when Types::DOUBLE
         read_double
       when Types::STRING
-        read_string
+        skip_string
       when Types::UUID
         read_uuid
       when Types::STRUCT

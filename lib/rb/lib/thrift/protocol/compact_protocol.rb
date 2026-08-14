@@ -428,6 +428,10 @@ module Thrift
       trans.read_all(size)
     end
 
+    def skip_string
+      read_binary
+    end
+
     def read_uuid
       UUID.uuid_from_bytes(trans.read_all(16))
     end
