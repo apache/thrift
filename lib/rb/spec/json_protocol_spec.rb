@@ -81,13 +81,13 @@ describe "JsonProtocol" do
       @prot.write_json_double(-3.21)
       expect(@trans.read(@trans.available)).to eq("-3.21")
 
-      @prot.write_json_double(((+1.0/0.0)/(+1.0/0.0)))
+      @prot.write_json_double(((+1.0 / 0.0) / (+1.0 / 0.0)))
       expect(@trans.read(@trans.available)).to eq("\"NaN\"")
 
-      @prot.write_json_double((+1.0/0.0))
+      @prot.write_json_double((+1.0 / 0.0))
       expect(@trans.read(@trans.available)).to eq("\"Infinity\"")
 
-      @prot.write_json_double((-1.0/0.0))
+      @prot.write_json_double((-1.0 / 0.0))
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
@@ -211,13 +211,13 @@ describe "JsonProtocol" do
       @prot.write_double(-32.1)
       expect(@trans.read(@trans.available)).to eq("-32.1")
 
-      @prot.write_double(((+1.0/0.0)/(+1.0/0.0)))
+      @prot.write_double(((+1.0 / 0.0) / (+1.0 / 0.0)))
       expect(@trans.read(@trans.available)).to eq("\"NaN\"")
 
-      @prot.write_double((+1.0/0.0))
+      @prot.write_double((+1.0 / 0.0))
       expect(@trans.read(@trans.available)).to eq("\"Infinity\"")
 
-      @prot.write_double((-1.0/0.0))
+      @prot.write_double((-1.0 / 0.0))
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
@@ -473,10 +473,10 @@ describe "JsonProtocol" do
       expect(@prot.read_json_double.nan?).to eq(true)
 
       @trans.write("\"Infinity\"")
-      expect(@prot.read_json_double).to eq(+1.0/0.0)
+      expect(@prot.read_json_double).to eq(+1.0 / 0.0)
 
       @trans.write("\"-Infinity\"")
-      expect(@prot.read_json_double).to eq(-1.0/0.0)
+      expect(@prot.read_json_double).to eq(-1.0 / 0.0)
     end
 
     it "should read json object start" do

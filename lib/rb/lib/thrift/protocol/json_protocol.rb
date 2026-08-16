@@ -218,7 +218,7 @@ module Thrift
     # Return true if the character ch is in [-+0-9.Ee]; false otherwise
     def is_json_numeric(ch)
       case ch
-      when "+", "-", ".", "0" .. "9", "E", "e"
+      when "+", "-", ".", "0".."9", "E", "e"
         return true
       else
         return false
@@ -597,11 +597,11 @@ module Thrift
         str = read_json_string(true)
         # Check for NaN, Infinity and -Infinity
         if (str == @@kThriftNan)
-          num = (+1.0/0.0)/(+1.0/0.0)
+          num = (+1.0 / 0.0) / (+1.0 / 0.0)
         elsif (str == @@kThriftInfinity)
-          num = +1.0/0.0
+          num = +1.0 / 0.0
         elsif (str == @@kThriftNegativeInfinity)
-          num = -1.0/0.0
+          num = -1.0 / 0.0
         else
           if (!@context.escapeNum)
             # Raise exception -- we should not be in a string in this case
