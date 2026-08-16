@@ -24,13 +24,13 @@ module Thrift
     VERSION_1 = 0x80010000
     TYPE_MASK = 0x000000ff
     BYTE_MIN = -2**7
-    BYTE_MAX = 2**7 - 1
+    BYTE_MAX = (2**7) - 1
     I16_MIN = -2**15
-    I16_MAX = 2**15 - 1
+    I16_MAX = (2**15) - 1
     I32_MIN = -2**31
-    I32_MAX = 2**31 - 1
+    I32_MAX = (2**31) - 1
     I64_MIN = -2**63
-    I64_MAX = 2**63 - 1
+    I64_MAX = (2**63) - 1
 
     attr_reader :strict_read, :strict_write
 

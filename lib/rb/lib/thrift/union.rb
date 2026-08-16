@@ -103,7 +103,7 @@ module Thrift
     end
 
     def ==(other)
-      other.equal?(self) || other.instance_of?(self.class) && @setfield == other.get_set_field && @value == other.get_value
+      other.equal?(self) || (other.instance_of?(self.class) && @setfield == other.get_set_field && @value == other.get_value)
     end
     alias_method :eql?, :==
 

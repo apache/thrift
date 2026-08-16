@@ -182,7 +182,7 @@ module Thrift
       # check if we can use delta encoding for the field id
       if id > last_id && id - last_id <= 15
         # write them together
-        write_byte_direct((id - last_id) << 4 | type_to_write)
+        write_byte_direct(((id - last_id) << 4) | type_to_write)
       else
         # write them separate
         write_byte_direct(type_to_write)
@@ -203,7 +203,7 @@ module Thrift
         write_byte_direct(0)
       else
         write_varint32(size)
-        write_byte_direct(CompactTypes.get_compact_type(ktype) << 4 | CompactTypes.get_compact_type(vtype))
+        write_byte_direct((CompactTypes.get_compact_type(ktype) << 4) | CompactTypes.get_compact_type(vtype))
       end
     end
 
@@ -449,7 +449,7 @@ module Thrift
       size = validate_size(size)
       compact_type = CompactTypes.get_compact_type(elem_type)
       if size <= 14
-        write_byte_direct(size << 4 | compact_type)
+        write_byte_direct((size << 4) | compact_type)
       else
         write_byte_direct(0xf0 | compact_type)
         write_varint32(size)

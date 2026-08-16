@@ -121,7 +121,7 @@ shared_examples_for "a socket" do
     @socket.timeout = 0.5
     @socket.open
     expect(@handle).to receive(:read_nonblock).with(17).and_raise(IO::EAGAINWaitReadable)
-    expect(IO).to receive(:select).once { sleep(0.6); nil }
+    expect(IO).to(receive(:select).once { sleep(0.6); nil })
     expect { @socket.read(17) }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
   end
 
@@ -129,7 +129,7 @@ shared_examples_for "a socket" do
     @socket.timeout = 0.5
     @socket.open
     expect(@handle).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
-    expect(IO).to receive(:select).once { sleep(0.6); nil }
+    expect(IO).to(receive(:select).once { sleep(0.6); nil })
     expect { @socket.write("test data") }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
   end
 
