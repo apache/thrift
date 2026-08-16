@@ -116,7 +116,7 @@ describe "HeaderProtocol" do
         @protocol.trans.flush
 
         data = @buffer.read(@buffer.available)
-        expect(data[8, 4].unpack("N").first).to eq(123)
+        expect(data[8, 4].unpack1("N")).to eq(123)
       end
 
       it "should write and read structs" do

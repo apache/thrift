@@ -279,7 +279,7 @@ module Thrift
 
       def slice_frame!(buf)
         if buf.length >= 4
-          size = buf.unpack("N").first
+          size = buf.unpack1("N")
           if buf.length >= size + 4
             buf.slice!(0, size + 4)
           else

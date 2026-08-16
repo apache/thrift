@@ -20,7 +20,7 @@
 
 module Thrift
   class CompactProtocol < BaseProtocol
-    PROTOCOL_ID = [0x82].pack("c").unpack("c").first
+    PROTOCOL_ID = [0x82].pack("c").unpack1("c")
     VERSION = 1
     VERSION_MASK = 0x1f
     TYPE_MASK = 0xE0
@@ -410,7 +410,7 @@ module Thrift
 
     def read_double
       trans.read_into_buffer(@rbuf, 8)
-      val = @rbuf.reverse.unpack("G").first
+      val = @rbuf.reverse.unpack1("G")
       val
     end
 

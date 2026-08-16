@@ -43,7 +43,7 @@ module Thrift
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid UUID data length")
       end
 
-      hex = bytes.unpack("H*").first
+      hex = bytes.unpack1("H*")
       "#{hex[0, 8]}-#{hex[8, 4]}-#{hex[12, 4]}-#{hex[16, 4]}-#{hex[20, 12]}"
     end
   end
