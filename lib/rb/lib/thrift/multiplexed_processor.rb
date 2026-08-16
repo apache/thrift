@@ -71,7 +71,6 @@ module Thrift
   end
 
   class StoredMessageProtocol < BaseProtocol
-
     include ProtocolDecorator
 
     def initialize(protocol, message_begin)

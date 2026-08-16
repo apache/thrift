@@ -26,7 +26,6 @@ class TestRecursiveGeneration < Test::Unit::TestCase
   PARENT_ITEM = "parent item"
 
   def test_can_create_recursive_tree
-
     child_tree = RecTree.new
     child_tree.item = CHILD_ITEM
 

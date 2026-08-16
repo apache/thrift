@@ -24,7 +24,6 @@ require "thrift/exceptions"
 
 module Thrift
   class ProtocolException < Exception
-
     UNKNOWN = 0
     INVALID_DATA = 1
     NEGATIVE_SIZE = 2
@@ -42,7 +41,6 @@ module Thrift
   end
 
   class BaseProtocol
-
     MAX_CONTAINER_SIZE = (1 << 31) - 1
 
     attr_reader :trans

@@ -28,7 +28,6 @@ require "thrift/server/rack_application"
 # server instead.
 module Thrift
   class ThinHTTPServer < BaseServer
-
     ##
     # Accepts a Thrift::Processor
     # Options include:

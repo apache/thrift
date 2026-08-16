@@ -107,7 +107,6 @@ class SimpleHandler
   def testOneway(arg0)
     sleep(arg0)
   end
-
 end
 
 class SecondHandler

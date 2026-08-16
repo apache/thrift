@@ -445,10 +445,10 @@ describe "BaseTransport" do
 
     it "should throw an EOFError when there isn't enough data in the buffer" do
       @buffer.reset_buffer("")
-      expect{ @buffer.read(1) }.to raise_error(EOFError)
+      expect { @buffer.read(1) }.to raise_error(EOFError)
 
       @buffer.reset_buffer("1234")
-      expect{ @buffer.read(5) }.to raise_error(EOFError)
+      expect { @buffer.read(5) }.to raise_error(EOFError)
     end
 
     it "should reject negative read sizes without consuming input" do

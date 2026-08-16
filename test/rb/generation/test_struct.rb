@@ -22,7 +22,6 @@ require File.join(File.dirname(__FILE__), "../test_helper")
 require "small_service"
 
 class TestStructGeneration < Test::Unit::TestCase
-
   def test_default_values
     hello = TestNamespace::Hello.new
 
@@ -45,5 +44,4 @@ class TestStructGeneration < Test::Unit::TestCase
   def test_goodbyez
     assert_equal(TestNamespace::Goodbyez.new.val, 325)
   end
-
 end

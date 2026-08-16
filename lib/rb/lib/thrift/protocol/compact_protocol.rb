@@ -20,7 +20,6 @@
 
 module Thrift
   class CompactProtocol < BaseProtocol
-
     PROTOCOL_ID = [0x82].pack("c").unpack("c").first
     VERSION = 1
     VERSION_MASK = 0x1f

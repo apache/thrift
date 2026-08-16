@@ -31,7 +31,6 @@ module Thrift
   end
 
   class ApplicationException < Exception
-
     UNKNOWN = 0
     UNKNOWN_METHOD = 1
     INVALID_MESSAGE_TYPE = 2
@@ -87,6 +86,5 @@ module Thrift
       oprot.write_field_stop
       oprot.write_struct_end
     end
-
   end
 end
