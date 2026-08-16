@@ -30,7 +30,7 @@ module Thrift
     end
 
     def open?
-      return true
+      true
     end
 
     def open

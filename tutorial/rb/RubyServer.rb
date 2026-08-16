@@ -38,7 +38,7 @@ class CalculatorHandler
 
   def add(n1, n2)
     print "add(", n1, ",", n2, ")\n"
-    return n1 + n2
+    n1 + n2
   end
 
   def calculate(logid, work)
@@ -69,12 +69,12 @@ class CalculatorHandler
     entry.value = val.to_s
     @log[logid] = entry
 
-    return val
+    val
   end
 
   def getStruct(key)
     print "getStruct(", key, ")\n"
-    return @log[key]
+    @log[key]
   end
 
   def zip()

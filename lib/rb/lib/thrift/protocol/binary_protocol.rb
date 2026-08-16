@@ -285,7 +285,7 @@ module Thrift
 
   class BinaryProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
-      return Thrift::BinaryProtocol.new(trans)
+      Thrift::BinaryProtocol.new(trans)
     end
 
     def to_s

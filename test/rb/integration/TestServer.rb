@@ -47,7 +47,7 @@ class SimpleHandler
   end
 
   def testInsanity(thing)
-    return {
+    {
       1 => {
         2 => thing,
         3 => thing,
@@ -59,7 +59,7 @@ class SimpleHandler
   end
 
   def testMapMap(thing)
-    return {
+    {
       -4 => {
         -4 => -4,
         -3 => -3,
@@ -76,7 +76,7 @@ class SimpleHandler
   end
 
   def testMulti(arg0, arg1, arg2, arg3, arg4, arg5)
-    return Thrift::Test::Xtruct.new({
+    Thrift::Test::Xtruct.new({
       "string_thing" => "Hello2",
       "byte_thing" => arg0,
       "i32_thing" => arg1,
@@ -100,7 +100,7 @@ class SimpleHandler
     elsif arg0 == "Xception"
       raise Thrift::Test::Xception, {errorCode: 1001, message: "This is an Xception"}
     else
-      return ::Thrift::Test::Xtruct.new({"string_thing" => arg1})
+      ::Thrift::Test::Xtruct.new({"string_thing" => arg1})
     end
   end
 
