@@ -316,11 +316,11 @@ describe "recursion depth limit" do
       error = Thrift::ApplicationException.new(Thrift::ApplicationException::UNKNOWN, "message")
       protocol = binary_protocol
 
-      protocol.write_type({:type => Thrift::Types::STRUCT}, error, 2)
+      protocol.write_type({type: Thrift::Types::STRUCT}, error, 2)
       expect {
         SpecNamespace::RecStruct.new.read_field(
           protocol,
-          {:type => Thrift::Types::STRUCT, :class => Thrift::ApplicationException},
+          {type: Thrift::Types::STRUCT, class: Thrift::ApplicationException},
           2
         )
       }.not_to raise_error

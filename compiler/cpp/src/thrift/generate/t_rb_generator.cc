@@ -752,44 +752,44 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out,
   field_type = get_true_type(field_type);
 
   // Begin this field's defn
-  out << "{:type => " << type_to_enum(field_type);
+  out << "{type: " << type_to_enum(field_type);
 
   if (!field_name.empty()) {
-    out << ", :name => \"" << field_name << "\"";
+    out << ", name: \"" << field_name << "\"";
   }
 
   if (field_value != nullptr) {
-    out << ", :default => ";
+    out << ", default: ";
     render_const_value(out, field_type, field_value);
   }
 
   if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
-      out << ", :class => " << full_type_name((t_struct*)field_type);
+      out << ", class: " << full_type_name((t_struct*)field_type);
     } else if (field_type->is_list()) {
-      out << ", :element => ";
+      out << ", element: ";
       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
     } else if (field_type->is_map()) {
-      out << ", :key => ";
+      out << ", key: ";
       generate_field_data(out, ((t_map*)field_type)->get_key_type());
-      out << ", :value => ";
+      out << ", value: ";
       generate_field_data(out, ((t_map*)field_type)->get_val_type());
     } else if (field_type->is_set()) {
-      out << ", :element => ";
+      out << ", element: ";
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
     }
   } else {
     if (((t_base_type*)field_type)->is_binary()) {
-      out << ", :binary => true";
+      out << ", binary: true";
     }
   }
 
   if (optional) {
-    out << ", :optional => true";
+    out << ", optional: true";
   }
 
   if (field_type->is_enum()) {
-    out << ", :enum_class => " << full_type_name(field_type);
+    out << ", enum_class: " << full_type_name(field_type);
   }
 
   // End of this field's defn
@@ -960,8 +960,15 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
     f_service_.indent() << messageSendProc << "(\"" << funname << "\", " << argsname;
 
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
+    if (!fields.empty()) {
+      f_service_ << ", {";
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (fld_iter != fields.begin()) {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name() << ": " << (*fld_iter)->get_name();
+      }
+      f_service_ << "}";
     }
 
     f_service_ << ")" << '\n';

@@ -84,9 +84,9 @@ class SimpleHandler
 
   def testException(thing)
     if thing == "Xception"
-      raise Thrift::Test::Xception, :errorCode => 1001, :message => thing
+      raise Thrift::Test::Xception, {errorCode: 1001, message: thing}
     elsif thing == "TException"
-      raise Thrift::Exception, :message => thing
+      raise Thrift::Exception, {message: thing}
     else
       # no-op
     end
@@ -94,9 +94,9 @@ class SimpleHandler
 
   def testMultiException(arg0, arg1)
     if arg0 == "Xception2"
-      raise Thrift::Test::Xception2, :errorCode => 2002, :struct_thing => ::Thrift::Test::Xtruct.new({ :string_thing => "This is an Xception2" })
+      raise Thrift::Test::Xception2, {errorCode: 2002, struct_thing: ::Thrift::Test::Xtruct.new({ string_thing: "This is an Xception2" })}
     elsif arg0 == "Xception"
-      raise Thrift::Test::Xception, :errorCode => 1001, :message => "This is an Xception"
+      raise Thrift::Test::Xception, {errorCode: 1001, message: "This is an Xception"}
     else
       return ::Thrift::Test::Xtruct.new({"string_thing" => arg1})
     end
@@ -275,13 +275,13 @@ end
 server = case normalized_server_type
 when "thin"
   require "thrift/server/thin_http_server"
-  thin_options = { :port => options[:port], :protocol_factory => protocol_factory }
+  thin_options = { port: options[:port], protocol_factory: protocol_factory }
   if options[:ssl]
     thin_options[:ssl] = true
     thin_options[:ssl_options] = {
-      :private_key_file => File.join(keys_dir, "server.key"),
-      :cert_chain_file => File.join(keys_dir, "server.crt"),
-      :verify_peer => false
+      private_key_file: File.join(keys_dir, "server.key"),
+      cert_chain_file: File.join(keys_dir, "server.crt"),
+      verify_peer: false
     }
   end
   Thrift::ThinHTTPServer.new(processor, thin_options)

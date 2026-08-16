@@ -33,7 +33,7 @@ describe "NonblockingServer" do
       if english
         SpecNamespace::Hello.new
       else
-        SpecNamespace::Hello.new(:greeting => "Aloha!")
+        SpecNamespace::Hello.new(greeting: "Aloha!")
       end
     end
 
@@ -181,7 +181,7 @@ describe "NonblockingServer" do
     it "should handle basic message passing" do
       client = setup_client
       expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
-      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => "Aloha!"))
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(greeting: "Aloha!"))
       @server.shutdown
     end
 
@@ -222,7 +222,7 @@ describe "NonblockingServer" do
       4.times { expect(result.pop).to be_truthy }
       queues[2] << :hello
       expect(result.pop).to eq(SpecNamespace::Hello.new)
-      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => "Aloha!"))
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(greeting: "Aloha!"))
       7.times { queues.shift << :exit }
       expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       @server.shutdown
@@ -271,12 +271,12 @@ describe "NonblockingServer" do
       error = RuntimeError.new("plain accept failed")
       server_transport = double(
         "server transport",
-        :listen => nil,
-        :closed? => false,
-        :close => nil
+        listen: nil,
+        closed?: false,
+        close: nil
       )
       allow(server_transport).to receive(:accept).and_raise(error)
-      io_manager = double("IOManager", :ensure_closed => nil)
+      io_manager = double("IOManager", ensure_closed: nil)
       server = Thrift::NonblockingServer.new(
         double("processor"),
         server_transport,
@@ -308,9 +308,9 @@ describe "NonblockingServer" do
 
     it "closes tracked connections and signal pipes during forced cleanup" do
       io_manager = build_io_manager
-      connection = double("connection", :close => nil)
-      pipe_a = double("pipe_a", :closed? => false, :close => nil)
-      pipe_b = double("pipe_b", :closed? => false, :close => nil)
+      connection = double("connection", close: nil)
+      pipe_a = double("pipe_a", closed?: false, close: nil)
+      pipe_b = double("pipe_b", closed?: false, close: nil)
 
       io_manager.instance_variable_set(:@connections, [connection])
       io_manager.instance_variable_set(:@buffers, { connection => "frame" })
@@ -328,8 +328,8 @@ describe "NonblockingServer" do
 
     it "continues closing remaining signal pipes when one close raises" do
       io_manager = build_io_manager
-      pipe_a = double("pipe_a", :closed? => false)
-      pipe_b = double("pipe_b", :closed? => false, :close => nil)
+      pipe_a = double("pipe_a", closed?: false)
+      pipe_b = double("pipe_b", closed?: false, close: nil)
 
       allow(pipe_a).to receive(:close).and_raise(IOError)
 
@@ -344,7 +344,7 @@ describe "NonblockingServer" do
 
     it "drops removed connections from bookkeeping" do
       io_manager = build_io_manager
-      connection = double("connection", :close => nil)
+      connection = double("connection", close: nil)
 
       io_manager.instance_variable_set(:@connections, [connection])
       io_manager.instance_variable_set(:@buffers, { connection => "frame" })

@@ -171,7 +171,7 @@ describe "Union" do
 
     it "should properly serialize and match structs with a union" do
       union = SpecNamespace::My_union.new(:integer32, 26)
-      swu = SpecNamespace::Struct_with_union.new(:fun_union => union)
+      swu = SpecNamespace::Struct_with_union.new(fun_union: union)
 
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -179,7 +179,7 @@ describe "Union" do
       swu.write(proto)
 
       other_union = SpecNamespace::My_union.new(:some_characters, "hello there")
-      swu2 = SpecNamespace::Struct_with_union.new(:fun_union => other_union)
+      swu2 = SpecNamespace::Struct_with_union.new(fun_union: other_union)
 
       expect(swu2).not_to eq(swu)
 
@@ -188,7 +188,7 @@ describe "Union" do
     end
 
     it "should support old style constructor" do
-      union = SpecNamespace::My_union.new(:integer32 => 26)
+      union = SpecNamespace::My_union.new(integer32: 26)
       expect(union.get_set_field).to eq(:integer32)
       expect(union.get_value).to eq(26)
     end
@@ -198,20 +198,20 @@ describe "Union" do
     end
 
     it "should print enum value name when inspected" do
-      expect(SpecNamespace::My_union.new(:some_enum => SpecNamespace::SomeEnum::ONE).inspect).to eq("<SpecNamespace::My_union some_enum: ONE (0)>")
+      expect(SpecNamespace::My_union.new(some_enum: SpecNamespace::SomeEnum::ONE).inspect).to eq("<SpecNamespace::My_union some_enum: ONE (0)>")
 
-      expect(SpecNamespace::My_union.new(:my_map => {SpecNamespace::SomeEnum::ONE => [SpecNamespace::SomeEnum::TWO]}).inspect).to eq("<SpecNamespace::My_union my_map: {ONE (0): [TWO (1)]}>")
+      expect(SpecNamespace::My_union.new(my_map: {SpecNamespace::SomeEnum::ONE => [SpecNamespace::SomeEnum::TWO]}).inspect).to eq("<SpecNamespace::My_union my_map: {ONE (0): [TWO (1)]}>")
     end
 
     it "should offer field? methods" do
       expect(SpecNamespace::My_union.new.some_enum?).to be_falsey
-      expect(SpecNamespace::My_union.new(:some_enum => SpecNamespace::SomeEnum::ONE).some_enum?).to be_truthy
-      expect(SpecNamespace::My_union.new(:im_true => false).im_true?).to be_truthy
-      expect(SpecNamespace::My_union.new(:im_true => true).im_true?).to be_truthy
+      expect(SpecNamespace::My_union.new(some_enum: SpecNamespace::SomeEnum::ONE).some_enum?).to be_truthy
+      expect(SpecNamespace::My_union.new(im_true: false).im_true?).to be_truthy
+      expect(SpecNamespace::My_union.new(im_true: true).im_true?).to be_truthy
     end
 
     it "should pretty print binary fields" do
-      expect(SpecNamespace::TestUnion.new(:binary_field => "\001\002\003").inspect).to eq("<SpecNamespace::TestUnion binary_field: 010203>")
+      expect(SpecNamespace::TestUnion.new(binary_field: "\001\002\003").inspect).to eq("<SpecNamespace::TestUnion binary_field: 010203>")
     end
 
     it "should be comparable" do

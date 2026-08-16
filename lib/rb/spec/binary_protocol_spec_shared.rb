@@ -406,15 +406,15 @@ shared_examples_for "a binary protocol" do
 
   it "should decode fixed-width signed edge byte patterns" do
     {
-      :read_i16 => {
+      read_i16: {
         [0x80, 0x00] => -(2**15),
         [0xff, 0xff] => -1
       },
-      :read_i32 => {
+      read_i32: {
         [0x80, 0x00, 0x00, 0x00] => -(2**31),
         [0xff, 0xff, 0xff, 0xff] => -1
       },
-      :read_i64 => {
+      read_i64: {
         [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] => -(2**63),
         [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff] => -1
       }

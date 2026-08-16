@@ -27,13 +27,13 @@ describe "SSLSocket" do
       @context = OpenSSL::SSL::SSLContext.new
       @socket = Thrift::SSLSocket.new
       @addrinfo = double("Addrinfo")
-      @simple_socket_handle = double("Handle", :closed? => false)
+      @simple_socket_handle = double("Handle", closed?: false)
       allow(@simple_socket_handle).to receive(:close)
       allow(@simple_socket_handle).to receive(:setsockopt)
       allow(@simple_socket_handle).to receive(:wait_readable)
       allow(@simple_socket_handle).to receive(:wait_writable)
 
-      @handle = double("SSLHandle", :closed? => false)
+      @handle = double("SSLHandle", closed?: false)
       allow(@handle).to receive(:connect).and_return(true)
       allow(@handle).to receive(:connect_nonblock).and_return(@handle)
       allow(@handle).to receive(:close)
@@ -71,7 +71,7 @@ describe "SSLSocket" do
     end
 
     it "should accept host/port options" do
-      handle = double("Handle", :closed? => false)
+      handle = double("Handle", closed?: false)
       allow(handle).to receive(:close)
       expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0)
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)

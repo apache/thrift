@@ -390,10 +390,10 @@ class SimpleClientTest < Test::Unit::TestCase
     p "test_multi"
     ret = @client.testMulti(42, 4242, 424242, {1 => "blah", 2 => "thing"}, Thrift::Test::Numberz::EIGHT, 24)
     expected = Thrift::Test::Xtruct.new({
-      :string_thing => "Hello2",
-      :byte_thing =>   42,
-      :i32_thing =>    4242,
-      :i64_thing =>    424242
+      string_thing: "Hello2",
+      byte_thing: 42,
+      i32_thing: 4242,
+      i64_thing: 424242
     })
     assert_equal(expected, ret)
   end
