@@ -151,11 +151,11 @@ describe "HeaderTransport" do
         expect(data.bytesize).to be > 16
 
         # First 4 bytes are frame length
-        frame_size = data[0, 4].unpack("N").first
+        frame_size = data[0, 4].unpack1("N")
         expect(frame_size).to eq(data.bytesize - 4)
 
         # Next 2 bytes should be header magic
-        magic = data[4, 2].unpack("n").first
+        magic = data[4, 2].unpack1("n")
         expect(magic).to eq(Thrift::HeaderTransport::HEADER_MAGIC)
       end
 
@@ -175,7 +175,7 @@ describe "HeaderTransport" do
         @trans.flush
 
         data = @underlying.read(@underlying.available)
-        expect(data[8, 4].unpack("N").first).to eq(456)
+        expect(data[8, 4].unpack1("N")).to eq(456)
       end
 
       it "should apply ZLIB transform" do

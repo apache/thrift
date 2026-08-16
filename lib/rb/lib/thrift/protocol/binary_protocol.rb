@@ -214,7 +214,7 @@ module Thrift
 
     def read_i16
       trans.read_into_buffer(@rbuf, 2)
-      val, = @rbuf.unpack("n")
+      val = @rbuf.unpack1("n")
       if (val > 0x7fff)
         val = 0 - ((val - 1) ^ 0xffff)
       end
@@ -223,7 +223,7 @@ module Thrift
 
     def read_i32
       trans.read_into_buffer(@rbuf, 4)
-      val, = @rbuf.unpack("N")
+      val = @rbuf.unpack1("N")
       if (val > 0x7fffffff)
         val = 0 - ((val - 1) ^ 0xffffffff)
       end
@@ -244,7 +244,7 @@ module Thrift
 
     def read_double
       trans.read_into_buffer(@rbuf, 8)
-      val = @rbuf.unpack("G").first
+      val = @rbuf.unpack1("G")
       val
     end
 

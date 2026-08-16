@@ -188,7 +188,7 @@ module Thrift
       elsif value.is_a? Set
         inspect_collection(value, field_info)
       elsif value.is_a?(String) && field_info[:binary]
-        value.unpack("H*").first
+        value.unpack1("H*")
       else
         value.inspect
       end

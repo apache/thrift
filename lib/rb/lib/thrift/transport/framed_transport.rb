@@ -107,7 +107,7 @@ module Thrift
     private
 
     def read_frame
-      sz = @transport.read_all(4).unpack("N").first
+      sz = @transport.read_all(4).unpack1("N")
 
       @index = 0
       @rbuf = @transport.read_all(sz)

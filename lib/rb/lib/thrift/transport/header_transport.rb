@@ -285,7 +285,7 @@ module Thrift
       rescue EOFError
         raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame size")
       end
-      frame_size = first_word.unpack("N").first
+      frame_size = first_word.unpack1("N")
 
       # Check for unframed binary protocol
       if (frame_size & BINARY_VERSION_MASK) == BINARY_VERSION_1
@@ -324,7 +324,7 @@ module Thrift
       second_word = frame_buf.read(4)
       frame_buf.rewind
 
-      magic = second_word.unpack("n").first
+      magic = second_word.unpack1("n")
 
       if magic == HEADER_MAGIC
         if frame_size < 10
@@ -332,7 +332,7 @@ module Thrift
         end
         set_client_type(HeaderClientType::HEADERS)
         @read_buffer = parse_header_format(frame_buf)
-      elsif (second_word.unpack("N").first & BINARY_VERSION_MASK) == BINARY_VERSION_1
+      elsif (second_word.unpack1("N") & BINARY_VERSION_MASK) == BINARY_VERSION_1
         set_client_type(HeaderClientType::FRAMED_BINARY)
         @protocol_id = HeaderSubprotocolID::BINARY
         @read_buffer = frame_buf
@@ -382,11 +382,11 @@ module Thrift
       buf.read(2)
 
       # Read flags and sequence ID
-      @flags = buf.read(2).unpack("n").first
-      @sequence_id = signed_int32(buf.read(4).unpack("N").first)
+      @flags = buf.read(2).unpack1("n")
+      @sequence_id = signed_int32(buf.read(4).unpack1("N"))
 
       # Read header length (in 32-bit words)
-      header_words = buf.read(2).unpack("n").first
+      header_words = buf.read(2).unpack1("n")
       if header_words >= 16_384
         raise TransportException.new(TransportException::UNKNOWN, "Header size is unreasonable")
       end
