@@ -163,15 +163,13 @@ module Thrift
             break if read_signals == :shutdown
           end
           rd.each do |fd|
-            begin
-              if fd.handle.eof?
-                remove_connection fd
-              else
-                read_connection fd
-              end
-            rescue Errno::ECONNRESET
+            if fd.handle.eof?
               remove_connection fd
+            else
+              read_connection fd
             end
+          rescue Errno::ECONNRESET
+            remove_connection fd
           end
         end
         join_worker_threads(@shutdown_timeout)
@@ -259,10 +257,8 @@ module Thrift
 
       def close_connections
         @connections.each do |fd|
-          begin
-            fd.close
-          rescue IOError, SystemCallError, TransportException
-          end
+          fd.close
+        rescue IOError, SystemCallError, TransportException
         end
         @connections.clear
         @buffers.clear
@@ -270,10 +266,8 @@ module Thrift
 
       def close_signal_pipes
         @signal_pipes.each do |pipe|
-          begin
-            pipe.close unless pipe.closed?
-          rescue IOError
-          end
+          pipe.close unless pipe.closed?
+        rescue IOError
         end
       end
 

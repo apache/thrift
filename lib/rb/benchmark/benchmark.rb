@@ -122,11 +122,9 @@ class BenchmarkManager
       rd, = select(@pool)
       next if rd.nil?
       rd.each do |fd|
-        begin
-          @buffers[fd] << fd.readpartial(4096)
-        rescue EOFError
-          @pool.delete fd
-        end
+        @buffers[fd] << fd.readpartial(4096)
+      rescue EOFError
+        @pool.delete fd
       end
     end
   end

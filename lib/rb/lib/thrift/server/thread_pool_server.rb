@@ -47,30 +47,28 @@ module Thrift
         loop do
           @thread_q.push(:token)
           Thread.new do
-            begin
-              loop do
-                begin
-                  client = @server_transport.accept
-                rescue => e
-                  next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
-                  raise
-                end
-                trans = @transport_factory.get_transport(client)
-                prot = @protocol_factory.get_protocol(trans)
-                begin
-                  loop do
-                    @processor.process(prot, prot)
-                  end
-                rescue Thrift::TransportException, Thrift::ProtocolException => e
-                ensure
-                  trans.close
-                end
+            loop do
+              begin
+                client = @server_transport.accept
+              rescue => e
+                next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+                raise
               end
-            rescue => e
-              @exception_q.push(e)
-            ensure
-              @thread_q.pop # thread died!
+              trans = @transport_factory.get_transport(client)
+              prot = @protocol_factory.get_protocol(trans)
+              begin
+                loop do
+                  @processor.process(prot, prot)
+                end
+              rescue Thrift::TransportException, Thrift::ProtocolException => e
+              ensure
+                trans.close
+              end
             end
+          rescue => e
+            @exception_q.push(e)
+          ensure
+            @thread_q.pop # thread died!
           end
         end
       ensure

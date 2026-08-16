@@ -113,13 +113,11 @@ describe "NonblockingServer" do
       @server = Thrift::NonblockingServer.new(processor, @transport, transport_factory, nil, 5, logger)
       handler.server = @server
       @server_thread = Thread.new(Thread.current) do |master_thread|
-        begin
-          @server.serve
-        rescue => e
-          p e
-          puts e.backtrace * "\n"
-          master_thread.raise e
-        end
+        @server.serve
+      rescue => e
+        p e
+        puts e.backtrace * "\n"
+        master_thread.raise e
       end
       queue.pop
       wait_until_listening(@transport, @server_thread)
@@ -149,31 +147,29 @@ describe "NonblockingServer" do
     def setup_client_thread(result)
       queue = Queue.new
       Thread.new do
-        begin
-          client = setup_client
-          while (cmd = queue.pop)
-            msg, *args = cmd
-            case msg
-            when :block
-              result << client.block
-            when :unblock
-              client.unblock(args.first)
-            when :hello
-              result << client.greeting(true) # ignore result
-            when :sleep
-              client.sleep(args[0] || 0.5)
-              result << :slept
-            when :shutdown
-              client.shutdown
-            when :exit
-              result << :done
-              break
-            end
+        client = setup_client
+        while (cmd = queue.pop)
+          msg, *args = cmd
+          case msg
+          when :block
+            result << client.block
+          when :unblock
+            client.unblock(args.first)
+          when :hello
+            result << client.greeting(true) # ignore result
+          when :sleep
+            client.sleep(args[0] || 0.5)
+            result << :slept
+          when :shutdown
+            client.shutdown
+          when :exit
+            result << :done
+            break
           end
-          @clients.each { |c, t| t.close and break if c == client } # close the transport
-        rescue => e
-          raise e unless @catch_exceptions
         end
+        @clients.each { |c, t| t.close and break if c == client } # close the transport
+      rescue => e
+        raise e unless @catch_exceptions
       end
       queue
     end
@@ -190,11 +186,9 @@ describe "NonblockingServer" do
       trans_queue = Queue.new
       4.times do
         Thread.new(Thread.current) do |main_thread|
-          begin
-            queue.push setup_client(trans_queue).block
-          rescue => e
-            main_thread.raise e
-          end
+          queue.push setup_client(trans_queue).block
+        rescue => e
+          main_thread.raise e
         end
       end
       4.times { trans_queue.pop }
@@ -376,11 +370,9 @@ describe "NonblockingServer" do
       handler.server = @server
 
       @server_thread = Thread.new(Thread.current) do |master_thread|
-        begin
-          @server.serve
-        rescue => e
-          master_thread.raise e
-        end
+        @server.serve
+      rescue => e
+        master_thread.raise e
       end
 
       @clients = []
