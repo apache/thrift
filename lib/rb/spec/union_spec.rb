@@ -194,7 +194,7 @@ describe "Union" do
     end
 
     it "should not throw an error when inspected and unset" do
-      expect{ SpecNamespace::TestUnion.new().inspect }.not_to raise_error
+      expect { SpecNamespace::TestUnion.new().inspect }.not_to raise_error
     end
 
     it "should print enum value name when inspected" do

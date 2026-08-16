@@ -606,7 +606,7 @@ void t_rb_generator::generate_rb_struct(t_rb_ofstream& out,
   out << '\n';
 
   out.indent_up();
-  out.indent() << "include ::Thrift::Struct, ::Thrift::Struct_Union" << '\n';
+  out.indent() << "include ::Thrift::Struct, ::Thrift::Struct_Union" << '\n' << '\n';
 
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
@@ -635,7 +635,7 @@ void t_rb_generator::generate_rb_union(t_rb_ofstream& out,
   out.indent() << "class " << type_name(tstruct) << " < ::Thrift::Union" << '\n';
 
   out.indent_up();
-  out.indent() << "include ::Thrift::Struct_Union" << '\n';
+  out.indent() << "include ::Thrift::Struct_Union" << '\n' << '\n';
 
   generate_field_constructors(out, tstruct);
 
@@ -708,7 +708,9 @@ void t_rb_generator::generate_field_constants(t_rb_ofstream& out, t_struct* tstr
 
     out.indent() << field_id_constant_name(field_name) << " = " << (*f_iter)->get_key() << '\n';
   }
-  out << '\n';
+  if (!fields.empty()) {
+    out << '\n';
+  }
 }
 
 void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct) {
@@ -975,11 +977,14 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   f_service_.indent() << "class Client" << extends_client << '\n';
   f_service_.indent_up();
 
-  f_service_.indent() << "include ::Thrift::Client" << '\n' << '\n';
-
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
+  f_service_.indent() << "include ::Thrift::Client" << '\n';
+  if (!functions.empty()) {
+    f_service_ << '\n';
+  }
+
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -1080,7 +1085,11 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       // Close function
       f_service_.indent_down();
-      f_service_.indent() << "end" << '\n' << '\n';
+      f_service_.indent() << "end" << '\n';
+    }
+
+    if (f_iter + 1 != functions.end()) {
+      f_service_ << '\n';
     }
   }
 
@@ -1110,11 +1119,17 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   f_service_.indent() << "class Processor" << extends_processor << '\n';
   f_service_.indent_up();
 
-  f_service_.indent() << "include ::Thrift::Processor" << '\n' << '\n';
+  f_service_.indent() << "include ::Thrift::Processor" << '\n';
+  if (!functions.empty()) {
+    f_service_ << '\n';
+  }
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
+    if (f_iter + 1 != functions.end()) {
+      f_service_ << '\n';
+    }
   }
 
   f_service_.indent_down();
@@ -1193,7 +1208,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   if (tfunction->is_oneway()) {
     f_service_.indent() << "return" << '\n';
     f_service_.indent_down();
-    f_service_.indent() << "end" << '\n' << '\n';
+    f_service_.indent() << "end" << '\n';
     return;
   }
 
@@ -1202,7 +1217,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Close function
   f_service_.indent_down();
-  f_service_.indent() << "end" << '\n' << '\n';
+  f_service_.indent() << "end" << '\n';
 }
 
 /**

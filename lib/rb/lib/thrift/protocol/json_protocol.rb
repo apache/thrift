@@ -111,7 +111,6 @@ module Thrift
 
   # Context class for lists
   class JSONListContext < JSONContext
-
     def initialize
       @first = true
     end
@@ -134,7 +133,6 @@ module Thrift
   end
 
   class JsonProtocol < BaseProtocol
-
     @@kJSONObjectStart = "{"
     @@kJSONObjectEnd = "}"
     @@kJSONArrayStart = "["

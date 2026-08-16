@@ -99,10 +99,12 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     std::remove(thrift_path.c_str());
 }
 
-TEST_CASE("t_rb_generator emits service arguments as a positional hash", "[functional]")
+TEST_CASE("t_rb_generator formats service classes and positional arguments", "[functional]")
 {
     const string thrift_path = "test_service_arguments.thrift";
     const string thrift_source =
+        "service EmptyService {\n"
+        "}\n"
         "service PingService {\n"
         "  oneway void ping(1: i32 n)\n"
         "}\n";
@@ -123,7 +125,18 @@ TEST_CASE("t_rb_generator emits service arguments as a positional hash", "[funct
     REQUIRE_NOTHROW(gen->generate_program());
 
     const string service = read_file("gen-rb/ping_service.rb");
+    const string expected_empty_result =
+        "  class Ping_result\n"
+        "    include ::Thrift::Struct, ::Thrift::Struct_Union\n"
+        "\n"
+        "    FIELDS";
     REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
+    REQUIRE(service.find(expected_empty_result) != string::npos);
+    REQUIRE(service.find("\n\n  end\n") == string::npos);
+
+    const string empty_service = read_file("gen-rb/empty_service.rb");
+    REQUIRE(!empty_service.empty());
+    REQUIRE(empty_service.find("\n\n  end\n") == string::npos);
 
     std::remove(thrift_path.c_str());
 }
@@ -133,6 +146,9 @@ TEST_CASE("t_rb_generator formats multiline Ruby literals, calls, and field meta
     const string thrift_path = "test_multiline_layout.thrift";
     const string thrift_source =
         "struct Item {\n"
+        "  1: string value\n"
+        "}\n"
+        "union Choice {\n"
         "  1: string value\n"
         "}\n"
         "const Item ITEM = {\"value\": \"one\"}\n"
@@ -157,14 +173,39 @@ TEST_CASE("t_rb_generator formats multiline Ruby literals, calls, and field meta
     REQUIRE_NOTHROW(gen->generate_program());
 
     const string constants = read_file("gen-rb/test_multiline_layout_constants.rb");
-    REQUIRE(constants.find("ITEM = ::Item.new({\n  %q\"value\" => %q\"one\",\n})")
-            != string::npos);
-    REQUIRE(constants.find("IDS = Set.new([\n  1,\n  2,\n])") != string::npos);
+    const string expected_item_constant =
+        "ITEM = ::Item.new({\n"
+        "  %q\"value\" => %q\"one\",\n"
+        "})";
+    const string expected_set_constant =
+        "IDS = Set.new([\n"
+        "  1,\n"
+        "  2,\n"
+        "])";
+    REQUIRE(constants.find(expected_item_constant) != string::npos);
+    REQUIRE(constants.find(expected_set_constant) != string::npos);
 
     const string types = read_file("gen-rb/test_multiline_layout_types.rb");
-    REQUIRE(types.find("VALUES_FIELD_ID => {\n      type: ::Thrift::Types::LIST,\n")
-            != string::npos);
-    REQUIRE(types.find("default: [\n        1,\n        2,\n      ],\n") != string::npos);
+    const string expected_struct =
+        "class Item\n"
+        "  include ::Thrift::Struct, ::Thrift::Struct_Union\n"
+        "\n";
+    const string expected_union =
+        "class Choice < ::Thrift::Union\n"
+        "  include ::Thrift::Struct_Union\n"
+        "\n";
+    const string expected_field_metadata =
+        "    VALUES_FIELD_ID => {\n"
+        "      type: ::Thrift::Types::LIST,\n";
+    const string expected_default =
+        "      default: [\n"
+        "        1,\n"
+        "        2,\n"
+        "      ],\n";
+    REQUIRE(types.find(expected_struct) != string::npos);
+    REQUIRE(types.find(expected_union) != string::npos);
+    REQUIRE(types.find(expected_field_metadata) != string::npos);
+    REQUIRE(types.find(expected_default) != string::npos);
 
     std::remove(thrift_path.c_str());
 }

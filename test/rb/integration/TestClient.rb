@@ -433,5 +433,4 @@ class SimpleClientTest < Test::Unit::TestCase
     time2 = Time.now.to_f
     assert_operator (time2-time1), :<, 0.1
   end
-
 end

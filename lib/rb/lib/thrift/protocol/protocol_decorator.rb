@@ -19,7 +19,6 @@
 
 module Thrift
   module ProtocolDecorator
-
     def initialize(protocol)
       @protocol = protocol
     end

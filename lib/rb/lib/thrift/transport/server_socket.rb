@@ -69,6 +69,5 @@ module Thrift
     def to_s
       "socket(#{@host}:#{@port})"
     end
-
   end
 end

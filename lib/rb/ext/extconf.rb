@@ -19,7 +19,7 @@
 #
 
 if defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby"
-  File.open("Makefile", "w"){ |f| f.puts "all:\n\ninstall:\n" }
+  File.open("Makefile", "w") { |f| f.puts "all:\n\ninstall:\n" }
 else
   require "mkmf"
 

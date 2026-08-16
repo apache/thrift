@@ -69,7 +69,6 @@ begin
   print "zip\n"
 
   transport.close()
-
 rescue Thrift::Exception => tx
   print "Thrift::Exception: ", tx.message, "\n"
 end

@@ -15,6 +15,10 @@ Layout/ArgumentAlignment:
 Layout/ArrayAlignment:
   Enabled: true
 
+Layout/BeginEndAlignment:
+  Enabled: true
+  EnforcedStyleAlignWith: start_of_line
+
 Layout/BlockAlignment:
   Enabled: true
   EnforcedStyleAlignWith: start_of_block
@@ -29,10 +33,40 @@ Layout/ClosingParenthesisIndentation:
 Layout/CommentIndentation:
   Enabled: true
 
+Layout/EmptyLineBetweenDefs:
+  Enabled: true
+
 Layout/EmptyLines:
   Enabled: true
 
+Layout/EmptyLinesAfterModuleInclusion:
+  Enabled: true
+
+Layout/EmptyLinesAroundAccessModifier:
+  Enabled: true
+
+Layout/EmptyLinesAroundArguments:
+  Enabled: true
+
+Layout/EmptyLinesAroundAttributeAccessor:
+  Enabled: true
+
+Layout/EmptyLinesAroundBeginBody:
+  Enabled: true
+
 Layout/EmptyLinesAroundBlockBody:
+  Enabled: true
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: true
+
+Layout/EmptyLinesAroundExceptionHandlingKeywords:
+  Enabled: true
+
+Layout/EmptyLinesAroundMethodBody:
+  Enabled: true
+
+Layout/EmptyLinesAroundModuleBody:
   Enabled: true
 
 Layout/ElseAlignment:
@@ -97,6 +131,9 @@ Layout/MultilineMethodCallBraceLayout:
   Enabled: true
   EnforcedStyle: symmetrical
 
+Layout/RescueEnsureAlignment:
+  Enabled: true
+
 Layout/SpaceAfterComma:
   Enabled: true
 
@@ -104,6 +141,9 @@ Layout/SpaceAroundKeyword:
   Enabled: true
 
 Layout/SpaceAroundEqualsInParameterDefault:
+  Enabled: true
+
+Layout/SpaceBeforeBlockBraces:
   Enabled: true
 
 Layout/SpaceBeforeComma:

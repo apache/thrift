@@ -70,7 +70,6 @@ class CalculatorHandler
     @log[logid] = entry
 
     return val
-
   end
 
   def getStruct(key)
@@ -81,7 +80,6 @@ class CalculatorHandler
   def zip()
     print "zip\n"
   end
-
 end
 
 handler = CalculatorHandler.new()

@@ -27,7 +27,6 @@ require "stringio"
 
 module Thrift
   class HTTPClientTransport < BaseTransport
-
     def initialize(url, opts = {})
       @url = URI url
       @headers = {"Content-Type" => "application/x-thrift"}
@@ -37,12 +36,14 @@ module Thrift
     end
 
     def open?; true end
+
     def read(sz)
       data = @inbuf.read sz
       return data unless data.nil?
 
       raise TransportException.new(TransportException::END_OF_FILE, "#{self.class.name} reached EOF reading response from #{to_s}, HTTP status code #{@response_code}")
     end
+
     def write(buf); @outbuf << Bytes.force_binary_encoding(buf) end
 
     def add_headers(headers)
