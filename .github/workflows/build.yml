@@ -164,7 +164,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # master
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # 2.37.1
         with:
           php-version: ${{ matrix.php-version }}
           extensions: intl, xml, curl
@@ -1003,7 +1003,7 @@ jobs:
           python -m pip install "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # master
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # 2.37.1
         with:
           php-version: "8.3"
           extensions: intl, xml, curl, sockets
@@ -1111,8 +1111,8 @@ jobs:
 
       - name: Installs for nodets and nodejs
         run: |
-          npm install .
-          cd lib/nodejs/test/ && npm install .
+          npm ci
+          npm ci --prefix lib/nodejs/test
 
       - name: Create tmp domain socket folder
         run: mkdir /tmp/v0.16
