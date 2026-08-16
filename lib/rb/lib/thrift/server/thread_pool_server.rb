@@ -79,7 +79,7 @@ module Thrift
     end
 
     def to_s
-      "threadpool(#{super.to_s})"
+      "threadpool(#{super})"
     end
   end
 end

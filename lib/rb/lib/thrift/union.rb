@@ -80,7 +80,7 @@ module Thrift
       validate
       oprot.write_struct_begin(self.class.name)
 
-      fid = self.name_to_id(@setfield.to_s)
+      fid = name_to_id(@setfield.to_s)
 
       field_info = struct_fields[fid]
       unless field_info
@@ -116,7 +116,7 @@ module Thrift
         if field_info[:name].to_sym == @setfield
           @value
         else
-          raise RuntimeError, "#{field_info[:name]} is not union's set field."
+          raise "#{field_info[:name]} is not union's set field."
         end
       end
 

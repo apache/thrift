@@ -171,11 +171,11 @@ class TestCompactProtocol < Test::Unit::TestCase
     assert_equal("hello_world123456789!@#$%&", server_results[:acc_string])
     assert_equal((0...256).reverse_each.to_a, server_results[:acc_binary])
     assert_equal(["hello_world", 4, 455536], server_results[:acc_message])
-    assert_equal("[8, 12]", "#{server_results[:acc_list]}")
-    assert_equal("[6, 8, 12]", "#{server_results[:acc_map1]}")
-    assert_equal("[0, 0, 0]", "#{server_results[:acc_map2]}")
-    assert_equal("[8, 5]", "#{server_results[:acc_set]}")
-    assert_equal("[nil, 6, 5]", "#{server_results[:acc_field1]}")
-    assert_equal("[nil, 0, 0]", "#{server_results[:acc_field2]}")
+    assert_equal("[8, 12]", server_results[:acc_list].to_s)
+    assert_equal("[6, 8, 12]", server_results[:acc_map1].to_s)
+    assert_equal("[0, 0, 0]", server_results[:acc_map2].to_s)
+    assert_equal("[8, 5]", server_results[:acc_set].to_s)
+    assert_equal("[nil, 6, 5]", server_results[:acc_field1].to_s)
+    assert_equal("[nil, 0, 0]", server_results[:acc_field2].to_s)
   end
 end

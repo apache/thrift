@@ -101,7 +101,7 @@ module Thrift
     end
 
     def to_s
-      "framed(#{@transport.to_s})"
+      "framed(#{@transport})"
     end
 
     private

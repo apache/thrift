@@ -133,7 +133,7 @@ module Thrift
       return false unless other.instance_of?(self.class)
       each_field do |fid, field_info|
         name = field_info[:name]
-        return false unless other.respond_to?(name) && self.send(name) == other.send(name)
+        return false unless other.respond_to?(name) && send(name) == other.send(name)
       end
       true
     end
@@ -147,7 +147,7 @@ module Thrift
       total = 17
       each_field do |fid, field_info|
         name = field_info[:name]
-        value = self.send(name)
+        value = send(name)
         total = ((total * 37) + value.hash) & 0xffffffff
       end
       total
@@ -160,7 +160,7 @@ module Thrift
       else
         each_field do |fid, field_info|
           name = field_info[:name]
-          diffs << "#{name} differs!" unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
+          diffs << "#{name} differs!" unless instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
         end
       end
       diffs
@@ -184,14 +184,14 @@ module Thrift
 
     def self.qmark_isset_method(klass, field_info)
       klass.send :define_method, "#{field_info[:name]}?" do
-        !self.send(field_info[:name].to_sym).nil?
+        !send(field_info[:name].to_sym).nil?
       end
     end
 
     def <=>(other)
       if self.class == other.class
         each_field do |fid, field_info|
-          v1 = self.send(field_info[:name])
+          v1 = send(field_info[:name])
           v1_set = !v1.nil?
           v2 = other.send(field_info[:name])
           v2_set = !v2.nil?

@@ -49,7 +49,7 @@ module Thrift
     end
 
     def to_s
-      "simple(#{super.to_s})"
+      "simple(#{super})"
     end
   end
 end

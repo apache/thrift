@@ -564,11 +564,11 @@ describe Thrift::CompactProtocol do
   end
 
   def writer(sym)
-    "write_#{sym.to_s}"
+    "write_#{sym}"
   end
 
   def reader(sym)
-    "read_#{sym.to_s}"
+    "read_#{sym}"
   end
 end
 

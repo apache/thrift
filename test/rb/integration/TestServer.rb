@@ -335,7 +335,7 @@ when "nonblocking"
   Thrift::NonblockingServer.new(processor, transport, transport_factory, protocol_factory, workers, logger)
 end
 
-puts "Starting TestServer #{server.to_s}"
+puts "Starting TestServer #{server}"
 if normalized_server_type == "falcon" && options[:ssl]
   server.run.wait
 elsif %w[puma falcon].include?(normalized_server_type)
