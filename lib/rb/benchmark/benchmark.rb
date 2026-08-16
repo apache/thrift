@@ -244,11 +244,11 @@ class BenchmarkManager
     labels_and_values.each do |(l, v)|
       f = fmt
       l, f, c = l if Array === l
-      fmtstr = "%-#{label_width+1}s #{f}"
+      fmtstr = "%-#{label_width + 1}s #{f}"
       if STDOUT.tty? and c and v.to_i > 0
         fmtstr = "\e[#{[*c].map { |x| ANSI[x] } * ";"}m" + fmtstr + "\e[#{ANSI[:reset]}m"
       end
-      puts fmtstr % [l+":", v]
+      puts fmtstr % [l + ":", v]
     end
   end
 end

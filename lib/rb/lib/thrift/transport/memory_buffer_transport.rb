@@ -21,7 +21,7 @@
 
 module Thrift
   class MemoryBufferTransport < BaseTransport
-    GARBAGE_BUFFER_SIZE = 4*(2**10) # 4kB
+    GARBAGE_BUFFER_SIZE = 4 * (2**10) # 4kB
 
     # The transport copies the input buffer and keeps its own mutable storage.
     def initialize(buffer = nil)

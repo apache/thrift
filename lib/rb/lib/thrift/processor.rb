@@ -57,7 +57,7 @@ module Thrift
       else
         iprot.skip(Types::STRUCT)
         iprot.read_message_end
-        x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "Unknown function "+name)
+        x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "Unknown function " + name)
         write_error(x, oprot, name, seqid)
         false
       end

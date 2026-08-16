@@ -421,7 +421,7 @@ class SimpleClientTest < Test::Unit::TestCase
     assert_raise Thrift::Test::Xception2 do
       @client.testMultiException("Xception2", "test 2")
     end
-    assert_equal( @client.testMultiException("Success", "test 3").string_thing, "test 3")
+    assert_equal(@client.testMultiException("Success", "test 3").string_thing, "test 3")
   end
 
   def test_oneway
@@ -431,6 +431,6 @@ class SimpleClientTest < Test::Unit::TestCase
     time1 = Time.now.to_f
     @client.testOneway(1)
     time2 = Time.now.to_f
-    assert_operator (time2-time1), :<, 0.1
+    assert_operator (time2 - time1), :<, 0.1
   end
 end
