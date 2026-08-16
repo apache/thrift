@@ -92,7 +92,7 @@ describe "recursion depth limit" do
       width = MAX_DEPTH * 3
       root = SpecNamespace::RecTree.new(
         item: 0,
-        children: (1..width).map { |item| SpecNamespace::RecTree.new(item: item, children: []) }
+        children: (1..width).map { |item| SpecNamespace::RecTree.new(item: item, children: []) },
       )
 
       protocol = binary_protocol
@@ -321,7 +321,7 @@ describe "recursion depth limit" do
         SpecNamespace::RecStruct.new.read_field(
           protocol,
           {type: Thrift::Types::STRUCT, class: Thrift::ApplicationException},
-          2
+          2,
         )
       }.not_to raise_error
 

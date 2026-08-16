@@ -217,7 +217,7 @@ module Thrift
       end
     end
 
-   # Return true if the character ch is in [-+0-9.Ee]; false otherwise
+    # Return true if the character ch is in [-+0-9.Ee]; false otherwise
     def is_json_numeric(ch)
       case ch
       when "+", "-", ".", "0" .. "9", "E", "e"
@@ -253,10 +253,10 @@ module Thrift
       # 1 : just output index
       # <other> : escape using "\<other>" notation
       kJSONCharTable = [
-          # 0 1 2 3 4 5 6 7 8 9 A B C D E F
-          0, 0, 0, 0, 0, 0, 0, 0, "b", "t", "n", 0, "f", "r", 0, 0, # 0
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
-          1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
+        # 0 1 2 3 4 5 6 7 8 9 A B C D E F
+        0, 0, 0, 0, 0, 0, 0, 0, "b", "t", "n", 0, "f", "r", 0, 0, # 0
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
+        1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
       ]
 
       ch_value = ch[0]

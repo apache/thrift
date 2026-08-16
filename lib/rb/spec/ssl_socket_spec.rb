@@ -369,7 +369,7 @@ describe "SSLSocket" do
         @tcp_server.local_address.ip_port,
         1,
         context,
-        server_hostname: "localhost"
+        server_hostname: "localhost",
       )
     end
 

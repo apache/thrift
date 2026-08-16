@@ -352,8 +352,8 @@ class SimpleClientTest < Test::Unit::TestCase
           "byte_thing" => 2,
           "i32_thing" => 2,
           "i64_thing" => 2,
-        })
-      ]
+        }),
+      ],
     })
 
     ret = @client.testInsanity(insane)
@@ -381,7 +381,7 @@ class SimpleClientTest < Test::Unit::TestCase
         3 => 3,
         2 => 2,
         1 => 1,
-      }
+      },
     }
     assert_equal(expected, ret)
   end
@@ -393,7 +393,7 @@ class SimpleClientTest < Test::Unit::TestCase
       string_thing: "Hello2",
       byte_thing: 42,
       i32_thing: 4242,
-      i64_thing: 424242
+      i64_thing: 424242,
     })
     assert_equal(expected, ret)
   end

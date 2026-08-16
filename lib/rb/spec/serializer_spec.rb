@@ -61,7 +61,7 @@ module DeserializerResetFixtures
     include Thrift::Struct, Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true}
+      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true},
     }.freeze
 
     def struct_fields
@@ -78,7 +78,7 @@ module DeserializerResetFixtures
     include Thrift::Struct, Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: "required_value"}
+      1 => {type: Thrift::Types::STRING, name: "required_value"},
     }.freeze
 
     def struct_fields
@@ -96,7 +96,7 @@ module DeserializerResetFixtures
     include Thrift::Struct_Union
 
     FIELDS = {
-      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true}
+      1 => {type: Thrift::Types::STRING, name: "reset_fields", optional: true},
     }.freeze
 
     def struct_fields
@@ -175,8 +175,8 @@ describe "Serializer" do
           expect(
             Thrift::Deserializer.new(Thrift::JsonProtocolFactory.new).deserialize(
               SpecNamespace::Hello.new,
-              data
-            )
+              data,
+            ),
           ).to eq(value)
         end
       end
@@ -194,7 +194,7 @@ describe "Serializer" do
       end
 
       expect(serializer.serialize(value)).to eq(
-        Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value)
+        Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(value),
       )
     end
 
@@ -203,7 +203,7 @@ describe "Serializer" do
       expected = {
         Thrift::BinaryProtocolFactory => "\v\x00\x01\x00\x00\x00\bGood day\x00".b,
         Thrift::CompactProtocolFactory => "\x18\bGood day\x00".b,
-        Thrift::JsonProtocolFactory => "{\"1\":{\"str\":\"Good day\"}}"
+        Thrift::JsonProtocolFactory => "{\"1\":{\"str\":\"Good day\"}}",
       }
 
       expected.each do |factory_class, bytes|
@@ -225,7 +225,7 @@ describe "Serializer" do
 
     [
       Thrift::HeaderSubprotocolID::BINARY,
-      Thrift::HeaderSubprotocolID::COMPACT
+      Thrift::HeaderSubprotocolID::COMPACT,
     ].each do |protocol_id|
       it "finalizes and round-trips Header protocol #{protocol_id}" do
         value = SpecNamespace::NonblockingService::Shutdown_args.new
@@ -256,8 +256,10 @@ describe "Serializer" do
     it "should deserialize structs from the given protocol" do
       protocol = Thrift::BaseProtocol.new(double("transport"))
       expect(protocol).to receive(:read_struct_begin).and_return("SpecNamespace::Hello")
-      expect(protocol).to receive(:read_field_begin).and_return(["greeting", Thrift::Types::STRING, 1],
-                                                            [nil, Thrift::Types::STOP, 0])
+      expect(protocol).to receive(:read_field_begin).and_return(
+        ["greeting", Thrift::Types::STRING, 1],
+        [nil, Thrift::Types::STOP, 0],
+      )
       expect(protocol).to receive(:read_string).and_return("Good day")
       expect(protocol).to receive(:read_field_end)
       expect(protocol).to receive(:read_struct_end)

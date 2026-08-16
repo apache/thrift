@@ -9,23 +9,93 @@ AllCops:
   Exclude:
     - "**/vendor/**/*"
 
+Layout/ArgumentAlignment:
+  Enabled: true
+
+Layout/ArrayAlignment:
+  Enabled: true
+
+Layout/BlockAlignment:
+  Enabled: true
+  EnforcedStyleAlignWith: start_of_block
+
+Layout/CaseIndentation:
+  Enabled: true
+  EnforcedStyle: end
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: true
+
+Layout/CommentIndentation:
+  Enabled: true
+
 Layout/EmptyLines:
   Enabled: true
 
 Layout/EmptyLinesAroundBlockBody:
   Enabled: true
 
+Layout/ElseAlignment:
+  Enabled: true
+
+Layout/EndAlignment:
+  Enabled: true
+  EnforcedStyleAlignWith: variable
+
 Layout/ExtraSpacing:
   Enabled: true
 
+Layout/FirstArgumentIndentation:
+  Enabled: true
+
+Layout/FirstArrayElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/FirstArrayElementLineBreak:
+  Enabled: true
+
+Layout/FirstHashElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/FirstHashElementLineBreak:
+  Enabled: true
+
+Layout/FirstMethodArgumentLineBreak:
+  Enabled: true
+  AllowMultilineFinalElement: true
+
+Layout/HashAlignment:
+  Enabled: true
+  EnforcedHashRocketStyle:
+    - key
+    - table
+
 Layout/IndentationConsistency:
   Enabled: true
+
+Layout/IndentationWidth:
+  Enabled: true
+  Width: 2
 
 Layout/LeadingCommentSpace:
   Enabled: true
 
 Layout/LeadingEmptyLines:
   Enabled: true
+
+Layout/MultilineArrayBraceLayout:
+  Enabled: true
+  EnforcedStyle: new_line
+
+Layout/MultilineHashBraceLayout:
+  Enabled: true
+  EnforcedStyle: new_line
+
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: true
+  EnforcedStyle: symmetrical
 
 Layout/SpaceAfterComma:
   Enabled: true
@@ -128,3 +198,15 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
+
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: diff_comma
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: true
+  EnforcedStyleForMultiline: comma

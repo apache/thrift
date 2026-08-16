@@ -194,7 +194,7 @@ describe "HeaderTransport" do
       it "should enforce the limit against the complete Header frame" do
         {
           5 => 19,
-          6 => 20
+          6 => 20,
         }.each do |payload_size, declared_size|
           underlying = Thrift::MemoryBufferTransport.new
           trans = Thrift::HeaderTransport.new(underlying)
@@ -214,7 +214,7 @@ describe "HeaderTransport" do
         @trans.write("x" * 7)
         expect { @trans.flush }.to raise_error(
           Thrift::TransportException,
-          "Frame size 21 exceeds maximum 20"
+          "Frame size 21 exceeds maximum 20",
         )
         expect(@underlying.available).to eq(0)
       end
@@ -243,7 +243,7 @@ describe "HeaderTransport" do
         rejected.write("payload")
         expect { rejected.flush }.to raise_error(
           Thrift::TransportException,
-          "Frame size #{declared_size} exceeds maximum #{declared_size - 1}"
+          "Frame size #{declared_size} exceeds maximum #{declared_size - 1}",
         )
 
         rejected.set_max_frame_size(declared_size)
@@ -287,7 +287,7 @@ describe "HeaderTransport" do
 
       {
         "binary" => Thrift::BinaryProtocol,
-        "compact" => Thrift::CompactProtocol
+        "compact" => Thrift::CompactProtocol,
       }.each do |protocol_name, protocol_class|
         it "enforces max frame size for unframed #{protocol_name} messages" do
           payload = unframed_message(protocol_class)
@@ -301,7 +301,7 @@ describe "HeaderTransport" do
           protocol = Thrift::HeaderProtocol.new(over_limit)
           expect { read_unframed_message(protocol) }.to raise_error(
             Thrift::TransportException,
-            "Unframed message size exceeds maximum #{payload.bytesize - 1}"
+            "Unframed message size exceeds maximum #{payload.bytesize - 1}",
           ) do |error|
             expect(error.type).to eq(Thrift::TransportException::SIZE_LIMIT)
           end
@@ -315,7 +315,7 @@ describe "HeaderTransport" do
 
         expect { read_trans.read(1) }.to raise_error(
           Thrift::TransportException,
-          "Unframed message size exceeds maximum 3"
+          "Unframed message size exceeds maximum 3",
         ) do |error|
           expect(error.type).to eq(Thrift::TransportException::SIZE_LIMIT)
         end
@@ -371,12 +371,12 @@ describe "HeaderTransport" do
 
       protocol_pairs = {
         "binary" => [Thrift::BinaryProtocol, Thrift::BinaryProtocol],
-        "compact" => [Thrift::CompactProtocol, Thrift::CompactProtocol]
+        "compact" => [Thrift::CompactProtocol, Thrift::CompactProtocol],
       }
       if defined?(Thrift::BinaryProtocolAccelerated)
         protocol_pairs["accelerated binary"] = [
           Thrift::BinaryProtocol,
-          Thrift::BinaryProtocolAccelerated
+          Thrift::BinaryProtocolAccelerated,
         ]
       end
 
@@ -385,7 +385,7 @@ describe "HeaderTransport" do
           first = unframed_message(writer_class, "first")
           second = unframed_message(writer_class, "second")
           read_trans = Thrift::HeaderTransport.new(
-            Thrift::MemoryBufferTransport.new(first + second)
+            Thrift::MemoryBufferTransport.new(first + second),
           )
           read_trans.set_max_frame_size([first.bytesize, second.bytesize].max)
           expect(read_trans).to receive(:message_boundaries?).once.and_return(true)
@@ -425,20 +425,20 @@ describe "HeaderTransport" do
 
       {
         "invalid" => "not-zlib",
-        "truncated" => Zlib::Deflate.deflate("valid payload")[0...-1]
+        "truncated" => Zlib::Deflate.deflate("valid payload")[0...-1],
       }.each do |failure_type, payload|
         it "adapts #{failure_type} ZLIB payloads to the transport exception boundary" do
           header_data = [
             Thrift::HeaderSubprotocolID::BINARY,
             1,
-            Thrift::HeaderTransformID::ZLIB
+            Thrift::HeaderTransformID::ZLIB,
           ].pack("C*")
           frame = build_header_frame(header_data, payload)
           read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
 
           expect { read_trans.read(1) }.to raise_error(
             Thrift::TransportException,
-            "Invalid ZLIB payload"
+            "Invalid ZLIB payload",
           ) do |error|
             expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
           end
@@ -548,7 +548,7 @@ describe "HeaderTransport" do
         "framed binary" => [:binary_message, true],
         "unframed binary" => [:binary_message, false],
         "framed compact" => [:compact_message, true],
-        "unframed compact" => [:compact_message, false]
+        "unframed compact" => [:compact_message, false],
       }.each do |legacy_name, (legacy_message, is_framed)|
         it "does not carry Header metadata through a #{legacy_name} protocol switch" do
           legacy_payload = public_send(legacy_message)
@@ -596,7 +596,7 @@ describe "HeaderTransport" do
 
         expect { read_trans.reset_protocol }.to raise_error(
           Thrift::TransportException,
-          "Could not detect client transport type"
+          "Could not detect client transport type",
         )
         expect(read_trans.get_headers).to eq({})
       end
@@ -639,7 +639,7 @@ describe "HeaderTransport" do
 
           expect { read_trans.read(1) }.to raise_error(
             Thrift::TransportException,
-            "Frame size #{frame_size} is too small"
+            "Frame size #{frame_size} is too small",
           ) do |error|
             expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
           end
@@ -649,12 +649,12 @@ describe "HeaderTransport" do
       it "reports EOF when the frame size is fragmented" do
         (0..3).each do |available_size|
           read_trans = Thrift::HeaderTransport.new(
-            Thrift::MemoryBufferTransport.new("\x00" * available_size)
+            Thrift::MemoryBufferTransport.new("\x00" * available_size),
           )
 
           expect { read_trans.read(1) }.to raise_error(
             Thrift::TransportException,
-            "Unexpected EOF reading frame size"
+            "Unexpected EOF reading frame size",
           ) do |error|
             expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
           end
@@ -667,7 +667,7 @@ describe "HeaderTransport" do
 
         expect { read_trans.read(1) }.to raise_error(
           Thrift::TransportException,
-          "Unexpected EOF reading frame"
+          "Unexpected EOF reading frame",
         ) do |error|
           expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
         end

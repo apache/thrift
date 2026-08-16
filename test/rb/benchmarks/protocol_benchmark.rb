@@ -76,7 +76,7 @@ module ProtocolBenchmark
       large_runs: env.fetch("THRIFT_BENCHMARK_LARGE_RUNS", DEFAULT_LARGE_RUNS),
       small_runs: env.fetch("THRIFT_BENCHMARK_SMALL_RUNS", DEFAULT_SMALL_RUNS),
       scenarios: env["THRIFT_BENCHMARK_SCENARIOS"],
-      json: false
+      json: false,
     }
 
     OptionParser.new do |parser|
@@ -90,7 +90,7 @@ module ProtocolBenchmark
       large_runs: normalize_run_count(options[:large_runs], "large runs"),
       small_runs: normalize_run_count(options[:small_runs], "small runs"),
       scenarios: normalize_scenarios(options[:scenarios]),
-      json: options[:json]
+      json: options[:json],
     }
   end
 
@@ -302,7 +302,7 @@ module ProtocolBenchmark
         scenario("c-bin-write-large", "c binary write large (1MB) structure #{large_run_label(large_runs)}") { write(accelerated_binary, nested4, count: large_runs) },
         scenario("c-bin-read-large", "c binary read large (1MB) structure #{large_run_label(large_runs)}") { deserialize(accelerated_binary, Fixtures::Structs::Nested4, accelerated_large_payload, count: large_runs) },
         scenario("c-bin-write-small", "c binary write #{small_runs} small structures") { write(accelerated_binary, one_of_each, count: small_runs) },
-        scenario("c-bin-read-small", "c binary read #{small_runs} small structures") { deserialize(accelerated_binary, Fixtures::Structs::OneOfEach, accelerated_small_payload, count: small_runs) }
+        scenario("c-bin-read-small", "c binary read #{small_runs} small structures") { deserialize(accelerated_binary, Fixtures::Structs::OneOfEach, accelerated_small_payload, count: small_runs) },
       ]
     elsif !THRIFT_BENCHMARK_SKIP_NATIVE && with_scenario_selected(scenario_ids, *NATIVE_SCENARIO_IDS)
       warn "Skipping accelerated binary protocol benchmarks: thrift_native extension is unavailable."
@@ -328,7 +328,7 @@ module ProtocolBenchmark
       scenario("hdr-cmp-write-small", "header compact write #{small_runs} small structures") { write(header_compact, one_of_each, count: small_runs) },
       scenario("hdr-cmp-read-small", "header compact read #{small_runs} small structures") { deserialize(header_compact, Fixtures::Structs::OneOfEach, header_compact_payload, count: small_runs) },
       scenario("hdr-zlib-write-small", "header zlib write #{small_runs} small structures") { write(header_zlib, one_of_each, count: small_runs) },
-      scenario("hdr-zlib-read-small", "header zlib read #{small_runs} small structures") { deserialize(header_zlib, Fixtures::Structs::OneOfEach, header_zlib_payload, count: small_runs) }
+      scenario("hdr-zlib-read-small", "header zlib read #{small_runs} small structures") { deserialize(header_zlib, Fixtures::Structs::OneOfEach, header_zlib_payload, count: small_runs) },
     ]
 
     select_scenarios(scenario_list, scenario_ids, native_available: native_available)
@@ -340,7 +340,7 @@ module ProtocolBenchmark
       user: result.utime,
       system: result.stime,
       total: result.total,
-      real: result.real
+      real: result.real,
     }
   end
 
@@ -354,7 +354,7 @@ module ProtocolBenchmark
       {
         id: entry[:id],
         label: entry[:label],
-        benchmark: measure_job(entry[:job], label: entry[:label])
+        benchmark: measure_job(entry[:job], label: entry[:label]),
       }
     end
   end
@@ -371,9 +371,9 @@ module ProtocolBenchmark
           small_runs: small_runs,
           scenarios: scenario_list.map { |entry| entry[:id] },
           skip_native: THRIFT_BENCHMARK_SKIP_NATIVE,
-          native_available: native_available?
+          native_available: native_available?,
         },
-        results: benchmark_scenarios(scenario_list)
+        results: benchmark_scenarios(scenario_list),
       )
       return
     end

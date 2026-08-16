@@ -144,7 +144,7 @@ shared_examples_for "a socket" do
 
     expect { @socket.read_all(4) }.to raise_error(
       Thrift::TransportException,
-      /Timed out reading 3 bytes/
+      /Timed out reading 3 bytes/,
     ) { |error|
       expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
     }
@@ -166,7 +166,7 @@ shared_examples_for "a socket" do
 
     expect { @socket.write("test data") }.to raise_error(
       Thrift::TransportException,
-      /Timed out writing 9 bytes/
+      /Timed out writing 9 bytes/,
     ) { |error|
       expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
     }

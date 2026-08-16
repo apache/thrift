@@ -37,7 +37,7 @@ module StructEqualityFixtures
 
     FIELDS = {
       1 => {type: Thrift::Types::STRING, name: "shared"},
-      2 => {type: Thrift::Types::STRING, name: "extra"}
+      2 => {type: Thrift::Types::STRING, name: "extra"},
     }
 
     def struct_fields; FIELDS; end
@@ -144,21 +144,21 @@ describe "Struct" do
       expect(prot).to receive(:read_struct_begin).twice
       expect(prot).to receive(:read_struct_end).twice
       expect(prot).to receive(:read_field_begin).and_return(
-        ["complex", Thrift::Types::MAP, 5], # Foo
-        ["words", Thrift::Types::STRING, 2], # Foo
-        ["hello", Thrift::Types::STRUCT, 3], # Foo
-          ["greeting", Thrift::Types::STRING, 1], # Hello
-          [nil, Thrift::Types::STOP, 0], # Hello
-        ["simple", Thrift::Types::I32, 1], # Foo
-        ["ints", Thrift::Types::LIST, 4], # Foo
-        ["shorts", Thrift::Types::SET, 6], # Foo
-        [nil, Thrift::Types::STOP, 0] # Hello
+        ["complex", Thrift::Types::MAP, 5], # Foo/complex
+        ["words", Thrift::Types::STRING, 2], # Foo/words
+        ["hello", Thrift::Types::STRUCT, 3], # Foo/hello
+        ["greeting", Thrift::Types::STRING, 1], # Foo/hello/greeting
+        [nil, Thrift::Types::STOP, 0], # Foo/hello
+        ["simple", Thrift::Types::I32, 1], # Foo/simple
+        ["ints", Thrift::Types::LIST, 4], # Foo/ints
+        ["shorts", Thrift::Types::SET, 6], # Foo/shorts
+        [nil, Thrift::Types::STOP, 0], # Foo
       )
       expect(prot).to receive(:read_field_end).exactly(7).times
       expect(prot).to receive(:read_map_begin).and_return(
-        [Thrift::Types::I32, Thrift::Types::MAP, 2], # complex
-          [Thrift::Types::STRING, Thrift::Types::DOUBLE, 2], # complex/1/value
-          [Thrift::Types::STRING, Thrift::Types::DOUBLE, 1] # complex/2/value
+        [Thrift::Types::I32, Thrift::Types::MAP, 2], # Foo/complex
+        [Thrift::Types::STRING, Thrift::Types::DOUBLE, 2], # Foo/complex/1/value
+        [Thrift::Types::STRING, Thrift::Types::DOUBLE, 1], # Foo/complex/2/value
       )
       expect(prot).to receive(:read_map_end).exactly(3).times
       expect(prot).to receive(:read_list_begin).and_return([Thrift::Types::I32, 4])
@@ -166,9 +166,9 @@ describe "Struct" do
       expect(prot).to receive(:read_set_begin).and_return([Thrift::Types::I16, 2])
       expect(prot).to receive(:read_set_end)
       expect(prot).to receive(:read_i32).and_return(
-        1, 14,        # complex keys
-        42,           # simple
-        4, 23, 4, 29  # ints
+        1, 14,        # Foo/complex/keys
+        42,           # Foo/simple
+        4, 23, 4, 29, # Foo/ints
       )
       expect(prot).to receive(:read_string).and_return("pi", "e", "feigenbaum", "apple banana", "what's up?")
       expect(prot).to receive(:read_double).and_return(Math::PI, Math::E, 4.669201609)
@@ -215,7 +215,7 @@ describe "Struct" do
     [
       ["map", Thrift::Types::MAP, 5, :read_map_begin, [Thrift::Types::I32, Thrift::Types::MAP]],
       ["list", Thrift::Types::LIST, 4, :read_list_begin, [Thrift::Types::I32]],
-      ["set", Thrift::Types::SET, 6, :read_set_begin, [Thrift::Types::I16]]
+      ["set", Thrift::Types::SET, 6, :read_set_begin, [Thrift::Types::I16]],
     ].each do |name, field_type, field_id, begin_method, header|
       it "rejects #{name} sizes above the signed 32-bit range" do
         struct = SpecNamespace::Foo.new
@@ -250,7 +250,7 @@ describe "Struct" do
         ["thinz", Thrift::Types::MAP, 7],
         ["foobar", Thrift::Types::I32, 3],
         ["words", Thrift::Types::STRING, 2],
-        [nil, Thrift::Types::STOP, 0]
+        [nil, Thrift::Types::STOP, 0],
       )
       expect(prot).to receive(:read_field_end).exactly(5).times
       expect(prot).to receive(:read_i32).and_return(42)
@@ -393,7 +393,7 @@ describe "Struct" do
       struct = SpecNamespace::Foo.new(
         simple: 42,
         words: "test",
-        opt_uuid: "550e8400-e29b-41d4-a716-446655440000"
+        opt_uuid: "550e8400-e29b-41d4-a716-446655440000",
       )
 
       trans = Thrift::MemoryBufferTransport.new
@@ -449,7 +449,7 @@ describe "Struct" do
         bools: [true, false],
         i32s: [1, 2, 3],
         strings: ["hello", "world"],
-        uuids: ["550e8400-e29b-41d4-a716-446655440000", "00000000-0000-0000-0000-000000000000"]
+        uuids: ["550e8400-e29b-41d4-a716-446655440000", "00000000-0000-0000-0000-000000000000"],
       )
 
       trans = Thrift::MemoryBufferTransport.new

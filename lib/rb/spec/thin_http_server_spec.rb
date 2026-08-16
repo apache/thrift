@@ -41,7 +41,7 @@ describe "Thrift::ThinHTTPServer", thin_dependency do
       allow(Thin::Server).to receive(:new)
 
       expect(Kernel).to receive(:warn).with(
-        "[DEPRECATION WARNING] `Thrift::ThinHTTPServer` is deprecated because Thin is no longer maintained. Please use `Thrift::RackApplication` with a maintained Rack server instead."
+        "[DEPRECATION WARNING] `Thrift::ThinHTTPServer` is deprecated because Thin is no longer maintained. Please use `Thrift::RackApplication` with a maintained Rack server instead.",
       )
 
       Thrift::ThinHTTPServer.new(processor)
@@ -92,7 +92,7 @@ describe "Thrift::ThinHTTPServer", thin_dependency do
       it "configures SSL" do
         ssl_options = {
           private_key_file: "/path/to/server.key",
-          cert_chain_file: "/path/to/server.crt"
+          cert_chain_file: "/path/to/server.crt",
         }
         underlying_thin_server = double("thin server")
         allow(Thin::Server).to receive(:new).and_return(underlying_thin_server)

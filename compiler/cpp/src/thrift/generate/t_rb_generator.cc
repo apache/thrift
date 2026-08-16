@@ -718,10 +718,6 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
   out.indent() << "FIELDS = {" << '\n';
   out.indent_up();
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (f_iter != fields.begin()) {
-      out << "," << '\n';
-    }
-
     // generate the field docstrings within the FIELDS constant. no real better place...
     generate_rdoc(out, *f_iter);
 
@@ -732,9 +728,9 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
                         (*f_iter)->get_name(),
                         (*f_iter)->get_value(),
                         (*f_iter)->get_req() == t_field::T_OPTIONAL);
+    out << "," << '\n';
   }
   out.indent_down();
-  out << '\n';
   out.indent() << "}" << '\n' << '\n';
 
   out.indent() << "def struct_fields; FIELDS; end" << '\n' << '\n';
@@ -750,50 +746,115 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out,
                                          t_const_value* field_value = nullptr,
                                          bool optional = false) {
   field_type = get_true_type(field_type);
+  const bool multiline = field_value != nullptr
+                         && (field_type->is_struct() || field_type->is_xception()
+                             || field_type->is_map() || field_type->is_list()
+                             || field_type->is_set());
 
   // Begin this field's defn
-  out << "{type: " << type_to_enum(field_type);
+  out << "{";
+  if (multiline) {
+    out << '\n';
+    out.indent_up();
+    out.indent() << "type: " << type_to_enum(field_type) << "," << '\n';
+  } else {
+    out << "type: " << type_to_enum(field_type);
+  }
 
   if (!field_name.empty()) {
-    out << ", name: \"" << field_name << "\"";
+    if (multiline) {
+      out.indent() << "name: \"" << field_name << "\"," << '\n';
+    } else {
+      out << ", name: \"" << field_name << "\"";
+    }
   }
 
   if (field_value != nullptr) {
-    out << ", default: ";
-    render_const_value(out, field_type, field_value);
+    if (multiline) {
+      out.indent() << "default: ";
+      render_const_value(out, field_type, field_value) << "," << '\n';
+    } else {
+      out << ", default: ";
+      render_const_value(out, field_type, field_value);
+    }
   }
 
   if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
-      out << ", class: " << full_type_name((t_struct*)field_type);
+      if (multiline) {
+        out.indent() << "class: " << full_type_name((t_struct*)field_type) << "," << '\n';
+      } else {
+        out << ", class: " << full_type_name((t_struct*)field_type);
+      }
     } else if (field_type->is_list()) {
-      out << ", element: ";
+      if (multiline) {
+        out.indent() << "element: ";
+      } else {
+        out << ", element: ";
+      }
       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     } else if (field_type->is_map()) {
-      out << ", key: ";
+      if (multiline) {
+        out.indent() << "key: ";
+      } else {
+        out << ", key: ";
+      }
       generate_field_data(out, ((t_map*)field_type)->get_key_type());
-      out << ", value: ";
+      if (multiline) {
+        out << "," << '\n';
+        out.indent() << "value: ";
+      } else {
+        out << ", value: ";
+      }
       generate_field_data(out, ((t_map*)field_type)->get_val_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     } else if (field_type->is_set()) {
-      out << ", element: ";
+      if (multiline) {
+        out.indent() << "element: ";
+      } else {
+        out << ", element: ";
+      }
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     }
-  } else {
-    if (((t_base_type*)field_type)->is_binary()) {
+  } else if (((t_base_type*)field_type)->is_binary()) {
+    if (multiline) {
+      out.indent() << "binary: true," << '\n';
+    } else {
       out << ", binary: true";
     }
   }
 
   if (optional) {
-    out << ", optional: true";
+    if (multiline) {
+      out.indent() << "optional: true," << '\n';
+    } else {
+      out << ", optional: true";
+    }
   }
 
   if (field_type->is_enum()) {
-    out << ", enum_class: " << full_type_name(field_type);
+    if (multiline) {
+      out.indent() << "enum_class: " << full_type_name(field_type) << "," << '\n';
+    } else {
+      out << ", enum_class: " << full_type_name(field_type);
+    }
   }
 
   // End of this field's defn
-  out << "}";
+  if (multiline) {
+    out.indent_down();
+    out.indent() << "}";
+  } else {
+    out << "}";
+  }
 }
 
 void t_rb_generator::begin_namespace(t_rb_ofstream& out, vector<std::string> modules) {

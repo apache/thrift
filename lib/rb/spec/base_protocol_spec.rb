@@ -145,8 +145,10 @@ describe "BaseProtocol" do
       @prot.read_type(Thrift::Types::DOUBLE)
       @prot.read_type(Thrift::Types::STRING)
       # all other types are not implemented
-      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
-       Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT].each do |type|
+      [
+        Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
+        Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT,
+      ].each do |type|
         expect { @prot.read_type(type) }.to raise_error(NotImplementedError)
       end
     end
@@ -169,8 +171,10 @@ describe "BaseProtocol" do
       @prot.read_type({type: Thrift::Types::STRING})
       @prot.read_type({type: Thrift::Types::STRING, binary: true})
       # all other types are not implemented
-      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
-       Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT].each do |type|
+      [
+        Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
+        Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT,
+      ].each do |type|
         expect { @prot.read_type({type: type}) }.to raise_error(NotImplementedError)
       end
     end
@@ -199,7 +203,7 @@ describe "BaseProtocol" do
         ["field 1", Thrift::Types::STRING, 1],
         ["field 2", Thrift::Types::I32, 2],
         ["field 3", Thrift::Types::MAP, 3],
-        [nil, Thrift::Types::STOP, 0]
+        [nil, Thrift::Types::STOP, 0],
       )
       expect(@prot).to receive(:read_field_end).exactly(3).times
       expect(@prot).to receive(:read_string).exactly(3).times

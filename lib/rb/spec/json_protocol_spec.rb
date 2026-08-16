@@ -367,7 +367,7 @@ describe "JsonProtocol" do
       {
         '"\u20AC"' => "\u20AC",
         '"\uD83D\uDE00"' => "\u{1F600}",
-        '"\ud83d\uDe00"' => "\u{1F600}"
+        '"\ud83d\uDe00"' => "\u{1F600}",
       }.each do |wire, value|
         trans = Thrift::MemoryBufferTransport.new(wire.b)
         protocol = Thrift::JsonProtocol.new(trans)
@@ -392,7 +392,7 @@ describe "JsonProtocol" do
         '"\u123"',
         '"\uD83D"',
         '"\uD83D\u0041"',
-        '"\uDE00"'
+        '"\uDE00"',
       ].each do |wire|
         protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire.b))
 

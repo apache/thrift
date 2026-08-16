@@ -160,11 +160,13 @@ module Thrift
     end
 
     def field_info(field)
-      { type: field[:type],
+      {
+        type: field[:type],
         class: field[:class],
         key: field[:key],
         value: field[:value],
-        element: field[:element] }
+        element: field[:element],
+      }
     end
 
     def inspect_field(value, field_info)

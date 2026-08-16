@@ -273,7 +273,7 @@ describe "NonblockingServer" do
         "server transport",
         listen: nil,
         closed?: false,
-        close: nil
+        close: nil,
       )
       allow(server_transport).to receive(:accept).and_raise(error)
       io_manager = double("IOManager", ensure_closed: nil)
@@ -283,7 +283,7 @@ describe "NonblockingServer" do
         nil,
         nil,
         1,
-        Logger.new(IO::NULL)
+        Logger.new(IO::NULL),
       )
       allow(server).to receive(:start_io_manager).and_return(io_manager)
       allow(server).to receive(:select).and_return([[server_transport], nil, nil])
@@ -302,7 +302,7 @@ describe "NonblockingServer" do
         Thrift::BaseTransportFactory.new,
         Thrift::BinaryProtocolFactory.new,
         1,
-        logger
+        logger,
       )
     end
 
@@ -367,7 +367,7 @@ describe "NonblockingServer" do
         "localhost",
         @port,
         create_server_ssl_context,
-        client_timeout: client_timeout
+        client_timeout: client_timeout,
       )
       transport_factory = Thrift::FramedTransportFactory.new
       logger = Logger.new(STDERR)
@@ -422,7 +422,7 @@ describe "NonblockingServer" do
 
     def setup_tls_client
       transport = Thrift::FramedTransport.new(
-        Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context)
+        Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context),
       )
       protocol = Thrift::BinaryProtocol.new(transport)
       client = SpecNamespace::NonblockingService::Client.new(protocol)
