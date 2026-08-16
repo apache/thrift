@@ -473,21 +473,21 @@ shared_examples_for "a binary protocol" do
 
   it "should perform a complete rpc with no args or return" do
     srv_test(
-      proc { |client| client.send_voidMethod() },
+      proc { |client| client.send_voidMethod },
       proc { |client| expect(client.recv_voidMethod).to eq(nil) },
     )
   end
 
   it "should perform a complete rpc with a primitive return type" do
     srv_test(
-      proc { |client| client.send_primitiveMethod() },
+      proc { |client| client.send_primitiveMethod },
       proc { |client| expect(client.recv_primitiveMethod).to eq(1) },
     )
   end
 
   it "should perform a complete rpc with a struct return type" do
     srv_test(
-      proc { |client| client.send_structMethod() },
+      proc { |client| client.send_structMethod },
       proc { |client|
         result = client.recv_structMethod
         result.set_byte_map = nil
@@ -531,7 +531,7 @@ shared_examples_for "a binary protocol" do
   end
 
   class SrvHandler
-    def voidMethod()
+    def voidMethod
     end
 
     def primitiveMethod

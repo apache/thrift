@@ -28,11 +28,11 @@ require "calculator"
 require "shared_types"
 
 class CalculatorHandler
-  def initialize()
+  def initialize
     @log = {}
   end
 
-  def ping()
+  def ping
     puts "ping()"
   end
 
@@ -51,20 +51,20 @@ class CalculatorHandler
       val = work.num1 * work.num2
     elsif work.op == Operation::DIVIDE
       if work.num2 == 0
-        x = InvalidOperation.new()
+        x = InvalidOperation.new
         x.whatOp = work.op
         x.why = "Cannot divide by 0"
         raise x
       end
       val = work.num1 / work.num2
     else
-      x = InvalidOperation.new()
+      x = InvalidOperation.new
       x.whatOp = work.op
       x.why = "Invalid operation"
       raise x
     end
 
-    entry = SharedStruct.new()
+    entry = SharedStruct.new
     entry.key = logid
     entry.value = val.to_s
     @log[logid] = entry
@@ -77,17 +77,17 @@ class CalculatorHandler
     @log[key]
   end
 
-  def zip()
+  def zip
     print "zip\n"
   end
 end
 
-handler = CalculatorHandler.new()
+handler = CalculatorHandler.new
 processor = Calculator::Processor.new(handler)
 transport = Thrift::ServerSocket.new(9090)
-transportFactory = Thrift::BufferedTransportFactory.new()
+transportFactory = Thrift::BufferedTransportFactory.new
 server = Thrift::SimpleServer.new(processor, transport, transportFactory)
 
 puts "Starting the server..."
-server.serve()
+server.serve
 puts "done."

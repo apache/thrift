@@ -33,9 +33,9 @@ begin
   protocol = Thrift::BinaryProtocol.new(transport)
   client = Calculator::Client.new(protocol)
 
-  transport.open()
+  transport.open
 
-  client.ping()
+  client.ping
   print "ping()\n"
 
   sum = client.add(1, 1)
@@ -44,7 +44,7 @@ begin
   sum = client.add(1, 4)
   print "1+4=", sum, "\n"
 
-  work = Work.new()
+  work = Work.new
 
   work.op = Operation::SUBTRACT
   work.num1 = 15
@@ -65,10 +65,10 @@ begin
     print "InvalidOperation: ", io.why, "\n"
   end
 
-  client.zip()
+  client.zip
   print "zip\n"
 
-  transport.close()
+  transport.close
 rescue Thrift::Exception => tx
   print "Thrift::Exception: ", tx.message, "\n"
 end

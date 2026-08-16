@@ -54,7 +54,7 @@ module Thrift
     end
 
     def read_byte
-      return @transport.read_byte() unless @read
+      return @transport.read_byte unless @read
 
       read_frame if @index >= @rbuf.length
 

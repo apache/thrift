@@ -291,7 +291,7 @@ module Thrift
     def read_message_begin
       trans.reset_message_size if @reset_message_size
 
-      protocol_id = read_byte()
+      protocol_id = read_byte
       if protocol_id != PROTOCOL_ID
         raise ProtocolException.new(
           ProtocolException::BAD_VERSION,
@@ -299,7 +299,7 @@ module Thrift
         )
       end
 
-      version_and_type = read_byte()
+      version_and_type = read_byte
       version = version_and_type & VERSION_MASK
       if (version != VERSION)
         raise ProtocolException.new(
@@ -309,8 +309,8 @@ module Thrift
       end
 
       type = (version_and_type >> TYPE_SHIFT_AMOUNT) & TYPE_BITS
-      seqid = message_seqid_from_varint32(read_varint32())
-      messageName = read_string()
+      seqid = message_seqid_from_varint32(read_varint32)
+      messageName = read_string
       [messageName, type, seqid]
     end
 
@@ -320,12 +320,12 @@ module Thrift
     end
 
     def read_struct_end
-      @last_field.pop()
+      @last_field.pop
       nil
     end
 
     def read_field_begin
-      type = read_byte()
+      type = read_byte
 
       # if it's a stop, then we can return immediately, as the struct is over.
       if (type & 0x0f) == Types::STOP
@@ -338,7 +338,7 @@ module Thrift
         if modifier == 0
           # not a delta. look ahead for the zigzag varint field id.
           @last_field.pop
-          field_id = read_i16()
+          field_id = read_i16
         else
           # has a delta. add the delta to the last read field id.
           field_id = @last_field.pop + modifier
@@ -357,17 +357,17 @@ module Thrift
     end
 
     def read_map_begin
-      size = read_varint32()
+      size = read_varint32
       validate_container_size(size)
-      key_and_value_type = size == 0 ? 0 : read_byte()
+      key_and_value_type = size == 0 ? 0 : read_byte
       [CompactTypes.get_ttype(key_and_value_type >> 4), CompactTypes.get_ttype(key_and_value_type & 0xf), size]
     end
 
     def read_list_begin
-      size_and_type = read_byte()
+      size_and_type = read_byte
       size = (size_and_type >> 4) & 0x0f
       if size == 15
-        size = read_varint32()
+        size = read_varint32
       end
       validate_container_size(size)
       type = CompactTypes.get_ttype(size_and_type)
@@ -384,7 +384,7 @@ module Thrift
         @bool_value = nil
         bv
       else
-        read_byte() == CompactTypes::BOOLEAN_TRUE
+        read_byte == CompactTypes::BOOLEAN_TRUE
       end
     end
 
@@ -397,15 +397,15 @@ module Thrift
     end
 
     def read_i16
-      zig_zag_to_int(read_varint32())
+      zig_zag_to_int(read_varint32)
     end
 
     def read_i32
-      zig_zag_to_int(read_varint32())
+      zig_zag_to_int(read_varint32)
     end
 
     def read_i64
-      zig_zag_to_long(read_varint64())
+      zig_zag_to_long(read_varint64)
     end
 
     def read_double
@@ -419,7 +419,7 @@ module Thrift
     end
 
     def read_binary
-      size = read_varint32()
+      size = read_varint32
       if size > I32_MAX
         raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "Binary size limit exceeded")
       end
@@ -492,17 +492,17 @@ module Thrift
       @trans.write(buffer)
     end
 
-    def read_varint32()
+    def read_varint32
       shift = 0
       result = 0
       VARINT32_PREFIX_BYTES.times do
-        b = read_byte()
+        b = read_byte
         result |= (b & 0x7f) << shift
         return result if (b & 0x80) != 0x80
         shift += 7
       end
 
-      b = read_byte()
+      b = read_byte
       if (b & 0x80) != 0
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Variable-length int over 5 bytes.")
       end
@@ -513,11 +513,11 @@ module Thrift
       result | (b << shift)
     end
 
-    def read_varint64()
+    def read_varint64
       shift = 0
       result = 0
       MAX_VARINT_BYTES.times do
-        b = read_byte()
+        b = read_byte
         result |= (b & 0x7f) << shift
         return result if (b & 0x80) != 0x80
         shift += 7

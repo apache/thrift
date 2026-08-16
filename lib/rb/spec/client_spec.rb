@@ -147,7 +147,7 @@ describe "Client" do
       expect(@prot).to receive(:read_message_end)
       mock_klass = double("#<MockClass:mock>")
       expect(mock_klass).to receive(:read).with(@prot)
-      @client.receive_message_begin()
+      @client.receive_message_begin
       @client.receive_message(double("MockClass", new: mock_klass))
     end
 

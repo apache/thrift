@@ -38,7 +38,7 @@ describe "Server" do
     end
 
     it "should not serve" do
-      expect { @server.serve() }.to raise_error(NotImplementedError)
+      expect { @server.serve }.to raise_error(NotImplementedError)
     end
 
     it "should provide a reasonable to_s" do
