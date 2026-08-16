@@ -89,7 +89,7 @@ module Thrift
       if block
         shutdown_proc.call
       else
-        Thread.new &shutdown_proc
+        Thread.new(&shutdown_proc)
       end
     end
 

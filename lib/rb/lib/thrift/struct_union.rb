@@ -176,7 +176,7 @@ module Thrift
         if field_info[:type] == Types::MAP
           map_buf = []
           value.each do |k, v|
-            map_buf << inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value])
+            map_buf << (inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value]))
           end
           "{" + map_buf.join(", ") + "}"
         else

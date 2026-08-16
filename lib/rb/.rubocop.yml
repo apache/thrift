@@ -212,6 +212,24 @@ Layout/TrailingEmptyLines:
 Layout/TrailingWhitespace:
   Enabled: true
 
+Lint/AmbiguousAssignment:
+  Enabled: true
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: true
+
+Lint/AmbiguousOperator:
+  Enabled: true
+
+Lint/AmbiguousOperatorPrecedence:
+  Enabled: true
+
+Lint/AmbiguousRange:
+  Enabled: true
+
+Lint/AmbiguousRegexpLiteral:
+  Enabled: true
+
 Lint/OrderedMagicComments:
   Enabled: true
 
@@ -273,6 +291,9 @@ Performance/UnfreezeString:
   Enabled: true
 
 Performance/UriDefaultParser:
+  Enabled: true
+
+Style/AmbiguousEndlessMethodDefinition:
   Enabled: true
 
 Style/FrozenStringLiteralComment:

@@ -33,7 +33,7 @@ module Server
     def fibonacci(n)
       seq = [1, 1]
       3.upto(n) do
-        seq << seq[-1] + seq[-2]
+        seq << (seq[-1] + seq[-2])
       end
       seq[n - 1] # n is 1-based
     end

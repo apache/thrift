@@ -128,7 +128,7 @@ shared_examples_for "a binary protocol" do
   it "should write an i16" do
     # try a random scattering of values
     # include the signed i16 minimum/maximum
-    [-2**15, -1024, 17, 0, -10000, 1723, 2**15 - 1].each do |i|
+    [-2**15, -1024, 17, 0, -10000, 1723, (2**15) - 1].each do |i|
       @prot.write_i16(i)
     end
 
@@ -153,11 +153,11 @@ shared_examples_for "a binary protocol" do
   it "should write an i32" do
     # try a random scattering of values
     # include the signed i32 minimum/maximum
-    [-2**31, -123123, -2532, -3, 0, 2351235, 12331, 2**31 - 1].each do |i|
+    [-2**31, -123123, -2532, -3, 0, 2351235, 12331, (2**31) - 1].each do |i|
       @prot.write_i32(i)
     end
     expect(@trans.read(@trans.available)).to eq("\200\000\000\000" + "\377\376\037\r" + "\377\377\366\034" + "\377\377\377\375" + "\000\000\000\000" + "\000#\340\203" + "\000\0000+" + "\177\377\377\377")
-    [-2**31 - 1, 2**31, 2**65 + 5].each do |i|
+    [-2**31 - 1, 2**31, (2**65) + 5].each do |i|
       expect { @prot.write_i32(i) }.to raise_error(RangeError)
     end
   end
@@ -173,7 +173,7 @@ shared_examples_for "a binary protocol" do
   it "should write an i64" do
     # try a random scattering of values
     # try the signed i64 minimum/maximum
-    [-2**63, -12356123612323, -23512351, -234, 0, 1231, 2351236, 12361236213, 2**63 - 1].each do |i|
+    [-2**63, -12356123612323, -23512351, -234, 0, 1231, 2351236, 12361236213, (2**63) - 1].each do |i|
       @prot.write_i64(i)
     end
     expect(@trans.read(@trans.available)).to eq([
@@ -187,7 +187,7 @@ shared_examples_for "a binary protocol" do
       "\000\000\000\002\340\311~\365",
       "\177\377\377\377\377\377\377\377",
     ].join(""))
-    [-2**63 - 1, 2**63, 2**65 + 5].each do |i|
+    [-2**63 - 1, 2**63, (2**65) + 5].each do |i|
       expect { @prot.write_i64(i) }.to raise_error(RangeError)
     end
   end
@@ -386,7 +386,7 @@ shared_examples_for "a binary protocol" do
 
   it "should read an i16" do
     # try a scattering of values, including min/max
-    [-2**15, -5237, -353, 0, 1527, 2234, 2**15 - 1].each do |i|
+    [-2**15, -5237, -353, 0, 1527, 2234, (2**15) - 1].each do |i|
       @trans.write([i].pack("n"));
       expect(@prot.read_i16).to eq(i)
     end
@@ -394,7 +394,7 @@ shared_examples_for "a binary protocol" do
 
   it "should read an i32" do
     # try a scattering of values, including min/max
-    [-2**31, -235125, -6236, 0, 2351, 123123, 2**31 - 1].each do |i|
+    [-2**31, -235125, -6236, 0, 2351, 123123, (2**31) - 1].each do |i|
       @trans.write([i].pack("N"))
       expect(@prot.read_i32).to eq(i)
     end
@@ -402,7 +402,7 @@ shared_examples_for "a binary protocol" do
 
   it "should read an i64" do
     # try a scattering of values, including min/max
-    [-2**63, -123512312, -6346, 0, 32, 2346322323, 2**63 - 1].each do |i|
+    [-2**63, -123512312, -6346, 0, 32, 2346322323, (2**63) - 1].each do |i|
       @trans.write([i >> 32, i & 0xFFFFFFFF].pack("NN"))
       expect(@prot.read_i64).to eq(i)
     end

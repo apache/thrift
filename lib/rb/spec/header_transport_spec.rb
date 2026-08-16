@@ -720,7 +720,7 @@ describe "HeaderTransport" do
       end
 
       it "should reject uint32 varints with an overflowing fifth byte" do
-        header_data = ([0x80] * 4 + [0x10]).pack("C*")
+        header_data = (([0x80] * 4) + [0x10]).pack("C*")
         frame = build_header_frame(header_data)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)
@@ -729,7 +729,7 @@ describe "HeaderTransport" do
       end
 
       it "should accept uint32 varints with a valid fifth byte" do
-        header_data = ([0x80] * 4 + [0x0f, 0]).pack("C*")
+        header_data = (([0x80] * 4) + [0x0f, 0]).pack("C*")
         frame = build_header_frame(header_data)
         read_transport = Thrift::MemoryBufferTransport.new(frame)
         read_trans = Thrift::HeaderTransport.new(read_transport)

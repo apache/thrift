@@ -167,7 +167,7 @@ describe "Serializer" do
 
         expect {
           serializer.serialize(SerializerFailureFixtures::Value.new(stage, error))
-        }.to raise_error { |raised| expect(raised).to equal(error) }
+        }.to(raise_error { |raised| expect(raised).to equal(error) })
 
         2.times do
           data = serializer.serialize(value)
@@ -190,7 +190,7 @@ describe "Serializer" do
         error = RuntimeError.new("failed at #{stage}")
         expect {
           serializer.serialize(SerializerFailureFixtures::Value.new(stage, error))
-        }.to raise_error { |raised| expect(raised).to equal(error) }
+        }.to(raise_error { |raised| expect(raised).to equal(error) })
       end
 
       expect(serializer.serialize(value)).to eq(

@@ -148,7 +148,7 @@ module Thrift
       each_field do |fid, field_info|
         name = field_info[:name]
         value = self.send(name)
-        total = (total * 37 + value.hash) & 0xffffffff
+        total = ((total * 37) + value.hash) & 0xffffffff
       end
       total
     end
