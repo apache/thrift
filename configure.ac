@@ -143,6 +143,7 @@ if test "$enable_libs" = "no"; then
   with_nodets="no"
   with_lua="no"
   with_rs="no"
+  with_zig="no"
 fi
 
 AX_THRIFT_LIB(cpp, [C++], yes)
@@ -421,6 +422,16 @@ fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 AM_CONDITIONAL([GOVERSION_LT_17], [test "$go_version_lt_17" = "yes"])
 AM_CONDITIONAL([GOVERSION_GE_118], [test "$go_version_ge_118" = "yes"])
+
+AX_THRIFT_LIB(zig, [Zig], yes)
+have_zig="no"
+if test "$with_zig" = "yes"; then
+  AC_PATH_PROG([ZIG], [zig])
+  if test "x$ZIG" != "x" -a "x$ZIG" != "x"; then
+    have_zig="yes"
+  fi
+fi
+AM_CONDITIONAL([WITH_ZIG], [test "$have_zig" = "yes"])
 
 AX_THRIFT_LIB(rs, [Rust], yes)
 have_rs="no"
@@ -808,6 +819,8 @@ AC_CONFIG_FILES([
   lib/ts/Makefile
   lib/xml/Makefile
   lib/xml/test/Makefile
+  lib/zig/Makefile
+  lib/zig/tests/Makefile
   test/Makefile
   test/features/Makefile
   test/c_glib/Makefile
@@ -826,6 +839,7 @@ AC_CONFIG_FILES([
   test/py.tornado/Makefile
   test/rb/Makefile
   test/rs/Makefile
+  test/zig/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cl/Makefile
@@ -845,6 +859,7 @@ AC_CONFIG_FILES([
   tutorial/py.tornado/Makefile
   tutorial/rb/Makefile
   tutorial/rs/Makefile
+  tutorial/zig/Makefile
 ])
 
 if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
@@ -885,6 +900,8 @@ if test "$have_netstd" = "yes" ; then MAYBE_NETSTD="netstd" ; else MAYBE_NETSTD=
 AC_SUBST([MAYBE_NETSTD])
 if test "$have_cl" = "yes" ; then MAYBE_CL="cl" ; else MAYBE_CL="" ; fi
 AC_SUBST([MAYBE_CL])
+if test "$have_zig" = "yes" ; then MAYBE_ZIG="zig" ; else MAYBE_ZIG="" ; fi
+AC_SUBST([MAYBE_ZIG])
 
 AC_OUTPUT
 
@@ -911,6 +928,7 @@ echo "Building Python Library ...... : $have_python"
 echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
+echo "Building Zig Library ......... : $have_zig"
 
 if test "$have_c_glib" = "yes" ; then
   echo
@@ -1039,6 +1057,12 @@ if test "$have_rs" = "yes" ; then
   echo "   Using Cargo................ : $CARGO"
   echo "   Using rustc................ : $RUSTC"
   echo "   Using Rust version......... : $($RUSTC --version)"
+fi
+if test "$have_zig" = "yes" ; then
+  echo
+  echo "Zig Library:"
+  echo "   Using Zig ................. : $ZIG"
+  echo "   Using Zig version ......... : $($ZIG version | head -1)"
 fi
 echo
 echo "If something is missing that you think should be present,"

@@ -101,6 +101,7 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_st_generator.cc \
                   src/thrift/generate/t_xml_generator.cc \
                   src/thrift/generate/t_xsd_generator.cc \
+                  src/thrift/generate/t_zig_generator.cc \
                   src/thrift/generate/validator_parser.cc \
                   src/thrift/generate/validator_parser.h \
                   src/thrift/generate/go_validator_generator.cc \
