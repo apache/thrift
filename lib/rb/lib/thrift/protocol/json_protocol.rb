@@ -34,7 +34,7 @@ module Thrift
         @data = @trans.read(1)
       end
 
-      return @data
+      @data
     end
 
     def peek
@@ -42,7 +42,7 @@ module Thrift
         @data = @trans.read(1)
       end
       @hasData = true
-      return @data
+      @data
     end
   end
 
@@ -69,7 +69,7 @@ module Thrift
     # Default behavior is to return false.
     #
     def escapeNum
-      return false
+      false
     end
   end
 
@@ -105,7 +105,7 @@ module Thrift
 
     # Numbers must be turned into strings if they are the key part of a pair
     def escapeNum
-      return @colon
+      @colon
     end
   end
 
@@ -219,9 +219,9 @@ module Thrift
     def is_json_numeric(ch)
       case ch
       when "+", "-", ".", "0".."9", "E", "e"
-        return true
+        true
       else
-        return false
+        false
       end
     end
 
@@ -563,7 +563,7 @@ module Thrift
         ch = @reader.read
         str << ch
       end
-      return str
+      str
     end
 
     # Reads a sequence of characters and assembles them into a number,
@@ -585,7 +585,7 @@ module Thrift
         read_json_syntax_char(@@kJSONStringDelimiter)
       end
 
-      return num
+      num
     end
 
     # Reads a JSON number or string and interprets it as a double.
@@ -624,7 +624,7 @@ module Thrift
           raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
         end
       end
-      return num
+      num
     end
 
     def read_json_object_start
@@ -821,7 +821,7 @@ module Thrift
 
   class JsonProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
-      return Thrift::JsonProtocol.new(trans)
+      Thrift::JsonProtocol.new(trans)
     end
 
     def to_s

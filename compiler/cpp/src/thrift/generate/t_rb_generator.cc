@@ -1009,9 +1009,6 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
     if (!(*f_iter)->is_oneway()) {
       f_service_.indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
-      }
       f_service_ << "recv_" << funname << "()" << '\n';
     }
     f_service_.indent_down();
@@ -1075,7 +1072,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        f_service_.indent() << "return" << '\n';
+        f_service_.indent() << "nil" << '\n';
       } else {
         f_service_.indent() << "raise "
                                "::Thrift::ApplicationException.new(::Thrift::ApplicationException::"
@@ -1206,7 +1203,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    f_service_.indent() << "return" << '\n';
+    f_service_.indent() << "nil" << '\n';
     f_service_.indent_down();
     f_service_.indent() << "end" << '\n';
     return;

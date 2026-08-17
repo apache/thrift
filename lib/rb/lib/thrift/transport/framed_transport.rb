@@ -61,7 +61,7 @@ module Thrift
       # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
       # allocating a temp string of size 1 unnecessarily.
       @index += 1
-      return Bytes.get_string_byte(@rbuf, @index - 1)
+      Bytes.get_string_byte(@rbuf, @index - 1)
     end
 
     def read_into_buffer(buffer, size)
@@ -116,7 +116,7 @@ module Thrift
 
   class FramedTransportFactory < BaseTransportFactory
     def get_transport(transport)
-      return FramedTransport.new(transport)
+      FramedTransport.new(transport)
     end
 
     def to_s

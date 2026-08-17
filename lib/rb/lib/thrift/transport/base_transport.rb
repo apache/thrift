@@ -73,7 +73,7 @@ module Thrift
     # Returns an unsigned byte as a Integer in the range (0..255).
     def read_byte
       buf = read_all(1)
-      return Bytes.get_string_byte(buf, 0)
+      Bytes.get_string_byte(buf, 0)
     end
 
     # Reads size bytes and copies them into buffer[0..size].
@@ -129,7 +129,7 @@ module Thrift
 
   class BaseTransportFactory
     def get_transport(trans)
-      return trans
+      trans
     end
 
     def to_s

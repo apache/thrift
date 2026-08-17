@@ -107,6 +107,7 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
         "}\n"
         "service PingService {\n"
         "  oneway void ping(1: i32 n)\n"
+        "  i32 pong()\n"
         "}\n";
 
     {
@@ -131,6 +132,8 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
         "\n"
         "    FIELDS";
     REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
+    REQUIRE(service.find("def pong()\n      send_pong()\n      recv_pong()\n    end")
+            != string::npos);
     REQUIRE(service.find(expected_empty_result) != string::npos);
     REQUIRE(service.find("\n\n  end\n") == string::npos);
 
