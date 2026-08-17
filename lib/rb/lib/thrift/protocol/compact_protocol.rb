@@ -410,8 +410,7 @@ module Thrift
 
     def read_double
       trans.read_into_buffer(@rbuf, 8)
-      val = @rbuf.reverse.unpack1("G")
-      val
+      @rbuf.reverse.unpack1("G")
     end
 
     def read_string
@@ -436,7 +435,7 @@ module Thrift
     end
 
     def to_s
-      "compact(#{super.to_s})"
+      "compact(#{super})"
     end
 
     private

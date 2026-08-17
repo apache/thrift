@@ -274,7 +274,7 @@ module Thrift
     end
 
     def to_s
-      "header(#{@protocol.to_s})"
+      "header(#{@protocol})"
     end
 
     private

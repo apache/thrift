@@ -29,7 +29,7 @@ module Thrift
     # Returns a String with BINARY encoding, filled with null characters
     # if size is greater than zero
     def self.empty_byte_buffer(size = nil)
-      if (size && size > 0)
+      if size && size > 0
         "\0".b * size
       else
         "".b

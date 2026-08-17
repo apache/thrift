@@ -107,7 +107,7 @@ module Thrift
     end
 
     def to_s
-      "buffered(#{@transport.to_s})"
+      "buffered(#{@transport})"
     end
   end
 

@@ -101,7 +101,7 @@ module Thrift
         close
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
-      if (data.nil? || data.length == 0)
+      if data.nil? || data.length == 0
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@desc}")
       end
       data

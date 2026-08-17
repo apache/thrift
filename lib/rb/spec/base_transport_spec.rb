@@ -494,7 +494,7 @@ describe "BaseTransport" do
     end
 
     it "should not mutate or consume input when reading into a frozen buffer" do
-      ["xy".freeze, ("x" * 100).freeze].each do |destination|
+      ["xy", ("x" * 100).freeze].each do |destination|
         @buffer.reset_buffer("ab")
 
         expect { @buffer.read_into_buffer(destination, 2) }.to raise_error(FrozenError)
@@ -504,7 +504,7 @@ describe "BaseTransport" do
     end
 
     it "should allow a zero-length read into a frozen buffer" do
-      destination = "x".freeze
+      destination = "x"
       @buffer.reset_buffer("a")
 
       expect(@buffer.read_into_buffer(destination, 0)).to eq(0)
@@ -513,7 +513,7 @@ describe "BaseTransport" do
     end
 
     it "should report EOF before modifying a frozen destination" do
-      destination = "xx".freeze
+      destination = "xx"
       @buffer.reset_buffer("")
 
       expect { @buffer.read_into_buffer(destination, 1) }.to raise_error(EOFError)

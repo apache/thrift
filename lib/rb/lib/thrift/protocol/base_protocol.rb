@@ -406,7 +406,7 @@ module Thrift
     end
 
     def to_s
-      "#{trans.to_s}"
+      trans.to_s
     end
   end
 

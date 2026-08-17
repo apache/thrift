@@ -243,7 +243,7 @@ module Thrift
     end
 
     def to_s
-      "header(#{@transport.to_s})"
+      "header(#{@transport})"
     end
 
     # Reads the next frame to detect protocol/client type before decoding.

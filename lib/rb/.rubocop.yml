@@ -233,6 +233,9 @@ Lint/AmbiguousRegexpLiteral:
 Lint/OrderedMagicComments:
   Enabled: true
 
+Lint/RedundantStringCoercion:
+  Enabled: true
+
 Lint/UnreachableCode:
   Enabled: true
 
@@ -304,6 +307,27 @@ Style/HashSyntax:
   EnforcedShorthandSyntax: either
 
 Style/MethodDefParentheses:
+  Enabled: true
+
+Style/RedundantAssignment:
+  Enabled: true
+
+Style/RedundantException:
+  Enabled: true
+
+Style/RedundantFreeze:
+  Enabled: true
+
+Style/RedundantInterpolation:
+  Enabled: true
+
+Style/RedundantParentheses:
+  Enabled: true
+
+Style/RedundantSelf:
+  Enabled: true
+
+Style/RedundantStringEscape:
   Enabled: true
 
 Style/StringLiterals:

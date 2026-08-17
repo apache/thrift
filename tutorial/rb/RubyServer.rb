@@ -66,7 +66,7 @@ class CalculatorHandler
 
     entry = SharedStruct.new()
     entry.key = logid
-    entry.value = "#{val}"
+    entry.value = val.to_s
     @log[logid] = entry
 
     return val

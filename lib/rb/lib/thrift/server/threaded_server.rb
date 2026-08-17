@@ -53,7 +53,7 @@ module Thrift
     end
 
     def to_s
-      "threaded(#{super.to_s})"
+      "threaded(#{super})"
     end
   end
 end
