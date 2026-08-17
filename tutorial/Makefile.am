@@ -86,6 +86,10 @@ if WITH_PHP
 SUBDIRS += php
 endif
 
+if WITH_ZIG
+SUBDIRS += zig
+endif
+
 #
 # generate html for tutorial.thrift
 #
