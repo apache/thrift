@@ -85,13 +85,11 @@ module Thrift
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
 
           data = loop do
-            begin
-              break @handle.read_nonblock(sz)
-            rescue IO::WaitReadable
-              wait_for(:read, deadline, sz)
-            rescue IO::WaitWritable
-              wait_for(:write, deadline, sz)
-            end
+            break @handle.read_nonblock(sz)
+          rescue IO::WaitReadable
+            wait_for(:read, deadline, sz)
+          rescue IO::WaitWritable
+            wait_for(:write, deadline, sz)
           end
         end
       rescue TransportException

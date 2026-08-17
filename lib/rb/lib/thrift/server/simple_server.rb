@@ -21,31 +21,29 @@
 module Thrift
   class SimpleServer < BaseServer
     def serve
-      begin
-        @server_transport.listen
-        loop do
-          begin
-            client = @server_transport.accept
-          rescue Errno::ECONNRESET, Errno::EPIPE
-            next
-          rescue => e
-            next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
-            raise
-          end
-          trans = @transport_factory.get_transport(client)
-          prot = @protocol_factory.get_protocol(trans)
-          begin
-            loop do
-              @processor.process(prot, prot)
-            end
-          rescue Thrift::TransportException, Thrift::ProtocolException
-          ensure
-            trans.close
-          end
+      @server_transport.listen
+      loop do
+        begin
+          client = @server_transport.accept
+        rescue Errno::ECONNRESET, Errno::EPIPE
+          next
+        rescue => e
+          next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+          raise
         end
-      ensure
-        @server_transport.close
+        trans = @transport_factory.get_transport(client)
+        prot = @protocol_factory.get_protocol(trans)
+        begin
+          loop do
+            @processor.process(prot, prot)
+          end
+        rescue Thrift::TransportException, Thrift::ProtocolException
+        ensure
+          trans.close
+        end
       end
+    ensure
+      @server_transport.close
     end
 
     def to_s

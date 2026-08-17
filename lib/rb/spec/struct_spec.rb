@@ -75,14 +75,12 @@ describe "Struct" do
     end
 
     it "should not share default values between instances" do
-      begin
-        struct = SpecNamespace::Foo.new
-        struct.ints << 17
-        expect(SpecNamespace::Foo.new.ints).to eq([1, 2, 2, 3])
-      ensure
-        # ensure no leakage to other tests
-        SpecNamespace::Foo::FIELDS[4][:default] = [1, 2, 2, 3]
-      end
+      struct = SpecNamespace::Foo.new
+      struct.ints << 17
+      expect(SpecNamespace::Foo.new.ints).to eq([1, 2, 2, 3])
+    ensure
+      # ensure no leakage to other tests
+      SpecNamespace::Foo::FIELDS[4][:default] = [1, 2, 2, 3]
     end
 
     it "should properly initialize boolean values" do
@@ -349,44 +347,40 @@ describe "Struct" do
     end
 
     it "should support `raise Xception, 'message'` for Exception structs" do
-      begin
-        raise SpecNamespace::Xception, "something happened"
-      rescue Thrift::Exception => e
-        expect(e.message).to eq("something happened")
-        expect(e.code).to eq(1)
-        # ensure it gets serialized properly, this is the really important part
-        prot = Thrift::BaseProtocol.new(double("trans"))
-        expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
-        expect(prot).to receive(:write_struct_end)
-        expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
-        expect(prot).to receive(:write_string).with("something happened")
-        expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
-        expect(prot).to receive(:write_i32).with(1)
-        expect(prot).to receive(:write_field_stop)
-        expect(prot).to receive(:write_field_end).twice
+      raise SpecNamespace::Xception, "something happened"
+    rescue Thrift::Exception => e
+      expect(e.message).to eq("something happened")
+      expect(e.code).to eq(1)
+      # ensure it gets serialized properly, this is the really important part
+      prot = Thrift::BaseProtocol.new(double("trans"))
+      expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
+      expect(prot).to receive(:write_struct_end)
+      expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
+      expect(prot).to receive(:write_string).with("something happened")
+      expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
+      expect(prot).to receive(:write_i32).with(1)
+      expect(prot).to receive(:write_field_stop)
+      expect(prot).to receive(:write_field_end).twice
 
-        e.write(prot)
-      end
+      e.write(prot)
     end
 
     it "should support the regular initializer for exception structs" do
-      begin
-        raise SpecNamespace::Xception, {message: "something happened", code: 5}
-      rescue Thrift::Exception => e
-        expect(e.message).to eq("something happened")
-        expect(e.code).to eq(5)
-        prot = Thrift::BaseProtocol.new(double("trans"))
-        expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
-        expect(prot).to receive(:write_struct_end)
-        expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
-        expect(prot).to receive(:write_string).with("something happened")
-        expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
-        expect(prot).to receive(:write_i32).with(5)
-        expect(prot).to receive(:write_field_stop)
-        expect(prot).to receive(:write_field_end).twice
+      raise SpecNamespace::Xception, {message: "something happened", code: 5}
+    rescue Thrift::Exception => e
+      expect(e.message).to eq("something happened")
+      expect(e.code).to eq(5)
+      prot = Thrift::BaseProtocol.new(double("trans"))
+      expect(prot).to receive(:write_struct_begin).with("SpecNamespace::Xception")
+      expect(prot).to receive(:write_struct_end)
+      expect(prot).to receive(:write_field_begin).with("message", Thrift::Types::STRING, 1)
+      expect(prot).to receive(:write_string).with("something happened")
+      expect(prot).to receive(:write_field_begin).with("code", Thrift::Types::I32, 2)
+      expect(prot).to receive(:write_i32).with(5)
+      expect(prot).to receive(:write_field_stop)
+      expect(prot).to receive(:write_field_end).twice
 
-        e.write(prot)
-      end
+      e.write(prot)
     end
 
     it "should handle UUID fields in structs" do

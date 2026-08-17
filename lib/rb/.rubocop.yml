@@ -312,6 +312,9 @@ Style/MethodDefParentheses:
 Style/RedundantAssignment:
   Enabled: true
 
+Style/RedundantBegin:
+  Enabled: true
+
 Style/RedundantException:
   Enabled: true
 
