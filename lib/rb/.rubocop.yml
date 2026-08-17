@@ -242,6 +242,9 @@ Lint/UnreachableCode:
 Lint/UselessAssignment:
   Enabled: true
 
+Lint/Void:
+  Enabled: true
+
 Performance/BindCall:
   Enabled: true
 
