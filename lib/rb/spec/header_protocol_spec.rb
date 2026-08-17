@@ -136,7 +136,7 @@ describe "HeaderProtocol" do
 
         read_protocol.read_message_begin
         read_protocol.read_struct_begin
-        name, type, id = read_protocol.read_field_begin
+        _, type, id = read_protocol.read_field_begin
         expect(type).to eq(Thrift::Types::I32)
         expect(id).to eq(1)
         value = read_protocol.read_i32
@@ -389,7 +389,7 @@ describe "HeaderProtocol" do
         read_buffer = Thrift::MemoryBufferTransport.new(data)
         read_protocol = Thrift::HeaderProtocol.new(read_buffer)
 
-        name, type, seqid = read_protocol.read_message_begin
+        name, _, seqid = read_protocol.read_message_begin
         expect(name).to eq("compressed_test")
         expect(seqid).to eq(42)
 

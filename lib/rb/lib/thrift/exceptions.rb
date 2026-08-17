@@ -54,7 +54,7 @@ module Thrift
       raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       iprot.read_struct_begin
       while true
-        fname, ftype, fid = iprot.read_field_begin
+        _, ftype, fid = iprot.read_field_begin
         if ftype == Types::STOP
           break
         end

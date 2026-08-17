@@ -1055,16 +1055,21 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, \"" << funname << "\")"
                           << '\n';
 
-      f_service_.indent() << "result = receive_message(" << resultname << ")" << '\n';
+      t_struct* xs = (*f_iter)->get_xceptions();
+      const std::vector<t_field*>& xceptions = xs->get_members();
+      vector<t_field*>::const_iterator x_iter;
+
+      f_service_.indent();
+      if (!(*f_iter)->get_returntype()->is_void() || !xceptions.empty()) {
+        f_service_ << "result = ";
+      }
+      f_service_ << "receive_message(" << resultname << ")" << '\n';
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_.indent() << "return result.success unless result.success.nil?" << '\n';
       }
 
-      t_struct* xs = (*f_iter)->get_xceptions();
-      const std::vector<t_field*>& xceptions = xs->get_members();
-      vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_.indent() << "raise result." << (*x_iter)->get_name() << " unless result."
                             << (*x_iter)->get_name() << ".nil?" << '\n';
@@ -1148,7 +1153,14 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   string argsname = capitalize(tfunction->get_name()) + "_args";
   string resultname = capitalize(tfunction->get_name()) + "_result";
 
-  f_service_.indent() << "args = read_args(iprot, " << argsname << ")" << '\n';
+  t_struct* arg_struct = tfunction->get_arglist();
+  const std::vector<t_field*>& fields = arg_struct->get_members();
+
+  f_service_.indent();
+  if (!fields.empty()) {
+    f_service_ << "args = ";
+  }
+  f_service_ << "read_args(iprot, " << argsname << ")" << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -1166,8 +1178,6 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   // Generate the function call
-  t_struct* arg_struct = tfunction->get_arglist();
-  const std::vector<t_field*>& fields = arg_struct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
   f_service_.indent();

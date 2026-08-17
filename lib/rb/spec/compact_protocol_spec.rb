@@ -92,7 +92,7 @@ describe Thrift::CompactProtocol do
         proto.write_field_end
 
         proto = Thrift::CompactProtocol.new(trans)
-        name, type, id = proto.read_field_begin
+        _, type, id = proto.read_field_begin
         expect(type).to eq(thrift_type)
         expect(id).to eq(15)
         read_back = proto.send(reader(primitive_type))

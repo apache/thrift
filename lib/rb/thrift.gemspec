@@ -17,8 +17,6 @@ Gem::Specification.new do |s|
 
   s.rdoc_options = %w[--line-numbers --inline-source --title Thrift --main README]
 
-  dir = File.expand_path(File.dirname(__FILE__))
-
   s.files = Dir.glob("{lib,ext}/**/*.{c,h,rb}")
   s.executables = Dir.glob("{bin}/**/*")
 

@@ -62,11 +62,11 @@ module Thrift
       @value = nil
 
       iprot.read_struct_begin
-      fname, ftype, fid = iprot.read_field_begin
+      _, ftype, fid = iprot.read_field_begin
       handle_message(iprot, fid, ftype, remaining_depth)
       iprot.read_field_end
 
-      fname, ftype, fid = iprot.read_field_begin
+      _, ftype, _ = iprot.read_field_begin
       unless (ftype == Types::STOP)
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Too many fields for union")
       end

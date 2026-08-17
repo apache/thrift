@@ -158,14 +158,14 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_string
     p "test_string"
-    test_string =
+    escaped_string =
       'quote: \" backslash:' +
       ' forwardslash-escaped: \/ ' +
       ' backspace: \b formfeed: \f newline: \n return: \r tab: ' +
       ' now-all-of-them-together: "\\\/\b\n\r\t' +
       ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' +
       ' char-to-test-json-parsing: ]] \"]] \\" }}}{ [[[ '
-    test_string = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, " +
+    unicode_string = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, " +
       "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, " +
       "Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, " +
       "বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, " +
@@ -191,8 +191,10 @@ class SimpleClientTest < Test::Unit::TestCase
       "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, " +
       "Bân-lâm-gú, 粵語"
 
-    result_string = @client.testString(test_string)
-    assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
+    [escaped_string, unicode_string].each do |test_string|
+      result_string = @client.testString(test_string)
+      assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
+    end
   end
 
   def test_multiplexed

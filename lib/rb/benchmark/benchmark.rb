@@ -183,9 +183,9 @@ class BenchmarkManager
       end
     end
     @report = {}
-    @report[:total_calls] = call_times.inject(0.0) { |a, t| a += t }
+    @report[:total_calls] = call_times.inject(0.0) { |a, t| a + t }
     @report[:avg_calls] = @report[:total_calls] / call_times.size
-    @report[:total_clients] = client_times.inject(0.0) { |a, t| a += t }
+    @report[:total_clients] = client_times.inject(0.0) { |a, t| a + t }
     @report[:avg_clients] = @report[:total_clients] / client_times.size
     @report[:connection_failures] = connection_failures.size
     @report[:connection_errors] = connection_errors.size
@@ -209,7 +209,6 @@ class BenchmarkManager
              ["Clients per process", @clients_per_process],
              ["Calls per client", @calls_per_client]
     puts
-    failures = (@report[:connection_failures] > 0)
     tabulate fmt,
              [["Connection failures", "%d", [:red, :bold]], @report[:connection_failures]],
              [["Connection errors", "%d", [:red, :bold]], @report[:connection_errors]],

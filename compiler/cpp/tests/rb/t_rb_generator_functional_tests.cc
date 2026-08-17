@@ -108,6 +108,7 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
         "service PingService {\n"
         "  oneway void ping(1: i32 n)\n"
         "  i32 pong()\n"
+        "  void noop()\n"
         "}\n";
 
     {
@@ -133,6 +134,17 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
         "    FIELDS";
     REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
     REQUIRE(service.find("def pong()\n      send_pong()\n      recv_pong()\n    end")
+            != string::npos);
+    REQUIRE(service.find("def recv_noop()\n"
+                         "      fname, mtype, rseqid = receive_message_begin()\n"
+                         "      validate_message_begin(fname, mtype, rseqid, \"noop\")\n"
+                         "      receive_message(Noop_result)\n"
+                         "      nil\n"
+                         "    end")
+            != string::npos);
+    REQUIRE(service.find("def process_pong(seqid, iprot, oprot)\n"
+                         "      read_args(iprot, Pong_args)\n"
+                         "      result = Pong_result.new()")
             != string::npos);
     REQUIRE(service.find(expected_empty_result) != string::npos);
     REQUIRE(service.find("\n\n  end\n") == string::npos);

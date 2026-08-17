@@ -62,7 +62,7 @@ module Thrift
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
-      rescue IOError => e
+      rescue IOError
       end
       # we must be shutting down
       @logger.info "#{self} is shutting down, goodbye"

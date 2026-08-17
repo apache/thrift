@@ -367,7 +367,7 @@ module Thrift
       when Types::STRUCT
         read_struct_begin
         while true
-          name, type, id = read_field_begin
+          _, type, _ = read_field_begin
           break if type == Types::STOP
           skip(type, max_depth - 1)
           read_field_end
