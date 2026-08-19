@@ -48,7 +48,6 @@ describe "Socket" do
       expect(Addrinfo).to receive(:foreach).with("localhost", 9090, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(no_args).and_return(@handle)
       expect(@handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-      @socket.to_s == "socket(localhost:9090)"
       @socket.open
     end
 
