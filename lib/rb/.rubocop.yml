@@ -312,6 +312,9 @@ Style/HashSyntax:
   Enabled: true
   EnforcedShorthandSyntax: either
 
+Style/LineEndConcatenation:
+  Enabled: true
+
 Style/MethodDefParentheses:
   Enabled: true
 
