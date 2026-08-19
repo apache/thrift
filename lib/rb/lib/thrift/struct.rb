@@ -96,7 +96,7 @@ module Thrift
 
       iprot.read_struct_begin
       loop do
-        fname, ftype, fid = iprot.read_field_begin
+        _, ftype, fid = iprot.read_field_begin
         break if (ftype == Types::STOP)
         handle_message(iprot, fid, ftype, remaining_depth)
         iprot.read_field_end

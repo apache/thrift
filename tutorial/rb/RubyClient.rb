@@ -59,7 +59,7 @@ begin
     work.op = Operation::DIVIDE
     work.num1 = 1
     work.num2 = 0
-    quot = client.calculate(1, work)
+    client.calculate(1, work)
     puts "Whoa, we can divide by 0 now?"
   rescue InvalidOperation => io
     print "InvalidOperation: ", io.why, "\n"

@@ -185,17 +185,17 @@ describe "UUID Validation" do
           @prot.write_struct_end
 
           @prot.read_struct_begin
-          name, type, id = @prot.read_field_begin
+          _, type, _ = @prot.read_field_begin
           expect(type).to eq(Thrift::Types::UUID)
           expect(@prot.read_uuid).to eq("550e8400-e29b-41d4-a716-446655440000")
           @prot.read_field_end
 
-          name, type, id = @prot.read_field_begin
+          _, type, _ = @prot.read_field_begin
           expect(type).to eq(Thrift::Types::UUID)
           expect(@prot.read_uuid).to eq("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
           @prot.read_field_end
 
-          name, type, id = @prot.read_field_begin
+          _, type, _ = @prot.read_field_begin
           expect(type).to eq(Thrift::Types::STOP)
         end
       end

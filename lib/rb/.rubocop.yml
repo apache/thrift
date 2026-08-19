@@ -239,6 +239,9 @@ Lint/RedundantStringCoercion:
 Lint/UnreachableCode:
   Enabled: true
 
+Lint/UselessAssignment:
+  Enabled: true
+
 Performance/BindCall:
   Enabled: true
 
