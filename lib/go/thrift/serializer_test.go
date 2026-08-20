@@ -326,7 +326,7 @@ func BenchmarkSerializer(b *testing.B) {
 		b.Run(
 			c.Label,
 			func(b *testing.B) {
-				for range b.N {
+				for b.Loop() {
 					s := c.Serializer()
 					m := MyTestStruct{}
 					str, _ := s.WriteString(context.Background(), &m)

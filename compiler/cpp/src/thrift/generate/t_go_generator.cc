@@ -794,9 +794,12 @@ void t_go_generator::generate_typedef(t_typedef* ttypedef) {
   // Generate a convenience function that converts an instance of a type
   // (which may be a constant) into a pointer to an instance of a type.
   f_types_ << '\n';
-  generate_deprecation_comment(f_types_, ttypedef->annotations_);
+  if (generate_deprecation_comment(f_types_, ttypedef->annotations_)) {
+    f_types_ << indent() << "//" << '\n';
+  }
+  f_types_ << indent() << "//go:fix inline" << '\n';
   f_types_ << "func " << new_type_name << "Ptr(v " << new_type_name << ") *" << new_type_name
-           << " { return &v }" << '\n';
+           << " { return new(v) }" << '\n';
 }
 
 /**
@@ -915,9 +918,12 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   // Generate a convenience function that converts an instance of an enum
   // (which may be a constant) into a pointer to an instance of that enum
   // type.
-  generate_deprecation_comment(f_types_, tenum->annotations_);
+  if (generate_deprecation_comment(f_types_, tenum->annotations_)) {
+    f_types_ << indent() << "//" << '\n';
+  }
+  f_types_ << indent() << "//go:fix inline" << '\n';
   f_types_ << "func " << tenum_name << "Ptr(v " << tenum_name << ") *" << tenum_name
-           << " { return &v }" << '\n';
+           << " { return new(v) }" << '\n';
 
   // Generate MarshalText
   f_types_ << '\n';
@@ -1001,11 +1007,9 @@ void t_go_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
-  string typedef_opt_ptr;
   string typedef_opt;
   if (type->is_typedef()) {
     typedef_opt = publicize(type_name(type));
-    typedef_opt_ptr = typedef_opt + "Ptr";
   }
   type = get_true_type(type);
   std::ostringstream out;
@@ -1016,57 +1020,67 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     if (opt) {
       switch (tbase) {
         case t_base_type::TYPE_BOOL:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
-          } else {
-            out << "thrift.BoolPtr";
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt << "(";
           }
-          out << "(";
           out << (value->get_integer() > 0 ? "true" : "false");
+          if (typedef_opt != "") {
+            out << ")";
+          }
           break;
 
         case t_base_type::TYPE_I8:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt;
           } else {
-            out << "thrift.Int8Ptr";
+            out << "int8";
           }
           out << "(";
           out << value->get_integer();
+          out << ")";
           break;
         case t_base_type::TYPE_I16:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt;
           } else {
-            out << "thrift.Int16Ptr";
+            out << "int16";
           }
           out << "(";
           out << value->get_integer();
+          out << ")";
           break;
         case t_base_type::TYPE_I32:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt;
           } else {
-            out << "thrift.Int32Ptr";
+            out << "int32";
           }
           out << "(";
           out << value->get_integer();
+          out << ")";
           break;
         case t_base_type::TYPE_I64:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt;
           } else {
-            out << "thrift.Int64Ptr";
+            out << "int64";
           }
           out << "(";
           out << value->get_integer();
+          out << ")";
           break;
 
         case t_base_type::TYPE_DOUBLE:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt;
           } else {
-            out << "thrift.Float64Ptr";
+            out << "float64";
           }
           out << "(";
           if (value->get_type() == t_const_value::CV_INTEGER) {
@@ -1074,27 +1088,27 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
           } else {
             out << value->get_double();
           }
+          out << ")";
           break;
 
         case t_base_type::TYPE_STRING:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr;
-          } else {
-            out << "thrift.StringPtr";
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt << "(";
           }
-          out << "(";
           out << '"' + get_escaped_string(value) + '"';
+          if (typedef_opt != "") {
+            out << ")";
+          }
           break;
 
         case t_base_type::TYPE_UUID:
-          if (typedef_opt_ptr != "") {
-            out << typedef_opt_ptr << "(" << typedef_opt;
-          } else {
-            out << "thrift.TuuidPtr";
+          out << "new(";
+          if (typedef_opt != "") {
+            out << typedef_opt << "(";
           }
-          out << "(";
           out << "thrift.Must(thrift.ParseTuuid(\"" + get_escaped_string(value) + "\"))";
-          if (typedef_opt_ptr != "") {
+          if (typedef_opt != "") {
             out << ")";
           }
           break;
@@ -1157,15 +1171,17 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     }
   } else if (type->is_enum()) {
     if (opt) {
-      if (typedef_opt_ptr != "") {
-        out << typedef_opt_ptr << "(";
+      out << "new(";
+      if (typedef_opt != "") {
+        out << typedef_opt;
       } else {
-        out << type_name(type) << "Ptr(";
+        out << type_name(type);
       }
+      out << "(";
     }
     out << value->get_integer();
     if (opt) {
-      out << ")";
+      out << "))";
     }
   } else if (type->is_struct() || type->is_xception()) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
@@ -4638,7 +4654,7 @@ void t_go_generator::parse_go_tags(map<string,string>* tags, const string in) {
   }
 }
 
-void t_go_generator::generate_deprecation_comment(ostream& out, const map<string, vector<string>>& annotations) {
+bool t_go_generator::generate_deprecation_comment(ostream& out, const map<string, vector<string>>& annotations) {
   auto iter = annotations.find("deprecated");
   if (annotations.end() != iter) {
     out << indent() << "// Deprecated: ";
@@ -4661,7 +4677,9 @@ void t_go_generator::generate_deprecation_comment(ostream& out, const map<string
       out << "(no reason given)";
     }
     out << '\n';
+    return true;
   }
+  return false;
 }
 
 bool format_go_output(const string& file_path) {

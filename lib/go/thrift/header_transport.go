@@ -143,8 +143,8 @@ func NewTransformReaderWithCapacity(baseReader io.Reader, capacity int) *Transfo
 // stops at and returns the first error encountered.
 func (tr *TransformReader) Close() error {
 	// Call closers in reversed order
-	for i := len(tr.closers) - 1; i >= 0; i-- {
-		if err := tr.closers[i].Close(); err != nil {
+	for _, v := range slices.Backward(tr.closers) {
+		if err := v.Close(); err != nil {
 			return err
 		}
 	}
@@ -204,8 +204,8 @@ func NewTransformWriter(baseWriter io.Writer, transforms []THeaderTransformID) (
 // stops at and returns the first error encountered.
 func (tw *TransformWriter) Close() error {
 	// Call closers in reversed order
-	for i := len(tw.closers) - 1; i >= 0; i-- {
-		if err := tw.closers[i].Close(); err != nil {
+	for _, v := range slices.Backward(tw.closers) {
+		if err := v.Close(); err != nil {
 			return err
 		}
 	}
