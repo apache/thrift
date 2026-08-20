@@ -195,7 +195,7 @@ func TestRecursionDepthWideStructureRoundTrips(t *testing.T) {
 	for _, proto := range recursionProtocols {
 		t.Run(proto.name, func(t *testing.T) {
 			root := &recursive.RecTree{Item: 0, Children: make([]*recursive.RecTree, 0, width)}
-			for i := 0; i < width; i++ {
+			for i := range width {
 				root.Children = append(root.Children, &recursive.RecTree{Item: int16(i)})
 			}
 			trans := thrift.NewTMemoryBuffer()

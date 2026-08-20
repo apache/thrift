@@ -36,7 +36,7 @@ func TestBasicValidator(t *testing.T) {
 	}
 	var ve *thrift.ValidationError
 	bt = validatetest.NewBasicTest()
-	bt.Bool1 = thrift.BoolPtr(false)
+	bt.Bool1 = new(false)
 	if err := bt.Validate(); err == nil {
 		t.Error("Expected vt.const error for Bool1")
 	} else if errors.As(err, &ve) {
@@ -50,7 +50,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	bt.Byte1 = thrift.Int8Ptr(3)
+	bt.Byte1 = new(int8(3))
 	if err := bt.Validate(); err == nil {
 		t.Errorf("Expected vt.lt error for Byte1")
 	} else if errors.As(err, &ve) {
@@ -64,7 +64,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	bt.Double1 = thrift.Float64Ptr(3.0)
+	bt.Double1 = new(3.0)
 	if err := bt.Validate(); err == nil {
 		t.Errorf("Expected vt.lt error for Double1")
 	} else if errors.As(err, &ve) {
@@ -78,7 +78,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	bt.String1 = thrift.StringPtr("other string")
+	bt.String1 = new("other string")
 	if err := bt.Validate(); err == nil {
 		t.Errorf("Expected vt.const error for String1")
 	} else if errors.As(err, &ve) {
@@ -178,7 +178,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	bt.Enum1 = (*validatetest.EnumFoo)(thrift.Int64Ptr(int64(validatetest.EnumFoo_e2)))
+	bt.Enum1 = (*validatetest.EnumFoo)(new(int64(validatetest.EnumFoo_e2)))
 	if err := bt.Validate(); err == nil {
 		t.Errorf("Expected vt.in error for Enum1")
 	} else if errors.As(err, &ve) {
@@ -194,7 +194,7 @@ func TestBasicValidator(t *testing.T) {
 
 	t.Run("pattern-valid", func(t *testing.T) {
 		bt = validatetest.NewBasicTest()
-		bt.StringPattern = thrift.StringPtr("abcd")
+		bt.StringPattern = new("abcd")
 		if err := bt.Validate(); err != nil {
 			t.Errorf("Expected no error for StringPattern, but got %v", err)
 		}
@@ -202,7 +202,7 @@ func TestBasicValidator(t *testing.T) {
 
 	t.Run("pattern-invalid", func(t *testing.T) {
 		bt = validatetest.NewBasicTest()
-		bt.StringPattern = thrift.StringPtr("1234")
+		bt.StringPattern = new("1234")
 		err := bt.Validate()
 		if err == nil {
 			t.Error("Expected error for StringPattern, but got none")
@@ -345,7 +345,7 @@ func TestFieldReference(t *testing.T) {
 
 	t.Run("pattern-valid", func(t *testing.T) {
 		frt = validatetest.NewFieldReferenceTest()
-		frt.StringPattern = thrift.StringPtr("abcd")
+		frt.StringPattern = new("abcd")
 		if err := frt.Validate(); err != nil {
 			t.Errorf("Expected no error for StringPattern, but got %v", err)
 		}
@@ -353,7 +353,7 @@ func TestFieldReference(t *testing.T) {
 
 	t.Run("pattern-invalid", func(t *testing.T) {
 		frt = validatetest.NewFieldReferenceTest()
-		frt.StringPattern = thrift.StringPtr("1234")
+		frt.StringPattern = new("1234")
 		err := frt.Validate()
 		if err == nil {
 			t.Error("Expected error for StringPattern, but got none")
@@ -370,12 +370,11 @@ func TestValidationFunction(t *testing.T) {
 	if err := vft.Validate(); err != nil {
 		t.Error(err)
 	}
-	var ve *thrift.ValidationError
 	vft = validatetest.NewValidationFunctionTest()
 	vft.StringFoo = "some string"
 	if err := vft.Validate(); err == nil {
 		t.Errorf("Expected vt.in error for StringLength")
-	} else if errors.As(err, &ve) {
+	} else if ve, ok := errors.AsType[*thrift.ValidationError](err); ok {
 		if ve.Check() != "vt.in" {
 			t.Errorf("Expected vt.in check error, but got %v", ve.Check())
 		}

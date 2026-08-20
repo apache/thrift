@@ -95,7 +95,8 @@ func MyTestEnumFromString(s string) (MyTestEnum, error) {
 	return MyTestEnum(0), fmt.Errorf("not a valid MyTestEnum string")
 }
 
-func MyTestEnumPtr(v MyTestEnum) *MyTestEnum { return &v }
+//go:fix inline
+func MyTestEnumPtr(v MyTestEnum) *MyTestEnum { return new(v) }
 
 type MyTestStruct struct {
 	On         bool                `thrift:"on,1" json:"on"`

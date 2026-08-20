@@ -39,7 +39,7 @@ type serviceImpl struct {
 func (s serviceImpl) Ping(_ context.Context) (err error) {
 	time.Sleep(s.sleepTime)
 	return &processormiddlewaretest.Error{
-		Foo: thrift.StringPtr(errorMessage),
+		Foo: new(errorMessage),
 	}
 }
 
