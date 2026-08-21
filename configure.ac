@@ -286,6 +286,8 @@ AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 
 # Find python regardless of with_python value, because it's needed by make cross
 AM_PATH_PYTHON(2.6,, :)
+AC_PATH_PROG([PERL_FOR_BUILD], [perl])
+AM_CONDITIONAL([HAVE_PERL_FOR_BUILD], [test -n "$PERL_FOR_BUILD"])
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
   if test -n "$PYTHON"; then
@@ -809,6 +811,7 @@ AC_CONFIG_FILES([
   lib/xml/Makefile
   lib/xml/test/Makefile
   test/Makefile
+  test/audit/Makefile
   test/features/Makefile
   test/c_glib/Makefile
   test/cl/Makefile

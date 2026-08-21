@@ -59,7 +59,7 @@ jobs:
         run: ./bootstrap.sh
 
       - name: Run configure
-        run: ./configure --disable-debug --disable-tests --disable-libs
+        run: ./configure --disable-debug --disable-libs
 
       - name: Run make
         run: make -j$(nproc)
@@ -69,6 +69,9 @@ jobs:
 
       - name: Run thrift version
         run: /usr/local/bin/thrift -version
+
+      - name: Run thrift audit tests
+        run: make -C test/audit check
 
       - name: Test Delphi UUIDv8 GUID determinism
         run: |
