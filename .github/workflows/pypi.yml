@@ -109,6 +109,10 @@ jobs:
             runner: windows-latest
             archs: AMD64
             build: "cp310-win_* cp311-win_* cp312-win_* cp313-win_* cp314-win_*"
+          - platform: windows-arm64
+            runner: windows-11-arm
+            archs: ARM64
+            build: "cp310-win_* cp311-win_* cp312-win_* cp313-win_* cp314-win_*"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
