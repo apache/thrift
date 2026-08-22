@@ -3960,6 +3960,21 @@ void t_netstd_generator::generate_netstd_doc(ostream& out, t_function* tfunction
             ps << "</param>";
         }
 
+        const vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+        vector<t_field*>::const_iterator e_iter;
+        for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter)
+        {
+            t_field* e = *e_iter;
+            ps << '\n' << "<exception cref=\"" << type_name(e->get_type()) << "\">";
+            if (e->has_doc())
+            {
+                string str = e->get_doc();
+                str.erase(remove(str.begin(), str.end(), '\n'), str.end());
+                ps << str;
+            }
+            ps << "</exception>";
+        }
+
         docstring_comment(out,
                                    "",
                                    "/// ",

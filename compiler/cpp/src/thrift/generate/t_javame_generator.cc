@@ -188,7 +188,7 @@ public:
 
   void generate_java_doc(std::ostream& out, t_doc* tdoc) override;
 
-  void generate_java_doc(std::ostream& out, t_function* tdoc) override;
+  void generate_java_doc(std::ostream& out, t_function* tfunction) override;
 
   void generate_java_docstring_comment(std::ostream& out, string contents) override;
 
@@ -3058,20 +3058,7 @@ void t_javame_generator::generate_java_doc(ostream& out, t_doc* tdoc) {
  * Emits a JavaDoc comment if the provided function object has a doc in Thrift
  */
 void t_javame_generator::generate_java_doc(ostream& out, t_function* tfunction) {
-  if (tfunction->has_doc()) {
-    stringstream ss;
-    ss << tfunction->get_doc();
-    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-    vector<t_field*>::const_iterator p_iter;
-    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
-      t_field* p = *p_iter;
-      ss << "\n@param " << p->get_name();
-      if (p->has_doc()) {
-        ss << " " << p->get_doc();
-      }
-    }
-    generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
-  }
+  t_oop_generator::generate_java_doc(out, tfunction);
 }
 
 void t_javame_generator::generate_deep_copy_container(ostream& out,
