@@ -1,0 +1,4 @@
+.zig-cache/
+gen-zig/
+zig-out/
+/lib
