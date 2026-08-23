@@ -740,6 +740,49 @@ describe "JsonProtocol" do
       end
     end
 
+    [0, 15, 16, 17].each do |prefix_size|
+      it "rejects every unescaped JSON control character after #{prefix_size} bytes" do
+        aggregate_failures do
+          (0x00..0x1f).each do |control|
+            wire = "\"#{"a" * prefix_size}#{control.chr}after\"".b
+            protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+
+            expect { protocol.read_string }.to raise_error(
+              Thrift::ProtocolException,
+              "Unescaped control character in JSON string",
+            ) do |error|
+              expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+            end
+          end
+        end
+      end
+    end
+
+    it "rejects every unescaped JSON control character without a byte API" do
+      transport_class = Class.new(Thrift::MemoryBufferTransport) { undef_method :read_byte }
+      (0x00..0x1f).each do |control|
+        wire = "\"#{"a" * 32}#{control.chr}\"".b
+        protocol = Thrift::JsonProtocol.new(transport_class.new(wire))
+
+        expect { protocol.read_string }.to raise_error(Thrift::ProtocolException) do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+          expect(error.message).to eq("Unescaped control character in JSON string")
+        end
+      end
+    end
+
+    [0, 16].each do |prefix_size|
+      it "accepts every JSON control character as a Unicode escape after #{prefix_size} bytes" do
+        (0x00..0x1f).each do |control|
+          prefix = "a" * prefix_size
+          wire = '"' + prefix + format('\\u%04x', control) + 'after"'
+          protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+
+          expect(protocol.read_string).to eq("#{prefix}#{control.chr}after")
+        end
+      end
+    end
+
     it "should read json string" do
       @trans.write("\"\\P")
       expect { @prot.read_json_string(false) }.to raise_error(Thrift::ProtocolException)
