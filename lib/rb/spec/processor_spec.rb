@@ -157,6 +157,16 @@ describe "Processor" do
       expect(@processor.read_args(@prot, args_class)).to eql(args)
     end
 
+    it "classifies malformed JSON binary arguments as invalid protocol data" do
+      input = Thrift::JsonProtocol.new(
+        Thrift::MemoryBufferTransport.new('{"1":{"str":"%"}}'),
+      )
+
+      expect { @processor.read_args(input, SpecNamespace::Foo2) }.to raise_error(Thrift::ProtocolException) do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+    end
+
     it "should write out a reply when asked" do
       expect(@prot).to receive(:write_message_begin).with("testMessage", Thrift::MessageTypes::REPLY, 23).ordered
       result = double("MockResult")
