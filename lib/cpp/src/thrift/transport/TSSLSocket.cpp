@@ -770,7 +770,11 @@ void TSSLSocket::authorize() {
       if (name == nullptr) {
         continue;
       }
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+      const char* data = (const char*)ASN1_STRING_get0_data(name->d.ia5);
+#else
       char* data = (char*)ASN1_STRING_data(name->d.ia5);
+#endif
       int length = ASN1_STRING_length(name->d.ia5);
       switch (name->type) {
       case GEN_DNS:
