@@ -191,6 +191,48 @@ describe "Server" do
         server_thread&.join
       end
     end
+
+    it "closes a zero-length framed connection and continues accepting clients" do
+      ready = Queue.new
+      errors = Queue.new
+      server_transport = EphemeralServerSocket.new(ready)
+      handler = StopAfterVoidHandler.new
+      processor = Thrift::Test::Srv::Processor.new(handler)
+      transport_factory = Thrift::FramedTransportFactory.new
+      protocol_factory = Thrift::CompactProtocolFactory.new
+      server = Thrift::SimpleServer.new(processor, server_transport, transport_factory, protocol_factory)
+      server_thread = Thread.new do
+        catch(:stop) { server.serve }
+      rescue StandardError, ScriptError => error
+        errors << error
+      end
+      server_thread.report_on_exception = false
+
+      port = Timeout.timeout(2) { ready.pop }
+      malformed_client = TCPSocket.new("127.0.0.1", port)
+      malformed_client.write([0].pack("N"))
+      malformed_client.close_write
+
+      expect(IO.select([malformed_client], nil, nil, 2)).not_to be_nil
+      expect(malformed_client.read).to eq("")
+      expect(server_thread).to be_alive
+
+      socket = Thrift::Socket.new("127.0.0.1", port)
+      valid_transport = Thrift::FramedTransport.new(socket)
+      valid_transport.open
+      valid_protocol = Thrift::CompactProtocol.new(valid_transport)
+      Thrift::Test::Srv::Client.new(valid_protocol).send_voidMethod
+
+      expect(server_thread.join(2)).to eq(server_thread)
+      expect(handler.calls).to eq(1)
+      expect(errors).to be_empty
+    ensure
+      malformed_client&.close
+      valid_transport&.close
+      server_transport&.close
+      server_thread&.kill
+      server_thread&.join
+    end
   end
 
   describe Thrift::ThreadedServer do
