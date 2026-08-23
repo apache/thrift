@@ -46,8 +46,8 @@
 
 /************************** DEFINES *************************/
 
-/* Define if the AI_ADDRCONFIG symbol is unavailable */
-#cmakedefine AI_ADDRCONFIG 0
+/* Define if the AI_V4MAPPED symbol is unavailable */
+#cmakedefine AI_V4MAPPED 0
 
 /* Possible value for SIGNED_RIGHT_SHIFT_IS */
 /* TODO: This is just set to 1 for the moment

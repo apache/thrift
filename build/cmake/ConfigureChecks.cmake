@@ -73,6 +73,16 @@ check_function_exists(strerror_r HAVE_STRERROR_R)
 check_function_exists(sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX)
 check_function_exists(sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN)
 
+check_symbol_exists(AI_V4MAPPED
+  "sys/types.h;sys/socket.h;netdb.h"
+  HAVE_AI_V4MAPPED
+)
+
+if(NOT HAVE_AI_V4MAPPED)
+  set(AI_V4MAPPED 1)
+else()
+  unset(AI_V4MAPPED)
+endif()
 
 check_cxx_source_compiles(
   "
