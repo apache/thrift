@@ -247,6 +247,31 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should batch each native multibyte varint into one transport write" do
+    probe = Thrift::CompactProtocol.new(Thrift::MemoryBufferTransport.new)
+    skip "requires the native Compact Protocol" unless probe.native?
+
+    recording_transport_class = Class.new(Thrift::BaseTransport) do
+      attr_reader :writes
+
+      def initialize
+        @writes = []
+      end
+
+      def write(data)
+        @writes << data
+      end
+    end
+
+    INTEGER_MINIMUM_ENCODINGS.each_pair do |primitive_type, expected_bytes|
+      trans = recording_transport_class.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.send(writer(primitive_type), INTEGER_BOUNDARY_TESTS.fetch(primitive_type).first)
+      expect(trans.writes).to eq([expected_bytes.pack("C*")])
+    end
+  end
+
   it "should use Ruby truthiness when writing bools" do
     {
       true => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,

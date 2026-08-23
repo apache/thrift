@@ -174,27 +174,29 @@ static int32_t message_seqid_from_varint32(uint32_t seqid) {
 }
 
 static void write_varint32(VALUE transport, uint32_t n) {
-  while (true) {
-    if ((n & ~0x7FU) == 0U) {
-      write_byte_direct(transport, n & 0x7FU);
-      break;
-    } else {
-      write_byte_direct(transport, (n & 0x7FU) | 0x80U);
-      n = n >> 7;
-    }
+  unsigned char bytes[5];
+  long length = 0;
+
+  while ((n & ~0x7FU) != 0U) {
+    bytes[length++] = (n & 0x7FU) | 0x80U;
+    n >>= 7;
   }
+  bytes[length++] = n;
+
+  WRITE(transport, (const char*)bytes, length);
 }
 
 static void write_varint64(VALUE transport, uint64_t n) {
-  while (true) {
-    if ((n & ~0x7FULL) == 0ULL) {
-      write_byte_direct(transport, n & 0x7FULL);
-      break;
-    } else {
-      write_byte_direct(transport, (n & 0x7FULL) | 0x80ULL);
-      n = n >> 7;
-    }
+  unsigned char bytes[10];
+  long length = 0;
+
+  while ((n & ~0x7FULL) != 0ULL) {
+    bytes[length++] = (n & 0x7FULL) | 0x80ULL;
+    n >>= 7;
   }
+  bytes[length++] = n;
+
+  WRITE(transport, (const char*)bytes, length);
 }
 
 static void write_collection_begin(VALUE transport, VALUE elem_type, VALUE size_value) {
