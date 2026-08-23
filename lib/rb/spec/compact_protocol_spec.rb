@@ -379,6 +379,20 @@ describe Thrift::CompactProtocol do
     expect(proto.read_i64).to eq(INTEGER_BOUNDARY_TESTS[:i64].first)
   end
 
+  it "should narrow oversized varints to their declared integer widths" do
+    aggregate_failures do
+      {
+        read_i16: [[0x80, 0x80, 0x04], -(2**15)],
+        read_i64: [[0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f], -(2**63)],
+      }.each do |reader_method, (bytes, expected)|
+        trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect(proto.public_send(reader_method)).to eq(expected)
+      end
+    end
+  end
+
   it "should preserve fixed-width double edge byte patterns" do
     [
       [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00],
