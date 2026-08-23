@@ -994,22 +994,22 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     // Open function
     f_service_.indent() << "def " << function_signature(*f_iter) << '\n';
     f_service_.indent_up();
-    f_service_.indent() << "send_" << funname << "(";
-
-    bool first = true;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
+    f_service_.indent() << "send_" << funname;
+    if (!fields.empty()) {
+      f_service_ << "(";
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (fld_iter != fields.begin()) {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name();
       }
-      f_service_ << (*fld_iter)->get_name();
+      f_service_ << ")";
     }
-    f_service_ << ")" << '\n';
+    f_service_ << '\n';
 
     if (!(*f_iter)->is_oneway()) {
       f_service_.indent();
-      f_service_ << "recv_" << funname << "()" << '\n';
+      f_service_ << "recv_" << funname << '\n';
     }
     f_service_.indent_down();
     f_service_.indent() << "end" << '\n';
@@ -1051,7 +1051,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent() << "def " << function_signature(&recv_function) << '\n';
       f_service_.indent_up();
 
-      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << '\n';
+      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin" << '\n';
       f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, \"" << funname << "\")"
                           << '\n';
 
@@ -1168,7 +1168,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_.indent() << "result = " << resultname << ".new()" << '\n';
+    f_service_.indent() << "result = " << resultname << ".new" << '\n';
   }
 
   // Try block for a function with exceptions
@@ -1184,17 +1184,18 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result.success = ";
   }
-  f_service_ << "@handler." << tfunction->get_name() << "(";
-  bool first = true;
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-    } else {
-      f_service_ << ", ";
+  f_service_ << "@handler." << tfunction->get_name();
+  if (!fields.empty()) {
+    f_service_ << "(";
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (f_iter != fields.begin()) {
+        f_service_ << ", ";
+      }
+      f_service_ << "args." << (*f_iter)->get_name();
     }
-    f_service_ << "args." << (*f_iter)->get_name();
+    f_service_ << ")";
   }
-  f_service_ << ")" << '\n';
+  f_service_ << '\n';
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     f_service_.indent_down();
@@ -1228,14 +1229,17 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 }
 
 /**
- * Renders a function signature of the form 'type name(args)'
+ * Renders a Ruby method signature, omitting parentheses when there are no arguments.
  *
  * @param tfunction Function definition
  * @return String of rendered function definition
  */
 string t_rb_generator::function_signature(t_function* tfunction, string prefix) {
-  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
-  return prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ")";
+  string arguments = argument_list(tfunction->get_arglist());
+  if (arguments.empty()) {
+    return prefix + tfunction->get_name();
+  }
+  return prefix + tfunction->get_name() + "(" + arguments + ")";
 }
 
 /**

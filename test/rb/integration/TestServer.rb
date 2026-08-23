@@ -43,7 +43,7 @@ class SimpleHandler
     end
   end
 
-  def testVoid()
+  def testVoid
   end
 
   def testInsanity(thing)
@@ -53,7 +53,7 @@ class SimpleHandler
         3 => thing,
       },
       2 => {
-        6 => Thrift::Test::Insanity::new(),
+        6 => Thrift::Test::Insanity::new,
       },
     }
   end

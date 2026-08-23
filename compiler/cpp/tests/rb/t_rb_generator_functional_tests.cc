@@ -99,7 +99,8 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     std::remove(thrift_path.c_str());
 }
 
-TEST_CASE("t_rb_generator formats service classes and positional arguments", "[functional]")
+TEST_CASE("t_rb_generator formats service classes, call parentheses, and positional arguments",
+          "[functional]")
 {
     const string thrift_path = "test_service_arguments.thrift";
     const string thrift_source =
@@ -132,11 +133,25 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
         "    include ::Thrift::Struct, ::Thrift::Struct_Union\n"
         "\n"
         "    FIELDS";
+    const string expected_argument_method =
+        "    def ping(n)\n"
+        "      send_ping(n)\n"
+        "    end\n";
+    const string expected_no_argument_method =
+        "    def pong\n"
+        "      send_pong\n"
+        "      recv_pong\n"
+        "    end\n";
+    const string expected_no_argument_receive =
+        "    def recv_pong\n"
+        "      fname, mtype, rseqid = receive_message_begin\n";
+    REQUIRE(service.find(expected_argument_method) != string::npos);
     REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
-    REQUIRE(service.find("def pong()\n      send_pong()\n      recv_pong()\n    end")
-            != string::npos);
-    REQUIRE(service.find("def recv_noop()\n"
-                         "      fname, mtype, rseqid = receive_message_begin()\n"
+    REQUIRE(service.find(expected_no_argument_method) != string::npos);
+    REQUIRE(service.find("    def send_pong\n") != string::npos);
+    REQUIRE(service.find(expected_no_argument_receive) != string::npos);
+    REQUIRE(service.find("def recv_noop\n"
+                         "      fname, mtype, rseqid = receive_message_begin\n"
                          "      validate_message_begin(fname, mtype, rseqid, \"noop\")\n"
                          "      receive_message(Noop_result)\n"
                          "      nil\n"
@@ -144,8 +159,9 @@ TEST_CASE("t_rb_generator formats service classes and positional arguments", "[f
             != string::npos);
     REQUIRE(service.find("def process_pong(seqid, iprot, oprot)\n"
                          "      read_args(iprot, Pong_args)\n"
-                         "      result = Pong_result.new()")
+                         "      result = Pong_result.new")
             != string::npos);
+    REQUIRE(service.find("      result.success = @handler.pong\n") != string::npos);
     REQUIRE(service.find(expected_empty_result) != string::npos);
     REQUIRE(service.find("\n\n  end\n") == string::npos);
 

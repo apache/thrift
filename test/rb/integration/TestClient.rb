@@ -153,7 +153,7 @@ class SimpleClientTest < Test::Unit::TestCase
 
   def test_void
     p "test_void"
-    @client.testVoid()
+    @client.testVoid
   end
 
   def test_string

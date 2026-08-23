@@ -305,6 +305,9 @@ Performance/UriDefaultParser:
 Style/AmbiguousEndlessMethodDefinition:
   Enabled: true
 
+Style/DefWithParentheses:
+  Enabled: true
+
 Style/FrozenStringLiteralComment:
   Enabled: true
 
@@ -313,6 +316,9 @@ Style/HashSyntax:
   EnforcedShorthandSyntax: either
 
 Style/LineEndConcatenation:
+  Enabled: true
+
+Style/MethodCallWithoutArgsParentheses:
   Enabled: true
 
 Style/MethodDefParentheses:

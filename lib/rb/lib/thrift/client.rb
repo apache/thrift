@@ -42,7 +42,7 @@ module Thrift
       write_message(nil, nil, args_class, args)
     end
 
-    def receive_message_begin()
+    def receive_message_begin
       fname, mtype, rseqid = @iprot.read_message_begin
       [fname, mtype, rseqid]
     end
