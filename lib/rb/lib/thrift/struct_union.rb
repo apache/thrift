@@ -174,9 +174,8 @@ module Thrift
         "#{enum_class.const_get(:VALUE_MAP)[value]} (#{value})"
       elsif value.is_a? Hash
         if field_info[:type] == Types::MAP
-          map_buf = []
-          value.each do |k, v|
-            map_buf << (inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value]))
+          map_buf = value.map do |k, v|
+            inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value])
           end
           "{" + map_buf.join(", ") + "}"
         else
@@ -195,9 +194,8 @@ module Thrift
     end
 
     def inspect_collection(collection, field_info)
-      buf = []
-      collection.each do |k|
-        buf << inspect_field(k, field_info[:element])
+      buf = collection.map do |element|
+        inspect_field(element, field_info[:element])
       end
       "[" + buf.join(", ") + "]"
     end

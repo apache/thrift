@@ -27,7 +27,7 @@ clients and services.
 
 ## Compatibility
 
-- Ruby MRI >= 2.7 (tested against current supported releases).
+- Ruby MRI >= 3.0 (tested against current supported releases).
 - JRuby works with the pure-Ruby implementation; the native extension is
   skipped automatically.
 - For the repo-wide transport, protocol, and server support matrix, see
@@ -36,7 +36,7 @@ clients and services.
 
 ## Installation
 
-- Requirements: Ruby >= 2.7.
+- Requirements: Ruby >= 3.0.
 - From RubyGems: `gem install thrift`
 - From source: `bundle install`, `gem build thrift.gemspec`, then install the
   resulting `thrift-*.gem`. The native accelerator is built when the gem is
@@ -143,6 +143,11 @@ mount Thrift::RackApplication.new(processor) => "/thrift"
 ## Breaking Changes
 
 ### 0.25.0
+
+Ruby 2.7 support has been removed because the runtime reached end of life on
+March 31, 2023. The Thrift gem now requires Ruby 3.0 or newer. Applications
+still running Ruby 2.7 must upgrade Ruby before installing Thrift 0.25.0 or
+remain on an earlier Thrift release.
 
 Ruby HTTP servers now share one Rack endpoint. Run `Thrift::RackApplication`
 as a Rack app, or mount it at one path in an app such as Rails. The

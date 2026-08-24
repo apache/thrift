@@ -56,7 +56,7 @@ module Thrift
 
           while len < str.length
             begin
-              len += @handle.write_nonblock(str[len..-1])
+              len += @handle.write_nonblock(str[len..])
             rescue IO::WaitWritable
               wait_for(:write, deadline, str.length)
             rescue IO::WaitReadable

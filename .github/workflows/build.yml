@@ -902,10 +902,10 @@ jobs:
     name: lib-ruby (${{ matrix.ruby-version }}) ${{ matrix.skip-build-ext && 'noext' || '' }}
     strategy:
       matrix:
-        ruby-version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4", "4.0", "head"]
+        ruby-version: ["3.0", "3.1", "3.2", "3.3", "3.4", "4.0", "head"]
         skip-build-ext: [false]
         include:
-          - ruby-version: "2.7"
+          - ruby-version: "3.0"
             skip-build-ext: true
       fail-fast: false
     env:
