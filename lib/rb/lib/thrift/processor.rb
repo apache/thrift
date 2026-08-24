@@ -19,9 +19,14 @@
 #
 
 require "logger"
+require "thrift/protocol/base_protocol"
 
 module Thrift
   module Processor
+    class ArgumentProtocolException < ProtocolException
+    end
+    private_constant :ArgumentProtocolException
+
     def initialize(handler, logger = nil)
       @handler = handler
       if logger.nil?
@@ -48,6 +53,9 @@ module Thrift
       if respond_to?("process_#{name}")
         begin
           send("process_#{name}", seqid, iprot, oprot)
+        rescue ArgumentProtocolException => e
+          x = ApplicationException.new(ApplicationException::PROTOCOL_ERROR, e.message)
+          write_error(x, oprot, name, seqid)
         rescue => e
           x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
           @logger.debug "Internal error : #{e.message}\n#{e.backtrace.join("\n")}"
@@ -68,6 +76,8 @@ module Thrift
       args.read(iprot)
       iprot.read_message_end
       args
+    rescue ProtocolException => e
+      raise ArgumentProtocolException.new(e.type, e.message)
     end
 
     def write_result(result, oprot, name, seqid)

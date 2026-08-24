@@ -167,6 +167,49 @@ describe "Processor" do
       end
     end
 
+    it "returns protocol errors for malformed request arguments" do
+      handler = double("Handler")
+      expect(handler).not_to receive(:sleep)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      input = Thrift::JsonProtocol.new(
+        Thrift::MemoryBufferTransport.new('[1,"sleep",1,17,{"1":{"dbl":x}}]'),
+      )
+      output_transport = Thrift::MemoryBufferTransport.new
+
+      expect(processor.process(input, Thrift::JsonProtocol.new(output_transport))).to be true
+
+      response = Thrift::JsonProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq(["sleep", Thrift::MessageTypes::EXCEPTION, 17])
+      exception = Thrift::ApplicationException.new
+      exception.read(response)
+      response.read_message_end
+
+      expect(exception.type).to eq(Thrift::ApplicationException::PROTOCOL_ERROR)
+      expect(exception.message).to eq('Expected numeric value; got ""')
+    end
+
+    it "keeps protocol exceptions raised by handlers as internal errors" do
+      handler = double("Handler")
+      expect(handler).to receive(:sleep).with(3.0).and_raise(
+        Thrift::ProtocolException.new(Thrift::ProtocolException::INVALID_DATA, "handler failed"),
+      )
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      args = SpecNamespace::NonblockingService::Sleep_args.new(seconds: 3.0)
+      input = input_protocol("sleep", Thrift::MessageTypes::CALL, 18, args)
+      output_transport, output = output_protocol
+
+      expect(processor.process(input, output)).to be true
+
+      response = Thrift::BinaryProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq(["sleep", Thrift::MessageTypes::EXCEPTION, 18])
+      exception = Thrift::ApplicationException.new
+      exception.read(response)
+      response.read_message_end
+
+      expect(exception.type).to eq(Thrift::ApplicationException::INTERNAL_ERROR)
+      expect(exception.message).to eq("Internal error")
+    end
+
     it "should write out a reply when asked" do
       expect(@prot).to receive(:write_message_begin).with("testMessage", Thrift::MessageTypes::REPLY, 23).ordered
       result = double("MockResult")
