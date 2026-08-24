@@ -22,7 +22,7 @@ require "thrift/protocol/base_protocol"
 
 module Thrift
   module UUID
-    UUID_REGEX = /\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z/.freeze
+    UUID_REGEX = /\A[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\z/
 
     def self.validate_uuid!(uuid)
       unless uuid.is_a?(String)
