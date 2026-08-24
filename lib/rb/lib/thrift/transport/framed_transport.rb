@@ -108,6 +108,7 @@ module Thrift
 
     def read_frame
       sz = @transport.read_all(4).unpack1("N")
+      raise TransportException.new(TransportException::END_OF_FILE, "Cannot read from a zero-length frame") if sz == 0
 
       @index = 0
       @rbuf = @transport.read_all(sz)

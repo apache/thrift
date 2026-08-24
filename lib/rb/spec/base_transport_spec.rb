@@ -286,6 +286,22 @@ describe "BaseTransport" do
       expect(Thrift::FramedTransport.new(@trans).read(-2)).to eq("")
     end
 
+    {
+      "read" => proc { |transport| transport.read(1) },
+      "read_byte" => proc { |transport| transport.read_byte },
+      "read_into_buffer" => proc { |transport| transport.read_into_buffer("\0".b, 1) },
+    }.each do |operation, read|
+      it "rejects a zero-length frame through #{operation}" do
+        transport = Thrift::MemoryBufferTransport.new([0].pack("N"))
+        framed_transport = Thrift::FramedTransport.new(transport)
+
+        expect { read.call(framed_transport) }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+          expect(error.message).to eq("Cannot read from a zero-length frame")
+        end
+      end
+    end
+
     it "should pull a new frame when the first is exhausted" do
       frame = "this is a frame"
       frame2 = "yet another frame"
