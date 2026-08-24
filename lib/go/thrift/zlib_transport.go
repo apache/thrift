@@ -136,8 +136,12 @@ func (z *TZlibTransport) Read(p []byte) (int, error) {
 
 // RemainingBytes returns the size in bytes of the data that is still to be
 // read.
+//
+// The underlying transport counts compressed bytes, which are no bound on the
+// bytes this transport can still produce, so the answer is always
+// UnknownRemainingBytes.
 func (z *TZlibTransport) RemainingBytes() uint64 {
-	return z.transport.RemainingBytes()
+	return UnknownRemainingBytes
 }
 
 func (z *TZlibTransport) Write(p []byte) (int, error) {

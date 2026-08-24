@@ -753,21 +753,27 @@ func TestCheckContainerSizeForProtocol(t *testing.T) {
 		label     string
 		size      int64
 		minElem   int32
+		remaining uint64
 		wantError bool
 	}{
-		{"small", 10, 8, false},
-		{"negative", -1, 8, true},
+		{"small", 10, 8, UnknownRemainingBytes, false},
+		{"negative", -1, 8, UnknownRemainingBytes, true},
 		// 0x20000000 * 8 == 1<<32, i.e. 0 taken as a signed 32-bit product.
-		{"int32-product", 0x20000000, 8, true},
+		{"int32-product", 0x20000000, 8, UnknownRemainingBytes, true},
 		// JSON reads the count as int64; a count past int32 must be rejected
 		// rather than reduced to a small product.
-		{"int64-count", 0x100000000, 2, true},
+		{"int64-count", 0x100000000, 2, UnknownRemainingBytes, true},
 		// A count near math.MaxInt64/minElem keeps the 64-bit product itself
 		// outside int32 range; it must be rejected by the count range check.
-		{"int64-product", 0x4000000000000000, 2, true},
+		{"int64-product", 0x4000000000000000, 2, UnknownRemainingBytes, true},
+		// A known remaining size bounds the count on top of the above.
+		{"fits-remaining", 10, 8, 80, false},
+		{"exceeds-remaining", 11, 8, 80, true},
+		{"nothing-remaining", 1, 1, 0, true},
+		{"empty-container", 0, 1, 0, false},
 	} {
 		t.Run(c.label, func(t *testing.T) {
-			err := checkContainerSizeForProtocol(c.size, c.minElem, &TConfiguration{})
+			err := checkContainerSizeForProtocol(c.size, c.minElem, c.remaining, &TConfiguration{})
 			if c.wantError && err == nil {
 				t.Errorf("size=%d minElem=%d: expected error, got nil", c.size, c.minElem)
 			}

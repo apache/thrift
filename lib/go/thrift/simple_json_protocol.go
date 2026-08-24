@@ -113,6 +113,14 @@ func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
 	})
 }
 
+// RemainingBytes implements ReadSizeProvider.
+//
+// The protocol reads through a bufio.Reader, so the bytes already pulled out of
+// the transport have to be added back to what the transport still reports.
+func (p *TSimpleJSONProtocol) RemainingBytes() uint64 {
+	return addRemainingBytes(p.trans.RemainingBytes(), uint64(p.reader.Buffered()))
+}
+
 func NewTSimpleJSONProtocolConf(t TTransport, conf *TConfiguration) *TSimpleJSONProtocol {
 	PropagateTConfiguration(t, conf)
 	v := &TSimpleJSONProtocol{
@@ -438,7 +446,8 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 			fmt.Errorf("size exceeded max allowed: %d", iSize),
 		)
 	}
-	err = checkSizeForProtocol(int32(iSize), p.cfg)
+	minElemSize := p.getMinSerializedSize(keyType) + p.getMinSerializedSize(valueType)
+	err = checkContainerSizeForProtocol(iSize, minElemSize, p.RemainingBytes(), p.cfg)
 	if err != nil {
 		return keyType, valueType, 0, err
 	}
@@ -1138,6 +1147,41 @@ func (p *TSimpleJSONProtocol) ParseListBegin() (isNull bool, err error) {
 	return isNull, NewTProtocolExceptionWithType(INVALID_DATA, err)
 }
 
+func (p *TSimpleJSONProtocol) getMinSerializedSize(ttype TType) int32 {
+	switch ttype {
+	case STOP:
+		return 1 // T_STOP needs to count itself
+	case VOID:
+		return 1 // T_VOID needs to count itself
+	case BOOL:
+		return 1 // written as int
+	case BYTE:
+		return 1
+	case DOUBLE:
+		return 1
+	case I16:
+		return 1
+	case I32:
+		return 1
+	case I64:
+		return 1
+	case STRING:
+		return 2 // empty string
+	case STRUCT:
+		return 2 // empty struct
+	case MAP:
+		return 2 // empty map
+	case SET:
+		return 2 // empty set
+	case LIST:
+		return 2 // empty list
+	case UUID:
+		return 16 // empty UUID
+	default:
+		return 1 // unknown type
+	}
+}
+
 func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e error) {
 	if isNull, e := p.ParseListBegin(); isNull || e != nil {
 		return VOID, 0, e
@@ -1157,7 +1201,8 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 			fmt.Errorf("size exceeded max allowed: %d", nSize),
 		)
 	}
-	err = checkSizeForProtocol(int32(nSize), p.cfg)
+	minElemSize := p.getMinSerializedSize(elemType)
+	err = checkContainerSizeForProtocol(nSize, minElemSize, p.RemainingBytes(), p.cfg)
 	if err != nil {
 		return elemType, 0, err
 	}

@@ -338,7 +338,13 @@ func checkSizeForProtocol(size int32, cfg *TConfiguration) error {
 // occupies at least minElemSize bytes. The count is range-checked and the
 // product is computed in 64-bit arithmetic, so the value handed to
 // checkSizeForProtocol always stays within int32 range.
-func checkContainerSizeForProtocol(size int64, minElemSize int32, cfg *TConfiguration) error {
+//
+// remaining is the transport's ReadSizeProvider.RemainingBytes value. When the
+// transport knows how much is left, a count whose elements cannot fit in that
+// many bytes is rejected here, before the caller uses it to size an allocation.
+// This mirrors the checkReadBytesAvailable step the Java and C++ protocols
+// perform on the same three headers.
+func checkContainerSizeForProtocol(size int64, minElemSize int32, remaining uint64, cfg *TConfiguration) error {
 	if size < 0 {
 		return NewTProtocolExceptionWithType(
 			NEGATIVE_SIZE,
@@ -356,6 +362,15 @@ func checkContainerSizeForProtocol(size int64, minElemSize int32, cfg *TConfigur
 		return NewTProtocolExceptionWithType(
 			SIZE_LIMIT,
 			fmt.Errorf("size exceeded max allowed: %d", totalMinSize),
+		)
+	}
+	if remaining != UnknownRemainingBytes && uint64(totalMinSize) > remaining {
+		return NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf(
+				"container of %d elements needs at least %d bytes, only %d remaining",
+				size, totalMinSize, remaining,
+			),
 		)
 	}
 	return checkSizeForProtocol(int32(totalMinSize), cfg)

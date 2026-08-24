@@ -254,8 +254,7 @@ func (p *TSSLSocket) Interrupt() error {
 }
 
 func (p *TSSLSocket) RemainingBytes() (num_bytes uint64) {
-	const maxSize = ^uint64(0)
-	return maxSize // the truth is, we just don't know unless framed is used
+	return UnknownRemainingBytes
 }
 
 var _ TConfigurationSetter = (*TSSLSocket)(nil)

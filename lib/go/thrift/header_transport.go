@@ -484,7 +484,9 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	// buffer length, so the frame-size and header-length checks above do not
 	// bound it. Validate it the same way every other wire-supplied container
 	// count (list/set/map sizes) is validated, before it sizes any allocation.
-	if err = checkContainerSizeForProtocol(int64(transformCount), 1, t.cfg); err != nil {
+	if err = checkContainerSizeForProtocol(
+		int64(transformCount), 1, headerBuf.RemainingBytes(), t.cfg,
+	); err != nil {
 		return err
 	}
 	if transformCount > 0 {
@@ -747,15 +749,24 @@ func (t *THeaderTransport) Close() error {
 	return t.transport.Close()
 }
 
-// RemainingBytes calls underlying transport's RemainingBytes.
+// RemainingBytes returns the number of bytes left in the current frame.
 //
-// Even in framed cases, because of all the possible compression transforms
-// involved, the remaining frame size is likely to be different from the actual
-// remaining readable bytes, so we don't bother to keep tracking the remaining
-// frame size by ourselves and just use the underlying transport's
-// RemainingBytes directly.
+// The underlying transport's value cannot be used here: the frame has already
+// been copied out of it into frameBuffer, so it no longer accounts for the
+// bytes this transport can still deliver.
+//
+// When a compression transform is in play the frame buffer holds transformed
+// bytes, which say nothing about how many bytes the transform will produce, so
+// the answer is UnknownRemainingBytes. The same applies outside a frame, where
+// reads come from a bufio.Reader over the underlying transport.
 func (t *THeaderTransport) RemainingBytes() uint64 {
-	return t.transport.RemainingBytes()
+	if t.frameReader == nil || t.frameBuffer == nil {
+		return UnknownRemainingBytes
+	}
+	if _, transformed := t.frameReader.(*TransformReader); transformed {
+		return UnknownRemainingBytes
+	}
+	return uint64(t.frameBuffer.Len())
 }
 
 // GetReadHeaders returns the THeaderMap read from transport.

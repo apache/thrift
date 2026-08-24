@@ -356,7 +356,7 @@ func (p *TBinaryProtocol) ReadMapBegin(ctx context.Context) (kType, vType TType,
 		return
 	}
 	minElemSize := p.getMinSerializedSize(kType) + p.getMinSerializedSize(vType)
-	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.cfg)
+	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.trans.RemainingBytes(), p.cfg)
 	if err != nil {
 		return
 	}
@@ -381,7 +381,7 @@ func (p *TBinaryProtocol) ReadListBegin(ctx context.Context) (elemType TType, si
 		return
 	}
 	minElemSize := p.getMinSerializedSize(elemType)
-	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.cfg)
+	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.trans.RemainingBytes(), p.cfg)
 	if err != nil {
 		return
 	}
@@ -407,7 +407,7 @@ func (p *TBinaryProtocol) ReadSetBegin(ctx context.Context) (elemType TType, siz
 		return
 	}
 	minElemSize := p.getMinSerializedSize(elemType)
-	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.cfg)
+	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.trans.RemainingBytes(), p.cfg)
 	if err != nil {
 		return
 	}

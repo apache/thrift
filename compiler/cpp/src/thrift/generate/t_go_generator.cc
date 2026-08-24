@@ -3735,9 +3735,9 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     indent_down();
     out << indent() << "}" << '\n';
     if (is_container_keyed_map(ttype)) {
-      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", 0, size)" << '\n';
+      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", 0, thrift.PreallocSize(size))" << '\n';
     } else {
-      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << '\n';
+      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", thrift.PreallocSize(size))" << '\n';
     }
     out << indent() << prefix << eq << (pointer_field ? "&" : "") << "tMap" << '\n';
   } else if (ttype->is_set()) {
@@ -3747,7 +3747,7 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     out << indent() << "return thrift.PrependError(\"error reading set begin: \", err)" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
-    out << indent() << "tSet := make(" << type_to_go_type(orig_type) << ", 0, size)" << '\n';
+    out << indent() << "tSet := make(" << type_to_go_type(orig_type) << ", 0, thrift.PreallocSize(size))" << '\n';
     out << indent() << prefix << eq << (pointer_field ? "&" : "") << "tSet" << '\n';
   } else if (ttype->is_list()) {
     out << indent() << "_, size, err := iprot.ReadListBegin(ctx)" << '\n';
@@ -3756,7 +3756,7 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     out << indent() << "return thrift.PrependError(\"error reading list begin: \", err)" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
-    out << indent() << "tSlice := make(" << type_to_go_type(orig_type) << ", 0, size)" << '\n';
+    out << indent() << "tSlice := make(" << type_to_go_type(orig_type) << ", 0, thrift.PreallocSize(size))" << '\n';
     out << indent() << prefix << eq << (pointer_field ? "&" : "") << "tSlice" << '\n';
   } else {
     throw "INVALID TYPE IN generate_deserialize_container '" + ttype->get_name() + "' for prefix '"
