@@ -397,7 +397,8 @@ module Thrift
     end
 
     def read_i16
-      zig_zag_to_int(read_varint32)
+      value = zig_zag_to_int(read_varint32) & 0xffff
+      value > I16_MAX ? value - 0x10000 : value
     end
 
     def read_i32
@@ -405,7 +406,7 @@ module Thrift
     end
 
     def read_i64
-      zig_zag_to_long(read_varint64)
+      zig_zag_to_long(read_varint64 & 0xffffffffffffffff)
     end
 
     def read_double
