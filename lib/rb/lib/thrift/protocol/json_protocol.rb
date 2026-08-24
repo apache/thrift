@@ -548,7 +548,11 @@ module Thrift
           str += "="
         end
       end
-      str.unpack1("m0")
+      begin
+        str.unpack1("m0")
+      rescue ArgumentError
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid Base64 data")
+      end
     end
 
     # Reads a sequence of characters, stopping at the first one that is not

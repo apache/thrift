@@ -424,6 +424,16 @@ describe "JsonProtocol" do
       expect(@prot.read_json_base64).to eq("this is a test string")
     end
 
+    it "rejects invalid Base64 alphabet and padding" do
+      ['"%"', '"Y=Q="'].each do |wire|
+        protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+
+        expect { protocol.read_json_base64 }.to raise_error(Thrift::ProtocolException, "Invalid Base64 data") do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        end
+      end
+    end
+
     it "should is json numeric" do
       expect(@prot.is_json_numeric("A")).to eq(false)
       expect(@prot.is_json_numeric("+")).to eq(true)
