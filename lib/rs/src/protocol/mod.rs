@@ -934,6 +934,25 @@ pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> c
     }
 }
 
+/// Largest number of elements a wire-supplied container count may reserve up
+/// front.
+///
+/// Element counts are read before any element is, so a peer can name a count it
+/// never backs with data. Capping what the count reserves keeps the cost of that
+/// proportional to the bytes actually sent, while containers that fit under the
+/// cap still get their exact capacity reserved in one go. Larger containers grow
+/// as elements arrive, which costs a few reallocations.
+const MAX_PREALLOC_SIZE: usize = 1024;
+
+/// Returns the capacity to reserve for a container whose declared element count
+/// is `size`. Used by generated code.
+pub fn prealloc_size(size: i32) -> usize {
+    if size < 0 {
+        return 0;
+    }
+    std::cmp::min(size as usize, MAX_PREALLOC_SIZE)
+}
+
 /// Common container size validation used by all protocols.
 ///
 /// Checks that:
@@ -1018,6 +1037,68 @@ mod tests {
 
     use super::*;
     use crate::transport::{TReadTransport, TWriteTransport};
+
+    #[test]
+    fn must_bound_prealloc_size_for_large_counts() {
+        assert_eq!(prealloc_size(-1), 0);
+        assert_eq!(prealloc_size(0), 0);
+        assert_eq!(prealloc_size(1), 1);
+        assert_eq!(prealloc_size(MAX_PREALLOC_SIZE as i32), MAX_PREALLOC_SIZE);
+        assert_eq!(
+            prealloc_size(MAX_PREALLOC_SIZE as i32 + 1),
+            MAX_PREALLOC_SIZE
+        );
+        assert_eq!(prealloc_size(i32::MAX), MAX_PREALLOC_SIZE);
+    }
+
+    // A truncated payload that declares a large list must not reserve capacity
+    // for the declared count: the decoder only ever sees the bytes that arrived.
+    #[test]
+    fn must_not_reserve_capacity_for_an_unbacked_count() {
+        let declared = 1_000_000i32;
+
+        // element type i64, then the count, and no elements at all
+        // 0x0A is the binary-protocol wire byte for i64
+        let mut payload = vec![0x0Au8];
+        payload.extend_from_slice(&declared.to_be_bytes());
+
+        let r: Box<dyn TReadTransport> = Box::new(Cursor::new(payload));
+        let mut i_prot = TBinaryInputProtocol::new(r, true);
+
+        let list_ident = i_prot.read_list_begin().unwrap();
+        assert_eq!(list_ident.size, declared);
+
+        // This is the line generated code emits.
+        let received: Vec<i64> = Vec::with_capacity(prealloc_size(list_ident.size));
+        assert_eq!(received.capacity(), MAX_PREALLOC_SIZE);
+
+        // and the very first element read fails, since nothing backs the count
+        assert!(i_prot.read_i64().is_err());
+    }
+
+    // A count the payload does back must still reserve its exact capacity.
+    #[test]
+    fn must_reserve_exact_capacity_for_small_counts() {
+        let count = 3i32;
+
+        // 0x0A is the binary-protocol wire byte for i64
+        let mut payload = vec![0x0Au8];
+        payload.extend_from_slice(&count.to_be_bytes());
+        for i in 0..count as i64 {
+            payload.extend_from_slice(&i.to_be_bytes());
+        }
+
+        let r: Box<dyn TReadTransport> = Box::new(Cursor::new(payload));
+        let mut i_prot = TBinaryInputProtocol::new(r, true);
+
+        let list_ident = i_prot.read_list_begin().unwrap();
+        let mut received: Vec<i64> = Vec::with_capacity(prealloc_size(list_ident.size));
+        assert_eq!(received.capacity(), count as usize);
+        for _ in 0..list_ident.size {
+            received.push(i_prot.read_i64().unwrap());
+        }
+        assert_eq!(received, vec![0i64, 1, 2]);
+    }
 
     #[test]
     fn must_create_usable_input_protocol_from_concrete_input_protocol() {

@@ -2029,7 +2029,7 @@ void t_rs_generator::render_list_sync_read(t_list* tlist, const string& list_var
 
   f_gen_ << indent() << "let list_ident = i_prot.read_list_begin()?;" << '\n';
   f_gen_ << indent() << "let mut " << list_var << ": " << to_rust_type((t_type*)tlist)
-         << " = Vec::with_capacity(list_ident.size as usize);" << '\n';
+         << " = Vec::with_capacity(thrift::protocol::prealloc_size(list_ident.size));" << '\n';
   f_gen_ << indent() << "for _ in 0..list_ident.size {" << '\n';
 
   indent_up();
