@@ -189,5 +189,28 @@ class JiraTrailerFallbackTests(unittest.TestCase):
         )
 
 
+class ZigSectionTests(unittest.TestCase):
+    """All three routes must land Zig work in the same "Zig" section."""
+
+    def test_github_label_maps_to_zig(self):
+        self.assertEqual(gc.labels_to_sections(["zig"]), ["Zig"])
+
+    def test_client_trailer_maps_to_zig(self):
+        self.assertEqual(
+            gc.extract_client_sections(
+                "THRIFT-6152: Add Zig binding", "Client: zig"
+            ),
+            ["Zig"],
+        )
+
+    def test_jira_components_map_to_zig(self):
+        # Both "Zig - Library" and "Zig - Compiler" reduce to the same heading.
+        # jira_component_to_section() falls back to the stripped base name, so
+        # this holds with or without the JIRA_COMPONENT_MAP entry; it pins the
+        # section string the other two routes have to agree with.
+        self.assertEqual(gc.jira_component_to_section("Zig - Library"), "Zig")
+        self.assertEqual(gc.jira_component_to_section("Zig - Compiler"), "Zig")
+
+
 if __name__ == "__main__":
     unittest.main()

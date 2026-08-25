@@ -129,6 +129,7 @@ JIRA_COMPONENT_MAP = {
     "Ruby": "Ruby",
     "Rust": "Rust",
     "TypeScript": "nodets",
+    "Zig": "Zig",
 }
 
 # Maps the value of the "Client:" commit trailer to the canonical section name.
@@ -170,6 +171,7 @@ CLIENT_SECTION_MAP = {
     "ruby": "Ruby",
     "rust": "Rust",
     "ts": "nodets",
+    "zig": "Zig",
 }
 
 # Maps GitHub label names (lowercase) to the canonical CHANGES.md section heading.
@@ -199,6 +201,7 @@ GITHUB_LABEL_MAP = {
     "ruby": "Ruby",
     "rust": "Rust",
     "typescript": "nodets",
+    "zig": "Zig",
     "doc": "Documentation",
     # dependabot and workflow-file PRs carry these labels; they have no Client:
     # trailer we could use instead, so route them to the build/CI section.
