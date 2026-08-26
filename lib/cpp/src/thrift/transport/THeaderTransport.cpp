@@ -144,6 +144,16 @@ bool THeaderTransport::readFrame() {
                                 "Received an oversized frame");
     }
 
+    // Every branch below reads a four-byte magic word out of the frame and
+    // then reads the remainder as sz - 4. sz is unsigned, so a frame that
+    // declares fewer bytes than the magic word it carries would wrap that
+    // subtraction into a huge read length. Reject those sizes here, once, for
+    // all three branches.
+    if (sz < sizeof(magic_n)) {
+      throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                "Header transport frame is too small");
+    }
+
     ensureReadBuffer(sz);
 
     // We can use readAll here, because it would be an invalid frame otherwise

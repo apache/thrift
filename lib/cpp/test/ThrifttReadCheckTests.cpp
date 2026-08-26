@@ -423,4 +423,69 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_roundtrip) {
   BOOST_CHECK(out == payload);
 }
 
+BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_below_magic_word) {
+  using apache::thrift::transport::THeaderTransport;
+  // The framed-binary and framed-compact branches of readFrame() read a 4-byte
+  // magic word out of the frame and then read the remainder as `sz - 4`. `sz`
+  // is unsigned, so a declared frame size below 4 wraps that subtraction to
+  // roughly 4 GB while the receive buffer holds only the four bytes
+  // ensureReadBuffer(4) reserved, and the read runs past the end of it. Only
+  // the header-format branch had a lower bound of its own, so every declared
+  // size below the magic word has to be rejected before the subtraction.
+  const uint8_t magics[][4] = {
+      {0x80, 0x01, 0x00, 0x01}, // TBinaryProtocol::VERSION_1
+      {0x82, 0x21, 0x00, 0x00}, // TCompactProtocol PROTOCOL_ID / VERSION_N
+  };
+
+  for (const auto& magic : magics) {
+    for (uint32_t declared = 0; declared < 4; ++declared) {
+      std::vector<uint8_t> frame = {
+          static_cast<uint8_t>((declared >> 24) & 0xFF),
+          static_cast<uint8_t>((declared >> 16) & 0xFF),
+          static_cast<uint8_t>((declared >> 8) & 0xFF),
+          static_cast<uint8_t>(declared & 0xFF),
+          magic[0],
+          magic[1],
+          magic[2],
+          magic[3],
+      };
+      // Payload the wrapped-around read would copy past the receive buffer.
+      frame.resize(frame.size() + 64, 0x41);
+
+      std::shared_ptr<TMemoryBuffer> buffer(
+          new TMemoryBuffer(frame.data(), static_cast<uint32_t>(frame.size())));
+      std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
+
+      uint8_t out[1];
+      bool caught = false;
+      try {
+        trans->read(out, sizeof(out));
+      } catch (const TTransportException& e) {
+        caught = true;
+        BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
+      }
+      BOOST_CHECK(caught);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_equal_to_magic_word) {
+  using apache::thrift::transport::THeaderTransport;
+  // Boundary control for the case above: a declared size of exactly 4 covers
+  // the magic word, `sz - 4` is zero and nothing is read past it. The frame
+  // carries no payload beyond the magic, so the transport delivers exactly
+  // those four bytes. This pins the lower bound to the subtraction it protects
+  // rather than rejecting one size too many.
+  uint8_t frame[] = {
+      0x00, 0x00, 0x00, 0x04, // frame length = 4, the magic word alone
+      0x80, 0x01, 0x00, 0x01  // TBinaryProtocol::VERSION_1
+  };
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(frame, sizeof(frame)));
+  std::shared_ptr<THeaderTransport> trans(new THeaderTransport(buffer));
+
+  uint8_t out[4];
+  BOOST_CHECK_NO_THROW(trans->readAll(out, sizeof(out)));
+  BOOST_CHECK_EQUAL(out[0], 0x80);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
