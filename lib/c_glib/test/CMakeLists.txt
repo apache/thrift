@@ -101,6 +101,7 @@ target_link_libraries(testmultiplexedprocessor thrift_c_glib)
 add_test(NAME testmultiplexedprocessor COMMAND testmultiplexedprocessor)
 
 add_executable(testdispatchprocessor testdispatchprocessor.c)
+target_link_libraries(testdispatchprocessor testgenc)
 target_link_libraries(testdispatchprocessor thrift_c_glib)
 add_test(NAME testdispatchprocessor COMMAND testdispatchprocessor)
 
