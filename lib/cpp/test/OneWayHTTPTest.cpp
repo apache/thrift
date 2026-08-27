@@ -62,6 +62,18 @@ namespace utf = boost::unit_test;
 // Define this env var to enable some logging (in case you need to debug)
 #undef ENABLE_STDERR_LOGGING
 
+class TInspectableHttpClient : public THttpClient {
+public:
+  explicit TInspectableHttpClient(std::shared_ptr<TTransport> transport) : THttpClient(transport) {}
+
+  bool closesAfterHeader(const string& header) {
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return closeAfterResponse_;
+  }
+};
+
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
 public:
   OneWayServiceHandler() = default;
@@ -379,6 +391,13 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
 
   server.stop();
   thread.join();
+}
+
+BOOST_AUTO_TEST_CASE(HTTP_ClientRequiresExactConnectionHeaderName) {
+  TInspectableHttpClient client(std::make_shared<TMemoryBuffer>());
+
+  BOOST_CHECK(!client.closesAfterHeader("Connection-Timeout: close"));
+  BOOST_CHECK(client.closesAfterHeader("Connection: keep-alive, close"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
