@@ -67,6 +67,7 @@ public:
   explicit TInspectableHttpClient(std::shared_ptr<TTransport> transport) : THttpClient(transport) {}
 
   bool closesAfterHeader(const string& header) {
+    closeAfterResponse_ = false;
     std::vector<char> buffer(header.begin(), header.end());
     buffer.push_back('\0');
     parseHeader(buffer.data());
@@ -396,8 +397,8 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
 BOOST_AUTO_TEST_CASE(HTTP_ClientRequiresExactConnectionHeaderName) {
   TInspectableHttpClient client(std::make_shared<TMemoryBuffer>());
 
-  BOOST_CHECK(!client.closesAfterHeader("Connection-Timeout: close"));
   BOOST_CHECK(client.closesAfterHeader("Connection: keep-alive, close"));
+  BOOST_CHECK(!client.closesAfterHeader("Connection-Timeout: close"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
