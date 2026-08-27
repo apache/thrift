@@ -65,6 +65,7 @@ protected:
   std::string host_;
   std::string path_;
   bool onewayResponsePending_;
+  bool closeAfterResponse_;
 
   void parseHeader(char* header) override;
   bool parseStatusLine(char* status) override;
