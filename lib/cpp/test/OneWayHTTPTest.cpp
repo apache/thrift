@@ -150,21 +150,23 @@ public:
     writeBuffer_.getBuffer(&buf, &len);
 
     std::ostringstream header;
-    header << "HTTP/1.1 200 OK" << CRLF << "Content-Type: application/x-thrift" << CRLF
-           << "Transfer-Encoding: chunked" << CRLF << "Connection: keep-alive, close" << CRLF
-           << "Connection: keep-alive" << CRLF << CRLF;
+    header << "HTTP/1.1 200 OK\r\n"
+           << "Content-Type: application/x-thrift\r\n"
+           << "Transfer-Encoding: chunked\r\n"
+           << "Connection: keep-alive, close\r\n"
+           << "Connection: keep-alive\r\n\r\n";
     const string headerText = header.str();
     transport_->write(reinterpret_cast<const uint8_t*>(headerText.data()),
                       static_cast<uint32_t>(headerText.size()));
 
     if (len > 0) {
       std::ostringstream chunkSize;
-      chunkSize << std::hex << len << CRLF;
+      chunkSize << std::hex << len << "\r\n";
       const string chunkPrefix = chunkSize.str();
       transport_->write(reinterpret_cast<const uint8_t*>(chunkPrefix.data()),
                         static_cast<uint32_t>(chunkPrefix.size()));
       transport_->write(buf, len);
-      transport_->write(reinterpret_cast<const uint8_t*>(CRLF), CRLF_LEN);
+      transport_->write(reinterpret_cast<const uint8_t*>("\r\n"), 2);
     }
     transport_->write(reinterpret_cast<const uint8_t*>("0\r\n\r\n"), 5);
     transport_->flush();
