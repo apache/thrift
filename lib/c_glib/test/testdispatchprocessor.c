@@ -352,12 +352,6 @@ test_dispatch_call_without_name (void)
   g_object_unref (processor);
 }
 
-/* A generated processor reaches its handler through the dispatch_call slot the
-   base class defines, so a service that has no parent must claim that slot for
-   itself. Srv is such a service: it extends nothing, so if its class_init only
-   sets its own dispatch_call member and leaves the inherited slot alone, every
-   call is answered by the base class' default with "Invalid method name". */
-
 static gboolean srv_handler_reached = FALSE;
 
 #define TEST_TYPE_SRV_HANDLER (test_srv_handler_get_type ())
@@ -427,8 +421,6 @@ test_generated_base_service_dispatches (void)
   protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", transport,
                            NULL);
 
-  /* Write a primitiveMethod call. It takes no arguments, so the argument
-     struct is empty. */
   g_assert (thrift_protocol_write_message_begin (THRIFT_PROTOCOL (protocol),
                                                  "primitiveMethod", T_CALL, 1,
                                                  &error) > 0);
@@ -450,8 +442,6 @@ test_generated_base_service_dispatches (void)
 
   g_assert (srv_handler_reached == TRUE);
 
-  /* The reply carries the handler's return value, not an application
-     exception reporting the method name was not recognized. */
   g_assert (thrift_protocol_read_message_begin (THRIFT_PROTOCOL (protocol),
                                                 &reply_name, &reply_type,
                                                 &reply_seqid, &error) > 0);
