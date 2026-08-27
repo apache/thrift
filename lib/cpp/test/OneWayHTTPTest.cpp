@@ -17,22 +17,23 @@
  * under the License.
  */
 
+#include "gen-cpp/OneWayService.h"
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
-#include <iostream>
 #include <climits>
-#include <vector>
+#include <iostream>
+#include <memory>
+#include <sstream>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/server/TThreadedServer.h>
-#include <thrift/transport/THttpServer.h>
+#include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THttpClient.h>
+#include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
-#include <memory>
-#include <thrift/transport/TBufferTransports.h>
-#include "gen-cpp/OneWayService.h"
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(OneWayHTTPTest)
 
@@ -126,11 +127,59 @@ public:
     return nullptr;
   }
   bool isListening() const { return isListening_; }
-  uint64_t acceptedCount() const { return accepted_; }
+  uint64_t acceptedCount() {
+    Synchronized sync(*this);
+    return accepted_;
+  }
 
 private:
   bool isListening_;
   uint64_t accepted_;
+};
+
+class TClosingHttpServer : public THttpServer {
+public:
+  explicit TClosingHttpServer(std::shared_ptr<TTransport> transport)
+    : THttpServer(transport, transport->getConfiguration()) {}
+
+  void flush() override {
+    resetConsumedMessageSize();
+
+    uint8_t* buf;
+    uint32_t len;
+    writeBuffer_.getBuffer(&buf, &len);
+
+    std::ostringstream header;
+    header << "HTTP/1.1 200 OK" << CRLF << "Content-Type: application/x-thrift" << CRLF
+           << "Transfer-Encoding: chunked" << CRLF << "Connection: keep-alive, close" << CRLF
+           << "Connection: keep-alive" << CRLF << CRLF;
+    const string headerText = header.str();
+    transport_->write(reinterpret_cast<const uint8_t*>(headerText.data()),
+                      static_cast<uint32_t>(headerText.size()));
+
+    if (len > 0) {
+      std::ostringstream chunkSize;
+      chunkSize << std::hex << len << CRLF;
+      const string chunkPrefix = chunkSize.str();
+      transport_->write(reinterpret_cast<const uint8_t*>(chunkPrefix.data()),
+                        static_cast<uint32_t>(chunkPrefix.size()));
+      transport_->write(buf, len);
+      transport_->write(reinterpret_cast<const uint8_t*>(CRLF), CRLF_LEN);
+    }
+    transport_->write(reinterpret_cast<const uint8_t*>("0\r\n\r\n"), 5);
+    transport_->flush();
+
+    writeBuffer_.resetBuffer();
+    readHeaders_ = true;
+    close();
+  }
+};
+
+class TClosingHttpServerTransportFactory : public apache::thrift::transport::TTransportFactory {
+public:
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> transport) override {
+    return std::make_shared<TClosingHttpServer>(transport);
+  }
 };
 
 class TBlockableBufferedTransport : public TBufferedTransport {
@@ -280,6 +329,50 @@ BOOST_AUTO_TEST_CASE( JSON_HTTP_OneWayWrapperDoesNotPoisonNextCall )
     }
     BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 1U);
     transport->close();
+  }
+
+  server.stop();
+  thread.join();
+}
+
+BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
+  std::shared_ptr<TServerSocket> ss = std::make_shared<TServerSocket>(0);
+  TThreadedServer server(std::make_shared<onewaytest::OneWayServiceProcessorFactory>(
+                             std::make_shared<OneWayServiceCloneFactory>()),
+                         ss, std::make_shared<TClosingHttpServerTransportFactory>(),
+                         std::make_shared<TBinaryProtocolFactory>());
+
+  std::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler);
+  server.setServerEventHandler(pEventHandler);
+
+  RPC0ThreadClass t(server);
+  boost::thread thread(&RPC0ThreadClass::Run, &t);
+
+  {
+    Synchronized sync(*(pEventHandler.get()));
+    while (!pEventHandler->isListening()) {
+      pEventHandler->wait();
+    }
+  }
+
+  {
+    std::shared_ptr<TSocket> socket(new TSocket("localhost", ss->getPort()));
+    socket->setRecvTimeout(10000);
+    std::shared_ptr<TTransport> httpTransport(new THttpClient(socket, "localhost", "/service"));
+    std::shared_ptr<TTransport> transport(new TBufferedTransport(httpTransport));
+    std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    onewaytest::OneWayServiceClient client(protocol);
+
+    transport->open();
+    client.roundTripRPC();
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 1U);
+    BOOST_CHECK_NO_THROW(client.roundTripRPC());
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 2U);
+    client.oneWayRPC();
+    BOOST_CHECK_NO_THROW(client.roundTripRPC());
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 4U);
+    transport->close();
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 4U);
   }
 
   server.stop();
