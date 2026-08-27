@@ -48,24 +48,30 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
+      raise ::TypeError, "integer argument expected" unless seqid.is_a?(Integer)
+      raise RangeError if seqid < I32_MIN || seqid > I32_MAX
+
       if strict_write
         raise ::TypeError, "integer argument expected" unless type.is_a?(Integer)
         raise RangeError if type < BYTE_MIN || type > BYTE_MAX
         trans.write([VERSION_1 | type].pack("N"))
         write_string(name)
-        write_i32(seqid)
+        trans.write([seqid].pack("N"))
       else
         write_string(name)
         write_byte(type)
-        write_i32(seqid)
+        trans.write([seqid].pack("N"))
       end
     end
 
     def write_struct_begin(name); nil; end
 
     def write_field_begin(name, type, id)
+      raise ::TypeError, "integer argument expected" unless id.is_a?(Integer)
+      raise RangeError if id < I16_MIN || id > I16_MAX
+
       write_byte(type)
-      write_i16(id)
+      trans.write([id].pack("n"))
     end
 
     def write_field_stop
@@ -73,19 +79,28 @@ module Thrift
     end
 
     def write_map_begin(ktype, vtype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_byte(ktype)
       write_byte(vtype)
-      write_i32_size(size)
+      trans.write([size].pack("N"))
     end
 
     def write_list_begin(etype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_byte(etype)
-      write_i32_size(size)
+      trans.write([size].pack("N"))
     end
 
     def write_set_begin(etype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_byte(etype)
-      write_i32_size(size)
+      trans.write([size].pack("N"))
     end
 
     def write_bool(bool)
@@ -93,28 +108,24 @@ module Thrift
     end
 
     def write_byte(byte)
-      raise "nil argument not allowed!" if byte.nil?
       raise ::TypeError, "integer argument expected" unless byte.is_a?(Integer)
       raise RangeError if byte < BYTE_MIN || byte > BYTE_MAX
       trans.write([byte].pack("c"))
     end
 
     def write_i16(i16)
-      raise "nil argument not allowed!" if i16.nil?
       raise ::TypeError, "integer argument expected" unless i16.is_a?(Integer)
       raise RangeError if i16 < I16_MIN || i16 > I16_MAX
       trans.write([i16].pack("n"))
     end
 
     def write_i32(i32)
-      raise "nil argument not allowed!" if i32.nil?
       raise ::TypeError, "integer argument expected" unless i32.is_a?(Integer)
       raise RangeError if i32 < I32_MIN || i32 > I32_MAX
       trans.write([i32].pack("N"))
     end
 
     def write_i64(i64)
-      raise "nil argument not allowed!" if i64.nil?
       raise ::TypeError, "integer argument expected" unless i64.is_a?(Integer)
       raise RangeError if i64 < I64_MIN || i64 > I64_MAX
       hi = i64 >> 32
@@ -280,7 +291,6 @@ module Thrift
     private
 
     def write_i32_size(size)
-      raise "nil argument not allowed!" if size.nil?
       raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
       raise RangeError if size < 0 || size > I32_MAX
       trans.write([size].pack("N"))

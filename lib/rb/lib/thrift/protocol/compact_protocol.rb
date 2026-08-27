@@ -133,10 +133,7 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
-      unless seqid.is_a?(Integer)
-        raise "nil argument not allowed!" if seqid.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless seqid.is_a?(Integer)
       raise RangeError if seqid < I32_MIN || seqid > I32_MAX
 
       write_byte_direct(PROTOCOL_ID)
@@ -157,10 +154,7 @@ module Thrift
     end
 
     def write_field_begin(name, type, id)
-      unless id.is_a?(Integer)
-        raise "nil argument not allowed!" if id.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless id.is_a?(Integer)
       raise RangeError if id < I16_MIN || id > I16_MAX
 
       if type == Types::BOOL
@@ -233,40 +227,28 @@ module Thrift
     end
 
     def write_byte(byte)
-      unless byte.is_a?(Integer)
-        raise "nil argument not allowed!" if byte.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless byte.is_a?(Integer)
       raise RangeError if byte < BYTE_MIN || byte > BYTE_MAX
 
       write_byte_direct(byte)
     end
 
     def write_i16(i16)
-      unless i16.is_a?(Integer)
-        raise "nil argument not allowed!" if i16.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless i16.is_a?(Integer)
       raise RangeError if i16 < I16_MIN || i16 > I16_MAX
 
       write_varint32(int_to_zig_zag(i16))
     end
 
     def write_i32(i32)
-      unless i32.is_a?(Integer)
-        raise "nil argument not allowed!" if i32.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless i32.is_a?(Integer)
       raise RangeError if i32 < I32_MIN || i32 > I32_MAX
 
       write_varint32(int_to_zig_zag(i32))
     end
 
     def write_i64(i64)
-      unless i64.is_a?(Integer)
-        raise "nil argument not allowed!" if i64.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless i64.is_a?(Integer)
       raise RangeError if i64 < I64_MIN || i64 > I64_MAX
 
       write_varint64(long_to_zig_zag(i64))
@@ -553,10 +535,7 @@ module Thrift
     end
 
     def validate_size(size)
-      unless size.is_a?(Integer)
-        raise "nil argument not allowed!" if size.nil?
-        raise ::TypeError, "integer argument expected"
-      end
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
       raise RangeError if size < 0 || size > I32_MAX
 
       size
