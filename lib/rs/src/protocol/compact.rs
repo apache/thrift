@@ -16,9 +16,9 @@
 // under the License.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use integer_encoding::VarIntWriter;
 use std::convert::{From, TryFrom};
-use std::io;
+use std::io::{self, Cursor};
+use varint_rs::VarintWriter;
 
 use super::{
     TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier,
@@ -31,6 +31,7 @@ use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
 const COMPACT_PROTOCOL_ID: u8 = 0x82;
 const COMPACT_VERSION: u8 = 0x01;
 const COMPACT_VERSION_MASK: u8 = 0x1F;
+const MAX_VARINT16_BYTES: usize = 3; // ceil(16/7); matches protobuf wire format
 const MAX_VARINT32_BYTES: usize = 5; // ceil(32/7); matches protobuf wire format
 const MAX_VARINT64_BYTES: usize = 10; // ceil(64/7); matches protobuf wire format
 
@@ -562,12 +563,13 @@ where
         } else {
             let header = 0xF0 | elem_identifier;
             self.write_byte(header)?;
+            let mut buf = [0_u8; MAX_VARINT32_BYTES];
+            let mut writer = Cursor::new(&mut buf[..]);
             // element count is strictly positive as per the spec, so
             // cast i32 as u32 so that varint writing won't use zigzag encoding
-            self.transport
-                .write_varint(element_count as u32)
-                .map_err(From::from)
-                .map(|_| ())
+            writer.write_u32_varint(element_count as u32)?;
+            let len = writer.position() as usize;
+            self.transport.write_all(&buf[..len]).map_err(From::from)
         }
     }
 
@@ -585,9 +587,12 @@ where
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> crate::Result<()> {
         self.write_byte(COMPACT_PROTOCOL_ID)?;
         self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION)?;
+        let mut buf = [0_u8; MAX_VARINT32_BYTES];
+        let mut writer = Cursor::new(&mut buf[..]);
         // cast i32 as u32 so that varint writing won't use zigzag encoding
-        self.transport
-            .write_varint(identifier.sequence_number as u32)?;
+        writer.write_u32_varint(identifier.sequence_number as u32)?;
+        let len = writer.position() as usize;
+        self.transport.write_all(&buf[..len])?;
         self.write_string(&identifier.name)?;
         Ok(())
     }
@@ -664,9 +669,13 @@ where
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> crate::Result<()> {
+        let mut buf = [0_u8; MAX_VARINT32_BYTES];
+        let mut writer = Cursor::new(&mut buf[..]);
         // length is strictly positive as per the spec, so
         // cast i32 as u32 so that varint writing won't use zigzag encoding
-        self.transport.write_varint(b.len() as u32)?;
+        writer.write_u32_varint(b.len() as u32)?;
+        let len = writer.position() as usize;
+        self.transport.write_all(&buf[..len])?;
         self.transport.write_all(b).map_err(From::from)
     }
 
@@ -675,24 +684,27 @@ where
     }
 
     fn write_i16(&mut self, i: i16) -> crate::Result<()> {
-        self.transport
-            .write_varint(i)
-            .map_err(From::from)
-            .map(|_| ())
+        let mut buf = [0_u8; MAX_VARINT16_BYTES];
+        let mut writer = Cursor::new(&mut buf[..]);
+        writer.write_i16_varint(i)?;
+        let len = writer.position() as usize;
+        self.transport.write_all(&buf[..len]).map_err(From::from)
     }
 
     fn write_i32(&mut self, i: i32) -> crate::Result<()> {
-        self.transport
-            .write_varint(i)
-            .map_err(From::from)
-            .map(|_| ())
+        let mut buf = [0_u8; MAX_VARINT32_BYTES];
+        let mut writer = Cursor::new(&mut buf[..]);
+        writer.write_i32_varint(i)?;
+        let len = writer.position() as usize;
+        self.transport.write_all(&buf[..len]).map_err(From::from)
     }
 
     fn write_i64(&mut self, i: i64) -> crate::Result<()> {
-        self.transport
-            .write_varint(i)
-            .map_err(From::from)
-            .map(|_| ())
+        let mut buf = [0_u8; MAX_VARINT64_BYTES];
+        let mut writer = Cursor::new(&mut buf[..]);
+        writer.write_i64_varint(i)?;
+        let len = writer.position() as usize;
+        self.transport.write_all(&buf[..len]).map_err(From::from)
     }
 
     fn write_double(&mut self, d: f64) -> crate::Result<()> {
@@ -731,9 +743,13 @@ where
         if identifier.size == 0 {
             self.write_byte(0)
         } else {
+            let mut buf = [0_u8; MAX_VARINT32_BYTES];
+            let mut writer = Cursor::new(&mut buf[..]);
             // element count is strictly positive as per the spec, so
             // cast i32 as u32 so that varint writing won't use zigzag encoding
-            self.transport.write_varint(identifier.size as u32)?;
+            writer.write_u32_varint(identifier.size as u32)?;
+            let len = writer.position() as usize;
+            self.transport.write_all(&buf[..len])?;
 
             let key_type = identifier
                 .key_type
