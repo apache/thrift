@@ -82,7 +82,7 @@ void THttpClient::parseHeader(char* header) {
   } else if (boost::istarts_with(header, "Content-Length")) {
     chunked_ = false;
     contentLength_ = atoi(value);
-  } else if (boost::istarts_with(header, "Connection")) {
+  } else if (boost::iequals(string(header, colon), "Connection")) {
     std::vector<string> options;
     boost::split(options, value, boost::is_any_of(","));
     for (const string& option : options) {
