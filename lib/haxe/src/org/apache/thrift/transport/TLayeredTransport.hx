@@ -49,4 +49,9 @@ class TLayeredTransport extends TTransport
 	{
 		InnerTransport.CheckReadBytesAvailable(numBytes);
 	}
+
+	public override function ResetMessageSizeAndConsumedBytes(?newSize : Int64) : Void
+	{
+		InnerTransport.ResetMessageSizeAndConsumedBytes(newSize);
+	}
 }

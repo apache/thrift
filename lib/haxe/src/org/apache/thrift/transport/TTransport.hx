@@ -32,6 +32,12 @@ class TTransport {
 	public function UpdateKnownMessageSize(size : Int64) : Void throw "abstract method called";
 	public function CheckReadBytesAvailable(numBytes : Int64) : Void  throw "abstract method called";
 
+	// Sets the read budget to newSize, discarding whatever has been consumed against the
+	// previous one; omit newSize to restore the configured maximum. This is the only way to
+	// widen a budget that an earlier, smaller message narrowed -- UpdateKnownMessageSize()
+	// refuses to grow one, and carries the previous message's consumption forward besides.
+	public function ResetMessageSizeAndConsumedBytes(?newSize : Int64) : Void throw "abstract method called";
+
     /**
      * Queries whether the transport is open.
      *
