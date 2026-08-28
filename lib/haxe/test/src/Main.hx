@@ -26,6 +26,7 @@ import org.apache.thrift.server.*;
 import org.apache.thrift.transport.*;
 import tests.ConstantsTest;
 import tests.MultiplexTest;
+import tests.FramedTransportTest;
 import tests.RecursionLimitTest;
 import tests.StreamTest;
 import thrift.test.*;
@@ -89,6 +90,7 @@ class Main
 					#if sys
 					tests.StreamTest.Run(server);
 					tests.RecursionLimitTest.Run(server);
+					tests.FramedTransportTest.Run(server);
 					#end
 				case Multiplex:
 					#if ! (flash || html5 || js)

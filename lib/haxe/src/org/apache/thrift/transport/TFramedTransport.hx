@@ -106,6 +106,13 @@ class TFramedTransport extends TLayeredTransport
 
 
     function readFrame() : Void {
+        // Return the budget to the configured maximum before reading anything. What is left of
+        // it describes the frame we have just finished with, and the endpoint charges every read
+        // against it (see TSocket), so without this the header read below fails as soon as a
+        // frame follows another with no flush in between -- which is what a run of one-way calls
+        // looks like, the generated processor returning before the flush for a one-way function.
+        ResetMessageSizeAndConsumedBytes();
+
         var size : Int = readFrameSize();
 
         if (size < 0) {

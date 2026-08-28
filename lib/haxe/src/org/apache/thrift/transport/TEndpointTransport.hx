@@ -50,8 +50,8 @@ class TEndpointTransport extends TTransport
 	// Resets RemainingMessageSize to the configured maximum 
 	private function ResetConsumedMessageSize(?newSize : Int64) : Void
 	{
-		// full reset 
-		if (newSize == null)
+		// full reset -- omitted, or negative, which is how every other binding spells it
+		if (newSize == null || newSize < 0)
 		{
 			KnownMessageSize = MaxMessageSize;
 			RemainingMessageSize = MaxMessageSize;
@@ -64,6 +64,13 @@ class TEndpointTransport extends TTransport
 
 		KnownMessageSize = newSize;
 		RemainingMessageSize = newSize;
+	}
+
+	// Sets the read budget to newSize, discarding whatever has been consumed against the
+	// previous one; omit newSize to restore the configured maximum.
+	public override function ResetMessageSizeAndConsumedBytes(?newSize : Int64) : Void
+	{
+		ResetConsumedMessageSize(newSize);
 	}
 
 	// Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
