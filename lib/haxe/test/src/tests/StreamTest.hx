@@ -143,7 +143,12 @@ class StreamTest extends tests.TestBase {
             tests.TestBase.Expect( MemoryStreamGrows(), "memory: grows across many writes");
 
         } catch(e:Dynamic) {
-            FileSystem.deleteFile(tmpfile);
+            // Only the two calls above leave the temp file behind, and everything after them
+            // has already deleted it -- so deleting unconditionally here throws
+            // std@file_delete over the top of whatever actually failed.
+            if( FileSystem.exists(tmpfile)) {
+                FileSystem.deleteFile(tmpfile);
+            }
             throw e;
         }
     }
