@@ -76,6 +76,12 @@ class TStreamTransport extends TEndpointTransport {
         var data : Bytes =  Bytes.alloc(len);
         var size = InputStream.Read( data, off, len);
         buf.addBytes( data, 0, size);
+
+        // Charge the read against the message budget, as every other endpoint does.
+        // MaxMessageSize is expressed as the bytes remaining to be read, so without this
+        // it has no effect here however much a message reads, as long as no single read
+        // exceeds it on its own.
+        CountConsumedMessageBytes(size);
         return size;
     }
 
@@ -101,6 +107,11 @@ class TStreamTransport extends TEndpointTransport {
         }
 
         OutputStream.Flush();
+
+        // One message is done with; give the next one its allowance back. TSocket does the
+        // same at the same point -- without it the budget would only ever shrink, and a
+        // long-lived connection would run itself out of it.
+        ResetConsumedMessageSize();
     }
 
 }

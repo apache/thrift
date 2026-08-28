@@ -22,6 +22,8 @@ import tests.TestBase;
 #if sys
 
 import haxe.Int64;
+import haxe.io.Bytes;
+import haxe.io.BytesBuffer;
 import sys.FileSystem;
 
 import org.apache.thrift.*;
@@ -123,6 +125,62 @@ class StreamTest extends tests.TestBase {
         return true;
     }
 
+    // MaxMessageSize is meant as "a general device to be used with any transport or
+    // protocol" (doc/specs/thrift-tconfiguration.md), and it is expressed as the number of
+    // bytes *remaining* to be read -- which only means something if reads draw it down.
+    // Every other Haxe endpoint charges reads against it; TStreamTransport did not, so the
+    // limit had no effect on a stream-backed connection however much was read.
+    private static function streamTransportWithLimit( maxMessageSize : Int) : TStreamTransport {
+        var config = new TConfiguration();
+        config.MaxMessageSize = maxMessageSize;
+        var stream = new TMemoryStream( Bytes.alloc( 4 * maxMessageSize));
+        stream.Position = 0;
+        return new TStreamTransport( stream, stream, config);
+    }
+
+    // Reading past the limit, a chunk at a time, must be refused. No single read here
+    // exceeds it, so nothing but cumulative accounting can catch this.
+    public static function ReadsAreChargedAgainstTheBudget() : Void {
+        var limit = 256;
+        var trans = streamTransportWithLimit( limit);
+
+        var refused = false;
+        try {
+            var read = 0;
+            while( read < 4 * limit) {
+                var buf = new BytesBuffer();
+                trans.read( buf, 0, 32);
+                read += 32;
+            }
+        }
+        catch( e : TTransportException) {
+            refused = (e.errorID == TTransportException.MESSAGE_SIZE_LIMIT);
+        }
+        tests.TestBase.Expect( refused, "stream: reading past MaxMessageSize is refused");
+    }
+
+    // ... and the allowance has to come back, or one long-lived connection would run itself
+    // out of budget over successive messages. flush() is where the other endpoints do it.
+    public static function FlushRestoresTheBudget() : Void {
+        var limit = 256;
+        var trans = streamTransportWithLimit( limit);
+
+        var buf = new BytesBuffer();
+        trans.read( buf, 0, 200);
+        trans.flush();
+
+        var ok = true;
+        try {
+            var again = new BytesBuffer();
+            trans.read( again, 0, 200);
+        }
+        catch( e : TTransportException) {
+            ok = false;
+        }
+        tests.TestBase.Expect( ok, "stream: flush restores the allowance for the next message");
+    }
+
+
     public static function Run(server : Bool) : Void
     {
         try {
@@ -151,6 +209,10 @@ class StreamTest extends tests.TestBase {
             }
             throw e;
         }
+
+        // Outside the block above: neither of these uses the temp file.
+        ReadsAreChargedAgainstTheBudget();
+        FlushRestoresTheBudget();
     }
 
 }
