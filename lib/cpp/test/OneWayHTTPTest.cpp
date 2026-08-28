@@ -73,6 +73,22 @@ public:
     parseHeader(buffer.data());
     return closeAfterResponse_;
   }
+
+  bool chunksAfterHeader(const string& header) {
+    chunked_ = false;
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return chunked_;
+  }
+
+  uint32_t contentLengthAfterHeader(const string& header) {
+    contentLength_ = 0;
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return contentLength_;
+  }
 };
 
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
@@ -399,6 +415,10 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientRequiresExactConnectionHeaderName) {
 
   BOOST_CHECK(client.closesAfterHeader("Connection: keep-alive, close"));
   BOOST_CHECK(!client.closesAfterHeader("Connection-Timeout: close"));
+  BOOST_CHECK(client.chunksAfterHeader("Transfer-Encoding: chunked"));
+  BOOST_CHECK(!client.chunksAfterHeader("Transfer-Encoding-Other: chunked"));
+  BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length: 42"), 42U);
+  BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length-Mismatch: 42"), 0U);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
