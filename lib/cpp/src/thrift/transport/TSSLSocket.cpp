@@ -164,10 +164,7 @@ void cleanupOpenSSL() {
   OPENSSL_thread_stop();
 #  endif
 #else
-  // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
   // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
-  // https://www.openssl.org/docs/manmaster/man3/ERR_remove_state.html
-  ERR_remove_state(0);
 #endif
   ERR_free_strings();
 
@@ -182,16 +179,26 @@ static char uppercase(char c);
 SSLContext::SSLContext(const SSLProtocol& protocol) {
   if (protocol == SSLTLS) {
     ctx_ = SSL_CTX_new(SSLv23_method());
-#ifndef OPENSSL_NO_SSL3
+#if !defined(OPENSSL_NO_SSL3) && OPENSSL_VERSION_NUMBER < 0x40000000L
   } else if (protocol == SSLv3) {
     ctx_ = SSL_CTX_new(SSLv3_method());
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+  } else if (protocol == TLSv1_0 || protocol == TLSv1_1 || protocol == TLSv1_2) {
+    ctx_ = SSL_CTX_new(TLS_method());
+    if (ctx_) {
+      int ver = (protocol == TLSv1_0) ? TLS1_VERSION : (protocol == TLSv1_1) ? TLS1_1_VERSION : TLS1_2_VERSION;
+      SSL_CTX_set_min_proto_version(ctx_, ver);
+      SSL_CTX_set_max_proto_version(ctx_, ver);
+    }
+#else
   } else if (protocol == TLSv1_0) {
     ctx_ = SSL_CTX_new(TLSv1_method());
   } else if (protocol == TLSv1_1) {
     ctx_ = SSL_CTX_new(TLSv1_1_method());
   } else if (protocol == TLSv1_2) {
     ctx_ = SSL_CTX_new(TLSv1_2_method());
+#endif
   } else {
     /// UNKNOWN PROTOCOL!
     throw TSSLException("SSL_CTX_new: Unknown protocol");
@@ -412,10 +419,7 @@ void TSSLSocket::close() {
     OPENSSL_thread_stop();
 #  endif
 #else
-    // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
     // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
-    // https://www.openssl.org/docs/manmaster/man3/ERR_remove_state.html
-    ERR_remove_state(0);
 #endif
   }
   TSocket::close();
@@ -773,7 +777,7 @@ void TSSLSocket::authorize() {
 #if OPENSSL_VERSION_NUMBER >= 0x10100000
       const char* data = (const char*)ASN1_STRING_get0_data(name->d.ia5);
 #else
-      char* data = (char*)ASN1_STRING_data(name->d.ia5);
+      const char* data = (const char*)ASN1_STRING_get0_data(name->d.ia5);
 #endif
       int length = ASN1_STRING_length(name->d.ia5);
       switch (name->type) {
@@ -800,19 +804,19 @@ void TSSLSocket::authorize() {
   }
 
   // extract commonName
-  X509_NAME* name = X509_get_subject_name(cert);
+  const X509_NAME* name = X509_get_subject_name(cert);
   if (name != nullptr) {
-    X509_NAME_ENTRY* entry;
+    const X509_NAME_ENTRY* entry;
     unsigned char* utf8;
     int last = -1;
     while (decision == AccessManager::SKIP) {
-      last = X509_NAME_get_index_by_NID(name, NID_commonName, last);
+      last = X509_NAME_get_index_by_NID((X509_NAME *)name, NID_commonName, last);
       if (last == -1)
         break;
       entry = X509_NAME_get_entry(name, last);
       if (entry == nullptr)
         continue;
-      ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
+      const ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
       int size = ASN1_STRING_to_UTF8(&utf8, common);
       if (host.empty()) {
         host = (server() ? getPeerHost() : getHost());
