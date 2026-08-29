@@ -25,6 +25,7 @@
     read/2,
     read/3,
     skip/2,
+    skip/3,
     flush_transport/1,
     close_transport/1,
     typeid_to_atom/1
@@ -268,39 +269,55 @@ skip_field(FType, IProto0, SDict, RTuple) ->
 
 -spec skip(#protocol{}, atom()) -> {#protocol{}, ok}.
 
-skip(Proto0, struct) ->
+%% What this walks is decided by type ids taken off the wire rather than by
+%% the IDL, so the peer picks the nesting and pays three bytes a level for it.
+%% The allowance starts fresh here: everything that ran before this point came
+%% through the generated readers, whose depth is fixed by the declared types
+%% and cannot be driven from the wire, so there is nothing earlier to charge.
+skip(Proto, Type) ->
+    skip(Proto, Type, ?DEFAULT_RECURSION_DEPTH).
+
+-spec skip(#protocol{}, atom(), integer()) -> {#protocol{}, ok}.
+
+skip(_Proto, _Type, Depth) when Depth =< 0 ->
+    error({protocol_error, max_skip_depth_exceeded});
+skip(Proto0, struct, Depth) ->
     {Proto1, ok} = read(Proto0, struct_begin),
-    {Proto2, ok} = skip_struct_loop(Proto1),
+    {Proto2, ok} = skip_struct_loop(Proto1, Depth),
     {Proto3, ok} = read(Proto2, struct_end),
     {Proto3, ok};
-skip(Proto0, map) ->
+skip(Proto0, map, Depth) ->
     {Proto1, Map} = read(Proto0, map_begin),
-    {Proto2, ok} = skip_map_loop(Proto1, Map),
+    {Proto2, ok} = skip_map_loop(Proto1, Map, Depth),
     {Proto3, ok} = read(Proto2, map_end),
     {Proto3, ok};
-skip(Proto0, set) ->
+skip(Proto0, set, Depth) ->
     {Proto1, Set} = read(Proto0, set_begin),
-    {Proto2, ok} = skip_set_loop(Proto1, Set),
+    {Proto2, ok} = skip_set_loop(Proto1, Set, Depth),
     {Proto3, ok} = read(Proto2, set_end),
     {Proto3, ok};
-skip(Proto0, list) ->
+skip(Proto0, list, Depth) ->
     {Proto1, List} = read(Proto0, list_begin),
-    {Proto2, ok} = skip_list_loop(Proto1, List),
+    {Proto2, ok} = skip_list_loop(Proto1, List, Depth),
     {Proto3, ok} = read(Proto2, list_end),
     {Proto3, ok};
-skip(Proto0, Type) when is_atom(Type) ->
+skip(Proto0, Type, _Depth) when is_atom(Type) ->
     {Proto1, _Ignore} = read(Proto0, Type),
     {Proto1, ok}.
 
-skip_struct_loop(Proto0) ->
+%% The loops below recurse once per element, which is a tail call and costs no
+%% stack, and once per level of nesting, which does. Only the second dimension
+%% spends the allowance.
+
+skip_struct_loop(Proto0, Depth) ->
     {Proto1, #protocol_field_begin{type = Type}} = read(Proto0, field_begin),
     case Type of
         ?tType_STOP ->
             {Proto1, ok};
         _Else ->
-            {Proto2, ok} = skip(Proto1, typeid_to_atom(Type)),
+            {Proto2, ok} = skip(Proto1, typeid_to_atom(Type), Depth - 1),
             {Proto3, ok} = read(Proto2, field_end),
-            skip_struct_loop(Proto3)
+            skip_struct_loop(Proto3, Depth)
     end.
 
 skip_map_loop(
@@ -309,15 +326,17 @@ skip_map_loop(
         ktype = Ktype,
         vtype = Vtype,
         size = Size
-    }
+    },
+    Depth
 ) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, typeid_to_atom(Ktype)),
-            {Proto2, ok} = skip(Proto1, typeid_to_atom(Vtype)),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Ktype), Depth - 1),
+            {Proto2, ok} = skip(Proto1, typeid_to_atom(Vtype), Depth - 1),
             skip_map_loop(
                 Proto2,
-                Map#protocol_map_begin{size = Size - 1}
+                Map#protocol_map_begin{size = Size - 1},
+                Depth
             );
         0 ->
             {Proto0, ok}
@@ -328,14 +347,16 @@ skip_set_loop(
     Map = #protocol_set_begin{
         etype = Etype,
         size = Size
-    }
+    },
+    Depth
 ) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype)),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype), Depth - 1),
             skip_set_loop(
                 Proto1,
-                Map#protocol_set_begin{size = Size - 1}
+                Map#protocol_set_begin{size = Size - 1},
+                Depth
             );
         0 ->
             {Proto0, ok}
@@ -346,14 +367,16 @@ skip_list_loop(
     Map = #protocol_list_begin{
         etype = Etype,
         size = Size
-    }
+    },
+    Depth
 ) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype)),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype), Depth - 1),
             skip_list_loop(
                 Proto1,
-                Map#protocol_list_begin{size = Size - 1}
+                Map#protocol_list_begin{size = Size - 1},
+                Depth
             );
         0 ->
             {Proto0, ok}
