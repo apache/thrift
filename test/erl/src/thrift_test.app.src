@@ -41,14 +41,5 @@
   % OTP application loader will load, but not start, included apps. Again
   % this can be ignored as well.  To load but not start an application it
   % is easier to include it in the .rel file followed by the atom 'none'
-  {included_applications, []},
-
-  % configuration parameters similar to those in the config file specified
-  % on the command line. can be fetched with gas:get_env
-  {env, [
-    % If an error/crash occurs during processing of a function,
-    % should the TApplicationException serialized back to the client
-    % include the erlang backtrace?
-    {exceptions_include_traces, true}
-  ]}
+  {included_applications, []}
 ]}.

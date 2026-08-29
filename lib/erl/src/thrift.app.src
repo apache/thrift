@@ -43,9 +43,15 @@
     % configuration parameters similar to those in the config file specified
     % on the command line. can be fetched with gas:get_env
     {env, [
-        % If an error/crash occurs during processing of a function,
-        % should the TApplicationException serialized back to the client
-        % include the erlang backtrace?
-        {exceptions_include_traces, true}
+        % If an error/crash occurs during processing of a function, should the
+        % TApplicationException serialized back to the client include the
+        % erlang backtrace?
+        %
+        % Off unless asked for. The backtrace names internal modules and the
+        % source paths of the machine that built the release, and on the
+        % handle_unknown_exception path the term the handler threw travels
+        % with it. Turn it on where the peer is trusted and the detail is
+        % worth more than what it gives away.
+        {exceptions_include_traces, false}
     ]}
 ]}.
