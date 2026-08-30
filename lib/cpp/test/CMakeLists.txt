@@ -89,6 +89,7 @@ set(UnitTest_SOURCES
     TServerSocketTest.cpp
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
+    FrameBoundReadBudgetTest.cpp
     TUuidTest.cpp
     Thrift5272.cpp
 )

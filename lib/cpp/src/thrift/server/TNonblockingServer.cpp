@@ -602,11 +602,15 @@ void TNonblockingServer::TConnection::transition() {
     // and get back some data from the dispatch function
     if (server_->getHeaderTransport()) {
       inputTransport_->resetBuffer(readBuffer_, readBufferPos_);
+      inputTransport_->bindMessageSizeToBuffer();
       outputTransport_->resetBuffer();
     } else {
       // We saved room for the framing size in case header transport needed it,
       // but just skip it for the non-header case
       inputTransport_->resetBuffer(readBuffer_ + 4, readBufferPos_ - 4);
+      // The frame is already off; what is left is exactly one message, and the
+      // protocol should not be allowed to size anything beyond it.
+      inputTransport_->bindMessageSizeToBuffer();
       outputTransport_->resetBuffer();
 
       // Prepend four bytes of blank space to the buffer so we can
