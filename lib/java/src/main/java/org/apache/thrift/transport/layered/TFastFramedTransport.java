@@ -140,6 +140,9 @@ public class TFastFramedTransport extends TLayeredTransport {
   }
 
   private void readFrame() throws TTransportException {
+    // See TFramedTransport.readFrame(): the framing reads need a full budget of their own.
+    resetMessageSizeAndConsumedBytes();
+
     getInnerTransport().readAll(i32buf, 0, 4);
     int size = TFramedTransport.decodeFrameSize(i32buf);
 
@@ -157,6 +160,10 @@ public class TFastFramedTransport extends TLayeredTransport {
     }
 
     readBuffer.fill(getInnerTransport(), size);
+
+    // Bind the read budget to this frame; see TFramedTransport.readFrame() for why this discards
+    // consumption rather than accumulating it.
+    resetMessageSizeAndConsumedBytes(size);
   }
 
   @Override

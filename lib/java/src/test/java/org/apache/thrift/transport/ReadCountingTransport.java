@@ -74,4 +74,9 @@ public class ReadCountingTransport extends TTransport {
   public void checkReadBytesAvailable(long numBytes) throws TTransportException {
     trans.checkReadBytesAvailable(numBytes);
   }
+
+  @Override
+  public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {
+    trans.resetMessageSizeAndConsumedBytes(newSize);
+  }
 }

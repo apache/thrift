@@ -199,4 +199,23 @@ public abstract class TTransport implements Closeable {
   public abstract void updateKnownMessageSize(long size) throws TTransportException;
 
   public abstract void checkReadBytesAvailable(long numBytes) throws TTransportException;
+
+  /**
+   * Sets the read budget to {@code newSize}, discarding whatever has been consumed against the
+   * previous one. A negative size restores the configured maximum.
+   *
+   * <p>This is the only way to widen a budget that an earlier, smaller message narrowed:
+   * updateKnownMessageSize() refuses to grow one, and carries the previous message's consumption
+   * forward besides. A caller that learns the real size of a message -- a framed transport reading
+   * a frame header, say -- wants this rather than updateKnownMessageSize(), because the reads that
+   * told it the size were themselves charged against the budget it is about to replace.
+   *
+   * @param newSize the size to bind the budget to, or a negative value for the configured maximum
+   */
+  public abstract void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException;
+
+  /** Restores the read budget to the configured maximum. */
+  public void resetMessageSizeAndConsumedBytes() throws TTransportException {
+    resetMessageSizeAndConsumedBytes(-1);
+  }
 }
