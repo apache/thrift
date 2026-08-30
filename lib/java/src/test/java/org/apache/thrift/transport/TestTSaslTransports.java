@@ -557,6 +557,11 @@ public class TestTSaslTransports {
     public void checkReadBytesAvailable(long numBytes) throws TTransportException {
       readBuffer.checkReadBytesAvailable(numBytes);
     }
+
+    @Override
+    public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {
+      readBuffer.resetMessageSizeAndConsumedBytes(newSize);
+    }
   }
 
   @Test

@@ -47,6 +47,11 @@ public abstract class TLayeredTransport extends TTransport {
     innerTransport.checkReadBytesAvailable(numBytes);
   }
 
+  @Override
+  public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {
+    innerTransport.resetMessageSizeAndConsumedBytes(newSize);
+  }
+
   public TTransport getInnerTransport() {
     return innerTransport;
   }
