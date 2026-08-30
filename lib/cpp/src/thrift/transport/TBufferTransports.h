@@ -61,7 +61,7 @@ public:
    * This method is meant to eventually be nonvirtual and inlinable.
    */
   uint32_t read(uint8_t* buf, uint32_t len) {
-    checkReadBytesAvailable(len);
+    checkReadBytesAvailable(budgetBoundToBuffer_ ? bufferedReadLength(len) : len);
     uint8_t* new_rBase = rBase_ + len;
     if (TDB_LIKELY(new_rBase <= rBound_)) {
       std::memcpy(buf, rBase_, len);
@@ -166,6 +166,23 @@ protected:
 
   ~TBufferBase() override = default;
 
+  /**
+   * How much of a read of len bytes the budget should be checked against, for
+   * a transport whose budget describes the buffer's contents.
+   *
+   * read() may return fewer bytes than it was asked for, so a request larger
+   * than the buffer is a short read rather than a budget violation; and an
+   * empty buffer means the budget belongs to a unit that is finished with,
+   * with the next one not yet sized. Neither loosens the bound the protocol is
+   * held to: the checks that gate an allocation -- readStringBody(), the
+   * container element counts -- call checkReadBytesAvailable() directly with
+   * the size the wire declared, and never come through here.
+   */
+  uint32_t bufferedReadLength(uint32_t len) const {
+    auto have = static_cast<uint32_t>(rBound_ - rBase_);
+    return (len > have) ? have : len;
+  }
+
   /// Reads begin here.
   uint8_t* rBase_;
   /// Reads may extend to just before here.
@@ -175,6 +192,16 @@ protected:
   uint8_t* wBase_;
   /// Writes may extend to just before here.
   uint8_t* wBound_;
+
+  /**
+   * Set by a subclass that refills its buffer a unit at a time and binds the
+   * read budget to that unit -- a frame -- while still handing out short
+   * reads across the stream.  See bufferedReadLength().
+   *
+   * A buffer that holds one whole message, and where a read past the end is a
+   * truncated message rather than a short read, leaves this alone.
+   */
+  bool budgetBoundToBuffer_ = false;
 };
 
 /**
@@ -680,6 +707,21 @@ public:
   uint32_t available_read() const {
     // Remember, wBase_ is the real rBound_.
     return static_cast<uint32_t>(wBase_ - rBase_);
+  }
+
+  /**
+   * Binds the read budget to the bytes the buffer currently holds.
+   *
+   * A caller that has placed a complete message into the buffer -- a server
+   * that has already taken the frame apart, say -- can use this to keep the
+   * protocol from sizing a field or a container from a number the message is
+   * too small to carry.  Unlike updateKnownMessageSize() it first discards the
+   * consumption recorded for any earlier message, so it is safe to call before
+   * every message however small the last one was.
+   */
+  void bindMessageSizeToBuffer() {
+    resetConsumedMessageSize();
+    updateKnownMessageSize(available_read());
   }
 
   uint32_t available_write() const { return static_cast<uint32_t>(wBound_ - wBase_); }

@@ -218,6 +218,20 @@ bool TFramedTransport::readFrame() {
   if (sz > static_cast<int32_t>(maxFrameSize_))
     throw TTransportException(TTransportException::CORRUPTED_DATA, "Received an oversized frame");
 
+  // Bind the read budget to this frame, so that the protocol cannot be talked
+  // into sizing a field or a container from a number the frame is too small to
+  // carry. The full reset first is what makes this safe to do on every frame:
+  // resetConsumedMessageSize() will not let a budget grow again once a smaller
+  // frame has shrunk it, and updateKnownMessageSize() on its own carries the
+  // previous frame's consumption forward into this one.
+  //
+  // From here on the budget describes one frame rather than the stream, which
+  // is what TBufferBase::read() needs to know to keep treating a request for
+  // more than the frame holds as a short read.
+  budgetBoundToBuffer_ = true;
+  resetConsumedMessageSize();
+  updateKnownMessageSize(sz);
+
   // Read the frame payload, and reset markers.
   if (sz > static_cast<int32_t>(rBufSize_)) {
     rBuf_.reset(new uint8_t[sz]);
