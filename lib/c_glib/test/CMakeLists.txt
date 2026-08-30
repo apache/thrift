@@ -84,6 +84,10 @@ add_executable(testframedtransport testframedtransport.c)
 target_link_libraries(testframedtransport thrift_c_glib)
 add_test(NAME testframedtransport COMMAND testframedtransport)
 
+add_executable(testframedreadbudget testframedreadbudget.c)
+target_link_libraries(testframedreadbudget thrift_c_glib)
+add_test(NAME testframedreadbudget COMMAND testframedreadbudget)
+
 add_executable(testfdtransport testfdtransport.c)
 target_link_libraries(testfdtransport thrift_c_glib)
 add_test(NAME testfdtransport COMMAND testfdtransport)
