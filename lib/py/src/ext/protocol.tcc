@@ -63,6 +63,11 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   }
   return PycStringIO->cread(buf, output, len);
 }
+
+inline Py_ssize_t buffer_remaining(PyObject*) {
+  // cStringIO exposes no cheap way to ask.
+  return -1;
+}
 } // namespace detail
 
 template <typename Impl>
@@ -146,6 +151,11 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   Py_ssize_t pos0 = buf2->pos;
   buf2->pos = (std::min)(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
   return static_cast<int>(buf2->pos - pos0);
+}
+
+inline Py_ssize_t buffer_remaining(PyObject* buf) {
+  bytesio* buf2 = reinterpret_cast<bytesio*>(buf);
+  return buf2->string_size - buf2->pos;
 }
 } // namespace detail
 
@@ -268,6 +278,32 @@ bool ProtocolBase<Impl>::checkLengthLimit(int32_t len, long limit) {
     return false;
   }
   return true;
+}
+
+template <typename Impl>
+inline int32_t ProtocolBase<Impl>::initialContainerSize(int32_t declared) {
+  // The count is the peer's claim about the message, not a measurement of it,
+  // and the two need not agree: a nine byte body can name a hundred million
+  // elements. Whatever the protocol, an element occupies at least one byte on
+  // the wire, so the bytes still sitting in the decode buffer are a ceiling on
+  // how many of them can turn up. A refill can bring more, which is why this
+  // sizes the first allocation only and the caller grows from there.
+  //
+  // For a message that is already buffered whole -- a memory buffer, or a
+  // frame -- there are always at least as many bytes left as elements
+  // declared, so the container is still allocated at its full size in one go
+  // and nothing about the common path changes.
+  if (!input_.stringiobuf) {
+    return (std::min)(declared, kMaxInitialContainerSize);
+  }
+  Py_ssize_t avail = detail::buffer_remaining(input_.stringiobuf.get());
+  if (avail < 0) {
+    return (std::min)(declared, kMaxInitialContainerSize);
+  }
+  if (avail >= static_cast<Py_ssize_t>(declared)) {
+    return declared;
+  }
+  return static_cast<int32_t>(avail);
 }
 
 template <typename Impl>
@@ -809,21 +845,41 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
     }
 
     bool use_tuple = type == T_LIST && parsedargs.immutable;
-    ScopedPyObject ret(use_tuple ? PyTuple_New(len) : PyList_New(len));
+    int32_t sized = initialContainerSize(len);
+    // A tuple cannot be appended to, so it is only built in place when the
+    // whole of it is accounted for. Otherwise the elements land in a list and
+    // are handed over once they are all in.
+    bool tuple_in_place = use_tuple && sized == len;
+
+    ScopedPyObject ret(tuple_in_place ? PyTuple_New(len) : PyList_New(sized));
     if (!ret) {
       return nullptr;
     }
 
-    for (int i = 0; i < len; i++) {
+    for (int32_t i = 0; i < len; i++) {
       PyObject* item = decodeValue(etype, parsedargs.typeargs);
       if (!item) {
         return nullptr;
       }
-      if (use_tuple) {
+      if (i >= sized) {
+        int rv = PyList_Append(ret.get(), item);
+        Py_DECREF(item);
+        if (rv < 0) {
+          return nullptr;
+        }
+      } else if (tuple_in_place) {
         PyTuple_SET_ITEM(ret.get(), i, item);
       } else {
         PyList_SET_ITEM(ret.get(), i, item);
       }
+    }
+
+    if (use_tuple && !tuple_in_place) {
+      ScopedPyObject tup(PyList_AsTuple(ret.get()));
+      if (!tup) {
+        return nullptr;
+      }
+      ret.reset(tup.release());
     }
 
     // TODO(dreiss): Consider biting the bullet and making two separate cases
