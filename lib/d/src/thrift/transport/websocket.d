@@ -36,6 +36,21 @@ import thrift.transport.http;
  */
 final class TServerWebSocketTransport(bool binary) : THttpTransport {
   /**
+   * The default value for maxPayloadLength, matching the frame size limit
+   * used consistently across the Thrift libraries.
+   */
+  enum DEFAULT_MAX_PAYLOAD_LENGTH = 16384000;
+
+  /**
+   * The largest payload accepted in a single WebSocket frame, in bytes.
+   *
+   * The payload length is read off the frame header and sizes the read
+   * buffer, so it decides how much memory a peer can ask for before it has
+   * sent anything.
+   */
+  size_t maxPayloadLength = DEFAULT_MAX_PAYLOAD_LENGTH;
+
+  /**
    * Constructs a new instance.
    *
    * Param:
@@ -235,6 +250,13 @@ private:
       }
     }
 
+    // The length below sizes the read buffer before a single payload byte has
+    // arrived, so decide on it first.
+    if (payloadLength > maxPayloadLength) {
+      failConnection(CloseCode.MessageTooBig);
+      return false;
+    }
+
     auto length = cast(size_t)payloadLength;
 
     if (length > 0) {
@@ -385,4 +407,26 @@ private enum Opcode : ubyte {
   Close = 0x8,
   Ping = 0x9,
   Pong = 0xA
+}
+
+unittest {
+  import core.memory : GC;
+  import thrift.transport.memory;
+
+  // A frame that declares a 2 GiB payload and carries none of it: 14 bytes on
+  // the wire. The declared length must not size the read buffer.
+  auto frame = cast(ubyte[])[
+    0x82, 0xff,              // FIN, binary, masked, 64-bit length follows
+    0x00, 0x00, 0x00, 0x00,  // high half of the length
+    0x80, 0x00, 0x00, 0x00,  // low half: 2 GiB
+    0xde, 0xad, 0xbe, 0xef   // masking key
+  ];
+
+  auto ws = new TServerWebSocketTransport!true(new TMemoryBuffer(frame));
+
+  auto before = GC.stats().allocatedInCurrentThread;
+  assert(!ws.readFrame(), "a frame promising more than it carries was accepted");
+  auto allocated = GC.stats().allocatedInCurrentThread - before;
+  assert(allocated < 1024 * 1024,
+    "reading a 14 byte frame allocated " ~ to!string(allocated) ~ " bytes");
 }
