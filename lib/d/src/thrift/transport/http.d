@@ -26,6 +26,7 @@
  */
 module thrift.transport.http;
 
+import core.stdc.string : memmove;
 import std.algorithm : canFind, countUntil, endsWith, findSplit, min, startsWith;
 import std.ascii : toLower;
 import std.array : empty;
@@ -118,9 +119,24 @@ abstract class THttpTransport : TBaseTransport {
 
   /**
    * The size of the buffer to read HTTP requests into, in bytes. Will expand
-   * as required.
+   * as required, up to maxHttpBufferSize.
    */
   enum HTTP_BUFFER_SIZE = 1024;
+
+  /**
+   * The default value for maxHttpBufferSize, matching the frame size limit
+   * used consistently across the Thrift libraries.
+   */
+  enum DEFAULT_MAX_HTTP_BUFFER_SIZE = 16384000;
+
+  /**
+   * The largest the read buffer will grow to, in bytes.
+   *
+   * The buffer only has to hold one line at a time; it grows because the peer
+   * has not sent a CRLF yet, so how far it grows is the peer's choice unless
+   * something bounds it.
+   */
+  size_t maxHttpBufferSize = DEFAULT_MAX_HTTP_BUFFER_SIZE;
 
 protected:
   abstract string getHeader(size_t dataLength);
@@ -158,8 +174,11 @@ private:
         if (httpBufRemaining_.empty) {
           httpBufRemaining_ = httpBuf_[0 .. 0];
         } else {
-          httpBuf_[0 .. httpBufRemaining_.length] = httpBufRemaining_;
-          httpBufRemaining_ = httpBuf_[0 .. httpBufRemaining_.length];
+          // Source and destination overlap whenever anything is left over,
+          // which a slice assignment does not allow.
+          auto length = httpBufRemaining_.length;
+          memmove(httpBuf_.ptr, httpBufRemaining_.ptr, length);
+          httpBufRemaining_ = httpBuf_[0 .. length];
         }
 
         if (!refill()) {
@@ -267,7 +286,12 @@ private:
     auto indexEnd = indexBegin + httpBufRemaining_.length;
 
     if (httpBuf_.length - indexEnd <= (httpBuf_.length / 4)) {
-      httpBuf_.length *= 2;
+      if (httpBuf_.length >= maxHttpBufferSize) {
+        throw new TTransportException("HTTP line does not fit in the maximum buffer size",
+          TTransportException.Type.CORRUPTED_DATA);
+      }
+      httpBuf_.length = (httpBuf_.length > maxHttpBufferSize / 2) ?
+        maxHttpBufferSize : httpBuf_.length * 2;
     }
 
     // Read more data.
@@ -455,5 +479,40 @@ private {
     import std.exception;
     enforce(capMemberName(Foo.bar) == "Bar");
     enforce(capMemberName(Foo.bAZ) == "BAZ");
+  }
+}
+
+unittest {
+  import std.array : replicate;
+  import thrift.transport.memory;
+
+  // A header line longer than the buffer the transport starts with, so that
+  // readLine() has to shift what it has and grow.
+  {
+    auto wire = cast(ubyte[])("POST / HTTP/1.1\r\nX-Filler: " ~ replicate("A", 20_000)
+      ~ "\r\nContent-Length: 5\r\n\r\nhello");
+    auto http = new TServerHttpTransport(new TMemoryBuffer(wire));
+    ubyte[5] buf;
+    assert(http.read(buf) == 5);
+    assert(cast(string)buf[] == "hello");
+  }
+
+  // A header line that never ends. The buffer used to double for as long as
+  // the peer kept sending.
+  {
+    auto wire = cast(ubyte[])("POST / HTTP/1.1\r\nX-Filler: " ~ replicate("A", 200_000));
+    auto http = new TServerHttpTransport(new TMemoryBuffer(wire));
+    http.maxHttpBufferSize = 16 * 1024;
+
+    ubyte[16] buf;
+    bool threw;
+    try {
+      http.read(buf);
+    } catch (TTransportException) {
+      threw = true;
+    }
+    assert(threw, "a header line without a CRLF was read without limit");
+    assert(http.httpBuf_.length <= http.maxHttpBufferSize,
+      "the read buffer grew past the maximum");
   }
 }
