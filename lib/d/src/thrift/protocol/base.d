@@ -252,14 +252,41 @@ protected:
   Type type_;
 }
 
+// Thread-local recursion depth counter. It is shared between skip() below and
+// the readStruct/writeStruct templates in thrift.codegen.base: skipping
+// descends through nested structs and containers the same way reading them
+// does, so it draws on the same depth budget.
+package(thrift) uint currentRecursionDepth_;
+package(thrift) enum uint DEFAULT_MAX_RECURSION_DEPTH = 64;
+
+package(thrift) void incrementRecursionDepth() {
+  if (++currentRecursionDepth_ > DEFAULT_MAX_RECURSION_DEPTH) {
+    --currentRecursionDepth_;
+    throw new TProtocolException("Maximum recursion depth exceeded",
+      TProtocolException.Type.DEPTH_LIMIT);
+  }
+}
+
+package(thrift) void decrementRecursionDepth() {
+  --currentRecursionDepth_;
+}
+
 /**
  * Skips a field of the given type on the protocol.
  *
  * The main purpose of skip() is to allow treating struct and container types,
  * (where multiple primitive types have to be skipped) the same as scalar types
  * in generated code.
+ *
+ * Nested structs and containers are descended into recursively, so skip()
+ * draws on the same depth budget as readStruct(): a payload nested deeper
+ * than DEFAULT_MAX_RECURSION_DEPTH is rejected with
+ * TProtocolException.Type.DEPTH_LIMIT.
  */
 void skip(Protocol)(Protocol prot, TType type) if (is(Protocol : TProtocol)) {
+  incrementRecursionDepth();
+  scope(exit) decrementRecursionDepth();
+
   switch (type) {
     case TType.BOOL:
       prot.readBool();

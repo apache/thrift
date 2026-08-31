@@ -661,6 +661,7 @@ unittest {
   import thrift.internal.test.protocol;
   testContainerSizeLimit!(TCompactProtocol!())();
   testStringSizeLimit!(TCompactProtocol!())();
+  testSkipDepthLimit!(TCompactProtocol!())();
 }
 
 /**
