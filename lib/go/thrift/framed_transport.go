@@ -140,30 +140,32 @@ func (p *TFramedTransport) Read(buf []byte) (read int, err error) {
 		}
 	}()
 
-	if p.readBuf != nil {
+	// Loop rather than recurse: an empty frame yields no bytes, so a peer
+	// can drive one iteration per 4 bytes it sends, and a stack frame per
+	// iteration would not be bounded by anything.
+	for {
+		if p.readBuf != nil {
+			read, err = p.readBuf.Read(buf)
+			if err != io.EOF {
+				return
+			}
 
-		read, err = p.readBuf.Read(buf)
-		if err != io.EOF {
-			return
+			// For bytes.Buffer.Read, EOF would only happen when read is zero,
+			// but still, do a sanity check,
+			// in case that behavior is changed in a future version of go stdlib.
+			// When that happens, just return nil error,
+			// and let the caller call Read again to read the next frame.
+			if read > 0 {
+				return read, nil
+			}
 		}
 
-		// For bytes.Buffer.Read, EOF would only happen when read is zero,
-		// but still, do a sanity check,
-		// in case that behavior is changed in a future version of go stdlib.
-		// When that happens, just return nil error,
-		// and let the caller call Read again to read the next frame.
-		if read > 0 {
-			return read, nil
+		// Reaching here means that the last Read finished the last frame,
+		// so we need to read the next frame into readBuf now.
+		if err = p.readFrame(); err != nil {
+			return read, err
 		}
 	}
-
-	// Reaching here means that the last Read finished the last frame,
-	// so we need to read the next frame into readBuf now.
-	if err = p.readFrame(); err != nil {
-		return read, err
-	}
-	newRead, err := p.Read(buf[read:])
-	return read + newRead, err
 }
 
 func (p *TFramedTransport) ReadByte() (c byte, err error) {
