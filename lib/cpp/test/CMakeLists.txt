@@ -90,6 +90,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
     FrameBoundReadBudgetTest.cpp
+    THttpBufferBoundTest.cpp
     TUuidTest.cpp
     Thrift5272.cpp
 )

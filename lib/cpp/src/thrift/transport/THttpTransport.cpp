@@ -47,6 +47,16 @@ THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport, std::share
   init();
 }
 
+uint32_t THttpTransport::maxHttpBufSize() {
+  const int configured = getConfiguration()->getMaxMessageSize();
+  if (configured <= static_cast<int>(httpBufSize_)) {
+    // Never below the buffer we start out with, so that a small or unset
+    // limit cannot make an ordinary request line unreadable.
+    return httpBufSize_;
+  }
+  return static_cast<uint32_t>(configured);
+}
+
 void THttpTransport::init() {
   httpBuf_ = (char*)std::malloc(httpBufSize_ + 1);
   if (httpBuf_ == nullptr) {
@@ -203,7 +213,18 @@ void THttpTransport::shift() {
 void THttpTransport::refill() {
   uint32_t avail = httpBufSize_ - httpBufLen_;
   if (avail <= (httpBufSize_ / 4)) {
-    httpBufSize_ *= 2;
+    // The buffer only has to hold one line at a time; it grows because the
+    // peer has not sent a CRLF yet, and how far it grows is therefore the
+    // peer's choice unless something bounds it. Hold that to the configured
+    // maximum message size: without a ceiling the doubling below eventually
+    // wraps uint32_t, and the realloc() that follows would then shrink the
+    // allocation that the read after it writes into.
+    const uint32_t maxBufSize = maxHttpBufSize();
+    if (httpBufSize_ >= maxBufSize) {
+      throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                "HTTP line does not fit in the configured maximum message size");
+    }
+    httpBufSize_ = (httpBufSize_ > maxBufSize / 2) ? maxBufSize : httpBufSize_ * 2;
     char* tmpBuf = (char*)std::realloc(httpBuf_, httpBufSize_ + 1);
     if (tmpBuf == nullptr) {
       throw std::bad_alloc();

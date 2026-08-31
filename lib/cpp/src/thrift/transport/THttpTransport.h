@@ -96,6 +96,9 @@ protected:
   void refill();
   void shift();
 
+  /// Upper bound on httpBufSize_, from TConfiguration::maxMessageSize.
+  uint32_t maxHttpBufSize();
+
   static const char* CRLF;
   static const int CRLF_LEN;
 };

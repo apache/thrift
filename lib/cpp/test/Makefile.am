@@ -144,6 +144,7 @@ UnitTests_SOURCES = \
 	ThrifttReadCheckTests.cpp \
 	FrameBoundReadBudgetTest.cpp \
 	TWebSocketServerTest.cpp \
+	THttpBufferBoundTest.cpp \
 	Thrift5272.cpp \
 	TUuidTest.cpp
 
