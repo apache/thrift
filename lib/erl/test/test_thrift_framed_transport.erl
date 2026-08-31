@@ -197,7 +197,7 @@ read_exact_test_() ->
             ?_assertMatch(
                 {
                     {t_framed, {t_transport, thrift_membuffer_transport, {t_membuffer, <<>>}},
-                        [[], <<"hallo world">>], []},
+                        [<<>>, <<"hallo world">>], []},
                     {error, eof}
                 },
                 read_exact(
@@ -319,3 +319,29 @@ close_test_() ->
                 {t_framed, {t_transport, thrift_membuffer_transport, {t_membuffer, <<>>}}, [], []}
             )
         )}.
+
+%% An empty frame yields no bytes, so read_exact/2 has to go on to the next
+%% one. It used to carry the previous read buffer forward as the iolist it was
+%% given, which nests one level deeper per frame while iolist_to_binary/1 walks
+%% the whole thing again on every pass -- quadratic work for a peer sending
+%% 4 bytes at a time.
+empty_frames(Count) ->
+    Frames = binary:copy(<<0, 0, 0, 0>>, Count),
+    Data = <<Frames/binary, 0, 0, 0, 4, "abcd">>,
+    {ok, {t_transport, _, MemBuf}} = thrift_membuffer_transport:new(Data),
+    State = {t_framed, {t_transport, thrift_membuffer_transport, MemBuf}, [], []},
+    {reductions, Before} = erlang:process_info(self(), reductions),
+    {_NewState, Result} = thrift_framed_transport:read_exact(State, 4),
+    {reductions, After} = erlang:process_info(self(), reductions),
+    ?assertEqual({ok, <<"abcd">>}, Result),
+    After - Before.
+
+empty_frames_cost_test_() ->
+    {timeout, 120, fun() ->
+        Small = empty_frames(2000),
+        Large = empty_frames(8000),
+        %% Four times as many frames, so no more than about four times the
+        %% work. The margin is wide because reduction counts move with the
+        %% runtime; quadratic growth is an order of magnitude away from it.
+        ?assert(Large < Small * 8)
+    end}.

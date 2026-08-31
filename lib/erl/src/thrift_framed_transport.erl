@@ -80,8 +80,13 @@ read_exact(State = #t_framed{wrapped = Wrapped, read_buffer = Buffer}, Len) when
         _ ->
             case next_frame(Wrapped) of
                 {NewState, {ok, Frame}} ->
+                    %% Carry the flattened buffer forward rather than the
+                    %% iolist it came from: appending to the latter nests it
+                    %% one level deeper per frame, and the iolist_to_binary
+                    %% above walks the whole thing again on every pass. A
+                    %% peer sending empty frames adds a level per 4 bytes.
                     read_exact(
-                        State#t_framed{wrapped = NewState, read_buffer = [Buffer, Frame]},
+                        State#t_framed{wrapped = NewState, read_buffer = [Binary, Frame]},
                         Len
                     );
                 {NewState, Error} ->
