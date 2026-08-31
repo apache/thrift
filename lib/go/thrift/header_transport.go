@@ -565,11 +565,18 @@ func (t *THeaderTransport) Read(p []byte) (read int, err error) {
 	// Then, 99% of the case when calling this Read frame is already read
 	// into frameReader. ReadFrame here is more of preventing bugs that
 	// didn't call ReadFrame before calling Read.
-	err = t.ReadFrame(context.Background())
-	if err != nil {
-		return
-	}
-	if t.frameReader != nil {
+	// Loop rather than recurse: a frame whose header block fills it yields no
+	// payload bytes, so a peer can drive one iteration per 18 bytes it sends,
+	// and a stack frame per iteration would not be bounded by anything.
+	for {
+		err = t.ReadFrame(context.Background())
+		if err != nil {
+			return
+		}
+		if t.frameReader == nil {
+			return t.reader.Read(p)
+		}
+
 		read, err = t.frameReader.Read(p)
 		if err == nil && t.frameBuffer.Len() <= 0 {
 			// the last Read finished the frame, do endOfFrame
@@ -590,12 +597,11 @@ func (t *THeaderTransport) Read(p []byte) (read int, err error) {
 				// as otherwise we would return 0 and nil,
 				// which is a case not handled well by most
 				// protocol implementations.
-				return t.Read(p)
+				continue
 			}
 		}
 		return
 	}
-	return t.reader.Read(p)
 }
 
 // Write writes data to the write buffer.

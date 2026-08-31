@@ -20,10 +20,12 @@
 package thrift
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -445,6 +447,89 @@ func TestTHeaderTransportTransformCountBounded(t *testing.T) {
 				"an EOF-shaped error here means transformCount was not bounds-checked "+
 				"before being used to size an allocation",
 			err, SIZE_LIMIT,
+		)
+	}
+}
+
+// headerDepthTransport records the call-stack depth observed on every Read of
+// the underlying transport, so that a test can tell whether THeaderTransport
+// consumes successive frames iteratively or by re-entering itself once per
+// frame.
+type headerDepthTransport struct {
+	TTransport
+
+	depths []int
+}
+
+func (h *headerDepthTransport) Read(p []byte) (int, error) {
+	var pcs [8192]uintptr
+	h.depths = append(h.depths, runtime.Callers(0, pcs[:]))
+	return h.TTransport.Read(p)
+}
+
+// emptyPayloadHeaderFrame builds a THeader frame whose header block fills the
+// whole frame, so that it carries no payload at all.
+func emptyPayloadHeaderFrame(payload []byte) []byte {
+	// One word of header block: protocol id 0 (binary) and a transform count
+	// of 0, as varints, then padding.
+	headerBlock := []byte{0x00, 0x00, 0x00, 0x00}
+
+	var frame bytes.Buffer
+	binary.Write(&frame, binary.BigEndian, THeaderHeaderMagic)
+	binary.Write(&frame, binary.BigEndian, int32(0)) // sequence id
+	binary.Write(&frame, binary.BigEndian, uint16(len(headerBlock)/4))
+	frame.Write(headerBlock)
+	frame.Write(payload)
+
+	var out bytes.Buffer
+	binary.Write(&out, binary.BigEndian, uint32(frame.Len()))
+	out.Write(frame.Bytes())
+	return out.Bytes()
+}
+
+func TestTHeaderTransportEmptyPayloadFrames(t *testing.T) {
+	// A frame whose header block fills it carries no payload, so Read has to
+	// move on to the next frame to satisfy its caller. It must do so without
+	// adding a stack frame per empty frame: such a frame costs a peer 18 bytes.
+	const (
+		emptyFrames = 50000
+		content     = "hello, world!"
+	)
+
+	var raw bytes.Buffer
+	for range emptyFrames {
+		raw.Write(emptyPayloadHeaderFrame(nil))
+	}
+	raw.Write(emptyPayloadHeaderFrame([]byte(content)))
+
+	base := &headerDepthTransport{TTransport: NewStreamTransportR(&raw)}
+	trans := NewTHeaderTransport(base)
+
+	buf := make([]byte, len(content))
+	n, err := io.ReadFull(trans, buf)
+	if err != nil {
+		t.Fatalf("Failed to read after %d empty frames: %v", emptyFrames, err)
+	}
+	if got := string(buf[:n]); got != content {
+		t.Errorf("Read after %d empty frames: want %q, got %q", emptyFrames, content, got)
+	}
+
+	if len(base.depths) < 2 {
+		t.Fatalf(
+			"Expected the underlying transport to be read more than once, got %d reads",
+			len(base.depths),
+		)
+	}
+	first := base.depths[0]
+	last := base.depths[len(base.depths)-1]
+	// An iterative implementation reads every frame from the same depth, so
+	// the difference is 0. Allow a small margin for the runtime rather than
+	// pinning an exact number.
+	if delta := last - first; delta > 16 {
+		t.Errorf(
+			"Stack depth grew by %d (from %d to %d) over %d reads of the underlying transport, "+
+				"which means one empty frame costs one stack frame",
+			delta, first, last, len(base.depths),
 		)
 	}
 }
