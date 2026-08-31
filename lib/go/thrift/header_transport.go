@@ -376,6 +376,17 @@ func (t *THeaderTransport) ReadFrame(ctx context.Context) error {
 			errors.New("frame too large"),
 		)
 	}
+	// A frame has to carry at least the 32-bit word peeked at further down,
+	// which is what says whether it holds headers or a bare message. Slicing
+	// to size32 on a shorter frame reads past what was copied into the frame
+	// buffer, and that buffer comes from a pool, so what it reads is whatever
+	// the previous user of the buffer left behind.
+	if frameSize < size32 {
+		return NewTProtocolExceptionWithType(
+			INVALID_DATA,
+			fmt.Errorf("frame too small: %d bytes", frameSize),
+		)
+	}
 	t.reader.Discard(size32)
 
 	// Read the frame fully into frameBuffer.

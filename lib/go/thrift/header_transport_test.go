@@ -533,3 +533,46 @@ func TestTHeaderTransportEmptyPayloadFrames(t *testing.T) {
 		)
 	}
 }
+
+// poisonBufPool puts a buffer whose leftover bytes look like a compact framed
+// message back into the pool, so that the next frame buffer taken from it
+// would answer a version check with the previous request's data.
+func poisonBufPool() {
+	poison := bufPool.get()
+	poison.Write(bytes.Repeat([]byte{COMPACT_PROTOCOL_ID, COMPACT_VERSION, 0xAA, 0xBB}, 200))
+	poison.Reset()
+	bufPool.put(&poison)
+}
+
+func TestTHeaderTransportShortFrame(t *testing.T) {
+	// A frame carrying fewer than 4 bytes cannot hold the version word that
+	// says what is in it. Reading one must not fall back on whatever the
+	// recycled frame buffer happens to still contain.
+	for _, frameSize := range []uint32{0, 1, 2, 3} {
+		t.Run(fmt.Sprintf("size-%d", frameSize), func(t *testing.T) {
+			poisonBufPool()
+
+			// Fill the frame with the leading bytes of the poison, so
+			// that whatever the frame is short of is supplied by the pool
+			// and the four bytes together read as a compact framed message.
+			trans := NewTMemoryBuffer()
+			binary.Write(trans, binary.BigEndian, frameSize)
+			trans.Write([]byte{COMPACT_PROTOCOL_ID, COMPACT_VERSION, 0xAA, 0xBB}[:frameSize])
+			reader := NewTHeaderTransport(trans)
+
+			err := reader.ReadFrame(context.Background())
+			if err == nil {
+				t.Fatalf(
+					"ReadFrame accepted a %d-byte frame, client type is now %v",
+					frameSize, reader.clientType,
+				)
+			}
+			if reader.clientType != clientUnknown {
+				t.Errorf(
+					"ReadFrame rejected the frame but left client type %v, want %v",
+					reader.clientType, clientUnknown,
+				)
+			}
+		})
+	}
+}
