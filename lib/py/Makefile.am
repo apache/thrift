@@ -33,6 +33,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TNonblockingServer.py
 	$(PYTHON3) test/thrift_TSerializer.py
 	$(PYTHON3) test/test_recursion_depth.py
+	$(PYTHON3) test/test_container_sizing.py
 else
 py3-build:
 py3-test:
@@ -64,6 +65,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TSerializer.py
 	THRIFT=${THRIFT} $(PYTHON) test/test_compiler/test_keyword_escape.py
 	$(PYTHON) test/test_recursion_depth.py
+	$(PYTHON) test/test_container_sizing.py
 
 
 clean-local:
