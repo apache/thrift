@@ -26,7 +26,11 @@ THttpTransport = TTransportBase:new{
   rBuf = '',
   CRLF = '\r\n',
   VERSION = version,
-  isServer = true
+  isServer = true,
+  -- The largest header block that will be accumulated, in bytes. The block
+  -- grows because the peer has not sent the blank line that ends it yet, so
+  -- how far it grows is the peer's choice unless something bounds it.
+  maxHeaderSize = 64 * 1024
 }
 
 function THttpTransport:new(obj)
@@ -83,9 +87,25 @@ function THttpTransport:read(len)
 end
 
 function THttpTransport:_readMsg()
+  local delimiter = self.CRLF .. self.CRLF
   while true do
+    local had = string.len(self.rBuf)
     self.rBuf = self.rBuf .. self.trans:read(4)
-    if string.find(self.rBuf, self.CRLF .. self.CRLF) then
+    local have = string.len(self.rBuf)
+    if have == had then
+      error('THttpTransport: no end of headers before the peer stopped sending')
+    end
+    if have > self.maxHeaderSize then
+      error('THttpTransport: headers larger than the maximum of ' ..
+            self.maxHeaderSize .. ' bytes')
+    end
+    -- Only the tail can hold a delimiter that was not there last time round,
+    -- so do not rescan the whole block on every pass.
+    local from = had - string.len(delimiter) + 2
+    if from < 1 then
+      from = 1
+    end
+    if string.find(self.rBuf, delimiter, from, true) then
       break
     end
   end
