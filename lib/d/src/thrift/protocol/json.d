@@ -830,6 +830,7 @@ unittest {
   import thrift.internal.test.protocol;
   testContainerSizeLimit!(TJsonProtocol!())();
   testStringSizeLimit!(TJsonProtocol!())();
+  testSkipDepthLimit!(TJsonProtocol!())();
 }
 
 /**

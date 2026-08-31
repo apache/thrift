@@ -50,10 +50,6 @@ import thrift.internal.codegen;
 import thrift.protocol.base;
 import thrift.util.hashset;
 
-// Thread-local recursion depth counter used by readStruct/writeStruct.
-private uint currentRecursionDepth_;
-private enum uint DEFAULT_MAX_RECURSION_DEPTH = 64;
-
 /*
  * Thrift struct/service meta data, which is used to store information from
  * the interface definition files not representable in plain D, i.e. field
@@ -598,12 +594,8 @@ template TIsSetFlags(T, alias fieldMetaData) {
 void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
   bool pointerStruct = false)(auto ref T s, Protocol p) if (isTProtocol!Protocol)
 {
-  if (++currentRecursionDepth_ > DEFAULT_MAX_RECURSION_DEPTH) {
-    --currentRecursionDepth_;
-    throw new TProtocolException("Maximum recursion depth exceeded",
-      TProtocolException.Type.DEPTH_LIMIT);
-  }
-  scope(exit) --currentRecursionDepth_;
+  incrementRecursionDepth();
+  scope(exit) decrementRecursionDepth();
   mixin({
     string code;
 
@@ -823,12 +815,8 @@ void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
     return code;
   }());
 
-  if (++currentRecursionDepth_ > DEFAULT_MAX_RECURSION_DEPTH) {
-    --currentRecursionDepth_;
-    throw new TProtocolException("Maximum recursion depth exceeded",
-      TProtocolException.Type.DEPTH_LIMIT);
-  }
-  scope(exit) --currentRecursionDepth_;
+  incrementRecursionDepth();
+  scope(exit) decrementRecursionDepth();
 
   p.writeStructBegin(TStruct(T.stringof));
   mixin({
@@ -1068,8 +1056,8 @@ unittest {
   // Reading a too-deep payload is likewise rejected. A normal write() of an
   // over-limit chain would itself be rejected, so craft the payload with raw
   // protocol primitives, bypassing the counter. Field id 1 / TType.LIST matches
-  // RecTree.children, so the reader recurses through the guarded readStruct and
-  // not the (separate, unbounded) skip() path.
+  // RecTree.children, so the reader recurses through readStruct rather than
+  // through skip(); the skip() path is covered on its own below.
   {
     auto buf = new TMemoryBuffer();
     auto p = tBinaryProtocol(buf);
@@ -1104,6 +1092,44 @@ unittest {
     }
     readTree(writeTree(wide));
     assert(currentRecursionDepth_ == 0, "counter must unwind to 0");
+  }
+
+  // readStruct and skip() draw on one shared budget, so the depth they reach
+  // adds up. RecTree has no field 99, so the generated reader hands that field
+  // to skip() from inside the already-counted readStruct: a chain of
+  // limit - 1 structs below it still fits, one more does not.
+  {
+    ubyte[] unknownFieldChain(uint chainDepth) {
+      auto buf = new TMemoryBuffer();
+      auto p = tBinaryProtocol(buf);
+      void emitChain(uint d) {
+        p.writeStructBegin(TStruct("Chain"));
+        if (d > 1) {
+          p.writeFieldBegin(TField("next", TType.STRUCT, 1));
+          emitChain(d - 1);
+          p.writeFieldEnd();
+        }
+        p.writeFieldStop();
+        p.writeStructEnd();
+      }
+
+      p.writeStructBegin(TStruct("RecTree"));
+      p.writeFieldBegin(TField("unknown", TType.STRUCT, 99));
+      emitChain(chainDepth);
+      p.writeFieldEnd();
+      p.writeFieldStop();
+      p.writeStructEnd();
+      return buf.getContents().dup;
+    }
+
+    readTree(unknownFieldChain(DEFAULT_MAX_RECURSION_DEPTH - 1));
+    assert(currentRecursionDepth_ == 0, "counter must unwind to 0");
+
+    auto ex = collectException!TProtocolException(
+      readTree(unknownFieldChain(DEFAULT_MAX_RECURSION_DEPTH)));
+    assert(ex !is null, "skipping past the shared limit must throw");
+    assert(ex.type == TProtocolException.Type.DEPTH_LIMIT);
+    assert(currentRecursionDepth_ == 0, "counter must unwind after a throw");
   }
 }
 
@@ -1169,8 +1195,7 @@ unittest {
   // Reading a too-deep payload is likewise rejected. A normal write() of an
   // over-limit chain would itself be rejected, so craft the payload with raw
   // protocol primitives. Field id 1 / TType.LIST matches RecError.children, so
-  // the reader recurses through the guarded readStruct and not the (separate,
-  // unbounded) skip() path.
+  // the reader recurses through readStruct rather than through skip().
   {
     auto buf = new TMemoryBuffer();
     auto p = tBinaryProtocol(buf);
