@@ -92,6 +92,10 @@ add_executable(testfdtransport testfdtransport.c)
 target_link_libraries(testfdtransport thrift_c_glib)
 add_test(NAME testfdtransport COMMAND testfdtransport)
 
+add_executable(testreadallprogress testreadallprogress.c)
+target_link_libraries(testreadallprogress thrift_c_glib)
+add_test(NAME testreadallprogress COMMAND testreadallprogress)
+
 add_executable(testmemorybuffer testmemorybuffer.c)
 target_link_libraries(testmemorybuffer thrift_c_glib)
 add_test(NAME testmemorybuffer COMMAND testmemorybuffer)

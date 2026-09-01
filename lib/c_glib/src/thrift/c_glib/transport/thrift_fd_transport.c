@@ -106,6 +106,16 @@ thrift_fd_transport_read (ThriftTransport *transport, gpointer buf,
                  strerror (errno));
     return -1;
   }
+  /* read(2) answers 0 at end of file.  Report it the way thrift_socket_read()
+     reports a closed peer, rather than as a read that delivered nothing. */
+  if (n == 0 && len > 0) {
+    g_set_error (error,
+                 THRIFT_TRANSPORT_ERROR,
+                 THRIFT_TRANSPORT_ERROR_RECEIVE,
+                 "Failed to read %u bytes from fd: end of file",
+                 len);
+    return -1;
+  }
   return n;
 }
 

@@ -307,10 +307,24 @@ thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
   }
   g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET && ssl_socket->ssl!=NULL, FALSE);
 
+  if (len == 0) {
+      return 0;
+  }
+
   for (retries=0; retries < maxRecvRetries_; retries++) {
       bytes = SSL_read(ssl_socket->ssl, buf, len);
-      if (bytes >= 0)
+      if (bytes > 0)
 	break;
+      if (bytes == 0) {
+	  /* The session was shut down.  Zero bytes is not a short read the caller
+	     can continue from, so report it rather than hand back a count that
+	     says no progress was made. */
+	  g_set_error (error, THRIFT_TRANSPORT_ERROR,
+		       THRIFT_TRANSPORT_ERROR_RECEIVE,
+		       "failed to read %u bytes - the peer closed the connection",
+		       len);
+	  return -1;
+      }
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       if (SSL_get_error(ssl_socket->ssl, bytes) == SSL_ERROR_SYSCALL) {
 	  if (ERR_get_error() == 0 && errno_copy == THRIFT_EINTR) {
