@@ -41,7 +41,12 @@ public abstract class TProtocol {
   /** Current recursion depth during struct serialization */
   private int recursionDepth_ = 0;
 
-  private static final int DEFAULT_RECURSION_DEPTH = 64;
+  /**
+   * How far a read will follow nesting the peer, rather than the IDL, chose the
+   * shape of. Shared with TProtocolUtil.skip(), which draws on the same budget:
+   * skipping an unknown field descends exactly the way reading it would.
+   */
+  public static final int DEFAULT_RECURSION_DEPTH = 64;
 
   /**
    * Constructor

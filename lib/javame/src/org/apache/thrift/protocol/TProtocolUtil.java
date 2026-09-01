@@ -31,8 +31,15 @@ public class TProtocolUtil {
   /**
    * The maximum recursive depth the skip() function will traverse before
    * throwing a TException.
+   *
+   * This used to be Integer.MAX_VALUE, which made the maxDepth <= 0 guard in
+   * skip() unreachable: the parameter was threaded and decremented per level,
+   * but seeded with a value no payload could reach, so the only thing that
+   * ended the recursion was the stack running out. That arrives as
+   * StackOverflowError, which is an Error rather than a TException and escapes
+   * every handler expecting one.
    */
-  private static int maxSkipDepth = Integer.MAX_VALUE;
+  private static int maxSkipDepth = TProtocol.DEFAULT_RECURSION_DEPTH;
 
   /**
    * Specifies the maximum recursive depth that the skip function will
@@ -71,7 +78,12 @@ public class TProtocolUtil {
   public static void skip(TProtocol prot, byte type, int maxDepth)
   throws TException {
     if (maxDepth <= 0) {
-      throw new TException("Maximum skip depth exceeded");
+      // TProtocolException with DEPTH_LIMIT, matching the other depth guard in
+      // this binding (TProtocol.incrementRecursionDepth) and the desktop Java
+      // library. A bare TException carries the reason only in its message, so a
+      // caller cannot tell this apart from any other failure.
+      throw new TProtocolException(
+          TProtocolException.DEPTH_LIMIT, "Maximum skip depth exceeded");
     }
     switch (type) {
     case TType.BOOL:
