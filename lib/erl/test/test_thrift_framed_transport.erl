@@ -345,3 +345,59 @@ empty_frames_cost_test_() ->
         %% runtime; quadratic growth is an order of magnitude away from it.
         ?assert(Large < Small * 8)
     end}.
+
+%% A frame length is four bytes the peer chose, and read_exact/2 accumulates
+%% whatever it says. These hold it to a maximum, and to being a length at all:
+%% the field is read signed, so a negative one used to reach read_exact/2, whose
+%% Len >= 0 guard does not match, raising an unhandled function_clause that takes
+%% the connection process with it.
+%%
+%% Built as state tuples rather than through new/1, the way the tests above are.
+
+framed_over(Declared) when is_integer(Declared) ->
+    {t_framed,
+        {t_transport, thrift_membuffer_transport,
+            {t_membuffer, <<Declared:32/integer-signed-big>>}},
+        [], []}.
+
+framed_holding(Bytes) ->
+    {t_framed, {t_transport, thrift_membuffer_transport, {t_membuffer, Bytes}}, [], []}.
+
+frame_size_limit_test_() ->
+    [
+        {"a frame larger than the maximum is refused", fun() ->
+            {_, Result} = read(framed_over(16#7FFFFFFF), 1),
+            ?assertMatch({error, {framing_error, frame_size_exceeds_maximum, _, _}}, Result)
+        end},
+        {"a negative frame size is refused rather than crashing read_exact", fun() ->
+            {_, Result} = read(framed_over(-1), 1),
+            ?assertMatch({error, {framing_error, negative_frame_size, -1}}, Result)
+        end},
+        {"the maximum is settable through the application environment", fun() ->
+            ok = application:set_env(thrift, max_frame_size, 32),
+            try
+                {_, Refused} = read(framed_over(33), 1),
+                ?assertMatch({error, {framing_error, frame_size_exceeds_maximum, 33, 32}}, Refused)
+            after
+                application:unset_env(thrift, max_frame_size)
+            end
+        end},
+        {"a frame within the maximum still reads", fun() ->
+            {_, Result} = read(
+                framed_holding(<<11:32/integer-signed-big, "hallo world">>), 11
+            ),
+            ?assertEqual({ok, <<"hallo world">>}, Result)
+        end},
+        {"a zero-length frame is still accepted", fun() ->
+            {_, Result} = read(framed_over(0), 0),
+            ?assertEqual({ok, <<>>}, Result)
+        end},
+        {"whatever this transport writes, it can still read", fun() ->
+            Payload = <<"a round trip">>,
+            {Written, ok} = thrift_framed_transport:write(framed_holding(<<>>), Payload),
+            {Flushed, ok} = flush(Written),
+            {t_framed, {t_transport, _, {t_membuffer, Bytes}}, _, _} = Flushed,
+            {_, Result} = read(framed_holding(iolist_to_binary(Bytes)), byte_size(Payload)),
+            ?assertEqual({ok, Payload}, Result)
+        end}
+    ].

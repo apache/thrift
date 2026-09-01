@@ -70,3 +70,7 @@
 %% How far thrift_protocol:skip/2 will follow nesting that the peer, rather
 %% than the IDL, chose the shape of. Same value the other bindings use.
 -define(DEFAULT_RECURSION_DEPTH, 64).
+
+%% The largest frame thrift_framed_transport will read. Same value the other
+%% bindings use. Override with {thrift, [{max_frame_size, Bytes}]}.
+-define(DEFAULT_MAX_FRAME_SIZE, 16384000).

@@ -21,6 +21,8 @@
 
 -behaviour(thrift_transport).
 
+-include("thrift_constants.hrl").
+
 %% constructor
 -export([new/1]).
 %% protocol callbacks
@@ -97,9 +99,32 @@ read_exact(State = #t_framed{wrapped = Wrapped, read_buffer = Buffer}, Len) when
 next_frame(Transport) ->
     case thrift_transport:read_exact(Transport, 4) of
         {NewState, {ok, <<FrameLength:32/integer-signed-big>>}} ->
-            thrift_transport:read_exact(NewState, FrameLength);
+            %% The length is four bytes the peer chose and read_exact/2
+            %% accumulates whatever it says, so check it before reading. A
+            %% negative one does not merely over-read: read_exact/2's Len >= 0
+            %% guard does not match it, and the resulting function_clause is
+            %% unhandled.
+            case check_frame_length(FrameLength) of
+                ok ->
+                    thrift_transport:read_exact(NewState, FrameLength);
+                {error, Reason} ->
+                    {NewState, {error, Reason}}
+            end;
         Error ->
             Error
+    end.
+
+max_frame_size() ->
+    application:get_env(thrift, max_frame_size, ?DEFAULT_MAX_FRAME_SIZE).
+
+check_frame_length(FrameLength) when FrameLength < 0 ->
+    {error, {framing_error, negative_frame_size, FrameLength}};
+check_frame_length(FrameLength) ->
+    case max_frame_size() of
+        Max when FrameLength > Max ->
+            {error, {framing_error, frame_size_exceeds_maximum, FrameLength, Max}};
+        _ ->
+            ok
     end.
 
 write(State = #t_framed{write_buffer = Buffer}, Data) ->
