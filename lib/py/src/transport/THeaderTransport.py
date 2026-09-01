@@ -26,6 +26,8 @@ from thrift.protocol.TCompactProtocol import TCompactProtocol, readVarint, write
 from thrift.Thrift import TApplicationException
 from thrift.transport.TTransport import (
     CReadableTransport,
+    DEFAULT_MAX_FRAME_SIZE,
+    HARD_MAX_FRAME_SIZE,
     TMemoryBuffer,
     TTransportBase,
     TTransportException,
@@ -34,8 +36,10 @@ from thrift.transport.TTransport import (
 U16 = struct.Struct("!H")
 I32 = struct.Struct("!i")
 HEADER_MAGIC = 0x0FFF
-DEFAULT_MAX_FRAME_SIZE = 16384000   # matches all other Thrift bindings
-HARD_MAX_FRAME_SIZE = 0x3FFFFFFF    # protocol hard cap (30-bit length field)
+
+# DEFAULT_MAX_FRAME_SIZE and HARD_MAX_FRAME_SIZE now live in TTransport, so the
+# framed and header transports share one definition. Re-exported here because
+# callers import them from this module.
 
 
 class THeaderClientType(object):

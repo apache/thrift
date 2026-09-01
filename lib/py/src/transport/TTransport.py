@@ -23,6 +23,16 @@ from struct import pack, unpack
 from thrift.Thrift import TException
 
 
+# The largest frame a layered transport will accept by default. Matches
+# THeaderTransport in this binding, and TConfiguration.DEFAULT_MAX_FRAME_SIZE
+# in the Java, netstd and C++ bindings.
+DEFAULT_MAX_FRAME_SIZE = 16384000
+
+# The frame length field is 30 bits in the header protocol, so no frame can
+# usefully be larger than this whatever a caller configures.
+HARD_MAX_FRAME_SIZE = 0x3FFFFFFF
+
+
 class TTransportException(TException):
     """Custom Transport Exception class"""
 
@@ -254,18 +264,25 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
 class TFramedTransportFactory(object):
     """Factory transport that builds framed transports"""
 
+    def __init__(self, max_frame_size=DEFAULT_MAX_FRAME_SIZE):
+        self.__max_frame_size = max_frame_size
+
     def getTransport(self, trans):
-        framed = TFramedTransport(trans)
+        framed = TFramedTransport(trans, self.__max_frame_size)
         return framed
 
 
 class TFramedTransport(TTransportBase, CReadableTransport):
     """Class that wraps another transport and frames its I/O when writing."""
 
-    def __init__(self, trans,):
+    def __init__(self, trans, max_frame_size=DEFAULT_MAX_FRAME_SIZE):
+        if not 0 < max_frame_size <= HARD_MAX_FRAME_SIZE:
+            raise ValueError(
+                "max_frame_size should be > 0 and <= %d" % HARD_MAX_FRAME_SIZE)
         self.__trans = trans
         self.__rbuf = BytesIO(b'')
         self.__wbuf = BytesIO()
+        self.__max_frame_size = max_frame_size
 
     def isOpen(self):
         return self.__trans.isOpen()
@@ -287,6 +304,20 @@ class TFramedTransport(TTransportBase, CReadableTransport):
     def readFrame(self):
         buff = self.__trans.readAll(4)
         sz, = unpack('!i', buff)
+        # Check before reading, not after: readAll() would hold everything the
+        # size declares while the peer decides how much of it to actually send.
+        # A zero-length frame is legitimate -- flush() with an empty buffer
+        # writes one, and the Java reader accepts one -- so only negatives are
+        # refused here.
+        if sz < 0:
+            raise TTransportException(
+                TTransportException.NEGATIVE_SIZE,
+                "Read a negative frame size (%d)" % sz)
+        if sz > self.__max_frame_size:
+            raise TTransportException(
+                TTransportException.SIZE_LIMIT,
+                "Frame size (%d) larger than the maximum (%d)"
+                % (sz, self.__max_frame_size))
         self.__rbuf = BytesIO(self.__trans.readAll(sz))
 
     def write(self, buf):
