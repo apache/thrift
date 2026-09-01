@@ -302,6 +302,65 @@ describe "BaseTransport" do
       end
     end
 
+    describe "frame size limit" do
+      it "refuses a frame larger than the maximum without reading it" do
+        # The double is strict: read_all with anything but 4 fails the example,
+        # so this asserts the declared size is never handed to the transport.
+        expect(@trans).to receive(:read_all).with(4).and_return([0x7FFFFFFF].pack("N"))
+
+        ftrans = Thrift::FramedTransport.new(@trans)
+
+        expect { ftrans.read(1) }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::UNKNOWN)
+          expect(error.message).to match(/exceeds maximum/)
+        end
+      end
+
+      it "defaults the maximum to the value the other bindings use" do
+        expect(Thrift::FramedTransport::DEFAULT_MAX_FRAME_SIZE).to eq(16_384_000)
+      end
+
+      it "refuses a frame one byte over the configured maximum" do
+        expect(@trans).to receive(:read_all).with(4).and_return([33].pack("N"))
+
+        ftrans = Thrift::FramedTransport.new(@trans, true, true, max_frame_size: 32)
+
+        expect { ftrans.read(1) }.to raise_error(Thrift::TransportException)
+      end
+
+      it "accepts a frame exactly at the configured maximum" do
+        frame = "x" * 32
+        expect(@trans).to receive(:read_all).with(4).and_return([32].pack("N"))
+        expect(@trans).to receive(:read_all).with(32).and_return(frame)
+
+        ftrans = Thrift::FramedTransport.new(@trans, true, true, max_frame_size: 32)
+
+        expect(ftrans.read(32)).to eq(frame)
+      end
+
+      it "rejects a maximum that is not usable" do
+        # Matching the message matters: without the keyword argument these
+        # raise ArgumentError anyway, for having too many arguments, and the
+        # example would pass without testing anything.
+        expect { Thrift::FramedTransport.new(@trans, true, true, max_frame_size: 0) }
+          .to raise_error(ArgumentError, /max_frame_size/)
+        expect { Thrift::FramedTransport.new(@trans, true, true, max_frame_size: 0x40000000) }
+          .to raise_error(ArgumentError, /max_frame_size/)
+      end
+
+      it "still round-trips whatever this binding writes" do
+        payload = "a round trip" * 1000
+
+        buffer = Thrift::MemoryBufferTransport.new
+        writer = Thrift::FramedTransport.new(buffer)
+        writer.write(payload)
+        writer.flush
+
+        reader = Thrift::FramedTransport.new(Thrift::MemoryBufferTransport.new(buffer.read(buffer.available)))
+        expect(reader.read(payload.bytesize)).to eq(payload)
+      end
+    end
+
     it "should pull a new frame when the first is exhausted" do
       frame = "this is a frame"
       frame2 = "yet another frame"

@@ -41,6 +41,25 @@ describe "HeaderTransport" do
     end
   end
 
+  describe "default frame size limit" do
+    # MAX_FRAME_SIZE is the protocol's hard ceiling -- the largest value the
+    # length field can express. Defaulting to it means a four-byte header can
+    # ask for a gigabyte, which is not a limit so much as the absence of one.
+    it "does not default the maximum frame size to the hard ceiling" do
+      trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new)
+
+      expect(trans.max_frame_size).to be < Thrift::HeaderTransport::MAX_FRAME_SIZE
+      expect(trans.max_frame_size).to eq(16_384_000)
+    end
+
+    it "still lets a caller raise it up to the hard ceiling" do
+      trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new)
+      trans.set_max_frame_size(Thrift::HeaderTransport::MAX_FRAME_SIZE)
+
+      expect(trans.max_frame_size).to eq(Thrift::HeaderTransport::MAX_FRAME_SIZE)
+    end
+  end
+
   describe Thrift::HeaderTransformID do
     it "should define transform ID constants" do
       expect(Thrift::HeaderTransformID::ZLIB).to eq(0x01)

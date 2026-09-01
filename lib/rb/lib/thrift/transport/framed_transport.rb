@@ -21,14 +21,29 @@
 
 module Thrift
   class FramedTransport < BaseTransport
-    def initialize(transport, read = true, write = true)
+    # The largest frame accepted by default. The value the Java, netstd, C++
+    # and Python framed transports use.
+    DEFAULT_MAX_FRAME_SIZE = 16_384_000
+
+    # The frame length field is 30 bits, so no frame can usefully be larger
+    # than this whatever a caller configures.
+    HARD_MAX_FRAME_SIZE = 0x3FFFFFFF
+
+    def initialize(transport, read = true, write = true, max_frame_size: DEFAULT_MAX_FRAME_SIZE)
+      unless max_frame_size > 0 && max_frame_size <= HARD_MAX_FRAME_SIZE
+        raise ArgumentError, "max_frame_size must be > 0 and <= #{HARD_MAX_FRAME_SIZE}"
+      end
+
       @transport = transport
       @rbuf      = Bytes.empty_byte_buffer
       @wbuf      = Bytes.empty_byte_buffer
       @read      = read
       @write     = write
       @index     = 0
+      @max_frame_size = max_frame_size
     end
+
+    attr_reader :max_frame_size
 
     def open?
       @transport.open?
@@ -109,6 +124,15 @@ module Thrift
     def read_frame
       sz = @transport.read_all(4).unpack1("N")
       raise TransportException.new(TransportException::END_OF_FILE, "Cannot read from a zero-length frame") if sz == 0
+
+      # Checked before the read, not after: read_all accumulates whatever the
+      # four bytes declare while the peer decides how much of it to send.
+      if sz > @max_frame_size
+        raise TransportException.new(
+          TransportException::UNKNOWN,
+          "Frame size #{sz} exceeds maximum #{@max_frame_size}",
+        )
+      end
 
       @index = 0
       @rbuf = @transport.read_all(sz)

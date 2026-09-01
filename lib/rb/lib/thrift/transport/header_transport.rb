@@ -71,8 +71,14 @@ module Thrift
     # Header magic value (first 2 bytes of header)
     HEADER_MAGIC = 0x0FFF
 
-    # Maximum frame size (~1GB)
+    # The largest frame the length field can express (~1GB). This is the
+    # protocol's ceiling, not a sensible default -- see DEFAULT_MAX_FRAME_SIZE.
     MAX_FRAME_SIZE = 0x3FFFFFFF
+
+    # The largest frame accepted by default (~15.6 MB, matches other Thrift
+    # bindings). Defaulting to MAX_FRAME_SIZE let a four-byte header ask for a
+    # gigabyte, which is the ceiling rather than a limit.
+    DEFAULT_MAX_FRAME_SIZE = 16_384_000
 
     # Default decompressed-size cap for ZLIB transform (~15.6 MB, matches other Thrift bindings)
     DEFAULT_MAX_DECOMPRESSED_SIZE = 16_384_000
@@ -118,7 +124,7 @@ module Thrift
 
       @sequence_id = 0
       @flags = 0
-      @max_frame_size = MAX_FRAME_SIZE
+      @max_frame_size = DEFAULT_MAX_FRAME_SIZE
       @max_decompressed_size = DEFAULT_MAX_DECOMPRESSED_SIZE
       @unframed_bytes_read = 0
     end
@@ -180,6 +186,9 @@ module Thrift
       end
       @write_transforms << transform_id unless @write_transforms.include?(transform_id)
     end
+
+    # The maximum frame size currently in force
+    attr_reader :max_frame_size
 
     # Sets the maximum allowed frame size
     def set_max_frame_size(size)
