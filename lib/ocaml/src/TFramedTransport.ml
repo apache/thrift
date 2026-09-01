@@ -30,7 +30,12 @@ let decode_frame_size s =
 				(Int32.shift_left n1 8)
 				n0))
 
-class t ?(max_length=Sys.max_string_length) (transport: T.t) =
+(* The largest frame accepted unless the caller says otherwise. The old default
+   was Sys.max_string_length, about 1.4e17 on a 64-bit build, so the check below
+   never refused anything. This is the value the other bindings use. *)
+let default_max_length = 16384000
+
+class t ?(max_length=default_max_length) (transport: T.t) =
 object (self)
 	inherit T.t
 

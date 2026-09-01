@@ -48,7 +48,11 @@ let comp_int64 b n =
 let version_mask = 0xffff0000l
 let version_1 = 0x80010000l
 
-class t trans =
+(* The longest string or binary field accepted unless the caller says otherwise.
+   Same value TFramedTransport uses for a frame. *)
+let default_max_length = 16384000
+
+class t ?(max_length=default_max_length) trans =
 object (self)
   inherit P.t trans
   val ibyte = String.create 8
@@ -127,6 +131,12 @@ object (self)
   method readString =
     let sz = Int32.to_int (self#readI32) in
     if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    (* Checked before the allocation: sz is four bytes the peer chose, and
+       String.create commits all of it before readAll blocks for the payload. *)
+    if sz > max_length
+    then raise (P.E (P.SIZE_LIMIT,
+                     Printf.sprintf "String length (%i) larger than max length (%i)"
+                       sz max_length));
     let buf = String.create sz in
       ignore (trans#readAll buf 0 sz);
       buf
