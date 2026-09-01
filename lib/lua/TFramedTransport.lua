@@ -76,6 +76,9 @@ end
 function TFramedTransport:__readFrame()
   local buf = self.trans:readAll(4)
   local frame_len = libluabpack.bunpack('i', buf)
+  -- Checked before the read: readAll keeps asking until it has whatever these
+  -- four bytes declared, and the peer need not send any of it.
+  self:checkDeclaredSize(frame_len, self.maxFrameSize)
   self.rBuf = self.trans:readAll(frame_len)
 end
 

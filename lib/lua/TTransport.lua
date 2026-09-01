@@ -52,20 +52,44 @@ function TTransportException:__errorCodeToString()
   end
 end
 
+-- The largest frame or field a transport will read by default. Same value the
+-- other bindings use. Override per transport or per protocol instance.
+DEFAULT_MAX_SIZE = 16384000
+
 TTransportBase = __TObject:new{
-  __type = 'TTransportBase'
+  __type = 'TTransportBase',
+  maxFrameSize = DEFAULT_MAX_SIZE
 }
+
+-- Refuses a length the peer declared before anything is read on account of it.
+function TTransportBase:checkDeclaredSize(size, limit)
+  if size < 0 then
+    terror(TTransportException:new{
+      message = 'Read a negative size (' .. tostring(size) .. ')',
+      errorCode = TTransportException.INVALID_FRAME_SIZE
+    })
+  end
+  if size > limit then
+    terror(TTransportException:new{
+      message = 'Size ' .. tostring(size) .. ' exceeds maximum ' .. tostring(limit),
+      errorCode = TTransportException.INVALID_FRAME_SIZE
+    })
+  end
+end
 
 function TTransportBase:isOpen() end
 function TTransportBase:open() end
 function TTransportBase:close() end
 function TTransportBase:read(len) end
 function TTransportBase:readAll(len)
-  local buf, have, chunk = '', 0
+  -- Collect the chunks and join once. Appending to a Lua string builds a new
+  -- one each time and copies everything read so far, so a peer that drips
+  -- bytes made the cost quadratic in what it sent.
+  local chunks, have, chunk = {}, 0
   while have < len do
     chunk = self:read(len - have)
     have = have + string.len(chunk)
-    buf = buf .. chunk
+    chunks[#chunks + 1] = chunk
 
     if string.len(chunk) == 0 then
       terror(TTransportException:new{
@@ -73,7 +97,7 @@ function TTransportBase:readAll(len)
       })
     end
   end
-  return buf
+  return table.concat(chunks)
 end
 function TTransportBase:write(buf) end
 -- flushOneway is a NOOP for most transport types.

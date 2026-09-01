@@ -50,6 +50,10 @@ end
 
 DEFAULT_RECURSION_DEPTH = 64
 
+-- The longest string or binary field a protocol will read by default. Same
+-- value the frame limit uses; override per protocol instance.
+DEFAULT_MAX_STRING_SIZE = 16384000
+
 TProtocolBase = __TObject:new{
   __type = 'TProtocolBase',
   trans
@@ -67,6 +71,17 @@ function TProtocolBase:new(obj)
 
   obj.recursionDepth = 0
   return __TObject.new(self, obj)
+end
+
+-- Refuses a declared string or binary length before anything is read for it.
+function TProtocolBase:checkStringSize(size)
+  local limit = self.maxStringSize or DEFAULT_MAX_STRING_SIZE
+  if size > limit then
+    terror(TProtocolException:new{
+      message = 'String size ' .. tostring(size) .. ' exceeds maximum ' .. tostring(limit),
+      errorCode = TProtocolException.SIZE_LIMIT
+    })
+  end
 end
 
 function TProtocolBase:incrementRecursionDepth()

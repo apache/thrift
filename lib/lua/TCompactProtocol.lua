@@ -446,6 +446,7 @@ function TCompactProtocol:readBinary()
   if size == 0 then
     return ""
   end
+  self:checkStringSize(size)
   return self.trans:readAll(size)
 end
 

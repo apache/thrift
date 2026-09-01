@@ -270,6 +270,7 @@ function TBinaryProtocol:readString()
   if len < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkStringSize(len)
   local str = self.trans:readAll(len)
   return str
 end
