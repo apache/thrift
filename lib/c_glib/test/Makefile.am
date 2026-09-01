@@ -55,6 +55,7 @@ check_PROGRAMS = \
   testframedtransport \
   testframedreadbudget \
   testzlibtransport \
+  testzlibshortread \
   testfdtransport \
   testreadallprogress \
   testmemorybuffer \
@@ -184,6 +185,13 @@ testzlibtransport_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o 
+
+testzlibshortread_SOURCES = testzlibshortread.c
+testzlibshortread_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_zlib_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_memory_buffer.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o
 
 testfdtransport_SOURCES = testfdtransport.c
 testfdtransport_LDADD = \
