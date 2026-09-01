@@ -195,7 +195,7 @@ type: anInteger
 	type := anInteger! !
 
 Object subclass: #TProtocol
-	instanceVariableNames: 'transport recursionDepth'
+	instanceVariableNames: 'transport recursionDepth stringSizeLimit'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Thrift-Protocol'!
@@ -313,6 +313,7 @@ readString
 	| sz |
 	sz := self readI32.
 	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
+	self checkStringSize: sz.
 	^ sz > 0 ifTrue: [(transport read: sz) asString] ifFalse: ['']! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 04:22'!
@@ -528,6 +529,24 @@ incrementRecursionDepth
 !TProtocol methodsFor: 'as yet unclassified'!
 decrementRecursionDepth
 	recursionDepth := (recursionDepth ifNil: [0]) - 1! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+stringSizeLimit
+	"Longest string or binary field this protocol will read. The declared
+	 length is a number the peer chose, and the read below is issued for all of
+	 it before any of those bytes have arrived. 16 MB is the value the other
+	 bindings use."
+	^ stringSizeLimit ifNil: [16384000]! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+stringSizeLimit: anInteger
+	anInteger > 0 ifFalse: [self error: 'stringSizeLimit must be positive'].
+	stringSizeLimit := anInteger! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+checkStringSize: anInteger
+	anInteger > self stringSizeLimit ifTrue: [
+		TProtocolError signalWithCode: TProtocolError sizeLimit]! !
 
 !TProtocol methodsFor: 'writing' stamp: 'pc 10/24/2007 19:37'!
 writeBool: aBool! !
