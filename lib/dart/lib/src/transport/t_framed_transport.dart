@@ -34,7 +34,16 @@ class TFramedTransport extends TBufferedTransport {
 
   Completer<Uint8List>? _frameCompleter;
 
-  TFramedTransport(TTransport transport) : _transport = transport;
+  /// Largest frame this transport will accept.
+  final int maxFrameSize;
+
+  TFramedTransport(TTransport transport,
+      {this.maxFrameSize = defaultMaxFrameSize})
+      : _transport = transport {
+    if (maxFrameSize <= 0) {
+      throw ArgumentError.value(maxFrameSize, 'maxFrameSize', 'must be positive');
+    }
+  }
 
   @override
   bool get isOpen => _transport.isOpen;
@@ -92,9 +101,12 @@ class TFramedTransport extends TBufferedTransport {
 
       _receivedHeaderBytes = 0;
 
-      if (size < 0) {
-        throw TTransportError(
-            TTransportErrorType.UNKNOWN, "Read a negative frame size: $size");
+      // getUint32 above cannot produce a negative, so the old `size < 0` check
+      // could never fire. What the four bytes can express is up to 4 GiB, and
+      // Uint8List(size) commits all of it before a payload byte has arrived.
+      if (size > maxFrameSize) {
+        throw TTransportError(TTransportErrorType.UNKNOWN,
+            "Frame size ($size) larger than max length ($maxFrameSize)");
       }
 
       _bodySize = size;

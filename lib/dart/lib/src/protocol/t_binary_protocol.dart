@@ -43,8 +43,10 @@ class TBinaryProtocol extends TProtocol {
   final bool strictWrite;
 
   TBinaryProtocol(TTransport transport,
-      {this.strictRead = false, this.strictWrite = true})
-      : super(transport);
+      {this.strictRead = false,
+      this.strictWrite = true,
+      int maxStringSize = defaultMaxStringSize})
+      : super(transport, maxStringSize: maxStringSize);
 
   /// write
   @override
@@ -317,7 +319,18 @@ class TBinaryProtocol extends TProtocol {
     if (size < 0) {
       throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
     }
+    _checkStringSize(size);
     return _readString(size);
+  }
+
+  /// Refuses a declared length before it is allocated: size is four bytes the
+  /// peer chose, and Uint8List(size) commits all of it before readAll blocks
+  /// for the bytes themselves.
+  void _checkStringSize(int size) {
+    if (size > maxStringSize) {
+      throw TProtocolError(TProtocolErrorType.SIZE_LIMIT,
+          'Length ($size) larger than max length ($maxStringSize)');
+    }
   }
 
   String _readString(int size) {
@@ -332,6 +345,7 @@ class TBinaryProtocol extends TProtocol {
     if (length < 0) {
       throw TProtocolError(TProtocolErrorType.NEGATIVE_SIZE, 'Negative size');
     }
+    _checkStringSize(length);
     Uint8List binaryIn = Uint8List(length);
     transport.readAll(binaryIn, 0, length);
     return binaryIn;

@@ -17,6 +17,13 @@
 
 part of thrift;
 
+/// The largest frame a layered transport will accept by default, and the
+/// longest string or binary field a protocol will read. The value the Java,
+/// netstd, C++ and Python bindings use. This binding has no TConfiguration, so
+/// these are the per-transport and per-protocol knobs instead.
+const int defaultMaxFrameSize = 16384000;
+const int defaultMaxStringSize = 16384000;
+
 abstract class TTransport {
   /// Queries whether the transport is open.
   /// Returns [true] if the transport is open.

@@ -83,7 +83,9 @@ static final List<int> _typeMap = List<int>.unmodifiable(
   final Uint8List tempList = Uint8List(10);
   final ByteData tempBD = ByteData(10);
 
-  TCompactProtocol(TTransport transport) : super(transport);
+  TCompactProtocol(TTransport transport,
+      {int maxStringSize = defaultMaxStringSize})
+      : super(transport, maxStringSize: maxStringSize);
 
   /// Write
   @override
@@ -408,6 +410,7 @@ static final List<int> _typeMap = List<int>.unmodifiable(
   String readString() {
     int length = _readVarInt32().toInt();
     _checkNegReadLength(length);
+    _checkStringSize(length);
 
     // TODO look at using temp for small strings?
     Uint8List buff = Uint8List(length);
@@ -419,6 +422,7 @@ static final List<int> _typeMap = List<int>.unmodifiable(
   Uint8List readBinary() {
     int length = _readVarInt32().toInt();
     _checkNegReadLength(length);
+    _checkStringSize(length);
 
     Uint8List buff = Uint8List(length);
     transport.readAll(buff, 0, length);
@@ -461,6 +465,14 @@ static final List<int> _typeMap = List<int>.unmodifiable(
     if (length < 0) {
       throw TProtocolError(
           TProtocolErrorType.NEGATIVE_SIZE, 'Negative length: $length');
+    }
+  }
+
+  /// Refuses a declared length before it is allocated.
+  void _checkStringSize(int length) {
+    if (length > maxStringSize) {
+      throw TProtocolError(TProtocolErrorType.SIZE_LIMIT,
+          'Length ($length) larger than max length ($maxStringSize)');
     }
   }
 
