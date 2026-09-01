@@ -30,9 +30,20 @@ import org.apache.thrift.TByteArrayOutputStream;
 public class TFramedTransport extends TTransport {
 
   /**
+   * The largest frame accepted unless the caller says otherwise. The value the
+   * desktop Java, netstd and C++ framed transports use.
+   */
+  public static final int DEFAULT_MAX_FRAME_SIZE = 16384000;
+
+  /**
    * Underlying transport
    */
   private TTransport transport_ = null;
+
+  /**
+   * Largest frame this transport will read.
+   */
+  private int maxFrameSize_ = DEFAULT_MAX_FRAME_SIZE;
 
   /**
    * Buffer for output
@@ -59,6 +70,25 @@ public class TFramedTransport extends TTransport {
    */
   public TFramedTransport(TTransport transport) {
     transport_ = transport;
+  }
+
+  /**
+   * Constructor wraps around another transport, with an explicit ceiling on
+   * the frame size this transport will accept.
+   */
+  public TFramedTransport(TTransport transport, int maxFrameSize) {
+    if (maxFrameSize <= 0) {
+      throw new IllegalArgumentException("maxFrameSize must be positive");
+    }
+    transport_ = transport;
+    maxFrameSize_ = maxFrameSize;
+  }
+
+  /**
+   * @return the largest frame this transport will read.
+   */
+  public int getMaxFrameSize() {
+    return maxFrameSize_;
   }
 
   public void open() throws TTransportException {
@@ -95,6 +125,18 @@ public class TFramedTransport extends TTransport {
       ((i32rd[1] & 0xff) << 16) |
       ((i32rd[2] & 0xff) <<  8) |
       ((i32rd[3] & 0xff));
+
+    // Checked before the allocation. size is four bytes the peer chose, and
+    // new byte[size] commits all of it before readAll blocks for the payload;
+    // a negative one would raise NegativeArraySizeException, which is not a
+    // TTransportException and escapes every handler expecting one.
+    if (size < 0) {
+      throw new TTransportException("Read a negative frame size (" + size + ")!");
+    }
+    if (size > maxFrameSize_) {
+      throw new TTransportException("Frame size (" + size
+          + ") larger than max length (" + maxFrameSize_ + ")!");
+    }
 
     byte[] buff = new byte[size];
     transport_.readAll(buff, 0, size);

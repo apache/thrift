@@ -60,6 +60,33 @@ public class TBinaryProtocol extends TProtocol {
   /**
    * Constructor
    */
+  /**
+   * The longest string or binary field accepted unless the caller says
+   * otherwise. The desktop Java library gets this bound from TConfiguration's
+   * message-size accounting, which this profile has no room for; a plain
+   * ceiling is the equivalent it can afford.
+   */
+  public static final int DEFAULT_MAX_STRING_LENGTH = 16384000;
+
+  private int maxStringLength_ = DEFAULT_MAX_STRING_LENGTH;
+
+  /**
+   * Sets the longest string or binary field this protocol will read.
+   */
+  public void setMaxStringLength(int maxStringLength) {
+    if (maxStringLength <= 0) {
+      throw new IllegalArgumentException("maxStringLength must be positive");
+    }
+    maxStringLength_ = maxStringLength;
+  }
+
+  /**
+   * @return the longest string or binary field this protocol will read.
+   */
+  public int getMaxStringLength() {
+    return maxStringLength_;
+  }
+
   public TBinaryProtocol(TTransport trans) {
     this(trans, false, true);
   }
@@ -319,6 +346,7 @@ public class TBinaryProtocol extends TProtocol {
     if (size < 0) {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative size");
     }
+    checkStringLength(size);
     try {
       byte[] buf = new byte[size];
       trans_.readAll(buf, 0, size);
@@ -333,9 +361,22 @@ public class TBinaryProtocol extends TProtocol {
     if (size < 0) {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative size");
     }
+    checkStringLength(size);
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
     return buf;
+  }
+
+  /**
+   * Refuses a declared length before it is allocated. size is a number the peer
+   * chose, and new byte[size] commits all of it before readAll blocks for the
+   * bytes themselves.
+   */
+  private void checkStringLength(int size) throws TProtocolException {
+    if (size > maxStringLength_) {
+      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
+          "Length (" + size + ") larger than max length (" + maxStringLength_ + ")");
+    }
   }
 
   private int readAll(byte[] buf, int off, int len) throws TException {
