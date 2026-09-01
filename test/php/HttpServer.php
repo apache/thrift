@@ -112,6 +112,8 @@ class HttpServer
             $this->protocolFactory->getProtocol(new TMemoryBuffer($body)),
             $this->protocolFactory->getProtocol($output),
         );
-        echo $output->getBuffer();
+        $responseBody = $output->getBuffer();
+        header('Content-Length: ' . strlen($responseBody));
+        echo $responseBody;
     }
 }
