@@ -66,3 +66,7 @@
 
 -define(MULTIPLEXED_SERVICE_SEPARATOR, ":").
 -define(MULTIPLEXED_ERROR_HANDLER_KEY, "error_handler").
+
+%% How far thrift_protocol:skip/2 will follow nesting that the peer, rather
+%% than the IDL, chose the shape of. Same value the other bindings use.
+-define(DEFAULT_RECURSION_DEPTH, 64).

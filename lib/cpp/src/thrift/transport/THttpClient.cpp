@@ -18,10 +18,11 @@
  */
 
 #include <algorithm>
-#include <limits>
-#include <cstdlib>
-#include <sstream>
 #include <boost/algorithm/string.hpp>
+#include <cstdlib>
+#include <limits>
+#include <sstream>
+#include <vector>
 
 #include <thrift/config.h>
 #include <thrift/transport/THttpClient.h>
@@ -38,23 +39,32 @@ THttpClient::THttpClient(std::shared_ptr<TTransport> transport,
                          std::string path,
                          std::shared_ptr<TConfiguration> config)
   : THttpTransport(transport, config),
-    host_(host), 
+    host_(host),
     path_(path),
-    onewayResponsePending_(false) {
-}
+    onewayResponsePending_(false),
+    closeAfterResponse_(false) {}
 
-THttpClient::THttpClient(string host, int port, string path, 
-                         std::shared_ptr<TConfiguration> config)
+THttpClient::THttpClient(string host, int port, string path, std::shared_ptr<TConfiguration> config)
   : THttpTransport(std::shared_ptr<TTransport>(new TSocket(host, port)), config),
     host_(host),
     path_(path),
-    onewayResponsePending_(false) {
-}
+    onewayResponsePending_(false),
+    closeAfterResponse_(false) {}
 
 THttpClient::~THttpClient() = default;
 
 void THttpClient::close() {
   onewayResponsePending_ = false;
+  closeAfterResponse_ = false;
+  readBuffer_.resetBuffer();
+  readHeaders_ = true;
+  chunked_ = false;
+  chunkedDone_ = false;
+  chunkSize_ = 0;
+  contentLength_ = 0;
+  httpPos_ = 0;
+  httpBufLen_ = 0;
+  httpBuf_[0] = '\0';
   THttpTransport::close();
 }
 
@@ -65,17 +75,28 @@ void THttpClient::parseHeader(char* header) {
   }
   char* value = colon + 1;
 
-  if (boost::istarts_with(header, "Transfer-Encoding")) {
+  const string name(header, colon);
+  if (boost::iequals(name, "Transfer-Encoding")) {
     if (boost::iends_with(value, "chunked")) {
       chunked_ = true;
     }
-  } else if (boost::istarts_with(header, "Content-Length")) {
+  } else if (boost::iequals(name, "Content-Length")) {
     chunked_ = false;
     contentLength_ = atoi(value);
+  } else if (boost::iequals(name, "Connection")) {
+    std::vector<string> options;
+    boost::split(options, value, boost::is_any_of(","));
+    for (const string& option : options) {
+      if (boost::iequals(boost::trim_copy(option), "close")) {
+        closeAfterResponse_ = true;
+        break;
+      }
+    }
   }
 }
 
 bool THttpClient::parseStatusLine(char* status) {
+  closeAfterResponse_ = false;
   char* http = status;
 
   char* code = strchr(http, ' ');
@@ -107,6 +128,13 @@ bool THttpClient::parseStatusLine(char* status) {
 void THttpClient::flush() {
   resetConsumedMessageSize();
 
+  uint8_t* buf;
+  uint32_t len;
+  writeBuffer_.getBuffer(&buf, &len);
+  if (len == 0) {
+    return;
+  }
+
   if (onewayResponsePending_) {
     if (transport_->isOpen()) {
       drainPendingOnewayResponse();
@@ -115,14 +143,13 @@ void THttpClient::flush() {
     }
   }
 
+  if (closeAfterResponse_) {
+    close();
+  }
+
   if (!transport_->isOpen()) {
     transport_->open();
   }
-
-  // Fetch the contents of the write buffer
-  uint8_t* buf;
-  uint32_t len;
-  writeBuffer_.getBuffer(&buf, &len);
 
   // Construct the HTTP header
   std::ostringstream h;

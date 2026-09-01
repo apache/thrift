@@ -1,0 +1,5 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        apache/infrastructure-actions/allowlist-check: ref-pin

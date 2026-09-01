@@ -567,6 +567,9 @@ public class TFileTransport extends TTransport {
   @Override
   public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
 
+  @Override
+  public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {}
+
   /** test program */
   public static void main(String[] args) throws Exception {
 

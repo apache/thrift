@@ -129,6 +129,12 @@ public class TFramedTransport extends TLayeredTransport {
   private final byte[] i32buf = new byte[4];
 
   private void readFrame() throws TTransportException {
+    // Hand the framing reads below a full budget. Whatever is left of the previous frame's bound
+    // describes a frame we are done with, and an inner transport that decrements on read -- a
+    // TMemoryBuffer, or the TMemoryInputTransport the nonblocking server uses -- would otherwise
+    // refuse to let us read a frame larger than the last one.
+    resetMessageSizeAndConsumedBytes();
+
     getInnerTransport().readAll(i32buf, 0, 4);
     int size = decodeFrameSize(i32buf);
 
@@ -152,6 +158,16 @@ public class TFramedTransport extends TLayeredTransport {
     byte[] buff = new byte[size];
     getInnerTransport().readAll(buff, 0, size);
     readBuffer_.reset(buff);
+
+    // Bind the read budget to this frame, so that the protocol cannot be talked into sizing a
+    // field or a container from a number the frame is too small to carry.
+    //
+    // This has to discard consumption rather than accumulate it, which is why it is not
+    // updateKnownMessageSize(): getting the frame off the wire was itself charged to the inner
+    // transport whenever that one decrements, and charging it again against the frame's own bound
+    // would leave the frame unreadable. Everything the protocol reads from here on comes out of
+    // readBuffer_, so what is bound here stands for the whole frame.
+    resetMessageSizeAndConsumedBytes(size);
   }
 
   public void write(byte[] buf, int off, int len) throws TTransportException {

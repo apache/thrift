@@ -17,22 +17,23 @@
  * under the License.
  */
 
+#include "gen-cpp/OneWayService.h"
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
-#include <iostream>
 #include <climits>
-#include <vector>
+#include <iostream>
+#include <memory>
+#include <sstream>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/server/TThreadedServer.h>
-#include <thrift/transport/THttpServer.h>
+#include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THttpClient.h>
+#include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
-#include <memory>
-#include <thrift/transport/TBufferTransports.h>
-#include "gen-cpp/OneWayService.h"
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(OneWayHTTPTest)
 
@@ -60,6 +61,35 @@ namespace utf = boost::unit_test;
 
 // Define this env var to enable some logging (in case you need to debug)
 #undef ENABLE_STDERR_LOGGING
+
+class TInspectableHttpClient : public THttpClient {
+public:
+  explicit TInspectableHttpClient(std::shared_ptr<TTransport> transport) : THttpClient(transport) {}
+
+  bool closesAfterHeader(const string& header) {
+    closeAfterResponse_ = false;
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return closeAfterResponse_;
+  }
+
+  bool chunksAfterHeader(const string& header) {
+    chunked_ = false;
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return chunked_;
+  }
+
+  uint32_t contentLengthAfterHeader(const string& header) {
+    contentLength_ = 0;
+    std::vector<char> buffer(header.begin(), header.end());
+    buffer.push_back('\0');
+    parseHeader(buffer.data());
+    return contentLength_;
+  }
+};
 
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
 public:
@@ -126,11 +156,61 @@ public:
     return nullptr;
   }
   bool isListening() const { return isListening_; }
-  uint64_t acceptedCount() const { return accepted_; }
+  uint64_t acceptedCount() {
+    Synchronized sync(*this);
+    return accepted_;
+  }
 
 private:
   bool isListening_;
   uint64_t accepted_;
+};
+
+class TClosingHttpServer : public THttpServer {
+public:
+  explicit TClosingHttpServer(std::shared_ptr<TTransport> transport)
+    : THttpServer(transport, transport->getConfiguration()) {}
+
+  void flush() override {
+    resetConsumedMessageSize();
+
+    uint8_t* buf;
+    uint32_t len;
+    writeBuffer_.getBuffer(&buf, &len);
+
+    std::ostringstream header;
+    header << "HTTP/1.1 200 OK\r\n"
+           << "Content-Type: application/x-thrift\r\n"
+           << "Transfer-Encoding: chunked\r\n"
+           << "Connection: keep-alive, close\r\n"
+           << "Connection: keep-alive\r\n\r\n";
+    const string headerText = header.str();
+    transport_->write(reinterpret_cast<const uint8_t*>(headerText.data()),
+                      static_cast<uint32_t>(headerText.size()));
+
+    if (len > 0) {
+      std::ostringstream chunkSize;
+      chunkSize << std::hex << len << "\r\n";
+      const string chunkPrefix = chunkSize.str();
+      transport_->write(reinterpret_cast<const uint8_t*>(chunkPrefix.data()),
+                        static_cast<uint32_t>(chunkPrefix.size()));
+      transport_->write(buf, len);
+      transport_->write(reinterpret_cast<const uint8_t*>("\r\n"), 2);
+    }
+    transport_->write(reinterpret_cast<const uint8_t*>("0\r\n\r\n"), 5);
+    transport_->flush();
+
+    writeBuffer_.resetBuffer();
+    readHeaders_ = true;
+    close();
+  }
+};
+
+class TClosingHttpServerTransportFactory : public apache::thrift::transport::TTransportFactory {
+public:
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> transport) override {
+    return std::make_shared<TClosingHttpServer>(transport);
+  }
 };
 
 class TBlockableBufferedTransport : public TBufferedTransport {
@@ -284,6 +364,61 @@ BOOST_AUTO_TEST_CASE( JSON_HTTP_OneWayWrapperDoesNotPoisonNextCall )
 
   server.stop();
   thread.join();
+}
+
+BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
+  std::shared_ptr<TServerSocket> ss = std::make_shared<TServerSocket>(0);
+  TThreadedServer server(std::make_shared<onewaytest::OneWayServiceProcessorFactory>(
+                             std::make_shared<OneWayServiceCloneFactory>()),
+                         ss, std::make_shared<TClosingHttpServerTransportFactory>(),
+                         std::make_shared<TBinaryProtocolFactory>());
+
+  std::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler);
+  server.setServerEventHandler(pEventHandler);
+
+  RPC0ThreadClass t(server);
+  boost::thread thread(&RPC0ThreadClass::Run, &t);
+
+  {
+    Synchronized sync(*(pEventHandler.get()));
+    while (!pEventHandler->isListening()) {
+      pEventHandler->wait();
+    }
+  }
+
+  {
+    std::shared_ptr<TSocket> socket(new TSocket("localhost", ss->getPort()));
+    socket->setRecvTimeout(10000);
+    std::shared_ptr<TTransport> httpTransport(new THttpClient(socket, "localhost", "/service"));
+    std::shared_ptr<TTransport> transport(new TBufferedTransport(httpTransport));
+    std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    onewaytest::OneWayServiceClient client(protocol);
+
+    transport->open();
+    client.roundTripRPC();
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 1U);
+    BOOST_CHECK_NO_THROW(client.roundTripRPC());
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 2U);
+    client.oneWayRPC();
+    BOOST_CHECK_NO_THROW(client.roundTripRPC());
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 4U);
+    transport->close();
+    BOOST_CHECK_EQUAL(pEventHandler->acceptedCount(), 4U);
+  }
+
+  server.stop();
+  thread.join();
+}
+
+BOOST_AUTO_TEST_CASE(HTTP_ClientRequiresExactConnectionHeaderName) {
+  TInspectableHttpClient client(std::make_shared<TMemoryBuffer>());
+
+  BOOST_CHECK(client.closesAfterHeader("Connection: keep-alive, close"));
+  BOOST_CHECK(!client.closesAfterHeader("Connection-Timeout: close"));
+  BOOST_CHECK(client.chunksAfterHeader("Transfer-Encoding: chunked"));
+  BOOST_CHECK(!client.chunksAfterHeader("Transfer-Encoding-Other: chunked"));
+  BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length: 42"), 42U);
+  BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length-Mismatch: 42"), 0U);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

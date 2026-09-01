@@ -19,23 +19,23 @@
 # under the License.
 #
 
-$:.push('gen-rb')
-$:.unshift '../../lib/rb/lib'
+$:.push("gen-rb")
+$:.unshift "../../lib/rb/lib"
 
-require 'thrift'
+require "thrift"
 
-require 'calculator'
+require "calculator"
 
 begin
   port = ARGV[0] || 9090
 
-  transport = Thrift::BufferedTransport.new(Thrift::Socket.new('localhost', port))
+  transport = Thrift::BufferedTransport.new(Thrift::Socket.new("localhost", port))
   protocol = Thrift::BinaryProtocol.new(transport)
   client = Calculator::Client.new(protocol)
 
-  transport.open()
+  transport.open
 
-  client.ping()
+  client.ping
   print "ping()\n"
 
   sum = client.add(1, 1)
@@ -44,7 +44,7 @@ begin
   sum = client.add(1, 4)
   print "1+4=", sum, "\n"
 
-  work = Work.new()
+  work = Work.new
 
   work.op = Operation::SUBTRACT
   work.num1 = 15
@@ -59,17 +59,16 @@ begin
     work.op = Operation::DIVIDE
     work.num1 = 1
     work.num2 = 0
-    quot = client.calculate(1, work)
+    client.calculate(1, work)
     puts "Whoa, we can divide by 0 now?"
   rescue InvalidOperation => io
     print "InvalidOperation: ", io.why, "\n"
   end
 
-  client.zip()
+  client.zip
   print "zip\n"
 
-  transport.close()
-
+  transport.close
 rescue Thrift::Exception => tx
-  print 'Thrift::Exception: ', tx.message, "\n"
+  print "Thrift::Exception: ", tx.message, "\n"
 end

@@ -54,14 +54,14 @@ module Thrift
     end
 
     def read_byte
-      return @transport.read_byte() unless @read
+      return @transport.read_byte unless @read
 
       read_frame if @index >= @rbuf.length
 
       # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
       # allocating a temp string of size 1 unnecessarily.
       @index += 1
-      return Bytes.get_string_byte(@rbuf, @index - 1)
+      Bytes.get_string_byte(@rbuf, @index - 1)
     end
 
     def read_into_buffer(buffer, size)
@@ -92,7 +92,7 @@ module Thrift
     def flush
       return @transport.flush unless @write
 
-      out = [@wbuf.length].pack('N')
+      out = [@wbuf.length].pack("N")
       # Array#pack should return a BINARY encoded String, so it shouldn't be necessary to force encoding
       out << @wbuf
       @transport.write(out)
@@ -101,13 +101,14 @@ module Thrift
     end
 
     def to_s
-      "framed(#{@transport.to_s})"
+      "framed(#{@transport})"
     end
 
     private
 
     def read_frame
-      sz = @transport.read_all(4).unpack('N').first
+      sz = @transport.read_all(4).unpack1("N")
+      raise TransportException.new(TransportException::END_OF_FILE, "Cannot read from a zero-length frame") if sz == 0
 
       @index = 0
       @rbuf = @transport.read_all(sz)
@@ -116,7 +117,7 @@ module Thrift
 
   class FramedTransportFactory < BaseTransportFactory
     def get_transport(transport)
-      return FramedTransport.new(transport)
+      FramedTransport.new(transport)
     end
 
     def to_s

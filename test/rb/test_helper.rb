@@ -18,11 +18,11 @@
 # under the License.
 #
 
-$:.unshift File.dirname(__FILE__) + '/gen-rb'
-$:.unshift File.join(File.dirname(__FILE__), '../../lib/rb/lib')
-$:.unshift File.join(File.dirname(__FILE__), '../../lib/rb/ext')
+$:.unshift File.dirname(__FILE__) + "/gen-rb"
+$:.unshift File.join(File.dirname(__FILE__), "../../lib/rb/lib")
+$:.unshift File.join(File.dirname(__FILE__), "../../lib/rb/ext")
 
-require 'test/unit'
+require "test/unit"
 
 module Thrift
   module Struct

@@ -27,6 +27,8 @@
 #include <thrift/c_glib/thrift_application_exception.h>
 #include <thrift/c_glib/thrift_struct.h>
 
+#include "gen-c_glib/t_test_srv.h"
+
 /* A protocol whose read_message_begin behaviour can be selected per test, so
    the dispatch processor can be driven through the results a protocol
    implementation may produce for a message header. */
@@ -350,6 +352,125 @@ test_dispatch_call_without_name (void)
   g_object_unref (processor);
 }
 
+static gboolean srv_handler_reached = FALSE;
+
+#define TEST_TYPE_SRV_HANDLER (test_srv_handler_get_type ())
+
+struct _TestSrvHandler
+{
+  TTestSrvHandler parent;
+};
+typedef struct _TestSrvHandler TestSrvHandler;
+
+struct _TestSrvHandlerClass
+{
+  TTestSrvHandlerClass parent;
+};
+typedef struct _TestSrvHandlerClass TestSrvHandlerClass;
+
+G_DEFINE_TYPE (TestSrvHandler, test_srv_handler, T_TEST_TYPE_SRV_HANDLER)
+
+static gboolean
+test_srv_handler_primitive_method (TTestSrvIf *iface, gint32 *_return,
+                                   GError **error)
+{
+  THRIFT_UNUSED_VAR (iface);
+  THRIFT_UNUSED_VAR (error);
+
+  srv_handler_reached = TRUE;
+  *_return = 42;
+
+  return TRUE;
+}
+
+static void
+test_srv_handler_init (TestSrvHandler *handler)
+{
+  THRIFT_UNUSED_VAR (handler);
+}
+
+static void
+test_srv_handler_class_init (TestSrvHandlerClass *klass)
+{
+  T_TEST_SRV_HANDLER_CLASS (klass)->primitive_method =
+    test_srv_handler_primitive_method;
+}
+
+static void
+test_generated_base_service_dispatches (void)
+{
+  TestSrvHandler *handler = NULL;
+  TTestSrvProcessor *processor = NULL;
+  ThriftMemoryBuffer *transport = NULL;
+  ThriftBinaryProtocol *protocol = NULL;
+  GError *error = NULL;
+  gchar *reply_name = NULL;
+  ThriftMessageType reply_type = 0;
+  gint32 reply_seqid = 0;
+  gchar *field_name = NULL;
+  ThriftType field_type = 0;
+  gint16 field_id = 0;
+  gint32 result = 0;
+
+  srv_handler_reached = FALSE;
+
+  handler = g_object_new (TEST_TYPE_SRV_HANDLER, NULL);
+  processor = g_object_new (T_TEST_TYPE_SRV_PROCESSOR, "handler", handler,
+                            NULL);
+  transport = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 1024, NULL);
+  protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", transport,
+                           NULL);
+
+  g_assert (thrift_protocol_write_message_begin (THRIFT_PROTOCOL (protocol),
+                                                 "primitiveMethod", T_CALL, 1,
+                                                 &error) > 0);
+  g_assert (thrift_protocol_write_struct_begin (THRIFT_PROTOCOL (protocol),
+                                                "primitiveMethod_args",
+                                                &error) >= 0);
+  g_assert (thrift_protocol_write_field_stop (THRIFT_PROTOCOL (protocol),
+                                              &error) > 0);
+  g_assert (thrift_protocol_write_struct_end (THRIFT_PROTOCOL (protocol),
+                                              &error) >= 0);
+  g_assert (thrift_protocol_write_message_end (THRIFT_PROTOCOL (protocol),
+                                               &error) >= 0);
+  g_assert (error == NULL);
+
+  g_assert (thrift_processor_process (THRIFT_PROCESSOR (processor),
+                                      THRIFT_PROTOCOL (protocol),
+                                      THRIFT_PROTOCOL (protocol), &error));
+  g_assert (error == NULL);
+
+  g_assert (srv_handler_reached == TRUE);
+
+  g_assert (thrift_protocol_read_message_begin (THRIFT_PROTOCOL (protocol),
+                                                &reply_name, &reply_type,
+                                                &reply_seqid, &error) > 0);
+  g_assert_cmpint (reply_type, ==, T_REPLY);
+  g_assert_cmpint (reply_seqid, ==, 1);
+
+  g_assert (thrift_protocol_read_struct_begin (THRIFT_PROTOCOL (protocol),
+                                               &field_name, &error) >= 0);
+  g_free (field_name);
+  field_name = NULL;
+
+  g_assert (thrift_protocol_read_field_begin (THRIFT_PROTOCOL (protocol),
+                                              &field_name, &field_type,
+                                              &field_id, &error) > 0);
+  g_assert_cmpint (field_type, ==, T_I32);
+  g_assert_cmpint (field_id, ==, 0);
+  g_assert (thrift_protocol_read_i32 (THRIFT_PROTOCOL (protocol), &result,
+                                      &error) > 0);
+  g_assert_cmpint (result, ==, 42);
+  g_assert (error == NULL);
+
+  g_free (field_name);
+  g_free (reply_name);
+  g_object_unref (protocol);
+  g_object_unref (transport);
+  g_object_unref (processor);
+  g_object_unref (handler);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -367,6 +488,8 @@ main (int argc, char *argv[])
                    test_process_failed_message_begin);
   g_test_add_func ("/testdispatchprocessor/DispatchCallWithoutName",
                    test_dispatch_call_without_name);
+  g_test_add_func ("/testdispatchprocessor/GeneratedBaseServiceDispatches",
+                   test_generated_base_service_dispatches);
 
   return g_test_run ();
 }

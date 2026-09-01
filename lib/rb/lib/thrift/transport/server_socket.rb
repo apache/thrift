@@ -19,7 +19,7 @@
 # under the License.
 #
 
-require 'socket'
+require "socket"
 
 module Thrift
   class ServerSocket < BaseServerTransport
@@ -54,8 +54,8 @@ module Thrift
     end
 
     def close
-     @handle.close unless @handle.nil? or @handle.closed?
-     @handle = nil
+      @handle.close unless @handle.nil? or @handle.closed?
+      @handle = nil
     end
 
     def closed?
@@ -63,12 +63,11 @@ module Thrift
     end
 
     def to_io
-      @handle&.to_io || raise(IOError, 'closed stream')
+      @handle&.to_io || raise(IOError, "closed stream")
     end
 
     def to_s
       "socket(#{@host}:#{@port})"
     end
-
   end
 end

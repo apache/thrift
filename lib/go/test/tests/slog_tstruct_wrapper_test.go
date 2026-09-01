@@ -45,7 +45,7 @@ func TestSlogTStructWrapperJSON(t *testing.T) {
 			label: "struct",
 			value: &forwardtypetest.Struct{
 				Foo: &forwardtypetest.Exc{
-					Code: thrift.Int32Ptr(10),
+					Code: new(int32(10)),
 				},
 			},
 			want: `{"level":"INFO","msg":"bar","struct":{"type":"*forwardtypetest.Struct","value":{"foo":{"code":10}}}}`,
@@ -53,7 +53,7 @@ func TestSlogTStructWrapperJSON(t *testing.T) {
 		{
 			label: "exception",
 			value: &forwardtypetest.Exc{
-				Code: thrift.Int32Ptr(10),
+				Code: new(int32(10)),
 			},
 			want: `{"level":"INFO","msg":"bar","struct":{"type":"*forwardtypetest.Exc","value":{"code":10}}}`,
 		},
@@ -93,7 +93,7 @@ func TestSlogTStructWrapperText(t *testing.T) {
 			label: "struct",
 			value: &forwardtypetest.Struct{
 				Foo: &forwardtypetest.Exc{
-					Code: thrift.Int32Ptr(10),
+					Code: new(int32(10)),
 				},
 			},
 			want: `level=INFO msg=bar struct="*forwardtypetest.Struct{\"foo\":{\"code\":10}}"`,
@@ -101,7 +101,7 @@ func TestSlogTStructWrapperText(t *testing.T) {
 		{
 			label: "exception",
 			value: &forwardtypetest.Exc{
-				Code: thrift.Int32Ptr(10),
+				Code: new(int32(10)),
 			},
 			want: `level=INFO msg=bar struct="*forwardtypetest.Exc{\"code\":10}"`,
 		},

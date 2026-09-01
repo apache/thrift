@@ -35,7 +35,9 @@ if 'vagrant' in str(os.environ):
 
 include_dirs = ['src']
 if sys.platform == 'win32':
-    include_dirs.append('compat/win32')
+    # Windows ARM64 builds require the real stdint.h.
+    if os.environ.get('CIBUILDWHEEL') != '1':
+        include_dirs.append('compat/win32')
     ext_errors = (CompileError, ExecError, PlatformError, IOError)
 else:
     ext_errors = (CompileError, ExecError, PlatformError)

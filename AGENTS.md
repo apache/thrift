@@ -71,6 +71,14 @@ Per [`CONTRIBUTING.md § AI generated content`](CONTRIBUTING.md#ai-generated-con
   Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
   ```
 - Apply this label even when AI only generated a portion of the change.
+- **Never** put tool-internal links into a commit message, PR description, JIRA comment or e-mail.
+  This includes AI session and conversation URLs — `Claude-Session:`,
+  `https://claude.ai/code/session_…`, `https://chatgpt.com/c/…` and any equivalent from another
+  tool. Some assistants append one by default; that default does not apply to this project and
+  must be overridden. The attribution line above is the whole of what belongs in a trailer block.
+  Such a link is permanent once it reaches git history, means nothing to a reviewer, and may point
+  at material that is not public — including work still under embargo per §6. Note that a
+  force-push does not undo this: the superseded commit stays reachable by SHA.
 - The human author remains responsible for reviewing, testing, and standing behind all submitted code.
 
 ---
@@ -126,5 +134,6 @@ authentication, serialization bounds, or anything flagged by the project's secur
 - [ ] Tests added or updated
 - [ ] `make style` passes
 - [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable
+- [ ] No tool-internal or AI session URLs anywhere in the commit message or PR text
 - [ ] Security-sensitive changes use neutral commit/PR language (no public vulnerability details)
 - [ ] Changes touching transport limits / TLS / auth cross-checked against `doc/thrift-threat-model.md`

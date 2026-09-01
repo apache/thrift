@@ -78,6 +78,17 @@ public abstract class TEndpointTransport extends TTransport {
   }
 
   /**
+   * Sets the read budget to newSize, discarding whatever has been consumed against the previous
+   * one. A negative size restores the configured maximum.
+   *
+   * @param newSize
+   */
+  @Override
+  public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {
+    resetConsumedMessageSize(newSize);
+  }
+
+  /**
    * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
    * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
    *

@@ -18,15 +18,15 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared")
 
 if defined? Thrift::BinaryProtocolAccelerated
 
-  describe 'BinaryProtocolAccelerated' do
+  describe "BinaryProtocolAccelerated" do
     # since BinaryProtocolAccelerated should be directly equivalent to
     # BinaryProtocol, we don't need any custom specs!
-    it_should_behave_like 'a binary protocol'
+    it_should_behave_like "a binary protocol"
 
     def protocol_class
       Thrift::BinaryProtocolAccelerated
@@ -34,7 +34,8 @@ if defined? Thrift::BinaryProtocolAccelerated
 
     describe Thrift::BinaryProtocolAcceleratedFactory do
       it "should create a BinaryProtocolAccelerated" do
-        expect(Thrift::BinaryProtocolAcceleratedFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::BinaryProtocolAccelerated)
+        transport = Thrift::MemoryBufferTransport.new
+        expect(Thrift::BinaryProtocolAcceleratedFactory.new.get_protocol(transport)).to be_instance_of(Thrift::BinaryProtocolAccelerated)
       end
 
       it "should provide a reasonable to_s" do

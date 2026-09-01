@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <stdint.h>
+
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
@@ -31,24 +33,63 @@ ID setvalue_id;
 ID to_s_method_id;
 ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
+static ID validate_container_size_method_id;
 static VALUE default_sym;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
+// Default budget when callers do not provide a remaining depth.
+static int recursion_limit;
 
-static void validate_container_size(int size) {
-  if (RB_UNLIKELY(size < 0)) {
+static void validate_recursion_depth(int remaining_depth) {
+  if (RB_UNLIKELY(remaining_depth <= 0)) {
     rb_exc_raise(
       get_protocol_exception(
-        INT2FIX(PROTOERR_NEGATIVE_SIZE),
-        rb_str_new2("Negative container size")
+        INT2FIX(PROTOERR_DEPTH_LIMIT),
+        rb_str_new2("Maximum recursion depth exceeded")
       )
     );
   }
 }
 
+static int parse_recursive_args(int argc, const VALUE *argv, VALUE *protocol) {
+  if (RB_UNLIKELY(argc < 1 || argc > 2)) {
+    rb_error_arity(argc, 1, 2);
+  }
+
+  *protocol = argv[0];
+  int remaining_depth = argc == 1 ? recursion_limit : NUM2INT(argv[1]);
+  validate_recursion_depth(remaining_depth);
+  return remaining_depth;
+}
+
+static int container_size(VALUE protocol, VALUE size) {
+  if (RB_LIKELY(FIXNUM_P(size))) {
+    long value = FIX2LONG(size);
+    if (RB_UNLIKELY(value < 0)) {
+      rb_exc_raise(
+        get_protocol_exception(
+          INT2FIX(PROTOERR_NEGATIVE_SIZE),
+          rb_str_new2("Negative size")
+        )
+      );
+    }
+    if (RB_UNLIKELY((unsigned long)value > INT32_MAX)) {
+      rb_exc_raise(
+        get_protocol_exception(
+          INT2FIX(PROTOERR_SIZE_LIMIT),
+          rb_str_new2("Container size limit exceeded")
+        )
+      );
+    }
+    return (int)value;
+  }
+
+  rb_funcall(protocol, validate_container_size_method_id, 1, size);
+  return NUM2INT(size);
+}
+
 static VALUE new_container_array(int size) {
-  validate_container_size(size);
   return rb_ary_new2(size > 1024 ? 1024 : size);
 }
 
@@ -236,9 +277,9 @@ VALUE default_read_struct_end(VALUE protocol) {
 
 // end default protocol methods
 
-static VALUE rb_thrift_union_write (VALUE self, VALUE protocol);
-static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol);
-static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info);
+static VALUE rb_thrift_struct_write_recursive(VALUE self, VALUE protocol, int remaining_depth);
+static VALUE rb_thrift_union_write_recursive(VALUE self, VALUE protocol, int remaining_depth);
+static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info, int remaining_depth);
 
 static inline ID field_ivar_id(VALUE field_name) {
   char name_buf[RSTRING_LEN(field_name) + 2];
@@ -253,7 +294,7 @@ VALUE get_field_value(VALUE obj, VALUE field_name) {
   return rb_ivar_get(obj, field_ivar_id(field_name));
 }
 
-static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol) {
+static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol, int remaining_depth) {
   long sz, i;
 
   if (ttype == TTYPE_MAP) {
@@ -280,15 +321,15 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
       VALUE val = rb_hash_aref(value, key);
 
       if (IS_CONTAINER(keytype)) {
-        write_container(keytype, key_info, key, protocol);
+        write_container(keytype, key_info, key, protocol, remaining_depth);
       } else {
-        write_anything(keytype, key, protocol, key_info);
+        write_anything(keytype, key, protocol, key_info, remaining_depth);
       }
 
       if (IS_CONTAINER(valuetype)) {
-        write_container(valuetype, value_info, val, protocol);
+        write_container(valuetype, value_info, val, protocol, remaining_depth);
       } else {
-        write_anything(valuetype, val, protocol, value_info);
+        write_anything(valuetype, val, protocol, value_info, remaining_depth);
       }
     }
 
@@ -306,9 +347,9 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     for (i = 0; i < sz; ++i) {
       VALUE val = rb_ary_entry(value, i);
       if (IS_CONTAINER(element_type)) {
-        write_container(element_type, element_type_info, val, protocol);
+        write_container(element_type, element_type_info, val, protocol, remaining_depth);
       } else {
-        write_anything(element_type, val, protocol, element_type_info);
+        write_anything(element_type, val, protocol, element_type_info, remaining_depth);
       }
     }
     default_write_list_end(protocol);
@@ -337,9 +378,9 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     for (i = 0; i < sz; i++) {
       VALUE val = rb_ary_entry(items, i);
       if (IS_CONTAINER(element_type)) {
-        write_container(element_type, element_type_info, val, protocol);
+        write_container(element_type, element_type_info, val, protocol, remaining_depth);
       } else {
-        write_anything(element_type, val, protocol, element_type_info);
+        write_anything(element_type, val, protocol, element_type_info, remaining_depth);
       }
     }
 
@@ -349,7 +390,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
   }
 }
 
-static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info) {
+static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info, int remaining_depth) {
   if (ttype == TTYPE_BOOL) {
     default_write_bool(protocol, value);
   } else if (ttype == TTYPE_BYTE) {
@@ -372,19 +413,21 @@ static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_i
   } else if (ttype == TTYPE_UUID) {
     default_write_uuid(protocol, value);
   } else if (IS_CONTAINER(ttype)) {
-    write_container(ttype, field_info, value, protocol);
+    write_container(ttype, field_info, value, protocol, remaining_depth);
   } else if (ttype == TTYPE_STRUCT) {
+    remaining_depth--;
+    validate_recursion_depth(remaining_depth);
     if (rb_obj_is_kind_of(value, thrift_union_class)) {
-      rb_thrift_union_write(value, protocol);
+      rb_thrift_union_write_recursive(value, protocol, remaining_depth);
     } else {
-      rb_thrift_struct_write(value, protocol);
+      rb_thrift_struct_write_recursive(value, protocol, remaining_depth);
     }
   } else {
     rb_raise(rb_eNotImpError, "Unknown type for binary_encoding: %d", ttype);
   }
 }
 
-static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
+static VALUE rb_thrift_struct_write_recursive(VALUE self, VALUE protocol, int remaining_depth) {
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
@@ -410,7 +453,7 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
     if (!NIL_P(field_value)) {
       default_write_field_begin(protocol, field_name, ttype_value, field_id);
 
-      write_anything(ttype, field_value, protocol, field_info);
+      write_anything(ttype, field_value, protocol, field_info, remaining_depth);
 
       default_write_field_end(protocol);
     }
@@ -424,12 +467,19 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
+// cppcheck-suppress constParameterCallback
+static VALUE rb_thrift_struct_write(int argc, VALUE *argv, VALUE self) {
+  VALUE protocol;
+  int remaining_depth = parse_recursive_args(argc, argv, &protocol);
+  return rb_thrift_struct_write_recursive(self, protocol, remaining_depth);
+}
+
 //-------------------------------------------
 // Reading section
 //-------------------------------------------
 
-static VALUE rb_thrift_union_read(VALUE self, VALUE protocol);
-static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol);
+static VALUE rb_thrift_union_read_recursive(VALUE self, VALUE protocol, int remaining_depth);
+static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int remaining_depth);
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
@@ -490,7 +540,7 @@ static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, 
   }
 }
 
-static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
+static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int remaining_depth) {
   VALUE result = Qnil;
 
   if (ttype == TTYPE_BOOL) {
@@ -517,21 +567,19 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   } else if (ttype == TTYPE_STRUCT) {
     VALUE klass = rb_hash_aref(field_info, class_sym);
     result = rb_class_new_instance(0, NULL, klass);
+    remaining_depth--;
+    validate_recursion_depth(remaining_depth);
 
     if (rb_obj_is_kind_of(result, thrift_union_class)) {
-      rb_thrift_union_read(result, protocol);
+      rb_thrift_union_read_recursive(result, protocol, remaining_depth);
     } else {
-      rb_thrift_struct_read(result, protocol);
+      rb_thrift_struct_read_recursive(result, protocol, remaining_depth);
     }
   } else if (ttype == TTYPE_MAP) {
     VALUE map_header = default_read_map_begin(protocol);
     int key_ttype = FIX2INT(rb_ary_entry(map_header, 0));
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
-    int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
-
-    if (num_entries < 0) {
-      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_NEGATIVE_SIZE), rb_str_new2("Negative container size")));
-    }
+    int num_entries = container_size(protocol, rb_ary_entry(map_header, 2));
 
     // Check the declared key and value types against the expected ones and skip the map contents
     // if the types don't match.
@@ -547,8 +595,8 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         for (int i = 0; i < num_entries; ++i) {
           VALUE key, val;
 
-          key = read_anything(protocol, key_ttype, key_info);
-          val = read_anything(protocol, value_ttype, value_info);
+          key = read_anything(protocol, key_ttype, key_info, remaining_depth);
+          val = read_anything(protocol, value_ttype, value_info, remaining_depth);
 
           rb_hash_aset(result, key, val);
         }
@@ -563,7 +611,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   } else if (ttype == TTYPE_LIST) {
     VALUE list_header = default_read_list_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
-    int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
+    int num_elements = container_size(protocol, rb_ary_entry(list_header, 1));
 
     // Check the declared element type against the expected one and skip the list contents
     // if the types don't match.
@@ -574,14 +622,12 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         result = new_container_array(num_elements);
 
         for (int i = 0; i < num_elements; ++i) {
-          rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+          rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym), remaining_depth));
         }
       } else {
-        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
-      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
@@ -591,7 +637,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
 
     VALUE set_header = default_read_set_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
-    int num_elements = FIX2INT(rb_ary_entry(set_header, 1));
+    int num_elements = container_size(protocol, rb_ary_entry(set_header, 1));
 
     // Check the declared element type against the expected one and skip the set contents
     // if the types don't match.
@@ -602,16 +648,14 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         items = new_container_array(num_elements);
 
         for (int i = 0; i < num_elements; ++i) {
-          rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+          rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym), remaining_depth));
         }
 
         result = rb_class_new_instance(1, &items, rb_cSet);
       } else {
-        validate_container_size(num_elements);
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
       }
     } else {
-      validate_container_size(num_elements);
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
@@ -623,7 +667,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   return result;
 }
 
-static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
+static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int remaining_depth) {
   VALUE struct_fields = STRUCT_FIELDS(self);
 
   if (RHASH_SIZE(struct_fields) > 0 && rb_ivar_count(self) > 0) {
@@ -652,7 +696,7 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
       if (field_type == specified_type) {
         // read the value
         VALUE name = rb_hash_aref(field_info, name_sym);
-        set_field_value(self, name, read_anything(protocol, field_type, field_info));
+        set_field_value(self, name, read_anything(protocol, field_type, field_info, remaining_depth));
       } else {
         rb_funcall(protocol, skip_method_id, 1, field_type_value);
       }
@@ -673,12 +717,19 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
+// cppcheck-suppress constParameterCallback
+static VALUE rb_thrift_struct_read(int argc, VALUE *argv, VALUE self) {
+  VALUE protocol;
+  int remaining_depth = parse_recursive_args(argc, argv, &protocol);
+  return rb_thrift_struct_read_recursive(self, protocol, remaining_depth);
+}
+
 
 // --------------------------------
 // Union section
 // --------------------------------
 
-static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
+static VALUE rb_thrift_union_read_recursive(VALUE self, VALUE protocol, int remaining_depth) {
   rb_check_frozen(self);
 
   if (!NIL_P(rb_ivar_get(self, setfield_id))) {
@@ -705,7 +756,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
     if (field_type == specified_type) {
       // read the value
       VALUE name = rb_hash_aref(field_info, name_sym);
-      VALUE value = read_anything(protocol, field_type, field_info);
+      VALUE value = read_anything(protocol, field_type, field_info, remaining_depth);
       rb_iv_set(self, "@setfield", rb_str_intern(name));
       rb_iv_set(self, "@value", value);
     } else {
@@ -735,7 +786,14 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
-static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
+// cppcheck-suppress constParameterCallback
+static VALUE rb_thrift_union_read(int argc, VALUE *argv, VALUE self) {
+  VALUE protocol;
+  int remaining_depth = parse_recursive_args(argc, argv, &protocol);
+  return rb_thrift_union_read_recursive(self, protocol, remaining_depth);
+}
+
+static VALUE rb_thrift_union_write_recursive(VALUE self, VALUE protocol, int remaining_depth) {
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
@@ -759,7 +817,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
 
   default_write_field_begin(protocol, setfield, ttype_value, field_id);
 
-  write_anything(ttype, setvalue, protocol, field_info);
+  write_anything(ttype, setvalue, protocol, field_info, remaining_depth);
 
   default_write_field_end(protocol);
 
@@ -771,17 +829,26 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
+// cppcheck-suppress constParameterCallback
+static VALUE rb_thrift_union_write(int argc, VALUE *argv, VALUE self) {
+  VALUE protocol;
+  int remaining_depth = parse_recursive_args(argc, argv, &protocol);
+  return rb_thrift_union_write_recursive(self, protocol, remaining_depth);
+}
+
 void Init_struct(void) {
   VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
 
-  rb_define_method(struct_module, "write", rb_thrift_struct_write, 1);
-  rb_define_method(struct_module, "read", rb_thrift_struct_read, 1);
+  recursion_limit = FIX2INT(rb_const_get(thrift_module, rb_intern("DEFAULT_RECURSION_DEPTH")));
+
+  rb_define_method(struct_module, "write", rb_thrift_struct_write, -1);
+  rb_define_method(struct_module, "read", rb_thrift_struct_read, -1);
 
   thrift_union_class = rb_const_get(thrift_module, rb_intern("Union"));
   rb_global_variable(&thrift_union_class);
 
-  rb_define_method(thrift_union_class, "write", rb_thrift_union_write, 1);
-  rb_define_method(thrift_union_class, "read", rb_thrift_union_read, 1);
+  rb_define_method(thrift_union_class, "write", rb_thrift_union_write, -1);
+  rb_define_method(thrift_union_class, "read", rb_thrift_union_read, -1);
 
   setfield_id = rb_intern("@setfield");
   rb_global_variable(&setfield_id);
@@ -797,6 +864,8 @@ void Init_struct(void) {
 
   sorted_field_ids_method_id = rb_intern("sorted_field_ids");
   rb_global_variable(&sorted_field_ids_method_id);
+
+  validate_container_size_method_id = rb_intern("validate_container_size");
 
   default_sym = ID2SYM(rb_intern("default"));
   rb_global_variable(&default_sym);

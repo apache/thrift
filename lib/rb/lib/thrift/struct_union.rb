@@ -17,7 +17,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-require 'set'
+require "set"
+require "thrift/exceptions"
+require "thrift/types"
 
 module Thrift
   module Struct_Union
@@ -49,16 +51,17 @@ module Thrift
       end
     end
 
-    def read_field(iprot, field = {})
+    def read_field(iprot, field = {}, remaining_depth = DEFAULT_RECURSION_DEPTH)
       case field[:type]
       when Types::STRUCT
+        remaining_depth -= 1
         value = field[:class].new
-        value.read(iprot)
+        value.read(iprot, remaining_depth)
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the map contents if the declared key or value types don't match the expected ones.
-        if (size != 0 && (key_type != field[:key][:type] || val_type != field[:value][:type]))
+        if size != 0 && (key_type != field[:key][:type] || val_type != field[:value][:type])
           size.times do
             iprot.skip(key_type)
             iprot.skip(val_type)
@@ -67,15 +70,15 @@ module Thrift
         else
           value = {}
           size.times do
-            k = read_field(iprot, field_info(field[:key]))
-            v = read_field(iprot, field_info(field[:value]))
+            k = read_field(iprot, field_info(field[:key]), remaining_depth)
+            v = read_field(iprot, field_info(field[:value]), remaining_depth)
             value[k] = v
           end
         end
         iprot.read_map_end
       when Types::LIST
         e_type, size = iprot.read_list_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the list contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do
@@ -85,13 +88,13 @@ module Thrift
         else
           value = []
           size.times do
-            value << read_field(iprot, field_info(field[:element]))
+            value << read_field(iprot, field_info(field[:element]), remaining_depth)
           end
         end
         iprot.read_list_end
       when Types::SET
         e_type, size = iprot.read_set_begin
-        raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+        iprot.validate_container_size(size)
         # Skip the set contents if the declared element type doesn't match the expected one.
         if (e_type != field[:element][:type])
           size.times do
@@ -100,7 +103,7 @@ module Thrift
         else
           value = Set.new
           size.times do
-            element = read_field(iprot, field_info(field[:element]))
+            element = read_field(iprot, field_info(field[:element]), remaining_depth)
             value << element
           end
         end
@@ -111,33 +114,36 @@ module Thrift
       value
     end
 
-    def write_data(oprot, value, field)
+    def write_data(oprot, value, field, remaining_depth = DEFAULT_RECURSION_DEPTH)
       if is_container? field[:type]
-        write_container(oprot, value, field)
+        write_container(oprot, value, field, remaining_depth)
+      elsif field[:type] == Types::STRUCT
+        remaining_depth -= 1
+        value.write(oprot, remaining_depth)
       else
         oprot.write_type(field, value)
       end
     end
 
-    def write_container(oprot, value, field = {})
+    def write_container(oprot, value, field = {}, remaining_depth = DEFAULT_RECURSION_DEPTH)
       case field[:type]
       when Types::MAP
         oprot.write_map_begin(field[:key][:type], field[:value][:type], value.size)
         value.each do |k, v|
-          write_data(oprot, k, field[:key])
-          write_data(oprot, v, field[:value])
+          write_data(oprot, k, field[:key], remaining_depth)
+          write_data(oprot, v, field[:value], remaining_depth)
         end
         oprot.write_map_end
       when Types::LIST
         oprot.write_list_begin(field[:element][:type], value.size)
         value.each do |elem|
-          write_data(oprot, elem, field[:element])
+          write_data(oprot, elem, field[:element], remaining_depth)
         end
         oprot.write_list_end
       when Types::SET
         oprot.write_set_begin(field[:element][:type], value.size)
         value.each do |v,| # the , is to preserve compatibility with the old Hash-style sets
-          write_data(oprot, v, field[:element])
+          write_data(oprot, v, field[:element], remaining_depth)
         end
         oprot.write_set_end
       else
@@ -154,11 +160,13 @@ module Thrift
     end
 
     def field_info(field)
-      { :type => field[:type],
-        :class => field[:class],
-        :key => field[:key],
-        :value => field[:value],
-        :element => field[:element] }
+      {
+        type: field[:type],
+        class: field[:class],
+        key: field[:key],
+        value: field[:value],
+        element: field[:element],
+      }
     end
 
     def inspect_field(value, field_info)
@@ -166,9 +174,8 @@ module Thrift
         "#{enum_class.const_get(:VALUE_MAP)[value]} (#{value})"
       elsif value.is_a? Hash
         if field_info[:type] == Types::MAP
-          map_buf = []
-          value.each do |k, v|
-            map_buf << inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value])
+          map_buf = value.map do |k, v|
+            inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value])
           end
           "{" + map_buf.join(", ") + "}"
         else
@@ -180,16 +187,15 @@ module Thrift
       elsif value.is_a? Set
         inspect_collection(value, field_info)
       elsif value.is_a?(String) && field_info[:binary]
-        value.unpack("H*").first
+        value.unpack1("H*")
       else
         value.inspect
       end
     end
 
     def inspect_collection(collection, field_info)
-      buf = []
-      collection.each do |k|
-        buf << inspect_field(k, field_info[:element])
+      buf = collection.map do |element|
+        inspect_field(element, field_info[:element])
       end
       "[" + buf.join(", ") + "]"
     end

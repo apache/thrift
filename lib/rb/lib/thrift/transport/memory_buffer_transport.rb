@@ -21,20 +21,16 @@
 
 module Thrift
   class MemoryBufferTransport < BaseTransport
-    GARBAGE_BUFFER_SIZE = 4*(2**10) # 4kB
+    GARBAGE_BUFFER_SIZE = 4 * (2**10) # 4kB
 
-    # If you pass a string to this, you should #dup that string
-    # unless you want it to be modified by #read and #write
-    #--
-    # this behavior is no longer required. If you wish to change it
-    # go ahead, just make sure the specs pass
+    # The transport copies the input buffer and keeps its own mutable storage.
     def initialize(buffer = nil)
-      @buf = buffer ? Bytes.force_binary_encoding(buffer) : Bytes.empty_byte_buffer
+      @buf = buffer ? Bytes.force_binary_encoding(buffer.dup) : Bytes.empty_byte_buffer
       @index = 0
     end
 
     def open?
-      return true
+      true
     end
 
     def open
@@ -48,7 +44,7 @@ module Thrift
     end
 
     # this method does not use the passed object directly but copies it
-    def reset_buffer(new_buf = '')
+    def reset_buffer(new_buf = "")
       @buf.replace Bytes.force_binary_encoding(new_buf)
       @index = 0
     end
@@ -58,7 +54,7 @@ module Thrift
     end
 
     def read(len)
-      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless len >= 0
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, "Negative size") unless len >= 0
 
       data = @buf.slice(@index, len)
       @index += len
@@ -74,7 +70,7 @@ module Thrift
     end
 
     def read_all(size)
-      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, "Negative size") unless size >= 0
 
       read(size)
     end

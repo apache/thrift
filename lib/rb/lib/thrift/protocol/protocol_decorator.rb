@@ -19,7 +19,6 @@
 
 module Thrift
   module ProtocolDecorator
-
     def initialize(protocol)
       @protocol = protocol
     end
@@ -194,6 +193,10 @@ module Thrift
 
     def read_binary
       @protocol.read_binary
+    end
+
+    def skip_string
+      @protocol.skip_string
     end
 
     def read_uuid

@@ -90,11 +90,153 @@ TEST_CASE("t_rb_generator uses suffixed field id constants to avoid FIELDS colli
     const string generated_content = read_file("gen-rb/test_field_id_conflict_types.rb");
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("FIELDS_FIELD_ID = 1") != string::npos);
-    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+    REQUIRE(generated_content.find("FIELDS_FIELD_ID => {type: ::Thrift::Types::STRING, name: \"fields\"},")
             != string::npos);
     REQUIRE(generated_content.find("FIELDS = 1") == string::npos);
-    REQUIRE(generated_content.find("FIELDS => {:type => ::Thrift::Types::STRING, :name => 'fields'}")
+    REQUIRE(generated_content.find("FIELDS => {type: ::Thrift::Types::STRING, name: \"fields\"},")
             == string::npos);
+
+    std::remove(thrift_path.c_str());
+}
+
+TEST_CASE("t_rb_generator formats service classes, call parentheses, and positional arguments",
+          "[functional]")
+{
+    const string thrift_path = "test_service_arguments.thrift";
+    const string thrift_source =
+        "service EmptyService {\n"
+        "}\n"
+        "service PingService {\n"
+        "  oneway void ping(1: i32 n)\n"
+        "  i32 pong()\n"
+        "  void noop()\n"
+        "}\n";
+
+    {
+        std::ofstream thrift_file(thrift_path, std::ios::binary);
+        REQUIRE(thrift_file.is_open());
+        thrift_file << thrift_source;
+    }
+
+    map<string, string> parsed_options;
+    std::unique_ptr<t_program> program(new t_program(thrift_path, "test_service_arguments"));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "rb", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    const string service = read_file("gen-rb/ping_service.rb");
+    const string expected_empty_result =
+        "  class Ping_result\n"
+        "    include ::Thrift::Struct, ::Thrift::Struct_Union\n"
+        "\n"
+        "    FIELDS";
+    const string expected_argument_method =
+        "    def ping(n)\n"
+        "      send_ping(n)\n"
+        "    end\n";
+    const string expected_no_argument_method =
+        "    def pong\n"
+        "      send_pong\n"
+        "      recv_pong\n"
+        "    end\n";
+    const string expected_no_argument_receive =
+        "    def recv_pong\n"
+        "      fname, mtype, rseqid = receive_message_begin\n";
+    REQUIRE(service.find(expected_argument_method) != string::npos);
+    REQUIRE(service.find("send_oneway_message(\"ping\", Ping_args, {n: n})") != string::npos);
+    REQUIRE(service.find(expected_no_argument_method) != string::npos);
+    REQUIRE(service.find("    def send_pong\n") != string::npos);
+    REQUIRE(service.find(expected_no_argument_receive) != string::npos);
+    REQUIRE(service.find("def recv_noop\n"
+                         "      fname, mtype, rseqid = receive_message_begin\n"
+                         "      validate_message_begin(fname, mtype, rseqid, \"noop\")\n"
+                         "      receive_message(Noop_result)\n"
+                         "      nil\n"
+                         "    end")
+            != string::npos);
+    REQUIRE(service.find("def process_pong(seqid, iprot, oprot)\n"
+                         "      read_args(iprot, Pong_args)\n"
+                         "      result = Pong_result.new")
+            != string::npos);
+    REQUIRE(service.find("      result.success = @handler.pong\n") != string::npos);
+    REQUIRE(service.find(expected_empty_result) != string::npos);
+    REQUIRE(service.find("\n\n  end\n") == string::npos);
+
+    const string empty_service = read_file("gen-rb/empty_service.rb");
+    REQUIRE(!empty_service.empty());
+    REQUIRE(empty_service.find("\n\n  end\n") == string::npos);
+
+    std::remove(thrift_path.c_str());
+}
+
+TEST_CASE("t_rb_generator formats multiline Ruby literals, calls, and field metadata", "[functional]")
+{
+    const string thrift_path = "test_multiline_layout.thrift";
+    const string thrift_source =
+        "struct Item {\n"
+        "  1: string value\n"
+        "}\n"
+        "union Choice {\n"
+        "  1: string value\n"
+        "}\n"
+        "const Item ITEM = {\"value\": \"one\"}\n"
+        "const set<i32> IDS = [1, 2]\n"
+        "struct Defaults {\n"
+        "  1: list<i32> values = [1, 2]\n"
+        "}\n";
+
+    {
+        std::ofstream thrift_file(thrift_path, std::ios::binary);
+        REQUIRE(thrift_file.is_open());
+        thrift_file << thrift_source;
+    }
+
+    map<string, string> parsed_options;
+    std::unique_ptr<t_program> program(new t_program(thrift_path, "test_multiline_layout"));
+    parse_thrift_for_test(program.get());
+
+    std::unique_ptr<t_generator> gen(
+        t_generator_registry::get_generator(program.get(), "rb", parsed_options, ""));
+    REQUIRE(gen != nullptr);
+    REQUIRE_NOTHROW(gen->generate_program());
+
+    const string constants = read_file("gen-rb/test_multiline_layout_constants.rb");
+    const string expected_item_constant =
+        "ITEM = ::Item.new({\n"
+        "  %q\"value\" => %q\"one\",\n"
+        "})";
+    const string expected_set_constant =
+        "IDS = Set.new([\n"
+        "  1,\n"
+        "  2,\n"
+        "])";
+    REQUIRE(constants.find(expected_item_constant) != string::npos);
+    REQUIRE(constants.find(expected_set_constant) != string::npos);
+
+    const string types = read_file("gen-rb/test_multiline_layout_types.rb");
+    const string expected_struct =
+        "class Item\n"
+        "  include ::Thrift::Struct, ::Thrift::Struct_Union\n"
+        "\n";
+    const string expected_union =
+        "class Choice < ::Thrift::Union\n"
+        "  include ::Thrift::Struct_Union\n"
+        "\n";
+    const string expected_field_metadata =
+        "    VALUES_FIELD_ID => {\n"
+        "      type: ::Thrift::Types::LIST,\n";
+    const string expected_default =
+        "      default: [\n"
+        "        1,\n"
+        "        2,\n"
+        "      ],\n";
+    REQUIRE(types.find(expected_struct) != string::npos);
+    REQUIRE(types.find(expected_union) != string::npos);
+    REQUIRE(types.find(expected_field_metadata) != string::npos);
+    REQUIRE(types.find(expected_default) != string::npos);
 
     std::remove(thrift_path.c_str());
 }

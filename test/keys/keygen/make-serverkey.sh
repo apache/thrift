@@ -48,7 +48,6 @@ echo '' >> my.cfg
 echo '[ alternate_names ]' >> my.cfg
 echo 'IP.1=127.0.0.1' >> my.cfg
 echo 'IP.2=::1' >> my.cfg
-echo 'IP.3=::ffff:127.0.0.1' >> my.cfg
 echo 'DNS.1=localhost' >> my.cfg
 echo '' >> my.cfg
 echo '[ v3_ca ]' >> my.cfg
@@ -128,7 +127,7 @@ winpty openssl req \
 	-extensions v3_req \
 	-config my.cfg
 
-	
+
 echo
 echo step 9
 winpty openssl x509 -req -days 3000 -in client_v3.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client_v3.crt -extensions v3_req -extfile my.cfg
@@ -141,7 +140,7 @@ rm *.csr 2> /dev/null
 echo
 echo test
 openssl s_client -connect localhost:9090 &
-openssl s_server -accept 9090 -www 
+openssl s_server -accept 9090 -www
 
 echo
 echo done

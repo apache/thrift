@@ -18,42 +18,38 @@
 # under the License.
 #
 
-require 'thread'
+require "thread"
 
 module Thrift
   class ThreadedServer < BaseServer
     def serve
-      begin
-        @server_transport.listen
-        loop do
-          begin
-            client = @server_transport.accept
-          rescue Errno::ECONNRESET, Errno::EPIPE
-            next
-          rescue => e
-            next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
-            raise
-          end
-          trans = @transport_factory.get_transport(client)
-          prot = @protocol_factory.get_protocol(trans)
-          Thread.new(prot, trans) do |p, t|
-            begin
-              loop do
-                @processor.process(p, p)
-              end
-            rescue Thrift::TransportException, Thrift::ProtocolException
-            ensure
-              t.close
-            end
-          end
+      @server_transport.listen
+      loop do
+        begin
+          client = @server_transport.accept
+        rescue Errno::ECONNRESET, Errno::EPIPE
+          next
+        rescue => e
+          next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+          raise
         end
-      ensure
-        @server_transport.close
+        trans = @transport_factory.get_transport(client)
+        prot = @protocol_factory.get_protocol(trans)
+        Thread.new(prot, trans) do |p, t|
+          loop do
+            @processor.process(p, p)
+          end
+        rescue Thrift::TransportException, Thrift::ProtocolException
+        ensure
+          t.close
+        end
       end
+    ensure
+      @server_transport.close
     end
 
     def to_s
-      "threaded(#{super.to_s})"
+      "threaded(#{super})"
     end
   end
 end

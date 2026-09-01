@@ -21,6 +21,24 @@ under the License.
 
 ## Release Notes ##
 
+### 0.25.0 ###
+
+The `exceptions_include_traces` application variable now defaults to `false`.
+When a handler crashes, the `TApplicationException` sent back to the caller no
+longer carries the crash term and the Erlang stack trace; the crash is still
+logged locally in full through `error_logger`. Set it back if you want the old
+behaviour:
+
+```erl
+application:set_env(thrift, exceptions_include_traces, true).
+```
+
+or, in `sys.config`:
+
+```erl
+{thrift, [{exceptions_include_traces, true}]}
+```
+
 ### 0.9.2 ###
 
 as of 0.9.2 struct and function naming conventions have changed. to retain the

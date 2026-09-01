@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'StructNestedContainers' do
+describe "StructNestedContainers" do
   def with_type_checking
     saved_type_checking, Thrift.type_checking = Thrift.type_checking, true
     begin

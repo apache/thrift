@@ -42,7 +42,7 @@ module Thrift
       write_message(nil, nil, args_class, args)
     end
 
-    def receive_message_begin()
+    def receive_message_begin
       fname, mtype, rseqid = @iprot.read_message_begin
       [fname, mtype, rseqid]
     end
@@ -57,14 +57,14 @@ module Thrift
       if mtype != MessageTypes::REPLY
         raise ApplicationException.new(
           ApplicationException::INVALID_MESSAGE_TYPE,
-          "#{expected_name} failed: invalid message type"
+          "#{expected_name} failed: invalid message type",
         )
       end
 
       if fname != expected_name
         raise ApplicationException.new(
           ApplicationException::WRONG_METHOD_NAME,
-          "#{expected_name} failed: wrong method name"
+          "#{expected_name} failed: wrong method name",
         )
       end
 
@@ -72,7 +72,7 @@ module Thrift
 
       raise ApplicationException.new(
         ApplicationException::BAD_SEQUENCE_ID,
-        "#{expected_name} failed: out of sequence response"
+        "#{expected_name} failed: out of sequence response",
       )
     end
 

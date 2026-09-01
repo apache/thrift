@@ -48,28 +48,28 @@ VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
 }
 
 VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
-  int length = FIX2INT(length_value);
+  long long length = NUM2LL(length_value);
 
   if (RB_UNLIKELY(length < 0)) {
     rb_exc_raise(rb_funcall(transport_exception_class, new_method_id, 2, transport_negative_size, rb_str_new2("Negative size")));
   }
 
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
-  int index = FIX2INT(index_value);
+  long index = NUM2LONG(index_value);
 
   VALUE buf = GET_BUF(self);
   VALUE data = rb_funcall(buf, slice_method_id, 2, index_value, length_value);
 
   if (length > RSTRING_LEN(buf) - index) {
-    index = (int)RSTRING_LEN(buf);
+    index = RSTRING_LEN(buf);
   } else {
-    index += length;
+    index += (long)length;
   }
   if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(RSTRING_LEN(buf) - 1)));
+    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, LONG2NUM(index), LONG2NUM(RSTRING_LEN(buf) - 1)));
     index = 0;
   }
-  rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+  rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
 
   if (RSTRING_LEN(data) < length) {
     rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
@@ -79,28 +79,28 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
 }
 
 VALUE rb_thrift_memory_buffer_read_all(VALUE self, VALUE length_value) {
-  int length = FIX2INT(length_value);
+  long long length = NUM2LL(length_value);
 
   if (RB_UNLIKELY(length < 0)) {
     rb_exc_raise(rb_funcall(transport_exception_class, new_method_id, 2, transport_negative_size, rb_str_new2("Negative size")));
   }
 
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
-  int index = FIX2INT(index_value);
+  long index = NUM2LONG(index_value);
   VALUE buf = GET_BUF(self);
 
   if (RB_UNLIKELY(length > RSTRING_LEN(buf) - index)) {
     rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
   }
 
-  VALUE data = rb_str_subseq(buf, index, length);
+  VALUE data = rb_str_subseq(buf, index, (long)length);
 
-  index += length;
+  index += (long)length;
   if (index >= GARBAGE_BUFFER_SIZE) {
     rb_ivar_set(self, buf_ivar_id, rb_str_subseq(buf, index, RSTRING_LEN(buf) - index));
     index = 0;
   }
-  rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+  rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
 
   return data;
 }

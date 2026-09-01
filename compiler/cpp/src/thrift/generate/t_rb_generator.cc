@@ -298,8 +298,8 @@ void t_rb_generator::init_generator() {
   begin_namespace(f_types_, modules);
   types_need_separator_ = !have_modules;
 
-  f_consts_ << rb_autogen_comment() << '\n' << render_require_thrift() << "require '"
-            << require_prefix_ << underscore(program_name_) << "_types'" << '\n';
+  f_consts_ << rb_autogen_comment() << '\n' << render_require_thrift() << "require \""
+            << require_prefix_ << underscore(program_name_) << "_types\"" << '\n';
   if (have_modules) {
     f_consts_ << '\n';
   }
@@ -312,9 +312,9 @@ void t_rb_generator::init_generator() {
  */
 string t_rb_generator::render_require_thrift() {
   if (require_rubygems_) {
-    return "require 'rubygems'\nrequire 'thrift'\n";
+    return "require \"rubygems\"\nrequire \"thrift\"\n";
   } else {
-    return "require 'thrift'\n";
+    return "require \"thrift\"\n";
   }
 }
 
@@ -330,9 +330,9 @@ string t_rb_generator::render_includes() {
       std::string included_require_prefix
           = rb_namespace_to_path_prefix(included->get_namespace("rb"));
       std::string included_name = included->get_name();
-      result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
+      result += "require \"" + included_require_prefix + underscore(included_name) + "_types\"\n";
     } else {
-      result += "require '" + underscore(include->get_name()) + "_types'\n";
+      result += "require \"" + underscore(include->get_name()) + "_types\"\n";
     }
   }
   return result;
@@ -606,7 +606,7 @@ void t_rb_generator::generate_rb_struct(t_rb_ofstream& out,
   out << '\n';
 
   out.indent_up();
-  out.indent() << "include ::Thrift::Struct, ::Thrift::Struct_Union" << '\n';
+  out.indent() << "include ::Thrift::Struct, ::Thrift::Struct_Union" << '\n' << '\n';
 
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
@@ -635,7 +635,7 @@ void t_rb_generator::generate_rb_union(t_rb_ofstream& out,
   out.indent() << "class " << type_name(tstruct) << " < ::Thrift::Union" << '\n';
 
   out.indent_up();
-  out.indent() << "include ::Thrift::Struct_Union" << '\n';
+  out.indent() << "include ::Thrift::Struct_Union" << '\n' << '\n';
 
   generate_field_constructors(out, tstruct);
 
@@ -708,7 +708,9 @@ void t_rb_generator::generate_field_constants(t_rb_ofstream& out, t_struct* tstr
 
     out.indent() << field_id_constant_name(field_name) << " = " << (*f_iter)->get_key() << '\n';
   }
-  out << '\n';
+  if (!fields.empty()) {
+    out << '\n';
+  }
 }
 
 void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct) {
@@ -718,10 +720,6 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
   out.indent() << "FIELDS = {" << '\n';
   out.indent_up();
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (f_iter != fields.begin()) {
-      out << "," << '\n';
-    }
-
     // generate the field docstrings within the FIELDS constant. no real better place...
     generate_rdoc(out, *f_iter);
 
@@ -732,9 +730,9 @@ void t_rb_generator::generate_field_defns(t_rb_ofstream& out, t_struct* tstruct)
                         (*f_iter)->get_name(),
                         (*f_iter)->get_value(),
                         (*f_iter)->get_req() == t_field::T_OPTIONAL);
+    out << "," << '\n';
   }
   out.indent_down();
-  out << '\n';
   out.indent() << "}" << '\n' << '\n';
 
   out.indent() << "def struct_fields; FIELDS; end" << '\n' << '\n';
@@ -750,50 +748,115 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out,
                                          t_const_value* field_value = nullptr,
                                          bool optional = false) {
   field_type = get_true_type(field_type);
+  const bool multiline = field_value != nullptr
+                         && (field_type->is_struct() || field_type->is_xception()
+                             || field_type->is_map() || field_type->is_list()
+                             || field_type->is_set());
 
   // Begin this field's defn
-  out << "{:type => " << type_to_enum(field_type);
+  out << "{";
+  if (multiline) {
+    out << '\n';
+    out.indent_up();
+    out.indent() << "type: " << type_to_enum(field_type) << "," << '\n';
+  } else {
+    out << "type: " << type_to_enum(field_type);
+  }
 
   if (!field_name.empty()) {
-    out << ", :name => '" << field_name << "'";
+    if (multiline) {
+      out.indent() << "name: \"" << field_name << "\"," << '\n';
+    } else {
+      out << ", name: \"" << field_name << "\"";
+    }
   }
 
   if (field_value != nullptr) {
-    out << ", :default => ";
-    render_const_value(out, field_type, field_value);
+    if (multiline) {
+      out.indent() << "default: ";
+      render_const_value(out, field_type, field_value) << "," << '\n';
+    } else {
+      out << ", default: ";
+      render_const_value(out, field_type, field_value);
+    }
   }
 
   if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
-      out << ", :class => " << full_type_name((t_struct*)field_type);
+      if (multiline) {
+        out.indent() << "class: " << full_type_name((t_struct*)field_type) << "," << '\n';
+      } else {
+        out << ", class: " << full_type_name((t_struct*)field_type);
+      }
     } else if (field_type->is_list()) {
-      out << ", :element => ";
+      if (multiline) {
+        out.indent() << "element: ";
+      } else {
+        out << ", element: ";
+      }
       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     } else if (field_type->is_map()) {
-      out << ", :key => ";
+      if (multiline) {
+        out.indent() << "key: ";
+      } else {
+        out << ", key: ";
+      }
       generate_field_data(out, ((t_map*)field_type)->get_key_type());
-      out << ", :value => ";
+      if (multiline) {
+        out << "," << '\n';
+        out.indent() << "value: ";
+      } else {
+        out << ", value: ";
+      }
       generate_field_data(out, ((t_map*)field_type)->get_val_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     } else if (field_type->is_set()) {
-      out << ", :element => ";
+      if (multiline) {
+        out.indent() << "element: ";
+      } else {
+        out << ", element: ";
+      }
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
+      if (multiline) {
+        out << "," << '\n';
+      }
     }
-  } else {
-    if (((t_base_type*)field_type)->is_binary()) {
-      out << ", :binary => true";
+  } else if (((t_base_type*)field_type)->is_binary()) {
+    if (multiline) {
+      out.indent() << "binary: true," << '\n';
+    } else {
+      out << ", binary: true";
     }
   }
 
   if (optional) {
-    out << ", :optional => true";
+    if (multiline) {
+      out.indent() << "optional: true," << '\n';
+    } else {
+      out << ", optional: true";
+    }
   }
 
   if (field_type->is_enum()) {
-    out << ", :enum_class => " << full_type_name(field_type);
+    if (multiline) {
+      out.indent() << "enum_class: " << full_type_name(field_type) << "," << '\n';
+    } else {
+      out << ", enum_class: " << full_type_name(field_type);
+    }
   }
 
   // End of this field's defn
-  out << "}";
+  if (multiline) {
+    out.indent_down();
+    out.indent() << "}";
+  } else {
+    out << "}";
+  }
 }
 
 void t_rb_generator::begin_namespace(t_rb_ofstream& out, vector<std::string> modules) {
@@ -826,16 +889,16 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != nullptr) {
     if (namespaced_) {
-      f_service_ << "require '" << rb_namespace_to_path_prefix(
+      f_service_ << "require \"" << rb_namespace_to_path_prefix(
                                        tservice->get_extends()->get_program()->get_namespace("rb"))
-                 << underscore(tservice->get_extends()->get_name()) << "'" << '\n';
+                 << underscore(tservice->get_extends()->get_name()) << "\"" << '\n';
     } else {
-      f_service_ << "require '" << require_prefix_
-                 << underscore(tservice->get_extends()->get_name()) << "'" << '\n';
+      f_service_ << "require \"" << require_prefix_
+                 << underscore(tservice->get_extends()->get_name()) << "\"" << '\n';
     }
   }
 
-  f_service_ << "require '" << require_prefix_ << underscore(program_name_) << "_types'" << '\n'
+  f_service_ << "require \"" << require_prefix_ << underscore(program_name_) << "_types\"" << '\n'
              << '\n';
 
   begin_namespace(f_service_, modules);
@@ -914,11 +977,14 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   f_service_.indent() << "class Client" << extends_client << '\n';
   f_service_.indent_up();
 
-  f_service_.indent() << "include ::Thrift::Client" << '\n' << '\n';
-
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
+  f_service_.indent() << "include ::Thrift::Client" << '\n';
+  if (!functions.empty()) {
+    f_service_ << '\n';
+  }
+
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -928,25 +994,22 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     // Open function
     f_service_.indent() << "def " << function_signature(*f_iter) << '\n';
     f_service_.indent_up();
-    f_service_.indent() << "send_" << funname << "(";
-
-    bool first = true;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
+    f_service_.indent() << "send_" << funname;
+    if (!fields.empty()) {
+      f_service_ << "(";
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (fld_iter != fields.begin()) {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name();
       }
-      f_service_ << (*fld_iter)->get_name();
+      f_service_ << ")";
     }
-    f_service_ << ")" << '\n';
+    f_service_ << '\n';
 
     if (!(*f_iter)->is_oneway()) {
       f_service_.indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
-      }
-      f_service_ << "recv_" << funname << "()" << '\n';
+      f_service_ << "recv_" << funname << '\n';
     }
     f_service_.indent_down();
     f_service_.indent() << "end" << '\n';
@@ -958,10 +1021,17 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     std::string argsname = capitalize((*f_iter)->get_name() + "_args");
     std::string messageSendProc = (*f_iter)->is_oneway() ? "send_oneway_message" : "send_message";
 
-    f_service_.indent() << messageSendProc << "('" << funname << "', " << argsname;
+    f_service_.indent() << messageSendProc << "(\"" << funname << "\", " << argsname;
 
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
+    if (!fields.empty()) {
+      f_service_ << ", {";
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (fld_iter != fields.begin()) {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name() << ": " << (*fld_iter)->get_name();
+      }
+      f_service_ << "}";
     }
 
     f_service_ << ")" << '\n';
@@ -981,20 +1051,25 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent() << "def " << function_signature(&recv_function) << '\n';
       f_service_.indent_up();
 
-      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << '\n';
-      f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, '" << funname << "')"
+      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin" << '\n';
+      f_service_.indent() << "validate_message_begin(fname, mtype, rseqid, \"" << funname << "\")"
                           << '\n';
 
-      f_service_.indent() << "result = receive_message(" << resultname << ")" << '\n';
+      t_struct* xs = (*f_iter)->get_xceptions();
+      const std::vector<t_field*>& xceptions = xs->get_members();
+      vector<t_field*>::const_iterator x_iter;
+
+      f_service_.indent();
+      if (!(*f_iter)->get_returntype()->is_void() || !xceptions.empty()) {
+        f_service_ << "result = ";
+      }
+      f_service_ << "receive_message(" << resultname << ")" << '\n';
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_.indent() << "return result.success unless result.success.nil?" << '\n';
       }
 
-      t_struct* xs = (*f_iter)->get_xceptions();
-      const std::vector<t_field*>& xceptions = xs->get_members();
-      vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_.indent() << "raise result." << (*x_iter)->get_name() << " unless result."
                             << (*x_iter)->get_name() << ".nil?" << '\n';
@@ -1002,17 +1077,21 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        f_service_.indent() << "return" << '\n';
+        f_service_.indent() << "nil" << '\n';
       } else {
         f_service_.indent() << "raise "
                                "::Thrift::ApplicationException.new(::Thrift::ApplicationException::"
-                               "MISSING_RESULT, '" << (*f_iter)->get_name()
-                            << " failed: unknown result')" << '\n';
+                               "MISSING_RESULT, \"" << (*f_iter)->get_name()
+                            << " failed: unknown result\")" << '\n';
       }
 
       // Close function
       f_service_.indent_down();
-      f_service_.indent() << "end" << '\n' << '\n';
+      f_service_.indent() << "end" << '\n';
+    }
+
+    if (f_iter + 1 != functions.end()) {
+      f_service_ << '\n';
     }
   }
 
@@ -1042,11 +1121,17 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   f_service_.indent() << "class Processor" << extends_processor << '\n';
   f_service_.indent_up();
 
-  f_service_.indent() << "include ::Thrift::Processor" << '\n' << '\n';
+  f_service_.indent() << "include ::Thrift::Processor" << '\n';
+  if (!functions.empty()) {
+    f_service_ << '\n';
+  }
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
+    if (f_iter + 1 != functions.end()) {
+      f_service_ << '\n';
+    }
   }
 
   f_service_.indent_down();
@@ -1068,7 +1153,14 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   string argsname = capitalize(tfunction->get_name()) + "_args";
   string resultname = capitalize(tfunction->get_name()) + "_result";
 
-  f_service_.indent() << "args = read_args(iprot, " << argsname << ")" << '\n';
+  t_struct* arg_struct = tfunction->get_arglist();
+  const std::vector<t_field*>& fields = arg_struct->get_members();
+
+  f_service_.indent();
+  if (!fields.empty()) {
+    f_service_ << "args = ";
+  }
+  f_service_ << "read_args(iprot, " << argsname << ")" << '\n';
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -1076,7 +1168,7 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_.indent() << "result = " << resultname << ".new()" << '\n';
+    f_service_.indent() << "result = " << resultname << ".new" << '\n';
   }
 
   // Try block for a function with exceptions
@@ -1086,25 +1178,24 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   // Generate the function call
-  t_struct* arg_struct = tfunction->get_arglist();
-  const std::vector<t_field*>& fields = arg_struct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
   f_service_.indent();
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result.success = ";
   }
-  f_service_ << "@handler." << tfunction->get_name() << "(";
-  bool first = true;
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-    } else {
-      f_service_ << ", ";
+  f_service_ << "@handler." << tfunction->get_name();
+  if (!fields.empty()) {
+    f_service_ << "(";
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (f_iter != fields.begin()) {
+        f_service_ << ", ";
+      }
+      f_service_ << "args." << (*f_iter)->get_name();
     }
-    f_service_ << "args." << (*f_iter)->get_name();
+    f_service_ << ")";
   }
-  f_service_ << ")" << '\n';
+  f_service_ << '\n';
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     f_service_.indent_down();
@@ -1123,29 +1214,32 @@ void t_rb_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    f_service_.indent() << "return" << '\n';
+    f_service_.indent() << "nil" << '\n';
     f_service_.indent_down();
-    f_service_.indent() << "end" << '\n' << '\n';
+    f_service_.indent() << "end" << '\n';
     return;
   }
 
-  f_service_.indent() << "write_result(result, oprot, '" << tfunction->get_name() << "', seqid)"
+  f_service_.indent() << "write_result(result, oprot, \"" << tfunction->get_name() << "\", seqid)"
                       << '\n';
 
   // Close function
   f_service_.indent_down();
-  f_service_.indent() << "end" << '\n' << '\n';
+  f_service_.indent() << "end" << '\n';
 }
 
 /**
- * Renders a function signature of the form 'type name(args)'
+ * Renders a Ruby method signature, omitting parentheses when there are no arguments.
  *
  * @param tfunction Function definition
  * @return String of rendered function definition
  */
 string t_rb_generator::function_signature(t_function* tfunction, string prefix) {
-  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
-  return prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ")";
+  string arguments = argument_list(tfunction->get_arglist());
+  if (arguments.empty()) {
+    return prefix + tfunction->get_name();
+  }
+  return prefix + tfunction->get_name() + "(" + arguments + ")";
 }
 
 /**
@@ -1302,7 +1396,7 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out, t
     t_field* field = (*f_iter);
     if (field->get_req() == t_field::T_REQUIRED) {
       out.indent() << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Required field " << field->get_name() << " is unset!')";
+                      "\"Required field " << field->get_name() << " is unset!\")";
       if (field->get_type()->is_bool()) {
         out << " if @" << field->get_name() << ".nil?";
       } else {
@@ -1322,7 +1416,7 @@ void t_rb_generator::generate_rb_struct_required_validator(t_rb_ofstream& out, t
                    << field->get_name() << ")" << '\n';
       out.indent_up();
       out.indent() << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Invalid value of field " << field->get_name() << "!')" << '\n';
+                      "\"Invalid value of field " << field->get_name() << "!\")" << '\n';
       out.indent_down();
       out.indent() << "end" << '\n';
     }
@@ -1341,7 +1435,7 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
 
   out.indent()
       << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-         "'Union fields are not set.') if get_set_field.nil? || get_value.nil?"
+         "\"Union fields are not set.\") if get_set_field.nil? || get_value.nil?"
       << '\n';
 
   // if field is an enum, check that its value is valid
@@ -1352,7 +1446,7 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
       out.indent() << "if get_set_field == :" << field->get_name() << '\n';
       out.indent() << "  raise "
                       "::Thrift::ProtocolException.new(::Thrift::ProtocolException::INVALID_DATA, "
-                      "'Invalid value of field " << field->get_name() << "!') unless "
+                      "\"Invalid value of field " << field->get_name() << "!\") unless "
                    << full_type_name(field->get_type()) << "::VALID_VALUES.include?(get_value)"
                    << '\n';
       out.indent() << "end" << '\n';

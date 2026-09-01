@@ -19,11 +19,11 @@
 # under the License.
 #
 
-require 'socket'
+require "socket"
 
 module Thrift
   class Socket < BaseTransport
-    def initialize(host = 'localhost', port = 9090, timeout = nil)
+    def initialize(host = "localhost", port = 9090, timeout = nil)
       @host = host
       @port = port
       @timeout = timeout
@@ -56,7 +56,7 @@ module Thrift
 
           while len < str.length
             begin
-              len += @handle.write_nonblock(str[len..-1])
+              len += @handle.write_nonblock(str[len..])
             rescue IO::WaitWritable
               wait_for(:write, deadline, str.length)
             rescue IO::WaitReadable
@@ -66,12 +66,11 @@ module Thrift
 
           len
         end
-      rescue TransportException => e
-        # pass this on
-        raise e
+      rescue TransportException
+        close
+        raise
       rescue StandardError => e
-        close_socket(@handle)
-        @handle = nil
+        close
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
     end
@@ -86,24 +85,21 @@ module Thrift
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @timeout
 
           data = loop do
-            begin
-              break @handle.read_nonblock(sz)
-            rescue IO::WaitReadable
-              wait_for(:read, deadline, sz)
-            rescue IO::WaitWritable
-              wait_for(:write, deadline, sz)
-            end
+            break @handle.read_nonblock(sz)
+          rescue IO::WaitReadable
+            wait_for(:read, deadline, sz)
+          rescue IO::WaitWritable
+            wait_for(:write, deadline, sz)
           end
         end
-      rescue TransportException => e
-        # don't let this get caught by the StandardError handler
-        raise e
+      rescue TransportException
+        close
+        raise
       rescue StandardError => e
-        close_socket(@handle)
-        @handle = nil
+        close
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
-      if (data.nil? || data.length == 0)
+      if data.nil? || data.length == 0
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@desc}")
       end
       data
@@ -115,7 +111,7 @@ module Thrift
     end
 
     def to_io
-      @handle&.to_io || raise(IOError, 'closed stream')
+      @handle&.to_io || raise(IOError, "closed stream")
     end
 
     def to_s

@@ -18,10 +18,15 @@
 # under the License.
 #
 
-require 'logger'
+require "logger"
+require "thrift/protocol/base_protocol"
 
 module Thrift
   module Processor
+    class ArgumentProtocolException < ProtocolException
+    end
+    private_constant :ArgumentProtocolException
+
     def initialize(handler, logger = nil)
       @handler = handler
       if logger.nil?
@@ -34,11 +39,25 @@ module Thrift
 
     def process(iprot, oprot)
       name, type, seqid = iprot.read_message_begin
+      unless type == MessageTypes::CALL || type == MessageTypes::ONEWAY
+        iprot.skip(Types::STRUCT)
+        iprot.read_message_end
+        x = ApplicationException.new(
+          ApplicationException::INVALID_MESSAGE_TYPE,
+          "Invalid message type #{type} for function #{name}",
+        )
+        write_error(x, oprot, name, seqid)
+        return false
+      end
+
       if respond_to?("process_#{name}")
         begin
           send("process_#{name}", seqid, iprot, oprot)
+        rescue ArgumentProtocolException => e
+          x = ApplicationException.new(ApplicationException::PROTOCOL_ERROR, e.message)
+          write_error(x, oprot, name, seqid)
         rescue => e
-          x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, 'Internal error')
+          x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
           @logger.debug "Internal error : #{e.message}\n#{e.backtrace.join("\n")}"
           write_error(x, oprot, name, seqid)
         end
@@ -46,7 +65,7 @@ module Thrift
       else
         iprot.skip(Types::STRUCT)
         iprot.read_message_end
-        x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)
+        x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "Unknown function " + name)
         write_error(x, oprot, name, seqid)
         false
       end
@@ -57,6 +76,8 @@ module Thrift
       args.read(iprot)
       iprot.read_message_end
       args
+    rescue ProtocolException => e
+      raise ArgumentProtocolException.new(e.type, e.message)
     end
 
     def write_result(result, oprot, name, seqid)

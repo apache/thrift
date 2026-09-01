@@ -17,8 +17,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'thrift/protocol/protocol_decorator'
-require 'thrift/protocol/base_protocol'
+require "thrift/protocol/protocol_decorator"
+require "thrift/protocol/base_protocol"
 
 module Thrift
   class MultiplexedProcessor
@@ -38,12 +38,12 @@ module Thrift
     def process(iprot, oprot)
       name, type, seqid = iprot.read_message_begin
       check_type(type)
-      if name.count(':') < 1
+      if name.count(":") < 1
         check_default_processor(name)
         return @default_processor.process(StoredMessageProtocol.new(iprot, [name, type, seqid]), oprot)
       end
 
-      service_name, method = name.split(':', 2)
+      service_name, method = name.split(":", 2)
       processor(service_name).process(StoredMessageProtocol.new(iprot, [method, type, seqid]), oprot)
     end
 
@@ -59,7 +59,7 @@ module Thrift
 
     def check_type(type)
       unless [MessageTypes::CALL, MessageTypes::ONEWAY].include?(type)
-        raise Thrift::Exception.new('This should not have happened!?')
+        raise Thrift::Exception.new("This should not have happened!?")
       end
     end
 
@@ -71,7 +71,6 @@ module Thrift
   end
 
   class StoredMessageProtocol < BaseProtocol
-
     include ProtocolDecorator
 
     def initialize(protocol, message_begin)

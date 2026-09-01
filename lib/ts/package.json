@@ -20,7 +20,6 @@
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-jshint": "^3.2.0",
     "grunt-contrib-qunit": "^3.1.0",
-    "grunt-contrib-uglify": "^1.0.1",
     "grunt-shell-spawn": "^0.3.12",
     "jslint": "^0.12.0",
     "node-int64": "^0.4.0",
@@ -38,6 +37,9 @@
     "grunt-legacy-log": "3.0.1",
     "grunt-legacy-log-utils": "2.1.3",
     "grunt-legacy-util": "2.0.2",
+    "jshint": {
+      "lodash": "4.18.1"
+    },
     "micromatch": "4.0.8",
     "semver": "5.7.2",
     "trim-newlines": "3.0.1"

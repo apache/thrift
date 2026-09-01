@@ -18,6 +18,8 @@
 # under the License.
 #
 
+require "thrift/struct_union"
+
 module Thrift
   class Union
     def initialize(name = nil, value = nil)
@@ -54,16 +56,17 @@ module Thrift
       end
     end
 
-    def read(iprot)
+    def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       @setfield = nil
       @value = nil
 
       iprot.read_struct_begin
-      fname, ftype, fid = iprot.read_field_begin
-      handle_message(iprot, fid, ftype)
+      _, ftype, fid = iprot.read_field_begin
+      handle_message(iprot, fid, ftype, remaining_depth)
       iprot.read_field_end
 
-      fname, ftype, fid = iprot.read_field_begin
+      _, ftype, _ = iprot.read_field_begin
       unless (ftype == Types::STOP)
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Too many fields for union")
       end
@@ -72,11 +75,12 @@ module Thrift
       validate
     end
 
-    def write(oprot)
+    def write(oprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       validate
       oprot.write_struct_begin(self.class.name)
 
-      fid = self.name_to_id(@setfield.to_s)
+      fid = name_to_id(@setfield.to_s)
 
       field_info = struct_fields[fid]
       unless field_info
@@ -86,8 +90,10 @@ module Thrift
       type = field_info[:type]
       if is_container? type
         oprot.write_field_begin(@setfield, type, fid)
-        write_container(oprot, @value, field_info)
+        write_container(oprot, @value, field_info, remaining_depth)
         oprot.write_field_end
+      elsif type == Types::STRUCT
+        oprot.write_field(field_info, fid, @value, remaining_depth)
       else
         oprot.write_field(@setfield, type, fid, @value)
       end
@@ -97,7 +103,7 @@ module Thrift
     end
 
     def ==(other)
-      other.equal?(self) || other.instance_of?(self.class) && @setfield == other.get_set_field && @value == other.get_value
+      other.equal?(self) || (other.instance_of?(self.class) && @setfield == other.get_set_field && @value == other.get_value)
     end
     alias_method :eql?, :==
 
@@ -110,7 +116,7 @@ module Thrift
         if field_info[:name].to_sym == @setfield
           @value
         else
-          raise RuntimeError, "#{field_info[:name]} is not union's set field."
+          raise "#{field_info[:name]} is not union's set field."
         end
       end
 
@@ -172,10 +178,10 @@ module Thrift
 
     protected
 
-    def handle_message(iprot, fid, ftype)
+    def handle_message(iprot, fid, ftype, remaining_depth)
       field = struct_fields[fid]
       if field and field[:type] == ftype
-        @value = read_field(iprot, field)
+        @value = read_field(iprot, field, remaining_depth)
         name = field[:name].to_sym
         @setfield = name
       else

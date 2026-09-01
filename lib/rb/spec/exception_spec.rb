@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'Exception' do
+describe "Exception" do
   describe Thrift::Exception do
     it "should have an accessible message" do
       e = Thrift::Exception.new("test message")
@@ -48,7 +48,7 @@ describe 'Exception' do
       expect(prot).to receive(:read_field_begin).exactly(3).times.and_return(
         ["message", Thrift::Types::STRING, 1],
         ["type", Thrift::Types::I32, 2],
-        [nil, Thrift::Types::STOP, 0]
+        [nil, Thrift::Types::STOP, 0],
       )
       expect(prot).to receive(:read_string).ordered.and_return "test message"
       expect(prot).to receive(:read_i32).ordered.and_return Thrift::ApplicationException::BAD_SEQUENCE_ID
@@ -69,7 +69,7 @@ describe 'Exception' do
         ["type", Thrift::Types::STRING, 2],
         ["message", Thrift::Types::MAP, 1],
         ["message", Thrift::Types::STRING, 3],
-        [nil, Thrift::Types::STOP, 0]
+        [nil, Thrift::Types::STOP, 0],
       )
       expect(prot).to receive(:read_i32).and_return Thrift::ApplicationException::INVALID_MESSAGE_TYPE
       expect(prot).to receive(:skip).with(Thrift::Types::STRING).twice

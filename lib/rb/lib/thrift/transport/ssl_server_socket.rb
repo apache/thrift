@@ -19,8 +19,8 @@
 # under the License.
 #
 
-require 'io/wait'
-require 'socket'
+require "io/wait"
+require "socket"
 
 module Thrift
   class SSLServerSocket < ServerSocket
@@ -57,7 +57,7 @@ module Thrift
     end
 
     def to_s
-      "ssl(#{super.to_s})"
+      "ssl(#{super})"
     end
 
     private

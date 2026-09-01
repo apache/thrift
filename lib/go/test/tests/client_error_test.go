@@ -23,7 +23,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/apache/thrift/lib/go/test/gopath/src/errortest"
 	"github.com/apache/thrift/lib/go/thrift"

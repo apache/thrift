@@ -21,12 +21,12 @@
 # under the License.
 #
 
-$:.push File.dirname(__FILE__) + '/..'
+$:.push File.dirname(__FILE__) + "/.."
 
-require 'test_helper'
-require 'thrift'
-require 'thrift_test'
-require 'second_service'
+require "test_helper"
+require "thrift"
+require "thrift_test"
+require "second_service"
 
 $domain_socket = nil
 $host = "localhost"
@@ -35,7 +35,7 @@ $protocolType = "binary"
 $ssl = false
 $transport = "buffered"
 
-ARGV.each do|a|
+ARGV.each do |a|
   if a == "--help"
     puts "Allowed options:"
     puts "\t -h [ --help ] \t produce help message"
@@ -66,14 +66,14 @@ class SimpleClientTest < Test::Unit::TestCase
     unless @transport
       if $transport == "http"
         if !$domain_socket.to_s.strip.empty?
-          raise 'transport http is not valid with --domain-socket'
+          raise "transport http is not valid with --domain-socket"
         end
 
-        scheme = $ssl ? 'https' : 'http'
+        scheme = $ssl ? "https" : "http"
         options = {}
         if $ssl
-          keys_dir = File.join(File.dirname(File.dirname(Dir.pwd)), 'keys')
-          options[:ssl_ca_file] = File.join(keys_dir, 'CA.pem')
+          keys_dir = File.join(File.dirname(File.dirname(Dir.pwd)), "keys")
+          options[:ssl_ca_file] = File.join(keys_dir, "CA.pem")
         end
         @transport = Thrift::HTTPClientTransport.new("#{scheme}://#{$host}:#{$port}/test", options)
       elsif $domain_socket.to_s.strip.empty?
@@ -85,7 +85,7 @@ class SimpleClientTest < Test::Unit::TestCase
             ctx.ca_file = File.join(keysDir, "CA.pem")
             ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "client.crt")))
             ctx.cert_store = OpenSSL::X509::Store.new
-            ctx.cert_store.add_file(File.join(keysDir, 'server.pem'))
+            ctx.cert_store.add_file(File.join(keysDir, "server.pem"))
             ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "client.key")))
             ctx.options = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
             ctx.ssl_version = :SSLv23
@@ -106,7 +106,7 @@ class SimpleClientTest < Test::Unit::TestCase
         elsif $transport == "header"
           @transport = Thrift::HeaderTransport.new(socket)
         else
-          raise 'Unknown transport type'
+          raise "Unknown transport type"
         end
       end
 
@@ -124,22 +124,22 @@ class SimpleClientTest < Test::Unit::TestCase
         @protocol = Thrift::HeaderProtocol.new(@transport)
       elsif $protocolType == "multi"
         protocol = Thrift::BinaryProtocol.new(@transport)
-        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
-        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, "ThriftTest")
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, "SecondService")
       elsif $protocolType == "multic"
         protocol = Thrift::CompactProtocol.new(@transport)
-        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
-        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, "ThriftTest")
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, "SecondService")
       elsif $protocolType == "multih"
         protocol = Thrift::HeaderProtocol.new(@transport)
-        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
-        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, "ThriftTest")
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, "SecondService")
       elsif $protocolType == "multij"
         protocol = Thrift::JsonProtocol.new(@transport)
-        @protocol = Thrift::MultiplexedProtocol.new(protocol, 'ThriftTest')
-        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, 'SecondService')
+        @protocol = Thrift::MultiplexedProtocol.new(protocol, "ThriftTest")
+        @protocol2 = Thrift::MultiplexedProtocol.new(protocol, "SecondService")
       else
-        raise 'Unknown protocol type'
+        raise "Unknown protocol type"
       end
       @client = Thrift::Test::ThriftTest::Client.new(@protocol)
       @client2 = Thrift::Test::SecondService::Client.new(@protocol2) if @protocol2
@@ -152,85 +152,87 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_void
-    p 'test_void'
-    @client.testVoid()
+    p "test_void"
+    @client.testVoid
   end
 
   def test_string
-    p 'test_string'
-    test_string =
-      'quote: \" backslash:' +
-      ' forwardslash-escaped: \/ ' +
-      ' backspace: \b formfeed: \f newline: \n return: \r tab: ' +
-      ' now-all-of-them-together: "\\\/\b\n\r\t' +
-      ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' +
+    p "test_string"
+    escaped_string =
+      'quote: \" backslash:' \
+      ' forwardslash-escaped: \/ ' \
+      ' backspace: \b formfeed: \f newline: \n return: \r tab: ' \
+      ' now-all-of-them-together: "\\\/\b\n\r\t' \
+      ' now-a-bunch-of-junk: !@#$%&()(&%$#{}{}<><><' \
       ' char-to-test-json-parsing: ]] \"]] \\" }}}{ [[[ '
-    test_string = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, " +
-      "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, " +
-      "Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, " +
-      "বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, " +
-      "Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, " +
-      "Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, " +
-      "Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, " +
-      "Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, " +
-      "Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, " +
-      "Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, " +
-      "Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, " +
-      "ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, " +
-      "Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, " +
-      "Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa " +
-      "Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa " +
-      "Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪" +
-      "Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, " +
-      "Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو, " +
-      "Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română, " +
-      "Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple " +
-      "English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, " +
-      "Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, " +
-      "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, " +
-      "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, " +
+    unicode_string = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, " \
+      "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, " \
+      "Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, " \
+      "বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, " \
+      "Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, " \
+      "Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, " \
+      "Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, " \
+      "Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, " \
+      "Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, " \
+      "Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, " \
+      "Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, " \
+      "ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, " \
+      "Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, " \
+      "Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa " \
+      "Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa " \
+      "Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪" \
+      "Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, " \
+      "Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو, " \
+      "Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română, " \
+      "Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple " \
+      "English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, " \
+      "Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, " \
+      "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, " \
+      "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, " \
       "Bân-lâm-gú, 粵語"
 
-    result_string = @client.testString(test_string)
-    assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
+    [escaped_string, unicode_string].each do |test_string|
+      result_string = @client.testString(test_string)
+      assert_equal(test_string, result_string.force_encoding(Encoding::UTF_8))
+    end
   end
 
   def test_multiplexed
     return unless @client2
 
-    p 'test_multiplexed'
-    assert_equal('testString("foobar")', @client2.secondtestString('foobar'))
+    p "test_multiplexed"
+    assert_equal('testString("foobar")', @client2.secondtestString("foobar"))
   end
 
   def test_bool
-    p 'test_bool'
+    p "test_bool"
     assert_equal(@client.testBool(true), true)
     assert_equal(@client.testBool(false), false)
   end
 
   def test_byte
-    p 'test_byte'
+    p "test_byte"
     val = 120
     assert_equal(@client.testByte(val), val)
     assert_equal(@client.testByte(-val), -val)
   end
 
   def test_i32
-    p 'test_i32'
+    p "test_i32"
     val = 2000000032
     assert_equal(@client.testI32(val), val)
     assert_equal(@client.testI32(-val), -val)
   end
 
   def test_i64
-    p 'test_i64'
+    p "test_i64"
     val = 9000000000000000064
     assert_equal(@client.testI64(val), val)
     assert_equal(@client.testI64(-val), -val)
   end
 
   def test_double
-    p 'test_double'
+    p "test_double"
     val = 3.14159265358979323846
     assert_equal(@client.testDouble(val), val)
     assert_equal(@client.testDouble(-val), -val)
@@ -238,36 +240,36 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_binary
-    p 'test_binary'
+    p "test_binary"
     val = (0...256).reverse_each.to_a
-    ret = @client.testBinary(val.pack('C*'))
+    ret = @client.testBinary(val.pack("C*"))
     assert_equal(val, ret.bytes.to_a)
   end
 
   def test_map
-    p 'test_map'
+    p "test_map"
     val = {1 => 1, 2 => 2, 3 => 3}
     assert_equal(@client.testMap(val), val)
     assert_kind_of(Hash, @client.testMap(val))
   end
 
   def test_string_map
-    p 'test_string_map'
-    val = {'a' => '2', 'b' => 'blah', 'some' => 'thing'}
+    p "test_string_map"
+    val = {"a" => "2", "b" => "blah", "some" => "thing"}
     ret = @client.testStringMap(val)
     assert_equal(val, ret)
     assert_kind_of(Hash, ret)
   end
 
   def test_list
-    p 'test_list'
+    p "test_list"
     val = [1, 2, 3, 4, 5]
     assert_equal(@client.testList(val), val)
     assert_kind_of(Array, @client.testList(val))
   end
 
   def test_enum
-    p 'test_enum'
+    p "test_enum"
     val = Thrift::Test::Numberz::SIX
     ret = @client.testEnum(val)
 
@@ -276,7 +278,7 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_typedef
-    p 'test_typedef'
+    p "test_typedef"
     # UserId  testTypedef(1: UserId thing),
     assert_equal(@client.testTypedef(309858235082523), 309858235082523)
     assert_kind_of(Integer, @client.testTypedef(309858235082523))
@@ -284,40 +286,40 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_set
-    p 'test_set'
+    p "test_set"
     val = Set.new([1, 2, 3])
     assert_equal(@client.testSet(val), val)
     assert_kind_of(Set, @client.testSet(val))
   end
 
   def get_struct
-    Thrift::Test::Xtruct.new({'string_thing' => 'hi!', 'i32_thing' => 4 })
+    Thrift::Test::Xtruct.new({"string_thing" => "hi!", "i32_thing" => 4 })
   end
 
   def test_uuid
-    p 'test_uuid'
-    val = '00112233-4455-6677-8899-aabbccddeeff'
+    p "test_uuid"
+    val = "00112233-4455-6677-8899-aabbccddeeff"
     ret = @client.testUuid(val)
     assert_equal(ret, val)
     assert_kind_of(String, ret)
   end
 
   def test_struct
-    p 'test_struct'
+    p "test_struct"
     ret = @client.testStruct(get_struct)
 
     # TODO: not sure what unspecified "default" requiredness values should be
     assert(ret.byte_thing == nil || ret.byte_thing == 0)
     assert(ret.i64_thing == nil || ret.i64_thing == 0)
 
-    assert_equal(ret.string_thing, 'hi!')
+    assert_equal(ret.string_thing, "hi!")
     assert_equal(ret.i32_thing, 4)
     assert_kind_of(Thrift::Test::Xtruct, ret)
   end
 
   def test_nest
-    p 'test_nest'
-    struct2 = Thrift::Test::Xtruct2.new({'struct_thing' => get_struct, 'i32_thing' => 10})
+    p "test_nest"
+    struct2 = Thrift::Test::Xtruct2.new({"struct_thing" => get_struct, "i32_thing" => 10})
 
     ret = @client.testNest(struct2)
 
@@ -325,7 +327,7 @@ class SimpleClientTest < Test::Unit::TestCase
     assert(ret.struct_thing.byte_thing == nil || ret.struct_thing.byte_thing == 0)
     assert(ret.struct_thing.i64_thing == nil || ret.struct_thing.i64_thing == 0)
 
-    assert_equal(ret.struct_thing.string_thing, 'hi!')
+    assert_equal(ret.struct_thing.string_thing, "hi!")
     assert_equal(ret.struct_thing.i32_thing, 4)
     assert_equal(ret.i32_thing, 10)
 
@@ -334,26 +336,26 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_insanity
-    p 'test_insanity'
+    p "test_insanity"
     insane = Thrift::Test::Insanity.new({
-      'userMap' => {
+      "userMap" => {
         Thrift::Test::Numberz::FIVE => 5,
         Thrift::Test::Numberz::EIGHT => 8,
       },
-      'xtructs' => [
+      "xtructs" => [
         Thrift::Test::Xtruct.new({
-          'string_thing' => 'Goodbye4',
-          'byte_thing' => 4,
-          'i32_thing' => 4,
-          'i64_thing' => 4,
+          "string_thing" => "Goodbye4",
+          "byte_thing" => 4,
+          "i32_thing" => 4,
+          "i64_thing" => 4,
         }),
         Thrift::Test::Xtruct.new({
-          'string_thing' => 'Hello2',
-          'byte_thing' => 2,
-          'i32_thing' => 2,
-          'i64_thing' => 2,
-        })
-      ]
+          "string_thing" => "Hello2",
+          "byte_thing" => 2,
+          "i32_thing" => 2,
+          "i64_thing" => 2,
+        }),
+      ],
     })
 
     ret = @client.testInsanity(insane)
@@ -366,7 +368,7 @@ class SimpleClientTest < Test::Unit::TestCase
   end
 
   def test_map_map
-    p 'test_map_map'
+    p "test_map_map"
     ret = @client.testMapMap(4)
     assert_kind_of(Hash, ret)
     expected = {
@@ -381,57 +383,56 @@ class SimpleClientTest < Test::Unit::TestCase
         3 => 3,
         2 => 2,
         1 => 1,
-      }
+      },
     }
     assert_equal(expected, ret)
   end
 
   def test_multi
-    p 'test_multi'
-    ret = @client.testMulti(42, 4242, 424242, {1 => 'blah', 2 => 'thing'}, Thrift::Test::Numberz::EIGHT, 24)
+    p "test_multi"
+    ret = @client.testMulti(42, 4242, 424242, {1 => "blah", 2 => "thing"}, Thrift::Test::Numberz::EIGHT, 24)
     expected = Thrift::Test::Xtruct.new({
-      :string_thing => 'Hello2',
-      :byte_thing =>   42,
-      :i32_thing =>    4242,
-      :i64_thing =>    424242
+      string_thing: "Hello2",
+      byte_thing: 42,
+      i32_thing: 4242,
+      i64_thing: 424242,
     })
     assert_equal(expected, ret)
   end
 
   def test_exception
-    p 'test_exception'
+    p "test_exception"
     assert_raise Thrift::Test::Xception do
-      @client.testException('Xception')
+      @client.testException("Xception")
     end
     begin
-      @client.testException('TException')
+      @client.testException("TException")
     rescue => e
       assert e.class.ancestors.include?(Thrift::Exception)
     end
     assert_nothing_raised do
-      @client.testException('test')
+      @client.testException("test")
     end
   end
 
   def test_multi_exception
-    p 'test_multi_exception'
+    p "test_multi_exception"
     assert_raise Thrift::Test::Xception do
       @client.testMultiException("Xception", "test 1")
     end
     assert_raise Thrift::Test::Xception2 do
       @client.testMultiException("Xception2", "test 2")
     end
-    assert_equal( @client.testMultiException("Success", "test 3").string_thing, "test 3")
+    assert_equal(@client.testMultiException("Success", "test 3").string_thing, "test 3")
   end
 
   def test_oneway
-    p 'test_oneway'
-    omit('oneway behavior is server-specific over HTTP') if $transport == 'http'
+    p "test_oneway"
+    omit("oneway behavior is server-specific over HTTP") if $transport == "http"
 
     time1 = Time.now.to_f
     @client.testOneway(1)
     time2 = Time.now.to_f
-    assert_operator (time2-time1), :<, 0.1
+    assert_operator (time2 - time1), :<, 0.1
   end
-
 end

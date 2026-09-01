@@ -18,10 +18,10 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'Thrift::ServerSocket' do
+describe "Thrift::ServerSocket" do
   describe Thrift::ServerSocket do
     before(:each) do
       @socket = Thrift::ServerSocket.new(1234)
@@ -33,9 +33,8 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should accept an optional host argument" do
-      @socket = Thrift::ServerSocket.new('localhost', 1234)
-      expect(TCPServer).to receive(:new).with('localhost', 1234)
-      @socket.to_s == "server(localhost:1234)"
+      @socket = Thrift::ServerSocket.new("localhost", 1234)
+      expect(TCPServer).to receive(:new).with("localhost", 1234)
       @socket.listen
     end
 
@@ -72,7 +71,7 @@ describe 'Thrift::ServerSocket' do
       allow(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
 
-      sock = double("sock", :closed? => false)
+      sock = double("sock", closed?: false)
       allow(sock).to receive(:setsockopt)
       allow(handle).to receive(:accept).and_return(sock)
 
@@ -80,16 +79,18 @@ describe 'Thrift::ServerSocket' do
       expect(transport.timeout).to eq(Thrift::BaseServerTransport::DEFAULT_CLIENT_TIMEOUT)
 
       expect(sock).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
+      expect(sock).to receive(:close)
       expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 105.1)
       expect(IO).to receive(:select).with(nil, [sock], nil, 5.0).and_return(nil)
 
       expect { transport.write("test data") }.to raise_error(Thrift::TransportException) do |e|
         expect(e.type).to eq(Thrift::TransportException::TIMED_OUT)
       end
+      expect(transport).not_to be_open
     end
 
     it "should close the handle when closed" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", closed?: false)
       expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       expect(handle).to receive(:close)
@@ -101,7 +102,7 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should return true for closed? when appropriate" do
-      handle = double("TCPServer", :closed? => false)
+      handle = double("TCPServer", closed?: false)
       allow(TCPServer).to receive(:new).and_return(handle)
       @socket.listen
       expect(@socket).not_to be_closed

@@ -18,22 +18,22 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'SSLSocket' do
+describe "SSLSocket" do
   describe Thrift::SSLSocket do
     before(:each) do
       @context = OpenSSL::SSL::SSLContext.new
       @socket = Thrift::SSLSocket.new
       @addrinfo = double("Addrinfo")
-      @simple_socket_handle = double("Handle", :closed? => false)
+      @simple_socket_handle = double("Handle", closed?: false)
       allow(@simple_socket_handle).to receive(:close)
       allow(@simple_socket_handle).to receive(:setsockopt)
       allow(@simple_socket_handle).to receive(:wait_readable)
       allow(@simple_socket_handle).to receive(:wait_writable)
 
-      @handle = double("SSLHandle", :closed? => false)
+      @handle = double("SSLHandle", closed?: false)
       allow(@handle).to receive(:connect).and_return(true)
       allow(@handle).to receive(:connect_nonblock).and_return(@handle)
       allow(@handle).to receive(:close)
@@ -61,41 +61,41 @@ describe 'SSLSocket' do
     it "should open a ::Socket with default args" do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, kind_of(OpenSSL::SSL::SSLContext)).and_return(@handle)
-      expect(@handle).to receive(:hostname=).with('localhost')
+      expect(@handle).to receive(:hostname=).with("localhost")
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
       @socket.open
       expect(@socket.ssl_context.verify_mode).to eq(OpenSSL::SSL::VERIFY_PEER)
       expect(@socket.ssl_context.cert_store).to be_a(OpenSSL::X509::Store)
     end
 
     it "should accept host/port options" do
-      handle = double("Handle", :closed? => false)
+      handle = double("Handle", closed?: false)
       allow(handle).to receive(:close)
       expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0)
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(timeout: 6000).and_return(handle)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(handle, kind_of(OpenSSL::SSL::SSLContext)).and_return(@handle)
-      expect(@handle).to receive(:hostname=).with('my.domain')
+      expect(@handle).to receive(:hostname=).with("my.domain")
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).and_return(@handle)
-      expect(@handle).to receive(:post_connection_check).with('my.domain')
-      Thrift::SSLSocket.new('my.domain', 1234, 6000, nil).open
+      expect(@handle).to receive(:post_connection_check).with("my.domain")
+      Thrift::SSLSocket.new("my.domain", 1234, 6000, nil).open
     end
 
     it "should accept an optional timeout" do
-      expect(Thrift::SSLSocket.new('localhost', 8080, 5).timeout).to eq(5)
+      expect(Thrift::SSLSocket.new("localhost", 8080, 5).timeout).to eq(5)
     end
 
     it "should accept an optional context" do
-      expect(Thrift::SSLSocket.new('localhost', 8080, 5, @context).ssl_context).to eq(@context)
+      expect(Thrift::SSLSocket.new("localhost", 8080, 5, @context).ssl_context).to eq(@context)
     end
 
     it "should accept an optional server hostname" do
-      socket = Thrift::SSLSocket.new('127.0.0.1', 8080, 5, @context, server_hostname: 'service.example.com')
-      expect(socket.server_hostname).to eq('service.example.com')
+      socket = Thrift::SSLSocket.new("127.0.0.1", 8080, 5, @context, server_hostname: "service.example.com")
+      expect(socket.server_hostname).to eq("service.example.com")
     end
 
     it "should pass a supplied SSL context through unchanged" do
@@ -106,9 +106,9 @@ describe 'SSLSocket' do
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, @context).and_return(@handle)
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
-      socket = Thrift::SSLSocket.new('localhost', 9090, nil, @context)
+      socket = Thrift::SSLSocket.new("localhost", 9090, nil, @context)
       expect(socket.open).to eq(@handle)
       expect(@context.verify_mode).to eq(verify_mode)
       expect(@context.cert_store).to equal(cert_store)
@@ -122,20 +122,20 @@ describe 'SSLSocket' do
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(@simple_socket_handle, @context).and_return(@handle)
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
-      expect(Thrift::SSLSocket.new('localhost', 9090, nil, @context).open).to eq(@handle)
+      expect(Thrift::SSLSocket.new("localhost", 9090, nil, @context).open).to eq(@handle)
       expect(@context.cert_store).to equal(cert_store)
     end
 
     it "should use the server hostname for SNI and certificate verification" do
       expect(Addrinfo).to receive(:foreach).with("127.0.0.1", 9090, nil, :STREAM).and_yield(@addrinfo)
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-      expect(@handle).to receive(:hostname=).with('service.example.com')
+      expect(@handle).to receive(:hostname=).with("service.example.com")
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('service.example.com')
+      expect(@handle).to receive(:post_connection_check).with("service.example.com")
 
-      Thrift::SSLSocket.new('127.0.0.1', 9090, nil, nil, server_hostname: 'service.example.com').open
+      Thrift::SSLSocket.new("127.0.0.1", 9090, nil, nil, server_hostname: "service.example.com").open
     end
 
     it "should not send SNI for an IP literal hostname" do
@@ -143,9 +143,9 @@ describe 'SSLSocket' do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(@handle).not_to receive(:hostname=)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('127.0.0.1')
+      expect(@handle).to receive(:post_connection_check).with("127.0.0.1")
 
-      Thrift::SSLSocket.new('127.0.0.1').open
+      Thrift::SSLSocket.new("127.0.0.1").open
     end
 
     it "should allow SNI to be disabled while still checking the connection host" do
@@ -153,9 +153,9 @@ describe 'SSLSocket' do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(@handle).not_to receive(:hostname=)
       expect(@handle).to receive(:connect).and_return(true)
-      expect(@handle).to receive(:post_connection_check).with('my.domain')
+      expect(@handle).to receive(:post_connection_check).with("my.domain")
 
-      Thrift::SSLSocket.new('my.domain', 9090, nil, nil, server_hostname: nil).open
+      Thrift::SSLSocket.new("my.domain", 9090, nil, nil, server_hostname: nil).open
     end
 
     it "should treat zero timeout as blocking for open and handshake" do
@@ -166,7 +166,7 @@ describe 'SSLSocket' do
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect).and_return(true)
       expect(@handle).not_to receive(:connect_nonblock)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
       expect(@socket.open).to eq(@handle)
     end
@@ -183,7 +183,7 @@ describe 'SSLSocket' do
       expect(@handle).to receive(:connect_nonblock).with(exception: false).ordered.and_return(:wait_writable)
       expect(@simple_socket_handle).to receive(:wait_writable).with(1.0).ordered.and_return(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).ordered.and_return(@handle)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
       expect(@socket.open).to eq(@handle)
     end
@@ -201,7 +201,7 @@ describe 'SSLSocket' do
       expect(@handle).to receive(:connect_nonblock).with(exception: false).ordered.and_return(:wait_readable)
       expect(@simple_socket_handle).to receive(:wait_readable).with(2.0).ordered.and_return(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).ordered.and_return(@handle)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
       expect(@socket.open).to eq(@handle)
     end
@@ -217,7 +217,7 @@ describe 'SSLSocket' do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).and_return(@handle)
-      expect(@handle).to receive(:post_connection_check).with('localhost')
+      expect(@handle).to receive(:post_connection_check).with("localhost")
 
       expect(@socket.open).to eq(@handle)
     end
@@ -276,7 +276,7 @@ describe 'SSLSocket' do
       expect(@simple_socket_handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(@handle).to receive(:sync_close=).with(true)
       expect(@handle).to receive(:connect_nonblock).with(exception: false).and_return(@handle)
-      expect(@handle).to receive(:post_connection_check).with('localhost').and_raise(StandardError.new("hostname mismatch"))
+      expect(@handle).to receive(:post_connection_check).with("localhost").and_raise(StandardError.new("hostname mismatch"))
       expect(@handle).to receive(:close)
 
       expect { @socket.open }.to raise_error(Thrift::TransportException) do |e|
@@ -308,17 +308,17 @@ describe 'SSLSocket' do
     end
 
     it "should raise IOError when to_io is called on a closed stream" do
-      expect { @socket.to_io }.to raise_error(IOError, 'closed stream')
+      expect { @socket.to_io }.to raise_error(IOError, "closed stream")
     end
 
     it "should provide a reasonable to_s" do
-      expect(Thrift::SSLSocket.new('myhost', 8090).to_s).to eq("ssl(socket(myhost:8090))")
+      expect(Thrift::SSLSocket.new("myhost", 8090).to_s).to eq("ssl(socket(myhost:8090))")
     end
   end
 
   describe "peer certificate verification" do
     before(:each) do
-      @tcp_server = TCPServer.new('127.0.0.1', 0)
+      @tcp_server = TCPServer.new("127.0.0.1", 0)
       ssl_server = OpenSSL::SSL::SSLServer.new(@tcp_server, server_context)
       @server_thread = Thread.new do
         ssl_server.accept.close
@@ -348,7 +348,7 @@ describe 'SSLSocket' do
     it "should use a configured certificate authority" do
       context = OpenSSL::SSL::SSLContext.new
       context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      context.ca_file = File.join(ssl_keys_dir, 'server.crt')
+      context.ca_file = File.join(ssl_keys_dir, "server.crt")
       @client = build_client(context)
 
       expect(@client.open).to be_a(OpenSSL::SSL::SSLSocket)
@@ -365,23 +365,23 @@ describe 'SSLSocket' do
 
     def build_client(context = nil)
       Thrift::SSLSocket.new(
-        '127.0.0.1',
+        "127.0.0.1",
         @tcp_server.local_address.ip_port,
         1,
         context,
-        server_hostname: 'localhost'
+        server_hostname: "localhost",
       )
     end
 
     def server_context
       OpenSSL::SSL::SSLContext.new.tap do |context|
-        context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, 'server.crt')))
-        context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, 'server.key')))
+        context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "server.crt")))
+        context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "server.key")))
       end
     end
 
     def ssl_keys_dir
-      File.expand_path('../../../test/keys', __dir__)
+      File.expand_path("../../../test/keys", __dir__)
     end
   end
 end

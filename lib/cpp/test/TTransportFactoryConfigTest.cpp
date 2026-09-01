@@ -250,3 +250,31 @@ BOOST_AUTO_TEST_CASE(test_header_transport_accepts_frame_within_max_frame_size) 
   BOOST_CHECK_NO_THROW(reader->readAll(&first, 1));
   BOOST_CHECK_EQUAL(first, static_cast<uint8_t>('B'));
 }
+
+// TFramedTransport has three constructors. The two that take an underlying
+// transport initialise maxFrameSize_ from the configuration; the one that takes
+// only a TConfiguration leaves it out of its member-init list entirely, so
+// getMaxFrameSize() reads an uninitialised member and the frame-size limit it
+// reports is whatever happened to be on the stack.
+//
+// Reading it is undefined, so this is not a guaranteed detector: it fails
+// whenever the indeterminate value differs from the configured limit, which is
+// to say very nearly always, but a run that happens to find the right bytes
+// there would pass. What it does state unconditionally is the contract, which
+// is that all three constructors agree.
+BOOST_AUTO_TEST_CASE(test_framed_transport_default_constructor_initialises_max_frame_size) {
+  TFramedTransport defaulted;
+  BOOST_CHECK_EQUAL(defaulted.getMaxFrameSize(),
+                    static_cast<uint32_t>(TConfiguration::DEFAULT_MAX_FRAME_SIZE));
+
+  const int kMaxFrameSize = 4096;
+  auto config
+      = std::make_shared<TConfiguration>(TConfiguration::DEFAULT_MAX_MESSAGE_SIZE, kMaxFrameSize);
+  TFramedTransport configured(config);
+  BOOST_CHECK_EQUAL(configured.getMaxFrameSize(), static_cast<uint32_t>(kMaxFrameSize));
+
+  // The constructors that take a transport already agree; pin that too, so the
+  // three cannot drift apart again.
+  TFramedTransport wrapped(std::make_shared<TMemoryBuffer>(), config);
+  BOOST_CHECK_EQUAL(wrapped.getMaxFrameSize(), static_cast<uint32_t>(kMaxFrameSize));
+}

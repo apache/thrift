@@ -84,6 +84,10 @@ add_executable(testframedtransport testframedtransport.c)
 target_link_libraries(testframedtransport thrift_c_glib)
 add_test(NAME testframedtransport COMMAND testframedtransport)
 
+add_executable(testframedreadbudget testframedreadbudget.c)
+target_link_libraries(testframedreadbudget thrift_c_glib)
+add_test(NAME testframedreadbudget COMMAND testframedreadbudget)
+
 add_executable(testfdtransport testfdtransport.c)
 target_link_libraries(testfdtransport thrift_c_glib)
 add_test(NAME testfdtransport COMMAND testfdtransport)
@@ -101,6 +105,7 @@ target_link_libraries(testmultiplexedprocessor thrift_c_glib)
 add_test(NAME testmultiplexedprocessor COMMAND testmultiplexedprocessor)
 
 add_executable(testdispatchprocessor testdispatchprocessor.c)
+target_link_libraries(testdispatchprocessor testgenc)
 target_link_libraries(testdispatchprocessor thrift_c_glib)
 add_test(NAME testdispatchprocessor COMMAND testdispatchprocessor)
 

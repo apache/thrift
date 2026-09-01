@@ -18,25 +18,19 @@
 # under the License.
 #
 
-$:.unshift File.expand_path('../../lib', __dir__)
-$:.unshift File.expand_path('../../ext', __dir__)
-require 'thrift'
+$:.unshift File.expand_path("../../lib", __dir__)
+$:.unshift File.expand_path("../../ext", __dir__)
+require "thrift"
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'fuzz_test_constants'
+require "fuzz_test_constants"
 
-require 'coverage'
+require "coverage"
 Coverage.start(branches: true) unless Coverage.respond_to?(:running?) && Coverage.running?
-require 'ruzzy'
+require "ruzzy"
 # Ruzzy.enable_branch_coverage_hooks
 
 def ignorable_fuzz_exception?(error)
-  return true if error.is_a?(Thrift::ProtocolException) ||
-    error.is_a?(EOFError)
-
-  [
-    /too big to convert to '(?:int|long)'/,
-    /bignum too big to convert into 'long'/
-  ].any? { |pattern| error.message =~ pattern }
+  error.is_a?(Thrift::ProtocolException) || error.is_a?(EOFError)
 end
 
 def read_fuzz_test(protocol, read_message_begin)
@@ -49,7 +43,7 @@ end
 
 def write_fuzz_test(protocol, obj, write_message_begin)
   if write_message_begin
-    protocol.write_message_begin('fuzz', Thrift::MessageTypes::CALL, 0)
+    protocol.write_message_begin("fuzz", Thrift::MessageTypes::CALL, 0)
   end
   obj.write(protocol)
   protocol.write_message_end if write_message_begin

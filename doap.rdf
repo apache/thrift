@@ -21,17 +21,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-  <Project rdf:about="http://thrift.apache.org">
+  <Project rdf:about="https://thrift.apache.org">
     <created>2012-04-14</created>
     <license rdf:resource="http://usefulinc.com/doap/licenses/asl20" />
     <name>Apache Thrift</name>
-    <homepage rdf:resource="http://thrift.apache.org" />
-    <asfext:pmc rdf:resource="http://thrift.apache.org" />
+    <homepage rdf:resource="https://thrift.apache.org" />
+    <asfext:pmc rdf:resource="https://thrift.apache.org" />
     <shortdesc>Apache Thrift software provides a framework for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently and seamlessly between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, JavaScript, Node.js, Smalltalk, OCaml and Delphi and other languages. </shortdesc>
     <description>Apache Thrift allows you to define data types and service interfaces in a simple definition file. Taking that file as input, the compiler generates code to be used to easily build RPC clients and servers that communicate seamlessly across programming languages. Instead of writing a load of boilerplate code to serialize and transport your objects and invoke remote methods, you can get right down to business. </description>
     <bug-database rdf:resource="https://issues.apache.org/jira/browse/THRIFT" />
-    <mailing-list rdf:resource="http://thrift.apache.org/mailing/" />
-    <download-page rdf:resource="http://thrift.apache.org/download/" />
+    <mailing-list rdf:resource="https://thrift.apache.org/mailing" />
+    <download-page rdf:resource="https://thrift.apache.org/download" />
     <programming-language>C</programming-language>
     <programming-language>C#</programming-language>
     <programming-language>C++</programming-language>
@@ -48,158 +48,217 @@
     <programming-language>Perl</programming-language>
     <programming-language>PHP</programming-language>
     <programming-language>Python</programming-language>
+    <programming-language>Ruby</programming-language>
     <programming-language>Rust</programming-language>
     <programming-language>SmallTalk</programming-language>
     <category rdf:resource="http://projects.apache.org/category/http" />
     <category rdf:resource="http://projects.apache.org/category/library" />
     <category rdf:resource="http://projects.apache.org/category/network-client" />
     <category rdf:resource="http://projects.apache.org/category/network-server" />
-    <release rdf:parseType="Collection">
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2026-07-11</created>
         <revision>0.24.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2026-04-08</created>
         <revision>0.23.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2025-05-14</created>
         <revision>0.22.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2024-09-02</created>
         <revision>0.21.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2024-02-04</created>
         <revision>0.20.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2023-07-15</created>
         <revision>0.19.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2023-02-15</created>
         <revision>0.18.1</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2023-02-06</created>
         <revision>0.18.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2022-08-30</created>
         <revision>0.17.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2022-01-20</created>
         <revision>0.16.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2021-08-03</created>
         <revision>0.15.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2021-06-11</created>
         <revision>0.14.2</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2021-03-02</created>
         <revision>0.14.1</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2021-02-04</created>
         <revision>0.14.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2019-10-11</created>
         <revision>0.13.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2018-12-28</created>
         <revision>0.12.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2017-11-30</created>
         <revision>0.11.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2017-03-01</created>
         <revision>0.10.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2015-09-25</created>
         <revision>0.9.3</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2014-11-05</created>
         <revision>0.9.2</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2013-08-22</created>
         <revision>0.9.1</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2012-10-15</created>
         <revision>0.9.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2011-11-29</created>
         <revision>0.8.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2011-08-13</created>
         <revision>0.7.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2011-04-25</created>
         <revision>0.6.1</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift</name>
         <created>2011-02-08</created>
         <revision>0.6.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift (incubating)</name>
         <created>2010-10-07</created>
         <revision>0.5.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift (incubating)</name>
         <created>2010-08-23</created>
         <revision>0.4.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift (incubating)</name>
         <created>2010-08-04</created>
         <revision>0.3.0</revision>
       </Version>
+    </release>
+    <release>
       <Version>
         <name>Apache Thrift (incubating)</name>
         <created>2009-12-11</created>
@@ -215,7 +274,7 @@
     <maintainer>
       <foaf:Person>
         <foaf:name>Apache Thrift PMC</foaf:name>
-          <foaf:mbox rdf:resource="mailto:dev@thrift.apache.org"/>
+        <foaf:mbox rdf:resource="mailto:dev@thrift.apache.org"/>
       </foaf:Person>
     </maintainer>
   </Project>

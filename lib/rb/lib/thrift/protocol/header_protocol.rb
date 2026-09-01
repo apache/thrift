@@ -265,12 +265,16 @@ module Thrift
       @protocol.read_binary
     end
 
+    def skip_string
+      @protocol.skip_string
+    end
+
     def read_uuid
       @protocol.read_uuid
     end
 
     def to_s
-      "header(#{@protocol.to_s})"
+      "header(#{@protocol})"
     end
 
     private
@@ -300,7 +304,7 @@ module Thrift
       else
         raise ProtocolException.new(
           ProtocolException::INVALID_DATA,
-          "Unknown protocol ID: #{protocol_id}"
+          "Unknown protocol ID: #{protocol_id}",
         )
       end
     end

@@ -56,6 +56,11 @@ module Thrift
 
     def close; end
 
+    # Returns true when the transport needs protocol message boundary notifications.
+    def message_boundaries?
+      false
+    end
+
     # Reads a number of bytes from the transports. The String returned will have a BINARY (aka ASCII-8BIT) encoding.
     #
     # sz - The number of bytes to read from the transport.
@@ -68,7 +73,7 @@ module Thrift
     # Returns an unsigned byte as a Integer in the range (0..255).
     def read_byte
       buf = read_all(1)
-      return Bytes.get_string_byte(buf, 0)
+      Bytes.get_string_byte(buf, 0)
     end
 
     # Reads size bytes and copies them into buffer[0..size].
@@ -83,12 +88,25 @@ module Thrift
     end
 
     def read_all(size)
-      raise TransportException.new(TransportException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      raise TransportException.new(TransportException::NEGATIVE_SIZE, "Negative size") unless size >= 0
       return Bytes.empty_byte_buffer if size == 0
-      buf = Bytes.force_binary_encoding(read(size))
+
+      buf = read(size)
+      if buf.nil? || buf.empty?
+        raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
+      end
+
+      buf = Bytes.force_binary_encoding(buf)
+      return buf if buf.length >= size
+
+      buf = buf.dup if buf.frozen?
       while (buf.length < size)
         chunk = read(size - buf.length)
-        buf << chunk
+        if chunk.nil? || chunk.empty?
+          raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
+        end
+
+        buf << Bytes.force_binary_encoding(chunk)
       end
 
       buf
@@ -111,7 +129,7 @@ module Thrift
 
   class BaseTransportFactory
     def get_transport(trans)
-      return trans
+      trans
     end
 
     def to_s

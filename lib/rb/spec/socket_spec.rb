@@ -18,15 +18,15 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-describe 'Socket' do
+describe "Socket" do
   describe Thrift::Socket do
     before(:each) do
       @socket = Thrift::Socket.new
       @addrinfo = double("Addrinfo")
-      @handle = double("Handle", :closed? => false)
+      @handle = double("Handle", closed?: false)
       allow(@handle).to receive(:close)
       allow(@handle).to receive(:setsockopt)
       allow(@addrinfo).to receive(:connect).and_return(@handle)
@@ -48,14 +48,13 @@ describe 'Socket' do
       expect(Addrinfo).to receive(:foreach).with("localhost", 9090, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(no_args).and_return(@handle)
       expect(@handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
-      @socket.to_s == "socket(localhost:9090)"
       @socket.open
     end
 
     it "should reject a second open without orphaning the live connection" do
       allow(Addrinfo).to receive(:foreach).and_call_original
-      server = TCPServer.new('127.0.0.1', 0)
-      socket = Thrift::Socket.new('127.0.0.1', server.addr[1])
+      server = TCPServer.new("127.0.0.1", 0)
+      socket = Thrift::Socket.new("127.0.0.1", server.addr[1])
       peer = nil
 
       socket.open
@@ -68,7 +67,7 @@ describe 'Socket' do
       expect(socket.handle).to equal(first_handle)
 
       socket.close
-      expect(peer.read).to eq('')
+      expect(peer.read).to eq("")
     ensure
       socket&.close
       first_handle&.close unless first_handle&.closed?
@@ -77,21 +76,21 @@ describe 'Socket' do
     end
 
     it "should accept host/port options" do
-      handle = double("Handle", :closed? => false)
+      handle = double("Handle", closed?: false)
       allow(handle).to receive(:close)
       expect(handle).to receive(:setsockopt).with(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
       expect(Addrinfo).to receive(:foreach).with("my.domain", 1234, nil, :STREAM).and_yield(@addrinfo)
       expect(@addrinfo).to receive(:connect).with(no_args).and_return(handle)
-      @socket = Thrift::Socket.new('my.domain', 1234).open
+      @socket = Thrift::Socket.new("my.domain", 1234).open
       @socket.to_s == "socket(my.domain:1234)"
     end
 
     it "should accept an optional timeout" do
-      expect(Thrift::Socket.new('localhost', 8080, 5).timeout).to eq(5)
+      expect(Thrift::Socket.new("localhost", 8080, 5).timeout).to eq(5)
     end
 
     it "should provide a reasonable to_s" do
-      expect(Thrift::Socket.new('myhost', 8090).to_s).to eq("socket(myhost:8090)")
+      expect(Thrift::Socket.new("myhost", 8090).to_s).to eq("socket(myhost:8090)")
     end
 
     it "should pass the remaining timeout to each address attempt" do
@@ -173,7 +172,7 @@ describe 'Socket' do
     it "should close a connected candidate before falling back when socket setup fails" do
       first_addrinfo = @addrinfo
       second_addrinfo = double("Addrinfo")
-      first_handle = double("Handle", :closed? => false)
+      first_handle = double("Handle", closed?: false)
       allow(first_handle).to receive(:close)
 
       expect(Addrinfo).to receive(:foreach).with("localhost", 9090, nil, :STREAM).and_yield(first_addrinfo).and_yield(second_addrinfo)
@@ -193,6 +192,27 @@ describe 'Socket' do
         expect(e.type).to eq(Thrift::TransportException::NOT_OPEN)
         expect(e.message).to eq("Could not connect to localhost:9090")
       end
+    end
+
+    it "should close the descriptor and notify its peer after a partial read timeout" do
+      local, peer = ::Socket.pair(:UNIX, :STREAM, 0)
+      socket = Thrift::Socket.new
+      socket.handle = local
+      socket.timeout = 1
+      peer.write("A")
+
+      expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 101.0)
+
+      expect { socket.read_all(2) }.to raise_error(Thrift::TransportException) { |error|
+        expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
+      }
+      expect(socket).not_to be_open
+      expect(IO.select([peer], nil, nil, 1)).not_to be_nil
+      expect(peer.read).to eq("")
+    ensure
+      socket&.close
+      local&.close unless local&.closed?
+      peer&.close
     end
   end
 end

@@ -18,9 +18,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-require File.expand_path('../../test_helper', __dir__)
-require 'thrift'
-require 'thread'
+require File.expand_path("../../test_helper", __dir__)
+require "thrift"
+require "thread"
 
 class TestJsonProtocol < Test::Unit::TestCase
   def test_different_data_types
@@ -108,7 +108,7 @@ class TestJsonProtocol < Test::Unit::TestCase
 
     server_ready.pop
 
-    socket = Thrift::Socket.new('localhost', port)
+    socket = Thrift::Socket.new("localhost", port)
     transport = Thrift::BufferedTransport.new(socket)
     transport.open
     protocol = Thrift::JsonProtocol.new(transport)
@@ -134,7 +134,7 @@ class TestJsonProtocol < Test::Unit::TestCase
     transport.flush
 
     # acc_message
-    protocol.write_message_begin('hello_world', 4, 455536)
+    protocol.write_message_begin("hello_world", 4, 455536)
     protocol.write_message_end
     transport.flush
 
@@ -208,7 +208,7 @@ class TestJsonProtocol < Test::Unit::TestCase
     protocol.write_json_object_start
     val = (0...256).reverse_each.to_a
     # acc_binary
-    protocol.write_binary(val.pack('C*'))
+    protocol.write_binary(val.pack("C*"))
     protocol.write_json_object_end
     transport.flush
 
@@ -219,12 +219,12 @@ class TestJsonProtocol < Test::Unit::TestCase
     assert_equal('hello_world12233!@#$%', server_results[:acc_json_base64])
     assert_equal(2553369689, server_results[:acc_json_integer])
     assert_equal(3.1415926, server_results[:acc_json_double])
-    assert_equal("[\"hello_world\", 4, 455536]", "#{server_results[:acc_message]}")
+    assert_equal("[\"hello_world\", 4, 455536]", server_results[:acc_message].to_s)
     assert_equal([nil, 6, 5], server_results[:acc_field])
-    assert_equal("[6, 8, 12]", "#{server_results[:acc_map]}")
-    assert_equal("[6, 8, 0]", "#{server_results[:acc_map2]}")
-    assert_equal("[8, 12]", "#{server_results[:acc_list]}")
-    assert_equal("[8, 5]", "#{server_results[:acc_set]}")
+    assert_equal("[6, 8, 12]", server_results[:acc_map].to_s)
+    assert_equal("[6, 8, 0]", server_results[:acc_map2].to_s)
+    assert_equal("[8, 12]", server_results[:acc_list].to_s)
+    assert_equal("[8, 5]", server_results[:acc_set].to_s)
     assert_equal(true, server_results[:acc_bool])
     assert_equal(123, server_results[:acc_byte])
     assert_equal(4203, server_results[:acc_i16])

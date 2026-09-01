@@ -27,7 +27,7 @@ clients and services.
 
 ## Compatibility
 
-- Ruby MRI >= 2.7 (tested against current supported releases).
+- Ruby MRI >= 3.0 (tested against current supported releases).
 - JRuby works with the pure-Ruby implementation; the native extension is
   skipped automatically.
 - For the repo-wide transport, protocol, and server support matrix, see
@@ -36,7 +36,7 @@ clients and services.
 
 ## Installation
 
-- Requirements: Ruby >= 2.7.
+- Requirements: Ruby >= 3.0.
 - From RubyGems: `gem install thrift`
 - From source: `bundle install`, `gem build thrift.gemspec`, then install the
   resulting `thrift-*.gem`. The native accelerator is built when the gem is
@@ -144,6 +144,11 @@ mount Thrift::RackApplication.new(processor) => "/thrift"
 
 ### 0.25.0
 
+Ruby 2.7 support has been removed because the runtime reached end of life on
+March 31, 2023. The Thrift gem now requires Ruby 3.0 or newer. Applications
+still running Ruby 2.7 must upgrade Ruby before installing Thrift 0.25.0 or
+remain on an earlier Thrift release.
+
 Ruby HTTP servers now share one Rack endpoint. Run `Thrift::RackApplication`
 as a Rack app, or mount it at one path in an app such as Rails. The
 cross-language HTTP tests now cover Puma and Falcon.
@@ -168,6 +173,18 @@ certificate must still match the connection hostname.
 `Thrift::Socket#open` now raises
 `Thrift::TransportException::ALREADY_OPEN` when the TCP transport is already
 open. Close the transport before opening it again.
+
+Ruby struct, union, and exception serialization methods now accept an optional
+remaining struct depth: `read(protocol, depth = 64)` and
+`write(protocol, depth = 64)`.
+Unknown and mismatched fields remain independently bounded by
+`Thrift::BaseProtocol#skip`. The `write_field` and `write_type` helpers accept
+an optional `remaining_depth`: custom writers must use
+`write_field(field_info, fid, value, remaining_depth)` or
+`write_type(field_info, value, remaining_depth)` for struct values. Custom
+protocols and custom struct, union, or exception serialization overrides with
+exact argument counts must accept and forward the optional depth argument (or
+use `*args`) before upgrading.
 
 ### 0.24.0
 

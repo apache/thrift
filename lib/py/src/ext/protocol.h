@@ -21,6 +21,7 @@
 #define THRIFT_PY_PROTOCOL_H
 
 #include "ext/types.h"
+#include <algorithm>
 #include <limits>
 #include <stdint.h>
 
@@ -59,6 +60,10 @@ public:
   bool checkDepthLimit();
   void decrementDepth() { recursionDepth_--; }
 
+  // Ceiling on the initial container allocation when the decode buffer cannot
+  // say how much input is left, which is the case for Python 2's cStringIO.
+  static const int32_t kMaxInitialContainerSize = 1024;
+
 protected:
   bool readBytes(char** output, int len);
 
@@ -81,6 +86,7 @@ protected:
 
   inline bool checkType(TType got, TType expected);
   inline bool checkLengthLimit(int32_t len, long limit);
+  inline int32_t initialContainerSize(int32_t declared);
 
   inline bool isUtf8(PyObject* typeargs);
 

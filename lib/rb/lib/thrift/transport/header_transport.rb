@@ -19,8 +19,8 @@
 # under the License.
 #
 
-require 'stringio'
-require 'zlib'
+require "stringio"
+require "zlib"
 
 module Thrift
   # Client type constants for Header protocol
@@ -77,9 +77,6 @@ module Thrift
     # Default decompressed-size cap for ZLIB transform (~15.6 MB, matches other Thrift bindings)
     DEFAULT_MAX_DECOMPRESSED_SIZE = 16_384_000
 
-    # Chunk size for streaming inflate loop
-    ZLIB_INFLATE_CHUNK_SIZE = 16_384
-
     # Binary protocol version mask and version 1
     BINARY_VERSION_MASK = 0xffff0000
     BINARY_VERSION_1 = 0x80010000
@@ -109,7 +106,7 @@ module Thrift
         HeaderClientType::FRAMED_BINARY,
         HeaderClientType::UNFRAMED_BINARY,
         HeaderClientType::FRAMED_COMPACT,
-        HeaderClientType::UNFRAMED_COMPACT
+        HeaderClientType::UNFRAMED_COMPACT,
       ]
 
       @read_buffer = StringIO.new(Bytes.empty_byte_buffer)
@@ -123,6 +120,7 @@ module Thrift
       @flags = 0
       @max_frame_size = MAX_FRAME_SIZE
       @max_decompressed_size = DEFAULT_MAX_DECOMPRESSED_SIZE
+      @unframed_bytes_read = 0
     end
 
     def sequence_id=(sequence_id)
@@ -210,7 +208,7 @@ module Thrift
       # Handle unframed passthrough - read directly from underlying transport
       if @client_type == HeaderClientType::UNFRAMED_BINARY ||
          @client_type == HeaderClientType::UNFRAMED_COMPACT
-        return data + @transport.read(bytes_left)
+        return data + read_unframed(bytes_left)
       end
 
       # Need to read the next frame
@@ -228,16 +226,15 @@ module Thrift
       @write_buffer = StringIO.new(Bytes.empty_byte_buffer)
 
       return if payload.empty?
-      if payload.bytesize > @max_frame_size
-        raise TransportException.new(TransportException::UNKNOWN, "Attempting to send frame that is too large")
-      end
 
       case @client_type
       when HeaderClientType::HEADERS
         flush_header_format(payload)
       when HeaderClientType::FRAMED_BINARY, HeaderClientType::FRAMED_COMPACT
+        validate_frame_size!(payload.bytesize)
         flush_framed(payload)
       when HeaderClientType::UNFRAMED_BINARY, HeaderClientType::UNFRAMED_COMPACT
+        validate_frame_size!(payload.bytesize)
         @transport.write(payload)
         @transport.flush
       else
@@ -246,7 +243,7 @@ module Thrift
     end
 
     def to_s
-      "header(#{@transport.to_s})"
+      "header(#{@transport})"
     end
 
     # Reads the next frame to detect protocol/client type before decoding.
@@ -254,6 +251,17 @@ module Thrift
       return unless @read_buffer.nil? || @read_buffer.eof?
 
       read_frame(0)
+    end
+
+    def message_boundaries?
+      true
+    end
+
+    # Starts a new protocol message without forcing client-type detection.
+    def reset_message_size
+      return unless @read_buffer.nil? || @read_buffer.eof?
+
+      @unframed_bytes_read = 0
     end
 
     private
@@ -268,9 +276,16 @@ module Thrift
 
     # Reads the next frame, detecting client type on first read
     def read_frame(req_sz)
+      @read_headers = {}
+      @unframed_bytes_read = 0
+
       # Read first 4 bytes - could be frame length or protocol magic
-      first_word = @transport.read_all(4)
-      frame_size = first_word.unpack('N').first
+      begin
+        first_word = @transport.read_all(4)
+      rescue EOFError
+        raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame size")
+      end
+      frame_size = first_word.unpack1("N")
 
       # Check for unframed binary protocol
       if (frame_size & BINARY_VERSION_MASK) == BINARY_VERSION_1
@@ -293,16 +308,23 @@ module Thrift
       if frame_size > @max_frame_size
         raise TransportException.new(TransportException::UNKNOWN, "Frame size #{frame_size} exceeds maximum #{@max_frame_size}")
       end
+      if frame_size < 4
+        raise TransportException.new(TransportException::UNKNOWN, "Frame size #{frame_size} is too small")
+      end
 
       # Read the complete frame
-      frame_data = @transport.read_all(frame_size)
+      begin
+        frame_data = @transport.read_all(frame_size)
+      rescue EOFError
+        raise TransportException.new(TransportException::END_OF_FILE, "Unexpected EOF reading frame")
+      end
       frame_buf = StringIO.new(frame_data)
 
       # Check the second word for protocol type
       second_word = frame_buf.read(4)
       frame_buf.rewind
 
-      magic = second_word.unpack('n').first
+      magic = second_word.unpack1("n")
 
       if magic == HEADER_MAGIC
         if frame_size < 10
@@ -310,7 +332,7 @@ module Thrift
         end
         set_client_type(HeaderClientType::HEADERS)
         @read_buffer = parse_header_format(frame_buf)
-      elsif (second_word.unpack('N').first & BINARY_VERSION_MASK) == BINARY_VERSION_1
+      elsif (second_word.unpack1("N") & BINARY_VERSION_MASK) == BINARY_VERSION_1
         set_client_type(HeaderClientType::FRAMED_BINARY)
         @protocol_id = HeaderSubprotocolID::BINARY
         @read_buffer = frame_buf
@@ -326,13 +348,32 @@ module Thrift
 
     # Handles unframed protocol - puts first_word back in buffer
     def handle_unframed(first_word, req_sz)
+      @unframed_bytes_read = first_word.bytesize
+      raise_unframed_size_limit if @unframed_bytes_read > @max_frame_size
+
       bytes_left = req_sz - 4
-      if bytes_left > 0
-        rest = @transport.read(bytes_left)
+      if bytes_left > 0 && @unframed_bytes_read < @max_frame_size
+        rest = read_unframed(bytes_left)
         @read_buffer = StringIO.new(first_word + rest)
       else
         @read_buffer = StringIO.new(first_word)
       end
+    end
+
+    def read_unframed(size)
+      remaining = @max_frame_size - @unframed_bytes_read
+      raise_unframed_size_limit if remaining <= 0
+
+      data = @transport.read([size, remaining].min)
+      @unframed_bytes_read += data.bytesize
+      data
+    end
+
+    def raise_unframed_size_limit
+      raise TransportException.new(
+        TransportException::SIZE_LIMIT,
+        "Unframed message size exceeds maximum #{@max_frame_size}",
+      )
     end
 
     # Parses a Header format frame
@@ -341,11 +382,11 @@ module Thrift
       buf.read(2)
 
       # Read flags and sequence ID
-      @flags = buf.read(2).unpack('n').first
-      @sequence_id = signed_int32(buf.read(4).unpack('N').first)
+      @flags = buf.read(2).unpack1("n")
+      @sequence_id = signed_int32(buf.read(4).unpack1("N"))
 
       # Read header length (in 32-bit words)
-      header_words = buf.read(2).unpack('n').first
+      header_words = buf.read(2).unpack1("n")
       if header_words >= 16_384
         raise TransportException.new(TransportException::UNKNOWN, "Header size is unreasonable")
       end
@@ -370,7 +411,6 @@ module Thrift
         transforms << transform_id
       end
       # Read info headers
-      @read_headers = {}
       while buf.pos < end_of_headers
         info_type = read_varint32(buf, end_of_headers)
         if info_type == 0
@@ -408,26 +448,22 @@ module Thrift
     def bounded_inflate(compressed)
       inflater = Zlib::Inflate.new
       buffer = Bytes.empty_byte_buffer
-      offset = 0
-      begin
-        while offset < compressed.bytesize
-          buffer << inflater.inflate(compressed.byteslice(offset, ZLIB_INFLATE_CHUNK_SIZE))
-          if buffer.bytesize > @max_decompressed_size
-            raise TransportException.new(
-              TransportException::SIZE_LIMIT,
-              "Decompressed size exceeds limit of #{@max_decompressed_size}"
-            )
-          end
-          offset += ZLIB_INFLATE_CHUNK_SIZE
-        end
-        buffer << inflater.finish
-        if buffer.bytesize > @max_decompressed_size
+      append_chunk = lambda do |chunk|
+        if buffer.bytesize + chunk.bytesize > @max_decompressed_size
           raise TransportException.new(
             TransportException::SIZE_LIMIT,
-            "Decompressed size exceeds limit of #{@max_decompressed_size}"
+            "Decompressed size exceeds limit of #{@max_decompressed_size}",
           )
         end
+
+        buffer << chunk
+      end
+      begin
+        inflater.inflate(compressed, &append_chunk)
+        inflater.finish(&append_chunk)
         buffer
+      rescue Zlib::DataError, Zlib::BufError
+        raise TransportException.new(TransportException::UNKNOWN, "Invalid ZLIB payload")
       ensure
         inflater.close rescue nil
       end
@@ -460,7 +496,6 @@ module Thrift
           write_varstring(header_buf, key)
           write_varstring(header_buf, value)
         end
-        @write_headers = {}
       end
 
       # Pad header to 4-byte boundary
@@ -471,14 +506,16 @@ module Thrift
       # Calculate total frame size (excludes the 4-byte length field itself)
       # Frame = magic(2) + flags(2) + seqid(4) + header_len(2) + header_data + payload
       frame_size = 2 + 2 + 4 + 2 + header_data.bytesize + payload.bytesize
+      validate_frame_size!(frame_size)
+      @write_headers = {}
 
       # Write complete frame
       frame = Bytes.empty_byte_buffer
-      frame << [frame_size].pack('N')               # Length
-      frame << [HEADER_MAGIC].pack('n')             # Magic
-      frame << [@flags].pack('n')                   # Flags
-      frame << [unsigned_int32(@sequence_id)].pack('N') # Sequence ID
-      frame << [header_data.bytesize / 4].pack('n') # Header length (in 32-bit words)
+      frame << [frame_size].pack("N")               # Length
+      frame << [HEADER_MAGIC].pack("n")             # Magic
+      frame << [@flags].pack("n")                   # Flags
+      frame << [unsigned_int32(@sequence_id)].pack("N") # Sequence ID
+      frame << [header_data.bytesize / 4].pack("n") # Header length (in 32-bit words)
       frame << header_data                          # Header data
       frame << payload                              # Payload
 
@@ -486,9 +523,18 @@ module Thrift
       @transport.flush
     end
 
+    def validate_frame_size!(frame_size)
+      return if frame_size <= @max_frame_size
+
+      raise TransportException.new(
+        TransportException::UNKNOWN,
+        "Frame size #{frame_size} exceeds maximum #{@max_frame_size}",
+      )
+    end
+
     # Flushes data in simple framed format (for legacy compatibility)
     def flush_framed(payload)
-      frame = [payload.bytesize].pack('N') + payload
+      frame = [payload.bytesize].pack("N") + payload
       @transport.write(frame)
       @transport.flush
     end
@@ -523,10 +569,10 @@ module Thrift
     def write_varint32(io, n)
       loop do
         if (n & ~0x7F) == 0
-          io.write([n].pack('C'))
+          io.write([n].pack("C"))
           break
         else
-          io.write([(n & 0x7F) | 0x80].pack('C'))
+          io.write([(n & 0x7F) | 0x80].pack("C"))
           n >>= 7
         end
       end

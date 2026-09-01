@@ -17,11 +17,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-require 'thrift/protocol/protocol_decorator'
+require "thrift/protocol/protocol_decorator"
 
 module Thrift
   class MultiplexedProtocol < BaseProtocol
-
     include ProtocolDecorator
 
     def initialize(protocol, service_name)

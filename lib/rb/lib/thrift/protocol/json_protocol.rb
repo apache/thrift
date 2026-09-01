@@ -34,7 +34,7 @@ module Thrift
         @data = @trans.read(1)
       end
 
-      return @data
+      @data
     end
 
     def peek
@@ -42,7 +42,7 @@ module Thrift
         @data = @trans.read(1)
       end
       @hasData = true
-      return @data
+      @data
     end
   end
 
@@ -51,7 +51,7 @@ module Thrift
   # implementations
   #
   class JSONContext
-    @@kJSONElemSeparator = ','
+    @@kJSONElemSeparator = ","
     #
     # Write context data to the trans. Default is to do nothing.
     #
@@ -69,13 +69,13 @@ module Thrift
     # Default behavior is to return false.
     #
     def escapeNum
-      return false
+      false
     end
   end
 
   # Context class for object member key-value pairs
   class JSONPairContext < JSONContext
-    @@kJSONPairSeparator = ':'
+    @@kJSONPairSeparator = ":"
 
     def initialize
       @first = true
@@ -83,7 +83,7 @@ module Thrift
     end
 
     def write(trans)
-      if (@first)
+      if @first
         @first = false
         @colon = true
       else
@@ -93,7 +93,7 @@ module Thrift
     end
 
     def read(reader)
-      if (@first)
+      if @first
         @first = false
         @colon = true
       else
@@ -105,19 +105,18 @@ module Thrift
 
     # Numbers must be turned into strings if they are the key part of a pair
     def escapeNum
-      return @colon
+      @colon
     end
   end
 
   # Context class for lists
   class JSONListContext < JSONContext
-
     def initialize
       @first = true
     end
 
     def write(trans)
-      if (@first)
+      if @first
         @first = false
       else
         trans.write(@@kJSONElemSeparator)
@@ -125,7 +124,7 @@ module Thrift
     end
 
     def read(reader)
-      if (@first)
+      if @first
         @first = false
       else
         JsonProtocol::read_syntax_char(reader, @@kJSONElemSeparator)
@@ -134,13 +133,12 @@ module Thrift
   end
 
   class JsonProtocol < BaseProtocol
-
-    @@kJSONObjectStart = '{'
-    @@kJSONObjectEnd = '}'
-    @@kJSONArrayStart = '['
-    @@kJSONArrayEnd = ']'
+    @@kJSONObjectStart = "{"
+    @@kJSONObjectEnd = "}"
+    @@kJSONArrayStart = "["
+    @@kJSONArrayEnd = "]"
     @@kJSONNewline = '\n'
-    @@kJSONBackslash = '\\'
+    @@kJSONBackslash = "\\"
     @@kJSONStringDelimiter = '"'
 
     @@kThriftVersion1 = 1
@@ -213,17 +211,17 @@ module Thrift
     def self.read_syntax_char(reader, ch)
       ch2 = reader.read
       if (ch2 != ch)
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected \'#{ch}\' got \'#{ch2}\'.")
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected '#{ch}' got '#{ch2}'.")
       end
     end
 
-   # Return true if the character ch is in [-+0-9.Ee]; false otherwise
+    # Return true if the character ch is in [-+0-9.Ee]; false otherwise
     def is_json_numeric(ch)
       case ch
-      when '+', '-', '.', '0' .. '9', 'E', "e"
-        return true
+      when "+", "-", ".", "0".."9", "E", "e"
+        true
       else
-        return false
+        false
       end
     end
 
@@ -243,7 +241,7 @@ module Thrift
       if (ch_value.kind_of? String)
         ch_value = ch.bytes.first
       end
-      trans.write(ch_value.to_s(16).rjust(4, '0'))
+      trans.write(ch_value.to_s(16).rjust(4, "0"))
     end
 
     # Write the character ch as part of a JSON string, escaping as appropriate.
@@ -253,10 +251,10 @@ module Thrift
       # 1 : just output index
       # <other> : escape using "\<other>" notation
       kJSONCharTable = [
-          # 0 1 2 3 4 5 6 7 8 9 A B C D E F
-          0, 0, 0, 0, 0, 0, 0, 0, 'b', 't', 'n', 0, 'f', 'r', 0, 0, # 0
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
-          1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
+        # 0 1 2 3 4 5 6 7 8 9 A B C D E F
+        0, 0, 0, 0, 0, 0, 0, 0, "b", "t", "n", 0, "f", "r", 0, 0, # 0
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, # 1
+        1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
       ]
 
       ch_value = ch[0]
@@ -300,7 +298,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      trans.write([str].pack('m0'))
+      trans.write([str].pack("m0"))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -309,11 +307,11 @@ module Thrift
     def write_json_integer(num)
       @context.write(trans)
       escapeNum = @context.escapeNum
-      if (escapeNum)
+      if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
       trans.write(num.to_s);
-      if (escapeNum)
+      if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
     end
@@ -324,10 +322,10 @@ module Thrift
       @context.write(trans)
       # Normalize output of thrift::to_string for NaNs and Infinities
       special = false;
-      if (num.nan?)
+      if num.nan?
         special = true;
         val = @@kThriftNan;
-      elsif (num.infinite?)
+      elsif num.infinite?
         special = true;
         val = @@kThriftInfinity;
         if (num < 0.0)
@@ -338,11 +336,11 @@ module Thrift
       end
 
       escapeNum = special || @context.escapeNum
-      if (escapeNum)
+      if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
       trans.write(val)
-      if (escapeNum)
+      if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
     end
@@ -486,16 +484,16 @@ module Thrift
       if code_unit.between?(0xD800, 0xDBFF)
         slash = @reader.read
         marker = @reader.read
-        invalid_unicode!("Unpaired UTF-16 high surrogate") unless slash == '\\' && marker == 'u'
+        invalid_unicode!("Unpaired UTF-16 high surrogate") unless slash == "\\" && marker == "u"
 
         low_surrogate = read_unicode_code_unit
         invalid_unicode!("Unpaired UTF-16 high surrogate") unless low_surrogate.between?(0xDC00, 0xDFFF)
         codepoint = 0x10000 + ((code_unit - 0xD800) << 10) + (low_surrogate - 0xDC00)
-        [codepoint].pack('U')
+        [codepoint].pack("U")
       elsif code_unit.between?(0xDC00, 0xDFFF)
         invalid_unicode!("Unpaired UTF-16 low surrogate")
       else
-        [code_unit].pack('U')
+        [code_unit].pack("U")
       end
     rescue EOFError
       invalid_unicode!("Incomplete Unicode escape")
@@ -504,14 +502,13 @@ module Thrift
     # Decodes a JSON string, including unescaping, and returns the string via str
     def read_json_string(skipContext = false)
       # This string's characters must match up with the elements in escape_char_vals.
-      # I don't have '/' on this list even though it appears on www.json.org --
-      # it is not in the RFC -> it is. See RFC 4627
+      # JSON permits the optional solidus escape "\/"; see RFC 8259, section 7.
       escape_chars = "\"\\/bfnrt"
 
       # The elements of this array must match up with the sequence of characters in
       # escape_chars
       escape_char_vals = [
-        "\"", "\\", "\/", "\b", "\f", "\n", "\r", "\t",
+        "\"", "\\", "/", "\b", "\f", "\n", "\r", "\t",
       ]
 
       if !skipContext
@@ -519,19 +516,19 @@ module Thrift
       end
       read_json_syntax_char(@@kJSONStringDelimiter)
       str = Bytes.empty_byte_buffer
-      while (true)
+      while true
         ch = @reader.read
         if (ch == @@kJSONStringDelimiter)
           break
         end
         if (ch == @@kJSONBackslash)
           ch = @reader.read
-          if (ch == 'u')
+          if (ch == "u")
             ch = read_json_escape_char
           else
             pos = escape_chars.index(ch);
-            if (pos.nil?) # not found
-              raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected control char, got \'#{ch}\'.")
+            if pos.nil? # not found
+              raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected control char, got '#{ch}'.")
             end
             ch = escape_char_vals[pos]
           end
@@ -548,32 +545,36 @@ module Thrift
       if m != 0
         # Add missing padding
         (4 - m).times do
-          str += '='
+          str += "="
         end
       end
-      str.unpack1('m0')
+      begin
+        str.unpack1("m0")
+      rescue ArgumentError
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid Base64 data")
+      end
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
     # a valid JSON numeric character.
     def read_json_numeric_chars
       str = String.new(encoding: Encoding::UTF_8)
-      while (true)
+      while true
         ch = @reader.peek
-        if (!is_json_numeric(ch))
+        if !is_json_numeric(ch)
           break;
         end
         ch = @reader.read
         str << ch
       end
-      return str
+      str
     end
 
     # Reads a sequence of characters and assembles them into a number,
     # returning them via num
     def read_json_integer
       @context.read(@reader)
-      if (@context.escapeNum)
+      if @context.escapeNum
         read_json_syntax_char(@@kJSONStringDelimiter)
       end
       str = read_json_numeric_chars
@@ -584,11 +585,11 @@ module Thrift
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
       end
 
-      if (@context.escapeNum)
+      if @context.escapeNum
         read_json_syntax_char(@@kJSONStringDelimiter)
       end
 
-      return num
+      num
     end
 
     # Reads a JSON number or string and interprets it as a double.
@@ -599,13 +600,13 @@ module Thrift
         str = read_json_string(true)
         # Check for NaN, Infinity and -Infinity
         if (str == @@kThriftNan)
-          num = (+1.0/0.0)/(+1.0/0.0)
+          num = (+1.0 / 0.0) / (+1.0 / 0.0)
         elsif (str == @@kThriftInfinity)
-          num = +1.0/0.0
+          num = +1.0 / 0.0
         elsif (str == @@kThriftNegativeInfinity)
-          num = -1.0/0.0
+          num = -1.0 / 0.0
         else
-          if (!@context.escapeNum)
+          if !@context.escapeNum
             # Raise exception -- we should not be in a string in this case
             raise ProtocolException.new(ProtocolException::INVALID_DATA, "Numeric data unexpectedly quoted")
           end
@@ -616,7 +617,7 @@ module Thrift
           end
         end
       else
-        if (@context.escapeNum)
+        if @context.escapeNum
           # This will throw - we should have had a quote if escapeNum == true
           read_json_syntax_char(@@kJSONStringDelimiter)
         end
@@ -627,7 +628,7 @@ module Thrift
           raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
         end
       end
-      return num
+      num
     end
 
     def read_json_object_start
@@ -660,7 +661,7 @@ module Thrift
       read_json_array_start
       version = read_json_integer
       if (version != @@kThriftVersion1)
-        raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Message contained bad version.')
+        raise ProtocolException.new(ProtocolException::BAD_VERSION, "Message contained bad version.")
       end
       name = read_json_string
       message_type = read_json_integer
@@ -772,15 +773,18 @@ module Thrift
       read_json_base64
     end
 
+    def skip_string
+      read_string
+    end
+
     def read_uuid
       uuid = read_json_string
-      raise EOFError.new if uuid.length < 36
       UUID.validate_uuid!(uuid)
       uuid.tap(&:downcase!)
     end
 
     def to_s
-      "json(#{super.to_s})"
+      "json(#{super})"
     end
 
     private
@@ -821,7 +825,7 @@ module Thrift
 
   class JsonProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
-      return Thrift::JsonProtocol.new(trans)
+      Thrift::JsonProtocol.new(trans)
     end
 
     def to_s

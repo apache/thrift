@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
-describe 'BaseTransport' do
+describe "BaseTransport" do
   describe Thrift::TransportException do
     it "should make type accessible" do
       exc = Thrift::TransportException.new(Thrift::TransportException::ALREADY_OPEN, "msg")
@@ -40,12 +40,68 @@ describe 'BaseTransport' do
 
     it "should coerce reads to binary encoding" do
       transport = Thrift::BaseTransport.new
-      expect(transport).to receive(:read).with(3).and_return(+'abc')
+      expect(transport).to receive(:read).with(3).and_return(+"abc")
 
       buf = transport.read_all(3)
 
-      expect(buf).to eq('abc')
+      expect(buf).to eq("abc")
       expect(buf.encoding).to eq(Encoding::BINARY)
+    end
+
+    it "treats an empty initial read as end of file without retrying" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(3).once.and_return(+"")
+
+      expect { transport.read_all(3) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "treats an empty read after partial progress as end of file without retrying" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return(+"ab")
+      expect(transport).to receive(:read).with(2).ordered.once.and_return(+"")
+
+      expect { transport.read_all(4) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "treats a nil read as end of file" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(1).once.and_return(nil)
+
+      expect { transport.read_all(1) }.to raise_error(Thrift::TransportException, "No more data available") do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
+    end
+
+    it "allows repeated short reads while every read makes progress" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return("a")
+      expect(transport).to receive(:read).with(3).ordered.and_return("b")
+      expect(transport).to receive(:read).with(2).ordered.and_return("c")
+      expect(transport).to receive(:read).with(1).ordered.and_return("d")
+
+      expect(transport.read_all(4)).to eq("abcd")
+    end
+
+    it "allows a frozen binary string as the first short read" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).to receive(:read).with(4).ordered.and_return("ab".b.freeze)
+      expect(transport).to receive(:read).with(2).ordered.and_return("cd")
+
+      expect(transport.read_all(4)).to eq("abcd")
+    end
+
+    it "returns an empty binary string for a zero-size read without reading" do
+      transport = Thrift::BaseTransport.new
+      expect(transport).not_to receive(:read)
+
+      result = transport.read_all(0)
+
+      expect(result).to eq("")
+      expect(result.encoding).to eq(Encoding::BINARY)
     end
 
     it "should reject negative read sizes" do
@@ -230,6 +286,22 @@ describe 'BaseTransport' do
       expect(Thrift::FramedTransport.new(@trans).read(-2)).to eq("")
     end
 
+    {
+      "read" => proc { |transport| transport.read(1) },
+      "read_byte" => proc { |transport| transport.read_byte },
+      "read_into_buffer" => proc { |transport| transport.read_into_buffer("\0".b, 1) },
+    }.each do |operation, read|
+      it "rejects a zero-length frame through #{operation}" do
+        transport = Thrift::MemoryBufferTransport.new([0].pack("N"))
+        framed_transport = Thrift::FramedTransport.new(transport)
+
+        expect { read.call(framed_transport) }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+          expect(error.message).to eq("Cannot read from a zero-length frame")
+        end
+      end
+    end
+
     it "should pull a new frame when the first is exhausted" do
       frame = "this is a frame"
       frame2 = "yet another frame"
@@ -305,12 +377,26 @@ describe 'BaseTransport' do
       expect(@buffer.to_s).to eq("memory")
     end
 
-    it "should accept a buffer on input and use it directly" do
-      s = +"this is a test"
-      @buffer = Thrift::MemoryBufferTransport.new(s)
-      expect(@buffer.read(4)).to eq("this")
-      s.slice!(-4..-1)
-      expect(@buffer.read(@buffer.available)).to eq(" is a ")
+    it "should privately own a buffer passed on input" do
+      source = +"this is a test"
+      @buffer = Thrift::MemoryBufferTransport.new(source)
+
+      expect(source.encoding).to eq(Encoding::UTF_8)
+      source.replace("caller changed")
+      @buffer.write("!")
+
+      expect(source).to eq("caller changed")
+      expect(@buffer.read(@buffer.available)).to eq("this is a test!".b)
+    end
+
+    it "should allow writes and resets after receiving a frozen buffer" do
+      @buffer = Thrift::MemoryBufferTransport.new("abc".b.freeze)
+
+      @buffer.write("d")
+      expect(@buffer.read(4)).to eq("abcd")
+
+      @buffer.reset_buffer("xy")
+      expect(@buffer.read(2)).to eq("xy")
     end
 
     it "should always remain open" do
@@ -375,10 +461,10 @@ describe 'BaseTransport' do
 
     it "should throw an EOFError when there isn't enough data in the buffer" do
       @buffer.reset_buffer("")
-      expect{ @buffer.read(1) }.to raise_error(EOFError)
+      expect { @buffer.read(1) }.to raise_error(EOFError)
 
       @buffer.reset_buffer("1234")
-      expect{ @buffer.read(5) }.to raise_error(EOFError)
+      expect { @buffer.read(5) }.to raise_error(EOFError)
     end
 
     it "should reject negative read sizes without consuming input" do
@@ -394,7 +480,7 @@ describe 'BaseTransport' do
       @buffer.reset_buffer("abcd")
 
       expect(@buffer.read(1)).to eq("a")
-      expect { @buffer.read((2**31) - 1) }.to raise_error(EOFError)
+      expect { @buffer.read(2**31) }.to raise_error(EOFError)
       expect(@buffer.available).to eq(0)
     end
 
@@ -424,7 +510,7 @@ describe 'BaseTransport' do
     end
 
     it "should not mutate or consume input when reading into a frozen buffer" do
-      ["xy".freeze, ("x" * 100).freeze].each do |destination|
+      ["xy", ("x" * 100).freeze].each do |destination|
         @buffer.reset_buffer("ab")
 
         expect { @buffer.read_into_buffer(destination, 2) }.to raise_error(FrozenError)
@@ -434,7 +520,7 @@ describe 'BaseTransport' do
     end
 
     it "should allow a zero-length read into a frozen buffer" do
-      destination = "x".freeze
+      destination = "x"
       @buffer.reset_buffer("a")
 
       expect(@buffer.read_into_buffer(destination, 0)).to eq(0)
@@ -443,7 +529,7 @@ describe 'BaseTransport' do
     end
 
     it "should report EOF before modifying a frozen destination" do
-      destination = "xx".freeze
+      destination = "xx"
       @buffer.reset_buffer("")
 
       expect { @buffer.read_into_buffer(destination, 1) }.to raise_error(EOFError)
@@ -465,12 +551,18 @@ describe 'BaseTransport' do
         expect(e.type).to eq(Thrift::TransportException::NEGATIVE_SIZE)
       end
     end
+
+    it "should handle oversized read_all sizes without overflowing" do
+      @buffer.reset_buffer("x")
+
+      expect { @buffer.read_all(3_397_380_576) }.to raise_error(EOFError)
+    end
   end
 
   describe Thrift::IOStreamTransport do
     before(:each) do
-      @input = double("Input", :closed? => false)
-      @output = double("Output", :closed? => false)
+      @input = double("Input", closed?: false)
+      @output = double("Output", closed?: false)
       @trans = Thrift::IOStreamTransport.new(@input, @output)
     end
 

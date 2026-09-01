@@ -19,11 +19,11 @@
 #
 
 # this require is to make generated struct definitions happy
-require 'set'
+require "set"
+require "thrift/exceptions"
 
 module Thrift
   class ProtocolException < Exception
-
     UNKNOWN = 0
     INVALID_DATA = 1
     NEGATIVE_SIZE = 2
@@ -41,6 +41,7 @@ module Thrift
   end
 
   class BaseProtocol
+    MAX_CONTAINER_SIZE = (1 << 31) - 1
 
     attr_reader :trans
 
@@ -228,6 +229,10 @@ module Thrift
       raise NotImplementedError
     end
 
+    def skip_string
+      read_string
+    end
+
     # Writes a field based on the field information, field ID and value.
     #
     # field_info - A Hash containing the definition of the field:
@@ -236,25 +241,19 @@ module Thrift
     #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
     # fid        - The ID of the field.
     # value      - The field's value to write; object type varies based on :type.
+    # remaining_depth - The optional recursion budget of the enclosing struct.
     #
     # Returns nothing.
-    def write_field(*args)
-      if args.size == 3
-        # handles the documented method signature - write_field(field_info, fid, value)
-        field_info = args[0]
-        fid = args[1]
-        value = args[2]
-      elsif args.size == 4
-        # handles the deprecated method signature - write_field(name, type, fid, value)
-        field_info = {:name => args[0], :type => args[1]}
-        fid = args[2]
-        value = args[3]
-      else
-        raise ArgumentError, "wrong number of arguments (#{args.size} for 3)"
+    def write_field(field_info, fid, value, remaining_depth = nil)
+      unless field_info.is_a?(Hash)
+        field_info = {name: field_info, type: fid}
+        fid = value
+        value = remaining_depth
+        remaining_depth = nil
       end
 
       write_field_begin(field_info[:name], field_info[:type], fid)
-      write_type(field_info, value)
+      write_type(field_info, value, remaining_depth)
       write_field_end
     end
 
@@ -264,13 +263,14 @@ module Thrift
     #              :type   - The Thrift::Types constant that determines how the value is written.
     #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
     # value      - The field's value to write; object type varies based on field_info[:type].
+    # remaining_depth - The optional recursion budget of the enclosing struct.
     #
     # Returns nothing.
-    def write_type(field_info, value)
+    def write_type(field_info, value, remaining_depth = nil)
       # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
       if field_info.is_a? Integer
-        field_info = {:type => field_info}
+        field_info = {type: field_info}
       end
 
       case field_info[:type]
@@ -295,7 +295,11 @@ module Thrift
       when Types::UUID
         write_uuid(value)
       when Types::STRUCT
-        value.write(self)
+        if remaining_depth
+          value.write(self, remaining_depth - 1)
+        else
+          value.write(self)
+        end
       else
         raise NotImplementedError
       end
@@ -312,7 +316,7 @@ module Thrift
       # if field_info is a Integer, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
       if field_info.is_a? Integer
-        field_info = {:type => field_info}
+        field_info = {type: field_info}
       end
 
       case field_info[:type]
@@ -342,7 +346,7 @@ module Thrift
     end
 
     def skip(type, max_depth = 64)
-      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, 'Maximum skip depth exceeded') if max_depth <= 0
+      raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum skip depth exceeded") if max_depth <= 0
       case type
       when Types::BOOL
         read_bool
@@ -357,13 +361,13 @@ module Thrift
       when Types::DOUBLE
         read_double
       when Types::STRING
-        read_string
+        skip_string
       when Types::UUID
         read_uuid
       when Types::STRUCT
         read_struct_begin
         while true
-          name, type, id = read_field_begin
+          _, type, _ = read_field_begin
           break if type == Types::STOP
           skip(type, max_depth - 1)
           read_field_end
@@ -392,16 +396,17 @@ module Thrift
         end
         read_list_end
       else
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Invalid data")
       end
     end
 
     def validate_container_size(size)
-      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, 'Negative size') unless size >= 0
+      raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, "Negative size") unless size >= 0
+      raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "Container size limit exceeded") if size > MAX_CONTAINER_SIZE
     end
 
     def to_s
-      "#{trans.to_s}"
+      trans.to_s
     end
   end
 

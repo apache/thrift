@@ -40,7 +40,7 @@ func TestEnumIsTextMarshaller(t *testing.T) {
 }
 
 func TestEnumIsTextUnmarshaller(t *testing.T) {
-	var tm encoding.TextUnmarshaler = thrifttest.NumberzPtr(thrifttest.Numberz_TWO)
+	var tm encoding.TextUnmarshaler = new(thrifttest.Numberz_TWO)
 	err := tm.UnmarshalText([]byte("TWO"))
 	if err != nil {
 		t.Fatalf("Unexpected error from UnmarshalText(TWO): %s", err)

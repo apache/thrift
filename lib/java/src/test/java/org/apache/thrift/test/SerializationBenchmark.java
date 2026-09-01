@@ -54,6 +54,8 @@ public class SerializationBenchmark {
 
           public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
 
+          public void resetMessageSizeAndConsumedBytes(long newSize) throws TTransportException {}
+
           public int read(byte[] bin, int x, int y) throws TTransportException {
             return 0;
           }

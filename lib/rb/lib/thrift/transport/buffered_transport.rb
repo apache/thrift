@@ -31,7 +31,7 @@ module Thrift
     end
 
     def open?
-      return @transport.open?
+      @transport.open?
     end
 
     def open
@@ -66,7 +66,7 @@ module Thrift
       # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
       # allocating a temp string of size 1 unnecessarily.
       @index += 1
-      return Bytes.get_string_byte(@rbuf, @index - 1)
+      Bytes.get_string_byte(@rbuf, @index - 1)
     end
 
     # Reads a number of bytes from the transport into the buffer passed.
@@ -107,13 +107,13 @@ module Thrift
     end
 
     def to_s
-      "buffered(#{@transport.to_s})"
+      "buffered(#{@transport})"
     end
   end
 
   class BufferedTransportFactory < BaseTransportFactory
     def get_transport(transport)
-      return BufferedTransport.new(transport)
+      BufferedTransport.new(transport)
     end
 
     def to_s

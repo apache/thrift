@@ -39,7 +39,6 @@ func TestSimpleJsonStringParse_Allocations(t *testing.T) {
 
 func BenchmarkSimpleJsonStringParse_Allocations(b *testing.B) {
 	b.ReportAllocs()
-	b.StopTimer()
 	numEscapedQuotes := 1000
 	var sb strings.Builder
 	for range numEscapedQuotes {
@@ -51,12 +50,13 @@ func BenchmarkSimpleJsonStringParse_Allocations(b *testing.B) {
 	transport := thrift.NewTMemoryBuffer()
 	p := thrift.NewTJSONProtocol(transport)
 
-	for range b.N {
+	for b.Loop() {
+		b.StopTimer()
 		transport.Reset()
 		transport.WriteString(testString)
 		transport.Flush(context.Background())
 		b.StartTimer()
-		_ = stringStruct.Read(context.Background(), p)
-		b.StopTimer()
+
+		stringStruct.Read(context.Background(), p)
 	}
 }

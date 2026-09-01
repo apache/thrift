@@ -4,11 +4,11 @@ source "https://rubygems.org"
 gemspec
 
 # Only required for tests with Rack 2.x on Ruby 4.0+
-gem 'cgi'
-gem 'ostruct'
+gem "cgi"
+gem "ostruct"
 
 group :thin_http_server do
-  gem 'thin', '~> 1.7'
+  gem "thin", "~> 1.7"
 end
 
 eval_gemfile "Gemfile.linters"

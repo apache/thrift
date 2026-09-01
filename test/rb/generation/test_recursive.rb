@@ -18,15 +18,14 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
-require 'recursive_types'
+require File.join(File.dirname(__FILE__), "../test_helper")
+require "recursive_types"
 
 class TestRecursiveGeneration < Test::Unit::TestCase
   CHILD_ITEM = "child item"
   PARENT_ITEM = "parent item"
 
   def test_can_create_recursive_tree
-
     child_tree = RecTree.new
     child_tree.item = CHILD_ITEM
 

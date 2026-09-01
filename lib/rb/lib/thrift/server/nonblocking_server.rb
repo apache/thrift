@@ -18,8 +18,8 @@
 # under the License.
 #
 
-require 'logger'
-require 'thread'
+require "logger"
+require "thread"
 
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
@@ -62,7 +62,7 @@ module Thrift
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
-      rescue IOError => e
+      rescue IOError
       end
       # we must be shutting down
       @logger.info "#{self} is shutting down, goodbye"
@@ -89,7 +89,7 @@ module Thrift
       if block
         shutdown_proc.call
       else
-        Thread.new &shutdown_proc
+        Thread.new(&shutdown_proc)
       end
     end
 
@@ -163,15 +163,13 @@ module Thrift
             break if read_signals == :shutdown
           end
           rd.each do |fd|
-            begin
-              if fd.handle.eof?
-                remove_connection fd
-              else
-                read_connection fd
-              end
-            rescue Errno::ECONNRESET
+            if fd.handle.eof?
               remove_connection fd
+            else
+              read_connection fd
             end
+          rescue Errno::ECONNRESET
+            remove_connection fd
           end
         end
         join_worker_threads(@shutdown_timeout)
@@ -181,7 +179,7 @@ module Thrift
 
       def read_connection(fd)
         @buffers[fd] << fd.read(DEFAULT_BUFFER)
-        while(frame = slice_frame!(@buffers[fd]))
+        while (frame = slice_frame!(@buffers[fd]))
           @logger.debug "#{self} is processing a frame"
           @worker_queue.push [:frame, fd, frame]
         end
@@ -259,10 +257,8 @@ module Thrift
 
       def close_connections
         @connections.each do |fd|
-          begin
-            fd.close
-          rescue IOError, SystemCallError, TransportException
-          end
+          fd.close
+        rescue IOError, SystemCallError, TransportException
         end
         @connections.clear
         @buffers.clear
@@ -270,16 +266,14 @@ module Thrift
 
       def close_signal_pipes
         @signal_pipes.each do |pipe|
-          begin
-            pipe.close unless pipe.closed?
-          rescue IOError
-          end
+          pipe.close unless pipe.closed?
+        rescue IOError
         end
       end
 
       def slice_frame!(buf)
         if buf.length >= 4
-          size = buf.unpack('N').first
+          size = buf.unpack1("N")
           if buf.length >= size + 4
             buf.slice!(0, size + 4)
           else

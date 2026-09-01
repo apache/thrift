@@ -18,9 +18,9 @@
 # under the License.
 #
 
-require 'rack'
-require 'thin'
-require 'thrift/server/rack_application'
+require "rack"
+require "thin"
+require "thrift/server/rack_application"
 
 ##
 # Wraps the Thin web server to provide a Thrift server over HTTP.
@@ -28,7 +28,6 @@ require 'thrift/server/rack_application'
 # server instead.
 module Thrift
   class ThinHTTPServer < BaseServer
-
     ##
     # Accepts a Thrift::Processor
     # Options include:

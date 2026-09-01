@@ -18,7 +18,7 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 shared_examples_for "a socket" do
   it "should open a socket" do
@@ -121,7 +121,7 @@ shared_examples_for "a socket" do
     @socket.timeout = 0.5
     @socket.open
     expect(@handle).to receive(:read_nonblock).with(17).and_raise(IO::EAGAINWaitReadable)
-    expect(IO).to receive(:select).once { sleep(0.6); nil }
+    expect(IO).to(receive(:select).once { sleep(0.6); nil })
     expect { @socket.read(17) }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
   end
 
@@ -129,8 +129,52 @@ shared_examples_for "a socket" do
     @socket.timeout = 0.5
     @socket.open
     expect(@handle).to receive(:write_nonblock).with("test data").and_raise(IO::EAGAINWaitWritable)
-    expect(IO).to receive(:select).once { sleep(0.6); nil }
+    expect(IO).to(receive(:select).once { sleep(0.6); nil })
     expect { @socket.write("test data") }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
+  end
+
+  it "should close after a read timeout follows partial progress" do
+    @socket.open
+    @socket.timeout = 1
+
+    expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 100.0, 101.0)
+    expect(@handle).to receive(:read_nonblock).with(4).ordered.and_return("A")
+    expect(@handle).to receive(:read_nonblock).with(3).ordered.and_raise(IO::EAGAINWaitReadable)
+    expect(@handle).to receive(:close).once
+
+    expect { @socket.read_all(4) }.to raise_error(
+      Thrift::TransportException,
+      /Timed out reading 3 bytes/,
+    ) { |error|
+      expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
+    }
+    expect(@socket.handle).to be_nil
+    expect(@socket).not_to be_open
+    expect { @socket.read(1) }.to raise_error(Thrift::TransportException, "closed stream") { |error|
+      expect(error.type).to eq(Thrift::TransportException::NOT_OPEN)
+    }
+  end
+
+  it "should close after a write timeout follows partial progress" do
+    @socket.open
+    @socket.timeout = 1
+
+    expect(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(100.0, 101.0)
+    expect(@handle).to receive(:write_nonblock).with("test data").ordered.and_return(1)
+    expect(@handle).to receive(:write_nonblock).with("est data").ordered.and_raise(IO::EAGAINWaitWritable)
+    expect(@handle).to receive(:close).once
+
+    expect { @socket.write("test data") }.to raise_error(
+      Thrift::TransportException,
+      /Timed out writing 9 bytes/,
+    ) { |error|
+      expect(error.type).to eq(Thrift::TransportException::TIMED_OUT)
+    }
+    expect(@socket.handle).to be_nil
+    expect(@socket).not_to be_open
+    expect { @socket.write("retry") }.to raise_error(Thrift::TransportException, "closed stream") { |error|
+      expect(error.type).to eq(Thrift::TransportException::NOT_OPEN)
+    }
   end
 
   it "should read buffered SSL data without waiting on the raw socket again" do

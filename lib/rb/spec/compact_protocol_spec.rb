@@ -19,28 +19,36 @@
 # under the License.
 #
 
-require 'spec_helper'
+require "spec_helper"
 
 describe Thrift::CompactProtocol do
   INTEGER_BOUNDARY_TESTS = {
-    :i32 => [-(2**31), (2**31) - 1],
-    :i64 => [-(2**63), (2**63) - 1]
+    byte: [-(2**7), (2**7) - 1],
+    i16: [-(2**15), (2**15) - 1],
+    i32: [-(2**31), (2**31) - 1],
+    i64: [-(2**63), (2**63) - 1],
   }
 
   INTEGER_MINIMUM_ENCODINGS = {
-    :i32 => [0xff, 0xff, 0xff, 0xff, 0x0f],
-    :i64 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]
+    i32: [0xff, 0xff, 0xff, 0xff, 0x0f],
+    i64: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01],
+  }
+
+  VARINT32_SIZE_ENCODINGS = {
+    (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
+    2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
+    (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f],
   }
 
   TESTS = {
-    :byte => (-127..127).to_a,
-    :i16 => (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :i32 => (0..30).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :i64 => (0..62).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
-    :string => ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
-    :binary => ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
-    :double => [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0/0.0, -1.0/0.0],
-    :bool => [true, false]
+    byte: (-127..127).to_a,
+    i16: (0..14).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    i32: (0..30).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    i64: (0..62).map { |shift| [1 << shift, -(1 << shift)] }.flatten.sort,
+    string: ["", "1", "short", "fourteen123456", "fifteen12345678", "unicode characters: \u20AC \u20AD", "1" * 127, "1" * 3000],
+    binary: ["", "\001", "\001" * 5, "\001" * 14, "\001" * 15, "\001" * 127, "\001" * 3000],
+    double: [0.0, 1.0, -1.0, 1.1, -1.1, 10000000.1, 1.0 / 0.0, -1.0 / 0.0],
+    bool: [true, false],
   }
 
   it "should encode and decode naked primitives correctly" do
@@ -58,6 +66,18 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should skip strings as binary values" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+    proto.write_binary("value")
+    expect(proto).to receive(:read_binary).and_call_original
+    expect(proto).not_to receive(:read_string)
+
+    proto.skip(Thrift::Types::STRING)
+
+    expect(trans.available).to eq(0)
+  end
+
   it "should encode and decode primitives in fields correctly" do
     TESTS.each_pair do |primitive_type, test_values|
       final_primitive_type = primitive_type == :binary ? :string : primitive_type
@@ -72,7 +92,7 @@ describe Thrift::CompactProtocol do
         proto.write_field_end
 
         proto = Thrift::CompactProtocol.new(trans)
-        name, type, id = proto.read_field_begin
+        _, type, id = proto.read_field_begin
         expect(type).to eq(thrift_type)
         expect(id).to eq(15)
         read_back = proto.send(reader(primitive_type))
@@ -94,6 +114,129 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "rejects fixed-width integers outside their declared ranges without writing" do
+    INTEGER_BOUNDARY_TESTS.each do |primitive_type, (minimum, maximum)|
+      [minimum - 1, maximum + 1].each do |value|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect { proto.send(writer(primitive_type), value) }.to raise_error(RangeError)
+        expect(trans.available).to eq(0)
+      end
+    end
+  end
+
+  it "rejects non-integer fixed-width values consistently without writing" do
+    INTEGER_BOUNDARY_TESTS.each_key do |primitive_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.send(writer(primitive_type), 1.5) }.to raise_error(TypeError, "integer argument expected")
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "rejects nil fixed-width values consistently without writing" do
+    INTEGER_BOUNDARY_TESTS.each_key do |primitive_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.send(writer(primitive_type), nil) }.to raise_error(StandardError, "nil argument not allowed!")
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "validates field ids before changing protocol state or wire bytes" do
+    [-2**15 - 1, 2**15, 1.5, nil].each do |field_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      proto.write_struct_begin("Value")
+
+      expected_error = field_id.nil? ? StandardError : field_id.is_a?(Integer) ? RangeError : TypeError
+      expect {
+        proto.write_field_begin("value", Thrift::Types::I32, field_id)
+      }.to raise_error(expected_error)
+      expect(trans.available).to eq(0)
+    end
+
+    [-2**15, (2**15) - 1].each do |field_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      proto.write_struct_begin("Value")
+      expect { proto.write_field_begin("value", Thrift::Types::I32, field_id) }.not_to raise_error
+    end
+  end
+
+  it "validates message sequence ids before writing the envelope" do
+    [-2**31 - 1, 2**31, 1.5, nil].each do |sequence_id|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+      expected_error = sequence_id.nil? ? StandardError : sequence_id.is_a?(Integer) ? RangeError : TypeError
+
+      expect {
+        proto.write_message_begin("value", Thrift::MessageTypes::CALL, sequence_id)
+      }.to raise_error(expected_error)
+      expect(trans.available).to eq(0)
+    end
+  end
+
+  it "writes message types with their exact envelope bytes" do
+    {
+      Thrift::MessageTypes::CALL => 0x21,
+      Thrift::MessageTypes::REPLY => 0x41,
+      Thrift::MessageTypes::EXCEPTION => 0x61,
+      Thrift::MessageTypes::ONEWAY => 0x81,
+      140 => 0x81,
+    }.each do |message_type, version_and_type|
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.write_message_begin("", message_type, 0)
+
+      expect(trans.read(trans.available).bytes).to eq([0x82, version_and_type, 0, 0])
+    end
+  end
+
+  it "validates collection sizes before writing their headers" do
+    writers = [
+      [:write_map_begin, [Thrift::Types::STRING, Thrift::Types::I32]],
+      [:write_list_begin, [Thrift::Types::I16]],
+      [:write_set_begin, [Thrift::Types::I16]],
+    ]
+
+    writers.each do |method, arguments|
+      [-1, 2**31, 1.5, nil].each do |size|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+        expected_error = size.nil? ? StandardError : size.is_a?(Integer) ? RangeError : TypeError
+
+        expect { proto.public_send(method, *arguments, size) }.to raise_error(expected_error)
+        expect(trans.available).to eq(0)
+      end
+
+      [0, (2**31) - 1].each do |size|
+        trans = Thrift::MemoryBufferTransport.new
+        proto = Thrift::CompactProtocol.new(trans)
+        expect { proto.public_send(method, *arguments, size) }.not_to raise_error
+      end
+    end
+  end
+
+  it "does not append rejected integers after field and collection headers" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+    proto.write_struct_begin("Value")
+    proto.write_field_begin("value", Thrift::Types::I16, 1)
+    field_header_size = trans.available
+    expect { proto.write_i16(2**15) }.to raise_error(RangeError)
+    expect(trans.available).to eq(field_header_size)
+
+    proto.write_list_begin(Thrift::Types::I32, 1)
+    list_header_size = trans.available
+    expect { proto.write_i32(2**31) }.to raise_error(RangeError)
+    expect(trans.available).to eq(list_header_size)
+  end
+
   it "should encode signed integer minima with the canonical zigzag varint bytes" do
     INTEGER_MINIMUM_ENCODINGS.each_pair do |primitive_type, expected_bytes|
       trans = Thrift::MemoryBufferTransport.new
@@ -104,6 +247,31 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should batch each native multibyte varint into one transport write" do
+    probe = Thrift::CompactProtocol.new(Thrift::MemoryBufferTransport.new)
+    skip "requires the native Compact Protocol" unless probe.native?
+
+    recording_transport_class = Class.new(Thrift::BaseTransport) do
+      attr_reader :writes
+
+      def initialize
+        @writes = []
+      end
+
+      def write(data)
+        @writes << data
+      end
+    end
+
+    INTEGER_MINIMUM_ENCODINGS.each_pair do |primitive_type, expected_bytes|
+      trans = recording_transport_class.new
+      proto = Thrift::CompactProtocol.new(trans)
+
+      proto.send(writer(primitive_type), INTEGER_BOUNDARY_TESTS.fetch(primitive_type).first)
+      expect(trans.writes).to eq([expected_bytes.pack("C*")])
+    end
+  end
+
   it "should use Ruby truthiness when writing bools" do
     {
       true => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
@@ -111,7 +279,7 @@ describe Thrift::CompactProtocol do
       nil => Thrift::CompactProtocol::CompactTypes::BOOLEAN_FALSE,
       0 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
       1 => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
-      Object.new => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE
+      Object.new => Thrift::CompactProtocol::CompactTypes::BOOLEAN_TRUE,
     }.each do |value, expected|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -125,7 +293,7 @@ describe Thrift::CompactProtocol do
   it "should report malformed message headers consistently" do
     {
       [0x00] => "Expected protocol id -126 but got 0",
-      [0x82, 0x00] => "Expected version 1 but got 0"
+      [0x82, 0x00] => "Expected version 1 but got 0",
     }.each do |bytes, expected_message|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -138,8 +306,8 @@ describe Thrift::CompactProtocol do
 
   it "should reject unknown field and container types as invalid protocol data" do
     {
-      :read_field_begin => [0x1e],
-      :read_list_begin => [0x1e]
+      read_field_begin: [0x1e],
+      read_list_begin: [0x1e],
     }.each do |reader_method, bytes|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -150,10 +318,40 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  it "should accept container sizes within the signed 32-bit range" do
+    bytes = [0xf5, *VARINT32_SIZE_ENCODINGS.fetch((2**31) - 1)]
+    trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+
+    expect(proto.read_list_begin).to eq([Thrift::Types::I32, (2**31) - 1])
+  end
+
+  it "should reject container sizes above the signed 32-bit range" do
+    {
+      read_map_begin: [0x55],
+      read_list_begin: [0xf5],
+      read_set_begin: [0xf5],
+    }.each do |reader_method, container_header|
+      [2**31, (2**32) - 1].each do |size|
+        bytes = if reader_method == :read_map_begin
+          [*VARINT32_SIZE_ENCODINGS.fetch(size), *container_header]
+        else
+          [*container_header, *VARINT32_SIZE_ENCODINGS.fetch(size)]
+        end
+        trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect { proto.public_send(reader_method) }.to raise_error(Thrift::ProtocolException, "Container size limit exceeded") do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+        end
+      end
+    end
+  end
+
   it "should report the original unknown type when writing fields and containers" do
     {
-      :write_field_begin => [nil, 99, 1],
-      :write_list_begin => [99, 1]
+      write_field_begin: [nil, 99, 1],
+      write_list_begin: [99, 1],
     }.each do |writer_method, args|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
@@ -181,10 +379,24 @@ describe Thrift::CompactProtocol do
     expect(proto.read_i64).to eq(INTEGER_BOUNDARY_TESTS[:i64].first)
   end
 
+  it "should narrow oversized varints to their declared integer widths" do
+    aggregate_failures do
+      {
+        read_i16: [[0x80, 0x80, 0x04], -(2**15)],
+        read_i64: [[0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f], -(2**63)],
+      }.each do |reader_method, (bytes, expected)|
+        trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
+        proto = Thrift::CompactProtocol.new(trans)
+
+        expect(proto.public_send(reader_method)).to eq(expected)
+      end
+    end
+  end
+
   it "should preserve fixed-width double edge byte patterns" do
     [
       [0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00],
-      [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80]
+      [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80],
     ].each do |bytes|
       trans = Thrift::MemoryBufferTransport.new(bytes.pack("C*"))
       proto = Thrift::CompactProtocol.new(trans)
@@ -203,20 +415,40 @@ describe Thrift::CompactProtocol do
     expect(proto.read_binary).to eq(payload)
   end
 
+  it "should accept binary sizes through the signed 32-bit range" do
+    trans = Thrift::MemoryBufferTransport.new(VARINT32_SIZE_ENCODINGS.fetch((2**31) - 1).pack("C*"))
+    proto = Thrift::CompactProtocol.new(trans)
+    expect(trans).to receive(:read_all).with((2**31) - 1).and_return("payload")
+
+    expect(proto.read_binary).to eq("payload")
+  end
+
+  it "should reject binary sizes above the signed 32-bit range before reading the payload" do
+    [2**31, (2**32) - 1].each do |size|
+      trans = Thrift::MemoryBufferTransport.new(VARINT32_SIZE_ENCODINGS.fetch(size).pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+      expect(trans).not_to receive(:read_all)
+
+      expect { proto.read_binary }.to raise_error(Thrift::ProtocolException, "Binary size limit exceeded") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+      end
+    end
+  end
+
   it "should write a uuid" do
     trans = Thrift::MemoryBufferTransport.new
     proto = Thrift::CompactProtocol.new(trans)
 
     proto.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
     a = trans.read(trans.available)
-    expect(a.unpack('C*')).to eq([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff])
+    expect(a.unpack("C*")).to eq([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff])
   end
 
   it "should read a uuid" do
     trans = Thrift::MemoryBufferTransport.new
     proto = Thrift::CompactProtocol.new(trans)
 
-    trans.write([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff].pack('C*'))
+    trans.write([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff].pack("C*"))
     uuid = proto.read_uuid
     expect(uuid).to eq("00112233-4455-6677-8899-aabbccddeeff")
   end
@@ -272,11 +504,13 @@ describe Thrift::CompactProtocol do
 
   it "should deal with fields following fields that have non-delta ids" do
     brcp = Thrift::Test::BreaksRubyCompactProtocol.new(
-      :field1 => "blah",
-      :field2 => Thrift::Test::BigFieldIdStruct.new(
-        :field1 => "string1",
-        :field2 => "string2"),
-      :field3 => 3)
+      field1: "blah",
+      field2: Thrift::Test::BigFieldIdStruct.new(
+        field1: "string1",
+        field2: "string2",
+      ),
+      field3: 3,
+    )
     ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
     bytes = ser.serialize(brcp)
 
@@ -287,7 +521,7 @@ describe Thrift::CompactProtocol do
   end
 
   it "should deserialize an empty map to an empty hash" do
-    struct = Thrift::Test::SingleMapTestStruct.new(:i32_map => {})
+    struct = Thrift::Test::SingleMapTestStruct.new(i32_map: {})
     ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
     bytes = ser.serialize(struct)
 
@@ -295,6 +529,15 @@ describe Thrift::CompactProtocol do
     struct2 = Thrift::Test::SingleMapTestStruct.new
     deser.deserialize(struct2, bytes)
     expect(struct).to eq(struct2)
+  end
+
+  it "should not resolve omitted types when writing an empty map" do
+    trans = Thrift::MemoryBufferTransport.new
+    proto = Thrift::CompactProtocol.new(trans)
+
+    proto.write_map_begin(nil, nil, 0)
+
+    expect(trans.read(trans.available)).to eq("\x00".b)
   end
 
   it "should provide a reasonable to_s" do
@@ -342,6 +585,17 @@ describe Thrift::CompactProtocol do
     expect { proto.read_i32 }.not_to raise_error
   end
 
+  it "should reject 32-bit varints with overflowing fifth-byte payload bits" do
+    [0x10, 0x7f].each do |terminal_byte|
+      trans = Thrift::MemoryBufferTransport.new((([0x80] * 4) + [terminal_byte]).pack("C*"))
+      proto = Thrift::CompactProtocol.new(trans)
+
+      expect { proto.read_i32 }.to raise_error(Thrift::ProtocolException, "Variable-length int overflows uint32.") do |error|
+        expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+      end
+    end
+  end
+
   class JankyHandler
     def Janky(i32arg)
       i32arg * 2
@@ -349,17 +603,18 @@ describe Thrift::CompactProtocol do
   end
 
   def writer(sym)
-    "write_#{sym.to_s}"
+    "write_#{sym}"
   end
 
   def reader(sym)
-    "read_#{sym.to_s}"
+    "read_#{sym}"
   end
 end
 
 describe Thrift::CompactProtocolFactory do
   it "should create a CompactProtocol" do
-    expect(Thrift::CompactProtocolFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::CompactProtocol)
+    transport = Thrift::MemoryBufferTransport.new
+    expect(Thrift::CompactProtocolFactory.new.get_protocol(transport)).to be_instance_of(Thrift::CompactProtocol)
   end
 
   it "should provide a reasonable to_s" do
