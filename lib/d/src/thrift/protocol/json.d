@@ -48,7 +48,7 @@ final class TJsonProtocol(Transport = TTransport) if (
    *   stringSizeLimit = If positive, the string length is limited to the
    *     given number of bytes.
    */
-  this(Transport trans, int containerSizeLimit = 0, int stringSizeLimit = 0) {
+  this(Transport trans, int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT) {
     trans_ = trans;
     this.containerSizeLimit = containerSizeLimit;
     this.stringSizeLimit = stringSizeLimit;
@@ -763,7 +763,7 @@ private:
  * enhancement requet 6082)).
  */
 TJsonProtocol!Transport tJsonProtocol(Transport)(Transport trans,
-  int containerSizeLimit = 0, int stringSizeLimit = 0
+  int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT
 ) if (isTTransport!Transport) {
   return new TJsonProtocol!Transport(trans, containerSizeLimit, stringSizeLimit);
 }
@@ -830,6 +830,7 @@ unittest {
   import thrift.internal.test.protocol;
   testContainerSizeLimit!(TJsonProtocol!())();
   testStringSizeLimit!(TJsonProtocol!())();
+  testSizeLimitDefaults!(TJsonProtocol!())();
   testSkipDepthLimit!(TJsonProtocol!())();
 }
 

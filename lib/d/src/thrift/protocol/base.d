@@ -259,6 +259,13 @@ protected:
 package(thrift) uint currentRecursionDepth_;
 package(thrift) enum uint DEFAULT_MAX_RECURSION_DEPTH = 64;
 
+/// The default ceilings a protocol applies to a length or element count the
+/// peer declared. They used to be zero, which readSize() reads as "no limit",
+/// so a protocol built with its default arguments had no bound at all. Zero
+/// and negative values still mean "no limit" for a caller that asks for it.
+enum int DEFAULT_CONTAINER_SIZE_LIMIT = 16384000;
+enum int DEFAULT_STRING_SIZE_LIMIT = 16384000;
+
 package(thrift) void incrementRecursionDepth() {
   if (++currentRecursionDepth_ > DEFAULT_MAX_RECURSION_DEPTH) {
     --currentRecursionDepth_;

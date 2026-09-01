@@ -130,6 +130,33 @@ void testContainerSizeLimit(Protocol)() if (isTProtocol!Protocol) {
   }
 }
 
+/*
+ * A protocol built with its default arguments must carry a usable limit. They
+ * used to default to zero, which readSize() reads as "no limit", so the checks
+ * above them could not fire unless a caller had set one -- and the size went
+ * straight into uninitializedArray.
+ *
+ * Only the defaults are checked here; that the checks themselves work is
+ * testStringSizeLimit/testContainerSizeLimit's job, and they are wire-format
+ * agnostic in a way a raw declared length cannot be.
+ */
+void testSizeLimitDefaults(Protocol)() if (isTProtocol!Protocol) {
+  auto buffer = new TMemoryBuffer;
+  auto prot = new Protocol(buffer);
+
+  enforce(prot.stringSizeLimit > 0,
+    "string size limit should have a usable default");
+  enforce(prot.containerSizeLimit > 0,
+    "container size limit should have a usable default");
+
+  // An ordinary payload still reads with the defaults in force.
+  prot.writeString("still fine");
+  prot.reset();
+  enforce(prot.readString() == "still fine");
+  prot.reset();
+  buffer.reset();
+}
+
 void testStringSizeLimit(Protocol)() if (isTProtocol!Protocol) {
   auto buffer = new TMemoryBuffer;
   auto prot = new Protocol(buffer);

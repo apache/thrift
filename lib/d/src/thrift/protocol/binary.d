@@ -44,7 +44,7 @@ final class TBinaryProtocol(Transport = TTransport) if (
    *     version are tolerated.
    *   strictWrite = Whether to include the protocol version in the header.
    */
-  this(Transport trans, int containerSizeLimit = 0, int stringSizeLimit = 0,
+  this(Transport trans, int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT,
     bool strictRead = false, bool strictWrite = true
   ) {
     trans_ = trans;
@@ -260,8 +260,14 @@ final class TBinaryProtocol(Transport = TTransport) if (
           "Protocol version missing, old client?",
           TProtocolException.Type.BAD_VERSION);
       } else {
+        // Route the name length through readSize() as every other string does:
+        // this branch used to hand it straight to readBinaryBody, so a
+        // configured string limit did not apply to the one field an old-format
+        // peer gets to declare before anything else is read.
         if (size < 0) {
           throw new TProtocolException(TProtocolException.Type.NEGATIVE_SIZE);
+        } else if (stringSizeLimit > 0 && size > stringSizeLimit) {
+          throw new TProtocolException(TProtocolException.Type.SIZE_LIMIT);
         }
         msg.name = cast(string)readBinaryBody(size);
         msg.type = cast(TMessageType)(readByte());
@@ -339,7 +345,7 @@ private:
  * enhancement requet 6082)).
  */
 TBinaryProtocol!Transport tBinaryProtocol(Transport)(Transport trans,
-  int containerSizeLimit = 0, int stringSizeLimit = 0,
+  int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT,
   bool strictRead = false, bool strictWrite = true
 ) if (isTTransport!Transport) {
   return new TBinaryProtocol!Transport(trans, containerSizeLimit,
@@ -369,7 +375,53 @@ unittest {
   import thrift.internal.test.protocol;
   testContainerSizeLimit!(TBinaryProtocol!())();
   testStringSizeLimit!(TBinaryProtocol!())();
+  testSizeLimitDefaults!(TBinaryProtocol!())();
   testSkipDepthLimit!(TBinaryProtocol!())();
+}
+
+unittest {
+  // The wire-format-specific half of the default-limit check: a declared length
+  // the peer has not sent must be refused on the declaration, not allocated and
+  // then found short. With no limit the read fails either way -- what tells the
+  // two apart is SIZE_LIMIT rather than an end-of-buffer error.
+  import std.exception;
+  import thrift.transport.memory;
+
+  {
+    auto buf = new TMemoryBuffer;
+    auto writer = tBinaryProtocol(buf);
+    writer.writeI32(0x7FFFFFFF);
+
+    auto prot = tBinaryProtocol(buf);
+    auto e = cast(TProtocolException)collectException(prot.readString());
+    enforce(e && e.type == TProtocolException.Type.SIZE_LIMIT,
+      "a string length past the default limit must be refused");
+  }
+
+  {
+    auto buf = new TMemoryBuffer;
+    auto writer = tBinaryProtocol(buf);
+    writer.writeByte(cast(byte)TType.I32);
+    writer.writeI32(0x7FFFFFFF);
+
+    auto prot = tBinaryProtocol(buf);
+    auto e = cast(TProtocolException)collectException(prot.readListBegin());
+    enforce(e && e.type == TProtocolException.Type.SIZE_LIMIT,
+      "a container count past the default limit must be refused");
+  }
+
+  {
+    // readMessageBegin's old-format branch used to hand the name length
+    // straight to readBinaryBody, bypassing readSize entirely.
+    auto buf = new TMemoryBuffer;
+    auto writer = tBinaryProtocol(buf);
+    writer.writeI32(0x7FFFFFFF); // non-negative => old format
+
+    auto prot = tBinaryProtocol(buf);
+    auto e = cast(TProtocolException)collectException(prot.readMessageBegin());
+    enforce(e && e.type == TProtocolException.Type.SIZE_LIMIT,
+      "an old-format message name length must go through the same check");
+  }
 }
 
 /**
@@ -386,7 +438,7 @@ class TBinaryProtocolFactory(Transports...) if (
   allSatisfy!(isTTransport, Transports)
 ) : TProtocolFactory {
   ///
-  this (int containerSizeLimit = 0, int stringSizeLimit = 0,
+  this (int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT,
     bool strictRead = false, bool strictWrite = true
   ) {
     strictRead_ = strictRead;

@@ -43,7 +43,7 @@ final class TCompactProtocol(Transport = TTransport) if (
    *   stringSizeLimit = If positive, the string length is limited to the
    *     given number of bytes.
    */
-  this(Transport trans, int containerSizeLimit = 0, int stringSizeLimit = 0) {
+  this(Transport trans, int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT) {
     trans_ = trans;
     this.containerSizeLimit = containerSizeLimit;
     this.stringSizeLimit = stringSizeLimit;
@@ -611,7 +611,7 @@ private:
  * enhancement requet 6082)).
  */
 TCompactProtocol!Transport tCompactProtocol(Transport)(Transport trans,
-  int containerSizeLimit = 0, int stringSizeLimit = 0
+  int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT
 ) if (isTTransport!Transport)
 {
   return new TCompactProtocol!Transport(trans,
@@ -661,6 +661,7 @@ unittest {
   import thrift.internal.test.protocol;
   testContainerSizeLimit!(TCompactProtocol!())();
   testStringSizeLimit!(TCompactProtocol!())();
+  testSizeLimitDefaults!(TCompactProtocol!())();
   testSkipDepthLimit!(TCompactProtocol!())();
 }
 
@@ -678,7 +679,7 @@ class TCompactProtocolFactory(Transports...) if (
   allSatisfy!(isTTransport, Transports)
 ) : TProtocolFactory {
   ///
-  this(int containerSizeLimit = 0, int stringSizeLimit = 0) {
+  this(int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT) {
     containerSizeLimit_ = 0;
     stringSizeLimit_ = 0;
   }
