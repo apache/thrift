@@ -18,8 +18,15 @@
 part of thrift;
 
 class TProtocolUtil {
-  // equal to JavaScript Number.MAX_SAFE_INTEGER, 2^53 - 1
-  static const int defaultRecursionLimit = 9007199254740991;
+  /// The default was 2^53 - 1 -- JavaScript's Number.MAX_SAFE_INTEGER -- which
+  /// no payload can reach. [_skip] threads the limit and decrements it per
+  /// level, so the guard below reads as effective, but seeded with that value
+  /// the only thing that ended the recursion was the VM stack running out.
+  ///
+  /// skip() is the path an unknown field takes, so its nesting is chosen by the
+  /// peer rather than by the IDL. It draws on the same budget a read does.
+  /// Kept equal to [TProtocol.defaultRecursionDepth]; the test asserts it.
+  static const int defaultRecursionLimit = 64;
 
   static int maxRecursionLimit = defaultRecursionLimit;
 

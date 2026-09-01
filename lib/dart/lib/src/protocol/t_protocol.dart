@@ -21,12 +21,17 @@ abstract class TProtocol {
   final TTransport transport;
 
   int _recursionDepth = 0;
-  static const int _defaultRecursionDepth = 64;
+
+  /// How far a read will follow nesting the peer, rather than the IDL, chose
+  /// the shape of. Shared with [TProtocolUtil.skip], which draws on the same
+  /// budget: skipping an unknown field descends exactly the way reading it
+  /// would.
+  static const int defaultRecursionDepth = 64;
 
   TProtocol(this.transport);
 
   void incrementRecursionDepth() {
-    if (_recursionDepth >= _defaultRecursionDepth) {
+    if (_recursionDepth >= defaultRecursionDepth) {
       throw TProtocolError(
           TProtocolErrorType.DEPTH_LIMIT, "Maximum recursion depth exceeded");
     }
