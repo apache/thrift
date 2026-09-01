@@ -51,6 +51,7 @@ import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.transport.sasl.NegotiationStatus;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -588,6 +589,57 @@ public class TestTSaslTransports {
     } catch (TTransportException e) {
       assertEquals(e.getMessage(), "Invalid payload header length: 1677721600");
     }
+  }
+
+  @Test
+  public void testNegotiationPayloadSizeLimit() throws Exception {
+    // The negotiation message is read before either side has authenticated the
+    // other, and its declared length is allocated before any payload byte
+    // arrives. Bound it the way the nonblocking SASL server bounds its own
+    // negotiation frames -- by max frame size -- rather than by max message
+    // size, which is 100 MB by default and is about a whole message rather than
+    // one pre-authentication header.
+    TConfiguration config =
+        new TConfiguration(
+            TConfiguration.DEFAULT_MAX_MESSAGE_SIZE, 1024, TConfiguration.DEFAULT_RECURSION_DEPTH);
+
+    // Over the frame maximum, but well under the message maximum, so this is
+    // accepted by a check that consults only the latter.
+    int declared = config.getMaxFrameSize() + 1;
+    assertTrue(declared < config.getMaxMessageSize(), "test premise");
+
+    byte[] header = new byte[5];
+    header[0] = NegotiationStatus.OK.getValue();
+    EncodingUtils.encodeBigEndian(declared, header, 1);
+
+    TSaslTransport saslTransport = new TSaslServerTransport(new MockTTransport(header, config));
+
+    TTransportException e =
+        assertThrows(TTransportException.class, () -> saslTransport.receiveSaslMessage());
+    assertTrue(
+        e.getMessage().contains("Invalid payload header length"),
+        "Expected the negotiation payload to be refused, but got: " + e.getMessage());
+  }
+
+  @Test
+  public void testNegotiationPayloadWithinTheLimitIsAccepted() throws Exception {
+    TConfiguration config =
+        new TConfiguration(
+            TConfiguration.DEFAULT_MAX_MESSAGE_SIZE, 1024, TConfiguration.DEFAULT_RECURSION_DEPTH);
+
+    byte[] payload = "a plausible challenge".getBytes(StandardCharsets.UTF_8);
+    byte[] message = new byte[5 + payload.length];
+    message[0] = NegotiationStatus.OK.getValue();
+    EncodingUtils.encodeBigEndian(payload.length, message, 1);
+    System.arraycopy(payload, 0, message, 5, payload.length);
+
+    TSaslTransport saslTransport = new TSaslServerTransport(new MockTTransport(message, config));
+
+    TSaslTransport.SaslResponse response = saslTransport.receiveSaslMessage();
+    assertEquals(NegotiationStatus.OK, response.status);
+    assertEquals(
+        new String(payload, StandardCharsets.UTF_8),
+        new String(response.payload, StandardCharsets.UTF_8));
   }
 
   @Test
