@@ -27,7 +27,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/apache/thrift/test/go/src/gen/thrifttest"

@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	thrift "github.com/apache/thrift/lib/go/thrift"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockTProtocol is a mock of TProtocol interface.
