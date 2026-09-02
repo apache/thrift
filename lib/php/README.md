@@ -63,6 +63,21 @@ apcu_fetch(), apcu_store()
 
 1. The legacy callable/string `$debugHandler` argument has been removed from `TSocket`, `TSSLSocket` and `TSocketPool`. The constructors now accept a PSR-3 logger via the `$logger` parameter instead. `TSocket::setDebug()`, `TSocket::DEFAULT_DEBUG_HANDLER` and `TSSLServerSocket::getSSLHost()` have also been removed. The `ssl://` prefix is still applied automatically by `TSSLServerSocket` and `TSSLSocket`. Additionally, `TSocket::open()` no longer falls back to the send timeout for the connect step; use `TSocket::setConnectTimeout()` to configure a dedicated connect timeout. The default connect timeout is now 1 second.
 
+### Scalar sets
+
+Scalar sets now also accept sequential lists of values, such as `[10, 20]`.
+Keyed sets should use boolean `true` markers: `array_fill_keys($elements, true)`.
+Previously the marker value was ignored. A keyed set whose keys are `0..n-1`
+and whose markers are not all strictly `true` is now interpreted as a value list;
+for example, `array_fill_keys([0, 1], 1)` is interpreted as the values `[1, 1]`.
+Update callers using other markers to use `true`. Generated REST wrappers and
+deserialized sets use `true` markers.
+
+An all-`true` list retains the keyed interpretation for compatibility: `[true]`
+represents the key `0`, so use `[1 => true]` to represent a `set<bool>` containing
+only `true`. Scalar set elements are cast to their declared Thrift type in both
+forms, consistently across generated serializers and the OOP runtime.
+
 ## 0.12.0
 
 1. [PSR-4](https://www.php-fig.org/psr/psr-4/) loader is now the default. If you want to use class maps instead, use `-gen php:classmap`.
