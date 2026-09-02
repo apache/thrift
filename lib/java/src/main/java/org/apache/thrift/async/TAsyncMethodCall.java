@@ -254,8 +254,25 @@ public abstract class TAsyncMethodCall<T> {
       throw new TTransportException(TTransportException.END_OF_FILE, "Read call frame size failed");
     }
     if (sizeBuffer.remaining() == 0) {
+      // The peer chose this number, and it sizes the buffer below before any of
+      // the response has arrived. Refuse what TFramedTransport.readFrame refuses,
+      // so that the two ways of reading a framed response agree.
+      int size = TFramedTransport.decodeFrameSize(sizeBufferArray);
+      if (size < 0) {
+        throw new TTransportException(
+            TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
+      }
+      if (size > transport.getMaxFrameSize()) {
+        throw new TTransportException(
+            TTransportException.CORRUPTED_DATA,
+            "Frame size ("
+                + size
+                + ") larger than max length ("
+                + transport.getMaxFrameSize()
+                + ")!");
+      }
       state = State.READING_RESPONSE_BODY;
-      frameBuffer = ByteBuffer.allocate(TFramedTransport.decodeFrameSize(sizeBufferArray));
+      frameBuffer = ByteBuffer.allocate(size);
     }
   }
 
