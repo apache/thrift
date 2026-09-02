@@ -139,6 +139,24 @@ excessive cpu overhead.
 
 This feature is also only enabled on non-oneway endpoints.
 
+A note about maps with container keys
+=====================================
+
+Go maps cannot be keyed by a slice or a map, so a thrift `map` whose key type
+is a `list`, `set`, `map`, or a typedef of one of those is generated as a
+slice of key/value pairs instead:
+
+    struct S { 1: map<list<string>, i32> m }
+
+    type S struct {
+        M []thrift.MapEntry[[]string, int32]
+    }
+
+Entries are written to the wire in slice order. As with `set` fields, writing
+a slice that contains two equal keys fails with an `INVALID_DATA` protocol
+exception; `Equals` compares entries position by position.
+Maps keyed by `binary` remain Go maps keyed by `string`.
+
 A note about server stop implementations
 ========================================
 

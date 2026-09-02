@@ -27,7 +27,6 @@ RECURSIVE = $(top_srcdir)/test/Recursive.thrift
 
 THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
-# Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) $(THRIFTTEST) \
 				$(RECURSIVE) \
 				IncludesTest.thrift \
@@ -37,6 +36,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				OptionalFieldsTest.thrift \
 				RequiredFieldTest.thrift \
 				ServicesTest.thrift \
+				ContainerKeyTest.thrift \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
 				RefAnnotationFieldsTest.thrift \
@@ -67,10 +67,11 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ForwardType.thrift \
 				StringParseAllocationTest.thrift
 	mkdir -p gopath/src
-	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
+	grep -v 'set<Insanity>' $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
 	$(THRIFT) $(THRIFTARGS) BinaryKeyTest.thrift
+	$(THRIFT) $(THRIFTARGS) ContainerKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS) MultiplexedProtocolTest.thrift
 	$(THRIFT) $(THRIFTARGS) OnewayTest.thrift
 	$(THRIFT) $(THRIFTARGS) OptionalFieldsTest.thrift
@@ -111,6 +112,7 @@ check: gopath
 	$(GO) build $(GOBUILDEXTRA) \
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
+				./gopath/src/containerkeytest \
 				./gopath/src/servicestest \
 				./gopath/src/typedeffieldtest \
 				./gopath/src/refannotationfieldstest \
@@ -160,6 +162,7 @@ EXTRA_DIST = \
 	ConflictNamespaceTestF.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
 	ConstOptionalField.thrift \
+	ContainerKeyTest.thrift \
 	ConstOptionalFieldImport.thrift \
 	DontExportRWTest.thrift \
 	DuplicateImportsTest.thrift \
