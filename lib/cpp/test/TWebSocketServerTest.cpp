@@ -20,6 +20,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <deque>
 #include <memory>
@@ -63,6 +64,7 @@ public:
 
   uint32_t read(uint8_t* buf, uint32_t len) {
     largestRead_ = (std::max)(largestRead_, len);
+    noteStackDepth();
     if (inbound_.empty()) {
       return 0;
     }
@@ -87,10 +89,31 @@ public:
   uint32_t largestRead() const { return largestRead_; }
   const std::string& outbound() const { return outbound_; }
 
+  // How far below the caller's own frame the reader got. A reader that
+  // re-enters itself per frame shows up here and nowhere else: the frames it
+  // consumes and the bytes it hands over are the same either way.
+  void anchorStack(const void* here) {
+    anchor_ = reinterpret_cast<uintptr_t>(here);
+    deepestStack_ = 0;
+  }
+  size_t deepestStack() const { return deepestStack_; }
+
 private:
+  void noteStackDepth() {
+    if (anchor_ == 0) {
+      return;
+    }
+    char here;
+    auto now = reinterpret_cast<uintptr_t>(&here);
+    size_t depth = (now > anchor_) ? (now - anchor_) : (anchor_ - now);
+    deepestStack_ = (std::max)(deepestStack_, depth);
+  }
+
   std::deque<std::string> inbound_;
   std::string outbound_;
   uint32_t largestRead_ = 0;
+  uintptr_t anchor_ = 0;
+  size_t deepestStack_ = 0;
   bool open_ = true;
 };
 
@@ -164,6 +187,15 @@ bool closedWith(const std::string& outbound, uint16_t code) {
 }
 
 const uint16_t kMessageTooBig = 1009;
+
+const uint8_t kPingOpcode = 0x9;
+
+// Enough pings to separate a reader that recurses from one that does not, and
+// far too few to run any stack out: at the ~160 bytes a frame costs, the
+// unmodified reader passes 300 kB here while the whole run stays four orders of
+// magnitude inside the eight megabytes a Linux thread starts with.
+const int kPings = 2000;
+const size_t kStackCeiling = 64 * 1024;
 
 } // namespace
 
@@ -268,6 +300,28 @@ BOOST_AUTO_TEST_CASE(a_payload_that_stops_early_is_still_end_of_stream) {
 
   uint8_t out[16];
   BOOST_CHECK_EQUAL(server->readAll(out, sizeof(out)), 0u);
+}
+
+BOOST_AUTO_TEST_CASE(a_run_of_pings_is_answered_from_one_stack_frame) {
+  // A Ping carries nothing for the caller, so the reader has to go on to the
+  // next frame to satisfy it. Doing that by re-entering itself costs a stack
+  // frame per Ping, and a Ping is seven bytes on the wire.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  std::string wire;
+  for (int i = 0; i < kPings; ++i) {
+    wire += clientFrame(1, "x", kPingOpcode);
+  }
+  wire += clientFrame(5, "hello");
+  inner->feed(wire);
+
+  char anchor;
+  inner->anchorStack(&anchor);
+
+  char got[5];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 5), 5u);
+  BOOST_CHECK_EQUAL(std::string(got, 5), "hello");
+  BOOST_CHECK_LE(inner->deepestStack(), kStackCeiling);
 }
 
 BOOST_AUTO_TEST_CASE(a_length_with_the_high_bit_set_is_still_refused) {
