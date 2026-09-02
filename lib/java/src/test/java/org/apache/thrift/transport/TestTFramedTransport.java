@@ -46,6 +46,17 @@ public class TestTFramedTransport {
     return new TFramedTransport(underlying, maxLength);
   }
 
+  /** Wraps without asking for a maximum, which is the case that must leave one alone. */
+  protected TTransport getTransportWithoutMaxLength(TTransport underlying)
+      throws TTransportException {
+    return new TFramedTransport(underlying);
+  }
+
+  /** The same, through the factory a server is configured with. */
+  protected TTransportFactory getFactoryWithoutMaxLength() {
+    return new TFramedTransport.Factory();
+  }
+
   public static byte[] byteSequence(int start, int end) {
     byte[] result = new byte[end - start + 1];
     for (int i = 0; i <= (end - start); i++) {
@@ -87,6 +98,63 @@ public class TestTFramedTransport {
     assertEquals(220, trans.read(readBuf, 0, 220));
     assertArrayEquals(readBuf, byteSequence(0, 219));
     assertEquals(4, countTrans.readCount);
+  }
+
+  @Test
+  public void testWrappingKeepsALoweredMaxFrameSize() throws IOException, TTransportException {
+    TMemoryBuffer membuf = new TMemoryBuffer(0);
+    membuf.getConfiguration().setMaxFrameSize(1024);
+
+    getTransportWithoutMaxLength(membuf);
+
+    assertEquals(
+        1024,
+        membuf.getConfiguration().getMaxFrameSize(),
+        "wrapping a transport must not raise a maximum its owner lowered");
+  }
+
+  @Test
+  public void testFactoryKeepsALoweredMaxFrameSize() throws IOException, TTransportException {
+    TMemoryBuffer membuf = new TMemoryBuffer(0);
+    membuf.getConfiguration().setMaxFrameSize(1024);
+
+    getFactoryWithoutMaxLength().getTransport(membuf);
+
+    assertEquals(
+        1024,
+        membuf.getConfiguration().getMaxFrameSize(),
+        "a factory that was not given a maximum must not impose one");
+  }
+
+  @Test
+  public void testAnExplicitMaxFrameSizeIsStillApplied() throws IOException, TTransportException {
+    TMemoryBuffer membuf = new TMemoryBuffer(0);
+    membuf.getConfiguration().setMaxFrameSize(1024);
+
+    getTransport(membuf, 2048);
+
+    assertEquals(2048, membuf.getConfiguration().getMaxFrameSize());
+  }
+
+  @Test
+  public void testALoweredMaxFrameSizeStillRefusesAFrame() throws IOException, TTransportException {
+    // The point of the three above: a maximum that is silently raised is not a
+    // maximum. This reads an actual frame through it.
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(baos);
+    dos.writeInt(2048);
+    dos.write(new byte[2048]);
+
+    TMemoryBuffer membuf = new TMemoryBuffer(0);
+    membuf.write(baos.toByteArray());
+    membuf.getConfiguration().setMaxFrameSize(1024);
+
+    TTransport trans = getTransportWithoutMaxLength(membuf);
+
+    byte[] readBuf = new byte[10];
+    TTransportException e =
+        assertThrows(TTransportException.class, () -> trans.read(readBuf, 0, 4));
+    assertEquals(TTransportException.CORRUPTED_DATA, e.getType());
   }
 
   @Test
