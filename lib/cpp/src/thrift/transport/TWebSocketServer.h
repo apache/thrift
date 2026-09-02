@@ -220,125 +220,131 @@ private:
   }
 
   bool readFrame() {
-    uint8_t headerBuffer[8];
+    // Loop rather than recurse: a Ping carries nothing for the caller, so the
+    // reader has to go on to the next frame to satisfy it, and a peer may send
+    // as many Pings as it likes. Re-entering readFrame() for each one cost a
+    // stack frame per seven bytes on the wire.
+    while (true) {
+      uint8_t headerBuffer[8];
 
-    auto read = transport_->read(headerBuffer, 2);
-    if (read < 2) {
-      return false;
-    }
-    // Since Thrift has its own message end marker and we read frame by frame,
-    // it doesn't really matter if the frame is marked as FIN.
-    // Capture it only for debugging only.
-    auto fin = (headerBuffer[0] & 0x80) != 0;
-    THRIFT_UNUSED_VARIABLE(fin);
-
-    // RSV1, RSV2, RSV3
-    if ((headerBuffer[0] & 0x70) != 0) {
-      failConnection(CloseCode::ProtocolError);
-      throw TTransportException(TTransportException::CORRUPTED_DATA,
-                                "Reserved bits must be zeroes");
-    }
-
-    auto opcode = (Opcode)(headerBuffer[0] & 0x0F);
-
-    // Mask
-    if ((headerBuffer[1] & 0x80) == 0) {
-      failConnection(CloseCode::ProtocolError);
-      throw TTransportException(TTransportException::CORRUPTED_DATA,
-                                "Messages from the client must be masked");
-    }
-
-    // Read the length
-    uint64_t payloadLength = headerBuffer[1] & 0x7F;
-    if (payloadLength == 126) {
-      read = transport_->read(headerBuffer, 2);
+      auto read = transport_->read(headerBuffer, 2);
       if (read < 2) {
         return false;
       }
-      payloadLength = ntohs(*reinterpret_cast<uint16_t*>(headerBuffer));
-    } else if (payloadLength == 127) {
-      read = transport_->read(headerBuffer, 8);
-      if (read < 8) {
-        return false;
-      }
-      payloadLength = THRIFT_ntohll(*reinterpret_cast<uint64_t*>(headerBuffer));
-      if ((payloadLength & 0x8000000000000000) != 0) {
+      // Since Thrift has its own message end marker and we read frame by frame,
+      // it doesn't really matter if the frame is marked as FIN.
+      // Capture it only for debugging only.
+      auto fin = (headerBuffer[0] & 0x80) != 0;
+      THRIFT_UNUSED_VARIABLE(fin);
+
+      // RSV1, RSV2, RSV3
+      if ((headerBuffer[0] & 0x70) != 0) {
         failConnection(CloseCode::ProtocolError);
-        throw TTransportException(
-            TTransportException::CORRUPTED_DATA,
-            "The most significant bit of the payload length must be zero");
-      }
-    }
-
-    // The read buffer below is sized from this number before a single payload
-    // byte has arrived, so the frame header on its own decides how much memory
-    // the server commits unless something bounds it. Hold it to the configured
-    // maximum frame size, the same ceiling TFramedTransport applies to its own
-    // frames. The UINT32_MAX arm stays for its own reason: size_t is narrower
-    // than the length field on a 32-bit system.
-    //
-    // The cast is safe because the first arm has already ruled out anything
-    // wider than 32 bits by the time the second is evaluated.
-    if (payloadLength > UINT32_MAX
-        || static_cast<int64_t>(payloadLength) > getConfiguration()->getMaxFrameSize()) {
-      failConnection(CloseCode::MessageTooBig);
-      return false;
-    }
-
-    auto length = static_cast<uint32_t>(payloadLength);
-
-    if (length > 0) {
-      // Read the masking key
-      read = transport_->read(headerBuffer, 4);
-      if (read < 4) {
-        return false;
+        throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                  "Reserved bits must be zeroes");
       }
 
-      readBuffer_.resetBuffer(length);
-      uint8_t* buffer = readBuffer_.getWritePtr(length);
-      // Wait for the whole payload. A single read returns whatever one recv()
-      // produced, so anything the network split across segments used to be
-      // reported as end of stream and the frame lost. Waiting is only safe
-      // because length has been held to the configured maximum frame size
-      // above; TFramedTransport reads its own frames the same way.
-      try {
-        transport_->readAll(buffer, length);
-      } catch (const TTransportException& e) {
-        if (e.getType() == TTransportException::END_OF_FILE) {
-          // The peer went away part-way through the frame. That is what the
-          // caller has always been told about a payload that does not turn up.
+      auto opcode = (Opcode)(headerBuffer[0] & 0x0F);
+
+      // Mask
+      if ((headerBuffer[1] & 0x80) == 0) {
+        failConnection(CloseCode::ProtocolError);
+        throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                  "Messages from the client must be masked");
+      }
+
+      // Read the length
+      uint64_t payloadLength = headerBuffer[1] & 0x7F;
+      if (payloadLength == 126) {
+        read = transport_->read(headerBuffer, 2);
+        if (read < 2) {
           return false;
         }
-        throw;
+        payloadLength = ntohs(*reinterpret_cast<uint16_t*>(headerBuffer));
+      } else if (payloadLength == 127) {
+        read = transport_->read(headerBuffer, 8);
+        if (read < 8) {
+          return false;
+        }
+        payloadLength = THRIFT_ntohll(*reinterpret_cast<uint64_t*>(headerBuffer));
+        if ((payloadLength & 0x8000000000000000) != 0) {
+          failConnection(CloseCode::ProtocolError);
+          throw TTransportException(
+              TTransportException::CORRUPTED_DATA,
+              "The most significant bit of the payload length must be zero");
+        }
       }
-      readBuffer_.wroteBytes(length);
+
+      // The read buffer below is sized from this number before a single payload
+      // byte has arrived, so the frame header on its own decides how much memory
+      // the server commits unless something bounds it. Hold it to the configured
+      // maximum frame size, the same ceiling TFramedTransport applies to its own
+      // frames. The UINT32_MAX arm stays for its own reason: size_t is narrower
+      // than the length field on a 32-bit system.
+      //
+      // The cast is safe because the first arm has already ruled out anything
+      // wider than 32 bits by the time the second is evaluated.
+      if (payloadLength > UINT32_MAX
+          || static_cast<int64_t>(payloadLength) > getConfiguration()->getMaxFrameSize()) {
+        failConnection(CloseCode::MessageTooBig);
+        return false;
+      }
+
+      auto length = static_cast<uint32_t>(payloadLength);
+
+      if (length > 0) {
+        // Read the masking key
+        read = transport_->read(headerBuffer, 4);
+        if (read < 4) {
+          return false;
+        }
+
+        readBuffer_.resetBuffer(length);
+        uint8_t* buffer = readBuffer_.getWritePtr(length);
+        // Wait for the whole payload. A single read returns whatever one recv()
+        // produced, so anything the network split across segments used to be
+        // reported as end of stream and the frame lost. Waiting is only safe
+        // because length has been held to the configured maximum frame size
+        // above; TFramedTransport reads its own frames the same way.
+        try {
+          transport_->readAll(buffer, length);
+        } catch (const TTransportException& e) {
+          if (e.getType() == TTransportException::END_OF_FILE) {
+            // The peer went away part-way through the frame. That is what the
+            // caller has always been told about a payload that does not turn up.
+            return false;
+          }
+          throw;
+        }
+        readBuffer_.wroteBytes(length);
       
-      // Unmask the data
-      for (size_t i = 0; i < length; i++) {
-        buffer[i] ^= headerBuffer[i % 4];
+        // Unmask the data
+        for (size_t i = 0; i < length; i++) {
+          buffer[i] ^= headerBuffer[i % 4];
+        }
+
+        T_DEBUG("FIN=%d, Opcode=%X, length=%d, payload=%s", fin, opcode, length,
+                binary ? readBuffer_.toHexString() : cast(string) readBuffer_);
       }
 
-      T_DEBUG("FIN=%d, Opcode=%X, length=%d, payload=%s", fin, opcode, length,
-              binary ? readBuffer_.toHexString() : cast(string) readBuffer_);
-    }
-
-    switch (opcode) {
-    case Opcode::Close:
-      if (length >= 2) {
-        uint8_t buffer[2];
-        readBuffer_.read(buffer, 2);
-        CloseCode closeCode = static_cast<CloseCode>(ntohs(*reinterpret_cast<uint16_t*>(buffer)));
-        THRIFT_UNUSED_VARIABLE(closeCode);
-        string closeReason = readBuffer_.readAsString(length - 2);
-        T_DEBUG("Connection closed: %d %s", closeCode, closeReason);
+      switch (opcode) {
+      case Opcode::Close:
+        if (length >= 2) {
+          uint8_t buffer[2];
+          readBuffer_.read(buffer, 2);
+          CloseCode closeCode = static_cast<CloseCode>(ntohs(*reinterpret_cast<uint16_t*>(buffer)));
+          THRIFT_UNUSED_VARIABLE(closeCode);
+          string closeReason = readBuffer_.readAsString(length - 2);
+          T_DEBUG("Connection closed: %d %s", closeCode, closeReason);
+        }
+        transport_->close();
+        return false;
+      case Opcode::Ping:
+        pong();
+        continue;
+      default:
+        return true;
       }
-      transport_->close();
-      return false;
-    case Opcode::Ping:
-      pong();
-      return readFrame();
-    default:
-      return true;
     }
   }
 
