@@ -92,6 +92,11 @@ SUBDIRS += rs
 PRECROSS_TARGET += precross-rs
 endif
 
+if WITH_ZIG
+SUBDIRS += zig
+PRECROSS_TARGET += precross-zig
+endif
+
 #
 # generate html, graphviz, mermaid and markdown for ThriftTest.thrift
 #

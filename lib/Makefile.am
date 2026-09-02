@@ -96,6 +96,10 @@ if WITH_CL
 SUBDIRS += cl
 endif
 
+if WITH_ZIG
+SUBDIRS += zig
+endif
+
 # All of the libs that don't use Automake need to go in here
 # so they will end up in our release tarballs.
 distdir:

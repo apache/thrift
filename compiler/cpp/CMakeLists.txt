@@ -115,6 +115,7 @@ THRIFT_ADD_COMPILER(rs            "Enable compiler for Rust" ON)
 THRIFT_ADD_COMPILER(st            "Enable compiler for Smalltalk" ON)
 THRIFT_ADD_COMPILER(xml           "Enable compiler for XML" ON)
 THRIFT_ADD_COMPILER(xsd           "Enable compiler for XSD" ON)
+THRIFT_ADD_COMPILER(zig           "Enable compiler for ZIG" ON)
 
 # The following compiler can be enabled or disabled by enabling or disabling certain languages
 THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)

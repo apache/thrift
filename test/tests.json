@@ -629,7 +629,7 @@
         "client"
       ]
     },
-        "workdir": "netstd"
+    "workdir": "netstd"
   },
   {
     "name": "perl",
@@ -755,9 +755,9 @@
       ],
       "command": [
         "dart",
-	    "--enable-asserts",
+        "--enable-asserts",
         "test_client/bin/main.dart",
-	    "--verbose"
+        "--verbose"
       ]
     },
     "workdir": "dart"
@@ -934,5 +934,41 @@
       "buffered"
     ],
     "workdir": "../lib/nodets/test"
+  },
+  {
+    "name": "zig",
+    "protocols": [
+      "binary",
+      "compact",
+      "multi",
+      "multic"
+    ],
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "server": {
+      "command": [
+        "test_server"
+      ],
+      "workdir": "zig/zig-out/bin",
+      "protocols": [
+        "binary:multi",
+        "compact:multic"
+      ]
+    },
+    "client": {
+      "command": [
+        "test_client"
+      ],
+      "workdir": "zig/zig-out/bin",
+      "protocols": [
+        "multi:binary",
+        "multic:compact"
+      ]
+    }
   }
 ]
