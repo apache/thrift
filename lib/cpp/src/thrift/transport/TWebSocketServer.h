@@ -296,11 +296,22 @@ private:
 
       readBuffer_.resetBuffer(length);
       uint8_t* buffer = readBuffer_.getWritePtr(length);
-      read = transport_->read(buffer, length);
-      readBuffer_.wroteBytes(read);
-      if (read < length) {
-        return false;
+      // Wait for the whole payload. A single read returns whatever one recv()
+      // produced, so anything the network split across segments used to be
+      // reported as end of stream and the frame lost. Waiting is only safe
+      // because length has been held to the configured maximum frame size
+      // above; TFramedTransport reads its own frames the same way.
+      try {
+        transport_->readAll(buffer, length);
+      } catch (const TTransportException& e) {
+        if (e.getType() == TTransportException::END_OF_FILE) {
+          // The peer went away part-way through the frame. That is what the
+          // caller has always been told about a payload that does not turn up.
+          return false;
+        }
+        throw;
       }
+      readBuffer_.wroteBytes(length);
       
       // Unmask the data
       for (size_t i = 0; i < length; i++) {
