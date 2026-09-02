@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/apache/thrift/lib/go/test/gopath/src/namestest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func TestThatAttributeNameSubstituionDoesNotOccur(t *testing.T) {
@@ -31,5 +32,31 @@ func TestThatAttributeNameSubstituionDoesNotOccur(t *testing.T) {
 	_, ok := st.FieldByName("Type")
 	if !ok {
 		t.Error("Type attribute is missing!")
+	}
+}
+
+func TestIsSetFieldDoesNotCollideWithAccessor(t *testing.T) {
+	st := reflect.TypeFor[namestest.SetFlagNamesTest]()
+	for _, name := range []string{"IsSetQueryParallelism_", "IsSetDefaultPoolPath_"} {
+		if _, ok := st.FieldByName(name); !ok {
+			t.Errorf("%s attribute is missing!", name)
+		}
+	}
+
+	v := &namestest.SetFlagNamesTest{
+		QueryParallelism:       thrift.Int32Ptr(4),
+		IsSetQueryParallelism_: thrift.BoolPtr(false),
+	}
+	if !v.IsSetQueryParallelism() {
+		t.Error("IsSetQueryParallelism() should report the queryParallelism field")
+	}
+	if !v.IsSetIsSetQueryParallelism_() {
+		t.Error("IsSetIsSetQueryParallelism_() should report the isSetQueryParallelism field")
+	}
+	if v.GetIsSetQueryParallelism_() {
+		t.Error("GetIsSetQueryParallelism_() should return the field value, not the accessor result")
+	}
+	if v.IsSetDefaultPoolPath() || v.IsSetIsSetDefaultPoolPath_() {
+		t.Error("unset fields reported as set")
 	}
 }

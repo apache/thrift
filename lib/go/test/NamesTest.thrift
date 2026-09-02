@@ -30,3 +30,12 @@ service NameCollisionTwo
 {
     void blahBlah()
 }
+
+// A field named isSetX next to a field named x must not collide with the
+// generated IsSetX() accessor.
+struct SetFlagNamesTest {
+    1: optional i32 queryParallelism
+    2: optional bool isSetQueryParallelism
+    3: optional string default_pool_path
+    4: optional bool is_set_default_pool_path
+}

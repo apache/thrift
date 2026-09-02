@@ -254,6 +254,13 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
     value2 += '_';
   }
 
+  // IDL identifiers may start with "IsSet" which interferes with the IsSetX() accessor
+  // generated for a sibling field X (e.g. fields "x" and "isSetX" in one struct)
+  // Adding an extra underscore to all those identifiers solves this
+  if ((len_before >= 5) && (value2.substr(0, 5) == "IsSet")) {
+    value2 += '_';
+  }
+
   // IDL identifiers may end with "Args"/"Result" which interferes with the implicit service
   // function structs
   // Adding another extra underscore to all those identifiers solves this
