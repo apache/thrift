@@ -34,24 +34,32 @@ public class TFastFramedTransport extends TLayeredTransport {
 
   public static class Factory extends TTransportFactory {
     private final int initialCapacity;
-    private final int maxLength;
+
+    /** Null when no maximum was asked for, which leaves each transport's own alone. */
+    private final Integer maxLength;
 
     public Factory() {
-      this(DEFAULT_BUF_CAPACITY, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
+      this(DEFAULT_BUF_CAPACITY, null);
     }
 
     public Factory(int initialCapacity) {
-      this(initialCapacity, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
+      this(initialCapacity, null);
     }
 
     public Factory(int initialCapacity, int maxLength) {
+      this(initialCapacity, Integer.valueOf(maxLength));
+    }
+
+    private Factory(int initialCapacity, Integer maxLength) {
       this.initialCapacity = initialCapacity;
       this.maxLength = maxLength;
     }
 
     @Override
     public TTransport getTransport(TTransport trans) throws TTransportException {
-      return new TFastFramedTransport(trans, initialCapacity, maxLength);
+      return Objects.isNull(maxLength)
+          ? new TFastFramedTransport(trans, initialCapacity)
+          : new TFastFramedTransport(trans, initialCapacity, maxLength);
     }
   }
 
@@ -71,7 +79,9 @@ public class TFastFramedTransport extends TLayeredTransport {
    * @param underlying Transport that real reads and writes will go through to.
    */
   public TFastFramedTransport(TTransport underlying) throws TTransportException {
-    this(underlying, DEFAULT_BUF_CAPACITY, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
+    // No maximum was asked for, so keep the one the transport already carries.
+    // See TFramedTransport's single-argument constructor.
+    this(underlying, DEFAULT_BUF_CAPACITY, configuredMaxFrameSize(underlying));
   }
 
   /**
@@ -85,7 +95,7 @@ public class TFastFramedTransport extends TLayeredTransport {
    */
   public TFastFramedTransport(TTransport underlying, int initialBufferCapacity)
       throws TTransportException {
-    this(underlying, initialBufferCapacity, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
+    this(underlying, initialBufferCapacity, configuredMaxFrameSize(underlying));
   }
 
   /**

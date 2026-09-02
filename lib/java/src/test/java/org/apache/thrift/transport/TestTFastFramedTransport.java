@@ -33,4 +33,15 @@ public class TestTFastFramedTransport extends TestTFramedTransport {
       throws TTransportException {
     return new TFastFramedTransport(underlying, INITIAL_CAPACITY, maxLength);
   }
+
+  @Override
+  protected TTransport getTransportWithoutMaxLength(TTransport underlying)
+      throws TTransportException {
+    return new TFastFramedTransport(underlying, INITIAL_CAPACITY);
+  }
+
+  @Override
+  protected TTransportFactory getFactoryWithoutMaxLength() {
+    return new TFastFramedTransport.Factory(INITIAL_CAPACITY);
+  }
 }

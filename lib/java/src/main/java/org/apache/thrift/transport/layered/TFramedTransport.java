@@ -40,10 +40,11 @@ public class TFramedTransport extends TLayeredTransport {
   private final TMemoryInputTransport readBuffer_;
 
   public static class Factory extends TTransportFactory {
-    private final int maxLength_;
+    /** Null when no maximum was asked for, which leaves each transport's own alone. */
+    private final Integer maxLength_;
 
     public Factory() {
-      maxLength_ = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
+      maxLength_ = null;
     }
 
     public Factory(int maxLength) {
@@ -52,7 +53,9 @@ public class TFramedTransport extends TLayeredTransport {
 
     @Override
     public TTransport getTransport(TTransport base) throws TTransportException {
-      return new TFramedTransport(base, maxLength_);
+      return Objects.isNull(maxLength_)
+          ? new TFramedTransport(base)
+          : new TFramedTransport(base, maxLength_);
     }
   }
 
@@ -75,7 +78,11 @@ public class TFramedTransport extends TLayeredTransport {
   }
 
   public TFramedTransport(TTransport transport) throws TTransportException {
-    this(transport, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
+    // No maximum was asked for, so keep the one the transport already carries.
+    // Passing the library default here would silently raise a limit its owner
+    // had lowered -- and, because the configuration object belongs to the
+    // transport underneath, would do so for everything else sharing it.
+    this(transport, configuredMaxFrameSize(transport));
   }
 
   public void open() throws TTransportException {
