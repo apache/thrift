@@ -94,6 +94,11 @@ set(UnitTest_SOURCES
     Thrift5272.cpp
 )
 
+# TWebSocketServer is only built when OpenSSL is available.
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+    list(APPEND UnitTest_SOURCES TWebSocketServerTest.cpp)
+endif()
+
 add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 target_link_libraries(UnitTests thrift)

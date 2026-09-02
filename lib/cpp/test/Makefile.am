@@ -143,6 +143,7 @@ UnitTests_SOURCES = \
 	TTransportCheckThrow.h \
 	ThrifttReadCheckTests.cpp \
 	FrameBoundReadBudgetTest.cpp \
+	TWebSocketServerTest.cpp \
 	Thrift5272.cpp \
 	TUuidTest.cpp
 
