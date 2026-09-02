@@ -270,8 +270,17 @@ private:
       }
     }
 
-    // size_t is smaller than a ulong on a 32-bit system
-    if (payloadLength > UINT32_MAX) {
+    // The read buffer below is sized from this number before a single payload
+    // byte has arrived, so the frame header on its own decides how much memory
+    // the server commits unless something bounds it. Hold it to the configured
+    // maximum frame size, the same ceiling TFramedTransport applies to its own
+    // frames. The UINT32_MAX arm stays for its own reason: size_t is narrower
+    // than the length field on a 32-bit system.
+    //
+    // The cast is safe because the first arm has already ruled out anything
+    // wider than 32 bits by the time the second is evaluated.
+    if (payloadLength > UINT32_MAX
+        || static_cast<int64_t>(payloadLength) > getConfiguration()->getMaxFrameSize()) {
       failConnection(CloseCode::MessageTooBig);
       return false;
     }
