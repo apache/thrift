@@ -129,6 +129,7 @@ function roundtrip($testClient, $method, $value)
  * STRING TEST
  */
 roundtrip($testClient, 'testString', "Test");
+roundtrip($testClient, 'testString', 'path /tmp/thrift and url https://127.0.0.1/service');
 
 /**
  * BOOL TEST
