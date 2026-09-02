@@ -839,7 +839,15 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
       out << indent() << "}" << '\n';
     } else if (key == "vt.key") {
       std::string src = GenID("_key");
-      out << indent() << "for " << src << " := range " << context.tgt << " {" << '\n';
+      if (go_generator->is_container_keyed_map(context.type)) {
+        std::string entry = GenID("_entry");
+        out << indent() << "for _, " << entry << " := range " << context.tgt << " {" << '\n';
+        indent_up();
+        out << indent() << src << " := " << entry << ".Key" << '\n';
+        indent_down();
+      } else {
+        out << indent() << "for " << src << " := range " << context.tgt << " {" << '\n';
+      }
       indent_up();
       generator_context ctx{context.field_symbol + ".key",
                             "",
@@ -852,7 +860,15 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
       out << indent() << "}" << '\n';
     } else if (key == "vt.value") {
       std::string src = GenID("_value");
-      out << indent() << "for _, " << src << " := range " << context.tgt << " {" << '\n';
+      if (go_generator->is_container_keyed_map(context.type)) {
+        std::string entry = GenID("_entry");
+        out << indent() << "for _, " << entry << " := range " << context.tgt << " {" << '\n';
+        indent_up();
+        out << indent() << src << " := " << entry << ".Value" << '\n';
+        indent_down();
+      } else {
+        out << indent() << "for _, " << src << " := range " << context.tgt << " {" << '\n';
+      }
       indent_up();
       generator_context ctx{context.field_symbol + ".value",
                             "",

@@ -265,6 +265,8 @@ public:
   std::string type_to_go_type(t_type* ttype);
   std::string type_to_go_type_with_opt(t_type* ttype, bool optional_field);
   std::string type_to_go_key_type(t_type* ttype);
+  bool is_container_keyed_map(t_type* ttype);
+  std::string map_entry_type(t_map* tmap);
   std::string type_to_spec_args(t_type* ttype);
 
   bool generate_deprecation_comment(std::ostream& os, const std::map<std::string, std::vector<std::string>>& annotations);

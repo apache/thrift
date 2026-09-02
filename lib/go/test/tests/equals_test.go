@@ -284,3 +284,11 @@ func genInt64StringMap(length int) map[int64]string {
 	}
 	return ret
 }
+
+func TestMapEqualsDetectsMissingKey(t *testing.T) {
+	a := &equalstest.MapEqualsFoo{I64StrMapFoo: map[int64]string{1: ""}}
+	b := &equalstest.MapEqualsFoo{I64StrMapFoo: map[int64]string{2: ""}}
+	if a.Equals(b) {
+		t.Error("maps with different key sets must not be equal even when the zero value matches")
+	}
+}

@@ -1244,13 +1244,29 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+    if (is_container_keyed_map(type)) {
+      string entry = map_entry_type((t_map*)type);
+      if (val.empty()) {
+        out << "[]" << entry << "{}";
+        return out.str();
+      }
+      out << "[]" << entry << "{" << '\n';
+      indent_up();
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        out << indent() << "{Key: " << render_const_value(ktype, v_iter->first, name)
+            << ", Value: " << render_const_value(vtype, v_iter->second, name) << "}," << '\n';
+      }
+      indent_down();
+      out << indent() << "}";
+      return out.str();
+    }
     if (val.empty()) {
       out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{}";
       return out.str();
     }
     out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{" << '\n';
     indent_up();
-    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     size_t max_key_len = 0;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string rendered_value = render_const_value(vtype, v_iter->second, name);
@@ -3711,7 +3727,11 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     out << indent() << "return thrift.PrependError(\"error reading map begin: \", err)" << '\n';
     indent_down();
     out << indent() << "}" << '\n';
-    out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << '\n';
+    if (is_container_keyed_map(ttype)) {
+      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", 0, size)" << '\n';
+    } else {
+      out << indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << '\n';
+    }
     out << indent() << prefix << eq << (pointer_field ? "&" : "") << "tMap" << '\n';
   } else if (ttype->is_set()) {
     out << indent() << "_, size, err := iprot.ReadSetBegin(ctx)" << '\n';
@@ -3790,6 +3810,27 @@ void t_go_generator::generate_deserialize_map_element(ostream& out,
   t_field fval(tmap->get_val_type(), val);
   fkey.set_req(t_field::T_OPT_IN_REQ_OUT);
   fval.set_req(t_field::T_OPT_IN_REQ_OUT);
+  if (is_container_keyed_map(tmap)) {
+    // The key is a container, and the value may be one too. Container reads
+    // declare fixed local names (size, tSlice, ...), so each read gets its own
+    // block and the results are declared up front.
+    indent(out) << "var " << key << " " << type_to_go_type(tmap->get_key_type()) << '\n';
+    indent(out) << "var " << val << " " << type_to_go_type(tmap->get_val_type())
+                << '\n';
+    indent(out) << "{" << '\n';
+    indent_up();
+    generate_deserialize_field(out, &fkey, false, "", false, false, true);
+    indent_down();
+    indent(out) << "}" << '\n';
+    indent(out) << "{" << '\n';
+    indent_up();
+    generate_deserialize_field(out, &fval, false, "", false, false, false, true);
+    indent_down();
+    indent(out) << "}" << '\n';
+    indent(out) << prefix << " = append(" << prefix << ", " << map_entry_type(tmap) << "{Key: "
+                << key << ", Value: " << val << "})" << '\n';
+    return;
+  }
   generate_deserialize_field(out, &fkey, true, "", false, false, true);
   generate_deserialize_field(out, &fval, true, "", false, false, false, true);
   indent(out) << prefix << "[" << key << "] = " << val << '\n';
@@ -3974,9 +4015,41 @@ void t_go_generator::generate_serialize_container(ostream& out,
 
   if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
-    out << indent() << "for k, v := range " << prefix << " {" << '\n';
-    indent_up();
-    generate_serialize_map_element(out, tmap, "k", "v");
+    if (is_container_keyed_map(tmap)) {
+      string wrapped_prefix = prefix;
+      if (pointer_field) {
+        wrapped_prefix = "(" + prefix + ")";
+      }
+      string keyType = type_to_go_type(tmap->get_key_type());
+      out << indent() << "for i := 0; i < len(" << prefix << "); i++ {" << '\n';
+      indent_up();
+      out << indent() << "for j := i + 1; j < len(" << prefix << "); j++ {" << '\n';
+      indent_up();
+      out << indent() << "if func(tgt, src " << keyType << ") bool {" << '\n';
+      indent_up();
+      generate_go_equals(out, tmap->get_key_type(), "tgt", "src");
+      out << indent() << "return true" << '\n';
+      indent_down();
+      out << indent() << "}(" << wrapped_prefix << "[i].Key, " << wrapped_prefix << "[j].Key) {"
+          << '\n';
+      indent_up();
+      out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
+          << "fmt.Errorf(\"%T error writing map field %q: keys are not unique\", "
+          << wrapped_prefix << ", \"" << escape_string(prefix) << "\"))" << '\n';
+      indent_down();
+      out << indent() << "}" << '\n';
+      indent_down();
+      out << indent() << "}" << '\n';
+      indent_down();
+      out << indent() << "}" << '\n';
+      out << indent() << "for _, e := range " << prefix << " {" << '\n';
+      indent_up();
+      generate_serialize_map_element(out, tmap, "e.Key", "e.Value");
+    } else {
+      out << indent() << "for k, v := range " << prefix << " {" << '\n';
+      indent_up();
+      generate_serialize_map_element(out, tmap, "k", "v");
+    }
     indent_down();
     indent(out) << "}" << '\n';
   } else if (ttype->is_set()) {
@@ -4164,12 +4237,27 @@ void t_go_generator::generate_go_equals_container(ostream& out,
   out << indent() << "return false" << '\n';
   indent_down();
   out << indent() << "}" << '\n';
-  if (ttype->is_map()) {
+  if (is_container_keyed_map(ttype)) {
+    t_map* tmap = (t_map*)ttype;
+    out << indent() << "for i, _tgt := range " << tgt << " {" << '\n';
+    indent_up();
+    string element_source = tmp("_src");
+    out << indent() << element_source << " := " << indexable_go_expr(src) << "[i]" << '\n';
+    generate_go_equals(out, tmap->get_key_type(), "_tgt.Key", element_source + ".Key");
+    generate_go_equals(out, tmap->get_val_type(), "_tgt.Value", element_source + ".Value");
+    indent_down();
+    indent(out) << "}" << '\n';
+  } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     out << indent() << "for k, _tgt := range " << tgt << " {" << '\n';
     indent_up();
     string element_source = tmp("_src");
-    out << indent() << element_source << " := " << indexable_go_expr(src) << "[k]" << '\n';
+    out << indent() << element_source << ", ok := " << indexable_go_expr(src) << "[k]" << '\n';
+    out << indent() << "if !ok {" << '\n';
+    indent_up();
+    out << indent() << "return false" << '\n';
+    indent_down();
+    out << indent() << "}" << '\n';
     generate_go_equals(out, tmap->get_val_type(), "_tgt", element_source);
     indent_down();
     indent(out) << "}" << '\n';
@@ -4485,15 +4573,33 @@ string t_go_generator::type_to_enum(t_type* type) {
 }
 
 /**
+ * Returns true for a map whose key type is a list, set or map (or a
+ * typedef of one); such maps are generated as []thrift.MapEntry[K, V].
+ */
+bool t_go_generator::is_container_keyed_map(t_type* type) {
+  t_type* ttype = type->get_true_type();
+  if (!ttype->is_map()) {
+    return false;
+  }
+  t_type* ktype = ((t_map*)ttype)->get_key_type()->get_true_type();
+  return ktype->is_map() || ktype->is_list() || ktype->is_set();
+}
+
+/**
+ * Renders the thrift.MapEntry[K, V] instantiation for a map whose key is a
+ * container.
+ */
+string t_go_generator::map_entry_type(t_map* tmap) {
+  return "thrift.MapEntry[" + type_to_go_type(tmap->get_key_type()) + ", "
+         + type_to_go_type(tmap->get_val_type()) + "]";
+}
+
+/**
  * Converts the parse type to a go map type, will throw an exception if it will
  * not produce a valid go map type.
  */
 string t_go_generator::type_to_go_key_type(t_type* type) {
-  t_type* resolved_type = type;
-
-  while (resolved_type->is_typedef()) {
-    resolved_type = ((t_typedef*)resolved_type)->get_type()->get_true_type();
-  }
+  t_type* resolved_type = type->get_true_type();
 
   if (resolved_type->is_map() || resolved_type->is_list() || resolved_type->is_set()) {
     throw "Cannot produce a valid type for a Go map key: " + type_to_go_type(type) + " - aborting.";
@@ -4568,6 +4674,9 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
     return "*" + publicize(type_name(type));
   } else if (type->is_map()) {
     t_map* t = (t_map*)type;
+    if (is_container_keyed_map(t)) {
+      return maybe_pointer + "[]" + map_entry_type(t);
+    }
     string keyType = type_to_go_key_type(t->get_key_type());
     string valueType = type_to_go_type(t->get_val_type());
     return maybe_pointer + string("map[") + keyType + "]" + valueType;
