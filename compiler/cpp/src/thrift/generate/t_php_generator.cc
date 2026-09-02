@@ -2681,13 +2681,18 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
     string iter_val = tmp("iter");
-    indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
-    indent_up();
-
     t_type* elem_type = ((t_set*)ttype)->get_elem_type();
-    if(php_is_scalar(elem_type)) {
-      generate_serialize_set_element(out, (t_set*)ttype, iter);
+    if (php_is_scalar(elem_type)) {
+      string is_list = tmp("isList");
+      string iter_elem = tmp("iter");
+      indent(out) << "$" << is_list << " = array_is_list($" << prefix << ");" << '\n';
+      indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
+      indent_up();
+      indent(out) << "$" << iter_elem << " = $" << is_list << " ? $" << iter_val << " : $" << iter << ";" << '\n';
+      generate_serialize_set_element(out, (t_set*)ttype, iter_elem);
     } else {
+      indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
+      indent_up();
       generate_serialize_set_element(out, (t_set*)ttype, iter_val);
     }
     scope_down(out);
@@ -2754,9 +2759,9 @@ void t_php_generator::generate_serialize_map_element(ostream& out,
  * Serializes the members of a set.
  */
 void t_php_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
-  // Set element used as PHP array key — same coercion concern as map keys;
-  // see comment on emit_array_key_recast. Helper no-ops for non-castable
-  // element types.
+  // Scalar PHP sets may be represented either as a legacy keyed array or as
+  // a plain list of element values. Cast when needed so typed writeXxx()
+  // calls accept array-key sourced scalars after PHP key coercion.
   emit_array_key_recast(out, tset->get_elem_type(), iter);
 
   t_field efield(tset->get_elem_type(), iter);

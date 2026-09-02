@@ -349,8 +349,9 @@ abstract class TBase
         } else {
             $xfer += $output->writeListBegin($etype, count($var));
         }
+        $setUsesValues = $set && array_is_list($var);
         foreach ($var as $key => $val) {
-            $elem = $set ? $key : $val;
+            $elem = $set && !$setUsesValues ? $key : $val;
             if (isset($ewrite)) {
                 $xfer += $output->$ewrite($elem);
             } else {
