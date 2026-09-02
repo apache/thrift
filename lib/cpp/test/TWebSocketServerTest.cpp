@@ -237,6 +237,39 @@ BOOST_AUTO_TEST_CASE(consecutive_frames_still_read) {
   BOOST_CHECK_EQUAL(std::string(got, 4), "beta");
 }
 
+BOOST_AUTO_TEST_CASE(a_payload_split_across_reads_still_arrives_whole) {
+  // The transport underneath hands over one chunk per read, which is what a
+  // socket does with anything larger than a segment. The frame is ordinary and
+  // well inside every limit; the only thing unusual about it is that it does
+  // not arrive all at once.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  const std::string payload(4000, 'A');
+  const std::string frame = clientFrame(payload.size(), payload);
+  inner->feed(frame.substr(0, 8));
+  inner->feed(frame.substr(8, 1000));
+  inner->feed(frame.substr(1008));
+
+  std::string got(payload.size(), '\0');
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(&got[0]),
+                                    static_cast<uint32_t>(payload.size())),
+                    payload.size());
+  BOOST_CHECK_EQUAL(got, payload);
+}
+
+BOOST_AUTO_TEST_CASE(a_payload_that_stops_early_is_still_end_of_stream) {
+  // Waiting for the rest of a frame must not turn a peer that went away into a
+  // half-read frame handed to the protocol.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  const std::string payload(4000, 'A');
+  const std::string frame = clientFrame(payload.size(), payload);
+  inner->feed(frame.substr(0, 500));
+
+  uint8_t out[16];
+  BOOST_CHECK_EQUAL(server->readAll(out, sizeof(out)), 0u);
+}
+
 BOOST_AUTO_TEST_CASE(a_length_with_the_high_bit_set_is_still_refused) {
   // Unchanged behaviour, kept here so the new bound cannot be mistaken for the
   // only thing standing between the header and the allocation.
