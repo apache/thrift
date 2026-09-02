@@ -29,6 +29,7 @@ use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
 use Basic\ThriftTest\Insanity;
 use Basic\ThriftTest\Numberz;
+use Basic\ThriftTest\OptionalSetDefaultTest;
 use Basic\ThriftTest\Xtruct;
 use Basic\ThriftTest\Xtruct2;
 
@@ -65,6 +66,19 @@ class TJSONProtocolTest extends TestCase
         $service = new \Basic\ThriftTest\ThriftTestClient($input, $this->protocol);
         $result = $service->testString('test');
         $this->assertSame('successResponse', $result);
+    }
+
+    public function testWriteScalarSetAcceptsSequentialValues(): void
+    {
+        $struct = new OptionalSetDefaultTest([
+            'with_default' => ['element1', 'element2'],
+        ]);
+
+        $struct->write($this->protocol);
+
+        $actual = $this->transport->read(self::BUFFER_SIZE);
+
+        $this->assertSame('{"1":{"set":["str",2,"element1","element2"]}}', $actual);
     }
 
     #[DataProvider('writeDataProvider')]
@@ -298,6 +312,13 @@ class TJSONProtocolTest extends TestCase
                 'thing' => [1 => true, 5 => true, 6 => true],
             ],
             'expected' => '{"1":{"set":["i32",3,1,5,6]}}',
+        ];
+        yield 'set sequential legacy keys' => [
+            'argsClassName' => \Basic\ThriftTest\ThriftTest_testSet_args::class,
+            'argsValues' => [
+                'thing' => [0 => true, 1 => true],
+            ],
+            'expected' => '{"1":{"set":["i32",2,0,1]}}',
         ];
         yield 'list' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testList_args::class,
