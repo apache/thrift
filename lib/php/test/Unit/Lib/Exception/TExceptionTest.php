@@ -137,6 +137,16 @@ class TExceptionTest extends TestCase
         $this->assertSame([5 => true, 9 => true], $result->setField);
     }
 
+    public function testWriteAndReadScalarSetPreservesSequentialLegacyKeys(): void
+    {
+        $exception = new TestRichException();
+        $exception->setField = [0 => true, 1 => true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([0 => true, 1 => true], $result->setField);
+    }
+
     public function testWriteAndReadAllFields()
     {
         $exception = new TestRichException();

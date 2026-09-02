@@ -348,7 +348,15 @@ class TException extends \Exception
         } else {
             $xfer += $output->writeListBegin($etype, count($var));
         }
-        $setUsesValues = $set && array_is_list($var);
+        $setUsesValues = false;
+        if ($set && array_is_list($var)) {
+            foreach ($var as $candidate) {
+                if ($candidate !== true) {
+                    $setUsesValues = true;
+                    break;
+                }
+            }
+        }
         foreach ($var as $key => $val) {
             $elem = $set && !$setUsesValues ? $key : $val;
             if (isset($ewrite)) {

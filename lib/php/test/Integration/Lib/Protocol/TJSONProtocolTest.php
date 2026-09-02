@@ -313,6 +313,13 @@ class TJSONProtocolTest extends TestCase
             ],
             'expected' => '{"1":{"set":["i32",3,1,5,6]}}',
         ];
+        yield 'set sequential legacy keys' => [
+            'argsClassName' => \Basic\ThriftTest\ThriftTest_testSet_args::class,
+            'argsValues' => [
+                'thing' => [0 => true, 1 => true],
+            ],
+            'expected' => '{"1":{"set":["i32",2,0,1]}}',
+        ];
         yield 'list' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testList_args::class,
             'argsValues' => [

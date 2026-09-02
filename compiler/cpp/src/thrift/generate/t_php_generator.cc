@@ -2683,12 +2683,24 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
     string iter_val = tmp("iter");
     t_type* elem_type = ((t_set*)ttype)->get_elem_type();
     if (php_is_scalar(elem_type)) {
-      string is_list = tmp("isList");
+      string set_uses_values = tmp("setUsesValues");
+      string list_val = tmp("iter");
       string iter_elem = tmp("iter");
-      indent(out) << "$" << is_list << " = array_is_list($" << prefix << ");" << '\n';
+      indent(out) << "$" << set_uses_values << " = false;" << '\n';
+      indent(out) << "if (array_is_list($" << prefix << ")) {" << '\n';
+      indent_up();
+      indent(out) << "foreach ($" << prefix << " as $" << list_val << ") {" << '\n';
+      indent_up();
+      indent(out) << "if ($" << list_val << " !== true) {" << '\n';
+      indent_up();
+      indent(out) << "$" << set_uses_values << " = true;" << '\n';
+      indent(out) << "break;" << '\n';
+      scope_down(out);
+      scope_down(out);
+      scope_down(out);
       indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
       indent_up();
-      indent(out) << "$" << iter_elem << " = $" << is_list << " ? $" << iter_val << " : $" << iter << ";" << '\n';
+      indent(out) << "$" << iter_elem << " = $" << set_uses_values << " ? $" << iter_val << " : $" << iter << ";" << '\n';
       generate_serialize_set_element(out, (t_set*)ttype, iter_elem);
     } else {
       indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
@@ -2759,9 +2771,10 @@ void t_php_generator::generate_serialize_map_element(ostream& out,
  * Serializes the members of a set.
  */
 void t_php_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
-  // Scalar PHP sets may be represented either as a legacy keyed array or as
-  // a plain list of element values. Cast when needed so typed writeXxx()
-  // calls accept array-key sourced scalars after PHP key coercion.
+  // Scalar PHP sets may be represented either as a legacy keyed array of
+  // element => true markers or as a plain list of element values. Cast when
+  // needed so typed writeXxx() calls accept array-key sourced scalars after
+  // PHP key coercion.
   emit_array_key_recast(out, tset->get_elem_type(), iter);
 
   t_field efield(tset->get_elem_type(), iter);

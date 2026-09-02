@@ -88,6 +88,20 @@ class TBaseTest extends TestCase
         $this->assertSame([10 => true, 20 => true], $restored->setField);
     }
 
+    public function testWriteSetPreservesSequentialLegacyKeys(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'setField' => [0 => true, 1 => true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([0 => true, 1 => true], $restored->setField);
+    }
+
     public function testReadSkipsUnknownAndUnexpectedFields(): void
     {
         $transport = new TMemoryBuffer();
