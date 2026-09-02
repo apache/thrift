@@ -55,7 +55,6 @@ FILES[CMakeLists.txt]=simpleReplace
 FILES[compiler/cpp/src/thrift/version.h]=simpleReplace
 FILES[configure.ac]=configureReplace
 FILES[contrib/Rebus/Properties/AssemblyInfo.cs]=simpleReplace
-FILES[contrib/thrift-maven-plugin/pom.xml]=pomReplace
 FILES[contrib/thrift.spec]=simpleReplace
 FILES[contrib/zeromq/csharp/AssemblyInfo.cs]=simpleReplace
 FILES[doc/specs/idl.md]=simpleReplace
