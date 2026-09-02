@@ -188,6 +188,26 @@ bool closedWith(const std::string& outbound, uint16_t code) {
 
 const uint16_t kMessageTooBig = 1009;
 
+// Everything the server wrote after the 101 that ends the handshake.
+std::string framesWritten(const std::string& outbound) {
+  auto end = outbound.find("\r\n\r\n");
+  return end == std::string::npos ? outbound : outbound.substr(end + 4);
+}
+
+std::string hex(const std::string& bytes) {
+  static const char* digits = "0123456789ABCDEF";
+  std::string out;
+  for (size_t i = 0; i < bytes.size(); ++i) {
+    auto b = static_cast<unsigned char>(bytes[i]);
+    if (i > 0) {
+      out.push_back(' ');
+    }
+    out.push_back(digits[b >> 4]);
+    out.push_back(digits[b & 0x0F]);
+  }
+  return out;
+}
+
 const uint8_t kPingOpcode = 0x9;
 
 // Enough pings to separate a reader that recurses from one that does not, and
@@ -322,6 +342,82 @@ BOOST_AUTO_TEST_CASE(a_run_of_pings_is_answered_from_one_stack_frame) {
   BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 5), 5u);
   BOOST_CHECK_EQUAL(std::string(got, 5), "hello");
   BOOST_CHECK_LE(inner->deepestStack(), kStackCeiling);
+}
+
+BOOST_AUTO_TEST_CASE(an_empty_masked_frame_does_not_desynchronise_the_stream) {
+  // The masking key is present in every frame whose MASK bit is set, whatever
+  // the payload length, and this server refuses a client frame that does not
+  // set it. Leaving those four bytes in the stream makes the next header be
+  // parsed out of the masking key.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  inner->feed(clientFrame(0, "", kPingOpcode) + clientFrame(5, "hello"));
+
+  char got[5];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 5), 5u);
+  BOOST_CHECK_EQUAL(std::string(got, 5), "hello");
+}
+
+BOOST_AUTO_TEST_CASE(a_pong_declares_the_length_it_carries) {
+  // RFC 6455 wants a Pong to carry the Ping's payload, and the header has to
+  // describe it, or the peer reads the payload as the next frame header.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  inner->feed(clientFrame(8, "PINGDATA", kPingOpcode) + clientFrame(5, "hello"));
+
+  char got[5];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 5), 5u);
+  BOOST_CHECK_EQUAL(hex(framesWritten(inner->outbound())), "8A 08 50 49 4E 47 44 41 54 41");
+}
+
+BOOST_AUTO_TEST_CASE(a_pong_for_an_empty_ping_carries_nothing) {
+  // The Pong echoes the read buffer, so a frame with no payload has to leave
+  // that buffer empty rather than whatever the frame before it left unread.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  inner->feed(clientFrame(5, "hello") + clientFrame(0, "", kPingOpcode) + clientFrame(5, "world"));
+
+  char got[1];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 1), 1u);
+  BOOST_CHECK_EQUAL(got[0], 'h');
+  // Four bytes of "hello" are still unread when the Ping arrives.
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 1), 1u);
+  BOOST_CHECK_EQUAL(got[0], 'e');
+  char rest[3];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(rest), 3), 3u);
+  char after[5];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(after), 5), 5u);
+  BOOST_CHECK_EQUAL(std::string(after, 5), "world");
+  BOOST_CHECK_EQUAL(hex(framesWritten(inner->outbound())), "8A 00");
+}
+
+BOOST_AUTO_TEST_CASE(a_response_frame_still_declares_its_own_length) {
+  // flush() is the one caller whose body really is the write buffer, and it
+  // has to keep saying so.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server);
+  inner->feed(clientFrame(5, "hello"));
+
+  char got[5];
+  BOOST_CHECK_EQUAL(server->readAll(reinterpret_cast<uint8_t*>(got), 5), 5u);
+  const std::string response = "world";
+  server->write(reinterpret_cast<const uint8_t*>(response.data()),
+                static_cast<uint32_t>(response.size()));
+  server->flush();
+
+  BOOST_CHECK_EQUAL(hex(framesWritten(inner->outbound())), "82 05 77 6F 72 6C 64");
+}
+
+BOOST_AUTO_TEST_CASE(a_close_declares_the_length_it_carries) {
+  // The close code is unreadable to a conforming peer if the header in front
+  // of it says the frame is empty.
+  std::shared_ptr<TTransport> server;
+  auto inner = connect(&server, withMaxFrameSize(4096));
+  inner->feed(clientFrame(32 * 1024, ""));
+
+  uint8_t out[16];
+  BOOST_CHECK_EQUAL(server->readAll(out, sizeof(out)), 0u);
+  BOOST_CHECK_EQUAL(hex(framesWritten(inner->outbound())), "88 02 03 F1");
 }
 
 BOOST_AUTO_TEST_CASE(a_length_with_the_high_bit_set_is_still_refused) {

@@ -99,10 +99,10 @@ public:
 
   void flush() override {
     resetConsumedMessageSize();
-    writeFrameHeader();
     uint8_t* buffer;
     uint32_t length;
     writeBuffer_.getBuffer(&buffer, &length);
+    writeFrameHeader(Opcode::Continuation, length);
     transport_->write(buffer, length);
     transport_->flush();
     writeBuffer_.resetBuffer();
@@ -199,7 +199,7 @@ private:
   };
 
   void failConnection(CloseCode reason) {
-    writeFrameHeader(Opcode::Close);
+    writeFrameHeader(Opcode::Close, sizeof(uint16_t));
     auto buffer = htons(static_cast<uint16_t>(reason));
     transport_->write(reinterpret_cast<const uint8_t*>(&buffer), 2);
     transport_->flush();
@@ -211,10 +211,13 @@ private:
   }
 
   void pong() {
-    writeFrameHeader(Opcode::Pong);
+    // RFC 6455 5.5.3: the Pong carries the Ping's payload, which is what the
+    // read buffer holds at this point, and the header has to say so -- a peer
+    // told the frame is empty reads the payload as the next frame header.
     uint8_t* buffer;
     uint32_t size;
     readBuffer_.getBuffer(&buffer, &size);
+    writeFrameHeader(Opcode::Pong, size);
     transport_->write(buffer, size);
     transport_->flush();
   }
@@ -292,13 +295,17 @@ private:
 
       auto length = static_cast<uint32_t>(payloadLength);
 
-      if (length > 0) {
-        // Read the masking key
-        read = transport_->read(headerBuffer, 4);
-        if (read < 4) {
-          return false;
-        }
+      // The masking key is part of the header of every frame whose MASK bit is
+      // set, whatever the payload length, and a client frame without MASK was
+      // already refused above. Reading it only for a frame that carries a
+      // payload leaves four bytes behind, and the next header is then parsed
+      // out of the masking key.
+      read = transport_->read(headerBuffer, 4);
+      if (read < 4) {
+        return false;
+      }
 
+      if (length > 0) {
         readBuffer_.resetBuffer(length);
         uint8_t* buffer = readBuffer_.getWritePtr(length);
         // Wait for the whole payload. A single read returns whatever one recv()
@@ -325,6 +332,9 @@ private:
 
         T_DEBUG("FIN=%d, Opcode=%X, length=%d, payload=%s", fin, opcode, length,
                 binary ? readBuffer_.toHexString() : cast(string) readBuffer_);
+      } else {
+        // Nothing for the caller, and nothing for pong() to echo back either.
+        readBuffer_.resetBuffer();
       }
 
       switch (opcode) {
@@ -364,9 +374,8 @@ private:
     transport_->close();
   }
 
-  void writeFrameHeader(Opcode opcode = Opcode::Continuation) {
+  void writeFrameHeader(Opcode opcode, uint32_t length) {
     uint32_t headerSize = 1;
-    uint32_t length = writeBuffer_.available_read();
     if (length < 126) {
       ++headerSize;
     } else if (length < 65536) {
