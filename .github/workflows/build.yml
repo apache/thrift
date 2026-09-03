@@ -955,6 +955,79 @@ jobs:
           path: lib/cpp/test/*.xml
           retention-days: 3
 
+  lib-d:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    env:
+      # Keep in sync with build/docker/ubuntu-*/Dockerfile.
+      D_VERSION: 2.087.0
+      DEIMOS_LIBEVENT_REF: v2.0.2+2.0.16
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends g++ wget ca-certificates $BUILD_DEPS
+
+      - name: Install dmd
+        run: |
+          wget -q "http://downloads.dlang.org/releases/2.x/$D_VERSION/dmd_$D_VERSION-0_amd64.deb"
+          # apt rather than dpkg, so that the deb's libcurl4 dependency is resolved.
+          sudo apt-get install -y --no-install-recommends "./dmd_$D_VERSION-0_amd64.deb"
+          rm -f "dmd_$D_VERSION-0_amd64.deb"
+          dmd --version
+
+      # The docker images also install the deimos OpenSSL 1.1.0h bindings, but
+      # the lib/d OpenSSL modules do not link against the OpenSSL 3.x that
+      # ubuntu-24.04 ships: ERR_put_error was dropped in 3.0 and
+      # SSL_get_peer_certificate was renamed to SSL_get1_peer_certificate.
+      # Leaving those headers out makes configure report
+      # "Building D SSL tests ... no", which drops the five OpenSSL-dependent
+      # modules from both the library and the test set. Install them here once
+      # THRIFT-6185 has taught lib/d to speak OpenSSL 3.x.
+      - name: Install deimos libevent bindings
+        run: |
+          sudo mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C
+          git clone -q -b "$DEIMOS_LIBEVENT_REF" https://github.com/D-Programming-Deimos/libevent.git deimos-libevent
+          sudo mv deimos-libevent/deimos/* /usr/include/dmd/druntime/import/deimos/
+          sudo mv deimos-libevent/C/* /usr/include/dmd/druntime/import/C/
+          rm -rf deimos-libevent
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for d
+        run: |
+          # \b keeps --without-dart from matching before --without-d does.
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/--without-d\b/--with-d/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # dmd was actually found.
+          echo "$summary" | grep -qE "Building D Library [.]+ : yes"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for d
+        run: make -C lib/d
+
+      # Builds and runs every module's unit tests in both debug and release
+      # mode, then the lib/d/test client pool and transport tests.
+      - name: Run make check for d
+        run: make -C lib/d check
+
   lib-ruby:
     needs: compiler
     runs-on: ubuntu-24.04
