@@ -1028,6 +1028,74 @@ jobs:
             lib/rb/ext/*.so
           retention-days: 3
 
+  lib-erl:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        # OTP and rebar3 are one axis, not two: rebar3 3.18.0 -- the version
+        # build/docker/ubuntu-*/Dockerfile installs, next to OTP 25.3.2.9 --
+        # does not load on OTP 27 or later, and 3.27.0 does not load on OTP 25.
+        # OTP 29 is left out because the eunit-only meck 0.9.2 dependency does
+        # not compile there any more, deprecated 'catch' having become an
+        # error; add it here once THRIFT-6186 is closed.
+        include:
+          - otp-version: "25.3"
+            rebar3-version: "3.18.0"
+          - otp-version: "26.2"
+            rebar3-version: "3.27.0"
+          - otp-version: "27.3"
+            rebar3-version: "3.27.0"
+          - otp-version: "28.5"
+            rebar3-version: "3.27.0"
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
+      # Has to run before configure, which locates erl and erlc on PATH.
+      - name: Set up Erlang/OTP
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp-version }}
+          rebar3-version: ${{ matrix.rebar3-version }}
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for erlang
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-erlang/with-erlang/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # Erlang was actually found.
+          echo "$summary" | grep -qE "Building Erlang Library [.]+ : yes"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for erlang
+        run: make -C lib/erl
+
+      # Generates the test sources with the compiler above, then rebar3 eunit.
+      - name: Run make check for erlang
+        run: make -C lib/erl check
+
   cross-test:
     needs:
       - lib-php
