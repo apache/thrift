@@ -102,6 +102,48 @@ class TBaseTest extends TestCase
         $this->assertSame([0 => true, 1 => true], $restored->setField);
     }
 
+    public function testWriteBoolSetAcceptsSequentialValuesWhenUnambiguous(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [true, false],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([1 => true, 0 => true], $restored->boolSetField);
+    }
+
+    public function testWriteBoolSetPreservesLegacyKeys(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [1 => true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([1 => true], $restored->boolSetField);
+    }
+
+    public function testWriteBoolSetPreservesLegacyMarkersForAmbiguousSequentialValues(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([0 => true], $restored->boolSetField);
+    }
+
     public function testReadSkipsUnknownAndUnexpectedFields(): void
     {
         $transport = new TMemoryBuffer();

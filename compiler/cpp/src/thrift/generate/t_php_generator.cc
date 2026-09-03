@@ -2684,6 +2684,9 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
     t_type* elem_type = ((t_set*)ttype)->get_elem_type();
     if (php_is_scalar(elem_type)) {
       string set_uses_values = tmp("setUsesValues");
+      // Preserve the legacy `element => true` marker form when every value is
+      // `true`. This keeps ambiguous `set<bool>` inputs such as `[true]` on
+      // the backward-compatible path instead of guessing they are value lists.
       string list_val = tmp("iter");
       string iter_elem = tmp("iter");
       indent(out) << "$" << set_uses_values << " = false;" << '\n';
@@ -2701,6 +2704,12 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
       indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
       indent_up();
       indent(out) << "$" << iter_elem << " = $" << set_uses_values << " ? $" << iter_val << " : $" << iter << ";" << '\n';
+      if (elem_type->is_bool()) {
+        indent(out) << "if (!$" << set_uses_values << ") {" << '\n';
+        indent_up();
+        indent(out) << "$" << iter_elem << " = (bool) $" << iter_elem << ";" << '\n';
+        scope_down(out);
+      }
       generate_serialize_set_element(out, (t_set*)ttype, iter_elem);
     } else {
       indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';

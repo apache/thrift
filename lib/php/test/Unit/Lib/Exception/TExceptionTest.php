@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace Test\Thrift\Unit\Lib\Exception;
 
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Fixture\TestRichException;
 use Thrift\Base\TBase;
 use Thrift\Exception\TException;
@@ -145,6 +145,36 @@ class TExceptionTest extends TestCase
         $result = $this->roundtrip($exception);
 
         $this->assertSame([0 => true, 1 => true], $result->setField);
+    }
+
+    public function testWriteAndReadBoolSetAcceptsSequentialValuesWhenUnambiguous(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [true, false];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([1 => true, 0 => true], $result->boolSetField);
+    }
+
+    public function testWriteAndReadBoolSetPreservesLegacyKeys(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [1 => true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([1 => true], $result->boolSetField);
+    }
+
+    public function testWriteAndReadBoolSetPreservesLegacyMarkersForAmbiguousSequentialValues(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([0 => true], $result->boolSetField);
     }
 
     public function testWriteAndReadAllFields()
