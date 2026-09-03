@@ -24,7 +24,9 @@ homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
 
 environment:
-  sdk: ">=2.12.0 <4.0.0"
+  # 3.2.0 rather than the 2.12.0 null-safety floor: the http 1.x dependency
+  # below does not resolve below it, so pub get already fails there.
+  sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
   fixnum: ">=0.10.2 <2.0.0"
