@@ -129,10 +129,48 @@ close(This = #data{socket = Socket}) ->
 %% This can be passed into a protocol factory to generate a connection to a
 %% thrift server over a socket.
 %%
+%% Options ssl:connect/3 needs before it will validate the server's
+%% certificate. They are prepended to the caller's list, not appended, because
+%% ssl:connect/3 honours the last occurrence of a duplicated option: a caller
+%% passing its own {verify, _} still overrides this one.
+%%
+%% Both halves are needed. From OTP 26 on, {verify, verify_peer} without CAs is
+%% not a weaker setting, it is a rejected one -- ssl:connect/3 answers
+%% {options, incompatible, [{verify, verify_peer}, {cacerts, undefined}]}.
+default_ssl_options(CallerOptions) ->
+    [{verify, verify_peer} | system_cacerts(CallerOptions)].
+
+%% The system trust store, and only when the caller has named no CAs itself.
+%% {cacerts, _} and {cacertfile, _} are separate options rather than two
+%% spellings of one, so prepending the first is not overridden by a caller's
+%% second: it wins over it, and the certificate the caller meant to trust is
+%% rejected as unknown_ca. Supplying either one is the caller saying which CAs
+%% to use, so leave that alone.
+system_cacerts(CallerOptions) ->
+    case lists:any(fun is_ca_option/1, CallerOptions) of
+        true ->
+            [];
+        false ->
+            %% public_key:cacerts_get/0 raises on a host with no trust store,
+            %% and does not exist at all before OTP 25. Leave the option out in
+            %% both cases and let ssl report the missing CAs, rather than
+            %% failing here or falling back to not verifying at all.
+            try public_key:cacerts_get() of
+                CaCerts -> [{cacerts, CaCerts}]
+            catch
+                _:_ -> []
+            end
+    end.
+
+is_ca_option({cacerts, _}) -> true;
+is_ca_option({cacertfile, _}) -> true;
+is_ca_option(_) -> false.
+
 new_transport_factory(Host, Port, Options) ->
     ParsedOpts = parse_factory_options(Options, #factory_opts{}),
 
     F = fun() ->
+        SslOptions = ParsedOpts#factory_opts.ssloptions,
         SockOpts = [
             binary,
             {packet, 0},
@@ -153,7 +191,7 @@ new_transport_factory(Host, Port, Options) ->
                     case
                         catch ssl:connect(
                             Sock,
-                            ParsedOpts#factory_opts.ssloptions,
+                            default_ssl_options(SslOptions) ++ SslOptions,
                             ParsedOpts#factory_opts.connect_timeout
                         )
                     of
