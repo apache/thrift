@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <memory>
 
+#include "thrift/TConfiguration.h"
 #include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
@@ -210,6 +211,23 @@ BOOST_FIXTURE_TEST_CASE(provide_event_base, Fixture) {
   // also assert that the event_base is actually used when it's easy
   BOOST_CHECK_GT(event_base_get_num_events(eb, EVENT_BASE_COUNT_ADDED), 0);
 #endif
+}
+
+// The frame cap TNonblockingServer applies to every accepted connection lives on
+// the server itself: TConfiguration appears nowhere in TNonblockingServer.{h,cpp},
+// so the default here and the library-wide default are two independent numbers
+// that have already drifted 16x apart once. Pin them together, and pin that the
+// setter still wins, so a caller that needs larger frames keeps its escape hatch.
+BOOST_AUTO_TEST_CASE(default_max_frame_size_matches_configuration) {
+  auto socket = make_shared<transport::TNonblockingServerSocket>(0);
+  auto processor = make_shared<test::ParentServiceProcessor>(make_shared<Handler>());
+  server::TNonblockingServer server(processor, socket);
+
+  BOOST_CHECK_EQUAL(server.getMaxFrameSize(),
+                    static_cast<size_t>(TConfiguration::DEFAULT_MAX_FRAME_SIZE));
+
+  server.setMaxFrameSize(4096);
+  BOOST_CHECK_EQUAL(server.getMaxFrameSize(), static_cast<size_t>(4096));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

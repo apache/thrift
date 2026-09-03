@@ -21,6 +21,7 @@
 #define _THRIFT_SERVER_TNONBLOCKINGSERVER_H_ 1
 
 #include <thrift/Thrift.h>
+#include <thrift/TConfiguration.h>
 #include <memory>
 #include <thrift/server/TServer.h>
 #include <thrift/transport/PlatformSocket.h>
@@ -123,8 +124,9 @@ private:
   /// Default limit on size of idle connection pool
   static const size_t CONNECTION_STACK_LIMIT = 1024;
 
-  /// Default limit on frame size
-  static const int MAX_FRAME_SIZE = 256 * 1024 * 1024;
+  /// Default limit on frame size, taken from TConfiguration so that the server
+  /// and the transports it wraps start from the same limit.
+  static const int MAX_FRAME_SIZE = TConfiguration::DEFAULT_MAX_FRAME_SIZE;
 
   /// Default limit on total number of connected sockets
   static const int MAX_CONNECTIONS = INT_MAX;
