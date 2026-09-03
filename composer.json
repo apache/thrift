@@ -5,10 +5,12 @@
   "license": "Apache-2.0",
   "homepage": "https://thrift.apache.org",
   "keywords": ["RPC"],
+  "readme": "README.md",
   "authors": [
     {
       "name": "Apache Thrift Developers",
-      "email": "dev@thrift.apache.org"
+      "email": "dev@thrift.apache.org",
+      "homepage": "https://thrift.apache.org"
     }
   ],
   "support": {
@@ -58,6 +60,7 @@
       "php-http/discovery": true
     }
   },
+  "minimum-stability": "stable",
   "extra": {
     "branch-alias": {
       "dev-master": "1.0.x-dev"
