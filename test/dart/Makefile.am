@@ -17,8 +17,8 @@
 # under the License.
 #
 
-# Dart build command
-DARTPUB = dart pub
+# DART and DARTPUB come from configure. "pub" as a standalone program is gone
+# as of Dart 3, so DARTPUB is "$(DART) pub".
 
 gen-dart/thrift_test/lib/thrift_test.dart: ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen dart ../v0.16/ThriftTest.thrift
@@ -33,11 +33,10 @@ stubs: gen-dart/thrift_test/lib/thrift_test.dart pub-get
 
 precross: stubs
 
-check: stubs
+check: stubs recursion-test
 
-# Recursion-depth regression test (THRIFT-6056). Kept out of the default
-# cross-test chain because it needs a null-safe Dart SDK (>= 2.12); run it
-# explicitly with: make recursion-test
+# Recursion-depth regression test (THRIFT-6056). The null-safe SDK it needs is
+# now the only kind the library builds against, so it runs as part of check.
 gen-dart/Recursive/lib/Recursive.dart: ../Recursive.thrift
 	$(THRIFT) --gen dart ../Recursive.thrift
 

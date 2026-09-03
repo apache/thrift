@@ -359,11 +359,22 @@ AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])
 AX_THRIFT_LIB(dart, [DART], yes)
 if test "$with_dart" = "yes"; then
   AC_PATH_PROG([DART], [dart])
-  AC_PATH_PROG([DARTPUB], [pub])
-  if test "x$DART" != "x" -a "x$DARTPUB" != "x"; then
-    have_dart="yes"
+  if test "x$DART" != "x"; then
+    dnl "pub" as a standalone program was deprecated in Dart 2.15 and is gone
+    dnl in Dart 3, where "dart pub" is the only spelling left. Probing for the
+    dnl subcommand rather than the program is what makes the Dart library
+    dnl detectable on the SDK versions it actually supports.
+    AC_MSG_CHECKING([whether $DART has the pub subcommand])
+    if $DART pub --help >/dev/null 2>&1; then
+      AC_MSG_RESULT([yes])
+      DARTPUB="$DART pub"
+      have_dart="yes"
+    else
+      AC_MSG_RESULT([no])
+    fi
   fi
 fi
+AC_SUBST([DARTPUB])
 AM_CONDITIONAL(WITH_DART, [test "$have_dart" = "yes"])
 
 AX_THRIFT_LIB(ruby, [Ruby], yes)
