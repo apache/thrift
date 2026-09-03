@@ -178,6 +178,8 @@ class TSocketPoolTest extends TestCase
         $expectedException,
         $expectedExceptionMessage
     ) {
+        $this->assertCount(count($apcuFetchCallParams), $apcuFetchResult);
+
         $this->getFunctionMock('Thrift\Transport', 'function_exists')
              ->expects($this->exactly(count($functionExistCallParams)))
              ->willReturnCallback(function (...$callArgs) use ($functionExistCallParams, $functionExistResult) {
@@ -375,6 +377,7 @@ class TSocketPoolTest extends TestCase
                     ['thrift_failtime:localhost:9090~', Assert::anything()],
                     ['thrift_consecfails:localhost:9090~', Assert::anything()],
                 ],
+                'apcuFetchResult' => [false, false],
                 'apcuStoreCallParams' => [
                     ['thrift_failtime:localhost:9090~', Assert::anything()],
                     ['thrift_consecfails:localhost:9090~', Assert::anything(), 0],
@@ -416,6 +419,9 @@ class TSocketPoolTest extends TestCase
                     ['php://temp', 'r'],
                 ],
                 'apcuStoreCallParams' => [],
+                'debugHandlerCall' => [
+                    [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
+                ],
             ]
         );
         yield 'last time fail time is not expired' => array_merge(
@@ -467,6 +473,7 @@ class TSocketPoolTest extends TestCase
                 ],
                 'apcuFetchResult' => [
                     90,
+                    false,
                 ],
                 'apcuStoreCallParams' => [
                     ['thrift_failtime:localhost:9090~', Assert::anything()],
@@ -503,6 +510,7 @@ class TSocketPoolTest extends TestCase
                     ['thrift_failtime:localhost:9090~', Assert::anything()],
                     ['thrift_consecfails:localhost:9090~', Assert::anything()],
                 ],
+                'apcuFetchResult' => [false, false],
                 'apcuStoreCallParams' => [
                     ['thrift_consecfails:localhost:9090~', 1],
                 ],
@@ -534,6 +542,7 @@ class TSocketPoolTest extends TestCase
                     1,
                 ],
                 'apcuFetchCallParams' => [],
+                'apcuFetchResult' => [],
                 'apcuStoreCallParams' => [],
                 'debugHandlerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
@@ -578,6 +587,7 @@ class TSocketPoolTest extends TestCase
                     ['thrift_consecfails:host2:9091~', Assert::anything()],
                     ['thrift_failtime:host1:9090~', Assert::anything()],
                 ],
+                'apcuFetchResult' => [false, false, false],
                 'apcuStoreCallParams' => [
                     ['thrift_failtime:host2:9091~', Assert::anything()],
                     ['thrift_consecfails:host2:9091~', Assert::anything(), 0],

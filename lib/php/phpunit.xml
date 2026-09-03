@@ -21,7 +21,8 @@
          bootstrap="test/bootstrap.php"
          cacheResult="false"
          colors="true"
-         stopOnWarning="true"
+         stopOnWarning="false"
+         failOnWarning="true"
          stopOnFailure="true"
          processIsolation="true"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd">

@@ -35,27 +35,27 @@ class BufferedReadTransport extends TTransport
         $this->chunks = $chunks;
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    public function open()
+    public function open(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         $this->readRequests[] = $len;
 
         return array_shift($this->chunks);
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
     }
 }
