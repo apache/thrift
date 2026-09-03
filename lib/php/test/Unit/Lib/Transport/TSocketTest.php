@@ -86,8 +86,8 @@ class TSocketTest extends TestCase
         yield 'host is empty' => [
             'host' => '',
             'port' => 9090,
-            'persist' => null,
-            'debugHandler' => false,
+            'persist' => false,
+            'debugHandler' => null,
             'fsockopenCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open null host',
@@ -469,6 +469,20 @@ class TSocketTest extends TestCase
         $this->assertNull($this->getPropertyValue($transport, 'handle'));
     }
 
+    public function testClosePersistentSocket(): void
+    {
+        $transport = new TSocket('localhost', 9090, true, null);
+        $transport->setHandle(fopen('php://memory', 'r+'));
+
+        $this->assertNotNull($this->getPropertyValue($transport, 'handle'));
+
+        // Guard THRIFT-2151: close() must remain effective even when the
+        // socket was opened in persistent mode.
+        $transport->close();
+
+        $this->assertNull($this->getPropertyValue($transport, 'handle'));
+    }
+
     #[DataProvider('writeFailDataProvider')]
     public function testWriteFail(
         $streamSelectResult,
@@ -805,7 +819,7 @@ class TSocketTest extends TestCase
         });
 
         $this->assertCount(1, $deprecations);
-        $this->assertStringContainsString('setConnectTimeout()', $deprecations[0]);
+        $this->assertStringContainsString('setConnectTimeout()', $deprecations[0]['errstr']);
     }
 
     public function testOpenWithDefaultTimeoutsDoesNotTriggerDeprecation(): void
