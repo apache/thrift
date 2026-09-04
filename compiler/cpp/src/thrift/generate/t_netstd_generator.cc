@@ -3942,9 +3942,9 @@ void t_netstd_generator::generate_netstd_doc(ostream& out, t_doc* tdoc)
 
 void t_netstd_generator::generate_netstd_doc(ostream& out, t_function* tfunction)
 {
-    if (tfunction->has_doc())
-    {
-        stringstream ps;
+    stringstream ps;
+    if (tfunction->has_doc()) {
+        ps << "<summary>\n" << xml_encode(tfunction->get_doc()) << "</summary>";
         const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
         vector<t_field*>::const_iterator p_iter;
         for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter)
@@ -3953,19 +3953,42 @@ void t_netstd_generator::generate_netstd_doc(ostream& out, t_function* tfunction
             ps << '\n' << "<param name=\"" << p->get_name() << "\">";
             if (p->has_doc())
             {
-                string str = p->get_doc();
-                str.erase(remove(str.begin(), str.end(), '\n'), str.end());
-                ps << str;
+                ps << xml_encode(p->get_doc());
             }
             ps << "</param>";
         }
-
-        docstring_comment(out,
-                                   "",
-                                   "/// ",
-                                   "<summary>" + string("\n") + tfunction->get_doc() + "</summary>" + ps.str(),
-                                   "");
     }
+
+    const vector<t_field*>& exceptions = tfunction->get_xceptions()->get_members();
+    if (!exceptions.empty()) {
+        vector<t_field*>::const_iterator e_iter;
+        for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter)
+        {
+            t_field* e = *e_iter;
+            ps << '\n' << "<exception cref=\"" << type_name(e->get_type()) << "\">";
+            if (e->has_doc())
+            {
+                string doc = e->get_doc();
+                while (!doc.empty() && (doc.back() == '\n' || doc.back() == '\r')) {
+                    doc.pop_back();
+                }
+                ps << xml_encode(doc);
+            }
+            ps << "</exception>";
+        }
+    }
+
+    const std::string result_doc = ps.str();
+    if (!result_doc.empty()) {
+        docstring_comment(out, "", "/// ", result_doc, "");
+    }
+}
+
+string t_netstd_generator::xml_encode(const string& contents)
+{
+    string result = replace_all(contents, "&", "&amp;");
+    result = replace_all(result, "<", "&lt;");
+    return replace_all(result, ">", "&gt;");
 }
 
 void t_netstd_generator::docstring_comment(ostream& out, const string& comment_start, const string& line_prefix, const string& contents, const string& comment_end)
