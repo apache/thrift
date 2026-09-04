@@ -174,10 +174,21 @@ class TSSLBase(object):
             raise IOError('No such certfile found: %s' % (certfile))
         self._certfile = certfile
 
+    @property
+    def _context_checks_hostname(self):
+        return self._has_ssl_context and bool(
+            getattr(self._context, 'check_hostname', False))
+
     def _wrap_socket(self, sock):
         if self._has_ssl_context:
             if not self._custom_context:
                 self.ssl_context.verify_mode = self.cert_reqs
+                # Have OpenSSL match the host name during the handshake. The
+                # PROTOCOL_TLS_CLIENT default already does; an explicitly
+                # supplied ssl_version builds a context with it off, and then
+                # nothing else was checking the name.
+                if self._should_verify and not self._server_side:
+                    self.ssl_context.check_hostname = True
                 if self.certfile:
                     self.ssl_context.load_cert_chain(self.certfile,
                                                      self.keyfile)
@@ -307,6 +318,14 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         super(TSSLSocket, self).open()
         if self._should_verify:
             self.peercert = self.handle.getpeercert()
+            if self._context_checks_hostname and \
+                    self._validate_callback is _match_hostname:
+                # OpenSSL already matched the name during the handshake, and
+                # did it to RFC 6125 rather than to whatever this Python
+                # version still ships. A caller-supplied callback is still
+                # honoured, since it may be checking something else entirely.
+                self.is_valid = True
+                return
             try:
                 self._validate_callback(self.peercert, self._server_hostname)
                 self.is_valid = True

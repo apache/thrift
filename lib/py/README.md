@@ -33,3 +33,28 @@ the generated code for the reflection structures.
 The Python libraries can be installed manually using the provided setup.py
 file, or automatically using the install hook provided via autoconf/automake.
 To use the latter, become superuser and do make install.
+
+Breaking Changes
+================
+
+0.25.0
+------
+
+TSSLSocket now sets check_hostname on the SSL contexts it builds whenever it
+verifies the peer, so OpenSSL matches the server name against the certificate
+during the handshake, whatever protocol the client asked for.
+
+Clients that leave ssl_version alone are unaffected, because PROTOCOL_TLS_CLIENT
+already switched it on. A client that passes an explicit ssl_version got a context
+with host-name matching off, and on Python 3.12 and later nothing else checked the
+name; such a client now refuses a certificate that does not carry the host it
+connected to. A caller-supplied validate_callback still runs on top of that check,
+since it may be looking at something else entirely; cert_reqs=ssl.CERT_NONE
+switches verification off altogether, as before.
+
+The default validate_callback on Python 3.12 and later, which stood in for the
+ssl.match_hostname removed in that release, now checks a peer certificate against
+an IP address and raises for a name rather than reporting a success it cannot back.
+Name matching belongs to OpenSSL on those versions. The only caller left in the
+library is TSSLServerSocket, which validates a client certificate against the
+address the connection arrived from.

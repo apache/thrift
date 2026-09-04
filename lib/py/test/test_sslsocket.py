@@ -22,6 +22,7 @@ import logging
 import time
 import os
 import platform
+import socket
 import ssl
 import sys
 import tempfile
@@ -365,6 +366,89 @@ class TestMatchHostname(unittest.TestCase):
         fake_cert = {"subject": ((("commonName", "evil.attacker.com"),),)}
         with self.assertRaises(Exception):
             _match_hostname(fake_cert, "real-server.com")
+
+
+class TSSLSocketHostnameTest(unittest.TestCase):
+    """The server host name is checked whatever protocol the caller asked for.
+
+    Deliberately not part of TSSLSocketTest: that class is skipped wholesale,
+    and a test that never runs is worse than no test. These drive real
+    handshakes against a plain ssl listener, so they depend on nothing that is
+    currently disabled.
+    """
+
+    def _listener(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(SERVER_CERT, SERVER_KEY)
+        sock = socket.socket()
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('127.0.0.1', 0))
+        sock.listen(8)
+
+        def serve():
+            while True:
+                try:
+                    client, _ = sock.accept()
+                except OSError:
+                    return
+                try:
+                    context.wrap_socket(client, server_side=True)
+                except Exception:
+                    pass
+
+        thread = threading.Thread(target=serve)
+        thread.daemon = True
+        thread.start()
+        self.addCleanup(sock.close)
+        return sock.getsockname()[1]
+
+    def _connect(self, port, hostname, **kwargs):
+        from thrift.transport.TSSLSocket import TSSLSocket
+        # Imported here rather than relying on the module-level names, which
+        # this file only binds under __main__.
+        client = TSSLSocket('127.0.0.1', port, cert_reqs=ssl.CERT_REQUIRED,
+                            ca_certs=SERVER_CERT, server_hostname=hostname,
+                            **kwargs)
+        client.setTimeout(2000)
+        try:
+            client.open()
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
+
+    # The certificate under test is issued for "localhost" and 127.0.0.1, so a
+    # connection announcing any other name must not be accepted.
+    MISMATCH = 'wrong.example'
+
+    def test_hostname_checked_on_the_default_path(self):
+        from thrift.transport.TTransport import TTransportException
+        port = self._listener()
+        self._connect(port, 'localhost')
+        with self.assertRaises(TTransportException):
+            self._connect(port, self.MISMATCH)
+
+    def test_hostname_checked_with_an_explicit_ssl_version(self):
+        # The regression this pins: an explicit ssl_version builds a context
+        # with check_hostname off, and on Python 3.12 and later the
+        # post-handshake callback had nothing left to check with.
+        from thrift.transport.TTransport import TTransportException
+        port = self._listener()
+        self._connect(port, 'localhost', ssl_version=ssl.PROTOCOL_TLS)
+        with self.assertRaises(TTransportException):
+            self._connect(port, self.MISMATCH, ssl_version=ssl.PROTOCOL_TLS)
+
+    def test_peer_address_matcher_does_not_pass_on_a_name(self):
+        # Whatever the interpreter version, the fallback must not report
+        # success for a check it cannot perform.
+        from thrift.transport.sslcompat import match_peer_ipaddress
+        cert = {'subjectAltName': (('IP Address', '127.0.0.1'),)}
+        match_peer_ipaddress(cert, '127.0.0.1')
+        with self.assertRaises(Exception):
+            match_peer_ipaddress(cert, '127.0.0.2')
+        with self.assertRaises(Exception):
+            match_peer_ipaddress(cert, 'localhost')
 
 
 # Add a dummy test because starting from python 3.12, if all tests in a test
