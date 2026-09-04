@@ -49,6 +49,13 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 # ciphers     => allowed cipher list
 #                (see http://www.openssl.org/docs/apps/ciphers.html#CIPHER_STRINGS)
 # key         => certificate key for "cert" option
+# verify      => whether to authenticate the server; defaults to true. The
+#                server's certificate chain is verified against "ca" when it
+#                is given and against the system trust store otherwise, and
+#                the host name is checked against the certificate. Set this
+#                to a false value to accept any certificate, which leaves the
+#                connection open to interception and is only appropriate on a
+#                network you already trust.
 # version     => acceptable SSL/TLS versions - if not specified then the
 #                default is to use SSLv23 handshake but only negotiate
 #                at TLSv1.0 or later
@@ -70,15 +77,22 @@ sub __open
                 Proto         => 'tcp',
                 Timeout       => $self->{sendTimeout} / 1000};
 
-    my $verify = IO::Socket::SSL::SSL_VERIFY_PEER | IO::Socket::SSL::SSL_VERIFY_FAIL_IF_NO_PEER_CERT | IO::Socket::SSL::SSL_VERIFY_CLIENT_ONCE;
-
     $opts->{SSL_ca_file}      = $self->{ca}      if defined $self->{ca};
     $opts->{SSL_cert_file}    = $self->{cert}    if defined $self->{cert};
     $opts->{SSL_cipher_list}  = $self->{ciphers} if defined $self->{ciphers};
     $opts->{SSL_key_file}     = $self->{key}     if defined $self->{key};
     $opts->{SSL_use_cert}     = (defined $self->{cert}) ? 1 : 0;
-    $opts->{SSL_verify_mode}  = (defined $self->{ca}) ? $verify : IO::Socket::SSL::SSL_VERIFY_NONE;
     $opts->{SSL_version}      = (defined $self->{version}) ? $self->{version} : 'SSLv23:!SSLv3:!SSLv2';
+
+    # Leave verification to IO::Socket::SSL unless the caller opted out. Its
+    # default is to verify the chain -- against SSL_ca_file when one is given
+    # and against the system trust store otherwise -- and to check the host
+    # name against the certificate, which it derives from PeerAddr. Setting
+    # SSL_verify_mode here at all would replace that, so it is set only to
+    # turn verification off on request.
+    if (exists $self->{verify} && !$self->{verify}) {
+        $opts->{SSL_verify_mode} = IO::Socket::SSL::SSL_VERIFY_NONE;
+    }
 
     return IO::Socket::SSL->new(%$opts);
 }
