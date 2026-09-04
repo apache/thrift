@@ -761,6 +761,12 @@ void TSSLSocket::authorize() {
   }
 
   // extract subjectAlternativeName
+  //
+  // Whether the certificate carried a dNSName at all is tracked separately
+  // from whether one matched: RFC 6125 6.4.4 and RFC 9525 6.3 make the
+  // subjectAltName the identity once it is present, so commonName below is
+  // consulted only for a certificate that carries no dNSName.
+  bool hasDnsName = false;
   auto* alternatives
       = (STACK_OF(GENERAL_NAME)*)X509_get_ext_d2i(cert, NID_subject_alt_name, nullptr, nullptr);
   if (alternatives != nullptr) {
@@ -778,6 +784,7 @@ void TSSLSocket::authorize() {
       int length = ASN1_STRING_length(name->d.ia5);
       switch (name->type) {
       case GEN_DNS:
+        hasDnsName = true;
         if (host.empty()) {
           host = (server() ? getPeerHost() : getHost());
         }
@@ -800,7 +807,10 @@ void TSSLSocket::authorize() {
   }
 
   // extract commonName
-  X509_NAME* name = X509_get_subject_name(cert);
+  //
+  // Skipped entirely when the certificate presented a dNSName: it has already
+  // had its say, and a non-matching one is an answer, not an absence.
+  X509_NAME* name = hasDnsName ? nullptr : X509_get_subject_name(cert);
   if (name != nullptr) {
     X509_NAME_ENTRY* entry;
     unsigned char* utf8;

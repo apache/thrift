@@ -389,6 +389,13 @@ if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTE
 endif ()
 add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
+add_executable(TSSLSocketMatchNameTest TSSLSocketMatchNameTest.cpp)
+target_link_libraries(TSSLSocketMatchNameTest
+    ${Boost_LIBRARIES}
+)
+target_link_libraries(TSSLSocketMatchNameTest thrift)
+add_test(NAME TSSLSocketMatchNameTest COMMAND TSSLSocketMatchNameTest)
+
 add_executable(SecurityFromBufferTest SecurityFromBufferTest.cpp)
 target_link_libraries(SecurityFromBufferTest
     testgencpp

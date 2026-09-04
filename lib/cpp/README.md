@@ -186,10 +186,14 @@ unless it's retrieved through TSocket::getPeerHost(). Either way, "host"
 should be the remote host name. Keep in mind, if TSocket::getPeerHost()
 failed, it would return the remote host name in numeric format.
 
-If all subjectAltName extensions were "skipped", the common name field would
-be checked. It is sent to application through (c), where "sa" is the remote
-IP address. "data" is the IP address extracted from subjectAltName IP
-extension, and "size" is the length of the extension data.
+The common name field is checked only for a certificate that carried no DNS
+subjectAltName extension at all. Once one is present it is the identity, per
+RFC 6125 6.4.4 and RFC 9525 6.3, so a DNS subjectAltName that did not match is
+an answer and not an absence -- SKIP from (b) does not hand the question on to
+the common name. A certificate with no DNS subjectAltName, or one carrying only
+IP entries, still reaches the common name; it is sent to the application
+through (b), where "host" is the remote host name as above, "data" is the
+common name, and "size" is its length.
 
 If any of the above "verify" methods returned a decision ALLOW or DENY, the
 verification process would be stopped.
@@ -296,6 +300,22 @@ by default, counting a chunked body by the sum of its chunks.  Nothing bounded
 it before: the declared length, or the number of chunks, was the peer's choice.
 A client or server that exchanges bodies larger than the configured maximum has
 to raise it, the same way it would for any other transport.
+
+TSSLSocket::authorize() consults the certificate's common name only when the
+certificate carries no DNS subjectAltName extension. Previously the common name
+was consulted whenever no subjectAltName entry had returned ALLOW, which meant a
+certificate whose subjectAltName named other hosts got a second chance from a
+common name that matched -- DefaultClientAccessManager::verify returns SKIP for a
+name that does not match, so "names other hosts" and "names no hosts" arrived at
+the fallthrough as the same state.
+
+A peer presenting a certificate whose subjectAltName does not cover the host,
+whose common name does, and that was accepted before, is now rejected with
+"authorize: cannot authorize peer". Reissue the certificate with the host in its
+subjectAltName, which is what every other TLS client on the machine already
+requires of it. An AccessManager of your own is otherwise unaffected: it is still
+offered subjectAltName entries through (b) and (c) until one of them answers, and
+what changes is only whether it is asked about the common name afterwards.
 
 ## 1.0.0
 
