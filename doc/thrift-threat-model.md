@@ -592,6 +592,12 @@ These are the patterns a scanner, fuzzer, AI-assisted reviewer, or human reviewe
 
 **N7. "TLS hostname verification is not performed by `TSSLSocket` constructor."** That is the documented contract (§9 F3); host-name check requires `AccessManager`. → `BY-DESIGN: property-disclaimed` unless the *operator's documented requirement* in §10 #11 wasn't met.
 
+**Scope — N7 covers a check that is not *enabled*, not one that is *disabled* or *botched*.** Two neighbouring shapes route the other way:
+- A binding that **overrides a secure default of its own TLS dependency** — setting `SSL_VERIFY_NONE` where the library defaults to verify-peer, say — removes **§8 P8** cert-chain validation, which §9 disclaims nowhere. F3 in fact presupposes it: it limits the disclaimer to "no host-name verification is performed *beyond cert-chain trust*". → `VALID`.
+- A **registered** `AccessManager` that answers `ALLOW` for a name the peer's certificate does not cover is §13's own worked example of a **§8 P9** violation. → `VALID`.
+
+N7 applies to the default construction of a binding that never promised the check. Nothing else.
+
 **N8. "Cleartext credentials in PLAIN SASL over `TSocket`."** SASL PLAIN over an unencrypted transport is application configuration; Thrift does not refuse the combination. → `BY-DESIGN: property-disclaimed` (§9 F5).
 
 **N9. "`TBinaryProtocol::readMessageBegin` accepts both strict and old encoding by default."** Documented spec behavior *(`doc/specs/thrift-binary-protocol.md` §Message)*. → `BY-DESIGN: property-disclaimed`.
@@ -674,6 +680,7 @@ The closed set of outcomes a vulnerability report, tool finding, or AI analysis 
 - *"Test harness leaks the private key under `test/keys/server.key`."* → `OUT-OF-MODEL: unsupported-component` (§11a N5).
 - *"`AccessManager::verify` returns `ALLOW` when the cert is for `evil.example` but the client connected to `bank.example`."* → `VALID` (§8 P9 — if the `AccessManager` *is* registered and the contract is misimplemented).
 - *"`TSSLSocket` accepts a cert for `evil.example` when no `AccessManager` is registered."* → `BY-DESIGN: property-disclaimed` (§9 F3, §11a N7).
+- *"A binding passes `SSL_VERIFY_NONE` to its TLS library, overriding that library's verify-peer default."* → `VALID` (§8 P8; §11a N7 covers not enabling a check, not disabling one).
 - *"Recursive `skip` of nested unknown structs blows the stack."* → `VALID` (§8 P1 violation; §11a N4 — historical class).
 - *"`thrift -gen java:bean` produces a struct that ignores `optional` semantics."* → likely `MODEL-GAP` (codegen correctness); routes to §12 #10 unless the PMC ratifies a P5-extension property.
 - *"The IDL compiler crashes on a `.thrift` file containing 200 nested `include` directives."* → `OUT-OF-MODEL: trusted-input` (§3 #8).
