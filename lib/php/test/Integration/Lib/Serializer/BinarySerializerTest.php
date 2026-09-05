@@ -43,4 +43,19 @@ class BinarySerializerTest extends TestCase
         $deserialized = TBinarySerializer::deserialize($serialized, '\\Basic\\ThriftTest\\Xtruct');
         $this->assertEquals($struct, $deserialized);
     }
+
+    public function testBinarySerializerAfterPhpUnserialize(): void
+    {
+        $struct = new \Basic\ThriftTest\Xtruct(['string_thing' => 'abc']);
+
+        /** @var \Basic\ThriftTest\Xtruct $restored */
+        $restored = unserialize(serialize($struct));
+
+        // Guard THRIFT-3874: generated PHP classes must keep their type
+        // metadata usable after PHP wakeup/unserialize.
+        $serialized = TBinarySerializer::serialize($restored, '\\Basic\\ThriftTest\\Xtruct');
+        $deserialized = TBinarySerializer::deserialize($serialized, '\\Basic\\ThriftTest\\Xtruct');
+
+        $this->assertEquals($restored, $deserialized);
+    }
 }
