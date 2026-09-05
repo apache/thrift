@@ -157,6 +157,39 @@ a slice that contains two equal keys fails with an `INVALID_DATA` protocol
 exception; `Equals` compares entries position by position.
 Maps keyed by `binary` remain Go maps keyed by `string`.
 
+Maps keyed by a struct, an exception or a union are generated as `map[*K]V` by
+default. Because the key is a pointer, two decoded keys with equal contents are
+distinct map keys, and `Equals` compares them by identity. Pass the
+`struct_key_entries` option to generate those fields as
+`[]thrift.MapEntry[*K, V]` as well:
+
+    thrift --gen go:struct_key_entries file.thrift
+
+The option changes more than the Go type. `Equals` starts comparing key
+contents, which is the point, but it also becomes order-sensitive: it walks the
+two slices position by position, so the same entries in a different order no
+longer compare equal. Writing a slice that holds two keys with equal contents
+fails with `INVALID_DATA`, where the map form silently wrote both.
+
+How that uniqueness check is done depends on the key. When every field of the
+key struct is a non-pointer scalar, the struct value is itself a valid Go map
+key and `==` on it agrees with `Equals`, so the check collects the keys in a
+set and runs in linear time. In a local benchmark, writing a field of 5000 such
+keys came within about 20 percent of the same data in `map[*K]V`, at the cost
+of one temporary set sized to the entry count.
+
+Any other key falls back to comparing every pair, which is quadratic: 5000
+entries cost about 12.5 million calls to `Equals` on every write. A key struct
+takes that path if it has an optional field, a field holding another struct, or
+a `binary`, `list`, `set` or `map` field, because none of those compare by
+content under `==`. Unions always take it, since all of their fields are
+optional. Container keys take it too. Keep those maps small, or keep the key
+struct to plain scalars.
+
+A typedef of a struct used as a key appears in the entry type as the underlying
+struct pointer: the generated `type KeyAlias *Key` is a defined pointer type and
+carries none of the struct's methods.
+
 A note about server stop implementations
 ========================================
 

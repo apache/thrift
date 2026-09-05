@@ -3821,7 +3821,7 @@ void t_go_generator::generate_deserialize_map_element(ostream& out,
     // The key is a container, and the value may be one too. Container reads
     // declare fixed local names (size, tSlice, ...), so each read gets its own
     // block and the results are declared up front.
-    indent(out) << "var " << key << " " << type_to_go_type(tmap->get_key_type()) << '\n';
+    indent(out) << "var " << key << " " << map_entry_key_type(tmap->get_key_type()) << '\n';
     indent(out) << "var " << val << " " << type_to_go_type(tmap->get_val_type())
                 << '\n';
     indent(out) << "{" << '\n';
@@ -4027,28 +4027,71 @@ void t_go_generator::generate_serialize_container(ostream& out,
       if (pointer_field) {
         wrapped_prefix = "(" + prefix + ")";
       }
-      string keyType = type_to_go_type(tmap->get_key_type());
-      out << indent() << "for i := 0; i < len(" << prefix << "); i++ {" << '\n';
-      indent_up();
-      out << indent() << "for j := i + 1; j < len(" << prefix << "); j++ {" << '\n';
-      indent_up();
-      out << indent() << "if func(tgt, src " << keyType << ") bool {" << '\n';
-      indent_up();
-      generate_go_equals(out, tmap->get_key_type(), "tgt", "src");
-      out << indent() << "return true" << '\n';
-      indent_down();
-      out << indent() << "}(" << wrapped_prefix << "[i].Key, " << wrapped_prefix << "[j].Key) {"
-          << '\n';
-      indent_up();
-      out << indent() << "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
-          << "fmt.Errorf(\"%T error writing map field %q: keys are not unique\", "
-          << wrapped_prefix << ", \"" << escape_string(prefix) << "\"))" << '\n';
-      indent_down();
-      out << indent() << "}" << '\n';
-      indent_down();
-      out << indent() << "}" << '\n';
-      indent_down();
-      out << indent() << "}" << '\n';
+      string not_unique
+          = "return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, "
+            "fmt.Errorf(\"%T error writing map field %q: keys are not unique\", "
+            + wrapped_prefix + ", \"" + escape_string(prefix) + "\"))";
+      if (is_comparable_struct_key(tmap->get_key_type())) {
+        // Every field of the key struct is a non-pointer scalar, so the struct
+        // value is a valid Go map key and "==" agrees with Equals. Collecting
+        // the keys in a set costs linear time, where comparing every pair
+        // costs quadratic time.
+        string seen = tmp("seen");
+        string sawNil = tmp("sawNil");
+        string entry = tmp("e");
+        string keyValueType = publicize(type_name(tmap->get_key_type()->get_true_type()));
+        out << indent() << "if len(" << wrapped_prefix << ") > 1 {" << '\n';
+        indent_up();
+        out << indent() << seen << " := make(map[" << keyValueType << "]struct{}, len("
+            << wrapped_prefix << "))" << '\n';
+        out << indent() << sawNil << " := false" << '\n';
+        out << indent() << "for _, " << entry << " := range " << wrapped_prefix << " {" << '\n';
+        indent_up();
+        // A nil key writes as an empty struct, and Equals treats two of them as
+        // equal, so track nil separately rather than dereferencing it.
+        out << indent() << "if " << entry << ".Key == nil {" << '\n';
+        indent_up();
+        out << indent() << "if " << sawNil << " {" << '\n';
+        indent_up();
+        out << indent() << not_unique << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        out << indent() << sawNil << " = true" << '\n';
+        out << indent() << "continue" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        out << indent() << "if _, ok := " << seen << "[*" << entry << ".Key]; ok {" << '\n';
+        indent_up();
+        out << indent() << not_unique << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        out << indent() << seen << "[*" << entry << ".Key] = struct{}{}" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+      } else {
+        string keyType = map_entry_key_type(tmap->get_key_type());
+        out << indent() << "for i := 0; i < len(" << prefix << "); i++ {" << '\n';
+        indent_up();
+        out << indent() << "for j := i + 1; j < len(" << prefix << "); j++ {" << '\n';
+        indent_up();
+        out << indent() << "if func(tgt, src " << keyType << ") bool {" << '\n';
+        indent_up();
+        generate_go_equals(out, tmap->get_key_type(), "tgt", "src");
+        out << indent() << "return true" << '\n';
+        indent_down();
+        out << indent() << "}(" << wrapped_prefix << "[i].Key, " << wrapped_prefix << "[j].Key) {"
+            << '\n';
+        indent_up();
+        out << indent() << not_unique << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+      }
       out << indent() << "for _, e := range " << prefix << " {" << '\n';
       indent_up();
       generate_serialize_map_element(out, tmap, "e.Key", "e.Value");
@@ -4580,8 +4623,11 @@ string t_go_generator::type_to_enum(t_type* type) {
 }
 
 /**
- * Returns true for a map whose key type is a list, set or map (or a
- * typedef of one); such maps are generated as []thrift.MapEntry[K, V].
+ * Returns true when the map is represented as a slice of thrift.MapEntry
+ * rather than a Go map: always when the key type is a container (list, set or
+ * map, possibly behind a typedef), and with the struct_key_entries option also
+ * when the key is a struct or exception, whose Go map form would be keyed by
+ * pointer identity.
  */
 bool t_go_generator::is_container_keyed_map(t_type* type) {
   t_type* ttype = type->get_true_type();
@@ -4589,7 +4635,10 @@ bool t_go_generator::is_container_keyed_map(t_type* type) {
     return false;
   }
   t_type* ktype = ((t_map*)ttype)->get_key_type()->get_true_type();
-  return ktype->is_map() || ktype->is_list() || ktype->is_set();
+  if (ktype->is_map() || ktype->is_list() || ktype->is_set()) {
+    return true;
+  }
+  return struct_key_entries_ && (ktype->is_struct() || ktype->is_xception());
 }
 
 /**
@@ -4597,8 +4646,56 @@ bool t_go_generator::is_container_keyed_map(t_type* type) {
  * container.
  */
 string t_go_generator::map_entry_type(t_map* tmap) {
-  return "thrift.MapEntry[" + type_to_go_type(tmap->get_key_type()) + ", "
+  return "thrift.MapEntry[" + map_entry_key_type(tmap->get_key_type()) + ", "
          + type_to_go_type(tmap->get_val_type()) + "]";
+}
+
+/**
+ * Returns true when the struct value behind a map key can itself be used as a
+ * Go map key, and "==" on two such values agrees with the generated Equals.
+ *
+ * That holds when every field is a non-pointer scalar. Strings, numbers,
+ * bools, enums and uuids all compare by content under "==". A pointer field
+ * would compare by identity instead, and binary, list, set and map fields are
+ * not comparable at all, so any of those rules the struct out. Unions are
+ * ruled out too: their fields are all optional, and so all pointers.
+ */
+bool t_go_generator::is_comparable_struct_key(t_type* ktype) {
+  t_type* ttype = ktype->get_true_type();
+  if (!ttype->is_struct() && !ttype->is_xception()) {
+    return false;
+  }
+  const vector<t_field*>& members = ((t_struct*)ttype)->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (is_pointer_field(*m_iter)) {
+      return false;
+    }
+    t_type* ftype = (*m_iter)->get_type()->get_true_type();
+    if (ftype->is_enum()) {
+      continue;
+    }
+    if (!ftype->is_base_type() || ftype->is_binary()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Returns the Go type an entry slice uses for its key.
+ *
+ * A typedef of a struct generates as a defined pointer type ("type K *S"),
+ * which has an empty method set, so an entry keyed by it could not be read,
+ * written or compared. Such keys use the underlying struct pointer instead.
+ * Typedefs of containers keep their own name: those need no methods.
+ */
+string t_go_generator::map_entry_key_type(t_type* ktype) {
+  t_type* true_type = ktype->get_true_type();
+  if (true_type->is_struct() || true_type->is_xception()) {
+    return type_to_go_type(true_type);
+  }
+  return type_to_go_type(ktype);
 }
 
 /**
@@ -4832,4 +4929,6 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    read_write_private\n"
                           "                     Make read/write methods private, default is public Read/Write\n"
                           "    skip_remote\n"
-                          "                     Skip the generating of -remote folders for the client binaries for services\n")
+                          "                     Skip the generating of -remote folders for the client binaries for services\n"
+                          "    struct_key_entries\n"
+                          "                     Generate maps keyed by a struct, union or exception as []thrift.MapEntry[*K, V] instead of map[*K]V\n")
