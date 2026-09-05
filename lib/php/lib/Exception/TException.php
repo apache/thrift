@@ -348,8 +348,24 @@ class TException extends \Exception
         } else {
             $xfer += $output->writeListBegin($etype, count($var));
         }
+        $setUsesValues = false;
+        if ($set && array_is_list($var)) {
+            // Preserve the legacy `element => true` marker form when every
+            // value is `true`. This keeps ambiguous `set<bool>` inputs such
+            // as `[true]` on the backward-compatible path.
+
+            foreach ($var as $candidate) {
+                if ($candidate !== true) {
+                    $setUsesValues = true;
+                    break;
+                }
+            }
+        }
         foreach ($var as $key => $val) {
-            $elem = $set ? $key : $val;
+            $elem = $set && !$setUsesValues ? $key : $val;
+            if ($set && !$setUsesValues && $etype === TType::BOOL) {
+                $elem = (bool) $elem;
+            }
             if (isset($ewrite)) {
                 $xfer += $output->$ewrite($elem);
             } else {

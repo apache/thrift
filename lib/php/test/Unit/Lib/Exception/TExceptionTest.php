@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace Test\Thrift\Unit\Lib\Exception;
 
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Fixture\TestRichException;
 use Thrift\Base\TBase;
 use Thrift\Exception\TException;
@@ -125,6 +125,56 @@ class TExceptionTest extends TestCase
         yield 'empty map' => ['field' => 'mapField', 'value' => []];
         yield 'empty list' => ['field' => 'listField', 'value' => []];
         yield 'empty set' => ['field' => 'setField', 'value' => []];
+    }
+
+    public function testWriteAndReadScalarSetProvidedAsSequentialValues(): void
+    {
+        $exception = new TestRichException();
+        $exception->setField = [5, 9];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([5 => true, 9 => true], $result->setField);
+    }
+
+    public function testWriteAndReadScalarSetPreservesSequentialLegacyKeys(): void
+    {
+        $exception = new TestRichException();
+        $exception->setField = [0 => true, 1 => true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([0 => true, 1 => true], $result->setField);
+    }
+
+    public function testWriteAndReadBoolSetAcceptsSequentialValuesWhenUnambiguous(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [true, false];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([1 => true, 0 => true], $result->boolSetField);
+    }
+
+    public function testWriteAndReadBoolSetPreservesLegacyKeys(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [1 => true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([1 => true], $result->boolSetField);
+    }
+
+    public function testWriteAndReadBoolSetPreservesLegacyMarkersForAmbiguousSequentialValues(): void
+    {
+        $exception = new TestRichException();
+        $exception->boolSetField = [true];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([0 => true], $result->boolSetField);
     }
 
     public function testWriteAndReadAllFields()
