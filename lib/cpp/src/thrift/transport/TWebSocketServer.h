@@ -118,6 +118,14 @@ protected:
     return h.str();
   }
 
+  // sz is the length of the name the peer sent, so comparing only that many
+  // characters accepted every name that is a prefix of one below: "U:", "C:"
+  // and "S:" were enough to satisfy the handshake, and "S:" reached the key
+  // arm because it is tested before the version one.
+  static bool headerNameIs(const char* header, size_t sz, const char* name) {
+    return sz == strlen(name) && THRIFT_strncasecmp(header, name, sz) == 0;
+  }
+
   void parseHeader(char* header) override {
     char* colon = strchr(header, ':');
     if (colon == nullptr) {
@@ -126,22 +134,29 @@ protected:
     size_t sz = colon - header;
     char* value = colon + 1;
 
-    if (THRIFT_strncasecmp(header, "Upgrade", sz) == 0) {
+    if (headerNameIs(header, sz, "Upgrade")) {
       if (THRIFT_strcasestr(value, "websocket") != nullptr) {
         upgrade_ = true;
       }
-    } else if (THRIFT_strncasecmp(header, "Connection", sz) == 0) {
+    } else if (headerNameIs(header, sz, "Connection")) {
       if (THRIFT_strcasestr(value, "Upgrade") != nullptr) {
         connection_ = true;
       }
-    } else if (THRIFT_strncasecmp(header, "Sec-WebSocket-Key", sz) == 0) {
-      std::string toHash = value + 1;
+    } else if (headerNameIs(header, sz, "Sec-WebSocket-Key")) {
+      // value + 1 dropped the space that a header usually has after the colon,
+      // and read past the terminator when it did not: "Sec-WebSocket-Key:" on
+      // its own leaves *value at '\0'.  Skip the optional whitespace instead.
+      const char* key = value;
+      while (*key == ' ' || *key == '\t') {
+        ++key;
+      }
+      std::string toHash = key;
       toHash += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
       unsigned char hash[20];
       SHA1((const unsigned char*)toHash.c_str(), toHash.length(), hash);
       acceptKey_ = base64Encode(hash, 20);
       secWebSocketKey_ = true;
-    } else if (THRIFT_strncasecmp(header, "Sec-WebSocket-Version", sz) == 0) {
+    } else if (headerNameIs(header, sz, "Sec-WebSocket-Version")) {
       if (THRIFT_strcasestr(value, "13") != nullptr) {
         secWebSocketVersion_ = true;
       }

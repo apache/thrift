@@ -19,6 +19,11 @@
 
 #include <sstream>
 
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
+#include <string>
+
 #include <thrift/transport/THttpTransport.h>
 
 using std::string;
@@ -43,7 +48,8 @@ THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport, std::share
     httpBuf_(nullptr),
     httpPos_(0),
     httpBufLen_(0),
-    httpBufSize_(1024) {
+    httpBufSize_(1024),
+    bodyBytesRead_(0) {
   init();
 }
 
@@ -53,6 +59,52 @@ uint32_t THttpTransport::maxHttpBufSize() {
     // Never below the buffer we start out with, so that a small or unset
     // limit cannot make an ordinary request line unreadable.
     return httpBufSize_;
+  }
+  return static_cast<uint32_t>(configured);
+}
+
+uint32_t THttpTransport::parseContentLength(const char* value) {
+  errno = 0;
+  char* end = nullptr;
+  const long long parsed = std::strtoll(value, &end, 10);
+
+  // strtoll skips leading whitespace, so end == value means there were no
+  // digits at all.  RFC 9110 8.6 has Content-Length as 1*DIGIT, which leaves
+  // no room for a sign, for trailing text, or for a value the member cannot
+  // hold.
+  if (end == value || errno == ERANGE || parsed < 0
+      || parsed > static_cast<long long>((std::numeric_limits<uint32_t>::max)())) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Bad Content-Length: " + std::string(value));
+  }
+  while (*end == ' ' || *end == '\t') {
+    ++end;
+  }
+  if (*end != '\0') {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Bad Content-Length: " + std::string(value));
+  }
+
+  return static_cast<uint32_t>(parsed);
+}
+
+void THttpTransport::chargeBodyBytes(uint32_t size) {
+  // The peer picks the declared content length, and in a chunked body it picks
+  // how many chunks there are; neither was measured against anything. The line
+  // buffer has had its own ceiling since the growth was bounded, but the body
+  // does not pass through it -- readContent() writes straight into readBuffer_.
+  const uint32_t remaining = maxBodySize() - bodyBytesRead_;
+  if (size > remaining) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "HTTP body exceeds the configured maximum message size");
+  }
+  bodyBytesRead_ += size;
+}
+
+uint32_t THttpTransport::maxBodySize() {
+  const int configured = getConfiguration()->getMaxMessageSize();
+  if (configured < 0) {
+    return 0;
   }
   return static_cast<uint32_t>(configured);
 }
@@ -153,6 +205,8 @@ uint32_t THttpTransport::parseChunkSize(char* line) {
 }
 
 uint32_t THttpTransport::readContent(uint32_t size) {
+  chargeBodyBytes(size);
+
   uint32_t need = size;
   while (need > 0) {
     uint32_t avail = httpBufLen_ - httpPos_;
@@ -244,6 +298,7 @@ void THttpTransport::refill() {
 
 void THttpTransport::readHeaders() {
   // Initialize headers state variables
+  bodyBytesRead_ = 0;
   contentLength_ = 0;
   chunked_ = false;
   chunkedDone_ = false;
