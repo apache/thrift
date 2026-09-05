@@ -33,6 +33,26 @@ using apache::thrift::to_string;
 
 BOOST_AUTO_TEST_SUITE(ToStringTest)
 
+namespace {
+
+// The two cases below set the global locale to prove that to_string() does not
+// follow it.  Setting it is the point; leaving it set is not -- every stream
+// constructed later in this binary picks it up, including in suites that have
+// nothing to do with this one, and a number then formats with digit grouping.
+// That has already cost one debugging session in THttpBufferBoundTest, where a
+// hex chunk size of 4096 became "1.000".
+class ScopedGlobalLocale {
+public:
+  explicit ScopedGlobalLocale(const char* name)
+    : previous_(std::locale::global(std::locale(name))) {}
+  ~ScopedGlobalLocale() { std::locale::global(previous_); }
+
+private:
+  std::locale previous_;
+};
+
+} // namespace
+
 BOOST_AUTO_TEST_CASE(base_types_to_string) {
   BOOST_CHECK_EQUAL(to_string(10), "10");
   BOOST_CHECK_EQUAL(to_string(true), "1");
@@ -47,18 +67,18 @@ BOOST_AUTO_TEST_CASE(base_types_to_string) {
 #ifndef _WIN32
 BOOST_AUTO_TEST_CASE(locale_en_US_int_to_string) {
 #ifdef _WIN32
-  std::locale::global(std::locale("en-US.UTF-8"));
+  ScopedGlobalLocale locale("en-US.UTF-8");
 #else
-  std::locale::global(std::locale("en_US.UTF-8"));
+  ScopedGlobalLocale locale("en_US.UTF-8");
 #endif
   BOOST_CHECK_EQUAL(to_string(1000000), "1000000");
 }
 
 BOOST_AUTO_TEST_CASE(locale_de_DE_floating_point_to_string) {
 #ifdef _WIN32
-  std::locale::global(std::locale("de-DE.UTF-8"));
+  ScopedGlobalLocale locale("de-DE.UTF-8");
 #else
-  std::locale::global(std::locale("de_DE.UTF-8"));
+  ScopedGlobalLocale locale("de_DE.UTF-8");
 #endif
   BOOST_CHECK_EQUAL(to_string(1.5), "1.5");
   BOOST_CHECK_EQUAL(to_string(1.5f), "1.5");
