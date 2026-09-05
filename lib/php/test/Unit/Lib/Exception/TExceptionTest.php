@@ -127,6 +127,16 @@ class TExceptionTest extends TestCase
         yield 'empty set' => ['field' => 'setField', 'value' => []];
     }
 
+    public function testWriteAndReadScalarSetProvidedAsSequentialValues(): void
+    {
+        $exception = new TestRichException();
+        $exception->setField = [5, 9];
+
+        $result = $this->roundtrip($exception);
+
+        $this->assertSame([5 => true, 9 => true], $result->setField);
+    }
+
     public function testWriteAndReadAllFields()
     {
         $exception = new TestRichException();

@@ -74,6 +74,20 @@ class TBaseTest extends TestCase
         $this->assertNull($restored->optionalField);
     }
 
+    public function testWriteSetAcceptsSequentialValues(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'setField' => [10, 20],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([10 => true, 20 => true], $restored->setField);
+    }
+
     public function testReadSkipsUnknownAndUnexpectedFields(): void
     {
         $transport = new TMemoryBuffer();
