@@ -291,6 +291,12 @@ not report a negative number, a value too large for the field, or text that is
 not a number at all -- `Content-length: -1` used to arrive as 4294967295 -- and
 all three are now refused with a `TTransportException`.
 
+The body of an HTTP message is held to `TConfiguration::maxMessageSize`, 100 MB
+by default, counting a chunked body by the sum of its chunks.  Nothing bounded
+it before: the declared length, or the number of chunks, was the peer's choice.
+A client or server that exchanges bodies larger than the configured maximum has
+to raise it, the same way it would for any other transport.
+
 ## 1.0.0
 
 THRIFT-4720:
