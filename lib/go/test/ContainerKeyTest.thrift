@@ -33,3 +33,14 @@ struct ContainerKeyStruct {
 }
 
 const map<list<string>, i32> LIST_KEYED_CONST = {["a", "b"]: 2, []: 0}
+
+struct PlainKey {
+  1: i32 id
+}
+
+# This file is generated without the struct_key_entries option, so a
+# struct-keyed map keeps the default representation: a Go map keyed by
+# pointer. StructKeyTest.thrift covers what the option changes.
+struct DefaultStructKeyStruct {
+  1: map<PlainKey, string> byKey
+}

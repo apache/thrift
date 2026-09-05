@@ -29,6 +29,11 @@ import (
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
+// ContainerKeyTest.thrift is generated without the struct_key_entries option,
+// so a struct-keyed map keeps the default Go representation: a map keyed by
+// pointer. This assignment stops that changing without a deliberate edit.
+var _ map[*containerkeytest.PlainKey]string = containerkeytest.DefaultStructKeyStruct{}.ByKey
+
 func newContainerKeyStruct() *containerkeytest.ContainerKeyStruct {
 	s := containerkeytest.NewContainerKeyStruct()
 	s.ListKey = []thrift.MapEntry[[]string, string]{
