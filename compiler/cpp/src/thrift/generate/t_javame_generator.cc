@@ -66,6 +66,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_doc_type_name(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -188,7 +189,7 @@ public:
 
   void generate_java_doc(std::ostream& out, t_doc* tdoc) override;
 
-  void generate_java_doc(std::ostream& out, t_function* tdoc) override;
+  void generate_java_doc(std::ostream& out, t_function* tfunction) override;
 
   void generate_java_docstring_comment(std::ostream& out, string contents) override;
 
@@ -2834,6 +2835,12 @@ string t_javame_generator::type_name(t_type* ttype,
   return ttype->get_name();
 }
 
+std::string t_javame_generator::get_doc_type_name(t_type* type) {
+  type = get_true_type(type);
+  const std::string package = type->get_program()->get_namespace("java");
+  return (package.empty() ? "" : package + ".") + type_name(type);
+}
+
 /**
  * Returns the C++ type that corresponds to the thrift type.
  *
@@ -3058,20 +3065,7 @@ void t_javame_generator::generate_java_doc(ostream& out, t_doc* tdoc) {
  * Emits a JavaDoc comment if the provided function object has a doc in Thrift
  */
 void t_javame_generator::generate_java_doc(ostream& out, t_function* tfunction) {
-  if (tfunction->has_doc()) {
-    stringstream ss;
-    ss << tfunction->get_doc();
-    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-    vector<t_field*>::const_iterator p_iter;
-    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
-      t_field* p = *p_iter;
-      ss << "\n@param " << p->get_name();
-      if (p->has_doc()) {
-        ss << " " << p->get_doc();
-      }
-    }
-    generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
-  }
+  t_oop_generator::generate_java_doc(out, tfunction);
 }
 
 void t_javame_generator::generate_deep_copy_container(ostream& out,

@@ -74,6 +74,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_doc_type_name(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -3136,8 +3137,8 @@ void t_haxe_generator::generate_haxe_doc(ostream& out, t_doc* tdoc) {
  * Emits a haxeDoc comment if the provided function object has a doc in Thrift
  */
 void t_haxe_generator::generate_haxe_doc(ostream& out, t_function* tfunction) {
+  stringstream ss;
   if (tfunction->has_doc()) {
-    stringstream ss;
     ss << tfunction->get_doc();
     const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
     vector<t_field*>::const_iterator p_iter;
@@ -3148,8 +3149,18 @@ void t_haxe_generator::generate_haxe_doc(ostream& out, t_function* tfunction) {
         ss << " " << p->get_doc();
       }
     }
-    generate_docstring_comment(out, "/**\n", " * ", ss.str(), " */\n");
   }
+
+  generate_throws_doc(ss, tfunction);
+
+  const std::string result_doc = ss.str();
+  if (!result_doc.empty()) {
+    generate_docstring_comment(out, "/**\n", " * ", result_doc, " */\n");
+  }
+}
+
+std::string t_haxe_generator::get_doc_type_name(t_type* type) {
+  return type_name(type);
 }
 
 std::string t_haxe_generator::generate_isset_check(t_field* field) {

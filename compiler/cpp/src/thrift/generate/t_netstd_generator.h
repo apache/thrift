@@ -124,6 +124,7 @@ public:
   void generate_netstd_doc(ostream& out, t_field* field);
   void generate_netstd_doc(ostream& out, t_doc* tdoc);
   void generate_netstd_doc(ostream& out, t_function* tdoc);
+  string xml_encode(const string& contents);
   void generate_netstd_docstring_comment(ostream& out, string contents);
   void docstring_comment(ostream& out, const string& comment_start, const string& line_prefix, const string& contents, const string& comment_end);
   void start_netstd_namespace(ostream& out);
