@@ -25,11 +25,12 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Serializer;
 
 use phpmock\phpunit\PHPMock;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Fixture\TestSerializerStruct;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Serializer\TBinarySerializer;
+use Thrift\Type\TMessageType;
 
 class TBinarySerializerTest extends TestCase
 {
@@ -166,5 +167,47 @@ class TBinarySerializerTest extends TestCase
         $this->assertInstanceOf(TestSerializerStruct::class, $deserialized);
         $this->assertEquals('accel', $deserialized->stringField);
         $this->assertEquals(7, $deserialized->intField);
+    }
+
+    public function testDeserializeWithAcceleratedExtensionFlushesMessagePrefix(): void
+    {
+        $object = new TestSerializerStruct();
+        $object->stringField = 'buffered';
+        $object->intField = 11;
+
+        $serialized = TBinarySerializer::serialize($object);
+
+        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+             ->setValue(null, null);
+
+        $funcExists = $this->getFunctionMock('Thrift\Serializer', 'function_exists');
+        $funcExists->expects($this->atLeastOnce())
+             ->willReturn(true);
+
+        $readFunc = $this->getFunctionMock('Thrift\Serializer', 'thrift_protocol_read_binary');
+        $readFunc->expects($this->once())
+             ->willReturnCallback(function ($protocol, $className, $strictRead, $bufferSize) {
+                 // Guard THRIFT-1941: deserialize must flush the wrapped
+                 // buffered transport after writing the synthetic message
+                 // prefix, otherwise the callback cannot read it back.
+                 $protocol->readMessageBegin($name, $type, $seqid);
+
+                 $this->assertSame('', $name);
+                 $this->assertSame(TMessageType::REPLY, $type);
+                 $this->assertSame(0, $seqid);
+                 $this->assertFalse($strictRead);
+                 $this->assertSame(8192, $bufferSize);
+
+                 $result = new $className();
+                 $result->read($protocol);
+
+                 return $result;
+             });
+
+        $deserialized = TBinarySerializer::deserialize($serialized, TestSerializerStruct::class);
+
+        $this->assertInstanceOf(TestSerializerStruct::class, $deserialized);
+        $this->assertSame('buffered', $deserialized->stringField);
+        $this->assertSame(11, $deserialized->intField);
     }
 }
