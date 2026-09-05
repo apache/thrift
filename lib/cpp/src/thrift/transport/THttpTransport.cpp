@@ -19,6 +19,11 @@
 
 #include <sstream>
 
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
+#include <string>
+
 #include <thrift/transport/THttpTransport.h>
 
 using std::string;
@@ -55,6 +60,31 @@ uint32_t THttpTransport::maxHttpBufSize() {
     return httpBufSize_;
   }
   return static_cast<uint32_t>(configured);
+}
+
+uint32_t THttpTransport::parseContentLength(const char* value) {
+  errno = 0;
+  char* end = nullptr;
+  const long long parsed = std::strtoll(value, &end, 10);
+
+  // strtoll skips leading whitespace, so end == value means there were no
+  // digits at all.  RFC 9110 8.6 has Content-Length as 1*DIGIT, which leaves
+  // no room for a sign, for trailing text, or for a value the member cannot
+  // hold.
+  if (end == value || errno == ERANGE || parsed < 0
+      || parsed > static_cast<long long>((std::numeric_limits<uint32_t>::max)())) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Bad Content-Length: " + std::string(value));
+  }
+  while (*end == ' ' || *end == '\t') {
+    ++end;
+  }
+  if (*end != '\0') {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Bad Content-Length: " + std::string(value));
+  }
+
+  return static_cast<uint32_t>(parsed);
 }
 
 void THttpTransport::init() {

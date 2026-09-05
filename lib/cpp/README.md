@@ -276,6 +276,21 @@ Support for Boost at runtime was deprecated.
 
 # Breaking Changes
 
+## 0.25.0
+
+The HTTP transport reads a header name as the whole token before the colon.  It
+used to compare only as many characters as the peer had sent, so any name that
+is a prefix of one it knows was accepted as that name: `C: 5` set the content
+length, `T: chunked` switched on chunked decoding, `X: 1.2.3.4` set the origin,
+and on the WebSocket server `U:`, `C:` and `S:` satisfied the handshake.  A
+deployment that relied on any of those abbreviations has to send the full name;
+every other HTTP implementation already required it.
+
+`Content-Length` is now parsed against RFC 9110 8.6's `1*DIGIT`.  `atoi()` could
+not report a negative number, a value too large for the field, or text that is
+not a number at all -- `Content-length: -1` used to arrive as 4294967295 -- and
+all three are now refused with a `TTransportException`.
+
 ## 1.0.0
 
 THRIFT-4720:

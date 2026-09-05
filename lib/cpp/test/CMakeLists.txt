@@ -91,6 +91,7 @@ set(UnitTest_SOURCES
     ThrifttReadCheckTests.cpp
     FrameBoundReadBudgetTest.cpp
     THttpBufferBoundTest.cpp
+    THttpHeaderParseTest.cpp
     TUuidTest.cpp
     Thrift5272.cpp
 )
