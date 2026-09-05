@@ -99,6 +99,11 @@ protected:
   /// Upper bound on httpBufSize_, from TConfiguration::maxMessageSize.
   uint32_t maxHttpBufSize();
 
+  /// Reads a Content-Length header value.  Throws TTransportException unless
+  /// it is a decimal number that fits contentLength_, which atoi() could
+  /// neither check nor report on: "-1" used to arrive here as 4294967295.
+  static uint32_t parseContentLength(const char* value);
+
   static const char* CRLF;
   static const int CRLF_LEN;
 };
