@@ -51,6 +51,20 @@ THttpServer::~THttpServer() = default;
   #define THRIFT_strcasestr(haystack, needle) strcasestr(haystack, needle)
 #endif
 
+namespace {
+
+// sz is the length of the name the peer sent, so comparing only that many
+// characters accepted every name that is a prefix of one below: "C: 5" was a
+// content length and "T: chunked" switched on chunked decoding.  A header name
+// is the whole token before the colon (RFC 9110 5.1), and a transport that
+// reads it otherwise disagrees with every other party on the connection about
+// where the message ends.
+bool headerNameIs(const char* header, size_t sz, const char* name) {
+  return sz == strlen(name) && THRIFT_strncasecmp(header, name, sz) == 0;
+}
+
+} // namespace
+
 void THttpServer::parseHeader(char* header) {
   char* colon = strchr(header, ':');
   if (colon == nullptr) {
@@ -59,14 +73,14 @@ void THttpServer::parseHeader(char* header) {
   size_t sz = colon - header;
   char* value = colon + 1;
 
-  if (THRIFT_strncasecmp(header, "Transfer-Encoding", sz) == 0) {
+  if (headerNameIs(header, sz, "Transfer-Encoding")) {
     if (THRIFT_strcasestr(value, "chunked") != nullptr) {
       chunked_ = true;
     }
-  } else if (THRIFT_strncasecmp(header, "Content-length", sz) == 0) {
+  } else if (headerNameIs(header, sz, "Content-length")) {
     chunked_ = false;
-    contentLength_ = atoi(value);
-  } else if (strncmp(header, "X-Forwarded-For", sz) == 0) {
+    contentLength_ = parseContentLength(value);
+  } else if (sz == strlen("X-Forwarded-For") && strncmp(header, "X-Forwarded-For", sz) == 0) {
     origin_ = value;
   }
 }
