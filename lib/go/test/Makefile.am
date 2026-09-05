@@ -27,6 +27,8 @@ RECURSIVE = $(top_srcdir)/test/Recursive.thrift
 
 THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
+THRIFTARGS_STRUCT_KEY_ENTRIES = -out gopath/src/ --gen go:struct_key_entries,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
+
 gopath: $(THRIFT) $(THRIFTTEST) \
 				$(RECURSIVE) \
 				IncludesTest.thrift \
@@ -37,6 +39,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				RequiredFieldTest.thrift \
 				ServicesTest.thrift \
 				ContainerKeyTest.thrift \
+				StructKeyTest.thrift \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
 				RefAnnotationFieldsTest.thrift \
@@ -72,6 +75,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
 	$(THRIFT) $(THRIFTARGS) BinaryKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS) ContainerKeyTest.thrift
+	$(THRIFT) $(THRIFTARGS_STRUCT_KEY_ENTRIES) StructKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS) MultiplexedProtocolTest.thrift
 	$(THRIFT) $(THRIFTARGS) OnewayTest.thrift
 	$(THRIFT) $(THRIFTARGS) OptionalFieldsTest.thrift
@@ -113,6 +117,7 @@ check: gopath
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
 				./gopath/src/containerkeytest \
+				./gopath/src/structkeytest \
 				./gopath/src/servicestest \
 				./gopath/src/typedeffieldtest \
 				./gopath/src/refannotationfieldstest \
@@ -183,6 +188,7 @@ EXTRA_DIST = \
 	RequiredFieldTest.thrift \
 	ServicesTest.thrift \
 	StringParseAllocationTest.thrift \
+	StructKeyTest.thrift \
 	TypedefFieldTest.thrift \
 	UnionBinaryTest.thrift \
 	UnionDefaultValueTest.thrift \

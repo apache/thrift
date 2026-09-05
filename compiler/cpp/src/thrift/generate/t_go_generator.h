@@ -65,6 +65,7 @@ public:
     read_write_private_ = false;
     ignore_initialisms_ = false;
     skip_remote_ = false;
+    struct_key_entries_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("package_prefix") == 0) {
         gen_package_prefix_ = (iter->second);
@@ -78,6 +79,8 @@ public:
         ignore_initialisms_ = true;
       } else if( iter->first.compare("skip_remote") == 0) {
         skip_remote_ =  true;
+      } else if (iter->first.compare("struct_key_entries") == 0) {
+        struct_key_entries_ = true;
       } else {
         throw "unknown option go:" + iter->first;
       }
@@ -267,6 +270,8 @@ public:
   std::string type_to_go_key_type(t_type* ttype);
   bool is_container_keyed_map(t_type* ttype);
   std::string map_entry_type(t_map* tmap);
+  std::string map_entry_key_type(t_type* ktype);
+  bool is_comparable_struct_key(t_type* ktype);
   std::string type_to_spec_args(t_type* ttype);
 
   bool generate_deprecation_comment(std::ostream& os, const std::map<std::string, std::vector<std::string>>& annotations);
@@ -301,6 +306,7 @@ private:
   bool read_write_private_;
   bool ignore_initialisms_;
   bool skip_remote_;
+  bool struct_key_entries_;
 
   /**
    * File streams
