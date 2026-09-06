@@ -226,6 +226,10 @@ public:
   void generate_go_equals_struct(std::ostream& out, t_type* ttype, string tgt, string src);
 
   void generate_go_equals_container(std::ostream& out, t_type* ttype, string tgt, string src);
+  void generate_go_equals_unordered(std::ostream& out,
+                                    const string& go_type,
+                                    const string& tgt,
+                                    const string& src);
 
   void generate_go_docstring(std::ostream& out, t_struct* tstruct);
 
