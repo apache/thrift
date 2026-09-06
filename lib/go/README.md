@@ -154,8 +154,9 @@ slice of key/value pairs instead:
 
 Entries are written to the wire in slice order. As with `set` fields, writing
 a slice that contains two equal keys fails with an `INVALID_DATA` protocol
-exception; `Equals` compares entries position by position.
-Maps keyed by `binary` remain Go maps keyed by `string`.
+exception. A map is unordered, so `Equals` compares the entries as a
+collection: two values holding the same entries in a different order are
+equal. Maps keyed by `binary` remain Go maps keyed by `string`.
 
 Maps keyed by a struct, an exception or a union are generated as `map[*K]V` by
 default. Because the key is a pointer, two decoded keys with equal contents are
@@ -166,10 +167,8 @@ distinct map keys, and `Equals` compares them by identity. Pass the
     thrift --gen go:struct_key_entries file.thrift
 
 The option changes more than the Go type. `Equals` starts comparing key
-contents, which is the point, but it also becomes order-sensitive: it walks the
-two slices position by position, so the same entries in a different order no
-longer compare equal. Writing a slice that holds two keys with equal contents
-fails with `INVALID_DATA`, where the map form silently wrote both.
+contents, which is the point. Writing a slice that holds two keys with equal
+contents fails with `INVALID_DATA`, where the map form silently wrote both.
 
 How that uniqueness check is done depends on the key. When every field of the
 key struct is a non-pointer scalar, the struct value is itself a valid Go map

@@ -163,3 +163,24 @@ func TestContainerKeyValidate(t *testing.T) {
 		t.Error("empty value must fail vt.value.min_size")
 	}
 }
+
+// An entry slice stands in for a map, which is unordered, so two values
+// holding the same entries in a different order are equal.
+func TestContainerKeyEqualsIgnoresOrder(t *testing.T) {
+	tgt := newContainerKeyStruct()
+	src := newContainerKeyStruct()
+	if len(src.ListKey) < 2 {
+		t.Fatalf("fixture needs at least two entries, got %d", len(src.ListKey))
+	}
+	src.ListKey[0], src.ListKey[1] = src.ListKey[1], src.ListKey[0]
+	if !tgt.Equals(src) {
+		t.Error("reordering map entries must not change equality")
+	}
+
+	// The entries themselves still have to match.
+	src = newContainerKeyStruct()
+	src.ListKey[0].Value = "changed"
+	if tgt.Equals(src) {
+		t.Error("changing an entry value must change equality")
+	}
+}
