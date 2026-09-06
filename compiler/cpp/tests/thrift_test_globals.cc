@@ -43,3 +43,5 @@ std::string g_curpath;
 std::vector<std::string> g_incl_searchpath;
 
 bool g_return_failure = false;
+bool g_audit_allow_optional_field_removal = false;
+bool g_audit_allow_required_field_to_default = false;
