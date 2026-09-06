@@ -295,21 +295,20 @@ func TestStructKeyWriteHandlesNilKeys(t *testing.T) {
 
 func TestStructKeyEqualsDetectsKeyDifference(t *testing.T) {
 	tests := map[string]func(s *structkeytest.StructKeyStruct){
-		"struct key":       func(s *structkeytest.StructKeyStruct) { s.ByKey[1].Key.Name = "deux" },
-		"map value":        func(s *structkeytest.StructKeyStruct) { s.ByKey[1].Value = "changed" },
-		"exception key":    func(s *structkeytest.StructKeyStruct) { s.ByErr[0].Key.Msg = "different" },
-		"union key":        func(s *structkeytest.StructKeyStruct) { *s.ByUnion[0].Key.Num = 10 },
-		"typedef key":      func(s *structkeytest.StructKeyStruct) { s.ByAlias[0].Key.ID = 30 },
-		"nested key":       func(s *structkeytest.StructKeyStruct) { s.Nested[0][0].Key.ID = 40 },
-		"keyed value key":  func(s *structkeytest.StructKeyStruct) { s.ValueAlsoKeyed[0].Value[0].Key.ID = 60 },
-		"entry order only": func(s *structkeytest.StructKeyStruct) { s.ByKey[0], s.ByKey[1] = s.ByKey[1], s.ByKey[0] },
-		"list value key":   func(s *structkeytest.StructKeyStruct) { s.ListValue[0].Key.ID = 70 },
-		"list value":       func(s *structkeytest.StructKeyStruct) { s.ListValue[0].Value[1] = "changed" },
-		"set value":        func(s *structkeytest.StructKeyStruct) { s.SetValue[0].Value = []string{"d"} },
-		"comparable key":   func(s *structkeytest.StructKeyStruct) { s.ByComparable[0].Key.Kind = structkeytest.KeyKind_BETA },
-		"binary key":       func(s *structkeytest.StructKeyStruct) { s.ByPairwise[0].Key.Blob[0] = 9 },
-		"optional field":   func(s *structkeytest.StructKeyStruct) { s.ByOptionalField[0].Key.Note = nil },
-		"union alias key":  func(s *structkeytest.StructKeyStruct) { *s.ByUnionAlias[0].Key.Num = 15 },
+		"struct key":      func(s *structkeytest.StructKeyStruct) { s.ByKey[1].Key.Name = "deux" },
+		"map value":       func(s *structkeytest.StructKeyStruct) { s.ByKey[1].Value = "changed" },
+		"exception key":   func(s *structkeytest.StructKeyStruct) { s.ByErr[0].Key.Msg = "different" },
+		"union key":       func(s *structkeytest.StructKeyStruct) { *s.ByUnion[0].Key.Num = 10 },
+		"typedef key":     func(s *structkeytest.StructKeyStruct) { s.ByAlias[0].Key.ID = 30 },
+		"nested key":      func(s *structkeytest.StructKeyStruct) { s.Nested[0][0].Key.ID = 40 },
+		"keyed value key": func(s *structkeytest.StructKeyStruct) { s.ValueAlsoKeyed[0].Value[0].Key.ID = 60 },
+		"list value key":  func(s *structkeytest.StructKeyStruct) { s.ListValue[0].Key.ID = 70 },
+		"list value":      func(s *structkeytest.StructKeyStruct) { s.ListValue[0].Value[1] = "changed" },
+		"set value":       func(s *structkeytest.StructKeyStruct) { s.SetValue[0].Value = []string{"d"} },
+		"comparable key":  func(s *structkeytest.StructKeyStruct) { s.ByComparable[0].Key.Kind = structkeytest.KeyKind_BETA },
+		"binary key":      func(s *structkeytest.StructKeyStruct) { s.ByPairwise[0].Key.Blob[0] = 9 },
+		"optional field":  func(s *structkeytest.StructKeyStruct) { s.ByOptionalField[0].Key.Note = nil },
+		"union alias key": func(s *structkeytest.StructKeyStruct) { *s.ByUnionAlias[0].Key.Num = 15 },
 	}
 	a := newStructKeyStruct()
 	for name, mutate := range tests {
@@ -323,6 +322,16 @@ func TestStructKeyEqualsDetectsKeyDifference(t *testing.T) {
 				t.Error("expected structs to differ")
 			}
 		})
+	}
+}
+
+// A map is unordered, so holding the same entries in a different order does
+// not change equality.
+func TestStructKeyEqualsIgnoresEntryOrder(t *testing.T) {
+	a, b := newStructKeyStruct(), newStructKeyStruct()
+	b.ByKey[0], b.ByKey[1] = b.ByKey[1], b.ByKey[0]
+	if !a.Equals(b) {
+		t.Error("reordering map entries must not change equality")
 	}
 }
 

@@ -292,3 +292,48 @@ func TestMapEqualsDetectsMissingKey(t *testing.T) {
 		t.Error("maps with different key sets must not be equal even when the zero value matches")
 	}
 }
+
+// A Thrift set is unordered, but Go represents it as a slice. Two values
+// holding the same members in a different order are equal.
+func TestSetEqualsIgnoresOrder(t *testing.T) {
+	tgt, src := genSetFoo(), genSetFoo()
+	reverse := func(s []int64) []int64 {
+		out := make([]int64, len(s))
+		for i, v := range s {
+			out[len(s)-1-i] = v
+		}
+		return out
+	}
+	src.I64SetFoo = reverse(src.I64SetFoo)
+	src.StructSetFoo[0], src.StructSetFoo[1] = src.StructSetFoo[1], src.StructSetFoo[0]
+	if !tgt.Equals(src) {
+		t.Error("reordering a set field must not change equality")
+	}
+
+	// Membership still has to match.
+	src = genSetFoo()
+	src.I64SetFoo[0] = -1
+	if tgt.Equals(src) {
+		t.Error("changing a set member must change equality")
+	}
+
+	// So does multiplicity, for a value assembled in memory.
+	tgt, src = genSetFoo(), genSetFoo()
+	tgt.I64SetFoo = []int64{1, 1, 2}
+	src.I64SetFoo = []int64{1, 2, 2}
+	if tgt.Equals(src) {
+		t.Error("sets differing in multiplicity must not be equal")
+	}
+}
+
+// A Thrift list is ordered, so its comparison stays position by position.
+func TestListEqualsKeepsOrder(t *testing.T) {
+	tgt, src := genListFoo(), genListFoo()
+	if !tgt.Equals(src) {
+		t.Error("identical lists must be equal")
+	}
+	src.I64ListFoo[0], src.I64ListFoo[1] = src.I64ListFoo[1], src.I64ListFoo[0]
+	if tgt.Equals(src) {
+		t.Error("reordering a list field must change equality")
+	}
+}
