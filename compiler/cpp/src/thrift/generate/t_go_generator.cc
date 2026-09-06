@@ -4235,6 +4235,19 @@ void t_go_generator::generate_go_equals_struct(ostream& out,
 /**
  * Compares any container type
  */
+/**
+ * Emits the head of a thrift.UnorderedEqual call, up to the opening brace of
+ * the element comparison. The caller fills in the body, which must return
+ * true when the two elements are equal, and closes the call.
+ */
+void t_go_generator::generate_go_equals_unordered(ostream& out,
+                                                  const string& go_type,
+                                                  const string& tgt,
+                                                  const string& src) {
+  out << indent() << "if !thrift.UnorderedEqual(" << indexable_go_expr(tgt) << ", "
+      << indexable_go_expr(src) << ", func(_tgt, _src " << go_type << ") bool {" << '\n';
+}
+
 void t_go_generator::generate_go_equals_container(ostream& out,
                                                   t_type* ttype,
                                                   string tgt,
@@ -4245,15 +4258,20 @@ void t_go_generator::generate_go_equals_container(ostream& out,
   indent_down();
   out << indent() << "}" << '\n';
   if (is_container_keyed_map(ttype)) {
+    // An entry slice stands in for a map, which is unordered, so the entries
+    // are compared as a collection rather than position by position.
     t_map* tmap = (t_map*)ttype;
-    out << indent() << "for i, _tgt := range " << tgt << " {" << '\n';
+    generate_go_equals_unordered(out, map_entry_type(tmap), tgt, src);
     indent_up();
-    string element_source = tmp("_src");
-    out << indent() << element_source << " := " << indexable_go_expr(src) << "[i]" << '\n';
-    generate_go_equals(out, tmap->get_key_type(), "_tgt.Key", element_source + ".Key");
-    generate_go_equals(out, tmap->get_val_type(), "_tgt.Value", element_source + ".Value");
+    generate_go_equals(out, tmap->get_key_type(), "_tgt.Key", "_src.Key");
+    generate_go_equals(out, tmap->get_val_type(), "_tgt.Value", "_src.Value");
+    out << indent() << "return true" << '\n';
     indent_down();
-    indent(out) << "}" << '\n';
+    out << indent() << "}) {" << '\n';
+    indent_up();
+    out << indent() << "return false" << '\n';
+    indent_down();
+    out << indent() << "}" << '\n';
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*)ttype;
     out << indent() << "for k, _tgt := range " << tgt << " {" << '\n';
@@ -4268,15 +4286,23 @@ void t_go_generator::generate_go_equals_container(ostream& out,
     generate_go_equals(out, tmap->get_val_type(), "_tgt", element_source);
     indent_down();
     indent(out) << "}" << '\n';
-  } else if (ttype->is_list() || ttype->is_set()) {
-    t_type* elem;
-    if (ttype->is_list()) {
-      t_list* temp = (t_list*)ttype;
-      elem = temp->get_elem_type();
-    } else {
-      t_set* temp = (t_set*)ttype;
-      elem = temp->get_elem_type();
-    }
+  } else if (ttype->is_set()) {
+    // A set is unordered, but Go represents it as a slice, so its elements
+    // are compared as a collection rather than position by position.
+    t_type* elem = ((t_set*)ttype)->get_elem_type();
+    generate_go_equals_unordered(out, type_to_go_type(elem), tgt, src);
+    indent_up();
+    generate_go_equals(out, elem, "_tgt", "_src");
+    out << indent() << "return true" << '\n';
+    indent_down();
+    out << indent() << "}) {" << '\n';
+    indent_up();
+    out << indent() << "return false" << '\n';
+    indent_down();
+    out << indent() << "}" << '\n';
+  } else if (ttype->is_list()) {
+    // A list is ordered, so position by position is the correct comparison.
+    t_type* elem = ((t_list*)ttype)->get_elem_type();
     out << indent() << "for i, _tgt := range " << tgt << " {" << '\n';
     indent_up();
     string element_source = tmp("_src");
