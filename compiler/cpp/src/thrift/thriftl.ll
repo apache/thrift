@@ -290,14 +290,20 @@ literal_begin (['\"])
     int ch = yyinput();
     switch (ch) {
       case EOF:
-        yyerror("End of file while read string at %d\n", yylineno);
+        yyerror("End of file while reading string at %d\n", yylineno);
         exit(1);
       case '\n':
-        yyerror("End of line while read string at %d\n", yylineno - 1);
+        yyerror("End of line while reading string at %d\n", yylineno - 1);
         exit(1);
       case '\\':
         ch = yyinput();
         switch (ch) {
+          case EOF:
+            yyerror("End of file while reading string at %d\n", yylineno);
+            exit(1);
+          case '\n':
+            yyerror("End of line while reading string at %d\n", yylineno - 1);
+            exit(1);
           case 'r':
             result.push_back('\r');
             continue;
@@ -317,8 +323,9 @@ literal_begin (['\"])
             result.push_back('\\');
             continue;
           default:
-            yyerror("Bad escape character\n");
-            return -1;
+            result.push_back('\\');
+            result.push_back(static_cast<char>(ch));
+            continue;
         }
         break;
       default:
