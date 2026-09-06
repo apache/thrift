@@ -66,6 +66,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/thrift_TSerializer.py
 	THRIFT=${THRIFT} $(PYTHON) test/test_compiler/test_keyword_escape.py
+	THRIFT=${THRIFT} $(PYTHON) test/test_compiler/test_default_struct.py
 	$(PYTHON) test/test_recursion_depth.py
 	$(PYTHON) test/test_container_sizing.py
 	$(PYTHON) test/test_framed_frame_size.py
