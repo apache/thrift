@@ -33,6 +33,12 @@
 
 #include <new>
 
+#ifndef _WIN32
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
+
 #include "gen-cpp/ParentService.h"
 
 #include <event.h>
@@ -326,5 +332,80 @@ BOOST_FIXTURE_TEST_CASE(bad_alloc_does_not_end_the_process, Fixture) {
   BOOST_CHECK_MESSAGE(canCommunicate(port),
                       "the server stopped serving after one failed allocation");
 }
+
+#ifndef _WIN32
+// The other way one connection used to end the process, and the worse of the
+// two: TConnection::transition() throws std::bad_alloc when the read buffer
+// cannot be grown to the frame size the peer asked for. transition() runs under
+// eventHandler(), which libevent -- a C library -- calls. An exception unwinding
+// out of a C frame reaches std::terminate, not a handler, so the process
+// aborted rather than merely exiting.
+//
+// Run in a child, because making an allocation fail means capping the address
+// space, and that cannot be undone for the rest of the suite. The child exiting
+// 0 is the assertion; before the fix it died on SIGABRT.
+BOOST_AUTO_TEST_CASE(allocation_failure_on_the_io_thread_does_not_end_the_process) {
+  pid_t pid = fork();
+  BOOST_REQUIRE_NE(pid, -1);
+
+  if (pid == 0) {
+    struct rlimit limit;
+    limit.rlim_cur = limit.rlim_max = 256UL * 1024 * 1024;
+    if (setrlimit(RLIMIT_AS, &limit) != 0) {
+      _exit(2);
+    }
+
+    auto socket = make_shared<transport::TNonblockingServerSocket>(0);
+    auto processor = make_shared<test::ParentServiceProcessor>(make_shared<Handler>());
+    auto child = make_shared<server::TNonblockingServer>(processor, socket);
+    // Above the cap on purpose, so that growing the buffer for the frame below
+    // is an allocation that cannot succeed.
+    child->setMaxFrameSize(512UL * 1024 * 1024);
+
+    auto factory = make_shared<ThreadFactory>(false);
+    struct Serve : public Runnable {
+      shared_ptr<server::TNonblockingServer> server;
+      void run() override { server->serve(); }
+    };
+    auto runnable = make_shared<Serve>();
+    runnable->server = child;
+    auto serveThread = factory->newThread(runnable);
+    serveThread->start();
+
+    for (int i = 0; i < 100 && child->getListenPort() == 0; ++i) {
+      THRIFT_SLEEP_USEC(10000);
+    }
+
+    try {
+      transport::TSocket client("localhost", child->getListenPort());
+      client.open();
+      uint32_t declared = 400UL * 1024 * 1024;
+      uint8_t header[4] = {static_cast<uint8_t>(declared >> 24),
+                           static_cast<uint8_t>(declared >> 16),
+                           static_cast<uint8_t>(declared >> 8),
+                           static_cast<uint8_t>(declared)};
+      client.write(header, sizeof(header));
+      client.flush();
+      THRIFT_SLEEP_USEC(1500000);
+      client.close();
+    } catch (...) {
+      _exit(3);
+    }
+
+    // Reached only if the allocation failure did not take the process with it.
+    child->stop();
+    serveThread->join();
+    _exit(0);
+  }
+
+  int status = 0;
+  BOOST_REQUIRE_NE(waitpid(pid, &status, 0), -1);
+  BOOST_CHECK_MESSAGE(WIFEXITED(status),
+                      "the server process was killed by a signal rather than exiting");
+  if (WIFEXITED(status)) {
+    BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
+  }
+}
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()

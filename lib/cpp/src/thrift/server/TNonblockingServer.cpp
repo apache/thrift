@@ -268,7 +268,22 @@ public:
    */
   static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
     assert(fd == static_cast<evutil_socket_t>(((TConnection*)v)->getTSocket()->getSocketFD()));
-    ((TConnection*)v)->workSocket();
+    auto* connection = (TConnection*)v;
+    // libevent is C: an exception unwinding out of this callback does not reach
+    // any handler, it reaches std::terminate. workSocket() and the transition()
+    // it drives can throw -- growing the read buffer for a frame the peer sized
+    // throws std::bad_alloc when the allocation fails -- so the boundary is
+    // where that has to stop. One connection cannot be served; the rest can.
+    try {
+      connection->workSocket();
+    } catch (const std::exception& x) {
+      TOutput::instance().printf("TNonblockingServer: %s while working the socket, closing connection.",
+                                 x.what());
+      connection->close();
+    } catch (...) {
+      TOutput::instance()("TNonblockingServer: unknown exception while working the socket, closing connection.");
+      connection->close();
+    }
   }
 
   /**
@@ -1399,7 +1414,17 @@ void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* 
         ioThread->breakLoop(false);
         return;
       }
-      connection->transition();
+      // Same boundary as eventHandler(): this is a libevent callback too.
+      try {
+        connection->transition();
+      } catch (const std::exception& x) {
+        TOutput::instance().printf("TNonblockingServer: %s in notifyHandler, closing connection.",
+                                   x.what());
+        connection->close();
+      } catch (...) {
+        TOutput::instance()("TNonblockingServer: unknown exception in notifyHandler, closing connection.");
+        connection->close();
+      }
     } else if (nBytes > 0) {
       // throw away these bytes and hope that next time we get a solid read
       TOutput::instance().printf("notifyHandler: Bad read of %d bytes, wanted %d", nBytes, kSize);
