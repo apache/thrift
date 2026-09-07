@@ -66,3 +66,10 @@ not such a number is refused with a TTransportException. A sign, trailing text,
 or a value that does not fit size_t was previously either accepted silently --
 "5abc" gave 5, "0x10" gave 0 -- or left the transport as a std.conv exception
 rather than a Thrift one.
+
+thrift.transport.http reads at most maxBodySize bytes of message body, which
+defaults to the 16 MB frame size limit the Thrift libraries use elsewhere. The
+declared content length, and the number of chunks in a chunked body, are numbers
+the peer chooses, and the body does not pass through the line buffer that
+maxHttpBufferSize already bounds. A deployment that exchanges bodies larger than
+that has to raise the limit on the transport.

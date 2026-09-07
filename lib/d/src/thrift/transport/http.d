@@ -138,6 +138,21 @@ abstract class THttpTransport : TBaseTransport {
    */
   size_t maxHttpBufferSize = DEFAULT_MAX_HTTP_BUFFER_SIZE;
 
+  /**
+   * The default value for maxBodySize, matching the frame size limit used
+   * consistently across the Thrift libraries.
+   */
+  enum DEFAULT_MAX_BODY_SIZE = 16384000;
+
+  /**
+   * The largest message body that will be read, in bytes.
+   *
+   * The declared content length, and the number of chunks in a chunked body,
+   * are numbers the peer chooses. The body does not pass through the line
+   * buffer, so maxHttpBufferSize does not bound it.
+   */
+  size_t maxBodySize = DEFAULT_MAX_BODY_SIZE;
+
 protected:
   abstract string getHeader(size_t dataLength);
   abstract bool parseStatusLine(const(ubyte)[] status);
@@ -288,6 +303,7 @@ private:
 
   void readHeaders() {
     // Initialize headers state variables
+    bodyBytesRead_ = 0;
     contentLength_ = 0;
     chunked_ = false;
     chunkedDone_ = false;
@@ -347,6 +363,8 @@ private:
   }
 
   size_t readContent(size_t size) {
+    chargeBodyBytes(size);
+
     auto need = size;
     while (need > 0) {
       if (httpBufRemaining_.length == 0) {
@@ -361,6 +379,21 @@ private:
       need -= give;
     }
     return size;
+  }
+
+  /**
+   * Charges size bytes of body against maxBodySize, refusing the message once
+   * it would exceed it.
+   *
+   * Throws: TTransportException if the message is over its allowance.
+   */
+  void chargeBodyBytes(size_t size) {
+    // bodyBytesRead_ never passes maxBodySize, so the difference cannot wrap.
+    if (size > maxBodySize - bodyBytesRead_) {
+      throw new TTransportException("HTTP body exceeds the maximum body size",
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+    bodyBytesRead_ += size;
   }
 
   bool refill() {
@@ -391,6 +424,7 @@ private:
 
   bool readHeaders_;
   bool chunked_;
+  size_t bodyBytesRead_;
   bool chunkedDone_;
   size_t chunkSize_;
   size_t contentLength_;
@@ -677,4 +711,151 @@ unittest {
   assertThrown!TTransportException(readChunkedBody(";ext=1\r\nhello\r\n0\r\n\r\n"));
   assertThrown!TTransportException(
     readChunkedBody("1ffffffffffffffff\r\nhello\r\n0\r\n\r\n"));
+}
+
+version (unittest) {
+  /**
+   * Serves a fixed header block and then a body, counting the body bytes it
+   * was asked for. Asking whether a read threw is not enough to tell a bounded
+   * transport from an unbounded one -- an over-declared body runs the peer out
+   * and throws either way -- so the tests below count what the peer was asked
+   * to send.
+   */
+  private final class TCountingTransport : TBaseTransport {
+    this(string headers, string content) {
+      headers_ = cast(ubyte[])headers.dup;
+      body_ = cast(ubyte[])content.dup;
+    }
+
+    override bool isOpen() @property { return true; }
+    override bool peek() { return true; }
+    override void open() {}
+    override void close() {}
+
+    override size_t read(ubyte[] buf) {
+      import std.algorithm : min;
+      if (headerPos_ < headers_.length) {
+        auto n = min(buf.length, headers_.length - headerPos_);
+        buf[0 .. n] = headers_[headerPos_ .. headerPos_ + n];
+        headerPos_ += n;
+        return n;
+      }
+      if (bodyPos_ >= body_.length) return 0;
+      auto n = min(buf.length, body_.length - bodyPos_);
+      buf[0 .. n] = body_[bodyPos_ .. bodyPos_ + n];
+      bodyPos_ += n;
+      return n;
+    }
+
+    /// How many body bytes the transport asked this peer for.
+    size_t bodyServed() const { return bodyPos_; }
+
+  private:
+    ubyte[] headers_;
+    ubyte[] body_;
+    size_t headerPos_;
+    size_t bodyPos_;
+  }
+}
+
+unittest {
+  import std.array : replicate;
+  import thrift.transport.memory;
+
+  enum maxBody = 64 * 1024;
+  enum overLong = 4 * maxBody;
+
+  // A declared length larger than the maximum is refused before anything is
+  // read on account of it. The declared number itself costs nothing -- nothing
+  // is allocated up front -- so what it buys is the licence to keep reading,
+  // and that is what has to be refused.
+  {
+    auto peer = new TCountingTransport(
+      "POST / HTTP/1.1\r\nContent-Length: " ~ to!string(overLong) ~ "\r\n\r\n",
+      replicate("x", overLong));
+    auto http = new TServerHttpTransport(peer);
+    http.maxBodySize = maxBody;
+
+    ubyte[64] buf;
+    bool threw;
+    try { http.read(buf); } catch (TTransportException) { threw = true; }
+    assert(threw, "an over-long declared body was read");
+    assert(peer.bodyServed() == 0,
+      "bytes were read on account of a length that was already too large");
+  }
+
+  // The largest size_t there is, which is what a peer sends when it wants the
+  // reading to simply not stop.
+  {
+    auto peer = new TCountingTransport(
+      "POST / HTTP/1.1\r\nContent-Length: 18446744073709551615\r\n\r\n",
+      replicate("x", overLong));
+    auto http = new TServerHttpTransport(peer);
+    http.maxBodySize = maxBody;
+
+    ubyte[64] buf;
+    bool threw;
+    try { http.read(buf); } catch (TTransportException) { threw = true; }
+    assert(threw, "a body declared as size_t.max was read");
+    assert(peer.bodyServed() == 0, "bytes were read on account of size_t.max");
+  }
+
+  // A chunked body declares no total at all: it runs until the peer stops.
+  {
+    enum chunkSize = 4096;
+    string chunks;
+    foreach (i; 0 .. overLong / chunkSize) {
+      chunks ~= "1000\r\n" ~ replicate("y", chunkSize) ~ "\r\n";
+    }
+    chunks ~= "0\r\n\r\n";
+
+    auto peer = new TCountingTransport(
+      "POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n", chunks);
+    auto http = new TServerHttpTransport(peer);
+    http.maxBodySize = maxBody;
+
+    ubyte[64] buf;
+    bool threw;
+    try {
+      http.read(buf);
+      http.readEnd();
+    } catch (TTransportException) { threw = true; }
+    assert(threw, "a chunked body was read without limit");
+    // Every chunk is charged, so the peer runs out of allowance a little past
+    // the maximum -- the chunk framing is served too -- and nowhere near the
+    // four times as much it was holding.
+    assert(peer.bodyServed() <= maxBody + 1024,
+      "more than the maximum was read from a chunked body");
+  }
+
+  // A body inside the maximum still arrives, ...
+  {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(
+      cast(ubyte[])("POST / HTTP/1.1\r\nContent-Length: 5\r\n\r\nhello")));
+    http.maxBodySize = maxBody;
+    ubyte[16] buf;
+    assert(http.read(buf) == 5);
+    assert(cast(string)buf[0 .. 5] == "hello");
+  }
+
+  // ... and so does the next one on the same connection: the allowance is per
+  // message, not per connection.
+  {
+    enum big = maxBody - 1024;
+    auto one = "POST / HTTP/1.1\r\nContent-Length: " ~ to!string(big) ~ "\r\n\r\n"
+      ~ replicate("z", big);
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])(one ~ one)));
+    http.maxBodySize = maxBody;
+
+    auto buf = new ubyte[big];
+    foreach (message; 0 .. 2) {
+      size_t have;
+      while (have < big) {
+        auto got = http.read(buf[have .. $]);
+        assert(got > 0, "a second message on the connection was refused");
+        have += got;
+      }
+      assert(have == big);
+    }
+  }
 }
