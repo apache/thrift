@@ -76,6 +76,7 @@
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5320.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5382.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5795.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift6198.thrift" />
     <!-- special options (see ticket) -->
     <Exec Command="$(PathToThrift) -gen netstd                  -r ../Thrift5794.thrift" />
   </Target>

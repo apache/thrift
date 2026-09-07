@@ -51,6 +51,7 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     : t_oop_generator(program)
 {
     (void)option_string;
+    extensions_owner_ = program;
     target_net_version = 0;
     suppress_deepcopy = false;
     add_async_postfix = false;
@@ -751,7 +752,7 @@ void t_netstd_generator::collect_extensions_types(t_type* ttype)
             // included programs are processed by those programs' own generators, which
             // generate extension methods for their internal container types. Recursing
             // into them here would duplicate those extension method signatures (CS0121).
-            if (ttype->get_program() == program_)
+            if (ttype->get_program() == extensions_owner_)
             {
                 t_struct* tstruct = static_cast<t_struct*>(ttype);
                 collect_extensions_types(tstruct);
@@ -793,9 +794,206 @@ void t_netstd_generator::collect_extensions_types(t_type* ttype)
 }
 
 
+// Determine which container types the generator of an included program collects for
+// itself. Mirrors the collect_extensions_types() calls made while a program's structs,
+// exceptions and services are generated, but with that program as the recursion owner.
+void t_netstd_generator::collect_extensions_types_of_program(t_program* program, map<string, t_type*>& result)
+{
+    map<string, t_type*> saved_collected;
+    map<string, t_type*> saved_checked;
+    t_program* saved_owner = extensions_owner_;
+
+    saved_collected.swap(collected_extension_types);
+    saved_checked.swap(checked_extension_types);
+    extensions_owner_ = program;
+
+    const vector<t_struct*>& objects = program->get_objects();
+    vector<t_struct*>::const_iterator o_iter;
+    for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter)
+    {
+        collect_extensions_types(*o_iter);
+    }
+
+    const vector<t_service*>& services = program->get_services();
+    vector<t_service*>::const_iterator sv_iter;
+    for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter)
+    {
+        const vector<t_function*>& functions = (*sv_iter)->get_functions();
+        vector<t_function*>::const_iterator fn_iter;
+        for (fn_iter = functions.begin(); fn_iter != functions.end(); ++fn_iter)
+        {
+            collect_extensions_types((*fn_iter)->get_arglist());
+            collect_extensions_types((*fn_iter)->get_xceptions());
+            collect_extensions_types((*fn_iter)->get_returntype());
+        }
+    }
+
+    result = collected_extension_types;
+
+    extensions_owner_ = saved_owner;
+    collected_extension_types.swap(saved_collected);
+    checked_extension_types.swap(saved_checked);
+}
+
+// True if the type - or, for a container, any of its element types - is declared in the
+// given program.
+bool t_netstd_generator::uses_type_of_program(t_type* ttype, t_program* program)
+{
+    ttype = resolve_typedef(ttype);
+
+    if (ttype->is_map())
+    {
+        t_map* tmap = static_cast<t_map*>(ttype);
+        return uses_type_of_program(tmap->get_key_type(), program) || uses_type_of_program(tmap->get_val_type(), program);
+    }
+
+    if (ttype->is_set())
+    {
+        return uses_type_of_program(static_cast<t_set*>(ttype)->get_elem_type(), program);
+    }
+
+    if (ttype->is_list())
+    {
+        return uses_type_of_program(static_cast<t_list*>(ttype)->get_elem_type(), program);
+    }
+
+    if (ttype->is_base_type())
+    {
+        return false;
+    }
+
+    return ttype->get_program() == program;
+}
+
+bool t_netstd_generator::uses_type_of_program(t_struct* tstruct, t_program* program)
+{
+    const vector<t_field*>& members = tstruct->get_members();
+    vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
+    {
+        if (uses_type_of_program((*m_iter)->get_type(), program))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// True if the code generated for "from" names at least one type declared in "program".
+// Such a pair can only ever be compiled together, so "from" may leave extension methods
+// to "program" instead of generating a second, ambiguous copy of them.
+bool t_netstd_generator::program_depends_on(t_program* from, t_program* program)
+{
+    const vector<t_struct*>& objects = from->get_objects();
+    vector<t_struct*>::const_iterator o_iter;
+    for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter)
+    {
+        if (uses_type_of_program(*o_iter, program))
+        {
+            return true;
+        }
+    }
+
+    const vector<t_const*>& consts = from->get_consts();
+    vector<t_const*>::const_iterator c_iter;
+    for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter)
+    {
+        if (uses_type_of_program((*c_iter)->get_type(), program))
+        {
+            return true;
+        }
+    }
+
+    const vector<t_service*>& services = from->get_services();
+    vector<t_service*>::const_iterator sv_iter;
+    for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter)
+    {
+        t_service* extends = (*sv_iter)->get_extends();
+        if ((extends != nullptr) && (extends->get_program() == program))
+        {
+            return true;
+        }
+
+        const vector<t_function*>& functions = (*sv_iter)->get_functions();
+        vector<t_function*>::const_iterator fn_iter;
+        for (fn_iter = functions.begin(); fn_iter != functions.end(); ++fn_iter)
+        {
+            if (uses_type_of_program((*fn_iter)->get_returntype(), program)
+                || uses_type_of_program((*fn_iter)->get_arglist(), program)
+                || uses_type_of_program((*fn_iter)->get_xceptions(), program))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// Gather the container types generated by the included programs we can safely leave them
+// to. That requires two things: their generated code has to be part of every build that
+// contains ours, and their extension class has to land in the same C# namespace - a class
+// in another namespace is out of reach of our generated call sites.
+void t_netstd_generator::collect_inherited_extensions_types(t_program* program, set<t_program*>& visited, map<string, t_type*>& result)
+{
+    const vector<t_program*>& includes = program->get_includes();
+    vector<t_program*>::const_iterator incl_iter;
+    for (incl_iter = includes.begin(); incl_iter != includes.end(); ++incl_iter)
+    {
+        t_program* include = *incl_iter;
+        if (!program_depends_on(program, include))
+        {
+            continue;   // an include we generate no reference to may not be around at all
+        }
+
+        if (!visited.insert(include).second)
+        {
+            continue;   // diamond-shaped include graph
+        }
+
+        if (include->get_namespace("netstd") == namespace_name_)
+        {
+            map<string, t_type*> types;
+            collect_extensions_types_of_program(include, types);
+            result.insert(types.begin(), types.end());
+        }
+
+        collect_inherited_extensions_types(include, visited, result);
+    }
+}
+
+// An included program generates extension methods for the container types it uses itself.
+// Whenever we use one of the same containers, both extension classes end up with the very
+// same signature, and since they also share the C# namespace every call site becomes
+// ambiguous (CS0121). Leave those to the included program - wherever our extension class
+// is in scope, theirs is too.
+void t_netstd_generator::remove_inherited_extensions_types(map<string, t_type*>& types)
+{
+    set<t_program*> visited;
+    map<string, t_type*> inherited;
+    collect_inherited_extensions_types(program_, visited, inherited);
+
+    map<string, t_type*>::iterator iter = types.begin();
+    while (iter != types.end())
+    {
+        if (inherited.find(iter->first) != inherited.end())
+        {
+            iter = types.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+}
+
 void t_netstd_generator::generate_extensions_file()
 {
-    if (collected_extension_types.empty())
+    map<string, t_type*> extension_types = collected_extension_types;
+    remove_inherited_extensions_types(extension_types);
+
+    if (extension_types.empty())
     {
         return;
     }
@@ -804,7 +1002,7 @@ void t_netstd_generator::generate_extensions_file()
     ofstream_with_content_based_conditional_update f_exts;
     f_exts.open(f_exts_name.c_str());
 
-    generate_extensions(f_exts, collected_extension_types);
+    generate_extensions(f_exts, extension_types);
 
     f_exts.close();
 }
