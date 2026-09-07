@@ -45,6 +45,7 @@ jobs:
           - ubuntu-24.04
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -122,6 +123,7 @@ jobs:
         os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -157,6 +159,7 @@ jobs:
   lib-php:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         php-version: [8.1, 8.2, 8.3, 8.4, 8.5]
@@ -240,6 +243,7 @@ jobs:
   lib-go:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         go:
@@ -302,6 +306,7 @@ jobs:
   lib-java-kotlin:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     env:
       GRADLE_VERSION: "8.4"
     steps:
@@ -413,6 +418,7 @@ jobs:
   lib-netstd:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
     defaults:
@@ -482,6 +488,7 @@ jobs:
   lib-netstd-codegen:
     needs: [compiler]
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         dotnet-version: [8, 9, 10]
@@ -516,6 +523,7 @@ jobs:
   lib-haxe-codegen:
     needs: [compiler]
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -577,6 +585,7 @@ jobs:
   lib-rust:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     env:
       TOOLCHAIN_VERSION: 1.85.1
     steps:
@@ -785,6 +794,7 @@ jobs:
   lib-nodejs:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -834,6 +844,7 @@ jobs:
   lib-dart:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         # The floor lib/dart/pubspec.yaml declares, and the version
@@ -894,6 +905,7 @@ jobs:
   lib-cpp:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -961,6 +973,7 @@ jobs:
   lib-d:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     env:
       # Keep in sync with build/docker/ubuntu-*/Dockerfile.
       D_VERSION: 2.087.0
@@ -1034,6 +1047,7 @@ jobs:
   lib-ruby:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     continue-on-error: ${{ matrix.ruby-version == 'head' }}
     name: lib-ruby (${{ matrix.ruby-version }}) ${{ matrix.skip-build-ext && 'noext' || '' }}
     strategy:
@@ -1107,6 +1121,7 @@ jobs:
   lib-erl:
     needs: compiler
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         # OTP and rebar3 are one axis, not two: rebar3 3.18.0 -- the version
@@ -1183,6 +1198,7 @@ jobs:
       - lib-ruby
       - lib-nodejs
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       matrix:
         # kotlin cross test are failing -> see THRIFT-5879
