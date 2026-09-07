@@ -27,12 +27,12 @@
 module thrift.transport.http;
 
 import core.stdc.string : memmove;
-import std.algorithm : canFind, countUntil, endsWith, findSplit, min, startsWith;
+import std.algorithm : canFind, countUntil, endsWith, equal, findSplit, min;
 import std.ascii : toLower;
 import std.array : empty;
-import std.conv : parse, to;
+import std.conv : to;
 import std.datetime : Clock, UTC;
-import std.string : stripLeft;
+import std.string : strip;
 import thrift.base : VERSION;
 import thrift.transport.base;
 import thrift.transport.memory;
@@ -153,15 +153,106 @@ protected:
       return toLower(cast(char)a) == toLower(cast(char)b);
     }
 
-    if (startsWith!compToLower(split[0], cast(ubyte[])"transfer-encoding")) {
+    // A header name is the whole token before the colon (RFC 9110 5.1), so it
+    // is compared in full: startsWith() accepted every name that merely began
+    // with one of these, and a transport that reads "Content-Length-Foo" as
+    // "Content-Length" disagrees with every other party on the connection
+    // about where the message ends.
+    if (equal!compToLower(split[0], cast(ubyte[])"transfer-encoding")) {
       if (endsWith!compToLower(split[2], cast(ubyte[])"chunked")) {
         chunked_ = true;
       }
-    } else if (startsWith!compToLower(split[0], cast(ubyte[])"content-length")) {
+    } else if (equal!compToLower(split[0], cast(ubyte[])"content-length")) {
       chunked_ = false;
-      auto lengthString = stripLeft(cast(const(char)[])split[2]);
-      contentLength_ = parse!size_t(lengthString);
+      contentLength_ = parseContentLength(split[2]);
     }
+  }
+
+  /**
+   * Reads a Content-Length header value.
+   *
+   * Content-Length is 1*DIGIT (RFC 9110 8.6), which leaves no room for a sign,
+   * for trailing text, or for a value size_t cannot hold. parse!size_t stops
+   * at the first character it cannot use without saying that anything was left
+   * over, and what it throws otherwise is a std.conv exception rather than a
+   * transport one.
+   *
+   * Throws: TTransportException if the value is not such a number.
+   */
+  static size_t parseContentLength(const(ubyte)[] value) {
+    // Optional whitespace surrounds a field value without being part of it
+    // (RFC 9110 5.5).
+    auto digits = strip(cast(const(char)[])value);
+
+    if (digits.empty) {
+      throw new TTransportException("Bad Content-Length: " ~ to!string(value),
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+
+    size_t result;
+    foreach (c; digits) {
+      if (c < '0' || c > '9') {
+        throw new TTransportException("Bad Content-Length: " ~ to!string(digits),
+          TTransportException.Type.CORRUPTED_DATA);
+      }
+      immutable digit = cast(size_t)(c - '0');
+      if (result > (size_t.max - digit) / 10) {
+        throw new TTransportException("Bad Content-Length: " ~ to!string(digits),
+          TTransportException.Type.CORRUPTED_DATA);
+      }
+      result = result * 10 + digit;
+    }
+    return result;
+  }
+
+  /**
+   * Reads a chunk size.
+   *
+   * chunk-size is 1*HEXDIG, optionally followed by chunk extensions
+   * introduced with a semicolon (RFC 9112 7.1). parse!size_t with a radix
+   * returns zero for a line that holds no hexadecimal digit at all instead of
+   * throwing, so the handler that was meant to reject a bad chunk size never
+   * saw the commonest malformed one, and "zz" was read as the chunk that ends
+   * the body.
+   *
+   * Throws: TTransportException if the line is not such a number.
+   */
+  static size_t parseChunkSize(const(ubyte)[] line) {
+    // Nothing in the grammar allows whitespace here, but a peer that pads the
+    // line was understood before and still is.
+    auto digits = strip(cast(const(char)[])line);
+
+    size_t result;
+    size_t count;
+    foreach (c; digits) {
+      // The extensions are not interpreted, but they do end the number.
+      if (c == ';') break;
+
+      size_t value;
+      if (c >= '0' && c <= '9') {
+        value = c - '0';
+      } else if (c >= 'a' && c <= 'f') {
+        value = c - 'a' + 10;
+      } else if (c >= 'A' && c <= 'F') {
+        value = c - 'A' + 10;
+      } else {
+        throw new TTransportException("Invalid chunk size: " ~ to!string(digits),
+          TTransportException.Type.CORRUPTED_DATA);
+      }
+
+      if (result > (size_t.max - value) / 16) {
+        throw new TTransportException("Invalid chunk size: " ~ to!string(digits),
+          TTransportException.Type.CORRUPTED_DATA);
+      }
+      result = result * 16 + value;
+      ++count;
+    }
+
+    if (count == 0) {
+      throw new TTransportException("Invalid chunk size: " ~ to!string(digits),
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+    return result;
   }
 
 private:
@@ -232,15 +323,7 @@ private:
   size_t readChunked() {
     size_t length;
 
-    auto line = readLine();
-    size_t chunkSize;
-    try {
-      auto charLine = cast(char[])line;
-      chunkSize = parse!size_t(charLine, 16);
-    } catch (Exception e) {
-      throw new TTransportException("Invalid chunk size: " ~ to!string(line),
-        TTransportException.Type.CORRUPTED_DATA);
-    }
+    auto chunkSize = parseChunkSize(readLine());
 
     if (chunkSize == 0) {
       readChunkedFooters();
@@ -515,4 +598,83 @@ unittest {
     assert(http.httpBuf_.length <= http.maxHttpBufferSize,
       "the read buffer grew past the maximum");
   }
+}
+
+unittest {
+  import std.exception : assertThrown;
+  import thrift.transport.memory;
+
+  // Reads one message off a server transport fed the given wire bytes, and
+  // returns what the transport handed out as the body.
+  static string readBody(string wire) {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])wire.dup));
+    ubyte[64] buf;
+    return cast(string)buf[0 .. http.read(buf)].idup;
+  }
+
+  enum request = "POST / HTTP/1.1\r\n";
+
+  // A header name is the whole token before the colon (RFC 9110 5.1). The
+  // names below all begin with one the transport knows and are not it, so the
+  // body they frame is the peer's choice and not the one any other party on
+  // the connection sees.
+  assert(readBody(request ~ "Content-Length: 5\r\n\r\nhello") == "hello");
+  assert(readBody(request ~ "content-length: 5\r\n\r\nhello") == "hello");
+  assert(readBody(request ~ "Content-Length-Foo: 5\r\n\r\nhello") == "");
+  assert(readBody(request ~ "Content-LengthX: 5\r\n\r\nhello") == "");
+  assert(readBody(request ~ "Content-Lengths: 5\r\n\r\nhello") == "");
+
+  // The same name arriving twice, the second one abbreviated: a parser that
+  // follows the grammar frames five bytes here, and so must this one.
+  assert(readBody(request ~ "Content-Length: 5\r\nContent-Length-Foo: 2\r\n\r\nhello")
+    == "hello");
+
+  // Transfer-Encoding, both directions.
+  assert(readBody(request ~ "Transfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")
+    == "hello");
+  assert(readBody(request ~ "Transfer-Encoding-Foo: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")
+    == "");
+
+  // Content-Length is 1*DIGIT (RFC 9110 8.6): no sign, no trailing text, and
+  // nothing that does not fit. parse!size_t stops at the first character it
+  // cannot use and says nothing about the rest, and what it throws on a sign
+  // or an overflow is a std.conv exception rather than a transport one.
+  assertThrown!TTransportException(readBody(request ~ "Content-Length: -1\r\n\r\nhello"));
+  assertThrown!TTransportException(readBody(request ~ "Content-Length: +5\r\n\r\nhello"));
+  assertThrown!TTransportException(readBody(request ~ "Content-Length: 5abc\r\n\r\nhello"));
+  assertThrown!TTransportException(readBody(request ~ "Content-Length: 0x10\r\n\r\nhello"));
+  assertThrown!TTransportException(readBody(request ~ "Content-Length: \r\n\r\nhello"));
+  assertThrown!TTransportException(
+    readBody(request ~ "Content-Length: 99999999999999999999999999\r\n\r\nhello"));
+
+  // Optional whitespace around the value is not part of it (RFC 9110 5.5)...
+  assert(readBody(request ~ "Content-Length:5\r\n\r\nhello") == "hello");
+  assert(readBody(request ~ "Content-Length:   5   \r\n\r\nhello") == "hello");
+
+  // ... but none is allowed between the name and the colon, so the name here
+  // is "Content-Length " and not one the transport knows.
+  assert(readBody(request ~ "Content-Length : 5\r\n\r\nhello") == "");
+
+  // A chunk size is 1*HEXDIG with optional extensions after a semicolon
+  // (RFC 9112 7.1). parse!size_t given a radix returns zero for a line with no
+  // hexadecimal digit in it rather than throwing, so a line the grammar does
+  // not allow was read as the chunk that ends the body and the message quietly
+  // came out empty.
+  static string readChunkedBody(string chunks) {
+    return readBody(request ~ "Transfer-Encoding: chunked\r\n\r\n" ~ chunks);
+  }
+
+  assert(readChunkedBody("5\r\nhello\r\n0\r\n\r\n") == "hello");
+  assert(readChunkedBody("5;ext=1\r\nhello\r\n0\r\n\r\n") == "hello");
+  assert(readChunkedBody("5 \r\nhello\r\n0\r\n\r\n") == "hello");
+  assert(readChunkedBody("A\r\nhelloworld\r\n0\r\n\r\n") == "helloworld");
+  assert(readChunkedBody("a\r\nhelloworld\r\n0\r\n\r\n") == "helloworld");
+
+  assertThrown!TTransportException(readChunkedBody("zz\r\nhello\r\n0\r\n\r\n"));
+  assertThrown!TTransportException(readChunkedBody("hello\r\nhello\r\n0\r\n\r\n"));
+  assertThrown!TTransportException(readChunkedBody("-5\r\nhello\r\n0\r\n\r\n"));
+  assertThrown!TTransportException(readChunkedBody("5xyz\r\nhello\r\n0\r\n\r\n"));
+  assertThrown!TTransportException(readChunkedBody(";ext=1\r\nhello\r\n0\r\n\r\n"));
+  assertThrown!TTransportException(
+    readChunkedBody("1ffffffffffffffff\r\nhello\r\n0\r\n\r\n"));
 }

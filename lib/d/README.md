@@ -47,3 +47,22 @@ Async and SSL
 Using SSL with async is experimental (always has been) and
 the unit test "async_test --ssl" hangs.  Use at your own
 risk.
+
+Breaking Changes
+----------------
+
+### 0.25.0
+
+thrift.transport.http compares a header name in full instead of by prefix, so a
+name that merely begins with one the transport knows no longer counts as that
+name: "Content-Length-Foo" and "Content-LengthX" no longer set the content
+length, and "Transfer-Encoding-Foo" no longer switches on chunked decoding. A
+header name is the whole token before the colon (RFC 9110 5.1), and no
+whitespace is allowed between the two, so "Content-Length : 5" is no longer read
+as a content length either.
+
+Content-Length is now read against RFC 9110 8.6's 1*DIGIT, and a value that is
+not such a number is refused with a TTransportException. A sign, trailing text,
+or a value that does not fit size_t was previously either accepted silently --
+"5abc" gave 5, "0x10" gave 0 -- or left the transport as a std.conv exception
+rather than a Thrift one.

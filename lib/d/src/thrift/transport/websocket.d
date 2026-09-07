@@ -131,18 +131,22 @@ protected:
       return toLower(a) == toLower(b);
     }
 
-    if (startsWith!compToLower(split[0], cast(ubyte[])"upgrade")) {
+    // A header name is the whole token before the colon (RFC 9110 5.1), so it
+    // is compared in full: startsWith() let every name that merely began with
+    // one of these count as that name, and all four of them together are the
+    // handshake.
+    if (equal!compToLower(split[0], cast(ubyte[])"upgrade")) {
       auto upgrade = stripLeft(cast(const(char)[])split[2]);
       upgrade_ = sicmp(upgrade, "websocket") == 0;
-    } else if (startsWith!compToLower(split[0], cast(ubyte[])"connection")) {
+    } else if (equal!compToLower(split[0], cast(ubyte[])"connection")) {
       auto connection = stripLeft(cast(const(char)[])split[2]);
       connection_ = canFind(connection.toLower, "upgrade");
-    } else if (startsWith!compToLower(split[0], cast(ubyte[])"sec-websocket-key")) {
+    } else if (equal!compToLower(split[0], cast(ubyte[])"sec-websocket-key")) {
       auto secWebSocketKey = stripLeft(cast(const(char)[])split[2]);
       auto hash = sha1Of(secWebSocketKey ~ WEBSOCKET_GUID);
       acceptKey_ = Base64.encode(hash);
       secWebSocketKey_ = true;
-    } else if (startsWith!compToLower(split[0], cast(ubyte[])"sec-websocket-version")) {
+    } else if (equal!compToLower(split[0], cast(ubyte[])"sec-websocket-version")) {
       auto secWebSocketVersion = stripLeft(cast(const(char)[])split[2]);
       secWebSocketVersion_ = sicmp(secWebSocketVersion, "13") == 0;
     }
@@ -429,4 +433,73 @@ unittest {
   auto allocated = GC.stats().allocatedInCurrentThread - before;
   assert(allocated < 1024 * 1024,
     "reading a 14 byte frame allocated " ~ to!string(allocated) ~ " bytes");
+}
+
+version (unittest) {
+  /**
+   * A transport whose read and write sides are separate, so that the response
+   * the handshake writes is not handed straight back to it as a frame.
+   */
+  private final class TPipeTransport : TBaseTransport {
+    this(string incoming) { in_ = cast(ubyte[])incoming.dup; }
+
+    override bool isOpen() @property { return true; }
+    override bool peek() { return pos_ < in_.length; }
+    override void open() {}
+    override void close() {}
+
+    override size_t read(ubyte[] buf) {
+      if (pos_ >= in_.length) return 0;
+      auto n = min(buf.length, in_.length - pos_);
+      buf[0 .. n] = in_[pos_ .. pos_ + n];
+      pos_ += n;
+      return n;
+    }
+
+    override void write(in ubyte[] buf) { out_ ~= buf; }
+    override void flush() {}
+
+    /// Everything the transport has written back.
+    string written() const { return cast(string)out_.idup; }
+
+  private:
+    ubyte[] in_;
+    ubyte[] out_;
+    size_t pos_;
+  }
+}
+
+unittest {
+  // All four of these names together are the handshake, so a name that merely
+  // begins with one of them must not count as it.
+  static bool accepted(string headers) {
+    auto peer = new TPipeTransport("GET /ws HTTP/1.1\r\n" ~ headers ~ "\r\n");
+    auto ws = new TServerWebSocketTransport!true(peer);
+    ubyte[64] buf;
+    // A completed handshake goes straight on to read a frame, and there is
+    // none here; what the handshake decided is in the response line.
+    try { ws.read(buf); } catch (TTransportException) {}
+    return canFind(peer.written(), "HTTP/1.1 101");
+  }
+
+  enum key = "dGhlIHNhbXBsZSBub25jZQ==";
+
+  assert(accepted("Upgrade: websocket\r\nConnection: Upgrade\r\n" ~
+    "Sec-WebSocket-Key: " ~ key ~ "\r\nSec-WebSocket-Version: 13\r\n"));
+
+  assert(!accepted("Upgrade-Foo: websocket\r\nConnection-Foo: Upgrade\r\n" ~
+    "Sec-WebSocket-Key-Foo: " ~ key ~ "\r\nSec-WebSocket-Version-Foo: 13\r\n"));
+
+  assert(!accepted("Upgrade-Foo: websocket\r\nConnection: Upgrade\r\n" ~
+    "Sec-WebSocket-Key: " ~ key ~ "\r\nSec-WebSocket-Version: 13\r\n"));
+
+  assert(!accepted("Upgrade: websocket\r\nConnection: Upgrade\r\n" ~
+    "Sec-WebSocket-KeyX: " ~ key ~ "\r\nSec-WebSocket-Version: 13\r\n"));
+
+  assert(!accepted("Upgrade: websocket\r\nConnection: Upgrade\r\n" ~
+    "Sec-WebSocket-Key: " ~ key ~ "\r\nSec-WebSocket-Versions: 13\r\n"));
+
+  // A name that is not a prefix of one of them was refused before and still is.
+  assert(!accepted("Upgra: websocket\r\nConn: Upgrade\r\n" ~
+    "Sec-WebSocket: " ~ key ~ "\r\nSec-WebSocket-Ver: 13\r\n"));
 }
