@@ -19,6 +19,8 @@
 
 #include <thrift/server/TConnectedClient.h>
 
+#include <exception>
+
 namespace apache {
 namespace thrift {
 namespace server {
@@ -84,6 +86,20 @@ void TConnectedClient::run() {
       string errStr = string("TConnectedClient processing exception: ") + tex.what();
       TOutput::instance()(errStr.c_str());
       // Disconnect from client, because we could not process the message.
+      done = true;
+    } catch (const std::exception& ex) {
+      // Not every exception a processor can raise is a TException:
+      // std::bad_alloc comes out of reading a message whose declared sizes do
+      // not fit in memory, and a handler may raise anything at all. Escaping
+      // here ends the thread this loop runs on, and with it the process --
+      // TSimpleServer runs it on the serve thread, TThreadedServer on a thread
+      // of its own, and neither has a handler above this one. One client that
+      // cannot be served is not a reason to stop serving the others.
+      string errStr = string("TConnectedClient processing exception: ") + ex.what();
+      TOutput::instance()(errStr.c_str());
+      done = true;
+    } catch (...) {
+      TOutput::instance()("TConnectedClient processing unknown exception");
       done = true;
     }
   }

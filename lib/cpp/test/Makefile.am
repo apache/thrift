@@ -103,6 +103,7 @@ check_PROGRAMS = \
 	TransportTest \
 	TInterruptTest \
 	TServerIntegrationTest \
+	TServerExceptionTest \
 	SecurityTest \
 	SecurityFromBufferTest \
 	ZlibTest \
@@ -196,6 +197,16 @@ TServerIntegrationTest_SOURCES = \
 	TServerIntegrationTest.cpp
 
 TServerIntegrationTest_LDADD = \
+  libtestgencpp.la \
+  libprocessortest.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+TServerExceptionTest_SOURCES = \
+	TServerExceptionTest.cpp
+
+TServerExceptionTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
   $(BOOST_TEST_LDADD) \

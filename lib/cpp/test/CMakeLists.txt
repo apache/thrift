@@ -165,6 +165,17 @@ if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTE
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
+add_executable(TServerExceptionTest TServerExceptionTest.cpp)
+target_link_libraries(TServerExceptionTest
+    testgencpp_cob
+    ${Boost_LIBRARIES}
+)
+target_link_libraries(TServerExceptionTest thrift)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
+    target_link_libraries(TServerExceptionTest -lrt)
+endif ()
+add_test(NAME TServerExceptionTest COMMAND TServerExceptionTest)
+
 if(WITH_ZLIB)
 include_directories(SYSTEM "${ZLIB_INCLUDE_DIRS}")
 add_executable(TransportTest TransportTest.cpp)
