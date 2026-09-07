@@ -2602,7 +2602,25 @@ void t_js_generator::generate_deserialize_map_element(ostream& out, t_map* tmap,
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
+  // A map key comes off the wire, and the map is a plain object, on which
+  // "__proto__" is not an ordinary member name: a plain assignment under it
+  // runs the setter inherited from Object.prototype, which swaps the object's
+  // prototype when the value is an object and silently drops the entry when it
+  // is not. Neither stores the pair. defineProperty always does.
+  indent(out) << "if (" << key << " === \"__proto__\") {" << '\n';
+  indent_up();
+  indent(out) << "Object.defineProperty(" << prefix << ", " << key << ", {" << '\n';
+  indent_up();
+  indent(out) << "value: " << val << ", writable: true, enumerable: true, configurable: true"
+              << '\n';
+  indent_down();
+  indent(out) << "});" << '\n';
+  indent_down();
+  indent(out) << "} else {" << '\n';
+  indent_up();
   indent(out) << prefix << "[" << key << "] = " << val << ";" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
 }
 
 void t_js_generator::generate_deserialize_set_element(ostream& out,
