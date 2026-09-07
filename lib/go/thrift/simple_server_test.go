@@ -168,8 +168,18 @@ func TestNoHangDuringStopFromClientNoDataSendDuringAcceptLoop(t *testing.T) {
 		t.Fatalf("Failed to listen: %v", err)
 	}
 
+	// Closed once the server is processing the connection, which is after
+	// TSimpleServer added it to the wait group Stop waits on. Sleeping
+	// instead makes the test fail whenever the accept and the goroutine
+	// start take longer than the nap.
+	processing := make(chan struct{})
+	markProcessing := sync.OnceFunc(func() {
+		close(processing)
+	})
+
 	proc := &mockProcessor{
 		ProcessFunc: func(in, out TProtocol) (bool, TException) {
+			markProcessing()
 			in.ReadMessageBegin(context.Background())
 			return false, nil
 		},
@@ -197,13 +207,22 @@ func TestNoHangDuringStopFromClientNoDataSendDuringAcceptLoop(t *testing.T) {
 
 	serv := NewTSimpleServer2(proc, trans)
 	go serv.Serve()
-	time.Sleep(networkWaitDuration)
 
 	netConn, err := net.Dial("tcp", ln.Addr().String())
 	if err != nil || netConn == nil {
 		t.Fatalf("error when dial server: %v", err)
 	}
-	time.Sleep(networkWaitDuration)
+	// The connection must outlive Stop: it is what keeps the processor
+	// blocked in ReadMessageBegin.
+	t.Cleanup(func() {
+		netConn.Close()
+	})
+
+	select {
+	case <-processing:
+	case <-time.After(time.Minute):
+		t.Fatal("server did not start processing the connection")
+	}
 
 	const serverStopTimeout = 50 * time.Millisecond
 	backupServerStopTimeout := ServerStopTimeout
