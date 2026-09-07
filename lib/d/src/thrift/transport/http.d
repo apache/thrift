@@ -288,9 +288,14 @@ private:
         }
 
         if (!refill()) {
-          auto buf = httpBufRemaining_;
-          httpBufRemaining_ = httpBufRemaining_[$ - 1 .. $ - 1];
-          return buf;
+          // The peer stopped in the middle of a line. What was here instead
+          // returned the partial line and set httpBufRemaining_ to
+          // httpBufRemaining_[$ - 1 .. $ - 1], which reads one element before
+          // the start of an empty slice; and readHeaders() cannot tell a
+          // partial line from a real one, so it kept asking for another. A
+          // line that never ends is the end of the stream.
+          throw new TTransportException("Unexpected end of stream while reading an HTTP line",
+            TTransportException.Type.END_OF_FILE);
         }
       } else {
         // Set the remaining buffer to the part after \r\n and return the part
@@ -857,5 +862,72 @@ unittest {
       }
       assert(have == big);
     }
+  }
+}
+
+unittest {
+  import std.exception : assertThrown;
+  import thrift.transport.memory;
+
+  // Everything a peer can send that stops in the middle of the header block.
+  // readLine() has nothing left and no CRLF, and what it did with that was to
+  // take an empty slice from one element before its own start.
+  static void readOne(string wire) {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])wire.dup));
+    ubyte[64] buf;
+    http.read(buf);
+  }
+
+  assertThrown!TTransportException(readOne("POST / HTTP/1.1\r\n"));
+  assertThrown!TTransportException(readOne("POST / HTTP/1.1\r\nContent-Length: 5\r\n"));
+  assertThrown!TTransportException(readOne("POST / HTTP/1.1"));
+
+  // A blank first line and then nothing: parseStatusLine never runs, so the
+  // header loop is still waiting for a status line and asks readLine() for
+  // another one every time round.
+  assertThrown!TTransportException(readOne("\r\n"));
+  assertThrown!TTransportException(readOne("\r\n\r\n\r\n"));
+
+  // A chunked body that stops before its terminating chunk. The first chunk
+  // arrives, so it is readEnd() draining the rest that runs out of stream; the
+  // second case stops while the footers are being read, which read() reaches
+  // on its own.
+  {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(
+      cast(ubyte[])"POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n"));
+    ubyte[64] buf;
+    assert(http.read(buf) == 5);
+    assertThrown!TTransportException(http.readEnd());
+  }
+  assertThrown!TTransportException(
+    readOne("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n"));
+
+  // A peer that closes between messages rather than inside one is not an
+  // error: read() says there is nothing more.
+  {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])""));
+    ubyte[64] buf;
+    assert(http.read(buf) == 0);
+  }
+
+  // A complete header block whose body never arrives is a different case and
+  // is left as it is: the body does not go through readLine(), and
+  // readContent() reports a short read by returning fewer bytes than were
+  // declared rather than by throwing. Pinned here so that the boundary of the
+  // change above is visible.
+  {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(
+      cast(ubyte[])"POST / HTTP/1.1\r\nContent-Length: 5\r\n\r\n"));
+    ubyte[64] buf;
+    assert(http.read(buf) == 0);
+  }
+
+  // And a complete request still reads.
+  {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(
+      cast(ubyte[])"POST / HTTP/1.1\r\nContent-Length: 5\r\n\r\nhello"));
+    ubyte[16] buf;
+    assert(http.read(buf) == 5);
+    assert(cast(string)buf[0 .. 5] == "hello");
   }
 }
