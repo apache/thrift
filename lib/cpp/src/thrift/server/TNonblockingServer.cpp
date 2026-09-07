@@ -340,10 +340,12 @@ public:
       }
     } catch (const TTransportException& ttx) {
       TOutput::instance().printf("TNonblockingServer: client died: %s", ttx.what());
-    } catch (const std::bad_alloc&) {
-      TOutput::instance()("TNonblockingServer: caught bad_alloc exception.");
-      exit(1);
     } catch (const std::exception& x) {
+      // std::bad_alloc lands here too, and is no longer treated apart. It used
+      // to be answered with exit(1), which turned one request that could not be
+      // allocated -- a declared container count is enough to try one -- into
+      // the end of the process for every other client connected to it. The
+      // inline path in this same file has always just closed the connection.
       TOutput::instance().printf("TNonblockingServer: process() exception: %s: %s",
                           typeid(x).name(),
                           x.what());

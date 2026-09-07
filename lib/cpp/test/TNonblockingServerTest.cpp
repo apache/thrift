@@ -24,8 +24,14 @@
 #include "thrift/TConfiguration.h"
 #include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
+#include "thrift/concurrency/ThreadManager.h"
+#include "thrift/protocol/TBinaryProtocol.h"
 #include "thrift/server/TNonblockingServer.h"
 #include "thrift/transport/TNonblockingServerSocket.h"
+#include "thrift/transport/TSocket.h"
+#include "thrift/transport/TTransportUtils.h"
+
+#include <new>
 
 #include "gen-cpp/ParentService.h"
 
@@ -78,6 +84,7 @@ private:
     int port;
     shared_ptr<event_base> userEventBase;
     shared_ptr<TProcessor> processor;
+    shared_ptr<concurrency::ThreadManager> threadManager;
     shared_ptr<server::TNonblockingServer> server;
     shared_ptr<ListenEventHandler> listenHandler;
     shared_ptr<transport::TNonblockingServerSocket> socket;
@@ -105,7 +112,12 @@ private:
     void startServer(int retry_count) {
       try {
         socket.reset(new transport::TNonblockingServerSocket(port));
-        server.reset(new server::TNonblockingServer(processor, socket));
+        if (threadManager) {
+          server.reset(new server::TNonblockingServer(
+              processor, make_shared<protocol::TBinaryProtocolFactory>(), socket, threadManager));
+        } else {
+          server.reset(new server::TNonblockingServer(processor, socket));
+        }
         server->setServerEventHandler(listenHandler);
         if (userEventBase) {
           server->registerEvents(userEventBase.get());
@@ -127,7 +139,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(make_shared<Handler>())) {}
+  Fixture() : processor(make_shared<test::ParentServiceProcessor>(make_shared<Handler>())) {}
 
   ~Fixture() {
     if (server) {
@@ -146,6 +158,7 @@ protected:
     shared_ptr<Runner> runner(new Runner);
     runner->port = port;
     runner->processor = processor;
+    runner->threadManager = threadManager_;
     runner->userEventBase = userEventBase_;
 
     shared_ptr<ThreadFactory> threadFactory(
@@ -171,7 +184,21 @@ protected:
 
 private:
   shared_ptr<event_base> userEventBase_;
-  shared_ptr<test::ParentServiceProcessor> processor;
+  shared_ptr<concurrency::ThreadManager> threadManager_;
+
+protected:
+  // Replaces the processor the fixture builds, and switches the server to the
+  // thread-pooled path, which dispatches through Task::run() rather than
+  // running the processor on the I/O thread.
+  void useThreadPool(const shared_ptr<TProcessor>& replacement) {
+    processor = replacement;
+    threadManager_ = concurrency::ThreadManager::newSimpleThreadManager(2);
+    threadManager_->threadFactory(make_shared<ThreadFactory>());
+    threadManager_->start();
+  }
+
+private:
+  shared_ptr<TProcessor> processor;
 protected:
   shared_ptr<server::TNonblockingServer> server;
 private:
@@ -228,6 +255,76 @@ BOOST_AUTO_TEST_CASE(default_max_frame_size_matches_configuration) {
 
   server.setMaxFrameSize(4096);
   BOOST_CHECK_EQUAL(server.getMaxFrameSize(), static_cast<size_t>(4096));
+}
+
+// Fails the first call the way argument deserialization fails when a declared
+// container count does not fit in memory: the exception leaves process(). It
+// cannot be raised from the handler instead, because generated dispatch code
+// catches std::exception around the handler call and answers with a
+// TApplicationException -- the allocation that fails is the one made before
+// that point, reading the arguments.
+struct FailsFirstCallProcessor : public TProcessor {
+  explicit FailsFirstCallProcessor(const shared_ptr<TProcessor>& delegate)
+    : delegate_(delegate), failed_(false) {}
+
+  bool process(shared_ptr<protocol::TProtocol> in,
+               shared_ptr<protocol::TProtocol> out,
+               void* connectionContext) override {
+    if (!failed_) {
+      failed_ = true;
+      throw std::bad_alloc();
+    }
+    return delegate_->process(in, out, connectionContext);
+  }
+
+private:
+  shared_ptr<TProcessor> delegate_;
+  bool failed_;
+};
+
+// A request that cannot be allocated is one request. Task::run() answered
+// std::bad_alloc with exit(1), so any peer able to make one allocation fail
+// ended the process for every other client connected to it -- and a declared
+// container count is enough to try. The inline path in this same file already
+// logs and closes the connection for every std::exception; this pins the
+// thread-pooled path to the same behaviour.
+//
+// If the process does end, this test does not fail an assertion: the binary
+// exits mid-run and takes the whole suite with it.
+//
+// It does not assert anything about the doomed connection. A task that throws
+// writes nothing, and the connection reads an empty write buffer as "no reply
+// was owed" -- so the caller of that one request never hears back. An empty
+// buffer is not the same thing as a oneway call: a void method still owes a
+// reply, and an exception is one of the replies it can owe. That confusion is
+// pre-existing, applies to every exception this catch handles, and differs from
+// the inline path, which closes the connection. Recorded separately.
+BOOST_FIXTURE_TEST_CASE(bad_alloc_does_not_end_the_process, Fixture) {
+  useThreadPool(make_shared<FailsFirstCallProcessor>(
+      make_shared<test::ParentServiceProcessor>(make_shared<Handler>())));
+
+  startServer(0);
+  int port = server->getListenPort();
+  BOOST_REQUIRE_GT(port, 0);
+
+  // Send the doomed call without waiting for a reply. A task that throws leaves
+  // outputTransport_ empty, and the connection answers an empty buffer with
+  // nothing at all -- so a client that waited here would wait for ever. That is
+  // the same for every exception this path catches and is not what this test is
+  // about; see the note above.
+  {
+    auto socket = make_shared<transport::TSocket>("localhost", port);
+    socket->open();
+    test::ParentServiceClient client(
+        make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(socket)));
+    client.send_addString("this one cannot be allocated");
+    socket->close();
+  }
+
+  // The finding is that the process does not survive the above. A second
+  // connection, served normally, is what says it did.
+  BOOST_CHECK_MESSAGE(canCommunicate(port),
+                      "the server stopped serving after one failed allocation");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
