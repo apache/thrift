@@ -139,6 +139,7 @@ node ${DIR}/bigint_helpers.test.js || TESTOK=1
 node ${DIR}/check_set_uniqueness.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
+node ${DIR}/json_own_properties.test.js || TESTOK=1
 node ${DIR}/int64_bigint.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 node ${DIR}/recursion_depth.test.js || TESTOK=1
