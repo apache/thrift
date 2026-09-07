@@ -590,18 +590,35 @@ func (p *TBinaryProtocol) getMinSerializedSize(ttype TType) int32 {
 // It tries to read size bytes from trans, in a way that prevents large
 // allocations when size is insanely large (mostly caused by malformed message),
 // or smaller than bytes.MinRead.
+//
+// Above bytes.MinRead the buffer starts small and doubles as the data arrives,
+// so a size the sender made up costs no more than the bytes it actually sends,
+// and the growth stops at size, so a well-formed message ends up in a buffer
+// holding exactly what it asked for.
 func safeReadBytes(size int32, trans io.Reader) ([]byte, error) {
 	if size < 0 {
 		return nil, nil
 	}
-	if size > bytes.MinRead {
-		// Use bytes.Buffer to prevent allocating size bytes when size is very large
-		buf := new(bytes.Buffer)
-		_, err := io.CopyN(buf, trans, int64(size))
-		return buf.Bytes(), err
+	if size <= bytes.MinRead {
+		// Allocate size bytes
+		b := make([]byte, size)
+		n, err := io.ReadFull(trans, b)
+		return b[:n], err
 	}
-	// Allocate size bytes
-	b := make([]byte, size)
-	n, err := io.ReadFull(trans, b)
-	return b[:n], err
+
+	want := int(size)
+	buf := make([]byte, 0, bytes.MinRead)
+	for len(buf) < want {
+		if len(buf) == cap(buf) {
+			grown := make([]byte, len(buf), min(cap(buf)*2, want))
+			copy(grown, buf)
+			buf = grown
+		}
+		n, err := trans.Read(buf[len(buf):cap(buf)])
+		buf = buf[:len(buf)+n]
+		if err != nil {
+			return buf, err
+		}
+	}
+	return buf, nil
 }

@@ -22,6 +22,7 @@ package thrift
 import (
 	"bytes"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -51,6 +52,42 @@ vel sem et.
 `
 	safeReadBytesSourceLen = len(safeReadBytesSource)
 )
+
+// The size asked for must decide the allocation exactly: reading n bytes must
+// not leave a buffer with capacity for more. See THRIFT-5828.
+func TestSafeReadBytesDoesNotOverAllocate(t *testing.T) {
+	for _, size := range []int{bytes.MinRead + 1, 4096, 32 * 1024} {
+		t.Run(strconv.Itoa(size), func(t *testing.T) {
+			buf, err := safeReadBytes(int32(size), bytes.NewReader(make([]byte, size)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(buf) != size {
+				t.Fatalf("read %d bytes, want %d", len(buf), size)
+			}
+			if cap(buf) != size {
+				t.Errorf("read %d bytes into a buffer of capacity %d, want capacity %d", len(buf), cap(buf), size)
+			}
+		})
+	}
+}
+
+// A size the sender made up must not decide the allocation either: only the
+// data that actually arrives may.
+func TestSafeReadBytesLargeSizeShortData(t *testing.T) {
+	const dataSize = 1024
+
+	buf, err := safeReadBytes(math.MaxInt32, bytes.NewReader(make([]byte, dataSize)))
+	if err == nil {
+		t.Error("expected an error when the data ends early, got nil")
+	}
+	if len(buf) != dataSize {
+		t.Errorf("read %d bytes, want %d", len(buf), dataSize)
+	}
+	if max := 2 * dataSize; cap(buf) > max {
+		t.Errorf("allocated %d bytes for %d bytes of data, want at most %d", cap(buf), dataSize, max)
+	}
+}
 
 func TestSafeReadBytes(t *testing.T) {
 	srcData := []byte(safeReadBytesSource)
@@ -176,6 +213,11 @@ func BenchmarkSafeReadBytes(b *testing.B) {
 			label:     "normal",
 			askedSize: 100,
 			dataSize:  100,
+		},
+		{
+			label:     "exact-32k",
+			askedSize: 32 * 1024,
+			dataSize:  32 * 1024,
 		},
 		{
 			label:     "max-askedSize",
