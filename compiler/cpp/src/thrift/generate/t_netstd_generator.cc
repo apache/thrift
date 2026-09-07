@@ -154,6 +154,12 @@ void t_netstd_generator::init_generator()
 
     namespace_dir_ = subdir;
 
+    // has to be known before the first call site is written, not just before the
+    // extensions file is
+    set<t_program*> visited;
+    inherited_extension_owners.clear();
+    collect_inherited_extensions_types(program_, visited, inherited_extension_owners);
+
     while (!member_mapping_scopes.empty())
     {
         cleanup_member_name_mapping(member_mapping_scopes.back().scope_member);
@@ -935,7 +941,7 @@ bool t_netstd_generator::program_depends_on(t_program* from, t_program* program)
 // to. That requires two things: their generated code has to be part of every build that
 // contains ours, and their extension class has to land in the same C# namespace - a class
 // in another namespace is out of reach of our generated call sites.
-void t_netstd_generator::collect_inherited_extensions_types(t_program* program, set<t_program*>& visited, map<string, t_type*>& result)
+void t_netstd_generator::collect_inherited_extensions_types(t_program* program, set<t_program*>& visited, map<string, t_program*>& result)
 {
     const vector<t_program*>& includes = program->get_includes();
     vector<t_program*>::const_iterator incl_iter;
@@ -956,7 +962,12 @@ void t_netstd_generator::collect_inherited_extensions_types(t_program* program, 
         {
             map<string, t_type*> types;
             collect_extensions_types_of_program(include, types);
-            result.insert(types.begin(), types.end());
+
+            map<string, t_type*>::const_iterator type_iter;
+            for (type_iter = types.begin(); type_iter != types.end(); ++type_iter)
+            {
+                result.insert(std::make_pair(type_iter->first, include));
+            }
         }
 
         collect_inherited_extensions_types(include, visited, result);
@@ -970,14 +981,10 @@ void t_netstd_generator::collect_inherited_extensions_types(t_program* program, 
 // is in scope, theirs is too.
 void t_netstd_generator::remove_inherited_extensions_types(map<string, t_type*>& types)
 {
-    set<t_program*> visited;
-    map<string, t_type*> inherited;
-    collect_inherited_extensions_types(program_, visited, inherited);
-
     map<string, t_type*>::iterator iter = types.begin();
     while (iter != types.end())
     {
-        if (inherited.find(iter->first) != inherited.end())
+        if (inherited_extension_owners.find(iter->first) != inherited_extension_owners.end())
         {
             iter = types.erase(iter);
         }
@@ -1056,7 +1063,6 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
             out << indent() << "return null;" << '\n' << '\n';
             indent_down();
 
-            string suffix("");
             string tmp_instance = tmp("tmp");
             if( (target_net_version < 5) && iter->second->is_set()) {
                 out << indent() << "var " << tmp_instance << " = new " << iter->first << "();" << '\n';
@@ -1066,28 +1072,28 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
             if( iter->second->is_map())
             {
                 t_map* tmap = static_cast<t_map*>(iter->second);
-                string copy_key = get_deep_copy_method_call(tmap->get_key_type(), true, needs_typecast, suffix);
-                string copy_val = get_deep_copy_method_call(tmap->get_val_type(), true, needs_typecast, suffix);
+                string copy_key = deep_copy_expression("pair.Key", tmap->get_key_type(), true, needs_typecast);
+                string copy_val = deep_copy_expression("pair.Value", tmap->get_val_type(), true, needs_typecast);
                 bool null_key = type_can_be_null(tmap->get_key_type());
                 bool null_val = type_can_be_null(tmap->get_val_type());
 
                 out << indent() << "foreach (var pair in source)" << '\n';
                 indent_up();
                 if( target_net_version >= 6) {
-                    out << indent() << tmp_instance << ".Add(pair.Key" << copy_key;
-                    out << ", pair.Value" << copy_val;
+                    out << indent() << tmp_instance << ".Add(" << copy_key;
+                    out << ", " << copy_val;
                 } else {
                     out << indent() << tmp_instance << ".Add(";
                     if( null_key) {
-                        out << "(pair.Key != null) ? pair.Key" << copy_key << " : null";
+                        out << "(pair.Key != null) ? " << copy_key << " : null";
                     } else {
-                        out << "pair.Key" << copy_key;
+                        out << copy_key;
                     }
                     out << ", ";
                     if( null_val) {
-                        out << "(pair.Value != null) ? pair.Value" << copy_val << " : null";
+                        out << "(pair.Value != null) ? " << copy_val << " : null";
                     } else {
-                        out << "pair.Value" << copy_val;
+                        out << copy_val;
                     }
                 }
                 out << ");" << '\n';
@@ -1099,27 +1105,27 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
                 if (iter->second->is_set())
                 {
                     t_set* tset = static_cast<t_set*>(iter->second);
-                    copy_elm = get_deep_copy_method_call(tset->get_elem_type(), true, needs_typecast, suffix);
+                    copy_elm = deep_copy_expression("elem", tset->get_elem_type(), true, needs_typecast);
                     null_elm = type_can_be_null(tset->get_elem_type());
                 }
                 else // list
                 {
                     t_list* tlist = static_cast<t_list*>(iter->second);
-                    copy_elm = get_deep_copy_method_call(tlist->get_elem_type(), true, needs_typecast, suffix);
+                    copy_elm = deep_copy_expression("elem", tlist->get_elem_type(), true, needs_typecast);
                     null_elm = type_can_be_null(tlist->get_elem_type());
                 }
 
                 out << indent() << "foreach (var elem in source)" << '\n';
                 indent_up();
                 if( target_net_version >= 6) {
-                    out << indent() << tmp_instance << ".Add(elem" << copy_elm;
+                    out << indent() << tmp_instance << ".Add(" << copy_elm;
                 } else {
                     out << indent() << tmp_instance << ".Add(";
                     if( null_elm)
                     {
-                        out << "(elem != null) ? elem" << copy_elm << " : null";
+                        out << "(elem != null) ? " << copy_elm << " : null";
                     } else {
-                        out << "elem" << copy_elm;
+                        out << copy_elm;
                     }
                 }
                 out << ");" << '\n';
@@ -1458,9 +1464,8 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         bool needs_typecast = false;
-        string suffix("");
         t_type* ttype = (*m_iter)->get_type();
-        string copy_op = get_deep_copy_method_call(ttype, true, needs_typecast, suffix);
+        string copy_op = deep_copy_expression("this." + prop_name(*m_iter), ttype, true, needs_typecast);
 
         bool is_required = field_is_required(*m_iter);
         bool null_allowed = type_can_be_null((*m_iter)->get_type());
@@ -1483,7 +1488,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
         if( needs_typecast) {
             out << "(" << type_name(ttype) << ")";
         }
-        out << "this." << prop_name(*m_iter) << copy_op;
+        out << copy_op;
         out << (inline_assignment ? "," : ";") << '\n';
 
         generate_null_check_end( out, *m_iter);
@@ -1996,9 +2001,8 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
             for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
             {
                 bool needs_typecast = false;
-                string suffix("");
-                string copy_op = get_deep_copy_method_call((*f_iter)->get_type(), false, needs_typecast, suffix);
-                out << indent() << (*f_iter)->get_key() << " => new " << (*f_iter)->get_name() << "(As_" << (*f_iter)->get_name() << suffix << copy_op << ")," << '\n';
+                string copy_op = deep_copy_expression("As_" + (*f_iter)->get_name(), (*f_iter)->get_type(), false, needs_typecast, true);
+                out << indent() << (*f_iter)->get_key() << " => new " << (*f_iter)->get_name() << "(" << copy_op << ")," << '\n';
             }
             out << indent() << "_ => new ___undefined()" << '\n';
             indent_down();
@@ -2010,11 +2014,10 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
             for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
             {
                 bool needs_typecast = false;
-                string suffix("");
-                string copy_op = get_deep_copy_method_call((*f_iter)->get_type(), false, needs_typecast, suffix);
+                string copy_op = deep_copy_expression("As_" + (*f_iter)->get_name(), (*f_iter)->get_type(), false, needs_typecast, true);
                 out << indent() << "case " << (*f_iter)->get_key() << ":" << '\n';
                 indent_up();
-                out << indent() << "return new " << (*f_iter)->get_name() << "(As_" << (*f_iter)->get_name() << suffix << copy_op << ");" << '\n';
+                out << indent() << "return new " << (*f_iter)->get_name() << "(" << copy_op << ");" << '\n';
                 indent_down();
             }
             out << indent() << "default:" << '\n';
@@ -2108,9 +2111,8 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         out << indent() << "{" << '\n';
         indent_up();
         bool needs_typecast = false;
-        string suffix("");
-        string copy_op = get_deep_copy_method_call(tfield->get_type(), true, needs_typecast, suffix);
-        out << indent() << "return new " << normalize_name(tfield->get_name()) << "(_data" << copy_op << ");" << '\n';
+        string copy_op = deep_copy_expression("_data", tfield->get_type(), true, needs_typecast);
+        out << indent() << "return new " << normalize_name(tfield->get_name()) << "(" << copy_op << ");" << '\n';
         indent_down();
         out << indent() << "}" << '\n' << '\n';
     }
@@ -3909,6 +3911,56 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool is_not_
     }
 
     throw "UNEXPECTED TYPE IN get_deep_copy_method_call: " + ttype->get_name();
+}
+
+// The name of the extension class holding the container extension methods of a program.
+string t_netstd_generator::extensions_class_name(t_program* program)
+{
+    return make_valid_csharp_identifier(program->get_name()) + "Extensions";
+}
+
+// The extension class that carries the DeepCopy() of the given container type. That is
+// ours, unless the container was left to an included program (see THRIFT-6198).
+string t_netstd_generator::extensions_class_of(t_type* ttype)
+{
+    map<string, t_program*>::const_iterator iter = inherited_extension_owners.find(type_name(ttype));
+    return extensions_class_name((iter != inherited_extension_owners.end()) ? iter->second : program_);
+}
+
+// Builds the expression that deep-copies "source".
+//
+// A container's DeepCopy() is an extension method, and the same signature can exist in
+// more than one extension class of a C# namespace - THRIFT-6198 removes the duplicates it
+// can see, but two programs without an include relation between them cannot know of each
+// other (THRIFT-6199). Calling through the class that owns the method rather than through
+// extension method syntax keeps the call site unambiguous however many of those classes
+// happen to be in scope. Structs and unions have an ordinary DeepCopy() instance method
+// and are left alone.
+//
+// null_conditional picks the "source?.DeepCopy()" form for those, which is what the code
+// generated for unions needs.
+string t_netstd_generator::deep_copy_expression(const string& source, t_type* ttype, bool is_not_null, bool& needs_typecast, bool null_conditional)
+{
+    t_type* resolved = resolve_typedef(ttype);
+
+    if (!resolved->is_container())
+    {
+        string suffix("");
+        string copy_op = get_deep_copy_method_call(ttype, is_not_null, needs_typecast, suffix);
+        return source + (null_conditional ? suffix : "") + copy_op;
+    }
+
+    needs_typecast = false;
+
+    // if is_not_null is set, then the surrounding code already explicitly tests against != null
+    string null_check("");
+    if( target_net_version >= 8) {
+        null_check = is_not_null ? "!" : " ?? []";
+    } else if( target_net_version >= 6) {
+        null_check = is_not_null ? "!" : " ?? new()";
+    }
+
+    return extensions_class_of(resolved) + "." + DEEP_COPY_METHOD_NAME + "(" + source + ")" + null_check;
 }
 
 string t_netstd_generator::declare_field(t_field* tfield, bool init, bool allow_nullable, string prefix)
