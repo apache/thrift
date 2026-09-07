@@ -197,6 +197,7 @@ private:
   vector<member_mapping_scope> member_mapping_scopes;
   map<string, t_type*> collected_extension_types;
   map<string, t_type*> checked_extension_types;
+  t_program* extensions_owner_;   // the program collect_extensions_types() recurses for
 
   string normalize_name(string name, bool is_arg_name = false);
   string make_valid_csharp_identifier(string const& fromName);
@@ -211,6 +212,12 @@ private:
   string get_deep_copy_method_call(t_type* ttype, bool is_not_null, bool& needs_typecast, string& suffix);
   void collect_extensions_types(t_struct* tstruct);
   void collect_extensions_types(t_type* ttype);
+  void collect_extensions_types_of_program(t_program* program, map<string, t_type*>& result);
+  void collect_inherited_extensions_types(t_program* program, set<t_program*>& visited, map<string, t_type*>& result);
+  void remove_inherited_extensions_types(map<string, t_type*>& types);
+  bool uses_type_of_program(t_type* ttype, t_program* program);
+  bool uses_type_of_program(t_struct* tstruct, t_program* program);
+  bool program_depends_on(t_program* from, t_program* program);
   void generate_extensions(ostream& out, map<string, t_type*> types);
   void reset_indent();
   void generate_null_check_begin(ostream& out, t_field* tfield);
