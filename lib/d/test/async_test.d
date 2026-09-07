@@ -150,7 +150,7 @@ void main(string[] args) {
       }
 
       // We only run the timing tests for the first server on each async
-      // manager, so that we don't get spurious timing errors becaue of
+      // manager, so that we don't get spurious timing errors because of
       // ordering issues.
       auto runTimingTests = (serverIndex == 0);
 
@@ -325,7 +325,7 @@ class ClientsThread : Thread {
       );
 
       // Temporarily redirect error logs to stdout, as SSL errors on the server
-      // side are expected when the client terminates aburptly (as is the case
+      // side are expected when the client terminates abruptly (as is the case
       // in the timeout test).
       auto oldErrorLogSink = g_errorLogSink;
       g_errorLogSink = g_infoLogSink;

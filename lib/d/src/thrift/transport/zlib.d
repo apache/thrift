@@ -133,7 +133,7 @@ final class TZlibTransport : TBaseTransport {
     while (true) {
       auto give = min(readAvail, buf.length);
 
-      // If std.range.put was optimized for slicable ranges, it could be used
+      // If std.range.put was optimized for sliceable ranges, it could be used
       // here as well.
       buf[0 .. give] = urbuf_[urpos_ .. urpos_ + give];
       buf = buf[give .. $];

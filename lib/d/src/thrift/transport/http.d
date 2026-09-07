@@ -18,7 +18,7 @@
  */
 
 /**
- * HTTP tranpsort implementation, modelled after the C++ one.
+ * HTTP transport implementation, modelled after the C++ one.
  *
  * Unfortunately, libcurl is quite heavyweight and supports only client-side
  * applications. This is an implementation of the basic HTTP/1.1 parts

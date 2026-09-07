@@ -760,7 +760,7 @@ private:
  * TJsonProtocol construction helper to avoid having to explicitly specify
  * the transport type, i.e. to allow the constructor being called using IFTI
  * (see $(LINK2 http://d.puremagic.com/issues/show_bug.cgi?id=6082, D Bugzilla
- * enhancement requet 6082)).
+ * enhancement request 6082)).
  */
 TJsonProtocol!Transport tJsonProtocol(Transport)(Transport trans,
   int containerSizeLimit = DEFAULT_CONTAINER_SIZE_LIMIT, int stringSizeLimit = DEFAULT_STRING_SIZE_LIMIT

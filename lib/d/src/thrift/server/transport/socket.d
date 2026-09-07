@@ -255,7 +255,7 @@ Socket makeSocketAndListen(ushort port, int backlog, ushort retryLimit,
 
   alias SocketOptionLevel.SOCKET lvlSock;
 
-  // Prevent 2 maximum segement lifetime delay on accept.
+  // Prevent 2 maximum segment lifetime delay on accept.
   try {
     socket.setOption(lvlSock, SocketOption.REUSEADDR, true);
   } catch (SocketException e) {
@@ -308,7 +308,7 @@ Socket makeSocketAndListen(ushort port, int backlog, ushort retryLimit,
       break;
     } catch (SocketException) {}
 
-    // If bind() worked, we breaked outside the loop above.
+    // If bind() worked, we broke out of the loop above.
     retries++;
     if (retries < retryLimit) {
       Thread.sleep(retryDelay);

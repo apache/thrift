@@ -17,7 +17,7 @@ Ddoc
   <dd>Internal helper modules used by the Thrift library. This package is not part of the public API, and no stability guarantees are given whatsoever.</dd>
 
   <dt>$(D_CODE thrift.protocol)</dt>
-  <dd>The Thrift protocol implemtations which specify how to pass messages over a TTransport.</dd>
+  <dd>The Thrift protocol implementations which specify how to pass messages over a TTransport.</dd>
 
   <dt>$(D_CODE thrift.server)</dt>
   <dd>Generic Thrift server implementations handling clients over a TTransport interface and forwarding requests to a TProcessor (which is in turn usually provided by thrift.codegen).</dd>

@@ -68,7 +68,7 @@ final class TFileReaderTransport : TBaseTransport {
    * Creates a new file writer transport.
    *
    * Params:
-   *   path = Path of the file to opperate on.
+   *   path = Path of the file to operate on.
    */
   this(string path) {
     path_ = path;
@@ -304,7 +304,7 @@ final class TFileReaderTransport : TBaseTransport {
   /// ditto
   void maxEventSize(size_t value) @property {
     enforce(value <= chunkSize_ - EventSize.sizeof, "Events cannot span " ~
-      "mutiple chunks, maxEventSize must be smaller than chunk size.");
+      "multiple chunks, maxEventSize must be smaller than chunk size.");
     maxEventSize_ = value;
   }
 
@@ -594,7 +594,7 @@ final class TFileWriterTransport : TBaseTransport {
    * Creates a new file writer transport.
    *
    * Params:
-   *   path = Path of the file to opperate on.
+   *   path = Path of the file to operate on.
    */
   this(string path) {
     path_ = path;
@@ -746,7 +746,7 @@ final class TFileWriterTransport : TBaseTransport {
   /**
    * Maximum interval between flushing the file to disk.
    *
-   * Currenlty cannot be set after the first call to write().
+   * Currently cannot be set after the first call to write().
    */
   Duration maxFlushInterval() @property {
     return maxFlushInterval_;

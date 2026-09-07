@@ -76,7 +76,7 @@ interface TAsyncManager {
   /**
    * Submits a work item to be executed asynchronously.
    *
-   * Access to asnyc transports is serialized – if two work items associated
+   * Access to async transports is serialized – if two work items associated
    * with the same transport are submitted, the second delegate will not be
    * invoked until the first has returned, even it the latter context-switches
    * away (because it is waiting for I/O) and the async manager is idle
@@ -125,7 +125,7 @@ interface TAsyncManager {
    *
    * Example:
    * ---
-   * // A very basic example – usually, the actuall work item would enqueue
+   * // A very basic example – usually, the actual work item would enqueue
    * // some async transport operation.
    * auto asyncMangager = someAsyncManager();
    *
@@ -184,7 +184,7 @@ interface TAsyncTransport : TTransport {
 }
 
 /**
- * A TAsyncManager providing notificiations for socket events.
+ * A TAsyncManager providing notifications for socket events.
  */
 interface TAsyncSocketManager : TAsyncManager {
   /**

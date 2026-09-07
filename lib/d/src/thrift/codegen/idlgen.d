@@ -250,7 +250,7 @@ private {
 
 /**
  * Returns an IDL string describing the passed service. IDL code for any type
- * dependcies is not included.
+ * dependencies is not included.
  */
 template serviceIdlString(T) if (isService!T) {
   enum serviceIdlString = {
@@ -333,7 +333,7 @@ template serviceIdlString(T) if (isService!T) {
 
 /**
  * Returns an IDL string describing the passed enum. IDL code for any type
- * dependcies is not included.
+ * dependencies is not included.
  */
 template enumIdlString(T) if (isEnum!T) {
   enum enumIdlString = {
@@ -354,7 +354,7 @@ template enumIdlString(T) if (isEnum!T) {
 
 /**
  * Returns an IDL string describing the passed struct. IDL code for any type
- * dependcies is not included.
+ * dependencies is not included.
  */
 template structIdlString(T) if (isStruct!T || isException!T) {
   enum structIdlString = {

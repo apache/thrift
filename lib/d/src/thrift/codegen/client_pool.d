@@ -253,7 +253,7 @@ private {
 /**
  * TClientPool construction helper to avoid having to explicitly specify
  * the interface type, i.e. to allow the constructor being called using IFTI
- * (see $(DMDBUG 6082, D Bugzilla enhancement requet 6082)).
+ * (see $(DMDBUG 6082, D Bugzilla enhancement request 6082)).
  */
 TClientPool!Interface tClientPool(Interface)(
   TClientBase!Interface[] clients

@@ -84,7 +84,7 @@ final class TInputRangeTransport(R) if (
   }
 
   /**
-   * Shortcut version of readAll() for slicable ranges.
+   * Shortcut version of readAll() for sliceable ranges.
    *
    * Because readAll() is typically a very hot path during deserialization,
    * using this over TBaseTransport.readAll() gives us a nice increase in
@@ -138,7 +138,7 @@ private:
  * TInputRangeTransport construction helper to avoid having to explicitly
  * specify the argument type, i.e. to allow the constructor being called using
  * IFTI (see $(LINK2 http://d.puremagic.com/issues/show_bug.cgi?id=6082, D
- * Bugzilla enhancement requet 6082)).
+ * Bugzilla enhancement request 6082)).
  */
 TInputRangeTransport!R tInputRangeTransport(R)(R data) if (
   is (TInputRangeTransport!R)

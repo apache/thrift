@@ -30,7 +30,7 @@ interface TServerTransport {
   /**
    * Starts listening for server connections.
    *
-   * Just as simliar functions commonly found in socket libraries, this
+   * Just as similar functions commonly found in socket libraries, this
    * function does not block.
    *
    * If the socket is already listening, nothing happens.

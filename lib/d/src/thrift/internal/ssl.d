@@ -32,11 +32,11 @@ import thrift.transport.ssl;
 
 /**
  * Checks if the peer is authorized after the SSL handshake has been
- * completed on the given conncetion and throws an TSSLException if not.
+ * completed on the given connection and throws an TSSLException if not.
  *
  * Params:
  *   ssl = The SSL connection to check.
- *   accessManager = The access manager to check the peer againts.
+ *   accessManager = The access manager to check the peer against.
  *   peerAddress = The (IP) address of the peer.
  *   hostName = The host name of the peer.
  */
@@ -129,7 +129,7 @@ void authorize(SSL* ssl, TAccessManager accessManager,
     sk_GENERAL_NAME_pop_free!()(alternatives, &GENERAL_NAME_free);
   }
 
-  // If we are alredy done, return.
+  // If we are already done, return.
   if (decision != Decision.SKIP) {
     X509_free(cert);
     if (decision != Decision.ALLOW) {
@@ -188,7 +188,7 @@ Exception getSSLException(string location = null, string clientFile = __FILE__,
   // OpenSSL error. Because there can possibly be more than one error on the
   // error stack, we have to fetch all of them, and pick the last, i.e. newest
   // one. We concatenate multiple successive OpenSSL error messages into a
-  // single one, but always just return the last D expcetion.
+  // single one, but always just return the last D exception.
   string message; // Probably better use an Appender here.
   bool hadMessage;
   Exception exception;

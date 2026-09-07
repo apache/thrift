@@ -260,7 +260,7 @@ private:
  *
  * Example:
  * ---
- * auto context = nwe TSSLContext();
+ * auto context = new TSSLContext();
  * ... // Configure SSL context.
  * auto factory = new TAsyncSSLSocketFactory(context);
  *

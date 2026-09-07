@@ -353,7 +353,7 @@ template Compose(T...) {
 /**
  * Instantiates the given template with the given list of parameters.
  *
- * Used to work around syntactic limiations of D with regard to instantiating
+ * Used to work around syntactic limitations of D with regard to instantiating
  * a template from a type tuple (e.g. T[0]!(...) is not valid) or a template
  * returning another template (e.g. Foo!(Bar)!(Baz) is not allowed).
  */

@@ -344,7 +344,7 @@ class TNonblockingServer : TServer {
   ///
   /// If a client tries to send a message larger than this limit, its
   /// connection will be closed. This helps to avoid allocating huge buffers
-  /// on bogous input.
+  /// on bogus input.
   uint maxFrameSize;
 
   /// Ditto

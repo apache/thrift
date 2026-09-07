@@ -284,7 +284,7 @@ class TAsyncSocket : TSocketBase, TAsyncTransport {
       TTransportException.Type.UNKNOWN);
   }
 
-  /// The amount of time in which a conncetion must be established before the
+  /// The amount of time in which a connection must be established before the
   /// open() call times out.
   Duration connectTimeout = dur!"seconds"(5);
 

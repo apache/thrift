@@ -55,7 +55,7 @@ import thrift.util.future;
  *
  * TAsyncClient can exclusively be used with TAsyncTransports, as it needs to
  * access the associated TAsyncManager. To set up any wrapper transports
- * (e.g. buffered, framed) on top of it and to instanciate the protocols to use,
+ * (e.g. buffered, framed) on top of it and to instantiate the protocols to use,
  * TTransportFactory and TProtocolFactory instances are passed to the
  * constructors – the three argument constructor is a shortcut if the same
  * transport and protocol are to be used for both input and output, which is
@@ -210,7 +210,7 @@ template TAsyncClient(Interface, InputProtocol = TProtocol, OutputProtocol = voi
       code ~= "TFuture!(" ~ returnTypeCode ~ ") " ~ methodName ~ "(" ~
         ctfeJoin(paramList) ~ ") {\n";
 
-      // Create the future instance that will repesent the result.
+      // Create the future instance that will represent the result.
       code ~= "auto promise = new TPromise!(" ~ returnTypeCode ~ ");\n";
 
       // Prepare delegate which executes the TClient method call.

@@ -159,7 +159,7 @@ template TClient(Interface, InputProtocol = TProtocol, OutputProtocol = void) if
         string[] paramList;
         string paramAssignCode;
         foreach (i, _; ParameterTypeTuple!(mixin("Interface." ~ methodName))) {
-          // Use the param name speficied in the meta information if any –
+          // Use the param name specified in the meta information if any –
           // just cosmetics in this case.
           string paramName;
           if (methodMetaFound && i < methodMeta.params.length) {
@@ -258,7 +258,7 @@ template TClient(Interface, InputProtocol = TProtocol, OutputProtocol = void) if
 /**
  * TClient construction helper to avoid having to explicitly specify
  * the protocol types, i.e. to allow the constructor being called using IFTI
- * (see $(DMDBUG 6082, D Bugzilla enhancement requet 6082)).
+ * (see $(DMDBUG 6082, D Bugzilla enhancement request 6082)).
  */
 TClient!(Interface, Prot) tClient(Interface, Prot)(Prot prot) if (
   isService!Interface && isTProtocol!Prot

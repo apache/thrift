@@ -109,7 +109,7 @@ struct TFieldMeta {
   /// The (Thrift) id of the field.
   short id;
 
-  /// Whether the field is requried.
+  /// Whether the field is required.
   TReq req;
 
   /// A code string containing a D expression for the default value, if there
@@ -125,7 +125,7 @@ struct TMethodMeta {
   /// method during code generation.
   string name;
 
-  /// Meta information for the parameteres.
+  /// Meta information for the parameters.
   TParamMeta[] params;
 
   /// Specifies which exceptions can be thrown by the method. All other
@@ -508,7 +508,7 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 }
 
 // DMD @@BUG@@: Having this inside TStructHelpers leads to weird lookup errors
-// (e.g. for std.arry.empty).
+// (e.g. for std.array.empty).
 string thriftFieldInitCode(alias fieldMeta)(string thisName) {
   string code = "";
   foreach (field; fieldMeta) {
@@ -588,7 +588,7 @@ template TIsSetFlags(T, alias fieldMetaData) {
  * internally (combined with TPResultStruct) and usually should not be used in
  * user code.
  *
- * This is a free function to make it possible to read exisiting structs from
+ * This is a free function to make it possible to read existing structs from
  * the wire without altering their definitions.
  */
 void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
@@ -783,7 +783,7 @@ void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
  * internally (combined with TPargsStruct) and usually should not be used in
  * user code.
  *
- * This is a free function to make it possible to read exisiting structs from
+ * This is a free function to make it possible to read existing structs from
  * the wire without altering their definitions.
  */
 void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,

@@ -540,7 +540,7 @@ private:
 /**
  * TFutureAggregatorRange construction helper to avoid having to explicitly
  * specify the value type, i.e. to allow the constructor being called using IFTI
- * (see $(DMDBUG 6082, D Bugzilla enhancement requet 6082)).
+ * (see $(DMDBUG 6082, D Bugzilla enhancement request 6082)).
  */
 TFutureAggregatorRange!T tFutureAggregatorRange(T)(TFuture!T[] futures,
   TCancellationOrigin childCancellation, Duration timeout = dur!"hnsecs"(0)

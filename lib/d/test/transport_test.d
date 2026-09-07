@@ -361,7 +361,7 @@ void testReadPartAvailable(CoupledTransports)() if (
   ubyte[10] writeBuf = 'a';
   ubyte[10] readBuf;
 
-  // Attemping to read 10 bytes when only 9 are available should return 9
+  // Attempting to read 10 bytes when only 9 are available should return 9
   // immediately.
   transports.output.write(writeBuf[0 .. 9]);
   transports.output.flush();
@@ -438,7 +438,7 @@ void testBorrowPartAvailable(CoupledTransports)() if (
   ubyte[9] writeBuf = 'a';
   ubyte[10] readBuf;
 
-  // Attemping to borrow 10 bytes when only 9 are available should return NULL
+  // Attempting to borrow 10 bytes when only 9 are available should return NULL
   // immediately.
   transports.output.write(writeBuf);
   transports.output.flush();

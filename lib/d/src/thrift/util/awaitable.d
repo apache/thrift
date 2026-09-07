@@ -165,7 +165,7 @@ final class TSocketNotifier {
   }
 
   /**
-   * Atatches the socket notifier to the specified awaitable, causing it to
+   * Attaches the socket notifier to the specified awaitable, causing it to
    * write a byte to the notification socket when the awaitable callbacks are
    * invoked.
    *
