@@ -65,7 +65,7 @@ public class TSaslClientTransport extends TSaslTransport {
       String authorizationId,
       String protocol,
       String serverName,
-      Map<String, String> props,
+      Map<String, ?> props,
       CallbackHandler cbh,
       TTransport transport)
       throws SaslException, TTransportException {
