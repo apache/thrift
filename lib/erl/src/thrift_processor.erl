@@ -65,34 +65,53 @@ loop(
                 [ServiceName, FunctionName] ->
                     ServiceModule = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
                     ServiceHandler = thrift_multiplexed_map_wrapper:fetch(ServiceName, Handler),
-                    case
-                        handle_function(
-                            State1#thrift_processor{
-                                service = ServiceModule, handler = ServiceHandler
-                            },
-                            list_to_existing_atom(FunctionName),
-                            Seqid
-                        )
-                    of
-                        {State2, ok} ->
-                            loop(State2#thrift_processor{service = Service, handler = Handler});
-                        {_State2, {error, Reason}} ->
+                    DispatchState = State1#thrift_processor{
+                        service = ServiceModule, handler = ServiceHandler
+                    },
+                    case resolve_function(ServiceModule, FunctionName) of
+                        {ok, FunctionAtom} ->
+                            case handle_function(DispatchState, FunctionAtom, Seqid) of
+                                {State2, ok} ->
+                                    loop(State2#thrift_processor{
+                                        service = Service, handler = Handler
+                                    });
+                                {_State2, {error, Reason}} ->
+                                    apply(ErrorHandler(Handler), handle_error, [
+                                        FunctionAtom, Reason
+                                    ]),
+                                    thrift_protocol:close_transport(Proto1),
+                                    ok
+                            end;
+                        unknown ->
+                            {State2, _} = report_unknown_method(
+                                DispatchState, Function, Type, Seqid
+                            ),
                             apply(ErrorHandler(Handler), handle_error, [
-                                list_to_existing_atom(Function), Reason
+                                Function, {no_function, Function}
                             ]),
-                            thrift_protocol:close_transport(Proto1),
-                            ok
+                            loop(State2#thrift_processor{service = Service, handler = Handler})
                     end;
                 _ ->
-                    case handle_function(State1, list_to_existing_atom(Function), Seqid) of
-                        {State2, ok} ->
-                            loop(State2);
-                        {_State2, {error, Reason}} ->
+                    case resolve_function(Service, Function) of
+                        {ok, FunctionAtom} ->
+                            case handle_function(State1, FunctionAtom, Seqid) of
+                                {State2, ok} ->
+                                    loop(State2);
+                                {_State2, {error, Reason}} ->
+                                    apply(ErrorHandler(Handler), handle_error, [
+                                        FunctionAtom, Reason
+                                    ]),
+                                    thrift_protocol:close_transport(Proto1),
+                                    ok
+                            end;
+                        unknown ->
+                            {State2, _} = report_unknown_method(
+                                State1, Function, Type, Seqid
+                            ),
                             apply(ErrorHandler(Handler), handle_error, [
-                                list_to_existing_atom(Function), Reason
+                                Function, {no_function, Function}
                             ]),
-                            thrift_protocol:close_transport(Proto1),
-                            ok
+                            loop(State2)
                     end
             end;
         {error, timeout = Reason} ->
@@ -108,6 +127,55 @@ loop(
             apply(ErrorHandler(Handler), handle_error, [undefined, Reason]),
             thrift_protocol:close_transport(Proto1),
             exit(shutdown)
+    end.
+
+%% The method name arrives as a string the peer chose. Turn it into the atom the
+%% service dispatches on only when it names a function the service actually
+%% implements. A name that was never created as an atom, or is an atom but not a
+%% function of this service, would otherwise raise badarg/function_clause here --
+%% outside the try around the handler -- and take the connection's process down;
+%% report it as an unknown method instead.
+resolve_function(ServiceModule, Name) ->
+    try list_to_existing_atom(Name) of
+        Function ->
+            try ServiceModule:function_info(Function, params_type) of
+                _ -> {ok, Function}
+            catch
+                error:function_clause -> unknown
+            end
+    catch
+        error:badarg -> unknown
+    end.
+
+%% Drain the call's arguments and, for a two-way call, answer it with a
+%% TApplicationException naming the unknown method. A one-way call carries no
+%% reply, so only its arguments are consumed.
+report_unknown_method(State = #thrift_processor{protocol = Proto0}, Name, Type, Seqid) ->
+    {Proto1, ok} = thrift_protocol:skip(Proto0, struct),
+    State1 = State#thrift_processor{protocol = Proto1},
+    case Type of
+        ?tMessageType_ONEWAY ->
+            {State1, ok};
+        _ ->
+            Reply =
+                {?TApplicationException_Structure, #'TApplicationException'{
+                    message = "Invalid method name: '" ++ Name ++ "'",
+                    type = ?TApplicationException_UNKNOWN_METHOD
+                }},
+            try
+                {Proto2, ok} = thrift_protocol:write(Proto1, #protocol_message_begin{
+                    name = Name,
+                    type = ?tMessageType_EXCEPTION,
+                    seqid = Seqid
+                }),
+                {Proto3, ok} = thrift_protocol:write(Proto2, Reply),
+                {Proto4, ok} = thrift_protocol:write(Proto3, message_end),
+                {Proto5, ok} = thrift_protocol:flush_transport(Proto4),
+                {State1#thrift_processor{protocol = Proto5}, ok}
+            catch
+                error:{badmatch, {_, {error, _} = Error}} ->
+                    {State1, Error}
+            end
     end.
 
 handle_function(
