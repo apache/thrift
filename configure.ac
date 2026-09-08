@@ -545,6 +545,7 @@ linker flags for OPTLINK. Please set DMD_LIBEVENT_FLAGS manually.])
   have_deimos_openssl=$success
 
   with_d_ssl_tests="no"
+  DMD_OPENSSL_VERSION_ID="use_openssl_1_0_x"
   if test "$have_deimos_openssl" = "yes"; then
     if test "x$DMD_OPENSSL_FLAGS" = "x"; then
       if test "$dmd_optlink" = "yes"; then
@@ -562,6 +563,21 @@ linker flags for OPTLINK. Please set DMD_OPENSSL_FLAGS manually.])
     else
       with_d_ssl_tests="yes"
     fi
+
+    # OpenSSL 3.0 removed SSL_get_peer_certificate and ERR_put_error, so the
+    # D SSL modules must be built with -version=use_openssl_3 there. Earlier
+    # OpenSSL keeps the version identifier the modules used before.
+    AC_MSG_CHECKING([which OpenSSL API version the D binding should target])
+    save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $OPENSSL_INCLUDES"
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <openssl/opensslv.h>]], [[
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+#error OpenSSL is older than 3.0
+#endif
+    ]])],
+      [DMD_OPENSSL_VERSION_ID="use_openssl_3"; AC_MSG_RESULT([3.0 or newer])],
+      [AC_MSG_RESULT([older than 3.0])])
+    CPPFLAGS="$save_CPPFLAGS"
   fi
 fi
 
@@ -574,6 +590,7 @@ AC_SUBST(DMD_LIBEVENT_FLAGS)
 AM_CONDITIONAL(HAVE_DEIMOS_OPENSSL, [test "$have_deimos_openssl" = "yes"])
 AM_CONDITIONAL(WITH_D_SSL_TESTS, [test "$with_d_ssl_tests" = "yes"])
 AC_SUBST(DMD_OPENSSL_FLAGS)
+AC_SUBST(DMD_OPENSSL_VERSION_ID)
 
 AC_ARG_ENABLE([tests],
   AS_HELP_STRING([--enable-tests], [build tests [default=yes]]),

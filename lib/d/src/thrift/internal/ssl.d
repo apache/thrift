@@ -30,6 +30,14 @@ import std.conv : to;
 import std.socket : Address;
 import thrift.transport.ssl;
 
+version (use_openssl_3) {
+  // OpenSSL 3.0 renamed SSL_get_peer_certificate to SSL_get1_peer_certificate
+  // and left the old name only as a header macro, so it is no longer an
+  // exported symbol the pinned deimos bindings can reach. Declare the current
+  // name here until those bindings carry it.
+  private extern (C) X509* SSL_get1_peer_certificate(const(SSL)* ssl);
+}
+
 /**
  * Checks if the peer is authorized after the SSL handshake has been
  * completed on the given connection and throws an TSSLException if not.
@@ -51,7 +59,11 @@ void authorize(SSL* ssl, TAccessManager accessManager,
       to!string(X509_verify_cert_error_string(rc)));
   }
 
-  auto cert = SSL_get_peer_certificate(ssl);
+  version (use_openssl_3) {
+    auto cert = SSL_get1_peer_certificate(ssl);
+  } else {
+    auto cert = SSL_get_peer_certificate(ssl);
+  }
   if (cert is null) {
     // Certificate is not present.
     if (SSL_get_verify_mode(ssl) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
@@ -96,10 +108,13 @@ void authorize(SSL* ssl, TAccessManager accessManager,
   } else version(use_openssl_1_1_x) {
     enum _GEN_DNS = GEN_DNS;
     enum _GEN_IPADD = GEN_IPADD;
+  } else version(use_openssl_3) {
+    enum _GEN_DNS = GENERAL_NAME.GEN_DNS;
+    enum _GEN_IPADD = GENERAL_NAME.GEN_IPADD;
   } else {
-    static assert(false, `Must have version either use_openssl_1_0_x or use_openssl_1_1_x defined, e.g.
+    static assert(false, `Must have version use_openssl_1_0_x, use_openssl_1_1_x or use_openssl_3 defined, e.g.
 	"subConfigurations": {
-		"apache-thrift": "use_openssl_1_0"
+		"apache-thrift": "use_openssl_3"
 	}`);
   }
 
