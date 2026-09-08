@@ -328,8 +328,8 @@ int main(int argc, char** argv) {
       testDir = parent;
     }
     string caPath = (testDir / "keys" / "CA.pem").string();
-    string certPath = (testDir / "keys" / "client.crt").string();
-    string keyPath = (testDir / "keys" / "client.key").string();
+    string certPath = (testDir / "keys" / "client_v3.crt").string();
+    string keyPath = (testDir / "keys" / "client_v3.key").string();
 
     auto fileExists = [](const std::string& path) {
       std::ifstream f(path.c_str());

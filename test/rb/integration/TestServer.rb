@@ -255,7 +255,7 @@ elsif options[:domain_socket].to_s.strip.empty?
     ctx.ca_file = File.join(keysDir, "CA.pem")
     ctx.cert = OpenSSL::X509::Certificate.new(File.binread(File.join(keysDir, "server.crt")))
     ctx.cert_store = OpenSSL::X509::Store.new
-    ctx.cert_store.add_file(File.join(keysDir, "client.pem"))
+    ctx.cert_store.add_file(File.join(keysDir, "client_v3.crt"))
     ctx.key = OpenSSL::PKey::RSA.new(File.binread(File.join(keysDir, "server.key")))
     ctx.min_version = :TLS1_2
     ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER

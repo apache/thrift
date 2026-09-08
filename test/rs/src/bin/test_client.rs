@@ -44,8 +44,8 @@ use thrift::transport::{
 use thrift::OrderedFloat;
 use thrift_test::*;
 
-const CLIENT_CERT: &[u8] = include_bytes!("../../../keys/client.crt");
-const CLIENT_KEY: &[u8] = include_bytes!("../../../keys/client.key");
+const CLIENT_CERT: &[u8] = include_bytes!("../../../keys/client_v3.crt");
+const CLIENT_KEY: &[u8] = include_bytes!("../../../keys/client_v3.key");
 
 type ThriftClientPair = (
     ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>,

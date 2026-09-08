@@ -43,8 +43,8 @@ class AbstractTest(unittest.TestCase):
                                             (options.http_path if options.http_path else '/'))
             if options.ssl:
                 __cafile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.pem")
-                __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.crt")
-                __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.key")
+                __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client_v3.crt")
+                __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client_v3.key")
                 self.transport = THttpClient.THttpClient(uri, cafile=__cafile, cert_file=__certfile, key_file=__keyfile)
             else:
                 self.transport = THttpClient.THttpClient(uri)
@@ -53,8 +53,8 @@ class AbstractTest(unittest.TestCase):
                 from thrift.transport import TSSLSocket
                 keys_dir = os.path.join(os.path.dirname(SCRIPT_DIR), "keys")
                 ca_certs = os.path.join(keys_dir, "server.pem")
-                certfile = os.path.join(keys_dir, "client.crt")
-                keyfile = os.path.join(keys_dir, "client.key")
+                certfile = os.path.join(keys_dir, "client_v3.crt")
+                keyfile = os.path.join(keys_dir, "client_v3.key")
                 ssl_version = getattr(ssl, "PROTOCOL_TLS_CLIENT", ssl.PROTOCOL_TLSv1)
                 socket = TSSLSocket.TSSLSocket(
                     options.host,
