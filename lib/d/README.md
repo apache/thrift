@@ -91,3 +91,8 @@ wildcard in the leftmost label still covers at most one label, unchanged, so
 "*.apache.org" matches "thrift.apache.org" but not "foo.bar.apache.org".
 Certificates affected need reissuing with the host in their subjectAltName,
 which is what every other TLS client already requires of them.
+
+thrift.transport.ssl now floors the TLS negotiation at TLS 1.2 by default, where
+it previously accepted whatever the OpenSSL build allowed -- TLS 1.0 on older
+builds. A peer that can only speak an earlier protocol version no longer
+connects.

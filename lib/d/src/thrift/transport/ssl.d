@@ -43,6 +43,11 @@ import thrift.internal.ssl;
 import thrift.transport.base;
 import thrift.transport.socket;
 
+// The control codes SSL_CTX_set_min_proto_version/SSL_CTX_get_min_proto_version
+// expand to; the deimos bindings declare neither the macros nor the codes.
+private enum SSL_CTRL_SET_MIN_PROTO_VERSION = 123;
+private enum SSL_CTRL_GET_MIN_PROTO_VERSION = 130;
+
 /**
  * SSL encrypted socket implementation using OpenSSL.
  *
@@ -256,6 +261,17 @@ class TSSLContext {
         SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
     }
     SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv3);   // THRIFT-3164
+    // Floor the negotiation at TLS 1.2, matching the modern default the other
+    // bindings follow. SSL_CTX_set_min_proto_version is a header macro rather
+    // than an exported symbol, so invoke the control code it stands for; on
+    // OpenSSL 1.0.x, which has no such control, decline the older versions by
+    // option instead.
+    static if (OPENSSL_VERSION_NUMBER >= 0x1010000f) {
+        SSL_CTX_ctrl(ctx_, SSL_CTRL_SET_MIN_PROTO_VERSION, TLS1_2_VERSION, null);
+    } else {
+        SSL_CTX_set_options(ctx_, SSL_OP_NO_TLSv1);
+        SSL_CTX_set_options(ctx_, SSL_OP_NO_TLSv1_1);
+    }
     enforce(ctx_, getSSLException("SSL_CTX_new"));
     SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
   }
@@ -548,6 +564,17 @@ private:
   static __gshared Mutex initMutex_;
   static __gshared Mutex[] mutexes_;
   static __gshared uint count_;
+}
+
+unittest {
+  // The default context floors the negotiation at TLS 1.2, so its minimum
+  // version matches the modern default the other bindings use.
+  static if (OPENSSL_VERSION_NUMBER >= 0x1010000f) {
+    auto context = new TSSLContext();
+    auto minVersion = SSL_CTX_ctrl(
+      context.ctx_, SSL_CTRL_GET_MIN_PROTO_VERSION, 0, null);
+    assert(minVersion == TLS1_2_VERSION, "the default context floor is not TLS 1.2");
+  }
 }
 
 /**
