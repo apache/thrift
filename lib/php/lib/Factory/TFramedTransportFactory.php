@@ -28,8 +28,13 @@ use Thrift\Transport\TTransport;
 
 class TFramedTransportFactory implements TTransportFactoryInterface
 {
+    public function __construct(
+        private int $maxFrameSize = TFramedTransport::DEFAULT_MAX_FRAME_SIZE,
+    ) {
+    }
+
     public function getTransport(TTransport $transport): TFramedTransport
     {
-        return new TFramedTransport($transport);
+        return new TFramedTransport($transport, true, true, $this->maxFrameSize);
     }
 }

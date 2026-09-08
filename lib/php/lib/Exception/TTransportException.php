@@ -35,6 +35,7 @@ class TTransportException extends TException
     public const ALREADY_OPEN = 2;
     public const TIMED_OUT = 3;
     public const END_OF_FILE = 4;
+    public const SIZE_LIMIT = 5;
 
     public function __construct(?string $message = null, int $code = 0)
     {

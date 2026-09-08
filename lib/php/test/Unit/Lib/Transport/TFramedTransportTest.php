@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Constraint\Constraint;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
+use Thrift\Exception\TTransportException;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TTransport;
 
@@ -152,6 +153,81 @@ class TFramedTransportTest extends TestCase
             'readLength' => 5,
             'expectedReadResult' => '12345',
         ];
+    }
+
+    public function testReadRejectsFrameLargerThanConfiguredMax()
+    {
+        $limit = 100;
+        $declared = $limit + 1;
+
+        $transport = $this->createMock(TTransport::class);
+        $framedTransport = new TFramedTransport($transport, true, true, $limit);
+
+        // Only the 4-byte length is read; the check fires before the body,
+        // so the declared body bytes are never requested.
+        $transport
+            ->expects($this->once())
+            ->method('readAll')
+            ->with(4)
+            ->willReturn(pack('N', $declared));
+
+        try {
+            $framedTransport->read(5);
+            $this->fail('Expected a TTransportException for an oversized frame');
+        } catch (TTransportException $e) {
+            $this->assertStringContainsString((string) $declared, $e->getMessage());
+            $this->assertStringContainsString((string) $limit, $e->getMessage());
+            $this->assertSame(TTransportException::SIZE_LIMIT, $e->getCode());
+        }
+    }
+
+    public function testReadRejectsFrameLargerThanDefaultMax()
+    {
+        $declared = TFramedTransport::DEFAULT_MAX_FRAME_SIZE + 1;
+
+        $transport = $this->createMock(TTransport::class);
+        $framedTransport = new TFramedTransport($transport);
+
+        $transport
+            ->expects($this->once())
+            ->method('readAll')
+            ->with(4)
+            ->willReturn(pack('N', $declared));
+
+        try {
+            $framedTransport->read(5);
+            $this->fail('Expected a TTransportException for a frame over the default limit');
+        } catch (TTransportException $e) {
+            $this->assertStringContainsString((string) $declared, $e->getMessage());
+            $this->assertSame(TTransportException::SIZE_LIMIT, $e->getCode());
+        }
+    }
+
+    public function testReadAcceptsFrameAtConfiguredMax()
+    {
+        $limit = 100;
+        $body = str_repeat('x', $limit);
+
+        $transport = $this->createMock(TTransport::class);
+        $framedTransport = new TFramedTransport($transport, true, true, $limit);
+
+        // A frame exactly at the limit is read in full: the 4-byte length,
+        // then the declared number of body bytes.
+        $transport
+            ->expects($this->exactly(2))
+            ->method('readAll')
+            ->willReturnCallback(function ($len) use ($limit, $body) {
+                static $iteration = 0;
+                $iteration++;
+                if ($iteration === 1) {
+                    $this->assertSame(4, $len);
+                    return pack('N', $limit);
+                }
+                $this->assertSame($limit, $len);
+                return $body;
+            });
+
+        $this->assertSame($body, $framedTransport->read($limit));
     }
 
     #[DataProvider('writeDataProvider')]

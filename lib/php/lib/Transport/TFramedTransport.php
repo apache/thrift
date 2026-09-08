@@ -25,6 +25,8 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
+use Thrift\Exception\TTransportException;
+
 /**
  * Framed transport. Writes and reads data in chunks that are stamped with
  * their length.
@@ -33,6 +35,13 @@ namespace Thrift\Transport;
  */
 class TFramedTransport extends TTransport
 {
+    /**
+     * The largest frame accepted from the wire by default. Matches
+     * TConfiguration.DEFAULT_MAX_FRAME_SIZE in the Java, netstd and C++
+     * bindings and the Python framed transport.
+     */
+    public const DEFAULT_MAX_FRAME_SIZE = 16384000;
+
     /**
      * Buffer for read data.
      */
@@ -47,6 +56,7 @@ class TFramedTransport extends TTransport
         private TTransport $transport,
         private bool $read = true,
         private bool $write = true,
+        private int $maxFrameSize = self::DEFAULT_MAX_FRAME_SIZE,
     ) {
     }
 
@@ -110,6 +120,17 @@ class TFramedTransport extends TTransport
         $buf = $this->transport->readAll(4);
         $val = unpack('N', $buf);
         $sz = $val[1];
+
+        // Check the declared size before reading the body: readAll() would
+        // otherwise wait for as many bytes as the length claims while the peer
+        // sends them at its own pace. The length is read unsigned, so a
+        // negative value cannot occur here; only the upper bound needs a guard.
+        if ($sz > $this->maxFrameSize) {
+            throw new TTransportException(
+                "Frame size ($sz) larger than the maximum ({$this->maxFrameSize})",
+                TTransportException::SIZE_LIMIT
+            );
+        }
 
         $this->rBuf = $this->transport->readAll($sz);
     }
