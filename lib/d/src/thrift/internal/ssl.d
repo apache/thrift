@@ -118,6 +118,12 @@ void authorize(SSL* ssl, TAccessManager accessManager,
 	}`);
   }
 
+  // Whether the certificate carried a dNSName at all, tracked separately from
+  // whether one matched: RFC 6125 6.4.4 and RFC 9525 6.3 make the
+  // subjectAltName the identity once it is present, so the commonName below is
+  // for certificates that carry none.
+  bool hasDnsName;
+
   if (alternatives != null) {
     auto count = sk_GENERAL_NAME_num(alternatives);
     for (int i = 0; decision == Decision.SKIP && i < count; i++) {
@@ -130,6 +136,7 @@ void authorize(SSL* ssl, TAccessManager accessManager,
 
       switch (name.type) {
         case _GEN_DNS:
+          hasDnsName = true;
           decision = accessManager.verify(hostName, cast(char[])data[0 .. length]);
           break;
         case _GEN_IPADD:
@@ -153,8 +160,9 @@ void authorize(SSL* ssl, TAccessManager accessManager,
     return;
   }
 
-  // Check commonName.
-  auto name = X509_get_subject_name(cert);
+  // Check commonName -- but only for a certificate that presented no dNSName.
+  // A dNSName that did not match is an answer, not an absence.
+  auto name = hasDnsName ? null : X509_get_subject_name(cert);
   if (name !is null) {
     X509_NAME_ENTRY* entry;
     char* utf8;

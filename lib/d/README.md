@@ -73,3 +73,13 @@ declared content length, and the number of chunks in a chunked body, are numbers
 the peer chooses, and the body does not pass through the line buffer that
 maxHttpBufferSize already bounds. A deployment that exchanges bodies larger than
 that has to raise the limit on the transport.
+
+thrift.internal.ssl.authorize() consults the certificate's common name only when
+the certificate carries no DNS subjectAltName extension. Previously the common
+name was consulted whenever no subjectAltName entry had returned ALLOW, so a
+certificate whose subjectAltName named other hosts got a second chance from a
+common name that matched -- TDefaultClientAccessManager.verify returns SKIP for a
+name that does not match, which made "names other hosts" and "names no hosts" the
+same state at the fallthrough. RFC 6125 6.4.4 and RFC 9525 6.3 make the
+subjectAltName the identity once it is present. A certificate affected needs
+reissuing with the host in its subjectAltName.
