@@ -157,7 +157,7 @@ void cleanupOpenSSL() {
 #endif
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(LIBRESSL_VERSION_NUMBER)
   // Do nothing unless an openssl derivative is detected
 #  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
   // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
@@ -180,6 +180,10 @@ static char uppercase(char c);
 
 // SSLContext implementation
 SSLContext::SSLContext(const SSLProtocol& protocol) {
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+  if (protocol == SSLTLS || protocol == LATEST) {
+    ctx_ = SSL_CTX_new(TLS_method());
+#else
   if (protocol == SSLTLS) {
     ctx_ = SSL_CTX_new(SSLv23_method());
 #ifndef OPENSSL_NO_SSL3
@@ -192,6 +196,7 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
     ctx_ = SSL_CTX_new(TLSv1_1_method());
   } else if (protocol == TLSv1_2) {
     ctx_ = SSL_CTX_new(TLSv1_2_method());
+#endif
   } else {
     /// UNKNOWN PROTOCOL!
     throw TSSLException("SSL_CTX_new: Unknown protocol");
@@ -405,7 +410,7 @@ void TSSLSocket::close() {
     SSL_free(ssl_);
     ssl_ = nullptr;
     handshakeCompleted_ = false;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(LIBRESSL_VERSION_NUMBER)
     // Do nothing unless an openssl derivative is detected
 #  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
     // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
@@ -800,9 +805,16 @@ void TSSLSocket::authorize() {
   }
 
   // extract commonName
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+  const X509_NAME* name = X509_get_subject_name(cert);
+  const X509_NAME_ENTRY* entry;
+  const ASN1_STRING* common;
+#else
   X509_NAME* name = X509_get_subject_name(cert);
+  X509_NAME_ENTRY* entry;
+  ASN1_STRING* common;
+#endif
   if (name != nullptr) {
-    X509_NAME_ENTRY* entry;
     unsigned char* utf8;
     int last = -1;
     while (decision == AccessManager::SKIP) {
@@ -812,7 +824,7 @@ void TSSLSocket::authorize() {
       entry = X509_NAME_get_entry(name, last);
       if (entry == nullptr)
         continue;
-      ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
+      common = X509_NAME_ENTRY_get_data(entry);
       int size = ASN1_STRING_to_UTF8(&utf8, common);
       if (host.empty()) {
         host = (server() ? getPeerHost() : getHost());

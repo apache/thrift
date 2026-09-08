@@ -235,6 +235,16 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix) {
           continue;
         }
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+	if (!(si == apache::thrift::transport::SSLTLS ||
+	      si == apache::thrift::transport::LATEST) ||
+	    !(ci == apache::thrift::transport::SSLTLS ||
+	      ci == apache::thrift::transport::LATEST))
+	{
+		// Only SSLTLS / LATEST is supported.
+		continue;
+	}
+#endif
 
         boost::mutex::scoped_lock lock(mMutex);
 

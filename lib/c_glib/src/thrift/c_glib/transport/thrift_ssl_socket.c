@@ -285,7 +285,9 @@ thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
       SSL_shutdown(ssl_socket->ssl);
       SSL_free(ssl_socket->ssl);
       ssl_socket->ssl = NULL;
+#if OPENSSL_VERSION_NUMBER < 0x40000000L
       ERR_remove_state(0);
+#endif
   }
   return thrift_socket_close(transport, error);
 }
@@ -724,7 +726,9 @@ void thrift_ssl_socket_finalize_openssl(void)
   ERR_free_strings();
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
+#if OPENSSL_VERSION_NUMBER < 0x40000000L
   ERR_remove_state(0);
+#endif
 }
 
 
@@ -846,6 +850,12 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
 {
   SSL_CTX* context = NULL;
   switch(ssl_protocol){
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+    case SSLTLS:
+    case LATEST:
+      context = SSL_CTX_new(TLS_method());
+      break;
+#else
     case SSLTLS:
       context = SSL_CTX_new(SSLv23_method());
       break;
@@ -863,6 +873,7 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
     case TLSv1_2:
       context = SSL_CTX_new(TLSv1_2_method());
       break;
+#endif
     default:
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
 		   THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
