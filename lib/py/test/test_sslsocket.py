@@ -450,6 +450,21 @@ class TSSLSocketHostnameTest(unittest.TestCase):
         with self.assertRaises(Exception):
             match_peer_ipaddress(cert, 'localhost')
 
+    def test_peer_address_matcher_unmaps_ipv4(self):
+        # A dual-stack listener reports an IPv4 peer as ::ffff:127.0.0.1,
+        # which is the address the certificate carries as 127.0.0.1.
+        from thrift.transport.sslcompat import match_peer_ipaddress
+        mapped = {'subjectAltName': (('IP Address', '::ffff:127.0.0.1'),)}
+        plain = {'subjectAltName': (('IP Address', '127.0.0.1'),)}
+        match_peer_ipaddress(plain, '::ffff:127.0.0.1')
+        match_peer_ipaddress(mapped, '127.0.0.1')
+        with self.assertRaises(Exception):
+            match_peer_ipaddress(
+                {'subjectAltName': (('IP Address', '127.0.0.2'),)},
+                '::ffff:127.0.0.1')
+        with self.assertRaises(Exception):
+            match_peer_ipaddress(plain, '::1')
+
 
 # Add a dummy test because starting from python 3.12, if all tests in a test
 # file are skipped that's considered an error.
