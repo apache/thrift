@@ -25,6 +25,16 @@ under the License.
 Node.js 10.18 or later is required, matching the `engines` field in the
 package's [`package.json`](../../package.json).
 
+## TLS minimum version
+
+`createSSLConnection` and the TLS server no longer set a protocol method of
+their own when the caller passes neither `secureProtocol` nor `secureOptions`.
+Such a connection now follows Node's default minimum TLS version -- TLS 1.2 on
+current Node releases -- where it previously also accepted TLS 1.0 and 1.1.
+
+Pass `secureProtocol`, `secureOptions`, or `minVersion` in the connect or
+server options to choose a different floor.
+
 ## Install
 
     npm install thrift 
