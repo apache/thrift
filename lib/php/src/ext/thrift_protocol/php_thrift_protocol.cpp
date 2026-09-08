@@ -704,8 +704,17 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
       zval *val_ptr;
       val_ptr = zend_hash_str_find(fieldspec, "key", sizeof("key")-1);
+      // The element types are read from the wire, so the declared type can name
+      // a container the field spec does not describe. Reject that here rather
+      // than dereferencing the missing entry, as the struct case already does.
+      if (val_ptr == nullptr) {
+        throw_tprotocolexception("no key type in spec", INVALID_DATA);
+      }
       HashTable* keyspec = Z_ARRVAL_P(val_ptr);
       val_ptr = zend_hash_str_find(fieldspec, "val", sizeof("val")-1);
+      if (val_ptr == nullptr) {
+        throw_tprotocolexception("no val type in spec", INVALID_DATA);
+      }
       HashTable* valspec = Z_ARRVAL_P(val_ptr);
 
       for (uint32_t s = 0; s < size; ++s) {
@@ -727,6 +736,9 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       int8_t type = transport.readI8();
       uint32_t size = transport.readU32();
       zval *val_ptr = zend_hash_str_find(fieldspec, "elem", sizeof("elem")-1);
+      if (val_ptr == nullptr) {
+        throw_tprotocolexception("no elem type in spec", INVALID_DATA);
+      }
       HashTable* elemspec = Z_ARRVAL_P(val_ptr);
 
       array_init(return_value);
@@ -744,6 +756,9 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       transport.readBytes(&size, 4);
       size = ntohl(size);
       zval *val_ptr = zend_hash_str_find(fieldspec, "elem", sizeof("elem")-1);
+      if (val_ptr == nullptr) {
+        throw_tprotocolexception("no elem type in spec", INVALID_DATA);
+      }
       HashTable* elemspec = Z_ARRVAL_P(val_ptr);
 
       array_init(return_value);
