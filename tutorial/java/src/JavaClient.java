@@ -51,7 +51,7 @@ public class JavaClient {
          * For this example it's a self-signed cert.
          */
         TSSLTransportParameters params = new TSSLTransportParameters();
-        params.setTrustStore("../../lib/java/test/resources/.truststore", "thrift", "SunX509", "JKS");
+        params.setTrustStore("../../lib/java/src/crossTest/resources/.truststore", "thrift", "SunX509", "JKS");
         /*
          * Get a client transport instead of a server transport. The connection is opened on
          * invocation of the factory method, no need to specifically call open()
@@ -67,6 +67,7 @@ public class JavaClient {
       transport.close();
     } catch (TException x) {
       x.printStackTrace();
+      System.exit(1);
     }
   }
 

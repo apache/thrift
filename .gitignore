@@ -433,6 +433,7 @@ SKILL.md
 /tutorial/haxe/bin
 /tutorial/hs/dist/
 /tutorial/java/build/
+/tutorial/java/.gradle/
 /tutorial/js/build/
 /tutorial/netstd/**/bin
 /tutorial/netstd/**/obj

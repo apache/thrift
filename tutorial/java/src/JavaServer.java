@@ -85,7 +85,7 @@ public class JavaServer {
        */
       TSSLTransportParameters params = new TSSLTransportParameters();
       // The Keystore contains the private key
-      params.setKeyStore("../../lib/java/test/resources/.keystore", "thrift", null, null);
+      params.setKeyStore("../../lib/java/src/crossTest/resources/.serverkeystore", "thrift", null, null);
 
       /*
        * Use any of the TSSLTransportFactory to get a server transport with the appropriate
