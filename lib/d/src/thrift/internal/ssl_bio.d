@@ -38,6 +38,17 @@ import thrift.base;
 import thrift.internal.ssl;
 import thrift.transport.base;
 
+version (use_openssl_3) {
+  // OpenSSL 3.0 removed ERR_put_error (it dropped function codes from the
+  // error record). ERR_raise expands to this trio, which the pinned deimos
+  // bindings do not yet declare.
+  private extern (C) nothrow {
+    void ERR_new();
+    void ERR_set_debug(const(char)* file, int line, const(char)* func);
+    void ERR_set_error(int lib, int reason, const(char)* fmt, ...);
+  }
+}
+
 /**
  * Creates an SSL BIO object wrapping the given transport.
  *
@@ -71,8 +82,16 @@ private {
   }
 
   void setError(Exception e) nothrow {
-    ERR_put_error(ERR_LIB_D_EXCEPTION, ERR_F_D_EXCEPTION, ERR_R_D_EXCEPTION,
-      ERR_FILE_D_EXCEPTION, ERR_LINE_D_EXCEPTION);
+    version (use_openssl_3) {
+      // OpenSSL 3.0 replaced ERR_put_error with this sequence; the function
+      // code the old call carried was dropped from the error record.
+      ERR_new();
+      ERR_set_debug(ERR_FILE_D_EXCEPTION.ptr, ERR_LINE_D_EXCEPTION, null);
+      ERR_set_error(ERR_LIB_D_EXCEPTION, ERR_R_D_EXCEPTION, null);
+    } else {
+      ERR_put_error(ERR_LIB_D_EXCEPTION, ERR_F_D_EXCEPTION, ERR_R_D_EXCEPTION,
+        ERR_FILE_D_EXCEPTION, ERR_LINE_D_EXCEPTION);
+    }
     try { GC.addRoot(cast(void*)e); } catch (Throwable) {}
     ERR_set_error_data(cast(char*)e, ERR_FLAGS_D_EXCEPTION);
   }
@@ -187,4 +206,22 @@ private {
     &ttDestroy,
     null // callback_ctrl
   };
+}
+
+unittest {
+  // Round-trips a D exception through the OpenSSL error stack: setError pushes
+  // it, getSSLException recovers the very same object. On OpenSSL 3.0 this
+  // exercises the ERR_new/ERR_set_debug/ERR_set_error sequence that replaced
+  // ERR_put_error, so it also guards that the replacement actually records an
+  // error rather than merely linking.
+  import thrift.internal.ssl : getSSLException;
+  import deimos.openssl.err : ERR_clear_error;
+
+  ERR_clear_error();
+  auto planted = new Exception("d_bio_exception_marker");
+  setError(planted);
+
+  auto recovered = getSSLException();
+  assert(recovered !is null, "the planted exception was not recovered");
+  assert(recovered is planted, "a different exception came back off the stack");
 }

@@ -965,6 +965,7 @@ jobs:
       # Keep in sync with build/docker/ubuntu-*/Dockerfile.
       D_VERSION: 2.087.0
       DEIMOS_LIBEVENT_REF: v2.0.2+2.0.16
+      DEIMOS_OPENSSL_REF: v2.0.0+1.1.0h
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -983,21 +984,24 @@ jobs:
           rm -f "dmd_$D_VERSION-0_amd64.deb"
           dmd --version
 
-      # The docker images also install the deimos OpenSSL 1.1.0h bindings, but
-      # the lib/d OpenSSL modules do not link against the OpenSSL 3.x that
-      # ubuntu-24.04 ships: ERR_put_error was dropped in 3.0 and
-      # SSL_get_peer_certificate was renamed to SSL_get1_peer_certificate.
-      # Leaving those headers out makes configure report
-      # "Building D SSL tests ... no", which drops the five OpenSSL-dependent
-      # modules from both the library and the test set. Install them here once
-      # THRIFT-6185 has taught lib/d to speak OpenSSL 3.x.
-      - name: Install deimos libevent bindings
+      # The deimos bindings are D headers for libevent and OpenSSL; the docker
+      # images install them but this runner does not. lib/d now builds its
+      # OpenSSL modules against the OpenSSL 3.x ubuntu-24.04 ships -- THRIFT-6185
+      # taught it to call SSL_get1_peer_certificate and the ERR_new/ERR_set_*
+      # family in place of the SSL_get_peer_certificate and ERR_put_error that
+      # 3.0 removed -- so installing the OpenSSL bindings here makes configure
+      # report "Building D SSL tests ... yes" and covers the five
+      # OpenSSL-dependent modules.
+      - name: Install deimos libevent and OpenSSL bindings
         run: |
           sudo mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C
           git clone -q -b "$DEIMOS_LIBEVENT_REF" https://github.com/D-Programming-Deimos/libevent.git deimos-libevent
           sudo mv deimos-libevent/deimos/* /usr/include/dmd/druntime/import/deimos/
           sudo mv deimos-libevent/C/* /usr/include/dmd/druntime/import/C/
           rm -rf deimos-libevent
+          git clone -q -b "$DEIMOS_OPENSSL_REF" https://github.com/D-Programming-Deimos/openssl.git deimos-openssl
+          sudo mv deimos-openssl/deimos/* /usr/include/dmd/druntime/import/deimos/
+          rm -rf deimos-openssl
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -1010,8 +1014,10 @@ jobs:
           # configure disables a binding it cannot find rather than failing, and
           # the steps below would then pass without running a single test. A
           # green job that tests nothing is worse than no job, so insist that
-          # dmd was actually found.
+          # dmd was actually found, and that the OpenSSL modules are in the build
+          # rather than silently dropped for a missing dependency.
           echo "$summary" | grep -qE "Building D Library [.]+ : yes"
+          echo "$summary" | grep -qE "Building D SSL tests [.]+ : yes"
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
