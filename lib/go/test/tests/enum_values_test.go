@@ -42,3 +42,25 @@ func TestEnumValues(t *testing.T) {
 		}
 	}
 }
+
+func TestEnumString(t *testing.T) {
+	if got := constoptionalfielda.Foo_One.String(); got != "One" {
+		t.Errorf("Foo_One.String() = %q, want %q", got, "One")
+	}
+	outOfRange := constoptionalfielda.Foo(999)
+	if got := outOfRange.String(); got != "Foo(999)" {
+		t.Errorf("Foo(999).String() = %q, want %q", got, "Foo(999)")
+	}
+}
+
+func TestEnumIsDefined(t *testing.T) {
+	if !constoptionalfielda.Foo_One.IsDefined() {
+		t.Errorf("Expected Foo_One to be defined")
+	}
+	if !constoptionalfielda.Foo_Two.IsDefined() {
+		t.Errorf("Expected Foo_Two to be defined")
+	}
+	if constoptionalfielda.Foo(999).IsDefined() {
+		t.Errorf("Expected Foo(999) to NOT be defined")
+	}
+}
