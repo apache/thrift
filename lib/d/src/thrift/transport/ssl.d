@@ -652,6 +652,18 @@ private {
    * Returns: true if host matches pattern, false otherwise.
    */
   bool matchName(const(char)[] host, const(char)[] pattern) {
+    // RFC 6125 6.4.3: a wildcard must not appear outside the leftmost label.
+    bool pastFirstDot;
+    foreach (c; pattern) {
+      if (c == '.') {
+        pastFirstDot = true;
+        continue;
+      }
+      if (c == '*' && pastFirstDot) {
+        return false;
+      }
+    }
+
     while (!host.empty && !pattern.empty) {
       if (toUpper(pattern.front) == toUpper(host.front)) {
         host.popFront;
@@ -670,8 +682,18 @@ private {
 
   unittest {
     enforce(matchName("thrift.apache.org", "*.apache.org"));
+    enforce(matchName("THRIFT.APACHE.ORG", "*.apache.org"));
     enforce(!matchName("thrift.apache.org", "apache.org"));
-    enforce(matchName("thrift.apache.org", "thrift.*.*"));
+
+    // A wildcard is confined to the leftmost label. The first of these used to
+    // be asserted the other way round, which is what let the rest through.
+    enforce(!matchName("thrift.apache.org", "thrift.*.*"));
+    enforce(!matchName("example.foo.com", "example.*.com"));
+    enforce(!matchName("a.evil.com", "a.ev*.com"));
+
+    // ... and it covers one label, not several.
+    enforce(!matchName("foo.bar.apache.org", "*.apache.org"));
+
     enforce(matchName("", ""));
     enforce(!matchName("", "*"));
   }
