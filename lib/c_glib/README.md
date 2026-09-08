@@ -47,3 +47,11 @@ reflect the proper convention for class names, which is
   representation of the class' namespace, followed by
 - An underscore and
 - A lowercase, snake-case representation of the class' name.
+
+0.25.0
+------
+
+The default, auto-negotiating SSL socket (`SSLTLS`) now declines TLS 1.0 and
+1.1 in addition to the obsolete SSL protocols, so its minimum version matches
+the modern default the other bindings follow. Select `TLSv1_0` or `TLSv1_1`
+explicitly if an older peer still has to be supported.

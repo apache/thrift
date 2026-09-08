@@ -112,6 +112,24 @@ test_ssl_create_and_set_properties(void)
 }
 
 static void
+test_ssl_context_default_min_version(void)
+{
+  GError *error = NULL;
+  SSL_CTX *context = thrift_ssl_socket_context_initialize(SSLTLS, &error);
+  long options;
+
+  g_assert (context != NULL);
+
+  /* The auto-negotiating default declines TLS 1.0 and 1.1 along with the
+     obsolete SSL protocols, so its floor matches the modern default. */
+  options = SSL_CTX_get_options(context);
+  g_assert ((options & SSL_OP_NO_TLSv1) != 0);
+  g_assert ((options & SSL_OP_NO_TLSv1_1) != 0);
+
+  SSL_CTX_free(context);
+}
+
+static void
 test_ssl_open_and_close_non_ssl_server(void)
 {
   ThriftSSLSocket *tSSLSocket = NULL;
@@ -528,6 +546,7 @@ main(int argc, char *argv[])
 
   g_test_add_func ("/testtransportsslsocket/CreateAndDestroy", test_ssl_create_and_destroy);
   g_test_add_func ("/testtransportsslsocket/CreateAndSetProperties", test_ssl_create_and_set_properties);
+  g_test_add_func ("/testtransportsslsocket/ContextDefaultMinVersion", test_ssl_context_default_min_version);
   g_test_add_func ("/testtransportsslsocket/OpenAndCloseNonSSLServer", test_ssl_open_and_close_non_ssl_server);
   g_test_add_func ("/testtransportsslsocket/OpenAndWriteInvalidSocket", test_ssl_write_invalid_socket);
 

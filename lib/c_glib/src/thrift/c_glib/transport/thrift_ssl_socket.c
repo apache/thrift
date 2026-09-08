@@ -878,10 +878,15 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
   SSL_CTX_set_mode(context, SSL_MODE_AUTO_RETRY);
 
   /* Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
-     with older clients so they get a graceful denial. */
+     with older clients so they get a graceful denial. On the auto-negotiating
+     default, also decline the superseded TLS 1.0 and 1.1 so the floor matches
+     the modern default other bindings follow; an explicitly selected protocol
+     is left untouched. */
   if (ssl_protocol == SSLTLS) {
       SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
       SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);   /* THRIFT-3164 */
+      SSL_CTX_set_options(context, SSL_OP_NO_TLSv1);
+      SSL_CTX_set_options(context, SSL_OP_NO_TLSv1_1);
   }
 
   return context;
