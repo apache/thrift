@@ -19,31 +19,46 @@
 
 export CLASSPATH
 
-# Make sure this doesn't fail if ant is not configured.
+# Make sure this doesn't fail if gradle is not configured.
 clean-local:
-	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
-	$$ANT $(ANT_FLAGS) clean
+	GRADLE=$(GRADLE) ; if test -z "$$GRADLE" ; then GRADLE=: ; fi ; \
+	$$GRADLE $(GRADLE_OPTS) clean --console=plain
 
 all-local:
-	$(ANT) $(ANT_FLAGS) compile
+	$(GRADLE) $(GRADLE_OPTS) assemble \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
 check-local: all
-	$(ANT) $(ANT_FLAGS) test
+	$(GRADLE) $(GRADLE_OPTS) test \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
 tutorial: all
-	$(ANT) $(ANT_FLAGS) tutorial
+	$(GRADLE) $(GRADLE_OPTS) tutorial \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
 tutorialserver: all
-	$(ANT) $(ANT_FLAGS) tutorialserver
+	$(GRADLE) $(GRADLE_OPTS) tutorialServer \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
 tutorialclient: all
-	$(ANT) $(ANT_FLAGS) tutorialclient
+	$(GRADLE) $(GRADLE_OPTS) tutorialClient \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 EXTRA_DIST = \
-	build.properties \
-	build.xml \
+	build.gradle \
+	settings.gradle \
 	src \
 	README.md
