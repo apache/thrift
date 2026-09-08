@@ -1768,6 +1768,11 @@ void t_go_generator::generate_countsetfields_helper(ostream& out,
   out << indent() << "func (p *" << tstruct_name << ") CountSetFields" << tstruct_name << "() int {"
       << '\n';
   indent_up();
+  out << indent() << "if p == nil {" << '\n';
+  indent_up();
+  out << indent() << "return 0" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
   out << indent() << "count := 0" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED)
