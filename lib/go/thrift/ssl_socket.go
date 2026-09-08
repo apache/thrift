@@ -51,9 +51,8 @@ type TSSLSocket struct {
 //	    }
 //	})
 func NewTSSLSocketConf(hostPort string, conf *TConfiguration) *TSSLSocket {
-	if cfg := conf.GetTLSConfig(); cfg != nil && cfg.MinVersion == 0 {
-		cfg.MinVersion = tls.VersionTLS10
-	}
+	// Leave an unset MinVersion alone so crypto/tls applies its own default
+	// floor rather than pinning an older minimum here.
 	return &TSSLSocket{
 		hostPort: hostPort,
 		cfg:      conf,

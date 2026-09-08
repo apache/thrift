@@ -212,3 +212,18 @@ zero err time. Otherwise, the stop will wait for all the client
 connections to be closed gracefully util thrift.ServerStopTimeout is 
 reached, and client connections that are not closed after thrift.ServerStopTimeout 
 will be closed abruptly which may cause some client errors.
+
+A note about the minimum TLS version
+====================================
+
+The TLS socket constructors no longer pin a minimum protocol version of their
+own when the caller leaves `tls.Config.MinVersion` unset. Such a config now
+follows the `crypto/tls` default minimum -- TLS 1.2 in current Go releases --
+where the constructors previously set TLS 1.0.
+
+A `MinVersion` the caller sets is left untouched, so a caller that needs an
+older floor can ask for it explicitly:
+
+    conf := &thrift.TConfiguration{
+        TLSConfig: &tls.Config{MinVersion: tls.VersionTLS10},
+    }
