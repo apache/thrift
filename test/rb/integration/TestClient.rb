@@ -83,10 +83,10 @@ class SimpleClientTest < Test::Unit::TestCase
             keysDir = File.join(File.dirname(File.dirname(Dir.pwd)), "keys")
             ctx = OpenSSL::SSL::SSLContext.new
             ctx.ca_file = File.join(keysDir, "CA.pem")
-            ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "client.crt")))
+            ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "client_v3.crt")))
             ctx.cert_store = OpenSSL::X509::Store.new
             ctx.cert_store.add_file(File.join(keysDir, "server.pem"))
-            ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "client.key")))
+            ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "client_v3.key")))
             ctx.options = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
             ctx.ssl_version = :SSLv23
             ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER

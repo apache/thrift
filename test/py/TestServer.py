@@ -376,7 +376,7 @@ def main(options):
     host = None
     if options.ssl:
         keys_dir = os.path.join(os.path.dirname(SCRIPT_DIR), 'keys')
-        ca_certs = os.path.join(keys_dir, 'client.pem')
+        ca_certs = os.path.join(keys_dir, 'client_v3.crt')
         certfile = os.path.join(keys_dir, 'server.crt')
         keyfile = os.path.join(keys_dir, 'server.key')
         ssl_version = getattr(ssl, 'PROTOCOL_TLS_SERVER', ssl.PROTOCOL_TLSv1)

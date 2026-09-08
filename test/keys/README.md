@@ -70,6 +70,34 @@ sign the client certificate with the server.key
 
     openssl x509 -req -days 3000 -in client_v3.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client_v3.crt -extensions v3_req -extfile openssl.cnf
 
+## which certificate the cross tests use
+
+Every certificate here carries the same distinguished name, and none of them
+carries an authority key identifier, so OpenSSL treats each one as self-signed
+and never builds a chain to `CA.pem`. A peer certificate is therefore accepted
+only when the verifying side has that exact certificate in its store, and a
+store can hold only one certificate for a given distinguished name -- adding a
+second one for the same name shadows it rather than extending the trust.
+
+The two test servers that ask for a client certificate,
+`test/py/TestServer.py` and `test/rb/integration/TestServer.rb`, trust
+`client_v3.crt`. Every cross-test client that presents a certificate to them
+sends `client_v3.crt` with `client_v3.key`, including the Java and Kotlin
+clients through `lib/java/src/crossTest/resources/.clientkeystore`. The Python
+server additionally matches the certificate against the address the connection
+arrived from, which is why it has to be the certificate carrying the
+`subjectAltName` records above and not `client.crt`.
+
+`client.crt` stays without `subjectAltName` on purpose: `lib/py/test/test_sslsocket.py`
+uses it as `CLIENT_CERT_NO_IP` to exercise the rejection path.
+
+regenerate the client keystore after changing `client_v3`
+
+    openssl pkcs12 -export -in client_v3.crt -inkey client_v3.key \
+        -name 1 -passout pass:thrift \
+        -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg sha256 -iter 10000 \
+        -out ../../lib/java/src/crossTest/resources/.clientkeystore
+
 ## Java key and certificate import
 Java Test Environment uses key and trust store password "thrift" without the quotes
 
