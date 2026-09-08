@@ -445,9 +445,13 @@ OpenSSLManualInitTest_LDADD = \
 TSSLSocketMatchNameTest_SOURCES = \
 	TSSLSocketMatchNameTest.cpp
 
+# The test runs its listener on a boost::thread, so it links the boost thread
+# library the same way the other tests that start one do.
 TSSLSocketMatchNameTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(BOOST_TEST_LDADD) \
+	$(BOOST_SYSTEM_LDADD) \
+	$(BOOST_THREAD_LDADD) \
 	$(OPENSSL_LDFLAGS) \
 	$(OPENSSL_LIBS)
 
