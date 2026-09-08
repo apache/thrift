@@ -64,6 +64,16 @@ def legacy_validate_callback(cert, hostname):
         % (hostname, cert))
 
 
+def _unmap_ipv4(address):
+    """Reduce an IPv4-mapped IPv6 address to the IPv4 address it carries.
+
+    A dual-stack listener reports an IPv4 peer as ::ffff:127.0.0.1, while a
+    certificate normally carries the plain 127.0.0.1. They are the same
+    address and have to compare equal.
+    """
+    return getattr(address, 'ipv4_mapped', None) or address
+
+
 def match_peer_ipaddress(cert, hostname):
     """Check that a peer's certificate covers the IP address it connected from.
 
@@ -88,7 +98,7 @@ def match_peer_ipaddress(cert, hostname):
             'No SSL certificate found from %s' % hostname)
 
     try:
-        peer = ipaddress.ip_address(hostname)
+        peer = _unmap_ipv4(ipaddress.ip_address(hostname))
     except ValueError:
         raise TTransportException(
             TTransportException.NOT_OPEN,
@@ -104,7 +114,7 @@ def match_peer_ipaddress(cert, hostname):
         if kind != 'IP Address':
             continue
         try:
-            if ipaddress.ip_address(value) == peer:
+            if _unmap_ipv4(ipaddress.ip_address(value)) == peer:
                 return
         except ValueError:
             continue
