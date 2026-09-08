@@ -33,6 +33,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				$(RECURSIVE) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
+				NamespacedBaseTest.thrift \
 				MultiplexedProtocolTest.thrift \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift \
@@ -115,6 +116,9 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 check: gopath
 	$(GO) build $(GOBUILDEXTRA) \
 				./gopath/src/includestest \
+				./gopath/src/includestest/test_service-remote \
+				./gopath/src/includestest/extended_service-remote \
+				./gopath/src/includestest/extended2_service-remote \
 				./gopath/src/binarykeytest \
 				./gopath/src/containerkeytest \
 				./gopath/src/structkeytest \
@@ -180,6 +184,7 @@ EXTRA_DIST = \
 	InitialismsTest.thrift \
 	MultiplexedProtocolTest.thrift \
 	NamespacedTest.thrift \
+	NamespacedBaseTest.thrift \
 	NamesTest.thrift \
 	OnewayTest.thrift \
 	OptionalFieldsTest.thrift \

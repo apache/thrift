@@ -17,32 +17,8 @@
 # under the License.
 #
 
-include "ThriftTest.thrift"
-include "NamespacedBaseTest.thrift"
+namespace go lib.go.test.namespacedbasetest
 
-namespace go lib.go.test.namespacedtest
-
-enum Stuff {
-  ONE = 1,
-  TWO = 2,
+service NamespacedBaseService {
+  void baseList(1: list<i32> xs),
 }
-
-const i32 THREE = 3;
-
-typedef i64 UserId
-
-struct StuffStruct {
-  2: Stuff stuff,
-}
-
-exception StuffException {
-  1: string message,
-}
-
-service NamespacedService extends NamespacedBaseTest.NamespacedBaseService {
-  ThriftTest.UserId getUserID(),
-  void takeList(1: list<i32> xs),
-  void takeMap(1: map<string, StuffStruct> m),
-  void takeException(1: StuffException e),
-}
-

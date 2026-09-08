@@ -2551,7 +2551,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
  */
 void t_go_generator::generate_service_remote(t_service* tservice) {
   vector<t_function*> functions;
-  std::unordered_map<std::string, std::string> func_to_service;
+  std::unordered_map<std::string, t_service*> func_to_service;
 
   // collect all functions including inherited functions
   t_service* parent = tservice;
@@ -2559,14 +2559,15 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     vector<t_function*> p_functions = parent->get_functions();
     functions.insert(functions.end(), p_functions.begin(), p_functions.end());
 
-    // We need to maintain a map of functions names to the name of their parent.
-    // This is because functions may come from a parent service, and if we need
-    // to create the arguments struct (e.g. `NewParentServiceNameFuncNameArgs()`)
-    // we need to make sure to specify the correct service name.
+    // We need to maintain a map of function names to the service that declares
+    // them. This is because functions may come from a parent service, and if we
+    // need to create the arguments struct (e.g. `NewParentServiceNameFuncNameArgs()`)
+    // we need to make sure to specify the correct service name and, when the
+    // parent service lives in an included file, the correct package.
     for (vector<t_function*>::iterator f_iter = p_functions.begin(); f_iter != p_functions.end(); ++f_iter) {
       auto it = func_to_service.find((*f_iter)->get_name());
       if (it == func_to_service.end()) {
-        func_to_service.emplace((*f_iter)->get_name(), parent->get_name());
+        func_to_service.emplace((*f_iter)->get_name(), parent);
       }
     }
 
@@ -2615,6 +2616,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   std::map<std::string, const t_program*> local_programs;
   for (auto include : program_->get_includes()) {
     local_programs.emplace(get_real_go_module(include), include);
+  }
+  // A function inherited from a service declared in a file that this program
+  // does not include directly still needs that file's package for its args
+  // struct.
+  for (t_service* ancestor = tservice->get_extends(); ancestor != nullptr;
+       ancestor = ancestor->get_extends()) {
+    local_programs.emplace(get_real_go_module(ancestor->get_program()), ancestor->get_program());
   }
   local_programs.emplace(get_real_go_module(program_), program_);
   if (!local_programs.empty()) {
@@ -2840,7 +2848,15 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
-    string argumentsName(publicize(funcName + "_args", true, func_to_service[funcName]));
+    t_service* declaring_service = func_to_service[funcName];
+    string argumentsName(publicize(funcName + "_args", true, declaring_service->get_name()));
+    // The args struct is generated next to the service that declares the
+    // function, which is another package when that service comes from an
+    // included file.
+    string argumentsModule(module_name(declaring_service));
+    if (argumentsModule.empty()) {
+      argumentsModule = package_name_aliased;
+    }
     f_remote << indent() << "case \"" << escape_string(funcName) << "\":" << '\n';
     indent_up();
     f_remote << indent() << "if flag.NArg()-1 != " << num_args << " {" << '\n';
@@ -2865,7 +2881,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "return" << '\n';
         indent_down();
         f_remote << indent() << "}" << '\n';
-        f_remote << indent() << "argvalue" << i << " := " << package_name_aliased << "."
+        // An enum declared in an included file lives in that file's package, not
+        // in the one this service was generated into.
+        std::string enum_module(module_name(the_type));
+        if (enum_module.empty()) {
+          enum_module = package_name_aliased;
+        }
+        f_remote << indent() << "argvalue" << i << " := " << enum_module << "."
                  << publicize(the_type->get_name()) << "(tmp" << i << ")" << '\n';
       } else if (the_type2->is_base_type()) {
         t_base_type::t_base e = ((t_base_type*)the_type2)->get_base();
@@ -3024,7 +3046,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << '\n';
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << '\n';
-        f_remote << indent() << "containerStruct" << i << " := " << package_name_aliased << ".New"
+        f_remote << indent() << "containerStruct" << i << " := " << argumentsModule << ".New"
                  << argumentsName << "()" << '\n';
         f_remote << indent() << err2 << " := containerStruct" << i << ".ReadField" << (i + 1) << "(context.Background(), "
                  << jsProt << ")" << '\n';
