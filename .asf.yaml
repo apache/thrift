@@ -8,6 +8,8 @@ notifications:
   jira_options: link label worklog
 
 github:
+  description: "Apache Thrift"
+  homepage: https://thrift.apache.org/
   rulesets:
     - name: "Default Branch Protection"
       type: branch
