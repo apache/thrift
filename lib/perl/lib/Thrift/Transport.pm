@@ -36,6 +36,7 @@ use constant NOT_OPEN     => 1;
 use constant ALREADY_OPEN => 2;
 use constant TIMED_OUT    => 3;
 use constant END_OF_FILE  => 4;
+use constant SIZE_LIMIT   => 5;
 
 sub new {
     my $classname = shift;
