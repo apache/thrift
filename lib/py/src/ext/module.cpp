@@ -139,11 +139,36 @@ static PyObject* decode_compact(PyObject*, PyObject* args) {
   return decode_impl<CompactProtocol>(args);
 }
 
+static PyObject* decode_binary_from_bytes(PyObject*, PyObject* args) {
+  PyObject* bytes_obj = nullptr;
+  PyObject* typeargs = nullptr;
+  if (!PyArg_ParseTuple(args, "OO", &bytes_obj, &typeargs)) {
+    return nullptr;
+  }
+  if (!PyBytes_Check(bytes_obj)) {
+    PyErr_SetString(PyExc_TypeError, "first argument must be bytes");
+    return nullptr;
+  }
+
+  StructTypeArgs parsedargs;
+  if (!parse_struct_args(&parsedargs, typeargs)) {
+    return nullptr;
+  }
+
+  BinaryProtocol protocol;
+  if (!protocol.prepareDecodeBufferFromBytes(bytes_obj)) {
+    return nullptr;
+  }
+
+  return protocol.readStruct(Py_None, parsedargs.klass, parsedargs.spec);
+}
+
 static PyMethodDef ThriftFastBinaryMethods[] = {
     {"encode_binary", encode_binary, METH_VARARGS, ""},
     {"decode_binary", decode_binary, METH_VARARGS, ""},
     {"encode_compact", encode_compact, METH_VARARGS, ""},
     {"decode_compact", decode_compact, METH_VARARGS, ""},
+    {"decode_binary_from_bytes", decode_binary_from_bytes, METH_VARARGS, ""},
     {nullptr, nullptr, 0, nullptr} /* Sentinel */
 };
 
