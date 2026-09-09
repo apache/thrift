@@ -34,4 +34,5 @@ distdir:
 EXTRA_DIST = \
 	fuzz.go \
 	fuzz_test.go \
+	fuzz_native_test.go \
 	go.mod
