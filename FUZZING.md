@@ -48,6 +48,13 @@ To ensure fuzzing can find issues as soon as possible, we will enable fuzzing su
 
 Currently the only convenient, formally supported build with fuzzing support enabled is via the oss-fuzz workflow. For languages where local fuzzing is practical, documentation is provided alongside the fuzzers. For example, C++ builds libFuzzer binaries directly, while Ruby exposes `make` targets that wrap Ruzzy.
 
+Go additionally has native `testing.F` targets, in `lib/go/thrift/fuzz_test.go` and
+`lib/go/test/fuzz/fuzz_native_test.go`. Those need no external tooling, and run without `-fuzz`
+they replay their seed corpus as ordinary test cases -- so `make check` gets regression coverage
+from them for free, and a fixed input stays fixed once its file under `testdata/fuzz/<Target>/`
+is committed. To fuzz one for real, `go test -run '^$' -fuzz <Target> -fuzztime 2m`. See
+`lib/go/test/fuzz/README.md`.
+
 ## OSS-Fuzz Integration
 
 Our fuzzers run continuously on OSS-Fuzz. To view build status:
@@ -68,7 +75,8 @@ we would still appreciate contributions that:
 
 1. Add new fuzzers for unsupported languages
 2. Improve existing fuzzers
-3. Add test cases to corpus
+3. Add test cases to corpus -- where a language keeps its corpus in the tree, as Go does under
+   `testdata/fuzz/<Target>/`, an input that once failed belongs there
 
 If you do add or change a fuzzer, please remember to make corresponding changes to the oss-fuzz build script in case they are needed.
 
