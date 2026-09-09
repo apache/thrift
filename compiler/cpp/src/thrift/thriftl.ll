@@ -133,12 +133,17 @@ literal_begin (['\"])
   int state = 0;  // 0 = normal, 1 = "*" seen, "*/" seen
   while(state < 2)
   {
+    yyinput_reached_eof = false;
     int ch = yyinput();
     parsed.push_back(ch);
     switch (ch) {
-      case EOF:
-        yyerror("Unexpected end of file in doc-comment at %d\n", yylineno);
-        exit(1);
+      case 0:
+        if (yyinput_reached_eof) {
+          yyerror("Unexpected end of file in doc-comment at %d\n", yylineno);
+          exit(1);
+        }
+        state = 0;
+        break;
       case '*':
         state = 1;
         break;
@@ -176,12 +181,17 @@ literal_begin (['\"])
   int state = 0;  // 0 = normal, 1 = "*" seen, "*/" seen
   while(state < 2)
   {
+    yyinput_reached_eof = false;
     int ch = yyinput();
     parsed.push_back(ch);
     switch (ch) {
-      case EOF:
-        yyerror("Unexpected end of file in multiline comment at %d\n", yylineno);
-        exit(1);
+      case 0:
+        if (yyinput_reached_eof) {
+          yyerror("Unexpected end of file in multiline comment at %d\n", yylineno);
+          exit(1);
+        }
+        state = 0;
+        break;
       case '*':
         state = 1;
         break;
