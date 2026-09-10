@@ -22,7 +22,8 @@ import socket
 import struct
 import warnings
 
-from .transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
+from .transport.TTransport import (TTransportException, TTransportBase, TMemoryBuffer,
+                                   DEFAULT_MAX_FRAME_SIZE, HARD_MAX_FRAME_SIZE)
 
 from io import BytesIO
 from collections import deque
@@ -67,7 +68,8 @@ class _Lock:
 class TTornadoStreamTransport(TTransportBase):
     """a framed, buffered transport over a Tornado stream"""
 
-    def __init__(self, host, port, stream=None, io_loop=None):
+    def __init__(self, host, port, stream=None, io_loop=None,
+                 max_frame_size=DEFAULT_MAX_FRAME_SIZE):
         if io_loop is not None:
             warnings.warn(
                 "The `io_loop` parameter is deprecated and unused. Passing "
@@ -78,11 +80,15 @@ class TTornadoStreamTransport(TTransportBase):
                 DeprecationWarning,
                 stacklevel=2,
             )
+        if not 0 < max_frame_size <= HARD_MAX_FRAME_SIZE:
+            raise ValueError(
+                "max_frame_size should be > 0 and <= %d" % HARD_MAX_FRAME_SIZE)
         self.host = host
         self.port = port
         self.io_loop = ioloop.IOLoop.current()
         self.__wbuf = BytesIO()
         self._read_lock = _Lock()
+        self.__max_frame_size = max_frame_size
 
         # servers provide a ready-to-go stream
         self.stream = stream
@@ -153,6 +159,19 @@ class TTornadoStreamTransport(TTransportBase):
                 if len(frame_header) == 0:
                     raise iostream.StreamClosedError('Read zero bytes from stream')
                 frame_length, = struct.unpack('!i', frame_header)
+                # Check before reading, as TFramedTransport does: the stream
+                # buffers whatever arrives until the declared length is there,
+                # and read_bytes() given a negative length returns the wrong
+                # bytes instead of failing.
+                if frame_length < 0:
+                    raise TTransportException(
+                        TTransportException.NEGATIVE_SIZE,
+                        "Read a negative frame size (%d)" % frame_length)
+                if frame_length > self.__max_frame_size:
+                    raise TTransportException(
+                        TTransportException.SIZE_LIMIT,
+                        "Frame size (%d) larger than the maximum (%d)"
+                        % (frame_length, self.__max_frame_size))
                 frame = yield self.stream.read_bytes(frame_length)
                 raise gen.Return(frame)
 
@@ -170,18 +189,23 @@ class TTornadoStreamTransport(TTransportBase):
 
 class TTornadoServer(tcpserver.TCPServer):
     def __init__(self, processor, iprot_factory, oprot_factory=None,
-                 *args, **kwargs):
+                 *args, max_frame_size=DEFAULT_MAX_FRAME_SIZE, **kwargs):
+        if not 0 < max_frame_size <= HARD_MAX_FRAME_SIZE:
+            raise ValueError(
+                "max_frame_size should be > 0 and <= %d" % HARD_MAX_FRAME_SIZE)
         super(TTornadoServer, self).__init__(*args, **kwargs)
 
         self._processor = processor
         self._iprot_factory = iprot_factory
         self._oprot_factory = (oprot_factory if oprot_factory is not None
                                else iprot_factory)
+        self._max_frame_size = max_frame_size
 
     @gen.coroutine
     def handle_stream(self, stream, address):
         host, port = address[:2]
-        trans = TTornadoStreamTransport(host=host, port=port, stream=stream)
+        trans = TTornadoStreamTransport(host=host, port=port, stream=stream,
+                                        max_frame_size=self._max_frame_size)
         oprot = self._oprot_factory.getProtocol(trans)
 
         try:

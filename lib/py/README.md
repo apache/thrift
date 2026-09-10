@@ -40,6 +40,14 @@ Breaking Changes
 0.25.0
 ------
 
+TTornadoStreamTransport and TTornadoServer now refuse a frame whose declared size
+is negative or larger than max_frame_size, before reading it. The maximum defaults
+to DEFAULT_MAX_FRAME_SIZE (16384000 bytes), the one TFramedTransport and
+THeaderTransport already apply, and both classes take max_frame_size as a keyword
+argument. A service that exchanges larger frames over Tornado needs it raised where
+those frames are read: on TTornadoServer for requests, and on the client's
+TTornadoStreamTransport for responses.
+
 TSSLSocket now sets check_hostname on the SSL contexts it builds whenever it
 verifies the peer, so OpenSSL matches the server name against the certificate
 during the handshake, whatever protocol the client asked for.

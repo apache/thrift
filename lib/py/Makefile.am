@@ -36,6 +36,7 @@ py3-test: py3-build
 	$(PYTHON3) test/test_container_sizing.py
 	$(PYTHON3) test/test_framed_frame_size.py
 	$(PYTHON3) test/test_sasl_frame_size.py
+	$(PYTHON3) test/test_tornado_frame_size.py
 else
 py3-build:
 py3-test:
@@ -70,6 +71,7 @@ check-local: all py3-test
 	$(PYTHON) test/test_container_sizing.py
 	$(PYTHON) test/test_framed_frame_size.py
 	$(PYTHON) test/test_sasl_frame_size.py
+	$(PYTHON) test/test_tornado_frame_size.py
 
 
 clean-local:
