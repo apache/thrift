@@ -20,5 +20,5 @@
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
-EXTRA_DIST = binary_protocol_negative_size.t frame_size_limit.t memory_buffer.t processor.t multiplex.t \
+EXTRA_DIST = binary_protocol_negative_size.t frame_size_limit.t memory_buffer.t string_size_limit.t processor.t multiplex.t \
 	recursion_depth.t ssl_verify.t RecursionDepth.thrift

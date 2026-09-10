@@ -145,6 +145,15 @@ interception, and is only appropriate on a network you already trust.
 `Thrift::SSLServerSocket` is unchanged. The same branch on a listener means "do not
 demand a client certificate", which is the ordinary posture for a TLS server.
 
+`Thrift::BinaryProtocol` now refuses a string or binary field longer than its maximum
+string size before reading it, with a `Thrift::TProtocolException` of type `SIZE_LIMIT`.
+The maximum defaults to `Thrift::BinaryProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000
+bytes, the frame size limit the framed transports apply. It is the optional second
+argument of `Thrift::BinaryProtocol->new` and the first of
+`Thrift::BinaryProtocolFactory->new`; pass `0` to read strings of any length, as before:
+
+`my $protocol = Thrift::BinaryProtocol->new($transport, 0);`
+
 # Deprecations
 
 ## 0.11.0
