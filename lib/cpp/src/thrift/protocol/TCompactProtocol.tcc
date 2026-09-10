@@ -293,8 +293,8 @@ uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeUUID(const TUuid& uuid) {
-  trans_->write(uuid.data(), uuid.size());
-  return uuid.size();
+  trans_->write(uuid.data(), static_cast<uint32_t>(uuid.size()));
+  return static_cast<uint32_t>(uuid.size());
 }
 
 //
@@ -736,7 +736,7 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readUUID(TUuid& uuid) {
-  return trans_->readAll(uuid.begin(), uuid.size());
+  return trans_->readAll(uuid.begin(), static_cast<uint32_t>(uuid.size()));
 }
 
 /**

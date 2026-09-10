@@ -388,7 +388,7 @@ uint32_t TDebugProtocol::writeBinary(const string& str) {
 }
 
 uint32_t TDebugProtocol::writeUUID(const TUuid& uuid) {
-  size_t size = writePlain("{\n");
+  uint32_t size = writePlain("{\n");
   indentUp();
   size += writeIndented("[raw] = ");
   size += writeString(std::string(std::begin(uuid), std::end(uuid)));
