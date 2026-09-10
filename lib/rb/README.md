@@ -170,6 +170,12 @@ responsible for its verification mode and trust sources. A newly constructed
 a trust source alone does not enable certificate chain verification. The server
 certificate must still match the connection hostname.
 
+`Thrift::NonblockingServer` now closes a connection whose frame declares more than
+`max_frame_size` before it collects the frame. `max_frame_size` is a new keyword argument
+and defaults to `Thrift::FramedTransport::DEFAULT_MAX_FRAME_SIZE` (16,384,000 bytes), the
+limit `FramedTransport` already applies to the frame the worker reads back. A server that
+accepted larger frames must pass a higher `max_frame_size:` to keep doing so.
+
 `Thrift::Socket#open` now raises
 `Thrift::TransportException::ALREADY_OPEN` when the TCP transport is already
 open. Close the transport before opening it again.

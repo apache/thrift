@@ -222,6 +222,21 @@ describe "NonblockingServer" do
       @server.shutdown
     end
 
+    it "should close a connection whose frame is over the maximum" do
+      socket = TCPSocket.new("localhost", @port)
+      begin
+        socket.write([Thrift::FramedTransport::DEFAULT_MAX_FRAME_SIZE + 1].pack("N") + ("x" * 1024))
+        closed = Timeout.timeout(5) do
+          socket.read(1).nil?
+        rescue Errno::ECONNRESET
+          true
+        end
+        expect(closed).to be(true)
+      ensure
+        socket.close
+      end
+    end
+
     it "should shut down when asked" do
       # connect first to ensure it's running
       client = setup_client
@@ -286,8 +301,33 @@ describe "NonblockingServer" do
     end
   end
 
+  describe "NonblockingServer max_frame_size" do
+    def build_server(**options)
+      Thrift::NonblockingServer.new(
+        double("processor"), double("server_transport"), nil, nil, 1, Logger.new(IO::NULL),
+        **options,
+      )
+    end
+
+    it "is validated" do
+      [0, -1, Thrift::FramedTransport::HARD_MAX_FRAME_SIZE + 1].each do |bad|
+        expect { build_server(max_frame_size: bad) }.to raise_error(ArgumentError, /max_frame_size/)
+      end
+    end
+
+    it "is handed to the IOManager" do
+      server = build_server(max_frame_size: 100)
+      allow(Thrift::NonblockingServer::IOManager).to receive(:new).and_return(double("IOManager", spawn: nil))
+
+      server.send(:start_io_manager)
+
+      expect(Thrift::NonblockingServer::IOManager).to have_received(:new)
+        .with(anything, anything, anything, anything, 1, anything, max_frame_size: 100)
+    end
+  end
+
   describe Thrift::NonblockingServer::IOManager do
-    def build_io_manager
+    def build_io_manager(**options)
       logger = Logger.new(IO::NULL)
       logger.level = Logger::FATAL
       Thrift::NonblockingServer::IOManager.new(
@@ -297,6 +337,7 @@ describe "NonblockingServer" do
         Thrift::BinaryProtocolFactory.new,
         1,
         logger,
+        **options,
       )
     end
 
@@ -347,6 +388,72 @@ describe "NonblockingServer" do
 
       expect(io_manager.instance_variable_get(:@connections)).to be_empty
       expect(io_manager.instance_variable_get(:@buffers)).to be_empty
+    end
+
+    # The IOManager reads the four-byte size of a frame itself and collects
+    # that many bytes before a worker sees the frame, so the maximum has to be
+    # applied here, to the declared size, and not only by the FramedTransport
+    # the worker later reads the collected frame through.
+    def connection_sending(bytes)
+      connection = double("connection", close: nil)
+      allow(connection).to receive(:read).and_return(bytes)
+      connection
+    end
+
+    def read_from(io_manager, connection)
+      io_manager.instance_variable_set(:@connections, [connection])
+      io_manager.send(:read_connection, connection)
+    end
+
+    def frames_queued(io_manager)
+      queue = io_manager.instance_variable_get(:@worker_queue)
+      Array.new(queue.size) { queue.pop }
+    end
+
+    it "closes a connection whose frame is over the default maximum, before collecting it" do
+      io_manager = build_io_manager
+      connection = connection_sending([Thrift::FramedTransport::DEFAULT_MAX_FRAME_SIZE + 1].pack("N") + ("x" * 64))
+
+      read_from(io_manager, connection)
+
+      expect(connection).to have_received(:close)
+      expect(io_manager.instance_variable_get(:@connections)).to be_empty
+      expect(io_manager.instance_variable_get(:@buffers)).to be_empty
+      expect(frames_queued(io_manager)).to be_empty
+    end
+
+    it "closes a connection whose frame is over a given maximum, even once the whole frame has arrived" do
+      io_manager = build_io_manager(max_frame_size: 100)
+      connection = connection_sending([101].pack("N") + ("x" * 101))
+
+      read_from(io_manager, connection)
+
+      expect(connection).to have_received(:close)
+      expect(io_manager.instance_variable_get(:@buffers)).to be_empty
+      expect(frames_queued(io_manager)).to be_empty
+    end
+
+    it "still hands a frame at the maximum to the workers" do
+      io_manager = build_io_manager(max_frame_size: 100)
+      frame = [100].pack("N") + ("y" * 100)
+      connection = connection_sending(frame)
+
+      read_from(io_manager, connection)
+
+      expect(connection).not_to have_received(:close)
+      expect(io_manager.instance_variable_get(:@connections)).to eq([connection])
+      expect(frames_queued(io_manager)).to eq([[:frame, connection, frame]])
+    end
+
+    it "still hands an ordinary frame to the workers" do
+      io_manager = build_io_manager
+      frame = [13].pack("N") + ("z" * 13)
+      connection = connection_sending(frame)
+
+      read_from(io_manager, connection)
+
+      expect(connection).not_to have_received(:close)
+      expect(frames_queued(io_manager)).to eq([[:frame, connection, frame]])
     end
   end
 

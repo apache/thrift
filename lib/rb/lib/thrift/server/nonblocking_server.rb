@@ -24,9 +24,14 @@ require "thread"
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
   class NonblockingServer < BaseServer
-    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20, logger = nil)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20, logger = nil,
+                   max_frame_size: FramedTransport::DEFAULT_MAX_FRAME_SIZE)
       super(processor, server_transport, transport_factory, protocol_factory)
+      unless max_frame_size > 0 && max_frame_size <= FramedTransport::HARD_MAX_FRAME_SIZE
+        raise ArgumentError, "max_frame_size must be > 0 and <= #{FramedTransport::HARD_MAX_FRAME_SIZE}"
+      end
       @num_threads = num
+      @max_frame_size = max_frame_size
       if logger.nil?
         @logger = Logger.new(STDERR)
         @logger.level = Logger::WARN
@@ -96,7 +101,10 @@ module Thrift
     private
 
     def start_io_manager
-      iom = IOManager.new(@processor, @server_transport, @transport_factory, @protocol_factory, @num_threads, @logger)
+      iom = IOManager.new(
+        @processor, @server_transport, @transport_factory, @protocol_factory, @num_threads, @logger,
+        max_frame_size: @max_frame_size,
+      )
       iom.spawn
       iom
     end
@@ -104,13 +112,15 @@ module Thrift
     class IOManager # :nodoc:
       DEFAULT_BUFFER = 2**20
 
-      def initialize(processor, server_transport, transport_factory, protocol_factory, num, logger)
+      def initialize(processor, server_transport, transport_factory, protocol_factory, num, logger,
+                     max_frame_size: FramedTransport::DEFAULT_MAX_FRAME_SIZE)
         @processor = processor
         @server_transport = server_transport
         @transport_factory = transport_factory
         @protocol_factory = protocol_factory
         @num_threads = num
         @logger = logger
+        @max_frame_size = max_frame_size
         @connections = []
         @buffers = Hash.new { |h, k| h[k] = Bytes.empty_byte_buffer }
         @signal_queue = Queue.new
@@ -178,8 +188,22 @@ module Thrift
       end
 
       def read_connection(fd)
-        @buffers[fd] << fd.read(DEFAULT_BUFFER)
-        while (frame = slice_frame!(@buffers[fd]))
+        buf = @buffers[fd]
+        buf << fd.read(DEFAULT_BUFFER)
+        while buf.length >= 4
+          # Refuse the size before collecting the frame: the four-byte length
+          # is read here and the bytes are then buffered as they arrive, for as
+          # long as the declared length allows. FramedTransport applies the
+          # same maximum to the frame the worker later reads back.
+          size = buf.unpack1("N")
+          if size > @max_frame_size
+            @logger.error "Frame size #{size} exceeds maximum #{@max_frame_size}, closing connection"
+            fd.close
+            remove_connection fd
+            break
+          end
+          frame = slice_frame!(buf)
+          break if frame.nil?
           @logger.debug "#{self} is processing a frame"
           @worker_queue.push [:frame, fd, frame]
         end
