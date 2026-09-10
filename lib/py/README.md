@@ -66,3 +66,11 @@ an IP address and raises for a name rather than reporting a success it cannot ba
 Name matching belongs to OpenSSL on those versions. The only caller left in the
 library is TSSLServerSocket, which validates a client certificate against the
 address the connection arrived from.
+
+THttpServer now checks a request's Content-Length before it reads the body: a
+missing length is answered with 411, one that is not a non-negative number with
+400, and one larger than max_body_size with 413. max_body_size is a new constructor
+argument and defaults to DEFAULT_MAX_FRAME_SIZE (16384000 bytes), the limit
+TFramedTransport and THeaderTransport apply. The body is read whole before it is
+processed, so a length inside the message can no longer ask the connection for
+more than the body carries.
