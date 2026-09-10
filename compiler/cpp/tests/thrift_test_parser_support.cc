@@ -43,14 +43,29 @@ extern std::vector<std::string> g_incl_searchpath;
 
 // Error reporting used by the parser.
 void yyerror(const char* fmt, ...) {
-  std::fprintf(stderr, "[ERROR:%s:%d] ", g_curpath.c_str(), yylineno);
   va_list args;
   va_start(args, fmt);
-  std::vfprintf(stderr, fmt, args);
+  va_list size_args;
+  va_copy(size_args, args);
+  const int size = std::vsnprintf(nullptr, 0, fmt, size_args);
+  va_end(size_args);
+  if (size < 0) {
+    va_end(args);
+    throw std::runtime_error("Unable to format thrift parser error");
+  }
+  std::vector<char> message(size + 1);
+  const int written = std::vsnprintf(message.data(), message.size(), fmt, args);
   va_end(args);
-  std::fprintf(stderr, "\n");
+  if (written != size) {
+    throw std::runtime_error("Unable to format thrift parser error");
+  }
+  std::fprintf(stderr, "[ERROR:%s:%d] ", g_curpath.c_str(), yylineno);
+  std::fwrite(message.data(), 1, static_cast<size_t>(size), stderr);
+  if (size == 0 || message[size - 1] != '\n') {
+    std::fprintf(stderr, "\n");
+  }
 
-  throw std::runtime_error("thrift parser error");
+  throw std::runtime_error(std::string(message.data(), static_cast<size_t>(size)));
 }
 
 // Simplified helpers referenced by the grammar.
