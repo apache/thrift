@@ -74,6 +74,15 @@ the peer chooses, and the body does not pass through the line buffer that
 maxHttpBufferSize already bounds. A deployment that exchanges bodies larger than
 that has to raise the limit on the transport.
 
+thrift.transport.framed refuses a frame whose declared size exceeds
+frameSizeLimit before it allocates the read buffer for the frame. frameSizeLimit
+defaults to the 16 MB frame size limit the Thrift libraries use elsewhere; the
+frame length is a number the peer chooses, so previously a peer could make the
+transport reserve an arbitrary amount of memory by announcing a large frame. A
+deployment that exchanges framed messages larger than the limit has to raise it
+on the transport; a value of zero or less disables the check, restoring the
+previous behaviour.
+
 thrift.internal.ssl.authorize() consults the certificate's common name only when
 the certificate carries no DNS subjectAltName extension. Previously the common
 name was consulted whenever no subjectAltName entry had returned ALLOW, so a

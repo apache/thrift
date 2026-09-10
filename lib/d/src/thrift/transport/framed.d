@@ -22,8 +22,16 @@ module thrift.transport.framed;
 import core.bitop : bswap;
 import std.algorithm : min;
 import std.array : empty;
+import std.conv : to;
 import std.exception : enforce;
 import thrift.transport.base;
+
+/**
+ * The default maximum frame size accepted when reading, in bytes, matching the
+ * size limit used consistently across the Thrift libraries. A frame declaring
+ * a larger size is refused before its read buffer is allocated.
+ */
+enum int DEFAULT_FRAME_SIZE_LIMIT = 16384000;
 
 /**
  * Framed transport.
@@ -45,10 +53,41 @@ final class TFramedTransport : TBaseTransport {
   }
 
   /**
+   * Constructs a new framed transport, overriding the maximum frame size.
+   *
+   * Params:
+   *   transport = The underlying transport to wrap.
+   *   frameSizeLimit = The largest frame accepted when reading, in bytes; a
+   *     value of zero or less disables the check.
+   */
+  this(TTransport transport, int frameSizeLimit) {
+    transport_ = transport;
+    frameSizeLimit_ = frameSizeLimit;
+  }
+
+  /**
    * Returns the wrapped transport.
    */
   TTransport underlyingTransport() @property {
     return transport_;
+  }
+
+  /**
+   * The largest frame accepted when reading, in bytes.
+   *
+   * A frame whose declared size exceeds this is rejected before the read
+   * buffer is allocated for it, so a peer cannot make the transport reserve an
+   * arbitrary amount of memory by announcing a large frame. A value of zero or
+   * less disables the check, restoring the previous unbounded behaviour.
+   * Defaults to DEFAULT_FRAME_SIZE_LIMIT.
+   */
+  int frameSizeLimit() const @property {
+    return frameSizeLimit_;
+  }
+
+  /// Ditto
+  void frameSizeLimit(int value) @property {
+    frameSizeLimit_ = value;
   }
 
   override bool isOpen() @property {
@@ -160,6 +199,12 @@ private:
     enforce(size >= 0, new TTransportException("Frame size has negative value",
       TTransportException.Type.CORRUPTED_DATA));
 
+    if (frameSizeLimit_ > 0 && size > frameSizeLimit_) {
+      throw new TTransportException("Frame size (" ~ to!string(size) ~
+        ") exceeds the maximum allowed (" ~ to!string(frameSizeLimit_) ~ ")",
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+
     // TODO: Benchmark this.
     rBuf_.length = size;
     rBuf_.assumeSafeAppend();
@@ -171,6 +216,7 @@ private:
   TTransport transport_;
   ubyte[] rBuf_;
   ubyte[] wBuf_;
+  int frameSizeLimit_ = DEFAULT_FRAME_SIZE_LIMIT;
 }
 
 /**
@@ -179,8 +225,61 @@ private:
 alias TWrapperTransportFactory!TFramedTransport TFramedTransportFactory;
 
 version (unittest) {
+  import std.algorithm : canFind;
+  import std.exception : assertNotThrown, collectException;
   import std.random : Mt19937, uniform;
   import thrift.transport.memory;
+}
+
+// A frame declaring more than the size limit is refused before its read buffer
+// is allocated; a frame at or below the limit is read normally; and a
+// non-positive limit disables the check.
+unittest {
+  static TMemoryBuffer framedBuf(int size, const(ubyte)[] payload) {
+    auto buf = new TMemoryBuffer;
+    auto prefix = bswap(size);
+    buf.write(cast(ubyte[])(&prefix)[0 .. 1]);
+    if (!payload.empty) buf.write(payload);
+    return buf;
+  }
+
+  // The default limit is in force and is the value shared across the libraries.
+  assert(new TFramedTransport(new TMemoryBuffer).frameSizeLimit ==
+    DEFAULT_FRAME_SIZE_LIMIT);
+
+  // A frame one byte over a (small, custom) limit is rejected. The full
+  // payload is supplied so that the only thing that can refuse the read is the
+  // size check: without it the nine bytes read back cleanly (verified as the
+  // baseline), so a test that merely asserts "something threw" would pass on
+  // the unfixed transport too.
+  {
+    auto payload = cast(ubyte[])"123456789";
+    auto framed = new TFramedTransport(framedBuf(cast(int)payload.length, payload), 8);
+    auto readBuf = new ubyte[16];
+    auto ex = collectException!TTransportException(framed.read(readBuf));
+    assert(ex !is null, "an over-limit frame must be refused");
+    assert(ex.msg.canFind("exceeds"), "refused for the wrong reason: " ~ ex.msg);
+  }
+
+  // A frame at exactly the limit is accepted.
+  {
+    auto payload = cast(ubyte[])"12345678";
+    auto framed = new TFramedTransport(framedBuf(cast(int)payload.length, payload),
+      cast(int)payload.length);
+    auto readBuf = new ubyte[payload.length];
+    assertNotThrown!TTransportException(framed.readAll(readBuf));
+    assert(readBuf == payload);
+  }
+
+  // A non-positive limit disables the check, restoring unbounded behaviour.
+  {
+    auto payload = cast(ubyte[])"0123456789abcdef";
+    auto framed = new TFramedTransport(framedBuf(cast(int)payload.length, payload), 0);
+    assert(framed.frameSizeLimit == 0);
+    auto readBuf = new ubyte[payload.length];
+    assertNotThrown!TTransportException(framed.readAll(readBuf));
+    assert(readBuf == payload);
+  }
 }
 
 // Some basic random testing, always starting with the same seed for
