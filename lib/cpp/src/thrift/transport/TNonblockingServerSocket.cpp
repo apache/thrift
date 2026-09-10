@@ -381,12 +381,14 @@ void TNonblockingServerSocket::listen() {
     // address resolves "localhost" to nothing, and an explicit "::1" fails outright
     // with EAI_ADDRFAMILY -- so fall back to resolving without AI_ADDRCONFIG, which
     // is what TSocket::open() does for the same reason.
+    //
+    // AI_V4MAPPED stays out of both: it does nothing for the AF_UNSPEC query made here,
+    // and Android's getaddrinfo() rejects it with EAI_BADFLAGS whatever the family.
     try {
-      resolved_addresses.resolve(address_, port_str, SOCK_STREAM,
-                                 AI_PASSIVE | AI_V4MAPPED | AI_ADDRCONFIG);
+      resolved_addresses.resolve(address_, port_str, SOCK_STREAM, AI_PASSIVE | AI_ADDRCONFIG);
     } catch (const std::system_error&) {
       try {
-        resolved_addresses.resolve(address_, port_str, SOCK_STREAM, AI_PASSIVE | AI_V4MAPPED);
+        resolved_addresses.resolve(address_, port_str, SOCK_STREAM, AI_PASSIVE);
       } catch (const std::system_error& e) {
         TOutput::instance().printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
         close();
