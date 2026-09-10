@@ -25,6 +25,7 @@ py3-build:
 py3-test: py3-build
 	$(PYTHON3) test/thrift_json.py
 	$(PYTHON3) test/thrift_transport.py
+	$(PYTHON3) test/test_nonblocking_server_frame_size.py
 	$(PYTHON3) test/test_sslsocket.py
 	$(PYTHON3) test/thrift_TBinaryProtocol.py
 	$(PYTHON3) test/thrift_THeaderProtocol.py
@@ -60,6 +61,7 @@ install-exec-hook:
 check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
 	$(PYTHON) test/thrift_transport.py
+	$(PYTHON) test/test_nonblocking_server_frame_size.py
 	$(PYTHON) test/test_sslsocket.py
 	$(PYTHON) test/test_socket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py

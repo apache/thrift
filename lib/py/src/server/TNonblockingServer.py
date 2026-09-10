@@ -116,7 +116,7 @@ class Connection(object):
                         of answer).
         CLOSED --- socket was closed and connection should be deleted.
     """
-    def __init__(self, new_socket, wake_up):
+    def __init__(self, new_socket, wake_up, max_frame_size=TTransport.DEFAULT_MAX_FRAME_SIZE):
         self.socket = new_socket
         self.socket.setblocking(False)
         self.status = WAIT_LEN
@@ -128,6 +128,7 @@ class Connection(object):
         self.lock = threading.Lock()
         self.wake_up = wake_up
         self.remaining = False
+        self.max_frame_size = max_frame_size
 
     @socket_exception
     def read(self):
@@ -153,6 +154,14 @@ class Connection(object):
                     mlen, = struct.unpack('!i', self._rbuf[:4])
                     if mlen < 0:
                         logger.error('could not read the head from frame')
+                        self.close()
+                        break
+                    # Refuse the size before collecting the frame: the bytes
+                    # are buffered as they arrive, for as long as the declared
+                    # length allows.
+                    if mlen > self.max_frame_size:
+                        logger.error('frame size %d is larger than the maximum %d',
+                                     mlen, self.max_frame_size)
                         self.close()
                         break
                     self._reading = Message(self._reading.end, mlen, False)
@@ -242,12 +251,17 @@ class TNonblockingServer(object):
                  lsocket,
                  inputProtocolFactory=None,
                  outputProtocolFactory=None,
-                 threads=10):
+                 threads=10,
+                 max_frame_size=TTransport.DEFAULT_MAX_FRAME_SIZE):
+        if not 0 < max_frame_size <= TTransport.HARD_MAX_FRAME_SIZE:
+            raise ValueError(
+                "max_frame_size should be > 0 and <= %d" % TTransport.HARD_MAX_FRAME_SIZE)
         self.processor = processor
         self.socket = lsocket
         self.in_protocol = inputProtocolFactory or TBinaryProtocolFactory()
         self.out_protocol = outputProtocolFactory or self.in_protocol
         self.threads = int(threads)
+        self.max_frame_size = max_frame_size
         self.clients = {}
         self.tasks = queue.Queue()
         self._read, self._write = socket.socketpair()
@@ -375,7 +389,8 @@ class TNonblockingServer(object):
                     client = self.socket.accept()
                     if client:
                         self.clients[client.handle.fileno()] = Connection(client.handle,
-                                                                          self.wake_up)
+                                                                          self.wake_up,
+                                                                          self.max_frame_size)
                 except socket.error:
                     logger.debug('error while accepting', exc_info=True)
             else:
