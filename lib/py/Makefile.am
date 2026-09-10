@@ -30,6 +30,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TBinaryProtocol.py
 	$(PYTHON3) test/thrift_THeaderProtocol.py
 	$(PYTHON3) test/thrift_TZlibTransport.py
+	$(PYTHON3) test/test_twisted_frame_size.py
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
 	$(PYTHON3) test/test_http_server_body_size.py
@@ -67,6 +68,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TBinaryProtocol.py
 	$(PYTHON) test/thrift_THeaderProtocol.py
 	$(PYTHON) test/thrift_TZlibTransport.py
+	$(PYTHON) test/test_twisted_frame_size.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/test_http_server_body_size.py

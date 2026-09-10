@@ -60,7 +60,7 @@ class TCallbackTransport(TMessageSenderTransport):
 
 class ThriftClientProtocol(basic.Int32StringReceiver):
 
-    MAX_LENGTH = 2 ** 31 - 1
+    MAX_LENGTH = TTransport.DEFAULT_MAX_FRAME_SIZE
 
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self._client_class = client_class
@@ -117,7 +117,7 @@ class ThriftSASLClientProtocol(ThriftClientProtocol):
     ERROR = 4
     COMPLETE = 5
 
-    MAX_LENGTH = 2 ** 31 - 1
+    MAX_LENGTH = TTransport.DEFAULT_MAX_FRAME_SIZE
 
     def __init__(self, client_class, iprot_factory, oprot_factory=None,
                  host=None, service=None, mechanism='GSSAPI', **sasl_kwargs):
@@ -213,7 +213,7 @@ class ThriftSASLClientProtocol(ThriftClientProtocol):
 
 class ThriftServerProtocol(basic.Int32StringReceiver):
 
-    MAX_LENGTH = 2 ** 31 - 1
+    MAX_LENGTH = TTransport.DEFAULT_MAX_FRAME_SIZE
 
     def dispatch(self, msg):
         self.sendString(msg)

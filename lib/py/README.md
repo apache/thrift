@@ -87,3 +87,8 @@ TNonblockingServer now closes a connection whose frame declares more than
 max_frame_size, instead of collecting the frame. max_frame_size is a new constructor
 argument and defaults to DEFAULT_MAX_FRAME_SIZE (16384000 bytes), the limit
 TFramedTransport and THeaderTransport apply.
+
+The Twisted protocols in TTwisted (ThriftServerProtocol, ThriftClientProtocol and
+ThriftSASLClientProtocol) now close a connection whose frame declares more than
+DEFAULT_MAX_FRAME_SIZE (16384000 bytes); they used to accept frames of up to 2**31 - 1
+bytes. MAX_LENGTH is still a class attribute, so a subclass can raise it.
