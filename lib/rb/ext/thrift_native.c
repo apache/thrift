@@ -103,6 +103,7 @@ ID transport_ivar_id;
 ID reset_message_size_ivar_id;
 ID strict_read_ivar_id;
 ID strict_write_ivar_id;
+ID max_string_size_ivar_id;
 
 // cached symbols
 VALUE type_sym;
@@ -213,6 +214,7 @@ RUBY_FUNC_EXPORTED void Init_thrift_native(void) {
   reset_message_size_ivar_id = rb_intern("@reset_message_size");
   strict_read_ivar_id = rb_intern("@strict_read");
   strict_write_ivar_id = rb_intern("@strict_write");
+  max_string_size_ivar_id = rb_intern("@max_string_size");
 
   // cached symbols
   type_sym = ID2SYM(rb_intern("type"));

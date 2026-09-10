@@ -186,6 +186,13 @@ protocols and custom struct, union, or exception serialization overrides with
 exact argument counts must accept and forward the optional depth argument (or
 use `*args`) before upgrading.
 
+`Thrift::BinaryProtocol`, `Thrift::BinaryProtocolAccelerated` and `Thrift::CompactProtocol`
+now refuse a string or binary field longer than `max_string_size` before reading it,
+with a `ProtocolException` of type `SIZE_LIMIT`. The maximum defaults to
+`Thrift::BaseProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes, the frame size limit
+the framed transports apply, and is a keyword argument of the three protocols and
+their factories. Pass `max_string_size: nil` to read strings of any length, as before.
+
 ### 0.24.0
 
 Connect timeout handling changed for both `Thrift::Socket` and

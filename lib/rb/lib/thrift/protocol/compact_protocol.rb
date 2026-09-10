@@ -117,8 +117,12 @@ module Thrift
       end
     end
 
-    def initialize(transport)
+    attr_reader :max_string_size
+
+    def initialize(transport, max_string_size: DEFAULT_MAX_STRING_SIZE)
+      BaseProtocol.validate_max_string_size(max_string_size)
       super(transport)
+      @max_string_size = max_string_size
       @reset_message_size = transport.message_boundaries?
 
       @last_field = [0]
@@ -424,6 +428,7 @@ module Thrift
       if size > I32_MAX
         raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "Binary size limit exceeded")
       end
+      check_string_size(size)
       trans.read_all(size)
     end
 
@@ -563,8 +568,12 @@ module Thrift
   end
 
   class CompactProtocolFactory < BaseProtocolFactory
+    def initialize(max_string_size: BaseProtocol::DEFAULT_MAX_STRING_SIZE)
+      @max_string_size = max_string_size
+    end
+
     def get_protocol(trans)
-      CompactProtocol.new(trans)
+      CompactProtocol.new(trans, max_string_size: @max_string_size)
     end
 
     def to_s

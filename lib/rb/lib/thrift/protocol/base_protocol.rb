@@ -43,6 +43,13 @@ module Thrift
   class BaseProtocol
     MAX_CONTAINER_SIZE = (1 << 31) - 1
 
+    # The longest string or binary field BinaryProtocol and CompactProtocol read
+    # by default: the frame size limit the framed transports apply. A string's
+    # length is the read size handed to the transport, and an unframed transport
+    # has no frame to bound it. Pass max_string_size: nil to read strings of any
+    # length.
+    DEFAULT_MAX_STRING_SIZE = 16_384_000
+
     attr_reader :trans
 
     def initialize(trans)
@@ -51,6 +58,21 @@ module Thrift
 
     def native?
       false
+    end
+
+    # Raises a SIZE_LIMIT ProtocolException when a declared string length is over
+    # the protocol's max_string_size.
+    def check_string_size(size)
+      max = @max_string_size
+      return if max.nil? || size <= max
+
+      raise ProtocolException.new(ProtocolException::SIZE_LIMIT, "String size #{size} larger than the maximum #{max}")
+    end
+
+    def self.validate_max_string_size(max_string_size)
+      return if max_string_size.nil? || (max_string_size.is_a?(Integer) && max_string_size > 0)
+
+      raise ArgumentError, "max_string_size must be nil or a positive Integer"
     end
 
     def write_message_begin(name, type, seqid)

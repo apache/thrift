@@ -87,6 +87,7 @@ extern ID transport_ivar_id;
 extern ID reset_message_size_ivar_id;
 extern ID strict_read_ivar_id;
 extern ID strict_write_ivar_id;
+extern ID max_string_size_ivar_id;
 
 extern VALUE type_sym;
 extern VALUE name_sym;

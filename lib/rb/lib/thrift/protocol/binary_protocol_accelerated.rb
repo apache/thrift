@@ -29,11 +29,15 @@ See MemoryBuffer and BufferedTransport for examples.
 
 module Thrift
   class BinaryProtocolAcceleratedFactory < BaseProtocolFactory
+    def initialize(max_string_size: BaseProtocol::DEFAULT_MAX_STRING_SIZE)
+      @max_string_size = max_string_size
+    end
+
     def get_protocol(trans)
       if (defined? BinaryProtocolAccelerated)
-        BinaryProtocolAccelerated.new(trans)
+        BinaryProtocolAccelerated.new(trans, max_string_size: @max_string_size)
       else
-        BinaryProtocol.new(trans)
+        BinaryProtocol.new(trans, max_string_size: @max_string_size)
       end
     end
 

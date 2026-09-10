@@ -696,6 +696,7 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
   if (RB_UNLIKELY(size > INT32_MAX)) {
     rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_SIZE_LIMIT), rb_str_new2("Binary size limit exceeded")));
   }
+  CHECK_STRING_SIZE(self, size);
   return rb_funcall(GET_TRANSPORT(self), read_all_method_id, 1, UINT2NUM(size));
 }
 

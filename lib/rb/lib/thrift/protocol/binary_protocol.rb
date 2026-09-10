@@ -32,13 +32,15 @@ module Thrift
     I64_MIN = -2**63
     I64_MAX = (2**63) - 1
 
-    attr_reader :strict_read, :strict_write
+    attr_reader :strict_read, :strict_write, :max_string_size
 
-    def initialize(trans, strict_read = true, strict_write = true)
+    def initialize(trans, strict_read = true, strict_write = true, max_string_size: DEFAULT_MAX_STRING_SIZE)
+      BaseProtocol.validate_max_string_size(max_string_size)
       super(trans)
       @reset_message_size = trans.message_boundaries?
       @strict_read = strict_read
       @strict_write = strict_write
+      @max_string_size = max_string_size
 
       # Pre-allocated read buffer for fixed-size read methods. Needs to be at least 8 bytes long for
       # read_i64() and read_double().
@@ -158,6 +160,7 @@ module Thrift
         if strict_read
           raise ProtocolException.new(ProtocolException::BAD_VERSION, "No version identifier, old protocol client?")
         end
+        check_string_size(version)
         name = trans.read_all(version)
         type = read_byte
         seqid = read_i32
@@ -255,6 +258,7 @@ module Thrift
     def read_binary
       size = read_i32
       if size >= 0
+        check_string_size(size)
         trans.read_all(size)
       else
         raise ProtocolException.new(ProtocolException::NEGATIVE_SIZE, "Negative size")
@@ -284,8 +288,12 @@ module Thrift
   end
 
   class BinaryProtocolFactory < BaseProtocolFactory
+    def initialize(max_string_size: BaseProtocol::DEFAULT_MAX_STRING_SIZE)
+      @max_string_size = max_string_size
+    end
+
     def get_protocol(trans)
-      Thrift::BinaryProtocol.new(trans)
+      Thrift::BinaryProtocol.new(trans, max_string_size: @max_string_size)
     end
 
     def to_s

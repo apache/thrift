@@ -417,7 +417,7 @@ describe Thrift::CompactProtocol do
 
   it "should accept binary sizes through the signed 32-bit range" do
     trans = Thrift::MemoryBufferTransport.new(VARINT32_SIZE_ENCODINGS.fetch((2**31) - 1).pack("C*"))
-    proto = Thrift::CompactProtocol.new(trans)
+    proto = Thrift::CompactProtocol.new(trans, max_string_size: nil)
     expect(trans).to receive(:read_all).with((2**31) - 1).and_return("payload")
 
     expect(proto.read_binary).to eq("payload")

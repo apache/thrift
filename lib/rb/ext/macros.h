@@ -24,6 +24,17 @@
 #define CHECK_NIL(obj) if (NIL_P(obj)) { rb_raise(rb_eStandardError, "nil argument not allowed!");}
 #define READ(obj, length) rb_funcall(GET_TRANSPORT(obj), read_all_method_id, 1, INT2FIX(length))
 
+// Refuse a declared string length over the protocol's @max_string_size (nil
+// means no limit) before it becomes a read size.
+#define CHECK_STRING_SIZE(obj, size) \
+  do { \
+    VALUE max_string_size_ = rb_ivar_get(obj, max_string_size_ivar_id); \
+    if (!NIL_P(max_string_size_) && RB_UNLIKELY((long long)(size) > NUM2LL(max_string_size_))) { \
+      rb_exc_raise(get_protocol_exception(INT2FIX(PROTOERR_SIZE_LIMIT), \
+        rb_sprintf("String size %lld larger than the maximum %lld", (long long)(size), NUM2LL(max_string_size_)))); \
+    } \
+  } while (0)
+
 #ifndef RFLOAT_VALUE
 #  define RFLOAT_VALUE(v) RFLOAT(rb_Float(v))->value
 #endif
