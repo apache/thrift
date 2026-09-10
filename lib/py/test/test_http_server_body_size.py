@@ -42,8 +42,8 @@ WAIT = 2.0
 
 def message(name=b'ping'):
     """A strict binary CALL header followed by an empty argument struct."""
-    return (struct.pack('!i', -2147418111) + struct.pack('!i', len(name)) + name
-            + struct.pack('!i', 0) + b'\x00')
+    return (struct.pack('!i', -2147418111) + struct.pack('!i', len(name)) + name +
+            struct.pack('!i', 0) + b'\x00')
 
 
 class RecordingProcessor(object):
