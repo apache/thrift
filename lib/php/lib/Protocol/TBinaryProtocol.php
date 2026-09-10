@@ -42,6 +42,7 @@ class TBinaryProtocol extends TProtocol
         TTransport $trans,
         protected bool $strictRead = false,
         protected bool $strictWrite = true,
+        protected int $maxStringSize = self::DEFAULT_MAX_STRING_SIZE,
     ) {
         parent::__construct($trans);
     }
@@ -248,6 +249,7 @@ class TBinaryProtocol extends TProtocol
                 );
             } else {
                 // Handle pre-versioned input
+                $this->checkStringSize($sz, $this->maxStringSize);
                 $name = $this->trans->readAll($sz);
                 $result +=
                     $sz +
@@ -465,6 +467,7 @@ class TBinaryProtocol extends TProtocol
         if ($len < 0) {
             throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
         }
+        $this->checkStringSize($len, $this->maxStringSize);
         if ($len) {
             $str = $this->trans->readAll($len);
         } else {

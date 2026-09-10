@@ -33,8 +33,13 @@ use Thrift\Transport\TTransport;
  */
 class TCompactProtocolFactory implements TProtocolFactory
 {
+    public function __construct(
+        private int $maxStringSize = TCompactProtocol::DEFAULT_MAX_STRING_SIZE,
+    ) {
+    }
+
     public function getProtocol(TTransport $trans): TCompactProtocol
     {
-        return new TCompactProtocol($trans);
+        return new TCompactProtocol($trans, $this->maxStringSize);
     }
 }

@@ -36,11 +36,12 @@ class TBinaryProtocolFactory implements TProtocolFactory
     public function __construct(
         private bool $strictRead = false,
         private bool $strictWrite = false,
+        private int $maxStringSize = TBinaryProtocol::DEFAULT_MAX_STRING_SIZE,
     ) {
     }
 
     public function getProtocol(TTransport $trans): TBinaryProtocol
     {
-        return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
+        return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite, $this->maxStringSize);
     }
 }

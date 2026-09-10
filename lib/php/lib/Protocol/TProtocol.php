@@ -37,6 +37,14 @@ abstract class TProtocol
 {
     public const DEFAULT_RECURSION_DEPTH = 64;
 
+    /**
+     * The longest string or binary field TBinaryProtocol and TCompactProtocol
+     * read by default: the frame size limit the framed transports apply. A
+     * string's length is the read size handed to the transport, and an unframed
+     * transport has no frame to bound it. A maximum of 0 means no limit.
+     */
+    public const DEFAULT_MAX_STRING_SIZE = 16384000;
+
     private int $recursionDepth = 0;
 
     protected function __construct(protected TTransport $trans)
@@ -46,6 +54,19 @@ abstract class TProtocol
     public function getTransport(): TTransport
     {
         return $this->trans;
+    }
+
+    /**
+     * @throws TProtocolException if $len is over $maxStringSize (0 means no limit)
+     */
+    protected function checkStringSize(int $len, int $maxStringSize): void
+    {
+        if ($maxStringSize > 0 && $len > $maxStringSize) {
+            throw new TProtocolException(
+                "String size ($len) larger than the maximum ($maxStringSize)",
+                TProtocolException::SIZE_LIMIT
+            );
+        }
     }
 
     public function incrementRecursionDepth(): void

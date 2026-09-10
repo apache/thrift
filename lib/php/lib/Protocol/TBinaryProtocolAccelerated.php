@@ -34,8 +34,12 @@ use Thrift\Transport\TTransport;
  */
 class TBinaryProtocolAccelerated extends TBinaryProtocol
 {
-    public function __construct(TTransport $trans, bool $strictRead = false, bool $strictWrite = true)
-    {
+    public function __construct(
+        TTransport $trans,
+        bool $strictRead = false,
+        bool $strictWrite = true,
+        int $maxStringSize = self::DEFAULT_MAX_STRING_SIZE,
+    ) {
         // If the transport doesn't implement putBack, wrap it in a
         // TBufferedTransport (which does)
 
@@ -56,7 +60,7 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol
         if (!method_exists($trans, 'putBack')) {
             $trans = new TBufferedTransport($trans);
         }
-        parent::__construct($trans, $strictRead, $strictWrite);
+        parent::__construct($trans, $strictRead, $strictWrite, $maxStringSize);
     }
 
     public function isStrictRead(): bool

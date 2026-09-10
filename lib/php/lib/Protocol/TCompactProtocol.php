@@ -168,8 +168,10 @@ class TCompactProtocol extends TProtocol
         throw new TProtocolException('Variable-length int over 10 bytes.', TProtocolException::INVALID_DATA);
     }
 
-    public function __construct(TTransport $trans)
-    {
+    public function __construct(
+        TTransport $trans,
+        protected int $maxStringSize = self::DEFAULT_MAX_STRING_SIZE,
+    ) {
         parent::__construct($trans);
     }
 
@@ -600,6 +602,7 @@ class TCompactProtocol extends TProtocol
     public function readString(?string &$str): int
     {
         $result = $this->readVarint($len);
+        $this->checkStringSize($len, $this->maxStringSize);
         if ($len) {
             $str = $this->trans->readAll($len);
         } else {

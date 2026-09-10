@@ -53,6 +53,10 @@ apcu_fetch(), apcu_store()
 
 # Breaking Changes
 
+## 0.25.0
+
+1. `TBinaryProtocol`, `TBinaryProtocolAccelerated` and `TCompactProtocol` now refuse a string or binary field longer than their maximum string size before reading it, with a `TProtocolException` of type `SIZE_LIMIT`. The maximum defaults to `TProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes, the frame size limit the framed transports apply. It is an optional constructor argument of the three protocols and of their factories; pass `0` to read strings of any length, as before.
+
 ## 0.12.0
 
 1. [PSR-4](https://www.php-fig.org/psr/psr-4/) loader is now the default. If you want to use class maps instead, use `-gen php:classmap`.
