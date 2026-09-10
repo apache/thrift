@@ -688,16 +688,6 @@ AC_CHECK_TYPES([ptrdiff_t], [], [echo "ptrdiff_t not found or g++ not installed 
 
 AC_STRUCT_TM
 
-dnl NOTE(dreiss): AI_V4MAPPED is not defined on OpenBSD.
-AC_CHECK_DECL([AI_V4MAPPED], [],
-              [AC_DEFINE([AI_V4MAPPED], 0,
-                         [Define if the AI_V4MAPPED symbol is unavailable])],
-              [
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netdb.h>
-])
-
 AC_FUNC_ALLOCA
 AC_FUNC_FORK
 AC_FUNC_MALLOC
