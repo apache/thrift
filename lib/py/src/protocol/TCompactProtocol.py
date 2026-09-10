@@ -17,7 +17,8 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
+from .TProtocol import (TType, TProtocolBase, TProtocolException, TProtocolFactory,
+                        checkIntegerLimits, DEFAULT_STRING_LENGTH_LIMIT)
 from struct import pack, unpack
 import uuid
 
@@ -139,7 +140,7 @@ class TCompactProtocol(TProtocolBase):
     TYPE_SHIFT_AMOUNT = 5
 
     def __init__(self, trans,
-                 string_length_limit=None,
+                 string_length_limit=DEFAULT_STRING_LENGTH_LIMIT,
                  container_length_limit=None):
         TProtocolBase.__init__(self, trans)
         self.state = CLEAR
@@ -447,7 +448,7 @@ class TCompactProtocol(TProtocolBase):
 
 class TCompactProtocolFactory(TProtocolFactory):
     def __init__(self,
-                 string_length_limit=None,
+                 string_length_limit=DEFAULT_STRING_LENGTH_LIMIT,
                  container_length_limit=None):
         self.string_length_limit = string_length_limit
         self.container_length_limit = container_length_limit
@@ -489,7 +490,7 @@ class TCompactProtocolAccelerated(TCompactProtocol):
 
 class TCompactProtocolAcceleratedFactory(TProtocolFactory):
     def __init__(self,
-                 string_length_limit=None,
+                 string_length_limit=DEFAULT_STRING_LENGTH_LIMIT,
                  container_length_limit=None,
                  fallback=True):
         self.string_length_limit = string_length_limit

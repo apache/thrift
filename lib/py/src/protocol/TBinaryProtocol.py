@@ -20,7 +20,8 @@
 from struct import pack, unpack
 import uuid
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
+from .TProtocol import (TType, TProtocolBase, TProtocolException, TProtocolFactory,
+                        DEFAULT_STRING_LENGTH_LIMIT)
 
 
 class TBinaryProtocol(TProtocolBase):
@@ -42,7 +43,7 @@ class TBinaryProtocol(TProtocolBase):
         TProtocolBase.__init__(self, trans)
         self.strictRead = strictRead
         self.strictWrite = strictWrite
-        self.string_length_limit = kwargs.get('string_length_limit', None)
+        self.string_length_limit = kwargs.get('string_length_limit', DEFAULT_STRING_LENGTH_LIMIT)
         self.container_length_limit = kwargs.get('container_length_limit', None)
 
     def _check_string_length(self, length):
@@ -150,6 +151,7 @@ class TBinaryProtocol(TProtocolBase):
             if self.strictRead:
                 raise TProtocolException(type=TProtocolException.BAD_VERSION,
                                          message='No protocol version header')
+            self._check_string_length(sz)
             name = self.trans.readAll(sz).decode('utf-8')
             type = self.readByte()
             seqid = self.readI32()
@@ -249,7 +251,7 @@ class TBinaryProtocolFactory(TProtocolFactory):
     def __init__(self, strictRead=False, strictWrite=True, **kwargs):
         self.strictRead = strictRead
         self.strictWrite = strictWrite
-        self.string_length_limit = kwargs.get('string_length_limit', None)
+        self.string_length_limit = kwargs.get('string_length_limit', DEFAULT_STRING_LENGTH_LIMIT)
         self.container_length_limit = kwargs.get('container_length_limit', None)
 
     def getProtocol(self, trans):
@@ -296,7 +298,7 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
 
 class TBinaryProtocolAcceleratedFactory(TProtocolFactory):
     def __init__(self,
-                 string_length_limit=None,
+                 string_length_limit=DEFAULT_STRING_LENGTH_LIMIT,
                  container_length_limit=None,
                  fallback=True):
         self.string_length_limit = string_length_limit

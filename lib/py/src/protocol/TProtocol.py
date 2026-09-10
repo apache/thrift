@@ -18,9 +18,16 @@
 #
 
 from thrift.Thrift import TException, TType, TFrozenDict
-from thrift.transport.TTransport import TTransportException
+from thrift.transport.TTransport import TTransportException, DEFAULT_MAX_FRAME_SIZE
 
 from itertools import islice
+
+# The longest string or binary field TBinaryProtocol and TCompactProtocol read
+# unless told otherwise. A length read from the wire becomes the read size the
+# protocol asks of its transport, and an unframed transport has no frame limit to
+# bound it, so the protocols apply the frame size limit themselves. Pass
+# string_length_limit=None to read strings of any length.
+DEFAULT_STRING_LENGTH_LIMIT = DEFAULT_MAX_FRAME_SIZE
 
 
 class TProtocolException(TException):

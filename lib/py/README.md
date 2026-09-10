@@ -74,3 +74,11 @@ argument and defaults to DEFAULT_MAX_FRAME_SIZE (16384000 bytes), the limit
 TFramedTransport and THeaderTransport apply. The body is read whole before it is
 processed, so a length inside the message can no longer ask the connection for
 more than the body carries.
+
+TBinaryProtocol and TCompactProtocol, their accelerated variants and their
+factories now refuse a string or binary field longer than string_length_limit by
+default, before reading it. The default is DEFAULT_STRING_LENGTH_LIMIT in
+thrift.protocol.TProtocol, 16384000 bytes, the frame size limit the framed and
+header transports already apply. Pass string_length_limit=None to read strings of
+any length, as before. Without strictRead, TBinaryProtocol now applies the same
+limit to the method name of an old-style message header.
