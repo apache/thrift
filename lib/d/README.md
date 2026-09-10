@@ -105,3 +105,13 @@ thrift.transport.ssl now floors the TLS negotiation at TLS 1.2 by default, where
 it previously accepted whatever the OpenSSL build allowed -- TLS 1.0 on older
 builds. A peer that can only speak an earlier protocol version no longer
 connects.
+
+thrift.protocol.binary, compact and json default containerSizeLimit and
+stringSizeLimit to the 16 MB frame size limit the Thrift libraries use
+elsewhere, where both used to default to zero. A limit of zero is read as "no
+limit", so a protocol built with its default arguments previously accepted a
+string or container of whatever length the peer declared; a declared length over
+the limit is now refused with a TProtocolException. The old-format (non-strict)
+message name in TBinaryProtocol.readMessageBegin, which used to bypass the
+string limit, is bounded as well. A value of zero or less still means "no limit"
+for a caller that asks for it, so passing zero restores the previous behaviour.
