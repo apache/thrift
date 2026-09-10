@@ -105,7 +105,7 @@ final class TServerWebSocketTransport(bool binary) : THttpTransport {
       writeBuffer_.assumeSafeAppend();
     }
 
-    writeFrameHeader();
+    writeFrameHeader(Opcode.Continuation, writeBuffer_.length);
     transport_.write(writeBuffer_);
     transport_.flush();
   }
@@ -181,141 +181,166 @@ private:
   }
 
   void failConnection(CloseCode reason) {
-    writeFrameHeader(Opcode.Close);
+    writeFrameHeader(Opcode.Close, ushort.sizeof);
     transport_.write(nativeToBigEndian!ushort(reason));
     transport_.flush();
     transport_.close();
   }
 
   void pong() {
-    writeFrameHeader(Opcode.Pong);
+    // RFC 6455 5.5.3: the Pong carries the Ping's payload, which is what the
+    // read buffer holds at this point, and the header has to say so -- a peer
+    // told the frame is empty reads the payload as the next frame header.
+    writeFrameHeader(Opcode.Pong, readBuffer_.length);
     transport_.write(readBuffer_);
     transport_.flush();
   }
 
   bool readFrame() {
-    ubyte[8] headerBuffer;
+    // Loop rather than recurse: a Ping carries nothing for the caller, so the
+    // reader has to go on to the next frame to satisfy it, and a peer may send
+    // as many Pings as it likes. Answering each by calling readFrame() again
+    // would take a stack frame per Ping.
+    while (true) {
+      ubyte[8] headerBuffer;
 
-    auto read = transport_.read(headerBuffer[0..2]);
-    if (read < 2) {
-      return false;
-    }
-    // Since Thrift has its own message end marker and we read frame by frame,
-    // it doesn't really matter if the frame is marked as FIN.
-    // Capture it only for debugging only.
-    debug auto fin = (headerBuffer[0] & 0x80) != 0;
-
-    // RSV1, RSV2, RSV3
-    if ((headerBuffer[0] & 0x70) != 0) {
-      failConnection(CloseCode.ProtocolError);
-      throw new TTransportException("Reserved bits must be zeroes", TTransportException.Type.CORRUPTED_DATA);
-    }
-
-    Opcode opcode;
-    try {
-      opcode = to!Opcode(headerBuffer[0] & 0x0F);
-    } catch (ConvException) {
-      failConnection(CloseCode.ProtocolError);
-      throw new TTransportException("Unknown opcode", TTransportException.Type.CORRUPTED_DATA);
-    }
-
-    // Mask
-    if ((headerBuffer[1] & 0x80) == 0) {
-      failConnection(CloseCode.ProtocolError);
-      throw new TTransportException("Messages from the client must be masked", TTransportException.Type.CORRUPTED_DATA);
-    }
-
-    // Read the length
-    ulong payloadLength = headerBuffer[1] & 0x7F;
-    if (payloadLength == 126) {
-      read = transport_.read(headerBuffer[0..2]);
+      auto read = transport_.read(headerBuffer[0..2]);
       if (read < 2) {
         return false;
       }
-      payloadLength = bigEndianToNative!ushort(headerBuffer[0..2]);
-    } else if (payloadLength == 127) {
-      read = transport_.read(headerBuffer);
-      if (read < headerBuffer.length) {
-        return false;
-      }
-      payloadLength = bigEndianToNative!ulong(headerBuffer);
-      if ((payloadLength & 0x8000000000000000) != 0) {
-        failConnection(CloseCode.ProtocolError);
-        throw new TTransportException("The most significant bit of the payload length must be zero", 
-          TTransportException.Type.CORRUPTED_DATA);
-      }
-    }
+      // Since Thrift has its own message end marker and we read frame by frame,
+      // it doesn't really matter if the frame is marked as FIN.
+      // Capture it only for debugging only.
+      debug auto fin = (headerBuffer[0] & 0x80) != 0;
 
-    // size_t is smaller than a ulong on a 32-bit system
-    static if (size_t.max < ulong.max) {
-      if(payloadLength > size_t.max) {
+      // RSV1, RSV2, RSV3
+      if ((headerBuffer[0] & 0x70) != 0) {
+        failConnection(CloseCode.ProtocolError);
+        throw new TTransportException("Reserved bits must be zeroes", TTransportException.Type.CORRUPTED_DATA);
+      }
+
+      Opcode opcode;
+      try {
+        opcode = to!Opcode(headerBuffer[0] & 0x0F);
+      } catch (ConvException) {
+        failConnection(CloseCode.ProtocolError);
+        throw new TTransportException("Unknown opcode", TTransportException.Type.CORRUPTED_DATA);
+      }
+
+      // Mask
+      if ((headerBuffer[1] & 0x80) == 0) {
+        failConnection(CloseCode.ProtocolError);
+        throw new TTransportException("Messages from the client must be masked", TTransportException.Type.CORRUPTED_DATA);
+      }
+
+      // Read the length
+      ulong payloadLength = headerBuffer[1] & 0x7F;
+      if (payloadLength == 126) {
+        read = transport_.read(headerBuffer[0..2]);
+        if (read < 2) {
+          return false;
+        }
+        payloadLength = bigEndianToNative!ushort(headerBuffer[0..2]);
+      } else if (payloadLength == 127) {
+        read = transport_.read(headerBuffer);
+        if (read < headerBuffer.length) {
+          return false;
+        }
+        payloadLength = bigEndianToNative!ulong(headerBuffer);
+        if ((payloadLength & 0x8000000000000000) != 0) {
+          failConnection(CloseCode.ProtocolError);
+          throw new TTransportException("The most significant bit of the payload length must be zero", 
+            TTransportException.Type.CORRUPTED_DATA);
+        }
+      }
+
+      // size_t is smaller than a ulong on a 32-bit system
+      static if (size_t.max < ulong.max) {
+        if(payloadLength > size_t.max) {
+          failConnection(CloseCode.MessageTooBig);
+          return false;
+        }
+      }
+
+      // The length below sizes the read buffer before a single payload byte has
+      // arrived, so decide on it first.
+      if (payloadLength > maxPayloadLength) {
         failConnection(CloseCode.MessageTooBig);
         return false;
       }
-    }
 
-    // The length below sizes the read buffer before a single payload byte has
-    // arrived, so decide on it first.
-    if (payloadLength > maxPayloadLength) {
-      failConnection(CloseCode.MessageTooBig);
-      return false;
-    }
+      auto length = cast(size_t)payloadLength;
 
-    auto length = cast(size_t)payloadLength;
-
-    if (length > 0) {
-      // Read the masking key
+      // The masking key is part of the header of every frame whose MASK bit is
+      // set, whatever the payload length, and a client frame without MASK was
+      // refused above. Read only for a frame that carries a payload, it would be
+      // left in the stream and the next header parsed out of it.
       read = transport_.read(headerBuffer[0..4]);
       if (read < 4) {
         return false;
       }
 
-      readBuffer_ = new ubyte[](length);
-      read = transport_.read(readBuffer_);
-      if (read < length) {
-        return false;
-      }
-
-      // Unmask the data
-      for (size_t i = 0; i < length; i++) {
-        readBuffer_[i] ^= headerBuffer[i % 4];
-      }
-
-      debug writef("FIN=%d, Opcode=%X, length=%d, payload=%s\n",
-          fin,
-          opcode,
-          length,
-          binary ? readBuffer_.toHexString() : cast(string)readBuffer_);
-    }
-
-    switch (opcode) {
-      case Opcode.Close:
-        debug {
-          if (length >= 2) {
-            CloseCode closeCode;
-            try {
-              closeCode = to!CloseCode(bigEndianToNative!ushort(readBuffer_[0..2]));
-            } catch (ConvException) {
-              closeCode = CloseCode.NoStatusCode;
-            }
-
-            string closeReason;
-            if (length == 2) {
-              closeReason = to!string(cast(CloseCode)closeCode);
-            } else {
-              closeReason = cast(string)readBuffer_[2..$];
-            }
-
-            writef("Connection closed: %d %s\n", closeCode, closeReason);
+      if (length > 0) {
+        readBuffer_ = new ubyte[](length);
+        // Wait for the whole payload. A single read returns whatever one recv()
+        // produced, so a payload the network splits across segments would be
+        // taken for the end of the stream. Waiting is only safe because the
+        // length has been held to maxPayloadLength above.
+        try {
+          transport_.readAll(readBuffer_);
+        } catch (TTransportException e) {
+          if (e.type != TTransportException.Type.END_OF_FILE) {
+            throw e;
           }
+          // The peer went away part-way through the frame, which is what the
+          // caller has always been told about a payload that does not turn up.
+          return false;
         }
-        transport_.close();
-        return false;
-      case Opcode.Ping:
-        pong();
-        return readFrame();
-      default:
-        return true;
+
+        // Unmask the data
+        for (size_t i = 0; i < length; i++) {
+          readBuffer_[i] ^= headerBuffer[i % 4];
+        }
+
+        debug writef("FIN=%d, Opcode=%X, length=%d, payload=%s\n",
+            fin,
+            opcode,
+            length,
+            binary ? readBuffer_.toHexString() : cast(string)readBuffer_);
+      } else {
+        // Nothing for the caller, and nothing for pong() to echo back either.
+        readBuffer_ = null;
+      }
+
+      switch (opcode) {
+        case Opcode.Close:
+          debug {
+            if (length >= 2) {
+              CloseCode closeCode;
+              try {
+                closeCode = to!CloseCode(bigEndianToNative!ushort(readBuffer_[0..2]));
+              } catch (ConvException) {
+                closeCode = CloseCode.NoStatusCode;
+              }
+
+              string closeReason;
+              if (length == 2) {
+                closeReason = to!string(cast(CloseCode)closeCode);
+              } else {
+                closeReason = cast(string)readBuffer_[2..$];
+              }
+
+              writef("Connection closed: %d %s\n", closeCode, closeReason);
+            }
+          }
+          transport_.close();
+          return false;
+        case Opcode.Ping:
+          pong();
+          continue;
+        default:
+          return true;
+      }
     }
   }
 
@@ -335,11 +360,11 @@ private:
     transport_.close();
   }
 
-  void writeFrameHeader(Opcode opcode = Opcode.Continuation) {
+  void writeFrameHeader(Opcode opcode, size_t length) {
     size_t headerSize = 1;
-    if (writeBuffer_.length < 126) {
+    if (length < 126) {
       ++headerSize;
-    } else if (writeBuffer_.length < 65536) {
+    } else if (length < 65536) {
       headerSize += 3;
     } else {
       headerSize += 9;
@@ -354,14 +379,14 @@ private:
       header[0] = opcode;
     }
     header[0] |= 0x80;
-    if (writeBuffer_.length < 126) {
-      header[1] = cast(ubyte)writeBuffer_.length;
-    } else if (writeBuffer_.length < 65536) {
+    if (length < 126) {
+      header[1] = cast(ubyte)length;
+    } else if (length < 65536) {
       header[1] = 126;
-      header[2..4] = nativeToBigEndian(cast(ushort)writeBuffer_.length);
+      header[2..4] = nativeToBigEndian(cast(ushort)length);
     } else {
       header[1] = 127;
-      header[2..10] = nativeToBigEndian(cast(ulong)writeBuffer_.length);
+      header[2..10] = nativeToBigEndian(cast(ulong)length);
     }
 
     transport_.write(header);
@@ -502,4 +527,169 @@ unittest {
   // A name that is not a prefix of one of them was refused before and still is.
   assert(!accepted("Upgra: websocket\r\nConn: Upgrade\r\n" ~
     "Sec-WebSocket: " ~ key ~ "\r\nSec-WebSocket-Ver: 13\r\n"));
+}
+
+version (unittest) {
+  /**
+   * A transport that serves a scripted byte stream at most `chunk` bytes per
+   * read -- the way a socket returns whatever one recv() produced -- records
+   * what is written back, and notes how far down the stack it was read from.
+   */
+  private final class TScriptedTransport : TBaseTransport {
+    this(const(ubyte)[] incoming, size_t chunk = size_t.max) {
+      in_ = incoming.dup;
+      chunk_ = chunk;
+    }
+
+    override bool isOpen() @property { return true; }
+    override bool peek() { return pos_ < in_.length; }
+    override void open() {}
+    override void close() {}
+
+    override size_t read(ubyte[] buf) {
+      ubyte marker;
+      auto here = cast(size_t)&marker;
+      if (lowest == 0 || here < lowest) lowest = here;
+
+      if (pos_ >= in_.length) return 0;
+      auto n = min(buf.length, in_.length - pos_, chunk_);
+      buf[0 .. n] = in_[pos_ .. pos_ + n];
+      pos_ += n;
+      return n;
+    }
+
+    override void write(in ubyte[] buf) { written ~= buf; }
+    override void flush() {}
+
+    /// Everything written back, and the lowest stack address read() ran at.
+    ubyte[] written;
+    size_t lowest;
+
+  private:
+    ubyte[] in_;
+    size_t pos_;
+    size_t chunk_;
+  }
+
+  /// A client frame: FIN set and masked with a fixed key, as a client's must be.
+  private ubyte[] clientFrame(Opcode opcode, const(ubyte)[] payload) {
+    immutable ubyte[4] key = [0x37, 0xfa, 0x21, 0x3d];
+    ubyte[] frame = [cast(ubyte)(0x80 | opcode)];
+    if (payload.length < 126) {
+      frame ~= cast(ubyte)(0x80 | payload.length);
+    } else if (payload.length < 65536) {
+      frame ~= cast(ubyte)(0x80 | 126);
+      auto length = nativeToBigEndian(cast(ushort)payload.length);
+      frame ~= length[];
+    } else {
+      frame ~= cast(ubyte)(0x80 | 127);
+      auto length = nativeToBigEndian(cast(ulong)payload.length);
+      frame ~= length[];
+    }
+    frame ~= key[];
+    foreach (i, b; payload) {
+      frame ~= cast(ubyte)(b ^ key[i % 4]);
+    }
+    return frame;
+  }
+}
+
+unittest {
+  // A payload the network delivers in pieces is still read whole (THRIFT-6178).
+  auto payload = new ubyte[](4000);
+  foreach (i, ref b; payload) b = cast(ubyte)(i * 31);
+
+  auto ws = new TServerWebSocketTransport!true(
+    new TScriptedTransport(clientFrame(Opcode.Binary, payload), 1000));
+  assert(ws.readFrame(), "a payload that arrived in pieces was taken for the end of the stream");
+  assert(ws.readBuffer_ == payload);
+
+  // A payload that really does stop short is still the end of the stream.
+  auto cut = clientFrame(Opcode.Binary, payload)[0 .. 8 + 500];
+  ws = new TServerWebSocketTransport!true(new TScriptedTransport(cut, 1000));
+  assert(!ws.readFrame(), "a payload cut short was handed over");
+}
+
+unittest {
+  // Pings are answered from a constant stack depth (THRIFT-6179). A one-byte
+  // Ping is seven bytes on the wire, and answering each by calling readFrame()
+  // again cost a stack frame per Ping.
+  ubyte[] stream;
+  foreach (i; 0 .. 2000) {
+    stream ~= clientFrame(Opcode.Ping, [cast(ubyte)0x42]);
+  }
+  stream ~= clientFrame(Opcode.Binary, cast(const(ubyte)[])"data");
+
+  auto peer = new TScriptedTransport(stream);
+  auto ws = new TServerWebSocketTransport!true(peer);
+  ubyte top;
+  assert(ws.readFrame());
+  assert(ws.readBuffer_ == cast(const(ubyte)[])"data");
+  auto depth = cast(size_t)&top - peer.lowest;
+  assert(depth < 64 * 1024, "2000 Pings took the reader " ~ to!string(depth) ~ " bytes down the stack");
+}
+
+unittest {
+  // The masking key of a masked frame with no payload is part of its header
+  // (THRIFT-6180). Left unread, the next header was parsed out of it.
+  auto peer = new TScriptedTransport(
+    clientFrame(Opcode.Ping, []) ~ clientFrame(Opcode.Binary, cast(const(ubyte)[])"hello"));
+  auto ws = new TServerWebSocketTransport!true(peer);
+  bool read;
+  try {
+    read = ws.readFrame();
+  } catch (TTransportException e) {
+    assert(false, "the frame after an empty Ping was misread: " ~ e.msg);
+  }
+  assert(read);
+  assert(ws.readBuffer_ == cast(const(ubyte)[])"hello");
+  assert(peer.written == cast(const(ubyte)[])[0x8A, 0x00], "the Pong for an empty Ping was not empty");
+}
+
+unittest {
+  // A Pong for an empty Ping echoes nothing, even right after a Ping whose
+  // payload is still in the read buffer (THRIFT-6180).
+  auto peer = new TScriptedTransport(clientFrame(Opcode.Ping, cast(const(ubyte)[])"PING") ~
+    clientFrame(Opcode.Ping, []) ~ clientFrame(Opcode.Binary, cast(const(ubyte)[])"d"));
+  auto ws = new TServerWebSocketTransport!true(peer);
+  bool read;
+  try {
+    read = ws.readFrame();
+  } catch (TTransportException e) {
+    assert(false, "the frame after an empty Ping was misread: " ~ e.msg);
+  }
+  assert(read);
+  assert(ws.readBuffer_ == cast(const(ubyte)[])"d");
+  assert(peer.written == cast(const(ubyte)[])[0x8A, 0x04] ~ cast(const(ubyte)[])"PING" ~
+    cast(const(ubyte)[])[0x8A, 0x00], "the Pongs were written as " ~ to!string(peer.written));
+}
+
+unittest {
+  // A Pong carries the Ping's payload, and its header says how long that is (THRIFT-6180).
+  auto ping = cast(const(ubyte)[])"PINGDATA";
+  auto peer = new TScriptedTransport(clientFrame(Opcode.Ping, ping) ~ clientFrame(Opcode.Binary, [cast(ubyte)1]));
+  auto ws = new TServerWebSocketTransport!true(peer);
+  assert(ws.readFrame());
+  assert(peer.written == cast(const(ubyte)[])[0x8A, 0x08] ~ ping,
+    "the Pong was written as " ~ to!string(peer.written));
+}
+
+unittest {
+  // A Close frame's header says it carries the two-byte status code (THRIFT-6180).
+  auto peer = new TScriptedTransport(clientFrame(Opcode.Binary, cast(const(ubyte)[])"12345"));
+  auto ws = new TServerWebSocketTransport!true(peer);
+  ws.maxPayloadLength = 4;
+  assert(!ws.readFrame());
+  assert(peer.written == cast(const(ubyte)[])[0x88, 0x02, 0x03, 0xF1],  // 1009, message too big
+    "the Close frame was written as " ~ to!string(peer.written));
+}
+
+unittest {
+  // flush() is the one caller whose body really is the write buffer; its
+  // header described that correctly before, and still does.
+  auto peer = new TScriptedTransport([]);
+  auto ws = new TServerWebSocketTransport!true(peer);
+  ws.write(cast(const(ubyte)[])"hello");
+  ws.flush();
+  assert(peer.written == cast(const(ubyte)[])[0x82, 0x05] ~ cast(const(ubyte)[])"hello");
 }
