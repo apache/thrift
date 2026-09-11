@@ -14,8 +14,9 @@
 #
 
 # The .NET SDK image provides the dotnet CLI used by lib/netstd. The C++ build
-# uses the Visual Studio 2022 Build Tools installed below, so nothing more is
-# needed from the base image.
+# uses the Visual Studio 2022 Build Tools installed below; the one thing it
+# still needs from a .NET Framework SDK is the 4.7.2 targeting pack, added as
+# a Build Tools component below, for the C++/CLI test project.
 FROM mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
 
 # Restore the default Windows shell for correct batch processing below.
@@ -39,6 +40,7 @@ RUN curl.exe -fsSL -o C:\TEMP\vs_buildtools.exe https://download.visualstudio.mi
     --add Microsoft.VisualStudio.Component.VC.CoreBuildTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
+    --add Microsoft.Net.Component.4.7.2.TargetingPack `
     || IF "%ERRORLEVEL%"=="3010" EXIT 0) && `
     DEL /F /Q C:\TEMP\vs_buildtools.exe && `
     (IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache") && `
