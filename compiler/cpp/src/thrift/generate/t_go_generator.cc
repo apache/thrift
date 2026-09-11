@@ -817,7 +817,7 @@ void t_go_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_go_generator::generate_enum(t_enum* tenum) {
   begin_types_declaration();
-  std::ostringstream to_string_mapping, from_string_mapping, known_values_mapping;
+  std::ostringstream to_string_mapping, from_string_mapping, known_values_mapping, is_defined_mapping;
   std::string tenum_name(publicize(tenum->get_name()));
   generate_go_docstring(f_types_, tenum);
   generate_deprecation_comment(f_types_, tenum->annotations_);
@@ -835,6 +835,12 @@ void t_go_generator::generate_enum(t_enum* tenum) {
                       << ", error) {" << '\n';
   indent_up();
   from_string_mapping << indent() << "switch s {" << '\n';
+  indent_down();
+
+  generate_deprecation_comment(is_defined_mapping, tenum->annotations_);
+  is_defined_mapping << indent() << "func (p " << tenum_name << ") IsDefined() bool {" << '\n';
+  indent_up();
+  is_defined_mapping << indent() << "switch p {" << '\n';
   indent_down();
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -877,10 +883,15 @@ void t_go_generator::generate_enum(t_enum* tenum) {
     indent_up();
     from_string_mapping << indent() << "return " << go_enum_name << ", nil" << '\n';
     indent_down();
+
+    is_defined_mapping << indent() << "case " << go_enum_name << ":" << '\n';
+    indent_up();
+    is_defined_mapping << indent() << "return true" << '\n';
+    indent_down();
   }
 
   to_string_mapping << indent() << "}" << '\n';
-  to_string_mapping << indent() << "return \"<UNSET>\"" << '\n';
+  to_string_mapping << indent() << "return fmt.Sprintf(\"" << tenum_name << "(%d)\", p)" << '\n';
   indent_down();
   to_string_mapping << indent() << "}" << '\n';
   indent_up();
@@ -889,6 +900,12 @@ void t_go_generator::generate_enum(t_enum* tenum) {
                       << " fmt.Errorf(\"not a valid " << tenum_name << " string\")" << '\n';
   indent_down();
   from_string_mapping << indent() << "}" << '\n';
+
+  indent_up();
+  is_defined_mapping << indent() << "}" << '\n';
+  is_defined_mapping << indent() << "return false" << '\n';
+  indent_down();
+  is_defined_mapping << indent() << "}" << '\n';
 
   if (constants.empty()) {
     known_values_mapping.str(std::string());
@@ -920,7 +937,8 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   }
   f_types_ << known_values_mapping.str()
            << to_string_mapping.str() << '\n'
-           << from_string_mapping.str() << '\n';
+           << from_string_mapping.str() << '\n'
+           << is_defined_mapping.str() << '\n';
 
   // Generate a convenience function that converts an instance of an enum
   // (which may be a constant) into a pointer to an instance of that enum

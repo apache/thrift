@@ -189,6 +189,22 @@ A typedef of a struct used as a key appears in the entry type as the underlying
 struct pointer: the generated `type KeyAlias *Key` is a defined pointer type and
 carries none of the struct's methods.
 
+A note about undefined enum values
+==================================
+
+An enum holding an integer the IDL does not define used to print `<UNSET>`
+from `String()`, which reads as "no value was sent" even though the integer
+arrived intact and is written back to the wire unchanged. `String()` now
+formats such a value as `Color(999)`, the shape `stringer` produces.
+`MarshalText`, and with it `encoding/json`, follow `String()`, so the text and
+JSON encoding of an undefined value changes the same way. Neither form
+round-trips through `UnmarshalText`, which still rejects any string that is not
+a defined name.
+
+Every enum also gains an `IsDefined() bool` method that reports whether the
+value is one of the IDL-defined constants. Code that compared `String()`
+against the literal `"<UNSET>"` should call `IsDefined()` instead.
+
 A note about server stop implementations
 ========================================
 
