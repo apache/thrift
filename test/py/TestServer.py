@@ -33,6 +33,7 @@ sys.path.insert(0, local_libpath())
 from thrift.protocol import TProtocol, TProtocolDecorator
 from thrift.Thrift import TException
 from thrift.transport import TSocket, TSSLSocket
+from thrift.transport.sslcompat import match_peer_ipaddress
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -389,6 +390,8 @@ def main(options):
             ca_certs=ca_certs,
             cert_reqs=ssl.CERT_REQUIRED,
             ssl_version=ssl_version,
+            # Keep the cross-test exercising the opt-in address check.
+            validate_callback=match_peer_ipaddress,
         )
     else:
         transport = TPortReportingServerSocket(

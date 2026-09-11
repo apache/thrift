@@ -63,9 +63,17 @@ switches verification off altogether, as before.
 The default validate_callback on Python 3.12 and later, which stood in for the
 ssl.match_hostname removed in that release, now checks a peer certificate against
 an IP address and raises for a name rather than reporting a success it cannot back.
-Name matching belongs to OpenSSL on those versions. The only caller left in the
-library is TSSLServerSocket, which validates a client certificate against the
-address the connection arrived from.
+Name matching belongs to OpenSSL on those versions.
+
+TSSLServerSocket no longer checks a client certificate against the address the
+connection arrived from. OpenSSL still verifies the certificate against ca_certs
+when cert_reqs asks for one; which of those certificates may connect is the
+application's policy, so validate_callback now defaults to None. Passing
+validate_callback=thrift.transport.sslcompat.match_peer_ipaddress brings the
+address check back for certificates that list the peer address as an IP
+subjectAltName. A server on Python 3.11 or earlier that relied on the previous
+default should note that this covers IP subjectAltName records only, not the
+commonName fallback that ssl.match_hostname also applied.
 
 THttpServer now checks a request's Content-Length before it reads the body: a
 missing length is answered with 411, one that is not a non-negative number with
