@@ -32,3 +32,8 @@ union Descendant {
 struct TestStruct {
   1: optional Descendant descendant = { "option1": {}}
 }
+
+struct StructWithUnsetUnion {
+  1: required bool f_1 = 1,
+  2: Descendant f_2,
+}
