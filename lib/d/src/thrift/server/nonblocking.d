@@ -37,7 +37,6 @@
 module thrift.server.nonblocking;
 
 import core.atomic : atomicLoad, atomicStore, atomicOp;
-import core.exception : onOutOfMemoryError;
 import core.memory : GC;
 import core.sync.mutex;
 import core.stdc.stdlib : free, realloc;
@@ -460,7 +459,7 @@ private:
       // (We need to avoid writing to our own notification pipe, to
       // avoid possible deadlocks if the pipe is full.)
       if (thisThread) {
-        conn.transition();
+        conn.processSafely(&conn.transition);
       } else {
         loop.notifyCompleted(conn);
       }
@@ -777,7 +776,7 @@ private {
           continue;
         }
 
-        connection.transition();
+        connection.processSafely(&connection.transition);
       }
 
       if (bytesRead > 0) {
@@ -944,9 +943,8 @@ private {
     /**
      * Grows the read buffer to hold at least target bytes, by doubling.
      *
-     * Never shrinks it; a target that already fits is a no-op. Calls
-     * onOutOfMemoryError() if the reallocation fails, as the previous
-     * in-line growth did.
+     * Never shrinks it; a target that already fits is a no-op. Throws a
+     * TTransportException if the reallocation fails.
      */
     void growReadBuffer(size_t target) {
       if (target <= readBufferSize_) return;
@@ -967,7 +965,15 @@ private {
       }
 
       auto newBuffer = cast(ubyte*)realloc(readBuffer_, newSize);
-      if (!newBuffer) onOutOfMemoryError();
+      if (!newBuffer) {
+        // The buffer for the requested frame size could not be allocated.
+        // Fail just this connection with a regular exception instead of
+        // raising an Error, which would unwind out of the libevent callback
+        // and stop the whole server.
+        throw new TTransportException("Could not allocate a read buffer " ~
+          "for the requested frame size.",
+          TTransportException.Type.INTERNAL_ERROR);
+      }
 
       readBuffer_ = newBuffer;
       readBufferSize_ = newSize;
@@ -1106,7 +1112,26 @@ private {
     extern(C) static void workSocketCallback(int fd, short flags, void* connThis) {
       auto conn = cast(Connection)connThis;
       assert(fd == conn.socket_.socketHandle);
-      conn.workSocket();
+      conn.processSafely(&conn.workSocket);
+    }
+
+    /**
+     * Runs a processing step (workSocket()/transition()) for this connection,
+     * making sure that an exception escaping it closes just this connection
+     * rather than propagating out of the libevent callback that invoked it –
+     * which would end the I/O loop and stop the whole server.
+     */
+    void processSafely(scope void delegate() step) {
+      try {
+        step();
+      } catch (Exception e) {
+        logError("Error while processing a client connection, closing it: %s", e);
+        try {
+          close();
+        } catch (Exception closeError) {
+          logError("Error while closing a client connection: %s", closeError);
+        }
+      }
     }
 
     /**
@@ -1146,9 +1171,18 @@ private {
 
           auto size = netToHost(frameSize);
           if (size > server_.maxFrameSize) {
+            // Resolving the peer address can fail, e.g. when the client has
+            // already reset the connection. Keep that out of the callback so
+            // the diagnostic below is still logged and the connection is still
+            // closed cleanly rather than via an escaping exception.
+            string peer;
+            try {
+              peer = socket_.getPeerAddress().toHostNameString();
+            } catch (Exception) {
+              peer = "(unknown)";
+            }
             logError("Frame size too large (%s > %s), client %s not using " ~
-              "TFramedTransport?", size, server_.maxFrameSize,
-              socket_.getPeerAddress().toHostNameString());
+              "TFramedTransport?", size, server_.maxFrameSize, peer);
             close();
             return;
           }
@@ -1730,4 +1764,126 @@ unittest {
       }
     });
   }
+}
+
+// An exception raised while a connection is being serviced must close only
+// that connection and leave the server running, rather than escaping the
+// libevent callback and ending the I/O loop. When a peer announces a frame
+// larger than the maximum and then resets the connection, resolving its
+// address for the rejection log fails; the server must survive a burst of such
+// peers and still answer a well-behaved request afterwards.
+unittest {
+  import core.sync.condition : Condition;
+  import std.socket : Socket, AddressFamily, SocketType, SocketOptionLevel,
+    SocketOption, Linger, InternetAddress;
+
+  auto oldInfoLogSink = g_infoLogSink;
+  auto oldErrorLogSink = g_errorLogSink;
+  g_infoLogSink = null;
+  g_errorLogSink = null;
+  scope (exit) {
+    g_infoLogSink = oldInfoLogSink;
+    g_errorLogSink = oldErrorLogSink;
+  }
+
+  // Consumes the whole frame and replies with a single byte, so a caller can
+  // tell that a request was actually served.
+  static class ReplyProcessor : TProcessor {
+    override bool process(TProtocol iprot, TProtocol oprot,
+      Variant connectionContext = Variant()
+    ) {
+      ubyte[4096] request;
+      while (iprot.transport.peek()) iprot.transport.read(request);
+
+      ubyte[1] reply = [42];
+      oprot.transport.write(reply);
+      return true;
+    }
+  }
+
+  auto server = new TNonblockingServer(new ReplyProcessor, 0,
+    new TTransportFactory, new TBinaryProtocolFactory!());
+
+  auto mutex = new Mutex;
+  auto condition = new Condition(mutex);
+  ushort port;
+  bool done;
+
+  class PortHandler : TServerEventHandler {
+    void preServe() {
+      synchronized (mutex) {
+        port = to!ushort(server.listenSocket_.localAddress.toPortString());
+        condition.notifyAll();
+      }
+    }
+    Variant createContext(TProtocol input, TProtocol output) {
+      return Variant.init;
+    }
+    void deleteContext(Variant serverContext, TProtocol input,
+      TProtocol output) {}
+    void preProcess(Variant serverContext, TTransport transport) {}
+  }
+  server.eventHandler = new PortHandler;
+
+  auto cancel = new TCancellationOrigin;
+  auto serverThread = new Thread({
+    scope (exit) synchronized (mutex) {
+      done = true;
+      condition.notifyAll();
+    }
+    server.serve(cancel);
+  });
+  serverThread.isDaemon = true;
+
+  synchronized (mutex) {
+    serverThread.start();
+    while (port == 0 && !done) {
+      enforce(condition.wait(dur!"seconds"(10)), "Server did not start.");
+    }
+    enforce(port != 0, "Server did not start.");
+  }
+
+  scope (exit) {
+    cancel.trigger();
+    synchronized (mutex) {
+      while (!done) {
+        enforce(condition.wait(dur!"seconds"(10)), "Server did not stop.");
+      }
+    }
+    serverThread.join();
+  }
+
+  // Each peer announces an over-limit frame and then closes with a zero linger
+  // timeout, which sends a reset. Several of them make it likely that the
+  // server reaches the rejection log for at least one after its peer is gone.
+  auto overSize = hostToNet(server.maxFrameSize + 1);
+  foreach (i; 0 .. 64) {
+    auto peer = new Socket(AddressFamily.INET, SocketType.STREAM);
+    peer.connect(new InternetAddress("127.0.0.1", port));
+    Linger linger;
+    linger.on = 1;
+    linger.time = 0;
+    peer.setOption(SocketOptionLevel.SOCKET, SocketOption.LINGER, linger);
+    peer.send(cast(ubyte[])((&overSize)[0 .. 1]));
+    peer.close();
+  }
+
+  // The server must still be serving: a normal one-byte framed request has to
+  // round-trip. If the I/O loop had stopped, this read would time out.
+  auto client = new TSocket("127.0.0.1", port);
+  client.recvTimeout = dur!"seconds"(10);
+  client.open();
+  scope (exit) client.close();
+
+  auto requestSize = hostToNet(1u);
+  client.write(cast(ubyte[])((&requestSize)[0 .. 1]));
+  ubyte[1] payload = [7];
+  client.write(payload);
+
+  // The four length bytes of the one-byte reply, then the reply itself.
+  static immutable ubyte[5] expected = [0, 0, 0, 1, 42];
+  ubyte[5] reply;
+  client.readAll(reply);
+  assert(reply == expected, "the server stopped serving after a peer reset " ~
+    "its connection while announcing an over-limit frame");
 }
