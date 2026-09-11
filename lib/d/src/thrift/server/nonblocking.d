@@ -347,8 +347,8 @@ class TNonblockingServer : TServer {
   /// on bogus input.
   uint maxFrameSize;
 
-  /// Ditto
-  enum uint DEFAULT_MAX_FRAME_SIZE = 256 * 1024 * 1024;
+  /// Ditto, the frame size limit the Thrift libraries use elsewhere.
+  enum uint DEFAULT_MAX_FRAME_SIZE = 16384000;
 
 
   size_t numIOThreads() @property {
@@ -1394,4 +1394,144 @@ unittest {
     s.taskPool = tp;
     s.numIOThreads = 4;
   });
+}
+
+// maxFrameSize defaults to the 16384000 bytes the other Thrift libraries use,
+// a frame declaring one byte more closes the connection, and a limit the caller
+// raises is the one the server enforces.
+unittest {
+  import core.sync.condition : Condition;
+  import std.exception : collectException;
+
+  auto oldInfoLogSink = g_infoLogSink;
+  auto oldErrorLogSink = g_errorLogSink;
+  g_infoLogSink = null;
+  g_errorLogSink = null;
+  scope (exit) {
+    g_infoLogSink = oldInfoLogSink;
+    g_errorLogSink = oldErrorLogSink;
+  }
+
+  // Replies to every request with a single byte, so the client can tell a
+  // frame the server accepted from one it refused.
+  static class ReplyProcessor : TProcessor {
+    override bool process(TProtocol iprot, TProtocol oprot,
+      Variant connectionContext = Variant()
+    ) {
+      // Consume the whole frame; processRequest() calls the processor again
+      // for as long as the input transport has data left.
+      ubyte[4096] request;
+      while (iprot.transport.peek()) iprot.transport.read(request);
+
+      ubyte[1] reply = [42];
+      oprot.transport.write(reply);
+      return true;
+    }
+  }
+
+  static TNonblockingServer makeServer() {
+    return new TNonblockingServer(new ReplyProcessor, 0,
+      new TTransportFactory, new TBinaryProtocolFactory!());
+  }
+
+  // Runs server on an ephemeral port, hands dg a client connected to it, and
+  // stops the server once dg returns.
+  static void withServer(TNonblockingServer server,
+    scope void delegate(TSocket client) dg
+  ) {
+    auto mutex = new Mutex;
+    auto condition = new Condition(mutex);
+    ushort port;
+    bool done;
+
+    class PortHandler : TServerEventHandler {
+      void preServe() {
+        synchronized (mutex) {
+          port = to!ushort(server.listenSocket_.localAddress.toPortString());
+          condition.notifyAll();
+        }
+      }
+      Variant createContext(TProtocol input, TProtocol output) {
+        return Variant.init;
+      }
+      void deleteContext(Variant serverContext, TProtocol input,
+        TProtocol output) {}
+      void preProcess(Variant serverContext, TTransport transport) {}
+    }
+    server.eventHandler = new PortHandler;
+
+    auto cancel = new TCancellationOrigin;
+    auto serverThread = new Thread({
+      scope (exit) synchronized (mutex) {
+        done = true;
+        condition.notifyAll();
+      }
+      server.serve(cancel);
+    });
+    serverThread.isDaemon = true;
+
+    synchronized (mutex) {
+      serverThread.start();
+      while (port == 0 && !done) {
+        enforce(condition.wait(dur!"seconds"(10)), "Server did not start.");
+      }
+      enforce(port != 0, "Server did not start.");
+    }
+
+    scope (exit) {
+      cancel.trigger();
+      synchronized (mutex) {
+        while (!done) {
+          enforce(condition.wait(dur!"seconds"(10)), "Server did not stop.");
+        }
+      }
+      serverThread.join();
+    }
+
+    auto client = new TSocket("127.0.0.1", port);
+    client.recvTimeout = dur!"seconds"(10);
+    client.open();
+    scope (exit) client.close();
+    dg(client);
+  }
+
+  static void writeFrameSize(TSocket client, uint size) {
+    auto netSize = hostToNet(size);
+    client.write(cast(ubyte[])((&netSize)[0 .. 1]));
+  }
+
+  // The default is the shared limit, and it is enforced: the connection is
+  // closed as soon as the four length bytes announce more.
+  {
+    auto server = makeServer();
+    assert(server.maxFrameSize == 16_384_000);
+
+    withServer(server, (TSocket client) {
+      writeFrameSize(client, 16_384_001);
+
+      ubyte[1] buf;
+      size_t received = size_t.max;
+      auto e = collectException!TTransportException(
+        received = client.read(buf));
+      assert(e is null && received == 0, "a frame over the default maximum " ~
+        "frame size must close the connection");
+    });
+  }
+
+  // A caller who raises the limit gets a frame of that size read and processed.
+  {
+    auto server = makeServer();
+    server.maxFrameSize = 16_384_001;
+
+    withServer(server, (TSocket client) {
+      writeFrameSize(client, 16_384_001);
+      client.write(new ubyte[16_384_001]);
+
+      // The four length bytes of the one-byte reply, then the reply itself.
+      static immutable ubyte[5] expected = [0, 0, 0, 1, 42];
+      ubyte[5] reply;
+      client.readAll(reply);
+      assert(reply == expected);
+    });
+  }
 }
