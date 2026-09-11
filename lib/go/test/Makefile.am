@@ -42,6 +42,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				StructKeyTest.thrift \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
+				TypedefStructTest.thrift \
+				TypedefIncludeTest.thrift \
 				RefAnnotationFieldsTest.thrift \
 				UnionDefaultValueTest.thrift \
 				UnionBinaryTest.thrift \
@@ -83,6 +85,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ServicesTest.thrift
 	$(THRIFT) $(THRIFTARGS) GoTagTest.thrift
 	$(THRIFT) $(THRIFTARGS) TypedefFieldTest.thrift
+	$(THRIFT) $(THRIFTARGS) TypedefStructTest.thrift
+	$(THRIFT) $(THRIFTARGS) -r TypedefIncludeTest.thrift
 	$(THRIFT) $(THRIFTARGS) RefAnnotationFieldsTest.thrift
 	$(THRIFT) $(THRIFTARGS) UnionDefaultValueTest.thrift
 	$(THRIFT) $(THRIFTARGS) UnionBinaryTest.thrift
@@ -120,6 +124,9 @@ check: gopath
 				./gopath/src/structkeytest \
 				./gopath/src/servicestest \
 				./gopath/src/typedeffieldtest \
+				./gopath/src/typedefstructtest \
+				./gopath/src/typedefstructtest/alias_service-remote \
+				./gopath/src/typedefincludetest \
 				./gopath/src/refannotationfieldstest \
 				./gopath/src/errortest	\
 				./gopath/src/namestest \
@@ -190,6 +197,8 @@ EXTRA_DIST = \
 	StringParseAllocationTest.thrift \
 	StructKeyTest.thrift \
 	TypedefFieldTest.thrift \
+	TypedefIncludeTest.thrift \
+	TypedefStructTest.thrift \
 	UnionBinaryTest.thrift \
 	UnionDefaultValueTest.thrift \
 	ValidateTest.thrift

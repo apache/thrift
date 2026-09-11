@@ -794,10 +794,26 @@ void t_go_generator::generate_typedef(t_typedef* ttypedef) {
     return;
   }
 
+  // A struct is used through a pointer and carries its Read, Write and Equals
+  // methods on that pointer, so a typedef of one has to be a Go alias: a
+  // defined type would be a distinct type with no methods, and one whose
+  // underlying type is already a pointer, so every use of it would need a
+  // second pointer to reach the struct.
+  t_type* resolved = ttypedef->get_type()->get_true_type();
+  bool alias_of_struct = resolved->is_struct() || resolved->is_xception();
+  string alias_target(base_type);
+  if (alias_of_struct && !alias_target.empty() && alias_target[0] == '*') {
+    alias_target.erase(0, 1);
+  }
+
   begin_types_declaration();
   generate_go_docstring(f_types_, ttypedef);
   generate_deprecation_comment(f_types_, ttypedef->annotations_);
-  f_types_ << "type " << new_type_name << " " << base_type << '\n';
+  if (alias_of_struct) {
+    f_types_ << "type " << new_type_name << " = " << alias_target << '\n';
+  } else {
+    f_types_ << "type " << new_type_name << " " << base_type << '\n';
+  }
   // Generate a convenience function that converts an instance of a type
   // (which may be a constant) into a pointer to an instance of a type.
   f_types_ << '\n';
@@ -2966,8 +2982,10 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         string factory(tmp("factory"));
         string jsProt(tmp("jsProt"));
         string err2(tmp("err"));
-        std::string tstruct_name(publicize(the_type->get_name()));
-        std::string tstruct_module( module_name(the_type));
+        // A typedef of a struct is an alias for it, so the constructor to
+        // call is the struct's own, in the struct's package.
+        std::string tstruct_name(publicize(the_type2->get_name()));
+        std::string tstruct_module( module_name(the_type2));
         if(tstruct_module.empty()) {
           tstruct_module = package_name_aliased;
         }
@@ -3035,7 +3053,9 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         throw("Invalid argument type in generate_service_remote");
       }
 
-      if (the_type->is_typedef()) {
+      if (the_type->is_typedef() && !the_type2->is_struct()) {
+        // A typedef of a struct needs no conversion: it is generated as a Go
+        // alias, so the value already has the right type.
         std::string typedef_module(module_name(the_type));
         if(typedef_module.empty()) {
           typedef_module = package_name_aliased;
@@ -4756,8 +4776,12 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
                                                 bool optional_field) {
   string maybe_pointer(optional_field ? "*" : "");
 
-  if (type->is_typedef() && ((t_typedef*)type)->is_forward_typedef()) {
-    type = ((t_typedef*)type)->get_true_type();
+  // A type used before it is declared arrives here wrapped in a forward
+  // typedef standing in for it. Unwrap the placeholders, but stop at the
+  // first declared type: when that is a typedef the IDL wrote, rendering it
+  // as its underlying type would drop the name the field asked for.
+  while (type->is_typedef() && ((t_typedef*)type)->is_forward_typedef()) {
+    type = ((t_typedef*)type)->get_type();
   }
 
   if (type->is_base_type()) {
@@ -4819,6 +4843,12 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
     string elemType = type_to_go_type(t->get_elem_type());
     return maybe_pointer + string("[]") + elemType;
   } else if (type->is_typedef()) {
+    t_type* resolved = type->get_true_type();
+    if (resolved->is_struct() || resolved->is_xception()) {
+      // Generated as a Go alias for the struct, so it is used through a
+      // pointer exactly like the struct itself.
+      return "*" + publicize(type_name(type));
+    }
     return maybe_pointer + publicize(type_name(type));
   }
 
