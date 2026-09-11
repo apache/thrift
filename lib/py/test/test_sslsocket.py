@@ -368,6 +368,77 @@ class TestMatchHostname(unittest.TestCase):
             _match_hostname(fake_cert, "real-server.com")
 
 
+class TSSLServerSocketClientCertTest(unittest.TestCase):
+    """A client certificate is matched against the peer address only on request.
+
+    Kept out of TSSLSocketTest, which is skipped wholesale, and driven through
+    TSSLServerSocket.accept() rather than the matcher alone. Both client
+    certificates are self-signed, so the server trusts each one directly.
+    """
+
+    def _serve(self, **server_kwargs):
+        from thrift.transport.TSSLSocket import TSSLServerSocket
+        # The server protocol is named explicitly, as test/py/TestServer.py
+        # does: the class default is the client protocol, whose context
+        # insists on a server_hostname that a listener cannot supply.
+        server = TSSLServerSocket(host='127.0.0.1', port=0,
+                                  cert_reqs=ssl.CERT_REQUIRED,
+                                  certfile=SERVER_CERT, keyfile=SERVER_KEY,
+                                  ssl_version=ssl.PROTOCOL_TLS_SERVER,
+                                  **server_kwargs)
+        acc = ServerAcceptor(server, expect_failure=True)
+        acc.start()
+        acc.await_listening()
+        self.addCleanup(acc.close)
+        return acc
+
+    def _exchange(self, port, certfile, keyfile):
+        """Return the server's reply, or None when it dropped the connection."""
+        from thrift.transport.TSSLSocket import TSSLSocket
+        client = TSSLSocket('127.0.0.1', port, cert_reqs=ssl.CERT_REQUIRED,
+                            ca_certs=SERVER_CERT, server_hostname='localhost',
+                            certfile=certfile, keyfile=keyfile)
+        client.setTimeout(2000)
+        try:
+            client.open()
+            client.write(b"hello")
+            return client.read(5)
+        except Exception:
+            return None
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
+
+    def test_client_cert_without_address_accepted_by_default(self):
+        acc = self._serve(ca_certs=CLIENT_CERT_NO_IP)
+        self.assertEqual(
+            self._exchange(acc.port, CLIENT_CERT_NO_IP, CLIENT_KEY_NO_IP),
+            b"there")
+        self.assertIsNotNone(acc.client)
+
+    def test_client_cert_without_address_refused_on_request(self):
+        from thrift.transport.sslcompat import match_peer_ipaddress
+        acc = self._serve(ca_certs=CLIENT_CERT_NO_IP,
+                          validate_callback=match_peer_ipaddress)
+        logging.disable(logging.CRITICAL)
+        try:
+            self.assertIsNone(
+                self._exchange(acc.port, CLIENT_CERT_NO_IP, CLIENT_KEY_NO_IP))
+        finally:
+            logging.disable(logging.NOTSET)
+        self.assertIsNone(acc.client)
+
+    def test_client_cert_with_address_accepted_on_request(self):
+        from thrift.transport.sslcompat import match_peer_ipaddress
+        acc = self._serve(ca_certs=CLIENT_CERT,
+                          validate_callback=match_peer_ipaddress)
+        self.assertEqual(
+            self._exchange(acc.port, CLIENT_CERT, CLIENT_KEY), b"there")
+        self.assertIsNotNone(acc.client)
+
+
 class TSSLSocketHostnameTest(unittest.TestCase):
     """The server host name is checked whatever protocol the caller asked for.
 
@@ -460,7 +531,8 @@ class DummyTest(unittest.TestCase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
-    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
+    from thrift.transport.sslcompat import _match_has_ipaddress
     from thrift.transport.TTransport import TTransportException
 
     unittest.main()

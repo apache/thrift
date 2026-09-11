@@ -150,7 +150,7 @@ def _optional_dependencies():
         #
         # OpenSSL performs it only when the context has check_hostname set,
         # which TSSLSocket now does for the contexts it builds. What is left
-        # for this function is TSSLServerSocket, which matches a client
+        # for this function is a server that opts in to matching a client
         # certificate against the address the connection arrived from -- an IP
         # address, never a name -- so that is what the replacement covers.
         if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
