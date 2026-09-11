@@ -92,6 +92,14 @@ class ComplexStruct extends TBase
             'var' => 'optionalField',
             'type' => TType::STRING,
         ],
+        9 => [
+            'var' => 'boolSetField',
+            'type' => TType::SET,
+            'etype' => TType::BOOL,
+            'elem' => [
+                'type' => TType::BOOL,
+            ],
+        ],
     ];
 
     public $flag = null;
@@ -102,6 +110,7 @@ class ComplexStruct extends TBase
     public $setField = null;
     public $mapOfLists = null;
     public $optionalField = null;
+    public $boolSetField = null;
 
     public function read(TProtocol $input): int
     {

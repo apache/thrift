@@ -2681,13 +2681,39 @@ void t_php_generator::generate_serialize_container(ostream& out, t_type* ttype, 
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
     string iter_val = tmp("iter");
-    indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
-    indent_up();
-
     t_type* elem_type = ((t_set*)ttype)->get_elem_type();
-    if(php_is_scalar(elem_type)) {
-      generate_serialize_set_element(out, (t_set*)ttype, iter);
+    if (php_is_scalar(elem_type)) {
+      string set_uses_values = tmp("setUsesValues");
+      // Preserve the legacy `element => true` marker form when every value is
+      // `true`. This keeps ambiguous `set<bool>` inputs such as `[true]` on
+      // the backward-compatible path instead of guessing they are value lists.
+      string list_val = tmp("iter");
+      string iter_elem = tmp("iter");
+      indent(out) << "$" << set_uses_values << " = false;" << '\n';
+      indent(out) << "if (array_is_list($" << prefix << ")) {" << '\n';
+      indent_up();
+      indent(out) << "foreach ($" << prefix << " as $" << list_val << ") {" << '\n';
+      indent_up();
+      indent(out) << "if ($" << list_val << " !== true) {" << '\n';
+      indent_up();
+      indent(out) << "$" << set_uses_values << " = true;" << '\n';
+      indent(out) << "break;" << '\n';
+      scope_down(out);
+      scope_down(out);
+      scope_down(out);
+      indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
+      indent_up();
+      indent(out) << "$" << iter_elem << " = $" << set_uses_values << " ? $" << iter_val << " : $" << iter << ";" << '\n';
+      if (elem_type->is_bool()) {
+        indent(out) << "if (!$" << set_uses_values << ") {" << '\n';
+        indent_up();
+        indent(out) << "$" << iter_elem << " = (bool) $" << iter_elem << ";" << '\n';
+        scope_down(out);
+      }
+      generate_serialize_set_element(out, (t_set*)ttype, iter_elem);
     } else {
+      indent(out) << "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ") {" << '\n';
+      indent_up();
       generate_serialize_set_element(out, (t_set*)ttype, iter_val);
     }
     scope_down(out);
@@ -2754,9 +2780,10 @@ void t_php_generator::generate_serialize_map_element(ostream& out,
  * Serializes the members of a set.
  */
 void t_php_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
-  // Set element used as PHP array key — same coercion concern as map keys;
-  // see comment on emit_array_key_recast. Helper no-ops for non-castable
-  // element types.
+  // Scalar PHP sets may be represented either as a legacy keyed array of
+  // element => true markers or as a plain list of element values. Cast when
+  // needed so typed writeXxx() calls accept array-key sourced scalars after
+  // PHP key coercion.
   emit_array_key_recast(out, tset->get_elem_type(), iter);
 
   t_field efield(tset->get_elem_type(), iter);
