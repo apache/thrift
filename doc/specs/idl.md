@@ -186,23 +186,27 @@ N.B.: These have some internal purpose at Facebook but serve no current purpose 
 
 ### Literal
 
-    [36] Literal         ::=  ('"' [^"]* '"') | ("'" [^']* "'")
+A literal is enclosed in double or single quotes and cannot contain a line break. Inside a literal, a backslash starts one of the escape sequences listed below; a backslash followed by any other character is an error.
+
+    [36] Literal         ::=  ('"' ( [^"\] | Escape )* '"') | ("'" ( [^'\] | Escape )* "'")
+
+    [37] Escape          ::=  '\' ( '"' | "'" | '\' | 'n' | 'r' | 't' )
 
 ### Identifier
 
-    [37] Identifier      ::=  ( Letter | '_' ) ( Letter | Digit | '.' | '_' )*
+    [38] Identifier      ::=  ( Letter | '_' ) ( Letter | Digit | '.' | '_' )*
 
-    [38] STIdentifier    ::=  ( Letter | '_' ) ( Letter | Digit | '.' | '_' | '-' )*
+    [39] STIdentifier    ::=  ( Letter | '_' ) ( Letter | Digit | '.' | '_' | '-' )*
 
 ### List Separator
 
-    [39] ListSeparator   ::=  ',' | ';'
+    [40] ListSeparator   ::=  ',' | ';'
 
 ### Letters and Digits
 
-    [40] Letter          ::=  ['A'-'Z'] | ['a'-'z']
+    [41] Letter          ::=  ['A'-'Z'] | ['a'-'z']
 
-    [41] Digit           ::=  ['0'-'9']
+    [42] Digit           ::=  ['0'-'9']
 
 ## Reserved keywords
 

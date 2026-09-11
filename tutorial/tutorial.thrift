@@ -86,6 +86,25 @@ typedef i32 MyInteger
 const i32 INT32CONSTANT = 9853
 const map<string,string> MAPCONSTANT = {'hello':'world', 'goodnight':'moon'}
 
+/*
+ * String literals like the ones in MAPCONSTANT can be enclosed in double or
+ * single quotes. The same syntax applies wherever a string literal appears,
+ * for example in include statements and annotation values.
+ *
+ * A literal must end on the line where it starts. The quote character that
+ * does not enclose it can be used as is, as in "don't" or 'say "hi"'. Inside
+ * a literal, a backslash starts one of these escape sequences:
+ *
+ *   \"  double quote        \n  line feed
+ *   \'  single quote        \r  carriage return
+ *   \\  backslash           \t  tab
+ *
+ * A backslash followed by any other character is an error, so a backslash
+ * meant literally has to be doubled: "C:\\Temp" is the string C:\Temp. There
+ * are no numeric escapes such as \x41 or \u00e4; non-ASCII characters are
+ * written directly.
+ */
+
 /**
  * You can define enums, which are just 32 bit integers. Values are optional
  * and start at 1 if not supplied, C style again.
