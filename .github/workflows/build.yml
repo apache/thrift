@@ -51,6 +51,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
@@ -259,6 +262,9 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
@@ -319,6 +325,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: "gradle"
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install dependencies
         run: |
@@ -429,6 +438,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
@@ -529,6 +541,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Set up Haxe
         run: |
           sudo apt-get update -qq
@@ -592,6 +607,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install dependencies
         run: |
@@ -664,6 +682,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install dependencies
         run: |
@@ -856,6 +877,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
@@ -910,6 +934,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install dependencies
         run: |
@@ -983,6 +1010,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install dependencies
         run: |
@@ -1151,6 +1181,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
@@ -1252,6 +1285,9 @@ jobs:
           ruby-version: "4.0"
           bundler-cache: true
           working-directory: test/rb
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
 
       - name: Install openssl and certificates (for SSL tests)
         run: |
