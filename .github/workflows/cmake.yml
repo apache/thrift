@@ -49,6 +49,16 @@ jobs:
           cd cmake_build
           ctest -j$(nproc --ignore=2)
 
+      - name: Build and run compiler tests on their own
+        timeout-minutes: 30
+        run: |
+          # Configures compiler/cpp/tests directly, as its README describes
+          mkdir compiler/cpp/tests/cmake_build
+          cd compiler/cpp/tests/cmake_build
+          cmake ..
+          cmake --build .
+          ctest --no-tests=error -j$(nproc --ignore=2)
+
       - name: Upload LastTest log
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

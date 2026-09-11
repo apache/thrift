@@ -103,10 +103,11 @@ macro(THRIFT_ADD_COMPILER name description initial)
     endif()
 endmacro()
 
-# This macro adds an option THRIFT_VALIDATOR_COMPILER_${NAME}
-# that allows enabling or disabling certain languages
+# This macro adds the validator for a language whenever THRIFT_COMPILER_${NAME}
+# is enabled, as in compiler/cpp/CMakeLists.txt: the validator calls into that
+# language's generator and does not link without it
 macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
-    string(TOUPPER "THRIFT_VALIDATOR_COMPILER_${name}" enabler)
+    string(TOUPPER "THRIFT_COMPILER_${name}" enabler)
     set(src "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.cc")
     list(APPEND "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.h")
     option(${enabler} ${description} ${initial})
