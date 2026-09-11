@@ -83,6 +83,14 @@ deployment that exchanges framed messages larger than the limit has to raise it
 on the transport; a value of zero or less disables the check, restoring the
 previous behaviour.
 
+thrift.server.nonblocking.TNonblockingServer defaults maxFrameSize to the 16 MB
+frame size limit the Thrift libraries use elsewhere, where it used to default to
+256 MiB; DEFAULT_MAX_FRAME_SIZE changes accordingly. The server closes the
+connection of a client that announces a larger frame, so a deployment that
+exchanges larger frames has to raise maxFrameSize on the server, and setting it
+to 256 * 1024 * 1024 restores the previous behaviour. Unlike frameSizeLimit on
+the framed transport, a maxFrameSize of zero does not disable the check.
+
 thrift.internal.ssl.authorize() consults the certificate's common name only when
 the certificate carries no DNS subjectAltName extension. Previously the common
 name was consulted whenever no subjectAltName entry had returned ALLOW, so a
