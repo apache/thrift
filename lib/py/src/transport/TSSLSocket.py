@@ -24,7 +24,7 @@ import ssl
 import sys
 import warnings
 
-from .sslcompat import _match_has_ipaddress, _match_hostname
+from .sslcompat import _match_hostname
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 
@@ -358,9 +358,16 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
           ``server_hostname``: Passed to SSLContext.wrap_socket
 
         Common keyword argument:
-          ``validate_callback`` (cert, hostname) -> None:
-              Called after SSL handshake. Can raise when hostname does not
-              match the cert.
+          ``validate_callback`` (cert, peer_address) -> None:
+              Called after the SSL handshake with the client certificate and
+              the address the connection arrived from, whenever ``cert_reqs``
+              asks for a certificate. Raise to refuse the connection. Off by
+              default, since OpenSSL has already verified the certificate
+              against ``ca_certs`` and which of those certificates may
+              connect is the application's policy. Pass
+              ``thrift.transport.sslcompat.match_peer_ipaddress`` to require
+              the peer address among the certificate's IP subjectAltName
+              records.
         """
         if args:
             if len(args) > 3:
@@ -378,13 +385,9 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
                 kwargs['certfile'] = 'cert.pem'
 
         unix_socket = kwargs.pop('unix_socket', None)
-        self._validate_callback = \
-            kwargs.pop('validate_callback', _match_hostname)
+        self._validate_callback = kwargs.pop('validate_callback', None)
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
-        if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
-                             'module to verify client certificate')
 
     def setCertfile(self, certfile):
         """Set or change the server certificate file used to wrap new
@@ -418,15 +421,20 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
 
         if self._should_verify:
             client.peercert = client.getpeercert()
-            try:
-                self._validate_callback(client.peercert, addr[0])
+            if self._validate_callback is None:
+                # OpenSSL verified the certificate against ca_certs during
+                # the handshake; anything beyond that is the caller's policy.
                 client.is_valid = True
-            except Exception:
-                logger.warning('Failed to validate client certificate address: %s',
-                               addr[0], exc_info=True)
-                client.close()
-                plain_client.close()
-                return None
+            else:
+                try:
+                    self._validate_callback(client.peercert, addr[0])
+                    client.is_valid = True
+                except Exception:
+                    logger.warning('Failed to validate client certificate address: %s',
+                                   addr[0], exc_info=True)
+                    client.close()
+                    plain_client.close()
+                    return None
 
         result = TSocket.TSocket()
         result.handle = client
