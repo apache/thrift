@@ -136,6 +136,21 @@ class TJSONProtocolTest extends TestCase
         }
     }
 
+    public function testWriteStringDoesNotEscapeForwardSlash(): void
+    {
+        $transport = new TMemoryBuffer();
+        $protocol = new TJSONProtocol($transport);
+
+        $protocol->writeStructBegin('Test');
+        $protocol->writeFieldBegin('f', TType::STRING, 1);
+        $protocol->writeString('a/b');
+        $protocol->writeFieldEnd();
+        $protocol->writeFieldStop();
+        $protocol->writeStructEnd();
+
+        $this->assertSame('{"1":{"str":"a/b"}}', $transport->getBuffer());
+    }
+
     public static function writeAndReadScalarDataProvider()
     {
         yield 'bool true' => [
