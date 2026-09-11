@@ -65,7 +65,16 @@ jobs:
       - name: Compute Docker image tag
         shell: pwsh
         run: |
-          $hash = (Get-FileHash -Algorithm SHA256 'build/docker/msvc/Dockerfile').Hash.ToLower().Substring(0, 12)
+          # Hash every file that ends up in the image, not only the Dockerfile,
+          # so that a change to a COPY'd script also produces a new tag.
+          $files = @(
+            'build/docker/msvc/Dockerfile',
+            'build/appveyor/build-libevent.bat',
+            'build/appveyor/build-zlib.bat'
+          )
+          $combined = ($files | ForEach-Object { (Get-FileHash -Algorithm SHA256 $_).Hash.ToLower() }) -join "`n"
+          $stream = [IO.MemoryStream]::new([Text.Encoding]::UTF8.GetBytes($combined))
+          $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash.ToLower().Substring(0, 12)
           "IMAGE_TAG=msvc-$hash" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Wait for Docker daemon
