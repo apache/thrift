@@ -194,8 +194,10 @@ private:
   /// Limit for number of open connections
   size_t maxConnections_;
 
-  /// Limit for frame size
-  size_t maxFrameSize_;
+  /// Transport configuration applied to accepted connections. Its maximum
+  /// frame size is the frame size limit this server enforces, and its maximum
+  /// message size bounds each accepted socket.
+  std::shared_ptr<TConfiguration> config_;
 
   /// Time in milliseconds before an unperformed task expires (0 == infinite).
   int64_t taskExpireTime_;
@@ -289,7 +291,7 @@ private:
     connectionStackLimit_ = CONNECTION_STACK_LIMIT;
     maxActiveProcessors_ = MAX_ACTIVE_PROCESSORS;
     maxConnections_ = MAX_CONNECTIONS;
-    maxFrameSize_ = MAX_FRAME_SIZE;
+    config_ = std::make_shared<TConfiguration>();
     taskExpireTime_ = 0;
     overloadHysteresis_ = 0.8;
     overloadAction_ = T_OVERLOAD_NO_ACTION;
@@ -508,14 +510,40 @@ public:
    *
    * @return Maxium frame size, in bytes.
    */
-  size_t getMaxFrameSize() const { return maxFrameSize_; }
+  size_t getMaxFrameSize() const { return static_cast<size_t>(config_->getMaxFrameSize()); }
 
   /**
    * Set the maximum allowed frame size.
    *
    * @param maxFrameSize The new maximum frame size.
    */
-  void setMaxFrameSize(size_t maxFrameSize) { maxFrameSize_ = maxFrameSize; }
+  void setMaxFrameSize(size_t maxFrameSize) {
+    // TConfiguration stores the frame size as int. Clamp rather than let a
+    // value above INT_MAX wrap to a negative int, which getMaxFrameSize() would
+    // then read back as a huge size_t and so disable the limit.
+    config_->setMaxFrameSize(
+        maxFrameSize > static_cast<size_t>(INT_MAX) ? INT_MAX : static_cast<int>(maxFrameSize));
+  }
+
+  /**
+   * Get the transport configuration this server applies to accepted
+   * connections.
+   */
+  std::shared_ptr<TConfiguration> getConfiguration() const { return config_; }
+
+  /**
+   * Set the transport configuration applied to accepted connections. The
+   * configured maximum frame size becomes the frame size limit the server
+   * enforces (as getMaxFrameSize()/setMaxFrameSize() operate on it), and the
+   * configured maximum message size bounds each accepted socket. A null
+   * argument is ignored.
+   */
+  void setConfiguration(const std::shared_ptr<TConfiguration>& config) {
+    if (config) {
+      config_ = config;
+      serverTransport_->setConfiguration(config_);
+    }
+  }
 
   /**
    * Get fraction of maximum limits before an overload condition is cleared.

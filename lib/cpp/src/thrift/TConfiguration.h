@@ -34,11 +34,11 @@ public:
   const static int DEFAULT_MAX_FRAME_SIZE = 16384000;      // this value is used consistently across all Thrift libraries
   const static int DEFAULT_RECURSION_DEPTH = 64;
 
-  inline int  getMaxMessageSize() { return maxMessageSize_; }
-  inline void setMaxMessageSize(int maxMessageSize) { maxMessageSize_ = maxMessageSize; } 
-  inline int getMaxFrameSize() { return maxFrameSize_; }
+  inline int  getMaxMessageSize() const { return maxMessageSize_; }
+  inline void setMaxMessageSize(int maxMessageSize) { maxMessageSize_ = maxMessageSize; }
+  inline int getMaxFrameSize() const { return maxFrameSize_; }
   inline void setMaxFrameSize(int maxFrameSize) { maxFrameSize_ = maxFrameSize; }
-  inline int getRecursionLimit() { return recursionLimit_; }
+  inline int getRecursionLimit() const { return recursionLimit_; }
   inline void setRecursionLimit(int recursionLimit) { recursionLimit_ = recursionLimit; }
 
 private:

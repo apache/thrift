@@ -19,6 +19,7 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
+#include <climits>
 #include <memory>
 
 #include "thrift/TConfiguration.h"
@@ -94,6 +95,7 @@ private:
     shared_ptr<server::TNonblockingServer> server;
     shared_ptr<ListenEventHandler> listenHandler;
     shared_ptr<transport::TNonblockingServerSocket> socket;
+    shared_ptr<TConfiguration> configuration;
     Mutex mutex_;
 
     Runner() {
@@ -123,6 +125,9 @@ private:
               processor, make_shared<protocol::TBinaryProtocolFactory>(), socket, threadManager));
         } else {
           server.reset(new server::TNonblockingServer(processor, socket));
+        }
+        if (configuration) {
+          server->setConfiguration(configuration);
         }
         server->setServerEventHandler(listenHandler);
         if (userEventBase) {
@@ -166,6 +171,7 @@ protected:
     runner->processor = processor;
     runner->threadManager = threadManager_;
     runner->userEventBase = userEventBase_;
+    runner->configuration = configuration_;
 
     shared_ptr<ThreadFactory> threadFactory(
         new ThreadFactory(false));
@@ -188,9 +194,37 @@ protected:
     return strings.size() == 1 && !(strings[0].compare("foo"));
   }
 
+  // A raw client that announces a frame of declaredSize (optionally sending
+  // bodyBytes of payload) and reports whether the server closed the connection
+  // without replying. A receive timeout distinguishes a refusal (the server
+  // closed, read returns 0) from acceptance (the server waits for the rest of
+  // the frame and the read times out).
+  bool serverClosesOnFrame(int serverPort, uint32_t declaredSize, uint32_t bodyBytes) {
+    transport::TSocket sock("localhost", serverPort);
+    sock.setRecvTimeout(1500);
+    sock.open();
+    uint32_t netSize = htonl(declaredSize);
+    sock.write(reinterpret_cast<uint8_t*>(&netSize), sizeof(netSize));
+    if (bodyBytes) {
+      std::vector<uint8_t> body(bodyBytes, 0);
+      sock.write(body.data(), bodyBytes);
+    }
+    uint8_t buf[16];
+    try {
+      return sock.read(buf, sizeof(buf)) == 0;
+    } catch (const transport::TTransportException&) {
+      return false;
+    }
+  }
+
 private:
   shared_ptr<event_base> userEventBase_;
   shared_ptr<concurrency::ThreadManager> threadManager_;
+
+protected:
+  shared_ptr<TConfiguration> configuration_;
+
+private:
 
 protected:
   // Replaces the processor the fixture builds, and switches the server to the
@@ -261,6 +295,12 @@ BOOST_AUTO_TEST_CASE(default_max_frame_size_matches_configuration) {
 
   server.setMaxFrameSize(4096);
   BOOST_CHECK_EQUAL(server.getMaxFrameSize(), static_cast<size_t>(4096));
+
+  // The configuration stores the frame size as int, so a value above INT_MAX
+  // clamps rather than wrapping to a negative int (which would read back as a
+  // huge size_t and disable the limit).
+  server.setMaxFrameSize(static_cast<size_t>(INT_MAX) + 1000);
+  BOOST_CHECK_EQUAL(server.getMaxFrameSize(), static_cast<size_t>(INT_MAX));
 }
 
 // Fails the first call the way argument deserialization fails when a declared
@@ -407,5 +447,46 @@ BOOST_AUTO_TEST_CASE(allocation_failure_on_the_io_thread_does_not_end_the_proces
   }
 }
 #endif
+
+// The server enforces the maximum frame size from a configuration it is given,
+// not only the library default. A frame above the configured maximum -- but far
+// below the 16 MB default the server would otherwise apply -- is refused and the
+// connection closed. Before the server honoured a configuration this frame was
+// accepted and the server waited for its body.
+BOOST_FIXTURE_TEST_CASE(honours_configured_max_frame_size, Fixture) {
+  configuration_ = make_shared<TConfiguration>();
+  configuration_->setMaxFrameSize(1024);
+  startServer(0);
+  int port = server->getListenPort();
+
+  BOOST_CHECK(serverClosesOnFrame(port, 2000, 0));
+
+  server->stop();
+}
+
+// The accepted socket carries the server's configuration, so a frame larger
+// than the configured maximum message size is refused before the read buffer is
+// grown for it, even when it is below the frame-size ceiling. Before the socket
+// carried the configuration its budget was the 100 MB default and this frame was
+// accepted.
+BOOST_FIXTURE_TEST_CASE(honours_configured_max_message_size, Fixture) {
+  configuration_ = make_shared<TConfiguration>(1024 /* maxMessageSize */);
+  startServer(0);
+  int port = server->getListenPort();
+
+  BOOST_CHECK(serverClosesOnFrame(port, 2000, 0));
+
+  server->stop();
+}
+
+// A generous configuration leaves ordinary traffic untouched: a real framed
+// request still round-trips.
+BOOST_FIXTURE_TEST_CASE(generous_configuration_still_serves, Fixture) {
+  configuration_ = make_shared<TConfiguration>();
+  startServer(0);
+  BOOST_CHECK(canCommunicate(server->getListenPort()));
+
+  server->stop();
+}
 
 BOOST_AUTO_TEST_SUITE_END()

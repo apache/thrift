@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TNONBLOCKINGSERVERTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TNONBLOCKINGSERVERTRANSPORT_H_ 1
 
+#include <thrift/TConfiguration.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportException.h>
 
@@ -60,7 +61,20 @@ public:
     if (!result) {
       throw TTransportException("accept() may not return nullptr");
     }
+    // Hand the accepted socket the server's configuration, so its message-size
+    // budget and the layered transports built on top of it use the operator's
+    // limits rather than each socket's own defaults. setConfiguration ignores a
+    // null argument, so an unconfigured server leaves the socket's default in
+    // place.
+    result->setConfiguration(config_);
     return result;
+  }
+
+  /**
+   * Sets the configuration handed to every subsequently accepted socket.
+   */
+  void setConfiguration(const std::shared_ptr<apache::thrift::TConfiguration>& config) {
+    config_ = config;
   }
 
   /**
@@ -83,6 +97,9 @@ public:
 
 protected:
   TNonblockingServerTransport() = default;
+
+  /// Configuration handed to accepted sockets; null until the server sets it.
+  std::shared_ptr<apache::thrift::TConfiguration> config_;
 
   /**
    * Subclasses should implement this function for accept.

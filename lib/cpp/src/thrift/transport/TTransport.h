@@ -261,8 +261,14 @@ public:
 
   std::shared_ptr<TConfiguration> getConfiguration() { return configuration_; }
 
-  void setConfiguration(std::shared_ptr<TConfiguration> config) { 
-    if (config != nullptr) configuration_ = config; 
+  void setConfiguration(std::shared_ptr<TConfiguration> config) {
+    if (config != nullptr) {
+      configuration_ = config;
+      // Re-seed the message-size budget from the new configuration. Without
+      // this the budget keeps the value seeded at construction, so a
+      // configuration installed after construction never takes effect.
+      resetConsumedMessageSize();
+    }
   }
 
   /**
