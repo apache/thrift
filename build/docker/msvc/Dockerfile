@@ -13,10 +13,22 @@
 # limitations under the License.
 #
 
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8.1-windowsservercore-ltsc2025
+# The .NET SDK image provides the dotnet CLI used by lib/netstd. The C++ build
+# uses the Visual Studio 2022 Build Tools installed below; the one thing it
+# still needs from a .NET Framework SDK is the 4.7.2 targeting pack, added as
+# a Build Tools component below, for the C++/CLI test project.
+FROM mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
 
 # Restore the default Windows shell for correct batch processing below.
 SHELL ["cmd", "/S", "/C"]
+
+# Notes on the RUN commands below:
+# - PATH is extended in the machine-scope registry key through PowerShell.
+#   SETX would re-embed the expanded PATH on every call and truncates silently
+#   at 1024 characters.
+# - cmd treats everything after "IF ... " and "FOR ... DO" as the body of that
+#   command, including "&& next-command". Cleanup loops are therefore wrapped
+#   in parentheses and placed after the environment writes.
 
 RUN IF NOT EXIST C:\TEMP MKDIR C:\TEMP
 
@@ -28,96 +40,92 @@ RUN curl.exe -fsSL -o C:\TEMP\vs_buildtools.exe https://download.visualstudio.mi
     --add Microsoft.VisualStudio.Component.VC.CoreBuildTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
+    --add Microsoft.Net.Component.4.7.2.TargetingPack `
     || IF "%ERRORLEVEL%"=="3010" EXIT 0) && `
     DEL /F /Q C:\TEMP\vs_buildtools.exe && `
-    IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache" && `
-    IF EXIST C:\Windows\SoftwareDistribution\Download RMDIR /S /Q C:\Windows\SoftwareDistribution\Download
+    (IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache") && `
+    (IF EXIST C:\Windows\SoftwareDistribution\Download RMDIR /S /Q C:\Windows\SoftwareDistribution\Download)
 
 # Install CMake
 RUN curl.exe -fsSL -o C:\TEMP\cmake.msi https://github.com/Kitware/CMake/releases/download/v4.1.2/cmake-4.1.2-windows-x86_64.msi && `
     powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\cmake.msi' -Algorithm SHA256).Hash.ToLower() -ne 'a10fc2527ec0727a5913acd310cddafdba1e5b4ca765ca23cc6a53c55eebb7c1') { exit 1 }" && `
     msiexec.exe /i C:\TEMP\cmake.msi /qn && `
-    SETX PATH "%PATH%;C:\Program Files\CMake\bin" && `
+    powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';C:\Program Files\CMake\bin', 'Machine')" && `
     DEL /F /Q C:\TEMP\cmake.msi && `
-    FOR %D IN (doc man) DO @IF EXIST "C:\Program Files\CMake\%D" RMDIR /S /Q "C:\Program Files\CMake\%D"
+    (FOR %D IN (doc man) DO @IF EXIST "C:\Program Files\CMake\%D" RMDIR /S /Q "C:\Program Files\CMake\%D")
 
 # Install boost (for the thrift runtime library build)
+# Thrift builds Release with /MD and links Boost dynamically, so the debug
+# (-gd-) and static-runtime (-s-, -sgd-) variants are removed after install.
 ENV BOOST_ROOT=C:\Libraries\boost_1_88_0
 ENV BOOST_LIBRARYDIR=C:\Libraries\boost_1_88_0\lib64-msvc-14.3
 RUN curl.exe -fsSL -o C:\TEMP\boost.exe https://boost.teeks99.com/bin/1.88.0/boost_1_88_0-msvc-14.3-64.exe && `
     powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\boost.exe' -Algorithm SHA256).Hash.ToLower() -ne 'bff575f21343f602c7b6c3ad3883a28053a1a50cde2153102d30479f85911738') { exit 1 }" && `
     C:\TEMP\boost.exe /DIR=%BOOST_ROOT% /SILENT && `
     DEL /F /Q C:\TEMP\boost.exe && `
-    FOR %D IN (doc libs tools status more) DO @IF EXIST "%BOOST_ROOT%\%D" RMDIR /S /Q "%BOOST_ROOT%\%D" && `
-    SETX BOOST_LIBRARYDIR "%BOOST_ROOT%\lib64-msvc-14.3" && `
-    SETX PATH "%BOOST_LIBRARYDIR%;%PATH%"
+    powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', '%BOOST_LIBRARYDIR%;' + [Environment]::GetEnvironmentVariable('PATH', 'Machine'), 'Machine')" && `
+    DEL /F /Q "%BOOST_LIBRARYDIR%\*-mt-gd-*" "%BOOST_LIBRARYDIR%\*-mt-s-*" "%BOOST_LIBRARYDIR%\*-mt-sgd-*" && `
+    (FOR %D IN (doc libs tools status more) DO @IF EXIST "%BOOST_ROOT%\%D" RMDIR /S /Q "%BOOST_ROOT%\%D")
 
 # Install chocolatey
 ENV CHOCO_DIR=C:\ProgramData\chocolatey
 RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command `
-    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" `
-    && SETX PATH "%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+    "$env:chocolateyVersion = '2.7.4'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && `
+    powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';%CHOCO_DIR%\bin', 'Machine')"
 
-# Install winflexbison (for the thrift compiler build)
-RUN choco install winflexbison3 -y --no-progress && `
-    choco cache remove -y
-
-# Install 7zip and curl (used by the libevent and zlib build scripts)
-RUN choco install 7zip curl -y --no-progress && `
+# Install winflexbison (for the thrift compiler build) and 7zip (used by the
+# libevent and zlib build scripts). curl.exe ships with Windows.
+RUN choco install winflexbison3 --version=2.5.24.20210105 -y --no-progress && `
+    choco install 7zip --version=26.3.0 -y --no-progress && `
     choco cache remove -y
 
 # Install libevent
 COPY appveyor\build-libevent.bat C:\TEMP\build-libevent.bat
 ENV LIBEVENT_VERSION=2.1.8
+ENV LIBEVENT_ROOT=C:\Libraries\libevent-${LIBEVENT_VERSION}
 ENV WIN3P=C:\TEMP\WIN3P
 RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     MKDIR C:\TEMP\WIN3P && `
     C:\TEMP\build-libevent.bat && `
-    MKDIR C:\Libraries\libevent-%LIBEVENT_VERSION% && `
-    MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\include C:\Libraries\libevent-%LIBEVENT_VERSION% && `
-    MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\lib C:\Libraries\libevent-%LIBEVENT_VERSION% && `
-    RMDIR /S /Q C:\TEMP\WIN3P && `
-    SETX LIBEVENT_ROOT "C:\Libraries\libevent-%LIBEVENT_VERSION%"
+    MKDIR %LIBEVENT_ROOT% && `
+    MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\include %LIBEVENT_ROOT% && `
+    MOVE C:\TEMP\WIN3P\libevent-%LIBEVENT_VERSION%-stable\lib %LIBEVENT_ROOT% && `
+    RMDIR /S /Q C:\TEMP\WIN3P
 
 # Install zlib
 COPY appveyor\build-zlib.bat C:\TEMP\build-zlib.bat
 ENV ZLIB_VERSION=1.3.1
-ENV WIN3P=C:\TEMP\WIN3P
+ENV ZLIB_ROOT=C:\Libraries\zlib-${ZLIB_VERSION}
 RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
     MKDIR C:\TEMP\WIN3P && `
     C:\TEMP\build-zlib.bat && `
-    MOVE C:\TEMP\WIN3P\zlib-inst C:\Libraries\zlib-%ZLIB_VERSION% && `
+    MOVE C:\TEMP\WIN3P\zlib-inst %ZLIB_ROOT% && `
     RMDIR /S /Q C:\TEMP\WIN3P && `
-    SETX ZLIB_ROOT "C:\Libraries\zlib-%ZLIB_VERSION%" && `
-    SETX PATH "%ZLIB_ROOT%\bin;%PATH%"
+    powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', '%ZLIB_ROOT%\bin;' + [Environment]::GetEnvironmentVariable('PATH', 'Machine'), 'Machine')"
 
 # Install OpenSSL
-RUN curl.exe -fsSL -o C:\TEMP\openssl.exe https://slproweb.com/download/Win64OpenSSL-3_6_2.exe && `
-    powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\openssl.exe' -Algorithm SHA256).Hash.ToLower() -ne 'c395482a1af33b2cdd4b801b227c864ed049e0f6aff79413d31b4fa916a67b1a') { exit 1 }" && `
+ENV OPENSSL_ROOT="C:\Program Files\OpenSSL-Win64"
+RUN curl.exe -fsSL -o C:\TEMP\openssl.exe https://slproweb.com/download/Win64OpenSSL-3_6_4.exe && `
+    powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\openssl.exe' -Algorithm SHA256).Hash.ToLower() -ne 'b33a9be5307fc42e98e03604ebbdb1fcee89e24c91af6009e965bdcdbc63449c') { exit 1 }" && `
     C:\TEMP\openssl.exe /silent && `
     DEL /F /Q C:\TEMP\openssl.exe && `
-    IF EXIST "C:\Program Files\OpenSSL-Win64\tests" RMDIR /S /Q "C:\Program Files\OpenSSL-Win64\tests" && `
-    SETX OPENSSL_ROOT "C:\Program Files\OpenSSL-Win64" && `
-    SETX PATH "%OPENSSL_ROOT%\bin;%PATH%"
-
-# Install java
-RUN choco install jdk8 -y --no-progress -params "source=false" && `
-    choco cache remove -y && `
-    IF EXIST "%CHOCO_DIR%\lib\jdk8" RMDIR /S /Q "%CHOCO_DIR%\lib\jdk8"
+    powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', '%OPENSSL_ROOT%\bin;' + [Environment]::GetEnvironmentVariable('PATH', 'Machine'), 'Machine')" && `
+    (FOR %D IN (tests html) DO @IF EXIST "%OPENSSL_ROOT%\%D" RMDIR /S /Q "%OPENSSL_ROOT%\%D") && `
+    (FOR %D IN (MDd MTd) DO @IF EXIST "%OPENSSL_ROOT%\lib\VC\x64\%D" RMDIR /S /Q "%OPENSSL_ROOT%\lib\VC\x64\%D")
 
 # Install python3
-RUN choco install python314 -y --no-progress --install-arguments "'Include_doc=0 Include_launcher=0 Include_tcltk=0 Include_test=0'" && `
+RUN choco install python314 --version=3.14.7 -y --no-progress --install-arguments "'Include_doc=0 Include_launcher=0 Include_tcltk=0 Include_test=0'" && `
     choco cache remove -y && `
     C:\Python314\python.exe -m pip install --disable-pip-version-check --no-cache-dir setuptools && `
-    IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache" && `
-    IF EXIST "%CHOCO_DIR%\lib\python314" RMDIR /S /Q "%CHOCO_DIR%\lib\python314"
+    (IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache") && `
+    (IF EXIST "%CHOCO_DIR%\lib\python314" RMDIR /S /Q "%CHOCO_DIR%\lib\python314")
 
-RUN choco install nodejs -y --no-progress && `
+# Install Node.js (LTS line)
+RUN choco install nodejs-lts --version=24.20.0 -y --no-progress && `
     choco cache remove -y && `
-    IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache" && `
-    IF EXIST "%CHOCO_DIR%\lib\nodejs" RMDIR /S /Q "%CHOCO_DIR%\lib\nodejs" && `
-    IF EXIST "%CHOCO_DIR%\lib\nodejs.install" RMDIR /S /Q "%CHOCO_DIR%\lib\nodejs.install"
+    (IF EXIST "C:\ProgramData\Package Cache" RMDIR /S /Q "C:\ProgramData\Package Cache") && `
+    (IF EXIST "%CHOCO_DIR%\lib\nodejs-lts" RMDIR /S /Q "%CHOCO_DIR%\lib\nodejs-lts")
 
 # Start developer command prompt with any other commands specified.
 ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 &&
