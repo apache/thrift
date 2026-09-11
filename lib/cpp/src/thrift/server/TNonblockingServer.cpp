@@ -492,6 +492,19 @@ void TNonblockingServer::TConnection::workSocket() {
         close();
         return;
       }
+      // Refuse a frame the message-size budget cannot admit before the read
+      // buffer is grown for it. The accepted socket carries the server's
+      // configuration, so this bounds the allocation by the configured maximum
+      // message size, which may be tighter than the frame-size ceiling above.
+      // The check is stable across the life of the connection: the C++ socket
+      // budget gates each read and does not accumulate.
+      try {
+        tSocket_->checkReadBytesAvailable(readWant_);
+      } catch (const TTransportException& te) {
+        TOutput::instance().printf("TConnection::workSocket(): %s", te.what());
+        close();
+        return;
+      }
       // size known; now get the rest of the frame
       transition();
 
@@ -1041,6 +1054,9 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
  * Creates a socket to listen on and binds it to the local port.
  */
 void TNonblockingServer::createAndListenOnSocket() {
+  // Ensure every socket the server transport accepts is handed the server's
+  // configuration, even when the caller never called setConfiguration().
+  serverTransport_->setConfiguration(config_);
   serverTransport_->listen();
   serverSocket_ = serverTransport_->getSocketFD();
 }
