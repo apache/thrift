@@ -1768,6 +1768,11 @@ void t_go_generator::generate_countsetfields_helper(ostream& out,
   out << indent() << "func (p *" << tstruct_name << ") CountSetFields" << tstruct_name << "() int {"
       << '\n';
   indent_up();
+  out << indent() << "if p == nil {" << '\n';
+  indent_up();
+  out << indent() << "return 0" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
   out << indent() << "count := 0" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED)
@@ -2078,7 +2083,11 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
         << "(ctx context.Context, oprot thrift.TProtocol) (err error) {" << '\n';
     indent_up();
 
-    if (field_required == t_field::T_OPTIONAL) {
+    // Default requiredness means "write if set" (doc/specs/idl.md), and a
+    // pointer field is unset exactly when it is nil.
+    bool check_if_set = field_required == t_field::T_OPTIONAL
+                        || (field_required == t_field::T_OPT_IN_REQ_OUT && is_pointer_field(*f_iter));
+    if (check_if_set) {
       out << indent() << "if p.IsSet" << publicize(field_name) << "() {" << '\n';
       indent_up();
     }
@@ -2102,7 +2111,7 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
     indent_down();
     out << indent() << "}" << '\n';
 
-    if (field_required == t_field::T_OPTIONAL) {
+    if (check_if_set) {
       indent_down();
       out << indent() << "}" << '\n';
     }
