@@ -20,6 +20,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
