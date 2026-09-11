@@ -245,6 +245,10 @@ public:
     */
   void checkIdleBufferMemLimit(size_t readLimit, size_t writeLimit);
 
+  /// Grows the read buffer to at least target bytes by doubling; never shrinks.
+  /// Throws std::bad_alloc if the reallocation fails.
+  void growReadBuffer(uint32_t target);
+
   /// Initialize
   void init(TNonblockingIOThread* ioThread);
 
@@ -530,8 +534,19 @@ void TNonblockingServer::TConnection::workSocket() {
       }
 
       try {
-        // Read from the socket
-        fetch = readWant_ - readBufferPos_;
+        // Grow the read buffer toward the frame size only as far as the next
+        // read needs, so the reservation tracks the payload actually received
+        // rather than the size the peer declared. Request double the current
+        // size, capped at the frame size, which also keeps the multiply from
+        // overflowing. growReadBuffer() rounds up by doubling, so the buffer can
+        // still end up larger than the frame.
+        if (readBufferPos_ == readBufferSize_) {
+          growReadBuffer(readBufferSize_ > readWant_ / 2 ? readWant_ : readBufferSize_ * 2);
+        }
+        // Read from the socket, but never past the end of this frame: the buffer
+        // may be larger than the frame (see above, or kept from an earlier
+        // request), and bytes beyond readWant_ belong to the next frame.
+        fetch = (std::min)(readBufferSize_, readWant_) - readBufferPos_;
         got = tSocket_->read(readBuffer_ + readBufferPos_, fetch);
       } catch (TTransportException& te) {
         //In Nonblocking SSLSocket some operations need to be retried again.
@@ -783,25 +798,19 @@ void TNonblockingServer::TConnection::transition() {
   case APP_READ_FRAME_SIZE:
     readWant_ += 4;
 
-    // We just read the request length
-    // Double the buffer size until it is big enough
-    if (readWant_ > readBufferSize_) {
-      if (readBufferSize_ == 0) {
-        readBufferSize_ = 1;
-      }
-      uint32_t newSize = readBufferSize_;
-      while (readWant_ > newSize) {
-        newSize *= 2;
-      }
-
-      auto* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
-      if (newBuffer == nullptr) {
-        // nothing else to be done...
-        throw std::bad_alloc();
-      }
-      readBuffer_ = newBuffer;
-      readBufferSize_ = newSize;
-    }
+    // We just read the request length. Reserve only enough to hold the 4-byte
+    // length prefix and begin reading; the buffer grows toward readWant_ in
+    // SOCKET_RECV as the payload arrives, so a peer that declares a large frame
+    // and sends no payload does not make the server reserve the whole frame.
+    //
+    // The initial kilobyte deliberately equals IDLE_READ_BUFFER_LIMIT: a
+    // connection that only ever carries small frames settles at exactly the
+    // size an idle connection is permitted to keep, so checkIdleBufferMemLimit()
+    // never frees and regrows it between requests. Keep this a small fixed
+    // constant -- do not derive it from a configurable idle limit, or raising
+    // that limit would push every connection back to reserving large buffers on
+    // the header, which is the amplification this change exists to remove.
+    growReadBuffer((std::min)(readWant_, static_cast<uint32_t>(1024)));
 
     readBufferPos_ = 4;
     *((uint32_t*)readBuffer_) = htonl(readWant_ - 4);
@@ -916,6 +925,31 @@ void TNonblockingServer::TConnection::checkIdleBufferMemLimit(size_t readLimit, 
     outputTransport_->resetBuffer(static_cast<uint32_t>(server_->getWriteBufferDefaultSize()));
     largestWriteBufferSize_ = 0;
   }
+}
+
+void TNonblockingServer::TConnection::growReadBuffer(uint32_t target) {
+  if (target <= readBufferSize_) {
+    return;
+  }
+  uint32_t newSize = readBufferSize_ ? readBufferSize_ : 1;
+  while (newSize < target) {
+    uint32_t doubled = newSize * 2;
+    if (doubled <= newSize) {
+      // The next doubling would overflow uint32_t. target is itself a valid
+      // uint32_t (bounded by the frame size), so stop doubling and allocate
+      // exactly what is needed rather than wrapping to a smaller size.
+      newSize = target;
+      break;
+    }
+    newSize = doubled;
+  }
+  auto* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
+  if (newBuffer == nullptr) {
+    // nothing else to be done...
+    throw std::bad_alloc();
+  }
+  readBuffer_ = newBuffer;
+  readBufferSize_ = newSize;
 }
 
 TNonblockingServer::~TNonblockingServer() {

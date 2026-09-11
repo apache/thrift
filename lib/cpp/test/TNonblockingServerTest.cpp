@@ -20,7 +20,9 @@
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
 #include <climits>
+#include <fstream>
 #include <memory>
+#include <string>
 
 #include "thrift/TConfiguration.h"
 #include "thrift/concurrency/Monitor.h"
@@ -488,5 +490,220 @@ BOOST_FIXTURE_TEST_CASE(generous_configuration_still_serves, Fixture) {
 
   server->stop();
 }
+
+// The read buffer grows as the payload arrives rather than being reserved on
+// the header, so a frame much larger than the ~1 KiB initial reservation is
+// assembled over many libevent callbacks, doubling the buffer each time it
+// fills. This drives that path with real traffic: two multi-megabyte requests
+// must round-trip byte-for-byte. The first grows the buffer far past
+// IDLE_READ_BUFFER_LIMIT and then closes, so returnConnection() frees it via
+// checkIdleBufferMemLimit(); every request -- the first included -- begins from
+// a freed-or-fresh (null) buffer and has to regrow it from nothing. A lost or
+// misplaced byte, or a mishandled null buffer, surfaces as a mismatch here. The
+// two payloads use distinct fill bytes so that reading stale bytes left in a
+// recycled buffer would fail the comparison rather than pass by coincidence.
+BOOST_FIXTURE_TEST_CASE(read_buffer_grows_across_callbacks_and_regrows_after_reclaim, Fixture) {
+  startServer(0);
+  int port = server->getListenPort();
+  BOOST_REQUIRE_GT(port, 0);
+
+  // Far larger than the ~1 KiB initial reservation, so assembling either frame
+  // forces repeated growth across callbacks; comfortably under the default
+  // frame size limit so the frames themselves are accepted.
+  const std::string first(2u * 1024 * 1024, 'a');
+  const std::string second(2u * 1024 * 1024, 'b');
+
+  {
+    auto socket = make_shared<transport::TSocket>("localhost", port);
+    socket->open();
+    test::ParentServiceClient client(
+        make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(socket)));
+    client.addString(first);
+    std::vector<std::string> strings;
+    client.getStrings(strings);
+    BOOST_REQUIRE_EQUAL(strings.size(), 1u);
+    BOOST_CHECK(strings[0] == first);
+    // socket closes here -> the grown (> IDLE_READ_BUFFER_LIMIT) read buffer is
+    // freed when the connection is returned to the pool.
+  }
+
+  {
+    auto socket = make_shared<transport::TSocket>("localhost", port);
+    socket->open();
+    test::ParentServiceClient client(
+        make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(socket)));
+    client.addString(second);
+    std::vector<std::string> strings;
+    client.getStrings(strings);
+    BOOST_REQUIRE_EQUAL(strings.size(), 2u);
+    BOOST_CHECK(strings[0] == first);
+    BOOST_CHECK(strings[1] == second);
+  }
+
+  server->stop();
+}
+
+// The same growth machinery, but with the read buffer reclaimed *between frames
+// on a live connection* rather than when the connection closes. APP_SEND_RESULT
+// runs checkIdleBufferMemLimit() once every getResizeBufferEveryN() requests;
+// forcing that to 1 frees the buffer grown by the first large request before the
+// second arrives on the same connection. On the single I/O thread the order is
+// fixed -- send the reply, reclaim, then read the next frame -- so the second
+// request is guaranteed to regrow the buffer from empty mid-connection. Both
+// requests round-tripping intact is the assertion.
+BOOST_FIXTURE_TEST_CASE(read_buffer_regrows_after_mid_connection_reclaim, Fixture) {
+  startServer(0);
+  int port = server->getListenPort();
+  BOOST_REQUIRE_GT(port, 0);
+  // Reclaim an oversized read buffer after every request instead of every 512,
+  // so the free lands between the two frames below rather than at close.
+  server->setResizeBufferEveryN(1);
+
+  const std::string first(2u * 1024 * 1024, 'a');
+  const std::string second(2u * 1024 * 1024, 'b');
+
+  auto socket = make_shared<transport::TSocket>("localhost", port);
+  socket->open();
+  test::ParentServiceClient client(
+      make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(socket)));
+  client.addString(first);
+  client.addString(second);
+  std::vector<std::string> strings;
+  client.getStrings(strings);
+  BOOST_REQUIRE_EQUAL(strings.size(), 2u);
+  BOOST_CHECK(strings[0] == first);
+  BOOST_CHECK(strings[1] == second);
+
+  server->stop();
+}
+
+// Frames that arrive back-to-back must be read one at a time. A client may send
+// its next request before the previous response is back -- a oneway call
+// followed by another call does exactly that -- so the socket can hold more than
+// the frame being read. The read buffer grows in doublings and can be larger
+// than the frame (a fresh buffer rounds up, and a buffer kept from an earlier
+// request may already exceed it), so each read has to stop at the end of the
+// frame rather than the end of the buffer, or it takes bytes of the next
+// request. Both requests go out in a single write, so they are guaranteed to be
+// waiting on the socket together.
+BOOST_FIXTURE_TEST_CASE(back_to_back_frames_are_read_one_at_a_time, Fixture) {
+  startServer(0);
+  int port = server->getListenPort();
+  BOOST_REQUIRE_GT(port, 0);
+
+  // Serialize two complete framed requests up front; a client would wait for
+  // each response before sending the next call.
+  auto requests = make_shared<transport::TMemoryBuffer>();
+  test::ParentServiceClient writer(
+      make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(requests)));
+  writer.send_addString("pipelined");
+  const size_t firstFrameSize = requests->getBufferAsString().size();
+  writer.send_getStrings();
+  const std::string bytes = requests->getBufferAsString();
+  // A first frame that exactly fills a power-of-two buffer leaves no room to
+  // read past it, and this test would pass without exercising the bound.
+  BOOST_REQUIRE_NE(firstFrameSize & (firstFrameSize - 1), 0u);
+
+  auto socket = make_shared<transport::TSocket>("localhost", port);
+  socket->setRecvTimeout(5000);
+  socket->open();
+  socket->write(reinterpret_cast<const uint8_t*>(bytes.data()),
+                static_cast<uint32_t>(bytes.size()));
+
+  test::ParentServiceClient reader(
+      make_shared<protocol::TBinaryProtocol>(make_shared<transport::TFramedTransport>(socket)));
+  reader.recv_addString();
+  std::vector<std::string> strings;
+  reader.recv_getStrings(strings);
+  BOOST_REQUIRE_EQUAL(strings.size(), 1u);
+  BOOST_CHECK_EQUAL(strings[0], "pipelined");
+
+  server->stop();
+}
+
+#if defined(__linux__)
+// The declared frame size is a number the peer chooses; the read buffer must be
+// grown as the payload arrives, not reserved in full when the four-byte header
+// is read. Here the peer announces a 256 MiB frame and sends none of it, so a
+// server that grows with the payload reserves next to nothing, while one that
+// reserves on the header commits the whole frame. The reservation is address
+// space (std::realloc; committed, not resident), so this reads VmSize from
+// /proc, which is Linux-only. It runs in a child because the unfixed path
+// reserves hundreds of MiB that would otherwise perturb the rest of the suite.
+static long readVmSizeKB() {
+  std::ifstream status("/proc/self/status");
+  std::string key;
+  while (status >> key) {
+    if (key == "VmSize:") {
+      long kb = -1;
+      status >> kb;
+      return kb;
+    }
+    std::getline(status, key);
+  }
+  return -1;
+}
+
+BOOST_AUTO_TEST_CASE(read_buffer_grows_with_the_payload_not_the_header) {
+  pid_t pid = fork();
+  BOOST_REQUIRE_NE(pid, -1);
+
+  if (pid == 0) {
+    auto socket = make_shared<transport::TNonblockingServerSocket>(0);
+    auto processor = make_shared<test::ParentServiceProcessor>(make_shared<Handler>());
+    auto child = make_shared<server::TNonblockingServer>(processor, socket);
+    // Well above the default so the large header below clears the frame-size
+    // check and reaches the buffer-growth path.
+    child->setMaxFrameSize(512UL * 1024 * 1024);
+
+    auto factory = make_shared<ThreadFactory>(false);
+    struct Serve : public Runnable {
+      shared_ptr<server::TNonblockingServer> server;
+      void run() override { server->serve(); }
+    };
+    auto runnable = make_shared<Serve>();
+    runnable->server = child;
+    auto serveThread = factory->newThread(runnable);
+    serveThread->start();
+
+    for (int i = 0; i < 100 && child->getListenPort() == 0; ++i) {
+      THRIFT_SLEEP_USEC(10000);
+    }
+
+    try {
+      transport::TSocket client("localhost", child->getListenPort());
+      client.open();
+      long before = readVmSizeKB();
+      uint32_t declared = 256UL * 1024 * 1024;
+      uint8_t header[4] = {static_cast<uint8_t>(declared >> 24),
+                           static_cast<uint8_t>(declared >> 16),
+                           static_cast<uint8_t>(declared >> 8),
+                           static_cast<uint8_t>(declared)};
+      client.write(header, sizeof(header));
+      client.flush();
+      // Give the I/O thread time to read the header and act on it.
+      THRIFT_SLEEP_USEC(1500000);
+      long after = readVmSizeKB();
+      client.close();
+      child->stop();
+      serveThread->join();
+
+      // The server must not have reserved the declared frame. The unfixed path
+      // grows by ~256-512 MiB; a payload-driven one by essentially nothing.
+      // 64 MiB of slack covers unrelated allocations without admitting the
+      // wrong behaviour.
+      long grewKB = (before < 0 || after < 0) ? -1 : after - before;
+      _exit((grewKB >= 0 && grewKB < 64L * 1024) ? 0 : 1);
+    } catch (...) {
+      _exit(3);
+    }
+  }
+
+  int status = 0;
+  BOOST_REQUIRE_NE(waitpid(pid, &status, 0), -1);
+  BOOST_REQUIRE(WIFEXITED(status));
+  BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
+}
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
