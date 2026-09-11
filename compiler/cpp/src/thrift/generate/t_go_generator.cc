@@ -2860,7 +2860,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "return" << '\n';
         indent_down();
         f_remote << indent() << "}" << '\n';
-        f_remote << indent() << "argvalue" << i << " := " << package_name_aliased << "."
+        // An enum declared in an included file lives in that file's package, not
+        // in the one this service was generated into.
+        std::string enum_module(module_name(the_type));
+        if (enum_module.empty()) {
+          enum_module = package_name_aliased;
+        }
+        f_remote << indent() << "argvalue" << i << " := " << enum_module << "."
                  << publicize(the_type->get_name()) << "(tmp" << i << ")" << '\n';
       } else if (the_type2->is_base_type()) {
         t_base_type::t_base e = ((t_base_type*)the_type2)->get_base();

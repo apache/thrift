@@ -115,6 +115,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 check: gopath
 	$(GO) build $(GOBUILDEXTRA) \
 				./gopath/src/includestest \
+				./gopath/src/includestest/test_service-remote \
+				./gopath/src/includestest/extended_service-remote \
 				./gopath/src/binarykeytest \
 				./gopath/src/containerkeytest \
 				./gopath/src/structkeytest \
