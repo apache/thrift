@@ -72,11 +72,9 @@ namespace gen = apache::thrift::test;
 
 namespace {
 
-// Not "localhost": TServerSocket::listen() resolves with AI_PASSIVE|AI_V4MAPPED
-// and TSocket::open() with AI_PASSIVE|AI_ADDRCONFIG, so where /etc/hosts maps
-// localhost to ::1 but the loopback carries no IPv6 address, the server binds
-// ::1 and the client dials 127.0.0.1 and is refused (THRIFT-6191). Naming the
-// address takes that out of the test.
+// Not "localhost": the test is about surviving a processing exception, so it
+// names the address rather than depend on how the host resolves localhost,
+// which server and client sockets once disagreed on (THRIFT-6191).
 const char* const kHost = "127.0.0.1";
 
 struct Handler : public gen::ParentServiceIf {

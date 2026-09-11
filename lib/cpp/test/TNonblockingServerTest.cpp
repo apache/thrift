@@ -246,6 +246,22 @@ BOOST_FIXTURE_TEST_CASE(provide_event_base, Fixture) {
 #endif
 }
 
+// A server and a client handed the same hostname have to agree on which address it
+// means. Each resolves independently, so any difference in the getaddrinfo() flags
+// they pass leaves the server listening on an address the client never dials: with
+// AI_ADDRCONFIG on one side only, a host that carries ::1 on loopback and no other
+// IPv6 address resolves "localhost" to ::1 for the server and 127.0.0.1 for the
+// client, and the connect is refused. See THRIFT-6191.
+BOOST_AUTO_TEST_CASE(bind_and_connect_agree_on_hostname) {
+  transport::TNonblockingServerSocket sock("localhost", 0);
+  sock.listen();
+  transport::TSocket client("localhost", sock.getListenPort());
+  client.open();
+  BOOST_CHECK(client.isOpen());
+  client.close();
+  sock.close();
+}
+
 // The frame cap TNonblockingServer applies to every accepted connection lives on
 // the server itself: TConfiguration appears nowhere in TNonblockingServer.{h,cpp},
 // so the default here and the library-wide default are two independent numbers

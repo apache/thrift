@@ -137,7 +137,7 @@ public:
   AddressResolutionHelper(const std::string& host,
                           const std::string& port, // pass "25" or "smtp" for port 25
                           int socktype = SOCK_STREAM,
-                          int flags = AI_V4MAPPED | AI_ADDRCONFIG)
+                          int flags = AI_ADDRCONFIG)
     : gai_results(query(host, port, socktype, flags)) {}
 
   AddressResolutionHelper() = default;
@@ -152,7 +152,7 @@ public:
   AddressResolutionHelper& resolve(const std::string& host,
                                    const std::string& port, // pass "25" or "smtp" for port 25
                                    int socktype = SOCK_STREAM,
-                                   int flags = AI_V4MAPPED | AI_ADDRCONFIG) {
+                                   int flags = AI_ADDRCONFIG) {
     gai_results.reset(query(host, port, socktype, flags));
     return *this;
   }

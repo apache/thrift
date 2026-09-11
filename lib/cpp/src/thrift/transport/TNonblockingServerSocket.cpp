@@ -369,18 +369,32 @@ void TNonblockingServerSocket::listen() {
   // Resolve host:port strings into an iterable of struct addrinfo*
   AddressResolutionHelper resolved_addresses;
   if (!isUnixDomainSocket()) {
+    const std::string port_str = std::to_string(port_);
+    // Resolve with the same flags TSocket::open() uses, so that a hostname means the
+    // same address to the server that binds it and to a client that dials it. Where
+    // the two disagree the server can end up listening on an address no client will
+    // ever try: AI_ADDRCONFIG does not count a loopback address as a configured one,
+    // so on a host carrying ::1 on loopback and no other IPv6 address, "localhost"
+    // resolves to ::1 without the flag and to 127.0.0.1 with it.
+    //
+    // That same rule can leave nothing to bind at all -- a host with no configured
+    // address resolves "localhost" to nothing, and an explicit "::1" fails outright
+    // with EAI_ADDRFAMILY -- so fall back to resolving without AI_ADDRCONFIG, which
+    // is what TSocket::open() does for the same reason.
+    //
+    // AI_V4MAPPED stays out of both: it does nothing for the AF_UNSPEC query made here,
+    // and Android's getaddrinfo() rejects it with EAI_BADFLAGS whatever the family.
     try {
-      resolved_addresses.resolve(address_, std::to_string(port_), SOCK_STREAM,
-#ifdef ANDROID
-                                 AI_PASSIVE | AI_ADDRCONFIG);
-#else
-                                 AI_PASSIVE | AI_V4MAPPED);
-#endif
-    } catch (const std::system_error& e) {
-      TOutput::instance().printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
-      close();
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                "Could not resolve host for server socket.");
+      resolved_addresses.resolve(address_, port_str, SOCK_STREAM, AI_PASSIVE | AI_ADDRCONFIG);
+    } catch (const std::system_error&) {
+      try {
+        resolved_addresses.resolve(address_, port_str, SOCK_STREAM, AI_PASSIVE);
+      } catch (const std::system_error& e) {
+        TOutput::instance().printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
+        close();
+        throw TTransportException(TTransportException::NOT_OPEN,
+                                  "Could not resolve host for server socket.");
+      }
     }
   }
 
