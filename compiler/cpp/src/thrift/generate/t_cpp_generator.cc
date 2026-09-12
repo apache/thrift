@@ -120,6 +120,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_doc_type_name(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -454,6 +455,11 @@ private:
   // themselves.
   friend class ProcessorGenerator;
 };
+
+std::string t_cpp_generator::get_doc_type_name(t_type* type) {
+  type = get_true_type(type);
+  return namespace_prefix(type->get_program()->get_namespace("cpp")) + type->get_name();
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
