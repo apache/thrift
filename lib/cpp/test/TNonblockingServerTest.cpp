@@ -19,6 +19,7 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
+#include <atomic>
 #include <climits>
 #include <fstream>
 #include <memory>
@@ -161,6 +162,17 @@ protected:
     if (thread) {
       thread->join();
     }
+    // Drain the thread pool while the server is still alive. server is declared
+    // after threadManager_, so it is destroyed first, and ~TNonblockingServer
+    // deletes every TConnection and the IO threads with their notification
+    // pipe. A task still unwinding at that point would call notifyIOThread() --
+    // and then close() -- on a deleted connection, which it holds by raw
+    // pointer. ThreadManager::stop() returns only once every worker has
+    // finished the task in its hands, so afterwards nothing is left to touch
+    // the objects about to be destroyed.
+    if (threadManager_) {
+      threadManager_->stop();
+    }
   }
 
   void setEventBase(event_base* user_event_base) {
@@ -187,6 +199,11 @@ protected:
 
   bool canCommunicate(int serverPort) {
     shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
+    // Without a timeout a server that never answers makes this block until the
+    // whole test binary is killed, which reports as one opaque timeout. The
+    // value only has to beat that: every call made here is a localhost
+    // round-trip of a few bytes.
+    socket->setRecvTimeout(10000);
     socket->open();
     test::ParentServiceClient client(make_shared<protocol::TBinaryProtocol>(
         make_shared<transport::TFramedTransport>(socket)));
@@ -313,21 +330,39 @@ BOOST_AUTO_TEST_CASE(default_max_frame_size_matches_configuration) {
 // that point, reading the arguments.
 struct FailsFirstCallProcessor : public TProcessor {
   explicit FailsFirstCallProcessor(const shared_ptr<TProcessor>& delegate)
-    : delegate_(delegate), failed_(false) {}
+    : delegate_(delegate), failed_(false), consumed_(false) {}
 
   bool process(shared_ptr<protocol::TProtocol> in,
                shared_ptr<protocol::TProtocol> out,
                void* connectionContext) override {
-    if (!failed_) {
-      failed_ = true;
+    // Both pool workers reach this, so the flag has to be claimed atomically:
+    // read-then-write let two calls each see it unset and both throw.
+    if (!failed_.exchange(true)) {
+      // Announce the claim before unwinding, so a caller can wait until the
+      // failure has been taken rather than guess.
+      {
+        Guard g(consumedMonitor_.mutex());
+        consumed_ = true;
+        consumedMonitor_.notifyAll();
+      }
       throw std::bad_alloc();
     }
     return delegate_->process(in, out, connectionContext);
   }
 
+  // Blocks until some call has consumed the injected failure.
+  void awaitFailure() {
+    Guard g(consumedMonitor_.mutex());
+    while (!consumed_) {
+      consumedMonitor_.wait();
+    }
+  }
+
 private:
   shared_ptr<TProcessor> delegate_;
-  bool failed_;
+  std::atomic<bool> failed_;
+  Monitor consumedMonitor_;
+  bool consumed_;
 };
 
 // A request that cannot be allocated is one request. Task::run() answered
@@ -348,8 +383,9 @@ private:
 // pre-existing, applies to every exception this catch handles, and differs from
 // the inline path, which closes the connection. Recorded separately.
 BOOST_FIXTURE_TEST_CASE(bad_alloc_does_not_end_the_process, Fixture) {
-  useThreadPool(make_shared<FailsFirstCallProcessor>(
-      make_shared<test::ParentServiceProcessor>(make_shared<Handler>())));
+  auto failing = make_shared<FailsFirstCallProcessor>(
+      make_shared<test::ParentServiceProcessor>(make_shared<Handler>()));
+  useThreadPool(failing);
 
   startServer(0);
   int port = server->getListenPort();
@@ -368,6 +404,13 @@ BOOST_FIXTURE_TEST_CASE(bad_alloc_does_not_end_the_process, Fixture) {
     client.send_addString("this one cannot be allocated");
     socket->close();
   }
+
+  // Wait until that call has actually taken the injected failure. The two pool
+  // workers are served in whatever order they are scheduled, so without this
+  // the call below can reach process() first, consume the failure itself and
+  // get no reply -- leaving the doomed call to be served normally and this test
+  // waiting on a reply that is never owed.
+  failing->awaitFailure();
 
   // The finding is that the process does not survive the above. A second
   // connection, served normally, is what says it did.
