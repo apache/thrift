@@ -157,7 +157,7 @@ void cleanupOpenSSL() {
 #endif
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(LIBRESSL_VERSION_NUMBER)
   // Do nothing unless an openssl derivative is detected
 #  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
   // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
@@ -405,7 +405,7 @@ void TSSLSocket::close() {
     SSL_free(ssl_);
     ssl_ = nullptr;
     handshakeCompleted_ = false;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000
+#if OPENSSL_VERSION_NUMBER >= 0x10100000 && !defined(LIBRESSL_VERSION_NUMBER)
     // Do nothing unless an openssl derivative is detected
 #  if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWSLC)
     // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
