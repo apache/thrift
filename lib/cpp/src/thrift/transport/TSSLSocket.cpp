@@ -864,17 +864,23 @@ void TSSLSocket::authorize() {
   // had its say, and a non-matching one is an answer, not an absence.
   //
   // OpenSSL 4.0 made X509_get_subject_name(), X509_NAME_get_entry() and
-  // X509_NAME_ENTRY_get_data() return const pointers. Every function these
-  // values are then passed to has taken const since 1.1.0, so the const types
-  // are used from there on as well. LibreSSL is excluded because it keeps the
-  // pre-1.1.0 signatures.
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+  // X509_NAME_ENTRY_get_data() return const pointers. The const types are
+  // adopted from 3.0 rather than only from 4.0, so that the 3.x libraries CI
+  // does build against keep this path compiled. 3.0 is the floor rather than
+  // 1.1.0 because 3.0 is also where X509_NAME_get_index_by_NID() became const:
+  // 1.1.1 still declares it as taking a non-const X509_NAME*, so a const name
+  // does not compile there. Below the floor all three getters return non-const
+  // pointers, which every consumer below accepts either way. LibreSSL is
+  // excluded explicitly, as in the guards above, so that it stays on the
+  // non-const arm; that arm compiles against it however it chooses to qualify
+  // its own getters.
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && !defined(LIBRESSL_VERSION_NUMBER)
   const X509_NAME* name = hasDnsName ? nullptr : X509_get_subject_name(cert);
 #else
   X509_NAME* name = hasDnsName ? nullptr : X509_get_subject_name(cert);
 #endif
   if (name != nullptr) {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && !defined(LIBRESSL_VERSION_NUMBER)
     const X509_NAME_ENTRY* entry;
 #else
     X509_NAME_ENTRY* entry;
@@ -888,7 +894,7 @@ void TSSLSocket::authorize() {
       entry = X509_NAME_get_entry(name, last);
       if (entry == nullptr)
         continue;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L && !defined(LIBRESSL_VERSION_NUMBER)
       const ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
 #else
       ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
