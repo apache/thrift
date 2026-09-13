@@ -23,6 +23,13 @@
  * Tokenizes a thrift definition file.
  */
 
+/* Flex defines INT8_MIN and the other limit macros itself when it is not
+ * compiled as C99, guarded by #ifndef, and MSVC's stdint.h then redefines
+ * them (C4005). Including the header first makes the guards skip. */
+%top{
+#include <stdint.h>
+}
+
 %{
 
 /* This is redundant with some of the flags in Makefile.am, but it works
