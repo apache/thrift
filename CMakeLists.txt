@@ -25,6 +25,9 @@ endif()
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)  # find_package behavior added in cmake 3.12
 endif()
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)  # upper-case <PACKAGENAME>_ROOT variables, added in cmake 3.27
+endif()
 
 # PACKAGE_VERSION is used by cpack scripts currently
 # Both thrift_VERSION and PACKAGE_VERSION should be the same for now

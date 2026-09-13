@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(wrapped_ssl_context_null)
 {
     try
     {
-        std::make_shared<SSLContext>(nullptr);
+        (void)std::make_shared<SSLContext>(nullptr);
         BOOST_FAIL("Expected null SSL_CTX to throw");
     }
     catch (const TSSLException& ex)
