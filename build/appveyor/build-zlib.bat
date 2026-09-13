@@ -20,16 +20,20 @@ SET INSTDIR=%WIN3P%\zlib-inst
 SET SRCDIR=%WIN3P%\%PACKAGE%
 SET URLFILE=%PACKAGE%.tar.gz
 
-:: This allows us to tolerate when the current version is archived
-SET URL=http://zlib.net/%URLFILE%
-SET FURL=http://zlib.net/fossils/%URLFILE%
+:: zlib.net serves only the current release from its root and moves every older
+:: one to fossils/, so the root URL starts returning 404 for a pinned version as
+:: soon as the next zlib is released. The GitHub release is therefore the
+:: primary source, as it already is for libevent, and zlib.net keeps the
+:: fallback it was given for exactly that case.
+SET URL=https://github.com/madler/zlib/releases/download/v%ZLIB_VERSION%/%URLFILE%
+SET FURL=https://zlib.net/fossils/%URLFILE%
 
 :: Download - support running a local build or a build in appveyor
 CD "%WIN3P%" || EXIT /B
 IF "%APPVEYOR_BUILD_ID%" == "" (
     curl -L -f -o "%URLFILE%" "%URL%"
     IF ERRORLEVEL 1 (
-        curl -L -f -o "%URLFILE%" "%FURL%"
+        curl -L -f -o "%URLFILE%" "%FURL%" || EXIT /B
     )
 ) ELSE (
     appveyor DownloadFile "%URL%"
