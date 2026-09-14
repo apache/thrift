@@ -77,6 +77,8 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_doc_type_name(t_type* type) override;
+  void generate_java_doc(std::ostream& out, t_function* function) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -402,6 +404,21 @@ string t_kotlin_generator::type_name(t_type* ttype,
   }
 
   return kotlin_safe_name(ttype->get_name());
+}
+
+std::string t_kotlin_generator::get_doc_type_name(t_type* type) {
+  return type_name(type, false, false, true);
+}
+
+void t_kotlin_generator::generate_java_doc(ostream& out, t_function* function) {
+  stringstream doc;
+  if (function->has_doc()) {
+    doc << function->get_doc();
+  }
+  generate_throws_doc(doc, function);
+  if (!doc.str().empty()) {
+    generate_docstring_comment(out, "/**\n", " * ", doc.str(), " */\n");
+  }
 }
 
 /**
@@ -1420,7 +1437,7 @@ void t_kotlin_generator::generate_service_interface(t_service* tservice) {
   out << "interface " << tservice->get_name() << " {" << '\n';
   indent_up();
   for (auto tfunc : tservice->get_functions()) {
-    generate_kdoc_comment(out, tfunc);
+    generate_java_doc(out, tfunc);
     indent(out) << function_signature(tfunc) << '\n';
   }
   scope_down(out);

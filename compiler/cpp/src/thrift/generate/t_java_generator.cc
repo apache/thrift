@@ -148,6 +148,7 @@ public:
   void init_generator() override;
   void close_generator() override;
   std::string display_name() const override;
+  std::string get_doc_type_name(t_type* type) override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -4690,6 +4691,10 @@ string t_java_generator::type_name(t_type* ttype,
   }
 
   return make_valid_java_identifier(ttype->get_name());
+}
+
+std::string t_java_generator::get_doc_type_name(t_type* type) {
+  return type_name(type, false, false, false, true);
 }
 
 /**
