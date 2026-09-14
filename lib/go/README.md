@@ -185,9 +185,36 @@ content under `==`. Unions always take it, since all of their fields are
 optional. Container keys take it too. Keep those maps small, or keep the key
 struct to plain scalars.
 
-A typedef of a struct used as a key appears in the entry type as the underlying
-struct pointer: the generated `type KeyAlias *Key` is a defined pointer type and
-carries none of the struct's methods.
+A typedef of a struct used as a key is the struct itself, since the generated
+`type KeyAlias = Key` is an alias, so the entry type is `[]thrift.MapEntry[*Key, V]`
+and the key compares like `Key` does.
+
+A note about typedefs of structs
+================================
+
+A typedef of a struct, union or exception is generated as a Go type alias:
+
+    typedef Inner Alias
+
+    type Alias = Inner
+
+`Alias` is the struct itself, with its `Read`, `Write` and `Equals` methods,
+and a field or argument declared with it is a `*Inner` like any other struct
+field. Earlier releases generated `type Alias *Inner`, a defined type over a
+pointer with no methods, so a package that used such a typedef in a field or a
+service signature did not compile. A typedef of a base type is unchanged and
+stays a defined type, `type TimestampMilliseconds int64`, with its `<Name>Ptr`
+helper.
+
+What changes for hand-written code that used an alias the IDL declared but
+never used, the only shape that compiled before:
+
+- A variable of the alias type held a `*Inner`; it now holds an `Inner`, and
+  the pointer moves outside the alias (`*Alias`).
+- The `<Name>Ptr` helper is no longer generated for such a typedef, because
+  the struct has none either.
+- Two typedefs of one struct are the same type, so a value of one is assignable
+  to the other, and `%T` prints the struct's name rather than the alias.
 
 A note about undefined enum values
 ==================================
