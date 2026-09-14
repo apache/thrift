@@ -427,14 +427,9 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_roundtrip) {
 
 BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_write_incompressible_roundtrip) {
   using apache::thrift::transport::THeaderTransport;
-  // Incompressible data does not shrink under deflate, it expands slightly, so
-  // the write-direction transform result is larger than the frame section that
-  // held it.  A payload that exactly fills the initial write buffer makes the
-  // compressed frame overrun that buffer when transform() copies it back.  Fill
-  // the payload from a PRNG so it cannot compress, and size it to the write
-  // buffer so the expansion lands just past the end.  Keep it within the
-  // transform buffer the reader sizes from its own write buffer so the round
-  // trip completes on the read side.
+  // Round-trip a PRNG-filled (incompressible) payload through the zlib
+  // transform.  The payload stays within the transform buffer the reader sizes
+  // from its own write buffer, so the read side can inflate it.
   const std::size_t N = 512;
   std::vector<uint8_t> payload(N);
   std::mt19937 rng(0xC0FFEEu);
@@ -457,15 +452,10 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_write_incompressible_roundtrip) 
 
 BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_write_large_incompressible) {
   using apache::thrift::transport::THeaderTransport;
-  // A large incompressible frame drives the write-direction transform past a
-  // single compression pass.  The compressed result must be a valid zlib stream
-  // of the whole frame; when the transform buffer is too small to hold it the
-  // compression restarts into the same buffer and the emitted payload is
-  // corrupt.  The reader sizes its own transform buffer from its (small) write
-  // buffer and cannot inflate a frame this large, so decode the emitted header
-  // frame and inflate the payload directly.  This is the case that fails without
-  // a sanitizer, since it corrupts the output rather than only overrunning a
-  // buffer.
+  // Write a large incompressible frame through the zlib transform and check
+  // that the emitted payload inflates to the whole frame.  The reader cannot
+  // inflate a frame this large, so decode the emitted header frame and inflate
+  // the payload directly.
   const std::size_t N = 2u * 1024u * 1024u;
   std::vector<uint8_t> payload(N);
   std::mt19937 rng(0xC0FFEEu);

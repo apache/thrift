@@ -400,14 +400,22 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
         throw TTransportException(TTransportException::CORRUPTED_DATA,
                                   "Error while zlib deflateInit");
       }
-      uint32_t tbuf_size = 0;
-      while (err == Z_OK) {
-        resizeTransformBuffer(tbuf_size);
 
-        stream.next_out = tBuf_.get();
-        stream.avail_out = tBufSize_;
-        err = deflate(&stream, Z_FINISH);
-        tbuf_size += DEFAULT_BUFFER_SIZE;
+      // Size the transform buffer to zlib's worst-case bound, plus the
+      // DEFAULT_BUFFER_SIZE headroom flush() relies on when it lays the header
+      // down in tBuf_, and compress in a single pass.
+      uLong needed = deflateBound(&stream, sz) + DEFAULT_BUFFER_SIZE;
+      if (needed > tBufSize_) {
+        tBuf_.reset(new uint8_t[needed]);
+        tBufSize_ = safe_numeric_cast<uint32_t>(needed);
+      }
+      stream.next_out = tBuf_.get();
+      stream.avail_out = tBufSize_;
+      err = deflate(&stream, Z_FINISH);
+      if (err != Z_STREAM_END) {
+        deflateEnd(&stream);
+        throw TTransportException(TTransportException::CORRUPTED_DATA,
+                                  "Error while zlib deflate");
       }
       sz = stream.total_out;
 
@@ -417,6 +425,14 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
                                   "Error while zlib deflateEnd");
       }
 
+      // The compressed frame replaces the source in the write buffer; grow the
+      // buffer first if the frame is larger.
+      if (sz > wBufSize_) {
+        wBuf_.reset(new uint8_t[sz]);
+        wBufSize_ = sz;
+        setWriteBuffer(wBuf_.get(), wBufSize_);
+        ptr = wBuf_.get();
+      }
       memcpy(ptr, tBuf_.get(), sz);
     } else {
       throw TTransportException(TTransportException::CORRUPTED_DATA, "Unknown transform");

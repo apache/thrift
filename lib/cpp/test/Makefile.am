@@ -155,7 +155,8 @@ UnitTests_LDADD = \
   $(top_builddir)/lib/cpp/libthriftz.la \
   $(BOOST_TEST_LDADD) \
   $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_THREAD_LDADD) \
+  -lz
 
 UnitTestsUuid_SOURCES = \
 	UnitTestMain.cpp \
