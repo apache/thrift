@@ -4215,7 +4215,11 @@ void t_netstd_generator::generate_netstd_doc(ostream& out, t_function* tfunction
         for (e_iter = exceptions.begin(); e_iter != exceptions.end(); ++e_iter)
         {
             t_field* e = *e_iter;
-            ps << '\n' << "<exception cref=\"" << type_name(e->get_type()) << "\">";
+            if (!ps.str().empty())
+            {
+                ps << '\n';
+            }
+            ps << "<exception cref=\"" << type_name(e->get_type()) << "\">";
             if (e->has_doc())
             {
                 string doc = e->get_doc();

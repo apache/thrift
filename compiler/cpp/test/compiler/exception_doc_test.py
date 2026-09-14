@@ -92,6 +92,11 @@ class TestExceptionDocRendering(unittest.TestCase):
         )
         self.assertIn("second line uses a &lt; b &amp;&amp; c &gt; d</exception>", content)
 
+    def test_netstd_exception_only_doc_has_no_leading_empty_line(self):
+        content = self._generate("netstd", "Main/Ns/ExceptionDocTest.cs")
+        self.assertIn('/// <exception cref="global::Main.Ns.@native">', content)
+        self.assertNotRegex(content, r"///[ \t]*\n[ \t]*/// <exception cref=")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
