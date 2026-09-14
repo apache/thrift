@@ -138,6 +138,10 @@ impl<'a> TInputProtocol for TStoredInputProtocol<'a> {
         self.inner.read_bytes()
     }
 
+    fn skip_binary(&mut self) -> crate::Result<()> {
+        self.inner.skip_binary()
+    }
+
     fn read_bool(&mut self) -> crate::Result<bool> {
         self.inner.read_bool()
     }
