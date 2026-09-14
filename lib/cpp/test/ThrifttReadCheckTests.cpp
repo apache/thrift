@@ -22,7 +22,9 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <climits>
+#include <random>
 #include <vector>
+#include <zlib.h>
 #include <thrift/TConfiguration.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
@@ -420,6 +422,81 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_roundtrip) {
   std::vector<uint8_t> out(N, 0x00);
   reader->readAll(out.data(), static_cast<uint32_t>(out.size()));
 
+  BOOST_CHECK(out == payload);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_write_incompressible_roundtrip) {
+  using apache::thrift::transport::THeaderTransport;
+  // Incompressible data does not shrink under deflate, it expands slightly, so
+  // the write-direction transform result is larger than the frame section that
+  // held it.  A payload that exactly fills the initial write buffer makes the
+  // compressed frame overrun that buffer when transform() copies it back.  Fill
+  // the payload from a PRNG so it cannot compress, and size it to the write
+  // buffer so the expansion lands just past the end.  Keep it within the
+  // transform buffer the reader sizes from its own write buffer so the round
+  // trip completes on the read side.
+  const std::size_t N = 512;
+  std::vector<uint8_t> payload(N);
+  std::mt19937 rng(0xC0FFEEu);
+  for (auto& b : payload) {
+    b = static_cast<uint8_t>(rng());
+  }
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<THeaderTransport> writer(new THeaderTransport(buffer));
+  writer->setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer->write(payload.data(), static_cast<uint32_t>(payload.size()));
+  writer->flush();
+
+  std::shared_ptr<THeaderTransport> reader(new THeaderTransport(buffer));
+  std::vector<uint8_t> out(N, 0x00);
+  reader->readAll(out.data(), static_cast<uint32_t>(out.size()));
+
+  BOOST_CHECK(out == payload);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_write_large_incompressible) {
+  using apache::thrift::transport::THeaderTransport;
+  // A large incompressible frame drives the write-direction transform past a
+  // single compression pass.  The compressed result must be a valid zlib stream
+  // of the whole frame; when the transform buffer is too small to hold it the
+  // compression restarts into the same buffer and the emitted payload is
+  // corrupt.  The reader sizes its own transform buffer from its (small) write
+  // buffer and cannot inflate a frame this large, so decode the emitted header
+  // frame and inflate the payload directly.  This is the case that fails without
+  // a sanitizer, since it corrupts the output rather than only overrunning a
+  // buffer.
+  const std::size_t N = 2u * 1024u * 1024u;
+  std::vector<uint8_t> payload(N);
+  std::mt19937 rng(0xC0FFEEu);
+  for (auto& b : payload) {
+    b = static_cast<uint8_t>(rng());
+  }
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<THeaderTransport> writer(new THeaderTransport(buffer));
+  writer->setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer->write(payload.data(), static_cast<uint32_t>(payload.size()));
+  writer->flush();
+
+  // Emitted header frame: 4B size, 2B magic, 2B flags, 4B seqId, then a 2B
+  // header-word count (headerSize / 4), then that many header words, then the
+  // zlib payload.
+  uint8_t* frame = nullptr;
+  uint32_t frameLen = 0;
+  buffer->getBuffer(&frame, &frameLen);
+  BOOST_REQUIRE(frameLen > 14);
+  const uint32_t headerBytes =
+      ((static_cast<uint32_t>(frame[12]) << 8) | frame[13]) * 4u;
+  const uint32_t payloadOffset = 14u + headerBytes;
+  BOOST_REQUIRE(frameLen > payloadOffset);
+
+  std::vector<uint8_t> out(N, 0x00);
+  uLongf outLen = static_cast<uLongf>(out.size());
+  int rc = uncompress(out.data(), &outLen, frame + payloadOffset,
+                      static_cast<uLong>(frameLen - payloadOffset));
+  BOOST_CHECK_EQUAL(rc, Z_OK);
+  BOOST_CHECK_EQUAL(outLen, static_cast<uLongf>(N));
   BOOST_CHECK(out == payload);
 }
 
