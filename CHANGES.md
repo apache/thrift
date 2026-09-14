@@ -1,5 +1,11 @@
 # Apache Thrift Changelog
 
+## 0.25.0
+
+### Breaking Changes
+
+- [THRIFT-6197](https://issues.apache.org/jira/browse/THRIFT-6197) - Go: a typedef of a struct, union or exception is generated as a type alias (`type Alias = Inner`) instead of a defined pointer type (`type Alias *Inner`), and no `<Name>Ptr` helper is generated for it; code that held a `*Inner` in such an alias now holds an `Inner` and takes the pointer outside the alias
+
 ## 0.24.0
 
 ### Build Process
