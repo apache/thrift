@@ -70,8 +70,8 @@ func newStructKeyStruct() *structkeytest.StructKeyStruct {
 		{Key: &structkeytest.KeyUnion{Num: &num}, Value: 1},
 		{Key: &structkeytest.KeyUnion{Text: &text}, Value: 2},
 	}
-	// A typedef of a struct resolves to the struct pointer, because the
-	// generated "type KeyAlias *Key" has no methods of its own.
+	// A struct key that is reached through a typedef. KeyAlias is generated as
+	// an alias for Key, so the two spellings are the same type here.
 	s.ByAlias = []thrift.MapEntry[*structkeytest.Key, string]{
 		{Key: &structkeytest.Key{ID: 3, Name: "three"}, Value: "3"},
 	}
