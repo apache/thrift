@@ -41,11 +41,22 @@ func StartClient(
 	transport string,
 	protocol string,
 	ssl bool,
+	certPath string,
 ) (client *thrifttest.ThriftTestClient, trans thrift.TTransport, err error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	if ssl && certPath != "" {
+		// The test servers that ask for a client certificate trust
+		// client_v3.crt, so present it as the other cross-test clients do.
+		cert, err := tls.LoadX509KeyPair(certPath+"/client_v3.crt", certPath+"/client_v3.key")
+		if err != nil {
+			return nil, nil, err
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
 	cfg := &thrift.TConfiguration{
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
+		TLSConfig: tlsConfig,
 	}
 
 	var protocolFactory thrift.TProtocolFactory
@@ -78,7 +89,7 @@ func StartClient(
 	case "http":
 		if ssl {
 			tr := &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				TLSClientConfig: tlsConfig,
 			}
 			client := &http.Client{Transport: tr}
 			trans, err = thrift.NewTHttpClientWithOptions(fmt.Sprintf("https://%s/", addr), thrift.THttpClientOptions{Client: client})

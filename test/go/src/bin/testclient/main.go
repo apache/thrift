@@ -39,6 +39,7 @@ var transport = flag.String("transport", "buffered", "Transport: buffered, frame
 var _ = flag.Bool("zlib", false, "For compatibility. Ignored.")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
+var certPath = flag.String("certPath", "keys", "Directory that contains SSL certificates")
 var testloops = flag.Int("testloops", 1, "Number of Tests")
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 	if addr == "" {
 		addr = fmt.Sprintf("%s:%d", *host, *port)
 	}
-	client, _, err := common.StartClient(addr, *transport, *protocol, *ssl)
+	client, _, err := common.StartClient(addr, *transport, *protocol, *ssl, *certPath)
 	if err != nil {
 		t.Fatalf("Unable to start client: ", err)
 	}

@@ -101,7 +101,8 @@
     "client": {
       "timeout": 15,
       "command": [
-        "testclient"
+        "testclient",
+        "--certPath=../../keys"
       ]
     },
     "transports": [
