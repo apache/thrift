@@ -168,13 +168,14 @@ read(IProto0, {list, Type}) ->
     {IProto1, #protocol_list_begin{etype = EType, size = Size}} =
         read(IProto0, list_begin),
     {EType, EType} = {term_to_typeid(Type), EType},
-    {List, IProto2} = lists:mapfoldl(
-        fun(_, ProtoS0) ->
+    {List, IProto2} = read_container_loop(
+        IProto1,
+        fun(ProtoS0) ->
             {ProtoS1, {ok, Item}} = read(ProtoS0, Type),
             {Item, ProtoS1}
         end,
-        IProto1,
-        lists:duplicate(Size, 0)
+        Size,
+        []
     ),
     {IProto3, ok} = read(IProto2, list_end),
     {IProto3, {ok, List}};
@@ -189,14 +190,15 @@ read(IProto0, {map, KeyType, ValType}) ->
                 {KType, KType} = {term_to_typeid(KeyType), KType},
                 {VType, VType} = {term_to_typeid(ValType), VType}
         end,
-    {List, IProto2} = lists:mapfoldl(
-        fun(_, ProtoS0) ->
+    {List, IProto2} = read_container_loop(
+        IProto1,
+        fun(ProtoS0) ->
             {ProtoS1, {ok, Key}} = read(ProtoS0, KeyType),
             {ProtoS2, {ok, Val}} = read(ProtoS1, ValType),
             {{Key, Val}, ProtoS2}
         end,
-        IProto1,
-        lists:duplicate(Size, 0)
+        Size,
+        []
     ),
     {IProto3, ok} = read(IProto2, map_end),
     {IProto3, {ok, dict:from_list(List)}};
@@ -204,18 +206,32 @@ read(IProto0, {set, Type}) ->
     {IProto1, #protocol_set_begin{etype = EType, size = Size}} =
         read(IProto0, set_begin),
     {EType, EType} = {term_to_typeid(Type), EType},
-    {List, IProto2} = lists:mapfoldl(
-        fun(_, ProtoS0) ->
+    {List, IProto2} = read_container_loop(
+        IProto1,
+        fun(ProtoS0) ->
             {ProtoS1, {ok, Item}} = read(ProtoS0, Type),
             {Item, ProtoS1}
         end,
-        IProto1,
-        lists:duplicate(Size, 0)
+        Size,
+        []
     ),
     {IProto3, ok} = read(IProto2, set_end),
     {IProto3, {ok, sets:from_list(List)}};
 read(Protocol, ProtocolType) ->
     read_specific(Protocol, ProtocolType).
+
+%% Reads N container items one at a time, threading the protocol state and
+%% accumulating the results. A container header carries its element count, which
+%% is read before any element, so a peer can name a count it never backs with
+%% data. Reading incrementally keeps the cost proportional to the elements
+%% actually present, rather than materialising an N-element driver list
+%% (lists:duplicate/2) from the wire count up front. ReadItemFun(Proto) returns
+%% {Item, Proto1}.
+read_container_loop(Proto, _ReadItemFun, 0, Acc) ->
+    {lists:reverse(Acc), Proto};
+read_container_loop(Proto, ReadItemFun, N, Acc) when N > 0 ->
+    {Item, Proto1} = ReadItemFun(Proto),
+    read_container_loop(Proto1, ReadItemFun, N - 1, [Item | Acc]).
 
 %% NOTE: Keep this in sync with read/2 spec
 -spec read_specific
