@@ -637,12 +637,19 @@ void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
       } else static if (is(F == enum)) {
         return v ~ " = cast(typeof(" ~ v ~ "))p.readI32();";
       } else static if (is(F _ : E[], E)) {
+        // The element count is read before any element, so a peer can name a count it never backs
+        // with data. Reserve an initial capacity capped at 1024 rather than the raw count and
+        // append each element; the array still ends with every element read, and larger lists grow
+        // as elements are added. readListBegin() has already rejected a negative size.
         return "{\n" ~
           "auto " ~ list ~ " = p.readListBegin();\n" ~
           // TODO: Check element type here?
-          v ~ " = new typeof(" ~ v ~ "[0])[" ~ list ~ ".size];\n" ~
+          v ~ " = typeof(" ~ v ~ ").init;\n" ~
+          v ~ ".reserve(" ~ list ~ ".size < 1024 ? " ~ list ~ ".size : 1024);\n" ~
           "foreach (" ~ i ~ "; 0 .. " ~ list ~ ".size) {\n" ~
-            readValueCode!E(v ~ "[" ~ i ~ "]", level + 1) ~ "\n" ~
+            "typeof(" ~ v ~ "[0]) " ~ elem ~ ";\n" ~
+            readValueCode!E(elem, level + 1) ~ "\n" ~
+            v ~ " ~= " ~ elem ~ ";\n" ~
           "}\n" ~
           "p.readListEnd();\n" ~
         "}";
@@ -1255,4 +1262,38 @@ private {
       static assert(false, "Cannot represent type in Thrift: " ~ T.stringof);
     }
   }
+}
+
+version (unittest) {
+  private struct ContainerPreallocTestStruct {
+    int[] items;
+    string[] names;
+    mixin TStructHelpers!([TFieldMeta("items", 1), TFieldMeta("names", 2)]);
+  }
+}
+
+// A container declares its element count before any of its elements, so a peer can name a count it
+// never backs with data. The generated read code caps the initial reservation at 1024 rather than
+// trusting the count; a container larger than the cap must still round-trip in full, since the cap
+// bounds only the up-front reservation and not the number of elements read.
+unittest {
+  import thrift.protocol.binary;
+  import thrift.transport.memory;
+  import thrift.transport.range;
+
+  auto buf = new TMemoryBuffer;
+  auto a = ContainerPreallocTestStruct();
+  foreach (i; 0 .. 3000) {
+    a.items ~= i;
+    a.names ~= "n";
+  }
+  a.write(tBinaryProtocol(buf));
+
+  auto readBuf = tInputRangeTransport(buf.getContents().dup);
+  auto b = ContainerPreallocTestStruct();
+  b.read(tBinaryProtocol(readBuf));
+
+  assert(b.items.length == 3000, "list larger than the prealloc cap was truncated");
+  assert(b.names.length == 3000, "list larger than the prealloc cap was truncated");
+  foreach (i; 0 .. 3000) assert(b.items[i] == i);
 }
