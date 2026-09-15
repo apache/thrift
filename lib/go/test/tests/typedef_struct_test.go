@@ -90,7 +90,7 @@ func TestTypedefStructRoundTrip(t *testing.T) {
 		"json":    thrift.NewTJSONProtocolFactory(),
 	} {
 		t.Run(label, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 			src := newOuter()
 
 			serializer := thrift.NewTSerializer()
@@ -118,7 +118,7 @@ func TestTypedefStructRoundTrip(t *testing.T) {
 }
 
 func TestTypedefStructFromIncludedFile(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	src := typedefincludetest.NewHoldsIncluded()
 	src.Value = &typedefincludetest.IncludedAlias{S: "from another file"}
 	src.Values = []*typedefincludetest.IncludedAlias{{S: "in a list"}}
@@ -139,7 +139,7 @@ func TestTypedefStructFromIncludedFile(t *testing.T) {
 }
 
 func TestForwardTypedefRoundTrip(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	src := typedefstructtest.NewUsesForwardTypedef()
 	value := typedefstructtest.ForwardTypedef(42)
 	src.Value = &value
