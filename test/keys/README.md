@@ -84,9 +84,10 @@ The two test servers that ask for a client certificate,
 `client_v3.crt`. Every cross-test client that presents a certificate to them
 sends `client_v3.crt` with `client_v3.key`, including the Java and Kotlin
 clients through `lib/java/src/crossTest/resources/.clientkeystore`. The Python
-server additionally matches the certificate against the address the connection
-arrived from, which is why it has to be the certificate carrying the
-`subjectAltName` records above and not `client.crt`.
+server additionally opts in, with `validate_callback=match_peer_ipaddress`, to
+matching the certificate against the address the connection arrived from, which
+is why it has to be the certificate carrying the `subjectAltName` records above
+and not `client.crt`.
 
 `client.crt` stays without `subjectAltName` on purpose: `lib/py/test/test_sslsocket.py`
 uses it as `CLIENT_CERT_NO_IP` to exercise the rejection path.
