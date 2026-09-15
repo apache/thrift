@@ -239,7 +239,7 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
       }
     } else if (key == "vt.defined_only") {
       if (values[0]->get_bool()) {
-        out << indent() << "if (" << context.tgt << ").String() == \"<UNSET>\"";
+        out << indent() << "if !(" << context.tgt << ").IsDefined()";
       } else {
         continue;
       }
