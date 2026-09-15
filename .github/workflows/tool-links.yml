@@ -1,0 +1,73 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# AGENTS.md section 4: no links to AI sessions or conversations in commit
+# messages or pull request text. A local commit-msg hook only covers the clone
+# it is installed in, and rebased or cherry-picked commits never run it, so
+# the pull request itself is checked here.
+
+name: "Tool-internal links"
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tool-internal-links:
+    name: No AI session or conversation links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check commit messages, title and description
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # A URL counts only with an id after the prefix, so text that merely
+          # names these forms, as AGENTS.md section 4 does, passes.
+          pattern='claude\.ai/code/session_[A-Za-z0-9]|chatgpt\.com/c/[A-Za-z0-9]|chat\.openai\.com/c/[A-Za-z0-9]|^[[:space:]]*(Claude-Session|Session-Url|Session-Id|Conversation-Url)[[:space:]]*:'
+
+          # Commit objects only: no trees, no blobs, no working tree.
+          git clone -q --bare --filter=tree:0 --single-branch --no-tags \
+            --branch "$GITHUB_BASE_REF" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" pr.git
+          git -C pr.git fetch -q --no-tags origin "$HEAD_SHA"
+
+          # Assigned first, so that a failing git log fails the step instead of
+          # yielding an empty list.
+          offenders=$(git -C pr.git log -E -i --grep="$pattern" --format=%H \
+                        "$HEAD_SHA" --not "refs/heads/$GITHUB_BASE_REF")
+
+          # Report commit ids only. Printing the matching line would copy the
+          # link into this public log.
+          status=0
+          for c in $offenders; do
+            echo "::error::Commit $c contains a link to an AI session or conversation. AGENTS.md section 4 does not allow these in commit messages; reword the commit and force-push."
+            status=1
+          done
+          if printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | grep -qEi "$pattern"; then
+            echo "::error::The pull request title or description contains a link to an AI session or conversation. AGENTS.md section 4 does not allow these; edit the pull request text."
+            status=1
+          fi
+          exit "$status"
