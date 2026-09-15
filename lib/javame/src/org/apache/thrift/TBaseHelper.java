@@ -206,4 +206,25 @@ public class TBaseHelper {
     return Integer.toHexString(extended).toUpperCase().substring(1);
   }
 
+  /**
+   * The largest initial capacity a wire-supplied container element count may reserve. A container
+   * header is read before any of its elements, so a peer can name an element count it never backs
+   * with data.
+   */
+  public static final int MAX_PREALLOC_SIZE = 1024;
+
+  /**
+   * Returns the initial capacity to reserve for a container whose declared element count is size.
+   * Capping what the count reserves up front keeps that cost proportional to the bytes actually
+   * sent, while still reserving exact capacity for containers that fit under the cap; larger
+   * containers grow as elements are added. A negative count (which can also arise when a count is
+   * doubled for a hash container and overflows int) reserves nothing. Used by generated code.
+   */
+  public static int preallocSize(int size) {
+    if (size < 0) {
+      return 0;
+    }
+    return (size < MAX_PREALLOC_SIZE) ? size : MAX_PREALLOC_SIZE;
+  }
+
 }

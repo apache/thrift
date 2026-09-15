@@ -2523,9 +2523,10 @@ void t_javame_generator::generate_deserialize_container(ostream& out,
   }
 
   indent(out) << prefix << " = new " << type_name(ttype, false, true)
-              // size the collection correctly
-              << "(" << (ttype->is_list() ? "" : "2*") << obj << ".size"
-              << ");" << '\n';
+              // size the collection correctly, but cap the capacity reserved from the wire-supplied
+              // element count so a peer cannot name a count it never backs with data
+              << "(TBaseHelper.preallocSize(" << (ttype->is_list() ? "" : "2*") << obj << ".size"
+              << "));" << '\n';
 
   // For loop iterates over elements
   string i = tmp("_i");
