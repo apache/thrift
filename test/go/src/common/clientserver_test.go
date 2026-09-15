@@ -79,7 +79,7 @@ func doUnit(t *testing.T, unit *test_unit) {
 		}
 		go server.Serve()
 		defer server.Stop()
-		client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
+		client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl, "../../../keys")
 		if err != nil {
 			t.Errorf("Unable to start client: %v", err)
 			return

@@ -50,7 +50,7 @@ func TestHttpContextTimeout(t *testing.T) {
 	server := &http.Server{Addr: addr, Handler: slowHttpHandler{}}
 	go server.ListenAndServe()
 
-	client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl)
+	client, trans, err := StartClient(addr, unit.transport, unit.protocol, unit.ssl, "../../../keys")
 	if err != nil {
 		t.Errorf("Unable to start client: %v", err)
 		return
