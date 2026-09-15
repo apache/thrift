@@ -1,0 +1,17 @@
+// apt settings for the GitHub Actions workflows. Copied into
+// /etc/apt/apt.conf.d/ before each apt-get update.
+//
+// The runner images resolve packages through a mirror list
+// (/etc/apt/apt-mirrors.txt) and apt only moves to the next mirror once an
+// item has failed on the current one. With the defaults (Acquire::Retries 3,
+// 30 second inactivity timeout, and the http method's own second attempt) a
+// stalled mirror costs about four minutes per item before apt falls over.
+// One retry and a 20 second timeout bound that to about 80 seconds per item
+// while still giving every mirror in the list a second chance, since a short
+// mirror outage can hit all of them at once.
+Acquire::Retries "1";
+Acquire::http::Timeout "20";
+Acquire::https::Timeout "20";
+// apt-get does not wait for the dpkg lock by default; another apt process (the
+// apt-daily timers, for example) can hold it briefly after the runner boots.
+DPkg::Lock::Timeout "120";
