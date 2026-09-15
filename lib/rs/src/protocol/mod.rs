@@ -60,6 +60,7 @@
 use std::convert::{From, TryFrom};
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::io::Read;
 
 use crate::transport::{TReadTransport, TWriteTransport};
 use crate::{ProtocolError, ProtocolErrorKind, TConfiguration};
@@ -208,7 +209,7 @@ pub trait TInputProtocol {
             TType::I32 => self.read_i32().map(|_| ()),
             TType::I64 => self.read_i64().map(|_| ()),
             TType::Double => self.read_double().map(|_| ()),
-            TType::String => self.read_bytes().map(|_| ()),
+            TType::String => self.skip_binary(),
             TType::Uuid => self.read_uuid().map(|_| ()),
             TType::Struct => {
                 self.read_struct_begin()?;
@@ -254,6 +255,11 @@ pub trait TInputProtocol {
                 message: format!("cannot skip field type {:?}", &u),
             })),
         }
+    }
+
+    /// Skip a binary or string field payload.
+    fn skip_binary(&mut self) -> crate::Result<()> {
+        self.read_bytes().map(|_| ())
     }
 
     // utility (DO NOT USE IN GENERATED CODE!!!!)
@@ -397,6 +403,10 @@ where
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
         (**self).read_bytes()
+    }
+
+    fn skip_binary(&mut self) -> crate::Result<()> {
+        (**self).skip_binary()
     }
 
     fn read_i8(&mut self) -> crate::Result<i8> {
@@ -1016,6 +1026,17 @@ pub(crate) fn check_container_size(
     }
 }
 
+pub(crate) fn discard_exact<R: Read>(reader: &mut R, mut count: usize) -> std::io::Result<()> {
+    const CHUNK: usize = 256;
+    let mut buf = [0u8; CHUNK];
+    while count > 0 {
+        let n = count.min(CHUNK);
+        reader.read_exact(&mut buf[..n])?;
+        count -= n;
+    }
+    Ok(())
+}
+
 /// Extract the field id from a Thrift field identifier.
 ///
 /// `field_ident` must *not* have `TFieldIdentifier.field_type` of type `TType::Stop`.
@@ -1213,5 +1234,130 @@ mod tests {
     fn must_skip_empty_binary_field() {
         let data = build_struct_with_unknown_binary_field(&[]);
         assert_eq!(read_struct_skipping_unknown(&data).unwrap(), 42);
+    }
+
+    fn build_struct_with_unknown_binary_then_i64(payload: &[u8], after: i64) -> Vec<u8> {
+        let mut buf = build_struct_with_unknown_binary_field(payload);
+        assert_eq!(buf.pop(), Some(0x00));
+        buf.push(0x0A); // field 2: TType::I64
+        buf.extend_from_slice(&2_i16.to_be_bytes());
+        buf.extend_from_slice(&after.to_be_bytes());
+        buf.push(0x00); // stop
+        buf
+    }
+
+    fn skip_unknown_and_read_i64_fields<P: TInputProtocol>(
+        proto: &mut P,
+    ) -> crate::Result<(i64, Option<i64>)> {
+        proto.read_struct_begin()?;
+        let mut first = None;
+        let mut second = None;
+        loop {
+            let field = proto.read_field_begin()?;
+            if field.field_type == TType::Stop {
+                break;
+            }
+            match field.id {
+                Some(1) if field.field_type == TType::I64 => {
+                    first = Some(proto.read_i64()?);
+                }
+                Some(2) if field.field_type == TType::I64 => {
+                    second = Some(proto.read_i64()?);
+                }
+                _ => {
+                    proto.skip(field.field_type)?;
+                }
+            }
+            proto.read_field_end()?;
+        }
+        proto.read_struct_end()?;
+        Ok((
+            first.ok_or_else(|| {
+                crate::Error::Protocol(crate::ProtocolError {
+                    kind: crate::ProtocolErrorKind::InvalidData,
+                    message: "missing known field".to_string(),
+                })
+            })?,
+            second,
+        ))
+    }
+
+    #[test]
+    fn must_skip_large_binary_field_and_read_following_field() {
+        let payload = vec![0xABu8; 1024];
+        let data = build_struct_with_unknown_binary_then_i64(&payload, 7);
+        let mut proto = TBinaryInputProtocol::new(Cursor::new(data), true);
+        let (first, second) = skip_unknown_and_read_i64_fields(&mut proto).unwrap();
+        assert_eq!(first, 42);
+        assert_eq!(second, Some(7));
+    }
+
+    #[test]
+    fn must_skip_large_binary_field_through_boxed_protocol() {
+        let payload = vec![0xCDu8; 1024];
+        let data = build_struct_with_unknown_binary_then_i64(&payload, 9);
+        let mut proto: Box<dyn TInputProtocol> =
+            Box::new(TBinaryInputProtocol::new(Cursor::new(data), true));
+        let (first, second) = skip_unknown_and_read_i64_fields(&mut proto).unwrap();
+        assert_eq!(first, 42);
+        assert_eq!(second, Some(9));
+    }
+
+    #[test]
+    fn must_skip_binary_respects_max_string_size() {
+        let payload = vec![0u8; 32];
+        let data = build_struct_with_unknown_binary_field(&payload);
+        let config = crate::TConfiguration::builder()
+            .max_string_size(Some(8))
+            .build()
+            .unwrap();
+        let mut proto = TBinaryInputProtocol::with_config(Cursor::new(data), true, config);
+        proto.read_struct_begin().unwrap();
+        let field = proto.read_field_begin().unwrap();
+        assert_eq!(field.id, Some(1));
+        let _ = proto.read_i64().unwrap();
+        proto.read_field_end().unwrap();
+        let field = proto.read_field_begin().unwrap();
+        assert_eq!(field.id, Some(99));
+        let err = proto.skip(field.field_type).unwrap_err();
+        match err {
+            crate::Error::Protocol(p) => {
+                assert_eq!(p.kind, crate::ProtocolErrorKind::SizeLimit);
+            }
+            other => panic!("expected SizeLimit, got {:?}", other),
+        }
+    }
+
+    fn compact_struct_with_unknown_binary_then_i64(payload: &[u8], after: i64) -> Vec<u8> {
+        let mut buf = Vec::new();
+        {
+            let mut o = TCompactOutputProtocol::new(&mut buf);
+            o.write_struct_begin(&TStructIdentifier::new("S")).unwrap();
+            o.write_field_begin(&TFieldIdentifier::new("known", TType::I64, 1))
+                .unwrap();
+            o.write_i64(42).unwrap();
+            o.write_field_end().unwrap();
+            o.write_field_begin(&TFieldIdentifier::new("bin", TType::String, 99))
+                .unwrap();
+            o.write_bytes(payload).unwrap();
+            o.write_field_end().unwrap();
+            o.write_field_begin(&TFieldIdentifier::new("after", TType::I64, 2))
+                .unwrap();
+            o.write_i64(after).unwrap();
+            o.write_field_end().unwrap();
+            o.write_field_stop().unwrap();
+            o.write_struct_end().unwrap();
+        }
+        buf
+    }
+
+    #[test]
+    fn must_skip_large_binary_field_compact_and_read_following_field() {
+        let payload = vec![0xEFu8; 1024];
+        let data = compact_struct_with_unknown_binary_then_i64(&payload, 11);
+        let mut proto = TCompactInputProtocol::new(Cursor::new(data));
+        let (first, second) = skip_unknown_and_read_i64_fields(&mut proto).unwrap();
+        assert_eq!(first, 42);
+        assert_eq!(second, Some(11));
     }
 }
