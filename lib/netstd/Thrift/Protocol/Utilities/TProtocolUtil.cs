@@ -106,5 +106,26 @@ namespace Thrift.Protocol.Utilities
                 protocol.DecrementRecursionDepth();
             }
         }
+
+        /// <summary>
+        /// The largest initial capacity a wire-supplied container element count may reserve. A
+        /// container header is read before any of its elements, so a peer can name an element count
+        /// it never backs with data.
+        /// </summary>
+        public const int MaxPreallocSize = 1024;
+
+        /// <summary>
+        /// Returns the initial capacity to reserve for a container whose declared element count is
+        /// <paramref name="size"/>. Capping what the count reserves up front keeps that cost
+        /// proportional to the bytes actually sent, while still reserving exact capacity for
+        /// containers that fit under the cap; larger containers grow as elements are added. A
+        /// negative count reserves nothing. Used by generated code.
+        /// </summary>
+        public static int PreallocSize(int size)
+        {
+            if (size < 0)
+                return 0;
+            return size < MaxPreallocSize ? size : MaxPreallocSize;
+        }
     }
 }

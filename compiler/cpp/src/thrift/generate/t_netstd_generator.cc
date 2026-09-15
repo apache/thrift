@@ -3117,7 +3117,7 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
     if( (target_net_version < 5) && ttype->is_set()) {
         out << indent() << prefix << " = new " << type_name(ttype) << "();" << '\n';
     } else {
-        out << indent() << prefix << " = new " << type_name(ttype) << "(" << obj << ".Count);" << '\n';
+        out << indent() << prefix << " = new " << type_name(ttype) << "(TProtocolUtil.PreallocSize(" << obj << ".Count));" << '\n';
     }
     string i = tmp("_i");
     out << indent() << "for(int " << i << " = 0; " << i << " < " << obj << ".Count; ++" << i << ")" << '\n'
