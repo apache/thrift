@@ -1387,6 +1387,10 @@ per-field, the same as Go — not a cumulative running remainder. Go's checkSize
 a struct with k list fields can each declare maxMessageSize / 1 elements independently — and, per the above, C++/Java over a plain socket permit that same per-field independence.
 The cumulative-remainder behaviour applies only to the in-memory buffer, zlib, and framed transports, where the counter is actually drawn down.
 
+The cumulative counter bounds the bytes actually consumed, not the capacity reserved, and on the pre-allocation path the reservation runs first. checkReadBytesAvailable(declaredCount × minSize) is a pure comparison — it throws when remainingMessageSize_ < numBytes but does not itself decrement the budget (C++ TTransport.h:286; Java TEndpointTransport). Only reading the elements' bytes decrements it, and the reservation is made before any element is read, so the running remainder never sees the reservation.
+
+Whether the check re-offers the full maxMessageSize then turns on whether the transport narrows the budget to the real message length. Only the transports that call updateKnownMessageSize do so — the framed and in-memory ones (C++ TBufferTransports; Java TFramedTransport, TMemoryInputTransport, TMemoryBuffer, TByteBuffer). A plain unframed socket (C++ TSocket / TIOStreamTransport, Java TSocket) never calls it, so remainingMessageSize_ stays at maxMessageSize however few bytes have arrived, and the check is re-offered in full at every nesting level and every sibling field. Go re-offers on every transport (it keeps no running remainder at all); Java and C++ re-offer only on the transports that never narrow — which is the default unframed path. Over a framed or in-memory transport the budget is the body length and the amplification collapses to the constant-factor form below.
+
 ---
 Evaluation of the three clauses
 
@@ -1414,6 +1418,8 @@ For list<LargeStruct> with maxMessageSize = M:
 
 If sizeof(LargeStruct) = 200 bytes: a 100 MB cap permits a 20 GB allocation from a single list field. This is "constant-factor" in the policy's sense (the constant is fixed per
  schema), but it can be 100–10,000× depending on the struct.
+
+Measured on the default unframed path (schema struct Obj { 1: list<Obj> objects; }, binary protocol, maxMessageSize at its 100 MB default). A single list field whose header declares 100,000,000 elements passes checkReadBytesAvailable(100,000,000 × 1) and reserves about 400 MB in Java (100M four-byte references) from a few-byte header, with no nesting. Because the budget is re-offered per level on an unframed transport, nesting to the recursion limit multiplies that: a roughly 384-byte message reserves about 25.6 GB in Java (OOM under -Xmx8g) and about 153.6 GB in C++ — the C++ figure larger because resize(N) value-initialises N × sizeof(element) rather than reserving N references, so the large allocation surfaces as std::bad_alloc rather than a contained OutOfMemoryError. Over a framed or in-memory transport the same message is bounded by its body length and the factor collapses to the sizeof(in-memory-type) / getMinSerializedSize(wire-type) form above.
 
 An additional complicating factor: C++ binary protocol has a separate container_limit_ (per-collection element count cap, TBinaryProtocol.h:48,66) that defaults to 0
 (disabled). The checkReadBytesAvailable path and the container_limit_ path are independent guards. The message-size cap alone is not sufficient to bound memory if struct
