@@ -1031,6 +1031,21 @@ void t_go_generator::generate_const(t_const* tconst) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
+/**
+ * Returns the type that opens a container literal in a constant. A container
+ * field with a default value is a pointer field, so the literal has to be
+ * addressed, and a typedef'd one has to use the typedef name for the address
+ * to have the field's type.
+ */
+static string const_container_literal(const string& container_type,
+                                      const string& typedef_name,
+                                      bool pointer) {
+  if (!pointer) {
+    return container_type;
+  }
+  return "&" + (typedef_name.empty() ? container_type : typedef_name);
+}
+
 string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
   string typedef_opt;
   if (type->is_typedef()) {
@@ -1271,12 +1286,13 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     if (is_container_keyed_map(type)) {
-      string entry = map_entry_type((t_map*)type);
+      string literal
+          = const_container_literal("[]" + map_entry_type((t_map*)type), typedef_opt, opt);
       if (val.empty()) {
-        out << "[]" << entry << "{}";
+        out << literal << "{}";
         return out.str();
       }
-      out << "[]" << entry << "{" << '\n';
+      out << literal << "{" << '\n';
       indent_up();
       for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
         out << indent() << "{Key: " << render_const_value(ktype, v_iter->first, name)
@@ -1286,11 +1302,14 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
       out << indent() << "}";
       return out.str();
     }
+    string literal = const_container_literal("map[" + type_to_go_key_type(ktype) + "]"
+                                                 + type_to_go_type(vtype),
+                                             typedef_opt, opt);
     if (val.empty()) {
-      out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{}";
+      out << literal << "{}";
       return out.str();
     }
-    out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{" << '\n';
+    out << literal << "{" << '\n';
     indent_up();
     size_t max_key_len = 0;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
@@ -1317,11 +1336,12 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
+    string literal = const_container_literal("[]" + type_to_go_type(etype), typedef_opt, opt);
     if (val.empty()) {
-      out << "[]" << type_to_go_type(etype) << "{}";
+      out << literal << "{}";
       return out.str();
     }
-    out << "[]" << type_to_go_type(etype) << "{" << '\n';
+    out << literal << "{" << '\n';
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
@@ -1334,11 +1354,12 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
+    string literal = const_container_literal("[]" + type_to_go_type(etype), typedef_opt, opt);
     if (val.empty()) {
-      out << "[]" << type_to_go_type(etype) << "{}";
+      out << literal << "{}";
       return out.str();
     }
-    out << "[]" << type_to_go_type(etype) << "{" << '\n';
+    out << literal << "{" << '\n';
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
@@ -4090,7 +4111,9 @@ void t_go_generator::generate_serialize_container(ostream& out,
         out << indent() << seen << " := make(map[" << keyValueType << "]struct{}, len("
             << wrapped_prefix << "))" << '\n';
         out << indent() << sawNil << " := false" << '\n';
-        out << indent() << "for _, " << entry << " := range " << wrapped_prefix << " {" << '\n';
+        // gofmt strips parentheses around a range expression, so a pointer
+        // field ranges over *p.Field rather than (*p.Field).
+        out << indent() << "for _, " << entry << " := range " << prefix << " {" << '\n';
         indent_up();
         // A nil key writes as an empty struct, and Equals treats two of them as
         // equal, so track nil separately rather than dereferencing it.

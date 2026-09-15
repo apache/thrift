@@ -34,3 +34,5 @@ typedef i64 TypedefAI64
 typedef double TypedefADouble
 typedef string TypedefAString
 typedef binary TypedefABinary
+typedef list<i32> TypedefAList
+typedef map<string, i32> TypedefAMap

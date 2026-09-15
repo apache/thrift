@@ -375,3 +375,21 @@ func TestStructKeyConst(t *testing.T) {
 		}
 	}
 }
+
+// A struct-keyed map field with a default value is a pointer to the entry
+// slice, and a constant of the enclosing struct has to take that address.
+// THRIFT-5463.
+func TestStructKeyConstInPointerField(t *testing.T) {
+	c := structkeytest.STRUCT_KEY_DEFAULTS_CONST
+	if c.ByKeyDefault == nil {
+		t.Fatal("ByKeyDefault is nil, want the const entries")
+	}
+	entries := *c.ByKeyDefault
+	if len(entries) != 1 {
+		t.Fatalf("got %d entries, want 1", len(entries))
+	}
+	want := &structkeytest.Key{ID: 1, Name: "one"}
+	if !entries[0].Key.Equals(want) || entries[0].Value != 1 {
+		t.Errorf("got %v=%d, want %v=1", entries[0].Key, entries[0].Value, want)
+	}
+}
