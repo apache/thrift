@@ -536,6 +536,22 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_below_magic_word) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(test_prealloc_size_caps_reserved_capacity) {
+  using apache::thrift::protocol::preallocSize;
+  using apache::thrift::protocol::MAX_PREALLOC_SIZE;
+
+  // A count that fits under the cap reserves exactly that count.
+  BOOST_CHECK_EQUAL(preallocSize(0), 0u);
+  BOOST_CHECK_EQUAL(preallocSize(1), 1u);
+  BOOST_CHECK_EQUAL(preallocSize(500), 500u);
+  BOOST_CHECK_EQUAL(preallocSize(MAX_PREALLOC_SIZE), MAX_PREALLOC_SIZE);
+
+  // A count above the cap reserves only the cap; the container grows as elements are added.
+  BOOST_CHECK_EQUAL(preallocSize(MAX_PREALLOC_SIZE + 1), MAX_PREALLOC_SIZE);
+  BOOST_CHECK_EQUAL(preallocSize(1000000u), MAX_PREALLOC_SIZE);
+  BOOST_CHECK_EQUAL(preallocSize(0xffffffffu), MAX_PREALLOC_SIZE);
+}
+
 BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_equal_to_magic_word) {
   using apache::thrift::transport::THeaderTransport;
   // Boundary control for the case above: a declared size of exactly 4 covers

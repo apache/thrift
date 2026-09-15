@@ -208,6 +208,23 @@ namespace protocol {
 using apache::thrift::transport::TTransport;
 
 /**
+ * The largest initial capacity a wire-supplied container element count may reserve. A container
+ * header is read before any of its elements, so a peer can name an element count it never backs
+ * with data.
+ */
+const uint32_t MAX_PREALLOC_SIZE = 1024;
+
+/**
+ * Returns the initial capacity to reserve for a container whose declared element count is \a size.
+ * Capping what the count reserves up front keeps that cost proportional to the bytes actually sent,
+ * while still reserving exact capacity for containers that fit under the cap; larger containers grow
+ * as elements are added. Used by generated code.
+ */
+inline uint32_t preallocSize(uint32_t size) {
+  return size < MAX_PREALLOC_SIZE ? size : MAX_PREALLOC_SIZE;
+}
+
+/**
  * Abstract class for a thrift protocol driver. These are all the methods that
  * a protocol must implement. Essentially, there must be some way of reading
  * and writing all the base types, plus a mechanism for writing out structs

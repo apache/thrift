@@ -4461,7 +4461,8 @@ void t_cpp_generator::generate_deserialize_container(ostream& out, t_type* ttype
     out << indent() << "::apache::thrift::protocol::TType " << etype << ";" << '\n' << indent()
         << "xfer += iprot->readListBegin(" << etype << ", " << size << ");" << '\n';
     if (!use_push) {
-      indent(out) << prefix << ".resize(" << size << ");" << '\n';
+      indent(out) << prefix << ".reserve(::apache::thrift::protocol::preallocSize(" << size
+                  << "));" << '\n';
     }
   }
 
@@ -4535,7 +4536,11 @@ void t_cpp_generator::generate_deserialize_list_element(ostream& out,
     generate_deserialize_field(out, &felem);
     indent(out) << prefix << ".push_back(" << elem << ");" << '\n';
   } else {
-    t_field felem(tlist->get_elem_type(), prefix + "[" + index + "]");
+    // The vector's capacity was reserved (capped) from the declared count, so grow it one element
+    // at a time and read into the element just appended, rather than indexing into a full resize.
+    (void)index;
+    indent(out) << prefix << ".emplace_back();" << '\n';
+    t_field felem(tlist->get_elem_type(), prefix + ".back()");
     generate_deserialize_field(out, &felem);
   }
 }
