@@ -11,6 +11,10 @@
 include_guard()
 include(FindPackageHandleStandardArgs)
 
+# The module finds several tools, so the names passed to
+# find_package_handle_standard_args() differ from the module name by design.
+set(FPHSA_NAME_MISMATCHED TRUE)
+
 foreach(program_name IN ITEMS clang-tidy clang-apply-replacements)
   find_program(${program_name}_BINARY NAMES ${program_name}-devel ${program_name}-8 ${program_name} PATH_SUFFIXES "LLVM/bin")
   find_package_handle_standard_args(${program_name} DEFAULT_MSG ${program_name}_BINARY)
@@ -26,3 +30,5 @@ if(run-clang-tidy_FOUND AND NOT TARGET ClangTools::run-clang-tidy)
   add_executable(ClangTools::run-clang-tidy IMPORTED)
   set_property(TARGET ClangTools::run-clang-tidy PROPERTY IMPORTED_LOCATION "${run-clang-tidy_BINARY}")
 endif()
+
+unset(FPHSA_NAME_MISMATCHED)
