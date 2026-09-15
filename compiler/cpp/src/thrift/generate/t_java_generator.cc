@@ -4275,8 +4275,8 @@ void t_java_generator::generate_deserialize_container(ostream& out,
     // TreeSet and TreeMap don't have any constructor which takes a capacity as an argument
     out << "();" << '\n';
   } else {
-    out << "(" << (ttype->is_list() ? "" : "2*") << obj << ".size"
-        << ");" << '\n';
+    out << "(org.apache.thrift.TBaseHelper.preallocSize(" << (ttype->is_list() ? "" : "2*") << obj
+        << ".size));" << '\n';
   }
 
   if (reuse_objects_) {

@@ -224,4 +224,26 @@ public class TestTBaseHelper {
 
     assertNull(TBaseHelper.copyBinary((byte[]) null));
   }
+
+  @Test
+  public void testPreallocSize() {
+    // A count that fits under the cap reserves exactly that count.
+    assertEquals(0, TBaseHelper.preallocSize(0));
+    assertEquals(1, TBaseHelper.preallocSize(1));
+    assertEquals(500, TBaseHelper.preallocSize(500));
+    assertEquals(
+        TBaseHelper.MAX_PREALLOC_SIZE, TBaseHelper.preallocSize(TBaseHelper.MAX_PREALLOC_SIZE));
+
+    // A count above the cap reserves only the cap; the container grows as elements are added.
+    assertEquals(
+        TBaseHelper.MAX_PREALLOC_SIZE, TBaseHelper.preallocSize(TBaseHelper.MAX_PREALLOC_SIZE + 1));
+    assertEquals(TBaseHelper.MAX_PREALLOC_SIZE, TBaseHelper.preallocSize(1_000_000));
+    assertEquals(TBaseHelper.MAX_PREALLOC_SIZE, TBaseHelper.preallocSize(Integer.MAX_VALUE));
+
+    // A negative count reserves nothing. This also covers a hash container's doubled count
+    // overflowing int (2 * size) into a negative value.
+    assertEquals(0, TBaseHelper.preallocSize(-1));
+    assertEquals(0, TBaseHelper.preallocSize(2 * 1_500_000_000));
+    assertEquals(0, TBaseHelper.preallocSize(Integer.MIN_VALUE));
+  }
 }
