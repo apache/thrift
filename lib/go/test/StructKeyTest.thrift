@@ -94,3 +94,13 @@ struct StructKeyStruct {
 }
 
 const map<Key, i32> STRUCT_KEYED_CONST = {{"id": 1, "name": "one"}: 1, {"id": 2, "name": "two"}: 2}
+
+// A struct-keyed map with a default value is a pointer field, so a constant
+// holding one takes the address of the entry slice. THRIFT-5463.
+struct StructKeyDefaults {
+  1: optional map<Key, i32> byKeyDefault = {{"id": 0, "name": "zero"}: 0}
+}
+
+const StructKeyDefaults STRUCT_KEY_DEFAULTS_CONST = {
+  "byKeyDefault": {{"id": 1, "name": "one"}: 1},
+}

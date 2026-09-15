@@ -31,6 +31,8 @@ typedef i64 TypedefBI64
 typedef double TypedefBDouble
 typedef string TypedefBString
 typedef binary TypedefBBinary
+typedef list<i32> TypedefBList
+typedef map<string, i32> TypedefBMap
 
 struct Bar {
   1: optional ConstOptionalFieldImport.Foo optFoo,
@@ -68,6 +70,18 @@ struct Bar {
   25: optional binary optBinary,
   26: optional ConstOptionalFieldImport.TypedefABinary aBinary,
   27: optional TypedefBBinary bBinary,
+
+  // A container field with a default value is generated as a pointer, so a
+  // constant holding one has to take the address of the literal.
+  // https://issues.apache.org/jira/browse/THRIFT-5463
+  28: optional list<i32> optList = [1],
+  29: optional ConstOptionalFieldImport.TypedefAList aList = [1],
+  30: optional TypedefBList bList = [1],
+  31: optional set<string> optSet = ["a"],
+  32: optional map<string, i32> optMap = {"a": 1},
+  33: optional ConstOptionalFieldImport.TypedefAMap aMap = {"a": 1},
+  34: optional TypedefBMap bMap = {"a": 1},
+  35: optional list<i32> optEmptyList = [1],
 }
 
 const list<Bar> CONSTANTS = [
@@ -107,5 +121,17 @@ const list<Bar> CONSTANTS = [
     "optBinary": "binary",
     "aBinary": "binary",
     "bBinary": "binary",
+
+    "optList": [1, 2],
+    "aList": [1, 2],
+    "bList": [1, 2],
+
+    "optSet": ["set"],
+
+    "optMap": {"key": 1},
+    "aMap": {"key": 1},
+    "bMap": {"key": 1},
+
+    "optEmptyList": [],
   },
 ]

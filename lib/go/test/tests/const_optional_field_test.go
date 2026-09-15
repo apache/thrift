@@ -20,6 +20,8 @@
 package tests
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/apache/thrift/lib/go/test/gopath/src/constoptionalfielda"
@@ -145,6 +147,50 @@ func TestConstOptionalField(t *testing.T) {
 		}
 		if string(c.BBinary) != expected {
 			t.Errorf("Typedef b expected %q, got %q", expected, c.BBinary)
+		}
+	})
+
+	// A container field with a default value is a pointer field, so the
+	// constant has to hold the address of the literal. THRIFT-5463.
+	t.Run("list", func(t *testing.T) {
+		expected := []int32{1, 2}
+		if !slices.Equal(*c.OptList, expected) {
+			t.Errorf("Expected %v, got %v", expected, *c.OptList)
+		}
+		if !slices.Equal(*c.AList, expected) {
+			t.Errorf("Typedef a expected %v, got %v", expected, *c.AList)
+		}
+		if !slices.Equal(*c.BList, expected) {
+			t.Errorf("Typedef b expected %v, got %v", expected, *c.BList)
+		}
+	})
+
+	t.Run("set", func(t *testing.T) {
+		expected := []string{"set"}
+		if !slices.Equal(*c.OptSet, expected) {
+			t.Errorf("Expected %v, got %v", expected, *c.OptSet)
+		}
+	})
+
+	t.Run("map", func(t *testing.T) {
+		expected := map[string]int32{"key": 1}
+		if !maps.Equal(*c.OptMap, expected) {
+			t.Errorf("Expected %v, got %v", expected, *c.OptMap)
+		}
+		if !maps.Equal(*c.AMap, expected) {
+			t.Errorf("Typedef a expected %v, got %v", expected, *c.AMap)
+		}
+		if !maps.Equal(*c.BMap, expected) {
+			t.Errorf("Typedef b expected %v, got %v", expected, *c.BMap)
+		}
+	})
+
+	t.Run("empty list", func(t *testing.T) {
+		if c.OptEmptyList == nil {
+			t.Fatal("Expected an empty list to be set, got nil")
+		}
+		if len(*c.OptEmptyList) != 0 {
+			t.Errorf("Expected an empty list, got %v", *c.OptEmptyList)
 		}
 	})
 }
