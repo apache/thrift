@@ -1413,7 +1413,7 @@ void t_ocaml_generator::generate_deserialize_container(ostream& out, t_type* tty
   if (ttype->is_map()) {
     indent(out) << "(let (" << ktype << "," << vtype << "," << size << ") = iprot#readMapBegin in"
                 << '\n';
-    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << '\n';
+    indent(out) << "let " << con << " = Hashtbl.create (min " << size << " 1024) in" << '\n';
     indent_up();
     indent(out) << "for i = 1 to " << size << " do" << '\n';
     indent_up();
@@ -1431,7 +1431,7 @@ void t_ocaml_generator::generate_deserialize_container(ostream& out, t_type* tty
     indent_down();
   } else if (ttype->is_set()) {
     indent(out) << "(let (" << etype << "," << size << ") = iprot#readSetBegin in" << '\n';
-    indent(out) << "let " << con << " = Hashtbl.create " << size << " in" << '\n';
+    indent(out) << "let " << con << " = Hashtbl.create (min " << size << " 1024) in" << '\n';
     indent_up();
     indent(out) << "for i = 1 to " << size << " do" << '\n';
     indent_up();
@@ -1442,14 +1442,19 @@ void t_ocaml_generator::generate_deserialize_container(ostream& out, t_type* tty
     indent(out) << "done; iprot#readSetEnd; " << con << ")";
     indent_down();
   } else if (ttype->is_list()) {
+    // The element count is read before any element, so read the elements one at a
+    // time into an accumulator rather than allocating an Array.init of the declared
+    // count up front; readListBegin has already rejected a negative size.
     indent(out) << "(let (" << etype << "," << size << ") = iprot#readListBegin in" << '\n';
     indent_up();
-    indent(out) << "let " << con << " = (Array.to_list (Array.init " << size << " (fun _ -> ";
-    generate_deserialize_type(out, ((t_list*)ttype)->get_elem_type());
-    out << "))) in" << '\n';
+    indent(out) << "let " << con << " = ref [] in" << '\n';
+    indent(out) << "for _i = 1 to " << size << " do" << '\n';
     indent_up();
-    indent(out) << "iprot#readListEnd; " << con << ")";
+    indent(out) << con << " := (";
+    generate_deserialize_type(out, ((t_list*)ttype)->get_elem_type());
+    out << ") :: !" << con << '\n';
     indent_down();
+    indent(out) << "done; iprot#readListEnd; List.rev !" << con << ")";
     indent_down();
   }
   indent_down();
