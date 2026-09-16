@@ -29,6 +29,7 @@
 #include <thrift/windows/Sync.h>
 #endif
 #include <thrift/TNonCopyable.h>
+#include <memory>
 #ifdef _WIN32
 #include <thrift/windows/Sync.h>
 #endif
@@ -71,7 +72,10 @@ public:
   // Creates and opens the named/anonymous pipe.
   void open() override;
 
-  // Shuts down communications on the pipe.
+  // Shuts down communications on the pipe.  Another thread may be in read() or
+  // write() meanwhile: if that call waits for the peer, it stops waiting and
+  // throws TTransportException::INTERRUPTED.  Anonymous pipes do synchronous
+  // I/O, which close() does not interrupt.
   void close() override;
 
   // Reads from the pipe.
@@ -95,6 +99,13 @@ public:
   HANDLE getNativeWaitHandle();
 
 private:
+  // close() may run while a read() or a write() is in flight by another thread,
+  // so impl_ must be accessed under impl_protect_.
+  std::shared_ptr<TPipeImpl> getImpl() const;
+  // Sets the new implementation and returns the previous one.
+  std::shared_ptr<TPipeImpl> exchangeImpl(std::shared_ptr<TPipeImpl> impl);
+
+  mutable TCriticalSection impl_protect_;
   std::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
