@@ -243,3 +243,20 @@ older floor can ask for it explicitly:
     conf := &thrift.TConfiguration{
         TLSConfig: &tls.Config{MinVersion: tls.VersionTLS10},
     }
+
+A note about the frames THeaderTransport writes
+===============================================
+
+`THeaderTransport.Flush` now holds the frames it writes to the transport's
+configured `MaxFrameSize`, the limit `ReadFrame` already applies to the frames
+it reads. A larger frame is not written; `Flush` returns a
+`TProtocolException` of type `SIZE_LIMIT` instead. The same applies to a
+header block larger than the frame format can describe (65535 words of four
+bytes).
+
+A client that sends frames larger than the default of 16384000 bytes needs a
+larger `MaxFrameSize` in its own configuration, not only in the server's:
+
+    conf := &thrift.TConfiguration{
+        MaxFrameSize: 64 * 1024 * 1024,
+    }
