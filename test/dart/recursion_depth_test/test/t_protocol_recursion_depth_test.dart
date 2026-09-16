@@ -109,6 +109,44 @@ Uint8List craftDeepErrorChain(TProtocolFactory factory, int depth) {
   return transport.consumeWriteBuffer();
 }
 
+// Craft a [depth]-deep nested CoRec payload whose innermost struct also
+// carries a field neither CoRec nor CoRec2 declares (id 2), holding a chain of
+// [skipped] structs. The reader goes through the generated read() for the
+// first part and through TProtocolUtil.skip() for the second.
+Uint8List craftChainWithUnknownField(
+    TProtocolFactory factory, int depth, int skipped) {
+  final transport = TBufferedTransport();
+  final protocol = factory.getProtocol(transport);
+
+  void emitUnknown(int d) {
+    protocol.writeStructBegin(TStruct('Unknown'));
+    if (d > 1) {
+      protocol.writeFieldBegin(TField('inner', TType.STRUCT, 1));
+      emitUnknown(d - 1);
+      protocol.writeFieldEnd();
+    }
+    protocol.writeFieldStop();
+    protocol.writeStructEnd();
+  }
+
+  void emit(int d) {
+    protocol.writeStructBegin(TStruct('CoRec'));
+    if (d > 1) {
+      protocol.writeFieldBegin(TField('other', TType.STRUCT, 1));
+      emit(d - 1);
+    } else {
+      protocol.writeFieldBegin(TField('unknown', TType.STRUCT, 2));
+      emitUnknown(skipped);
+    }
+    protocol.writeFieldEnd();
+    protocol.writeFieldStop();
+    protocol.writeStructEnd();
+  }
+
+  emit(depth);
+  return transport.consumeWriteBuffer();
+}
+
 final Matcher throwsDepthLimit = throwsA(predicate(
     (e) => e is TProtocolError && e.type == TProtocolErrorType.DEPTH_LIMIT));
 
@@ -186,6 +224,21 @@ void main() {
       test('rejects reading an exception payload above the limit', () {
         final bytes = craftDeepErrorChain(factory, kRecursionLimit + 1);
         expect(() => readWith(CoError(), bytes, factory), throwsDepthLimit);
+      });
+
+      // An unknown field is skipped with the depth the generated read() has
+      // left, not with a limit of its own: the two together stay within one
+      // limit, and exactly reaching it is still allowed.
+      test('skips an unknown field that fits the remaining depth', () {
+        final bytes =
+            craftChainWithUnknownField(factory, 32, kRecursionLimit - 32);
+        readWith(CoRec(), bytes, factory);
+      });
+
+      test('rejects an unknown field deeper than the remaining depth', () {
+        final bytes =
+            craftChainWithUnknownField(factory, 32, kRecursionLimit - 32 + 1);
+        expect(() => readWith(CoRec(), bytes, factory), throwsDepthLimit);
       });
     });
   });

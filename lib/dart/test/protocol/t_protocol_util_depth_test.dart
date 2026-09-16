@@ -48,6 +48,24 @@ void main() {
   TProtocol protocolOver(Uint8List bytes) =>
       TBinaryProtocol(_ListTransport(bytes));
 
+  final throwsDepthLimit = throwsA(predicate(
+      (e) => e is TProtocolError && e.type == TProtocolErrorType.DEPTH_LIMIT));
+
+  /// Enters [levels] levels on [protocol], as generated read() code does for
+  /// each struct it reads.
+  void enter(TProtocol protocol, int levels) {
+    for (var i = 0; i < levels; i++) {
+      protocol.incrementRecursionDepth();
+    }
+  }
+
+  /// Expects [protocol] to have its whole depth available: exactly
+  /// [TProtocol.defaultRecursionDepth] levels can be entered, and no more.
+  void expectWholeDepthAvailable(TProtocol protocol) {
+    enter(protocol, TProtocol.defaultRecursionDepth);
+    expect(() => protocol.incrementRecursionDepth(), throwsDepthLimit);
+  }
+
   group('TProtocolUtil.skip recursion depth', () {
     setUp(() {
       // maxRecursionLimit is a mutable static, so pin it rather than depend on
@@ -83,6 +101,38 @@ void main() {
       final protocol = protocolOver(nested(TProtocol.defaultRecursionDepth - 2));
 
       expect(() => TProtocolUtil.skip(protocol, TType.STRUCT), returnsNormally);
+    });
+
+    // An unknown field turns up inside a struct that generated read() code is
+    // already counting against the protocol, so skipping it can only go as
+    // deep as the protocol has left.
+    test('draws on the depth the protocol has already used', () {
+      final used = TProtocol.defaultRecursionDepth - 4;
+
+      // Four levels: the struct being skipped and three inside it.
+      final fits = protocolOver(nested(3));
+      enter(fits, used);
+      expect(() => TProtocolUtil.skip(fits, TType.STRUCT), returnsNormally);
+
+      final deeper = protocolOver(nested(4));
+      enter(deeper, used);
+      expect(() => TProtocolUtil.skip(deeper, TType.STRUCT), throwsDepthLimit);
+    });
+
+    test('gives the depth back when it returns', () {
+      final protocol =
+          protocolOver(nested(TProtocol.defaultRecursionDepth - 2));
+      TProtocolUtil.skip(protocol, TType.STRUCT);
+
+      expectWholeDepthAvailable(protocol);
+    });
+
+    test('gives the depth back when it throws', () {
+      final protocol = protocolOver(nested(200));
+      expect(
+          () => TProtocolUtil.skip(protocol, TType.STRUCT), throwsDepthLimit);
+
+      expectWholeDepthAvailable(protocol);
     });
   });
 }

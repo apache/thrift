@@ -28,9 +28,10 @@ abstract class TProtocol {
   int _recursionDepth = 0;
 
   /// How far a read will follow nesting the peer, rather than the IDL, chose
-  /// the shape of. Shared with [TProtocolUtil.skip], which draws on the same
-  /// budget: skipping an unknown field descends exactly the way reading it
-  /// would.
+  /// the shape of. Generated read() and write() code counts each struct it
+  /// enters, and [TProtocolUtil.skip] counts each level of an unknown field
+  /// against the same total: skipping a field descends exactly the way reading
+  /// it would.
   static const int defaultRecursionDepth = 64;
 
   TProtocol(this.transport, {this.maxStringSize = defaultMaxStringSize});
