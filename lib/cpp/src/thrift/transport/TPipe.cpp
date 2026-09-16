@@ -44,6 +44,7 @@ class TPipeImpl : apache::thrift::TNonCopyable {
 public:
   TPipeImpl() {}
   virtual ~TPipeImpl() {}
+  virtual void cancel() {} // Abort any I/O outstanding on this.
   virtual uint32_t read(uint8_t* buf, uint32_t len) = 0;
   virtual void write(const uint8_t* buf, uint32_t len) = 0;
   virtual HANDLE getPipeHandle() = 0; // doubles as the read handle for anon pipe
@@ -110,10 +111,11 @@ public:
     // see if there is an outstanding read request
     if (begin_unread_idx_ == end_unread_idx_) {
       // if so, cancel it, and wait for the dead completion
-      thread_->addWorkItem(&cancelOverlap_);
+      cancel();
       readOverlap_.overlappedResults(false /*ignore errors*/);
     }
   }
+  virtual void cancel() { thread_->addWorkItem(&cancelOverlap_); }
   virtual uint32_t read(uint8_t* buf, uint32_t len);
   virtual void write(const uint8_t* buf, uint32_t len) {
     pseudo_sync_write(Pipe_.h, write_event_.h, buf, len);
@@ -259,8 +261,19 @@ TPipe::~TPipe() {
 //---------------------------------------------------------
 // Transport callbacks
 //---------------------------------------------------------
+std::shared_ptr<TPipeImpl> TPipe::getImpl() const {
+  TAutoCrit lock(impl_protect_);
+  return impl_;
+}
+
+std::shared_ptr<TPipeImpl> TPipe::exchangeImpl(std::shared_ptr<TPipeImpl> impl) {
+  TAutoCrit lock(impl_protect_);
+  impl_.swap(impl);
+  return impl;
+}
+
 bool TPipe::isOpen() const {
-  return impl_.get() != nullptr;
+  return getImpl() != nullptr;
 }
 
 bool TPipe::peek() {
@@ -296,18 +309,24 @@ void TPipe::open() {
     throw TTransportException(TTransportException::NOT_OPEN, "Unable to open pipe");
   }
 
-  impl_.reset(new TNamedPipeImpl(hPipe));
+  exchangeImpl(std::make_shared<TNamedPipeImpl>(hPipe));
 }
 
 void TPipe::close() {
-  impl_.reset();
+  // Detach the implementation first, so that a concurrent read() or write()
+  // that already took a reference keeps it alive, then abort its pending I/O
+  // so that a blocked reader wakes up.
+  auto oldImpl = exchangeImpl(nullptr);
+  if (oldImpl)
+    oldImpl->cancel();
 }
 
 uint32_t TPipe::read(uint8_t* buf, uint32_t len) {
   checkReadBytesAvailable(len);
-  if (!isOpen())
+  auto myImpl = getImpl();
+  if (!myImpl)
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open pipe");
-  return impl_->read(buf, len);
+  return myImpl->read(buf, len);
 }
 
 uint32_t pipe_read(HANDLE pipe, uint8_t* buf, uint32_t len) {
@@ -325,9 +344,10 @@ uint32_t pipe_read(HANDLE pipe, uint8_t* buf, uint32_t len) {
 }
 
 void TPipe::write(const uint8_t* buf, uint32_t len) {
-  if (!isOpen())
+  auto myImpl = getImpl();
+  if (!myImpl)
     throw TTransportException(TTransportException::NOT_OPEN, "Called write on non-open pipe");
-  impl_->write(buf, len);
+  myImpl->write(buf, len);
 }
 
 void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len) {
@@ -358,35 +378,35 @@ void TPipe::setPipename(const std::string& pipename) {
 }
 
 HANDLE TPipe::getPipeHandle() {
-  if (impl_)
-    return impl_->getPipeHandle();
+  if (auto myImpl = getImpl())
+    return myImpl->getPipeHandle();
   return INVALID_HANDLE_VALUE;
 }
 
 void TPipe::setPipeHandle(HANDLE pipehandle) {
   if (isAnonymous_)
-    impl_->setPipeHandle(pipehandle);
+    getImpl()->setPipeHandle(pipehandle);
   else
   {
     TAutoHandle pipe(pipehandle);
-    impl_.reset(new TNamedPipeImpl(pipe));
+    exchangeImpl(std::make_shared<TNamedPipeImpl>(pipe));
   }
 }
 
 HANDLE TPipe::getWrtPipeHandle() {
-  if (impl_)
-    return impl_->getWrtPipeHandle();
+  if (auto myImpl = getImpl())
+    return myImpl->getWrtPipeHandle();
   return INVALID_HANDLE_VALUE;
 }
 
 void TPipe::setWrtPipeHandle(HANDLE pipehandle) {
-  if (impl_)
-    impl_->setWrtPipeHandle(pipehandle);
+  if (auto myImpl = getImpl())
+    myImpl->setWrtPipeHandle(pipehandle);
 }
 
 HANDLE TPipe::getNativeWaitHandle() {
-  if (impl_)
-    return impl_->getNativeWaitHandle();
+  if (auto myImpl = getImpl())
+    return myImpl->getNativeWaitHandle();
   return INVALID_HANDLE_VALUE;
 }
 

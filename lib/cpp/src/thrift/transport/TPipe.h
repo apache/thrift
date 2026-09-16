@@ -29,6 +29,7 @@
 #include <thrift/windows/Sync.h>
 #endif
 #include <thrift/TNonCopyable.h>
+#include <memory>
 #ifdef _WIN32
 #include <thrift/windows/Sync.h>
 #endif
@@ -95,6 +96,13 @@ public:
   HANDLE getNativeWaitHandle();
 
 private:
+  // close() may run while a read() or a write() is in flight by another thread,
+  // so impl_ must be accessed under impl_protect_.
+  std::shared_ptr<TPipeImpl> getImpl() const;
+  // Sets the new implementation and returns the previous one.
+  std::shared_ptr<TPipeImpl> exchangeImpl(std::shared_ptr<TPipeImpl> impl);
+
+  mutable TCriticalSection impl_protect_;
   std::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
