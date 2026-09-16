@@ -57,28 +57,27 @@ read(State = #t_socket{buffer = Buf}, Len) when
     is_integer(Len), Len >= 0
 ->
     Binary = iolist_to_binary(Buf),
-    case iolist_size(Binary) of
+    case byte_size(Binary) of
         X when X >= Len ->
             {Result, Remaining} = split_binary(Binary, Len),
             {State#t_socket{buffer = Remaining}, {ok, Result}};
-        _ ->
-            loop_recv(State, Len, Len)
+        X ->
+            loop_recv(State#t_socket{buffer = Binary}, Len, X)
     end.
 
-loop_recv(State = #t_socket{buffer = Buf}, ReadLen, NextReadLen) when NextReadLen =< 0 ->
-    {Result, Remaining} = split_binary(Buf, ReadLen),
+%% Receives until at least ReadLen bytes are buffered. Have is the number of
+%% bytes buffered so far. What arrives is collected as an iolist and flattened
+%% once there is enough of it, rather than on every pass.
+loop_recv(State = #t_socket{buffer = Buf}, ReadLen, Have) when Have >= ReadLen ->
+    {Result, Remaining} = split_binary(iolist_to_binary(Buf), ReadLen),
     {State#t_socket{buffer = Remaining}, {ok, Result}};
-loop_recv(State = #t_socket{socket = Socket, buffer = Buf}, ReadLen, NextReadLen) when
-    NextReadLen > 0
-->
+loop_recv(State = #t_socket{socket = Socket, buffer = Buf}, ReadLen, Have) ->
     case gen_tcp:recv(Socket, 0, State#t_socket.recv_timeout) of
         {error, Error} ->
             gen_tcp:close(Socket),
             {State, {error, Error}};
         {ok, Data} ->
-            Binary = iolist_to_binary([Buf, Data]),
-            Give = min(iolist_size(Binary), ReadLen),
-            loop_recv(State#t_socket{buffer = Binary}, ReadLen, ReadLen - Give)
+            loop_recv(State#t_socket{buffer = [Buf, Data]}, ReadLen, Have + iolist_size(Data))
     end.
 
 read_exact(State = #t_socket{buffer = Buf}, Len) when
