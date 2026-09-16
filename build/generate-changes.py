@@ -223,7 +223,9 @@ GITHUB_LABEL_MAP = {
 # Add any section names you want pinned to the bottom here.
 LATE_SECTIONS = {"(All Languages)", "(No Section)"}
 
-TICKET_RE = re.compile(r'\bTHRIFT-(\d+)\b', re.IGNORECASE)
+# A number followed by ".digit" belongs to a version, as in the path
+# "thrift-0.24.0/lib/...", and is not a ticket.
+TICKET_RE = re.compile(r'\bTHRIFT-(\d+)\b(?!\.\d)', re.IGNORECASE)
 CLIENT_TRAILER_RE = re.compile(r'\bClient:\s*(.+)', re.IGNORECASE)
 PR_RE = re.compile(r'\(#(\d+)\)\s*$')
 
@@ -297,6 +299,11 @@ def extract_tickets(subject, body):
     """Return set of 'THRIFT-NNNN' (uppercase) strings from subject + body."""
     text = f"{subject}\n{body}"
     return {f"THRIFT-{m.group(1)}" for m in TICKET_RE.finditer(text)}
+
+
+def ticket_number(ticket_id):
+    """Sort key for 'THRIFT-NNNN' strings: the number NNNN."""
+    return int(ticket_id.rsplit("-", 1)[1])
 
 
 def extract_client_sections(subject, body):
@@ -398,12 +405,14 @@ def fetch_jira_issues(ticket_ids):
     """Query JIRA for the given tickets.
 
     Returns dict mapping ticket_id (uppercase) to a jira_issue_entry().
-    Unknown / unreachable tickets are absent from the result.
+    Unknown / unreachable tickets are absent from the result; the unknown
+    ones are reported on stderr.
     """
     if not ticket_ids:
         return {}
 
     result = {}
+    unknown = []
     ticket_list = sorted(ticket_ids)
 
     for i in range(0, len(ticket_list), 50):
@@ -413,6 +422,11 @@ def fetch_jira_issues(ticket_ids):
             "jql": f"key in ({keys})",
             "fields": JIRA_FIELDS,
             "maxResults": 50,
+            # A validating JIRA rejects a list of up to 25 keys as a whole if
+            # one of them does not exist, losing all the others.  Only keys
+            # are looked up here, so skip the check and report the keys that
+            # come back empty instead.
+            "validateQuery": "false",
         })
         url = f"{JIRA_BASE}/rest/api/2/search?{params}"
         try:
@@ -421,12 +435,19 @@ def fetch_jira_issues(ticket_ids):
                 data = json.loads(resp.read())
             for issue in data.get("issues", []):
                 result[issue["key"].upper()] = jira_issue_entry(issue["fields"])
+            unknown.extend(k for k in batch if k.upper() not in result)
         except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
             print(f"Warning: JIRA query failed: {exc}", file=sys.stderr)
 
         if i + 50 < len(ticket_list):
             time.sleep(0.3)
 
+    if unknown:
+        unknown.sort(key=ticket_number)
+        print(
+            f"Warning: referenced tickets not found in JIRA: {', '.join(unknown)}",
+            file=sys.stderr,
+        )
     return result
 
 
@@ -508,7 +529,7 @@ def filter_release_tickets(jira_data, version):
             kept[key] = entry
         else:
             skipped.append(key)
-    skipped.sort(key=lambda key: int(key.rsplit("-", 1)[1]))
+    skipped.sort(key=ticket_number)
     return kept, skipped
 
 

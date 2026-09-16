@@ -48,6 +48,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import urllib.error
 import urllib.parse
 from unittest import mock
 
@@ -89,7 +90,13 @@ class FakeJira:
     """Stands in for urllib.request.urlopen and answers the two JIRA searches
     generate-changes.py sends ("key in (...)" and the fixVersion query) from
     a {key: fields} table.  Like the real REST API it returns only the
-    fields the request asked for.  Any other request fails the test."""
+    fields the request asked for, and it rejects a key list that names an
+    unknown key when it validates the query.  Any other request fails the
+    test."""
+
+    # issues.apache.org checks that each key exists only in key lists up to
+    # this length, and only while validateQuery is on (the default).
+    VALIDATED_KEY_LIST = 25
 
     def __init__(self, issues):
         self.issues = issues
@@ -122,7 +129,19 @@ class FakeJira:
         start = int(query.get("startAt", ["0"])[0])
         keys = re.fullmatch(r"key in \((.*)\)", jql)
         if keys:
-            hits = [k for k in keys.group(1).split(",") if k in self.issues]
+            requested = keys.group(1).split(",")
+            unknown = [k for k in requested if k not in self.issues]
+            validate = query.get("validateQuery", ["true"])[0].lower() == "true"
+            if validate and unknown and len(requested) <= self.VALIDATED_KEY_LIST:
+                error = {"errorMessages": [
+                    f"An issue with key '{k}' does not exist for field 'key'."
+                    for k in unknown
+                ], "errors": {}}
+                raise urllib.error.HTTPError(
+                    url, 400, "Bad Request", None,
+                    io.BytesIO(json.dumps(error).encode("utf-8")),
+                )
+            hits = [k for k in requested if k in self.issues]
         else:
             version = re.search(r'fixVersion = "([^"]+)"', jql).group(1)
             hits = [
@@ -308,6 +327,29 @@ class ZigSectionTests(unittest.TestCase):
         # section string the other two routes have to agree with.
         self.assertEqual(gc.jira_component_to_section("Zig - Library"), "Zig")
         self.assertEqual(gc.jira_component_to_section("Zig - Compiler"), "Zig")
+
+
+class TicketExtractionTests(unittest.TestCase):
+    """Which THRIFT-NNNN mentions in a commit message count as tickets."""
+
+    def test_version_string_is_not_a_ticket(self):
+        # Mirrors da6ed655d, whose body quotes a path in the 0.24.0 tarball.
+        self.assertEqual(gc.extract_tickets(
+            "Add cstddef include to fix build error with 6.3.0",
+            "thrift-0.24.0/lib/cpp/src/thrift/transport/TBufferTransports.h:110:32:",
+        ), set())
+
+    def test_ticket_at_the_end_of_a_sentence_is_kept(self):
+        self.assertEqual(
+            gc.extract_tickets("Fix the frame size", "Follows up on THRIFT-1337."),
+            {"THRIFT-1337"},
+        )
+
+    def test_ticket_prefix_in_any_case_is_kept(self):
+        self.assertEqual(
+            gc.extract_tickets("Thrift-2600: 0.9.2 release", ""),
+            {"THRIFT-2600"},
+        )
 
 
 class CleanSubjectTests(unittest.TestCase):
@@ -554,6 +596,45 @@ class ReleaseTicketDraftTests(unittest.TestCase):
             with self.subTest(jira_version=jira_version):
                 draft, _ = self.generate(issues, jira_version=jira_version)
                 self.assertEqual(sections_of(draft), expected)
+
+    def test_version_string_in_a_commit_body_costs_no_ticket(self):
+        # Mirrors da6ed655d. "thrift-0.24.0/..." was read as THRIFT-0, and
+        # JIRA then rejected the whole lookup, THRIFT-6183 included.
+        self.commit_6183()
+        self.commit(
+            "Add cstddef include to fix build error with 6.3.0 (#3801)\n"
+            "\n"
+            "thrift-0.24.0/lib/cpp/src/thrift/transport/TBufferTransports.h:110:32:\n"
+            " error: 'ptrdiff_t' does not name a type\n"
+            "\n"
+            "Client: cpp\n"
+        )
+        draft, log = self.generate({"THRIFT-6183": TICKET_6183})
+        self.assertEqual(sections_of(draft), {"C++": [
+            self.CPP_6183,
+            "- [#3801](https://github.com/apache/thrift/pull/3801)"
+            " - Add cstddef include to fix build error with 6.3.0",
+        ]})
+        self.assertNotRegex(log, r"\bTHRIFT-0\b")
+
+    def test_unknown_ticket_key_costs_no_other_ticket(self):
+        # A key that does not exist, such as a typo, must not hide the
+        # tickets that other commits reference.
+        self.commit_6183()
+        self.commit(
+            "Clarify the frame size documentation (#3900)\n"
+            "\n"
+            "Follows up on THRIFT-99999.\n"
+            "\n"
+            "Client: cpp\n"
+        )
+        draft, log = self.generate({"THRIFT-6183": TICKET_6183})
+        self.assertEqual(sections_of(draft), {"C++": [
+            self.CPP_6183,
+            "- [#3900](https://github.com/apache/thrift/pull/3900)"
+            " - Clarify the frame size documentation",
+        ]})
+        self.assertIn("THRIFT-99999", log)
 
 
 if __name__ == "__main__":
