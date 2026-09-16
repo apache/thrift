@@ -82,9 +82,9 @@ SET PACKAGES=^
 ::mingw-w64-%MINGWPLAT%-qt5 : WAY too large (1GB download!) - tested in cygwin builds anyway
 
 :: Upgrade things
-%BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
-%BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
-%BASH% -lc "pacman --noconfirm --needed -S %PACKAGES%" || EXIT /B
+CALL pacman-retry.bat --noconfirm -Syu %IGNORE% || EXIT /B
+CALL pacman-retry.bat --noconfirm -Syu %IGNORE% || EXIT /B
+CALL pacman-retry.bat --noconfirm --needed -S %PACKAGES% || EXIT /B
 
 
 :: These instructions are for a manual update of specific package versions.
