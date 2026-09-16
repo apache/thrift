@@ -254,6 +254,7 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
 
     def test_client_cert(self):
+        from thrift.transport.sslcompat import _match_has_ipaddress
         if not _match_has_ipaddress:
             print('skipping test_client_cert')
             return
@@ -466,6 +467,121 @@ class TSSLSocketHostnameTest(unittest.TestCase):
             match_peer_ipaddress(plain, '::1')
 
 
+class TSSLServerSocketClientCertTest(unittest.TestCase):
+    """A client certificate is matched against the peer address by default.
+
+    These tests are kept out of TSSLSocketTest, which is skipped as a whole.
+    They drive TSSLServerSocket.accept() under the running interpreter, so
+    every Python in the matrix exercises the same default. Both client
+    certificates are self-signed, so the server trusts each one directly.
+    """
+
+    def _serve(self, host='127.0.0.1', **server_kwargs):
+        from thrift.transport.TSSLSocket import TSSLServerSocket
+        # The server protocol is named explicitly, as test/py/TestServer.py
+        # does: the class default is the client protocol, whose context
+        # insists on a server_hostname that a listener cannot supply.
+        server = TSSLServerSocket(host=host, port=0,
+                                  cert_reqs=ssl.CERT_REQUIRED,
+                                  certfile=SERVER_CERT, keyfile=SERVER_KEY,
+                                  ssl_version=ssl.PROTOCOL_TLS_SERVER,
+                                  **server_kwargs)
+        acc = ServerAcceptor(server, expect_failure=True)
+        acc.start()
+        acc.await_listening()
+        self.addCleanup(acc.close)
+        return acc
+
+    def _exchange(self, port, certfile, keyfile):
+        """Return the server's reply, or None when it dropped the connection."""
+        from thrift.transport.TSSLSocket import TSSLSocket
+        client = TSSLSocket('127.0.0.1', port, cert_reqs=ssl.CERT_REQUIRED,
+                            ca_certs=SERVER_CERT, server_hostname='localhost',
+                            certfile=certfile, keyfile=keyfile)
+        client.setTimeout(2000)
+        try:
+            client.open()
+            client.write(b"hello")
+            return client.read(5)
+        except Exception:
+            return None
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
+
+    @contextmanager
+    def _quiet(self):
+        # A refused client is logged as a warning with the traceback.
+        logging.disable(logging.CRITICAL)
+        try:
+            yield
+        finally:
+            logging.disable(logging.NOTSET)
+
+    def test_default_is_the_peer_address_matcher_on_every_version(self):
+        from thrift.transport.TSSLSocket import TSSLServerSocket
+        from thrift.transport.sslcompat import match_peer_ipaddress
+        server = TSSLServerSocket(host='127.0.0.1', port=0,
+                                  certfile=SERVER_CERT, keyfile=SERVER_KEY,
+                                  ssl_version=ssl.PROTOCOL_TLS_SERVER)
+        self.assertIs(server._validate_callback, match_peer_ipaddress)
+
+    def test_client_cert_with_address_accepted(self):
+        acc = self._serve(ca_certs=CLIENT_CERT)
+        self.assertEqual(
+            self._exchange(acc.port, CLIENT_CERT, CLIENT_KEY), b"there")
+        self.assertIsNotNone(acc.client)
+
+    def test_client_cert_without_address_refused(self):
+        acc = self._serve(ca_certs=CLIENT_CERT_NO_IP)
+        with self._quiet():
+            self.assertIsNone(
+                self._exchange(acc.port, CLIENT_CERT_NO_IP, CLIENT_KEY_NO_IP))
+        self.assertIsNone(acc.client)
+
+    def test_ipv4_mapped_peer_matches_the_plain_address(self):
+        # A dual-stack listener reports an IPv4 client as ::ffff:127.0.0.1.
+        # ssl.match_hostname refused that peer on Python 3.11 and earlier
+        # unless the certificate listed the mapped address itself.
+        # client_v3.crt carried that entry for this reason until THRIFT-6275
+        # removed it, because Go 1.27 refuses to load a certificate with one.
+        # The cross-test Python server listens like this, with client_v3.crt
+        # as its CA.
+        try:
+            acc = self._serve(host=None, ca_certs=CLIENT_CERT)
+        except OSError as ex:
+            self.skipTest('no dual-stack listener here: %s' % ex)
+        if acc._server.handle.family != socket.AF_INET6:
+            self.skipTest('listener is not dual-stack')
+        self.assertEqual(
+            self._exchange(acc.port, CLIENT_CERT, CLIENT_KEY), b"there")
+        self.assertIsNotNone(acc.client)
+
+    def test_custom_callback_decides_on_the_subject(self):
+        from thrift.transport.TTransport import TTransportException
+        seen = []
+
+        def refuse_thrift_clients(cert, peer_address):
+            seen.append((cert, peer_address))
+            subject = dict(x[0] for x in cert.get('subject', ()))
+            if subject.get('organizationalUnitName') == 'Apache Thrift':
+                raise TTransportException(
+                    message='client certificate not allowed')
+
+        acc = self._serve(ca_certs=CLIENT_CERT,
+                          validate_callback=refuse_thrift_clients)
+        with self._quiet():
+            self.assertIsNone(
+                self._exchange(acc.port, CLIENT_CERT, CLIENT_KEY))
+        self.assertIsNone(acc.client)
+        self.assertEqual(len(seen), 1)
+        cert, peer_address = seen[0]
+        self.assertIn('subject', cert)
+        self.assertEqual(peer_address, '127.0.0.1')
+
+
 # Add a dummy test because starting from python 3.12, if all tests in a test
 # file are skipped that's considered an error.
 class DummyTest(unittest.TestCase):
@@ -475,7 +591,7 @@ class DummyTest(unittest.TestCase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
-    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
     from thrift.transport.TTransport import TTransportException
 
     unittest.main()
