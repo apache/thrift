@@ -168,3 +168,50 @@ func TestTFramedTransportEmptyFrames(t *testing.T) {
 		)
 	}
 }
+
+// Flush refuses a frame that a TFramedTransport holding the same configuration
+// refuses to read, before writing any of it, and the transport stays usable.
+// It refuses it the way THeaderTransport.Flush refuses one, through the check
+// the two share.
+func TestTFramedTransportFlushFrameSizeLimit(t *testing.T) {
+	const limit = 1024
+	conf := &TConfiguration{MaxFrameSize: limit}
+	ctx := context.Background()
+
+	t.Run("at-limit", func(t *testing.T) {
+		buf := NewTMemoryBuffer()
+		writer := NewTFramedTransportConf(buf, conf)
+		payload := bytes.Repeat([]byte("x"), limit)
+		writer.Write(payload)
+		if err := writer.Flush(ctx); err != nil {
+			t.Fatalf("Flush refused a frame of exactly %d bytes: %v", limit, err)
+		}
+		reader := NewTFramedTransportConf(buf, conf)
+		read := make([]byte, limit)
+		if _, err := io.ReadFull(reader, read); err != nil {
+			t.Fatalf("reading the frame back: %v", err)
+		}
+		if !bytes.Equal(read, payload) {
+			t.Error("payload read back differs from the payload written")
+		}
+	})
+
+	t.Run("over-limit", func(t *testing.T) {
+		out := &flushCountingTransport{in: bytes.NewReader(nil)}
+		writer := NewTFramedTransportConf(out, conf)
+		writer.Write(bytes.Repeat([]byte("x"), limit+1))
+		requireFlushSizeLimit(t, writer.Flush(ctx))
+		if out.written != 0 {
+			t.Errorf("Flush wrote %d bytes of a frame it refused, want 0", out.written)
+		}
+
+		// The refused frame is dropped, so the next one goes out on its own.
+		writer.Write([]byte("next"))
+		if err := writer.Flush(ctx); err != nil {
+			t.Fatalf("Flush after a refused frame: %v", err)
+		}
+		if want := 4 + len("next"); out.written != want {
+			t.Errorf("Flush after a refused frame wrote %d bytes, want %d", out.written, want)
+		}
+	})
+}

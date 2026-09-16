@@ -628,12 +628,13 @@ func (t *THeaderTransport) Write(p []byte) (int, error) {
 	return t.writeBuffer.Write(p)
 }
 
-// checkWriteFrameSize refuses a frame of size bytes that ReadFrame, holding the
-// same configuration, would refuse. THeaderMaxFrameSize is below the largest
-// length the frame's 32-bit length word can carry, so a frame that passes is
-// written with its true length.
-func (t *THeaderTransport) checkWriteFrameSize(size int) error {
-	if uint64(size) > uint64(THeaderMaxFrameSize) || int64(size) > int64(t.cfg.GetMaxFrameSize()) {
+// checkWriteFrameSize refuses a frame of size bytes that a reader holding cfg
+// would refuse. THeaderMaxFrameSize is below the largest length the frame's
+// 32-bit length word can carry, so a frame that passes is written with its
+// true length. TFramedTransport.Flush writes the same length word and applies
+// the same check.
+func checkWriteFrameSize(cfg *TConfiguration, size int) error {
+	if uint64(size) > uint64(THeaderMaxFrameSize) || int64(size) > int64(cfg.GetMaxFrameSize()) {
 		return NewTProtocolExceptionWithType(
 			SIZE_LIMIT,
 			fmt.Errorf("frame too large: %d bytes", size),
@@ -733,7 +734,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 		// First write frame length
-		if err := t.checkWriteFrameSize(payload.Len()); err != nil {
+		if err := checkWriteFrameSize(t.cfg, payload.Len()); err != nil {
 			return err
 		}
 		buf := t.buffer[:size32]
@@ -747,7 +748,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 	case clientFramedBinary, clientFramedCompact:
-		if err := t.checkWriteFrameSize(t.writeBuffer.Len()); err != nil {
+		if err := checkWriteFrameSize(t.cfg, t.writeBuffer.Len()); err != nil {
 			return err
 		}
 		buf := t.buffer[:size32]
