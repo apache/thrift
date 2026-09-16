@@ -93,7 +93,7 @@ flush(
             %% Don't bother flushing empty buffers.
             {State, ok};
         WBinary ->
-            {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
+            Response =
                 httpc:request(
                     post,
                     {
@@ -105,12 +105,17 @@ flush(
                     HttpOptions,
                     [{body_format, binary}]
                 ),
-
-            State1 = State#http_transport{
-                read_buffer = [Rbuf, Body],
-                write_buffer = []
-            },
-            {State1, ok}
+            %% The request has been dealt with either way; what was written
+            %% for it is not sent again with the next one.
+            State1 = State#http_transport{write_buffer = []},
+            case Response of
+                {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} ->
+                    {State1#http_transport{read_buffer = [Rbuf, Body]}, ok};
+                {ok, {{_Version, Status, ReasonPhrase}, _Headers, _Body}} ->
+                    {State1, {error, {http_status, Status, ReasonPhrase}}};
+                {error, Reason} ->
+                    {State1, {error, Reason}}
+            end
     end.
 
 close(State) ->
