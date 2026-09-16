@@ -165,8 +165,7 @@ std::shared_ptr<TConfiguration> withMaxFrameSize(int maxFrameSize) {
 }
 
 // The server is handed back as a TTransport, which is how a transport factory
-// hands it to a protocol: readAll() on the concrete type resolves to the CRTP
-// helper in TVirtualTransport and would never reach the WebSocket framing.
+// hands it to a protocol.
 std::shared_ptr<ScriptedTransport> connect(std::shared_ptr<TTransport>* server,
                                            std::shared_ptr<TConfiguration> config = nullptr) {
   auto inner = std::make_shared<ScriptedTransport>();
@@ -478,6 +477,26 @@ BOOST_AUTO_TEST_CASE(readAll_delivers_the_requested_length) {
     BOOST_CHECK_EQUAL(server->readAll(second, sizeof(second)), 4u);
     BOOST_CHECK_EQUAL(hex(std::string(reinterpret_cast<char*>(second), 4)), "55 66 77 88");
   }
+}
+
+// Called on the concrete type, readAll() is the WebSocket one too, the same
+// that a TTransport dispatches to: a test or a caller holding the server by
+// its own type sees the frame payload, not the HTTP request underneath.
+BOOST_AUTO_TEST_CASE(readAll_on_the_concrete_type_reads_frames) {
+  auto inner = std::make_shared<ScriptedTransport>();
+  inner->feed(kHandshake);
+  inner->feed(clientFrame(5, "hello"));
+  inner->feed(clientFrame(4, "more"));
+  TWebSocketServer<true> server(inner);
+
+  std::string got(5, '\0');
+  BOOST_CHECK_EQUAL(server.readAll(reinterpret_cast<uint8_t*>(&got[0]), 5), 5u);
+  BOOST_CHECK_EQUAL(got, "hello");
+
+  got.assign(4, '\0');
+  TWebSocketServer<true>* concrete = &server;
+  BOOST_CHECK_EQUAL(concrete->readAll(reinterpret_cast<uint8_t*>(&got[0]), 4), 4u);
+  BOOST_CHECK_EQUAL(got, "more");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
