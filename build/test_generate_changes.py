@@ -18,7 +18,7 @@
 # under the License.
 #
 
-"""Unit tests for build/generate-changes.py section-assignment logic.
+"""Unit tests for build/generate-changes.py.
 
 These cover the three cases that previously produced "(No Section)" entries:
 
@@ -29,13 +29,27 @@ These cover the three cases that previously produced "(No Section)" entries:
   3. JIRA tickets with no usable component, filed under the section named
      by their commit's Client: trailer instead (JIRA -> trailer fallback).
 
-No network access is required: only the pure mapping/assignment helpers are
-exercised.
+They also cover which referenced tickets get a JIRA line: only those JIRA
+files under the release version.  A commit that merely mentions an old
+ticket (THRIFT-6183 citing THRIFT-1337) must not list it.  Those tests run
+generate_changes() against a temporary git repository and a fake JIRA.
+
+No network access is required.
 """
 
+import argparse
+import contextlib
 import importlib.util
+import io
+import json
 import os
+import re
+import shutil
+import subprocess
+import tempfile
 import unittest
+import urllib.parse
+from unittest import mock
 
 # generate-changes.py has a hyphen in its name, so it cannot be imported with a
 # plain ``import``; load it as a module from its path instead.
@@ -57,6 +71,90 @@ def make_commit(sha="0" * 40, pr_num=None, sections=None, tickets=()):
         "sections": list(sections or []),
         "pr_num": pr_num,
     }
+
+
+def jira_fields(summary, components=(), fix_versions=(), status="Resolved",
+                resolution="Fixed"):
+    """Build an issue's "fields" object as the JIRA REST API returns it."""
+    return {
+        "summary": summary,
+        "components": [{"name": c} for c in components],
+        "fixVersions": [{"name": v} for v in fix_versions],
+        "status": {"name": status},
+        "resolution": {"name": resolution} if resolution else None,
+    }
+
+
+class FakeJira:
+    """Stands in for urllib.request.urlopen and answers the two JIRA searches
+    generate-changes.py sends ("key in (...)" and the fixVersion query) from
+    a {key: fields} table.  Like the real REST API it returns only the
+    fields the request asked for.  Any other request fails the test."""
+
+    def __init__(self, issues):
+        self.issues = issues
+
+    @staticmethod
+    def matches_fix_version_query(jql, fields, version):
+        # resolution != Unresolved [AND resolution not in (...)]
+        # AND fixVersion = version AND status != Open
+        excluded = re.search(r"resolution not in \(([^)]*)\)", jql)
+        names = (
+            [n.strip().strip('"') for n in excluded.group(1).split(",")]
+            if excluded else []
+        )
+        resolution = fields["resolution"]
+        return (
+            resolution is not None and
+            resolution["name"] not in names and
+            version in [v["name"] for v in fields["fixVersions"]] and
+            fields["status"]["name"] != "Open"
+        )
+
+    def urlopen(self, req, timeout=None):
+        prefix = f"{gc.JIRA_BASE}/rest/api/2/search?"
+        url = req.full_url
+        if not url.startswith(prefix):
+            raise AssertionError(f"unexpected request: {url}")
+        query = urllib.parse.parse_qs(url[len(prefix):])
+        jql = query["jql"][0]
+        wanted = query["fields"][0].split(",")
+        start = int(query.get("startAt", ["0"])[0])
+        keys = re.fullmatch(r"key in \((.*)\)", jql)
+        if keys:
+            hits = [k for k in keys.group(1).split(",") if k in self.issues]
+        else:
+            version = re.search(r'fixVersion = "([^"]+)"', jql).group(1)
+            hits = [
+                k for k, f in self.issues.items()
+                if self.matches_fix_version_query(jql, f, version)
+            ]
+        body = {
+            "total": len(hits),
+            "issues": [
+                {
+                    "key": k,
+                    "fields": {
+                        name: self.issues[k][name]
+                        for name in wanted if name in self.issues[k]
+                    },
+                }
+                for k in hits[start:]
+            ],
+        }
+        return io.BytesIO(json.dumps(body).encode("utf-8"))
+
+
+def sections_of(draft):
+    """Map each ### heading of a rendered draft to its bullet lines."""
+    result = {}
+    bullets = None
+    for line in draft.splitlines():
+        if line.startswith("### "):
+            bullets = result.setdefault(line[len("### "):], [])
+        elif line.startswith("- ") and bullets is not None:
+            bullets.append(line)
+    return result
 
 
 class LabelMappingTests(unittest.TestCase):
@@ -210,6 +308,252 @@ class ZigSectionTests(unittest.TestCase):
         # section string the other two routes have to agree with.
         self.assertEqual(gc.jira_component_to_section("Zig - Library"), "Zig")
         self.assertEqual(gc.jira_component_to_section("Zig - Compiler"), "Zig")
+
+
+class CleanSubjectTests(unittest.TestCase):
+    """A commit line shows the subject without its ticket and trailers."""
+
+    def test_patch_trailer_before_client_trailer_is_stripped(self):
+        # Mirrors 2ae9c11db, listed by commit while THRIFT-6108 is open.
+        self.assertEqual(
+            gc.clean_subject(
+                "THRIFT-6108: Consolidate replace_all() into t_oop_generator"
+                " Patch: A. Contributor Client: dart,delphi"
+            ),
+            "Consolidate replace_all() into t_oop_generator",
+        )
+
+    def test_autor_trailer_is_stripped(self):
+        self.assertEqual(
+            gc.clean_subject("THRIFT-1: Fix the build Autor: A. Contributor"),  # codespell:ignore
+            "Fix the build",
+        )
+
+
+TICKET_6183 = jira_fields(
+    "Use the library-wide default frame size in TNonblockingServer",
+    components=["C++ - Library"], fix_versions=["0.25.0"],
+)
+
+# Fixed in 2011 and never given a Fix Version/s.
+TICKET_1337 = jira_fields(
+    "thrift: support maximum frame size in TNonblockingServer",
+    components=["C++ - Library"], status="Closed",
+)
+
+
+class ReleaseTicketFilterTests(unittest.TestCase):
+    """A ticket is in the release only if JIRA files it under that version."""
+
+    def in_release(self, version="0.25.0", **fields):
+        entry = gc.jira_issue_entry(jira_fields("summary", **fields))
+        return gc.jira_ticket_in_release(entry, version)
+
+    def test_resolved_ticket_with_the_release_fix_version_is_in(self):
+        self.assertTrue(self.in_release(fix_versions=["0.25.0"]))
+
+    def test_ticket_without_a_fix_version_is_out(self):
+        self.assertFalse(self.in_release(status="Closed"))
+
+    def test_ticket_fixed_in_another_version_is_out(self):
+        self.assertFalse(self.in_release(fix_versions=["0.24.0"]))
+
+    def test_release_among_several_fix_versions_is_in(self):
+        self.assertTrue(self.in_release(fix_versions=["0.24.1", "0.25.0"]))
+
+    def test_open_ticket_is_out_even_with_the_release_fix_version(self):
+        self.assertFalse(self.in_release(
+            fix_versions=["0.25.0"], status="Open", resolution=None
+        ))
+
+    def test_unresolved_ticket_is_out_even_when_not_open(self):
+        self.assertFalse(self.in_release(
+            fix_versions=["0.25.0"], status="In Progress", resolution=None
+        ))
+
+    def test_resolutions_that_record_a_change_are_in(self):
+        # Duplicate included: the release manager sometimes gives a duplicate
+        # the fix version when the release addressed it.
+        for resolution in ["Fixed", "Done", "Implemented", "Duplicate"]:
+            with self.subTest(resolution=resolution):
+                self.assertTrue(self.in_release(
+                    fix_versions=["0.25.0"], status="Closed",
+                    resolution=resolution,
+                ))
+
+    def test_resolutions_without_a_fix_are_out(self):
+        # THRIFT-5917 (Won't Do): not a change to report, whatever its
+        # Fix Version/s says.
+        for resolution in [
+            "Won't Do", "Won't Fix", "Not A Problem", "Not A Bug",
+            "Cannot Reproduce", "Works for Me", "Invalid", "Incomplete",
+            "Information Provided", "Later", "Abandoned", "Auto Closed",
+        ]:
+            with self.subTest(resolution=resolution):
+                self.assertFalse(self.in_release(
+                    fix_versions=["0.25.0"], status="Closed",
+                    resolution=resolution,
+                ))
+
+    def test_entry_keeps_the_fields_the_filter_needs(self):
+        entry = gc.jira_issue_entry(jira_fields(
+            "summary",
+            components=["C++ - Library", "C++ - Compiler"],
+            fix_versions=["0.25.0"],
+        ))
+        self.assertEqual(entry, {
+            "summary": "summary",
+            "sections": ["C++"],
+            "fix_versions": ["0.25.0"],
+            "status": "Resolved",
+            "resolution": "Fixed",
+        })
+
+    def test_filter_reports_skipped_tickets_in_ticket_order(self):
+        data = {
+            "THRIFT-6183": gc.jira_issue_entry(TICKET_6183),
+            "THRIFT-1337": gc.jira_issue_entry(TICKET_1337),
+            "THRIFT-892": gc.jira_issue_entry(
+                jira_fields("summary", fix_versions=["0.7"])
+            ),
+        }
+        kept, skipped = gc.filter_release_tickets(data, "0.25.0")
+        self.assertEqual(list(kept), ["THRIFT-6183"])
+        self.assertEqual(skipped, ["THRIFT-892", "THRIFT-1337"])
+
+
+@unittest.skipUnless(shutil.which("git"), "git is not installed")
+class ReleaseTicketDraftTests(unittest.TestCase):
+    """End to end: which referenced tickets the rendered draft lists."""
+
+    CPP_6183 = (
+        "- [THRIFT-6183](https://issues.apache.org/jira/browse/THRIFT-6183)"
+        " - Use the library-wide default frame size in TNonblockingServer"
+    )
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.repo = os.path.join(tmp.name, "repo")
+        self.output = os.path.join(tmp.name, "CHANGES-draft.md")
+        os.mkdir(self.repo)
+        # Keep the user's git configuration away from both the setup below and
+        # the script's own git calls.
+        env = mock.patch.dict(os.environ, {
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.org",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.org",
+        })
+        env.start()
+        self.addCleanup(env.stop)
+        self.git("init", "-q")
+        configure_ac = os.path.join(self.repo, "configure.ac")
+        with open(configure_ac, "w", encoding="utf-8") as f:
+            f.write("AC_INIT([thrift], [0.25.0], [dev@thrift.apache.org])\n")
+        self.git("add", "configure.ac")
+        self.git("commit", "-q", "-m", "Set the version to 0.25.0")
+        self.git("tag", "v0.24.0")
+
+    def git(self, *args):
+        subprocess.run(
+            ["git"] + list(args), cwd=self.repo, check=True, capture_output=True
+        )
+
+    def commit(self, message):
+        self.git("commit", "-q", "--allow-empty", "-m", message)
+
+    def generate(self, issues, jira_version=None):
+        """Run generate_changes() on the repository; return (draft, stderr)."""
+        args = argparse.Namespace(
+            branch=None, from_tag=None, version=None, jira_version=jira_version,
+            no_commits=False, github_token=None, repo="apache/thrift",
+            output=self.output,
+        )
+        log = io.StringIO()
+        fake = FakeJira(issues)
+        with mock.patch.object(gc, "find_repo_root", return_value=self.repo), \
+                mock.patch.object(gc.urllib.request, "urlopen", fake.urlopen), \
+                contextlib.redirect_stderr(log):
+            gc.generate_changes(args)
+        with open(self.output, encoding="utf-8") as f:
+            return f.read(), log.getvalue()
+
+    def commit_6183(self):
+        # Mirrors 8b79397f7, whose body names THRIFT-1337 only as history.
+        self.commit(
+            "THRIFT-6183: Use the library-wide default frame size in"
+            " TNonblockingServer\n"
+            "\n"
+            "TNonblockingServer caps the frame it will accept at its own\n"
+            "MAX_FRAME_SIZE, 256 * 1024 * 1024 since THRIFT-1337 landed it in\n"
+            "2011.\n"
+            "\n"
+            "Client: cpp\n"
+        )
+
+    def test_ticket_mentioned_in_a_commit_body_is_not_listed(self):
+        self.commit_6183()
+        draft, log = self.generate(
+            {"THRIFT-6183": TICKET_6183, "THRIFT-1337": TICKET_1337}
+        )
+        self.assertEqual(sections_of(draft), {"C++": [self.CPP_6183]})
+        self.assertIn("THRIFT-1337", log)
+
+    def test_jira_version_mode_does_not_add_it_back(self):
+        # The fixVersion query finds THRIFT-6183; THRIFT-1337 only comes in
+        # through the extra lookup of tickets the commits reference.
+        self.commit_6183()
+        draft, log = self.generate(
+            {"THRIFT-6183": TICKET_6183, "THRIFT-1337": TICKET_1337},
+            jira_version="0.25.0",
+        )
+        self.assertEqual(sections_of(draft), {"C++": [self.CPP_6183]})
+        self.assertIn("THRIFT-1337", log)
+
+    def test_subject_ticket_outside_the_release_is_listed_by_commit(self):
+        # Mirrors f62e1b4bf: THRIFT-1941 was closed without a Fix Version/s,
+        # so the commit is listed by its PR and subject instead.
+        self.commit(
+            "THRIFT-1941: Add PHP serializer regression coverage (#3794)\n"
+            "\n"
+            "Client: php\n"
+        )
+        draft, _ = self.generate({
+            "THRIFT-1941": jira_fields(
+                "PHP Serializer deserialize doesn't work",
+                components=["PHP - Library"], status="Closed",
+            ),
+        })
+        self.assertEqual(sections_of(draft), {"PHP": [
+            "- [#3794](https://github.com/apache/thrift/pull/3794)"
+            " - Add PHP serializer regression coverage"
+        ]})
+
+    def test_ticket_resolved_without_a_fix_is_listed_by_commit(self):
+        # Like THRIFT-5917, but carrying the fix version, so that the
+        # fixVersion query itself has to leave it out.
+        self.commit(
+            "THRIFT-5917: Remove Rust deprecation warning (#3637)\n"
+            "\n"
+            "Client: rs\n"
+        )
+        issues = {
+            "THRIFT-5917": jira_fields(
+                "Drop Rust support?", components=["Rust - Library"],
+                fix_versions=["0.25.0"], status="Closed", resolution="Won't Do",
+            ),
+        }
+        expected = {"Rust": [
+            "- [#3637](https://github.com/apache/thrift/pull/3637)"
+            " - Remove Rust deprecation warning"
+        ]}
+        for jira_version in [None, "0.25.0"]:
+            with self.subTest(jira_version=jira_version):
+                draft, _ = self.generate(issues, jira_version=jira_version)
+                self.assertEqual(sections_of(draft), expected)
 
 
 if __name__ == "__main__":
