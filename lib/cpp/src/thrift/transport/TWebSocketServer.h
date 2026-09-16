@@ -60,6 +60,12 @@ public:
 
   ~TWebSocketServer() override = default;
 
+  // The readAll() inherited from TVirtualTransport<THttpTransport> reads
+  // through THttpTransport::read() and never sees a WebSocket frame, so a
+  // caller holding the concrete type would bypass the framing below. This one
+  // does what a call through TTransport does.
+  uint32_t readAll(uint8_t* buf, uint32_t len) { return readAll_virt(buf, len); }
+
   uint32_t readAll_virt(uint8_t* buf, uint32_t len) override {
     // If we do not have a good handshake, the client will attempt one.
     if (!handshakeComplete()) {
