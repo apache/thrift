@@ -17,6 +17,7 @@
 # under the License.
 #
 
+import re
 import ssl
 
 import http.server as BaseHTTPServer
@@ -24,6 +25,9 @@ import http.server as BaseHTTPServer
 from thrift.Thrift import TMessageType
 from thrift.server import TServer
 from thrift.transport import TTransport
+
+# Content-Length is 1*DIGIT (RFC 9110 8.6).
+_CONTENT_LENGTH = re.compile('[0-9]+')
 
 
 class ResponseException(Exception):
@@ -96,9 +100,14 @@ class THttpServer(TServer.TServer):
                 if length is None:
                     self.send_error(411)
                     return
+                # The whitespace around a field value is not part of it (RFC
+                # 9110 5.5). int() would also take a sign, underscores and
+                # whitespace of other kinds, so the value is checked first.
+                length = length.strip(' \t')
                 try:
-                    length = int(length)
+                    length = int(length) if _CONTENT_LENGTH.fullmatch(length) else -1
                 except ValueError:
+                    # More digits than int() converts.
                     length = -1
                 if length < 0:
                     self.send_error(400, "Invalid Content-Length")
