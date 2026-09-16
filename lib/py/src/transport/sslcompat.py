@@ -134,20 +134,6 @@ def _optional_dependencies():
         logger.warning('ipaddress module is unavailable')
         ipaddr = False
 
-    if sys.hexversion < 0x030500F0:
-        try:
-            from backports.ssl_match_hostname import match_hostname, __version__ as ver
-            ver = list(map(int, ver.split('.')))
-            logger.debug('backports.ssl_match_hostname module is available')
-            match = match_hostname
-            if ver[0] * 10 + ver[1] >= 35:
-                return ipaddr, match
-            else:
-                logger.warning('backports.ssl_match_hostname module is too old')
-                ipaddr = False
-        except ImportError:
-            logger.warning('backports.ssl_match_hostname is unavailable')
-            ipaddr = False
     try:
         from ssl import match_hostname
         logger.debug('ssl.match_hostname is available')
@@ -160,9 +146,10 @@ def _optional_dependencies():
         #
         # OpenSSL performs it only when the context has check_hostname set,
         # which TSSLSocket now does for the contexts it builds. What is left
-        # for this function is TSSLServerSocket, which matches a client
-        # certificate against the address the connection arrived from -- an IP
-        # address, never a name -- so that is what the replacement covers.
+        # for this function is a client whose caller-supplied context has it
+        # off. There, only an IP address can still be checked; a name is
+        # refused, not passed. TSSLServerSocket uses match_peer_ipaddress
+        # directly on every Python version.
         if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
             match = match_peer_ipaddress
         else:

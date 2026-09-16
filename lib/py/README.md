@@ -63,9 +63,21 @@ switches verification off altogether, as before.
 The default validate_callback on Python 3.12 and later, which stood in for the
 ssl.match_hostname removed in that release, now checks a peer certificate against
 an IP address and raises for a name rather than reporting a success it cannot back.
-Name matching belongs to OpenSSL on those versions. The only caller left in the
-library is TSSLServerSocket, which validates a client certificate against the
-address the connection arrived from.
+Name matching belongs to OpenSSL on those versions.
+
+TSSLServerSocket checks a client certificate against the address the connection
+came from. It now uses that same matcher on every Python version. Before, it used
+ssl.match_hostname on Python 3.11 and earlier. The check runs whenever cert_reqs
+asks for a client certificate, and it looks only at the IP subjectAltName records
+of the certificate. A dual-stack listener reports an IPv4 client as
+::ffff:127.0.0.1; that peer now matches a certificate that carries 127.0.0.1 on
+every version. A certificate without an IP subjectAltName is refused, where
+ssl.match_hostname compared the commonName with the address instead. DNS records
+are not matched, because a server has no name for its client. To decide which
+subjects may connect, pass a validate_callback. It receives the certificate as
+getpeercert() returns it, and the peer address. The backports.ssl_match_hostname
+fallback in sslcompat can only run below Python 3.5 and is removed, as is the
+setup.py dependency on it (THRIFT-6265).
 
 THttpServer now checks a request's Content-Length before it reads the body: a
 missing length is answered with 411, one that is not a non-negative number with
