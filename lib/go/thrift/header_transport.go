@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"slices"
 )
 
@@ -627,6 +628,20 @@ func (t *THeaderTransport) Write(p []byte) (int, error) {
 	return t.writeBuffer.Write(p)
 }
 
+// checkWriteFrameSize refuses a frame of size bytes that ReadFrame, holding the
+// same configuration, would refuse. THeaderMaxFrameSize is below the largest
+// length the frame's 32-bit length word can carry, so a frame that passes is
+// written with its true length.
+func (t *THeaderTransport) checkWriteFrameSize(size int) error {
+	if uint64(size) > uint64(THeaderMaxFrameSize) || int64(size) > int64(t.cfg.GetMaxFrameSize()) {
+		return NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("frame too large: %d bytes", size),
+		)
+	}
+	return nil
+}
+
 // Flush writes the appropriate header and the write buffer to the underlying transport.
 func (t *THeaderTransport) Flush(ctx context.Context) error {
 	if t.writeBuffer == nil || t.writeBuffer.Len() == 0 {
@@ -683,12 +698,21 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 			}
 		}
 
+		// The header length is a count of 4-byte words, carried in 16 bits.
+		headerWords := headers.Len() / 4
+		if headerWords > math.MaxUint16 {
+			return NewTProtocolExceptionWithType(
+				SIZE_LIMIT,
+				fmt.Errorf("headers too large: %d bytes", headers.Len()),
+			)
+		}
+
 		payload := bufPool.get()
 		defer bufPool.put(&payload)
 		meta := headerMeta{
 			MagicFlags:   THeaderHeaderMagic + t.Flags&THeaderFlagsMask,
 			SequenceID:   t.SequenceID,
-			HeaderLength: uint16(headers.Len() / 4),
+			HeaderLength: uint16(headerWords),
 		}
 		if err := binary.Write(payload, binary.BigEndian, meta); err != nil {
 			return NewTTransportExceptionFromError(err)
@@ -709,6 +733,9 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 		// First write frame length
+		if err := t.checkWriteFrameSize(payload.Len()); err != nil {
+			return err
+		}
 		buf := t.buffer[:size32]
 		binary.BigEndian.PutUint32(buf, uint32(payload.Len()))
 		if _, err := t.transport.Write(buf); err != nil {
@@ -720,6 +747,9 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 	case clientFramedBinary, clientFramedCompact:
+		if err := t.checkWriteFrameSize(t.writeBuffer.Len()); err != nil {
+			return err
+		}
 		buf := t.buffer[:size32]
 		binary.BigEndian.PutUint32(buf, uint32(t.writeBuffer.Len()))
 		if _, err := t.transport.Write(buf); err != nil {

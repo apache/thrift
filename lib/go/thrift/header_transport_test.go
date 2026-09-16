@@ -23,8 +23,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
+	"math"
 	"runtime"
 	"strings"
 	"testing"
@@ -575,4 +577,196 @@ func TestTHeaderTransportShortFrame(t *testing.T) {
 			}
 		})
 	}
+}
+
+// flushCountingTransport serves reads from in and counts, without keeping,
+// every byte written to it.
+type flushCountingTransport struct {
+	in      io.Reader
+	written int
+}
+
+func (c *flushCountingTransport) Read(p []byte) (int, error) { return c.in.Read(p) }
+
+func (c *flushCountingTransport) Write(p []byte) (int, error) {
+	c.written += len(p)
+	return len(p), nil
+}
+
+func (c *flushCountingTransport) Close() error                { return nil }
+func (c *flushCountingTransport) Flush(context.Context) error { return nil }
+func (c *flushCountingTransport) RemainingBytes() uint64      { return UnknownRemainingBytes }
+func (c *flushCountingTransport) Open() error                 { return nil }
+func (c *flushCountingTransport) IsOpen() bool                { return true }
+
+func requireFlushSizeLimit(t *testing.T, err error) {
+	t.Helper()
+	var pe TProtocolException
+	if !errors.As(err, &pe) || pe.TypeId() != SIZE_LIMIT {
+		t.Fatalf("Flush returned %v, want a TProtocolException of type SIZE_LIMIT", err)
+	}
+}
+
+// headerFrameOverhead returns how many bytes a header frame written with conf
+// adds to its payload, not counting the length in front of the frame.
+func headerFrameOverhead(t *testing.T, conf *TConfiguration) int {
+	t.Helper()
+	trans := NewTMemoryBuffer()
+	writer := NewTHeaderTransportConf(trans, conf)
+	writer.Write([]byte{0})
+	if err := writer.Flush(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	return trans.Len() - size32 - 1
+}
+
+// Flush has to refuse a frame that ReadFrame, holding the same configuration,
+// would refuse, and has to refuse it before writing any of it.
+func TestTHeaderTransportFlushFrameSizeLimit(t *testing.T) {
+	const limit = 1024
+	conf := &TConfiguration{MaxFrameSize: limit}
+	payloadLimit := limit - headerFrameOverhead(t, conf)
+
+	t.Run("at-limit", func(t *testing.T) {
+		trans := NewTMemoryBuffer()
+		writer := NewTHeaderTransportConf(trans, conf)
+		payload := bytes.Repeat([]byte("x"), payloadLimit)
+		writer.Write(payload)
+		if err := writer.Flush(context.Background()); err != nil {
+			t.Fatalf("Flush refused a frame of exactly %d bytes: %v", limit, err)
+		}
+		if size := binary.BigEndian.Uint32(trans.Bytes()); size != limit {
+			t.Fatalf("Flush wrote a frame of %d bytes, want %d", size, limit)
+		}
+
+		reader := NewTHeaderTransportConf(trans, conf)
+		if err := reader.ReadFrame(context.Background()); err != nil {
+			t.Fatalf("ReadFrame refused the frame Flush wrote: %v", err)
+		}
+		read := make([]byte, len(payload))
+		if _, err := io.ReadFull(reader, read); err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(read, payload) {
+			t.Error("payload read back differs from the payload written")
+		}
+	})
+
+	t.Run("over-limit", func(t *testing.T) {
+		out := &flushCountingTransport{in: bytes.NewReader(nil)}
+		writer := NewTHeaderTransportConf(out, conf)
+		writer.Write(bytes.Repeat([]byte("x"), payloadLimit+1))
+		requireFlushSizeLimit(t, writer.Flush(context.Background()))
+		if out.written != 0 {
+			t.Errorf("Flush wrote %d bytes of a frame it refused, want 0", out.written)
+		}
+	})
+}
+
+// A transport that was asked in plain framing answers in plain framing, and
+// that frame is held to the same limit.
+func TestTHeaderTransportFlushFramedFrameSizeLimit(t *testing.T) {
+	const limit = 1024
+	for _, tc := range []struct {
+		name       string
+		protocol   func(TTransport) TProtocol
+		clientType clientType
+	}{
+		{
+			name:       "binary",
+			protocol:   func(trans TTransport) TProtocol { return NewTBinaryProtocolConf(trans, nil) },
+			clientType: clientFramedBinary,
+		},
+		{
+			name:       "compact",
+			protocol:   func(trans TTransport) TProtocol { return NewTCompactProtocolConf(trans, nil) },
+			clientType: clientFramedCompact,
+		},
+	} {
+		for _, size := range []int{limit, limit + 1} {
+			t.Run(fmt.Sprintf("%s-%d", tc.name, size), func(t *testing.T) {
+				ctx := context.Background()
+				message := NewTMemoryBuffer()
+				proto := tc.protocol(message)
+				proto.WriteMessageBegin(ctx, "method", CALL, 1)
+				proto.WriteStructBegin(ctx, "args")
+				proto.WriteFieldStop(ctx)
+				proto.WriteStructEnd(ctx)
+				proto.WriteMessageEnd(ctx)
+				proto.Flush(ctx)
+				request := new(bytes.Buffer)
+				binary.Write(request, binary.BigEndian, uint32(message.Len()))
+				request.Write(message.Bytes())
+
+				out := &flushCountingTransport{in: request}
+				server := NewTHeaderTransportConf(out, &TConfiguration{MaxFrameSize: limit})
+				if err := server.ReadFrame(ctx); err != nil {
+					t.Fatal(err)
+				}
+				if server.clientType != tc.clientType {
+					t.Fatalf("client type is %v after the request, want %v", server.clientType, tc.clientType)
+				}
+
+				server.Write(bytes.Repeat([]byte("x"), size))
+				err := server.Flush(ctx)
+				if size <= limit {
+					if err != nil {
+						t.Fatalf("Flush refused a frame of exactly %d bytes: %v", limit, err)
+					}
+					if want := size32 + size; out.written != want {
+						t.Errorf("Flush wrote %d bytes, want %d", out.written, want)
+					}
+					return
+				}
+				requireFlushSizeLimit(t, err)
+				if out.written != 0 {
+					t.Errorf("Flush wrote %d bytes of a frame it refused, want 0", out.written)
+				}
+			})
+		}
+	}
+}
+
+// The header block's length travels as a 16-bit count of 4-byte words, so a
+// frame cannot declare more than 4*math.MaxUint16 bytes of headers.
+func TestTHeaderTransportFlushHeaderLengthLimit(t *testing.T) {
+	// With a single header "k", the block holds the value plus nine bytes:
+	// one each for the protocol id, the transform count, the info type, the
+	// header count, the key's length and the key, and three for the value's
+	// length at the sizes used here.
+	const blockOverhead = 9
+	maxValue := 4*math.MaxUint16 - blockOverhead
+
+	t.Run("at-limit", func(t *testing.T) {
+		trans := NewTMemoryBuffer()
+		writer := NewTHeaderTransportConf(trans, &TConfiguration{})
+		writer.SetWriteHeader("k", strings.Repeat("v", maxValue))
+		writer.Write([]byte{0})
+		if err := writer.Flush(context.Background()); err != nil {
+			t.Fatalf("Flush refused a header block of exactly %d bytes: %v", 4*math.MaxUint16, err)
+		}
+		// Frame length, magic and flags, sequence id, then the header length.
+		if words := binary.BigEndian.Uint16(trans.Bytes()[12:14]); words != math.MaxUint16 {
+			t.Fatalf("header length field is %d words, want %d", words, math.MaxUint16)
+		}
+
+		reader := NewTHeaderTransportConf(trans, &TConfiguration{})
+		if err := reader.ReadFrame(context.Background()); err != nil {
+			t.Fatalf("ReadFrame refused the frame Flush wrote: %v", err)
+		}
+		if value := reader.GetReadHeaders()["k"]; len(value) != maxValue {
+			t.Errorf("header read back has %d bytes, want %d", len(value), maxValue)
+		}
+	})
+
+	t.Run("over-limit", func(t *testing.T) {
+		out := &flushCountingTransport{in: bytes.NewReader(nil)}
+		writer := NewTHeaderTransportConf(out, &TConfiguration{})
+		writer.SetWriteHeader("k", strings.Repeat("v", maxValue+1))
+		writer.Write([]byte{0})
+		requireFlushSizeLimit(t, writer.Flush(context.Background()))
+		if out.written != 0 {
+			t.Errorf("Flush wrote %d bytes of a frame it refused, want 0", out.written)
+		}
+	})
 }
