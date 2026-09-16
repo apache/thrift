@@ -151,6 +151,81 @@ func TestTHeaderTransportNoDoubleWrapping(t *testing.T) {
 	}
 }
 
+// headerConfTransport is a memory buffer that remembers the configuration it
+// was handed.
+type headerConfTransport struct {
+	*TMemoryBuffer
+	conf *TConfiguration
+}
+
+func (h *headerConfTransport) SetTConfiguration(conf *TConfiguration) {
+	h.conf = conf
+}
+
+// headerConfFactory hands out headerConfTransports and remembers the
+// configuration it was handed.
+type headerConfFactory struct {
+	conf      *TConfiguration
+	transport *headerConfTransport
+}
+
+func (f *headerConfFactory) GetTransport(TTransport) (TTransport, error) {
+	f.transport = &headerConfTransport{TMemoryBuffer: NewTMemoryBuffer()}
+	return f.transport, nil
+}
+
+func (f *headerConfFactory) SetTConfiguration(conf *TConfiguration) {
+	f.conf = conf
+}
+
+// The factory hands its configuration to the factory it wraps when it is made
+// and whenever it is given a new one, and to the transports it makes.
+func TestTHeaderTransportFactoryConfPropagation(t *testing.T) {
+	conf := &TConfiguration{MaxFrameSize: 1024}
+	inner := &headerConfFactory{}
+	factory := NewTHeaderTransportFactoryConf(inner, conf)
+	if inner.conf != conf {
+		t.Errorf("wrapped factory has configuration %v, want %v", inner.conf, conf)
+	}
+
+	base := &headerConfTransport{TMemoryBuffer: NewTMemoryBuffer()}
+	trans, err := factory.GetTransport(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if base.conf != conf {
+		t.Errorf("transport handed to the factory has configuration %v, want %v", base.conf, conf)
+	}
+	if inner.transport.conf != conf {
+		t.Errorf("wrapped transport has configuration %v, want %v", inner.transport.conf, conf)
+	}
+	if got := trans.(*THeaderTransport).cfg; got != conf {
+		t.Errorf("header transport has configuration %v, want %v", got, conf)
+	}
+
+	updated := &TConfiguration{MaxFrameSize: 2048}
+	PropagateTConfiguration(factory, updated)
+	if inner.conf != updated {
+		t.Errorf("wrapped factory has configuration %v after the update, want %v", inner.conf, updated)
+	}
+	trans, err = factory.GetTransport(NewTMemoryBuffer())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := trans.(*THeaderTransport).cfg; got != updated {
+		t.Errorf("header transport has configuration %v after the update, want %v", got, updated)
+	}
+}
+
+// The deprecated constructor keeps its configuration to itself, as before.
+func TestTHeaderTransportFactoryWithoutConf(t *testing.T) {
+	inner := &headerConfFactory{}
+	NewTHeaderTransportFactory(inner)
+	if inner.conf != nil {
+		t.Errorf("wrapped factory has configuration %v, want none", inner.conf)
+	}
+}
+
 func TestTHeaderTransportNoReadBeyondFrame(t *testing.T) {
 	trans := NewTMemoryBuffer()
 	writeContent := func(writer TTransport, content string) error {

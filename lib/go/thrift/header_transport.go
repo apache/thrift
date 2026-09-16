@@ -886,6 +886,7 @@ func NewTHeaderTransportFactory(factory TTransportFactory) TTransportFactory {
 // NewTHeaderTransportFactoryConf creates a new *THeaderTransportFactory with
 // the given *TConfiguration.
 func NewTHeaderTransportFactoryConf(factory TTransportFactory, conf *TConfiguration) TTransportFactory {
+	PropagateTConfiguration(factory, conf)
 	return &THeaderTransportFactory{
 		Factory: factory,
 
@@ -896,6 +897,7 @@ func NewTHeaderTransportFactoryConf(factory TTransportFactory, conf *TConfigurat
 // GetTransport implements TTransportFactory.
 func (f *THeaderTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
 	if f.Factory != nil {
+		PropagateTConfiguration(trans, f.cfg)
 		t, err := f.Factory.GetTransport(trans)
 		if err != nil {
 			return nil, err
@@ -907,7 +909,7 @@ func (f *THeaderTransportFactory) GetTransport(trans TTransport) (TTransport, er
 
 // SetTConfiguration implements TConfigurationSetter.
 func (f *THeaderTransportFactory) SetTConfiguration(cfg *TConfiguration) {
-	PropagateTConfiguration(f.Factory, f.cfg)
+	PropagateTConfiguration(f.Factory, cfg)
 	f.cfg = cfg
 }
 
