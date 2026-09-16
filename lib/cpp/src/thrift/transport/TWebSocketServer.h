@@ -75,26 +75,33 @@ public:
       THttpServer::flush();
     }
 
-    uint32_t want = len;
-    auto have = readBuffer_.available_read();
-
-    // If we have some data in the buffer, copy it out and return it.
-    // We have to return it without attempting to read more, since we aren't
-    // guaranteed that the underlying transport actually has more data, so
-    // attempting to read from it could block.
-    if (have > 0 && have >= want) {
-      return readBuffer_.read(buf, want);
+    // Deliver the number of bytes the caller asked for, drawing on the read
+    // buffer and reading further frames when it runs dry, and raise at end of
+    // stream. That is the contract readAll carries everywhere, the same one the
+    // base transport and the other bindings meet. A frame carries its own
+    // WebSocket framing, so a single frame's payload may be smaller than one
+    // caller's request.
+    uint32_t have = 0;
+    while (have < len) {
+      auto avail = readBuffer_.available_read();
+      if (avail == 0) {
+        if (!readFrame()) {
+          // End of stream. With nothing handed over yet, this is the clean end
+          // of the message the caller was waiting for, reported as it always
+          // has been by a read count of zero. Part way through a request it is
+          // a message that stops short, and readAll does not hand back part of
+          // one -- it delivers the whole request or it raises.
+          if (have == 0) {
+            return 0;
+          }
+          throw TTransportException(TTransportException::END_OF_FILE, "No more data to read.");
+        }
+        continue;
+      }
+      uint32_t give = (std::min)(len - have, avail);
+      have += readBuffer_.read(buf + have, give);
     }
-
-    // Read another frame.
-    if (!readFrame()) {
-      // EOF.  No frame available.
-      return 0;
-    }
-
-    // Hand over whatever we have.
-    uint32_t give = (std::min)(want, readBuffer_.available_read());
-    return readBuffer_.read(buf, give);
+    return have;
   }
 
   void flush() override {

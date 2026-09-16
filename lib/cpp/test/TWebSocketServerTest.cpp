@@ -433,4 +433,51 @@ BOOST_AUTO_TEST_CASE(a_length_with_the_high_bit_set_is_still_refused) {
   BOOST_CHECK_LE(inner->largestRead(), kHandshakeReadCeiling);
 }
 
+// readAll delivers exactly the number of bytes asked for, or raises. A frame
+// carries WebSocket framing, so its payload can be smaller than one caller's
+// request; readAll draws on the buffer and reads further frames until it has
+// the whole request, and raises at end of stream.
+BOOST_AUTO_TEST_CASE(readAll_delivers_the_requested_length) {
+  // A frame carrying fewer bytes than the request, with no frame behind it.
+  {
+    std::shared_ptr<TTransport> server;
+    auto inner = connect(&server);
+    inner->feed(clientFrame(2, std::string("\x12\x34", 2)));
+    uint8_t out[4];
+    BOOST_CHECK_THROW(server->readAll(out, sizeof(out)),
+                      apache::thrift::transport::TTransportException);
+  }
+  // A request that a single frame satisfies exactly.
+  {
+    std::shared_ptr<TTransport> server;
+    auto inner = connect(&server);
+    inner->feed(clientFrame(4, std::string("\x12\x34\x56\x78", 4)));
+    uint8_t out[4];
+    BOOST_CHECK_EQUAL(server->readAll(out, sizeof(out)), 4u);
+    BOOST_CHECK_EQUAL(hex(std::string(reinterpret_cast<char*>(out), 4)), "12 34 56 78");
+  }
+  // A request that two frames together satisfy.
+  {
+    std::shared_ptr<TTransport> server;
+    auto inner = connect(&server);
+    inner->feed(clientFrame(2, std::string("\x12\x34", 2)));
+    inner->feed(clientFrame(2, std::string("\x56\x78", 2)));
+    uint8_t out[4];
+    BOOST_CHECK_EQUAL(server->readAll(out, sizeof(out)), 4u);
+    BOOST_CHECK_EQUAL(hex(std::string(reinterpret_cast<char*>(out), 4)), "12 34 56 78");
+  }
+  // Successive requests are served from one frame's buffer.
+  {
+    std::shared_ptr<TTransport> server;
+    auto inner = connect(&server);
+    inner->feed(clientFrame(8, std::string("\x11\x22\x33\x44\x55\x66\x77\x88", 8)));
+    uint8_t first[4];
+    uint8_t second[4];
+    BOOST_CHECK_EQUAL(server->readAll(first, sizeof(first)), 4u);
+    BOOST_CHECK_EQUAL(hex(std::string(reinterpret_cast<char*>(first), 4)), "11 22 33 44");
+    BOOST_CHECK_EQUAL(server->readAll(second, sizeof(second)), 4u);
+    BOOST_CHECK_EQUAL(hex(std::string(reinterpret_cast<char*>(second), 4)), "55 66 77 88");
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
