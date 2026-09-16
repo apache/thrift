@@ -123,7 +123,9 @@ class Connection(object):
         self.len = 0
         self.received = deque()
         self._reading = Message(0, 4, True)
-        self._rbuf = b''
+        # A bytearray grows in place; appending to bytes would copy
+        # everything received so far on every read.
+        self._rbuf = bytearray()
         self._wbuf = b''
         self.lock = threading.Lock()
         self.wake_up = wake_up
@@ -167,9 +169,11 @@ class Connection(object):
                     self._reading = Message(self._reading.end, mlen, False)
                     self.status = WAIT_MESSAGE
                 else:
-                    self._reading.buffer = self._rbuf
+                    # The message gets a copy of exactly its own frame; what
+                    # follows stays in the buffer for the next one.
+                    self._reading.buffer = bytes(self._rbuf[:self._reading.end])
                     self.received.append(self._reading)
-                    self._rbuf = self._rbuf[self._reading.end:]
+                    del self._rbuf[:self._reading.end]
                     self._reading = Message(0, 4, True)
             first = False
             if self.received:
