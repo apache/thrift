@@ -104,6 +104,36 @@ read_test_() ->
                 )}
         ]}.
 
+reductions_of(Fun) ->
+    {reductions, Before} = process_info(self(), reductions),
+    Result = Fun(),
+    {reductions, After} = process_info(self(), reductions),
+    {After - Before, Result}.
+
+%% A read that has to wait for many pieces does work in proportion to what it
+%% reads: what has arrived is not flattened again for every new piece.
+read_in_pieces_test_() ->
+    {setup,
+        fun() ->
+            meck:new(gen_tcp, [unstick, passthrough]),
+            %% The fake socket is the piece that every recv returns.
+            meck:expect(gen_tcp, recv, fun(Piece, 0, _) -> {ok, Piece} end)
+        end,
+        fun(_) -> meck:unload(gen_tcp) end,
+        ?_test(begin
+            Piece = binary:copy(<<"x">>, 4096),
+            Len = 256 * byte_size(Piece),
+            {Reductions, {State, {ok, Data}}} =
+                reductions_of(fun() -> read({t_socket, Piece, 60000, []}, Len) end),
+            ?assertEqual(binary:copy(<<"x">>, Len), Data),
+            ?assertMatch({t_socket, _, _, <<>>}, State),
+            %% Copying scales the reduction count by about one per 256 bytes.
+            %% Flattening the buffer again for each of the 256 pieces copies
+            %% about 256 * 257 / 2 * 4096 bytes, some 500,000 reductions;
+            %% collecting them and flattening once copies Len bytes.
+            ?assert(Reductions < Len div 16)
+        end)}.
+
 read_exact(Socket, Bytes) -> thrift_socket_transport:read_exact(Socket, Bytes).
 
 read_exact_test_() ->
