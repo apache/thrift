@@ -145,8 +145,7 @@ IF "%WITH_PYTHON%" == "ON" (
   "!PYTHON_ROOT!\python.exe" -m ensurepip --upgrade || EXIT /B
   "!PYTHON_ROOT!\python.exe" -m pip install --upgrade pip setuptools wheel || EXIT /B
   "!PYTHON_ROOT!\python.exe" -m pip ^
-      install backports.ssl_match_hostname ^
-              ipaddress ^
+      install ipaddress ^
               tornado>=6.3.0 ^
               twisted>=24.3.0 ^
               zope.interface>=6.1 || EXIT /B

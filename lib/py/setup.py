@@ -104,8 +104,6 @@ def run_setup(with_binary):
         extensions = dict()
 
     ssl_deps = []
-    if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
     tornado_deps = ['tornado>=6.3.0']
     twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
