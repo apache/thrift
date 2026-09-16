@@ -202,11 +202,15 @@ func (p *TFramedTransport) WriteString(s string) (n int, err error) {
 
 func (p *TFramedTransport) Flush(ctx context.Context) error {
 	size := p.writeBuf.Len()
-	if uint64(size) > uint64(math.MaxUint32) {
-		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("frame too large: %d bytes exceeds uint32 max", size))
-	}
-
 	defer bufPool.put(&p.writeBuf)
+
+	// readFrame refuses a frame larger than the configured maximum, and so does
+	// a peer holding the same configuration. THeaderTransport.Flush holds the
+	// frames it writes to the same limit. A refused frame is dropped with the
+	// buffer.
+	if err := checkWriteFrameSize(p.cfg, size); err != nil {
+		return err
+	}
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
