@@ -24,14 +24,18 @@ generate-changes.py - Generate CHANGES.md content for an Apache Thrift release.
 Three complementary data sources are combined:
 
   1. JIRA (primary, when --jira-version is given)
-     Queries all tickets where fixVersion = VERSION and status is resolved.
+     Queries all tickets where fixVersion = VERSION and status is resolved,
+     except those resolved without a change (Won't Fix, Not A Problem, ...).
      This is the authoritative list used in actual releases.
 
   2. Git commits (always)
      Walks commits between the last v* tag (or --from) and the branch tip.
      Extracts THRIFT-NNNN references from commit messages and fetches their
-     JIRA summaries.  Commits with no ticket reference are included as
-     GitHub commit links, grouped by their "Client:" trailer.
+     JIRA summaries.  A referenced ticket is listed only if JIRA files it
+     under the release version the same way the fixVersion query does, so a
+     commit that merely mentions an older ticket does not list it.  Commits
+     with no such ticket are included as GitHub commit links, grouped by
+     their "Client:" trailer.
 
   3. GitHub PR labels (fallback for commits without a "Client:" trailer)
      When a commit was merged via a PR (subject ends with "(#NNN)") and has
@@ -41,8 +45,10 @@ Three complementary data sources are combined:
      With --github-token the script also resolves PR numbers for commits whose
      subject lacks the "(#NNN)" suffix, so all commit links point to their PR.
 
-When --jira-version is NOT given the script is git-only (useful while a
-release is still in progress and fixVersions haven't been assigned in JIRA).
+When --jira-version is NOT given the script is git-only: tickets come from
+commit messages alone, filtered by the version from --version or
+configure.ac.  A commit whose ticket has no fixVersion assigned yet is still
+listed, as a commit link.
 
 Usage:
   generate-changes.py [options]
@@ -50,7 +56,9 @@ Usage:
 Options:
   --branch BRANCH           Branch to analyze (default: current branch or master)
   --from TAG                Starting tag or commit ref (default: auto-detect latest v* tag)
-  --version VERSION         Release version for the ## header (default: from configure.ac)
+  --version VERSION         Release version for the ## header and, without
+                            --jira-version, the fixVersion a referenced ticket
+                            needs to be listed (default: from configure.ac)
   --jira-version VERSION    Also query JIRA for all tickets with this fixVersion;
                             overrides git-extracted tickets as the primary source
   --no-commits              Exclude ticket-less commits from output (default: include them)
@@ -316,6 +324,9 @@ def clean_subject(subject):
     subject = re.sub(r'^No\s+ticket:\s*', '', subject, flags=re.IGNORECASE)
     # Remove trailing "Client: ..." trailer that appears on the subject line
     subject = re.sub(r'\s+Client:\s*\S.*$', '', subject, flags=re.IGNORECASE)
+    # ... and the contributor trailers extract_client_sections() strips, also
+    # when they precede the Client: trailer
+    subject = re.sub(r'\s+(?:Patch|Autor):.*$', '', subject)  # codespell:ignore
     # Strip trailing PR reference " (#NNN)"
     subject = re.sub(r'\s+\(#\d+\)\s*$', '', subject)
     return subject.strip()
@@ -336,11 +347,57 @@ def jira_component_to_section(comp_name):
     return JIRA_COMPONENT_MAP.get(base, base)
 
 
-def fetch_jira_issues(ticket_ids):
-    """Query JIRA for summary + components.
+# Issue fields both JIRA queries request; jira_issue_entry() reads them.
+JIRA_FIELDS = "summary,components,fixVersions,status,resolution"
 
-    Returns dict mapping ticket_id (uppercase) to
-      {"summary": str, "sections": [str]}
+# Resolutions that close a ticket without a change to report.  Such tickets
+# stay out of the release notes even when they carry the fix version.
+NON_FIX_RESOLUTIONS = (
+    "Won't Do",
+    "Won't Fix",
+    "Not A Problem",
+    "Not A Bug",
+    "Cannot Reproduce",
+    "Works for Me",
+    "Invalid",
+    "Incomplete",
+    "Information Provided",
+    "Later",
+    "Abandoned",
+    "Auto Closed",
+)
+
+
+def jira_issue_entry(fields):
+    """Turn a JIRA issue's "fields" object into the entry the fetch helpers
+    return:
+      {"summary": str, "sections": [str], "fix_versions": [str],
+       "status": str, "resolution": str or None}
+    """
+    raw_sections = [
+        jira_component_to_section(c["name"])
+        for c in fields.get("components") or []
+    ]
+    # Deduplicate, preserving order
+    seen: set = set()
+    sections = []
+    for s in raw_sections:
+        if s not in seen:
+            seen.add(s)
+            sections.append(s)
+    return {
+        "summary": fields["summary"],
+        "sections": sections if sections else ["(No Section)"],
+        "fix_versions": [v["name"] for v in fields.get("fixVersions") or []],
+        "status": (fields.get("status") or {}).get("name"),
+        "resolution": (fields.get("resolution") or {}).get("name"),
+    }
+
+
+def fetch_jira_issues(ticket_ids):
+    """Query JIRA for the given tickets.
+
+    Returns dict mapping ticket_id (uppercase) to a jira_issue_entry().
     Unknown / unreachable tickets are absent from the result.
     """
     if not ticket_ids:
@@ -354,7 +411,7 @@ def fetch_jira_issues(ticket_ids):
         keys = ",".join(batch)
         params = urlencode({
             "jql": f"key in ({keys})",
-            "fields": "summary,components",
+            "fields": JIRA_FIELDS,
             "maxResults": 50,
         })
         url = f"{JIRA_BASE}/rest/api/2/search?{params}"
@@ -363,23 +420,7 @@ def fetch_jira_issues(ticket_ids):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read())
             for issue in data.get("issues", []):
-                key = issue["key"].upper()
-                summary = issue["fields"]["summary"]
-                raw_sections = [
-                    jira_component_to_section(c["name"])
-                    for c in issue["fields"].get("components", [])
-                ]
-                # Deduplicate, preserving order
-                seen: set = set()
-                sections = []
-                for s in raw_sections:
-                    if s not in seen:
-                        seen.add(s)
-                        sections.append(s)
-                result[key] = {
-                    "summary": summary,
-                    "sections": sections if sections else ["(No Section)"],
-                }
+                result[issue["key"].upper()] = jira_issue_entry(issue["fields"])
         except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
             print(f"Warning: JIRA query failed: {exc}", file=sys.stderr)
 
@@ -391,7 +432,8 @@ def fetch_jira_issues(ticket_ids):
 
 def fetch_jira_by_fixversion(fix_version):
     """Return the same dict format as fetch_jira_issues, for all tickets that
-    have fixVersion = fix_version and are resolved/closed.
+    have fixVersion = fix_version and are resolved/closed, except those with
+    a resolution in NON_FIX_RESOLUTIONS.
 
     This is the authoritative JIRA query described in ReleaseManagement.md:
       project = THRIFT AND resolution = Fixed
@@ -401,18 +443,22 @@ def fetch_jira_by_fixversion(fix_version):
     start_at = 0
     page_size = 100
 
-    # Include any resolved/closed ticket regardless of resolution sub-type.
-    # The release manager occasionally assigns fixVersion to Duplicate or
-    # similar tickets when they were addressed as part of the release.
+    # Include resolved/closed tickets beyond resolution = Fixed: the release
+    # manager occasionally assigns fixVersion to Duplicate or similar tickets
+    # when they were addressed as part of the release.  Resolutions that
+    # record no change (NON_FIX_RESOLUTIONS) stay out.
+    # jira_ticket_in_release() applies the same test to tickets found in git.
+    non_fix = ", ".join(f'"{name}"' for name in NON_FIX_RESOLUTIONS)
     jql = (
         f'project = THRIFT AND resolution != Unresolved '
+        f'AND resolution not in ({non_fix}) '
         f'AND fixVersion = "{fix_version}" AND status != Open'
     )
 
     while True:
         params = urlencode({
             "jql": jql,
-            "fields": "summary,components",
+            "fields": JIRA_FIELDS,
             "maxResults": page_size,
             "startAt": start_at,
         })
@@ -426,22 +472,7 @@ def fetch_jira_by_fixversion(fix_version):
             break
 
         for issue in data.get("issues", []):
-            key = issue["key"].upper()
-            summary = issue["fields"]["summary"]
-            raw_sections = [
-                jira_component_to_section(c["name"])
-                for c in issue["fields"].get("components", [])
-            ]
-            seen: set = set()
-            sections = []
-            for s in raw_sections:
-                if s not in seen:
-                    seen.add(s)
-                    sections.append(s)
-            result[key] = {
-                "summary": summary,
-                "sections": sections if sections else ["(No Section)"],
-            }
+            result[issue["key"].upper()] = jira_issue_entry(issue["fields"])
 
         total = data.get("total", 0)
         start_at += page_size
@@ -450,6 +481,51 @@ def fetch_jira_by_fixversion(fix_version):
         time.sleep(0.3)
 
     return result
+
+
+def jira_ticket_in_release(entry, version):
+    """True if JIRA files the ticket under version the way the fixVersion
+    query in fetch_jira_by_fixversion() does: version is among its fix
+    versions, it has a resolution that is not in NON_FIX_RESOLUTIONS, and
+    it is not Open."""
+    return (
+        version in entry["fix_versions"] and
+        entry["resolution"] is not None and
+        entry["resolution"] not in NON_FIX_RESOLUTIONS and
+        entry["status"] != "Open"
+    )
+
+
+def filter_release_tickets(jira_data, version):
+    """Split fetched JIRA entries by jira_ticket_in_release().
+
+    Returns (kept, skipped): the entries in the release, and the keys of the
+    others in ticket-number order."""
+    kept = {}
+    skipped = []
+    for key, entry in jira_data.items():
+        if jira_ticket_in_release(entry, version):
+            kept[key] = entry
+        else:
+            skipped.append(key)
+    skipped.sort(key=lambda key: int(key.rsplit("-", 1)[1]))
+    return kept, skipped
+
+
+def fetch_release_tickets(ticket_ids, version):
+    """fetch_jira_issues() restricted to the tickets in the release.
+
+    A commit message may name a ticket that belongs to another release, for
+    instance as history.  Such tickets are reported and left out, so commits
+    that reference nothing else are listed as commit links instead."""
+    kept, skipped = filter_release_tickets(fetch_jira_issues(ticket_ids), version)
+    if skipped:
+        print(
+            f"Skipping {len(skipped)} referenced tickets that JIRA does not "
+            f"list as fixed in {version}: {', '.join(skipped)}",
+            file=sys.stderr,
+        )
+    return kept
 
 
 # ---------------------------------------------------------------------------
@@ -662,6 +738,8 @@ def generate_changes(args):
     # --- Version ---
     version = args.version or version_from_configure(repo_root) or "X.Y.Z"
     print(f"Version : {version}", file=sys.stderr)
+    # The fixVersion a ticket referenced in git must carry to be listed.
+    release_version = args.jira_version or version
 
     # --- Commits ---
     commits = get_commits(since, branch, repo_root)
@@ -700,11 +778,11 @@ def generate_changes(args):
                 f"Fetching {len(extra)} additional git-referenced tickets from JIRA ...",
                 file=sys.stderr,
             )
-            jira_data.update(fetch_jira_issues(extra))
+            jira_data.update(fetch_release_tickets(extra, release_version))
     else:
         if all_tickets:
             print(f"Querying JIRA for {len(all_tickets)} git-referenced tickets ...", file=sys.stderr)
-        jira_data = fetch_jira_issues(all_tickets)
+        jira_data = fetch_release_tickets(all_tickets, release_version)
 
     print(f"Total JIRA entries: {len(jira_data)}", file=sys.stderr)
 
@@ -859,14 +937,19 @@ def main():
     )
     parser.add_argument(
         "--version", metavar="VERSION",
-        help="release version for the ## header (default: read from configure.ac)",
+        help=(
+            "release version for the ## header and, without --jira-version, "
+            "the fixVersion a git-referenced ticket needs to be listed "
+            "(default: read from configure.ac)"
+        ),
     )
     parser.add_argument(
         "--jira-version", dest="jira_version", metavar="VERSION",
         help=(
             "query JIRA for all tickets with this fixVersion as the primary "
             "source (recommended for release prep once fixVersions are assigned); "
-            "git-extracted tickets are merged in as a supplement"
+            "git-extracted tickets with the same fixVersion are merged in as a "
+            "supplement"
         ),
     )
     parser.add_argument(
