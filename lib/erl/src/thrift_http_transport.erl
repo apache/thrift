@@ -35,6 +35,7 @@
 
 % string()
 -record(http_transport, {
+    scheme :: http | https,
     host :: string(),
     path :: string(),
     read_buffer :: iodata(),
@@ -51,6 +52,11 @@ new(Host, Path) ->
 
 %%--------------------------------------------------------------------
 %% Options include:
+%%   {scheme, http | https}  = http unless given. For https, the server's
+%%                             certificate and host name are checked against
+%%                             the system's trusted roots; TLS options of the
+%%                             caller's own go into {ssl, _} in HttpOptions
+%%                             and take the place of the matching defaults
 %%   {http_options, HttpOptions}  = See http(3)
 %%   {extra_headers, ExtraHeaders}  = List of extra HTTP headers
 %%   {max_message_size, Bytes}  = The longest reply to read, in place of the
@@ -58,6 +64,7 @@ new(Host, Path) ->
 %%--------------------------------------------------------------------
 new(Host, Path, Options) ->
     State1 = #http_transport{
+        scheme = http,
         host = Host,
         path = Path,
         read_buffer = [],
@@ -68,6 +75,10 @@ new(Host, Path, Options) ->
     },
     ApplyOption =
         fun
+            ({scheme, Scheme}, State = #http_transport{}) when
+                Scheme =:= http; Scheme =:= https
+            ->
+                State#http_transport{scheme = Scheme};
             ({http_options, HttpOpts}, State = #http_transport{}) ->
                 State#http_transport{http_options = HttpOpts};
             ({extra_headers, ExtraHeaders}, State = #http_transport{}) ->
@@ -117,6 +128,7 @@ flush(State = #http_transport{read_buffer = Rbuf, write_buffer = Wbuf}) ->
 %% takes along whatever is still on its way of a reply given up on.
 request(
     State = #http_transport{
+        scheme = Scheme,
         host = Host,
         path = Path,
         http_options = HttpOptions,
@@ -125,15 +137,16 @@ request(
     Body
 ) ->
     Request = {
-        "http://" ++ Host ++ Path,
+        atom_to_list(Scheme) ++ "://" ++ Host ++ Path,
         [{"User-Agent", "Erlang/thrift_http_transport"} | ExtraHeaders],
         "application/x-thrift",
         Body
     },
+    RequestHttpOptions = http_options(Scheme, HttpOptions),
     Max = max_message_size(State),
     Caller = self(),
     {Pid, Monitor} = spawn_monitor(fun() ->
-        Caller ! {self(), try_request(Request, HttpOptions, Max)}
+        Caller ! {self(), try_request(Request, RequestHttpOptions, Max)}
     end),
     receive
         {Pid, {result, Result}} ->
@@ -218,6 +231,47 @@ declared_length(Headers) ->
         false ->
             undefined
     end.
+
+%% httpc checks a server's certificate by default only from OTP 26 on, and
+%% only when it is given no TLS options at all. So for https the caller's
+%% TLS options go after defaults that have the certificate and the host name
+%% checked; ssl:connect/3 honours the last occurrence of a duplicated option,
+%% so the caller's win. The defaults are those of
+%% httpc:ssl_verify_host_options(true), with the roots handled as in
+%% thrift_sslsocket_transport.
+http_options(http, HttpOptions) ->
+    HttpOptions;
+http_options(https, HttpOptions) ->
+    TlsOptions = proplists:get_value(ssl, HttpOptions, []),
+    Defaults =
+        [{verify, verify_peer} | system_cacerts(TlsOptions)] ++
+            [
+                {customize_hostname_check, [
+                    {match_fun, public_key:pkix_verify_hostname_match_fun(https)}
+                ]}
+            ],
+    lists:keystore(ssl, 1, HttpOptions, {ssl, Defaults ++ TlsOptions}).
+
+%% The system's trusted roots, unless the caller names roots itself:
+%% {cacerts, _} would win over a {cacertfile, _} of the caller's.
+system_cacerts(TlsOptions) ->
+    case lists:any(fun is_ca_option/1, TlsOptions) of
+        true ->
+            [];
+        false ->
+            %% public_key:cacerts_get/0 raises on a host without a trust
+            %% store. Leave the roots out then, and let ssl refuse the
+            %% certificate, rather than fail here or not check it at all.
+            try public_key:cacerts_get() of
+                CaCerts -> [{cacerts, CaCerts}]
+            catch
+                _:_ -> []
+            end
+    end.
+
+is_ca_option({cacerts, _}) -> true;
+is_ca_option({cacertfile, _}) -> true;
+is_ca_option(_) -> false.
 
 max_message_size(#http_transport{max_message_size = undefined}) ->
     application:get_env(thrift, max_message_size, ?DEFAULT_MAX_MESSAGE_SIZE);
