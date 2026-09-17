@@ -157,6 +157,39 @@ void testSizeLimitDefaults(Protocol)() if (isTProtocol!Protocol) {
   buffer.reset();
 }
 
+/*
+ * A protocol factory hands the size limits it was given on to the protocols it
+ * makes, and leaves the protocol defaults in place when it was given none.
+ */
+void testFactorySizeLimits(Protocol, Factory)() if (isTProtocol!Protocol) {
+  auto buffer = new TMemoryBuffer;
+
+  auto factory = new Factory(3, 5);
+  auto prot = cast(Protocol)factory.getProtocol(buffer);
+  enforce(prot !is null, "factory should make a " ~ Protocol.stringof);
+  enforce(prot.containerSizeLimit == 3,
+    "factory should pass on its container size limit");
+  enforce(prot.stringSizeLimit == 5,
+    "factory should pass on its string size limit");
+
+  // The protocol applies the limit it was given.
+  prot.writeListBegin(TList(TType.I32, 4));
+  prot.writeI32(0); // Make sure size can be read e.g. for JSON protocol.
+  prot.reset();
+  auto e = cast(TProtocolException)collectException(prot.readListBegin());
+  enforce(e && e.type == TProtocolException.Type.SIZE_LIMIT,
+    "a protocol from the factory should apply its container size limit");
+  prot.reset();
+  buffer.reset();
+
+  auto plainFactory = new Factory;
+  auto plain = cast(Protocol)plainFactory.getProtocol(buffer);
+  enforce(plain.containerSizeLimit == DEFAULT_CONTAINER_SIZE_LIMIT,
+    "factory without arguments should keep the default container size limit");
+  enforce(plain.stringSizeLimit == DEFAULT_STRING_SIZE_LIMIT,
+    "factory without arguments should keep the default string size limit");
+}
+
 void testStringSizeLimit(Protocol)() if (isTProtocol!Protocol) {
   auto buffer = new TMemoryBuffer;
   auto prot = new Protocol(buffer);

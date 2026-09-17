@@ -84,7 +84,7 @@ final class TBinaryProtocol(Transport = TTransport) if (
    * data is received. If the limit is exceeded, a SIZE_LIMIT-type
    * TProtocolException is thrown.
    *
-   * Defaults to zero (no limit).
+   * Defaults to DEFAULT_CONTAINER_SIZE_LIMIT.
    */
   int containerSizeLimit;
 
@@ -96,7 +96,7 @@ final class TBinaryProtocol(Transport = TTransport) if (
    * data is received. If the limit is exceeded, a SIZE_LIMIT-type
    * TProtocolException is thrown.
    *
-   * Defaults to zero (no limit).
+   * Defaults to DEFAULT_STRING_SIZE_LIMIT.
    */
   int stringSizeLimit;
 
@@ -376,6 +376,7 @@ unittest {
   testContainerSizeLimit!(TBinaryProtocol!())();
   testStringSizeLimit!(TBinaryProtocol!())();
   testSizeLimitDefaults!(TBinaryProtocol!())();
+  testFactorySizeLimits!(TBinaryProtocol!(), TBinaryProtocolFactory!())();
   testSkipDepthLimit!(TBinaryProtocol!())();
 }
 
