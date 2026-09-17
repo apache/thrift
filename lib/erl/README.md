@@ -66,6 +66,22 @@ only where httpc takes the `max_body_size` request option (OTP 27.3.4.17,
 28.5.0.6, 29.0.6 and later), and only when it declares its length or is
 chunked.
 
+`thrift_http_transport:new/3` takes a `{scheme, https}` option; `http` stays
+the default. For https, the transport has the server's certificate and host
+name checked against the system's trusted roots, as
+`httpc:ssl_verify_host_options(true)` would, also on OTP 25, where httpc
+checks nothing unless asked to. TLS options of your own go into
+`{http_options, [{ssl, TlsOptions}]}` and take the place of the matching
+defaults. Naming roots with `cacerts` or `cacertfile` replaces the system's
+roots:
+
+```erl
+thrift_http_transport:new(Host, Path, [
+    {scheme, https},
+    {http_options, [{ssl, [{cacertfile, "/path/to/ca.pem"}]}]}
+]).
+```
+
 ### 0.9.2 ###
 
 as of 0.9.2 struct and function naming conventions have changed. to retain the

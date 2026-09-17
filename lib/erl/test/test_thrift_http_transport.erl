@@ -19,6 +19,7 @@
 
 -module(test_thrift_http_transport).
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("public_key/include/public_key.hrl").
 
 %% logger handler callback, see capture_log/1
 -export([log/2]).
@@ -68,22 +69,28 @@ serve(Listen, Parent, [{Status, Body} | Rest] = Replies) ->
             ok
     end.
 
-%% Reads the request head and returns the body.
+%% Reads the request head and returns the body, from a TCP or a TLS socket.
 read_request(Socket) ->
-    ok = inet:setopts(Socket, [{packet, http_bin}]),
-    {ok, {http_request, 'POST', _, _}} = gen_tcp:recv(Socket, 0),
+    ok = setopts(Socket, [{packet, http_bin}]),
+    {ok, {http_request, 'POST', _, _}} = recv(Socket, 0),
     Length = read_headers(Socket, 0),
-    ok = inet:setopts(Socket, [{packet, raw}]),
+    ok = setopts(Socket, [{packet, raw}]),
     case Length of
         0 ->
             <<>>;
         _ ->
-            {ok, Body} = gen_tcp:recv(Socket, Length),
+            {ok, Body} = recv(Socket, Length),
             Body
     end.
 
+setopts(Socket, Options) when is_port(Socket) -> inet:setopts(Socket, Options);
+setopts(Socket, Options) -> ssl:setopts(Socket, Options).
+
+recv(Socket, Length) when is_port(Socket) -> gen_tcp:recv(Socket, Length);
+recv(Socket, Length) -> ssl:recv(Socket, Length).
+
 read_headers(Socket, Length) ->
-    case gen_tcp:recv(Socket, 0) of
+    case recv(Socket, 0) of
         {ok, {http_header, _, 'Content-Length', _, Value}} ->
             read_headers(Socket, binary_to_integer(Value));
         {ok, {http_header, _, _, _, _}} ->
@@ -282,6 +289,84 @@ memory_after_gc() ->
     true = erlang:garbage_collect(),
     {memory, Memory} = process_info(self(), memory),
     Memory.
+
+%% A test titled Title that runs Test(Host, Roots) in the test process against
+%% a local https server whose certificate is for Name and chains up to one of
+%% Roots, a root made for the test that no system trusts. The server answers
+%% each request with <<"reply">> and sends each request body it receives to
+%% the test process.
+with_tls_server(Title, Name, Test) ->
+    {atom_to_list(Title), ?_test(run_with_tls_server(Name, Test))}.
+
+run_with_tls_server(Name, Test) ->
+    {ok, _} = application:ensure_all_started(ssl),
+    {Certificate, Roots} = certificate_for(Name),
+    {ok, Listen} = ssl:listen(0, [binary, {active, false} | Certificate]),
+    {ok, {_, Port}} = ssl:sockname(Listen),
+    Parent = self(),
+    spawn_link(fun() -> serve_tls(Listen, Parent) end),
+    try
+        Test("localhost:" ++ integer_to_list(Port), Roots)
+    after
+        ssl:close(Listen)
+    end.
+
+certificate_for(Name) ->
+    %% SHA-1, the default, is not accepted for TLS 1.3.
+    Key = [{key, {namedCurve, secp256r1}}, {digest, sha256}],
+    SubjectAltName = #'Extension'{
+        extnID = ?'id-ce-subjectAltName', extnValue = [{dNSName, Name}], critical = false
+    },
+    #{server_config := Server, client_config := Client} = public_key:pkix_test_data(#{
+        server_chain => #{
+            root => Key, intermediates => [], peer => [{extensions, [SubjectAltName]} | Key]
+        },
+        client_chain => #{root => Key, intermediates => [], peer => Key}
+    }),
+    {
+        [{Option, proplists:get_value(Option, Server)} || Option <- [cert, key]],
+        proplists:get_value(cacerts, Client)
+    }.
+
+serve_tls(Listen, Parent) ->
+    case ssl:transport_accept(Listen) of
+        {ok, Socket} ->
+            case ssl:handshake(Socket, 5000) of
+                {ok, TlsSocket} ->
+                    Parent ! {request_body, read_request(TlsSocket)},
+                    ok = ssl:send(
+                        TlsSocket,
+                        <<"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nreply">>
+                    ),
+                    ssl:close(TlsSocket);
+                %% The client refused the certificate.
+                {error, _} ->
+                    ok
+            end,
+            serve_tls(Listen, Parent);
+        {error, _} ->
+            ok
+    end.
+
+https_transport(Host, HttpOptions) ->
+    Options = [{scheme, https}, {http_options, HttpOptions}],
+    {ok, Transport} = thrift_http_transport:new(Host, "/", Options),
+    Transport.
+
+trusting(Roots) ->
+    [{verify, verify_peer}, {cacerts, Roots}].
+
+%% The TLS alert a request was refused with.
+tls_alert({error, {failed_connect, [_, {_, _, {tls_alert, Alert}}]}}) ->
+    Alert;
+tls_alert(Other) ->
+    {not_a_tls_alert, Other}.
+
+request_received() ->
+    receive
+        {request_body, _} -> true
+    after 0 -> false
+    end.
 
 ok_reply_test_() ->
     with_inets(
@@ -548,3 +633,128 @@ takes_max_body_size_test_() ->
             {"", false}
         ]
     ].
+
+%% http stays the default, and can also be asked for.
+http_scheme_test_() ->
+    with_inets(
+        with_server([{<<"200 OK">>, <<"reply">>}], fun(Host) ->
+            {ok, Transport} = thrift_http_transport:new(Host, "/", [{scheme, http}]),
+            {Transport1, ok} = flush(Transport, <<"request">>),
+            ?assertEqual(<<"request">>, next_request_body()),
+            ?assertMatch({_, {ok, <<"reply">>}}, thrift_transport:read(Transport1, 5))
+        end)
+    ).
+
+invalid_scheme_test_() ->
+    [
+        ?_assertEqual(
+            {error, {invalid_option, {scheme, Scheme}}},
+            thrift_http_transport:new("localhost", "/", [{scheme, Scheme}])
+        )
+     || Scheme <- [ftp, "https", <<"https">>]
+    ].
+
+%% https reaches a server whose certificate the caller trusts.
+https_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "localhost", fun(Host, Roots) ->
+            Transport = https_transport(Host, [{ssl, trusting(Roots)}]),
+            {Transport1, ok} = flush(Transport, <<"request">>),
+            ?assertEqual(<<"request">>, next_request_body()),
+            ?assertMatch({_, {ok, <<"reply">>}}, thrift_transport:read(Transport1, 5))
+        end)
+    ).
+
+%% Without TLS options of the caller's own, the certificate is checked
+%% against the system's trusted roots, which do not include the test root.
+%% httpc itself checks nothing by default before OTP 26.
+https_checks_the_certificate_by_default_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "localhost", fun(Host, _Roots) ->
+            {_, Result} = flush(https_transport(Host, []), <<"request">>),
+            ?assertMatch({unknown_ca, _}, tls_alert(Result)),
+            ?assertNot(request_received())
+        end)
+    ).
+
+%% A certificate from a trusted root is still refused for another host name.
+https_checks_the_host_name_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "other.example", fun(Host, Roots) ->
+            {_, Result} = flush(https_transport(Host, [{ssl, trusting(Roots)}]), <<"request">>),
+            {_, Description} = tls_alert(Result),
+            ?assertNotEqual(nomatch, string:find(Description, "hostname_check_failed")),
+            ?assertNot(request_received())
+        end)
+    ).
+
+%% The host name is checked even when the caller only names the roots.
+https_checks_the_host_name_with_caller_roots_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "other.example", fun(Host, Roots) ->
+            {_, Result} = flush(https_transport(Host, [{ssl, [{cacerts, Roots}]}]), <<"request">>),
+            {_, Description} = tls_alert(Result),
+            ?assertNotEqual(nomatch, string:find(Description, "hostname_check_failed")),
+            ?assertNot(request_received())
+        end)
+    ).
+
+%% A wildcard certificate is matched the way https matches it, as httpc does
+%% by default. The test server can only be reached as localhost, so the name
+%% to check is given as server_name_indication, which the check then uses.
+https_wildcard_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "*.example.test", fun(Host, Roots) ->
+            TlsOptions = [{cacerts, Roots}, {server_name_indication, "thrift.example.test"}],
+            Transport = https_transport(Host, [{ssl, TlsOptions}]),
+            ?assertMatch({_, ok}, flush(Transport, <<"request">>)),
+            ?assertEqual(<<"request">>, next_request_body())
+        end)
+    ).
+
+%% An option of the caller's takes the place of the default one.
+https_caller_options_win_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "other.example", fun(Host, _Roots) ->
+            Transport = https_transport(Host, [{ssl, [{verify, verify_none}]}]),
+            ?assertMatch({_, ok}, flush(Transport, <<"request">>)),
+            ?assertEqual(<<"request">>, next_request_body())
+        end)
+    ).
+
+%% Roots the caller names in a file are not shadowed by the system's.
+https_caller_cacertfile_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "localhost", fun(Host, Roots) ->
+            File = filename:join(
+                os:getenv("TMPDIR", "/tmp"),
+                "thrift_http_transport_" ++ integer_to_list(erlang:unique_integer([positive]))
+            ),
+            Pem = public_key:pem_encode([{'Certificate', Root, not_encrypted} || Root <- Roots]),
+            ok = file:write_file(File, Pem),
+            try
+                Transport = https_transport(Host, [{ssl, [{cacertfile, File}]}]),
+                ?assertMatch({_, ok}, flush(Transport, <<"request">>)),
+                ?assertEqual(<<"request">>, next_request_body())
+            after
+                file:delete(File)
+            end
+        end)
+    ).
+
+%% Without a system trust store, a request is refused rather than made
+%% without a check, and the transport does not crash.
+https_without_trust_store_test_() ->
+    with_inets(
+        with_tls_server(?FUNCTION_NAME, "localhost", fun(Host, _Roots) ->
+            meck:new(public_key, [unstick, passthrough]),
+            try
+                meck:expect(public_key, cacerts_get, fun() -> erlang:error(enoent) end),
+                {_, Result} = flush(https_transport(Host, []), <<"request">>),
+                ?assertMatch({error, _}, Result),
+                ?assertNot(request_received())
+            after
+                meck:unload(public_key)
+            end
+        end)
+    ).
