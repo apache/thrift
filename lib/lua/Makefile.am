@@ -60,8 +60,9 @@ liblualongnumber_la_LIBADD = $(LUA_LIB) -lm
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
-EXTRA_DIST = \
-		coding_standards.md \
+# The Lua modules are required by their bare name (e.g. require 'TTransport'),
+# so they install flat into luadir. dist_ keeps them in the release tarball too.
+dist_lua_DATA = \
 		TBinaryProtocol.lua \
 		TBufferedTransport.lua \
 		TCompactProtocol.lua \
@@ -73,7 +74,10 @@ EXTRA_DIST = \
 		TProtocol.lua \
 		TServer.lua \
 		TSocket.lua \
-		TTransport.lua \
+		TTransport.lua
+
+EXTRA_DIST = \
+		coding_standards.md \
 		test/RecursionDepth.thrift \
 		test/test_recursion_depth.lua \
 		test/test_http_headers.lua \
