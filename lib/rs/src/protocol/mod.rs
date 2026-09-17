@@ -990,9 +990,13 @@ pub(crate) fn check_container_size(
 
     // Check for potential overflow
     if let Some(min_bytes_needed) = size_as_usize.checked_mul(element_size) {
-        // TODO: When Rust trait specialization stabilizes, we can add more precise checks
-        // for transports that track exact remaining bytes. For now, we use the message
-        // size limit as a best-effort check.
+        // TODO: hold min_bytes_needed to what is left of the current message
+        // rather than to the whole max_message_size. The other bindings keep
+        // that count in their transports, but every io::Read is a
+        // TReadTransport through one blanket impl, so a Rust transport cannot
+        // supply its own count until trait specialization is stable.
+        // Up-front allocation does not depend on this check: generated code
+        // reserves list capacity through prealloc_size, which caps it.
         if let Some(max_message_size) = config.max_message_size() {
             if min_bytes_needed > max_message_size {
                 return Err(crate::Error::Protocol(ProtocolError::new(
