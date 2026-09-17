@@ -138,7 +138,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     1. Create a level 3 section in `CHANGES.md` under the release for each component and copy the items from the RelNote column into the changes file.
 
-    1. Find all [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) and add them to `CHANGES.md` in the list of known critical issues for the release.
+    1. Find all [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed,resolved)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) and add them to `CHANGES.md` in the list of known critical issues for the release.
 
 1. Commit all changes to the release branch.
 
