@@ -44,7 +44,7 @@
 }).
 
 -type json_context() :: #json_context{}.
--type jsx_type() :: atom() | {atom(), atom() | string()}.
+-type jsx_type() :: atom() | {atom(), atom() | binary() | number()}.
 -type jsx() :: {event, jsx_type(), [jsx_type()]}.
 
 -record(json_protocol, {
@@ -69,17 +69,17 @@ typeid_to_json(?tType_MAP) -> "map";
 typeid_to_json(?tType_SET) -> "set";
 typeid_to_json(?tType_LIST) -> "lst".
 
-json_to_typeid("tf") -> ?tType_BOOL;
-json_to_typeid("dbl") -> ?tType_DOUBLE;
-json_to_typeid("i8") -> ?tType_I8;
-json_to_typeid("i16") -> ?tType_I16;
-json_to_typeid("i32") -> ?tType_I32;
-json_to_typeid("i64") -> ?tType_I64;
-json_to_typeid("str") -> ?tType_STRING;
-json_to_typeid("rec") -> ?tType_STRUCT;
-json_to_typeid("map") -> ?tType_MAP;
-json_to_typeid("set") -> ?tType_SET;
-json_to_typeid("lst") -> ?tType_LIST.
+json_to_typeid(<<"tf">>) -> ?tType_BOOL;
+json_to_typeid(<<"dbl">>) -> ?tType_DOUBLE;
+json_to_typeid(<<"i8">>) -> ?tType_I8;
+json_to_typeid(<<"i16">>) -> ?tType_I16;
+json_to_typeid(<<"i32">>) -> ?tType_I32;
+json_to_typeid(<<"i64">>) -> ?tType_I64;
+json_to_typeid(<<"str">>) -> ?tType_STRING;
+json_to_typeid(<<"rec">>) -> ?tType_STRUCT;
+json_to_typeid(<<"map">>) -> ?tType_MAP;
+json_to_typeid(<<"set">>) -> ?tType_SET;
+json_to_typeid(<<"lst">>) -> ?tType_LIST.
 
 start_context(object) -> "{";
 start_context(array) -> "[".
@@ -310,10 +310,7 @@ write(This, {double, Double}) ->
 write(This0, {string, Str}) ->
     write_values(This0, [
         {context_pre_item, false},
-        case is_binary(Str) of
-            true -> Str;
-            false -> <<"\"", (list_to_binary(Str))/binary, "\"">>
-        end,
+        <<"\"", (escape(iolist_to_binary(Str)))/binary, "\"">>,
         {context_post_item, false}
     ]);
 %% TODO: binary fields should be base64 encoded?
@@ -335,34 +332,93 @@ write_values(This0, ValueList) ->
     ),
     {FinalState, ok}.
 
-%% I wish the erlang version of the transport interface included a
-%% read_all function (like eg. the java implementation). Since it doesn't,
-%% here's my version (even though it probably shouldn't be in this file).
-%%
-%% The resulting binary is immediately send to the JSX stream parser.
-%% Subsequent calls to read actually operate on the events returned by JSX.
-read_all(#json_protocol{transport = Transport0} = State) ->
-    {Transport1, Bin} = read_all_1(Transport0, []),
-    P = thrift_json_parser:parser(),
-    [First | Rest] = P(Bin),
-    State#json_protocol{
-        transport = Transport1,
-        jsx = {event, First, Rest}
-    }.
+%% JSON requires the quote, the backslash and the control characters to be
+%% escaped in a string. Everything else, UTF-8 included, goes as it is.
+escape(Bin) ->
+    <<<<(escape_byte(B))/binary>> || <<B>> <= Bin>>.
 
-read_all_1(Transport0, IoList) ->
-    {Transport1, Result} = thrift_transport:read(Transport0, 1),
-    case Result of
-        % nothing read: assume we're done
-        {ok, <<>>} ->
-            {Transport1, iolist_to_binary(lists:reverse(IoList))};
-        % character successfully read; read more
-        {ok, Data} ->
-            read_all_1(Transport1, [Data | IoList]);
-        % we're done
-        {error, 'EOF'} ->
-            {Transport1, iolist_to_binary(lists:reverse(IoList))}
+escape_byte($") -> <<"\\\"">>;
+escape_byte($\\) -> <<"\\\\">>;
+escape_byte($\b) -> <<"\\b">>;
+escape_byte($\f) -> <<"\\f">>;
+escape_byte($\n) -> <<"\\n">>;
+escape_byte($\r) -> <<"\\r">>;
+escape_byte($\t) -> <<"\\t">>;
+escape_byte(B) when B < 16#20 -> iolist_to_binary(io_lib:format("\\u~4.16.0b", [B]));
+escape_byte(B) -> <<B>>.
+
+%% Reads a whole message and hands it to the JSON parser. Subsequent calls to
+%% read operate on the events the parser returned.
+%%
+%% The message ends where its outer array closes, which scanning the bytes
+%% for brackets outside of strings finds. The transport is asked each time
+%% for no more bytes than the message still needs at least. A socket
+%% transport, and a buffered one over it, waits until it has all the bytes
+%% it was asked for, and the stream goes on with the next message; other
+%% transports, framed among them, return what they have and keep the rest.
+read_all(#json_protocol{transport = Transport0} = State) ->
+    case read_message(Transport0, [], 0, false, false) of
+        {Transport1, {ok, Bin}} ->
+            P = thrift_json_parser:parser(),
+            [First | Rest] = P(Bin),
+            {State#json_protocol{transport = Transport1, jsx = {event, First, Rest}}, ok};
+        {Transport1, {error, _} = Error} ->
+            {State#json_protocol{transport = Transport1}, Error}
     end.
+
+read_message(Transport0, Parts, Depth, InString, Escaped) ->
+    {Transport1, Result} = thrift_transport:read(
+        Transport0, least_left(Depth, InString, Escaped)
+    ),
+    case Result of
+        {ok, <<>>} ->
+            {Transport1, {error, eof}};
+        {ok, Data} ->
+            case scan(Data, Depth, InString, Escaped) of
+                done ->
+                    {Transport1, {ok, iolist_to_binary(lists:reverse([Data | Parts]))}};
+                {Depth1, InString1, Escaped1} ->
+                    read_message(Transport1, [Data | Parts], Depth1, InString1, Escaped1)
+            end;
+        {error, _} = Error ->
+            {Transport1, Error}
+    end.
+
+%% The fewest bytes that can still complete the message: a closing bracket
+%% for each open one, and the end of an open string, with the character an
+%% escape in it still needs.
+least_left(0, _, _) -> 1;
+least_left(Depth, false, _) -> Depth;
+least_left(Depth, true, false) -> Depth + 1;
+least_left(Depth, true, true) -> Depth + 2.
+
+%% Follows the brackets of a message through Data: done once the outer one
+%% has closed, or else where the message has got to. A message that does not
+%% start with a bracket is done at once, and the parser reports it.
+scan(<<>>, Depth, InString, Escaped) ->
+    {Depth, InString, Escaped};
+scan(<<C, Rest/binary>>, 0, _, _) ->
+    if
+        C =:= $[; C =:= ${ -> scan(Rest, 1, false, false);
+        C =:= $\s; C =:= $\t; C =:= $\r; C =:= $\n -> scan(Rest, 0, false, false);
+        true -> done
+    end;
+scan(<<_, Rest/binary>>, Depth, true, true) ->
+    scan(Rest, Depth, true, false);
+scan(<<$\\, Rest/binary>>, Depth, true, false) ->
+    scan(Rest, Depth, true, true);
+scan(<<$", Rest/binary>>, Depth, InString, false) ->
+    scan(Rest, Depth, not InString, false);
+scan(<<_, Rest/binary>>, Depth, true, false) ->
+    scan(Rest, Depth, true, false);
+scan(<<C, Rest/binary>>, Depth, false, false) when C =:= $[; C =:= ${ ->
+    scan(Rest, Depth + 1, false, false);
+scan(<<C, _/binary>>, 1, false, false) when C =:= $]; C =:= $} ->
+    done;
+scan(<<C, Rest/binary>>, Depth, false, false) when C =:= $]; C =:= $} ->
+    scan(Rest, Depth - 1, false, false);
+scan(<<_, Rest/binary>>, Depth, false, false) ->
+    scan(Rest, Depth, false, false).
 
 % Expect reads an event from the JSX event stream. It receives an event or data
 % type as input. Comparing the read event from the one is was passed, it
@@ -372,16 +428,18 @@ expect(#json_protocol{jsx = {event, {Type, Data} = Ev, [Next | Rest]}} = State, 
     NextState = State#json_protocol{jsx = {event, Next, Rest}},
     case Type == ExpectedType of
         true ->
-            {NextState, {ok, convert_data(Type, Data)}};
+            %% The parser hands over numbers as numbers, and keys and
+            %% strings as binaries.
+            {NextState, {ok, Data}};
         false ->
             {NextState, {error, {unexpected_json_event, Ev}}}
     end;
 expect(#json_protocol{jsx = {event, Event, Next}} = State, ExpectedEvent) ->
     expect(State#json_protocol{jsx = {event, {Event, none}, Next}}, ExpectedEvent).
 
-convert_data(integer, I) -> list_to_integer(I);
-convert_data(float, F) -> list_to_float(F);
-convert_data(_, D) -> D.
+%% The next event, left for the next read to take.
+peek(#json_protocol{jsx = {event, Event, _}}) ->
+    Event.
 
 expect_many(State, ExpectedList) ->
     expect_many_1(State, ExpectedList, [], ok).
@@ -411,27 +469,11 @@ read_field(#json_protocol{jsx = {event, Field, [Next | Rest]}} = State) ->
     {NewState, Field}.
 
 read(This0, message_begin) ->
-    % call read_all to get the contents of the transport buffer into JSX.
-    This1 = read_all(This0),
-    case
-        expect_many(
-            This1,
-            [start_array, integer, string, integer, integer]
-        )
-    of
-        {This2, {ok, [_, Version, Name, Type, SeqId]}} ->
-            case Version =:= ?VERSION_1 of
-                true ->
-                    {This2, #protocol_message_begin{
-                        name = Name,
-                        type = Type,
-                        seqid = SeqId
-                    }};
-                false ->
-                    {This2, {error, no_json_protocol_version}}
-            end;
-        Other ->
-            Other
+    case read_all(This0) of
+        {This1, ok} ->
+            read_message_begin(This1);
+        {This1, {error, _} = Error} ->
+            {This1, Error}
     end;
 read(This, message_end) ->
     expect_nodata(This, [end_array]);
@@ -439,30 +481,34 @@ read(This, struct_begin) ->
     expect_nodata(This, [start_object]);
 read(This, struct_end) ->
     expect_nodata(This, [end_object]);
+%% The end of the struct is the stop field. Its end_object is left for
+%% struct_end, which is read next.
 read(This0, field_begin) ->
-    {This1, Read} = expect_many(
-        This0,
-        %field id
-        [
-            key,
-            % {} surrounding field
-            start_object,
-            % type of field
-            key
-        ]
-    ),
-    case Read of
-        {ok, [FieldIdStr, _, FieldType]} ->
-            {This1, #protocol_field_begin{
-                type = json_to_typeid(FieldType),
-                % TODO: do we need to wrap this in a try/catch?
-                id = list_to_integer(FieldIdStr)
-            }};
-        {error, [{unexpected_json_event, {end_object, none}}]} ->
-            {This1, #protocol_field_begin{type = ?tType_STOP}};
-        Other ->
-            io:format("**** OTHER branch selected ****"),
-            {This1, Other}
+    case peek(This0) of
+        end_object ->
+            {This0, #protocol_field_begin{type = ?tType_STOP}};
+        _ ->
+            {This1, Read} = expect_many(
+                This0,
+                %field id
+                [
+                    key,
+                    % {} surrounding field
+                    start_object,
+                    % type of field
+                    key
+                ]
+            ),
+            case Read of
+                {ok, [FieldId, _, FieldType]} ->
+                    {This1, #protocol_field_begin{
+                        type = json_to_typeid(FieldType),
+                        id = binary_to_integer(FieldId)
+                    }};
+                Other ->
+                    io:format("**** OTHER branch selected ****"),
+                    {This1, Other}
+            end
     end;
 read(This, field_end) ->
     expect_nodata(This, [end_object]);
@@ -486,8 +532,8 @@ read(This0, map_begin) ->
     of
         {This1, {ok, [_, Ktype, Vtype, Size, _]}} ->
             {This1, #protocol_map_begin{
-                ktype = Ktype,
-                vtype = Vtype,
+                ktype = json_to_typeid(Ktype),
+                vtype = json_to_typeid(Vtype),
                 size = Size
             }};
         Other ->
@@ -510,7 +556,7 @@ read(This0, list_begin) ->
     of
         {This1, {ok, [_, Etype, Size]}} ->
             {This1, #protocol_list_begin{
-                etype = Etype,
+                etype = json_to_typeid(Etype),
                 size = Size
             }};
         Other ->
@@ -534,7 +580,7 @@ read(This0, set_begin) ->
     of
         {This1, {ok, [_, Etype, Size]}} ->
             {This1, #protocol_set_begin{
-                etype = Etype,
+                etype = json_to_typeid(Etype),
                 size = Size
             }};
         Other ->
@@ -546,12 +592,17 @@ read(This0, field_stop) ->
     {This0, ok};
 %%
 
+%% A value that is the key of a map comes as the text of an object key.
 read(This0, bool) ->
     {This1, Field} = read_field(This0),
     Value =
         case Field of
-            {literal, I} ->
-                {ok, I};
+            {literal, B} when is_boolean(B) ->
+                {ok, B};
+            {key, <<"true">>} ->
+                {ok, true};
+            {key, <<"false">>} ->
+                {ok, false};
             _Other ->
                 {error, unexpected_event_for_boolean}
         end,
@@ -561,9 +612,9 @@ read(This0, byte) ->
     Value =
         case Field of
             {key, K} ->
-                {ok, list_to_integer(K)};
+                key_to_number(K, fun binary_to_integer/1, unexpected_event_for_integer);
             {integer, I} ->
-                {ok, list_to_integer(I)};
+                {ok, I};
             _Other ->
                 {error, unexpected_event_for_integer}
         end,
@@ -578,8 +629,10 @@ read(This0, double) ->
     {This1, Field} = read_field(This0),
     Value =
         case Field of
-            {float, I} ->
-                {ok, list_to_float(I)};
+            {key, K} ->
+                key_to_number(K, fun binary_to_float/1, unexpected_event_for_double);
+            {float, F} ->
+                {ok, F};
             _Other ->
                 {error, unexpected_event_for_double}
         end,
@@ -597,6 +650,35 @@ read(This0, string) ->
                 {error, unexpected_event_for_string}
         end,
     {This1, Value}.
+
+read_message_begin(This0) ->
+    case
+        expect_many(
+            This0,
+            [start_array, integer, string, integer, integer]
+        )
+    of
+        {This1, {ok, [_, Version, Name, Type, SeqId]}} ->
+            case Version =:= ?VERSION_1 of
+                true ->
+                    {This1, #protocol_message_begin{
+                        name = binary_to_list(Name),
+                        type = Type,
+                        seqid = SeqId
+                    }};
+                false ->
+                    {This1, {error, no_json_protocol_version}}
+            end;
+        Other ->
+            Other
+    end.
+
+key_to_number(Key, Convert, Error) ->
+    try Convert(Key) of
+        Number -> {ok, Number}
+    catch
+        error:badarg -> {error, Error}
+    end.
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
