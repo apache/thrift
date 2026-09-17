@@ -39,6 +39,13 @@ or, in `sys.config`:
 {thrift, [{exceptions_include_traces, true}]}
 ```
 
+`thrift_json_protocol` now reads the messages it writes, and a read ends where
+its message does, so the protocol also works over socket and framed
+transports. Strings are written as quoted and escaped JSON strings, also when
+given as binaries. Booleans are still written as `true` and `false`, and
+binary fields as plain strings, where the other bindings' JSON protocols use
+`1`/`0` and base64.
+
 ### 0.9.2 ###
 
 as of 0.9.2 struct and function naming conventions have changed. to retain the
