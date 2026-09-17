@@ -74,3 +74,9 @@
 %% The largest frame thrift_framed_transport will read. Same value the other
 %% bindings use. Override with {thrift, [{max_frame_size, Bytes}]}.
 -define(DEFAULT_MAX_FRAME_SIZE, 16384000).
+
+%% The largest reply thrift_http_transport will read. Same value the other
+%% bindings use for their maximum message size. Override with
+%% {thrift, [{max_message_size, Bytes}]}, or for one transport with its
+%% max_message_size option.
+-define(DEFAULT_MAX_MESSAGE_SIZE, (100 * 1024 * 1024)).
