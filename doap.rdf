@@ -58,6 +58,13 @@
     <release>
       <Version>
         <name>Apache Thrift</name>
+        <created>2026-09-18</created>
+        <revision>0.25.0</revision>
+      </Version>
+    </release>
+    <release>
+      <Version>
+        <name>Apache Thrift</name>
         <created>2026-07-11</created>
         <revision>0.24.0</revision>
       </Version>

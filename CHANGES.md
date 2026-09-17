@@ -2,6 +2,366 @@
 
 ## 0.25.0
 
+### Build Process
+
+- [THRIFT-6077](https://issues.apache.org/jira/browse/THRIFT-6077) - improve CHANGES.md generator section assignment
+- [THRIFT-6170](https://issues.apache.org/jira/browse/THRIFT-6170) - Add a GitHub Actions CI job for the D library
+- [THRIFT-6171](https://issues.apache.org/jira/browse/THRIFT-6171) - Add a GitHub Actions CI job for the Erlang library
+- [THRIFT-6172](https://issues.apache.org/jira/browse/THRIFT-6172) - Dart tests are not run by make check, and no CI job builds the binding
+- [THRIFT-6185](https://issues.apache.org/jira/browse/THRIFT-6185) - lib/d does not build against OpenSSL 3.x
+- [THRIFT-6196](https://issues.apache.org/jira/browse/THRIFT-6196) - Remove the unreleased contrib thrift-maven-plugin in favour of standard Maven plugins
+- [THRIFT-6234](https://issues.apache.org/jira/browse/THRIFT-6234) - Configure apt retries and timeouts in GitHub Actions workflows
+- [THRIFT-6235](https://issues.apache.org/jira/browse/THRIFT-6235) - Compiler unit tests fail to link when the Go generator is disabled
+- [THRIFT-6237](https://issues.apache.org/jira/browse/THRIFT-6237) - Shrink the MSVC Docker image: drop the unused .NET Framework base and JDK, prune Boost, pin tool versions
+- [THRIFT-6247](https://issues.apache.org/jira/browse/THRIFT-6247) - AppVeyor jobs depend on a single fallback URL for the zlib download
+- [THRIFT-6250](https://issues.apache.org/jira/browse/THRIFT-6250) - Clean up the warnings in the MSVC CI build
+- [THRIFT-6270](https://issues.apache.org/jira/browse/THRIFT-6270) - Sweep for source files that no build list mentions
+- [THRIFT-6274](https://issues.apache.org/jira/browse/THRIFT-6274) - Reject AI session and conversation links in pull request commits and text
+- [THRIFT-6276](https://issues.apache.org/jira/browse/THRIFT-6276) - AppVeyor MINGW job fails when one MSYS2 mirror drops a signature download
+- [THRIFT-6277](https://issues.apache.org/jira/browse/THRIFT-6277) - CHANGES draft lists tickets that are not fixed in the release
+- [THRIFT-6278](https://issues.apache.org/jira/browse/THRIFT-6278) - CHANGES draft generator loses a whole JIRA lookup over one nonexistent ticket key
+- [#3816](https://github.com/apache/thrift/pull/3816) - Cap every build workflow job at 60 minutes
+- [#3837](https://github.com/apache/thrift/pull/3837) - Resolve config.h.in relative to ConfigureChecks.cmake
+- [#3833](https://github.com/apache/thrift/pull/3833) - Bump js-yaml from 3.15.1 to 3.15.2 in /lib/js
+- [#3790](https://github.com/apache/thrift/pull/3790) - Bump @humanfs/node from 0.16.6 to 0.16.8
+- [#3771](https://github.com/apache/thrift/pull/3771) - Bump com.ncorti.ktfmt.gradle from 0.26.0 to 0.27.0 in /lib/kotlin
+- [#3775](https://github.com/apache/thrift/pull/3775) - Bump actions/setup-java from 5.2.0 to 6.0.0
+- [#3774](https://github.com/apache/thrift/pull/3774) - Bump actions/setup-python from 6.2.0 to 7.0.0
+- [#3773](https://github.com/apache/thrift/pull/3773) - Bump shivammathur/setup-php from 2.37.1 to 2.37.2
+- [#3772](https://github.com/apache/thrift/pull/3772) - Bump com.diffplug.spotless from 8.8.0 to 8.10.0 in /lib/java
+- [#3776](https://github.com/apache/thrift/pull/3776) - Bump actions/setup-go from 6.5.0 to 7.0.0
+- [#3769](https://github.com/apache/thrift/pull/3769) - Bump zizmorcore/zizmor-action from 0.6.1 to 0.6.2
+- [#3749](https://github.com/apache/thrift/pull/3749) - Add Zig tags to the CHANGES.md generator
+- [#3737](https://github.com/apache/thrift/pull/3737) - Fix building on OpenBSD
+- [#3635](https://github.com/apache/thrift/pull/3635) - Bump puma from 6.6.1 to 7.2.1 in /test/rb
+- [#3721](https://github.com/apache/thrift/pull/3721) - Bump shell-quote from 1.7.3 to 1.10.0 in /lib/ts
+- [#3735](https://github.com/apache/thrift/pull/3735) - Add Windows ARM64 PyPI distribution
+- [#3733](https://github.com/apache/thrift/pull/3733) - Update supported go versions to 1.26+1.27
+- [#3734](https://github.com/apache/thrift/pull/3734) - Update test certificates
+- [#3697](https://github.com/apache/thrift/pull/3697) - Bump pypa/gh-action-pypi-publish from 1.13.0 to 1.14.2
+- [#3695](https://github.com/apache/thrift/pull/3695) - Bump actions/setup-dotnet from 5.2.0 to 6.0.0
+- [#3698](https://github.com/apache/thrift/pull/3698) - Bump jvm from 2.4.0 to 2.4.10 in /lib/kotlin
+- [#3692](https://github.com/apache/thrift/pull/3692) - Bump com.diffplug.spotless from 8.7.0 to 8.8.0 in /lib/java
+- [#3693](https://github.com/apache/thrift/pull/3693) - Bump actions/checkout from 6.0.2 to 7.0.1
+- [#3699](https://github.com/apache/thrift/pull/3699) - Bump com.diffplug.spotless from 8.7.0 to 8.8.0 in /lib/kotlin
+- [#3696](https://github.com/apache/thrift/pull/3696) - Bump ruby/setup-ruby from 1.314.0 to 1.321.0
+- [#3694](https://github.com/apache/thrift/pull/3694) - Bump zizmorcore/zizmor-action from 0.5.6 to 0.6.1
+- [#3670](https://github.com/apache/thrift/pull/3670) - Bump json from 2.19.2 to 2.19.9 in /test/rb
+- [#3671](https://github.com/apache/thrift/pull/3671) - Bump json from 2.19.2 to 2.19.9 in /lib/rb
+- [#3661](https://github.com/apache/thrift/pull/3661) - Bump linkify-it from 5.0.1 to 5.0.2 in /lib/js
+- [#3654](https://github.com/apache/thrift/pull/3654) - Bump shell-quote from 1.8.4 to 1.10.0 in /lib/js
+- [#3655](https://github.com/apache/thrift/pull/3655) - Bump System.Security.Cryptography.Xml from 10.0.7 to 10.0.10
+- [#3653](https://github.com/apache/thrift/pull/3653) - Bump System.Security.Cryptography.Xml from 10.0.7 to 10.0.10
+- [#3636](https://github.com/apache/thrift/pull/3636) - Bump ws from 6.2.3 to 6.2.4 in /lib/js
+- [#3632](https://github.com/apache/thrift/pull/3632) - Add job timeout to Python CI jobs
+- [#3631](https://github.com/apache/thrift/pull/3631) - Bump ws from 6.2.3 to 6.2.4 in /lib/ts
+- [#3624](https://github.com/apache/thrift/pull/3624) - Add a make dist job to CI
+
+### C glib
+
+- [THRIFT-6066](https://issues.apache.org/jira/browse/THRIFT-6066) - An error occurs when thrift_dispatch_processor_process is executed because dispatch_processor_class->dispatch_call is nullptr
+- [THRIFT-6166](https://issues.apache.org/jira/browse/THRIFT-6166) - C (GLib): bind the read budget to the frame that carries the message
+- [#3678](https://github.com/apache/thrift/pull/3678) - Reject a message the protocol did not name in the c_glib multiplexed processor
+- [#3676](https://github.com/apache/thrift/pull/3676) - Update the c_glib binary protocol test for non-versioned message headers
+- [#3668](https://github.com/apache/thrift/pull/3668) - Link thrift_memory_buffer into the c_glib testbinaryprotocol test
+
+### C++
+
+- [THRIFT-5090](https://issues.apache.org/jira/browse/THRIFT-5090) - error "TConnectedClient processing exception: Expected control char, got '/'" when a string argument contains a slash and JSON is used
+- [THRIFT-5371](https://issues.apache.org/jira/browse/THRIFT-5371) - Max Message Size is eventually exceeded when using TFramedTransport
+- [THRIFT-6060](https://issues.apache.org/jira/browse/THRIFT-6060) - C++ THttpClient does not reopen socket after server sends Connection: close
+- [THRIFT-6167](https://issues.apache.org/jira/browse/THRIFT-6167) - PHP HTTP cross-test server omits Content-Length and breaks php-cpp HTTP cases
+- [THRIFT-6174](https://issues.apache.org/jira/browse/THRIFT-6174) - Enable TSSLSocket to build with OpenSSL 4.0
+- [THRIFT-6177](https://issues.apache.org/jira/browse/THRIFT-6177) - Bound the WebSocket frame payload length before it sizes the read buffer in the C++ library
+- [THRIFT-6178](https://issues.apache.org/jira/browse/THRIFT-6178) - C++ WebSocket server drops any frame whose payload does not arrive in one read
+- [THRIFT-6179](https://issues.apache.org/jira/browse/THRIFT-6179) - C++ WebSocket server recurses once per Ping frame with no depth bound
+- [THRIFT-6180](https://issues.apache.org/jira/browse/THRIFT-6180) - C++ WebSocket server mis-frames empty and control frames
+- [THRIFT-6183](https://issues.apache.org/jira/browse/THRIFT-6183) - Use the library-wide default frame size in TNonblockingServer in the C++ library
+- [THRIFT-6191](https://issues.apache.org/jira/browse/THRIFT-6191) - C++ server sockets and TSocket resolve the same host with different getaddrinfo flags
+- [THRIFT-6192](https://issues.apache.org/jira/browse/THRIFT-6192) - THttpServer matches a header name by prefix, and Content-Length goes through atoi
+- [THRIFT-6193](https://issues.apache.org/jira/browse/THRIFT-6193) - The C++ HTTP transport does not hold the message body to maxMessageSize
+- [THRIFT-6194](https://issues.apache.org/jira/browse/THRIFT-6194) - ToStringTest leaves the global locale set for the rest of the UnitTests binary
+- [THRIFT-6242](https://issues.apache.org/jira/browse/THRIFT-6242) - Honour the transport configuration in the C++ TNonblockingServer
+- [THRIFT-6243](https://issues.apache.org/jira/browse/THRIFT-6243) - Grow the TNonblockingServer read buffer as the payload arrives, not on the frame header
+- [THRIFT-6244](https://issues.apache.org/jira/browse/THRIFT-6244) - TNonblockingServerTest intermittently crashes or hangs in bad_alloc_does_not_end_the_process
+- [THRIFT-6248](https://issues.apache.org/jira/browse/THRIFT-6248) - TSSLSocket does not compile against OpenSSL 1.1.1
+- [THRIFT-6250](https://issues.apache.org/jira/browse/THRIFT-6250) - Clean up the warnings in the MSVC CI build
+- [#3868](https://github.com/apache/thrift/pull/3868) - Give TWebSocketServer a readAll() of its own
+- [#3858](https://github.com/apache/thrift/pull/3858) - Make the narrowing of TUuid::size() to uint32_t explicit
+- [#3831](https://github.com/apache/thrift/pull/3831) - Link the boost thread library into the C++ certificate name test
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3689](https://github.com/apache/thrift/pull/3689) - Refine thrift audit compatibility options
+- [#3801](https://github.com/apache/thrift/pull/3801) - Add cstddef include to fix build error with 6.3.0
+- [#3754](https://github.com/apache/thrift/pull/3754) - Initialise maxFrameSize_ in the TFramedTransport configuration-only constructor
+- [#3738](https://github.com/apache/thrift/pull/3738) - Replace deprecated OpenSSL API ASN1_STRING_data()
+- [#3675](https://github.com/apache/thrift/pull/3675) - Measure JSON field size against the configured maximum
+- [#3630](https://github.com/apache/thrift/pull/3630) - Enable C++ TLS cross-tests
+
+### Compiler (General)
+
+- [THRIFT-6076](https://issues.apache.org/jira/browse/THRIFT-6076) - Compiler build fails with GCC 14 LTO
+- [THRIFT-6212](https://issues.apache.org/jira/browse/THRIFT-6212) - Compiler loops forever on an unterminated comment at end of file
+- [THRIFT-6235](https://issues.apache.org/jira/browse/THRIFT-6235) - Compiler unit tests fail to link when the Go generator is disabled
+- [#3733](https://github.com/apache/thrift/pull/3733) - Update supported go versions to 1.26+1.27
+
+### D
+
+- [THRIFT-6168](https://issues.apache.org/jira/browse/THRIFT-6168) - Add recursion depth limit to skip() in D library
+- [THRIFT-6170](https://issues.apache.org/jira/browse/THRIFT-6170) - Add a GitHub Actions CI job for the D library
+- [THRIFT-6185](https://issues.apache.org/jira/browse/THRIFT-6185) - lib/d does not build against OpenSSL 3.x
+- [THRIFT-6230](https://issues.apache.org/jira/browse/THRIFT-6230) - Port the WebSocket frame reading fixes of THRIFT-6178, THRIFT-6179 and THRIFT-6180 to the D library
+- [THRIFT-6241](https://issues.apache.org/jira/browse/THRIFT-6241) - Use the library-wide default frame size in TNonblockingServer in the D library
+- [THRIFT-6245](https://issues.apache.org/jira/browse/THRIFT-6245) - Grow the D TNonblockingServer read buffer as the payload arrives, not on the frame header
+- [79dc86d55](https://github.com/apache/thrift/commit/79dc86d55ec473203c9b7da56c0d8e782202a7fc) - Build, test and install the WebSocket transport module
+
+### Dart
+
+- [THRIFT-6172](https://issues.apache.org/jira/browse/THRIFT-6172) - Dart tests are not run by make check, and no CI job builds the binding
+- [THRIFT-6264](https://issues.apache.org/jira/browse/THRIFT-6264) - Dart: TProtocol.incrementRecursionDepth and decrementRecursionDepth are never called
+- [2ae9c11db](https://github.com/apache/thrift/commit/2ae9c11db596a90fc8daa21c3bd319821a4da42b) - Consolidate replace_all() into t_oop_generator
+
+### Delphi
+
+- [THRIFT-6075](https://issues.apache.org/jira/browse/THRIFT-6075) - Generate Equal Method for Delphi Thrift Data Classes/Interfaces
+- [2ae9c11db](https://github.com/apache/thrift/commit/2ae9c11db596a90fc8daa21c3bd319821a4da42b) - Consolidate replace_all() into t_oop_generator
+
+### Documentation
+
+- [THRIFT-5415](https://issues.apache.org/jira/browse/THRIFT-5415) - Github Project should link Thrift Website in About section for easier Onboarding
+- [THRIFT-6205](https://issues.apache.org/jira/browse/THRIFT-6205) - Remove the stale MIT attribution for the removed Erlang makefile from LICENSE
+
+### Erlang
+
+- [THRIFT-6163](https://issues.apache.org/jira/browse/THRIFT-6163) - Erlang: do not send handler crash detail to the caller by default
+- [THRIFT-6164](https://issues.apache.org/jira/browse/THRIFT-6164) - Erlang: bound the depth thrift_protocol:skip/2 will follow
+- [THRIFT-6171](https://issues.apache.org/jira/browse/THRIFT-6171) - Add a GitHub Actions CI job for the Erlang library
+- [THRIFT-6184](https://issues.apache.org/jira/browse/THRIFT-6184) - Erlang TLS client cannot connect on OTP 26 and later, and does not verify the server certificate on earlier releases
+- [THRIFT-6268](https://issues.apache.org/jira/browse/THRIFT-6268) - Erlang: the HTTP transport fails with a badmatch on any non-200 reply, offers no https and buffers the body unbounded
+- [THRIFT-6269](https://issues.apache.org/jira/browse/THRIFT-6269) - Erlang: two avoidable per-byte costs in the socket transport and the JSON protocol
+- [THRIFT-6279](https://issues.apache.org/jira/browse/THRIFT-6279) - Erlang: the JSON protocol cannot read a message and writes binary strings unquoted
+
+### Go
+
+- [THRIFT-2063](https://issues.apache.org/jira/browse/THRIFT-2063) - Go compiler cannot create code for maps with complex/binary keys
+- [THRIFT-5420](https://issues.apache.org/jira/browse/THRIFT-5420) - Go library should not depend on "testing" in the main package
+- [THRIFT-5463](https://issues.apache.org/jira/browse/THRIFT-5463) - Incorrect and inconsistency in compiler generated go code regarding pointer types
+- [THRIFT-5493](https://issues.apache.org/jira/browse/THRIFT-5493) - Invalid chmod command in test/go/genmock.sh
+- [THRIFT-5806](https://issues.apache.org/jira/browse/THRIFT-5806) - Inconsistent Handling of Unset Union Fields in Structs Across Languages
+- [THRIFT-5807](https://issues.apache.org/jira/browse/THRIFT-5807) - Generated Go enums' always appear to be <UNSET> for out of ranges values in enum
+- [THRIFT-5814](https://issues.apache.org/jira/browse/THRIFT-5814) - go: Flaky test TestNoHangDuringStopFromClientNoDataSendDuringAcceptLoop
+- [THRIFT-5828](https://issues.apache.org/jira/browse/THRIFT-5828) - ReadBinary in the binary protocol implementation over-allocates
+- [THRIFT-6175](https://issues.apache.org/jira/browse/THRIFT-6175) - Go maps keyed by a struct use pointer identity, so decoded keys never match and Equals compares by address
+- [THRIFT-6176](https://issues.apache.org/jira/browse/THRIFT-6176) - Go generator: struct field named isSetX collides with the generated IsSetX() accessor
+- [THRIFT-6195](https://issues.apache.org/jira/browse/THRIFT-6195) - Go Equals is order-sensitive for set and entry-slice map fields, so equal values compare unequal
+- [THRIFT-6197](https://issues.apache.org/jira/browse/THRIFT-6197) - Go generator mishandles typedefs, so aliased structs and forward-declared typedefs generate code that does not compile
+- [THRIFT-6200](https://issues.apache.org/jira/browse/THRIFT-6200) - Go -remote stub qualifies enum and inherited container arguments with the wrong package when they come from an included file
+- [THRIFT-6211](https://issues.apache.org/jira/browse/THRIFT-6211) - Go: add native go test -fuzz targets and a committed seed corpus that runs in CI
+- [THRIFT-6262](https://issues.apache.org/jira/browse/THRIFT-6262) - Go: THeaderTransport.Flush truncates the frame length instead of refusing an oversized frame
+- [THRIFT-6263](https://issues.apache.org/jira/browse/THRIFT-6263) - Go: TZlibTransportFactory has no constructor that takes a TConfiguration
+- [THRIFT-6280](https://issues.apache.org/jira/browse/THRIFT-6280) - Go: THeaderTransportFactory passes a stale TConfiguration to the factory it wraps
+- [#3812](https://github.com/apache/thrift/pull/3812) - Fix Go code generation for typedefs of structs and forward typedefs
+- [#3777](https://github.com/apache/thrift/pull/3777) - Migrate from deprecated golang/mock to go.uber.org/mock
+- [#3733](https://github.com/apache/thrift/pull/3733) - Update supported go versions to 1.26+1.27
+- [#3625](https://github.com/apache/thrift/pull/3625) - Fix Go and Rust version detection for multi-digit version numbers
+
+### Haxe
+
+- [THRIFT-6160](https://issues.apache.org/jira/browse/THRIFT-6160) - Haxe framed transport cannot read consecutive frames without an intervening flush
+- [THRIFT-6161](https://issues.apache.org/jira/browse/THRIFT-6161) - Haxe TStreamTransport does not charge reads against MaxMessageSize
+- [THRIFT-6173](https://issues.apache.org/jira/browse/THRIFT-6173) - Haxe TFullDuplexHttpClient is dead code: guarded by an undefined conditional and does not compile
+- [#3756](https://github.com/apache/thrift/pull/3756) - Stop StreamTest's cleanup handler from masking the failure it is cleaning up after
+
+### Java
+
+- [THRIFT-3606](https://issues.apache.org/jira/browse/THRIFT-3606) - TSaslClientTransport props typed too strongly
+- [THRIFT-5566](https://issues.apache.org/jira/browse/THRIFT-5566) - migrate java tutorial from ant to gradle
+- [THRIFT-6165](https://issues.apache.org/jira/browse/THRIFT-6165) - Java: bind the read budget to the frame that carries the message
+- [THRIFT-6181](https://issues.apache.org/jira/browse/THRIFT-6181) - Bound the response frame size in the Java async client
+- [THRIFT-6182](https://issues.apache.org/jira/browse/THRIFT-6182) - Wrapping a transport must not raise the configured maximum frame size (Java)
+- [THRIFT-6196](https://issues.apache.org/jira/browse/THRIFT-6196) - Remove the unreleased contrib thrift-maven-plugin in favour of standard Maven plugins
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3789](https://github.com/apache/thrift/pull/3789) - Remove obsolete thrift-maven-plugin and document standard Maven usage
+- [#3771](https://github.com/apache/thrift/pull/3771) - Bump com.ncorti.ktfmt.gradle from 0.26.0 to 0.27.0 in /lib/kotlin
+- [#3772](https://github.com/apache/thrift/pull/3772) - Bump com.diffplug.spotless from 8.8.0 to 8.10.0 in /lib/java
+- [#3733](https://github.com/apache/thrift/pull/3733) - Update supported go versions to 1.26+1.27
+- [#3734](https://github.com/apache/thrift/pull/3734) - Update test certificates
+- [#3698](https://github.com/apache/thrift/pull/3698) - Bump jvm from 2.4.0 to 2.4.10 in /lib/kotlin
+- [#3692](https://github.com/apache/thrift/pull/3692) - Bump com.diffplug.spotless from 8.7.0 to 8.8.0 in /lib/java
+- [#3699](https://github.com/apache/thrift/pull/3699) - Bump com.diffplug.spotless from 8.7.0 to 8.8.0 in /lib/kotlin
+
+### JavaScript
+
+- [#3833](https://github.com/apache/thrift/pull/3833) - Bump js-yaml from 3.15.1 to 3.15.2 in /lib/js
+- [#3790](https://github.com/apache/thrift/pull/3790) - Bump @humanfs/node from 0.16.6 to 0.16.8
+- [#3746](https://github.com/apache/thrift/pull/3746) - Update legacy JavaScript lodash dependencies
+- [#3724](https://github.com/apache/thrift/pull/3724) - Update legacy JavaScript js-yaml dependencies
+- [#3721](https://github.com/apache/thrift/pull/3721) - Bump shell-quote from 1.7.3 to 1.10.0 in /lib/ts
+- [#3720](https://github.com/apache/thrift/pull/3720) - Update js-yaml development dependencies
+- [#3661](https://github.com/apache/thrift/pull/3661) - Bump linkify-it from 5.0.1 to 5.0.2 in /lib/js
+- [#3654](https://github.com/apache/thrift/pull/3654) - Bump shell-quote from 1.8.4 to 1.10.0 in /lib/js
+- [#3636](https://github.com/apache/thrift/pull/3636) - Bump ws from 6.2.3 to 6.2.4 in /lib/js
+- [#3631](https://github.com/apache/thrift/pull/3631) - Bump ws from 6.2.3 to 6.2.4 in /lib/ts
+
+### Kotlin
+
+- [#3771](https://github.com/apache/thrift/pull/3771) - Bump com.ncorti.ktfmt.gradle from 0.26.0 to 0.27.0 in /lib/kotlin
+- [#3698](https://github.com/apache/thrift/pull/3698) - Bump jvm from 2.4.0 to 2.4.10 in /lib/kotlin
+
+### netstd
+
+- [THRIFT-6198](https://issues.apache.org/jira/browse/THRIFT-6198) - CS0121 ambiguous extension methods generated for container types referencing included structs
+- [THRIFT-6199](https://issues.apache.org/jira/browse/THRIFT-6199) - CS0121 for container extension methods shared by programs that have no include relation
+- [THRIFT-6202](https://issues.apache.org/jira/browse/THRIFT-6202) - Drop netstandard2.0 and netstandard2.1 targets from ApacheThrift.AspNetCore
+- [#3658](https://github.com/apache/thrift/pull/3658) - updated System.ServiceModel.Primitives 10.x breaks net8/net9
+- [#3655](https://github.com/apache/thrift/pull/3655) - Bump System.Security.Cryptography.Xml from 10.0.7 to 10.0.10
+- [#3653](https://github.com/apache/thrift/pull/3653) - Bump System.Security.Cryptography.Xml from 10.0.7 to 10.0.10
+- [#3624](https://github.com/apache/thrift/pull/3624) - Fix stale EXTRA_DIST references that broke make dist
+
+### nodejs
+
+- [THRIFT-5224](https://issues.apache.org/jira/browse/THRIFT-5224) - Deprecated Nodejs Buffer() 
+- [THRIFT-6130](https://issues.apache.org/jira/browse/THRIFT-6130) - Node.js library cannot load in CommonJS environments with ESM-only uuid dependency
+- [THRIFT-6203](https://issues.apache.org/jira/browse/THRIFT-6203) - Node.js library uses url.parse(), fs.exists() and require("constants"), all deprecated
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3790](https://github.com/apache/thrift/pull/3790) - Bump @humanfs/node from 0.16.6 to 0.16.8
+- [#3718](https://github.com/apache/thrift/pull/3718) - Fix GitHub Actions code scanning findings
+
+### nodets
+
+- [#3790](https://github.com/apache/thrift/pull/3790) - Bump @humanfs/node from 0.16.6 to 0.16.8
+- [#3746](https://github.com/apache/thrift/pull/3746) - Update legacy JavaScript lodash dependencies
+- [#3724](https://github.com/apache/thrift/pull/3724) - Update legacy JavaScript js-yaml dependencies
+- [#3721](https://github.com/apache/thrift/pull/3721) - Bump shell-quote from 1.7.3 to 1.10.0 in /lib/ts
+- [#3631](https://github.com/apache/thrift/pull/3631) - Bump ws from 6.2.3 to 6.2.4 in /lib/ts
+
+### PHP
+
+- [THRIFT-1941](https://issues.apache.org/jira/browse/THRIFT-1941) - PHP Serializer deserialize doesn't work
+- [THRIFT-2151](https://issues.apache.org/jira/browse/THRIFT-2151) - PHP Thrift library provides persistent socket option that cannot be recovered from network failure
+- [THRIFT-3874](https://issues.apache.org/jira/browse/THRIFT-3874) - _TSPEC is not populated on de-serialization of type classes
+- [THRIFT-4244](https://issues.apache.org/jira/browse/THRIFT-4244) - PHP compiler errors out if escape character is part in string constant
+- [THRIFT-5090](https://issues.apache.org/jira/browse/THRIFT-5090) - error "TConnectedClient processing exception: Expected control char, got '/'" when a string argument contains a slash and JSON is used
+- [THRIFT-6167](https://issues.apache.org/jira/browse/THRIFT-6167) - PHP HTTP cross-test server omits Content-Length and breaks php-cpp HTTP cases
+- [#3792](https://github.com/apache/thrift/pull/3792) - refactor(composer): normalize metadata and keep packages sorted
+- [#3718](https://github.com/apache/thrift/pull/3718) - Fix GitHub Actions code scanning findings
+
+### Python
+
+- [THRIFT-5955](https://issues.apache.org/jira/browse/THRIFT-5955) - Publish wheels for manylinux aarch64
+- [THRIFT-6081](https://issues.apache.org/jira/browse/THRIFT-6081) - Add UUID support for header protocol in Python
+- [THRIFT-6082](https://issues.apache.org/jira/browse/THRIFT-6082) - Python TProcessPoolServer test shutdown can deadlock (signal handler reenters Condition.notify())
+- [THRIFT-6113](https://issues.apache.org/jira/browse/THRIFT-6113) - test_keyword_escape.py regression test silently skips (thrift compiler not found) in CI and local builds
+- [THRIFT-6114](https://issues.apache.org/jira/browse/THRIFT-6114) - Python service/function names that are Python keywords generate unimportable modules and a broken -remote script
+- [THRIFT-6115](https://issues.apache.org/jira/browse/THRIFT-6115) - Python service extends and cross-module (include) type references also skip keyword escaping
+- [THRIFT-6116](https://issues.apache.org/jira/browse/THRIFT-6116) - Python generator still misses keyword escaping in six more spots (consts, enum-value defaults, required-field checks, type_hints/twisted/enum modes)
+- [THRIFT-6169](https://issues.apache.org/jira/browse/THRIFT-6169) - Size containers from the payload rather than the declared count in the Python C extension
+- [THRIFT-6201](https://issues.apache.org/jira/browse/THRIFT-6201) - Python peer address matcher does not reduce IPv4-mapped IPv6 addresses
+- [THRIFT-6265](https://issues.apache.org/jira/browse/THRIFT-6265) - Python: setup.py still carries the backports.ssl_match_hostname dependency for Python < 3.5
+- [THRIFT-6266](https://issues.apache.org/jira/browse/THRIFT-6266) - Python: THttpServer accepts Content-Length values that are not valid HTTP numbers
+- [THRIFT-6267](https://issues.apache.org/jira/browse/THRIFT-6267) - Python: TNonblockingServer rebuilds its whole read buffer on every socket read
+- [#3838](https://github.com/apache/thrift/pull/3838) - Break after the operator in a Python test to satisfy flake8
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3735](https://github.com/apache/thrift/pull/3735) - Add Windows ARM64 PyPI distribution
+- [#3677](https://github.com/apache/thrift/pull/3677) - Fix Python process-pool test server lifecycle
+- [#3667](https://github.com/apache/thrift/pull/3667) - Let Python test servers allocate ephemeral ports
+- [#3663](https://github.com/apache/thrift/pull/3663) - Fix Python socket timeout test units
+
+### Ruby
+
+- [THRIFT-6045](https://issues.apache.org/jira/browse/THRIFT-6045) - Limit struct read/write recursion depth in Ruby library
+- [THRIFT-6078](https://issues.apache.org/jira/browse/THRIFT-6078) - Ruby SSL clients do not send SNI during TLS handshake
+- [THRIFT-6079](https://issues.apache.org/jira/browse/THRIFT-6079) - Rewrite HTTP server for Ruby library as Thin and EventMachine are not supported on modern Ruby versions
+- [THRIFT-6098](https://issues.apache.org/jira/browse/THRIFT-6098) - Ruby SSLSocket should verify peers by default
+- [THRIFT-6099](https://issues.apache.org/jira/browse/THRIFT-6099) - Ruby MemoryBufferTransport should reject invalid read lengths
+- [THRIFT-6100](https://issues.apache.org/jira/browse/THRIFT-6100) - Ruby MemoryBufferTransport should respect frozen destination buffers
+- [THRIFT-6101](https://issues.apache.org/jira/browse/THRIFT-6101) - Ruby CompactProtocol should use Ruby truthiness when writing booleans
+- [THRIFT-6102](https://issues.apache.org/jira/browse/THRIFT-6102) - Ruby CompactProtocol should report malformed headers consistently
+- [THRIFT-6103](https://issues.apache.org/jira/browse/THRIFT-6103) - Ruby MemoryBufferTransport should return unsigned byte values
+- [THRIFT-6104](https://issues.apache.org/jira/browse/THRIFT-6104) - Ruby native struct writing should accept Set subclasses
+- [THRIFT-6105](https://issues.apache.org/jira/browse/THRIFT-6105) - Ruby native MemoryBufferTransport should retain partial read progress
+- [THRIFT-6106](https://issues.apache.org/jira/browse/THRIFT-6106) - Ruby native protocol readers should decode fixed-width values without undefined shifts
+- [THRIFT-6109](https://issues.apache.org/jira/browse/THRIFT-6109) - Ruby HTTP client transport should provide a safe endpoint label
+- [THRIFT-6110](https://issues.apache.org/jira/browse/THRIFT-6110) - Ruby HTTP client transport should reject empty successful responses
+- [THRIFT-6111](https://issues.apache.org/jira/browse/THRIFT-6111) - Ruby Struct equality should be symmetric across generated classes
+- [THRIFT-6112](https://issues.apache.org/jira/browse/THRIFT-6112) - Ruby Socket should reject duplicate opens
+- [THRIFT-6118](https://issues.apache.org/jira/browse/THRIFT-6118) - Ruby ProtocolDecorator should forward message begin arguments
+- [THRIFT-6119](https://issues.apache.org/jira/browse/THRIFT-6119) - Ruby MultiplexedProtocol diagnostics should preserve the service name
+- [THRIFT-6120](https://issues.apache.org/jira/browse/THRIFT-6120) - Ruby SSLServerSocket client timeout does not cover the TLS handshake
+- [THRIFT-6121](https://issues.apache.org/jira/browse/THRIFT-6121) - Ruby HeaderProtocol emits unparseable errors for unknown protocol IDs
+- [THRIFT-6122](https://issues.apache.org/jira/browse/THRIFT-6122) - Ruby JSONProtocol mishandles Unicode strings and surrogate pairs
+- [THRIFT-6123](https://issues.apache.org/jira/browse/THRIFT-6123) - Ruby Serializer retains JSON protocol state after write failures
+- [THRIFT-6124](https://issues.apache.org/jira/browse/THRIFT-6124) - Ruby deserializer retains stale values when reusing target objects
+- [THRIFT-6125](https://issues.apache.org/jira/browse/THRIFT-6125) - Ruby client leaves transports reusable after uncertain request sends
+- [THRIFT-6126](https://issues.apache.org/jira/browse/THRIFT-6126) - Ruby SimpleServer stops accepting clients after unknown Compact or JSON types
+- [THRIFT-6127](https://issues.apache.org/jira/browse/THRIFT-6127) - Ruby sockets remain reusable after I/O timeouts
+- [THRIFT-6128](https://issues.apache.org/jira/browse/THRIFT-6128) - Ruby: exclude development files from the thrift gem
+- [THRIFT-6129](https://issues.apache.org/jira/browse/THRIFT-6129) - Enforce Ruby HeaderTransport ZLIB limit before buffering
+- [THRIFT-6131](https://issues.apache.org/jira/browse/THRIFT-6131) - Bound Ruby HeaderTransport varint32 parsing
+- [THRIFT-6132](https://issues.apache.org/jira/browse/THRIFT-6132) - Ruby HeaderTransport retains stale metadata after legacy frames
+- [THRIFT-6133](https://issues.apache.org/jira/browse/THRIFT-6133) - Ruby native MemoryBufferTransport handles oversized reads consistently
+- [THRIFT-6136](https://issues.apache.org/jira/browse/THRIFT-6136) - Stop suppressing Ruby integer conversion errors in fuzzing
+- [THRIFT-6137](https://issues.apache.org/jira/browse/THRIFT-6137) - Ruby HeaderTransport should reject incomplete framed protocol headers
+- [THRIFT-6138](https://issues.apache.org/jira/browse/THRIFT-6138) - Ruby MemoryBufferTransport should privately own initial buffers
+- [THRIFT-6139](https://issues.apache.org/jira/browse/THRIFT-6139) - Ruby CompactProtocol writers should reject out-of-range integers
+- [THRIFT-6140](https://issues.apache.org/jira/browse/THRIFT-6140) - Ruby SimpleServer stops after a short JSON UUID value
+- [THRIFT-6141](https://issues.apache.org/jira/browse/THRIFT-6141) - Ruby HeaderTransport exposes raw ZLIB decompression errors
+- [THRIFT-6142](https://issues.apache.org/jira/browse/THRIFT-6142) - Ruby HeaderTransport does not limit unframed messages
+- [THRIFT-6144](https://issues.apache.org/jira/browse/THRIFT-6144) - Ruby BaseTransport read_all should report EOF when reads make no progress
+- [THRIFT-6145](https://issues.apache.org/jira/browse/THRIFT-6145) - Validate Ruby Compact decoder varint and binary size bounds
+- [THRIFT-6146](https://issues.apache.org/jira/browse/THRIFT-6146) - Ruby processor should validate request message types
+- [THRIFT-6147](https://issues.apache.org/jira/browse/THRIFT-6147) - Ruby Serializer should finalize buffered protocol transports
+- [THRIFT-6148](https://issues.apache.org/jira/browse/THRIFT-6148) - Ruby HeaderTransport should enforce limits against complete frames
+- [THRIFT-6149](https://issues.apache.org/jira/browse/THRIFT-6149) - Ruby Binary and Compact protocols should avoid decoding skipped strings
+- [THRIFT-6153](https://issues.apache.org/jira/browse/THRIFT-6153) - Reduce native Ruby Compact Protocol varint write overhead
+- [THRIFT-6154](https://issues.apache.org/jira/browse/THRIFT-6154) - Drop Ruby 2.7 support
+- [THRIFT-6155](https://issues.apache.org/jira/browse/THRIFT-6155) - Ruby SimpleServer exits on zero-length framed messages
+- [THRIFT-6156](https://issues.apache.org/jira/browse/THRIFT-6156) - Ruby JsonProtocol leaks ArgumentError for malformed Base64 data
+- [THRIFT-6157](https://issues.apache.org/jira/browse/THRIFT-6157) - Ruby CompactProtocol fixed-width reads differ between native and pure modes
+- [THRIFT-6158](https://issues.apache.org/jira/browse/THRIFT-6158) - Ruby processor should classify malformed request arguments as protocol errors
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3635](https://github.com/apache/thrift/pull/3635) - Bump puma from 6.6.1 to 7.2.1 in /test/rb
+- [#3740](https://github.com/apache/thrift/pull/3740) - Omit parentheses from zero-argument Ruby methods
+- [#3732](https://github.com/apache/thrift/pull/3732) - Enable RuboCop Style/LineEndConcatenation
+- [#3731](https://github.com/apache/thrift/pull/3731) - Enable RuboCop Lint/Void
+- [#3729](https://github.com/apache/thrift/pull/3729) - Enable RuboCop Lint/UselessAssignment
+- [#3728](https://github.com/apache/thrift/pull/3728) - Enable RuboCop Style/RedundantReturn
+- [#3727](https://github.com/apache/thrift/pull/3727) - Enable RuboCop Style/RedundantBegin
+- [#3726](https://github.com/apache/thrift/pull/3726) - Enable RuboCop redundancy rules
+- [#3725](https://github.com/apache/thrift/pull/3725) - Enable RuboCop ambiguity rules
+- [#3723](https://github.com/apache/thrift/pull/3723) - Enable additional RuboCop spacing rules
+- [#3722](https://github.com/apache/thrift/pull/3722) - Enable RuboCop Style/UnpackFirst
+- [#3719](https://github.com/apache/thrift/pull/3719) - Enforce Ruby whitespace layout rules
+- [#3717](https://github.com/apache/thrift/pull/3717) - Enable multiline Ruby layout cops
+- [#3716](https://github.com/apache/thrift/pull/3716) - Enforce modern Ruby hash syntax
+- [#3715](https://github.com/apache/thrift/pull/3715) - Enable double-quoted Ruby string literals
+- [#3714](https://github.com/apache/thrift/pull/3714) - Enable additional Ruby RuboCop rules
+- [#3683](https://github.com/apache/thrift/pull/3683) - Silence Ruby native capability queries
+- [#3670](https://github.com/apache/thrift/pull/3670) - Bump json from 2.19.2 to 2.19.9 in /test/rb
+- [#3671](https://github.com/apache/thrift/pull/3671) - Bump json from 2.19.2 to 2.19.9 in /lib/rb
+- [#3627](https://github.com/apache/thrift/pull/3627) - Skip Thin HTTP server bundle on Ruby head
+
+### Rust
+
+- [THRIFT-6097](https://issues.apache.org/jira/browse/THRIFT-6097) - Rust supports TLS
+- [THRIFT-6159](https://issues.apache.org/jira/browse/THRIFT-6159) - Rust: Use faster varint library - #3739
+- [THRIFT-6288](https://issues.apache.org/jira/browse/THRIFT-6288) - Rust: the stale remaining-bytes TODO in check_container_size
+- [#3831](https://github.com/apache/thrift/pull/3831) - Use the client certificate with subjectAltNames in the SSL cross-test clients
+- [#3637](https://github.com/apache/thrift/pull/3637) - Remove Rust deprecation warning
+- [#3625](https://github.com/apache/thrift/pull/3625) - Fix Go and Rust version detection for multi-digit version numbers
+
+### Test Suite
+
+- [THRIFT-6167](https://issues.apache.org/jira/browse/THRIFT-6167) - PHP HTTP cross-test server omits Content-Length and breaks php-cpp HTTP cases
+- [THRIFT-6270](https://issues.apache.org/jira/browse/THRIFT-6270) - Sweep for source files that no build list mentions
+
+### (No Section)
+
+- [#3834](https://github.com/apache/thrift/pull/3834) - Correct LANGUAGES.md entries flagged after the matrix update
+- [#3820](https://github.com/apache/thrift/pull/3820) - Update LANGUAGES.md with current versions and supported features
+- [#3815](https://github.com/apache/thrift/pull/3815) - Test the string length bound in the Smalltalk binary protocol
+- [#3758](https://github.com/apache/thrift/pull/3758) - Forbid tool-internal links in commit messages and PR text
+- [#3707](https://github.com/apache/thrift/pull/3707) - Update Apache Thrift DOAP metadata [skip ci]
+
 ### Breaking Changes
 
 - [THRIFT-6197](https://issues.apache.org/jira/browse/THRIFT-6197) - Go: a typedef of a struct, union or exception is generated as a type alias (`type Alias = Inner`) instead of a defined pointer type (`type Alias *Inner`), and no `<Name>Ptr` helper is generated for it; code that held a `*Inner` in such an alias now holds an `Inner` and takes the pointer outside the alias
