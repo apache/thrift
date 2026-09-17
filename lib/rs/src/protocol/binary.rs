@@ -101,7 +101,8 @@ where
 {
     #[allow(clippy::collapsible_if)]
     fn read_message_begin(&mut self) -> crate::Result<TMessageIdentifier> {
-        // TODO: Once specialization is stable, call the message size tracking here
+        // TODO: start the per-message byte count here once a transport can keep
+        // one; see check_container_size in protocol/mod.rs.
         let mut first_bytes = vec![0; 4];
         self.transport.read_exact(&mut first_bytes[..])?;
 

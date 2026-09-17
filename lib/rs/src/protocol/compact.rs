@@ -165,7 +165,8 @@ where
     T: TReadTransport,
 {
     fn read_message_begin(&mut self) -> crate::Result<TMessageIdentifier> {
-        // TODO: Once specialization is stable, call the message size tracking here
+        // TODO: start the per-message byte count here once a transport can keep
+        // one; see check_container_size in protocol/mod.rs.
         let compact_id = self.read_byte()?;
         if compact_id != COMPACT_PROTOCOL_ID {
             Err(crate::Error::Protocol(crate::ProtocolError {
