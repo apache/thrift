@@ -206,7 +206,11 @@ function configureReplace
 function jsonReplace
 {
     local current
-    if ! current=$(jq -e -r ".version" "$1"); then
+    if ! jq empty "$1"; then
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not read the file" "$1" 0
+        echo
+        return 1
+    elif ! current=$(jq -e -r ".version" "$1"); then
         printf "%-60s | %5d | ${red}ERROR${normal}: version tag not found" "$1" 0
         echo
         return 1
@@ -265,8 +269,12 @@ function gemlockReplace
 function npmlockReplace
 {
     local current
-    if ! current=$(jq -r '[.version, .packages[""].version] | map(. // "") | join(" ")' "$1") \
-       || [ "${current}" != "${OLDVERSION} ${OLDVERSION}" ]; then
+    if ! jq empty "$1"; then
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not read the file" "$1" 0
+        echo
+        return 1
+    elif ! current=$(jq -r '[.version, .packages[""].version] | map(. // "") | join(" ")' "$1") \
+         || [ "${current}" != "${OLDVERSION} ${OLDVERSION}" ]; then
         printf "%-60s | %5d | ${red}NOT FOUND${normal}: ${OLDVERSION} in version and packages[\"\"].version" "$1" 0
         echo
         return 1
