@@ -576,6 +576,11 @@ module Thrift
 
     # Writes a varint32 to the given IO
     def write_varint32(io, n)
+      # Encode the low 32 bits: Ruby's >> is arithmetic, so a negative value
+      # would keep its sign bit set and never satisfy the (n & ~0x7F) == 0 exit
+      # condition below. Masking yields the same unsigned varint read_varint32
+      # produces and accepts.
+      n &= 0xFFFFFFFF
       loop do
         if (n & ~0x7F) == 0
           io.write([n].pack("C"))

@@ -865,4 +865,21 @@ describe "HeaderTransport" do
       expect(result).to be_a(Thrift::HeaderTransport)
     end
   end
+
+  describe "varint encoding" do
+    it "encodes a negative value as a canonical uint32 varint and round-trips" do
+      require "stringio"
+      require "timeout"
+      trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new)
+      io = StringIO.new(String.new)
+      # A negative argument must not spin the encoder: it is encoded as its low
+      # 32 bits, which is the same byte sequence 0xFFFFFFFF produces and which
+      # read_varint32 accepts. The timeout guards against the non-terminating loop.
+      Timeout.timeout(5) { trans.send(:write_varint32, io, -1) }
+      expect(io.string.bytes).to eq([0xFF, 0xFF, 0xFF, 0xFF, 0x0F])
+
+      io.rewind
+      expect(trans.send(:read_varint32, io)).to eq(0xFFFFFFFF)
+    end
+  end
 end
