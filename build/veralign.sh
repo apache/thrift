@@ -36,7 +36,7 @@
 # IMPORTANT USAGE NOTE
 # -----------------------------------------------------------
 # Define the environment variable DRYRUN to have the script
-# print out all matches to the oldVersion hilighted so that
+# print out all matches to the oldVersion highlighted so that
 # you can verify it will change the right things.
 #
 
@@ -163,7 +163,7 @@ function escapeVersion
     echo "$(echo "$1" | sed 's/\./\\./g' | sed 's/\[/\\\[/g' | sed 's/\]/\\\]/g' | sed 's/[()]/[&]/g')"
 }
 
-# Set up verbose hilighting if running interactive
+# Set up verbose highlighting if running interactive
 if [ "$(tput colors)" -ne 0 ]; then
     reverse=$(tput rev)
     red=$(tput setaf 1)
@@ -205,24 +205,21 @@ function configureReplace
 
 function jsonReplace
 {
-    local result
-    local output
-    if [ ! -z "$DRYRUN" ]; then
-        output=$(jq -e ".version" "$1")
-    else
-        output=$(jq -e ".version = \"${NEWVERSION}\"" "$1" > tmp.$$.json && mv tmp.$$.json "$1")
-    fi
-    result=$?
-    if [ $? -ne 0 ]; then
-        printf "%-60s | %5d | ${red}ERROR${normal}: version tag not found" "$1" "$count"
+    local current
+    if ! current=$(jq -e -r ".version" "$1"); then
+        printf "%-60s | %5d | ${red}ERROR${normal}: version tag not found" "$1" 0
         echo
         return 1
     elif [ ! -z "$DRYRUN" ]; then
-        output=${output%\"}
-        output=${output#\"}
-        printf "%-60s | %5d | MATCHES:   version: \"${reverse}${green}${output}${normal}\"" "$1" 1
+        printf "%-60s | %5d | MATCHES:   version: \"${reverse}${green}${current}${normal}\"" "$1" 1
         echo
         return 0
+    fi
+    if ! { jq ".version = \"${NEWVERSION}\"" "$1" > tmp.$$.json && mv tmp.$$.json "$1"; }; then
+        rm -f tmp.$$.json
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not rewrite the file" "$1" 1
+        echo
+        return 1
     fi
     printf "%-60s | %5d | ${green}OK${normal}" "$1" 1
     echo
@@ -308,7 +305,7 @@ function pomReplace
 #     in order to be successful.
 # \param $1 filename to do replacements on
 # \param $2 the "old" string to be replaced
-# \param $3 the "new" striing to replace it with
+# \param $3 the "new" string to replace it with
 # \returns 0 on success
 #
 function replace
@@ -350,7 +347,7 @@ function replace
 #     in order to be successful.
 # \param $1 filename to do replacements on
 # \param $2 the "old" string to be replaced
-# \param $3 the "new" striing to replace it with
+# \param $3 the "new" string to replace it with
 # \returns 0 on success
 #
 function simpleReplace
@@ -369,14 +366,14 @@ echo "-------------------------------------------------------------+-------+----
 echo "Filename                                                     | Count | Status               "
 echo "-------------------------------------------------------------+-------+----------------------"
 
-for file in $(echo "${!FILES[@]}" | sort); do
+for file in $(printf '%s\n' "${!FILES[@]}" | sort); do
     ${FILES[$file]} $file || exit $?
 done
 
 echo
 echo "Files that must be modified manually:"
 echo
-for manu in $(echo "${!MANUAL[@]}" | sort); do
+for manu in $(printf '%s\n' "${!MANUAL[@]}" | sort); do
     echo " > ${yellow}${manu}${normal}"
 done
 
