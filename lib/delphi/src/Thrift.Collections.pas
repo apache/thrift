@@ -412,7 +412,7 @@ begin
 {$IF CompilerVersion < 22.0}
   SetLength(Result, Count);
   i := 0;
-  for x in FDictionaly do
+  for x in FDictionary do
   begin
     Result[i] := x;
     Inc( i );
