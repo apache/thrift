@@ -672,13 +672,18 @@ uint32_t THeaderTransport::writeVarint32(int32_t n, uint8_t* pkt) {
   uint8_t buf[5];
   uint32_t wsize = 0;
 
+  // Encode over an unsigned copy so the shift is logical, not arithmetic: a
+  // negative value would otherwise keep its sign bit set on every >> and the
+  // loop would never satisfy the (val & ~0x7F) == 0 exit condition, writing
+  // past buf. The low 32 bits always fit in the five bytes buf holds.
+  uint32_t val = static_cast<uint32_t>(n);
   while (true) {
-    if ((n & ~0x7F) == 0) {
-      buf[wsize++] = (int8_t)n;
+    if ((val & ~0x7Fu) == 0) {
+      buf[wsize++] = static_cast<uint8_t>(val);
       break;
     } else {
-      buf[wsize++] = (int8_t)((n & 0x7F) | 0x80);
-      n >>= 7;
+      buf[wsize++] = static_cast<uint8_t>((val & 0x7F) | 0x80);
+      val >>= 7;
     }
   }
 
