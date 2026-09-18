@@ -34,6 +34,7 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THeaderTransport.h>
+#include <thrift/TApplicationException.h>
 #include <thrift/transport/TSimpleFileTransport.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/protocol/TEnum.h>
@@ -569,6 +570,31 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_equal_to_magic_word) {
   uint8_t out[4];
   BOOST_CHECK_NO_THROW(trans->readAll(out, sizeof(out)));
   BOOST_CHECK_EQUAL(out[0], 0x80);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_read_failure_releases_stream) {
+  using apache::thrift::transport::THeaderTransport;
+  using apache::thrift::TApplicationException;
+  // A ZLIB-transformed frame whose inflated size exceeds the transform buffer
+  // the reader sizes from its own (default) write buffer cannot be inflated, so
+  // the read fails. The zlib stream inflateInit acquired for it has to be
+  // released on that failure path too; otherwise it is leaked once per frame.
+  // A plain build only checks that the failure still surfaces cleanly here --
+  // the leak itself is observable under LeakSanitizer (build the library and
+  // this test with -fsanitize=address and run: unfixed leaks ~40 KB per frame,
+  // fixed exits clean).
+  const std::size_t N = 4096; // > the ~1 KB reader transform buffer
+  std::vector<uint8_t> payload(N, 0x41);
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<THeaderTransport> writer(new THeaderTransport(buffer));
+  writer->setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer->write(payload.data(), static_cast<uint32_t>(payload.size()));
+  writer->flush();
+
+  std::shared_ptr<THeaderTransport> reader(new THeaderTransport(buffer));
+  uint8_t out[16];
+  BOOST_CHECK_THROW(reader->read(out, sizeof(out)), TApplicationException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

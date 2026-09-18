@@ -328,6 +328,9 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
       stream.avail_out = tBufSize_;
       err = inflate(&stream, Z_FINISH);
       if (err != Z_STREAM_END || stream.avail_out == 0) {
+        // Release the stream before leaving through the error path; inflateInit
+        // has already acquired it, and the throw would otherwise skip cleanup.
+        inflateEnd(&stream);
         throw TApplicationException(TApplicationException::MISSING_RESULT,
                                     "Error while zlib deflate");
       }
@@ -335,8 +338,10 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
 
       // Apply the configured frame-size limit to the post-transform payload as
       // well: the decompressed data is what the caller ultimately reads, so it
-      // is bounded the same way an untransformed frame is in readFrame().
+      // is bounded the same way an untransformed frame is in readFrame(). Release
+      // the stream before this throw too, keeping the original check order.
       if (sz > maxFrameSize_) {
+        inflateEnd(&stream);
         throw TTransportException(TTransportException::CORRUPTED_DATA,
                                   "Received an oversized frame after transform");
       }
@@ -406,8 +411,18 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
       // down in tBuf_, and compress in a single pass.
       uLong needed = deflateBound(&stream, sz) + DEFAULT_BUFFER_SIZE;
       if (needed > tBufSize_) {
-        tBuf_.reset(new uint8_t[needed]);
-        tBufSize_ = safe_numeric_cast<uint32_t>(needed);
+        // Sizing this buffer can throw (allocation failure, or the numeric cast
+        // for an unrepresentable size); release the stream first so those paths
+        // do not leak it. reset() is noexcept and the assignment cannot throw,
+        // so both fields are set together once the size and allocation succeed.
+        try {
+          uint32_t newSize = safe_numeric_cast<uint32_t>(needed);
+          tBuf_.reset(new uint8_t[newSize]);
+          tBufSize_ = newSize;
+        } catch (...) {
+          deflateEnd(&stream);
+          throw;
+        }
       }
       stream.next_out = tBuf_.get();
       stream.avail_out = tBufSize_;
