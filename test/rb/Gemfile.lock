@@ -1,7 +1,7 @@
 PATH
   remote: ../../lib/rb
   specs:
-    thrift (0.25.0)
+    thrift (0.26.0)
       logger
 
 GEM
@@ -37,7 +37,7 @@ GEM
       string-format (~> 0.2)
     async-utilization (0.4.0)
       console (~> 1.0)
-    bake (0.25.0)
+    bake (0.26.0)
       bigdecimal
       samovar (~> 2.1)
     bigdecimal (4.1.2)
