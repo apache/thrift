@@ -27,7 +27,6 @@ on:
       - master
     paths:
       - ".github/workflows/pypi.yml"
-      - "doc/ReleaseManagement.md"
       - "lib/py/MANIFEST.in"
       - "lib/py/pyproject.toml"
       - "lib/py/setup.cfg"
