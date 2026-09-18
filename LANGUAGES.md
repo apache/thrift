@@ -243,7 +243,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <td align=left><a href="https://github.com/apache/thrift/tree/master/lib/lua">Lua</a></td>
 <!-- Since -----------------><td>0.9.2</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<!-- Language Levels -------><td>5.1.5</td><td>5.4</td>
+<!-- Language Levels -------><td>5.3</td><td>5.4</td>
 <!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
