@@ -1230,6 +1230,82 @@ jobs:
       - name: Run make check for erlang
         run: make -C lib/erl check
 
+  lib-lua:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        # The floor configure.ac requires, and the version
+        # build/docker/ubuntu-{jammy,noble}/Dockerfile install. Keep
+        # LANGUAGES.md in step.
+        lua-version: ["5.3", "5.4"]
+      fail-fast: false
+    env:
+      # Not LUA_VERSION, which configure sets itself from the interpreter it finds.
+      MATRIX_LUA_VERSION: ${{ matrix.lua-version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS "lua$MATRIX_LUA_VERSION" "liblua$MATRIX_LUA_VERSION-dev"
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for lua
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-lua/with-lua/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # Lua was actually found, and that it is the version this leg is for.
+          echo "$summary" | grep -qE "Building Lua Library [.]+ : yes"
+          echo "$summary" | grep -E "Using Lua version" | grep -qF "Lua $MATRIX_LUA_VERSION."
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for lua
+        run: make -C lib/lua
+
+      # Generates the types test_recursion_depth.lua needs, then runs the
+      # scripts in lib/lua/test. Those preload pure-Lua stand-ins for the C
+      # modules, so it is the cross test below that loads the ones built above.
+      - name: Run make check for lua
+        run: make -C lib/lua check
+
+      - name: Run make precross for lua
+        run: make -C test/lua precross
+
+      # The Lua client against the Lua server, over each transport and protocol
+      # test/tests.json lists for Lua.
+      - name: Run cross test for lua
+        run: python3 test/test.py --server lua --client lua
+
+      - name: Upload log files from failed cross test runs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-lua-cross-test-log_${{ matrix.lua-version }}
+          path: test/log/
+          retention-days: 3
+
   cross-test:
     needs:
       - lib-php

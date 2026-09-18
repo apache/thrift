@@ -82,3 +82,17 @@ EXTRA_DIST = \
 		test/test_recursion_depth.lua \
 		test/test_http_headers.lua \
 		test/test_frame_and_string_limits.lua
+
+THRIFT = $(top_builddir)/compiler/cpp/thrift
+
+# test_recursion_depth.lua loads its generated types from gen-lua/ next to it.
+test/gen-lua/RecursionDepth_ttypes.lua: test/RecursionDepth.thrift $(THRIFT)
+	$(THRIFT) -o test --gen lua test/RecursionDepth.thrift
+
+check-local: test/gen-lua/RecursionDepth_ttypes.lua
+	$(LUA) test/test_recursion_depth.lua
+	$(LUA) test/test_http_headers.lua
+	$(LUA) test/test_frame_and_string_limits.lua
+
+clean-local:
+	$(RM) -r test/gen-lua

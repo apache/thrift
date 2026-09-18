@@ -276,7 +276,9 @@ AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 AX_THRIFT_LIB(lua, [Lua], yes)
 have_lua=no
 if test "$with_lua" = "yes"; then
-  AX_PROG_LUA(5.2,, have_lua="yes", have_lua="no")
+  dnl 5.3, because the scripts make check runs in lib/lua/test use its
+  dnl bitwise operators and string.pack.
+  AX_PROG_LUA(5.3,, have_lua="yes", have_lua="no")
   if test "$have_lua" = "yes"; then
     AX_LUA_HEADERS(, have_lua="no")
     AX_LUA_LIBS(, have_lua="no")
