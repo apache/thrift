@@ -47,15 +47,15 @@ class TSSLSocket extends TSocket
     /**
      * Socket constructor
      *
-     * @param resource|null                        $context      Stream context
-     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger or
-     *        legacy callable; see TSocket::__construct().
+     * @param resource|null        $context      Stream context
+     * @param LoggerInterface|null $debugHandler PSR-3 logger for diagnostic
+     *        output; see TSocket::__construct().
      */
     public function __construct(
         string $host = 'localhost',
         int $port = 9090,
         $context = null,
-        LoggerInterface|callable|string|null $debugHandler = null,
+        ?LoggerInterface $debugHandler = null,
     ) {
         parent::__construct($this->ensureSslHostPrefix($host), $port, false, $debugHandler);
         $this->context = $context ?? stream_context_create();
