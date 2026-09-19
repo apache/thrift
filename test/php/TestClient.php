@@ -51,8 +51,7 @@ require_once __DIR__ . '/protocols.php';
 
 /**
  * Minimal PSR-3 logger that forwards every message to PHP's error_log
- * (stderr in CLI mode). Used here to exercise the new logger-aware
- * debugHandler path on the cross-test client.
+ * (stderr in CLI mode).
  */
 final class StderrLogger extends AbstractLogger implements LoggerInterface
 {

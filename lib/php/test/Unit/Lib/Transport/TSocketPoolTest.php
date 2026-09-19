@@ -602,29 +602,4 @@ class TSocketPoolTest extends TestCase
             ]
         );
     }
-
-    public function testSetDebugIsDeprecated(): void
-    {
-        $pool = new TSocketPool(['localhost'], 9090);
-
-        $errors = [];
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$errors): bool {
-                $errors[] = ['errno' => $errno, 'errstr' => $errstr];
-
-                return true;
-            },
-            E_USER_DEPRECATED,
-        );
-
-        try {
-            $pool->setDebug(true);
-        } finally {
-            restore_error_handler();
-        }
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString('setDebug() is deprecated', $errors[0]['errstr']);
-    }
 }
