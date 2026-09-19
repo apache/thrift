@@ -359,7 +359,6 @@ public:
            " *)\n";
   }
 
-  string xml_encode(string contents);
   string xmldoc_encode(string contents);
   string xmlattrib_encode(string contents);
   void generate_delphi_doc(std::ostream& out, t_field* field);
@@ -468,20 +467,6 @@ private:
   };
   std::ostream& indent_impl(std::ostream& os) { return os << indent_impl(); };
 };
-
-// XML encoding
-string t_delphi_generator::xml_encode(string contents) {
-  string str(contents);
-
-  // escape the escape
-  str = replace_all(str, "&", "&amp;");
-
-  // other standard XML entities
-  str = replace_all(str, "<", "&lt;");
-  str = replace_all(str, ">", "&gt;");
-
-  return str;
-}
 
 // XML attribute encoding
 string t_delphi_generator::xmlattrib_encode(string contents) {
