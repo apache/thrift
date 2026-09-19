@@ -25,7 +25,6 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
-use Closure;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
@@ -39,15 +38,6 @@ use Thrift\Exception\TTransportException;
  */
 class TSocket extends TTransport
 {
-    /**
-     * Default debug handler used when none is supplied to the constructor.
-     *
-     * @deprecated Callable / function-name debug handlers are deprecated and
-     *             will be removed in the next version. Pass a
-     *             Psr\Log\LoggerInterface to the constructor instead.
-     */
-    public const DEFAULT_DEBUG_HANDLER = 'error_log';
-
     private static ?bool $hasSocketsExtension = null;
 
     /**
@@ -61,14 +51,15 @@ class TSocket extends TTransport
      * Connect timeout in seconds.
      *
      * Combined with connectTimeoutUsec this is used for the fsockopen()
-     * timeout. Null means "use the send timeout" for backwards compatibility
-     * with callers that only configure setSendTimeout().
+     * timeout. Defaults to 1 second.
      */
-    protected ?int $connectTimeoutSec = null;
+    protected int $connectTimeoutSec = 1;
 
     /**
-     * Connect timeout in microseconds. Only consulted when connectTimeoutSec
-     * is non-null.
+     * Connect timeout in microseconds.
+     *
+     * Combined with connectTimeoutSec this is used for the fsockopen()
+     * timeout. Defaults to 0 microseconds.
      */
     protected int $connectTimeoutUsec = 0;
 
@@ -87,13 +78,6 @@ class TSocket extends TTransport
     protected int $sendTimeoutUsec = 100000;
 
     /**
-     * True once a caller invoked setSendTimeout(). Used to fire a deprecation
-     * notice in open() when the caller relies on the send-timeout-as-
-     * connect-timeout coupling that this class used to enforce.
-     */
-    private bool $sendTimeoutCustomized = false;
-
-    /**
      * Recv timeout in seconds
      *
      * Combined with recvTimeoutUsec this is used for recv timeouts.
@@ -108,61 +92,24 @@ class TSocket extends TTransport
     protected int $recvTimeoutUsec = 750000;
 
     /**
-     * Debugging on? Gates the legacy callable $debugHandler. Has no effect
-     * when a Psr\Log\LoggerInterface is used — that path is always invoked
-     * and the logger is responsible for level filtering.
-     *
-     * @deprecated Used only with the legacy callable $debugHandler, which
-     *             is itself deprecated. Will be removed alongside it in
-     *             the next version.
-     */
-    protected bool $debug = false;
-
-    /**
      * PSR-3 logger used for diagnostic output. Defaults to a NullLogger so the
      * transport is silent unless the caller supplies a real logger.
      */
     protected LoggerInterface $logger;
 
     /**
-     * Legacy debug callback. Only populated when the caller passed a callable
-     * (or, deprecated, a function-name string) instead of a LoggerInterface.
-     */
-    protected ?Closure $debugHandler = null;
-
-    /**
      * Socket constructor
      *
-     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger
-     *        for diagnostic output. Passing a callable or function-name string
-     *        is deprecated and triggers E_USER_DEPRECATED; pass a
-     *        Psr\Log\LoggerInterface instead.
+     * @param LoggerInterface|null $logger PSR-3 logger for diagnostic output.
+     *        Defaults to NullLogger (silent).
      */
     public function __construct(
         protected string $host = 'localhost',
         protected int $port = 9090,
         protected bool $persist = false,
-        LoggerInterface|callable|string|null $debugHandler = null,
+        ?LoggerInterface $logger = null,
     ) {
-        if ($debugHandler instanceof LoggerInterface) {
-            $this->logger = $debugHandler;
-            return;
-        }
-
-        $this->logger = new NullLogger();
-
-        if ($debugHandler === null) {
-            return;
-        }
-
-        trigger_error(
-            'Passing a callable as $debugHandler is deprecated and will be '
-            . 'removed in the next version; pass a Psr\\Log\\LoggerInterface '
-            . 'instead.',
-            E_USER_DEPRECATED,
-        );
-
-        $this->debugHandler = Closure::fromCallable($debugHandler);
+        $this->logger = $logger ?? new NullLogger();
     }
 
     /**
@@ -177,10 +124,6 @@ class TSocket extends TTransport
     /**
      * Sets the timeout used while establishing the TCP connection (the
      * `timeout` argument passed to fsockopen()/pfsockopen()).
-     *
-     * When unset, the send timeout is used for the connect step too, for
-     * backwards compatibility with callers that only ever set
-     * setSendTimeout().
      *
      * @param int $timeout Timeout in milliseconds.
      */
@@ -199,7 +142,6 @@ class TSocket extends TTransport
         $this->sendTimeoutSec = intdiv($timeout, 1000);
         $this->sendTimeoutUsec =
             ($timeout - ($this->sendTimeoutSec * 1000)) * 1000;
-        $this->sendTimeoutCustomized = true;
     }
 
     /**
@@ -213,54 +155,11 @@ class TSocket extends TTransport
     }
 
     /**
-     * Enables or disables emission via the legacy callable $debugHandler.
-     * Has no effect when a Psr\Log\LoggerInterface is in use — configure
-     * the logger's level filter instead.
-     *
-     * @deprecated The full LoggerInterface migration is planned for the
-     *             next version, at which point this gate becomes
-     *             redundant and will be removed. Pass a configured
-     *             Psr\Log\LoggerInterface to the constructor instead.
-     */
-    public function setDebug(bool $debug): void
-    {
-        trigger_error(
-            __METHOD__ . '() is deprecated; pass a Psr\\Log\\LoggerInterface '
-            . 'to the constructor and let the logger filter by level. This '
-            . 'method will be removed in the next version.',
-            E_USER_DEPRECATED,
-        );
-
-        $this->debug = $debug;
-    }
-
-    /**
-     * Dispatches a diagnostic message.
-     *
-     * - Legacy callable $debugHandler: gated by setDebug() for BC.
-     * - User-supplied Psr\Log\LoggerInterface: always invoked; the logger
-     *   filters by level.
-     * - No handler supplied (default NullLogger): falls back to PHP's
-     *   error_log() when setDebug(true) is in effect, matching master.
+     * Dispatches a diagnostic message to the configured PSR-3 logger.
      */
     protected function log(string $level, string $message): void
     {
-        if ($this->debugHandler !== null) {
-            if (!$this->debug) {
-                return;
-            }
-            ($this->debugHandler)($message);
-            return;
-        }
-
-        if (!($this->logger instanceof NullLogger)) {
-            $this->logger->log($level, $message);
-            return;
-        }
-
-        if ($this->debug) {
-            error_log($message);
-        }
+        $this->logger->log($level, $message);
     }
 
     public function getHost(): string
@@ -295,19 +194,7 @@ class TSocket extends TTransport
             throw new TTransportException('Cannot open without port', TTransportException::NOT_OPEN);
         }
 
-        if ($this->connectTimeoutSec !== null) {
-            $connectTimeout = $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000);
-        } else {
-            if ($this->sendTimeoutCustomized) {
-                trigger_error(
-                    'TSocket::open() reusing setSendTimeout() for the connect '
-                    . 'step is deprecated and will be removed in the next '
-                    . 'version; call setConnectTimeout() explicitly.',
-                    E_USER_DEPRECATED,
-                );
-            }
-            $connectTimeout = $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
-        }
+        $connectTimeout = $this->connectTimeoutSec + ($this->connectTimeoutUsec / 1000000);
 
         if ($this->persist) {
             $this->handle = @pfsockopen(

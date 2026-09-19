@@ -28,7 +28,6 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Test\Thrift\Unit\Lib\UserDeprecationCapture;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSSLSocket;
@@ -36,14 +35,13 @@ use Thrift\Transport\TSSLSocket;
 class TSSLSocketTest extends TestCase
 {
     use PHPMock;
-    use UserDeprecationCapture;
 
     #[DataProvider('openExceptionDataProvider')]
     public function testOpenException(
         $host,
         $port,
         $context,
-        $debugHandler,
+        $logger,
         $streamSocketClientCallCount,
         $expectedException,
         $expectedMessage,
@@ -69,7 +67,7 @@ class TSSLSocketTest extends TestCase
             $host,
             $port,
             $context,
-            $debugHandler
+            $logger
         );
         $socket->open();
     }
@@ -80,7 +78,7 @@ class TSSLSocketTest extends TestCase
             'host' => '',
             'port' => 9090,
             'context' => null,
-            'debugHandler' => null,
+            'logger' => null,
             'streamSocketClientCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open null host',
@@ -90,7 +88,7 @@ class TSSLSocketTest extends TestCase
             'host' => 'localhost',
             'port' => 0,
             'context' => null,
-            'debugHandler' => null,
+            'logger' => null,
             'streamSocketClientCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open without port',
@@ -100,7 +98,7 @@ class TSSLSocketTest extends TestCase
             'host' => 'nonexistent-host',
             'port' => 9090,
             'context' => null,
-            'debugHandler' => null,
+            'logger' => null,
             'streamSocketClientCallCount' => 1,
             'expectedException' => TException::class,
             'expectedMessage' => 'TSocket: Could not connect to',
@@ -113,7 +111,7 @@ class TSSLSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $context = null;
-        $debugHandler = null;
+        $logger = null;
 
         $this->getFunctionMock('Thrift\Transport', 'stream_socket_client')
              ->expects($this->once())
@@ -131,7 +129,7 @@ class TSSLSocketTest extends TestCase
             $host,
             $port,
             $context,
-            $debugHandler
+            $logger
         );
 
         $transport->open();
@@ -141,115 +139,7 @@ class TSSLSocketTest extends TestCase
         $transport->open();
     }
 
-    public function testDebugHandler()
-    {
-        $host = 'nonexistent-host';
-        $port = 9090;
-        $context = null;
-
-        $debugHandler = function ($error) {
-            $this->assertEquals(
-                'TSocket: Could not connect to ssl://nonexistent-host:9090 (Connection refused [999])',
-                $error
-            );
-        };
-
-        $this->getFunctionMock('Thrift\Transport', 'stream_socket_client')
-            ->expects($this->once())
-            ->with(
-                'ssl://' . $host . ':' . $port,
-                $this->anything(), #$errno,
-                $this->anything(), #$errstr,
-                $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-                STREAM_CLIENT_CONNECT,
-                $this->anything() #$context
-            )
-            ->willReturnCallback(
-                function ($host, &$error_code, &$error_message, $timeout, $flags, $context) {
-                    $error_code = 999;
-                    $error_message = 'Connection refused';
-
-                    return false;
-                }
-            );
-
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('TSocket: Could not connect to');
-        $this->expectExceptionCode(0);
-
-        $transport = null;
-        $deprecations = self::captureUserDeprecations(
-            static function () use (&$transport, $host, $port, $context, $debugHandler): void {
-                $transport = new TSSLSocket($host, $port, $context, $debugHandler);
-                $transport->setDebug(true);
-            },
-        );
-        $this->assertCount(2, $deprecations);
-        $transport->open();
-    }
-
-    public function testOpenWithContext()
-    {
-        $host = 'self-signed-localhost';
-        $port = 9090;
-        $context = stream_context_create(
-            [
-                'ssl' => [
-                    'verify_peer' => true,
-                    'verify_peer_name' => true,
-                    'allow_self_signed' => true,
-                ],
-            ]
-        );
-        $debugHandler = null;
-
-        $this->getFunctionMock('Thrift\Transport', 'stream_socket_client')
-             ->expects($this->once())
-             ->with(
-                 'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-                 STREAM_CLIENT_CONNECT,
-                 $context #$context
-             )
-             ->willReturn(fopen('php://memory', 'r+'));
-
-        $transport = new TSSLSocket(
-            $host,
-            $port,
-            $context,
-            $debugHandler
-        );
-
-
-        $transport->open();
-        $this->assertTrue($transport->isOpen());
-    }
-
-    #[DataProvider('hostDataProvider')]
-    public function testGetHost($host, $expected)
-    {
-        $port = 9090;
-        $context = null;
-        $debugHandler = null;
-        $transport = new TSSLSocket(
-            $host,
-            $port,
-            $context,
-            $debugHandler
-        );
-        $this->assertEquals($expected, $transport->getHost());
-    }
-
-    public static function hostDataProvider()
-    {
-        yield 'localhost' => ['localhost', 'ssl://localhost'];
-        yield 'ssl_localhost' => ['ssl://localhost', 'ssl://localhost'];
-        yield 'http_localhost' => ['http://localhost', 'http://localhost'];
-    }
-
-    public function testDebugHandlerWithLoggerInterface(): void
+    public function testPsr3LoggerReceivesErrorLog(): void
     {
         $host = 'nonexistent-host';
         $port = 9090;
@@ -284,32 +174,64 @@ class TSSLSocketTest extends TestCase
         $transport->open();
     }
 
-    public function testStringDebugHandlerTriggersDeprecation(): void
+    public function testOpenWithContext()
     {
-        $errors = self::captureUserDeprecations(static function (): void {
-            new TSSLSocket('localhost', 9090, null, 'error_log');
-        });
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString(
-            'Passing a callable as $debugHandler is deprecated',
-            $errors[0]['errstr'],
+        $host = 'self-signed-localhost';
+        $port = 9090;
+        $context = stream_context_create(
+            [
+                'ssl' => [
+                    'verify_peer' => true,
+                    'verify_peer_name' => true,
+                    'allow_self_signed' => true,
+                ],
+            ]
         );
+        $logger = null;
+
+        $this->getFunctionMock('Thrift\Transport', 'stream_socket_client')
+             ->expects($this->once())
+             ->with(
+                 'ssl://' . $host . ':' . $port,
+                 $this->anything(), #$errno,
+                 $this->anything(), #$errstr,
+                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 STREAM_CLIENT_CONNECT,
+                 $context #$context
+             )
+             ->willReturn(fopen('php://memory', 'r+'));
+
+        $transport = new TSSLSocket(
+            $host,
+            $port,
+            $context,
+            $logger
+        );
+
+
+        $transport->open();
+        $this->assertTrue($transport->isOpen());
     }
 
-    public function testClosureDebugHandlerTriggersDeprecation(): void
+    #[DataProvider('hostDataProvider')]
+    public function testGetHost($host, $expected)
     {
-        $errors = self::captureUserDeprecations(static function (): void {
-            new TSSLSocket('localhost', 9090, null, static function (string $m): void {
-            });
-        });
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString(
-            'Passing a callable as $debugHandler is deprecated',
-            $errors[0]['errstr'],
+        $port = 9090;
+        $context = null;
+        $logger = null;
+        $transport = new TSSLSocket(
+            $host,
+            $port,
+            $context,
+            $logger
         );
+        $this->assertEquals($expected, $transport->getHost());
+    }
+
+    public static function hostDataProvider()
+    {
+        yield 'localhost' => ['localhost', 'ssl://localhost'];
+        yield 'ssl_localhost' => ['ssl://localhost', 'ssl://localhost'];
+        yield 'http_localhost' => ['http://localhost', 'http://localhost'];
     }
 }
