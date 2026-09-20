@@ -29,6 +29,17 @@ foreach(LANG ${KEYWORD_LANGS})
     endforeach()
 endforeach()
 
+# THRIFT-6062: the Smalltalk generator inline-expands nested struct
+# serialization into the service send/recv methods. With no bound and no
+# per-struct method to call, a recursive type made it recurse until the C++
+# stack overflowed, so "thrift --gen st" on a recursive IDL died with SIGSEGV.
+#
+# No PASS_REGULAR_EXPRESSION here on purpose: the test passes only on a zero
+# exit, and a signal is not one.
+add_test(NAME st_recursive_types
+    COMMAND thrift-compiler --gen st -out "${CMAKE_CURRENT_BINARY_DIR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/Recursive.thrift")
+
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
   add_test(NAME StalenessCheckTest COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})

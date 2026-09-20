@@ -94,6 +94,7 @@ public:
 
   void generate_st_struct(std::ostream& out, t_struct* tstruct, bool is_exception);
   void generate_accessors(std::ostream& out, t_struct* tstruct);
+  void generate_serialization(std::ostream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -516,6 +517,35 @@ void t_st_generator::generate_st_struct(std::ostream& out,
       << "\tcategory: '" << generated_category() << "'!\n\n";
 
   generate_accessors(out, tstruct);
+  generate_serialization(out, tstruct);
+}
+
+/**
+ * Gives a struct class the two methods that serialize it.
+ *
+ * Nested structs used to be expanded textually wherever they appeared, which
+ * meant a type that (directly or indirectly) contained itself expanded for
+ * ever: the generator recursed until its own stack ran out (THRIFT-6062).
+ * Emitting the code once per struct and calling it removes the recursion from
+ * the generator, and lets recursive types be generated at all.
+ *
+ * It also makes the depth guard mean something. Inlined, the
+ * incrementRecursionDepth pairs counted lexical nesting, which is fixed at
+ * generation time; here each struct counts one level per actual call, so the
+ * limit applies to how deep the *data* is.
+ */
+void t_st_generator::generate_serialization(std::ostream& out, t_struct* tstruct) {
+  string cls = capitalize(type_name(tstruct));
+
+  st_method(out, cls, "writeTo: oprot");
+  out << struct_writer(tstruct, "self");
+  st_close_method(out);
+
+  st_class_method(out, cls, "readFrom: iprot");
+  out << "^ " << struct_reader(tstruct, tstruct->get_name());
+  st_close_method(out);
+
+  out << '\n';
 }
 
 bool t_st_generator::is_vowel(char c) {
@@ -796,26 +826,26 @@ string t_st_generator::write_val(t_type* t, string fname) {
     t_base_type::t_base tbase = ((t_base_type*)t)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_DOUBLE:
-      return "iprot writeDouble: " + fname + " asFloat";
+      return "oprot writeDouble: " + fname + " asFloat";
       break;
     case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      return "iprot write" + capitalize(type_name(t)) + ": " + fname + " asInteger";
+      return "oprot write" + capitalize(type_name(t)) + ": " + fname + " asInteger";
     default:
-      return "iprot write" + capitalize(type_name(t)) + ": " + fname;
+      return "oprot write" + capitalize(type_name(t)) + ": " + fname;
     }
   } else if (t->is_map()) {
     return map_writer((t_map*)t, fname);
   } else if (t->is_struct() || t->is_xception()) {
-    return struct_writer((t_struct*)t, fname);
+    return fname + " writeTo: oprot";
   } else if (t->is_list()) {
     return list_writer((t_list*)t, fname);
   } else if (t->is_set()) {
     return set_writer((t_set*)t, fname);
   } else if (t->is_enum()) {
-    return "iprot writeI32: " + fname;
+    return "oprot writeI32: " + fname;
   } else {
     throw "Sorry, I don't know how to write this: " + type_name(t);
   }
@@ -829,7 +859,11 @@ string t_st_generator::read_val(t_type* t) {
   } else if (t->is_map()) {
     return map_reader((t_map*)t);
   } else if (t->is_struct() || t->is_xception()) {
-    return struct_reader((t_struct*)t);
+    // Parenthesised: a read_val result is used as a keyword argument, and
+    // "coll add: Foo readFrom: iprot" would parse as one add:readFrom: send.
+    // Every other branch returns a primary or a bracketed block, so this is
+    // the only one that needs it.
+    return "(" + prefix(type_name(t)) + " readFrom: iprot)";
   } else if (t->is_list()) {
     return list_reader((t_list*)t);
   } else if (t->is_set()) {
