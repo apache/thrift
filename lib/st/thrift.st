@@ -787,9 +787,17 @@ read: anInteger
 
 !TTransport methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 17:22'!
 readAll: anInteger
-	^ String streamContents: [:str |
+	"Read exactly anInteger bytes, looping until they have all arrived.
+
+	 A read: that answers nothing has to end the loop: asking the same source
+	 again for the same bytes cannot answer differently, so without this the
+	 loop never terminates."
+	^ String streamContents: [:str | | chunk |
 		[str size < anInteger] whileTrue:
-			[str nextPutAll: (self read: anInteger - str size)]]! !
+			[chunk := self read: anInteger - str size.
+			 chunk isEmpty ifTrue:
+				[TTransportError signal: 'Could not read ', anInteger asString, ' bytes'].
+			 str nextPutAll: chunk]]! !
 
 !TTransport methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 17:22'!
 write: aString
