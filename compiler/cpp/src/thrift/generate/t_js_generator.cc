@@ -586,17 +586,14 @@ string t_js_generator::js_includes() {
       if (!gen_bigint_) {
         result += "import Int64 from 'node-int64';\n";
       }
-      result += "import { v4 as uuid } from 'uuid';";
     } else {
       if (!gen_bigint_) {
         result += js_const_type_ + "Int64 = require('node-int64');\n";
       }
-      result += js_const_type_ + "uuid = require('uuid').v4;\n";
     }
     return result;
   }
   string result = "if (typeof Int64 === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "Int64 = require('node-int64');\n}\n";
-  result += "if (typeof uuid === 'undefined' && typeof require === 'function') {\n  " + js_const_type_ + "uuid = require('uuid').v4;\n}\n";
   return result;
 }
 
@@ -614,14 +611,11 @@ string t_js_generator::ts_includes() {
     if (!gen_bigint_) {
       result += "import Int64 = require('node-int64');\n";
     }
-    result +=
-        "import { v4 as uuid } from 'uuid';\n"
-        "type uuid = string;";
+    result += "type uuid = string;";
     return result;
   }
   return string(
     "import Int64 = require('node-int64');\n"
-    "import { v4 as uuid } from 'uuid';\n"
     "type uuid = string;");
 }
 
