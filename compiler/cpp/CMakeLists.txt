@@ -125,7 +125,43 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
 list(APPEND thrift-compiler_SOURCES ${compiler_core})
 
-add_executable(thrift-compiler ${thrift-compiler_SOURCES})
+# The unit tests in tests/ link the generator and parser sources rather than
+# running the built compiler, so the same translation units used to be compiled
+# once here and a second time there. Compile them once into an object library
+# and let both targets consume the objects.
+#
+# What the executable keeps for itself is taken out of the shared set by what
+# the list actually holds, rather than by re-deriving the option names, so that
+# a renamed or disabled generator cannot silently leave one in place.
+set(thrift_compiler_exe_only
+    src/thrift/main.cc
+    # tests/ocaml/t_ocaml_generator_tests.cc includes t_ocaml_generator.cc
+    # directly, so that translation unit must not also reach the tests as a
+    # compiled object; the executable compiles it on its own.
+    src/thrift/generate/t_ocaml_generator.cc
+)
+
+set(thrift_compiler_exe_SOURCES)
+set(thrift_compiler_core_SOURCES ${thrift-compiler_SOURCES})
+foreach(src IN LISTS thrift_compiler_exe_only)
+    list(FIND thrift_compiler_core_SOURCES ${src} _found)
+    if(NOT _found EQUAL -1)
+        list(REMOVE_ITEM thrift_compiler_core_SOURCES ${src})
+        list(APPEND thrift_compiler_exe_SOURCES ${src})
+    endif()
+endforeach()
+
+if(NOT thrift_compiler_exe_SOURCES)
+    message(FATAL_ERROR "none of thrift_compiler_exe_only matched thrift-compiler_SOURCES; the compiler would be built without a main()")
+endif()
+
+add_library(thrift_compiler_core OBJECT ${thrift_compiler_core_SOURCES})
+
+# The generator sources include thrifty.hh, which bison produces as part of the
+# parse target; without this the objects could compile before it exists.
+target_link_libraries(thrift_compiler_core PUBLIC parse)
+
+add_executable(thrift-compiler ${thrift_compiler_exe_SOURCES} $<TARGET_OBJECTS:thrift_compiler_core>)
 
 set_target_properties(thrift-compiler PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin/)
 set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)

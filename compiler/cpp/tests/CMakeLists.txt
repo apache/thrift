@@ -159,6 +159,20 @@ list(REMOVE_ITEM thrift_compiler_SOURCES
 # - the top-level binary directory for generated files when reusing targets from the parent build
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
 
+# In the combined build the generator and parser sources have already been
+# compiled for the thrift-compiler executable; reuse those objects instead of
+# compiling them a second time. A standalone build of this directory, which
+# .github/workflows/cmake.yml exercises, has no such target and keeps the list
+# assembled above.
+if(TARGET thrift_compiler_core)
+    set(thrift_compiler_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_globals.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_parser_support.cc
+        ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/logging.cc
+        $<TARGET_OBJECTS:thrift_compiler_core>
+    )
+endif()
+
 add_library(thrift_compiler STATIC ${thrift_compiler_SOURCES})
 
 #link parse lib to thrift_compiler lib
