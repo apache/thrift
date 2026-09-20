@@ -19,10 +19,15 @@
 
  This drives the recursion-depth limit through the generated struct read/write
  code (DeepClient sendEchoA: / recvEcho), not by poking the depth counter in
- isolation. The recursive types in test/Recursive.thrift cannot be used: the
- Smalltalk generator inline-expands nested struct serialization and recurses
- without bound at code-generation time on a recursive type, so a finite chain of
- distinct struct types (A1..A65) is used to nest past the limit (64) instead.
+ isolation. It nests past the limit (64) with a finite chain of distinct struct
+ types, A1..A65.
+
+ That chain was originally a workaround: the generator inline-expanded nested
+ struct serialization and recursed without bound at code-generation time, so a
+ recursive type could not be generated at all. THRIFT-6062 fixed that -- each
+ struct now carries its own writeTo:/readFrom:, and a genuinely recursive type
+ both generates and round-trips. Rewriting this suite to use one is worth doing
+ and is a separate change; the chain still exercises the limit as it stands.
 
  To run (Squeak/Pharo, or GNU Smalltalk with SUnit):
    thrift --gen st RecursionDepthTest.thrift
