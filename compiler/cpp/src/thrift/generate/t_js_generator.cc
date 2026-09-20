@@ -3002,7 +3002,10 @@ string t_js_generator::ts_get_type(t_type* type) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      ts_type = type->is_binary() ? "Buffer" : "string";
+      // Only the node runtime exchanges binary as a Buffer.  The browser
+      // library has no Buffer: TProtocol.writeBinary() takes a string and
+      // readBinary() returns one, as lib/ts/thrift.d.ts declares.
+      ts_type = (type->is_binary() && gen_node_) ? "Buffer" : "string";
       break;
     case t_base_type::TYPE_UUID:
       ts_type = "uuid";
