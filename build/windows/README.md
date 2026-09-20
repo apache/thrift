@@ -21,9 +21,7 @@ under the License.
 
 Scripts used by the Windows compiler build in
 [`.github/workflows/cmake.yml`](../../.github/workflows/cmake.yml) and by the
-Windows packaging in
-[`.github/workflows/windows-packages.yml`](../../.github/workflows/windows-packages.yml),
-and usable on their own from a developer machine.
+Windows packaging workflows, and usable on their own from a developer machine.
 
 ## `check-compiler-imports.ps1`
 
@@ -113,3 +111,52 @@ machine.
 ```powershell
 PS C:\thrift> .\build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.26.0-setup.exe
 ```
+
+## `build-dotnet-tool.ps1`
+
+Packs a built `thrift.exe` as a [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools-how-to-create),
+published to NuGet as `Apache.Thrift.Compiler`.
+
+```powershell
+PS C:\thrift> .\build\windows\build-dotnet-tool.ps1 -Version 0.26.0 -Compiler C:\install\bin\thrift.exe -OutputDir nupkg
+```
+
+As with the installer, the version is passed in rather than stored in the
+project file, so [`build/veralign.sh`](../veralign.sh) gains nothing to keep in
+step. Building without `-Compiler` fails rather than producing a package with no
+compiler in it.
+
+## `dotnet-tool/`
+
+The tool project. A .NET tool package needs a managed entry point, so
+`Program.cs` is a launcher that finds `thrift.exe` next to itself and hands over
+to it - arguments, the standard streams and the exit code all pass straight
+through.
+
+.NET 10 can declare a native executable as the entry point directly, with no
+managed code, but a package built that way cannot be installed by the .NET 8 or
+.NET 9 SDK at all, and the MSBuild properties involved are undocumented. The
+launcher costs one small assembly and works everywhere.
+
+The package carries the Windows compiler only. NuGet installs a tool package on
+any platform, so the launcher checks and reports that rather than failing to
+start a Windows executable.
+
+## `dotnet-tool/test-dotnet-tool.ps1`
+
+Looks inside a packed `.nupkg`, then installs it into a throwaway directory and
+runs it.
+
+```bash
+$ pwsh build/windows/dotnet-tool/test-dotnet-tool.ps1 -Package nupkg/Apache.Thrift.Compiler.0.26.0.nupkg -Version 0.26.0
+```
+
+Two things can go wrong with a tool package that wraps a native executable, and
+neither shows up before somebody installs it: the payload can be missing, and
+the layout can be such that the tool installs but does not run. So the test
+checks the package contents - including that `LICENSE` and `NOTICE` really are
+in there and are not empty - and then proves the installed command works.
+
+It runs anywhere PowerShell and the .NET SDK do. Off Windows it checks the
+launcher's refusal instead of the compiler's output, which is the behaviour that
+keeps a Linux user from a confusing failure.

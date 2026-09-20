@@ -490,6 +490,19 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   should pick up the release based on the tag.  No action is needed.
 * [npmjs] @jfarrell is the only one who can do this right now.
     https://issues.apache.org/jira/browse/THRIFT-4688
+* [nuget] The `.NET tool` GitHub Actions workflow publishes
+  [`Apache.Thrift.Compiler`](https://www.nuget.org/packages/Apache.Thrift.Compiler/) when the
+  GitHub release is published.  This is the Windows compiler packaged as a .NET tool, so that it
+  can be installed with `dotnet tool install --global Apache.Thrift.Compiler`.  It is not the
+  `ApacheThrift` runtime library, which is still published by hand following the instructions in
+  `ApacheThrift.nuspec`.
+  * Before publishing, verify that nuget.org has a trusted publishing policy for the
+    `apache/thrift` repository, the `.github/workflows/dotnet-tool.yml` workflow and the
+    `release` environment, and that the repository variable `NUGET_USER` names the nuget.org
+    account that owns it.
+  * A NuGet version can never be replaced.  If a package went out with the wrong contents,
+    prepare a new Apache Thrift release rather than trying to overwrite it.
+  * Do not publish release candidates or pre-releases; the workflow skips them.
 * [perl] A submission to CPAN is necessary (normally jeking3 does this):
   * Checkout the release branch or tag on a linux system.
   * Fire up the docker build container.

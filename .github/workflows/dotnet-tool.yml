@@ -1,0 +1,190 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+# Publishes the Windows Thrift compiler to NuGet as a .NET tool, so that it can
+# be installed with "dotnet tool install --global Apache.Thrift.Compiler".
+#
+# The compiler build mirrors the compiler-windows job in cmake.yml, which is
+# what actually tests it on every push.
+
+name: ".NET tool"
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/dotnet-tool.yml"
+      - "build/windows/dotnet-tool/**"
+      - "build/windows/build-dotnet-tool.ps1"
+      - "build/windows/check-compiler-imports.ps1"
+      - "doc/ReleaseManagement.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    name: Pack
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Determine the version
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          $sourceVersion = ''
+          foreach ($line in Get-Content CMakeLists.txt) {
+            if ($line -match '^\s*set\(thrift_VERSION\s+"(\d+\.\d+\.\d+)"\)') {
+              $sourceVersion = $Matches[1]
+              break
+            }
+          }
+          if (-not $sourceVersion) {
+            Write-Error 'Could not read thrift_VERSION from CMakeLists.txt.'
+            exit 1
+          }
+
+          $version = $sourceVersion
+          if ($env:RELEASE_TAG) {
+            # A NuGet version can never be replaced, so refuse to publish a
+            # package whose version disagrees with the release it comes from.
+            # release_rust.yml does the same for the crate.
+            $tagVersion = $env:RELEASE_TAG -replace '^v', ''
+            if ($tagVersion -ne $sourceVersion) {
+              Write-Error "Version mismatch: CMakeLists.txt=$sourceVersion, tag=$env:RELEASE_TAG"
+              exit 1
+            }
+            $version = $tagVersion
+          }
+
+          Write-Host "Version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Install dependencies
+        shell: pwsh
+        timeout-minutes: 10
+        # Pinned to the version build/docker/msvc/Dockerfile uses.
+        run: choco install winflexbison3 --version=2.5.24.20210105 -y --no-progress
+
+      - name: Build the compiler
+        shell: pwsh
+        timeout-minutes: 30
+        run: |
+          # No -DWITH_MT: the released compiler links the shared runtime. See THRIFT-6320.
+          cmake -S . -B cmake_build -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build cmake_build --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --install cmake_build --config Release --prefix cmake_install
+
+      - name: Check what the compiler imports
+        shell: pwsh
+        # A published NuGet version cannot be replaced, so this has to hold
+        # before the package is built, not only in cmake.yml afterwards.
+        run: ./build/windows/check-compiler-imports.ps1 -Path cmake_install/bin/thrift.exe
+
+      - name: Pack the tool
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./build/windows/build-dotnet-tool.ps1 `
+            -Version $env:VERSION `
+            -Compiler cmake_install/bin/thrift.exe `
+            -OutputDir nupkg
+
+      - name: Test the package
+        shell: pwsh
+        timeout-minutes: 15
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./build/windows/dotnet-tool/test-dotnet-tool.ps1 `
+            -Package "nupkg/Apache.Thrift.Compiler.$env:VERSION.nupkg" `
+            -Version $env:VERSION `
+            -ExpectedCompilerOutput "Thrift version $env:VERSION"
+
+      - name: Archive the package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dotnet-tool
+          if-no-files-found: error
+          path: nupkg/*.nupkg
+          retention-days: 3
+
+  publish:
+    name: Publish to NuGet
+    needs: pack
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+      # Mandatory for NuGet trusted publishing.
+      id-token: write
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dotnet-tool
+          path: nupkg
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
+      # Trusted publishing, as for PyPI in pypi.yml and crates.io in
+      # release_rust.yml: nuget.org hands back a short lived key in exchange
+      # for this run's OIDC token, so no long lived secret is stored here.
+      # It needs a trusted publishing policy on nuget.org naming this
+      # repository, this workflow and the release environment.
+      - name: Authenticate to NuGet
+        id: nuget-auth
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-auth.outputs.NUGET_API_KEY }}
+          VERSION: ${{ needs.pack.outputs.version }}
+        run: |
+          dotnet nuget push "nupkg/Apache.Thrift.Compiler.${VERSION}.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" \
+            --skip-duplicate
