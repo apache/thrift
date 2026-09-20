@@ -42,6 +42,7 @@ declare -A EXPECTED=(
     [TProtocolStringSizeLimitTest]=11
     [TProtocolRecursionDepthTest]=6
     [TTransportReadAllTest]=6
+    [TProtocolShortReadTest]=10
 )
 
 THRIFT=""
