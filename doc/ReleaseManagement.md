@@ -425,6 +425,45 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Make an announcement on the dev@ and user@ mailing lists of the release.  There's no template to follow, but you can point folks to the official web site at https://thrift.apache.org, and to the GitHub site at https://github.org/apache.thrift.
 
+### Release Automation Credentials
+
+Six workflows publish something when a GitHub release is published.  What each
+of them needs is described where that package is described, further down; this
+is the list, so that it can be checked before a release rather than discovered
+during one.
+
+Most of it needs no stored credential.  PyPI, RubyGems, crates.io and NuGet are
+all published over **trusted publishing**: the workflow exchanges the run's OIDC
+token for a short-lived key, so nothing is kept in the repository.  What has to
+exist is a policy on the receiving side naming this repository, the workflow
+file and the `release` environment.
+
+| Needed | Kind | Used by | Without it |
+|---|---|---|---|
+| PyPI trusted publisher for `.github/workflows/pypi.yml` | policy on pypi.org | `pypi.yml` | the publish step fails |
+| crates.io trusted publisher for `.github/workflows/release_rust.yml` | policy on crates.io | `release_rust.yml` | the publish step fails |
+| RubyGems trusted publisher for `.github/workflows/release_ruby.yml` | policy on rubygems.org | `release_ruby.yml` | the publish step fails |
+| NuGet trusted publisher for `.github/workflows/dotnet-tool.yml` | policy on nuget.org | `dotnet-tool.yml` | the publish step fails |
+| `NUGET_USER` | repository **variable** | `dotnet-tool.yml` | the publish step fails |
+| `WINGET_TOKEN` | repository **secret** | `winget.yml` | nothing is submitted; see below |
+| `CHOCO_API_KEY` | repository **secret** | `chocolatey.yml` | nothing is pushed; see below |
+
+All of them are scoped to the `release` [environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+`GITHUB_TOKEN` is provided by Actions itself and needs no setup.
+
+Two notes that are easy to get wrong:
+
+* **`WINGET_TOKEN` has to be a _classic_ personal access token** with the
+  `public_repo` scope.  Fine-grained tokens are not supported by `wingetcreate`.
+* **A green run does not prove anything was published.**  The WinGet and
+  Chocolatey steps deliberately do *not* fail when their secret is missing: they
+  build and upload the artifact, emit a warning, and print in the run summary how
+  to publish by hand.  That keeps a missing secret from failing a release, but it
+  means the run summary is what to read, not the tick.
+
+`CHOCO_API_KEY` is expected to be missing for now - see
+[Chocolatey](#chocolatey) below, the package id has not been handed over yet.
+
 ### Post-Release
 
 1. Visit https://reporter.apache.org/addrelease.html?thrift and register it.  You will get an automated reminder as the one who committed into dist.  This informs the Apache Board of Directors of releases through project reports.
