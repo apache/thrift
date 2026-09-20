@@ -75,6 +75,16 @@ if(MSVC)
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
+        # Policy CMP0091, which is NEW because the project requires CMake 3.16,
+        # takes the runtime library out of the per configuration compiler flag
+        # variables below and puts it in the MSVC_RUNTIME_LIBRARY target
+        # property, initialised from this variable. It has to be set before the
+        # first target is created.
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+        # Rewriting the flags is what still selects the runtime under CMP0091
+        # OLD, so it stays. Under NEW there is no /MD left to replace and the
+        # loop does nothing.
         set(CompilerFlags
                 CMAKE_CXX_FLAGS
                 CMAKE_CXX_FLAGS_DEBUG
