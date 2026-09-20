@@ -249,29 +249,32 @@ if test "$with_erlang" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
 
+dnl HAVE_NPM also drives the check targets of lib/js and lib/ts, which are
+dnl browser bindings and not tied to --with-nodejs.  Look for npm up front, so
+dnl that disabling the nodejs binding does not silently turn those tests into
+dnl no-ops.
+AC_PATH_PROG([NPM], [npm])
+AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
 AX_THRIFT_LIB(nodejs, [Nodejs], yes)
 have_nodejs=no
 if test "$with_nodejs" = "yes"; then
   AC_PATH_PROGS([NODEJS], [nodejs node])
-  AC_PATH_PROG([NPM], [npm])
   if test "x$NODEJS" != "x" -a "x$NPM" != "x"; then
     have_nodejs="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
-AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 
 AX_THRIFT_LIB(nodets, [Nodets], yes)
 have_nodets=no
 if test "$with_nodets" = "yes"; then
   AC_PATH_PROGS([NODETS], [nodets node])
-  AC_PATH_PROG([NPM], [npm])
   if test "x$NODETS" != "x" -a "x$NPM" != "x"; then
     have_nodets="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_NODETS, [test "$have_nodets" = "yes"])
-AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 
 AX_THRIFT_LIB(lua, [Lua], yes)
 have_lua=no

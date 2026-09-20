@@ -912,6 +912,68 @@ jobs:
             lib/nodets/test-compiled
           retention-days: 3
 
+  lib-ts:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      # ant fetches the browser test libraries, and lib/Makefile.am builds
+      # lib/ts inside the WITH_JAVA block for exactly that reason.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS ant
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for ts
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/'))
+          echo "$summary"
+          # lib/ts has no --with-ts of its own; it is built inside the WITH_JAVA
+          # block, and its check-local is guarded by HAVE_NPM.  Insist on both,
+          # so that a missing prerequisite cannot turn this job into a green
+          # run that tests nothing.
+          echo "$summary" | grep -qE "Building Java Library [.]+ : yes"
+          command -v npm
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # Generates the test code, compiles test/*.ts, bundles it and drives the
+      # QUnit pages in headless Chrome.  The grep is the guard: grunt reports
+      # the QUnit totals, and a run that executed no test at all would
+      # otherwise still exit 0.
+      - name: Run make check for ts
+        shell: bash
+        run: |
+          set -o pipefail
+          make -C lib/ts check 2>&1 | tee /tmp/lib-ts-check.log
+          grep -qE "[0-9]+ tests completed" /tmp/lib-ts-check.log
+
+      - name: Upload log files from a failed run
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-ts-check-log
+          path: /tmp/lib-ts-check.log
+          retention-days: 3
+
   lib-dart:
     needs: compiler
     runs-on: ubuntu-24.04
