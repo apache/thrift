@@ -160,3 +160,32 @@ in there and are not empty - and then proves the installed command works.
 It runs anywhere PowerShell and the .NET SDK do. Off Windows it checks the
 launcher's refusal instead of the compiler's output, which is the behaviour that
 keeps a Linux user from a confusing failure.
+
+## `build-chocolatey-package.ps1` and `chocolatey/`
+
+Builds the [Chocolatey](https://chocolatey.org/) package, so that the compiler
+can be installed with `choco install thrift`.
+
+```powershell
+PS C:\thrift> .\build\windows\build-chocolatey-package.ps1 -Version 0.26.0
+```
+
+The package does not carry the compiler. It downloads the installer published
+with the release and runs it silently for all users, so what a user installs is
+what was voted on and signed, and no binary is redistributed through a third
+party CDN. As with the WinGet manifest, the URL is `archive.apache.org` and the
+checksum is computed from the file at that very URL, so the package cannot
+record a checksum the published file does not have.
+
+Pass `-StageOnly` to render the package without packing it, which works on a
+machine that has no Chocolatey.
+
+### `chocolatey/test-chocolatey-package.ps1`
+
+Tests the builder: that the URL, checksum and silent install arguments reach
+the install script, that no placeholder survives, that `LICENSE` and `NOTICE`
+are staged and not empty, and that a malformed version or checksum is refused.
+Given `-Package`, it also looks inside a packed `.nupkg` - including that it
+carries no executable, since the compiler is downloaded at install time.
+
+Runs anywhere PowerShell does; only the `choco pack` step needs Windows.

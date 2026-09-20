@@ -476,6 +476,38 @@ GitHub is what the signatures on `dist.apache.org` cover.
 ~$ gh release upload v1.0.0 thrift-1.0.0-setup.exe --clobber --repo apache/thrift
 ```
 
+##### Chocolatey
+
+The [`Chocolatey`](../.github/workflows/chocolatey.yml) workflow builds the
+[Chocolatey](https://chocolatey.org/) package, so that the compiler can be
+installed with `choco install thrift`.
+
+The package does not carry the compiler.  It downloads the installer from
+`archive.apache.org` and records its checksum, so it can only be built once the
+archive has the release - `downloads.apache.org` only carries the current
+release, and a package naming it would stop installing at the next one.  If the
+release run was too early, run it again from the Actions tab once the archive
+has the file.
+
+**Nothing is pushed yet.**  The `thrift` id on the Chocolatey community
+repository belongs to a third-party package that last shipped 0.12.0 in February
+2019, maintained by `chaliy` and `Lite` from
+<https://github.com/Litee/chocolatey-packages>.  Before Apache Thrift can publish
+under that id, a maintainer takeover has to be requested from Chocolatey under
+their process for abandoned packages:
+
+1. Contact the current maintainers through their Chocolatey profile page and
+   allow the response time Chocolatey's policy requires.
+1. If there is no response, open a maintainer takeover request with Chocolatey.
+1. Once the id has been handed over, add the API key of the account that owns it
+   as a secret named `CHOCO_API_KEY` in the `release` environment.
+
+Until then the workflow builds and checks the package, attaches it to the run as
+an artifact, and says in its summary that it did not push.  If the takeover is
+refused, the free ids `apache-thrift` and `thrift-compiler` are the fallback;
+changing the id means editing `build/windows/chocolatey/thrift.nuspec.in` and
+the package name the build script expects.
+
 #### Third Party Package Managers
 
 See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  The information below is from the 0.12.0 release:

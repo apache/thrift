@@ -1,0 +1,190 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+# Packages the Windows Thrift compiler for Chocolatey, so that it can be
+# installed with "choco install thrift".
+#
+# The package downloads the installer from archive.apache.org rather than
+# carrying a copy, so it cannot be built until the release has been promoted
+# and the archive has picked it up. If the release run is too early, run it
+# again from the Actions tab once the archive has the file.
+#
+# Nothing is pushed until the CHOCO_API_KEY secret exists. The "thrift" id on
+# the Chocolatey community repository currently belongs to an abandoned third
+# party package, and a maintainer takeover has to be granted first. See
+# doc/ReleaseManagement.md.
+
+name: "Chocolatey"
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/chocolatey.yml"
+      - "build/windows/chocolatey/**"
+      - "build/windows/build-chocolatey-package.ps1"
+      - "doc/ReleaseManagement.md"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released version to package, for example 0.26.0. Taken from CMakeLists.txt when empty."
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package
+    # choco pack needs Chocolatey, which is only on the Windows images.
+    runs-on: windows-2025
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test the package builder
+        shell: pwsh
+        run: ./build/windows/chocolatey/test-chocolatey-package.ps1
+
+      - name: Determine the version
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = ''
+          if ($env:INPUT_VERSION) {
+            $version = $env:INPUT_VERSION
+          }
+          elseif ($env:RELEASE_TAG) {
+            $version = $env:RELEASE_TAG -replace '^v', ''
+          }
+          else {
+            foreach ($line in Get-Content CMakeLists.txt) {
+              if ($line -match '^\s*set\(thrift_VERSION\s+"(\d+\.\d+\.\d+)"\)') {
+                $version = $Matches[1]
+                break
+              }
+            }
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Could not determine a major.minor.patch version (got '$version')."
+            exit 1
+          }
+
+          Write-Host "Version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build the package
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          IS_RELEASE: ${{ github.event_name == 'release' }}
+        run: |
+          if ($env:IS_RELEASE -eq 'true') {
+            # No checksum given, so the published installer is downloaded and
+            # hashed. The package then cannot record a checksum the published
+            # file does not have.
+            ./build/windows/build-chocolatey-package.ps1 -Version $env:VERSION -OutputDir chocolatey-package
+          }
+          else {
+            # Nothing is published for a pull request, so this packages an
+            # obviously fake checksum. It proves the templates render and that
+            # choco pack accepts the result; it is not pushable, and the job
+            # does not upload it.
+            Write-Host '::notice::Packaging with a placeholder checksum; this run cannot push.'
+            ./build/windows/build-chocolatey-package.ps1 -Version $env:VERSION `
+              -Sha256 ('DEADBEEF' * 8) -OutputDir chocolatey-package
+          }
+
+      - name: Check the packed package
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./build/windows/chocolatey/test-chocolatey-package.ps1 `
+            -Package "chocolatey-package/thrift.$env:VERSION.nupkg"
+
+      - name: Archive the package
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: chocolatey-package
+          if-no-files-found: error
+          path: chocolatey-package/*.nupkg
+          retention-days: 14
+
+  push:
+    name: Push to Chocolatey
+    needs: package
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    runs-on: windows-2025
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Download the package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: chocolatey-package
+          path: chocolatey-package
+
+      - name: Push
+        shell: pwsh
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          $package = "chocolatey-package/thrift.$env:VERSION.nupkg"
+
+          if (-not $env:CHOCO_API_KEY) {
+            # Expected until the "thrift" id has been handed over. The package
+            # is built and attached to the run either way.
+            Write-Host '::warning::CHOCO_API_KEY is not set, so nothing was pushed to Chocolatey.'
+            @(
+              '### Chocolatey push skipped',
+              '',
+              'The `CHOCO_API_KEY` secret is not set in the `release` environment, so the',
+              'package was built but not pushed. It is attached to this run as the',
+              '`chocolatey-package` artifact.',
+              '',
+              'The `thrift` id on the Chocolatey community repository still belongs to an',
+              'abandoned third party package; a maintainer takeover has to be granted before',
+              'anything can be pushed under it. See `doc/ReleaseManagement.md`.'
+            ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            exit 0
+          }
+
+          choco push $package --source https://push.chocolatey.org/ --api-key $env:CHOCO_API_KEY
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
