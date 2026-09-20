@@ -41,6 +41,7 @@ set -euo pipefail
 declare -A EXPECTED=(
     [TProtocolStringSizeLimitTest]=11
     [TProtocolRecursionDepthTest]=6
+    [TTransportReadAllTest]=6
 )
 
 THRIFT=""
