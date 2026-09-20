@@ -932,10 +932,15 @@ void t_st_generator::generate_recv_method(t_function* function) {
     result.append(exception);
   }
 
+  // The envelope is read with iprot, like the struct inside it. A client that
+  // never calls outProtocol: has oprot and iprot pointing at the same object,
+  // which is why reading the envelope from oprot went unnoticed; one that does
+  // would read the reply from the protocol it writes to. The flush is a write
+  // side operation and stays on oprot.
   st_method(f_, client_class_name(), "recv" + capitalize(funname));
-  f_ << "| f msg res | " << '\n' << indent() << "msg := oprot readMessageBegin." << '\n' << indent()
+  f_ << "| msg res | " << '\n' << indent() << "msg := iprot readMessageBegin." << '\n' << indent()
      << "self validateRemoteMessage: msg." << '\n' << indent()
-     << "res := " << struct_reader(&result) << "." << '\n' << indent() << "oprot readMessageEnd."
+     << "res := " << struct_reader(&result) << "." << '\n' << indent() << "iprot readMessageEnd."
      << '\n' << indent() << "oprot transport flush." << '\n' << indent()
      << "res exception ifNotNil: [res exception signal]." << '\n' << indent() << "^ res";
   st_close_method(f_);
