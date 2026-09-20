@@ -75,18 +75,18 @@ class TSocketPool extends TSocket
     /**
      * Socket pool constructor
      *
-     * @param list<string>                         $hosts        List of remote hostnames
-     * @param int|list<int>                        $ports        Array of remote ports, or a single common port
-     * @param LoggerInterface|callable|string|null $debugHandler PSR-3 logger or legacy callable;
+     * @param list<string>         $hosts  List of remote hostnames
+     * @param int|list<int>        $ports  Array of remote ports, or a single common port
+     * @param LoggerInterface|null $logger PSR-3 logger for diagnostic output;
      *        see TSocket::__construct().
      */
     public function __construct(
         array $hosts = ['localhost'],
         int|array $ports = [9090],
         bool $persist = false,
-        LoggerInterface|callable|string|null $debugHandler = null
+        ?LoggerInterface $logger = null
     ) {
-        parent::__construct('', 0, $persist, $debugHandler);
+        parent::__construct('', 0, $persist, $logger);
 
         if (!is_array($ports)) {
             $port = $ports;

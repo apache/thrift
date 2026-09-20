@@ -29,7 +29,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Test\Thrift\Unit\Lib\ReflectionHelper;
-use Test\Thrift\Unit\Lib\UserDeprecationCapture;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocket;
@@ -38,7 +37,6 @@ class TSocketTest extends TestCase
 {
     use PHPMock;
     use ReflectionHelper;
-    use UserDeprecationCapture;
 
     protected function setUp(): void
     {
@@ -51,7 +49,7 @@ class TSocketTest extends TestCase
         $host,
         $port,
         $persist,
-        $debugHandler,
+        $logger,
         $fsockopenCallCount,
         $expectedException,
         $expectedMessage,
@@ -76,7 +74,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $socket->open();
     }
@@ -87,7 +85,7 @@ class TSocketTest extends TestCase
             'host' => '',
             'port' => 9090,
             'persist' => false,
-            'debugHandler' => null,
+            'logger' => null,
             'fsockopenCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open null host',
@@ -97,7 +95,7 @@ class TSocketTest extends TestCase
             'host' => 'localhost',
             'port' => 0,
             'persist' => false,
-            'debugHandler' => null,
+            'logger' => null,
             'fsockopenCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open without port',
@@ -107,7 +105,7 @@ class TSocketTest extends TestCase
             'host' => 'nonexistent-host',
             'port' => 9090,
             'persist' => false,
-            'debugHandler' => null,
+            'logger' => null,
             'fsockopenCallCount' => 1,
             'expectedException' => TException::class,
             'expectedMessage' => 'TSocket: Could not connect to',
@@ -120,7 +118,7 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $handle = fopen('php://memory', 'r+');
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
              ->expects($this->once())
@@ -152,7 +150,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->open();
@@ -162,28 +160,19 @@ class TSocketTest extends TestCase
         $transport->open();
     }
 
-    public function testDebugHandler()
+    public function testPsr3LoggerReceivesErrorLog(): void
     {
         $host = 'nonexistent-host';
         $port = 9090;
-        $false = false;
+        $expectedMessage = 'TSocket: Could not connect to nonexistent-host:9090 (Connection refused [999])';
 
-        $debugHandler = function ($error) {
-            $this->assertEquals(
-                'TSocket: Could not connect to nonexistent-host:9090 (Connection refused [999])',
-                $error
-            );
-        };
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+               ->method('log')
+               ->with(LogLevel::ERROR, $expectedMessage);
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
             ->expects($this->once())
-            ->with(
-                $host,
-                $port,
-                $this->anything(), #$errno,
-                $this->anything(), #$errstr,
-                $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
-            )
             ->willReturnCallback(
                 function (
                     string $hostname,
@@ -199,18 +188,9 @@ class TSocketTest extends TestCase
                 }
             );
 
-        $transport = null;
-        $deprecations = self::captureUserDeprecations(
-            static function () use (&$transport, $host, $port, $false, $debugHandler): void {
-                $transport = new TSocket($host, $port, $false, $debugHandler);
-                $transport->setDebug(true);
-            },
-        );
-        $this->assertCount(2, $deprecations);
+        $transport = new TSocket($host, $port, false, $logger);
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('TSocket: Could not connect to');
-        $this->expectExceptionCode(0);
+        $this->expectException(TException::class);
         $transport->open();
     }
 
@@ -219,7 +199,7 @@ class TSocketTest extends TestCase
         $host = 'persist-localhost';
         $port = 9090;
         $persist = true;
-        $debugHandler = null;
+        $logger = null;
 
         $handle = fopen('php://memory', 'r+');
 
@@ -253,7 +233,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->open();
@@ -265,7 +245,7 @@ class TSocketTest extends TestCase
         $host = 'unix:///tmp/ipc.sock';
         $port = -1;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $handle = fopen('php://memory', 'r+');
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
@@ -298,7 +278,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->open();
@@ -311,7 +291,7 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
 
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
             ->expects($this->once())
@@ -342,7 +322,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->open();
@@ -364,12 +344,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $this->assertFalse($transport->isOpen());
@@ -382,12 +362,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->setSendTimeout(9999);
@@ -400,12 +380,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
 
         $transport->setRecvTimeout(9999);
@@ -418,12 +398,12 @@ class TSocketTest extends TestCase
     {
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $this->assertEquals($expected, $transport->getHost());
     }
@@ -440,12 +420,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $this->assertEquals($port, $transport->getPort());
     }
@@ -455,12 +435,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $transport->setHandle(fopen('php://memory', 'r+'));
         $this->assertNotNull($this->getPropertyValue($transport, 'handle'));
@@ -497,7 +477,7 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $handle = fopen('php://memory', 'r+');
 
         $this->getFunctionMock('Thrift\Transport', 'stream_select')
@@ -527,7 +507,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $transport->setHandle($handle);
 
@@ -539,12 +519,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $fileName = sys_get_temp_dir() . '/' . md5(mt_rand(0, time()) . time());
         touch($fileName);
@@ -588,12 +568,12 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $fileName = sys_get_temp_dir() . '/' . md5(mt_rand(0, time()) . time());
         file_put_contents($fileName, '12345678901234567890');
@@ -618,7 +598,7 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $handle = fopen('php://memory', 'r+');
 
         $this->getFunctionMock('Thrift\Transport', 'stream_select')
@@ -652,7 +632,7 @@ class TSocketTest extends TestCase
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $transport->setHandle($handle);
 
@@ -708,101 +688,19 @@ class TSocketTest extends TestCase
         $host = 'localhost';
         $port = 9090;
         $persist = false;
-        $debugHandler = null;
+        $logger = null;
         $transport = new TSocket(
             $host,
             $port,
             $persist,
-            $debugHandler
+            $logger
         );
         $this->assertNUll($transport->flush());
     }
 
-    public function testDebugHandlerWithLoggerInterface(): void
+    public function testDefaultConnectTimeoutIsUsedWhenNotSet(): void
     {
-        $host = 'nonexistent-host';
-        $port = 9090;
-        $expectedMessage = 'TSocket: Could not connect to nonexistent-host:9090 (Connection refused [999])';
-
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())
-               ->method('log')
-               ->with(LogLevel::ERROR, $expectedMessage);
-
-        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
-            ->expects($this->once())
-            ->willReturnCallback(
-                function (
-                    string $hostname,
-                    int $port,
-                    &$error_code,
-                    &$error_message,
-                    ?float $timeout
-                ) {
-                    $error_code = 999;
-                    $error_message = 'Connection refused';
-
-                    return false;
-                }
-            );
-
-        $transport = new TSocket($host, $port, false, $logger);
-
-        $this->expectException(TException::class);
-        $transport->open();
-    }
-
-    public function testStringDebugHandlerTriggersDeprecation(): void
-    {
-        $errors = self::captureUserDeprecations(static function (): void {
-            new TSocket('localhost', 9090, false, 'error_log');
-        });
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString(
-            'Passing a callable as $debugHandler is deprecated',
-            $errors[0]['errstr'],
-        );
-    }
-
-    public function testClosureDebugHandlerTriggersDeprecation(): void
-    {
-        $errors = self::captureUserDeprecations(static function (): void {
-            new TSocket('localhost', 9090, false, static function (string $m): void {
-            });
-        });
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString(
-            'Passing a callable as $debugHandler is deprecated',
-            $errors[0]['errstr'],
-        );
-    }
-
-    public function testNullDebugHandlerDoesNotTriggerDeprecation(): void
-    {
-        $errors = self::captureUserDeprecations(static function (): void {
-            new TSocket('localhost', 9090, false, null);
-        });
-
-        $this->assertSame([], $errors);
-    }
-
-    public function testLoggerInterfaceDebugHandlerDoesNotTriggerDeprecation(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $errors = self::captureUserDeprecations(function () use ($logger): void {
-            new TSocket('localhost', 9090, false, $logger);
-        });
-
-        $this->assertSame([], $errors);
-    }
-
-    public function testSendTimeoutUsedForConnectWhenConnectTimeoutNotSet(): void
-    {
-        $handle = fopen('php://memory', 'r+');
+        $handle = $this->createSocketStream();
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
              ->expects($this->once())
              ->with(
@@ -810,40 +708,20 @@ class TSocketTest extends TestCase
                  9090,
                  $this->anything(),
                  $this->anything(),
-                 2.5, // 2500ms send timeout (no connect timeout set)
+                 1.0, // default connect timeout (1s)
              )
              ->willReturn($handle);
 
         $socket = new TSocket('localhost', 9090, false, null);
         $socket->setSendTimeout(2500);
 
-        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
-            $socket->open();
-        });
-
-        $this->assertCount(1, $deprecations);
-        $this->assertStringContainsString('setConnectTimeout()', $deprecations[0]['errstr']);
-    }
-
-    public function testOpenWithDefaultTimeoutsDoesNotTriggerDeprecation(): void
-    {
-        $handle = fopen('php://memory', 'r+');
-        $this->getFunctionMock('Thrift\Transport', 'fsockopen')
-             ->expects($this->once())
-             ->willReturn($handle);
-
-        $socket = new TSocket('localhost', 9090, false, null);
-
-        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
-            $socket->open();
-        });
-
-        $this->assertSame([], $deprecations);
+        $socket->open();
+        $this->assertTrue($socket->isOpen());
     }
 
     public function testConnectTimeoutOverridesSendTimeoutDuringOpen(): void
     {
-        $handle = fopen('php://memory', 'r+');
+        $handle = $this->createSocketStream();
         $this->getFunctionMock('Thrift\Transport', 'fsockopen')
              ->expects($this->once())
              ->with(
@@ -859,10 +737,17 @@ class TSocketTest extends TestCase
         $socket->setSendTimeout(5000);
         $socket->setConnectTimeout(750);
 
-        $deprecations = self::captureUserDeprecations(static function () use ($socket): void {
-            $socket->open();
-        });
+        $socket->open();
+        $this->assertTrue($socket->isOpen());
+    }
 
-        $this->assertSame([], $deprecations);
+    private function createSocketStream()
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $this->assertIsArray($pair);
+        $this->assertCount(2, $pair);
+        fclose($pair[1]);
+
+        return $pair[0];
     }
 }
