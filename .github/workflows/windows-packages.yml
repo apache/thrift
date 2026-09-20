@@ -1,0 +1,189 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+# Windows packages for the Thrift compiler.
+#
+# The compiler build here mirrors the compiler-windows job in cmake.yml, minus
+# the tests, which that job already runs on every push. This workflow exists to
+# build and test what gets packaged.
+#
+# The installer that counts is the one on dist.apache.org, signed by a release
+# manager before the vote - long before a GitHub release exists. What this
+# workflow attaches to the GitHub release is an unsigned convenience copy, so
+# that the link is there straight away; the release manager overwrites it with
+# the signed file afterwards. See doc/ReleaseManagement.md.
+
+name: "Windows packages"
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/windows-packages.yml"
+      - "build/windows/**"
+      - "doc/ReleaseManagement.md"
+  # Run by the release manager against the release branch while preparing a
+  # release candidate. The artifact this produces is what gets signed and
+  # uploaded to dist.apache.org.
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: Installer
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Determine the version
+        id: version
+        shell: pwsh
+        run: |
+          $sourceVersion = ''
+          foreach ($line in Get-Content CMakeLists.txt) {
+            if ($line -match '^\s*set\(thrift_VERSION\s+"(\d+\.\d+\.\d+)"\)') {
+              $sourceVersion = $Matches[1]
+              break
+            }
+          }
+          if (-not $sourceVersion) {
+            Write-Error 'Could not read thrift_VERSION from CMakeLists.txt.'
+            exit 1
+          }
+
+          $version = $sourceVersion
+          Write-Host "Version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Install dependencies
+        shell: pwsh
+        timeout-minutes: 10
+        # Pinned to the version build/docker/msvc/Dockerfile uses.
+        run: choco install winflexbison3 --version=2.5.24.20210105 -y --no-progress
+
+      - name: Build the compiler
+        shell: pwsh
+        timeout-minutes: 30
+        run: |
+          # No -DWITH_MT: the released compiler links the shared runtime and
+          # requires the Visual C++ redistributable. See THRIFT-6320.
+          cmake -S . -B cmake_build -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build cmake_build --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --install cmake_build --config Release --prefix cmake_install
+
+      - name: Check what the compiler imports
+        shell: pwsh
+        run: ./build/windows/check-compiler-imports.ps1 -Path cmake_install/bin/thrift.exe
+
+      - name: Build the installer
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./build/windows/build-installer.ps1 `
+            -Version $env:VERSION `
+            -Compiler cmake_install/bin/thrift.exe `
+            -OutputDir dist
+
+      - name: Test the installer
+        shell: pwsh
+        timeout-minutes: 15
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./build/windows/installer/test-installer.ps1 `
+            -Installer "dist/thrift-$env:VERSION-setup.exe" `
+            -ExpectedVersion $env:VERSION
+
+      - name: Report the checksum
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $installer = "dist/thrift-$env:VERSION-setup.exe"
+          $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
+          $size = '{0:N0}' -f (Get-Item $installer).Length
+          Write-Host "sha256: $hash"
+          # Package manager manifests need this by hand until they are wired up.
+          @(
+            '### Windows installer',
+            '',
+            "| | |",
+            "|---|---|",
+            "| file | ``$([System.IO.Path]::GetFileName($installer))`` |",
+            "| size | $size bytes |",
+            "| sha256 | ``$hash`` |"
+          ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
+      - name: Archive the installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-installer
+          if-no-files-found: error
+          path: dist/thrift-*-setup.exe
+          # Long enough for a release manager to pick the artifact up while
+          # preparing a release candidate.
+          retention-days: 14
+
+  publish:
+    name: Attach to the release
+    needs: installer
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download the installer
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: windows-installer
+          path: dist
+
+      - name: Attach the installer to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ needs.installer.outputs.version }}
+        run: |
+          installer="dist/thrift-${VERSION}-setup.exe"
+          test -f "$installer"
+          sha256sum "$installer"
+          # This is the unsigned convenience copy. The release manager replaces
+          # it with the signed file from dist.apache.org after the vote, which
+          # is also a --clobber upload.
+          gh release upload "$RELEASE_TAG" "$installer" --clobber
