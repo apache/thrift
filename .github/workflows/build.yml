@@ -647,6 +647,50 @@ jobs:
           haxe --cwd . neko.hxml
           neko bin/Test.n
 
+  lib-st:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # The Pharo release line to test against. "stable" is deliberately not
+      # used: it will move to Pharo 14 one day and turn this job red for
+      # reasons that have nothing to do with Thrift. Verified against the
+      # 13.1 snapshot this line currently serves.
+      PHARO_RELEASE: "130"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # lib/st cannot be built the way the other bindings are: it is not in
+      # configure.ac and not in a SUBDIRS, so there is no "make check" to hang
+      # this on. It is a Squeak/Pharo file-in, and the tests are SUnit suites.
+      - name: Install Pharo
+        timeout-minutes: 10
+        run: |
+          mkdir -p "$RUNNER_TEMP/pharo"
+          cd "$RUNNER_TEMP/pharo"
+          curl -sSL "https://get.pharo.org/64/${PHARO_RELEASE}+vm" | bash
+          ./pharo Pharo.image eval "Smalltalk version"
+
+      # The script does the asserting: Pharo prints a failed test and still
+      # exits 0, so the run and pass counts are the only signal there is.
+      - name: Run the lib/st tests
+        run: |
+          ./lib/st/test/run-tests.sh \
+            --thrift "$PWD/compiler/cpp/thrift" \
+            --pharo "$RUNNER_TEMP/pharo"
+
   lib-rust:
     needs: compiler
     runs-on: ubuntu-24.04
