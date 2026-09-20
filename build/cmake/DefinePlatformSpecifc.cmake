@@ -25,7 +25,7 @@ set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix")
 
 # basic options
 foreach(lang IN ITEMS C CXX)
-  if("CMAKE_${lang}_COMPILER_ID" STREQUAL "MSVC")
+  if("${CMAKE_${lang}_COMPILER_ID}" STREQUAL "MSVC")
     # These flags are not supported (or needed) with Clang-Cl on Windows:
     set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /MP") # parallel build
   endif()
