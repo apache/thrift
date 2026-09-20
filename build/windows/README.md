@@ -189,3 +189,42 @@ Given `-Package`, it also looks inside a packed `.nupkg` - including that it
 carries no executable, since the compiler is downloaded at install time.
 
 Runs anywhere PowerShell does; only the `choco pack` step needs Windows.
+
+## `build-winget-manifests.ps1` and `winget/`
+
+Renders the three manifest files a submission to
+[`microsoft/winget-pkgs`](https://github.com/microsoft/winget-pkgs) needs, from
+the templates in `winget/`, so that the compiler can be installed with
+`winget install Apache.Thrift`.
+
+```bash
+$ pwsh build/windows/build-winget-manifests.ps1 -Version 0.26.0
+```
+
+The manifest points at `archive.apache.org`, which keeps every release.
+`downloads.apache.org` only carries the current one, so a manifest naming it
+would stop working at the next release and take every older version in
+winget-pkgs with it.
+
+Unless `-Sha256` is given, the installer is downloaded from the very URL that
+goes into the manifest and hashed, so the manifest cannot claim a checksum the
+published file does not have. That also means this cannot be run before the
+release has reached the archive.
+
+### `winget/test-winget-manifests.ps1`
+
+Tests the renderer: that the values land where they belong, that no placeholder
+survives into a file that would be submitted verbatim, that the output is UTF-8
+without a BOM and with LF endings, and that a malformed version, checksum or
+date is refused.
+
+### `winget/validate_manifests.py`
+
+Validates rendered manifests against the WinGet JSON schemas, fetched from
+Microsoft for the schema version each manifest names. A manifest that does not
+match is otherwise rejected only after the pull request has been opened.
+
+```bash
+$ python3 -m pip install pyyaml jsonschema
+$ python3 build/windows/winget/validate_manifests.py winget-manifests/manifests/a/Apache/Thrift/0.26.0
+```

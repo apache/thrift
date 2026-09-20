@@ -508,6 +508,33 @@ refused, the free ids `apache-thrift` and `thrift-compiler` are the fallback;
 changing the id means editing `build/windows/chocolatey/thrift.nuspec.in` and
 the package name the build script expects.
 
+##### WinGet
+
+The [`WinGet`](../.github/workflows/winget.yml) workflow submits the installer to
+the [Windows Package Manager](https://github.com/microsoft/winget-pkgs) as
+`Apache.Thrift`, so that it can be installed with `winget install Apache.Thrift`.
+
+It runs when the release is published, but it can only succeed once the release
+has been promoted to `dist.apache.org` **and** `archive.apache.org` has picked it
+up - the manifest points at the archive, because `downloads.apache.org` only
+carries the current release and a manifest naming it would stop working at the
+next one.  This is the same wait the Docker Official Image update has.
+
+So expect to run it again, from the Actions tab, a while after the release:
+
+1. Actions → `WinGet` → *Run workflow*, entering the released version.
+1. The workflow renders the manifests, downloads the published installer to
+   compute its checksum, validates the manifests against the WinGet schemas, and
+   opens a pull request against `microsoft/winget-pkgs`.
+1. Watch that pull request.  Submissions are reviewed, and validation failures
+   are reported there.
+
+For the submission step the `release` environment needs a secret named
+`WINGET_TOKEN`: a **classic** GitHub personal access token with the `public_repo`
+scope.  Fine-grained tokens are not supported by `wingetcreate`.  Without it the
+workflow still renders and validates the manifests and leaves them as an
+artifact, and says in its summary how to submit them by hand.
+
 #### Third Party Package Managers
 
 See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  The information below is from the 0.12.0 release:
