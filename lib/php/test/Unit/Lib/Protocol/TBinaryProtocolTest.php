@@ -1163,7 +1163,7 @@ class TBinaryProtocolTest extends TestCase
 
     public function testReadMapBeginRejectsNegativeSize()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $readAllReturns = [
@@ -1184,7 +1184,7 @@ class TBinaryProtocolTest extends TestCase
 
     public function testReadListBeginRejectsNegativeSize()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $readAllReturns = [
@@ -1204,7 +1204,7 @@ class TBinaryProtocolTest extends TestCase
 
     public function testReadSetBeginRejectsNegativeSize()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $readAllReturns = [
@@ -1224,7 +1224,7 @@ class TBinaryProtocolTest extends TestCase
 
     public function testReadStringRejectsNegativeSize()
     {
-        $transport = $this->createMock(TTransport::class);
+        $transport = $this->createStub(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
         $transport->method('readAll')

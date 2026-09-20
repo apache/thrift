@@ -122,8 +122,7 @@ class TForkingServerTest extends TestCase
         );
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
 
@@ -155,7 +154,7 @@ class TForkingServerTest extends TestCase
              ->willReturn(12345);
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
+             ->expects($this->exactly(2))
              ->willReturn(0);
 
         $server->serve();
@@ -170,7 +169,7 @@ class TForkingServerTest extends TestCase
         $this->expectException(TException::class);
         $this->expectExceptionMessage('Failed to fork');
 
-        $serverTransport = $this->createMock(TServerTransport::class);
+        $serverTransport = $this->createStub(TServerTransport::class);
         $clientTransport = $this->createStub(TTransport::class);
 
         $server = $this->createServer(null, $serverTransport);
@@ -182,8 +181,7 @@ class TForkingServerTest extends TestCase
              ->willReturn(-1);
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
     }
@@ -208,8 +206,7 @@ class TForkingServerTest extends TestCase
         );
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
 
