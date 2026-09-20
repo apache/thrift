@@ -195,15 +195,17 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     - Using [Docker for Windows](../build/docker/msvc2017/README.md), follow the instructions for building the compiler.
     - In both cases:
-        1. Verify with [depends.exe](http://www.dependencywalker.com/) that the executable depends
-            only on Windows system DLLs and on the Visual C++ runtime, and on nothing else -
-            no Boost, OpenSSL, zlib or libevent.  At the time of writing that list is
-            `KERNEL32.dll`, `ole32.dll`, `MSVCP140.dll`, `VCRUNTIME140.dll`,
-            `VCRUNTIME140_1.dll` and the `api-ms-win-crt-*.dll` set.
+        1. Verify that the executable depends only on Windows system DLLs and on the Visual
+            C++ runtime, and on nothing else - no Boost, OpenSSL, zlib or libevent:
+            ```powershell
+            PS C:\thrift> .\build\windows\check-compiler-imports.ps1 -Path C:\install\bin\thrift.exe
+            ```
+            The same check runs on every push in the `compiler-windows` job of
+            [`.github/workflows/cmake.yml`](../.github/workflows/cmake.yml).
 
             Do **not** build a statically linked compiler to make that list shorter.  The
             project moved away from one deliberately, and the released compiler is expected
-            to require the Visual C++ redistributable.
+            to require the Visual C++ redistributable; the check fails if it does not.
         1. Copy the executable `thrift.exe` to your linux system where the signed tarball lives and rename it to `thrift-1.0.0.exe` (substitute the correct version, of course).
         1. Sign the executable the same way you signed the tarball.
 

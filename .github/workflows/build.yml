@@ -36,7 +36,8 @@ permissions:
   contents: read
 
 jobs:
-  # TODO windows and macos
+  # The Windows compiler build lives in cmake.yml. This workflow drives the
+  # autotools build, which has no native Windows toolchain.
   compiler:
     strategy:
       matrix:

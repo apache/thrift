@@ -20,7 +20,7 @@ jobs:
   compiler:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -67,5 +67,71 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cmake-LastTest-log
+          path: cmake_build/Testing/Temporary/LastTest.log
+          if-no-files-found: warn
+
+  compiler-windows:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test the import check
+        shell: pwsh
+        run: ./build/windows/check-compiler-imports-tests.ps1
+
+      - name: Install dependencies
+        shell: pwsh
+        timeout-minutes: 10
+        # flex and bison are not on the runner image. Pinned to the version the
+        # MSVC container in build/docker/msvc uses.
+        run: choco install winflexbison3 --version=2.5.24.20210105 -y --no-progress
+
+      - name: Generate build files using CMake
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          # No -DWITH_MT here: the released compiler links the shared runtime,
+          # and so does this build. See THRIFT-6320.
+          cmake -S . -B cmake_build -DBUILD_LIBRARIES=OFF | Tee-Object -Variable configureLog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Without this the job would happily build and test nothing at all.
+          if (-not ($configureLog -match 'Build compiler:\s+ON')) {
+            Write-Error 'CMake did not configure a compiler build.'
+            exit 1
+          }
+
+      - name: Run build
+        timeout-minutes: 30
+        run: cmake --build cmake_build --config Release
+
+      - name: Run test
+        timeout-minutes: 30
+        run: ctest --test-dir cmake_build -C Release --no-tests=error --output-on-failure
+
+      - name: Run install
+        run: cmake --install cmake_build --config Release --prefix cmake_install
+
+      - name: Run thrift version
+        run: ./cmake_install/bin/thrift.exe -version
+
+      - name: Check what the compiler imports
+        shell: pwsh
+        run: ./build/windows/check-compiler-imports.ps1 -Path cmake_install/bin/thrift.exe
+
+      - name: Archive built thrift compiler (Windows)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: thrift-compiler-windows
+          path: cmake_install/bin/thrift.exe
+          retention-days: 3
+
+      - name: Upload LastTest log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cmake-windows-LastTest-log
           path: cmake_build/Testing/Temporary/LastTest.log
           if-no-files-found: warn
