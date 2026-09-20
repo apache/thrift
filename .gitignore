@@ -65,6 +65,8 @@ SKILL.md
 /aclocal/lt*.m4
 /autoscan.log
 /autoscan-*.log
+/build/windows/dotnet-tool/bin
+/build/windows/dotnet-tool/obj
 /cmake_*
 /compiler/cpp/compiler.VC.db
 /compiler/cpp/compiler.VC.VC.opendb

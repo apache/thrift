@@ -1,0 +1,121 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+
+  Packages the Windows Thrift compiler as a .NET tool. Build it with
+  build/windows/build-dotnet-tool.ps1, which supplies the version and the
+  compiler to bundle.
+
+  No version is stored here. It is passed on the command line, taken from the
+  release tag, so that build/veralign.sh has nothing extra to keep in step.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Root of the Thrift source tree, with a trailing separator. -->
+    <ThriftSourceRoot Condition="'$(ThriftSourceRoot)' == ''">$(MSBuildThisFileDirectory)../../../</ThriftSourceRoot>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- The lowest SDK the tool has to install on. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Apache.Thrift.Compiler</RootNamespace>
+    <AssemblyName>Apache.Thrift.Compiler</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only Program.cs belongs to this project; the payload arrives via
+         ThriftCompiler below. Without this, a stray .cs file left in the
+         output directory by a previous build would be compiled in. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <!-- No extension: the tool is installed through an app host. -->
+    <ToolCommandName>thrift</ToolCommandName>
+    <PackageId>Apache.Thrift.Compiler</PackageId>
+    <Title>Apache Thrift Compiler</Title>
+    <Authors>Apache Thrift Developers</Authors>
+    <Company>Apache Software Foundation</Company>
+    <Copyright>Copyright (c) The Apache Software Foundation</Copyright>
+    <Description>The Apache Thrift IDL compiler for Windows, installable as a .NET tool. Generates client and server code from .thrift files for every language Apache Thrift supports.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://thrift.apache.org/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/apache/thrift</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>apache;thrift;rpc;idl;codegen;compiler</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      PackageReadmeFile has its own handling, so this one does get packed. A
+      plain None/Pack item would not: a tool package is built from the publish
+      output and the ordinary pack file set is not used. LICENSE and NOTICE
+      therefore travel as content, below, and land next to the executable.
+    -->
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!--
+    The compiler to bundle. A .NET tool package is built from the *publish*
+    output: Microsoft.NET.PackTool.targets globs $(PublishDir) and maps it to
+    tools/<tfm>/any/. So the payload gets there by being copied to the publish
+    directory, not through Pack/PackagePath - adding it twice would produce a
+    duplicate entry.
+  -->
+  <ItemGroup Condition="'$(ThriftCompiler)' != ''">
+    <Content Include="$(ThriftCompiler)">
+      <Link>thrift.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Pack>false</Pack>
+    </Content>
+    <Content Include="$(ThriftSourceRoot)LICENSE">
+      <Link>LICENSE.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Pack>false</Pack>
+    </Content>
+    <Content Include="$(ThriftSourceRoot)NOTICE">
+      <Link>NOTICE.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Pack>false</Pack>
+    </Content>
+  </ItemGroup>
+
+  <!--
+    A package without the compiler in it would install and then fail for every
+    user, so refuse to build one.
+  -->
+  <Target Name="ThriftCheckCompilerWasGiven" BeforeTargets="Build">
+    <Error Condition="'$(ThriftCompiler)' == ''"
+           Text="Set ThriftCompiler to the thrift.exe to bundle, for example -p:ThriftCompiler=C:\install\bin\thrift.exe. Use build/windows/build-dotnet-tool.ps1." />
+    <Error Condition="!Exists('$(ThriftCompiler)')"
+           Text="ThriftCompiler does not point at an existing file: $(ThriftCompiler)" />
+  </Target>
+
+</Project>
