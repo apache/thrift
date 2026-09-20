@@ -871,7 +871,7 @@ describe "HeaderTransport" do
       require "stringio"
       require "timeout"
       trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new)
-      io = StringIO.new(String.new)
+      io = StringIO.new("".b)
       # A negative argument must not spin the encoder: it is encoded as its low
       # 32 bits, which is the same byte sequence 0xFFFFFFFF produces and which
       # read_varint32 accepts. The timeout guards against the non-terminating loop.
