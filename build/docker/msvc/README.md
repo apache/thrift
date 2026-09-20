@@ -1,17 +1,19 @@
 # Building Thrift using Docker for Windows
 
-The build image is very large (just under 30GB) so plan accordingly.
-Once Microsoft supports build tools in nano, it should get better.
+The build image is large, so plan accordingly.
 
-Install Docker for Windows and switch to Windows container mode.
+Install Docker for Windows and switch to Windows container mode, then build the
+image from this directory's Dockerfile. Note that the build context is `build\`,
+not the directory the Dockerfile is in, because the image also copies scripts
+from `build\appveyor\`:
 
-Pull from docker hub:
+    PS C:\Thrift> docker build -t thrift-build:msvc -f build\docker\msvc\Dockerfile build\
 
-    PS C:\> docker pull thrift/thrift-build:msvc2017
-
-or build in a docker for windows environment:
-
-    PS C:\Thrift> docker build -t thrift/thrift-build:msvc2017 -f build\docker\msvc2017\Dockerfile build\
+There is no image to pull: the `thrift/thrift-build` repository on Docker Hub
+carries the Linux images only. The `MSVC Build` GitHub Actions workflow builds
+this image itself and caches it in GHCR under a tag derived from the hash of the
+Dockerfile and the scripts it copies, so a run only rebuilds it when one of
+those changes. See [`.github/workflows/msvc.yml`](../../../.github/workflows/msvc.yml).
 
 The following directories are used inside the container:
 
@@ -23,22 +25,25 @@ You can override these as docker volumes if desired.
 
 ### Compiler
 
-To build a portable windows thrift compiler (with a statically linked
-runtime) and get it placed into C:\install:
+To build the windows thrift compiler and get it placed into C:\install:
 
     docker run -v C:\thrift:C:\thrift^
            -v C:\install:C:\install^
-           --rm -t thrift/thrift-build:msvc2017^
-           C:\thrift\build\docker\msvc2017\build-compiler.bat
+           --rm -t thrift-build:msvc^
+           C:\thrift\build\docker\msvc\build-compiler.bat
 
-The end result is a portable windows thrift compiler located at
+The end result is at
 
     C:\Install\bin\thrift.exe
 
-If you run it through the [Dependency Walker](http://www.dependencywalker.com/)
-you will see it only depends on KERNEL32.DLL which means the runtime is statically
-linked, so the executable is portable and self-contained.  This is how the
-windows thrift compiler is built for each Apache Thrift release.
+It is a single self-contained executable, but it is not statically linked: it
+needs the Visual C++ redistributable, which the ASF does not ship. Beyond that
+it must depend on nothing but Windows system DLLs - no Boost, OpenSSL, zlib or
+libevent. `build\windows\check-compiler-imports.ps1` checks exactly that, and
+the `compiler-windows` job in
+[`.github/workflows/cmake.yml`](../../../.github/workflows/cmake.yml) runs it on
+every push. See [`doc/ReleaseManagement.md`](../../../doc/ReleaseManagement.md)
+for how the compiler is built for a release.
 
 ### Libraries
 
@@ -46,5 +51,5 @@ To build, test everything and get the C++ SDK placed into C:\install:
 
     docker run -v C:\thrift:C:\thrift^
            -v C:\install:C:\install^
-           -m 4096 --rm -t thrift/thrift-build:msvc2017^
-           C:\thrift\build\docker\msvc2017\build.bat
+           -m 4096 --rm -t thrift-build:msvc^
+           C:\thrift\build\docker\msvc\build.bat

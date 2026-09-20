@@ -193,7 +193,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
             C:\build> cmake --build . --config Release
             ```
 
-    - Using [Docker for Windows](../build/docker/msvc2017/README.md), follow the instructions for building the compiler.
+    - Using [Docker for Windows](../build/docker/msvc/README.md), follow the instructions for building the compiler.
     - In both cases:
         1. Verify that the executable depends only on Windows system DLLs and on the Visual
             C++ runtime, and on nothing else - no Boost, OpenSSL, zlib or libevent:
