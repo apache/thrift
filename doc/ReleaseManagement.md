@@ -208,6 +208,20 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
             to require the Visual C++ redistributable; the check fails if it does not.
         1. Copy the executable `thrift.exe` to your linux system where the signed tarball lives and rename it to `thrift-1.0.0.exe` (substitute the correct version, of course).
         1. Sign the executable the same way you signed the tarball.
+        1. Build the Windows installer from the very same executable:
+            ```powershell
+            PS C:\thrift> .\build\windows\build-installer.ps1 -Version 1.0.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
+            ```
+            This needs [Inno Setup](https://jrsoftware.org/isdl.php) 6.3 or later.  The result is
+            `dist\thrift-1.0.0-setup.exe`.
+
+            Rather than installing Inno Setup, you can run the
+            [`Windows packages`](../.github/workflows/windows-packages.yml) workflow against the
+            release branch from the Actions tab and download its `windows-installer` artifact.  The
+            workflow builds the compiler the same way and also installs and uninstalls the result to
+            check it.
+        1. Copy the installer to your linux system and sign and checksum it the same way you signed
+            the tarball and the executable.
 
 1. Upload the release artifacts to the Apache Dist/Dev site.  This requires subversion:
 
@@ -271,6 +285,18 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe.asc
 
     Prebuilt Windows compiler checksums are:
+    md5: 
+    sha1: 
+    sha256: 
+
+
+    A Windows installer for the compiler is available at:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0-setup.exe
+
+    Windows installer GPG signature:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0-setup.exe.asc
+
+    Windows installer checksums are:
     md5: 
     sha1: 
     sha256: 
@@ -358,7 +384,9 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).
 
-    Attach the Windows thrift compiler as a binary here.
+    Attach the Windows thrift compiler and the Windows installer as binaries here.  Use the very
+    files that were voted on and are now under `dist/release`, not a fresh build, so that the
+    signatures on `dist.apache.org` cover what people download from GitHub.
 
     You may find it useful to use the button that automates release notes.
 
@@ -419,6 +447,34 @@ Voting on the development mailing list provides additional benefits (wisdom from
 1. Ensure that the [Jira release page](https://issues.apache.org/jira/projects/THRIFT?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=unreleased) for the version has the same number of issues in the version as issues done, and that there are no issues in progress and no issues to do, and no warnings.  Finally, mark it as released and set the date of the release.
   
 * [Report any CVEs](https://apache.org/security/committers.html) that were fixed.  You can email `security@apache.org` if you are not sure if there are any CVEs to report.
+
+#### Windows Packages
+
+The Windows installer is a release artifact like the tarball and the prebuilt
+compiler: it is built, signed and voted on before the release, and distributed
+from `dist.apache.org`.  The file the vote covers has to carry a release
+manager's signature, so it cannot be produced by a workflow at release time.
+
+What *is* automated is building and testing it.  The
+[`Windows packages`](../.github/workflows/windows-packages.yml) workflow builds
+the compiler on a Windows runner the way a release build does, checks what the
+executable imports, packages it with Inno Setup, and then installs and
+uninstalls the result to check that the compiler runs, that the install
+directory lands on `PATH`, and that uninstalling takes that one `PATH` entry
+away and leaves the others alone.  It runs on every pull request that touches
+the packaging, and on demand from the Actions tab - which is how you get the
+artifact to sign while preparing the release candidate, described above under
+*Generate the Windows Thrift Compiler*.
+
+When the GitHub release is published, the same workflow attaches an installer to
+it as an unsigned convenience copy, so that the download link is there
+immediately.  **One thing is left to do after the release:** overwrite that asset
+with the signed file from `dist/release`, so that what people download from
+GitHub is what the signatures on `dist.apache.org` cover.
+
+```bash
+~$ gh release upload v1.0.0 thrift-1.0.0-setup.exe --clobber --repo apache/thrift
+```
 
 #### Third Party Package Managers
 
