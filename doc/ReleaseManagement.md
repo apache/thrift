@@ -189,13 +189,21 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         1. Install chocolatey and install winflexbison with chocolatey.
         1. Run cmake to generate an out-of-tree build environment:
             ```cmd
-            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
+            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
             C:\build> cmake --build . --config Release
             ```
 
     - Using [Docker for Windows](../build/docker/msvc2017/README.md), follow the instructions for building the compiler.
     - In both cases:
-        1. Verify the executable only depends on kernel32.dll using [depends.exe](http://www.dependencywalker.com/).
+        1. Verify with [depends.exe](http://www.dependencywalker.com/) that the executable depends
+            only on Windows system DLLs and on the Visual C++ runtime, and on nothing else -
+            no Boost, OpenSSL, zlib or libevent.  At the time of writing that list is
+            `KERNEL32.dll`, `ole32.dll`, `MSVCP140.dll`, `VCRUNTIME140.dll`,
+            `VCRUNTIME140_1.dll` and the `api-ms-win-crt-*.dll` set.
+
+            Do **not** build a statically linked compiler to make that list shorter.  The
+            project moved away from one deliberately, and the released compiler is expected
+            to require the Visual C++ redistributable.
         1. Copy the executable `thrift.exe` to your linux system where the signed tarball lives and rename it to `thrift-1.0.0.exe` (substitute the correct version, of course).
         1. Sign the executable the same way you signed the tarball.
 
