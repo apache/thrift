@@ -24,6 +24,10 @@ ECHO qt                    = %QT_VERSION%
 ECHO zlib                  = %ZLIB_VERSION%
 ECHO/
 )
+ECHO Build worker
+ECHO -------------------------------------------------------------------------------
+ECHO NUMBER_OF_PROCESSORS  = %NUMBER_OF_PROCESSORS%
+ECHO/
 ECHO Appveyor Variables
 ECHO -------------------------------------------------------------------------------
 ECHO APPVEYOR_BUILD_FOLDER = %APPVEYOR_BUILD_FOLDER%

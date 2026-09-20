@@ -114,7 +114,7 @@ SET CMAKEARGS=^
   -DOPENSSL_ROOT_DIR=/mingw%NORM_PLATFORM% ^
   -DWITH_PYTHON=OFF
 
-%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% && cmake --install . --config %CONFIGURATION%" || EXIT /B
+%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --parallel %NUMBER_OF_PROCESSORS% && cmake --install . --config %CONFIGURATION%" || EXIT /B
 
 
 ::
