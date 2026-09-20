@@ -24,7 +24,11 @@
 IF NOT EXIST C:\build (MKDIR C:\build)
 cd c:\build
 
-:: Generate the out-of-tree build files
+:: Generate the out-of-tree build files.
+::
+:: Note there is no -DWITH_MT=ON here. The released compiler links the shared
+:: runtime and requires the Visual C++ redistributable; the project moved away
+:: from a statically linked compiler in dd8ecde06. See doc/ReleaseManagement.md.
 cmake^
   -DBOOST_ROOT=C:\Libraries\boost_1_89_0^
   -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_89_0\lib64-msvc-14.1^
@@ -32,7 +36,6 @@ cmake^
   -DBUILD_TESTING=ON^
   -DCMAKE_BUILD_TYPE=Release^
   -DCMAKE_INSTALL_PREFIX=C:\install^
-  -DWITH_MT=ON^
   c:\thrift || EXIT /B
 
 :: Build
