@@ -180,7 +180,7 @@ class TCurlClientTest extends TestCase
              ->expects($this->once());
 
         $this->getFunctionMock('Thrift\\Transport', 'curl_setopt')
-             ->expects($this->any())
+             ->expects($this->exactly(count($curlSetOptCalls)))
              ->willReturnCallback(function (...$args) use ($curlSetOptCalls) {
                  static $iteration = 0;
                  $expected = $curlSetOptCalls[$iteration++];

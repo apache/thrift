@@ -19,7 +19,6 @@
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          bootstrap="test/bootstrap.php"
-         cacheResult="false"
          colors="true"
          stopOnWarning="false"
          failOnWarning="true"

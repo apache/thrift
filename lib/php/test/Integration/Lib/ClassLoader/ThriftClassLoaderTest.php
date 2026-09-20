@@ -45,12 +45,12 @@ class ThriftClassLoaderTest extends TestCase
         $apcuPrefix = null
     ) {
         $this->getFunctionMock('Thrift\ClassLoader', 'apcu_fetch')
-             ->expects($useApcu ? $this->any() : $this->never())
+             ->expects($useApcu ? $this->once() : $this->never())
              ->with($apcuPrefix . $class)
              ->willReturn(false);
 
         $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
-            ->expects($useApcu ? $this->any() : $this->never())
+            ->expects($useApcu ? $this->once() : $this->never())
              ->with($apcuPrefix . $class, $this->anything())
              ->willReturn(true);
 
