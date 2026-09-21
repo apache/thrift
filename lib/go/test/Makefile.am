@@ -73,10 +73,10 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ForwardType.thrift \
 				StringParseAllocationTest.thrift \
 				DocCommentTest.thrift
-	mkdir -p gopath/src
-	grep -v 'set<Insanity>' $(THRIFTTEST) > ThriftTest.thrift
+	mkdir -p gopath/src build
+	grep -v 'set<Insanity>' $(THRIFTTEST) > build/ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
-	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
+	$(THRIFT) $(THRIFTARGS) -I build -r IncludesTest.thrift
 	$(THRIFT) $(THRIFTARGS) BinaryKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS) ContainerKeyTest.thrift
 	$(THRIFT) $(THRIFTARGS_STRUCT_KEY_ENTRIES) StructKeyTest.thrift
@@ -154,7 +154,7 @@ check: gopath
 	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
 clean-local:
-	$(RM) -r gopath ThriftTest.thrift gen-go
+	$(RM) -r gopath build gen-go
 
 client: stubs
 	$(GO) run TestClient.go
