@@ -145,6 +145,61 @@ ok, err = pcall(function() return proto:readString() end)
 check(ok and err == text, 'a string within the maximum still reads')
 
 --------------------------------------------------------------------------
+-- Message name length
+--------------------------------------------------------------------------
+
+-- A message without a version header names its own length in the leading
+-- int32, and that is the first thing read off a connection. readString() puts
+-- a declared length through checkStringSize(); this path has to as well.
+local function old_style_message(declared, name)
+  return CountingTransport:new{
+    data = string.pack('>i4', declared) .. (name or '') ..
+           string.pack('>i1', 1) .. string.pack('>i4', 0)
+  }
+end
+
+local msgInner = old_style_message(0x7FFFFFFF)
+proto = TBinaryProtocol:new{trans = msgInner}
+ok = pcall(function() return proto:readMessageBegin() end)
+check(not ok, 'a message name declaring 2 GB is refused')
+check(msgInner.bytesRequested == 4,
+      'the declared name length is never asked of the transport (asked for ' ..
+      msgInner.bytesRequested .. ')')
+
+local longName = string.rep('a', 64)
+msgInner = old_style_message(string.len(longName), longName)
+proto = TBinaryProtocol:new{trans = msgInner, maxStringSize = 32}
+ok = pcall(function() return proto:readMessageBegin() end)
+check(not ok, 'a message name over a lowered maximum is refused')
+check(msgInner.bytesRequested == 4,
+      'the lowered maximum is applied before the read (asked for ' ..
+      msgInner.bytesRequested .. ')')
+
+msgInner = old_style_message(4, 'ping')
+proto = TBinaryProtocol:new{trans = msgInner}
+local mname, mtype, mseqid
+ok = pcall(function()
+  mname, mtype, mseqid = proto:readMessageBegin()
+  return true
+end)
+check(ok and mname == 'ping' and mtype == 1 and mseqid == 0,
+      'a message name within the maximum still reads')
+
+-- The versioned header takes the other branch and reads its name through
+-- readString(); it must keep working unchanged.
+local verInner = CountingTransport:new{
+  data = string.pack('>I4', 0x80010000 | 1) ..
+         string.pack('>i4', 4) .. 'ping' .. string.pack('>i4', 7)
+}
+proto = TBinaryProtocol:new{trans = verInner}
+ok = pcall(function()
+  mname, mtype, mseqid = proto:readMessageBegin()
+  return true
+end)
+check(ok and mname == 'ping' and mtype == 1 and mseqid == 7,
+      'a versioned message header is unaffected')
+
+--------------------------------------------------------------------------
 -- readAll() cost
 --------------------------------------------------------------------------
 
