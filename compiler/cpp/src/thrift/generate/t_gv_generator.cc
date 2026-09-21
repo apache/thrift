@@ -239,6 +239,9 @@ void t_gv_generator::print_type(t_type* ttype, string struct_field_ref) {
  */
 void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
   bool first = true;
+  // The declared type may be a typedef; the value's shape follows the
+  // resolved type. The identifier case below keeps the declared name.
+  t_type* ttype = type->get_true_type();
   switch (tvalue->get_type()) {
   case t_const_value::CV_INTEGER:
     f_out_ << tvalue->get_integer();
@@ -250,6 +253,8 @@ void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
     f_out_ << "\\\"" << get_escaped_string(tvalue) << "\\\"";
     break;
   case t_const_value::CV_MAP: {
+    // A map value is either a map constant or a struct literal, whose keys
+    // are field names and whose values are typed by the fields.
     f_out_ << "\\{ ";
     map<t_const_value*, t_const_value*, t_const_value::value_compare> map_elems = tvalue->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::iterator map_iter;
@@ -258,26 +263,40 @@ void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
         f_out_ << ", ";
       }
       first = false;
-      print_const_value(((t_map*)type)->get_key_type(), map_iter->first);
-      f_out_ << " = ";
-      print_const_value(((t_map*)type)->get_val_type(), map_iter->second);
+      if (ttype->is_map()) {
+        print_const_value(((t_map*)ttype)->get_key_type(), map_iter->first);
+        f_out_ << " = ";
+        print_const_value(((t_map*)ttype)->get_val_type(), map_iter->second);
+      } else if (ttype->is_struct() || ttype->is_xception()) {
+        t_field* field = ((t_struct*)ttype)->get_field_by_name(map_iter->first->get_string());
+        print_const_value(g_type_string, map_iter->first);
+        f_out_ << " = ";
+        if (field != nullptr) {
+          print_const_value(field->get_type(), map_iter->second);
+        } else {
+          f_out_ << "UNKNOWN";
+        }
+      } else {
+        f_out_ << "UNKNOWN";
+      }
     }
     f_out_ << " \\}";
   } break;
   case t_const_value::CV_LIST: {
     f_out_ << "\\{ ";
     vector<t_const_value*> list_elems = tvalue->get_list();
-    ;
     vector<t_const_value*>::iterator list_iter;
     for (list_iter = list_elems.begin(); list_iter != list_elems.end(); list_iter++) {
       if (!first) {
         f_out_ << ", ";
       }
       first = false;
-      if (type->is_list()) {
-        print_const_value(((t_list*)type)->get_elem_type(), *list_iter);
+      if (ttype->is_list()) {
+        print_const_value(((t_list*)ttype)->get_elem_type(), *list_iter);
+      } else if (ttype->is_set()) {
+        print_const_value(((t_set*)ttype)->get_elem_type(), *list_iter);
       } else {
-        print_const_value(((t_set*)type)->get_elem_type(), *list_iter);
+        f_out_ << "UNKNOWN";
       }
     }
     f_out_ << " \\}";
