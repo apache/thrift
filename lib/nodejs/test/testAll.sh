@@ -145,6 +145,7 @@ node ${DIR}/map_keys.test.js || TESTOK=1
 node ${DIR}/int64_bigint.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 node ${DIR}/recursion_depth.test.js || TESTOK=1
+node ${DIR}/connection_transport.test.js || TESTOK=1
 node ${DIR}/transport_receiver.test.js || TESTOK=1
 node ${DIR}/web_server_ws.test.js || TESTOK=1
 node ${DIR}/uuid.test.js || TESTOK=1
