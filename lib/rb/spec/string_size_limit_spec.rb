@@ -158,3 +158,117 @@ describe "The maximum string size" do
     end
   end
 end
+
+# A JSON string or number is delimited rather than length-prefixed, so its size
+# is whatever the peer sends. The protocol holds each value, and the method name
+# of a message, to the maximum string size as it is read. These specs check that
+# a value over the maximum is refused after the transport is asked for little
+# more than the maximum, not for the whole value.
+describe "The maximum string size in the JSON protocol" do
+  # The JSON reader takes a value one byte at a time; this records how many
+  # bytes it asks of the transport, which climbs as the value grows.
+  class JsonSizeRecordingTransport < Thrift::MemoryBufferTransport
+    attr_reader :bytes_requested
+
+    def initialize(*args)
+      super
+      @bytes_requested = 0
+    end
+
+    def read(len)
+      @bytes_requested += len
+      super
+    end
+  end
+
+  let(:limit) { 16_384_000 }
+
+  def transport_with(bytes)
+    trans = JsonSizeRecordingTransport.new
+    trans.write(Thrift::Bytes.force_binary_encoding(bytes))
+    trans
+  end
+
+  # Plain ASCII, one transport byte per accumulated byte, so a bounded read
+  # stops within a few bytes of the maximum rather than after the whole value.
+  def expect_refused_within(trans, ceiling)
+    expect { yield }.to raise_error(Thrift::ProtocolException) { |e|
+      expect(e.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+    }
+    expect(trans.bytes_requested).to be <= ceiling
+  end
+
+  it "defaults max_string_size to the same value as the other protocols" do
+    expect(Thrift::JsonProtocol.new(transport_with("")).max_string_size).to eq(limit)
+    expect(Thrift::JsonProtocolFactory.new.get_protocol(transport_with("")).max_string_size).to eq(limit)
+  end
+
+  it "refuses a string over a lowered maximum near the maximum" do
+    trans = transport_with('"' + ("a" * 64) + '"')
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
+    expect_refused_within(trans, 32 + 8) { prot.read_string }
+  end
+
+  it "reads a string at the maximum" do
+    trans = transport_with('"' + ("a" * 32) + '"')
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: 32).read_string).to eq("a" * 32)
+  end
+
+  it "refuses one byte over the maximum" do
+    trans = transport_with('"' + ("a" * 33) + '"')
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
+    expect { prot.read_string }.to raise_error(Thrift::ProtocolException) { |e|
+      expect(e.type).to eq(Thrift::ProtocolException::SIZE_LIMIT)
+    }
+  end
+
+  it "refuses a number over a lowered maximum near the maximum" do
+    trans = transport_with(("1" * 64) + " ")
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
+    expect_refused_within(trans, 32 + 8) { prot.read_i64 }
+  end
+
+  it "reads a number at the maximum" do
+    digits = "1" * 32
+    trans = transport_with(digits + " ")
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: 32).read_i64).to eq(digits.to_i)
+  end
+
+  it "refuses a base64 value over a lowered maximum near the maximum" do
+    trans = transport_with('"' + ("QUJD" * 16) + '"')
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
+    expect_refused_within(trans, 32 + 8) { prot.read_binary }
+  end
+
+  it "reads a base64 value at the maximum" do
+    trans = transport_with('"' + ("QUJD" * 8) + '"')
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: 32).read_binary).to eq("ABC" * 8)
+  end
+
+  it "bounds the method name of a message near the maximum" do
+    trans = transport_with('[1,"' + ("a" * 64) + '",1,0]')
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
+    expect_refused_within(trans, 32 + 12) { prot.read_message_begin }
+  end
+
+  it "honours a caller-set maximum, and reads at it" do
+    trans = transport_with('"' + ("x" * 101) + '"')
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 100)
+    expect_refused_within(trans, 100 + 8) { prot.read_string }
+    trans = transport_with('"' + ("x" * 100) + '"')
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: 100).read_string).to eq("x" * 100)
+  end
+
+  it "reads any length when the maximum is nil" do
+    trans = transport_with('"' + ("a" * 200) + '"')
+    expect(Thrift::JsonProtocol.new(trans, max_string_size: nil).read_string).to eq("a" * 200)
+  end
+
+  it "rejects a maximum that is not a positive Integer" do
+    expect { Thrift::JsonProtocol.new(transport_with(""), max_string_size: 0) }.to raise_error(ArgumentError, /must be nil or a positive Integer/)
+  end
+
+  it "passes a factory's maximum to the protocol" do
+    expect(Thrift::JsonProtocolFactory.new(max_string_size: 100).get_protocol(transport_with("")).max_string_size).to eq(100)
+  end
+end

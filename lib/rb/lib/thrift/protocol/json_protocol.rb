@@ -133,6 +133,8 @@ module Thrift
   end
 
   class JsonProtocol < BaseProtocol
+    attr_reader :max_string_size
+
     @@kJSONObjectStart = "{"
     @@kJSONObjectEnd = "}"
     @@kJSONArrayStart = "["
@@ -147,8 +149,10 @@ module Thrift
     @@kThriftInfinity = "Infinity"
     @@kThriftNegativeInfinity = "-Infinity"
 
-    def initialize(trans)
+    def initialize(trans, max_string_size: DEFAULT_MAX_STRING_SIZE)
+      BaseProtocol.validate_max_string_size(max_string_size)
       super(trans)
+      @max_string_size = max_string_size
       @context = JSONContext.new
       @contexts = Array.new
       @reader = LookaheadReader.new(trans)
@@ -534,6 +538,7 @@ module Thrift
           end
         end
         str << Bytes.force_binary_encoding(ch)
+        check_string_size(str.bytesize)
       end
       decode_json_string(str)
     end
@@ -566,6 +571,7 @@ module Thrift
         end
         ch = @reader.read
         str << ch
+        check_string_size(str.bytesize)
       end
       str
     end
@@ -824,8 +830,12 @@ module Thrift
   end
 
   class JsonProtocolFactory < BaseProtocolFactory
+    def initialize(max_string_size: BaseProtocol::DEFAULT_MAX_STRING_SIZE)
+      @max_string_size = max_string_size
+    end
+
     def get_protocol(trans)
-      Thrift::JsonProtocol.new(trans)
+      Thrift::JsonProtocol.new(trans, max_string_size: @max_string_size)
     end
 
     def to_s
