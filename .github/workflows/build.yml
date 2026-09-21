@@ -956,6 +956,94 @@ jobs:
             lib/nodets/test-compiled
           retention-days: 3
 
+  lib-js:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      GRADLE_VERSION: "8.4"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: "gradle"
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      # ant fetches the browser test libraries, and lib/Makefile.am builds
+      # lib/js inside the WITH_JAVA block for exactly that reason.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y wget unzip ant
+
+      - name: Setup gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
+          (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
+          sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
+          sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
+          gradle --version
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for js
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/'))
+          echo "$summary"
+          # lib/js has no --with-js of its own; it is built inside the WITH_JAVA
+          # block, and its check-local is guarded by HAVE_NPM.  Insist on both,
+          # so that a missing prerequisite cannot turn this job into a green
+          # run that tests nothing.
+          echo "$summary" | grep -qE "Building Java Library [.]+ : yes"
+          command -v npm
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # lib/js/test/build.xml stops unless lib/java/build/libs holds two jars:
+      # the library, and its test classes, which gradle builds only as testJar.
+      - name: Build the java library and its test jar
+        run: |
+          make -C lib/java
+          gradle -p lib/java testJar -Prelease=true --console=plain
+
+      # Generates the test code, starts the test servers and drives the QUnit
+      # pages in headless Chrome.  The ant half of the check skips its own
+      # browser test when phantomjs is missing, so the grep is the guard:
+      # grunt reports the QUnit totals, and a run that executed no test at
+      # all would otherwise still exit 0.
+      - name: Run make check for js
+        shell: bash
+        run: |
+          set -o pipefail
+          make -C lib/js check 2>&1 | tee /tmp/lib-js-check.log
+          grep -aqE "[0-9]+ tests completed" /tmp/lib-js-check.log
+
+      - name: Upload log files from a failed run
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-js-check-log
+          path: /tmp/lib-js-check.log
+          retention-days: 3
+
   lib-ts:
     needs: compiler
     runs-on: ubuntu-24.04
