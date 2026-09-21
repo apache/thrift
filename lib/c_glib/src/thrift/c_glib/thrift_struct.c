@@ -26,8 +26,28 @@ gint32
 thrift_struct_read (ThriftStruct *object, ThriftProtocol *protocol,
                     GError **error)
 {
+  gint32 ret;
+
   g_return_val_if_fail (THRIFT_IS_STRUCT (object), -1);
-  return THRIFT_STRUCT_GET_CLASS (object)->read (object, protocol, error);
+
+  /* a struct read without a protocol has no nesting to account for */
+  if (protocol == NULL)
+  {
+    return THRIFT_STRUCT_GET_CLASS (object)->read (object, protocol, error);
+  }
+
+  /* every struct a message nests is read through here, so this is where the
+     protocol's recursion limit applies to incoming data */
+  if (!thrift_protocol_increment_input_recursion_depth (protocol, error))
+  {
+    return -1;
+  }
+
+  ret = THRIFT_STRUCT_GET_CLASS (object)->read (object, protocol, error);
+
+  thrift_protocol_decrement_input_recursion_depth (protocol);
+
+  return ret;
 }
 
 gint32

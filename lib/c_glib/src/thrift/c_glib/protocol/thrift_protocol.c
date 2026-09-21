@@ -31,7 +31,16 @@ enum _ThriftProtocolProperties
   PROP_THRIFT_PROTOCOL_TRANSPORT
 };
 
-G_DEFINE_ABSTRACT_TYPE(ThriftProtocol, thrift_protocol, G_TYPE_OBJECT)
+typedef struct _ThriftProtocolPrivate ThriftProtocolPrivate;
+
+struct _ThriftProtocolPrivate
+{
+  /* how many structs deep the protocol currently is while reading */
+  gint32 input_recursion_depth;
+};
+
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE(ThriftProtocol, thrift_protocol,
+                                    G_TYPE_OBJECT)
 
 void
 thrift_protocol_get_property (GObject *object, guint property_id,
@@ -426,6 +435,59 @@ thrift_protocol_get_min_serialized_size (ThriftProtocol *protocol, ThriftType ty
                                                                          type, error);
 }
 
+/* the recursion limit configured for the protocol's transport, or the
+   default one when the transport carries no configuration */
+static gint32
+thrift_protocol_get_recursion_limit (ThriftProtocol *protocol)
+{
+  if (protocol->transport != NULL &&
+      protocol->transport->configuration != NULL)
+  {
+    return protocol->transport->configuration->recursionLimit_;
+  }
+
+  return DEFAULT_RECURSION_DEPTH;
+}
+
+gboolean
+thrift_protocol_increment_input_recursion_depth (ThriftProtocol *protocol,
+                                                 GError **error)
+{
+  ThriftProtocolPrivate *priv;
+  gint32 recursion_limit;
+
+  g_return_val_if_fail (THRIFT_IS_PROTOCOL (protocol), FALSE);
+
+  priv = thrift_protocol_get_instance_private (protocol);
+  recursion_limit = thrift_protocol_get_recursion_limit (protocol);
+
+  if (priv->input_recursion_depth >= recursion_limit)
+  {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_DEPTH_LIMIT,
+                 "Maximum recursion depth exceeded");
+    return FALSE;
+  }
+
+  priv->input_recursion_depth++;
+  return TRUE;
+}
+
+void
+thrift_protocol_decrement_input_recursion_depth (ThriftProtocol *protocol)
+{
+  ThriftProtocolPrivate *priv;
+
+  g_return_if_fail (THRIFT_IS_PROTOCOL (protocol));
+
+  priv = thrift_protocol_get_instance_private (protocol);
+
+  if (priv->input_recursion_depth > 0)
+  {
+    priv->input_recursion_depth--;
+  }
+}
+
 #define THRIFT_SKIP_RESULT_OR_RETURN(_RES, _CALL) \
   { \
     gint32 _x = (_CALL); \
@@ -437,13 +499,7 @@ static gint32
 thrift_protocol_skip_impl (ThriftProtocol *protocol, ThriftType type,
                            gint32 recursion_depth, GError **error)
 {
-  gint32 recursion_limit = DEFAULT_RECURSION_DEPTH;
-
-  if (protocol->transport != NULL &&
-      protocol->transport->configuration != NULL)
-  {
-    recursion_limit = protocol->transport->configuration->recursionLimit_;
-  }
+  gint32 recursion_limit = thrift_protocol_get_recursion_limit (protocol);
 
   if (recursion_depth > recursion_limit)
   {
@@ -608,7 +664,10 @@ thrift_protocol_error_quark (void)
 static void
 thrift_protocol_init (ThriftProtocol *protocol)
 {
+  ThriftProtocolPrivate *priv = thrift_protocol_get_instance_private (protocol);
+
   protocol->transport = NULL;
+  priv->input_recursion_depth = 0;
 }
 
 static void

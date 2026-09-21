@@ -325,6 +325,21 @@ gint thrift_protocol_get_min_serialized_size (ThriftProtocol *protocol,
 gint32 thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type,
                              GError **error);
 
+/*!
+ * Records that the protocol has entered one more struct while reading.
+ * Returns FALSE, with THRIFT_PROTOCOL_ERROR_DEPTH_LIMIT set, when that
+ * would take the read past the recursion limit configured for the
+ * protocol's transport.  Every successful call must be paired with a call
+ * to thrift_protocol_decrement_input_recursion_depth.
+ */
+gboolean thrift_protocol_increment_input_recursion_depth (ThriftProtocol *protocol,
+                                                          GError **error);
+
+/*!
+ * Records that the protocol has left a struct it was reading.
+ */
+void thrift_protocol_decrement_input_recursion_depth (ThriftProtocol *protocol);
+
 /* define error types */
 typedef enum
 {

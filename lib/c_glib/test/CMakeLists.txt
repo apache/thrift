@@ -31,6 +31,7 @@ set(testgenc_SOURCES
     gen-c_glib/t_test_empty_service.c
     gen-c_glib/t_test_inherited.c
     gen-c_glib/t_test_optional_required_test_types.c
+    gen-c_glib/t_test_recursion_limit_test_types.c
     gen-c_glib/t_test_reverse_order_service.c
     gen-c_glib/t_test_second_service.c
     gen-c_glib/t_test_service_for_exception_with_a_map.c
@@ -43,6 +44,7 @@ set(testgenc_SOURCES
     gen-c_glib/t_test_empty_service.h
     gen-c_glib/t_test_inherited.h
     gen-c_glib/t_test_optional_required_test_types.h
+    gen-c_glib/t_test_recursion_limit_test_types.h
     gen-c_glib/t_test_reverse_order_service.h
     gen-c_glib/t_test_second_service.h
     gen-c_glib/t_test_service_for_exception_with_a_map.h
@@ -120,6 +122,11 @@ add_test(NAME testdebugproto COMMAND testdebugproto)
 add_executable(testoptionalrequired testoptionalrequired.c)
 target_link_libraries(testoptionalrequired testgenc)
 add_test(NAME testoptionalrequired COMMAND testoptionalrequired)
+
+add_executable(testrecursionlimit testrecursionlimit.c)
+target_link_libraries(testrecursionlimit testgenc)
+target_link_libraries(testrecursionlimit thrift_c_glib)
+add_test(NAME testrecursionlimit COMMAND testrecursionlimit)
 
 add_executable(testthriftbinaryreadcheck testthriftbinaryreadcheck.c)
 target_link_libraries(testthriftbinaryreadcheck testgenc)
@@ -234,6 +241,12 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_optional_required_test_types.c
     gen-c_glib/t_test_optional_required_test_types.h
     COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/OptionalRequiredTest.thrift
+)
+
+add_custom_command(OUTPUT
+    gen-c_glib/t_test_recursion_limit_test_types.c
+    gen-c_glib/t_test_recursion_limit_test_types.h
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${CMAKE_CURRENT_SOURCE_DIR}/RecursionLimitTest.thrift
 )
 
 add_custom_command(OUTPUT
