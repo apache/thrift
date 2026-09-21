@@ -367,6 +367,15 @@ if(WITH_LIBEVENT)
       target_link_libraries(TNonblockingSSLServerTest thriftnb)
       add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
     endif(OPENSSL_FOUND AND WITH_OPENSSL)
+
+    set(TEvhttpServerRequestContextTest_SOURCES TEvhttpServerRequestContextTest.cpp)
+    add_executable(TEvhttpServerRequestContextTest ${TEvhttpServerRequestContextTest_SOURCES})
+    include_directories(${LIBEVENT_INCLUDE_DIRS})
+    target_link_libraries(TEvhttpServerRequestContextTest
+        ${Boost_LIBRARIES}
+    )
+    target_link_libraries(TEvhttpServerRequestContextTest thriftnb)
+    add_test(NAME TEvhttpServerRequestContextTest COMMAND TEvhttpServerRequestContextTest)
 endif()
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)

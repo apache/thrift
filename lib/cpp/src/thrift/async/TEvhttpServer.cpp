@@ -108,13 +108,20 @@ void TEvhttpServer::request(struct evhttp_request* req, void* self) {
 }
 
 void TEvhttpServer::process(struct evhttp_request* req) {
-  auto* ctx = new RequestContext(req);
-  return processor_->process(std::bind(&TEvhttpServer::complete,
-                                                          this,
-                                                          ctx,
-                                                          std::placeholders::_1),
-                             ctx->ibuf,
-                             ctx->obuf);
+  // Own the request context until responsibility for it is handed to the
+  // completion callback. processor_->process() can throw before it invokes
+  // that callback -- for example on a request body too short to parse a
+  // message header -- and the unique_ptr then frees the context as the stack
+  // unwinds. On the normal path complete() takes over and deletes it, so
+  // ownership is released here once process() has returned without throwing.
+  std::unique_ptr<RequestContext> ctx(new RequestContext(req));
+  processor_->process(std::bind(&TEvhttpServer::complete,
+                                this,
+                                ctx.get(),
+                                std::placeholders::_1),
+                      ctx->ibuf,
+                      ctx->obuf);
+  ctx.release();
 }
 
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
