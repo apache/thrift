@@ -42,7 +42,9 @@ class Payload
     }
 }
 
-function read_string_field($declared_size, $data)
+// A maximum string size of 0 leaves the declared length to the wire, which is
+// what the lengths below are about.
+function read_string_field($declared_size, $data, $max_string_size = 0)
 {
     $buf  = pack('C', TType::STRING);   // field type
     $buf .= pack('n', 1);               // field id
@@ -50,7 +52,7 @@ function read_string_field($declared_size, $data)
     $buf .= $data;
     $buf .= pack('C', TType::STOP);
 
-    $protocol = new TBinaryProtocol(new TMemoryBuffer($buf));
+    $protocol = new TBinaryProtocol(new TMemoryBuffer($buf), false, true, $max_string_size);
 
     return thrift_protocol_read_binary_after_message_begin($protocol, 'Payload', true);
 }
