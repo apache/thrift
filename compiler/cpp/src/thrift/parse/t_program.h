@@ -100,6 +100,13 @@ public:
   const std::vector<t_service*>& get_services() const { return services_; }
   const std::map<std::string, std::string>& get_namespaces() const { return namespaces_; }
 
+  /**
+   * Resolves every forward typedef the program's types refer to, so that an
+   * undeclared target or a typedef that refers to itself throws here rather
+   * than from inside a generator. Defined in parse.cc.
+   */
+  void resolve_types() const;
+
   // Program elements
   void add_typedef(t_typedef* td) { typedefs_.push_back(td); }
   void add_enum(t_enum* te) { enums_.push_back(te); }

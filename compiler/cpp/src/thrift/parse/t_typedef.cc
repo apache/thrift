@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <cstdio>
+#include <string>
 
 #include "thrift/parse/t_typedef.h"
 #include "thrift/parse/t_program.h"
@@ -29,8 +29,10 @@ const t_type* t_typedef::get_type() const {
   if (type_ == nullptr) {
     const t_type* type = get_program()->scope()->get_type(symbolic_);
     if (type == nullptr) {
-      printf("Type \"%s\" not defined\n", symbolic_.c_str());
-      exit(1);
+      // Reported through failure() by whoever catches it: parse() resolves
+      // every typedef before any generator runs, and generate() catches
+      // what a generator asks for.
+      throw std::string("Type \"") + symbolic_ + "\" not defined";
     }
     return type;
   }
