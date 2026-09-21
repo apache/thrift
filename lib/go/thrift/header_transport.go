@@ -178,6 +178,38 @@ func (tr *TransformReader) AddTransform(id THeaderTransformID) error {
 	return nil
 }
 
+// limitedTransformReader reads the output of a read transform, and fails the
+// read that would take that output past limit bytes.
+type limitedTransformReader struct {
+	r     io.Reader
+	limit int64
+	read  int64
+	err   error
+}
+
+func (l *limitedTransformReader) Read(p []byte) (int, error) {
+	if l.err != nil {
+		return 0, l.err
+	}
+	// Read at most one byte past the limit: output that ends right at the
+	// limit is read to its end, and the extra byte shows output that goes on.
+	if left := l.limit - l.read; int64(len(p)) > left+1 {
+		p = p[:left+1]
+	}
+	n, err := l.r.Read(p)
+	if l.read+int64(n) > l.limit {
+		l.err = NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("frame too large after transform: more than %d bytes", l.limit),
+		)
+		n = int(l.limit - l.read)
+		l.read = l.limit
+		return n, l.err
+	}
+	l.read += int64(n)
+	return n, err
+}
+
 // TransformWriter is an io.WriteCloser that handles transforms writing.
 type TransformWriter struct {
 	io.Writer
@@ -519,6 +551,15 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 			id := transformIDs[i]
 			if err := reader.AddTransform(id); err != nil {
 				return err
+			}
+			if id == TransformZlib {
+				// ReadFrame held the frame to the maximum frame
+				// size as it came off the wire. Hold what each
+				// inflate makes of it to the same size.
+				reader.Reader = &limitedTransformReader{
+					r:     reader.Reader,
+					limit: int64(t.cfg.GetMaxFrameSize()),
+				}
 			}
 		}
 	}
