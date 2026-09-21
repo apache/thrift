@@ -77,6 +77,71 @@ void main() {
     });
   });
 
+  group('message name length', () {
+    /// The pre-versioned (non-strict) message header is a bare int32 followed
+    /// by that many bytes of method name. It is the first thing read off a
+    /// fresh connection, so it is the one length a peer gets to declare before
+    /// anything else has been seen.
+    Uint8List oldStyleHeader(int declaredNameLength, [Uint8List? name]) {
+      final out = <int>[...i32(declaredNameLength)];
+      if (name != null) out.addAll(name);
+      out.add(1); // message type
+      out.addAll(i32(0)); // seqid
+      return Uint8List.fromList(out);
+    }
+
+    test('a name declaring 2 GB is refused, without reading it', () {
+      final inner = _CountingTransport(oldStyleHeader(0x7FFFFFFF));
+      final protocol = TBinaryProtocol(inner);
+
+      expect(
+          () => protocol.readMessageBegin(),
+          throwsA(predicate((e) =>
+              e is TProtocolError && e.type == TProtocolErrorType.SIZE_LIMIT)));
+      expect(inner.bytesRequested, 4);
+    });
+
+    test('a name over a lowered maximum is refused', () {
+      final name = Uint8List.fromList(List<int>.filled(64, 0x61));
+      final inner = _CountingTransport(oldStyleHeader(name.length, name));
+      final protocol = TBinaryProtocol(inner, maxStringSize: 32);
+
+      expect(
+          () => protocol.readMessageBegin(),
+          throwsA(predicate((e) =>
+              e is TProtocolError && e.type == TProtocolErrorType.SIZE_LIMIT)));
+      expect(inner.bytesRequested, 4);
+    });
+
+    test('a name within the maximum still reads', () {
+      final name = Uint8List.fromList('ping'.codeUnits);
+      final inner = _CountingTransport(oldStyleHeader(name.length, name));
+      final protocol = TBinaryProtocol(inner);
+
+      final message = protocol.readMessageBegin();
+      expect(message.name, 'ping');
+      expect(message.type, 1);
+      expect(message.seqid, 0);
+    });
+
+    test('a versioned header is unaffected', () {
+      final name = Uint8List.fromList('ping'.codeUnits);
+      final out = <int>[
+        ...i32(0x80010000 | 1),
+        ...i32(name.length),
+        ...name,
+        ...i32(7),
+      ];
+      final protocol =
+          TBinaryProtocol(_CountingTransport(Uint8List.fromList(out)));
+
+      final message = protocol.readMessageBegin();
+      expect(message.name, 'ping');
+      expect(message.type, 1);
+      expect(message.seqid, 7);
+    });
+  });
+
   group('framed transport frame size', () {
     test('the maximum has a usable default', () {
       expect(TFramedTransport(_CountingTransport(Uint8List(0))).maxFrameSize,

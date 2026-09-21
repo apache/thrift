@@ -199,6 +199,10 @@ class TBinaryProtocol extends TProtocol {
         throw TProtocolError(TProtocolErrorType.BAD_VERSION,
             "Missing version in readMessageBegin");
       }
+      // The pre-versioned header names its own length, and it is the first
+      // thing read off a connection. readString() holds every other declared
+      // length to maxStringSize; this one has to go through the same check.
+      _checkStringSize(size);
       name = _readString(size);
       type = readByte();
       seqid = readI32();
