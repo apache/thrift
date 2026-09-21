@@ -289,19 +289,17 @@ inline int32_t ProtocolBase<Impl>::initialContainerSize(int32_t declared) {
   // how many of them can turn up. A refill can bring more, which is why this
   // sizes the first allocation only and the caller grows from there.
   //
-  // For a message that is already buffered whole -- a memory buffer, or a
-  // frame -- there are always at least as many bytes left as elements
-  // declared, so the container is still allocated at its full size in one go
-  // and nothing about the common path changes.
+  // The first allocation is also held to kMaxInitialContainerSize on every
+  // path, whatever the buffer can supply, so no single reservation runs ahead
+  // of the elements actually read; a larger container grows from there as they
+  // are decoded.
+  int32_t capped = (std::min)(declared, kMaxInitialContainerSize);
   if (!input_.stringiobuf) {
-    return (std::min)(declared, kMaxInitialContainerSize);
+    return capped;
   }
   Py_ssize_t avail = detail::buffer_remaining(input_.stringiobuf.get());
-  if (avail < 0) {
-    return (std::min)(declared, kMaxInitialContainerSize);
-  }
-  if (avail >= static_cast<Py_ssize_t>(declared)) {
-    return declared;
+  if (avail < 0 || avail >= static_cast<Py_ssize_t>(capped)) {
+    return capped;
   }
   return static_cast<int32_t>(avail);
 }
