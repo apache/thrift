@@ -46,6 +46,24 @@ and servers communicating across languages.
 Thrift's core transport (supported by all languages) is TSocket.
 Thrift's core protocol is TBinary, supported by all languages except for JavaScript.
 
+## Version support policy ##
+
+Apache Thrift targets the versions of each language runtime and toolchain that are
+still receiving upstream support -- active or security -- at the time a Thrift
+release is cut.  Once a version reaches its upstream end of life it becomes a
+candidate for removal from the tested matrix and from the minimum version listed for
+that language below.
+
+This is a guideline, not a hard rule.  Where the cost of keeping an older, already
+end-of-life version working is small, the project may continue to support it as a
+courtesy, and several languages do.  Support is withdrawn when keeping it is no longer
+practical -- most clearly when the end-of-life version carries defects that affect
+Thrift and that its upstream will no longer fix.  When a minimum version advances, the
+reason is recorded in the release notes.
+
+The `Min` column below is the lowest version the CI matrix exercises for each
+language; it is the effective minimum the project stands behind for that release.
+
 <table style="font-size: 60%; padding: 1px;">
 <thead>
 <tr>
@@ -303,7 +321,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/php/README.md">PHP</a></td>
 <!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<!-- Language Levels -------><td>8.1</td><td>8.5</td>
+<!-- Language Levels -------><td>8.2</td><td>8.5</td>
 <!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>

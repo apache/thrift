@@ -232,18 +232,18 @@ RUN apt-get install -y --no-install-recommends \
       libnet-ssleay-perl \
       libtest-exception-perl
 
-# PHP via Ondřej Surý PPA (focal default is 7.4 which is below our 8.1 floor)
+# PHP via Ondřej Surý PPA (focal default is 7.4 which is below our 8.2 floor)
 RUN add-apt-repository -y ppa:ondrej/php && \
       apt-get update -yq
 
 RUN apt-get install -y --no-install-recommends \
       `# Php dependencies` \
-      php8.1 \
-      php8.1-cli \
-      php8.1-dev \
-      php8.1-xml \
-      php8.1-curl \
-      php8.1-xdebug \
+      php8.2 \
+      php8.2-cli \
+      php8.2-dev \
+      php8.2-xml \
+      php8.2-curl \
+      php8.2-xdebug \
       php-pear \
       re2c
 
