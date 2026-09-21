@@ -26,7 +26,7 @@
 
 sudo: required
 # https://docs.travis-ci.com/user/reference/linux
-dist: focal
+dist: jammy
 language: cpp
 
 services:
@@ -47,7 +47,7 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-    - DISTRO=ubuntu-focal
+    - DISTRO=ubuntu-jammy
     - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
@@ -58,11 +58,6 @@ env:
 jobs:
   include:
     # ========================= stage: docker =========================
-    - script: true
-      env:
-        - JOB="Docker Build ubuntu-focal 20.04 LTS"
-        - DISTRO=ubuntu-focal
-        - TRAVIS_BUILD_STAGE=docker
     - script: true
       env:
         - JOB="Docker Build ubuntu-jammy 22.04 LTS"
@@ -123,12 +118,6 @@ jobs:
     #     - JOB="Autotools (Ubuntu Jammy)"
     #     - DISTRO=ubuntu-jammy
     #     - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Focal)"
-        - DISTRO=ubuntu-focal
-        - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------
     - script: build/docker/run.sh
