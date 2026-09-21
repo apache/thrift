@@ -183,6 +183,248 @@ check(ratio < 10,
       string.format('%.1f', ratio) .. 'x the time)')
 
 --------------------------------------------------------------------------
+-- JSON string, number and base64 length
+--------------------------------------------------------------------------
+
+require('TJsonProtocol')
+
+-- A JSON string or number carries no length: it ends at the closing quote,
+-- or at the first character that cannot be part of the number. The string
+-- maximum is applied while the value is read, so reading stops within a byte
+-- or two of the maximum however long the value goes on.
+local function check_refused(what, read, prefix, value, maxStringSize, limit)
+  local jinner = CountingTransport:new{data = prefix .. value}
+  local jproto = TJSONProtocol:new{trans = jinner, maxStringSize = maxStringSize}
+  local ok, err = pcall(read, jproto)
+  check(not ok and
+        tostring(err):find('exceeds maximum ' .. limit, 1, true) ~= nil,
+        what .. ' over the maximum is refused: ' .. tostring(err))
+  local allowed = string.len(prefix) + limit + 2
+  check(jinner.bytesRequested <= allowed,
+        what .. ' is refused by the time ' .. allowed ..
+        ' bytes are asked of the transport (asked for ' ..
+        jinner.bytesRequested .. ')')
+end
+
+local long = string.rep('a', 64)
+check_refused('a JSON string', TJSONProtocol.readString,
+              '"', long .. '"', 32, 32)
+check_refused('a JSON string with no closing quote', TJSONProtocol.readString,
+              '"', string.rep('a', 100000), 32, 32)
+check_refused('a JSON number', TJSONProtocol.readI32,
+              '', string.rep('1', 64) .. ']', 32, 32)
+check_refused('a JSON double', TJSONProtocol.readDouble,
+              '', string.rep('1', 64) .. ']', 32, 32)
+check_refused('a JSON base64 value', TJSONProtocol.readBinary,
+              '"', string.rep('QUJD', 16) .. '"', 32, 32)
+check_refused('a JSON message name', TJSONProtocol.readMessageBegin,
+              '[1,"', long .. '",1,0]', 32, 32)
+
+-- With no maxStringSize set, DEFAULT_MAX_STRING_SIZE applies, as it does for
+-- the binary and compact protocols. Lowered for the one read, to keep it small.
+check(DEFAULT_MAX_STRING_SIZE == 16384000,
+      'the default string maximum is 16384000 (' ..
+      tostring(DEFAULT_MAX_STRING_SIZE) .. ')')
+local savedDefault = DEFAULT_MAX_STRING_SIZE
+DEFAULT_MAX_STRING_SIZE = 32
+check_refused('a JSON string under the default maximum',
+              TJSONProtocol.readString, '"', long .. '"', nil, 32)
+DEFAULT_MAX_STRING_SIZE = savedDefault
+
+-- Values up to the maximum still read.
+do
+  local function read_with(read, data)
+    local jproto = TJSONProtocol:new{
+      trans = CountingTransport:new{data = data}, maxStringSize = 32
+    }
+    local ok, val = pcall(read, jproto)
+    return ok and val
+  end
+  check(read_with(TJSONProtocol.readString, '"' .. string.rep('s', 32) .. '"')
+          == string.rep('s', 32),
+        'a JSON string at the maximum still reads')
+  check(read_with(TJSONProtocol.readI32, string.rep('0', 30) .. '42]') == 42,
+        'a JSON number at the maximum still reads')
+  check(read_with(TJSONProtocol.readBinary, '"' .. string.rep('QUJD', 8) .. '"')
+          == string.rep('ABC', 8),
+        'a JSON base64 value at the maximum still reads')
+end
+
+-- A message written with TJSONProtocol reads back the same.
+do
+  local texts = {'', 'plain', 'with "quotes"', 'new\nline\ttab',
+                 string.rep('0123456789', 500), 'utf-8 \xc3\xa4\xe2\x82\xac'}
+  local buffer = TMemoryBuffer:new{}
+  local out = TJSONProtocol:new{trans = buffer}
+  out:writeMessageBegin('someMethod', TMessageType.CALL, 7)
+  out:writeStructBegin('args')
+  out:writeFieldBegin('texts', TType.LIST, 1)
+  out:writeListBegin(TType.STRING, #texts)
+  for _, t in ipairs(texts) do
+    out:writeString(t)
+  end
+  out:writeListEnd()
+  out:writeFieldEnd()
+  out:writeFieldBegin('number', TType.I32, 2)
+  out:writeI32(-123456)
+  out:writeFieldEnd()
+  out:writeFieldBegin('real', TType.DOUBLE, 3)
+  out:writeDouble(3.25)
+  out:writeFieldEnd()
+  out:writeFieldBegin('bytes', TType.STRING, 4)
+  out:writeBinary('a\0z')
+  out:writeFieldEnd()
+  out:writeFieldStop()
+  out:writeStructEnd()
+  out:writeMessageEnd()
+
+  local jproto = TJSONProtocol:new{trans = buffer}
+  local same = true
+  local function expect(got, want)
+    if got ~= want then
+      same = false
+    end
+  end
+  ok, err = pcall(function()
+    local name, mtype, seqid = jproto:readMessageBegin()
+    expect(name, 'someMethod')
+    expect(mtype, TMessageType.CALL)
+    expect(seqid, 7)
+    jproto:readStructBegin()
+    local _, ftype, fid = jproto:readFieldBegin()
+    expect(ftype, TType.LIST)
+    expect(fid, 1)
+    local etype, count = jproto:readListBegin()
+    expect(etype, TType.STRING)
+    expect(count, #texts)
+    for i = 1, count do
+      expect(jproto:readString(), texts[i])
+    end
+    jproto:readListEnd()
+    jproto:readFieldEnd()
+    _, ftype, fid = jproto:readFieldBegin()
+    expect(jproto:readI32(), -123456)
+    jproto:readFieldEnd()
+    _, ftype, fid = jproto:readFieldBegin()
+    expect(jproto:readDouble(), 3.25)
+    jproto:readFieldEnd()
+    _, ftype, fid = jproto:readFieldBegin()
+    expect(jproto:readBinary(), 'a\0z')
+    jproto:readFieldEnd()
+    _, ftype, fid = jproto:readFieldBegin()
+    expect(ftype, TType.STOP)
+    jproto:readStructEnd()
+    jproto:readMessageEnd()
+  end)
+  check(ok and same, 'a JSON message reads back as written: ' .. tostring(err))
+end
+
+-- Base64 as other implementations write it: RFC 4648's test vectors, and all
+-- 256 byte values.
+do
+  local allBytes = {}
+  for i = 0, 255 do
+    allBytes[#allBytes + 1] = string.char(i)
+  end
+  local vectors = {
+    {'', ''}, {'f', 'Zg=='}, {'fo', 'Zm8='}, {'foo', 'Zm9v'},
+    {'foob', 'Zm9vYg=='}, {'fooba', 'Zm9vYmE='}, {'foobar', 'Zm9vYmFy'},
+    {table.concat(allBytes),
+     'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEy' ..
+     'MzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2Rl' ..
+     'ZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeY' ..
+     'mZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrL' ..
+     'zM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+' ..
+     '/w=='}
+  }
+  local wrong = 0
+  for _, v in ipairs(vectors) do
+    local jproto = TJSONProtocol:new{
+      trans = CountingTransport:new{data = '"' .. v[2] .. '"'}
+    }
+    local ok2, got = pcall(jproto.readBinary, jproto)
+    if not ok2 or got ~= v[1] then
+      wrong = wrong + 1
+    end
+  end
+  check(wrong == 0, 'base64 values decode to the bytes they encode (' ..
+        wrong .. ' of ' .. #vectors .. ' wrong)')
+end
+
+-- Reading a string, number or base64 value costs about the same per byte
+-- whatever its length. Timed rather than asserted on implementation, as with
+-- readAll() above, and the best of three runs to ride out noise. The
+-- transport here costs next to nothing per byte, so the time is the
+-- protocol's own.
+local function lean_transport(data)
+  local pos = 1
+  return {
+    readAll = function(_, n)
+      local bytes = string.sub(data, pos, pos + n - 1)
+      pos = pos + n
+      return bytes
+    end
+  }
+end
+
+local function time_json_read(read, data)
+  local jproto = TJSONProtocol:new{trans = lean_transport(data)}
+  local started = os.clock()
+  read(jproto)
+  return os.clock() - started
+end
+
+-- Decoding takes most of the time of a base64 read, and would hide how the
+-- decoded bytes are put together. Here readJSONString() and base64_decode()
+-- are stood in for by functions that cost next to nothing, which leaves the
+-- putting together to be timed.
+local function time_base64_assembly(n)
+  local text = string.rep('QUJD', n // 4)
+  local jproto = TJSONProtocol:new{trans = lean_transport('')}
+  jproto.readJSONString = function() return text end
+  local decode = base64_decode
+  base64_decode = function() return 'ABC' end
+  local started = os.clock()
+  local ok3, err3 = pcall(jproto.readBinary, jproto)
+  local elapsed = os.clock() - started
+  base64_decode = decode
+  if not ok3 then
+    error(err3, 0)
+  end
+  return elapsed
+end
+
+local function best_json_time(time_it, n)
+  local best
+  for _ = 1, 3 do
+    local t = time_it(n)
+    if not best or t < best then
+      best = t
+    end
+  end
+  return math.max(best, 1e-6)
+end
+
+-- Eight times the bytes. Linear is ~8x; twenty leaves wide room for noise.
+for _, case in ipairs({
+    {'reading a JSON string', 25000, function(n)
+      return time_json_read(TJSONProtocol.readString,
+                            '"' .. string.rep('a', n) .. '"')
+    end},
+    {'reading a JSON number', 25000, function(n)
+      return time_json_read(TJSONProtocol.readI32, string.rep('1', n) .. ']')
+    end},
+    {'putting a decoded base64 value together', 100000,
+     time_base64_assembly}}) do
+  local what, n, time_it = case[1], case[2], case[3]
+  time_it(1000)  -- warm up
+  local jratio = best_json_time(time_it, 8 * n) / best_json_time(time_it, n)
+  check(jratio < 20,
+        what .. ' costs about linearly (8x the bytes took ' ..
+        string.format('%.1f', jratio) .. 'x the time)')
+end
+
+--------------------------------------------------------------------------
 -- HTTP body length
 --------------------------------------------------------------------------
 

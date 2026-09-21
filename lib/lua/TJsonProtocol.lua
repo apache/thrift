@@ -122,6 +122,29 @@ function base64_decode(data)
     end))
 end
 
+-- Collects a value that is read a few bytes at a time. The bytes are gathered
+-- in a table, every 1024 entries of which are joined into one piece as they
+-- come, and the pieces are joined once at the end. The cost stays linear in
+-- the length of the value, and neither table grows long.
+local function newValueBuffer()
+  return {pieces = {}, recent = {}, count = 0}
+end
+
+local function addToValue(buf, bytes)
+  buf.count = buf.count + 1
+  buf.recent[buf.count] = bytes
+  if buf.count == 1024 then
+    buf.pieces[#buf.pieces + 1] = table.concat(buf.recent)
+    buf.recent = {}
+    buf.count = 0
+  end
+end
+
+local function valueOf(buf)
+  buf.pieces[#buf.pieces + 1] = table.concat(buf.recent)
+  return table.concat(buf.pieces)
+end
+
 function TJSONProtocol:resetContext()
   self.jsonContext = {}
   self.jsonContextVal = {first = true, colon = true, ttype = 2, null = true}
@@ -475,10 +498,13 @@ function TJSONProtocol:readJSONEscapeChar(ch)
 end
 
 
+-- A JSON string carries no length, so the string maximum is applied as the
+-- value grows.
 function TJSONProtocol:readJSONString()
   self:readElemSeparator()
   self:readJSONSyntaxChar(JSONNode.StringDelimiter)
-  local result = ""
+  local result = newValueBuffer()
+  local size = 0
   while true do
     local ch = self.trans:readAll(1)
     if ch == JSONNode.StringDelimiter then
@@ -496,40 +522,49 @@ function TJSONProtocol:readJSONString()
         ch = EscapeCharVals[pos]
       end
     end
-    result = result .. ch
+    size = size + string.len(ch)
+    self:checkStringSize(size)
+    addToValue(result, ch)
   end
-  return result
+  return valueOf(result)
 end
 
+-- The encoded text is read by readJSONString(), which holds it to the string
+-- maximum; the decoded value is shorter than that.
 function TJSONProtocol:readJSONBase64()
   local result = self:readJSONString()
   local length = string.len(result)
-  local str = ""
+  local str = newValueBuffer()
   local offset = 1
   while length >= 4 do
     local bytes = string.sub(result, offset, offset+4)
-    str = str .. base64_decode(bytes)
+    addToValue(str, base64_decode(bytes))
     offset = offset + 4
     length = length - 4
   end
   if length >= 0 then
-    str = str .. base64_decode(string.sub(result, offset, offset + length))
+    addToValue(str, base64_decode(string.sub(result, offset, offset + length)))
   end
-  return str
+  return valueOf(str)
 end
 
+-- A JSON number carries no length either, and is held to the string maximum
+-- the same way.
 function TJSONProtocol:readJSONNumericChars()
-  local result = ""
+  local result = newValueBuffer()
+  local size = 0
   while true do
     local ch = self.trans:readAll(1)
     if string.find(ch, '[-+0-9.Ee]') then
-      result = result .. ch
+      size = size + 1
+      self:checkStringSize(size)
+      addToValue(result, ch)
     else
       self.hasReadByte = ch
       break
     end
   end
-  return result
+  return valueOf(result)
 end
 
 function TJSONProtocol:readJSONLongInteger()
