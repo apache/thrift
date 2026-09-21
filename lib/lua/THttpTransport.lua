@@ -24,6 +24,8 @@ THttpTransport = TTransportBase:new{
   path = '/',
   wBuf = '',
   rBuf = '',
+  -- How much of the body in rBuf read() has handed out so far
+  rPos = 0,
   CRLF = '\r\n',
   VERSION = version,
   isServer = true,
@@ -80,14 +82,13 @@ function THttpTransport:read(len)
   if string.len(self.rBuf) == 0 then
     self:_readMsg()
   end
-  if len > string.len(self.rBuf) then
-    local val = self.rBuf
-    self.rBuf = ''
-    return val
-  end
 
-  local val = string.sub(self.rBuf, 0, len)
-  self.rBuf = string.sub(self.rBuf, len+1)
+  local val = string.sub(self.rBuf, self.rPos + 1, self.rPos + len)
+  self.rPos = self.rPos + string.len(val)
+  if self.rPos >= string.len(self.rBuf) then
+    self.rBuf = ''
+    self.rPos = 0
+  end
   return val
 end
 
@@ -136,6 +137,7 @@ function THttpTransport:_readMsg()
   if self.rBuf == nil then
     self.rBuf = ""
   end
+  self.rPos = 0
 end
 
 function THttpTransport:getLine()

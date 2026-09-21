@@ -444,5 +444,168 @@ check(httpInner.bytesRequested < 1000,
       'the declared body length is never asked of the transport (asked for ' ..
       httpInner.bytesRequested .. ')')
 
+--------------------------------------------------------------------------
+-- Frame and HTTP body reads
+--------------------------------------------------------------------------
+
+-- Bytes that differ from one position to the next, so a byte handed out
+-- twice, skipped or out of order fails the comparison.
+local function sample(n, seed)
+  local bytes = {}
+  for i = 1, n do
+    bytes[i] = string.char((i * 31 + seed * 7) % 256)
+  end
+  return table.concat(bytes)
+end
+
+local frameSizes = {1, 5, 300, 4096, 17, 70000, 3}
+local frames, frameWire = {}, {}
+for i, n in ipairs(frameSizes) do
+  frames[i] = sample(n, i)
+  frameWire[i] = string.pack('>i4', n) .. frames[i]
+end
+
+local bodySizes = {5000, 4, 70000, 777}
+local bodies, httpWire = {}, {}
+for i, n in ipairs(bodySizes) do
+  bodies[i] = sample(n, 100 + i)
+  httpWire[i] = 'POST / HTTP/1.1\r\nContent-Length: ' .. n .. '\r\n\r\n' ..
+                bodies[i]
+end
+
+local readSizes = {1, 2, 3, 7, 64, 1000, 5000, 13}
+
+-- read() returns at most what is left of the current frame or body, and
+-- starts on the next one once that is used up. Replays readSizes against that
+-- rule until every piece is consumed, comparing each result with the bytes
+-- the rule says it must return.
+local function check_reads(trans, pieces, what)
+  local piece, pos, total, expectedTotal, reads, wrong = 1, 0, 0, 0, 0, 0
+  for _, p in ipairs(pieces) do
+    expectedTotal = expectedTotal + string.len(p)
+  end
+  while total < expectedTotal do
+    reads = reads + 1
+    local len = readSizes[(reads - 1) % #readSizes + 1]
+    if pos == string.len(pieces[piece]) then
+      piece, pos = piece + 1, 0
+    end
+    local want = string.sub(pieces[piece], pos + 1, pos + len)
+    local ok, got = pcall(function() return trans:read(len) end)
+    if not ok or got ~= want then
+      wrong = wrong + 1
+    end
+    pos = pos + string.len(want)
+    total = total + string.len(want)
+  end
+  check(wrong == 0,
+        what .. ': ' .. reads .. ' reads of assorted sizes return the ' ..
+        expectedTotal .. ' bytes in order (' .. wrong .. ' wrong)')
+end
+
+check_reads(TFramedTransport:new{
+              trans = CountingTransport:new{data = table.concat(frameWire)}
+            }, frames, 'frames')
+check_reads(THttpTransport:new{
+              trans = CountingTransport:new{data = table.concat(httpWire)},
+              isServer = true
+            }, bodies, 'HTTP bodies')
+
+-- readAll() carries on into the next frame until it has what it asked for.
+do
+  local trans = TFramedTransport:new{
+    trans = CountingTransport:new{data = table.concat(frameWire)}
+  }
+  local expected = table.concat(frames)
+  local got, total, wrong, reads = {}, 0, 0, 0
+  while total < string.len(expected) do
+    reads = reads + 1
+    local len = math.min(readSizes[(reads - 1) % #readSizes + 1] * 3,
+                         string.len(expected) - total)
+    local chunk = trans:readAll(len)
+    if string.len(chunk) ~= len then
+      wrong = wrong + 1
+    end
+    got[#got + 1] = chunk
+    total = total + len
+  end
+  check(wrong == 0 and table.concat(got) == expected,
+        'frames: ' .. reads .. ' readAll() calls across frame boundaries ' ..
+        'return the ' .. string.len(expected) .. ' bytes in order')
+end
+
+-- A list skipped inside a frame leaves the protocol at the field after it.
+do
+  local buffer = TMemoryBuffer:new{}
+  local out = TFramedTransport:new{trans = buffer}
+  local proto = TBinaryProtocol:new{trans = out}
+  proto:writeListBegin(TType.BYTE, 3000)
+  for i = 1, 3000 do
+    proto:writeByte(i % 100)
+  end
+  proto:writeListEnd()
+  proto:writeI32(123456789)
+  proto:writeString('after the list')
+  out:flush()
+
+  proto = TBinaryProtocol:new{trans = TFramedTransport:new{trans = buffer}}
+  local marker, text
+  ok = pcall(function()
+    proto:skip(TType.LIST)
+    marker = proto:readI32()
+    text = proto:readString()
+  end)
+  check(ok and marker == 123456789 and text == 'after the list',
+        'a list skipped inside a frame leaves the protocol at the next field')
+end
+
+-- One-byte reads cost about the same per byte whatever the size of the frame
+-- or body they come from. Timed rather than asserted on implementation, as
+-- with readAll() above, and the best of three runs to ride out noise.
+local function best_of_three(time_it, n)
+  local best
+  for _ = 1, 3 do
+    local t = time_it(n)
+    if not best or t < best then
+      best = t
+    end
+  end
+  return math.max(best, 1e-6)
+end
+
+local function time_frame_reads(n)
+  local trans = framed_over(n, string.rep('x', n))
+  local started = os.clock()
+  for _ = 1, n do
+    trans:read(1)
+  end
+  return os.clock() - started
+end
+
+local function time_body_reads(n)
+  local inner = CountingTransport:new{
+    data = 'POST / HTTP/1.1\r\nContent-Length: ' .. n .. '\r\n\r\n' ..
+           string.rep('x', n)
+  }
+  local trans = THttpTransport:new{trans = inner, isServer = true}
+  local started = os.clock()
+  for _ = 1, n do
+    trans:read(1)
+  end
+  return os.clock() - started
+end
+
+-- Eight times the bytes. Linear is ~8x; twenty leaves wide room for noise.
+for _, case in ipairs({{'a frame', time_frame_reads},
+                       {'an HTTP body', time_body_reads}}) do
+  case[2](2000)  -- warm up
+  local small = best_of_three(case[2], 25000)
+  local large = best_of_three(case[2], 200000)
+  local ratio = large / small
+  check(ratio < 20,
+        'one-byte reads from ' .. case[1] .. ' cost about linearly (8x the ' ..
+        'bytes took ' .. string.format('%.1f', ratio) .. 'x the time)')
+end
+
 print(string.format('\n%d checks, %d failures', checks, failures))
 os.exit(failures == 0 and 0 or 1)
