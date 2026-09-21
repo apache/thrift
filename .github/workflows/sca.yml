@@ -332,7 +332,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           # Lowest supported PHP version
-          php-version: "8.1"
+          php-version: "8.2"
           extensions: xml, curl, pcntl
 
       - name: Configure

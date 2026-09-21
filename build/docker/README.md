@@ -192,7 +192,7 @@ Last updated: May 2, 2026
 | nodejs    | 16.20.2       | 16.20.2       |               |       |
 | ocaml     | 4.08.1        | 4.13.1        |               |       |
 | perl      | 5.30.0        | 5.34.0        |               |       |
-| php       | 8.1 (ondrej)  | 8.1.2         | 8.3           | focal pulls 8.1 from ppa:ondrej/php |
+| php       | 8.2 (ondrej)  | 8.2 (ondrej)  | 8.3           | focal & jammy pull 8.2 from ppa:ondrej/php |
 | python2   | 2.7.18        |               |               |       |
 | python3   | 3.8.10        | 3.10.12       |               |       |
 | ruby      | 2.7.0p0       | 3.0.2p107     |               |       |
