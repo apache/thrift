@@ -25,7 +25,8 @@ namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionMethod;
+use ReflectionProperty;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Factory\TProtocolFactory;
@@ -37,7 +38,6 @@ use Thrift\Transport\TTransport;
 class TForkingServerTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     private const NO_CONNECTION = 'no connection';
 
@@ -67,13 +67,13 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer(null, $transport);
         $server->stop();
 
-        $this->assertTrue($this->getPropertyValue($server, 'stop'));
+        $this->assertTrue((new ReflectionProperty($server, 'stop'))->getValue($server));
     }
 
     public function testChildrenArrayInitiallyEmpty()
     {
         $server = $this->createServer();
-        $this->assertEmpty($this->getPropertyValue($server, 'children'));
+        $this->assertEmpty((new ReflectionProperty($server, 'children'))->getValue($server));
     }
 
     public function testConstructorStoresCollaborators()
@@ -94,12 +94,24 @@ class TForkingServerTest extends TestCase
             $outputProtocolFactory
         );
 
-        $this->assertSame($processor, $this->getPropertyValue($server, 'processor'));
-        $this->assertSame($transport, $this->getPropertyValue($server, 'transport'));
-        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory'));
-        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory'));
-        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory'));
-        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory'));
+        $this->assertSame($processor, (new ReflectionProperty($server, 'processor'))->getValue($server));
+        $this->assertSame($transport, (new ReflectionProperty($server, 'transport'))->getValue($server));
+        $this->assertSame(
+            $inputTransportFactory,
+            (new ReflectionProperty($server, 'inputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputTransportFactory,
+            (new ReflectionProperty($server, 'outputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $inputProtocolFactory,
+            (new ReflectionProperty($server, 'inputProtocolFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputProtocolFactory,
+            (new ReflectionProperty($server, 'outputProtocolFactory'))->getValue($server)
+        );
     }
 
     public function testServeListensAndLoopsUntilStopped()
@@ -115,7 +127,7 @@ class TForkingServerTest extends TestCase
             function () use ($server, &$callCount) {
                 $callCount++;
                 if ($callCount >= 2) {
-                    $this->setPropertyValue($server, 'stop', true);
+                    (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 }
                 throw new TTransportException(self::NO_CONNECTION);
             }
@@ -144,7 +156,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     return $clientTransport;
                 }
-                $this->setPropertyValue($server, 'stop', true);
+                (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 throw new TTransportException(self::NO_CONNECTION);
             }
         );
@@ -159,7 +171,7 @@ class TForkingServerTest extends TestCase
 
         $server->serve();
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayHasKey(12345, $children);
         $this->assertSame($clientTransport, $children[12345]);
     }
@@ -200,7 +212,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     throw new TTransportException('Connection reset');
                 }
-                $this->setPropertyValue($server, 'stop', true);
+                (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 throw new TTransportException(self::NO_CONNECTION);
             }
         );
@@ -223,7 +235,7 @@ class TForkingServerTest extends TestCase
         $transport2 = $this->createMock(TTransport::class);
         $transport2->expects($this->never())->method('close');
 
-        $this->setPropertyValue($server, 'children', [
+        (new ReflectionProperty($server, 'children'))->setValue($server, [
             111 => $transport1,
             222 => $transport2,
         ]);
@@ -234,10 +246,10 @@ class TForkingServerTest extends TestCase
                  return ($pid === 111) ? 111 : 0;
              });
 
-        $method = $this->getAccessibleMethod($server, 'collectChildren');
+        $method = new ReflectionMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayNotHasKey(111, $children);
         $this->assertArrayHasKey(222, $children);
     }
@@ -246,7 +258,7 @@ class TForkingServerTest extends TestCase
     {
         $server = $this->createServer();
 
-        $this->setPropertyValue($server, 'children', [
+        (new ReflectionProperty($server, 'children'))->setValue($server, [
             333 => null,
         ]);
 
@@ -254,10 +266,10 @@ class TForkingServerTest extends TestCase
              ->expects($this->once())
              ->willReturn(333);
 
-        $method = $this->getAccessibleMethod($server, 'collectChildren');
+        $method = new ReflectionMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertEmpty($children);
     }
 
@@ -266,10 +278,10 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer();
         $transport = $this->createStub(TTransport::class);
 
-        $method = $this->getAccessibleMethod($server, 'handleParent');
+        $method = new ReflectionMethod($server, 'handleParent');
         $method->invoke($server, $transport, 42);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayHasKey(42, $children);
         $this->assertSame($transport, $children[42]);
     }

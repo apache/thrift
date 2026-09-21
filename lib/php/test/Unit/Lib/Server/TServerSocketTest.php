@@ -25,7 +25,7 @@ namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TTransportException;
 use Thrift\Server\TServerSocket;
 use Thrift\Transport\TSocket;
@@ -33,14 +33,13 @@ use Thrift\Transport\TSocket;
 class TServerSocketTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     public function testSetAcceptTimeout(): void
     {
         $socket = new TServerSocket();
         $socket->setAcceptTimeout(1000);
 
-        $this->assertEquals(1000, $this->getPropertyValue($socket, 'acceptTimeout'));
+        $this->assertEquals(1000, (new ReflectionProperty($socket, 'acceptTimeout'))->getValue($socket));
     }
 
     public function testListenAndClose(): void
@@ -55,7 +54,7 @@ class TServerSocketTest extends TestCase
 
         $socket->listen();
 
-        $this->assertIsResource($this->getPropertyValue($socket, 'listener'));
+        $this->assertIsResource((new ReflectionProperty($socket, 'listener'))->getValue($socket));
 
         $this->getFunctionMock('Thrift\Server', 'fclose')
              ->expects($this->once())
@@ -63,7 +62,7 @@ class TServerSocketTest extends TestCase
              ->willReturn(true);
 
         $socket->close();
-        $this->assertNull($this->getPropertyValue($socket, 'listener'));
+        $this->assertNull((new ReflectionProperty($socket, 'listener'))->getValue($socket));
     }
 
     public function testAccept()
@@ -90,7 +89,7 @@ class TServerSocketTest extends TestCase
         $result = $socket->accept();
         $this->assertInstanceOf(TSocket::class, $result);
 
-        $this->assertEquals($transportHandle, $this->getPropertyValue($result, 'handle'));
+        $this->assertEquals($transportHandle, (new ReflectionProperty($result, 'handle'))->getValue($result));
     }
 
     public function testAcceptFailed()

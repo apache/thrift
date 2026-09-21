@@ -25,7 +25,7 @@ namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Factory\TBinaryProtocolAcceleratedFactory;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TBufferedTransport;
@@ -33,8 +33,6 @@ use Thrift\Transport\TTransport;
 
 class TBinaryProtocolAcceleratedFactoryTest extends TestCase
 {
-    use ReflectionHelper;
-
     #[DataProvider('getProtocolDataProvider')]
     public function testGetProtocol(bool $strictRead, bool $strictWrite): void
     {
@@ -43,8 +41,8 @@ class TBinaryProtocolAcceleratedFactoryTest extends TestCase
         $protocol = $factory->getProtocol($transport);
 
         $this->assertInstanceOf(TBinaryProtocolAccelerated::class, $protocol);
-        $this->assertEquals($strictRead, $this->getPropertyValue($protocol, 'strictRead'));
-        $this->assertEquals($strictWrite, $this->getPropertyValue($protocol, 'strictWrite'));
+        $this->assertEquals($strictRead, (new ReflectionProperty($protocol, 'strictRead'))->getValue($protocol));
+        $this->assertEquals($strictWrite, (new ReflectionProperty($protocol, 'strictWrite'))->getValue($protocol));
     }
 
     public static function getProtocolDataProvider(): \Generator
@@ -61,8 +59,8 @@ class TBinaryProtocolAcceleratedFactoryTest extends TestCase
         $protocol = (new TBinaryProtocolAcceleratedFactory())->getProtocol($transport);
 
         // TBinaryProtocolAccelerated defaults: strictRead=false, strictWrite=true.
-        $this->assertFalse($this->getPropertyValue($protocol, 'strictRead'));
-        $this->assertTrue($this->getPropertyValue($protocol, 'strictWrite'));
+        $this->assertFalse((new ReflectionProperty($protocol, 'strictRead'))->getValue($protocol));
+        $this->assertTrue((new ReflectionProperty($protocol, 'strictWrite'))->getValue($protocol));
     }
 
     public function testNonBufferedTransportIsWrapped(): void

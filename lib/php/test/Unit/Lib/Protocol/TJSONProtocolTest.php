@@ -26,7 +26,8 @@ namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionMethod;
+use ReflectionProperty;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\JSON\BaseContext;
 use Thrift\Protocol\TJSONProtocol;
@@ -36,8 +37,6 @@ use Thrift\Type\TType;
 
 class TJSONProtocolTest extends TestCase
 {
-    use ReflectionHelper;
-
     #[DataProvider('writeAndReadMessageBeginDataProvider')]
     public function testWriteAndReadMessageBegin(string $name, int $type, int $seqid)
     {
@@ -755,10 +754,10 @@ class TJSONProtocolTest extends TestCase
 
         // Reflect into the private popContext()/context to assert the
         // underflow path completes without TypeError.
-        $popContext = $this->getAccessibleMethod($protocol, 'popContext');
+        $popContext = new ReflectionMethod($protocol, 'popContext');
         $popContext->invoke($protocol);
 
-        $context = $this->getPropertyValue($protocol, 'context');
+        $context = (new ReflectionProperty($protocol, 'context'))->getValue($protocol);
         $this->assertInstanceOf(BaseContext::class, $context);
     }
 }

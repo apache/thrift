@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocket;
@@ -36,11 +36,10 @@ use Thrift\Transport\TSocket;
 class TSocketTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     protected function setUp(): void
     {
-        $this->getAccessibleProperty(TSocket::class, 'hasSocketsExtension')
+        (new ReflectionProperty(TSocket::class, 'hasSocketsExtension'))
              ->setValue(null, null);
     }
 
@@ -371,8 +370,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setSendTimeout(9999);
-        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'sendTimeoutSec'));
-        $this->assertEquals(999000, $this->getPropertyValue($transport, 'sendTimeoutUsec'));
+        $this->assertEquals(9.0, (new ReflectionProperty($transport, 'sendTimeoutSec'))->getValue($transport));
+        $this->assertEquals(999000, (new ReflectionProperty($transport, 'sendTimeoutUsec'))->getValue($transport));
     }
 
     public function testSetRecvTimeout()
@@ -389,8 +388,8 @@ class TSocketTest extends TestCase
         );
 
         $transport->setRecvTimeout(9999);
-        $this->assertEquals(9.0, $this->getPropertyValue($transport, 'recvTimeoutSec'));
-        $this->assertEquals(999000, $this->getPropertyValue($transport, 'recvTimeoutUsec'));
+        $this->assertEquals(9.0, (new ReflectionProperty($transport, 'recvTimeoutSec'))->getValue($transport));
+        $this->assertEquals(999000, (new ReflectionProperty($transport, 'recvTimeoutUsec'))->getValue($transport));
     }
 
     #[DataProvider('hostDataProvider')]
@@ -443,10 +442,10 @@ class TSocketTest extends TestCase
             $logger
         );
         $transport->setHandle(fopen('php://memory', 'r+'));
-        $this->assertNotNull($this->getPropertyValue($transport, 'handle'));
+        $this->assertNotNull((new ReflectionProperty($transport, 'handle'))->getValue($transport));
 
         $transport->close();
-        $this->assertNull($this->getPropertyValue($transport, 'handle'));
+        $this->assertNull((new ReflectionProperty($transport, 'handle'))->getValue($transport));
     }
 
     public function testClosePersistentSocket(): void
@@ -456,14 +455,14 @@ class TSocketTest extends TestCase
         $this->assertIsResource($handle);
         $transport->setHandle($handle);
 
-        $this->assertNotNull($this->getPropertyValue($transport, 'handle'));
+        $this->assertNotNull((new ReflectionProperty($transport, 'handle'))->getValue($transport));
 
         // Guard THRIFT-2151: close() must remain effective even when the
         // socket was opened in persistent mode.
         $transport->close();
 
         $this->assertIsClosedResource($handle);
-        $this->assertNull($this->getPropertyValue($transport, 'handle'));
+        $this->assertNull((new ReflectionProperty($transport, 'handle'))->getValue($transport));
     }
 
     #[DataProvider('writeFailDataProvider')]
