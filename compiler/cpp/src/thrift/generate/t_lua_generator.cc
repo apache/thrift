@@ -841,7 +841,7 @@ void t_lua_generator::generate_deserialize_field(ostream& out,
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_VOID:
-        throw "compiler error: cannot serialize void field in a struct: " + name;
+        throw "compiler error: cannot deserialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
         out << "readString()";
@@ -868,7 +868,7 @@ void t_lua_generator::generate_deserialize_field(ostream& out,
         out << "readUuid()";
         break;
       default:
-        throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
+        throw "compiler error: no Lua name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "readI32()";
@@ -1026,7 +1026,7 @@ void t_lua_generator::generate_serialize_field(ostream& out, t_field* tfield, st
         out << "writeUuid(" << name << ")";
         break;
       default:
-        throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
+        throw "compiler error: no Lua name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ")";
