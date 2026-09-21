@@ -20,8 +20,14 @@ class TSimpleServer extends TServer
 
     /**
      * Listens for new client using the supplied
-     * transport. It handles TTransportExceptions
-     * to avoid timeouts etc killing it
+     * transport and serves one client at a time
+     * until stop() is called. It handles
+     * TTransportExceptions from accept(), so that
+     * timeouts etc do not end it. Whatever ends a
+     * client's connection - the client closing it,
+     * a transport error or a request that cannot
+     * be read - ends only that connection, which
+     * is then closed.
      */
     public function serve(): void
     {
@@ -30,13 +36,22 @@ class TSimpleServer extends TServer
         while (!$this->stop) {
             try {
                 $transport = $this->transport->accept();
-                $inputTransport = $this->inputTransportFactory->getTransport($transport);
-                $outputTransport = $this->outputTransportFactory->getTransport($transport);
-                $inputProtocol = $this->inputProtocolFactory->getProtocol($inputTransport);
-                $outputProtocol = $this->outputProtocolFactory->getProtocol($outputTransport);
-                while ($this->processor->process($inputProtocol, $outputProtocol)) {
-                }
             } catch (TTransportException $e) {
+                continue;
+            }
+
+            try {
+                try {
+                    $inputTransport = $this->inputTransportFactory->getTransport($transport);
+                    $outputTransport = $this->outputTransportFactory->getTransport($transport);
+                    $inputProtocol = $this->inputProtocolFactory->getProtocol($inputTransport);
+                    $outputProtocol = $this->outputProtocolFactory->getProtocol($outputTransport);
+                    while ($this->processor->process($inputProtocol, $outputProtocol)) {
+                    }
+                } finally {
+                    $transport->close();
+                }
+            } catch (\Throwable $e) {
             }
         }
     }

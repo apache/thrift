@@ -24,12 +24,18 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use ReflectionProperty;
+use Test\Thrift\Unit\Lib\Server\Fixture\ConnectionStub;
+use Test\Thrift\Unit\Lib\Server\Fixture\CountingProcessor;
+use Test\Thrift\Unit\Lib\Server\Fixture\QueuedServerTransport;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
+use Thrift\Factory\TBinaryProtocolFactory;
 use Thrift\Factory\TProtocolFactory;
+use Thrift\Factory\TTransportFactory;
 use Thrift\Factory\TTransportFactoryInterface;
 use Thrift\Server\TForkingServer;
 use Thrift\Server\TServerTransport;
@@ -284,5 +290,50 @@ class TForkingServerTest extends TestCase
         $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayHasKey(42, $children);
         $this->assertSame($transport, $children[42]);
+    }
+
+    /**
+     * The child forked for a connection ends with that connection, also when
+     * the request cannot be read, and never returns into the accept loop.
+     * handleChild() ends the process, so the test runs serve() in a real
+     * child process and looks at how that process ended.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function testChildExitsWhenItsConnectionFails()
+    {
+        $serverTransport = new QueuedServerTransport([new ConnectionStub("\xff\xff\xff\xff")]);
+        $server = $this->createServer(
+            new CountingProcessor(),
+            $serverTransport,
+            new TTransportFactory(),
+            new TTransportFactory(),
+            new TBinaryProtocolFactory(),
+            new TBinaryProtocolFactory()
+        );
+        $serverTransport->server = $server;
+
+        // Every connection the server accepts takes the child's side of the fork.
+        $this->getFunctionMock('Thrift\Server', 'pcntl_fork')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $pid = \pcntl_fork();
+        if ($pid === 0) {
+            // Keep whatever the child prints on its way out to itself.
+            ob_start(static function (): string {
+                return '';
+            });
+            try {
+                $server->serve();
+            } catch (\Throwable $e) {
+            }
+            // Only reached when the child came back out of serve().
+            exit(3);
+        }
+
+        $this->assertGreaterThan(0, $pid, 'fork failed');
+        \pcntl_waitpid($pid, $status);
+        $this->assertTrue(\pcntl_wifexited($status), 'the child did not exit');
+        $this->assertSame(0, \pcntl_wexitstatus($status), 'exit status of the child');
     }
 }
