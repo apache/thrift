@@ -38,6 +38,11 @@ use Thrift\Exception\TTransportException;
 class TMemoryBuffer extends TTransport
 {
     /**
+     * Offset of the first unread byte in $buf.
+     */
+    private int $rPos = 0;
+
+    /**
      * Constructor. Optionally pass an initial value for the buffer.
      */
     public function __construct(protected string $buf = '')
@@ -59,12 +64,18 @@ class TMemoryBuffer extends TTransport
 
     public function write(string $buf): void
     {
+        // Drop the bytes already read before the buffer grows, once they are
+        // at least as many as the bytes still unread.
+        if ($this->rPos > 0 && 2 * $this->rPos >= strlen($this->buf)) {
+            $this->buf = substr($this->buf, $this->rPos);
+            $this->rPos = 0;
+        }
         $this->buf .= $buf;
     }
 
     public function read(int $len): string
     {
-        $bufLength = strlen($this->buf);
+        $bufLength = strlen($this->buf) - $this->rPos;
 
         if ($bufLength === 0) {
             throw new TTransportException(
@@ -74,31 +85,31 @@ class TMemoryBuffer extends TTransport
             );
         }
 
-        if ($bufLength <= $len) {
-            $ret = $this->buf;
+        $ret = substr($this->buf, $this->rPos, $len);
+        $this->rPos += strlen($ret);
+
+        // Release the buffer once it has been read
+        if ($this->rPos === strlen($this->buf)) {
             $this->buf = '';
-
-            return $ret;
+            $this->rPos = 0;
         }
-
-        $ret = substr($this->buf, 0, $len);
-        $this->buf = substr($this->buf, $len);
 
         return $ret;
     }
 
     public function getBuffer(): string
     {
-        return $this->buf;
+        return substr($this->buf, $this->rPos);
     }
 
     public function available(): int
     {
-        return strlen($this->buf);
+        return strlen($this->buf) - $this->rPos;
     }
 
     public function putBack(string $data): void
     {
-        $this->buf = $data . $this->buf;
+        $this->buf = $data . substr($this->buf, $this->rPos);
+        $this->rPos = 0;
     }
 }

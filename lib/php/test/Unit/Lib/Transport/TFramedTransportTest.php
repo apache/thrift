@@ -29,6 +29,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionProperty;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TFramedTransport;
+use Thrift\Transport\TMemoryBuffer;
 use Thrift\Transport\TTransport;
 
 class TFramedTransportTest extends TestCase
@@ -315,5 +316,50 @@ class TFramedTransportTest extends TestCase
             'writeBuffer' => '12345',
             'lowLevelTransportWrite' => pack('N', strlen('12345')) . '12345',
         ];
+    }
+
+    /**
+     * A read returns at most the bytes left in the current frame and fetches
+     * the next frame only once the current one is used up.
+     */
+    public function testReadsOfAssortedSizesFollowTheFrames()
+    {
+        $frames = ['a', '', 'bc', str_repeat('d', 300), 'efghijk', str_repeat('l', 5000), 'mn'];
+        $wire = '';
+        foreach ($frames as $frame) {
+            $wire .= pack('N', strlen($frame)) . $frame;
+        }
+        $framedTransport = new TFramedTransport(new TMemoryBuffer($wire));
+
+        $sizes = [1, 2, 3, 5, 7, 64, 1000, 4096];
+        $pending = $frames;
+        $frame = '';
+        $reads = 0;
+        while ($pending !== [] || $frame !== '') {
+            if ($frame === '') {
+                $frame = array_shift($pending);
+            }
+            $len = $sizes[$reads++ % count($sizes)];
+            $expected = substr($frame, 0, $len);
+            $frame = substr($frame, strlen($expected));
+            $this->assertSame($expected, $framedTransport->read($len), "read #$reads of $len bytes");
+        }
+
+        $framedTransport = new TFramedTransport(new TMemoryBuffer($wire));
+        $this->assertSame(implode('', $frames), $framedTransport->readAll(strlen(implode('', $frames))));
+    }
+
+    public function testPutBackPrecedesTheRestOfTheFrame()
+    {
+        $wire = pack('N', 6) . 'abcdef' . pack('N', 2) . 'gh';
+        $framedTransport = new TFramedTransport(new TMemoryBuffer($wire));
+
+        $this->assertSame('abc', $framedTransport->read(3));
+        $framedTransport->putBack('XY');
+        $this->assertSame('XYd', $framedTransport->read(3));
+        $this->assertSame('ef', $framedTransport->read(10));
+        $framedTransport->putBack('Z');
+        $this->assertSame('Z', $framedTransport->read(10));
+        $this->assertSame('gh', $framedTransport->read(10));
     }
 }

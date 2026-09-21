@@ -48,6 +48,11 @@ class TFramedTransport extends TTransport
     private string $rBuf = '';
 
     /**
+     * Offset of the first unread byte in $rBuf.
+     */
+    private int $rPos = 0;
+
+    /**
      * Buffer for queued output data
      */
     private string $wBuf = '';
@@ -85,31 +90,26 @@ class TFramedTransport extends TTransport
             return $this->transport->read($len);
         }
 
-        if (strlen($this->rBuf) === 0) {
+        if ($this->rPos === strlen($this->rBuf)) {
             $this->readFrame();
         }
 
-        // Just return full buff
-        if ($len >= strlen($this->rBuf)) {
-            $out = $this->rBuf;
+        $out = substr($this->rBuf, $this->rPos, $len);
+        $this->rPos += strlen($out);
+
+        // Release the frame once it has been read
+        if ($this->rPos === strlen($this->rBuf)) {
             $this->rBuf = '';
-
-            return $out;
+            $this->rPos = 0;
         }
-
-        $out = substr($this->rBuf, 0, $len);
-        $this->rBuf = substr($this->rBuf, $len);
 
         return $out;
     }
 
     public function putBack(string $data): void
     {
-        if (strlen($this->rBuf) === 0) {
-            $this->rBuf = $data;
-        } else {
-            $this->rBuf = ($data . $this->rBuf);
-        }
+        $this->rBuf = $data . substr($this->rBuf, $this->rPos);
+        $this->rPos = 0;
     }
 
     /**
@@ -133,6 +133,7 @@ class TFramedTransport extends TTransport
         }
 
         $this->rBuf = $this->transport->readAll($sz);
+        $this->rPos = 0;
     }
 
     /**

@@ -52,6 +52,11 @@ class TPsrHttpClient extends TTransport
     protected string $response = '';
 
     /**
+     * Offset of the first unread byte in $response.
+     */
+    private int $responsePos = 0;
+
+    /**
      * @var array<string, string|int>
      */
     protected array $headers = [];
@@ -100,19 +105,21 @@ class TPsrHttpClient extends TTransport
     {
         $this->request = '';
         $this->response = '';
+        $this->responsePos = 0;
     }
 
     public function read(int $len): string
     {
-        if ($len >= strlen($this->response)) {
-            $ret = $this->response;
+        if ($len >= strlen($this->response) - $this->responsePos) {
+            $ret = substr($this->response, $this->responsePos);
             $this->response = '';
+            $this->responsePos = 0;
 
             return $ret;
         }
 
-        $ret = substr($this->response, 0, $len);
-        $this->response = substr($this->response, $len);
+        $ret = substr($this->response, $this->responsePos, $len);
+        $this->responsePos += strlen($ret);
 
         return $ret;
     }
@@ -196,6 +203,7 @@ class TPsrHttpClient extends TTransport
         }
 
         $this->response = (string) $response->getBody();
+        $this->responsePos = 0;
     }
 
     /**

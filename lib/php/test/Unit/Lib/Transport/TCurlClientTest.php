@@ -90,12 +90,11 @@ class TCurlClientTest extends TestCase
 
         $response = $transport->read(5);
         $this->assertEquals('12345', $response);
-        $this->assertEquals('67890', (new ReflectionProperty($transport, 'response'))->getValue($transport));
 
         $response = $transport->read(5);
         $this->assertEquals('67890', $response);
         # The response does not cleaned after reading full answer, maybe it should be fixed
-        $this->assertEquals('67890', (new ReflectionProperty($transport, 'response'))->getValue($transport));
+        $this->assertEquals('67890', $transport->read(5));
     }
 
     public function testReadAll()
@@ -107,7 +106,27 @@ class TCurlClientTest extends TestCase
 
         $response = $transport->readAll(5);
         $this->assertEquals('12345', $response);
-        $this->assertEquals('67890', (new ReflectionProperty($transport, 'response'))->getValue($transport));
+        $this->assertEquals('67890', $transport->readAll(5));
+    }
+
+    public function testReadAfterFlushStartsAtTheNewResponse()
+    {
+        $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function');
+        $this->getFunctionMock('Thrift\\Transport', 'curl_init')->expects($this->any())->willReturn(true);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_setopt')->expects($this->any())->willReturn(true);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_exec')
+             ->expects($this->exactly(2))
+             ->willReturnOnConsecutiveCalls('abcdef', '123456');
+        $this->getFunctionMock('Thrift\\Transport', 'curl_error')->expects($this->any())->willReturn('');
+        $this->getFunctionMock('Thrift\\Transport', 'curl_getinfo')->expects($this->any())->willReturn(200);
+
+        $transport = new TCurlClient('localhost');
+        $transport->flush();
+        $this->assertEquals('ab', $transport->read(2));
+
+        $transport->flush();
+        $this->assertEquals('123', $transport->read(3));
+        $this->assertEquals('456', $transport->readAll(3));
     }
 
     public function testReadAllThrift4656()

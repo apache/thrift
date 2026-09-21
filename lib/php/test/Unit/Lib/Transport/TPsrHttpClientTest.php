@@ -116,9 +116,36 @@ class TPsrHttpClientTest extends TestCase
         (new ReflectionProperty($transport, 'response'))->setValue($transport, '1234567890');
 
         $this->assertSame('12345', $transport->read(5));
-        $this->assertSame('67890', (new ReflectionProperty($transport, 'response'))->getValue($transport));
         $this->assertSame('67890', $transport->read(99));
         $this->assertSame('', (new ReflectionProperty($transport, 'response'))->getValue($transport));
+        $this->assertSame('', $transport->read(5));
+    }
+
+    public function testReadAfterFlushStartsAtTheNewResponse(): void
+    {
+        $responses = [
+            $this->psr17->createResponse(200)->withBody($this->psr17->createStream('abcdef')),
+            $this->psr17->createResponse(200)->withBody($this->psr17->createStream('123456')),
+        ];
+        $client = new class ($responses) implements ClientInterface {
+            /** @param ResponseInterface[] $responses */
+            public function __construct(private array $responses)
+            {
+            }
+
+            public function sendRequest(RequestInterface $request): ResponseInterface
+            {
+                return array_shift($this->responses);
+            }
+        };
+        $transport = $this->makeTransport($client);
+
+        $transport->flush();
+        $this->assertSame('ab', $transport->read(2));
+
+        $transport->flush();
+        $this->assertSame('123', $transport->read(3));
+        $this->assertSame('456', $transport->readAll(3));
     }
 
     public function testReadAllThrowsWhenShort(): void

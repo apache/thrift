@@ -53,6 +53,11 @@ class TCurlClient extends TTransport
     protected string|false|null $response = null;
 
     /**
+     * Offset of the first unread byte in $response.
+     */
+    private int $responsePos = 0;
+
+    /**
      * Read timeout in seconds.
      */
     protected ?float $timeout = null;
@@ -104,6 +109,7 @@ class TCurlClient extends TTransport
     {
         $this->request = '';
         $this->response = null;
+        $this->responsePos = 0;
     }
 
     /**
@@ -112,12 +118,12 @@ class TCurlClient extends TTransport
     public function read(int $len): string
     {
         $response = (string) $this->response;
-        if ($len >= strlen($response)) {
-            return $response;
+        if ($len >= strlen($response) - $this->responsePos) {
+            return substr($response, $this->responsePos);
         }
 
-        $ret = substr($response, 0, $len);
-        $this->response = substr($response, $len);
+        $ret = substr($response, $this->responsePos, $len);
+        $this->responsePos += strlen($ret);
 
         return $ret;
     }
@@ -200,6 +206,7 @@ class TCurlClient extends TTransport
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
         $this->response = curl_exec(self::$curlHandle);
+        $this->responsePos = 0;
         $responseError = curl_error(self::$curlHandle);
 
         $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
