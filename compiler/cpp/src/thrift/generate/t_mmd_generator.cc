@@ -122,7 +122,6 @@ void t_mmd_generator::emit_program_types(t_program* program) {
 
   const vector<t_service*>& services = program->get_services();
   for (auto svc : services) {
-    service_name_ = get_service_name(svc);
     generate_service(svc);
   }
 }

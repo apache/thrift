@@ -283,7 +283,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   indent(f_xsd_) << s_xsd_types_.str();
 
   // Keep a list of all the possible exceptions that might get thrown
-  map<string, t_struct*> all_xceptions;
+  map<string, t_type*> all_xceptions;
 
   // List the elements that you might actually get
   vector<t_function*> functions = tservice->get_functions();
@@ -298,11 +298,11 @@ void t_xsd_generator::generate_service(t_service* tservice) {
     const std::vector<t_field*>& xceptions = xs->get_members();
     vector<t_field*>::const_iterator x_iter;
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      all_xceptions[(*x_iter)->get_name()] = (t_struct*)((*x_iter)->get_type());
+      all_xceptions[(*x_iter)->get_name()] = (*x_iter)->get_type();
     }
   }
 
-  map<string, t_struct*>::iterator ax_iter;
+  map<string, t_type*>::iterator ax_iter;
   for (ax_iter = all_xceptions.begin(); ax_iter != all_xceptions.end(); ++ax_iter) {
     generate_element(f_xsd_, ax_iter->first, ax_iter->second);
   }

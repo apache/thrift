@@ -110,8 +110,6 @@ public:
   void generate_java_struct_writer(std::ostream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ostream& out, t_struct* tstruct);
   void generate_java_struct_clear(std::ostream& out, t_struct* tstruct);
-  void generate_field_value_meta_data(std::ostream& out, t_type* type);
-  std::string get_java_type_string(t_type* type);
   void generate_reflection_setters(std::ostringstream& out,
                                    t_type* type,
                                    std::string field_name,
@@ -120,7 +118,6 @@ public:
                                    t_type* type,
                                    std::string field_name,
                                    std::string cap_name);
-  void generate_generic_field_getters_setters(std::ostream& out, t_struct* tstruct);
   void generate_java_bean_boilerplate(std::ostream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
@@ -1157,7 +1154,6 @@ void t_javame_generator::generate_java_struct_definition(ostream& out,
   generate_java_struct_clear(out, tstruct);
 
   generate_java_bean_boilerplate(out, tstruct);
-  generate_generic_field_getters_setters(out, tstruct);
 
   generate_java_struct_equality(out, tstruct);
   generate_java_struct_compare_to(out, tstruct);
@@ -1560,28 +1556,6 @@ void t_javame_generator::generate_reflection_setters(ostringstream& out,
   indent_down();
 }
 
-void t_javame_generator::generate_generic_field_getters_setters(std::ostream& out,
-                                                                t_struct* tstruct) {
-  (void)out;
-  std::ostringstream getter_stream;
-  std::ostringstream setter_stream;
-
-  // build up the bodies of both the getter and setter at once
-  const vector<t_field*>& fields = tstruct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    t_field* field = *f_iter;
-    t_type* type = get_true_type(field->get_type());
-    std::string field_name = field->get_name();
-    std::string cap_name = get_cap_name(field_name);
-
-    indent_up();
-    generate_reflection_setters(setter_stream, type, field_name, cap_name);
-    generate_reflection_getters(getter_stream, type, field_name, cap_name);
-    indent_down();
-  }
-}
-
 /**
  * Generates a set of Java Bean boilerplate functions (setters, getters, etc.)
  * for the given struct.
@@ -1795,97 +1769,6 @@ void t_javame_generator::generate_java_struct_tostring(ostream& out, t_struct* t
 
   indent_down();
   indent(out) << "}" << '\n' << '\n';
-}
-
-/**
- * Returns a string with the java representation of the given thrift type
- * (e.g. for the type struct it returns "TType.STRUCT")
- */
-std::string t_javame_generator::get_java_type_string(t_type* type) {
-  if (type->is_list()) {
-    return "TType.LIST";
-  } else if (type->is_map()) {
-    return "TType.MAP";
-  } else if (type->is_set()) {
-    return "TType.SET";
-  } else if (type->is_struct() || type->is_xception()) {
-    return "TType.STRUCT";
-  } else if (type->is_enum()) {
-    return "TType.ENUM";
-  } else if (type->is_typedef()) {
-    return get_java_type_string(((t_typedef*)type)->get_type());
-  } else if (type->is_base_type()) {
-    switch (((t_base_type*)type)->get_base()) {
-    case t_base_type::TYPE_VOID:
-      return "TType.VOID";
-      break;
-    case t_base_type::TYPE_STRING:
-      return "TType.STRING";
-      break;
-    case t_base_type::TYPE_BOOL:
-      return "TType.BOOL";
-      break;
-    case t_base_type::TYPE_I8:
-      return "TType.BYTE";
-      break;
-    case t_base_type::TYPE_I16:
-      return "TType.I16";
-      break;
-    case t_base_type::TYPE_I32:
-      return "TType.I32";
-      break;
-    case t_base_type::TYPE_I64:
-      return "TType.I64";
-      break;
-    case t_base_type::TYPE_DOUBLE:
-      return "TType.DOUBLE";
-      break;
-    default:
-      throw std::runtime_error("Unknown thrift type \"" + type->get_name()
-                               + "\" passed to t_javame_generator::get_java_type_string!");
-      break; // This should never happen!
-    }
-  } else {
-    throw std::runtime_error(
-        "Unknown thrift type \"" + type->get_name()
-        + "\" passed to t_javame_generator::get_java_type_string!"); // This should never happen!
-  }
-}
-
-void t_javame_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
-  out << '\n';
-  indent_up();
-  indent_up();
-  if (type->is_struct() || type->is_xception()) {
-    indent(out) << "new StructMetaData(TType.STRUCT, " << type_name(type) << ".class";
-  } else if (type->is_container()) {
-    if (type->is_list()) {
-      indent(out) << "new ListMetaData(TType.LIST, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();
-      generate_field_value_meta_data(out, elem_type);
-    } else if (type->is_set()) {
-      indent(out) << "new SetMetaData(TType.SET, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();
-      generate_field_value_meta_data(out, elem_type);
-    } else { // map
-      indent(out) << "new MapMetaData(TType.MAP, ";
-      t_type* key_type = ((t_map*)type)->get_key_type();
-      t_type* val_type = ((t_map*)type)->get_val_type();
-      generate_field_value_meta_data(out, key_type);
-      out << ", ";
-      generate_field_value_meta_data(out, val_type);
-    }
-  } else if (type->is_enum()) {
-    indent(out) << "new EnumMetaData(TType.ENUM, " << type_name(type) << ".class";
-  } else {
-    indent(out) << "new FieldValueMetaData(" << get_java_type_string(type);
-    if (type->is_typedef()) {
-      indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
-    }
-  }
-  out << ")";
-  indent_down();
-  indent_down();
 }
 
 /**
