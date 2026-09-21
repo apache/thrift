@@ -25,15 +25,13 @@ namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Factory\TBinaryProtocolFactory;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TTransport;
 
 class TBinaryProtocolFactoryTest extends TestCase
 {
-    use ReflectionHelper;
-
     /**
      * @param bool $strictRead
      * @param bool $strictWrite
@@ -50,9 +48,9 @@ class TBinaryProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TBinaryProtocol::class, $protocol);
 
-        $this->assertEquals($strictRead, $this->getPropertyValue($protocol, 'strictRead'));
-        $this->assertEquals($strictWrite, $this->getPropertyValue($protocol, 'strictWrite'));
-        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans'));
+        $this->assertEquals($strictRead, (new ReflectionProperty($protocol, 'strictRead'))->getValue($protocol));
+        $this->assertEquals($strictWrite, (new ReflectionProperty($protocol, 'strictWrite'))->getValue($protocol));
+        $this->assertSame($transport, (new ReflectionProperty($protocol, 'trans'))->getValue($protocol));
     }
 
     public static function getProtocolDataProvider()

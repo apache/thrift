@@ -30,7 +30,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TException;
 use Thrift\Transport\TSocket;
 use Thrift\Transport\TSocketPool;
@@ -38,16 +38,15 @@ use Thrift\Transport\TSocketPool;
 class TSocketPoolTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     protected function setUp(): void
     {
         #need to be defined before the TSocketPool class definition
         self::defineFunctionMock('Thrift\Transport', 'function_exists');
 
-        $this->getAccessibleProperty(TSocketPool::class, 'hasApcuCache')
+        (new ReflectionProperty(TSocketPool::class, 'hasApcuCache'))
              ->setValue(null, null);
-        $this->getAccessibleProperty(TSocket::class, 'hasSocketsExtension')
+        (new ReflectionProperty(TSocket::class, 'hasSocketsExtension'))
              ->setValue(null, null);
     }
 
@@ -61,7 +60,7 @@ class TSocketPoolTest extends TestCase
     ) {
         $socketPool = new TSocketPool($hosts, $ports, $persist, $logger);
 
-        $this->assertEquals($expectedServers, $this->getPropertyValue($socketPool, 'servers'));
+        $this->assertEquals($expectedServers, (new ReflectionProperty($socketPool, 'servers'))->getValue($socketPool));
     }
 
 
@@ -112,7 +111,10 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->addServer('localhost', 9090);
 
-        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $this->getPropertyValue($socketPool, 'servers'));
+        $this->assertEquals(
+            [['host' => 'localhost', 'port' => 9090]],
+            (new ReflectionProperty($socketPool, 'servers'))->getValue($socketPool)
+        );
     }
 
     public function testSetNumRetries(): void
@@ -120,7 +122,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setNumRetries(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'numRetries'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'numRetries'))->getValue($socketPool));
     }
 
     public function testrSetRetryInterval(): void
@@ -128,7 +130,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRetryInterval(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'retryInterval'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'retryInterval'))->getValue($socketPool));
     }
 
     public function testrSetMaxConsecutiveFailures(): void
@@ -136,7 +138,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setMaxConsecutiveFailures(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'maxConsecutiveFailures'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'maxConsecutiveFailures'))->getValue($socketPool));
     }
 
     public function testrSetRandomize(): void
@@ -144,7 +146,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRandomize(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'randomize'));
+        $this->assertEquals(false, (new ReflectionProperty($socketPool, 'randomize'))->getValue($socketPool));
     }
 
     public function testrSetAlwaysTryLast(): void
@@ -152,7 +154,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setAlwaysTryLast(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'alwaysTryLast'));
+        $this->assertEquals(false, (new ReflectionProperty($socketPool, 'alwaysTryLast'))->getValue($socketPool));
     }
 
     #[DataProvider('openDataProvider')]

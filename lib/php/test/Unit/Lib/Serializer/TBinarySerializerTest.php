@@ -27,21 +27,20 @@ namespace Test\Thrift\Unit\Lib\Serializer;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Test\Thrift\Unit\Lib\Fixture\TestSerializerStruct;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
 use Thrift\Serializer\TBinarySerializer;
 use Thrift\Type\TMessageType;
 
 class TBinarySerializerTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     protected function setUp(): void
     {
         self::defineFunctionMock('Thrift\Serializer', 'function_exists');
 
-        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+        (new ReflectionProperty(TBinarySerializer::class, 'hasAcceleratedProtocol'))
              ->setValue(null, null);
     }
 
@@ -147,7 +146,7 @@ class TBinarySerializerTest extends TestCase
 
         $serialized = TBinarySerializer::serialize($object);
 
-        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+        (new ReflectionProperty(TBinarySerializer::class, 'hasAcceleratedProtocol'))
              ->setValue(null, null);
 
         $funcExists = $this->getFunctionMock('Thrift\Serializer', 'function_exists');
@@ -177,7 +176,7 @@ class TBinarySerializerTest extends TestCase
 
         $serialized = TBinarySerializer::serialize($object);
 
-        $this->getAccessibleProperty(TBinarySerializer::class, 'hasAcceleratedProtocol')
+        (new ReflectionProperty(TBinarySerializer::class, 'hasAcceleratedProtocol'))
              ->setValue(null, null);
 
         $funcExists = $this->getFunctionMock('Thrift\Serializer', 'function_exists');

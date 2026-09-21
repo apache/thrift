@@ -31,14 +31,12 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TPsrHttpClient;
 
 class TPsrHttpClientTest extends TestCase
 {
-    use ReflectionHelper;
-
     private Psr17Factory $psr17;
 
     protected function setUp(): void
@@ -93,13 +91,13 @@ class TPsrHttpClientTest extends TestCase
     public function testCloseClearsBuffers(): void
     {
         $transport = $this->makeTransport($this->makeClient($this->psr17->createResponse(200)));
-        $this->setPropertyValue($transport, 'request', 'pending');
-        $this->setPropertyValue($transport, 'response', 'leftover');
+        (new ReflectionProperty($transport, 'request'))->setValue($transport, 'pending');
+        (new ReflectionProperty($transport, 'response'))->setValue($transport, 'leftover');
 
         $transport->close();
 
-        $this->assertSame('', $this->getPropertyValue($transport, 'request'));
-        $this->assertSame('', $this->getPropertyValue($transport, 'response'));
+        $this->assertSame('', (new ReflectionProperty($transport, 'request'))->getValue($transport));
+        $this->assertSame('', (new ReflectionProperty($transport, 'response'))->getValue($transport));
     }
 
     public function testWriteAccumulatesBuffer(): void
@@ -109,24 +107,24 @@ class TPsrHttpClientTest extends TestCase
         $transport->write('foo');
         $transport->write('bar');
 
-        $this->assertSame('foobar', $this->getPropertyValue($transport, 'request'));
+        $this->assertSame('foobar', (new ReflectionProperty($transport, 'request'))->getValue($transport));
     }
 
     public function testReadConsumesResponseBuffer(): void
     {
         $transport = $this->makeTransport($this->makeClient($this->psr17->createResponse(200)));
-        $this->setPropertyValue($transport, 'response', '1234567890');
+        (new ReflectionProperty($transport, 'response'))->setValue($transport, '1234567890');
 
         $this->assertSame('12345', $transport->read(5));
-        $this->assertSame('67890', $this->getPropertyValue($transport, 'response'));
+        $this->assertSame('67890', (new ReflectionProperty($transport, 'response'))->getValue($transport));
         $this->assertSame('67890', $transport->read(99));
-        $this->assertSame('', $this->getPropertyValue($transport, 'response'));
+        $this->assertSame('', (new ReflectionProperty($transport, 'response'))->getValue($transport));
     }
 
     public function testReadAllThrowsWhenShort(): void
     {
         $transport = $this->makeTransport($this->makeClient($this->psr17->createResponse(200)));
-        $this->setPropertyValue($transport, 'response', 'abc');
+        (new ReflectionProperty($transport, 'response'))->setValue($transport, 'abc');
 
         $this->expectException(TTransportException::class);
         $this->expectExceptionMessage('TPsrHttpClient could not read 10 bytes');
@@ -137,13 +135,13 @@ class TPsrHttpClientTest extends TestCase
     public function testAddHeadersMergesWithExisting(): void
     {
         $transport = $this->makeTransport($this->makeClient($this->psr17->createResponse(200)));
-        $this->setPropertyValue($transport, 'headers', ['X-Existing' => 'old']);
+        (new ReflectionProperty($transport, 'headers'))->setValue($transport, ['X-Existing' => 'old']);
 
         $transport->addHeaders(['X-New' => 'new', 'X-Existing' => 'replaced']);
 
         $this->assertSame(
             ['X-Existing' => 'replaced', 'X-New' => 'new'],
-            $this->getPropertyValue($transport, 'headers'),
+            (new ReflectionProperty($transport, 'headers'))->getValue($transport),
         );
     }
 
@@ -187,7 +185,7 @@ class TPsrHttpClientTest extends TestCase
 
         $transport->flush();
 
-        $this->assertSame('', $this->getPropertyValue($transport, 'request'));
+        $this->assertSame('', (new ReflectionProperty($transport, 'request'))->getValue($transport));
     }
 
     #[DataProvider('urlProvider')]
