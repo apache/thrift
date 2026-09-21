@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Protocol;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TException;
 use Thrift\Exception\TProtocolException;
 use Thrift\Exception\TTransportException;
@@ -41,8 +41,6 @@ use Thrift\Transport\TTransport;
  */
 class JsonStringSizeLimitTest extends TestCase
 {
-    use ReflectionHelper;
-
     private const MAX = 1024;
 
     /**
@@ -54,10 +52,16 @@ class JsonStringSizeLimitTest extends TestCase
     public function testTheDefaultIsTheBinaryDefault(): void
     {
         $protocol = new TJSONProtocol(self::transport(''));
-        $this->assertSame(TProtocol::DEFAULT_MAX_STRING_SIZE, $this->getPropertyValue($protocol, 'maxStringSize'));
+        $this->assertSame(
+            TProtocol::DEFAULT_MAX_STRING_SIZE,
+            (new ReflectionProperty($protocol, 'maxStringSize'))->getValue($protocol)
+        );
 
         $protocol = (new TJSONProtocolFactory())->getProtocol(self::transport(''));
-        $this->assertSame(TProtocol::DEFAULT_MAX_STRING_SIZE, $this->getPropertyValue($protocol, 'maxStringSize'));
+        $this->assertSame(
+            TProtocol::DEFAULT_MAX_STRING_SIZE,
+            (new ReflectionProperty($protocol, 'maxStringSize'))->getValue($protocol)
+        );
     }
 
     public function testAMethodNameOverTheMaximumIsRefusedWhileItIsRead(): void
