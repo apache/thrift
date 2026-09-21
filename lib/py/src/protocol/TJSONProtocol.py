@@ -18,7 +18,8 @@
 #
 
 from .TProtocol import (TType, TProtocolBase, TProtocolException,
-                        TProtocolFactory, checkIntegerLimits)
+                        TProtocolFactory, checkIntegerLimits,
+                        DEFAULT_STRING_LENGTH_LIMIT)
 import base64
 import math
 import uuid
@@ -173,12 +174,14 @@ class LookaheadReader():
 
 class TJSONProtocolBase(TProtocolBase):
 
-    def __init__(self, trans, string_length_limit=None):
+    def __init__(self, trans, string_length_limit=DEFAULT_STRING_LENGTH_LIMIT):
         TProtocolBase.__init__(self, trans)
         # JSON strings/numbers are delimited, not length-prefixed, so there is no
-        # declared size to reject up front. The per-string limit is enforced as
-        # the field is read (see readJSONString/readJSONNumericChars); it defaults
-        # to None (unbounded), matching TBinaryProtocol/TCompactProtocol.
+        # declared size to reject up front: the peer sets the size of a value by
+        # how much it sends. The per-string limit is enforced as the field is read
+        # (see readJSONString/readJSONNumericChars) and defaults to the same
+        # DEFAULT_STRING_LENGTH_LIMIT as TBinaryProtocol/TCompactProtocol. Pass
+        # string_length_limit=None to read values of any length.
         self.string_length_limit = string_length_limit
         self.resetWriteContext()
         self.resetReadContext()
@@ -594,7 +597,7 @@ class TJSONProtocol(TJSONProtocolBase):
 
 
 class TJSONProtocolFactory(TProtocolFactory):
-    def __init__(self, string_length_limit=None):
+    def __init__(self, string_length_limit=DEFAULT_STRING_LENGTH_LIMIT):
         self.string_length_limit = string_length_limit
 
     def getProtocol(self, trans):
