@@ -294,7 +294,6 @@ SKILL.md
 /lib/go/src
 /lib/go/test/fuzz/gopathfuzz
 /lib/go/test/gopath/
-/lib/go/test/ThriftTest*.thrift
 /lib/nodets/test-compiled/
 /lib/ocaml/_build/
 /lib/ocaml/_tags
@@ -365,7 +364,6 @@ SKILL.md
 /test/erl/_build/
 /test/erl/rebar.lock
 /test/go/bin/
-/test/go/ThriftTest*.thrift
 /test/go/gopath
 /test/go/pkg/
 /test/go/src/code.google.com/
