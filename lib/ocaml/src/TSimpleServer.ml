@@ -34,7 +34,7 @@ object
           try
             while (pf#process inp op) do () done;
             trans#close
-          with e -> trans#close; raise e
+          with _ -> (try trans#close with _ -> ())
       done
     with _ -> ()
 end
