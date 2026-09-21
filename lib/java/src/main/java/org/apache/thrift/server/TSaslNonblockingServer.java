@@ -201,6 +201,8 @@ public class TSaslNonblockingServer extends TServer {
     private final BlockingQueue<NonblockingSaslHandler> stateTransitions =
         new LinkedBlockingQueue<>();
     private final Selector ioSelector;
+    // Set once this thread no longer serves connections, guarded by this.
+    private boolean closed = false;
 
     NetworkThread(String name) throws IOException {
       super(name);
@@ -219,6 +221,8 @@ public class TSaslNonblockingServer extends TServer {
       } catch (Throwable e) {
         LOGGER.error("Unreoverable error in " + getName(), e);
       } finally {
+        // Without this thread, its share of the connections would never be served.
+        TSaslNonblockingServer.this.stop();
         close();
       }
     }
@@ -229,7 +233,17 @@ public class TSaslNonblockingServer extends TServer {
         if (statemachine == null) {
           return;
         }
-        tryRunNextPhase(statemachine);
+        try {
+          tryRunNextPhase(statemachine);
+        } catch (Throwable e) {
+          closeAfterFailure(
+              e,
+              () -> {
+                if (statemachine.getCurrentPhase() != Phase.CLOSED) {
+                  statemachine.close();
+                }
+              });
+        }
       }
     }
 
@@ -246,22 +260,55 @@ public class TSaslNonblockingServer extends TServer {
       while (!stopped_ && selectedKeyItr.hasNext()) {
         SelectionKey selected = selectedKeyItr.next();
         selectedKeyItr.remove();
-        if (!selected.isValid()) {
-          closeChannel(selected);
+        try {
+          if (!selected.isValid()) {
+            closeChannel(selected);
+          }
+          NonblockingSaslHandler saslHandler = (NonblockingSaslHandler) selected.attachment();
+          if (selected.isReadable()) {
+            saslHandler.handleRead();
+          } else if (selected.isWritable()) {
+            saslHandler.handleWrite();
+          } else {
+            LOGGER.error("Invalid interest op " + selected.interestOps());
+            closeChannel(selected);
+            continue;
+          }
+          if (saslHandler.isCurrentPhaseDone()) {
+            tryRunNextPhase(saslHandler);
+          }
+        } catch (Throwable e) {
+          closeAfterFailure(
+              e,
+              () -> {
+                if (selected.isValid()) {
+                  closeChannel(selected);
+                }
+              });
         }
-        NonblockingSaslHandler saslHandler = (NonblockingSaslHandler) selected.attachment();
-        if (selected.isReadable()) {
-          saslHandler.handleRead();
-        } else if (selected.isWritable()) {
-          saslHandler.handleWrite();
-        } else {
-          LOGGER.error("Invalid interest op " + selected.interestOps());
-          closeChannel(selected);
-          continue;
-        }
-        if (saslHandler.isCurrentPhaseDone()) {
-          tryRunNextPhase(saslHandler);
-        }
+      }
+    }
+
+    /**
+     * Closes a connection whose handling failed and lets this thread go on serving the others. This
+     * includes an OutOfMemoryError: closing the connection releases the memory it holds. Other
+     * virtual machine errors and ThreadDeath end this thread.
+     */
+    private void closeAfterFailure(Throwable failure, Runnable closeConnection) {
+      rethrowIfFatal(failure);
+      LOGGER.error("Closing a connection after a failure in " + getName(), failure);
+      try {
+        closeConnection.run();
+      } catch (Throwable e) {
+        rethrowIfFatal(e);
+        LOGGER.error("Failed to close a connection in " + getName(), e);
+      }
+    }
+
+    private void rethrowIfFatal(Throwable e) {
+      if (e instanceof ThreadDeath
+          || (e instanceof VirtualMachineError && !(e instanceof OutOfMemoryError))) {
+        throw (Error) e;
       }
     }
 
@@ -295,11 +342,14 @@ public class TSaslNonblockingServer extends TServer {
         } catch (IOException e) {
           LOGGER.error("Failed to register connection for the selector, close it.", e);
           connection.close();
+        } catch (Throwable e) {
+          closeAfterFailure(e, connection::close);
         }
       }
     }
 
     private synchronized void close() {
+      closed = true;
       LOGGER.warn("Closing " + getName());
       while (true) {
         TNonblockingTransport incomingConnection = incomingConnections.poll();
@@ -351,8 +401,8 @@ public class TSaslNonblockingServer extends TServer {
       }
     }
 
-    public boolean accept(TNonblockingTransport connection) {
-      if (stopped_) {
+    public synchronized boolean accept(TNonblockingTransport connection) {
+      if (stopped_ || closed) {
         return false;
       }
       if (incomingConnections.offer(connection)) {
