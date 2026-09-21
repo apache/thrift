@@ -248,6 +248,7 @@ SKILL.md
 /lib/kotlin/gradle/
 /lib/kotlin/gradlew
 /lib/kotlin/gradlew.bat
+/lib/lua/test/test_socket_send
 /lib/netstd/**/bin
 /lib/netstd/**/obj
 /lib/nodejs/coverage

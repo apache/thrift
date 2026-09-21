@@ -95,7 +95,10 @@ function TSocket:read(len)
 end
 
 function TSocket:write(buf)
-  self.handle:send(self.handle, buf)
+  local sent = self.handle:send(self.handle, buf)
+  if not sent then
+    terror(TTransportException:new{errorCode = TTransportException.UNKNOWN})
+  end
 end
 
 function TSocket:flush()
