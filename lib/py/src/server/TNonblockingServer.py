@@ -129,7 +129,6 @@ class Connection(object):
         self._wbuf = b''
         self.lock = threading.Lock()
         self.wake_up = wake_up
-        self.remaining = False
         self.max_frame_size = max_frame_size
 
     @socket_exception
@@ -179,7 +178,6 @@ class Connection(object):
             if self.received:
                 self.status = WAIT_PROCESS
                 break
-        self.remaining = not done
 
     @socket_exception
     def write(self):
@@ -326,7 +324,7 @@ class TNonblockingServer(object):
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 readable.append(connection.fileno())
-                if connection.remaining or connection.received:
+                if connection.received:
                     remaining.append(connection.fileno())
             if connection.is_writeable():
                 writable.append(connection.fileno())
@@ -347,7 +345,7 @@ class TNonblockingServer(object):
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 self.poll.register(connection.fileno(), select.POLLIN | select.POLLRDNORM | select.POLLERR | select.POLLHUP | select.POLLNVAL)
-                if connection.remaining or connection.received:
+                if connection.received:
                     remaining.append(connection.fileno())
             if connection.is_writeable():
                 self.poll.register(connection.fileno(), select.POLLOUT | select.POLLWRNORM)
