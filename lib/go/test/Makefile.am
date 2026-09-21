@@ -71,7 +71,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ClientMiddlewareExceptionTest.thrift \
 				ValidateTest.thrift \
 				ForwardType.thrift \
-				StringParseAllocationTest.thrift
+				StringParseAllocationTest.thrift \
+				DocCommentTest.thrift
 	mkdir -p gopath/src
 	grep -v 'set<Insanity>' $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
@@ -113,6 +114,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ValidateTest.thrift
 	$(THRIFT) $(THRIFTARGS) ForwardType.thrift
 	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
+	$(THRIFT) $(THRIFTARGS) DocCommentTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -180,6 +182,7 @@ EXTRA_DIST = \
 	ConstOptionalField.thrift \
 	ContainerKeyTest.thrift \
 	ConstOptionalFieldImport.thrift \
+	DocCommentTest.thrift \
 	DontExportRWTest.thrift \
 	DuplicateImportsTest.thrift \
 	ErrorTest.thrift \
