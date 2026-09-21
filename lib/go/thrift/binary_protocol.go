@@ -293,6 +293,12 @@ func (p *TBinaryProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 	if p.cfg.GetTBinaryStrictRead() {
 		return name, typeId, seqId, NewTProtocolExceptionWithType(BAD_VERSION, fmt.Errorf("Missing version in ReadMessageBegin"))
 	}
+	// Without a version, size is the length of the name, and it is held to
+	// the same limit as the length of any other string.
+	e = checkSizeForProtocol(size, p.cfg)
+	if e != nil {
+		return name, typeId, seqId, e
+	}
 	name, e2 := p.readStringBody(size)
 	if e2 != nil {
 		return name, typeId, seqId, e2
