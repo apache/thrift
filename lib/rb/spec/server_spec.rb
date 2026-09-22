@@ -145,6 +145,19 @@ describe "Server" do
       ],
       ["JSON unknown type", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"wat":0}}]' }],
       ["short JSON UUID", Thrift::JsonProtocolFactory.new, proc { '[1,"unknown",1,1,{"1":{"uid":"x"}}]' }],
+      [
+        "binary invalid UTF-8 method name", Thrift::BinaryProtocolFactory.new, proc do
+          method_name = [0xff, 0xfe].pack("C*")
+          [0x80010000 | Thrift::MessageTypes::CALL].pack("N") +
+            [method_name.bytesize].pack("N") + method_name + [1].pack("N") + [Thrift::Types::STOP].pack("C")
+        end,
+      ],
+      [
+        "compact invalid UTF-8 method name", Thrift::CompactProtocolFactory.new, proc do
+          method_name = [0xff, 0xfe].pack("C*")
+          [0x82, 0x21, 0x01, method_name.bytesize].pack("C*") + method_name + [Thrift::Types::STOP].pack("C")
+        end,
+      ],
     ].each do |failure_type, protocol_factory, malformed_request|
       it "closes a malformed #{failure_type} connection and continues accepting clients" do
         ready = Queue.new
@@ -221,6 +234,57 @@ describe "Server" do
       valid_transport = Thrift::FramedTransport.new(socket)
       valid_transport.open
       valid_protocol = Thrift::CompactProtocol.new(valid_transport)
+      Thrift::Test::Srv::Client.new(valid_protocol).send_voidMethod
+
+      expect(server_thread.join(2)).to eq(server_thread)
+      expect(handler.calls).to eq(1)
+      expect(errors).to be_empty
+    ensure
+      malformed_client&.close
+      valid_transport&.close
+      server_transport&.close
+      server_thread&.kill
+      server_thread&.join
+    end
+
+    it "closes a connection whose multiplexed dispatch fails and continues accepting clients" do
+      ready = Queue.new
+      errors = Queue.new
+      server_transport = EphemeralServerSocket.new(ready)
+      handler = StopAfterVoidHandler.new
+      protocol_factory = Thrift::BinaryProtocolFactory.new
+      processor = Thrift::MultiplexedProcessor.new
+      processor.register_processor("Srv", Thrift::Test::Srv::Processor.new(handler))
+      server = Thrift::SimpleServer.new(processor, server_transport, nil, protocol_factory)
+      server_thread = Thread.new do
+        catch(:stop) { server.serve }
+      rescue StandardError, ScriptError => error
+        errors << error
+      end
+      server_thread.report_on_exception = false
+
+      # A call without a "service:" prefix matches no registered processor.
+      unprefixed_request = Thrift::MemoryBufferTransport.new
+      Thrift::Test::Srv::Client.new(protocol_factory.get_protocol(unprefixed_request)).send_voidMethod
+
+      port = Timeout.timeout(2) { ready.pop }
+      malformed_client = TCPSocket.new("127.0.0.1", port)
+      malformed_client.write(unprefixed_request.read(unprefixed_request.available))
+      malformed_client.close_write
+
+      expect(IO.select([malformed_client], nil, nil, 2)).not_to be_nil
+      peer_closed = begin
+        malformed_client.readpartial(1)
+        false
+      rescue EOFError, Errno::ECONNRESET
+        true
+      end
+      expect(peer_closed).to be(true)
+      expect(server_thread).to be_alive
+
+      valid_transport = Thrift::Socket.new("127.0.0.1", port)
+      valid_transport.open
+      valid_protocol = Thrift::MultiplexedProtocol.new(protocol_factory.get_protocol(valid_transport), "Srv")
       Thrift::Test::Srv::Client.new(valid_protocol).send_voidMethod
 
       expect(server_thread.join(2)).to eq(server_thread)

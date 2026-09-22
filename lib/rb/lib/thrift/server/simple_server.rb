@@ -38,6 +38,12 @@ module Thrift
             @processor.process(prot, prot)
           end
         rescue Thrift::TransportException, Thrift::ProtocolException
+          # The client hung up or sent a message this connection could not
+          # read. Close it below and keep accepting other clients.
+        rescue => e
+          # Any other error raised while serving this one client must not end
+          # the accept loop. Log it, close the connection, and keep serving.
+          @logger.error("Error while serving a client connection: #{e.inspect}")
         ensure
           trans.close
         end
