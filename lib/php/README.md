@@ -57,7 +57,7 @@ apcu_fetch(), apcu_store()
 
 1. `TJSONProtocol` now holds a string, binary or numeric value to the same maximum string size as `TBinaryProtocol` and `TCompactProtocol`, and reports a longer one with a `TProtocolException` of type `SIZE_LIMIT`. A JSON value carries no length in front of it, so the maximum applies to the bytes it takes on the wire while it is read. The maximum defaults to `TProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes; it is an optional constructor argument of `TJSONProtocol` and of `TJSONProtocolFactory`; pass `0` to read values of any length, as before.
 
-2. `TCurlClient` no longer follows HTTP redirects. A reply with a 3xx status now fails the request with a `TTransportException`, as it already did with `THttpClient`. Configure the client with the URL that serves the requests.
+2. `TCurlClient` follows a redirect only within the origin of the URL it is configured with, that is to the same scheme, host and port. It sends the request again there, with its headers and body, and follows at most one redirect, as before. A redirect to another origin, including one from `http` to `https`, now fails the request with a `TTransportException`, as any redirect does with `THttpClient`. Configure the client with the scheme, host and port that serve the requests.
 
 ## 0.25.0
 

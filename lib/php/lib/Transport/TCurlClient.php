@@ -34,6 +34,11 @@ use Thrift\Exception\TTransportException;
  */
 class TCurlClient extends TTransport
 {
+    /**
+     * The port a URL without one refers to, by scheme.
+     */
+    private const DEFAULT_PORTS = ['http' => 80, 'https' => 443];
+
     /** @var \CurlHandle|null */
     private static $curlHandle;
 
@@ -166,12 +171,13 @@ class TCurlClient extends TTransport
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
             curl_setopt(self::$curlHandle, CURLOPT_CUSTOMREQUEST, 'POST');
-            // A redirect is not followed: its 3xx status fails the request below, as in THttpClient.
+            // curl follows no redirect; flush() follows one itself, within the origin of the URL.
             curl_setopt(self::$curlHandle, CURLOPT_FOLLOWLOCATION, false);
         }
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
-        $fullUrl = $this->scheme . "://" . $host . $this->uri;
+        $origin = $this->scheme . "://" . $host;
+        $fullUrl = $origin . $this->uri;
 
         $headers = [];
         $defaultHeaders = [
@@ -206,14 +212,24 @@ class TCurlClient extends TTransport
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
         $this->response = curl_exec(self::$curlHandle);
+        $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
+
+        // Follow one redirect, and only within the origin of the URL: the request goes
+        // out again, with its headers and body, to the new path and query.
+        if ($this->response !== false && $code >= 300 && $code < 400) {
+            $redirectUrl = self::redirectWithinOrigin($origin, curl_getinfo(self::$curlHandle, CURLINFO_REDIRECT_URL));
+            if ($redirectUrl !== null) {
+                $fullUrl = $redirectUrl;
+                curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
+                $this->response = curl_exec(self::$curlHandle);
+                $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
+            }
+        }
         $this->responsePos = 0;
         $responseError = curl_error(self::$curlHandle);
 
-        $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
-
         // Handle non 200 status code / connect failure
         if ($this->response === false || $code !== 200) {
-            curl_close(self::$curlHandle);
             self::$curlHandle = null;
             $this->response = null;
             $error = 'TCurlClient: Could not connect to ' . $fullUrl;
@@ -229,17 +245,9 @@ class TCurlClient extends TTransport
 
     public static function closeCurlHandle(): void
     {
-        try {
-            if (self::$curlHandle) {
-                // This function has no effect. Prior to PHP 8.0.0,
-                // this function was used to close the resource.
-                curl_close(self::$curlHandle);
-                self::$curlHandle = null;
-            }
-        } catch (\Exception $x) {
-            #it's not possible to throw an exception by calling a function that has no effect
-            error_log('There was an error closing the curl handle: ' . $x->getMessage());
-        }
+        // Dropping the reference frees the handle. curl_close() has had no effect
+        // since PHP 8.0, and PHP 8.5 deprecates it.
+        self::$curlHandle = null;
     }
 
     /**
@@ -248,5 +256,39 @@ class TCurlClient extends TTransport
     public function addHeaders(array $headers): void
     {
         $this->headers = array_merge($this->headers, $headers);
+    }
+
+    /**
+     * The URL to send the request to again after a redirect to $location: the
+     * path and query of $location, under $origin. Null when $location is not a
+     * URL with the scheme, host and port of $origin.
+     */
+    private static function redirectWithinOrigin(string $origin, mixed $location): ?string
+    {
+        $target = is_string($location) ? self::originOf($location) : null;
+        if ($target === null || $target !== self::originOf($origin)) {
+            return null;
+        }
+        $path = parse_url($location, PHP_URL_PATH);
+        $query = parse_url($location, PHP_URL_QUERY);
+
+        return $origin . (is_string($path) ? $path : '/') . (is_string($query) ? '?' . $query : '');
+    }
+
+    /**
+     * The scheme, host and port of $url, with the port the scheme implies when
+     * $url names none. Null when $url has no scheme or host.
+     *
+     * @return array{string, string, int|null}|null
+     */
+    private static function originOf(string $url): ?array
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts) || !isset($parts['scheme'], $parts['host'])) {
+            return null;
+        }
+        $scheme = strtolower($parts['scheme']);
+
+        return [$scheme, strtolower($parts['host']), $parts['port'] ?? self::DEFAULT_PORTS[$scheme] ?? null];
     }
 }
