@@ -268,6 +268,19 @@ abstract class TProtocol
      */
     public static function skipBinary(TTransport $itrans, int $type): int
     {
+        // Like skip(), but with no protocol to hold the depth budget: the
+        // transport holds it, for the inlined readers that call this.
+        $itrans->incrementRecursionDepth();
+
+        try {
+            return self::skipBinaryType($itrans, $type);
+        } finally {
+            $itrans->decrementRecursionDepth();
+        }
+    }
+
+    private static function skipBinaryType(TTransport $itrans, int $type): int
+    {
         return match ($type) {
             TType::BOOL, TType::BYTE => self::skipBinaryFixed($itrans, 1),
             TType::I16 => self::skipBinaryFixed($itrans, 2),

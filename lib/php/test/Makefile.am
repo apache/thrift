@@ -28,6 +28,7 @@ stubs: Resources/ThriftTest.thrift Resources/RecursionDepth.thrift
 	mkdir -p ./Resources/packages/phpcm
 	mkdir -p ./Resources/packages/phprec
 	mkdir -p ./Resources/packages/phprecoop
+	mkdir -p ./Resources/packages/phpreci
 	$(THRIFT) --gen php:nsglobal="Basic" -r --out ./Resources/packages/php Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:inlined,nsglobal="BasicInline" -r --out ./Resources/packages/phpi Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:validate,nsglobal="Validate" -r --out ./Resources/packages/phpv Resources/ThriftTest.thrift
@@ -36,6 +37,7 @@ stubs: Resources/ThriftTest.thrift Resources/RecursionDepth.thrift
 	$(THRIFT) --gen php:classmap,server,rest,nsglobal="Classmap" -r --out ./Resources/packages/phpcm Resources/ThriftTest.thrift
 	$(THRIFT) --gen php:nsglobal="PhpRec" -r --out ./Resources/packages/phprec Resources/RecursionDepth.thrift
 	$(THRIFT) --gen php:oop,nsglobal="PhpRecOop" -r --out ./Resources/packages/phprecoop Resources/RecursionDepth.thrift
+	$(THRIFT) --gen php:inlined,nsglobal="PhpRecInline" -r --out ./Resources/packages/phpreci Resources/RecursionDepth.thrift
 
 deps: $(top_srcdir)/composer.json
 	composer install --working-dir=$(top_srcdir)

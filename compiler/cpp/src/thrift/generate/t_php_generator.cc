@@ -1142,11 +1142,12 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
   out << indent() << "$xfer = 0;" << '\n' << indent() << "$fname = null;" << '\n' << indent()
       << "$ftype = 0;" << '\n' << indent() << "$fid = 0;" << '\n';
 
-  // Declare stack tmp variables
+  // In inline mode $input is the TTransport, which holds the depth budget
+  // for the reads that bypass a TProtocol.
+  indent(out) << "$input->incrementRecursionDepth();" << '\n';
+  indent(out) << "try {" << '\n';
+  indent_up();
   if (!binary_inline_) {
-    indent(out) << "$input->incrementRecursionDepth();" << '\n';
-    indent(out) << "try {" << '\n';
-    indent_up();
     indent(out) << "$xfer += $input->readStructBegin($fname);" << '\n';
   }
 
@@ -1225,13 +1226,13 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
 
   if (!binary_inline_) {
     indent(out) << "$xfer += $input->readStructEnd();" << '\n';
-    indent_down();
-    indent(out) << "} finally {" << '\n';
-    indent_up();
-    indent(out) << "$input->decrementRecursionDepth();" << '\n';
-    indent_down();
-    indent(out) << "}" << '\n';
   }
+  indent_down();
+  indent(out) << "} finally {" << '\n';
+  indent_up();
+  indent(out) << "$input->decrementRecursionDepth();" << '\n';
+  indent_down();
+  indent(out) << "}" << '\n';
 
   if (needs_php_read_validator(tstruct, is_result)) {
     indent(out) << "$this->validateForRead();" << '\n';

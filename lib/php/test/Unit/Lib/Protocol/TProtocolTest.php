@@ -264,6 +264,47 @@ class TProtocolTest extends TestCase
         TProtocol::skipBinary(new TMemoryBuffer(), 999);
     }
 
+    public function testSkipBinaryAtTheDepthLimit(): void
+    {
+        $this->assertSkipBinaryConsumesBuffer(
+            $this->buildNestedStructs(TProtocol::DEFAULT_RECURSION_DEPTH),
+            TType::STRUCT
+        );
+    }
+
+    public function testSkipBinaryPastTheDepthLimitThrows(): void
+    {
+        $buffer = $this->buildNestedStructs(TProtocol::DEFAULT_RECURSION_DEPTH + 1);
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::DEPTH_LIMIT);
+
+        TProtocol::skipBinary(new TMemoryBuffer($buffer), TType::STRUCT);
+    }
+
+    /**
+     * $levels nested structs, each but the last holding the next in a field.
+     */
+    private function buildNestedStructs(int $levels): string
+    {
+        return $this->buildBinaryBuffer(
+            function (TBinaryProtocol $protocol) use ($levels): void {
+                for ($i = 1; $i < $levels; $i++) {
+                    $protocol->writeStructBegin('Nested');
+                    $protocol->writeFieldBegin('inner', TType::STRUCT, 1);
+                }
+                $protocol->writeStructBegin('Nested');
+                $protocol->writeFieldStop();
+                $protocol->writeStructEnd();
+                for ($i = 1; $i < $levels; $i++) {
+                    $protocol->writeFieldEnd();
+                    $protocol->writeFieldStop();
+                    $protocol->writeStructEnd();
+                }
+            }
+        );
+    }
+
     private function buildBinaryBuffer(callable $writer): string
     {
         $transport = new TMemoryBuffer();

@@ -25,7 +25,9 @@ declare(strict_types=1);
 
 namespace Thrift\Transport;
 
+use Thrift\Exception\TProtocolException;
 use Thrift\Exception\TTransportException;
+use Thrift\Protocol\TProtocol;
 
 /**
  * Base interface for a transport agent.
@@ -34,6 +36,31 @@ use Thrift\Exception\TTransportException;
  */
 abstract class TTransport
 {
+    /**
+     * Nesting depth of the reads that decode straight from this transport
+     * rather than through a TProtocol: the read() methods of the code
+     * "--gen php:inlined" emits, and TProtocol::skipBinary(). Reads through a
+     * TProtocol count on the protocol instead.
+     */
+    private int $recursionDepth = 0;
+
+    /**
+     * @throws TProtocolException if the nesting goes past TProtocol::DEFAULT_RECURSION_DEPTH
+     */
+    public function incrementRecursionDepth(): void
+    {
+        ++$this->recursionDepth;
+        if ($this->recursionDepth > TProtocol::DEFAULT_RECURSION_DEPTH) {
+            --$this->recursionDepth;
+            throw new TProtocolException('Maximum recursion depth exceeded', TProtocolException::DEPTH_LIMIT);
+        }
+    }
+
+    public function decrementRecursionDepth(): void
+    {
+        --$this->recursionDepth;
+    }
+
     abstract public function isOpen(): bool;
 
     /**
