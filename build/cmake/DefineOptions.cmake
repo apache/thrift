@@ -70,8 +70,9 @@ CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
 
 # C GLib
 option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
+set(GLIB_MINREV 2.48)
 if(WITH_C_GLIB)
-    find_package(GLIB QUIET COMPONENTS gobject)
+    find_package(GLIB ${GLIB_MINREV} QUIET COMPONENTS gobject)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
@@ -179,7 +180,7 @@ endif ()
 message(STATUS)
 message(STATUS "  Build C (GLib) library:                     ${BUILD_C_GLIB}")
 MESSAGE_DEP(WITH_C_GLIB "Disabled by WITH_C_GLIB=OFF")
-MESSAGE_DEP(GLIB_FOUND "GLib missing")
+MESSAGE_DEP(GLIB_FOUND "GLib ${GLIB_MINREV} or later missing")
 message(STATUS)
 message(STATUS "  Build Java library:                         ${BUILD_JAVA}")
 MESSAGE_DEP(WITH_JAVA "Disabled by WITH_JAVA=OFF")

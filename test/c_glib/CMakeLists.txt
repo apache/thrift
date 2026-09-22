@@ -20,7 +20,7 @@
 # Contains the thrift specific target_link_libraries
 include(ThriftMacros)
 
-find_package(GLIB REQUIRED COMPONENTS gobject)
+find_package(GLIB ${GLIB_MINREV} REQUIRED COMPONENTS gobject)
 include_directories(SYSTEM "${GLIB_INCLUDE_DIR}")
 include_directories(SYSTEM "${GLIBCONFIG_INCLUDE_DIR}")
 
