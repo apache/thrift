@@ -202,18 +202,18 @@ end
 
 function TJSONProtocol:writeJSONEscapeChar(ch)
   self.trans:write(JSONNode.EscapePrefix)
-  local outCh = hexChar(libluabitwise.shiftr(ch, 4))
+  local outCh = self:hexChar(libluabitwise.shiftr(ch, 4))
   local buff = libluabpack.bpack('c', outCh)
   self.trans:write(buff)
-  outCh = hexChar(ch)
+  outCh = self:hexChar(ch)
   buff = libluabpack.bpack('c', outCh)
   self.trans:write(buff)
 end
 
 function TJSONProtocol:writeJSONChar(byte)
-  ch = string.byte(byte)
+  local ch = string.byte(byte)
   if ch >= 0x30 then
-    if ch == JSONNode.Backslash then
+    if ch == string.byte(JSONNode.Backslash) then
       self.trans:write(JSONNode.Backslash)
       self.trans:write(JSONNode.Backslash)
     else
@@ -253,13 +253,13 @@ function TJSONProtocol:writeJSONBase64(str)
   local offset = 1
   while length >= 3 do
     -- Encode 3 bytes at a time
-    local bytes = base64_encode(string.sub(str, offset, offset+3))
+    local bytes = base64_encode(string.sub(str, offset, offset+2))
     self.trans:write(bytes)
     length = length - 3
     offset = offset + 3
   end
   if length > 0 then
-    local bytes = base64_encode(string.sub(str, offset, offset+length))
+    local bytes = base64_encode(string.sub(str, offset, offset+length-1))
     self.trans:write(bytes)
   end
   self.trans:write(JSONNode.StringDelimiter)
@@ -513,9 +513,9 @@ function TJSONProtocol:readJSONString()
     if ch == JSONNode.Backslash then
       ch = self.trans:readAll(1)
       if ch == JSONNode.EscapeChar then
-        self:readJSONEscapeChar(ch)
+        ch = string.char(self:readJSONEscapeChar(ch))
       else
-        local pos, _ = string.find(JSONNode.EscapeChars, ch)
+        local pos, _ = string.find(JSONNode.EscapeChars, ch, 1, true)
         if pos == nil then
           terror(TProtocolException:new{message = "Expected control char, got " .. ch})
         end
