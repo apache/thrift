@@ -273,8 +273,7 @@ class TCurlClientTest extends TestCase
                 [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                 [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
                 [Assert::anything(), CURLOPT_CUSTOMREQUEST, 'POST'],
-                [Assert::anything(), CURLOPT_FOLLOWLOCATION, true],
-                [Assert::anything(), CURLOPT_MAXREDIRS, 1],
+                [Assert::anything(), CURLOPT_FOLLOWLOCATION, false],
                 [
                     Assert::anything(),
                     CURLOPT_HTTPHEADER,
@@ -301,8 +300,7 @@ class TCurlClientTest extends TestCase
                     [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                     [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
                     [Assert::anything(), CURLOPT_CUSTOMREQUEST, 'POST'],
-                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, true],
-                    [Assert::anything(), CURLOPT_MAXREDIRS, 1],
+                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, false],
                     [
                         Assert::anything(),
                         CURLOPT_HTTPHEADER,
@@ -326,8 +324,7 @@ class TCurlClientTest extends TestCase
                     [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                     [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
                     [Assert::anything(), CURLOPT_CUSTOMREQUEST, 'POST'],
-                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, true],
-                    [Assert::anything(), CURLOPT_MAXREDIRS, 1],
+                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, false],
                     [
                         Assert::anything(),
                         CURLOPT_HTTPHEADER,
@@ -351,8 +348,7 @@ class TCurlClientTest extends TestCase
                     [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                     [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
                     [Assert::anything(), CURLOPT_CUSTOMREQUEST, 'POST'],
-                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, true],
-                    [Assert::anything(), CURLOPT_MAXREDIRS, 1],
+                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, false],
                     [
                         Assert::anything(),
                         CURLOPT_HTTPHEADER,
@@ -378,8 +374,7 @@ class TCurlClientTest extends TestCase
                     [Assert::anything(), CURLOPT_RETURNTRANSFER, true],
                     [Assert::anything(), CURLOPT_USERAGENT, 'PHP/TCurlClient'],
                     [Assert::anything(), CURLOPT_CUSTOMREQUEST, 'POST'],
-                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, true],
-                    [Assert::anything(), CURLOPT_MAXREDIRS, 1],
+                    [Assert::anything(), CURLOPT_FOLLOWLOCATION, false],
                     [
                         Assert::anything(),
                         CURLOPT_HTTPHEADER,

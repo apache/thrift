@@ -166,8 +166,8 @@ class TCurlClient extends TTransport
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
             curl_setopt(self::$curlHandle, CURLOPT_CUSTOMREQUEST, 'POST');
-            curl_setopt(self::$curlHandle, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt(self::$curlHandle, CURLOPT_MAXREDIRS, 1);
+            // A redirect is not followed: its 3xx status fails the request below, as in THttpClient.
+            curl_setopt(self::$curlHandle, CURLOPT_FOLLOWLOCATION, false);
         }
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
