@@ -235,6 +235,8 @@ thrift_application_exception_finalize (GObject *object)
   if (tae->__isset_message) {
 		g_free(tae->message);
   }
+
+  G_OBJECT_CLASS (thrift_application_exception_parent_class)->finalize (object);
 }
 
 void

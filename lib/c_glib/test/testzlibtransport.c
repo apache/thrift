@@ -373,6 +373,34 @@ test_write_reports_a_failed_underlying_write (void)
   g_free (payload);
 }
 
+static void
+count_release (gpointer data)
+{
+  guint *releases = data;
+
+  (*releases)++;
+}
+
+/* Only GObject's own finalize() releases the data attached to an instance, so
+ * the transport's finalize() has to chain up to it. */
+static void
+test_finalize_releases_instance_data (void)
+{
+  ThriftSocket *tsocket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  ThriftTransport *transport =
+    g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                  "transport", THRIFT_TRANSPORT (tsocket),
+                  NULL);
+  guint releases = 0;
+
+  g_object_set_data_full (G_OBJECT (transport), "testzlibtransport",
+                          &releases, count_release);
+  g_object_unref (transport);
+  g_assert (releases == 1);
+
+  g_object_unref (tsocket);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -392,6 +420,8 @@ main(int argc, char *argv[])
                    test_small_writes_more_than_the_compressed_buffer);
   g_test_add_func ("/testzlibtransport/WriteReportsAFailedUnderlyingWrite",
                    test_write_reports_a_failed_underlying_write);
+  g_test_add_func ("/testzlibtransport/FinalizeReleasesInstanceData",
+                   test_finalize_releases_instance_data);
 
   return g_test_run ();
 }

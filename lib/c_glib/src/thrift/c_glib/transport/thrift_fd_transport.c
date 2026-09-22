@@ -206,7 +206,7 @@ thrift_fd_transport_init (ThriftFDTransport *transport)
 static void
 thrift_fd_transport_finalize (GObject *object)
 {
-  THRIFT_UNUSED_VAR (object);
+  G_OBJECT_CLASS (thrift_fd_transport_parent_class)->finalize (object);
 }
 
 /* property accessor */
