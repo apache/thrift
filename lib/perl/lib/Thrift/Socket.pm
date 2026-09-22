@@ -232,7 +232,15 @@ sub write
 
         }
 
-        $buf = substr($buf, $sent);
+        # All sent. Stop without changing the buffer: it still shares its
+        # bytes with the caller's string, so changing it would copy them.
+        last if $sent >= length($buf);
+
+        # Drop the sent bytes from the front of the buffer. This moves the
+        # start of the buffer rather than copying what is left, so a write
+        # that takes many partial sends (TLS sends one record per call) costs
+        # time in proportion to its size.
+        substr($buf, 0, $sent, '');
     }
 }
 
@@ -293,6 +301,10 @@ sub __recv
 #
 # Send data
 #
+# write() calls this once per partial send, with all the data it has not sent
+# yet. Use the buffer in place, as $_[0] after shifting $self and $sock:
+# copying it into a variable copies all of that data on every call.
+#
 # @param[in] $sock the socket
 # @param[in] $buf the data buffer
 # @returns the number of bytes written
@@ -301,8 +313,7 @@ sub __send
 {
     my $self = shift;
     my $sock = shift;
-    my $buf = shift;
-    return $sock->send($buf);
+    return $sock->send($_[0]);
 }
 
 #

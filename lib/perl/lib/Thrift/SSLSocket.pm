@@ -122,8 +122,8 @@ sub __send
 {
     my $self = shift;
     my $sock = shift;
-    my $buf = shift;
-    return syswrite($sock, $buf);
+    # Writes the buffer in place, see Thrift::Socket::__send
+    return syswrite($sock, $_[0]);
 }
 
 sub __wait
