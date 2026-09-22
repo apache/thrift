@@ -120,7 +120,6 @@ sub _handleException
         my $code    = $e->{code};
         my $out     = $code . ':' . $message;
 
-        $message =~ m/TTransportException/ and die $out;
         if ($message =~ m/Socket/) {
             # suppress Socket messages
         }
@@ -130,6 +129,35 @@ sub _handleException
     }
     else {
         warn $e;
+    }
+}
+
+#
+# Close a transport, reporting but not propagating any error, so that closing
+# one client's connection never interferes with serving the next.
+#
+sub tryClose
+{
+    my $self = shift;
+    my $file = shift;
+
+    eval {
+        if (defined $file)
+        {
+          $file->close();
+        }
+    };
+    if($@) {
+        if ($@->isa('Thrift::TException') and exists $@->{message}) {
+            my $message = $@->{message};
+            my $code    = $@->{code};
+            my $out     = $code . ':' . $message;
+
+            warn $out;
+        }
+        else {
+            warn $@;
+        }
     }
 }
 
@@ -158,11 +186,12 @@ sub serve
     while (!$stop) {
         my $client = $self->{serverTransport}->accept();
         if (defined $client) {
-            my $itrans = $self->{inputTransportFactory}->getTransport($client);
-            my $otrans = $self->{outputTransportFactory}->getTransport($client);
-            my $iprot  = $self->{inputProtocolFactory}->getProtocol($itrans);
-            my $oprot  = $self->{outputProtocolFactory}->getProtocol($otrans);
+            my ($itrans, $otrans);
             eval {
+                $itrans = $self->{inputTransportFactory}->getTransport($client);
+                $otrans = $self->{outputTransportFactory}->getTransport($client);
+                my $iprot = $self->{inputProtocolFactory}->getProtocol($itrans);
+                my $oprot = $self->{outputProtocolFactory}->getProtocol($otrans);
                 $self->_clientBegin($iprot, $oprot);
                 while (1)
                 {
@@ -172,8 +201,10 @@ sub serve
             if($@) {
                 $self->_handleException($@);
             }
-            $itrans->close();
-            $otrans->close();
+            # Whatever ended this connection ends only this connection: close it
+            # and go on accepting the next one.
+            $self->tryClose($itrans);
+            $self->tryClose($otrans);
         } else {
             $stop = 1;
         }
@@ -230,7 +261,17 @@ sub _client
 
         my $pid = fork();
 
-        if ($pid)
+        if (!defined $pid)
+        {
+            # The fork failed: there is no child to serve this connection, so
+            # close it and keep the parent accepting instead of running the
+            # child path in the parent.
+            $self->tryClose($itrans);
+            $self->tryClose($otrans);
+            die Thrift::TTransportException->new('Thrift::ForkingServer: unable to fork: ' . $!,
+                Thrift::TTransportException::UNKNOWN);
+        }
+        elsif ($pid)
         {
             $self->_parent($pid, $itrans, $otrans);
         }
@@ -281,31 +322,6 @@ sub _child
     $self->tryClose($otrans);
 
     exit($ecode);
-}
-
-sub tryClose
-{
-    my $self = shift;
-    my $file = shift;
-
-    eval {
-        if (defined $file)
-        {
-          $file->close();
-        }
-    };
-    if($@) {
-        if ($@->isa('Thrift::TException') and exists $@->{message}) {
-            my $message = $@->{message};
-            my $code    = $@->{code};
-            my $out     = $code . ':' . $message;
-
-            warn $out;
-        }
-        else {
-            warn $@;
-        }
-    }
 }
 
 1;
