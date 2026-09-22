@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -32,15 +33,22 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class THttpTransport : TEndpointTransport
+    public class THttpTransport : TEndpointTransport, ITPerCallTransportProvider
     {
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
+        private readonly object _lifecycleLock = new object();
+        private readonly HashSet<THttpPerCallTransport> _perCallTransports = new HashSet<THttpPerCallTransport>();
+        private CancellationTokenSource _lifecycleCancellation = new CancellationTokenSource();
+        private bool _lifecycleOpen = true;
+        private int _flushInProgress;
 
         private int _connectTimeout = 30000; // Timeouts in milliseconds
         private HttpClient _httpClient;
         private Stream _inputStream;
         private MemoryStream _outputStream = new MemoryStream();
+        private HttpResponseMessage _response;
+        private CancellationTokenSource _responseReadTimeout;
         private bool _isDisposed;
 
         public THttpTransport(Uri uri, TConfiguration config, IDictionary<string, string> customRequestHeaders = null, string userAgent = null)
@@ -109,7 +117,16 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public override bool IsOpen => true;
+        public override bool IsOpen
+        {
+            get
+            {
+                lock (_lifecycleLock)
+                {
+                    return _lifecycleOpen && _httpClient != null;
+                }
+            }
+        }
 
         public HttpRequestHeaders RequestHeaders => _httpClient.DefaultRequestHeaders;
 
@@ -118,27 +135,50 @@ namespace Thrift.Transport.Client
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _httpClient == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+            }
             return Task.CompletedTask;
         }
 
         public override void Close()
         {
-            if (_inputStream != null)
+            List<THttpPerCallTransport> transports;
+            CancellationTokenSource lifecycleCancellation;
+            lock (_lifecycleLock)
             {
-                _inputStream.Dispose();
+                _lifecycleOpen = false;
+                transports = new List<THttpPerCallTransport>(_perCallTransports);
+                _perCallTransports.Clear();
+                lifecycleCancellation = _lifecycleCancellation;
+                _lifecycleCancellation = null;
+
+                _inputStream?.Dispose();
                 _inputStream = null;
-            }
-
-            if (_outputStream != null)
-            {
-                _outputStream.Dispose();
+                var outputStream = _outputStream;
                 _outputStream = null;
+                if (_flushInProgress == 0)
+                {
+                    outputStream?.Dispose();
+                }
+                _response?.Dispose();
+                _response = null;
+                _responseReadTimeout?.Dispose();
+                _responseReadTimeout = null;
+                _httpClient?.Dispose();
+                _httpClient = null;
             }
 
-            if (_httpClient != null)
+            lifecycleCancellation?.Cancel();
+            lifecycleCancellation?.Dispose();
+            foreach (var transport in transports)
             {
-                _httpClient.Dispose();
-                _httpClient = null;
+                transport.Dispose();
             }
         }
 
@@ -151,12 +191,33 @@ namespace Thrift.Transport.Client
 
             CheckReadBytesAvailable(length);
 
+            CancellationTokenSource readCts = null;
+            Stream inputStream;
+            bool hasResponseReadTimeout;
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _inputStream == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+
+                inputStream = _inputStream;
+                hasResponseReadTimeout = _responseReadTimeout != null;
+                readCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    _lifecycleCancellation.Token,
+                    _responseReadTimeout?.Token ?? CancellationToken.None);
+            }
+
             try
             {
+                var readToken = readCts?.Token ?? cancellationToken;
+                int ret;
 #if NET5_0_OR_GREATER
-                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+                ret = await inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), readToken);
 #else
-                var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+                ret = await inputStream.ReadAsync(buffer, offset, length, readToken);
 #endif
                 if (ret == -1)
                 {
@@ -166,9 +227,22 @@ namespace Thrift.Transport.Client
                 CountConsumedMessageBytes(ret);
                 return ret;
             }
+            catch (OperationCanceledException ocx) when (hasResponseReadTimeout && !cancellationToken.IsCancellationRequested)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
+            }
+            catch (ObjectDisposedException odx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                    "The transport has been closed.", odx);
+            }
             catch (IOException iox)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
+            }
+            finally
+            {
+                readCts?.Dispose();
             }
         }
 
@@ -176,10 +250,22 @@ namespace Thrift.Transport.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            Stream outputStream;
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _outputStream == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+
+                outputStream = _outputStream;
+            }
+
 #if NET5_0_OR_GREATER
-            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+            await outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
 #else
-            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await outputStream.WriteAsync(buffer, offset, length, cancellationToken);
 #endif
         }
 
@@ -237,27 +323,91 @@ namespace Thrift.Transport.Client
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
+            HttpClient httpClient;
+            Stream outputStream;
+            int connectTimeout;
+            CancellationTokenSource operationCts;
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _httpClient == null || _outputStream == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+                httpClient = _httpClient;
+                outputStream = _outputStream;
+                connectTimeout = _connectTimeout;
+                operationCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    _lifecycleCancellation.Token);
+                _flushInProgress++;
+            }
+
+            StreamContent contentStream = null;
+            HttpRequestMessage request = null;
+            HttpResponseMessage response = null;
+            CancellationTokenSource responseReadTimeout = null;
+            Stream inputStream = null;
+            var responseDeadline = Stopwatch.StartNew();
             try
             {
-                _outputStream.Seek(0, SeekOrigin.Begin);
+                outputStream.Seek(0, SeekOrigin.Begin);
 
-                using (var contentStream = new StreamContent(_outputStream))
+                contentStream = new StreamContent(outputStream);
+                contentStream.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
+
+                request = new HttpRequestMessage(HttpMethod.Post, _uri)
                 {
-                    contentStream.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
+                    Content = contentStream
+                };
 
-                    var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
+                response = await httpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    operationCts.Token);
+                response.EnsureSuccessStatusCode();
+
+               responseReadTimeout = new CancellationTokenSource();
+               var remainingTimeout = connectTimeout - (int)responseDeadline.ElapsedMilliseconds;
+               if (connectTimeout > 0)
+               {
+                   responseReadTimeout.CancelAfter(Math.Max(0, remainingTimeout));
+               }
+
+                using (var acquisitionCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    operationCts.Token, responseReadTimeout.Token))
+                {
+                    inputStream = await ReadAsStreamAsync(response.Content, acquisitionCts.Token);
+                }
+                if (inputStream.CanSeek)
+                {
+                    inputStream.Seek(0, SeekOrigin.Begin);
+                }
+
+                // Only take ownership of the new response/timeout/stream once stream acquisition
+                // has succeeded, so a failed FlushAsync leaves no dangling resources behind.
+                lock (_lifecycleLock)
+                {
+                    if (!_lifecycleOpen || !ReferenceEquals(_httpClient, httpClient))
+                    {
+                        throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                            "The transport has been closed.");
+                    }
 
                     _inputStream?.Dispose();
-#if NET5_0_OR_GREATER
-                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-#else
-                    _inputStream = await response.Content.ReadAsStreamAsync();
-#endif
-                    if (_inputStream.CanSeek)
-                    {
-                        _inputStream.Seek(0, SeekOrigin.Begin);
-                    }
+                    _inputStream = inputStream;
+                    inputStream = null;
+                    _response?.Dispose();
+                    _response = response;
+                    response = null;
+                    _responseReadTimeout?.Dispose();
+                    _responseReadTimeout = responseReadTimeout;
+                    responseReadTimeout = null;
                 }
+            }
+            catch (TTransportException)
+            {
+                throw;
             }
             catch (IOException iox)
             {
@@ -267,6 +417,11 @@ namespace Thrift.Transport.Client
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown,
                     "Couldn't connect to server: " + wx, wx);
+            }
+            catch (ObjectDisposedException odx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                    "The transport has been closed.", odx);
             }
             catch (OperationCanceledException ocx)
             {
@@ -278,8 +433,30 @@ namespace Thrift.Transport.Client
             }
             finally
             {
-                _outputStream = new MemoryStream();
-                ResetMessageSizeAndConsumedBytes();
+                inputStream?.Dispose();
+                response?.Dispose();
+                responseReadTimeout?.Dispose();
+                operationCts?.Dispose();
+                request?.Dispose();
+                if (request == null)
+                {
+                    contentStream?.Dispose();
+                }
+
+                lock (_lifecycleLock)
+                {
+                    _flushInProgress--;
+                    if (_lifecycleOpen)
+                    {
+                        _outputStream = new MemoryStream();
+                    }
+                    else
+                    {
+                        outputStream.Dispose();
+                        _outputStream = null;
+                    }
+                    ResetMessageSizeAndConsumedBytes();
+                }
             }
         }
 
@@ -287,16 +464,217 @@ namespace Thrift.Transport.Client
         // IDisposable
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (_isDisposed)
             {
-                if (disposing)
-                {
-                    _inputStream?.Dispose();
-                    _outputStream?.Dispose();
-                    _httpClient?.Dispose();
-                }
+                return;
+            }
+
+            if (disposing)
+            {
+                Close();
             }
             _isDisposed = true;
+        }
+
+        public ValueTask<TTransport> CreatePerCallTransportAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _httpClient == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+
+                var transport = new THttpPerCallTransport(this);
+                _perCallTransports.Add(transport);
+                return new ValueTask<TTransport>(transport);
+            }
+        }
+
+        internal object LifecycleLock => _lifecycleLock;
+
+        internal bool IsLifecycleOpen
+        {
+            get
+            {
+                lock (_lifecycleLock)
+                {
+                    return _lifecycleOpen && _httpClient != null;
+                }
+            }
+        }
+
+        internal void RemovePerCallTransport(THttpPerCallTransport transport)
+        {
+            lock (_lifecycleLock)
+            {
+                _perCallTransports.Remove(transport);
+            }
+        }
+
+        internal static async Task<Stream> ReadAsStreamAsync(HttpContent content, CancellationToken cancellationToken)
+        {
+#if NET5_0_OR_GREATER
+            return await content.ReadAsStreamAsync(cancellationToken);
+#else
+            var readTask = content.ReadAsStreamAsync();
+            if (readTask.IsCompleted || !cancellationToken.CanBeCanceled)
+            {
+                return await readTask;
+            }
+
+            var cancellationTask = new TaskCompletionSource<bool>();
+            using (cancellationToken.Register(() => cancellationTask.TrySetResult(true)))
+            {
+                if (await Task.WhenAny(readTask, cancellationTask.Task) != readTask)
+                {
+                    // The legacy API cannot cancel acquisition. If it later succeeds, dispose
+                    // the stream because cancellation has already abandoned the acquisition.
+                    _ = readTask.ContinueWith(
+                        task =>
+                        {
+                            if (task.Status == TaskStatus.RanToCompletion)
+                            {
+                                task.Result.Dispose();
+                            }
+                            else if (task.IsFaulted)
+                            {
+                                var ignored = task.Exception;
+                            }
+                        },
+                        CancellationToken.None,
+                        TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
+                    throw new OperationCanceledException(cancellationToken);
+                }
+            }
+
+            return await readTask;
+#endif
+        }
+
+        /// <summary>
+        /// Sends the given request stream to the server and returns the HTTP response.
+        /// </summary>
+        /// <param name="request">The request stream to send.</param>
+        /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+        /// <returns>The HTTP response message.</returns>
+        /// <exception cref="TTransportException">Thrown if an error occurs during the request.</exception>
+        internal async Task<HttpResponseMessage> SendAsync(Stream request, CancellationToken cancellationToken)
+        {
+            // Snapshot the client under the lifecycle lock so Close()/Dispose() cannot race
+            // the state check and publish a response after the parent has closed.
+            HttpClient httpClient;
+            lock (_lifecycleLock)
+            {
+                if (!_lifecycleOpen || _httpClient == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.");
+                }
+                httpClient = _httpClient;
+            }
+
+            // Wrap the caller-owned request stream so that disposing the HttpRequestMessage/
+            // StreamContent below (which we do deterministically once the request has been sent)
+            // does not dispose the stream itself; that remains owned and disposed by the caller.
+            var content = new StreamContent(new NonDisposingStream(request));
+            content.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue("application/x-thrift");
+
+            using (var message = new HttpRequestMessage(HttpMethod.Post, _uri) { Content = content })
+            {
+                HttpResponseMessage response = null;
+                try
+                {
+                    response = await httpClient.SendAsync(
+                        message,
+                        HttpCompletionOption.ResponseHeadersRead,
+                        cancellationToken);
+
+                    response.EnsureSuccessStatusCode();
+                    lock (_lifecycleLock)
+                    {
+                        if (!_lifecycleOpen || !ReferenceEquals(_httpClient, httpClient))
+                        {
+                            throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                                "The transport has been closed.");
+                        }
+                    }
+                    var result = response;
+                    response = null;
+                    return result;
+                }
+                catch (TTransportException)
+                {
+                    throw;
+                }
+                catch (IOException iox)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
+                }
+                catch (HttpRequestException wx)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown,
+                        "Couldn't connect to server: " + wx, wx);
+                }
+                catch (ObjectDisposedException odx)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen,
+                        "The transport has been closed.", odx);
+                }
+                catch (OperationCanceledException ocx)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
+                }
+                catch (Exception ex)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message, ex);
+                }
+                finally
+                {
+                    response?.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// A <see cref="Stream"/> wrapper whose <c>Dispose</c> is a no-op, used to let an
+        /// <see cref="HttpRequestMessage"/>/<see cref="StreamContent"/> pair be disposed
+        /// deterministically without disposing a caller-owned inner stream.
+        /// </summary>
+        private sealed class NonDisposingStream : Stream
+        {
+            private readonly Stream _inner;
+
+            public NonDisposingStream(Stream inner) => _inner = inner;
+
+            public override bool CanRead => _inner.CanRead;
+            public override bool CanSeek => _inner.CanSeek;
+            public override bool CanWrite => _inner.CanWrite;
+            public override long Length => _inner.Length;
+            public override long Position { get => _inner.Position; set => _inner.Position = value; }
+
+            public override void Flush() => _inner.Flush();
+            public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
+            public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
+            public override void SetLength(long value) => _inner.SetLength(value);
+            public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
+
+            public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+                _inner.ReadAsync(buffer, offset, count, cancellationToken);
+
+#if NET5_0_OR_GREATER
+            public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+                _inner.ReadAsync(buffer, cancellationToken);
+#endif
+
+            protected override void Dispose(bool disposing)
+            {
+                // Intentionally do not dispose the inner stream; it is owned by the caller.
+                base.Dispose(disposing);
+            }
         }
     }
 }
