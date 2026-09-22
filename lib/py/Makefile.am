@@ -55,6 +55,7 @@ all-local: py3-build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
 	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
 	${THRIFT} --gen py ../../test/Recursive.thrift
+	${THRIFT} --gen py:dynamic test/test_thrift_file/RecursiveDynamic.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
