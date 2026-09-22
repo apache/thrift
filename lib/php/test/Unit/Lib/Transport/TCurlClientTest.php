@@ -237,8 +237,7 @@ class TCurlClientTest extends TestCase
             $this->expectExceptionCode($expectedCode);
 
             $this->getFunctionMock('Thrift\\Transport', 'curl_close')
-                 ->expects($this->once())
-                 ->with(Assert::anything());
+                 ->expects($this->never());
         }
 
         $transport = new TCurlClient($host, $port, $uri, $scheme);
@@ -412,15 +411,155 @@ class TCurlClientTest extends TestCase
         );
     }
 
+    /**
+     * flush() follows one redirect, and only within the origin of the URL it
+     * requested: the same scheme, host and port. The request is sent again to
+     * the path and query of the redirect target, under the scheme, host and
+     * port of that URL. Any other redirect fails the request.
+     */
+    #[DataProvider('redirectDataProvider')]
+    public function testFlushFollowsOneRedirectWithinTheOrigin(
+        $scheme,
+        $port,
+        $exchanges,
+        $expectedUrls,
+        $expectedResponse
+    ) {
+        $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function');
+        $this->getFunctionMock('Thrift\\Transport', 'curl_init')->expects($this->once())->willReturn(true);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_error')->expects($this->once())->willReturn('');
+
+        $urls = [];
+        $this->getFunctionMock('Thrift\\Transport', 'curl_setopt')
+             ->expects($this->atLeastOnce())
+             ->willReturnCallback(function ($handle, $option, $value) use (&$urls) {
+                if ($option === CURLOPT_URL) {
+                    $urls[] = $value;
+                }
+
+                 return true;
+             });
+
+        $exchange = -1;
+        $this->getFunctionMock('Thrift\\Transport', 'curl_exec')
+             ->expects($this->exactly(count($expectedUrls)))
+             ->willReturnCallback(function () use (&$exchange) {
+                 $exchange++;
+
+                 return 'response ' . $exchange;
+             });
+        $this->getFunctionMock('Thrift\\Transport', 'curl_getinfo')
+             ->expects($this->atLeastOnce())
+             ->willReturnCallback(function ($handle, $option) use (&$exchange, $exchanges) {
+                 [$code, $location] = $exchanges[$exchange];
+                if ($option === CURLINFO_HTTP_CODE) {
+                    return $code;
+                }
+                 $this->assertSame(CURLINFO_REDIRECT_URL, $option);
+
+                 return $location;
+             });
+
+        $transport = new TCurlClient('localhost', $port, '/rpc', $scheme);
+        $transport->write('request');
+        try {
+            $transport->flush();
+            $response = $transport->read(64);
+        } catch (TTransportException $e) {
+            $response = null;
+        }
+
+        $this->assertSame($expectedUrls, $urls);
+        $this->assertSame($expectedResponse, $response);
+    }
+
+    public static function redirectDataProvider()
+    {
+        yield 'same origin' => [
+            'http', 80,
+            [[302, 'http://localhost/moved'], [200, false]],
+            ['http://localhost/rpc', 'http://localhost/moved'],
+            'response 1',
+        ];
+        yield 'the query is kept' => [
+            'http', 80,
+            [[307, 'http://localhost/moved?a=1&b=2'], [200, false]],
+            ['http://localhost/rpc', 'http://localhost/moved?a=1&b=2'],
+            'response 1',
+        ];
+        yield 'host in another case' => [
+            'http', 80,
+            [[301, 'HTTP://LocalHost/moved'], [200, false]],
+            ['http://localhost/rpc', 'http://localhost/moved'],
+            'response 1',
+        ];
+        yield 'default port named' => [
+            'http', 80,
+            [[308, 'http://localhost:80/moved'], [200, false]],
+            ['http://localhost/rpc', 'http://localhost/moved'],
+            'response 1',
+        ];
+        yield 'https on port 443' => [
+            'https', 443,
+            [[307, 'https://localhost/moved'], [200, false]],
+            ['https://localhost:443/rpc', 'https://localhost:443/moved'],
+            'response 1',
+        ];
+        yield 'https with the port left at 80, which the URL leaves out' => [
+            'https', 80,
+            [[302, 'https://localhost:443/moved'], [200, false]],
+            ['https://localhost/rpc', 'https://localhost/moved'],
+            'response 1',
+        ];
+        yield 'another host' => [
+            'http', 80,
+            [[302, 'http://example.com/moved']],
+            ['http://localhost/rpc'],
+            null,
+        ];
+        yield 'another port' => [
+            'http', 80,
+            [[307, 'http://localhost:8080/moved']],
+            ['http://localhost/rpc'],
+            null,
+        ];
+        yield 'another scheme' => [
+            'http', 80,
+            [[301, 'https://localhost/moved']],
+            ['http://localhost/rpc'],
+            null,
+        ];
+        yield 'user info in front of another host' => [
+            'http', 80,
+            [[302, 'http://localhost@example.com/moved']],
+            ['http://localhost/rpc'],
+            null,
+        ];
+        yield 'no location' => [
+            'http', 80,
+            [[302, false]],
+            ['http://localhost/rpc'],
+            null,
+        ];
+        yield 'a second redirect' => [
+            'http', 80,
+            [[302, 'http://localhost/moved'], [302, 'http://localhost/again']],
+            ['http://localhost/rpc', 'http://localhost/moved'],
+            null,
+        ];
+    }
+
     public function testCloseCurlHandle()
     {
         $this->getFunctionMock('Thrift\\Transport', 'curl_close')
-             ->expects($this->once())
-             ->with('testHandle');
+             ->expects($this->never());
 
         $transport = new TCurlClient('localhost');
-        (new ReflectionProperty($transport, 'curlHandle'))->setValue($transport, 'testHandle');
+        $curlHandle = new ReflectionProperty($transport, 'curlHandle');
+        $curlHandle->setValue($transport, 'testHandle');
 
         $transport::closeCurlHandle();
+
+        $this->assertNull($curlHandle->getValue($transport));
     }
 }
