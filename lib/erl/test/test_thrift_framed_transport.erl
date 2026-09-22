@@ -346,6 +346,30 @@ empty_frames_cost_test_() ->
         ?assert(Large < Small * 8)
     end}.
 
+%% A read_exact/2 longer than one frame collects the frames it needs. It used
+%% to flatten everything collected so far again for each frame it added, so a
+%% read spanning many small frames cost time quadratic in their number.
+small_frames(Count) ->
+    Frames = binary:copy(<<0, 0, 0, 1, "x">>, Count),
+    {ok, {t_transport, _, MemBuf}} = thrift_membuffer_transport:new(Frames),
+    State = {t_framed, {t_transport, thrift_membuffer_transport, MemBuf}, [], []},
+    {reductions, Before} = erlang:process_info(self(), reductions),
+    {_NewState, Result} = thrift_framed_transport:read_exact(State, Count),
+    {reductions, After} = erlang:process_info(self(), reductions),
+    ?assertEqual({ok, binary:copy(<<"x">>, Count)}, Result),
+    After - Before.
+
+small_frames_cost_test_() ->
+    {timeout, 120, fun() ->
+        %% The copying only dominates the per-frame work once a read spans
+        %% tens of thousands of frames, hence counts well above those of
+        %% empty_frames_cost_test_. Four times as many frames, so no more
+        %% than about four times the work, with the same margin.
+        Small = small_frames(32000),
+        Large = small_frames(128000),
+        ?assert(Large < Small * 8)
+    end}.
+
 %% A frame length is four bytes the peer chose, and read_exact/2 accumulates
 %% whatever it says. These hold it to a maximum, and to being a length at all:
 %% the field is read signed, so a negative one used to reach read_exact/2, whose
