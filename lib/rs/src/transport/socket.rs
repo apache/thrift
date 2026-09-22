@@ -257,7 +257,7 @@ impl TIoChannel for UnixStream {
     where
         Self: Sized,
     {
-        let socket_rx = self.try_clone().unwrap();
+        let socket_rx = self.try_clone()?;
 
         Ok((ReadHalf::new(self), WriteHalf::new(socket_rx)))
     }
