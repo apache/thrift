@@ -303,6 +303,8 @@ thrift_buffered_transport_finalize (GObject *object)
     g_byte_array_free (transport->w_buf, TRUE);
   }
   transport->w_buf = NULL;
+
+  G_OBJECT_CLASS (thrift_buffered_transport_parent_class)->finalize (object);
 }
 
 /* property accessor */

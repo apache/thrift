@@ -128,6 +128,11 @@ target_link_libraries(testrecursionlimit testgenc)
 target_link_libraries(testrecursionlimit thrift_c_glib)
 add_test(NAME testrecursionlimit COMMAND testrecursionlimit)
 
+add_executable(testfinalize testfinalize.c)
+target_link_libraries(testfinalize testgenc)
+target_link_libraries(testfinalize thrift_c_glib)
+add_test(NAME testfinalize COMMAND testfinalize)
+
 add_executable(testthriftbinaryreadcheck testthriftbinaryreadcheck.c)
 target_link_libraries(testthriftbinaryreadcheck testgenc)
 add_test(NAME testthriftbinaryreadcheck COMMAND testthriftbinaryreadcheck)

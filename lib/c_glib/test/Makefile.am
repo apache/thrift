@@ -67,6 +67,7 @@ check_PROGRAMS = \
   testdebugproto \
   testoptionalrequired \
   testrecursionlimit \
+  testfinalize \
   testthrifttest \
   testthriftbinaryreadcheck \
   testthriftcompactreadcheck \
@@ -285,6 +286,9 @@ testrecursionlimit_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o \
     libtestgenc.la
+
+testfinalize_SOURCES = testfinalize.c
+testfinalize_LDADD = libtestgenc.la
 
 testthrifttest_SOURCES = testthrifttest.c
 testthrifttest_LDADD = libtestgenc.la \

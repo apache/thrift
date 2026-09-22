@@ -3222,6 +3222,8 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
   f_types_impl_ << "}" << '\n' << '\n';
 
   /* create the destructor */
+  f_types_impl_ << "static gpointer " << class_name_lc << "_parent_class = NULL;" << '\n' << '\n';
+
   f_types_impl_ << "static void " << '\n' << this->nspace_lc << name_u
                 << "_finalize (GObject *object)" << '\n' << "{" << '\n';
   indent_up();
@@ -3303,6 +3305,10 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
     }
   }
 
+  f_types_impl_ << '\n'
+                << indent() << "G_OBJECT_CLASS (" << class_name_lc
+                << "_parent_class)->finalize (object);" << '\n';
+
   indent_down();
   f_types_impl_ << "}" << '\n' << '\n';
 
@@ -3314,9 +3320,14 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
 
   f_types_impl_ << indent() << "GObjectClass *gobject_class = G_OBJECT_CLASS (cls);" << '\n'
                 << indent() << "ThriftStructClass *struct_class = "
-                << "THRIFT_STRUCT_CLASS (cls);" << '\n' << '\n' << indent()
-                << "struct_class->read = " << class_name_lc << "_read;" << '\n' << indent()
-                << "struct_class->write = " << class_name_lc << "_write;" << '\n' << '\n'
+                << "THRIFT_STRUCT_CLASS (cls);" << '\n'
+                << '\n'
+                << indent() << class_name_lc << "_parent_class = g_type_class_peek_parent (cls);"
+                << '\n'
+                << '\n'
+                << indent() << "struct_class->read = " << class_name_lc << "_read;" << '\n'
+                << indent() << "struct_class->write = " << class_name_lc << "_write;" << '\n'
+                << '\n'
                 << indent() << "gobject_class->finalize = " << class_name_lc << "_finalize;"
                 << '\n';
   if (members.size() > 0) {

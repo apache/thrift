@@ -174,6 +174,8 @@ thrift_memory_buffer_finalize (GObject *object)
     g_byte_array_unref (t->buf);
   }
   t->buf = NULL;
+
+  G_OBJECT_CLASS (thrift_memory_buffer_parent_class)->finalize (object);
 }
 
 /* property accessor */

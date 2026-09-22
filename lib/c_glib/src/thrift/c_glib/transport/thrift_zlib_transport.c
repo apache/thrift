@@ -586,6 +586,8 @@ thrift_zlib_transport_finalize (GObject *object)
   if (t->wstream != NULL) {
     g_free (t->wstream);
   }
+
+  G_OBJECT_CLASS (thrift_zlib_transport_parent_class)->finalize (object);
 }
 
 /* property accessor */
