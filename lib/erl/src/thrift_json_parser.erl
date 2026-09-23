@@ -79,16 +79,49 @@ handle_event(Event, State) -> [Event] ++ State.
     Symbol =:= ?space; Symbol =:= ?tab; Symbol =:= ?cr; Symbol =:= ?newline
 ).
 
-%% lists are benchmarked to be faster (tho higher in memory usage) than binaries
-new_seq() -> [].
+%% The digits of a number, newest first. There are at most
+%% ?MAX_NUMBER_LENGTH of them.
 new_seq(C) -> [C].
 
 acc_seq(Seq, C) when is_list(C) -> lists:reverse(C) ++ Seq;
 acc_seq(Seq, C) -> [C] ++ Seq.
 
-end_seq(Seq) -> unicode:characters_to_binary(lists:reverse(Seq)).
+%% The most characters a number may take. A 64-bit integer takes at most 20,
+%% and a double with 17 significant digits about 25, or about 330 written
+%% without an exponent.
+-define(MAX_NUMBER_LENGTH, 1024).
 
-end_seq(Seq, _) -> end_seq(Seq).
+%% The characters of a string: {Count, Characters, Chunks}. The characters,
+%% newest first, are turned into a UTF-8 chunk every ?STRING_CHUNK_LENGTH of
+%% them; the chunks are newest first as well.
+-define(STRING_CHUNK_LENGTH, 256).
+
+new_str() -> {0, [], []}.
+
+acc_str({Count, Chars, Chunks}, C) when Count >= ?STRING_CHUNK_LENGTH ->
+    {1, [C], [unicode:characters_to_binary(lists:reverse(Chars)) | Chunks]};
+acc_str({Count, Chars, Chunks}, C) ->
+    {Count + 1, [C | Chars], Chunks}.
+
+end_str({_Count, Chars, Chunks}) ->
+    iolist_to_binary(lists:reverse(Chunks, [unicode:characters_to_binary(lists:reverse(Chars))])).
+
+%% Refuses a number longer than ?MAX_NUMBER_LENGTH characters before its
+%% digits are collected.
+check_number(Bin) ->
+    case number_length(Bin, 0) =< ?MAX_NUMBER_LENGTH of
+        true -> ok;
+        false -> erlang:error(badarg)
+    end.
+
+number_length(<<C, Rest/binary>>, N) when
+    N =< ?MAX_NUMBER_LENGTH,
+    ((C >= $0 andalso C =< $9) orelse C =:= ?decimalpoint orelse C =:= $e orelse C =:= $E orelse
+        C =:= ?positive orelse C =:= ?negative)
+->
+    number_length(Rest, N + 1);
+number_length(_Bin, N) ->
+    N.
 
 start(<<16#ef, 16#bb, 16#bf, Rest/binary>>, Handler, Stack, Config) ->
     value(Rest, Handler, Stack, Config);
@@ -96,18 +129,21 @@ start(Bin, Handler, Stack, Config) ->
     value(Bin, Handler, Stack, Config).
 
 value(<<?doublequote, Rest/binary>>, Handler, Stack, Config) ->
-    string(Rest, Handler, new_seq(), Stack, Config);
+    string(Rest, Handler, new_str(), Stack, Config);
 value(<<$t, Rest/binary>>, Handler, Stack, Config) ->
     true(Rest, Handler, Stack, Config);
 value(<<$f, Rest/binary>>, Handler, Stack, Config) ->
     false(Rest, Handler, Stack, Config);
 value(<<$n, Rest/binary>>, Handler, Stack, Config) ->
     null(Rest, Handler, Stack, Config);
-value(<<?negative, Rest/binary>>, Handler, Stack, Config) ->
+value(<<?negative, Rest/binary>> = Bin, Handler, Stack, Config) ->
+    ok = check_number(Bin),
     negative(Rest, Handler, new_seq($-), Stack, Config);
-value(<<?zero, Rest/binary>>, Handler, Stack, Config) ->
+value(<<?zero, Rest/binary>> = Bin, Handler, Stack, Config) ->
+    ok = check_number(Bin),
     zero(Rest, Handler, new_seq($0), Stack, Config);
-value(<<S, Rest/binary>>, Handler, Stack, Config) when ?is_nonzero(S) ->
+value(<<S, Rest/binary>> = Bin, Handler, Stack, Config) when ?is_nonzero(S) ->
+    ok = check_number(Bin),
     integer(Rest, Handler, new_seq(S), Stack, Config);
 value(<<?start_object, Rest/binary>>, Handler, Stack, Config) ->
     object(Rest, handle_event(start_object, Handler, Config), [key | Stack], Config);
@@ -119,7 +155,7 @@ value(_Bin, _Handler, _Stack, _Config) ->
     erlang:error(badarg).
 
 object(<<?doublequote, Rest/binary>>, Handler, Stack, Config) ->
-    string(Rest, Handler, new_seq(), Stack, Config);
+    string(Rest, Handler, new_str(), Stack, Config);
 object(<<?end_object, Rest/binary>>, Handler, [key | Stack], Config) ->
     maybe_done(Rest, handle_event(end_object, Handler, Config), Stack, Config);
 object(<<S, Rest/binary>>, Handler, Stack, Config) when ?is_whitespace(S) ->
@@ -142,7 +178,7 @@ colon(_Bin, _Handler, _Stack, _Config) ->
     erlang:error(badarg).
 
 key(<<?doublequote, Rest/binary>>, Handler, Stack, Config) ->
-    string(Rest, Handler, new_seq(), Stack, Config);
+    string(Rest, Handler, new_str(), Stack, Config);
 key(<<S, Rest/binary>>, Handler, Stack, Config) when ?is_whitespace(S) ->
     key(Rest, Handler, Stack, Config);
 key(_Bin, _Handler, _Stack, _Config) ->
@@ -153,59 +189,59 @@ key(_Bin, _Handler, _Stack, _Config) ->
 string(<<?doublequote, Rest/binary>>, Handler, Acc, Stack, Config) ->
     doublequote(Rest, Handler, Acc, Stack, Config);
 string(<<?solidus, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, ?solidus), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, ?solidus), Stack, Config);
 string(<<?rsolidus/utf8, Rest/binary>>, Handler, Acc, Stack, Config) ->
     unescape(Rest, Handler, Acc, Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#20, X < 16#2028 ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X == 16#2028; X == 16#2029 ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X > 16#2029, X < 16#d800 ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X > 16#dfff, X < 16#fdd0 ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X > 16#fdef, X < 16#fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#10000, X < 16#1fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#20000, X < 16#2fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#30000, X < 16#3fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#40000, X < 16#4fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#50000, X < 16#5fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#60000, X < 16#6fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#70000, X < 16#7fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#80000, X < 16#8fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#90000, X < 16#9fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#a0000, X < 16#afffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#b0000, X < 16#bfffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#c0000, X < 16#cfffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#d0000, X < 16#dfffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#e0000, X < 16#efffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#f0000, X < 16#ffffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 string(<<X/utf8, Rest/binary>>, Handler, Acc, Stack, Config) when X >= 16#100000, X < 16#10fffe ->
-    string(Rest, Handler, acc_seq(Acc, X), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, X), Stack, Config);
 %% surrogates
 string(<<237, X, _, Rest/binary>>, Handler, Acc, Stack, Config = #config{strict_utf8 = false}) when
     X >= 160
 ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config);
 %% u+xfffe, u+xffff, control codes and other noncharacters
 string(<<_/utf8, Rest/binary>>, Handler, Acc, Stack, Config = #config{strict_utf8 = false}) ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config);
 %% u+fffe and u+ffff for R14BXX (subsequent runtimes will happily match the
 %%  preceding clause
 string(
@@ -213,7 +249,7 @@ string(
 ) when
     X == 190; X == 191
 ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config);
 %% overlong encodings and missing continuations of a 2 byte sequence
 string(<<X, Rest/binary>>, Handler, Acc, Stack, Config = #config{strict_utf8 = false}) when
     X >= 192, X =< 223
@@ -231,44 +267,44 @@ string(<<X, Rest/binary>>, Handler, Acc, Stack, Config = #config{strict_utf8 = f
     strip_continuations(Rest, Handler, Acc, Stack, Config, 3);
 %% incompletes and unexpected bytes, including orphan continuations
 string(<<_, Rest/binary>>, Handler, Acc, Stack, Config = #config{strict_utf8 = false}) ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config);
 string(_Bin, _Handler, _Acc, _Stack, _Config) ->
     erlang:error(badarg).
 
 doublequote(Rest, Handler, Acc, [key | _] = Stack, Config) ->
-    colon(Rest, handle_event({key, end_seq(Acc, Config)}, Handler, Config), Stack, Config);
+    colon(Rest, handle_event({key, end_str(Acc)}, Handler, Config), Stack, Config);
 doublequote(Rest, Handler, Acc, Stack, Config) ->
-    maybe_done(Rest, handle_event({string, end_seq(Acc, Config)}, Handler, Config), Stack, Config).
+    maybe_done(Rest, handle_event({string, end_str(Acc)}, Handler, Config), Stack, Config).
 
 %% strips continuation bytes after bad utf bytes, guards against both too short
 %%  and overlong sequences. N is the maximum number of bytes to strip
 strip_continuations(<<Rest/binary>>, Handler, Acc, Stack, Config, 0) ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config);
 strip_continuations(<<X, Rest/binary>>, Handler, Acc, Stack, Config, N) when X >= 128, X =< 191 ->
     strip_continuations(Rest, Handler, Acc, Stack, Config, N - 1);
 %% not a continuation byte, insert a replacement character for sequence thus
 %%  far and dispatch back to string
 strip_continuations(<<Rest/binary>>, Handler, Acc, Stack, Config, _) ->
-    string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config).
+    string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config).
 
 %% this all gets really gross and should probably eventually be folded into
 %%  but for now it fakes being part of string on incompletes and errors
 unescape(<<$b, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\b), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\b), Stack, Config);
 unescape(<<$f, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\f), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\f), Stack, Config);
 unescape(<<$n, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\n), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\n), Stack, Config);
 unescape(<<$r, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\r), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\r), Stack, Config);
 unescape(<<$t, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\t), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\t), Stack, Config);
 unescape(<<?doublequote, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\"), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\"), Stack, Config);
 unescape(<<?rsolidus, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $\\), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $\\), Stack, Config);
 unescape(<<?solidus, Rest/binary>>, Handler, Acc, Stack, Config) ->
-    string(Rest, Handler, acc_seq(Acc, $/), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, $/), Stack, Config);
 unescape(
     <<$u, $d, A, B, C, ?rsolidus, $u, $d, X, Y, Z, Rest/binary>>, Handler, Acc, Stack, Config
 ) when
@@ -282,7 +318,7 @@ unescape(
     High = erlang:list_to_integer([$d, A, B, C], 16),
     Low = erlang:list_to_integer([$d, X, Y, Z], 16),
     Codepoint = (High - 16#d800) * 16#400 + (Low - 16#dc00) + 16#10000,
-    string(Rest, Handler, acc_seq(Acc, Codepoint), Stack, Config);
+    string(Rest, Handler, acc_str(Acc, Codepoint), Stack, Config);
 unescape(
     <<$u, $d, A, B, C, ?rsolidus, $u, W, X, Y, Z, Rest/binary>>, Handler, Acc, Stack, Config
 ) when
@@ -294,15 +330,15 @@ unescape(
     ?is_hex(Y),
     ?is_hex(Z)
 ->
-    string(Rest, Handler, acc_seq(Acc, [16#fffd, 16#fffd]), Stack, Config);
+    string(Rest, Handler, acc_str(acc_str(Acc, 16#fffd), 16#fffd), Stack, Config);
 unescape(<<$u, A, B, C, D, Rest/binary>>, Handler, Acc, Stack, Config) when
     ?is_hex(A), ?is_hex(B), ?is_hex(C), ?is_hex(D)
 ->
     case erlang:list_to_integer([A, B, C, D], 16) of
         Codepoint when Codepoint < 16#d800; Codepoint > 16#dfff ->
-            string(Rest, Handler, acc_seq(Acc, Codepoint), Stack, Config);
+            string(Rest, Handler, acc_str(Acc, Codepoint), Stack, Config);
         _ ->
-            string(Rest, Handler, acc_seq(Acc, 16#fffd), Stack, Config)
+            string(Rest, Handler, acc_str(Acc, 16#fffd), Stack, Config)
     end;
 unescape(_Bin, _Handler, _Acc, _Stack, _Config) ->
     erlang:error(badarg).
