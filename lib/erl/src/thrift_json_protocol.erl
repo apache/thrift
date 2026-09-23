@@ -50,7 +50,9 @@
 -record(json_protocol, {
     transport :: term(),
     context_stack = [] :: [json_context()],
-    jsx :: undefined | jsx()
+    jsx :: undefined | jsx(),
+    % undefined: the thrift application's max_message_size
+    max_message_size :: pos_integer() | undefined
 }).
 
 -define(VERSION_1, 1).
@@ -90,9 +92,26 @@ end_context(array) -> "]".
 new(Transport) ->
     new(Transport, _Options = []).
 
+%%--------------------------------------------------------------------
+%% Options include:
+%%   {max_message_size, Bytes}  = The longest message to read, in place of the
+%%                                thrift application's max_message_size
+%%--------------------------------------------------------------------
+new(Transport, Options) when is_list(Options) ->
+    State = lists:foldl(fun apply_option/2, #json_protocol{transport = Transport}, Options),
+    thrift_protocol:new(?MODULE, State);
 new(Transport, _Options) ->
-    State = #json_protocol{transport = Transport},
-    thrift_protocol:new(?MODULE, State).
+    new(Transport, []).
+
+apply_option({max_message_size, Max}, State) when is_integer(Max), Max > 0 ->
+    State#json_protocol{max_message_size = Max};
+apply_option(_Other, State) ->
+    State.
+
+max_message_size(#json_protocol{max_message_size = undefined}) ->
+    application:get_env(thrift, max_message_size, ?DEFAULT_MAX_MESSAGE_SIZE);
+max_message_size(#json_protocol{max_message_size = Max}) ->
+    Max.
 
 flush_transport(This = #json_protocol{transport = Transport}) ->
     {NewTransport, Result} = thrift_transport:flush(Transport),
@@ -356,8 +375,11 @@ escape_byte(B) -> <<B>>.
 %% transport, and a buffered one over it, waits until it has all the bytes
 %% it was asked for, and the stream goes on with the next message; other
 %% transports, framed among them, return what they have and keep the rest.
+%%
+%% A message longer than max_message_size is refused before more than that
+%% many bytes of it are read.
 read_all(#json_protocol{transport = Transport0} = State) ->
-    case read_message(Transport0, [], 0, false, false) of
+    case read_message(Transport0, max_message_size(State), [], 0, 0, false, false) of
         {Transport1, {ok, Bin}} ->
             P = thrift_json_parser:parser(),
             [First | Rest] = P(Bin),
@@ -366,22 +388,34 @@ read_all(#json_protocol{transport = Transport0} = State) ->
             {State#json_protocol{transport = Transport1}, Error}
     end.
 
-read_message(Transport0, Parts, Depth, InString, Escaped) ->
-    {Transport1, Result} = thrift_transport:read(
-        Transport0, least_left(Depth, InString, Escaped)
-    ),
-    case Result of
-        {ok, <<>>} ->
-            {Transport1, {error, eof}};
-        {ok, Data} ->
-            case scan(Data, Depth, InString, Escaped) of
-                done ->
-                    {Transport1, {ok, iolist_to_binary(lists:reverse([Data | Parts]))}};
-                {Depth1, InString1, Escaped1} ->
-                    read_message(Transport1, [Data | Parts], Depth1, InString1, Escaped1)
-            end;
-        {error, _} = Error ->
-            {Transport1, Error}
+read_message(Transport0, Max, Parts, Size, Depth, InString, Escaped) ->
+    Least = least_left(Depth, InString, Escaped),
+    case Size + Least > Max of
+        true ->
+            {Transport0, {error, {message_size_exceeds_maximum, Max}}};
+        false ->
+            {Transport1, Result} = thrift_transport:read(Transport0, Least),
+            case Result of
+                {ok, <<>>} ->
+                    {Transport1, {error, eof}};
+                {ok, Data} ->
+                    case scan(Data, Depth, InString, Escaped) of
+                        done ->
+                            {Transport1, {ok, iolist_to_binary(lists:reverse([Data | Parts]))}};
+                        {Depth1, InString1, Escaped1} ->
+                            read_message(
+                                Transport1,
+                                Max,
+                                [Data | Parts],
+                                Size + byte_size(Data),
+                                Depth1,
+                                InString1,
+                                Escaped1
+                            )
+                    end;
+                {error, _} = Error ->
+                    {Transport1, Error}
+            end
     end.
 
 %% The fewest bytes that can still complete the message: a closing bracket
