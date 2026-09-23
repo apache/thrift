@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "thrift"
-  s.version     = "0.26.0"
+  s.version     = "0.25.0"
   s.authors     = ["Apache Thrift Developers"]
   s.email       = ["dev@thrift.apache.org"]
   s.homepage    = "https://thrift.apache.org"
