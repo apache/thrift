@@ -54,6 +54,12 @@ DEFAULT_RECURSION_DEPTH = 64
 -- value the frame limit uses; override per protocol instance.
 DEFAULT_MAX_STRING_SIZE = 16384000
 
+-- The most elements a list, set or map may declare by default. Same value
+-- again: every element takes at least one byte on the wire, so no container in
+-- a message that fits into one frame of the default size exceeds it. Override
+-- per protocol instance with maxContainerSize; zero or less switches it off.
+DEFAULT_MAX_CONTAINER_SIZE = 16384000
+
 TProtocolBase = __TObject:new{
   __type = 'TProtocolBase',
   trans
@@ -79,6 +85,17 @@ function TProtocolBase:checkStringSize(size)
   if size > limit then
     terror(TProtocolException:new{
       message = 'String size ' .. tostring(size) .. ' exceeds maximum ' .. tostring(limit),
+      errorCode = TProtocolException.SIZE_LIMIT
+    })
+  end
+end
+
+-- Refuses a declared list, set or map size before any element is read.
+function TProtocolBase:checkContainerSize(size)
+  local limit = self.maxContainerSize or DEFAULT_MAX_CONTAINER_SIZE
+  if limit > 0 and size > limit then
+    terror(TProtocolException:new{
+      message = 'Container size ' .. tostring(size) .. ' exceeds maximum ' .. tostring(limit),
       errorCode = TProtocolException.SIZE_LIMIT
     })
   end

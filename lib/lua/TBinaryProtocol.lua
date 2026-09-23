@@ -195,6 +195,7 @@ function TBinaryProtocol:readMapBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   return ktype, vtype, size
 end
 
@@ -207,6 +208,7 @@ function TBinaryProtocol:readListBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   return etype, size
 end
 
@@ -219,6 +221,7 @@ function TBinaryProtocol:readSetBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   return etype, size
 end
 
