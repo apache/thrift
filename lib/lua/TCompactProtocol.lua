@@ -335,6 +335,7 @@ function TCompactProtocol:readMapBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   local kvtype = 0
   if size > 0 then
     kvtype = self:readSignByte()
@@ -356,6 +357,7 @@ function TCompactProtocol:readListBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   local etype = self:getTType(libluabitwise.band(size_and_type, 0x0f))
   return etype, size
 end

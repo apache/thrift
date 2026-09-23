@@ -1,7 +1,7 @@
 Thrift TConfiguration
 ====================================================================
 
-Last Modified: 2026-Sep-17
+Last Modified: 2026-Sep-23
 
 <!--
 --------------------------------------------------------------------
@@ -57,6 +57,8 @@ The RecursionLimit defines, how deep structures may be nested into each other. T
 MaxContainerSize limits the number of elements a single list, set or map may declare when it is read. It exists because MaxMessageSize cannot cover that case on its own. MaxMessageSize is counted in bytes, while what a container costs is its element count multiplied by the in-memory footprint of one element, and the two are only loosely related. A list of structs whose smallest possible encoding on the wire is a single byte stays comfortably inside any byte budget while still asking for one object per declared element. The two settings are therefore independent levers, and an implementation SHOULD offer both.
 
 Unlike the three settings above, MaxContainerSize has no finite default. The default is "no limit of its own", because any finite default would reject messages that the same binding accepted before. This describes the setting as it is introduced, not a position on which default is right for a given deployment; §10 of doc/thrift-threat-model.md asks operators to set finite limits before exposing a server to untrusted peers. The element count stays bounded by MaxMessageSize and, where the transport knows how many bytes of the current message are left, by that remainder.
+
+The Lua implementation departs from this. It has no MaxMessageSize, so nothing else would bound the count. Its maxContainerSize, set on the protocol object like its string size limit, therefore defaults to 16384000 elements: the value of its string and frame size limits, and of the older D limit described below. Every element takes at least one byte on the wire, so that default refuses no message that fits into one frame of the default size.
 
 The value that switches the limit off is any value less than or equal to zero. An implementation in a language that has a natural spelling for an absent value, such as an option type, MAY use that spelling instead. The setting SHOULD be consulted where the declared element count is read, before the collection is sized, and a violation SHOULD be reported the way the other limits are, as a protocol exception of type SIZE_LIMIT.
 
