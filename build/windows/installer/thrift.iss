@@ -22,7 +22,7 @@
 ; Requires Inno Setup 6.3 or later, which is what the GitHub Windows runner
 ; images ship. Build it with build/windows/build-installer.ps1, or by hand:
 ;
-;   iscc /DAppVersion=0.26.0 ^
+;   iscc /DAppVersion=0.25.0 ^
 ;        /DSourceExe=C:\install\bin\thrift.exe ^
 ;        /DSourceRoot=C:\thrift ^
 ;        /DOutputDir=C:\out ^
@@ -32,7 +32,7 @@
 ; release tag, so that build/veralign.sh has nothing extra to keep in step.
 
 #ifndef AppVersion
-  #error Pass the version on the command line, for example /DAppVersion=0.26.0
+  #error Pass the version on the command line, for example /DAppVersion=0.25.0
 #endif
 #ifndef SourceExe
   #error Pass the compiler on the command line, for example /DSourceExe=C:\install\bin\thrift.exe

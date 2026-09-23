@@ -30,7 +30,7 @@
     nothing new has to be kept in step by build/veralign.sh.
 
 .PARAMETER Version
-    The version to stamp into the installer, for example 0.26.0.
+    The version to stamp into the installer, for example 0.25.0.
 
 .PARAMETER Compiler
     The thrift.exe to package.
@@ -46,7 +46,7 @@
     Full path to ISCC.exe. Found automatically when omitted.
 
 .EXAMPLE
-    pwsh build\windows\build-installer.ps1 -Version 0.26.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
+    pwsh build\windows\build-installer.ps1 -Version 0.25.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
 #>
 
 [CmdletBinding()]

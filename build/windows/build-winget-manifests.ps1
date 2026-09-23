@@ -31,7 +31,7 @@
     before the release has reached the archive.
 
 .PARAMETER Version
-    The released version, for example 0.26.0.
+    The released version, for example 0.25.0.
 
 .PARAMETER InstallerUrl
     Where the installer is published. Defaults to the Apache archive, which
@@ -50,7 +50,7 @@
     winget-pkgs uses and wingetcreate expects.
 
 .EXAMPLE
-    pwsh build/windows/build-winget-manifests.ps1 -Version 0.26.0
+    pwsh build/windows/build-winget-manifests.ps1 -Version 0.25.0
 #>
 
 [CmdletBinding()]

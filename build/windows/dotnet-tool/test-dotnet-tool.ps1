@@ -45,7 +45,7 @@
     Windows. Optional.
 
 .EXAMPLE
-    pwsh build\windows\dotnet-tool\test-dotnet-tool.ps1 -Package nupkg\Apache.Thrift.Compiler.0.26.0.nupkg -Version 0.26.0
+    pwsh build\windows\dotnet-tool\test-dotnet-tool.ps1 -Package nupkg\Apache.Thrift.Compiler.0.25.0.nupkg -Version 0.25.0
 #>
 
 [CmdletBinding()]

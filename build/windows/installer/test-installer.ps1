@@ -42,7 +42,7 @@
     Version thrift.exe is expected to report. Optional.
 
 .EXAMPLE
-    pwsh build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.26.0-setup.exe
+    pwsh build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.25.0-setup.exe
 #>
 
 [CmdletBinding()]

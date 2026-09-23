@@ -29,7 +29,7 @@
     so that nothing new has to be kept in step by build/veralign.sh.
 
 .PARAMETER Version
-    The package version, for example 0.26.0.
+    The package version, for example 0.25.0.
 
 .PARAMETER Compiler
     The thrift.exe to bundle.
@@ -42,7 +42,7 @@
     the checkout this script lives in.
 
 .EXAMPLE
-    pwsh build\windows\build-dotnet-tool.ps1 -Version 0.26.0 -Compiler C:\install\bin\thrift.exe -OutputDir nupkg
+    pwsh build\windows\build-dotnet-tool.ps1 -Version 0.25.0 -Compiler C:\install\bin\thrift.exe -OutputDir nupkg
 #>
 
 [CmdletBinding()]

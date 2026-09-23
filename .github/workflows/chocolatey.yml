@@ -45,7 +45,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Released version to package, for example 0.26.0. Taken from CMakeLists.txt when empty."
+        description: "Released version to package, for example 0.25.0. Taken from CMakeLists.txt when empty."
         required: false
         type: string
 

@@ -72,7 +72,7 @@ Packages a built `thrift.exe` into a Windows installer with
 preinstalled on the GitHub Windows runner images.
 
 ```powershell
-PS C:\thrift> .\build\windows\build-installer.ps1 -Version 0.26.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
+PS C:\thrift> .\build\windows\build-installer.ps1 -Version 0.25.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
 ```
 
 It writes `thrift-<version>-setup.exe` into the output directory and prints its
@@ -109,7 +109,7 @@ It changes the `PATH` of the user it runs as, so run it in CI or on a throwaway
 machine.
 
 ```powershell
-PS C:\thrift> .\build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.26.0-setup.exe
+PS C:\thrift> .\build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.25.0-setup.exe
 ```
 
 ## `build-dotnet-tool.ps1`
@@ -118,7 +118,7 @@ Packs a built `thrift.exe` as a [.NET tool](https://learn.microsoft.com/en-us/do
 published to NuGet as `Apache.Thrift.Compiler`.
 
 ```powershell
-PS C:\thrift> .\build\windows\build-dotnet-tool.ps1 -Version 0.26.0 -Compiler C:\install\bin\thrift.exe -OutputDir nupkg
+PS C:\thrift> .\build\windows\build-dotnet-tool.ps1 -Version 0.25.0 -Compiler C:\install\bin\thrift.exe -OutputDir nupkg
 ```
 
 As with the installer, the version is passed in rather than stored in the
@@ -148,7 +148,7 @@ Looks inside a packed `.nupkg`, then installs it into a throwaway directory and
 runs it.
 
 ```bash
-$ pwsh build/windows/dotnet-tool/test-dotnet-tool.ps1 -Package nupkg/Apache.Thrift.Compiler.0.26.0.nupkg -Version 0.26.0
+$ pwsh build/windows/dotnet-tool/test-dotnet-tool.ps1 -Package nupkg/Apache.Thrift.Compiler.0.25.0.nupkg -Version 0.25.0
 ```
 
 Two things can go wrong with a tool package that wraps a native executable, and
@@ -167,7 +167,7 @@ Builds the [Chocolatey](https://chocolatey.org/) package, so that the compiler
 can be installed with `choco install thrift`.
 
 ```powershell
-PS C:\thrift> .\build\windows\build-chocolatey-package.ps1 -Version 0.26.0
+PS C:\thrift> .\build\windows\build-chocolatey-package.ps1 -Version 0.25.0
 ```
 
 The package does not carry the compiler. It downloads the installer published
@@ -198,7 +198,7 @@ the templates in `winget/`, so that the compiler can be installed with
 `winget install Apache.Thrift`.
 
 ```bash
-$ pwsh build/windows/build-winget-manifests.ps1 -Version 0.26.0
+$ pwsh build/windows/build-winget-manifests.ps1 -Version 0.25.0
 ```
 
 The manifest points at `archive.apache.org`, which keeps every release.
@@ -226,5 +226,5 @@ match is otherwise rejected only after the pull request has been opened.
 
 ```bash
 $ python3 -m pip install pyyaml jsonschema
-$ python3 build/windows/winget/validate_manifests.py winget-manifests/manifests/a/Apache/Thrift/0.26.0
+$ python3 build/windows/winget/validate_manifests.py winget-manifests/manifests/a/Apache/Thrift/0.25.0
 ```
