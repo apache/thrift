@@ -143,6 +143,115 @@ class TCurlClientTest extends TestCase
         $transport->readAll(5);
     }
 
+    public function testClientsKeepIndependentTimeoutsAndReuseTheirOwnHandles(): void
+    {
+        $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function');
+        $firstHandle = new \stdClass();
+        $secondHandle = new \stdClass();
+        $this->getFunctionMock('Thrift\\Transport', 'curl_init')
+            ->expects($this->exactly(2))
+            ->willReturnOnConsecutiveCalls($firstHandle, $secondHandle);
+
+        $options = new \SplObjectStorage();
+        $this->getFunctionMock('Thrift\\Transport', 'curl_setopt')
+            ->expects($this->any())
+            ->willReturnCallback(function ($handle, $option, $value) use ($options) {
+                $settings = $options->contains($handle) ? $options[$handle] : [];
+                $settings[$option] = $value;
+                $options[$handle] = $settings;
+
+                return true;
+            });
+        $requests = [];
+        $this->getFunctionMock('Thrift\\Transport', 'curl_exec')
+            ->expects($this->exactly(3))
+            ->willReturnCallback(function ($handle) use ($options, &$requests) {
+                $settings = $options[$handle];
+                $requests[] = [
+                    $handle,
+                    $settings[CURLOPT_TIMEOUT_MS] ?? null,
+                    $settings[CURLOPT_CONNECTTIMEOUT_MS] ?? null,
+                ];
+
+                return 'reply';
+            });
+        $this->getFunctionMock('Thrift\\Transport', 'curl_getinfo')->expects($this->any())->willReturn(200);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_error')->expects($this->any())->willReturn('');
+
+        $first = new TCurlClient('localhost');
+        $first->setTimeoutSecs(0.1);
+        $first->setConnectionTimeoutSecs(0.2);
+        $first->flush();
+        $second = new TCurlClient('localhost');
+        $second->flush();
+        $first->flush();
+
+        $this->assertSame([
+            [$firstHandle, 100.0, 200.0],
+            [$secondHandle, null, null],
+            [$firstHandle, 100.0, 200.0],
+        ], $requests);
+    }
+
+    #[DataProvider('releaseHandleDataProvider')]
+    public function testReleasingOneClientLeavesTheOtherHandleUsable(string $release): void
+    {
+        $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function')->expects($this->never());
+        $firstHandle = new \stdClass();
+        $secondHandle = new \stdClass();
+        $replacementHandle = new \stdClass();
+        $this->getFunctionMock('Thrift\\Transport', 'curl_init')
+            ->expects($this->exactly(3))
+            ->willReturnOnConsecutiveCalls($firstHandle, $secondHandle, $replacementHandle);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_setopt')->expects($this->any())->willReturn(true);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_getinfo')->expects($this->any())->willReturn(200);
+        $this->getFunctionMock('Thrift\\Transport', 'curl_error')->expects($this->any())->willReturn('');
+        $handles = [];
+        $this->getFunctionMock('Thrift\\Transport', 'curl_exec')
+            ->expects($this->exactly($release === 'failure' ? 5 : 4))
+            ->willReturnCallback(function ($handle) use (&$handles, $release) {
+                $handles[] = $handle;
+
+                return $release === 'failure' && count($handles) === 3 ? false : 'reply';
+            });
+
+        $first = new TCurlClient('localhost');
+        $second = new TCurlClient('localhost');
+        $first->flush();
+        $second->flush();
+        if ($release === 'failure') {
+            try {
+                $first->flush();
+                $this->fail('Expected the failed transfer to throw');
+            } catch (TTransportException $e) {
+                $this->assertSame(TTransportException::UNKNOWN, $e->getCode());
+            }
+        } else {
+            $first->$release();
+        }
+        $second->flush();
+        $first->flush();
+
+        $expected = [$firstHandle, $secondHandle];
+        if ($release === 'failure') {
+            $expected[] = $firstHandle;
+        }
+        $expected[] = $secondHandle;
+        $expected[] = $replacementHandle;
+        $this->assertSame($expected, $handles);
+        $this->assertSame('reply', $first->readAll(5));
+        $this->assertSame('reply', $second->readAll(5));
+    }
+
+    public static function releaseHandleDataProvider(): array
+    {
+        return [
+            'close transport' => ['close'],
+            'close handle' => ['closeCurlHandle'],
+            'failed transfer' => ['failure'],
+        ];
+    }
+
     public function testWrite()
     {
         $host = 'localhost';
@@ -187,16 +296,7 @@ class TCurlClientTest extends TestCase
         $expectedCode = null
     ) {
         $this->getFunctionMock('Thrift\\Transport', 'register_shutdown_function')
-            ->expects($this->once())
-            ->with(
-                $this->callback(
-                    function ($arg) {
-                        return is_array($arg)
-                            && $arg[0] === 'Thrift\\Transport\\TCurlClient'
-                            && $arg[1] === 'closeCurlHandle';
-                    }
-                )
-            );
+            ->expects($this->never());
         $this->getFunctionMock('Thrift\\Transport', 'curl_init')
              ->expects($this->once());
 
@@ -558,7 +658,7 @@ class TCurlClientTest extends TestCase
         $curlHandle = new ReflectionProperty($transport, 'curlHandle');
         $curlHandle->setValue($transport, 'testHandle');
 
-        $transport::closeCurlHandle();
+        $transport->closeCurlHandle();
 
         $this->assertNull($curlHandle->getValue($transport));
     }
