@@ -271,15 +271,16 @@ read(This0 = #t_compact{max_message_size = Max}, message_begin) ->
     {This2, {ok, VerAndType}} = read(This1, ubyte),
     ?VERSION_1 = VerAndType band ?VERSION_MASK,
     {This3, {ok, SeqId}} = read(This2, ui32),
-    case read(This3, string) of
-        {This4, {ok, Name}} ->
-            {This4, #protocol_message_begin{
+    {This4, {ok, NameSz}} = read(This3, ui32),
+    case read_name(This4, NameSz) of
+        {This5, {ok, Name}} ->
+            {This5, #protocol_message_begin{
                 name = binary_to_list(Name),
                 type = (VerAndType bsr ?TYPE_SHIFT_AMOUNT) band ?TYPE_BITS,
                 seqid = SeqId
             }};
-        {This4, Error} ->
-            {This4, Error}
+        {This5, Error} ->
+            {This5, Error}
     end;
 read(This, message_end) ->
     {This#t_compact{message_bytes_left = undefined}, ok};
@@ -400,6 +401,13 @@ read(This0, double) ->
 read(This0, string) ->
     {This1, {ok, Sz}} = read(This0, ui32),
     read_data(This1, Sz).
+
+%% The name of a message, refused before it is read if it is longer than
+%% ?MAX_MESSAGE_NAME_SIZE.
+read_name(This, Sz) when Sz > ?MAX_MESSAGE_NAME_SIZE ->
+    {This, {error, {message_name_exceeds_maximum, ?MAX_MESSAGE_NAME_SIZE}}};
+read_name(This, Sz) ->
+    read_data(This, Sz).
 
 -spec read_data(#t_compact{}, non_neg_integer()) ->
     {#t_compact{}, {ok, binary()} | {error, _Reason}}.

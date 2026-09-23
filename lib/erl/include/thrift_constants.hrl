@@ -82,7 +82,7 @@
 %% its max_message_size option.
 -define(DEFAULT_MAX_MESSAGE_SIZE, (100 * 1024 * 1024)).
 
-%% The longest message name thrift_json_protocol will read. A name the
-%% processor can dispatch is a function name, an atom of at most 255
-%% characters, after a service name and a ':' for a multiplexed service.
+%% The longest message name the binary, compact and JSON protocols will read.
+%% A name the processor can dispatch is a function name, an atom of at most
+%% 255 characters, after a service name and a ':' for a multiplexed service.
 -define(MAX_MESSAGE_NAME_SIZE, 4096).
