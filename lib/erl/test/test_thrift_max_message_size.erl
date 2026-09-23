@@ -139,6 +139,25 @@ name_test_() ->
      || {Name, Module, Base} <- protocols()
     ].
 
+%% A message name up to ?MAX_MESSAGE_NAME_SIZE bytes is read. A longer one is
+%% refused by message_begin before its bytes are taken from the transport.
+name_length_test_() ->
+    [
+        {Name,
+            ?_test(begin
+                AtMax = lists:duplicate(?MAX_MESSAGE_NAME_SIZE, $n),
+                Ok = message(Module, Base, AtMax, <<"x">>),
+                ?assertMatch({{ok, AtMax, _}, _, _}, read_call(new(Module, Ok, Base), Ok)),
+                Long = message(Module, Base, [$n | AtMax], <<"x">>),
+                {Protocol, Result} = thrift_protocol:read(new(Module, Long, Base), message_begin),
+                ?assertEqual(
+                    {error, {message_name_exceeds_maximum, ?MAX_MESSAGE_NAME_SIZE}}, Result
+                ),
+                ?assert(byte_size(Long) - iolist_size(buffered(Protocol)) =< 8)
+            end)}
+     || {Name, Module, Base} <- protocols()
+    ].
+
 %% Each message has the whole maximum to itself.
 one_message_after_another_test_() ->
     [
