@@ -684,6 +684,7 @@ function TJSONProtocol:readMapBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   self:readJSONObjectBegin()
   return ktype, vtype, size
 end
@@ -701,6 +702,7 @@ function TJSONProtocol:readListBegin()
   if size < 0 then
     terror(TProtocolException:new{errorCode = TProtocolException.NEGATIVE_SIZE})
   end
+  self:checkContainerSize(size)
   return etype, size
 end
 
