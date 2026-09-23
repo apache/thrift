@@ -186,9 +186,14 @@ read(This0 = #binary_protocol{max_message_size = Max}, message_begin) ->
     case Initial of
         {ok, Sz} when Sz band ?VERSION_MASK =:= ?VERSION_1 ->
             %% we're at version 1
-            case read(This1, string) of
-                {This2, {ok, Name}} ->
-                    read_message_begin(This2, Name, Sz band ?TYPE_MASK);
+            case read(This1, i32) of
+                {This2, {ok, NameSz}} ->
+                    case read_name(This2, NameSz) of
+                        {This3, {ok, Name}} ->
+                            read_message_begin(This3, Name, Sz band ?TYPE_MASK);
+                        {This3, Error} ->
+                            {This3, Error}
+                    end;
                 {This2, Error} ->
                     {This2, Error}
             end;
@@ -200,7 +205,7 @@ read(This0 = #binary_protocol{max_message_size = Max}, message_begin) ->
             {This1, {error, no_binary_protocol_version}};
         {ok, Sz} when This1#binary_protocol.strict_read =:= false ->
             %% strict_read is false, so just read the old way
-            case read_data(This1, Sz) of
+            case read_name(This1, Sz) of
                 {This2, {ok, Name}} ->
                     case read(This2, byte) of
                         {This3, {ok, Type}} -> read_message_begin(This3, Name, Type);
@@ -319,6 +324,15 @@ read(This0, string) ->
     {This1, {ok, Sz}} = read(This0, i32),
     if Sz < 0 -> error({protocol_error, negative_size}); true -> ok end,
     read_data(This1, Sz).
+
+%% The name of a message, refused before it is read if it is longer than
+%% ?MAX_MESSAGE_NAME_SIZE.
+read_name(_This, Sz) when Sz < 0 ->
+    error({protocol_error, negative_size});
+read_name(This, Sz) when Sz > ?MAX_MESSAGE_NAME_SIZE ->
+    {This, {error, {message_name_exceeds_maximum, ?MAX_MESSAGE_NAME_SIZE}}};
+read_name(This, Sz) ->
+    read_data(This, Sz).
 
 %% The sequence id that ends a message header, once its name and type are read.
 read_message_begin(This0, Name, Type) ->
