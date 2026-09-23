@@ -25,7 +25,9 @@ TFramedTransport = TTransportBase:new{
   doRead = true,
   doWrite = true,
   wBuf = '',
-  rBuf = ''
+  rBuf = '',
+  -- How much of rBuf read() has handed out so far
+  rPos = 0
 }
 
 function TFramedTransport:new(obj)
@@ -62,14 +64,12 @@ function TFramedTransport:read(len)
     return self.trans:read(len)
   end
 
-  if len > string.len(self.rBuf) then
-    local val = self.rBuf
+  local val = string.sub(self.rBuf, self.rPos + 1, self.rPos + len)
+  self.rPos = self.rPos + string.len(val)
+  if self.rPos >= string.len(self.rBuf) then
     self.rBuf = ''
-    return val
+    self.rPos = 0
   end
-
-  local val = string.sub(self.rBuf, 0, len)
-  self.rBuf = string.sub(self.rBuf, len+1)
   return val
 end
 
@@ -80,6 +80,7 @@ function TFramedTransport:__readFrame()
   -- four bytes declared, and the peer need not send any of it.
   self:checkDeclaredSize(frame_len, self.maxFrameSize)
   self.rBuf = self.trans:readAll(frame_len)
+  self.rPos = 0
 end
 
 

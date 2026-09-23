@@ -39,7 +39,9 @@ class TJsonProtocol extends TProtocol {
   final List<_BaseContext> _contextStack = [];
   final Uint8List _tempBuffer = Uint8List(4);
 
-  TJsonProtocol(TTransport transport) : super(transport) {
+  TJsonProtocol(TTransport transport,
+      {int maxStringSize = defaultMaxStringSize})
+      : super(transport, maxStringSize: maxStringSize) {
     _rootContext = _BaseContext(this);
     _context = _rootContext;
     _reader = _LookaheadReader(this);
@@ -307,6 +309,17 @@ class TJsonProtocol extends TProtocol {
 
   bool _isLowSurrogate(int b) => b >= 0xDC00 && b <= 0xDFFF;
 
+  /// A JSON string or number carries no length, so its size is whatever the
+  /// peer sends. It is held to the same maximum the binary and compact
+  /// protocols apply, checked against the running byte count as the value is
+  /// read.
+  void _checkStringSize(int size) {
+    if (size > maxStringSize) {
+      throw TProtocolError(TProtocolErrorType.SIZE_LIMIT,
+          'Length ($size) larger than max length ($maxStringSize)');
+    }
+  }
+
   /// read
   Uint8List _readJsonString({bool skipContext = false}) {
     List<int> bytes = [];
@@ -318,6 +331,7 @@ class TJsonProtocol extends TProtocol {
 
     _readJsonSyntaxChar(_Constants.QUOTE_BYTES[0]);
     while (true) {
+      _checkStringSize(bytes.length);
       int byte = _reader.read();
       if (byte == _Constants.QUOTE_BYTES[0]) {
         break;
@@ -380,6 +394,7 @@ class TJsonProtocol extends TProtocol {
   String _readJsonNumericChars() {
     StringBuffer buffer = StringBuffer();
     while (true) {
+      _checkStringSize(buffer.length);
       if (!_Constants.isJsonNumeric(_reader.peek())) {
         break;
       }

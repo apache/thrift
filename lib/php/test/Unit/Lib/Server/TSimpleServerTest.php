@@ -26,8 +26,14 @@ namespace Test\Thrift\Unit\Lib\Server;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Test\Thrift\Unit\Lib\Server\Fixture\ConnectionStub;
+use Test\Thrift\Unit\Lib\Server\Fixture\CountingProcessor;
+use Test\Thrift\Unit\Lib\Server\Fixture\QueuedServerTransport;
 use Test\Thrift\Unit\Lib\Server\Fixture\TestProcessor;
+use Thrift\Factory\TBinaryProtocolFactory;
+use Thrift\Factory\TJSONProtocolFactory;
 use Thrift\Factory\TProtocolFactory;
+use Thrift\Factory\TTransportFactory;
 use Thrift\Factory\TTransportFactoryInterface;
 use Thrift\Protocol\TProtocol;
 use Thrift\Server\TServerTransport;
@@ -167,5 +173,95 @@ class TSimpleServerTest extends TestCase
                 false,
             ]
         ];
+    }
+
+    /**
+     * A connection whose request cannot be read ends, and the next client is
+     * still served. The processor reads like generated code, so the failure
+     * comes out of process() just as it would in a real server.
+     */
+    #[DataProvider('unreadableRequestDataProvider')]
+    public function testServeContinuesAfterAConnectionFails(string $protocol, string $request): void
+    {
+        $protocolFactory = $protocol === 'json' ? new TJSONProtocolFactory() : new TBinaryProtocolFactory();
+        $failed = new ConnectionStub($request);
+        $valid = new ConnectionStub(CountingProcessor::call($protocolFactory));
+        $processor = new CountingProcessor();
+        $serverTransport = new QueuedServerTransport([$failed, $valid]);
+        $server = new TSimpleServer(
+            $processor,
+            $serverTransport,
+            new TTransportFactory(),
+            new TTransportFactory(),
+            $protocolFactory,
+            $protocolFactory
+        );
+        $serverTransport->server = $server;
+
+        $escaped = null;
+        try {
+            $server->serve();
+        } catch (\Throwable $e) {
+            $escaped = $e;
+        }
+
+        $this->assertSame(2, $serverTransport->accepted, 'connections accepted');
+        $this->assertSame(1, $processor->served, 'calls served');
+        $this->assertNotSame('', $valid->written, 'reply written to the second client');
+        $this->assertSame(1, $failed->closed, 'close() calls on the failed connection');
+        $this->assertSame(1, $valid->closed, 'close() calls on the served connection');
+        $this->assertNull($escaped, 'serve() ended early');
+    }
+
+    public static function unreadableRequestDataProvider()
+    {
+        // TBinaryProtocol refuses the first word with a TProtocolException.
+        yield 'binary, bad version' => [
+            'protocol' => 'binary',
+            'request' => "\xff\xff\xff\xff",
+        ];
+        // The field type name does not decode, which TJSONProtocol reports
+        // with a TypeError rather than a TException.
+        yield 'json, undecodable field type' => [
+            'protocol' => 'json',
+            'request' => '[1,"ping",1,1,{"1":{"\z"',
+        ];
+    }
+
+    public function testServeContinuesWhenClosingAConnectionFails(): void
+    {
+        // Closing a TSocket twice throws, so a connection the processor has
+        // already closed must not end serve() when the server closes it.
+        $connection = new class ('') extends ConnectionStub {
+            public function close(): void
+            {
+                parent::close();
+                if ($this->closed > 1) {
+                    throw new \TypeError('closed twice');
+                }
+            }
+        };
+        $serverTransport = new QueuedServerTransport([$connection]);
+        $server = new TSimpleServer(
+            new class {
+                public function process(TProtocol $input, TProtocol $output): bool
+                {
+                    $input->getTransport()->close();
+
+                    return false;
+                }
+            },
+            $serverTransport,
+            new TTransportFactory(),
+            new TTransportFactory(),
+            new TBinaryProtocolFactory(),
+            new TBinaryProtocolFactory()
+        );
+        $serverTransport->server = $server;
+
+        $server->serve();
+
+        $this->assertSame(1, $serverTransport->accepted);
+        $this->assertSame(2, $connection->closed);
     }
 }

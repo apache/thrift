@@ -208,16 +208,18 @@ T_ERRCODE socket_connect(p_socket sock, p_sa addr, int addr_len, int timeout) {
 #define SEND_RETRY_COUNT 5
 T_ERRCODE socket_send(
   p_socket sock, const char *data, size_t len, int timeout) {
-  int err, put = 0;
+  int err;
+  size_t sent = 0; // bytes of data already delivered
+  ssize_t put;     // result of the last send()
   if (*sock < 0) {
     return CLOSED;
   }
   for(int i = 0; i < SEND_RETRY_COUNT; i++) {
     do {
-      size_t l = len - put;
-      put = send(*sock, data + put, l, 0);
-      if (put > 0) {
-        if(put == l) {
+      put = send(*sock, data + sent, len - sent, 0);
+      if (put >= 0) {
+        sent += (size_t)put;
+        if(sent == len) {
           return SUCCESS;
         }
         // Not all data was delivered, we need to try again.
@@ -226,7 +228,7 @@ T_ERRCODE socket_send(
       }
     } while ((err = errno) == EINTR);
 
-    if (err == EAGAIN) {
+    if (err == EAGAIN || err == EWOULDBLOCK) {
       err = socket_wait(sock, WAIT_MODE_W, timeout);
       // Check if the socket is available again and try to resend.
       if(err == SUCCESS) {
@@ -236,6 +238,10 @@ T_ERRCODE socket_send(
     break;
   }
 
+  // Out of retries with data still to send.
+  if (err == SUCCESS) {
+    err = TIMEOUT;
+  }
   return err;
 }
 

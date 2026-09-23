@@ -34,6 +34,8 @@ PRECROSS_TARGET += precross-java
 # JavaScript unit test depends on java
 # so test only if java, ant & co is available
 SUBDIRS += js
+# The TypeScript test drives the same ant target to fetch its browser libs
+SUBDIRS += ts
 endif
 
 if WITH_KOTLIN

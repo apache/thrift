@@ -25,6 +25,7 @@
 #include <thrift/c_glib/transport/thrift_socket.h>
 #include <thrift/c_glib/transport/thrift_server_transport.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
 
 #define TEST_DATA  \
                     { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',  \
@@ -239,6 +240,167 @@ test_message_size_limit(void)
   g_object_unref (tsocket);
 }
 
+/* Larger than zlib's 64 KiB window, so that deflate() has to hand compressed
+ * output back while input is still left, in write() as well as in flush(). */
+#define LARGE_PAYLOAD_BYTES (256 * 1024)
+
+/* Bytes that do not compress, so that their compressed form is larger than the
+ * transport's compressed write buffer. */
+static guchar *
+incompressible_bytes (void)
+{
+  guchar *payload = g_malloc (LARGE_PAYLOAD_BYTES);
+  GRand *rand = g_rand_new_with_seed (5);
+  guint i;
+
+  for (i = 0; i < LARGE_PAYLOAD_BYTES; i++)
+    payload[i] = (guchar) g_rand_int_range (rand, 0, 256);
+  g_rand_free (rand);
+  return payload;
+}
+
+/* Inflates what the zlib transport wrote into BUFFER and returns how many
+ * bytes came out, leaving them in OUT, which holds one byte more than
+ * LARGE_PAYLOAD_BYTES. */
+static gsize
+inflate_what_was_written (ThriftMemoryBuffer *buffer, guchar *out)
+{
+  guchar *compressed = g_malloc (2 * LARGE_PAYLOAD_BYTES);
+  gint32 compressed_len;
+  z_stream stream;
+  gsize produced;
+
+  compressed_len = thrift_transport_read (THRIFT_TRANSPORT (buffer), compressed,
+                                          2 * LARGE_PAYLOAD_BYTES, NULL);
+  g_assert_cmpint (compressed_len, >, 0);
+
+  memset (&stream, 0, sizeof (stream));
+  g_assert_cmpint (inflateInit (&stream), ==, Z_OK);
+  stream.next_in = compressed;
+  stream.avail_in = (uInt) compressed_len;
+  stream.next_out = out;
+  stream.avail_out = LARGE_PAYLOAD_BYTES + 1;
+  inflate (&stream, Z_SYNC_FLUSH);
+  produced = stream.total_out;
+  inflateEnd (&stream);
+
+  g_free (compressed);
+  return produced;
+}
+
+/* Data whose compressed form does not fit into the compressed write buffer
+ * must reach the underlying transport in full, whether it is written in one
+ * piece ... */
+static void
+test_write_more_than_the_compressed_buffer (void)
+{
+  ThriftMemoryBuffer *buffer;
+  ThriftTransport *transport;
+  guchar *payload = incompressible_bytes ();
+  guchar *inflated = g_malloc (LARGE_PAYLOAD_BYTES + 1);
+
+  buffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                         "buf_size", (guint32) (2 * LARGE_PAYLOAD_BYTES), NULL);
+  transport = g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (buffer), NULL);
+
+  g_assert (thrift_zlib_transport_write (transport, payload,
+                                         LARGE_PAYLOAD_BYTES, NULL) == TRUE);
+  g_assert (thrift_zlib_transport_flush (transport, NULL) == TRUE);
+
+  g_assert_cmpuint (inflate_what_was_written (buffer, inflated), ==,
+                    LARGE_PAYLOAD_BYTES);
+  g_assert_cmpint (memcmp (inflated, payload, LARGE_PAYLOAD_BYTES), ==, 0);
+
+  g_object_unref (transport);
+  g_object_unref (buffer);
+  g_free (inflated);
+  g_free (payload);
+}
+
+/* ... or in writes small enough to be collected before they are compressed. */
+static void
+test_small_writes_more_than_the_compressed_buffer (void)
+{
+  ThriftMemoryBuffer *buffer;
+  ThriftTransport *transport;
+  guchar *payload = incompressible_bytes ();
+  guchar *inflated = g_malloc (LARGE_PAYLOAD_BYTES + 1);
+  guint i;
+
+  buffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                         "buf_size", (guint32) (2 * LARGE_PAYLOAD_BYTES), NULL);
+  transport = g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (buffer), NULL);
+
+  for (i = 0; i < LARGE_PAYLOAD_BYTES; i += 16)
+    g_assert (thrift_zlib_transport_write (transport, payload + i, 16,
+                                           NULL) == TRUE);
+  g_assert (thrift_zlib_transport_flush (transport, NULL) == TRUE);
+
+  g_assert_cmpuint (inflate_what_was_written (buffer, inflated), ==,
+                    LARGE_PAYLOAD_BYTES);
+  g_assert_cmpint (memcmp (inflated, payload, LARGE_PAYLOAD_BYTES), ==, 0);
+
+  g_object_unref (transport);
+  g_object_unref (buffer);
+  g_free (inflated);
+  g_free (payload);
+}
+
+/* A write of the underlying transport that fails is reported to the caller. */
+static void
+test_write_reports_a_failed_underlying_write (void)
+{
+  ThriftMemoryBuffer *buffer;
+  ThriftTransport *transport;
+  guchar *payload = incompressible_bytes ();
+  GError *error = NULL;
+
+  /* Too small for even one full compressed buffer. */
+  buffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                         "buf_size", (guint32) 512, NULL);
+  transport = g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (buffer), NULL);
+
+  g_assert (thrift_zlib_transport_write (transport, payload,
+                                         LARGE_PAYLOAD_BYTES, &error) == FALSE);
+  g_assert (error != NULL);
+  g_clear_error (&error);
+
+  g_object_unref (transport);
+  g_object_unref (buffer);
+  g_free (payload);
+}
+
+static void
+count_release (gpointer data)
+{
+  guint *releases = data;
+
+  (*releases)++;
+}
+
+/* Only GObject's own finalize() releases the data attached to an instance, so
+ * the transport's finalize() has to chain up to it. */
+static void
+test_finalize_releases_instance_data (void)
+{
+  ThriftSocket *tsocket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  ThriftTransport *transport =
+    g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
+                  "transport", THRIFT_TRANSPORT (tsocket),
+                  NULL);
+  guint releases = 0;
+
+  g_object_set_data_full (G_OBJECT (transport), "testzlibtransport",
+                          &releases, count_release);
+  g_object_unref (transport);
+  g_assert (releases == 1);
+
+  g_object_unref (tsocket);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -252,6 +414,14 @@ main(int argc, char *argv[])
   g_test_add_func ("/testzlibtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testzlibtransport/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testzlibtransport/MessageSizeLimit", test_message_size_limit);
+  g_test_add_func ("/testzlibtransport/WriteMoreThanTheCompressedBuffer",
+                   test_write_more_than_the_compressed_buffer);
+  g_test_add_func ("/testzlibtransport/SmallWritesMoreThanTheCompressedBuffer",
+                   test_small_writes_more_than_the_compressed_buffer);
+  g_test_add_func ("/testzlibtransport/WriteReportsAFailedUnderlyingWrite",
+                   test_write_reports_a_failed_underlying_write);
+  g_test_add_func ("/testzlibtransport/FinalizeReleasesInstanceData",
+                   test_finalize_releases_instance_data);
 
   return g_test_run ();
 }

@@ -93,6 +93,7 @@ const int8_t T_REPLY = 2;
 const int8_t T_EXCEPTION = 3;
 // tprotocolexception
 const int INVALID_DATA = 1;
+const int SIZE_LIMIT = 3;
 const int BAD_VERSION = 4;
 
 static inline int uuid_hex_nibble(char c) {
@@ -333,6 +334,14 @@ protected:
 class PHPInputTransport : public PHPTransport {
 public:
   PHPInputTransport(zval* _p, size_t _buffer_size = 8192) : PHPTransport(_p, _buffer_size) {
+    max_string_size = read_max_string_size(_p);
+  }
+
+  // The longest string or binary field the protocol reads, as
+  // TBinaryProtocol::$maxStringSize holds it. 0 (or less) means no limit, and
+  // so does a protocol object that has no such property.
+  zend_long maxStringSize() const {
+    return max_string_size;
   }
 
   ~PHPInputTransport() {
@@ -414,6 +423,24 @@ public:
   }
 
 protected:
+  static zend_long read_max_string_size(zval* _p) {
+    zval rv;
+    zval* max = zend_read_property(Z_OBJCE_P(_p), Z4_OBJ_P(_p), ZEND_STRL("maxStringSize"), true, &rv);
+
+    if (EG(exception)) {
+      zend_object *ex = EG(exception);
+      EG(exception) = nullptr;
+      throw PHPExceptionWrapper(ex);
+    }
+
+    if (max == nullptr) {
+      return 0;
+    }
+    ZVAL_DEREF(max);
+
+    return Z_TYPE_P(max) == IS_LONG ? Z_LVAL_P(max) : 0;
+  }
+
   void refill() {
     assert(buffer_used == 0);
     zval retval;
@@ -445,6 +472,7 @@ protected:
     buffer_ptr = buffer;
   }
 
+  zend_long max_string_size;
 };
 
 static
@@ -496,6 +524,20 @@ void throw_tprotocolexception(const char* what, long errorcode) {
   zval_dtor(&zerrorcode);
 
   throw PHPExceptionWrapper(&ex);
+}
+
+// A string or binary field carries its length on the wire. Hold it to the
+// protocol's maximum string size before any of the bytes are read, as
+// TProtocol::checkStringSize() does on the PHP side.
+static
+void check_string_size(const PHPInputTransport& transport, int64_t len) {
+  const zend_long max = transport.maxStringSize();
+  if (max > 0 && len > (int64_t)max) {
+    char errbuf[128];
+    snprintf(errbuf, sizeof(errbuf), "String size (%lld) larger than the maximum (%lld)",
+             (long long)len, (long long)max);
+    throw_tprotocolexception(errbuf, SIZE_LIMIT);
+  }
 }
 
 // Sets EG(exception), call this and then RETURN_NULL();
@@ -557,6 +599,7 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport, int depth) {
     case T_UTF16:
     case T_STRING: {
       uint32_t len = transport.readU32();
+      check_string_size(transport, len);
       transport.skip(len);
       } return;
     case T_MAP: {
@@ -678,6 +721,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
     case T_UTF16:
     case T_STRING: {
       uint32_t size = transport.readU32();
+      check_string_size(transport, size);
       if (size) {
         // The length comes off the wire, so the result is built on the heap as
         // the bytes actually arrive: nothing is placed on the stack, the length
@@ -1231,6 +1275,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
       }
       messageType = (sz & 0x000000ff);
       int32_t namelen = transport.readI32();
+      check_string_size(transport, namelen);
       // skip the name string and the sequence ID, we don't care about those
       transport.skip(namelen + 4);
     } else {
@@ -1238,6 +1283,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
         throw_tprotocolexception("No version identifier... old protocol client in strict mode?", BAD_VERSION);
       } else {
         // Handle pre-versioned input
+        check_string_size(transport, sz);
         transport.skip(sz); // skip string body
         messageType = transport.readI8();
         transport.skip(4); // skip sequence number

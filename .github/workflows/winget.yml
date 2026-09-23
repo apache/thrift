@@ -1,0 +1,246 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+# Submits the Windows Thrift compiler to the Windows Package Manager, so that
+# it can be installed with "winget install Apache.Thrift".
+#
+# The manifest points at archive.apache.org, which keeps every release, rather
+# than downloads.apache.org, which only carries the current one. So this cannot
+# run until the release has been promoted and the archive has picked it up. If
+# the release run is too early, run it again from the Actions tab once the
+# archive has the file.
+
+name: "WinGet"
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/winget.yml"
+      - "build/windows/winget/**"
+      - "build/windows/build-winget-manifests.ps1"
+      - "doc/ReleaseManagement.md"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released version to submit, for example 0.26.0. Taken from CMakeLists.txt when empty."
+        required: false
+        type: string
+      release_date:
+        description: "Release date as yyyy-MM-dd. Today when empty, which is only right on the day of the release."
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    name: Render manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_date: ${{ steps.version.outputs.release_date }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test the manifest renderer
+        shell: pwsh
+        run: ./build/windows/winget/test-winget-manifests.ps1
+
+      - name: Determine the version and release date
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PUBLISHED_AT: ${{ github.event.release.published_at }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_RELEASE_DATE: ${{ inputs.release_date }}
+        run: |
+          $version = ''
+          if ($env:INPUT_VERSION) {
+            $version = $env:INPUT_VERSION
+          }
+          elseif ($env:RELEASE_TAG) {
+            $version = $env:RELEASE_TAG -replace '^v', ''
+          }
+          else {
+            foreach ($line in Get-Content CMakeLists.txt) {
+              if ($line -match '^\s*set\(thrift_VERSION\s+"(\d+\.\d+\.\d+)"\)') {
+                $version = $Matches[1]
+                break
+              }
+            }
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Could not determine a major.minor.patch version (got '$version')."
+            exit 1
+          }
+
+          # The manifest records when the release came out. Defaulting to
+          # today would be wrong on exactly the runs the documentation asks
+          # for: the re-run, days later, once the archive has the file.
+          $releaseDate = ''
+          if ($env:INPUT_RELEASE_DATE) {
+            $releaseDate = $env:INPUT_RELEASE_DATE
+          }
+          elseif ($env:RELEASE_PUBLISHED_AT) {
+            $releaseDate = ([datetime]$env:RELEASE_PUBLISHED_AT).ToUniversalTime().ToString('yyyy-MM-dd')
+          }
+          else {
+            $releaseDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+            Write-Host "::notice::No release date given; using today, $releaseDate."
+          }
+          if ($releaseDate -notmatch '^\d{4}-\d{2}-\d{2}$') {
+            Write-Error "Release date '$releaseDate' is not yyyy-MM-dd."
+            exit 1
+          }
+
+          Write-Host "Version:      $version"
+          Write-Host "Release date: $releaseDate"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "release_date=$releaseDate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Render the manifests
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_DATE: ${{ steps.version.outputs.release_date }}
+          IS_RELEASE: ${{ github.event_name == 'release' }}
+        run: |
+          if ($env:IS_RELEASE -eq 'true') {
+            # No checksum given, so the renderer downloads the published
+            # installer and hashes that. The manifest then cannot claim a
+            # checksum the published file does not have.
+            ./build/windows/build-winget-manifests.ps1 -Version $env:VERSION `
+              -ReleaseDate $env:RELEASE_DATE -OutputDir winget-manifests
+          }
+          else {
+            # Nothing is published for a pull request, so the manifests are
+            # rendered with an obviously fake checksum. They are still checked
+            # against the WinGet schemas below; they are just not submittable,
+            # and the job does not upload them.
+            Write-Host '::notice::Rendering with a placeholder checksum; this run cannot submit.'
+            ./build/windows/build-winget-manifests.ps1 -Version $env:VERSION `
+              -ReleaseDate $env:RELEASE_DATE -Sha256 ('DEADBEEF' * 8) -OutputDir winget-manifests
+          }
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate the manifests
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python -m pip install --quiet pyyaml jsonschema
+          python build/windows/winget/validate_manifests.py \
+            "winget-manifests/manifests/a/Apache/Thrift/${VERSION}"
+
+      - name: Show the manifests
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for manifest in "winget-manifests/manifests/a/Apache/Thrift/${VERSION}"/*.yaml; do
+            {
+              echo "### $(basename "$manifest")"
+              echo '```yaml'
+              # The default shell is "bash -e" with no pipefail, but a grep
+              # that matches nothing still returns 1 and would end the step.
+              grep -v '^#' "$manifest" | grep -v '^$' || true
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Archive the manifests
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: winget-manifests
+          if-no-files-found: error
+          path: winget-manifests/
+          retention-days: 14
+
+  submit:
+    name: Submit to winget-pkgs
+    needs: manifests
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    # wingetcreate only runs on Windows.
+    runs-on: windows-2025
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Download the manifests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: winget-manifests
+          path: winget-manifests
+
+      - name: Submit
+        shell: pwsh
+        env:
+          # Read from the environment rather than passed as --token, which
+          # Microsoft warn can end up in a log. wingetcreate forks
+          # microsoft/winget-pkgs itself, so nothing is set up here.
+          WINGET_CREATE_GITHUB_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          VERSION: ${{ needs.manifests.outputs.version }}
+        run: |
+          $manifestDir = "winget-manifests/manifests/a/Apache/Thrift/$env:VERSION"
+
+          if (-not $env:WINGET_CREATE_GITHUB_TOKEN) {
+            # Not a failure: the manifests are ready and someone can submit
+            # them by hand. Say so loudly enough to be noticed.
+            Write-Host '::warning::WINGET_TOKEN is not set, so nothing was submitted to winget-pkgs.'
+            @(
+              '### WinGet submission skipped',
+              '',
+              'The `WINGET_TOKEN` secret is not set in the `release` environment, so the',
+              'manifests were rendered but not submitted. They are attached to this run as the',
+              '`winget-manifests` artifact. To submit them by hand, from a Windows machine:',
+              '',
+              '```powershell',
+              'curl.exe -JLO https://aka.ms/wingetcreate/latest',
+              ".\wingetcreate.exe submit --prtitle ""Apache.Thrift version $env:VERSION"" <manifest directory>",
+              '```',
+              '',
+              'The token has to be a *classic* personal access token with the `public_repo`',
+              'scope. Fine grained tokens are not supported by wingetcreate.'
+            ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            exit 0
+          }
+
+          curl.exe -JLO https://aka.ms/wingetcreate/latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          ./wingetcreate.exe submit --prtitle "Apache.Thrift version $env:VERSION" $manifestDir
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

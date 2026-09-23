@@ -30,7 +30,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TException;
 use Thrift\Transport\TSocket;
 use Thrift\Transport\TSocketPool;
@@ -38,16 +38,15 @@ use Thrift\Transport\TSocketPool;
 class TSocketPoolTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     protected function setUp(): void
     {
         #need to be defined before the TSocketPool class definition
         self::defineFunctionMock('Thrift\Transport', 'function_exists');
 
-        $this->getAccessibleProperty(TSocketPool::class, 'hasApcuCache')
+        (new ReflectionProperty(TSocketPool::class, 'hasApcuCache'))
              ->setValue(null, null);
-        $this->getAccessibleProperty(TSocket::class, 'hasSocketsExtension')
+        (new ReflectionProperty(TSocket::class, 'hasSocketsExtension'))
              ->setValue(null, null);
     }
 
@@ -56,12 +55,12 @@ class TSocketPoolTest extends TestCase
         $hosts,
         $ports,
         $persist,
-        $debugHandler,
+        $logger,
         $expectedServers
     ) {
-        $socketPool = new TSocketPool($hosts, $ports, $persist, $debugHandler);
+        $socketPool = new TSocketPool($hosts, $ports, $persist, $logger);
 
-        $this->assertEquals($expectedServers, $this->getPropertyValue($socketPool, 'servers'));
+        $this->assertEquals($expectedServers, (new ReflectionProperty($socketPool, 'servers'))->getValue($socketPool));
     }
 
 
@@ -112,7 +111,10 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->addServer('localhost', 9090);
 
-        $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $this->getPropertyValue($socketPool, 'servers'));
+        $this->assertEquals(
+            [['host' => 'localhost', 'port' => 9090]],
+            (new ReflectionProperty($socketPool, 'servers'))->getValue($socketPool)
+        );
     }
 
     public function testSetNumRetries(): void
@@ -120,7 +122,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setNumRetries(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'numRetries'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'numRetries'))->getValue($socketPool));
     }
 
     public function testrSetRetryInterval(): void
@@ -128,7 +130,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRetryInterval(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'retryInterval'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'retryInterval'))->getValue($socketPool));
     }
 
     public function testrSetMaxConsecutiveFailures(): void
@@ -136,7 +138,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setMaxConsecutiveFailures(5);
 
-        $this->assertEquals(5, $this->getPropertyValue($socketPool, 'maxConsecutiveFailures'));
+        $this->assertEquals(5, (new ReflectionProperty($socketPool, 'maxConsecutiveFailures'))->getValue($socketPool));
     }
 
     public function testrSetRandomize(): void
@@ -144,7 +146,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setRandomize(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'randomize'));
+        $this->assertEquals(false, (new ReflectionProperty($socketPool, 'randomize'))->getValue($socketPool));
     }
 
     public function testrSetAlwaysTryLast(): void
@@ -152,7 +154,7 @@ class TSocketPoolTest extends TestCase
         $socketPool = new TSocketPool([], []);
         $socketPool->setAlwaysTryLast(false);
 
-        $this->assertEquals(false, $this->getPropertyValue($socketPool, 'alwaysTryLast'));
+        $this->assertEquals(false, (new ReflectionProperty($socketPool, 'alwaysTryLast'))->getValue($socketPool));
     }
 
     #[DataProvider('openDataProvider')]
@@ -160,7 +162,7 @@ class TSocketPoolTest extends TestCase
         $hosts,
         $ports,
         $persist,
-        $debugHandler,
+        $logger,
         $randomize,
         $retryInterval,
         $numRetries,
@@ -171,7 +173,7 @@ class TSocketPoolTest extends TestCase
         $apcuFetchCallParams,
         $apcuFetchResult,
         $timeResult,
-        $debugHandlerCall,
+        $loggerCall,
         $apcuStoreCallParams,
         $fsockopenCallParams,
         $fsockopenResult,
@@ -221,13 +223,13 @@ class TSocketPoolTest extends TestCase
                  return $apcuFetchResult[$iteration++];
              });
 
-        $logger = $this->createMock(LoggerInterface::class);
-        if (count($debugHandlerCall) > 0) {
-            $logger->expects($this->exactly(count($debugHandlerCall)))
+        $loggerMock = $this->createMock(LoggerInterface::class);
+        if (count($loggerCall) > 0) {
+            $loggerMock->expects($this->exactly(count($loggerCall)))
                    ->method('log')
-                   ->willReturnCallback(function (...$callArgs) use ($debugHandlerCall) {
+                   ->willReturnCallback(function (...$callArgs) use ($loggerCall) {
                        static $iteration = 0;
-                       $expected = $debugHandlerCall[$iteration++];
+                       $expected = $loggerCall[$iteration++];
                     foreach ($expected as $i => $exp) {
                         if ($exp instanceof Constraint) {
                             $this->assertThat($callArgs[$i], $exp);
@@ -237,7 +239,7 @@ class TSocketPoolTest extends TestCase
                     }
                    });
         } else {
-            $logger->expects($this->never())->method('log');
+            $loggerMock->expects($this->never())->method('log');
         }
 
         $this->getFunctionMock('Thrift\Transport', 'apcu_store')
@@ -305,7 +307,7 @@ class TSocketPoolTest extends TestCase
             $this->expectExceptionMessage($expectedExceptionMessage);
         }
 
-        $socketPool = new TSocketPool($hosts, $ports, $persist, $debugHandler ?? $logger);
+        $socketPool = new TSocketPool($hosts, $ports, $persist, $logger ?? $loggerMock);
         $socketPool->setRandomize($randomize);
         $socketPool->setRetryInterval($retryInterval);
         $socketPool->setNumRetries($numRetries);
@@ -320,7 +322,7 @@ class TSocketPoolTest extends TestCase
             'hosts' => ['localhost'],
             'ports' => [9090],
             'persist' => false,
-            'debugHandler' => null,
+            'logger' => null,
             'randomize' => true,
             'retryInterval' => 5,
             'numRetries' => 1,
@@ -345,7 +347,7 @@ class TSocketPoolTest extends TestCase
                 false,
             ],
             'timeResult' => [],
-            'debugHandlerCall' => [],
+            'loggerCall' => [],
             'apcuStoreCallParams' => [],
             'fsockopenCallParams' => [
                 [
@@ -385,7 +387,7 @@ class TSocketPoolTest extends TestCase
                 'timeResult' => [
                     1,
                 ],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
                     [LogLevel::WARNING, 'TSocketPool: marking localhost:9090 as down for 5 secs after 1 failed attempts.'],
                     [LogLevel::ERROR, 'TSocketPool: All hosts in pool are down. (localhost:9090)'],
@@ -419,7 +421,7 @@ class TSocketPoolTest extends TestCase
                     ['php://temp', 'r'],
                 ],
                 'apcuStoreCallParams' => [],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
                 ],
             ]
@@ -452,7 +454,7 @@ class TSocketPoolTest extends TestCase
                 'timeResult' => [
                     100,
                 ],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::DEBUG, 'TSocketPool: retryInterval (5) has passed for host localhost:9090'],
                 ],
             ]
@@ -486,7 +488,7 @@ class TSocketPoolTest extends TestCase
                 'fsockopenResult' => [
                     false,
                 ],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::DEBUG, 'TSocketPool: retryInterval (5) has passed for host localhost:9090'],
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
                     [LogLevel::WARNING, 'TSocketPool: marking localhost:9090 as down for 5 secs after 1 failed attempts.'],
@@ -518,7 +520,7 @@ class TSocketPoolTest extends TestCase
                 'fsockopenResult' => [
                     false,
                 ],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
                     [LogLevel::ERROR, 'TSocketPool: All hosts in pool are down. (localhost:9090)'],
                 ],
@@ -544,7 +546,7 @@ class TSocketPoolTest extends TestCase
                 'apcuFetchCallParams' => [],
                 'apcuFetchResult' => [],
                 'apcuStoreCallParams' => [],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to localhost:9090 ( [])'],
                     [LogLevel::WARNING, 'TSocketPool: marking localhost:9090 as down for 5 secs after 1 failed attempts.'],
                     [LogLevel::ERROR, 'TSocketPool: All hosts in pool are down. (localhost:9090)'],
@@ -595,36 +597,11 @@ class TSocketPoolTest extends TestCase
                 'timeResult' => [
                     1,
                 ],
-                'debugHandlerCall' => [
+                'loggerCall' => [
                     [LogLevel::ERROR, 'TSocket: Could not connect to host2:9091 ( [])'],
                     [LogLevel::WARNING, 'TSocketPool: marking host2:9091 as down for 5 secs after 1 failed attempts.'],
                 ],
             ]
         );
-    }
-
-    public function testSetDebugIsDeprecated(): void
-    {
-        $pool = new TSocketPool(['localhost'], 9090);
-
-        $errors = [];
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$errors): bool {
-                $errors[] = ['errno' => $errno, 'errstr' => $errstr];
-
-                return true;
-            },
-            E_USER_DEPRECATED,
-        );
-
-        try {
-            $pool->setDebug(true);
-        } finally {
-            restore_error_handler();
-        }
-
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString('setDebug() is deprecated', $errors[0]['errstr']);
     }
 }

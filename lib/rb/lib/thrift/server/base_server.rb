@@ -18,13 +18,21 @@
 # under the License.
 #
 
+require "logger"
+
 module Thrift
   class BaseServer
-    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, logger: nil)
       @processor = processor
       @server_transport = server_transport
       @transport_factory = transport_factory ? transport_factory : Thrift::BaseTransportFactory.new
       @protocol_factory = protocol_factory ? protocol_factory : Thrift::BinaryProtocolFactory.new
+      if logger.nil?
+        @logger = Logger.new(STDERR)
+        @logger.level = Logger::WARN
+      else
+        @logger = logger
+      end
     end
 
     def serve

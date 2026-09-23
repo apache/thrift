@@ -287,3 +287,12 @@ larger `MaxFrameSize` in its own configuration, not only in the server's:
     conf := &thrift.TConfiguration{
         MaxFrameSize: 64 * 1024 * 1024,
     }
+
+A note about the frames TFramedTransport writes
+===============================================
+
+`TFramedTransport.Flush` holds the frames it writes to the same limit, through
+the same check. A larger frame is not written: `Flush` returns a
+`TProtocolException` of type `SIZE_LIMIT` and drops the frame, where it
+previously returned no error and wrote a frame `readFrame` refuses. The note
+above on raising `MaxFrameSize` applies to it as well.

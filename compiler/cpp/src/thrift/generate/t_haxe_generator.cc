@@ -590,11 +590,7 @@ void t_haxe_generator::render_const_value(std::ostream& out,
       out << ((value->get_integer() > 0) ? "true" : "false");
       break;
     case t_base_type::TYPE_I8:
-      out << "(byte)" << value->get_integer();
-      break;
     case t_base_type::TYPE_I16:
-      out << "(short)" << value->get_integer();
-      break;
     case t_base_type::TYPE_I32:
       out << value->get_integer();
       break;

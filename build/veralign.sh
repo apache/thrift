@@ -36,7 +36,7 @@
 # IMPORTANT USAGE NOTE
 # -----------------------------------------------------------
 # Define the environment variable DRYRUN to have the script
-# print out all matches to the oldVersion hilighted so that
+# print out all matches to the oldVersion highlighted so that
 # you can verify it will change the right things.
 #
 
@@ -64,8 +64,7 @@ FILES[lib/delphi/src/Thrift.pas]=simpleReplace
 FILES[lib/erl/src/thrift.app.src]=simpleReplace
 FILES[lib/haxe/haxelib.json]=simpleReplace
 FILES[lib/java/gradle.properties]=simpleReplace
-FILES[lib/js/package-lock.json]=jsonReplace
-FILES[lib/js/package-lock.json]=simpleReplace
+FILES[lib/js/package-lock.json]=npmlockReplace
 FILES[lib/js/package.json]=jsonReplace
 FILES[lib/js/src/thrift.js]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
@@ -82,15 +81,13 @@ FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
 FILES[lib/ocaml/_oasis]=simpleReplace
 FILES[lib/perl/lib/Thrift.pm]=simpleReplace
 FILES[lib/py/setup.py]=simpleReplace
-FILES[lib/rb/Gemfile.lock]=simpleReplace
+FILES[lib/rb/Gemfile.lock]=gemlockReplace
 FILES[lib/rb/thrift.gemspec]=simpleReplace
 FILES[lib/rs/Cargo.toml]=simpleReplace
 FILES[lib/st/package.xml]=simpleReplace
-FILES[lib/ts/package-lock.json]=jsonReplace
-FILES[lib/ts/package-lock.json]=simpleReplace
+FILES[lib/ts/package-lock.json]=npmlockReplace
 FILES[lib/ts/package.json]=jsonReplace
-FILES[package-lock.json]=jsonReplace
-FILES[package-lock.json]=simpleReplace
+FILES[package-lock.json]=npmlockReplace
 FILES[package.json]=jsonReplace
 FILES[sonar-project.properties]=simpleReplace
 FILES[test/dart/recursion_depth_test/pubspec.yaml]=simpleReplace
@@ -98,7 +95,7 @@ FILES[test/dart/test_client/pubspec.yaml]=pubspecReplace
 FILES[test/erl/src/thrift_test.app.src]=simpleReplace
 FILES[test/netstd/Client/Client.csproj]=simpleReplace
 FILES[test/netstd/Server/Server.csproj]=simpleReplace
-FILES[test/rb/Gemfile.lock]=simpleReplace
+FILES[test/rb/Gemfile.lock]=gemlockReplace
 FILES[tutorial/dart/client/pubspec.yaml]=pubspecReplace
 FILES[tutorial/dart/console_client/pubspec.yaml]=pubspecReplace
 FILES[tutorial/dart/server/pubspec.yaml]=pubspecReplace
@@ -153,17 +150,20 @@ validateVersion "${NEWVERSION}" || exit $?
 
 #
 # escapeVersion: escape the version for use as a sed search
+#   Parentheses become bracket expressions, which match them literally in
+#   the extended regex grep uses and in the basic regex sed uses alike.
 # \param $1 the version to escape
 # \output the escaped string
 # \returns 0
 # \example VERSEARCH=$(escapeVersion "[1.0.0]"); echo $VERSEARCH; => "\[1\.0\.0\]"
+# \example VERSEARCH=$(escapeVersion "(1.0.0)"); echo $VERSEARCH; => "[(]1\.0\.0[)]"
 #
 function escapeVersion
 {
-    echo "$(echo "$1" | sed 's/\./\\./g' | sed 's/\[/\\\[/g' | sed 's/\]/\\\]/g')"
+    echo "$(echo "$1" | sed 's/\./\\./g' | sed 's/\[/\\\[/g' | sed 's/\]/\\\]/g' | sed 's/[()]/[&]/g')"
 }
 
-# Set up verbose hilighting if running interactive
+# Set up verbose highlighting if running interactive
 if [ "$(tput colors)" -ne 0 ]; then
     reverse=$(tput rev)
     red=$(tput setaf 1)
@@ -205,24 +205,25 @@ function configureReplace
 
 function jsonReplace
 {
-    local result
-    local output
-    if [ ! -z "$DRYRUN" ]; then
-        output=$(jq -e ".version" "$1")
-    else
-        output=$(jq -e ".version = \"${NEWVERSION}\"" "$1" > tmp.$$.json && mv tmp.$$.json "$1")
-    fi
-    result=$?
-    if [ $? -ne 0 ]; then
-        printf "%-60s | %5d | ${red}ERROR${normal}: version tag not found" "$1" "$count"
+    local current
+    if ! jq empty "$1"; then
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not read the file" "$1" 0
+        echo
+        return 1
+    elif ! current=$(jq -e -r ".version" "$1"); then
+        printf "%-60s | %5d | ${red}ERROR${normal}: version tag not found" "$1" 0
         echo
         return 1
     elif [ ! -z "$DRYRUN" ]; then
-        output=${output%\"}
-        output=${output#\"}
-        printf "%-60s | %5d | MATCHES:   version: \"${reverse}${green}${output}${normal}\"" "$1" 1
+        printf "%-60s | %5d | MATCHES:   version: \"${reverse}${green}${current}${normal}\"" "$1" 1
         echo
         return 0
+    fi
+    if ! { jq ".version = \"${NEWVERSION}\"" "$1" > tmp.$$.json && mv tmp.$$.json "$1"; }; then
+        rm -f tmp.$$.json
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not rewrite the file" "$1" 1
+        echo
+        return 1
     fi
     printf "%-60s | %5d | ${green}OK${normal}" "$1" 1
     echo
@@ -244,6 +245,57 @@ function pubspecReplace
 }
 
 #
+# gemlockReplace: replace the version of the thrift gem in a Gemfile.lock
+#   and of no other gem; the rest are locked at versions of their own,
+#   and one of those can equal ours
+# \param $1 filename to do replacements on
+# \returns 0 on success
+#
+
+function gemlockReplace
+{
+    replace "$1" "^    thrift (${OLDVERSION})" "    thrift (${NEWVERSION})"
+}
+
+#
+# npmlockReplace: replace the version of the root package in an npm
+#   package-lock.json, which is the top level "version" field and its copy
+#   in packages[""], and of no dependency; those are locked at versions of
+#   their own, and one of those can equal ours
+# \param $1 filename to do replacements on
+# \returns 0 on success
+#
+
+function npmlockReplace
+{
+    local current
+    if ! jq empty "$1"; then
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not read the file" "$1" 0
+        echo
+        return 1
+    elif ! current=$(jq -r '[.version, .packages[""].version] | map(. // "") | join(" ")' "$1") \
+         || [ "${current}" != "${OLDVERSION} ${OLDVERSION}" ]; then
+        printf "%-60s | %5d | ${red}NOT FOUND${normal}: ${OLDVERSION} in version and packages[\"\"].version" "$1" 0
+        echo
+        return 1
+    elif [ ! -z "$DRYRUN" ]; then
+        printf "%-60s | %5d | MATCHES:   version, packages[\"\"].version: \"${reverse}${green}${OLDVERSION}${normal}\"" "$1" 2
+        echo
+        return 0
+    fi
+    if ! { jq --arg v "${NEWVERSION}" '.version = $v | .packages[""].version = $v' "$1" > tmp.$$.json \
+           && mv tmp.$$.json "$1"; }; then
+        rm -f tmp.$$.json
+        printf "%-60s | %5d | ${red}ERROR${normal}: jq could not rewrite the file" "$1" 2
+        echo
+        return 1
+    fi
+    printf "%-60s | %5d | ${green}OK${normal}" "$1" 2
+    echo
+    return 0
+}
+
+#
 # pomReplace: replace a specific version field in a maven pom file
 #   must be a top level "version" field in the xml structure
 # \param $1 filename to do replacements on
@@ -261,7 +313,7 @@ function pomReplace
 #     in order to be successful.
 # \param $1 filename to do replacements on
 # \param $2 the "old" string to be replaced
-# \param $3 the "new" striing to replace it with
+# \param $3 the "new" string to replace it with
 # \returns 0 on success
 #
 function replace
@@ -303,7 +355,7 @@ function replace
 #     in order to be successful.
 # \param $1 filename to do replacements on
 # \param $2 the "old" string to be replaced
-# \param $3 the "new" striing to replace it with
+# \param $3 the "new" string to replace it with
 # \returns 0 on success
 #
 function simpleReplace
@@ -322,14 +374,14 @@ echo "-------------------------------------------------------------+-------+----
 echo "Filename                                                     | Count | Status               "
 echo "-------------------------------------------------------------+-------+----------------------"
 
-for file in $(echo "${!FILES[@]}" | sort); do
+for file in $(printf '%s\n' "${!FILES[@]}" | sort); do
     ${FILES[$file]} $file || exit $?
 done
 
 echo
 echo "Files that must be modified manually:"
 echo
-for manu in $(echo "${!MANUAL[@]}" | sort); do
+for manu in $(printf '%s\n' "${!MANUAL[@]}" | sort); do
     echo " > ${yellow}${manu}${normal}"
 done
 

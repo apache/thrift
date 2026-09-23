@@ -25,14 +25,12 @@ namespace Test\Thrift\Unit\Lib\Transport;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Transport\TTransport;
 
 class TBufferedTransportTest extends TestCase
 {
-    use ReflectionHelper;
-
     public function testIsOpen()
     {
         $transport = $this->createMock(TTransport::class);
@@ -76,10 +74,13 @@ class TBufferedTransportTest extends TestCase
         $bufferedTransport = new TBufferedTransport($transport);
         $bufferedTransport->putBack('test');
 
-        $this->assertEquals('test', $this->getPropertyValue($bufferedTransport, 'rBuf'));
+        $this->assertEquals('test', (new ReflectionProperty($bufferedTransport, 'rBuf'))->getValue($bufferedTransport));
 
         $bufferedTransport->putBack('abcde');
-        $this->assertEquals('abcdetest', $this->getPropertyValue($bufferedTransport, 'rBuf'));
+        $this->assertEquals(
+            'abcdetest',
+            (new ReflectionProperty($bufferedTransport, 'rBuf'))->getValue($bufferedTransport)
+        );
     }
 
     #[DataProvider('readAllDataProvider')]
@@ -103,7 +104,10 @@ class TBufferedTransportTest extends TestCase
 
         $this->assertEquals($expectedRead, $bufferedTransport->readAll($readLength));
 
-        $this->assertEquals($expectedBufferValue, $this->getPropertyValue($bufferedTransport, 'rBuf'));
+        $this->assertEquals(
+            $expectedBufferValue,
+            (new ReflectionProperty($bufferedTransport, 'rBuf'))->getValue($bufferedTransport)
+        );
     }
 
     public static function readAllDataProvider()
@@ -163,7 +167,10 @@ class TBufferedTransportTest extends TestCase
 
         $this->assertEquals($expectedRead, $bufferedTransport->read($readLength));
 
-        $this->assertEquals($expectedBufferValue, $this->getPropertyValue($bufferedTransport, 'rBuf'));
+        $this->assertEquals(
+            $expectedBufferValue,
+            (new ReflectionProperty($bufferedTransport, 'rBuf'))->getValue($bufferedTransport)
+        );
     }
 
     public static function readDataProvider()
@@ -211,7 +218,10 @@ class TBufferedTransportTest extends TestCase
 
         $this->assertNull($bufferedTransport->write($writeData));
 
-        $this->assertEquals($expectedWriteBufferValue, $this->getPropertyValue($bufferedTransport, 'wBuf'));
+        $this->assertEquals(
+            $expectedWriteBufferValue,
+            (new ReflectionProperty($bufferedTransport, 'wBuf'))->getValue($bufferedTransport)
+        );
     }
 
     public static function writeDataProvider()
@@ -236,7 +246,7 @@ class TBufferedTransportTest extends TestCase
     ) {
         $transport = $this->createMock(TTransport::class);
         $bufferedTransport = new TBufferedTransport($transport, 512, 512);
-        $this->setPropertyValue($bufferedTransport, 'wBuf', $writeBuffer);
+        (new ReflectionProperty($bufferedTransport, 'wBuf'))->setValue($bufferedTransport, $writeBuffer);
 
         $transport
             ->expects(!empty($writeBuffer) ? $this->once() : $this->never())
@@ -249,7 +259,7 @@ class TBufferedTransportTest extends TestCase
 
         $this->assertNull($bufferedTransport->flush());
 
-        $this->assertEquals('', $this->getPropertyValue($bufferedTransport, 'wBuf'));
+        $this->assertEquals('', (new ReflectionProperty($bufferedTransport, 'wBuf'))->getValue($bufferedTransport));
     }
 
     public static function flushDataProvider()

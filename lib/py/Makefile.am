@@ -27,6 +27,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_transport.py
 	$(PYTHON3) test/test_nonblocking_server_frame_size.py
 	$(PYTHON3) test/test_nonblocking_server_read_buffer.py
+	$(PYTHON3) test/test_nonblocking_server_select_progress.py
 	$(PYTHON3) test/test_sslsocket.py
 	$(PYTHON3) test/thrift_TBinaryProtocol.py
 	$(PYTHON3) test/thrift_THeaderProtocol.py
@@ -42,6 +43,7 @@ py3-test: py3-build
 	$(PYTHON3) test/test_protocol_string_length_limit.py
 	$(PYTHON3) test/test_framed_frame_size.py
 	$(PYTHON3) test/test_sasl_frame_size.py
+	$(PYTHON3) test/test_sasl_transport.py
 	$(PYTHON3) test/test_tornado_frame_size.py
 else
 py3-build:
@@ -53,6 +55,7 @@ all-local: py3-build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
 	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
 	${THRIFT} --gen py ../../test/Recursive.thrift
+	${THRIFT} --gen py:dynamic test/test_thrift_file/RecursiveDynamic.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
@@ -66,6 +69,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_transport.py
 	$(PYTHON) test/test_nonblocking_server_frame_size.py
 	$(PYTHON) test/test_nonblocking_server_read_buffer.py
+	$(PYTHON) test/test_nonblocking_server_select_progress.py
 	$(PYTHON) test/test_sslsocket.py
 	$(PYTHON) test/test_socket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py
@@ -83,6 +87,7 @@ check-local: all py3-test
 	$(PYTHON) test/test_protocol_string_length_limit.py
 	$(PYTHON) test/test_framed_frame_size.py
 	$(PYTHON) test/test_sasl_frame_size.py
+	$(PYTHON) test/test_sasl_transport.py
 	$(PYTHON) test/test_tornado_frame_size.py
 
 

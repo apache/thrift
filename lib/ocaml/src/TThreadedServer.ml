@@ -35,11 +35,12 @@ object
           (fun _ ->
              let ip = ipf#getProtocol tr in
              let op = opf#getProtocol tr in
-               try
+               (try
                  while pf#process ip op do
                    ()
                  done
-               with _ -> ()) ())
+               with _ -> ());
+               (try tr#close with _ -> ())) ())
     done
 end
 

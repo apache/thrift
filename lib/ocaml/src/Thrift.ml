@@ -256,18 +256,18 @@ struct
                                with Break -> ());
                               self#readStructEnd)
         | T_MAP -> ignore (let (k,v,s) = self#readMapBegin in
-                             for i=0 to s do
+                             for i=1 to s do
                                self#skip k;
                                self#skip v;
                              done;
                              self#readMapEnd)
         | T_SET -> ignore (let (t,s) = self#readSetBegin in
-                             for i=0 to s do
+                             for i=1 to s do
                                self#skip t
                              done;
                              self#readSetEnd)
         | T_LIST -> ignore (let (t,s) = self#readListBegin in
-                              for i=0 to s do
+                              for i=1 to s do
                                 self#skip t
                               done;
                               self#readListEnd)

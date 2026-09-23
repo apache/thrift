@@ -1,5 +1,3 @@
-<?php
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -19,34 +17,11 @@
  * under the License.
  */
 
-declare(strict_types=1);
+namespace c_glib TTest
 
-namespace Test\Thrift\Unit\Lib;
-
-trait UserDeprecationCapture
-{
-    /**
-     * @param callable():void $action
-     * @return list<array{errno:int,errstr:string}>
-     */
-    private static function captureUserDeprecations(callable $action): array
-    {
-        $errors = [];
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$errors): bool {
-                $errors[] = ['errno' => $errno, 'errstr' => $errstr];
-
-                return true;
-            },
-            E_USER_DEPRECATED,
-        );
-
-        try {
-            $action();
-        } finally {
-            restore_error_handler();
-        }
-
-        return $errors;
-    }
+/* The RecTree shape from test/Recursive.thrift. The other types in that file
+   refer to each other directly, which the c_glib generator cannot express. */
+struct RecTree {
+  1: list<RecTree> children
+  2: i16 item
 }

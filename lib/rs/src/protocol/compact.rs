@@ -158,6 +158,24 @@ where
             "Variable-length int over 10 bytes.",
         )))
     }
+
+    fn read_binary_len(&mut self) -> crate::Result<usize> {
+        let len = self.read_varint32()?;
+
+        if let Some(max_size) = self.config.max_string_size() {
+            if len as usize > max_size {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::SizeLimit,
+                    format!(
+                        "Byte array size {} exceeds maximum allowed size of {}",
+                        len, max_size
+                    ),
+                )));
+            }
+        }
+
+        Ok(len as usize)
+    }
 }
 
 impl<T> TInputProtocol for TCompactInputProtocol<T>
@@ -303,25 +321,17 @@ where
     }
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
-        let len = self.read_varint32()?;
-
-        if let Some(max_size) = self.config.max_string_size() {
-            if len as usize > max_size {
-                return Err(crate::Error::Protocol(ProtocolError::new(
-                    ProtocolErrorKind::SizeLimit,
-                    format!(
-                        "Byte array size {} exceeds maximum allowed size of {}",
-                        len, max_size
-                    ),
-                )));
-            }
-        }
-
-        let mut buf = vec![0u8; len as usize];
+        let len = self.read_binary_len()?;
+        let mut buf = vec![0u8; len];
         self.transport
             .read_exact(&mut buf)
             .map_err(From::from)
             .map(|_| buf)
+    }
+
+    fn skip_binary(&mut self) -> crate::Result<()> {
+        let len = self.read_binary_len()?;
+        super::discard_exact(&mut self.transport, len).map_err(From::from)
     }
 
     fn read_i8(&mut self) -> crate::Result<i8> {

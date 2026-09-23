@@ -190,7 +190,7 @@ cmake.exe "%SRCDIR%" ^
   -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
   -DWITH_PYTHON=%WITH_PYTHON% %CMAKE_PYTHON_OPTS% || EXIT /B
 
-cmake.exe --build . --config "%CONFIGURATION%" || EXIT /B
+cmake.exe --build . --config "%CONFIGURATION%" --parallel %NUMBER_OF_PROCESSORS% || EXIT /B
 
 cmake.exe --install . --config "%CONFIGURATION%" || EXIT /B
 

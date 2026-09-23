@@ -24,11 +24,18 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionMethod;
+use ReflectionProperty;
+use Test\Thrift\Unit\Lib\Server\Fixture\ConnectionStub;
+use Test\Thrift\Unit\Lib\Server\Fixture\CountingProcessor;
+use Test\Thrift\Unit\Lib\Server\Fixture\QueuedServerTransport;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
+use Thrift\Factory\TBinaryProtocolFactory;
 use Thrift\Factory\TProtocolFactory;
+use Thrift\Factory\TTransportFactory;
 use Thrift\Factory\TTransportFactoryInterface;
 use Thrift\Server\TForkingServer;
 use Thrift\Server\TServerTransport;
@@ -37,7 +44,6 @@ use Thrift\Transport\TTransport;
 class TForkingServerTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     private const NO_CONNECTION = 'no connection';
 
@@ -67,13 +73,13 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer(null, $transport);
         $server->stop();
 
-        $this->assertTrue($this->getPropertyValue($server, 'stop'));
+        $this->assertTrue((new ReflectionProperty($server, 'stop'))->getValue($server));
     }
 
     public function testChildrenArrayInitiallyEmpty()
     {
         $server = $this->createServer();
-        $this->assertEmpty($this->getPropertyValue($server, 'children'));
+        $this->assertEmpty((new ReflectionProperty($server, 'children'))->getValue($server));
     }
 
     public function testConstructorStoresCollaborators()
@@ -94,12 +100,24 @@ class TForkingServerTest extends TestCase
             $outputProtocolFactory
         );
 
-        $this->assertSame($processor, $this->getPropertyValue($server, 'processor'));
-        $this->assertSame($transport, $this->getPropertyValue($server, 'transport'));
-        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory'));
-        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory'));
-        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory'));
-        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory'));
+        $this->assertSame($processor, (new ReflectionProperty($server, 'processor'))->getValue($server));
+        $this->assertSame($transport, (new ReflectionProperty($server, 'transport'))->getValue($server));
+        $this->assertSame(
+            $inputTransportFactory,
+            (new ReflectionProperty($server, 'inputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputTransportFactory,
+            (new ReflectionProperty($server, 'outputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $inputProtocolFactory,
+            (new ReflectionProperty($server, 'inputProtocolFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputProtocolFactory,
+            (new ReflectionProperty($server, 'outputProtocolFactory'))->getValue($server)
+        );
     }
 
     public function testServeListensAndLoopsUntilStopped()
@@ -115,15 +133,14 @@ class TForkingServerTest extends TestCase
             function () use ($server, &$callCount) {
                 $callCount++;
                 if ($callCount >= 2) {
-                    $this->setPropertyValue($server, 'stop', true);
+                    (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 }
                 throw new TTransportException(self::NO_CONNECTION);
             }
         );
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
 
@@ -145,7 +162,7 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     return $clientTransport;
                 }
-                $this->setPropertyValue($server, 'stop', true);
+                (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 throw new TTransportException(self::NO_CONNECTION);
             }
         );
@@ -155,12 +172,12 @@ class TForkingServerTest extends TestCase
              ->willReturn(12345);
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
+             ->expects($this->exactly(2))
              ->willReturn(0);
 
         $server->serve();
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayHasKey(12345, $children);
         $this->assertSame($clientTransport, $children[12345]);
     }
@@ -170,7 +187,7 @@ class TForkingServerTest extends TestCase
         $this->expectException(TException::class);
         $this->expectExceptionMessage('Failed to fork');
 
-        $serverTransport = $this->createMock(TServerTransport::class);
+        $serverTransport = $this->createStub(TServerTransport::class);
         $clientTransport = $this->createStub(TTransport::class);
 
         $server = $this->createServer(null, $serverTransport);
@@ -182,8 +199,7 @@ class TForkingServerTest extends TestCase
              ->willReturn(-1);
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
     }
@@ -202,14 +218,13 @@ class TForkingServerTest extends TestCase
                 if ($callCount === 1) {
                     throw new TTransportException('Connection reset');
                 }
-                $this->setPropertyValue($server, 'stop', true);
+                (new ReflectionProperty($server, 'stop'))->setValue($server, true);
                 throw new TTransportException(self::NO_CONNECTION);
             }
         );
 
         $this->getFunctionMock('Thrift\Server', 'pcntl_waitpid')
-             ->expects($this->any())
-             ->willReturn(0);
+             ->expects($this->never());
 
         $server->serve();
 
@@ -226,7 +241,7 @@ class TForkingServerTest extends TestCase
         $transport2 = $this->createMock(TTransport::class);
         $transport2->expects($this->never())->method('close');
 
-        $this->setPropertyValue($server, 'children', [
+        (new ReflectionProperty($server, 'children'))->setValue($server, [
             111 => $transport1,
             222 => $transport2,
         ]);
@@ -237,10 +252,10 @@ class TForkingServerTest extends TestCase
                  return ($pid === 111) ? 111 : 0;
              });
 
-        $method = $this->getAccessibleMethod($server, 'collectChildren');
+        $method = new ReflectionMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayNotHasKey(111, $children);
         $this->assertArrayHasKey(222, $children);
     }
@@ -249,7 +264,7 @@ class TForkingServerTest extends TestCase
     {
         $server = $this->createServer();
 
-        $this->setPropertyValue($server, 'children', [
+        (new ReflectionProperty($server, 'children'))->setValue($server, [
             333 => null,
         ]);
 
@@ -257,10 +272,10 @@ class TForkingServerTest extends TestCase
              ->expects($this->once())
              ->willReturn(333);
 
-        $method = $this->getAccessibleMethod($server, 'collectChildren');
+        $method = new ReflectionMethod($server, 'collectChildren');
         $method->invoke($server);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertEmpty($children);
     }
 
@@ -269,11 +284,56 @@ class TForkingServerTest extends TestCase
         $server = $this->createServer();
         $transport = $this->createStub(TTransport::class);
 
-        $method = $this->getAccessibleMethod($server, 'handleParent');
+        $method = new ReflectionMethod($server, 'handleParent');
         $method->invoke($server, $transport, 42);
 
-        $children = $this->getPropertyValue($server, 'children');
+        $children = (new ReflectionProperty($server, 'children'))->getValue($server);
         $this->assertArrayHasKey(42, $children);
         $this->assertSame($transport, $children[42]);
+    }
+
+    /**
+     * The child forked for a connection ends with that connection, also when
+     * the request cannot be read, and never returns into the accept loop.
+     * handleChild() ends the process, so the test runs serve() in a real
+     * child process and looks at how that process ended.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function testChildExitsWhenItsConnectionFails()
+    {
+        $serverTransport = new QueuedServerTransport([new ConnectionStub("\xff\xff\xff\xff")]);
+        $server = $this->createServer(
+            new CountingProcessor(),
+            $serverTransport,
+            new TTransportFactory(),
+            new TTransportFactory(),
+            new TBinaryProtocolFactory(),
+            new TBinaryProtocolFactory()
+        );
+        $serverTransport->server = $server;
+
+        // Every connection the server accepts takes the child's side of the fork.
+        $this->getFunctionMock('Thrift\Server', 'pcntl_fork')
+             ->expects($this->any())
+             ->willReturn(0);
+
+        $pid = \pcntl_fork();
+        if ($pid === 0) {
+            // Keep whatever the child prints on its way out to itself.
+            ob_start(static function (): string {
+                return '';
+            });
+            try {
+                $server->serve();
+            } catch (\Throwable $e) {
+            }
+            // Only reached when the child came back out of serve().
+            exit(3);
+        }
+
+        $this->assertGreaterThan(0, $pid, 'fork failed');
+        \pcntl_waitpid($pid, $status);
+        $this->assertTrue(\pcntl_wifexited($status), 'the child did not exit');
+        $this->assertSame(0, \pcntl_wexitstatus($status), 'exit status of the child');
     }
 }

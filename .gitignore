@@ -65,6 +65,8 @@ SKILL.md
 /aclocal/lt*.m4
 /autoscan.log
 /autoscan-*.log
+/build/windows/dotnet-tool/bin
+/build/windows/dotnet-tool/obj
 /cmake_*
 /compiler/cpp/compiler.VC.db
 /compiler/cpp/compiler.VC.VC.opendb
@@ -246,6 +248,7 @@ SKILL.md
 /lib/kotlin/gradle/
 /lib/kotlin/gradlew
 /lib/kotlin/gradlew.bat
+/lib/lua/test/test_socket_send
 /lib/netstd/**/bin
 /lib/netstd/**/obj
 /lib/nodejs/coverage

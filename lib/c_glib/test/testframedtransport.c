@@ -366,6 +366,187 @@ test_read_across_frames (void)
   g_object_unref (membuf);
 }
 
+/* A transport whose write() or flush() fails when told to, and which counts
+ * the flushes it is asked for. */
+#define TEST_TYPE_FAILING_TRANSPORT (test_failing_transport_get_type ())
+
+struct _TestFailingTransport
+{
+  ThriftTransport parent;
+  gboolean fail_write;
+  gboolean fail_flush;
+  guint flushes;
+};
+typedef struct _TestFailingTransport TestFailingTransport;
+
+struct _TestFailingTransportClass
+{
+  ThriftTransportClass parent;
+};
+typedef struct _TestFailingTransportClass TestFailingTransportClass;
+
+GType test_failing_transport_get_type (void);
+
+G_DEFINE_TYPE (TestFailingTransport, test_failing_transport,
+               THRIFT_TYPE_TRANSPORT)
+
+static gboolean
+test_failing_transport_is_open (ThriftTransport *transport)
+{
+  THRIFT_UNUSED_VAR (transport);
+  return TRUE;
+}
+
+static gboolean
+test_failing_transport_open (ThriftTransport *transport, GError **error)
+{
+  THRIFT_UNUSED_VAR (transport);
+  THRIFT_UNUSED_VAR (error);
+  return TRUE;
+}
+
+static gboolean
+test_failing_transport_close (ThriftTransport *transport, GError **error)
+{
+  THRIFT_UNUSED_VAR (transport);
+  THRIFT_UNUSED_VAR (error);
+  return TRUE;
+}
+
+static gint32
+test_failing_transport_read (ThriftTransport *transport, gpointer buf,
+                             guint32 len, GError **error)
+{
+  THRIFT_UNUSED_VAR (transport);
+  THRIFT_UNUSED_VAR (buf);
+  THRIFT_UNUSED_VAR (len);
+  THRIFT_UNUSED_VAR (error);
+  return -1;
+}
+
+static gboolean
+test_failing_transport_read_end (ThriftTransport *transport, GError **error)
+{
+  THRIFT_UNUSED_VAR (transport);
+  THRIFT_UNUSED_VAR (error);
+  return TRUE;
+}
+
+static gboolean
+test_failing_transport_write (ThriftTransport *transport, const gpointer buf,
+                              const guint32 len, GError **error)
+{
+  THRIFT_UNUSED_VAR (buf);
+  THRIFT_UNUSED_VAR (len);
+
+  if (((TestFailingTransport *) transport)->fail_write)
+    {
+      g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SEND,
+                   "write failed");
+      return FALSE;
+    }
+  return TRUE;
+}
+
+static gboolean
+test_failing_transport_write_end (ThriftTransport *transport, GError **error)
+{
+  THRIFT_UNUSED_VAR (transport);
+  THRIFT_UNUSED_VAR (error);
+  return TRUE;
+}
+
+static gboolean
+test_failing_transport_flush (ThriftTransport *transport, GError **error)
+{
+  TestFailingTransport *t = (TestFailingTransport *) transport;
+
+  t->flushes++;
+  if (t->fail_flush)
+    {
+      g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SEND,
+                   "flush failed");
+      return FALSE;
+    }
+  return TRUE;
+}
+
+static void
+test_failing_transport_init (TestFailingTransport *transport)
+{
+  transport->fail_write = FALSE;
+  transport->fail_flush = FALSE;
+  transport->flushes = 0;
+}
+
+static void
+test_failing_transport_class_init (TestFailingTransportClass *klass)
+{
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (klass);
+
+  ttc->is_open = test_failing_transport_is_open;
+  ttc->open = test_failing_transport_open;
+  ttc->close = test_failing_transport_close;
+  ttc->read = test_failing_transport_read;
+  ttc->read_end = test_failing_transport_read_end;
+  ttc->write = test_failing_transport_write;
+  ttc->write_end = test_failing_transport_write_end;
+  ttc->flush = test_failing_transport_flush;
+}
+
+/* A frame the underlying transport fails to take must make flush() fail too,
+ * rather than be reported as sent. */
+static void
+test_flush_reports_a_failed_write (void)
+{
+  guchar data[] = TEST_DATA;
+  TestFailingTransport *inner;
+  ThriftTransport *transport;
+  GError *error = NULL;
+
+  inner = g_object_new (TEST_TYPE_FAILING_TRANSPORT, NULL);
+  inner->fail_write = TRUE;
+  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (inner), NULL);
+
+  g_assert (thrift_transport_write (transport, data, sizeof (data),
+                                    NULL) == TRUE);
+  g_assert (thrift_transport_flush (transport, &error) == FALSE);
+  g_assert (error != NULL);
+  g_clear_error (&error);
+
+  /* Nothing was written, so there is nothing to flush. */
+  g_assert_cmpuint (inner->flushes, ==, 0);
+
+  g_object_unref (transport);
+  g_object_unref (inner);
+}
+
+/* The same when the underlying transport takes the frame but fails to flush
+ * it. */
+static void
+test_flush_reports_a_failed_flush (void)
+{
+  guchar data[] = TEST_DATA;
+  TestFailingTransport *inner;
+  ThriftTransport *transport;
+  GError *error = NULL;
+
+  inner = g_object_new (TEST_TYPE_FAILING_TRANSPORT, NULL);
+  inner->fail_flush = TRUE;
+  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (inner), NULL);
+
+  g_assert (thrift_transport_write (transport, data, sizeof (data),
+                                    NULL) == TRUE);
+  g_assert (thrift_transport_flush (transport, &error) == FALSE);
+  g_assert (error != NULL);
+  g_clear_error (&error);
+
+  g_object_unref (transport);
+  g_object_unref (inner);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -380,6 +561,10 @@ main(int argc, char *argv[])
   g_test_add_func ("/testframedtransport/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testframedtransport/ReadAfterPeerClose", test_read_after_peer_close);
   g_test_add_func ("/testframedtransport/ReadAcrossFrames", test_read_across_frames);
+  g_test_add_func ("/testframedtransport/FlushReportsAFailedWrite",
+                   test_flush_reports_a_failed_write);
+  g_test_add_func ("/testframedtransport/FlushReportsAFailedFlush",
+                   test_flush_reports_a_failed_flush);
 
   return g_test_run ();
 }

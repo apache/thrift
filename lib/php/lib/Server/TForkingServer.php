@@ -64,7 +64,9 @@ class TForkingServer extends TServer
     }
 
     /**
-     * Code run by the child.
+     * Code run by the child. The child ends with its
+     * client's connection, however that ends, and
+     * never returns to the accept loop.
      */
     private function handleChild(TTransport $transport): void
     {
@@ -76,7 +78,7 @@ class TForkingServer extends TServer
             while ($this->processor->process($inputProtocol, $outputProtocol)) {
             }
             @$transport->close();
-        } catch (TTransportException $e) {
+        } catch (\Throwable $e) {
         }
 
         exit(0);

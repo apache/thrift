@@ -38,10 +38,11 @@ abstract class TProtocol
     public const DEFAULT_RECURSION_DEPTH = 64;
 
     /**
-     * The longest string or binary field TBinaryProtocol and TCompactProtocol
-     * read by default: the frame size limit the framed transports apply. A
-     * string's length is the read size handed to the transport, and an unframed
-     * transport has no frame to bound it. A maximum of 0 means no limit.
+     * The longest string or binary field TBinaryProtocol, TCompactProtocol
+     * and TJSONProtocol read by default: the frame size limit the framed
+     * transports apply. A string's length is the read size handed to the
+     * transport, and an unframed transport has no frame to bound it. A
+     * maximum of 0 means no limit.
      */
     public const DEFAULT_MAX_STRING_SIZE = 16384000;
 
@@ -266,6 +267,19 @@ abstract class TProtocol
      * Utility for skipping binary data without parsing it.
      */
     public static function skipBinary(TTransport $itrans, int $type): int
+    {
+        // Like skip(), but with no protocol to hold the depth budget: the
+        // transport holds it, for the inlined readers that call this.
+        $itrans->incrementRecursionDepth();
+
+        try {
+            return self::skipBinaryType($itrans, $type);
+        } finally {
+            $itrans->decrementRecursionDepth();
+        }
+    }
+
+    private static function skipBinaryType(TTransport $itrans, int $type): int
     {
         return match ($type) {
             TType::BOOL, TType::BYTE => self::skipBinaryFixed($itrans, 1),

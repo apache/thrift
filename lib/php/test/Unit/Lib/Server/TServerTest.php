@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Server;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Test\Thrift\Unit\Lib\Server\Fixture\ServerStub;
 use Thrift\Factory\TProtocolFactory;
 use Thrift\Factory\TTransportFactoryInterface;
@@ -32,8 +32,6 @@ use Thrift\Server\TServerTransport;
 
 class TServerTest extends TestCase
 {
-    use ReflectionHelper;
-
     public function testConstructorStoresCollaborators(): void
     {
         $processor = new \stdClass();
@@ -52,11 +50,23 @@ class TServerTest extends TestCase
             $outputProtocolFactory
         );
 
-        $this->assertSame($processor, $this->getPropertyValue($server, 'processor'));
-        $this->assertSame($transport, $this->getPropertyValue($server, 'transport'));
-        $this->assertSame($inputTransportFactory, $this->getPropertyValue($server, 'inputTransportFactory'));
-        $this->assertSame($outputTransportFactory, $this->getPropertyValue($server, 'outputTransportFactory'));
-        $this->assertSame($inputProtocolFactory, $this->getPropertyValue($server, 'inputProtocolFactory'));
-        $this->assertSame($outputProtocolFactory, $this->getPropertyValue($server, 'outputProtocolFactory'));
+        $this->assertSame($processor, (new ReflectionProperty($server, 'processor'))->getValue($server));
+        $this->assertSame($transport, (new ReflectionProperty($server, 'transport'))->getValue($server));
+        $this->assertSame(
+            $inputTransportFactory,
+            (new ReflectionProperty($server, 'inputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputTransportFactory,
+            (new ReflectionProperty($server, 'outputTransportFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $inputProtocolFactory,
+            (new ReflectionProperty($server, 'inputProtocolFactory'))->getValue($server)
+        );
+        $this->assertSame(
+            $outputProtocolFactory,
+            (new ReflectionProperty($server, 'outputProtocolFactory'))->getValue($server)
+        );
     }
 }

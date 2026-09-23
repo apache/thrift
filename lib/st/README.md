@@ -37,3 +37,28 @@ calc := CalculatorClient binaryOnHost: 'localhost' port: '9090'
 calc addNum1: 10 num2: 15
 
 Tested in Squeak 3.7, but should work fine with anything later.
+
+Note that GNU Smalltalk cannot read thrift.st: the file is in the
+Squeak/Pharo chunk format, which gst does not parse.
+
+Tests
+=====
+
+The suites in test/ are SUnit test cases. lib/st is not part of the
+autotools build - it is not in configure.ac and not in a SUBDIRS - so
+there is no "make check" for it. test/run-tests.sh is the equivalent:
+it files thrift.st and the suites into a Pharo image, runs them, and
+fails if any test fails or if a suite registers a different number of
+tests than expected.
+
+  # Pharo, once:
+  mkdir -p /tmp/pharo && cd /tmp/pharo
+  curl -sSL https://get.pharo.org/64/130+vm | bash
+
+  # then, from a Thrift checkout with a built compiler:
+  lib/st/test/run-tests.sh --thrift compiler/cpp/thrift --pharo /tmp/pharo
+
+Pharo prints a failed test and still exits 0, so the script parses the
+run and pass counts rather than trusting the exit status.
+
+The same script runs in the lib-st CI job.

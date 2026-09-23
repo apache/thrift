@@ -279,6 +279,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
   ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
   gint32 sz_hbo, sz_nbo;
   guchar *tmpdata;
+  gboolean result;
 
   if(!ttc->resetConsumedMessageSize (transport, -1, error))
   {
@@ -299,15 +300,15 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
     t->w_buf = g_byte_array_remove_range (t->w_buf, 0, t->w_buf->len);
   }
     
-  /* write the buffer and then empty it */
-  THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                    tmpdata, sz_hbo,
-                                                    error);
-
-  THRIFT_TRANSPORT_GET_CLASS (t->transport)->flush (t->transport,
-                                                    error);
+  /* write the buffer and then empty it; a failure of either is the caller's
+   * to know about, and there is nothing to flush after a failed write */
+  result = THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                             tmpdata, sz_hbo,
+                                                             error)
+           && THRIFT_TRANSPORT_GET_CLASS (t->transport)->flush (t->transport,
+                                                                error);
   g_free (tmpdata);
-  return TRUE;
+  return result;
 }
 
 /* initializes the instance */
@@ -337,6 +338,8 @@ thrift_framed_transport_finalize (GObject *object)
     g_byte_array_free (transport->w_buf, TRUE);
   }
   transport->w_buf = NULL;
+
+  G_OBJECT_CLASS (thrift_framed_transport_parent_class)->finalize (object);
 }
 
 /* property accessor */

@@ -155,6 +155,10 @@ function TBinaryProtocol:readMessageBegin()
     if self.strictRead then
       terror(TProtocolException:new{message = 'No protocol version header'})
     end
+    -- The pre-versioned header names its own length, and it is the first
+    -- thing read off a connection. readString() holds every other declared
+    -- length to checkStringSize(); this one has to go through it as well.
+    self:checkStringSize(sz)
     name = self.trans:readAll(sz)
     ttype = self:readByte()
     seqid = self:readI32()

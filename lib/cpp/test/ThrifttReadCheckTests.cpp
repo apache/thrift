@@ -34,6 +34,8 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THeaderTransport.h>
+#include <thrift/protocol/THeaderProtocol.h>
+#include <thrift/TApplicationException.h>
 #include <thrift/transport/TSimpleFileTransport.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/protocol/TEnum.h>
@@ -569,6 +571,61 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_equal_to_magic_word) {
   uint8_t out[4];
   BOOST_CHECK_NO_THROW(trans->readAll(out, sizeof(out)));
   BOOST_CHECK_EQUAL(out[0], 0x80);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_zlib_read_failure_releases_stream) {
+  using apache::thrift::transport::THeaderTransport;
+  using apache::thrift::TApplicationException;
+  // A ZLIB-transformed frame whose inflated size exceeds the transform buffer
+  // the reader sizes from its own (default) write buffer cannot be inflated, so
+  // the read fails. The zlib stream inflateInit acquired for it has to be
+  // released on that failure path too; otherwise it is leaked once per frame.
+  // A plain build only checks that the failure still surfaces cleanly here --
+  // the leak itself is observable under LeakSanitizer (build the library and
+  // this test with -fsanitize=address and run: unfixed leaks ~40 KB per frame,
+  // fixed exits clean).
+  const std::size_t N = 4096; // > the ~1 KB reader transform buffer
+  std::vector<uint8_t> payload(N, 0x41);
+
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<THeaderTransport> writer(new THeaderTransport(buffer));
+  writer->setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer->write(payload.data(), static_cast<uint32_t>(payload.size()));
+  writer->flush();
+
+  std::shared_ptr<THeaderTransport> reader(new THeaderTransport(buffer));
+  uint8_t out[16];
+  BOOST_CHECK_THROW(reader->read(out, sizeof(out)), TApplicationException);
+}
+
+BOOST_AUTO_TEST_CASE(test_theadertransport_unknown_protocol_id_error_reply) {
+  using apache::thrift::transport::THeaderTransport;
+  using apache::thrift::protocol::THeaderProtocol;
+  using apache::thrift::protocol::T_BINARY_PROTOCOL;
+  using apache::thrift::TApplicationException;
+  using apache::thrift::protocol::TMessageType;
+  // Header-format frame whose protocol id varint decodes to 0xFFFF. The
+  // transport stores that in its signed 16-bit protocol id as -1. readMessageBegin
+  // rejects the unknown protocol and writes an error reply back on the same
+  // transport, which re-encodes the protocol id varint. That encoder has to
+  // terminate on a negative value rather than run off its fixed output buffer,
+  // so the call surfaces a clean TApplicationException instead of overrunning.
+  uint8_t frame[] = {
+      0x00, 0x00, 0x00, 0x0E, // frame length = 14
+      0x0F, 0xFF, 0x00, 0x00, // header magic + flags
+      0x00, 0x00, 0x00, 0x00, // seqId
+      0x00, 0x01,             // header size field (1 -> 4 bytes)
+      0xFF, 0xFF, 0x03,       // protocol id varint = 0xFFFF
+      0x00                    // num transforms = 0
+  };
+  std::shared_ptr<TMemoryBuffer> inBuf(new TMemoryBuffer(frame, sizeof(frame)));
+  std::shared_ptr<TMemoryBuffer> outBuf(new TMemoryBuffer());
+  THeaderProtocol proto(inBuf, outBuf, T_BINARY_PROTOCOL);
+
+  std::string name;
+  TMessageType messageType;
+  int32_t seqId = 0;
+  BOOST_CHECK_THROW(proto.readMessageBegin(name, messageType, seqId), TApplicationException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

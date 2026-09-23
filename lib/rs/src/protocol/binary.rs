@@ -93,6 +93,31 @@ where
         }
         Ok(())
     }
+
+    fn read_binary_len(&mut self) -> crate::Result<usize> {
+        let num_bytes = self.transport.read_i32::<BigEndian>()?;
+
+        if num_bytes < 0 {
+            return Err(crate::Error::Protocol(ProtocolError::new(
+                ProtocolErrorKind::NegativeSize,
+                format!("Negative byte array size: {}", num_bytes),
+            )));
+        }
+
+        if let Some(max_size) = self.config.max_string_size() {
+            if num_bytes as usize > max_size {
+                return Err(crate::Error::Protocol(ProtocolError::new(
+                    ProtocolErrorKind::SizeLimit,
+                    format!(
+                        "Byte array size {} exceeds maximum allowed size of {}",
+                        num_bytes, max_size
+                    ),
+                )));
+            }
+        }
+
+        Ok(num_bytes as usize)
+    }
 }
 
 impl<T> TInputProtocol for TBinaryInputProtocol<T>
@@ -193,32 +218,17 @@ where
     }
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
-        let num_bytes = self.transport.read_i32::<BigEndian>()?;
-
-        if num_bytes < 0 {
-            return Err(crate::Error::Protocol(ProtocolError::new(
-                ProtocolErrorKind::NegativeSize,
-                format!("Negative byte array size: {}", num_bytes),
-            )));
-        }
-
-        if let Some(max_size) = self.config.max_string_size() {
-            if num_bytes as usize > max_size {
-                return Err(crate::Error::Protocol(ProtocolError::new(
-                    ProtocolErrorKind::SizeLimit,
-                    format!(
-                        "Byte array size {} exceeds maximum allowed size of {}",
-                        num_bytes, max_size
-                    ),
-                )));
-            }
-        }
-
-        let mut buf = vec![0u8; num_bytes as usize];
+        let num_bytes = self.read_binary_len()?;
+        let mut buf = vec![0u8; num_bytes];
         self.transport
             .read_exact(&mut buf)
             .map(|_| buf)
             .map_err(From::from)
+    }
+
+    fn skip_binary(&mut self) -> crate::Result<()> {
+        let num_bytes = self.read_binary_len()?;
+        super::discard_exact(&mut self.transport, num_bytes).map_err(From::from)
     }
 
     fn read_bool(&mut self) -> crate::Result<bool> {
@@ -1175,6 +1185,31 @@ mod tests {
         assert_eq!(i_prot.recursion_depth, 1);
         assert!(i_prot.read_struct_end().is_ok());
         assert_eq!(i_prot.recursion_depth, 0);
+    }
+
+    #[test]
+    fn must_reject_negative_binary_size() {
+        let mem = TBufferChannel::with_capacity(16, 16);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+        let mut i_prot = TBinaryInputProtocol::new(r_mem, true);
+        w_mem.set_readable_bytes(&[0xFF, 0xFF, 0xFF, 0xFF]);
+        match i_prot.read_bytes() {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::NegativeSize);
+            }
+            other => panic!("Expected NegativeSize, got {:?}", other),
+        }
+
+        let mem = TBufferChannel::with_capacity(16, 16);
+        let (r_mem, mut w_mem) = mem.split().unwrap();
+        let mut i_prot = TBinaryInputProtocol::new(r_mem, true);
+        w_mem.set_readable_bytes(&[0xFF, 0xFF, 0xFF, 0xFF]);
+        match i_prot.skip_binary() {
+            Err(crate::Error::Protocol(e)) => {
+                assert_eq!(e.kind, ProtocolErrorKind::NegativeSize);
+            }
+            other => panic!("Expected NegativeSize, got {:?}", other),
+        }
     }
 
     #[test]

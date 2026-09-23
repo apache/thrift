@@ -297,13 +297,16 @@ thrift_zlib_transport_flush_to_zlib (ThriftTransport *transport, const gint8* bu
       break;
     }
 
-    /* If our output buffer is full, flush to the underlying transport. */
+    /* If our output buffer is full, flush to the underlying transport, then
+     * go on deflating what is left of the input. */
     if (t->wstream->avail_out == 0) {
-      THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
-                                                        t->cwbuf, t->cwbuf_size, error);
+      if (!THRIFT_TRANSPORT_GET_CLASS (t->transport)->write (t->transport,
+                                                             t->cwbuf, t->cwbuf_size,
+                                                             error)) {
+        return FALSE;
+      }
       t->wstream->next_out = t->cwbuf;
       t->wstream->avail_out = t->cwbuf_size;
-      break;
     }
 
     int zlib_rv = deflate(t->wstream, flush);
@@ -439,7 +442,9 @@ thrift_zlib_transport_flush (ThriftTransport *transport, GError **error)
     return FALSE;
   }
 
-  thrift_zlib_transport_flush_to_zlib (transport, (gint8*)t->uwbuf, t->uwpos, Z_NO_FLUSH, error);
+  if (!thrift_zlib_transport_flush_to_zlib (transport, (gint8*)t->uwbuf, t->uwpos, Z_NO_FLUSH, error)) {
+    return FALSE;
+  }
   t->uwpos = 0;
 
   if (t->wstream->avail_out < 6) {
@@ -581,6 +586,8 @@ thrift_zlib_transport_finalize (GObject *object)
   if (t->wstream != NULL) {
     g_free (t->wstream);
   }
+
+  G_OBJECT_CLASS (thrift_zlib_transport_parent_class)->finalize (object);
 }
 
 /* property accessor */

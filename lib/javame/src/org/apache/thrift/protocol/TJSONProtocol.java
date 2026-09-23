@@ -303,6 +303,35 @@ public class TJSONProtocol extends TProtocol {
     super(trans);
   }
 
+  private int maxStringLength_ = TBinaryProtocol.DEFAULT_MAX_STRING_LENGTH;
+
+  /**
+   * Sets the longest string or binary field this protocol will read.
+   */
+  public void setMaxStringLength(int maxStringLength) {
+    if (maxStringLength <= 0) {
+      throw new IllegalArgumentException("maxStringLength must be positive");
+    }
+    maxStringLength_ = maxStringLength;
+  }
+
+  /**
+   * @return the longest string or binary field this protocol will read.
+   */
+  public int getMaxStringLength() {
+    return maxStringLength_;
+  }
+
+  // A JSON string or number carries no length, so its size is whatever the
+  // peer sends. It is held to maxStringLength_, checked against the running
+  // byte count as the value is read.
+  private void checkStringLength(int size) throws TProtocolException {
+    if (size > maxStringLength_) {
+      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
+          "Length (" + size + ") larger than max length (" + maxStringLength_ + ")");
+    }
+  }
+
   public void reset() {
     contextStack_.clear();
     context_ = new JSONBaseContext();
@@ -644,6 +673,7 @@ public class TJSONProtocol extends TProtocol {
     }
     readJSONSyntaxChar(QUOTE);
     while (true) {
+      checkStringLength(arr.size());
       byte ch = reader_.read();
       if (ch == QUOTE[0]) {
         break;
@@ -735,6 +765,7 @@ public class TJSONProtocol extends TProtocol {
   private String readJSONNumericChars() throws TException {
     StringBuffer strbuf = new StringBuffer();
     while (true) {
+      checkStringLength(strbuf.length());
       byte ch = reader_.peek();
       if (!isJSONNumeric(ch)) {
         break;

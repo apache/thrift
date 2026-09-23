@@ -25,7 +25,8 @@ namespace Test\Thrift\Unit\Lib\Server;
 
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionMethod;
+use ReflectionProperty;
 use Thrift\Exception\TTransportException;
 use Thrift\Server\TSSLServerSocket;
 use Thrift\Transport\TSocket;
@@ -33,13 +34,12 @@ use Thrift\Transport\TSocket;
 class TSSLServerSocketTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
 
     public function testEnsureSslHostPrefix()
     {
         $socket = new TSSLServerSocket();
-        $ensureSslHostPrefix = $this->getAccessibleMethod($socket, 'ensureSslHostPrefix');
+        $ensureSslHostPrefix = new ReflectionMethod($socket, 'ensureSslHostPrefix');
 
         $this->assertEquals('ssl://localhost', $ensureSslHostPrefix->invoke($socket, 'localhost'));
         $this->assertEquals('ssl://localhost', $ensureSslHostPrefix->invoke($socket, 'ssl://localhost'));
@@ -75,7 +75,7 @@ class TSSLServerSocketTest extends TestCase
 
         $socket->listen();
 
-        $this->assertIsResource($this->getPropertyValue($socket, 'listener'));
+        $this->assertIsResource((new ReflectionProperty($socket, 'listener'))->getValue($socket));
 
         $this->getFunctionMock('Thrift\Server', 'fclose')
              ->expects($this->once())
@@ -83,7 +83,7 @@ class TSSLServerSocketTest extends TestCase
              ->willReturn(true);
 
         $socket->close();
-        $this->assertNull($this->getPropertyValue($socket, 'listener'));
+        $this->assertNull((new ReflectionProperty($socket, 'listener'))->getValue($socket));
     }
 
     public function testAccept()
@@ -118,7 +118,7 @@ class TSSLServerSocketTest extends TestCase
         $result = $socket->accept();
         $this->assertInstanceOf(TSocket::class, $result);
 
-        $this->assertEquals($transportHandle, $this->getPropertyValue($result, 'handle'));
+        $this->assertEquals($transportHandle, (new ReflectionProperty($result, 'handle'))->getValue($result));
     }
 
     public function testAcceptFailed()
@@ -145,31 +145,5 @@ class TSSLServerSocketTest extends TestCase
 
         $socket->listen();
         $socket->accept();
-    }
-
-    public function testGetSSLHostTriggersDeprecation(): void
-    {
-        $socket = new TSSLServerSocket();
-
-        $errors = [];
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$errors): bool {
-                $errors[] = ['errno' => $errno, 'errstr' => $errstr];
-
-                return true;
-            },
-            E_USER_DEPRECATED,
-        );
-
-        try {
-            $result = $socket->getSSLHost('example.com');
-        } finally {
-            restore_error_handler();
-        }
-
-        $this->assertSame('ssl://example.com', $result);
-        $this->assertCount(1, $errors);
-        $this->assertSame(E_USER_DEPRECATED, $errors[0]['errno']);
-        $this->assertStringContainsString('getSSLHost() is deprecated', $errors[0]['errstr']);
     }
 }

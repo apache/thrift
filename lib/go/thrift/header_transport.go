@@ -178,6 +178,38 @@ func (tr *TransformReader) AddTransform(id THeaderTransformID) error {
 	return nil
 }
 
+// limitedTransformReader reads the output of a read transform, and fails the
+// read that would take that output past limit bytes.
+type limitedTransformReader struct {
+	r     io.Reader
+	limit int64
+	read  int64
+	err   error
+}
+
+func (l *limitedTransformReader) Read(p []byte) (int, error) {
+	if l.err != nil {
+		return 0, l.err
+	}
+	// Read at most one byte past the limit: output that ends right at the
+	// limit is read to its end, and the extra byte shows output that goes on.
+	if left := l.limit - l.read; int64(len(p)) > left+1 {
+		p = p[:left+1]
+	}
+	n, err := l.r.Read(p)
+	if l.read+int64(n) > l.limit {
+		l.err = NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("frame too large after transform: more than %d bytes", l.limit),
+		)
+		n = int(l.limit - l.read)
+		l.read = l.limit
+		return n, l.err
+	}
+	l.read += int64(n)
+	return n, err
+}
+
 // TransformWriter is an io.WriteCloser that handles transforms writing.
 type TransformWriter struct {
 	io.Writer
@@ -520,6 +552,15 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 			if err := reader.AddTransform(id); err != nil {
 				return err
 			}
+			if id == TransformZlib {
+				// ReadFrame held the frame to the maximum frame
+				// size as it came off the wire. Hold what each
+				// inflate makes of it to the same size.
+				reader.Reader = &limitedTransformReader{
+					r:     reader.Reader,
+					limit: int64(t.cfg.GetMaxFrameSize()),
+				}
+			}
 		}
 	}
 
@@ -628,12 +669,13 @@ func (t *THeaderTransport) Write(p []byte) (int, error) {
 	return t.writeBuffer.Write(p)
 }
 
-// checkWriteFrameSize refuses a frame of size bytes that ReadFrame, holding the
-// same configuration, would refuse. THeaderMaxFrameSize is below the largest
-// length the frame's 32-bit length word can carry, so a frame that passes is
-// written with its true length.
-func (t *THeaderTransport) checkWriteFrameSize(size int) error {
-	if uint64(size) > uint64(THeaderMaxFrameSize) || int64(size) > int64(t.cfg.GetMaxFrameSize()) {
+// checkWriteFrameSize refuses a frame of size bytes that a reader holding cfg
+// would refuse. THeaderMaxFrameSize is below the largest length the frame's
+// 32-bit length word can carry, so a frame that passes is written with its
+// true length. TFramedTransport.Flush writes the same length word and applies
+// the same check.
+func checkWriteFrameSize(cfg *TConfiguration, size int) error {
+	if uint64(size) > uint64(THeaderMaxFrameSize) || int64(size) > int64(cfg.GetMaxFrameSize()) {
 		return NewTProtocolExceptionWithType(
 			SIZE_LIMIT,
 			fmt.Errorf("frame too large: %d bytes", size),
@@ -733,7 +775,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 		// First write frame length
-		if err := t.checkWriteFrameSize(payload.Len()); err != nil {
+		if err := checkWriteFrameSize(t.cfg, payload.Len()); err != nil {
 			return err
 		}
 		buf := t.buffer[:size32]
@@ -747,7 +789,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		}
 
 	case clientFramedBinary, clientFramedCompact:
-		if err := t.checkWriteFrameSize(t.writeBuffer.Len()); err != nil {
+		if err := checkWriteFrameSize(t.cfg, t.writeBuffer.Len()); err != nil {
 			return err
 		}
 		buf := t.buffer[:size32]

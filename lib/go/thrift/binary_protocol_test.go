@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"bytes"
+	"context"
 	"math"
 	"strconv"
 	"strings"
@@ -226,5 +227,69 @@ func BenchmarkSafeReadBytes(b *testing.B) {
 		},
 	} {
 		b.Run(c.label, generateSafeReadBytesBenchmark(c.askedSize, c.dataSize))
+	}
+}
+
+// readRequestCountingTransport wraps a TTransport and records how many bytes
+// the reads from it ask for, whether or not they are there to be read.
+type readRequestCountingTransport struct {
+	TTransport
+	requested int
+}
+
+func (t *readRequestCountingTransport) Read(buf []byte) (int, error) {
+	t.requested += len(buf)
+	return t.TTransport.Read(buf)
+}
+
+// A message header without a version starts with the name, as a length and
+// the bytes. The length is held to the maximum message size like that of any
+// other string, before any of the name is read.
+func TestBinaryProtocolNonStrictMessageNameSize(t *testing.T) {
+	const maxSize = 1024
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		label string
+		size  int
+	}{
+		{label: "at-limit", size: maxSize},
+		{label: "over-limit", size: 2 * maxSize},
+	} {
+		t.Run(tc.label, func(t *testing.T) {
+			name := strings.Repeat("n", tc.size)
+			buf := NewTMemoryBuffer()
+			writer := NewTBinaryProtocolConf(buf, &TConfiguration{
+				TBinaryStrictWrite: BoolPtr(false),
+			})
+			if err := writer.WriteMessageBegin(ctx, name, CALL, 1); err != nil {
+				t.Fatal(err)
+			}
+
+			trans := &readRequestCountingTransport{TTransport: buf}
+			reader := NewTBinaryProtocolConf(trans, &TConfiguration{
+				MaxMessageSize: maxSize,
+			})
+			readName, typeID, seqID, err := reader.ReadMessageBegin(ctx)
+			if tc.size <= maxSize {
+				if err != nil {
+					t.Fatalf("ReadMessageBegin with a name of %d bytes failed: %v", tc.size, err)
+				}
+				if readName != name || typeID != CALL || seqID != 1 {
+					t.Fatalf(
+						"ReadMessageBegin returned a name of %d bytes, type %v, sequence id %d, want %d bytes, %v, 1",
+						len(readName), typeID, seqID, tc.size, CALL,
+					)
+				}
+				return
+			}
+			if trans.requested != 4 {
+				t.Errorf(
+					"ReadMessageBegin asked the transport for %d bytes, want 4: the name's length and none of the name",
+					trans.requested,
+				)
+			}
+			requireSizeLimit(t, err, "ReadMessageBegin")
+		})
 	}
 }

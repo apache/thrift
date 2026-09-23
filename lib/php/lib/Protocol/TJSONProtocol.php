@@ -191,8 +191,15 @@ class TJSONProtocol extends TProtocol
         $this->context = array_pop($this->contextStack) ?? new BaseContext();
     }
 
-    public function __construct(TTransport $trans)
-    {
+    /**
+     * A JSON string or number has no length in front of it, so the maximum
+     * applies to the bytes it takes on the wire as they are read. A maximum
+     * of 0 means no limit.
+     */
+    public function __construct(
+        TTransport $trans,
+        protected int $maxStringSize = self::DEFAULT_MAX_STRING_SIZE,
+    ) {
         parent::__construct($trans);
         $this->context = new BaseContext();
         $this->reader = new LookaheadReader($this);
@@ -311,6 +318,9 @@ class TJSONProtocol extends TProtocol
             ) {
                 break;
             }
+            // $jsonString holds the opening quote as well, which is not part
+            // of the string itself.
+            $this->checkStringSize(strlen($jsonString) - 1, $this->maxStringSize);
             if ($ch == self::ESCSEQ && $lastChar == self::ESCSEQ) {
                 $lastChar = self::DOUBLEESC;
             } else {
@@ -347,7 +357,7 @@ class TJSONProtocol extends TProtocol
 
     private function readJSONNumericChars(): string
     {
-        $strbld = [];
+        $strbld = '';
 
         while (true) {
             $ch = $this->reader->peek();
@@ -356,10 +366,11 @@ class TJSONProtocol extends TProtocol
                 break;
             }
 
-            $strbld[] = $this->reader->read();
+            $strbld .= $this->reader->read();
+            $this->checkStringSize(strlen($strbld), $this->maxStringSize);
         }
 
-        return implode("", $strbld);
+        return $strbld;
     }
 
     private function readJSONInteger(): int

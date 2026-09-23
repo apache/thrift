@@ -21,10 +21,12 @@ package thrift
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/adler32"
 	"io"
 	"math"
 	"runtime"
@@ -844,4 +846,146 @@ func TestTHeaderTransportFlushHeaderLengthLimit(t *testing.T) {
 			t.Errorf("Flush wrote %d bytes of a frame it refused, want 0", out.written)
 		}
 	})
+}
+
+// zlibHeaderFrames writes one THeader frame with the ZLIB transform for each
+// payload, and returns the transport holding them.
+func zlibHeaderFrames(t *testing.T, payloads ...[]byte) *TMemoryBuffer {
+	t.Helper()
+	trans := NewTMemoryBuffer()
+	writer := NewTHeaderTransportConf(trans, &TConfiguration{
+		THeaderTransforms: []THeaderTransformID{TransformZlib},
+	})
+	for _, payload := range payloads {
+		if _, err := writer.Write(payload); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Flush(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return trans
+}
+
+func requireReadSizeLimit(t *testing.T, err error) {
+	t.Helper()
+	var pe TProtocolException
+	if !errors.As(err, &pe) || pe.TypeId() != SIZE_LIMIT {
+		t.Fatalf("read returned %v, want a TProtocolException of type SIZE_LIMIT", err)
+	}
+}
+
+// ReadFrame holds a frame to the maximum frame size as it comes off the wire.
+// The payload the ZLIB transform inflates the frame to is held to the same
+// size: a read that would go past it fails instead of returning more.
+func TestTHeaderTransportZlibFrameSizeLimit(t *testing.T) {
+	const limit = 64 * 1024
+	conf := &TConfiguration{MaxFrameSize: limit}
+
+	for _, tc := range []struct {
+		name string
+		size int
+	}{
+		{name: "at-limit", size: limit},
+		{name: "one-over", size: limit + 1},
+		{name: "far-over", size: 1024 * 1024},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := bytes.Repeat([]byte("x"), tc.size)
+			trans := zlibHeaderFrames(t, payload)
+			wire := trans.Len()
+			if wire > limit {
+				t.Fatalf("frame on the wire is %d bytes, want it within the limit of %d", wire, limit)
+			}
+
+			reader := NewTHeaderTransportConf(trans, conf)
+			var read bytes.Buffer
+			n, err := io.Copy(&read, reader)
+			if tc.size <= limit {
+				if err != nil {
+					t.Fatalf("read of a %d byte payload failed after %d bytes: %v", tc.size, n, err)
+				}
+				if !bytes.Equal(read.Bytes(), payload) {
+					t.Fatalf("read back %d bytes, want the %d bytes written", n, tc.size)
+				}
+				return
+			}
+			if n > limit {
+				t.Errorf(
+					"read %d bytes of a %d byte payload from %d bytes on the wire, want at most %d",
+					n, tc.size, wire, limit,
+				)
+			}
+			requireReadSizeLimit(t, err)
+		})
+	}
+
+	// Every frame gets the whole limit.
+	t.Run("per-frame", func(t *testing.T) {
+		payload := bytes.Repeat([]byte("x"), limit)
+		trans := zlibHeaderFrames(t, payload, payload, payload)
+		reader := NewTHeaderTransportConf(trans, conf)
+		read, err := io.ReadAll(reader)
+		if err != nil {
+			t.Fatalf("read of three frames of %d bytes each failed after %d bytes: %v", limit, len(read), err)
+		}
+		if want := 3 * limit; len(read) != want {
+			t.Fatalf("read %d bytes, want %d", len(read), want)
+		}
+	})
+}
+
+// emptyStoredBlocksZlibStream returns a zlib stream of the given number of
+// empty stored blocks, five bytes each, which inflates to no data at all.
+func emptyStoredBlocksZlibStream(blocks int) []byte {
+	var stream bytes.Buffer
+	stream.Write([]byte{0x78, 0x01}) // deflate, 32 KiB window, no dictionary
+	for range blocks {
+		// A block that is not the last one, stored, of length 0.
+		stream.Write([]byte{0x00, 0x00, 0x00, 0xff, 0xff})
+	}
+	stream.Write([]byte{0x01, 0x00, 0x00, 0xff, 0xff}) // the last block
+	binary.Write(&stream, binary.BigEndian, adler32.Checksum(nil))
+	return stream.Bytes()
+}
+
+// A frame can list the ZLIB transform more than once. Each of them is held to
+// the maximum frame size, not only the one that yields the payload.
+func TestTHeaderTransportStackedZlibFrameSizeLimit(t *testing.T) {
+	const limit = 64 * 1024
+
+	// The first transform inflates what is on the wire into this stream,
+	// twice the limit, and the second inflates the stream into nothing.
+	stream := emptyStoredBlocksZlibStream(2 * limit / 5)
+	var compressed bytes.Buffer
+	w := zlib.NewWriter(&compressed)
+	if _, err := w.Write(stream); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Protocol id 0 (binary) and two ZLIB transforms, as varints.
+	headerBlock := []byte{0x00, 0x02, byte(TransformZlib), byte(TransformZlib)}
+	var frame bytes.Buffer
+	binary.Write(&frame, binary.BigEndian, THeaderHeaderMagic)
+	binary.Write(&frame, binary.BigEndian, int32(0)) // sequence id
+	binary.Write(&frame, binary.BigEndian, uint16(len(headerBlock)/4))
+	frame.Write(headerBlock)
+	frame.Write(compressed.Bytes())
+	if frame.Len() > limit {
+		t.Fatalf("frame on the wire is %d bytes, want it within the limit of %d", frame.Len(), limit)
+	}
+
+	trans := NewTMemoryBuffer()
+	binary.Write(trans, binary.BigEndian, uint32(frame.Len()))
+	trans.Write(frame.Bytes())
+
+	reader := NewTHeaderTransportConf(trans, &TConfiguration{MaxFrameSize: limit})
+	read, err := io.ReadAll(reader)
+	if len(read) != 0 {
+		t.Errorf("read %d bytes, want none", len(read))
+	}
+	requireReadSizeLimit(t, err)
 }

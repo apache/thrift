@@ -20,7 +20,7 @@
 AC_PREREQ(2.65)
 AC_CONFIG_MACRO_DIR([./aclocal])
 
-AC_INIT([thrift], [0.25.0])
+AC_INIT([thrift], [0.26.0])
 
 AC_CONFIG_AUX_DIR([.])
 
@@ -188,8 +188,8 @@ AM_CONDITIONAL([QT5_REDUCE_RELOCATIONS], [test "x$qt_reduce_reloc" != "x"])
 
 AX_THRIFT_LIB(c_glib, [C (GLib)], yes)
 if test "$with_c_glib" = "yes"; then
-  PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.0], have_glib2=yes, have_glib2=no)
-  PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.0], have_gobject2=yes, have_gobject2=no)
+  PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.48], have_glib2=yes, have_glib2=no)
+  PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.48], have_gobject2=yes, have_gobject2=no)
   if test "$have_glib2" = "yes" -a "$have_gobject2" = "yes" ; then
     AC_PATH_PROG([GSETTINGS], [gsettings])
     have_c_glib="yes"
@@ -249,34 +249,39 @@ if test "$with_erlang" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
 
+dnl HAVE_NPM also drives the check targets of lib/js and lib/ts, which are
+dnl browser bindings and not tied to --with-nodejs.  Look for npm up front, so
+dnl that disabling the nodejs binding does not silently turn those tests into
+dnl no-ops.
+AC_PATH_PROG([NPM], [npm])
+AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
 AX_THRIFT_LIB(nodejs, [Nodejs], yes)
 have_nodejs=no
 if test "$with_nodejs" = "yes"; then
   AC_PATH_PROGS([NODEJS], [nodejs node])
-  AC_PATH_PROG([NPM], [npm])
   if test "x$NODEJS" != "x" -a "x$NPM" != "x"; then
     have_nodejs="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
-AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 
 AX_THRIFT_LIB(nodets, [Nodets], yes)
 have_nodets=no
 if test "$with_nodets" = "yes"; then
   AC_PATH_PROGS([NODETS], [nodets node])
-  AC_PATH_PROG([NPM], [npm])
   if test "x$NODETS" != "x" -a "x$NPM" != "x"; then
     have_nodets="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_NODETS, [test "$have_nodets" = "yes"])
-AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
 
 AX_THRIFT_LIB(lua, [Lua], yes)
 have_lua=no
 if test "$with_lua" = "yes"; then
-  AX_PROG_LUA(5.2,, have_lua="yes", have_lua="no")
+  dnl 5.3, because the scripts make check runs in lib/lua/test use its
+  dnl bitwise operators and string.pack.
+  AX_PROG_LUA(5.3,, have_lua="yes", have_lua="no")
   if test "$have_lua" = "yes"; then
     AX_LUA_HEADERS(, have_lua="no")
     AX_LUA_LIBS(, have_lua="no")

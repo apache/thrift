@@ -24,6 +24,8 @@ THttpTransport = TTransportBase:new{
   path = '/',
   wBuf = '',
   rBuf = '',
+  -- How much of the body in rBuf read() has handed out so far
+  rPos = 0,
   CRLF = '\r\n',
   VERSION = version,
   isServer = true,
@@ -80,14 +82,13 @@ function THttpTransport:read(len)
   if string.len(self.rBuf) == 0 then
     self:_readMsg()
   end
-  if len > string.len(self.rBuf) then
-    local val = self.rBuf
-    self.rBuf = ''
-    return val
-  end
 
-  local val = string.sub(self.rBuf, 0, len)
-  self.rBuf = string.sub(self.rBuf, len+1)
+  local val = string.sub(self.rBuf, self.rPos + 1, self.rPos + len)
+  self.rPos = self.rPos + string.len(val)
+  if self.rPos >= string.len(self.rBuf) then
+    self.rBuf = ''
+    self.rPos = 0
+  end
   return val
 end
 
@@ -136,6 +137,7 @@ function THttpTransport:_readMsg()
   if self.rBuf == nil then
     self.rBuf = ""
   end
+  self.rPos = 0
 end
 
 function THttpTransport:getLine()
@@ -153,15 +155,28 @@ function THttpTransport:_parseHeaders()
 
   repeat
     local line = self:getLine()
-    for key, val in string.gmatch(line, "([%w%-]+)%s*:%s*(.+)") do
-      if headers[key] then
-        local delimiter = ", "
-        if string.lower(key) == "set-cookie" then
-          delimiter = "; "
+    -- Split the line at the first ':' with a plain search, so the work stays
+    -- linear in the length of the line. The field name is the leading run of
+    -- name characters (surrounding whitespace ignored); the value is the rest
+    -- of the line with its leading whitespace removed. The two matches are
+    -- anchored so neither scans the line more than once.
+    local colon = string.find(line, ':', 1, true)
+    if colon then
+      local key, rest = string.match(string.sub(line, 1, colon - 1),
+                                     "^%s*([%w%-]+)(.*)")
+      if key and string.find(rest, "^%s*$") then
+        local val = string.match(line, "^%s*(.+)", colon + 1)
+        if val then
+          if headers[key] then
+            local delimiter = ", "
+            if string.lower(key) == "set-cookie" then
+              delimiter = "; "
+            end
+            headers[key] = headers[key] .. delimiter .. tostring(val)
+          else
+            headers[key] = tostring(val)
+          end
         end
-        headers[key] = headers[key] .. delimiter .. tostring(val)
-      else
-        headers[key] = tostring(val)
       end
     end
   until string.find(line, "^%s*$")

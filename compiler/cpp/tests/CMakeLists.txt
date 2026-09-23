@@ -120,13 +120,13 @@ endmacro()
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" OFF)
 THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
-THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
+THRIFT_ADD_COMPILER(d       "Enable compiler for D" ON)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
 THRIFT_ADD_COMPILER(delphi  "Enable compiler for Delphi" OFF)
 THRIFT_ADD_COMPILER(erl     "Enable compiler for Erlang" OFF)
 THRIFT_ADD_COMPILER(go      "Enable compiler for Go" OFF)
-THRIFT_ADD_COMPILER(gv      "Enable compiler for GraphViz" OFF)
-THRIFT_ADD_COMPILER(haxe    "Enable compiler for Haxe" OFF)
+THRIFT_ADD_COMPILER(gv      "Enable compiler for GraphViz" ON)
+THRIFT_ADD_COMPILER(haxe    "Enable compiler for Haxe" ON)
 THRIFT_ADD_COMPILER(html    "Enable compiler for HTML Documentation" OFF)
 THRIFT_ADD_COMPILER(java    "Enable compiler for Java"   OFF)
 THRIFT_ADD_COMPILER(javame  "Enable compiler for Java ME" OFF)
@@ -158,6 +158,20 @@ list(REMOVE_ITEM thrift_compiler_SOURCES
 # - the current binary directory for locally generated files (standalone tests build)
 # - the top-level binary directory for generated files when reusing targets from the parent build
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} ${THRIFT_COMPILER_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/catch)
+
+# In the combined build the generator and parser sources have already been
+# compiled for the thrift-compiler executable; reuse those objects instead of
+# compiling them a second time. A standalone build of this directory, which
+# .github/workflows/cmake.yml exercises, has no such target and keeps the list
+# assembled above.
+if(TARGET thrift_compiler_core)
+    set(thrift_compiler_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_globals.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/thrift_test_parser_support.cc
+        ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/logging.cc
+        $<TARGET_OBJECTS:thrift_compiler_core>
+    )
+endif()
 
 add_library(thrift_compiler STATIC ${thrift_compiler_SOURCES})
 

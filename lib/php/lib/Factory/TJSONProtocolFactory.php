@@ -33,8 +33,13 @@ use Thrift\Transport\TTransport;
  */
 class TJSONProtocolFactory implements TProtocolFactory
 {
+    public function __construct(
+        private int $maxStringSize = TJSONProtocol::DEFAULT_MAX_STRING_SIZE,
+    ) {
+    }
+
     public function getProtocol(TTransport $trans): TJSONProtocol
     {
-        return new TJSONProtocol($trans);
+        return new TJSONProtocol($trans, $this->maxStringSize);
     }
 }

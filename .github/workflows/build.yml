@@ -36,7 +36,8 @@ permissions:
   contents: read
 
 jobs:
-  # TODO windows and macos
+  # The Windows compiler build lives in cmake.yml. This workflow drives the
+  # autotools build, which has no native Windows toolchain.
   compiler:
     strategy:
       matrix:
@@ -111,12 +112,22 @@ jobs:
 
           echo "All Delphi UUIDv8 GUID determinism tests passed."
 
-      # only upload while building ubuntu-24.04
+      # For the jobs that run on ubuntu-24.04.
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: thrift-compiler
+          path: compiler/cpp/thrift
+          retention-days: 3
+
+      # For lib-c_glib, which runs on ubuntu-22.04. The ubuntu-24.04 build
+      # does not start there: it needs glibc 2.38, and ubuntu-22.04 has 2.35.
+      - name: Archive built thrift compiler (ubuntu-22.04)
+        if: matrix.os == 'ubuntu-22.04'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: thrift-compiler-ubuntu-22.04
           path: compiler/cpp/thrift
           retention-days: 3
 
@@ -165,7 +176,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        php-version: [8.1, 8.2, 8.3, 8.4, 8.5]
+        php-version: [8.2, 8.3, 8.4, 8.5]
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -215,6 +226,7 @@ jobs:
           mkdir -p ./lib/php/test/Resources/packages/phpcm
           mkdir -p ./lib/php/test/Resources/packages/phprec
           mkdir -p ./lib/php/test/Resources/packages/phprecoop
+          mkdir -p ./lib/php/test/Resources/packages/phpreci
           compiler/cpp/thrift --gen php:nsglobal="Basic" -r --out ./lib/php/test/Resources/packages/php lib/php/test/Resources/ThriftTest.thrift
           compiler/cpp/thrift --gen php:inlined,nsglobal="BasicInline" -r --out ./lib/php/test/Resources/packages/phpi lib/php/test/Resources/ThriftTest.thrift
           compiler/cpp/thrift --gen php:validate,nsglobal="Validate" -r --out ./lib/php/test/Resources/packages/phpv lib/php/test/Resources/ThriftTest.thrift
@@ -223,6 +235,7 @@ jobs:
           compiler/cpp/thrift --gen php:classmap,server,rest,nsglobal="Classmap" -r --out ./lib/php/test/Resources/packages/phpcm lib/php/test/Resources/ThriftTest.thrift
           compiler/cpp/thrift --gen php:nsglobal="PhpRec" -r --out ./lib/php/test/Resources/packages/phprec lib/php/test/Resources/RecursionDepth.thrift
           compiler/cpp/thrift --gen php:oop,nsglobal="PhpRecOop" -r --out ./lib/php/test/Resources/packages/phprecoop lib/php/test/Resources/RecursionDepth.thrift
+          compiler/cpp/thrift --gen php:inlined,nsglobal="PhpRecInline" -r --out ./lib/php/test/Resources/packages/phpreci lib/php/test/Resources/RecursionDepth.thrift
 
       - name: Run Tests
         run: vendor/bin/phpunit -c lib/php/phpunit.xml
@@ -428,6 +441,51 @@ jobs:
             lib/kotlin/cross-test-server/build/install/TestServer/
           retention-days: 3
 
+  lib-javame:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # lib/javame has no build harness -- no Makefile.am, no configure.ac
+      # entry -- so it is compiled here directly, together with the code its
+      # tests generate. THttpClient.java is left out: it needs the
+      # javax.microedition API, which no JDK provides and which is not
+      # available under a license an ASF build can use.
+      - name: Compile lib/javame and its tests
+        working-directory: lib/javame
+        run: |
+          ../../compiler/cpp/thrift --gen javame -o . test/RecursionDepth.thrift
+          javac -d "$RUNNER_TEMP/javame" \
+            $(find src -name '*.java' ! -name 'THttpClient.java') \
+            gen-javame/*.java test/*.java
+
+      # Every test/Test*.java has a main that exits non-zero on a failed check.
+      - name: Run the lib/javame tests
+        working-directory: lib/javame
+        run: |
+          for test in test/Test*.java; do
+            java -cp "$RUNNER_TEMP/javame" "$(basename "$test" .java)"
+          done
+
   lib-netstd:
     needs: compiler
     runs-on: ubuntu-24.04
@@ -600,6 +658,50 @@ jobs:
           thrift --gen haxe -r ../../../test/ConstantsDemo.thrift
           haxe --cwd . neko.hxml
           neko bin/Test.n
+
+  lib-st:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # The Pharo release line to test against. "stable" is deliberately not
+      # used: it will move to Pharo 14 one day and turn this job red for
+      # reasons that have nothing to do with Thrift. Verified against the
+      # 13.1 snapshot this line currently serves.
+      PHARO_RELEASE: "130"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # lib/st cannot be built the way the other bindings are: it is not in
+      # configure.ac and not in a SUBDIRS, so there is no "make check" to hang
+      # this on. It is a Squeak/Pharo file-in, and the tests are SUnit suites.
+      - name: Install Pharo
+        timeout-minutes: 10
+        run: |
+          mkdir -p "$RUNNER_TEMP/pharo"
+          cd "$RUNNER_TEMP/pharo"
+          curl -sSL "https://get.pharo.org/64/${PHARO_RELEASE}+vm" | bash
+          ./pharo Pharo.image eval "Smalltalk version"
+
+      # The script does the asserting: Pharo prints a failed test and still
+      # exits 0, so the run and pass counts are the only signal there is.
+      - name: Run the lib/st tests
+        run: |
+          ./lib/st/test/run-tests.sh \
+            --thrift "$PWD/compiler/cpp/thrift" \
+            --pharo "$RUNNER_TEMP/pharo"
 
   lib-rust:
     needs: compiler
@@ -866,6 +968,156 @@ jobs:
             lib/nodets/test-compiled
           retention-days: 3
 
+  lib-js:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      GRADLE_VERSION: "8.4"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: "gradle"
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      # ant fetches the browser test libraries, and lib/Makefile.am builds
+      # lib/js inside the WITH_JAVA block for exactly that reason.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y wget unzip ant
+
+      - name: Setup gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
+          (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
+          sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
+          sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
+          gradle --version
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for js
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/'))
+          echo "$summary"
+          # lib/js has no --with-js of its own; it is built inside the WITH_JAVA
+          # block, and its check-local is guarded by HAVE_NPM.  Insist on both,
+          # so that a missing prerequisite cannot turn this job into a green
+          # run that tests nothing.
+          echo "$summary" | grep -qE "Building Java Library [.]+ : yes"
+          command -v npm
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # lib/js/test/build.xml stops unless lib/java/build/libs holds two jars:
+      # the library, and its test classes, which gradle builds only as testJar.
+      - name: Build the java library and its test jar
+        run: |
+          make -C lib/java
+          gradle -p lib/java testJar -Prelease=true --console=plain
+
+      # Generates the test code, starts the test servers and drives the QUnit
+      # pages in headless Chrome.  The ant half of the check skips its own
+      # browser test when phantomjs is missing, so the grep is the guard:
+      # grunt reports the QUnit totals, and a run that executed no test at
+      # all would otherwise still exit 0.
+      - name: Run make check for js
+        shell: bash
+        run: |
+          set -o pipefail
+          make -C lib/js check 2>&1 | tee /tmp/lib-js-check.log
+          grep -aqE "[0-9]+ tests completed" /tmp/lib-js-check.log
+
+      - name: Upload log files from a failed run
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-js-check-log
+          path: /tmp/lib-js-check.log
+          retention-days: 3
+
+  lib-ts:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      # ant fetches the browser test libraries, and lib/Makefile.am builds
+      # lib/ts inside the WITH_JAVA block for exactly that reason.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS ant
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for ts
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/'))
+          echo "$summary"
+          # lib/ts has no --with-ts of its own; it is built inside the WITH_JAVA
+          # block, and its check-local is guarded by HAVE_NPM.  Insist on both,
+          # so that a missing prerequisite cannot turn this job into a green
+          # run that tests nothing.
+          echo "$summary" | grep -qE "Building Java Library [.]+ : yes"
+          command -v npm
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # Generates the test code, compiles test/*.ts, bundles it and drives the
+      # QUnit pages in headless Chrome.  The grep is the guard: grunt reports
+      # the QUnit totals, and a run that executed no test at all would
+      # otherwise still exit 0.
+      - name: Run make check for ts
+        shell: bash
+        run: |
+          set -o pipefail
+          make -C lib/ts check 2>&1 | tee /tmp/lib-ts-check.log
+          grep -qE "[0-9]+ tests completed" /tmp/lib-ts-check.log
+
+      - name: Upload log files from a failed run
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-ts-check-log
+          path: /tmp/lib-ts-check.log
+          retention-days: 3
+
   lib-dart:
     needs: compiler
     runs-on: ubuntu-24.04
@@ -1000,6 +1252,72 @@ jobs:
           name: lib-cpp-test-log
           path: lib/cpp/test/*.xml
           retention-days: 3
+
+  lib-c_glib:
+    needs: compiler
+    # Not ubuntu-24.04: with the GLib 2.80 there, testapplicationexception,
+    # testfdtransport and testthriftfdreadcheck stop on GLib criticals
+    # (THRIFT-5680). With the GLib 2.72 of ubuntu-22.04 they pass.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libglib2.0-dev zlib1g-dev
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for c_glib
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -e 's/without-c_glib/with-c_glib/' -e 's/without-cpp/with-cpp/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # GLib was actually found. The C++ library is needed as well: the C++
+          # interop tests in lib/c_glib/test link it, and configure looks for
+          # zlib, which the c_glib zlib transport links, only when C++ is
+          # enabled.
+          echo "$summary" | grep -qE "Building C [(]GLib[)] Library [.]+ : yes"
+          echo "$summary" | grep -qE "Building C[+][+] Library [.]+ : yes"
+          echo "$summary" | grep -qE "Build TZlibTransport [.]+ : yes"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler-ubuntu-22.04
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      # Only the two libraries the C++ interop tests link.
+      - name: Run make for cpp
+        run: make -j$(nproc) -C lib/cpp libthrift.la libthriftz.la
+
+      # Also generates the code lib/c_glib/test compiles, which the check-am
+      # below does not do by itself.
+      - name: Run make for c_glib
+        run: make -j$(nproc) -C lib/c_glib
+
+      # testthrifttest links test/c_glib's thrift_test_handler.o.
+      - name: Run make precross for c_glib test
+        run: make -j$(nproc) -C test/c_glib precross
+
+      # check-am, as plain check also enters lib/c_glib/test/fuzz, whose fuzz
+      # targets have no main() unless clang builds them.
+      - name: Run make check for c_glib
+        run: make -C lib/c_glib/test check-am
 
   lib-d:
     needs: compiler
@@ -1229,6 +1547,82 @@ jobs:
       # Generates the test sources with the compiler above, then rebar3 eunit.
       - name: Run make check for erlang
         run: make -C lib/erl check
+
+  lib-lua:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        # The floor configure.ac requires, and the version
+        # build/docker/ubuntu-{jammy,noble}/Dockerfile install. Keep
+        # LANGUAGES.md in step.
+        lua-version: ["5.3", "5.4"]
+      fail-fast: false
+    env:
+      # Not LUA_VERSION, which configure sets itself from the interpreter it finds.
+      MATRIX_LUA_VERSION: ${{ matrix.lua-version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS "lua$MATRIX_LUA_VERSION" "liblua$MATRIX_LUA_VERSION-dev"
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for lua
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-lua/with-lua/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # Lua was actually found, and that it is the version this leg is for.
+          echo "$summary" | grep -qE "Building Lua Library [.]+ : yes"
+          echo "$summary" | grep -E "Using Lua version" | grep -qF "Lua $MATRIX_LUA_VERSION."
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for lua
+        run: make -C lib/lua
+
+      # Generates the types test_recursion_depth.lua needs, then runs the
+      # scripts in lib/lua/test. Those preload pure-Lua stand-ins for the C
+      # modules, so it is the cross test below that loads the ones built above.
+      - name: Run make check for lua
+        run: make -C lib/lua check
+
+      - name: Run make precross for lua
+        run: make -C test/lua precross
+
+      # The Lua client against the Lua server, over each transport and protocol
+      # test/tests.json lists for Lua.
+      - name: Run cross test for lua
+        run: python3 test/test.py --server lua --client lua
+
+      - name: Upload log files from failed cross test runs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: lib-lua-cross-test-log_${{ matrix.lua-version }}
+          path: test/log/
+          retention-days: 3
 
   cross-test:
     needs:

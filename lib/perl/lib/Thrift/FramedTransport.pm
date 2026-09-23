@@ -57,6 +57,7 @@ sub new
         maxFrameSize => $maxFrameSize,
         wBuf         => '',
         rBuf         => '',
+        rPos         => 0,
     };
 
     return bless($self,$classname);
@@ -104,17 +105,16 @@ sub read
         $self->_readFrame();
     }
 
+    # Serve the read from the current position in the frame
+    my $out = substr($self->{rBuf}, $self->{rPos}, $len);
+    $self->{rPos} += length($out);
 
-    # Just return full buff
-    if ($len > length($self->{rBuf})) {
-        my $out = $self->{rBuf};
+    # Release the frame once it has been read
+    if ($self->{rPos} >= length($self->{rBuf})) {
         $self->{rBuf} = '';
-        return $out;
+        $self->{rPos} = 0;
     }
 
-    # Return substr
-    my $out = substr($self->{rBuf}, 0, $len);
-    $self->{rBuf} = substr($self->{rBuf}, $len);
     return $out;
 }
 
@@ -139,6 +139,7 @@ sub _readFrame
     }
 
     $self->{rBuf} = $self->{transport}->readAll($sz);
+    $self->{rPos} = 0;
 }
 
 #

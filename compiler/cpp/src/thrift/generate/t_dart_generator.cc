@@ -148,7 +148,6 @@ public:
   void generate_dart_struct_result_writer(std::ostream& out, t_struct* tstruct);
   void generate_dart_struct_writer(std::ostream& out, t_struct* tstruct);
   void generate_dart_struct_tostring(std::ostream& out, t_struct* tstruct);
-  std::string get_dart_type_string(t_type* type);
   void generate_generic_field_getters(std::ostream& out, t_struct* tstruct);
   void generate_generic_field_setters(std::ostream& out, t_struct* tstruct);
   void generate_generic_isset_method(std::ostream& out, t_struct* tstruct);
@@ -1354,61 +1353,6 @@ void t_dart_generator::generate_dart_struct_tostring(ostream& out,
   indent(out) << "return ret.toString();" << '\n';
 
   scope_down(out, "\n\n");
-}
-
-/**
- * Returns a string with the dart representation of the given thrift type
- * (e.g. for the type struct it returns "TType.STRUCT")
- */
-std::string t_dart_generator::get_dart_type_string(t_type* type) {
-  if (type->is_list()) {
-    return "TType.LIST";
-  } else if (type->is_map()) {
-    return "TType.MAP";
-  } else if (type->is_set()) {
-    return "TType.SET";
-  } else if (type->is_struct() || type->is_xception()) {
-    return "TType.STRUCT";
-  } else if (type->is_enum()) {
-    return "TType.I32";
-  } else if (type->is_typedef()) {
-    return get_dart_type_string(((t_typedef*)type)->get_type());
-  } else if (type->is_base_type()) {
-    switch (((t_base_type*)type)->get_base()) {
-    case t_base_type::TYPE_VOID:
-      return "TType.VOID";
-      break;
-    case t_base_type::TYPE_STRING:
-      return "TType.STRING";
-      break;
-    case t_base_type::TYPE_BOOL:
-      return "TType.BOOL";
-      break;
-    case t_base_type::TYPE_I8:
-      return "TType.BYTE";
-      break;
-    case t_base_type::TYPE_I16:
-      return "TType.I16";
-      break;
-    case t_base_type::TYPE_I32:
-      return "TType.I32";
-      break;
-    case t_base_type::TYPE_I64:
-      return "TType.I64";
-      break;
-    case t_base_type::TYPE_DOUBLE:
-      return "TType.DOUBLE";
-      break;
-    default:
-      throw std::runtime_error("Unknown thrift type \"" + type->get_name()
-                               + "\" passed to t_dart_generator::get_dart_type_string!");
-      break; // This should never happen!
-    }
-  } else {
-    throw std::runtime_error(
-        "Unknown thrift type \"" + type->get_name()
-        + "\" passed to t_dart_generator::get_dart_type_string!"); // This should never happen!
-  }
 }
 
 void t_dart_generator::generate_service(t_service* tservice) {

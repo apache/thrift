@@ -44,6 +44,53 @@ def generate_random_buff():
     return new_data
 
 
+class ChunkedTransport(TTransport.TTransportBase):
+    """Keeps every write as a chunk of its own and hands the chunks back one
+    read at a time, the way a socket returns what the peer has sent so far.
+    """
+
+    def __init__(self, chunks=()):
+        self.chunks = list(chunks)
+
+    def isOpen(self):
+        return True
+
+    def write(self, buf):
+        self.chunks.append(bytes(buf))
+
+    def flush(self):
+        pass
+
+    def read(self, sz):
+        if not self.chunks:
+            raise TTransportException(TTransportException.END_OF_FILE, "no more chunks")
+        chunk = self.chunks.pop(0)
+        if len(chunk) > sz:
+            self.chunks.insert(0, chunk[sz:])
+            chunk = chunk[:sz]
+        return chunk
+
+
+def zlib_chunks(*payloads):
+    """Compress the payloads with one TZlibTransport, flushing after each."""
+    trans = ChunkedTransport()
+    writer = TZlibTransport.TZlibTransport(trans)
+    for payload in payloads:
+        writer.write(payload)
+        writer.flush()
+    return trans.chunks
+
+
+def read_outcome(trans, sz):
+    """Return the number of bytes a read gives, or the error it raises."""
+    try:
+        return len(trans.read(sz))
+    except TTransportException as e:
+        return ('TTransportException', e.type)
+    except Exception as e:
+        return (type(e).__name__, str(e))
+
+
 class TestTZlibTransport(unittest.TestCase):
 
     def test_write_then_read(self):
@@ -127,6 +174,44 @@ class TestTZlibTransport(unittest.TestCase):
         )
         result = reader.read(len(data))
         self.assertEqual(result, data)
+
+    def test_whole_decompressed_size_limit_can_be_read_in_parts(self):
+        limit = 4096
+        parts = [b'a' * 1000, b'b' * 1000, b'c' * 2096]
+        reader = TZlibTransport.TZlibTransport(
+            ChunkedTransport(zlib_chunks(*parts)),
+            max_decompressed_size=limit,
+        )
+        for part in parts:
+            self.assertEqual(reader.readAll(len(part)), part)
+        self.assertEqual(reader._bytes_decompressed, limit)
+
+    def test_no_data_is_read_once_the_decompressed_size_limit_is_used_up(self):
+        limit = 4096
+        more = b'\0' * (1024 * 1024)
+        reader = TZlibTransport.TZlibTransport(
+            ChunkedTransport(zlib_chunks(b'x' * limit, more, b'y' * 16)),
+            max_decompressed_size=limit,
+        )
+        self.assertEqual(len(reader.readAll(limit)), limit)
+        self.assertEqual(reader._bytes_decompressed, limit)
+
+        size_limit = ('TTransportException', TTransportException.SIZE_LIMIT)
+        outcomes = [read_outcome(reader, len(more)), read_outcome(reader, 16)]
+        self.assertEqual(outcomes, [size_limit, size_limit])
+        self.assertEqual(reader._bytes_decompressed, limit)
+
+    def test_max_decompressed_size_is_validated(self):
+        for size in (0, -1):
+            with self.assertRaises(ValueError):
+                TZlibTransport.TZlibTransport(
+                    TTransport.TMemoryBuffer(), max_decompressed_size=size)
+            with self.assertRaises(ValueError):
+                TZlibTransport.TZlibTransportFactory().getTransport(
+                    TTransport.TMemoryBuffer(), max_decompressed_size=size)
+        # the limit covers a whole session, so it may be larger than any one frame
+        for size in (1, 1 << 40):
+            TZlibTransport.TZlibTransport(TTransport.TMemoryBuffer(), max_decompressed_size=size)
 
 
 if __name__ == '__main__':

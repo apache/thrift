@@ -257,7 +257,7 @@ impl TIoChannel for UnixStream {
     where
         Self: Sized,
     {
-        let socket_rx = self.try_clone().unwrap();
+        let socket_rx = self.try_clone()?;
 
         Ok((ReadHalf::new(self), WriteHalf::new(socket_rx)))
     }
@@ -419,10 +419,16 @@ mod tests {
     }
 
     /// Regression: after split() one half must not clobber the other's timeout.
+    ///
+    /// The timeouts are multiples of 20 ms on purpose. Linux keeps socket
+    /// timeouts in jiffies and rounds up, so a value that is not a whole
+    /// number of jiffies reads back larger than it was set: 250 ms becomes
+    /// 252 ms where CONFIG_HZ is 250. A multiple of 20 ms is exact for HZ
+    /// 100, 250 and 1000 alike.
     #[test]
     fn split_halves_must_not_clobber_each_others_timeout() {
         let initial = Some(Duration::from_millis(80));
-        let updated = Some(Duration::from_millis(250));
+        let updated = Some(Duration::from_millis(240));
         let updated_write = Some(Duration::from_millis(500));
         let (mut channel, _server) = wrapped_channel();
 

@@ -358,6 +358,8 @@ thrift_socket_finalize (GObject *object)
     close (socket->sd);
   }
   socket->sd = THRIFT_INVALID_SOCKET;
+
+  G_OBJECT_CLASS (thrift_socket_parent_class)->finalize (object);
 }
 
 /* property accessor */

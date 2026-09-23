@@ -219,7 +219,7 @@ readBool
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/25/2007 00:02'!
 readByte
-	^ (self transport read: 1) first! !
+	^ (self transport readAll: 1) first! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/28/2007 16:24'!
 readDouble
@@ -253,7 +253,7 @@ readI64
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 02:35'!
 readInt: size
 	| buf val |
-	buf := transport read: size.
+	buf := transport readAll: size.
 	val := self intFromByteArray: buf.
 	^ buf first > 16r7F
 		ifTrue: [self unsignedInt: val size: size]
@@ -296,7 +296,7 @@ readMessageBegin
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/28/2007 16:24'!
 readRawInt: size
-	^ self intFromByteArray: (transport read: size)! !
+	^ self intFromByteArray: (transport readAll: size)! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 00:59'!
 readSetBegin
@@ -314,7 +314,7 @@ readString
 	sz := self readI32.
 	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
 	self checkStringSize: sz.
-	^ sz > 0 ifTrue: [(transport read: sz) asString] ifFalse: ['']! !
+	^ sz > 0 ifTrue: [(transport readAll: sz) asString] ifFalse: ['']! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 04:22'!
 unsignedInt: val size: size
@@ -787,9 +787,36 @@ read: anInteger
 
 !TTransport methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 17:22'!
 readAll: anInteger
-	^ String streamContents: [:str |
-		[str size < anInteger] whileTrue:
-			[str nextPutAll: (self read: anInteger - str size)]]! !
+	"Read exactly anInteger bytes, looping until they have all arrived.
+
+	 A read: that answers nothing has to end the loop: asking the same source
+	 again for the same bytes cannot answer differently, so without this the
+	 loop never terminates.
+
+	 The result has the species of what read: answered. TSocket connects its
+	 stream 'binary', so a real transport answers a ByteArray, and the protocol
+	 decodes it by shifting the elements as integers. Accumulating into a String
+	 instead - as this used to - raises 'Improper store into indexable object'
+	 the first time it meets one."
+	| chunks chunk got out pos take |
+	chunks := OrderedCollection new.
+	got := 0.
+	[got < anInteger] whileTrue:
+		[chunk := self read: anInteger - got.
+		 chunk isEmpty ifTrue:
+			[TTransportError signal: 'Could not read ', anInteger asString, ' bytes'].
+		 chunks add: chunk.
+		 got := got + chunk size].
+	chunks isEmpty ifTrue: [^ String new].
+
+	out := chunks first species new: anInteger.
+	pos := 1.
+	chunks do: [:each |
+		take := each size min: anInteger - pos + 1.
+		take > 0 ifTrue:
+			[out replaceFrom: pos to: pos + take - 1 with: each startingAt: 1.
+			 pos := pos + take]].
+	^ out! !
 
 !TTransport methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 17:22'!
 write: aString

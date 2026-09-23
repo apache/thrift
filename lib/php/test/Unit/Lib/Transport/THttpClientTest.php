@@ -26,14 +26,13 @@ namespace Test\Thrift\Unit\Lib\Transport;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\THttpClient;
 
 class THttpClientTest extends TestCase
 {
     use PHPMock;
-    use ReflectionHelper;
 
     public function testSetTimeoutSecs()
     {
@@ -41,7 +40,7 @@ class THttpClientTest extends TestCase
         $transport = new THttpClient($host);
         $transport->setTimeoutSecs(1000);
 
-        $this->assertEquals(1000, $this->getPropertyValue($transport, 'timeout'));
+        $this->assertEquals(1000, (new ReflectionProperty($transport, 'timeout'))->getValue($transport));
     }
 
     public function testIsOpen()
@@ -69,10 +68,10 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'handle', $handle);
+        (new ReflectionProperty($transport, 'handle'))->setValue($transport, $handle);
 
         $this->assertNull($transport->close());
-        $this->assertNull($this->getPropertyValue($transport, 'handle'));
+        $this->assertNull((new ReflectionProperty($transport, 'handle'))->getValue($transport));
     }
 
     #[DataProvider('readDataProvider')]
@@ -105,7 +104,7 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'handle', $handle);
+        (new ReflectionProperty($transport, 'handle'))->setValue($transport, $handle);
 
         $this->assertEquals($expectedResult, $transport->read($readLen));
     }
@@ -152,7 +151,7 @@ class THttpClientTest extends TestCase
 
         $transport->write('1234567890');
 
-        $this->assertEquals('1234567890', $this->getPropertyValue($transport, 'buf'));
+        $this->assertEquals('1234567890', (new ReflectionProperty($transport, 'buf'))->getValue($transport));
     }
 
     #[DataProvider('flushDataProvider')]
@@ -309,9 +308,12 @@ class THttpClientTest extends TestCase
         $host = 'localhost';
         $transport = new THttpClient($host);
 
-        $this->setPropertyValue($transport, 'headers', ['test' => '1234567890']);
+        (new ReflectionProperty($transport, 'headers'))->setValue($transport, ['test' => '1234567890']);
 
         $transport->addHeaders(['test2' => '12345']);
-        $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $this->getPropertyValue($transport, 'headers'));
+        $this->assertEquals(
+            ['test' => '1234567890', 'test2' => '12345'],
+            (new ReflectionProperty($transport, 'headers'))->getValue($transport)
+        );
     }
 }

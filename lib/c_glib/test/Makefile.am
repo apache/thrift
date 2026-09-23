@@ -27,6 +27,7 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_empty_service.h \
         gen-c_glib/t_test_inherited.h \
         gen-c_glib/t_test_optional_required_test_types.h \
+        gen-c_glib/t_test_recursion_limit_test_types.h \
         gen-c_glib/t_test_reverse_order_service.h \
         gen-c_glib/t_test_second_service.h \
         gen-c_glib/t_test_service_for_exception_with_a_map.h \
@@ -65,6 +66,8 @@ check_PROGRAMS = \
   testdispatchprocessor \
   testdebugproto \
   testoptionalrequired \
+  testrecursionlimit \
+  testfinalize \
   testthrifttest \
   testthriftbinaryreadcheck \
   testthriftcompactreadcheck \
@@ -181,6 +184,7 @@ testframedreadbudget_LDADD = \
 testzlibtransport_SOURCES = testzlibtransport.c
 testzlibtransport_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_memory_buffer.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
@@ -271,6 +275,22 @@ testoptionalrequired_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o \
     libtestgenc.la
 
+testrecursionlimit_SOURCES = testrecursionlimit.c
+testrecursionlimit_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_binary_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_protocol_decorator.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/protocol/libthrift_c_glib_la-thrift_stored_message_protocol.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_memory_buffer.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_struct.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o \
+    libtestgenc.la
+
+testfinalize_SOURCES = testfinalize.c
+testfinalize_LDADD = libtestgenc.la
+
 testthrifttest_SOURCES = testthrifttest.c
 testthrifttest_LDADD = libtestgenc.la \
     $(top_builddir)/test/c_glib/src/thrift_test_handler.o
@@ -348,6 +368,7 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_empty_service.c \
         gen-c_glib/t_test_inherited.c \
         gen-c_glib/t_test_optional_required_test_types.c \
+        gen-c_glib/t_test_recursion_limit_test_types.c \
         gen-c_glib/t_test_reverse_order_service.c \
         gen-c_glib/t_test_second_service.c \
         gen-c_glib/t_test_service_for_exception_with_a_map.c \
@@ -362,6 +383,7 @@ nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_empty_service.h \
         gen-c_glib/t_test_inherited.h \
         gen-c_glib/t_test_optional_required_test_types.h \
+        gen-c_glib/t_test_recursion_limit_test_types.h \
         gen-c_glib/t_test_reverse_order_service.h \
         gen-c_glib/t_test_second_service.h \
         gen-c_glib/t_test_service_for_exception_with_a_map.h \
@@ -391,6 +413,9 @@ gen-c_glib/t_test_enum_test_types.c gen-c_glib/t_test_enum_test_types.h gen-c_gl
 	$(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_optional_required_test_types.c gen-c_glib/t_test_optional_required_test_types.h: ../../../test/OptionalRequiredTest.thrift $(THRIFT)
+	$(THRIFT) --gen c_glib $<
+
+gen-c_glib/t_test_recursion_limit_test_types.c gen-c_glib/t_test_recursion_limit_test_types.h: RecursionLimitTest.thrift $(THRIFT)
 	$(THRIFT) --gen c_glib $<
 
 gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_test_thrift_test_types.c gen-c_glib/t_test_second_service.h gen-c_glib/t_test_thrift_test.h gen-c_glib/t_test_thrift_test_types.h: ../../../test/v0.16/ThriftTest.thrift $(THRIFT)
@@ -467,5 +492,6 @@ distdir:
 
 EXTRA_DIST = \
              CMakeLists.txt \
-             ContainerTest.thrift
+             ContainerTest.thrift \
+             RecursionLimitTest.thrift
 

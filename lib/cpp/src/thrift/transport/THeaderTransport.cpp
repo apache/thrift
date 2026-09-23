@@ -328,6 +328,9 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
       stream.avail_out = tBufSize_;
       err = inflate(&stream, Z_FINISH);
       if (err != Z_STREAM_END || stream.avail_out == 0) {
+        // Release the stream before leaving through the error path; inflateInit
+        // has already acquired it, and the throw would otherwise skip cleanup.
+        inflateEnd(&stream);
         throw TApplicationException(TApplicationException::MISSING_RESULT,
                                     "Error while zlib deflate");
       }
@@ -335,8 +338,10 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
 
       // Apply the configured frame-size limit to the post-transform payload as
       // well: the decompressed data is what the caller ultimately reads, so it
-      // is bounded the same way an untransformed frame is in readFrame().
+      // is bounded the same way an untransformed frame is in readFrame(). Release
+      // the stream before this throw too, keeping the original check order.
       if (sz > maxFrameSize_) {
+        inflateEnd(&stream);
         throw TTransportException(TTransportException::CORRUPTED_DATA,
                                   "Received an oversized frame after transform");
       }
@@ -406,8 +411,18 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
       // down in tBuf_, and compress in a single pass.
       uLong needed = deflateBound(&stream, sz) + DEFAULT_BUFFER_SIZE;
       if (needed > tBufSize_) {
-        tBuf_.reset(new uint8_t[needed]);
-        tBufSize_ = safe_numeric_cast<uint32_t>(needed);
+        // Sizing this buffer can throw (allocation failure, or the numeric cast
+        // for an unrepresentable size); release the stream first so those paths
+        // do not leak it. reset() is noexcept and the assignment cannot throw,
+        // so both fields are set together once the size and allocation succeed.
+        try {
+          uint32_t newSize = safe_numeric_cast<uint32_t>(needed);
+          tBuf_.reset(new uint8_t[newSize]);
+          tBufSize_ = newSize;
+        } catch (...) {
+          deflateEnd(&stream);
+          throw;
+        }
       }
       stream.next_out = tBuf_.get();
       stream.avail_out = tBufSize_;
@@ -657,13 +672,18 @@ uint32_t THeaderTransport::writeVarint32(int32_t n, uint8_t* pkt) {
   uint8_t buf[5];
   uint32_t wsize = 0;
 
+  // Encode over an unsigned copy so the shift is logical, not arithmetic: a
+  // negative value would otherwise keep its sign bit set on every >> and the
+  // loop would never satisfy the (val & ~0x7F) == 0 exit condition, writing
+  // past buf. The low 32 bits always fit in the five bytes buf holds.
+  uint32_t val = static_cast<uint32_t>(n);
   while (true) {
-    if ((n & ~0x7F) == 0) {
-      buf[wsize++] = (int8_t)n;
+    if ((val & ~0x7Fu) == 0) {
+      buf[wsize++] = static_cast<uint8_t>(val);
       break;
     } else {
-      buf[wsize++] = (int8_t)((n & 0x7F) | 0x80);
-      n >>= 7;
+      buf[wsize++] = static_cast<uint8_t>((val & 0x7F) | 0x80);
+      val >>= 7;
     }
   }
 

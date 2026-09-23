@@ -20,7 +20,9 @@
 import unittest
 
 import _import_local_thrift  # noqa
-from thrift.protocol.TJSONProtocol import TJSONProtocol, TJSONProtocolFactory
+from thrift.protocol.TJSONProtocol import (TJSONProtocol, TJSONProtocolFactory,
+                                           TSimpleJSONProtocol)
+from thrift.protocol.TProtocol import DEFAULT_STRING_LENGTH_LIMIT
 from thrift.transport import TTransport
 
 #
@@ -144,11 +146,40 @@ class TestJSONStringSizeLimit(unittest.TestCase):
             proto.readI64()
         self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
 
-    def test_default_has_no_string_limit(self):
-        # Parity with binary/compact: the limit is opt-in. With no limit set the
-        # same large string is read successfully, confirming the rejections above
-        # are the configured limit firing, not malformed input.
-        proto = self._protocol(b'"' + b'A' * 4096 + b'"')
+    def test_the_default_is_the_shared_limit(self):
+        # Parity with binary/compact, which default to DEFAULT_STRING_LENGTH_LIMIT.
+        # A JSON value is delimited rather than length-prefixed, so the peer sets
+        # its size by how much it sends; with no bound in force the method name of
+        # every message is unbounded. The protocol, its factory and the write-only
+        # simple variant all take the shared default.
+        buf = TTransport.TMemoryBuffer(b'')
+        self.assertEqual(TJSONProtocol(buf).string_length_limit,
+                         DEFAULT_STRING_LENGTH_LIMIT)
+        self.assertEqual(TJSONProtocolFactory().string_length_limit,
+                         DEFAULT_STRING_LENGTH_LIMIT)
+        self.assertEqual(TJSONProtocolFactory().getProtocol(buf).string_length_limit,
+                         DEFAULT_STRING_LENGTH_LIMIT)
+        self.assertEqual(TSimpleJSONProtocol(buf).string_length_limit,
+                         DEFAULT_STRING_LENGTH_LIMIT)
+
+    def test_the_default_limit_is_the_boundary(self):
+        # The default is only worth anything if the check it feeds actually
+        # rejects at it. Exercised through the primitive the read loops call,
+        # because reaching it through readString() would mean pushing 16 MB
+        # through a byte-at-a-time decoder.
+        proto = self._protocol(b'')
+        proto._check_string_length(DEFAULT_STRING_LENGTH_LIMIT)
+        with self.assertRaises(TTransport.TTransportException) as ctx:
+            proto._check_string_length(DEFAULT_STRING_LENGTH_LIMIT + 1)
+        self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
+
+    def test_none_still_means_no_limit(self):
+        # The unbounded read stays available, now as an explicit opt-out rather
+        # than as what a caller gets by saying nothing.
+        proto = self._protocol(b'"' + b'A' * 4096 + b'"', string_length_limit=None)
+        self.assertEqual(proto.readString(), 'A' * 4096)
+        proto = TJSONProtocolFactory(string_length_limit=None).getProtocol(
+            TTransport.TMemoryBuffer(b'"' + b'A' * 4096 + b'"'))
         self.assertEqual(proto.readString(), 'A' * 4096)
 
     def test_limit_enforced_via_factory(self):

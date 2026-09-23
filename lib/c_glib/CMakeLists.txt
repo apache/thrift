@@ -18,7 +18,7 @@
 #
 
 # Find required packages
-find_package(GLIB REQUIRED COMPONENTS gobject)
+find_package(GLIB ${GLIB_MINREV} REQUIRED COMPONENTS gobject)
 include_directories(${GLIB_INCLUDE_DIRS})
 
 include_directories(src)

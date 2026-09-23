@@ -24,15 +24,13 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Factory;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Unit\Lib\ReflectionHelper;
+use ReflectionProperty;
 use Thrift\Factory\TJSONProtocolFactory;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TTransport;
 
 class TJSONProtocolFactoryTest extends TestCase
 {
-    use ReflectionHelper;
-
     /**
      * @return void
      */
@@ -44,6 +42,6 @@ class TJSONProtocolFactoryTest extends TestCase
 
         $this->assertInstanceOf(TJSONProtocol::class, $protocol);
 
-        $this->assertSame($transport, $this->getPropertyValue($protocol, 'trans'));
+        $this->assertSame($transport, (new ReflectionProperty($protocol, 'trans'))->getValue($protocol));
     }
 }

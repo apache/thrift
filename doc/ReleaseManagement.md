@@ -138,7 +138,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     1. Create a level 3 section in `CHANGES.md` under the release for each component and copy the items from the RelNote column into the changes file.
 
-    1. Find all [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) and add them to `CHANGES.md` in the list of known critical issues for the release.
+    1. Find all [Open Critical Issues](https://issues.apache.org/jira/issues/?filter=-1&jql=project%20%3D%20THRIFT%20and%20priority%20in%20(critical)%20and%20status%20not%20in%20(closed,resolved)%20and%20type%20not%20in%20(%22wish%22)%20order%20by%20component%20ASC) and add them to `CHANGES.md` in the list of known critical issues for the release.
 
 1. Commit all changes to the release branch.
 
@@ -189,15 +189,39 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         1. Install chocolatey and install winflexbison with chocolatey.
         1. Run cmake to generate an out-of-tree build environment:
             ```cmd
-            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
+            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
             C:\build> cmake --build . --config Release
             ```
 
-    - Using [Docker for Windows](../build/docker/msvc2017/README.md), follow the instructions for building the compiler.
+    - Using [Docker for Windows](../build/docker/msvc/README.md), follow the instructions for building the compiler.
     - In both cases:
-        1. Verify the executable only depends on kernel32.dll using [depends.exe](http://www.dependencywalker.com/).
+        1. Verify that the executable depends only on Windows system DLLs and on the Visual
+            C++ runtime, and on nothing else - no Boost, OpenSSL, zlib or libevent:
+            ```powershell
+            PS C:\thrift> .\build\windows\check-compiler-imports.ps1 -Path C:\install\bin\thrift.exe
+            ```
+            The same check runs on every push in the `compiler-windows` job of
+            [`.github/workflows/cmake.yml`](../.github/workflows/cmake.yml).
+
+            Do **not** build a statically linked compiler to make that list shorter.  The
+            project moved away from one deliberately, and the released compiler is expected
+            to require the Visual C++ redistributable; the check fails if it does not.
         1. Copy the executable `thrift.exe` to your linux system where the signed tarball lives and rename it to `thrift-1.0.0.exe` (substitute the correct version, of course).
         1. Sign the executable the same way you signed the tarball.
+        1. Build the Windows installer from the very same executable:
+            ```powershell
+            PS C:\thrift> .\build\windows\build-installer.ps1 -Version 1.0.0 -Compiler C:\install\bin\thrift.exe -OutputDir dist
+            ```
+            This needs [Inno Setup](https://jrsoftware.org/isdl.php) 6.3 or later.  The result is
+            `dist\thrift-1.0.0-setup.exe`.
+
+            Rather than installing Inno Setup, you can run the
+            [`Windows packages`](../.github/workflows/windows-packages.yml) workflow against the
+            release branch from the Actions tab and download its `windows-installer` artifact.  The
+            workflow builds the compiler the same way and also installs and uninstalls the result to
+            check it.
+        1. Copy the installer to your linux system and sign and checksum it the same way you signed
+            the tarball and the executable.
 
 1. Upload the release artifacts to the Apache Dist/Dev site.  This requires subversion:
 
@@ -261,6 +285,18 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe.asc
 
     Prebuilt Windows compiler checksums are:
+    md5: 
+    sha1: 
+    sha256: 
+
+
+    A Windows installer for the compiler is available at:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0-setup.exe
+
+    Windows installer GPG signature:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0-setup.exe.asc
+
+    Windows installer checksums are:
     md5: 
     sha1: 
     sha256: 
@@ -348,7 +384,9 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).
 
-    Attach the Windows thrift compiler as a binary here.
+    Attach the Windows thrift compiler and the Windows installer as binaries here.  Use the very
+    files that were voted on and are now under `dist/release`, not a fresh build, so that the
+    signatures on `dist.apache.org` cover what people download from GitHub.
 
     You may find it useful to use the button that automates release notes.
 
@@ -387,6 +425,45 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 1. Make an announcement on the dev@ and user@ mailing lists of the release.  There's no template to follow, but you can point folks to the official web site at https://thrift.apache.org, and to the GitHub site at https://github.org/apache.thrift.
 
+### Release Automation Credentials
+
+Six workflows publish something when a GitHub release is published.  What each
+of them needs is described where that package is described, further down; this
+is the list, so that it can be checked before a release rather than discovered
+during one.
+
+Most of it needs no stored credential.  PyPI, RubyGems, crates.io and NuGet are
+all published over **trusted publishing**: the workflow exchanges the run's OIDC
+token for a short-lived key, so nothing is kept in the repository.  What has to
+exist is a policy on the receiving side naming this repository, the workflow
+file and the `release` environment.
+
+| Needed | Kind | Used by | Without it |
+|---|---|---|---|
+| PyPI trusted publisher for `.github/workflows/pypi.yml` | policy on pypi.org | `pypi.yml` | the publish step fails |
+| crates.io trusted publisher for `.github/workflows/release_rust.yml` | policy on crates.io | `release_rust.yml` | the publish step fails |
+| RubyGems trusted publisher for `.github/workflows/release_ruby.yml` | policy on rubygems.org | `release_ruby.yml` | the publish step fails |
+| NuGet trusted publisher for `.github/workflows/dotnet-tool.yml` | policy on nuget.org | `dotnet-tool.yml` | the publish step fails |
+| `NUGET_USER` | repository **variable** | `dotnet-tool.yml` | the publish step fails |
+| `WINGET_TOKEN` | repository **secret** | `winget.yml` | nothing is submitted; see below |
+| `CHOCO_API_KEY` | repository **secret** | `chocolatey.yml` | nothing is pushed; see below |
+
+All of them are scoped to the `release` [environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+`GITHUB_TOKEN` is provided by Actions itself and needs no setup.
+
+Two notes that are easy to get wrong:
+
+* **`WINGET_TOKEN` has to be a _classic_ personal access token** with the
+  `public_repo` scope.  Fine-grained tokens are not supported by `wingetcreate`.
+* **A green run does not prove anything was published.**  The WinGet and
+  Chocolatey steps deliberately do *not* fail when their secret is missing: they
+  build and upload the artifact, emit a warning, and print in the run summary how
+  to publish by hand.  That keeps a missing secret from failing a release, but it
+  means the run summary is what to read, not the tick.
+
+`CHOCO_API_KEY` is expected to be missing for now - see
+[Chocolatey](#chocolatey) below, the package id has not been handed over yet.
+
 ### Post-Release
 
 1. Visit https://reporter.apache.org/addrelease.html?thrift and register it.  You will get an automated reminder as the one who committed into dist.  This informs the Apache Board of Directors of releases through project reports.
@@ -410,6 +487,93 @@ Voting on the development mailing list provides additional benefits (wisdom from
   
 * [Report any CVEs](https://apache.org/security/committers.html) that were fixed.  You can email `security@apache.org` if you are not sure if there are any CVEs to report.
 
+#### Windows Packages
+
+The Windows installer is a release artifact like the tarball and the prebuilt
+compiler: it is built, signed and voted on before the release, and distributed
+from `dist.apache.org`.  The file the vote covers has to carry a release
+manager's signature, so it cannot be produced by a workflow at release time.
+
+What *is* automated is building and testing it.  The
+[`Windows packages`](../.github/workflows/windows-packages.yml) workflow builds
+the compiler on a Windows runner the way a release build does, checks what the
+executable imports, packages it with Inno Setup, and then installs and
+uninstalls the result to check that the compiler runs, that the install
+directory lands on `PATH`, and that uninstalling takes that one `PATH` entry
+away and leaves the others alone.  It runs on every pull request that touches
+the packaging, and on demand from the Actions tab - which is how you get the
+artifact to sign while preparing the release candidate, described above under
+*Generate the Windows Thrift Compiler*.
+
+When the GitHub release is published, the same workflow attaches an installer to
+it as an unsigned convenience copy, so that the download link is there
+immediately.  **One thing is left to do after the release:** overwrite that asset
+with the signed file from `dist/release`, so that what people download from
+GitHub is what the signatures on `dist.apache.org` cover.
+
+```bash
+~$ gh release upload v1.0.0 thrift-1.0.0-setup.exe --clobber --repo apache/thrift
+```
+
+##### Chocolatey
+
+The [`Chocolatey`](../.github/workflows/chocolatey.yml) workflow builds the
+[Chocolatey](https://chocolatey.org/) package, so that the compiler can be
+installed with `choco install thrift`.
+
+The package does not carry the compiler.  It downloads the installer from
+`archive.apache.org` and records its checksum, so it can only be built once the
+archive has the release - `downloads.apache.org` only carries the current
+release, and a package naming it would stop installing at the next one.  If the
+release run was too early, run it again from the Actions tab once the archive
+has the file.
+
+**Nothing is pushed yet.**  The `thrift` id on the Chocolatey community
+repository belongs to a third-party package that last shipped 0.12.0 in February
+2019, maintained by `chaliy` and `Lite` from
+<https://github.com/Litee/chocolatey-packages>.  Before Apache Thrift can publish
+under that id, a maintainer takeover has to be requested from Chocolatey under
+their process for abandoned packages:
+
+1. Contact the current maintainers through their Chocolatey profile page and
+   allow the response time Chocolatey's policy requires.
+1. If there is no response, open a maintainer takeover request with Chocolatey.
+1. Once the id has been handed over, add the API key of the account that owns it
+   as a secret named `CHOCO_API_KEY` in the `release` environment.
+
+Until then the workflow builds and checks the package, attaches it to the run as
+an artifact, and says in its summary that it did not push.  If the takeover is
+refused, the free ids `apache-thrift` and `thrift-compiler` are the fallback;
+changing the id means editing `build/windows/chocolatey/thrift.nuspec.in` and
+the package name the build script expects.
+
+##### WinGet
+
+The [`WinGet`](../.github/workflows/winget.yml) workflow submits the installer to
+the [Windows Package Manager](https://github.com/microsoft/winget-pkgs) as
+`Apache.Thrift`, so that it can be installed with `winget install Apache.Thrift`.
+
+It runs when the release is published, but it can only succeed once the release
+has been promoted to `dist.apache.org` **and** `archive.apache.org` has picked it
+up - the manifest points at the archive, because `downloads.apache.org` only
+carries the current release and a manifest naming it would stop working at the
+next one.  This is the same wait the Docker Official Image update has.
+
+So expect to run it again, from the Actions tab, a while after the release:
+
+1. Actions → `WinGet` → *Run workflow*, entering the released version.
+1. The workflow renders the manifests, downloads the published installer to
+   compute its checksum, validates the manifests against the WinGet schemas, and
+   opens a pull request against `microsoft/winget-pkgs`.
+1. Watch that pull request.  Submissions are reviewed, and validation failures
+   are reported there.
+
+For the submission step the `release` environment needs a secret named
+`WINGET_TOKEN`: a **classic** GitHub personal access token with the `public_repo`
+scope.  Fine-grained tokens are not supported by `wingetcreate`.  Without it the
+workflow still renders and validates the manifests and leaves them as an
+artifact, and says in its summary how to submit them by hand.
+
 #### Third Party Package Managers
 
 See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  The information below is from the 0.12.0 release:
@@ -424,6 +588,19 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   should pick up the release based on the tag.  No action is needed.
 * [npmjs] @jfarrell is the only one who can do this right now.
     https://issues.apache.org/jira/browse/THRIFT-4688
+* [nuget] The `.NET tool` GitHub Actions workflow publishes
+  [`Apache.Thrift.Compiler`](https://www.nuget.org/packages/Apache.Thrift.Compiler/) when the
+  GitHub release is published.  This is the Windows compiler packaged as a .NET tool, so that it
+  can be installed with `dotnet tool install --global Apache.Thrift.Compiler`.  It is not the
+  `ApacheThrift` runtime library, which is still published by hand following the instructions in
+  `ApacheThrift.nuspec`.
+  * Before publishing, verify that nuget.org has a trusted publishing policy for the
+    `apache/thrift` repository, the `.github/workflows/dotnet-tool.yml` workflow and the
+    `release` environment, and that the repository variable `NUGET_USER` names the nuget.org
+    account that owns it.
+  * A NuGet version can never be replaced.  If a package went out with the wrong contents,
+    prepare a new Apache Thrift release rather than trying to overwrite it.
+  * Do not publish release candidates or pre-releases; the workflow skips them.
 * [perl] A submission to CPAN is necessary (normally jeking3 does this):
   * Checkout the release branch or tag on a linux system.
   * Fire up the docker build container.

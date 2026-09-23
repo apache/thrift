@@ -139,4 +139,52 @@ class TMemoryBufferTest extends TestCase
         $transport->putBack('67890');
         $this->assertEquals('6789012345', $transport->getBuffer());
     }
+
+    public function testWritesAndReadsInTurn()
+    {
+        $transport = new TMemoryBuffer('abc');
+        $this->assertSame('a', $transport->read(1));
+        $transport->write('def');
+        $this->assertSame(5, $transport->available());
+        $this->assertSame('bcdef', $transport->getBuffer());
+        $this->assertSame('bc', $transport->read(2));
+        $transport->putBack('XY');
+        $this->assertSame(5, $transport->available());
+        $this->assertSame('XYdef', $transport->getBuffer());
+        $this->assertSame('XYdef', $transport->read(10));
+        $this->assertSame(0, $transport->available());
+        $this->assertSame('', $transport->getBuffer());
+        $transport->write('g');
+        $this->assertSame('g', $transport->readAll(1));
+
+        $this->expectException(TTransportException::class);
+        $this->expectExceptionMessage('TMemoryBuffer: Could not read 1 bytes from buffer.');
+        $transport->read(1);
+    }
+
+    /**
+     * A long run of writes, reads and put-backs of varying sizes must give the
+     * same results as a plain string that is appended to and cut from the front.
+     */
+    public function testWritesAndReadsInTurnMatchAPlainString()
+    {
+        $transport = new TMemoryBuffer();
+        $model = '';
+        for ($step = 1; $step <= 600; $step++) {
+            $data = str_repeat(chr(65 + $step % 26), $step % 29 + 1);
+            $transport->write($data);
+            $model .= $data;
+
+            $len = $step % 23 + 1;
+            $this->assertSame(substr($model, 0, $len), $transport->read($len), "read at step $step");
+            $model = (string) substr($model, $len);
+
+            if ($step % 7 === 0) {
+                $transport->putBack("<$step>");
+                $model = "<$step>" . $model;
+            }
+            $this->assertSame(strlen($model), $transport->available(), "available at step $step");
+            $this->assertSame($model, $transport->getBuffer(), "buffer at step $step");
+        }
+    }
 }

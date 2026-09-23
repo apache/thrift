@@ -52,23 +52,45 @@ export certificate in PEM format for OpenSSL usage
 
 ### create client key and certificate with altnames
 
-copy openssl.cnf from your system e.g. /etc/ssl/openssl.cnf and append following to the end of [ v3_req ]
+`client_v3.crt` is self-signed with `client_v3.key`, carries the same
+distinguished name as the other certificates, and lists the loopback addresses
+and `localhost` as alternative names. It does not carry an IPv4-mapped IPv6
+address (`::ffff:127.0.0.1`): Go 1.27 and later refuse to load a certificate
+with one, and the Python peer matcher reduces a mapped peer address to its IPv4
+form before comparing, so the entry is not needed.
 
-    subjectAltName=@alternate_names
+Write this configuration to `client_v3.cnf`:
+
+    [ req ]
+    distinguished_name = req_distinguished_name
+    x509_extensions = v3_req
+    prompt = no
+
+    [ req_distinguished_name ]
+    CN = localhost
+    emailAddress = dev@thrift.apache.org
+    OU = Apache Thrift
+    O = The Apache Software Foundation
+    L = Forest Hill
+    ST = Maryland
+    C = US
+
+    [ v3_req ]
+    basicConstraints = CA:FALSE
+    keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+    subjectKeyIdentifier = none
+    authorityKeyIdentifier = none
+    subjectAltName = @alternate_names
 
     [ alternate_names ]
-    IP.1=127.0.0.1
-    IP.2=::1
-    IP.3=::ffff:127.0.0.1
+    IP.1 = 127.0.0.1
+    IP.2 = ::1
+    DNS.1 = localhost
 
-create a signing request:
+create the self-signed certificate:
 
-    openssl req -new -key client_v3.key -out client_v3.csr -config openssl.cnf \
-        -subj "/C=US/ST=Maryland/L=Forest Hill/O=The Apache Software Foundation/OU=Apache Thrift/CN=localhost" -extensions v3_req
-
-sign the client certificate with the server.key
-
-    openssl x509 -req -days 3000 -in client_v3.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client_v3.crt -extensions v3_req -extfile openssl.cnf
+    openssl req -x509 -new -key client_v3.key -days 3000 -set_serial 01 \
+        -config client_v3.cnf -out client_v3.crt
 
 ## which certificate the cross tests use
 

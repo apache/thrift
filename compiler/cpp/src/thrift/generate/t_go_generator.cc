@@ -2141,7 +2141,11 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
         << "(ctx context.Context, oprot thrift.TProtocol) (err error) {" << '\n';
     indent_up();
 
-    if (field_required == t_field::T_OPTIONAL) {
+    // Default requiredness means "write if set" (doc/specs/idl.md), and a
+    // pointer field is unset exactly when it is nil.
+    bool check_if_set = field_required == t_field::T_OPTIONAL
+                        || (field_required == t_field::T_OPT_IN_REQ_OUT && is_pointer_field(*f_iter));
+    if (check_if_set) {
       out << indent() << "if p.IsSet" << publicize(field_name) << "() {" << '\n';
       indent_up();
     }
@@ -2165,7 +2169,7 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
     indent_down();
     out << indent() << "}" << '\n';
 
-    if (field_required == t_field::T_OPTIONAL) {
+    if (check_if_set) {
       indent_down();
       out << indent() << "}" << '\n';
     }
@@ -4519,6 +4523,7 @@ void t_go_generator::generate_go_docstring_comment(ostream& out, const string& c
   if (contents.find_first_not_of(" \t\r\n") == string::npos) {
     return;
   }
+  vector<string> lines;
   stringstream docs(contents, std::ios_base::in);
   while (!(docs.eof() || docs.fail())) {
     char line[1024];
@@ -4534,9 +4539,32 @@ void t_go_generator::generate_go_docstring_comment(ostream& out, const string& c
         doc_line.replace(quote_pos, 2, "\"\"");
         quote_pos += 2;
       }
-      indent(out) << "// " << doc_line << '\n';
+      lines.push_back(doc_line);
     } else if (!docs.eof()) {
-      indent(out) << "//" << '\n';
+      lines.push_back("");
+    }
+  }
+
+  // gofmt drops the empty lines at either end of a doc comment and keeps
+  // one of a run, so write the comment that way and it stays gofmt-clean.
+  size_t begin = 0;
+  size_t end = lines.size();
+  while (begin < end && lines[begin].empty()) {
+    ++begin;
+  }
+  while (end > begin && lines[end - 1].empty()) {
+    --end;
+  }
+  bool previous_empty = false;
+  for (size_t i = begin; i < end; ++i) {
+    if (lines[i].empty()) {
+      if (!previous_empty) {
+        indent(out) << "//" << '\n';
+      }
+      previous_empty = true;
+    } else {
+      indent(out) << "// " << lines[i] << '\n';
+      previous_empty = false;
     }
   }
 }

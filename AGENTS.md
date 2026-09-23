@@ -120,6 +120,29 @@ authentication, serialization bounds, or anything flagged by the project's secur
   or mix fixes into existing/unrelated work unless told otherwise.
 - Follow a strict test-first workflow: write or update tests demonstrating the bug BEFORE applying the fix, 
   and inspect any generated code before changing it.
+- **Prose-only changes skip CI.** A commit that only edits the text of existing documentation
+  files ends its subject line with `[skip ci]`, and the PR title carries it too:
+  ```
+  THRIFT-9999: Clarify the TLS options in lib/cpp/README.md [skip ci]
+  ```
+  GitHub then runs none of the `push` and `pull_request` workflows for it, and AppVeyor skips
+  the build.
+  - Only the subject line works for both: AppVeyor ignores the rest of the message. A squash
+    merge of several commits takes its subject from the PR title.
+  - Not prose-only, so no marker: source code, comments and doc comments included; build,
+    packaging and CI files; tests and test data (`compiler/cpp/test/compiler/DocTest.md` is a
+    golden file, not documentation); adding, removing or renaming a file. `EXTRA_DIST` in the
+    `Makefile.am` files lists documentation files by name: a removed or renamed one breaks the
+    `make dist` job, and a new one needs an entry of its own, which no CI job asks for. Several
+    package manifests name a README, too. When in doubt, leave the marker out.
+  - The marker can skip CI for everything pushed along with it, so push a marked commit on its
+    own. When a review round adds anything but prose, drop the marker as you amend.
+  - GitHub also matches the marker when it is quoted. A commit that is not prose-only must not
+    contain it, or GitHub's variants `[ci skip]`, `[no ci]`, `[skip actions]` and
+    `[actions skip]`, anywhere in its message. A squash message built from a PR description
+    picks it up from the checklist in the PR template.
+  - The marker also stops the tool-internal links check (§4) from running, so check the commit
+    message (`git log --format=%B`) and the PR text yourself before pushing.
 
 ---
 
@@ -131,6 +154,7 @@ authentication, serialization bounds, or anything flagged by the project's secur
 - [ ] PR title starts with `THRIFT-NNNN:` (if ticket exists)
 - [ ] Commit message includes affected `Client:` languages
 - [ ] Single squashed commit
+- [ ] Prose-only change: `[skip ci]` ends the commit subject and the PR title; any other change: no such marker anywhere in the commit message
 - [ ] Tests added or updated
 - [ ] `make style` passes
 - [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable
