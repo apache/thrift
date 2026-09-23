@@ -217,7 +217,7 @@ class TCurlClient extends TTransport
         // Follow one redirect, and only within the origin of the URL: the request goes
         // out again, with its headers and body, to the new path and query.
         if ($this->response !== false && $code >= 300 && $code < 400) {
-            $redirectUrl = self::redirectWithinOrigin($origin, curl_getinfo(self::$curlHandle, CURLINFO_REDIRECT_URL));
+            $redirectUrl = $this->redirectWithinOrigin($origin, curl_getinfo(self::$curlHandle, CURLINFO_REDIRECT_URL));
             if ($redirectUrl !== null) {
                 $fullUrl = $redirectUrl;
                 curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
@@ -263,10 +263,10 @@ class TCurlClient extends TTransport
      * path and query of $location, under $origin. Null when $location is not a
      * URL with the scheme, host and port of $origin.
      */
-    private static function redirectWithinOrigin(string $origin, mixed $location): ?string
+    private function redirectWithinOrigin(string $origin, mixed $location): ?string
     {
-        $target = is_string($location) ? self::originOf($location) : null;
-        if ($target === null || $target !== self::originOf($origin)) {
+        $target = is_string($location) ? $this->originOf($location) : null;
+        if ($target === null || $target !== $this->originOf($origin)) {
             return null;
         }
         $path = parse_url($location, PHP_URL_PATH);
@@ -281,7 +281,7 @@ class TCurlClient extends TTransport
      *
      * @return array{string, string, int|null}|null
      */
-    private static function originOf(string $url): ?array
+    private function originOf(string $url): ?array
     {
         $parts = parse_url($url);
         if (!is_array($parts) || !isset($parts['scheme'], $parts['host'])) {
