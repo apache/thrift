@@ -57,6 +57,8 @@
 
 -define(VERSION_1, 1).
 -define(JSON_DOUBLE_PRECISION, 16).
+%% What has been read of a message is joined into a binary every this many bytes.
+-define(JSON_READ_CHUNK_SIZE, 65536).
 
 typeid_to_json(?tType_BOOL) -> "tf";
 typeid_to_json(?tType_DOUBLE) -> "dbl";
@@ -379,7 +381,7 @@ escape_byte(B) -> <<B>>.
 %% A message longer than max_message_size is refused before more than that
 %% many bytes of it are read.
 read_all(#json_protocol{transport = Transport0} = State) ->
-    case read_message(Transport0, max_message_size(State), [], 0, 0, false, false) of
+    case read_message(Transport0, max_message_size(State), {0, [], [], 0}, 0, false, false) of
         {Transport1, {ok, Bin}} ->
             P = thrift_json_parser:parser(),
             [First | Rest] = P(Bin),
@@ -388,7 +390,7 @@ read_all(#json_protocol{transport = Transport0} = State) ->
             {State#json_protocol{transport = Transport1}, Error}
     end.
 
-read_message(Transport0, Max, Parts, Size, Depth, InString, Escaped) ->
+read_message(Transport0, Max, Read = {Size, _, _, _}, Depth, InString, Escaped) ->
     Least = least_left(Depth, InString, Escaped),
     case Size + Least > Max of
         true ->
@@ -399,24 +401,33 @@ read_message(Transport0, Max, Parts, Size, Depth, InString, Escaped) ->
                 {ok, <<>>} ->
                     {Transport1, {error, eof}};
                 {ok, Data} ->
+                    Read1 = add_read(Data, Read),
                     case scan(Data, Depth, InString, Escaped) of
                         done ->
-                            {Transport1, {ok, iolist_to_binary(lists:reverse([Data | Parts]))}};
+                            {Transport1, {ok, message_read(Read1)}};
                         {Depth1, InString1, Escaped1} ->
-                            read_message(
-                                Transport1,
-                                Max,
-                                [Data | Parts],
-                                Size + byte_size(Data),
-                                Depth1,
-                                InString1,
-                                Escaped1
-                            )
+                            read_message(Transport1, Max, Read1, Depth1, InString1, Escaped1)
                     end;
                 {error, _} = Error ->
                     {Transport1, Error}
             end
     end.
+
+%% What has been read of a message: {Size, Chunks, Parts, PartsSize}. The
+%% parts read most recently are joined into a chunk once they add up to
+%% ?JSON_READ_CHUNK_SIZE bytes. Both lists are newest first.
+add_read(Data, {Size, Chunks, Parts, PartsSize}) ->
+    DataSize = byte_size(Data),
+    case PartsSize + DataSize >= ?JSON_READ_CHUNK_SIZE of
+        true ->
+            Chunk = iolist_to_binary(lists:reverse([Data | Parts])),
+            {Size + DataSize, [Chunk | Chunks], [], 0};
+        false ->
+            {Size + DataSize, Chunks, [Data | Parts], PartsSize + DataSize}
+    end.
+
+message_read({_Size, Chunks, Parts, _PartsSize}) ->
+    iolist_to_binary([lists:reverse(Chunks), lists:reverse(Parts)]).
 
 %% The fewest bytes that can still complete the message: a closing bracket
 %% for each open one, and the end of an open string, with the character an
@@ -693,15 +704,17 @@ read_message_begin(This0) ->
         )
     of
         {This1, {ok, [_, Version, Name, Type, SeqId]}} ->
-            case Version =:= ?VERSION_1 of
+            if
+                Version =/= ?VERSION_1 ->
+                    {This1, {error, no_json_protocol_version}};
+                byte_size(Name) > ?MAX_MESSAGE_NAME_SIZE ->
+                    {This1, {error, {message_name_exceeds_maximum, ?MAX_MESSAGE_NAME_SIZE}}};
                 true ->
                     {This1, #protocol_message_begin{
                         name = binary_to_list(Name),
                         type = Type,
                         seqid = SeqId
-                    }};
-                false ->
-                    {This1, {error, no_json_protocol_version}}
+                    }}
             end;
         Other ->
             Other
