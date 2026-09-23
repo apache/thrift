@@ -40,7 +40,7 @@ class TCurlClient extends TTransport
     private const DEFAULT_PORTS = ['http' => 80, 'https' => 443];
 
     /** @var \CurlHandle|null */
-    private static $curlHandle;
+    private $curlHandle;
 
     /**
      * The URI to request
@@ -112,6 +112,7 @@ class TCurlClient extends TTransport
 
     public function close(): void
     {
+        $this->closeCurlHandle();
         $this->request = '';
         $this->response = null;
         $this->responsePos = 0;
@@ -165,14 +166,13 @@ class TCurlClient extends TTransport
      */
     public function flush(): void
     {
-        if (!self::$curlHandle) {
-            register_shutdown_function(['Thrift\\Transport\\TCurlClient', 'closeCurlHandle']);
-            self::$curlHandle = curl_init();
-            curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
-            curl_setopt(self::$curlHandle, CURLOPT_CUSTOMREQUEST, 'POST');
+        if (!$this->curlHandle) {
+            $this->curlHandle = curl_init();
+            curl_setopt($this->curlHandle, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($this->curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
+            curl_setopt($this->curlHandle, CURLOPT_CUSTOMREQUEST, 'POST');
             // curl follows no redirect; flush() follows one itself, within the origin of the URL.
-            curl_setopt(self::$curlHandle, CURLOPT_FOLLOWLOCATION, false);
+            curl_setopt($this->curlHandle, CURLOPT_FOLLOWLOCATION, false);
         }
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host . ($this->port != 80 ? ':' . $this->port : '');
@@ -189,48 +189,48 @@ class TCurlClient extends TTransport
             $headers[] = "$key: $value";
         }
 
-        curl_setopt(self::$curlHandle, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($this->curlHandle, CURLOPT_HTTPHEADER, $headers);
 
         if ($this->timeout > 0) {
             if ($this->timeout < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_TIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout);
+                curl_setopt($this->curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout);
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout);
+                curl_setopt($this->curlHandle, CURLOPT_TIMEOUT, $this->timeout);
             }
         }
         if ($this->connectionTimeout > 0) {
             if ($this->connectionTimeout < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_CONNECTTIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout);
+                curl_setopt($this->curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout);
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout);
+                curl_setopt($this->curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout);
             }
         }
-        curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request);
+        curl_setopt($this->curlHandle, CURLOPT_POSTFIELDS, $this->request);
         $this->request = '';
 
-        curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
-        $this->response = curl_exec(self::$curlHandle);
-        $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
+        curl_setopt($this->curlHandle, CURLOPT_URL, $fullUrl);
+        $this->response = curl_exec($this->curlHandle);
+        $code = curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE);
 
         // Follow one redirect, and only within the origin of the URL: the request goes
         // out again, with its headers and body, to the new path and query.
         if ($this->response !== false && $code >= 300 && $code < 400) {
-            $redirectUrl = self::redirectWithinOrigin($origin, curl_getinfo(self::$curlHandle, CURLINFO_REDIRECT_URL));
+            $redirectUrl = self::redirectWithinOrigin($origin, curl_getinfo($this->curlHandle, CURLINFO_REDIRECT_URL));
             if ($redirectUrl !== null) {
                 $fullUrl = $redirectUrl;
-                curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
-                $this->response = curl_exec(self::$curlHandle);
-                $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
+                curl_setopt($this->curlHandle, CURLOPT_URL, $fullUrl);
+                $this->response = curl_exec($this->curlHandle);
+                $code = curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE);
             }
         }
         $this->responsePos = 0;
-        $responseError = curl_error(self::$curlHandle);
+        $responseError = curl_error($this->curlHandle);
 
         // Handle non 200 status code / connect failure
         if ($this->response === false || $code !== 200) {
-            self::$curlHandle = null;
+            $this->curlHandle = null;
             $this->response = null;
             $error = 'TCurlClient: Could not connect to ' . $fullUrl;
             if ($responseError) {
@@ -243,11 +243,11 @@ class TCurlClient extends TTransport
         }
     }
 
-    public static function closeCurlHandle(): void
+    public function closeCurlHandle(): void
     {
         // Dropping the reference frees the handle. curl_close() has had no effect
         // since PHP 8.0, and PHP 8.5 deprecates it.
-        self::$curlHandle = null;
+        $this->curlHandle = null;
     }
 
     /**

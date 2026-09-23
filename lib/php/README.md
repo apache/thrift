@@ -59,6 +59,8 @@ apcu_fetch(), apcu_store()
 
 2. `TCurlClient` follows a redirect only within the origin of the URL it is configured with, that is to the same scheme, host and port. It sends the request again there, with its headers and body, and follows at most one redirect, as before. A redirect to another origin, including one from `http` to `https`, now fails the request with a `TTransportException`, as any redirect does with `THttpClient`. Configure the client with the scheme, host and port that serve the requests.
 
+3. Each `TCurlClient` now owns its curl handle, so timeout settings and connection reuse are independent between client instances. `close()` releases that client's handle. Replace static calls to `TCurlClient::closeCurlHandle()` with `$client->closeCurlHandle()` to release a specific client's handle, or `$client->close()` to clear its buffers as well.
+
 ## 0.25.0
 
 1. `TBinaryProtocol`, `TBinaryProtocolAccelerated` and `TCompactProtocol` now refuse a string or binary field longer than their maximum string size before reading it, with a `TProtocolException` of type `SIZE_LIMIT`. The maximum defaults to `TProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes, the frame size limit the framed transports apply. It is an optional constructor argument of the three protocols and of their factories; pass `0` to read strings of any length, as before.
