@@ -41,7 +41,8 @@ split_options([], ProtoIn, TransIn) ->
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn) when
     OptKey =:= strict_read;
     OptKey =:= strict_write;
-    OptKey =:= protocol
+    OptKey =:= protocol;
+    OptKey =:= max_message_size
 ->
     split_options(Rest, [Opt | ProtoIn], TransIn);
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn) when

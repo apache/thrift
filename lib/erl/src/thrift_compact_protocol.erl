@@ -46,7 +46,11 @@
     read_stack = [] :: iodata(),
     read_value = ?CBOOL_NONE :: cbool(),
     write_stack = [] :: iodata(),
-    write_id = ?ID_NONE :: non_neg_integer()
+    write_id = ?ID_NONE :: non_neg_integer(),
+    % the most a message may take; new/2 settles it
+    max_message_size :: pos_integer() | undefined,
+    % what the message being read may still take; undefined between messages
+    message_bytes_left :: non_neg_integer() | undefined
 }).
 
 -type t_compact() :: #t_compact{}.
@@ -91,9 +95,25 @@ cbool_to_bool(Value) -> Value =:= ?CBOOL_TRUE.
 
 new(Transport) -> new(Transport, _Options = []).
 
-new(Transport, _Options) ->
-    State = #t_compact{transport = Transport},
+%%--------------------------------------------------------------------
+%% Options include:
+%%   {max_message_size, Bytes}  = The longest message to read, in place of the
+%%                                thrift application's max_message_size
+%%--------------------------------------------------------------------
+new(Transport, Options) ->
+    Max = proplists:get_value(max_message_size, max_message_size_options(Options)),
+    State = #t_compact{transport = Transport, max_message_size = max_message_size(Max)},
     thrift_protocol:new(?MODULE, State).
+
+max_message_size_options(Options) when is_list(Options) ->
+    [Opt || Opt = {max_message_size, Max} <- Options, is_integer(Max), Max > 0];
+max_message_size_options(_Options) ->
+    [].
+
+max_message_size(undefined) ->
+    application:get_env(thrift, max_message_size, ?DEFAULT_MAX_MESSAGE_SIZE);
+max_message_size(Max) ->
+    Max.
 
 flush_transport(This = #t_compact{transport = Transport}) ->
     {NewTransport, Result} = thrift_transport:flush(Transport),
@@ -246,19 +266,23 @@ write(This = #t_compact{transport = Trans}, Data) ->
 %%
 %%
 
-read(This0, message_begin) ->
-    {This1, {ok, ?PROTOCOL_ID}} = read(This0, ubyte),
+read(This0 = #t_compact{max_message_size = Max}, message_begin) ->
+    {This1, {ok, ?PROTOCOL_ID}} = read(This0#t_compact{message_bytes_left = Max}, ubyte),
     {This2, {ok, VerAndType}} = read(This1, ubyte),
     ?VERSION_1 = VerAndType band ?VERSION_MASK,
     {This3, {ok, SeqId}} = read(This2, ui32),
-    {This4, {ok, Name}} = read(This3, string),
-    {This4, #protocol_message_begin{
-        name = binary_to_list(Name),
-        type = (VerAndType bsr ?TYPE_SHIFT_AMOUNT) band ?TYPE_BITS,
-        seqid = SeqId
-    }};
+    case read(This3, string) of
+        {This4, {ok, Name}} ->
+            {This4, #protocol_message_begin{
+                name = binary_to_list(Name),
+                type = (VerAndType bsr ?TYPE_SHIFT_AMOUNT) band ?TYPE_BITS,
+                seqid = SeqId
+            }};
+        {This4, Error} ->
+            {This4, Error}
+    end;
 read(This, message_end) ->
-    {This, ok};
+    {This#t_compact{message_bytes_left = undefined}, ok};
 read(This = #t_compact{read_stack = Stack}, struct_begin) ->
     {This#t_compact{read_stack = [0 | Stack]}, ok};
 read(This = #t_compact{read_stack = [_H | T]}, struct_end) ->
@@ -381,20 +405,36 @@ read(This0, string) ->
     {#t_compact{}, {ok, binary()} | {error, _Reason}}.
 read_data(This, 0) ->
     {This, {ok, <<>>}};
-read_data(This = #t_compact{transport = Trans}, Len) when is_integer(Len) andalso Len > 0 ->
-    {NewTransport, Result} = thrift_transport:read(Trans, Len),
-    {This#t_compact{transport = NewTransport}, Result}.
+read_data(This0 = #t_compact{transport = Trans}, Len) when is_integer(Len) andalso Len > 0 ->
+    case take(This0, Len) of
+        {ok, This1} ->
+            {NewTransport, Result} = thrift_transport:read(Trans, Len),
+            {This1#t_compact{transport = NewTransport}, Result};
+        Error ->
+            {This0, Error}
+    end.
+
+%% Takes Len bytes from what the message being read may still take, before
+%% they are read. Between messages, each read is held to the maximum on its own.
+take(This = #t_compact{message_bytes_left = undefined, max_message_size = Max}, Len) when
+    Len =< Max
+->
+    {ok, This};
+take(This = #t_compact{message_bytes_left = Left}, Len) when is_integer(Left), Len =< Left ->
+    {ok, This#t_compact{message_bytes_left = Left - Len}};
+take(#t_compact{max_message_size = Max}, _Len) ->
+    {error, {message_size_exceeds_maximum, Max}}.
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% returns a (fun() -> thrift_protocol())
-new_protocol_factory(TransportFactory, _Options) ->
+new_protocol_factory(TransportFactory, Options) ->
     F = fun() ->
         case TransportFactory() of
             {ok, Transport} ->
                 thrift_compact_protocol:new(
                     Transport,
-                    []
+                    max_message_size_options(Options)
                 );
             {error, Error} ->
                 {error, Error}
