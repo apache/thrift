@@ -601,6 +601,8 @@
 
 - [THRIFT-6030](https://issues.apache.org/jira/browse/THRIFT-6030) - Harden Erlang protocol negative sizes
 - [THRIFT-6084](https://issues.apache.org/jira/browse/THRIFT-6084) - Add byte-count limit to TCompactProtocol varint reader
+- [THRIFT-6366](https://issues.apache.org/jira/browse/THRIFT-6366) - Bound the message size in the Erlang binary and compact protocols
+
 
 ### Go
 

@@ -717,10 +717,10 @@ key_to_number(Key, Convert, Error) ->
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% returns a (fun() -> thrift_protocol())
-new_protocol_factory(TransportFactory, _Options) ->
-    % Only strice read/write are implemented
+new_protocol_factory(TransportFactory, Options) ->
+    MaxOptions = [Opt || is_list(Options), Opt = {max_message_size, _} <- Options],
     F = fun() ->
         {ok, Transport} = TransportFactory(),
-        thrift_json_protocol:new(Transport, [])
+        thrift_json_protocol:new(Transport, MaxOptions)
     end,
     {ok, F}.
