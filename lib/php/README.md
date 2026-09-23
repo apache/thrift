@@ -53,17 +53,15 @@ apcu_fetch(), apcu_store()
 
 # Breaking Changes
 
-## 0.26.0
+## 0.25.0
 
 1. `TJSONProtocol` now holds a string, binary or numeric value to the same maximum string size as `TBinaryProtocol` and `TCompactProtocol`, and reports a longer one with a `TProtocolException` of type `SIZE_LIMIT`. A JSON value carries no length in front of it, so the maximum applies to the bytes it takes on the wire while it is read. The maximum defaults to `TProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes; it is an optional constructor argument of `TJSONProtocol` and of `TJSONProtocolFactory`; pass `0` to read values of any length, as before.
 
-2. `TCurlClient` follows a redirect only within the origin of the URL it is configured with, that is to the same scheme, host and port. It sends the request again there, with its headers and body, and follows at most one redirect, as before. A redirect to another origin, including one from `http` to `https`, now fails the request with a `TTransportException`, as any redirect does with `THttpClient`. Configure the client with the scheme, host and port that serve the requests.
-
-## 0.25.0
+1. `TCurlClient` follows a redirect only within the origin of the URL it is configured with, that is to the same scheme, host and port. It sends the request again there, with its headers and body, and follows at most one redirect, as before. A redirect to another origin, including one from `http` to `https`, now fails the request with a `TTransportException`, as any redirect does with `THttpClient`. Configure the client with the scheme, host and port that serve the requests.
 
 1. `TBinaryProtocol`, `TBinaryProtocolAccelerated` and `TCompactProtocol` now refuse a string or binary field longer than their maximum string size before reading it, with a `TProtocolException` of type `SIZE_LIMIT`. The maximum defaults to `TProtocol::DEFAULT_MAX_STRING_SIZE`, 16384000 bytes, the frame size limit the framed transports apply. It is an optional constructor argument of the three protocols and of their factories; pass `0` to read strings of any length, as before.
 
-2. The legacy callable/string `$debugHandler` argument has been removed from `TSocket`, `TSSLSocket` and `TSocketPool`. The constructors now accept a PSR-3 logger via the `$logger` parameter instead. `TSocket::setDebug()`, `TSocket::DEFAULT_DEBUG_HANDLER` and `TSSLServerSocket::getSSLHost()` have also been removed. The `ssl://` prefix is still applied automatically by `TSSLServerSocket` and `TSSLSocket`. Additionally, `TSocket::open()` no longer falls back to the send timeout for the connect step; use `TSocket::setConnectTimeout()` to configure a dedicated connect timeout. The default connect timeout is now 1 second.
+1. The legacy callable/string `$debugHandler` argument has been removed from `TSocket`, `TSSLSocket` and `TSocketPool`. The constructors now accept a PSR-3 logger via the `$logger` parameter instead. `TSocket::setDebug()`, `TSocket::DEFAULT_DEBUG_HANDLER` and `TSSLServerSocket::getSSLHost()` have also been removed. The `ssl://` prefix is still applied automatically by `TSSLServerSocket` and `TSSLSocket`. Additionally, `TSocket::open()` no longer falls back to the send timeout for the connect step; use `TSocket::setConnectTimeout()` to configure a dedicated connect timeout. The default connect timeout is now 1 second.
 
 ## 0.12.0
 
