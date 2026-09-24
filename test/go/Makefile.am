@@ -26,14 +26,11 @@ THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 precross: bin/testclient bin/testserver
 
-ThriftTest.thrift: $(THRIFTTEST)
-	cp $(THRIFTTEST) ThriftTest.thrift
-
 .PHONY: gopath
 
-gopath: $(THRIFT) ThriftTest.thrift
+gopath: $(THRIFT) $(THRIFTTEST)
 	mkdir -p src/gen
-	$(THRIFTCMD) ThriftTest.thrift
+	$(THRIFTCMD) $(THRIFTTEST)
 	$(THRIFTCMD) ../StressTest.thrift
 	$(THRIFTCMD) ../ConstantsDemo.thrift
 	touch gopath
@@ -48,7 +45,7 @@ bin/stress: gopath
 	$(GO) build $(GOBUILDEXTRA) -o bin/stress ./src/bin/stress
 
 clean-local:
-	$(RM) -r src/gen src/github.com/golang src/thrift bin pkg gopath ThriftTest.thrift
+	$(RM) -r src/gen src/github.com/golang src/thrift bin pkg gopath
 
 check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
