@@ -2439,6 +2439,20 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)" << '\n'
         << indent() << "{" << '\n'
         << indent() << "}" << '\n'
+        << '\n'
+        << indent() << "public Client(TTransport transport, TProtocolFactory protocolFactory) : this(transport, protocolFactory, protocolFactory)" << '\n'
+        << indent() << "{" << '\n'
+        << indent() << "}" << '\n'
+        << '\n'
+        << indent() << "public Client(TTransport transport, TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory)" << '\n'
+        << indent() << "    : base(transport, inputProtocolFactory, outputProtocolFactory)" << '\n'
+        << indent() << "{" << '\n'
+        << indent() << "}" << '\n'
+        << '\n'
+        << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol, TTransport transport, TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory)" << '\n'
+        << indent() << "    : base(inputProtocol, outputProtocol, transport, inputProtocolFactory, outputProtocolFactory)" << '\n'
+        << indent() << "{" << '\n'
+        << indent() << "}" << '\n'
         << '\n';
 
     vector<t_function*> functions = tservice->get_functions();
@@ -2454,6 +2468,13 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << '\n'
             << indent() << "{" << '\n';
         indent_up();
+        out << indent()
+            << (((!(*functions_iterator)->is_oneway()) && !(*functions_iterator)->get_returntype()->is_void())
+                    ? "return await "
+                    : "await ")
+            << "ExecutePerCallAsync(async () =>" << '\n'
+            << indent() << "{" << '\n';
+        indent_up();
         out << indent() << "await send_" << function_name << "(";
         string call_args = argument_list((*functions_iterator)->get_arglist(),false);
         if(! call_args.empty()) {
@@ -2464,6 +2485,8 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             out << indent() << ((*functions_iterator)->get_returntype()->is_void() ? "" : "return ")
                             << "await recv_" << function_name << "(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
         }
+        indent_down();
+        out << indent() << "}, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
         indent_down();
         out << indent() << "}" << '\n' << '\n';
 
