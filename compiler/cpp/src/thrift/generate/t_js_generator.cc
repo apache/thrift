@@ -820,7 +820,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
       out << "'" << get_escaped_string(value) << "'";
       break;
     case t_base_type::TYPE_UUID:
-      out << "'" << value << "'";
+      out << "'" << get_escaped_string(value) << "'";
       break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
