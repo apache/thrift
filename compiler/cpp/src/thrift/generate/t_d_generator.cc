@@ -235,8 +235,9 @@ protected:
     indent_up();
 
     // Collect all the exception types service methods can throw so we can
-    // emit the necessary aliases later.
-    set<t_type*> exception_types;
+    // emit the necessary aliases later, in the order they are first thrown.
+    vector<t_type*> exception_types;
+    set<t_type*> seen_exception_types;
 
     // Print the method signatures.
     vector<t_function*> functions = tservice->get_functions();
@@ -250,14 +251,16 @@ protected:
       const vector<t_field*>& exceptions = (*fn_iter)->get_xceptions()->get_members();
       vector<t_field*>::const_iterator ex_iter;
       for (ex_iter = exceptions.begin(); ex_iter != exceptions.end(); ++ex_iter) {
-        exception_types.insert((*ex_iter)->get_type());
+        if (seen_exception_types.insert((*ex_iter)->get_type()).second) {
+          exception_types.push_back((*ex_iter)->get_type());
+        }
       }
     }
 
     // Alias the exception types into the current scope.
     if (!exception_types.empty())
       f_service << '\n';
-    set<t_type*>::const_iterator et_iter;
+    vector<t_type*>::const_iterator et_iter;
     for (et_iter = exception_types.begin(); et_iter != exception_types.end(); ++et_iter) {
       indent(f_service) << "alias " << render_package(*(*et_iter)->get_program())
                         << (*et_iter)->get_program()->get_name() << "_types"
