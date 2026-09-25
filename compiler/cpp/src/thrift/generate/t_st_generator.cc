@@ -180,13 +180,6 @@ void t_st_generator::init_generator() {
 
   st_class_def(f_, program_name_);
   generate_class_side_definition();
-
-  // Generate enums
-  vector<t_enum*> enums = program_->get_enums();
-  vector<t_enum*>::iterator en_iter;
-  for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
-    generate_enum(*en_iter);
-  }
 }
 
 string t_st_generator::class_name() {
