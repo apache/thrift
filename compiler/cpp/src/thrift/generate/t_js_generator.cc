@@ -1425,9 +1425,14 @@ void t_js_generator::generate_service(t_service* tservice) {
 
   if (gen_node_) {
     if (tservice->get_extends() != nullptr) {
-      f_service_ << js_const_type_ <<  tservice->get_extends()->get_name() << " = require('"
-                 << get_import_path(tservice->get_extends()) << "');" << '\n' << js_const_type_
-                 << tservice->get_extends()->get_name()
+      if (gen_esm_) {
+        f_service_ << "import * as " << tservice->get_extends()->get_name() << " from '"
+                   << get_import_path(tservice->get_extends()) << "';" << '\n';
+      } else {
+        f_service_ << js_const_type_ << tservice->get_extends()->get_name() << " = require('"
+                   << get_import_path(tservice->get_extends()) << "');" << '\n';
+      }
+      f_service_ << js_const_type_ << tservice->get_extends()->get_name()
                  << "Client = " << tservice->get_extends()->get_name() << ".Client;" << '\n'
                  << js_const_type_ << tservice->get_extends()->get_name()
                  << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << '\n';
