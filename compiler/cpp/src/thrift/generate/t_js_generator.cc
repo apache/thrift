@@ -2274,14 +2274,10 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent_up();
     if (gen_node_) {
       f_service_ << indent() << "delete this._reqs[this.seqid()];" << '\n';
-      f_service_ << indent() << "if (typeof " << outputVar << ".reset === 'function') {" << '\n';
-      f_service_ << indent() << "  " << outputVar << ".reset();" << '\n';
-      f_service_ << indent() << "}" << '\n';
-    } else {
-      f_service_ << indent() << "if (typeof " << outputVar << ".getTransport().reset === 'function') {" << '\n';
-      f_service_ << indent() << "  " << outputVar << ".getTransport().reset();" << '\n';
-      f_service_ << indent() << "}" << '\n';
     }
+    f_service_ << indent() << "if (typeof " << outputVar << ".getTransport().reset === 'function') {" << '\n';
+    f_service_ << indent() << "  " << outputVar << ".getTransport().reset();" << '\n';
+    f_service_ << indent() << "}" << '\n';
     f_service_ << indent() << "throw e;" << '\n';
     indent_down();
     f_service_ << indent() << "}" << '\n';
