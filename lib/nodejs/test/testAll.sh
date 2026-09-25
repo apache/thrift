@@ -94,16 +94,19 @@ ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsRecursionDepthT
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${DIR}/MapKeyTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Include.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${DIR}/ServiceExtendsTest.thrift
 mkdir ${DIR}/gen-nodejs-es6
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/ThriftTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Int64Test.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Include.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/ServiceExtendsTest.thrift
 mkdir ${DIR}/gen-nodejs-esm
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/ThriftTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Int64Test.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${THRIFT_FILES_DIR}/Include.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-esm --gen js:node,es6,esm ${DIR}/ServiceExtendsTest.thrift
 
 # Opt-in BigInt codegen — only Int64Test.thrift is exercised by int64_bigint.test.js.
 mkdir ${DIR}/gen-nodejs-bigint
@@ -154,6 +157,7 @@ node ${DIR}/web_server_ws.test.js || TESTOK=1
 node ${DIR}/uuid.test.js || TESTOK=1
 node ${DIR}/generated-exceptions.test.js || TESTOK=1
 node ${DIR}/include.test.mjs || TESTOK=1
+node ${DIR}/service_extends.test.mjs || TESTOK=1
 node ${DIR}/thrift_4987_xhr_protocol.test.mjs || TESTOK=1
 
 # integration tests
