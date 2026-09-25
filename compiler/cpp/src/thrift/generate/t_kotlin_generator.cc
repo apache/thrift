@@ -278,7 +278,7 @@ void t_kotlin_generator::generate_enum(t_enum* tenum) {
 
 void t_kotlin_generator::generate_consts(std::vector<t_const*> consts) {
   for (auto const_value : consts) {
-    auto const_type = const_value->get_type();
+    auto const_type = const_value->get_type()->get_true_type();
     if (const_type->is_base_type()) {
       f_types_ << "const ";
     }
