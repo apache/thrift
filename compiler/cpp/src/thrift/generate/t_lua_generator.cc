@@ -274,7 +274,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
       }
       break;
     case t_base_type::TYPE_UUID:
-      out << "TUUIDfromString(" << value->get_string() << ")";
+      out << "TUUIDfromString('" << get_escaped_string(value) << "')";
       break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
