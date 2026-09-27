@@ -4544,8 +4544,13 @@ void t_cpp_generator::generate_deserialize_list_element(ostream& out,
   } else {
     // The vector's capacity was reserved (capped) from the declared count, so grow it one element
     // at a time and read into the element just appended, rather than indexing into a full resize.
+    // std::vector<bool> has no emplace_back() before C++14, so a list of bool uses push_back().
     (void)index;
-    indent(out) << prefix << ".emplace_back();" << '\n';
+    if (tlist->get_elem_type()->get_true_type()->is_bool()) {
+      indent(out) << prefix << ".push_back(false);" << '\n';
+    } else {
+      indent(out) << prefix << ".emplace_back();" << '\n';
+    }
     t_field felem(tlist->get_elem_type(), prefix + ".back()");
     generate_deserialize_field(out, &felem);
   }
