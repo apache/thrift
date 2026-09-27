@@ -363,7 +363,7 @@ Sample:
                 {
                     _ = env;
                     _ = loggerFactory;
-                    app.UseMiddleware<THttpServerTransport>();
+                    app.UseMiddleware<THttpServerTransport>(app.ApplicationServices.GetRequiredService<ITAsyncProcessor>(), new TConfiguration());
                 }
             }
         }
