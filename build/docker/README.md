@@ -186,7 +186,7 @@ Last updated: May 2, 2026
 | java      | 17            |               |       |
 | js        |               |               | Node.js 16.20.2, npm 8.19.4 |
 | lua       | 5.2.4         |               | Lua 5.3: see THRIFT-4386 |
-| netstd    | 9.0           | 9.0           |       |
+| netstd    | 11.0          | 11.0          |       |
 | nodejs    | 16.20.2       |               |       |
 | ocaml     | 4.13.1        |               |       |
 | perl      | 5.34.0        |               |       |

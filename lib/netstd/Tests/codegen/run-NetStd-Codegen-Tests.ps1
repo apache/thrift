@@ -45,7 +45,8 @@ $KNOWN_BUGS = @(
 $NET_VERSIONS = @(
 	"net8",
 	"net9",
-	"net10"
+	"net10",
+	"net11"
 )
 if ($TargetVersions.Count -gt 0) { $NET_VERSIONS = $TargetVersions }
 
