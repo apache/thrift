@@ -22,7 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -426,5 +428,18 @@ public class TestStruct {
 
     b = new StructB().setAb(valid).setAa(invalid);
     assertThrows(TException.class, b::validate);
+  }
+
+  @Test
+  public void testBinaryGetterDoesNotCopyOnEveryRead() {
+    OneOfEach ooe = new OneOfEach();
+    ooe.setBase64(ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4}, 1, 3));
+
+    byte[] first = ooe.getBase64();
+    assertArrayEquals(new byte[] {1, 2, 3}, first);
+    // Once right-sized, the field is read as it is, not copied again on each read.
+    assertSame(first, ooe.getBase64());
+    // bufferForBase64() still hands out a copy.
+    assertNotSame(first, ooe.bufferForBase64().array());
   }
 }

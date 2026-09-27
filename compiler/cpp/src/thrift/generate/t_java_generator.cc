@@ -2616,8 +2616,10 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         indent(out) << "@Deprecated" << '\n';
       }
       indent(out) << "public byte[] get" << cap_name << "() {" << '\n';
-      indent(out) << "  set" << cap_name << "(org.apache.thrift.TBaseHelper.rightSize("
-                  << field_name << "));" << '\n';
+      // Assign the right-sized buffer directly: going through the setter would copy it again
+      // (copyBinary) on every call, although the returned array is the field's own either way.
+      indent(out) << "  this." << field_name << " = org.apache.thrift.TBaseHelper.rightSize("
+                  << field_name << ");" << '\n';
       indent(out) << "  return " << field_name << " == null ? null : " << field_name << ".array();"
                   << '\n';
       indent(out) << "}" << '\n' << '\n';
