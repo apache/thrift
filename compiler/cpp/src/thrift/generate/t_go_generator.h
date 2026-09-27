@@ -295,7 +295,15 @@ public:
       return real_module;
     }
 
-    return lowercase(program->get_name());
+    // Named after the IDL file, which may contain characters such as '-' that a Go package
+    // name cannot; '.' stays, because it separates the nested package directories.
+    real_module = lowercase(program->get_name());
+    for (char& c : real_module) {
+      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_' && c != '.') {
+        c = '_';
+      }
+    }
+    return real_module;
   }
 
   static bool is_pointer_field(t_field* tfield, bool in_container = false);
