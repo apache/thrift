@@ -451,10 +451,11 @@ private {
           auto f = future;
           return { completionCallback(f); };
         }());
-        if (future.status != TFutureStatus.RUNNING) {
-          // If the current future is already completed, we are done, don't
-          // bother adding callbacks for the others (they would just return
-          // immediately after acquiring the lock).
+        if (resultPromise_.status != TFutureStatus.RUNNING) {
+          // If the result is already set, we are done, don't bother adding
+          // callbacks for the others (they would just return immediately
+          // after acquiring the lock). A child that has already failed with
+          // an RPC fault does not set the result, so the others still count.
           return;
         }
       }
@@ -903,4 +904,21 @@ private {
     alias typeof(invokeAccumulator!acc(cast(T[])[], cast(Exception[])[]))
       AccumulatorResult;
   }
+}
+
+unittest {
+  // If a child operation has already failed with an RPC fault by the time the
+  // job is created, the job must still wait for the others rather than never
+  // completing.
+  auto first = new TPromise!int;
+  auto second = new TPromise!int;
+  first.fail(new TException("first"));
+
+  auto job = new FastestPoolJob!int([first, second],
+    delegate bool(Exception e) { return true; }, null, new TCancellationOrigin);
+  second.fail(new TException("second"));
+
+  enforce(job.status == TFutureStatus.FAILED);
+  auto e = cast(TCompoundOperationException)job.getException();
+  enforce(e !is null && e.exceptions.length == 2);
 }

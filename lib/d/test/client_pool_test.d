@@ -57,6 +57,12 @@ class TestServiceException : TException {
   int port;
 }
 
+// How long any single wait in the client code may take. The servers answer
+// within 100 ms, but a TSimpleServer serves one connection at a time and only
+// drops an idle one after its 3 s receive timeout, so this must be well above
+// that. A stuck call then fails the test instead of hanging it.
+enum clientTimeout = dur!"seconds"(10);
+
 interface TestService {
   int getPort();
   alias .TestServiceException TestServiceException;
@@ -204,7 +210,7 @@ version (none) {
   foreach (h; handlers) (new ServerThread(h, new ServerPreServeHandler(sem), serverCancellation)).start();
 
   // wait until all the handlers signal that they're ready to serve
-  foreach (h; handlers) (sem.wait(dur!`seconds`(1)));
+  foreach (h; handlers) enforce(sem.wait(clientTimeout), "Server did not start in time.");
 
   syncClientPoolTest(ports, handlers);
   asyncClientPoolTest(ports, handlers);
@@ -215,8 +221,11 @@ version (none) {
 
 void syncClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers) {
   auto clients = array(map!((a){
+    auto socket = new TSocket("127.0.0.1", a);
+    socket.recvTimeout = clientTimeout;
+    socket.sendTimeout = clientTimeout;
     return cast(TClientBase!ExTestService)tClient!ExTestService(
-      tBinaryProtocol(new TSocket("127.0.0.1", a))
+      tBinaryProtocol(socket)
     );
   })(ports));
 
@@ -278,13 +287,13 @@ void asyncClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers) {
 
   // Try the case where the first client succeeds.
   {
-    enforce(makeAsyncPool(clients).getPort() == ports[0]);
+    enforce(makeAsyncPool(clients).getPort().waitGet(clientTimeout) == ports[0]);
   }
 
   // Try the case where all clients fail.
   {
     auto pool = makeAsyncPool(clients[3 .. $]);
-    auto e = cast(TCompoundOperationException)collectException(pool.getPort().waitGet());
+    auto e = cast(TCompoundOperationException)collectException(pool.getPort().waitGet(clientTimeout));
     enforce(e);
     enforce(equal(map!"a.port"(cast(TestServiceException[])e.exceptions),
       ports[3 .. $]));
@@ -293,7 +302,7 @@ void asyncClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers) {
   // Try the case where the first clients fail, but a later one succeeds.
   {
     auto pool = makeAsyncPool(clients[3 .. $] ~ clients[0 .. 3]);
-    enforce(pool.getPortInArray() == [ports[0]]);
+    enforce(pool.getPortInArray().waitGet(clientTimeout) == [ports[0]]);
   }
 
   // Make sure a client is properly deactivated when it has failed too often.
@@ -303,13 +312,13 @@ void asyncClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers) {
     pool.faultDisableDuration = dur!"msecs"(50);
 
     handlers[0].failing = true;
-    enforce(pool.getPort() == ports[1]);
+    enforce(pool.getPort().waitGet(clientTimeout) == ports[1]);
 
     handlers[0].failing = false;
-    enforce(pool.getPort() == ports[1]);
+    enforce(pool.getPort().waitGet(clientTimeout) == ports[1]);
 
     Thread.sleep(dur!"msecs"(50));
-    enforce(pool.getPort() == ports[0]);
+    enforce(pool.getPort().waitGet(clientTimeout) == ports[0]);
   }
 }
 
@@ -327,8 +336,11 @@ auto makeAsyncClients(TLibeventAsyncManager manager, in ushort[] ports) {
   // to »function D main is a nested function and cannot be accessed from array«.
   // Thus, we manually do the array conversion.
   auto lazyClients = map!((a){
+    auto socket = new TAsyncSocket(manager, "127.0.0.1", a);
+    socket.recvTimeout = clientTimeout;
+    socket.sendTimeout = clientTimeout;
     return new TAsyncClient!ExTestService(
-      new TAsyncSocket(manager, "127.0.0.1", a),
+      socket,
       new TBufferedTransportFactory,
       new TBinaryProtocolFactory!(TBufferedTransport)
     );
@@ -349,14 +361,14 @@ void asyncFastestClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers)
   // Make sure the fastest client wins, even if they are called in some other
   // order.
   {
-    auto result = makeAsyncFastestPool(array(retro(clients))).getPort().waitGet();
+    auto result = makeAsyncFastestPool(array(retro(clients))).getPort().waitGet(clientTimeout);
     enforce(result == ports[0]);
   }
 
   // Try the case where all clients fail.
   {
     auto pool = makeAsyncFastestPool(clients[3 .. $]);
-    auto e = cast(TCompoundOperationException)collectException(pool.getPort().waitGet());
+    auto e = cast(TCompoundOperationException)collectException(pool.getPort().waitGet(clientTimeout));
     enforce(e);
     enforce(equal(map!"a.port"(cast(TestServiceException[])e.exceptions),
       ports[3 .. $]));
@@ -365,7 +377,7 @@ void asyncFastestClientPoolTest(const(ushort)[] ports, ExTestHandler[] handlers)
   // Try the case where the first clients fail, but a later one succeeds.
   {
     auto pool = makeAsyncFastestPool(clients[1 .. $]);
-    enforce(pool.getPortInArray() == [ports[1]]);
+    enforce(pool.getPortInArray().waitGet(clientTimeout) == [ports[1]]);
   }
 }
 
@@ -400,7 +412,7 @@ void asyncAggregatorTest(const(ushort)[] ports, ExTestHandler[] handlers) {
   // Test default accumulator for scalars.
   {
     auto fullResult = aggregator.getPort().accumulate();
-    enforce(fullResult.waitGet() == ports[0 .. 3]);
+    enforce(fullResult.waitGet(clientTimeout) == ports[0 .. 3]);
 
     auto partialResult = aggregator.getPort().accumulate();
     Thread.sleep(dur!"msecs"(20));
@@ -411,7 +423,7 @@ void asyncAggregatorTest(const(ushort)[] ports, ExTestHandler[] handlers) {
   // Test default accumulator for arrays.
   {
     auto fullResult = aggregator.getPortInArray().accumulate();
-    enforce(fullResult.waitGet() == ports[0 .. 3]);
+    enforce(fullResult.waitGet(clientTimeout) == ports[0 .. 3]);
 
     auto partialResult = aggregator.getPortInArray().accumulate();
     Thread.sleep(dur!"msecs"(20));
@@ -423,7 +435,7 @@ void asyncAggregatorTest(const(ushort)[] ports, ExTestHandler[] handlers) {
     auto fullResult = aggregator.getPort().accumulate!(function(int[] results){
       return reduce!"a + b"(results);
     })();
-    enforce(fullResult.waitGet() == ports[0] + ports[1] + ports[2]);
+    enforce(fullResult.waitGet(clientTimeout) == ports[0] + ports[1] + ports[2]);
 
     auto partialResult = aggregator.getPort().accumulate!(
       function(int[] results, Exception[] exceptions) {
