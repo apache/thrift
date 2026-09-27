@@ -83,6 +83,9 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
         else if (iter->first.compare("no_deepcopy") == 0) {
           suppress_deepcopy = true;
         }
+        else if (iter->first.compare("net11") == 0) {
+          target_net_version = 11;
+        }
         else if (iter->first.compare("net10") == 0) {
           target_net_version = 10;
         }
@@ -212,9 +215,12 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
-    if( target_net_version >= 10) {
+    if( target_net_version >= 11) {
+        out << "// targeting net 11" << '\n';
+        out << "#if( !NET11_0_OR_GREATER)" << '\n';
+    } else if( target_net_version >= 10) {
         out << "// targeting net 10" << '\n';
-        out << "#if( !NET10_0_OR_GREATER)" << '\n';
+        out << "#if( NET11_0_OR_GREATER || !NET10_0_OR_GREATER)" << '\n';
     } else if( target_net_version >= 9) {
         out << "// targeting net 9" << '\n';
         out << "#if( NET10_0_OR_GREATER || !NET9_0_OR_GREATER)" << '\n';
@@ -4294,6 +4300,7 @@ THRIFT_REGISTER_GENERATOR(
     "    net8:            Enable features that require net8 and C# 12 or higher.\n"
     "    net9:            Enable features that require net9 and C# 13 or higher.\n"
     "    net10:           Enable features that require net10 and C# 14 or higher.\n"
+    "    net11:           Enable features that require net11 and C# 15 or higher.\n"
     "    no_deepcopy:     Suppress generation of " + DEEP_COPY_METHOD_NAME + "() method.\n"
     "    async_postfix:   Append \"Async\" to all service methods (maintains compatibility with existing code).\n"
 )

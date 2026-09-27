@@ -41,7 +41,7 @@ for arg in "$@"; do
 done
 
 # Ensure the SharpFuzz.CommandLine global tool (runtimeconfig-pinned to
-# net9.0 in package 2.2.0) can roll forward onto the net10 runtime used
+# net9.0 in package 2.2.0) can roll forward onto the net11 runtime used
 # by this repo. Remove once SharpFuzz 2.3.0 (upstream PR #72) ships with
 # an updated runtimeconfig.
 export DOTNET_ROLL_FORWARD=Major
@@ -84,7 +84,7 @@ THRIFT=$(realpath "$THRIFT")
 THRIFT_FILE=$(realpath "$(dirname "$0")/../../test/FuzzTest.thrift")
 GEN_DIR=$(realpath -m "$(dirname "$0")/Tests/Thrift.FuzzTests/gen-netstd")
 FUZZERS_DIR=$(realpath "$(dirname "$0")/Tests/Thrift.FuzzTests")
-OUTPUT_DIR="$FUZZERS_DIR/bin/Debug/net10.0"
+OUTPUT_DIR="$FUZZERS_DIR/bin/Debug/net11.0"
 
 # Step 1: Generate C# code from FuzzTest.thrift
 if [ ! -x "$THRIFT" ]; then
@@ -97,7 +97,7 @@ rm -rf "$GEN_DIR"
 mkdir -p "$GEN_DIR"
 
 echo "[1/13] Generating C# code from $THRIFT_FILE ..."
-"$THRIFT" --gen netstd:net10 -out "$GEN_DIR" "$THRIFT_FILE"
+"$THRIFT" --gen netstd:net11 -out "$GEN_DIR" "$THRIFT_FILE"
 echo "C# code generated in $GEN_DIR."
 
 # Step 2: Build all fuzzer projects

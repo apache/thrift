@@ -70,6 +70,7 @@ FILES[lib/js/src/thrift.js]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
 FILES[lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net11/Thrift.Compile.net11.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj]=simpleReplace

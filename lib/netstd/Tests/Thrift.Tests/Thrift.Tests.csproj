@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <LangVersion>latestMajor</LangVersion>
     <Version>0.26.0.0</Version>
     <Nullable>enable</Nullable>
@@ -36,7 +36,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Thrift\Thrift.csproj" />
-    <ProjectReference Include="..\Thrift.Compile.Tests\Thrift.Compile.net10\Thrift.Compile.net10.csproj" />
+    <ProjectReference Include="..\Thrift.Compile.Tests\Thrift.Compile.net11\Thrift.Compile.net11.csproj" />
   </ItemGroup>
 
   <ItemGroup>
