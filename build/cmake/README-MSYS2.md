@@ -12,41 +12,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Building thrift on Windows (MinGW64/MSYS2)
+# Building thrift on Windows (MSYS2 UCRT64)
 
 Thrift uses cmake to make it easier to build the project on multiple platforms, however to build a fully functional and production ready thrift on Windows requires a number of third party libraries to be obtained.  Once third party libraries are ready, the right combination of options must be passed to cmake in order to generate the correct environment.
-
-> Note: libevent and libevent-devel do not work with this toolchain as they do not properly detect mingw64 and expect some headers to exist that do not, so the non-blocking server is not currently built into this solution.
 
 ## MSYS2
 
 Download and fully upgrade msys2 following the instructions at:
 
-    https://msys2.github.io/
+    https://www.msys2.org/
+
+Run all of the following steps in a terminal for the UCRT64 environment of MSYS2, which puts `/ucrt64/bin` first on the PATH. The MSYS2 installer opens one when it finishes, and https://www.msys2.org/docs/environments/ describes the environments. MSYS2 is phasing out the MINGW64 environment that earlier versions of these instructions used.
 
 Install the necessary toolchain items for C++:
 
-    $ pacman --needed -S bison flex make mingw-w64-x86_64-openssl \
-                mingw-w64-x86_64-boost mingw-w64-x86_64-cmake \
-                mingw-w64-x86_64-toolchain mingw-w64-x86_64-zlib
-
-Update your msys2 bash path to include /mingw64/bin by adding a line to your ~/.bash_profiles using this command:
-
-    echo "export PATH=/mingw64/bin:\$PATH" >> ~/.bash_profile
-
-After that, close your shell and open a new one.
+    $ pacman --needed -S bison flex make mingw-w64-ucrt-x86_64-openssl \
+                mingw-w64-ucrt-x86_64-boost mingw-w64-ucrt-x86_64-cmake \
+                mingw-w64-ucrt-x86_64-libevent mingw-w64-ucrt-x86_64-toolchain \
+                mingw-w64-ucrt-x86_64-zlib
 
 Use cmake to create a MinGW makefile, out of tree (assumes you are in the top level of the thrift source tree):
 
     mkdir ../thrift-build
     cd ../thrift-build
-    cmake -G"MinGW Makefiles" -DCMAKE_MAKE_PROGRAM=/mingw64/bin/mingw32-make \
-       -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc.exe \
-       -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++.exe \
-       -DWITH_LIBEVENT=OFF \
-       -DWITH_SHARED_LIB=OFF -DWITH_STATIC_LIB=ON \
-       -DWITH_JAVA=OFF -DWITH_PYTHON=OFF -DWITH_PERL=OFF \
+    cmake -G"MinGW Makefiles" -DCMAKE_MAKE_PROGRAM=/ucrt64/bin/mingw32-make \
+       -DCMAKE_C_COMPILER=/ucrt64/bin/gcc.exe \
+       -DCMAKE_CXX_COMPILER=/ucrt64/bin/g++.exe \
+       -DOPENSSL_ROOT_DIR=/ucrt64 \
+       -DWITH_JAVA=OFF -DWITH_PYTHON=OFF \
        ../thrift
+
+This builds the compiler and the C++ library with OpenSSL, libevent and zlib. The libraries are DLLs, which is the default on Windows; `-DBUILD_SHARED_LIBS=OFF` builds static libraries instead.
 
 Build thrift (inside thrift-build):
 
@@ -56,8 +52,6 @@ Run the tests (inside thrift-build):
 
     ctest
 
-> If you run into issues, check Apache Jira THRIFT-4046 for patches relating to MinGW64/MSYS2 builds.
-
 ## Tested With
 
-msys2 64-bit 2016-10-26 distribution
+The AppVeyor MINGW job builds thrift in the UCRT64 environment and runs its tests on every commit, with the packages and compilers shown here; see `build/appveyor/MINGW-appveyor-full.bat`.
