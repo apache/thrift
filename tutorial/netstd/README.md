@@ -19,6 +19,8 @@ Depending on the platform, the name of the generated executables will vary. On L
 - go to folder (Client/Server) 
 - run the generated executables: server first, then client from a second console
 
+`make check`, or `./smoketest.sh` after a build, runs the client against the server once for each transport, and with the other protocols, the layered transports and multiplexing. The client exits with 1 if one of its clients fails.
+
 # Known issues
 - In trace logging mode you can see some not important internal exceptions
 

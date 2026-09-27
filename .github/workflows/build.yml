@@ -559,6 +559,11 @@ jobs:
             test/netstd/Server/bin/Release/
           retention-days: 3
 
+      # Builds the tutorial and runs its client against its server (smoketest.sh)
+      - name: Run make check for tutorial/netstd
+        timeout-minutes: 15
+        run: make -C tutorial/netstd check
+
   lib-netstd-codegen:
     needs: [compiler]
     runs-on: ubuntu-24.04
