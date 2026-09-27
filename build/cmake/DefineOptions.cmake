@@ -119,7 +119,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
 
 # Common library options
 # https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
-# Default on Windows is static, shared mode library support needs work...
+# Default is shared libraries on Windows, static libraries elsewhere
 if(WIN32)
     set(DEFAULT_BUILD_SHARED_LIBS ON)
 else()
