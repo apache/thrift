@@ -25,6 +25,7 @@
   </Configurations>
   <Project Path="../../lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj" />
+  <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net11/Thrift.Compile.net11.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj" />
   <Project Path="../../lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj" />

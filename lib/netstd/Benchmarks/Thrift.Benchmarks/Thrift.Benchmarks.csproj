@@ -20,6 +20,9 @@
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <!-- Stays on net10.0 until a BenchmarkDotNet release supports net11.0. BenchmarkDotNet 0.15.8
+         stops with "GetRuntimeVersion not implemented for NotRecognized" (0.16.0 is in preview).
+         Follow-up listed on THRIFT-6382. -->
     <TargetFramework>net10.0</TargetFramework>
     <Version>0.26.0</Version>
     <LangVersion>latestMajor</LangVersion>

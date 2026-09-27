@@ -25,6 +25,7 @@ all-local:
 check-local: precompile-fuzzers
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj
+	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
@@ -58,6 +59,10 @@ clean-local:
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net10/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net10/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net11/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net11/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/obj
 	$(RM) -r Tests/Thrift.FuzzTests/bin

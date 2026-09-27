@@ -19,7 +19,7 @@
 # a Build Tools component below, for the C++/CLI test project.
 # Keep the SDK major in step with the highest TargetFramework in lib/netstd:
 # an older SDK cannot build a newer target.
-FROM mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
+FROM mcr.microsoft.com/dotnet/sdk:11.0-windowsservercore-ltsc2025
 
 # Restore the default Windows shell for correct batch processing below.
 SHELL ["cmd", "/S", "/C"]
