@@ -122,7 +122,6 @@ Sample:
             if (Logger.IsEnabled(LogLevel.Information))
                 Logger.LogInformation("Selected client transport: {transport}", transport);
 
-            var protocol = MakeProtocol( args, MakeTransport(args));
             if (Logger.IsEnabled(LogLevel.Information))
                 Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
 
@@ -133,6 +132,8 @@ Sample:
             var tasks = new Task[numClients];
             for (int i = 0; i < numClients; i++)
             {
+                // each client gets a transport and protocol of its own
+                var protocol = MakeProtocol(args, MakeTransport(args));
                 var task = RunClientAsync(protocol, mplex, cancellationToken);
                 tasks[i] = task;
             }
