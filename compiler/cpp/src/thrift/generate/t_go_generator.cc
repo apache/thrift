@@ -3112,8 +3112,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
                  << '\n';
         f_remote << indent() << "containerStruct" << i << " := " << argumentsModule << ".New"
                  << argumentsName << "()" << '\n';
-        f_remote << indent() << err2 << " := containerStruct" << i << ".ReadField" << (i + 1) << "(context.Background(), "
-                 << jsProt << ")" << '\n';
+        // The args struct names its read methods after the field id, which need not be the
+        // argument's position, and is negative (ReadField_N) when the IDL gives none.
+        int32_t field_id = args[i]->get_key();
+        string read_method = field_id < 0 ? "ReadField_" + std::to_string(-field_id)
+                                          : "ReadField" + std::to_string(field_id);
+        f_remote << indent() << err2 << " := containerStruct" << i << "." << read_method
+                 << "(context.Background(), " << jsProt << ")" << '\n';
         f_remote << indent() << "if " << err2 << " != nil {" << '\n';
         indent_up();
         f_remote << indent() << "Usage()" << '\n';
