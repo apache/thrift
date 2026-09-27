@@ -1403,8 +1403,11 @@ jobs:
         run: make -C lib/d
 
       # Builds and runs every module's unit tests in both debug and release
-      # mode, then the lib/d/test client pool and transport tests.
+      # mode, then the lib/d/test client pool and transport tests. It takes
+      # under 3 minutes; the limit makes a hung test fail the step instead of
+      # holding the job until its 60 minute timeout.
       - name: Run make check for d
+        timeout-minutes: 15
         run: make -C lib/d check
 
   lib-ruby:
