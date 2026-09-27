@@ -72,7 +72,10 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ValidateTest.thrift \
 				ForwardType.thrift \
 				StringParseAllocationTest.thrift \
-				DocCommentTest.thrift
+				DocCommentTest.thrift \
+				RemoteShadowClient.thrift \
+				RemoteShadowHost.thrift \
+				RemoteShadowTest.thrift
 	mkdir -p gopath/src
 	grep -v 'set<Insanity>' $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
@@ -115,6 +118,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ForwardType.thrift
 	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
 	$(THRIFT) $(THRIFTARGS) DocCommentTest.thrift
+	$(THRIFT) $(THRIFTARGS) -r RemoteShadowTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -149,7 +153,9 @@ check: gopath
 				./gopath/src/processormiddlewaretest \
 				./gopath/src/clientmiddlewareexceptiontest \
 				./gopath/src/validatetest \
-				./gopath/src/forwardtypetest
+				./gopath/src/forwardtypetest \
+				./gopath/src/remoteshadowtest \
+				./gopath/src/remoteshadowtest/shadow_service-remote
 	$(GO) test github.com/apache/thrift/lib/go/thrift
 	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
@@ -200,6 +206,9 @@ EXTRA_DIST = \
 	OptionalFieldsTest.thrift \
 	ProcessorMiddlewareTest.thrift \
 	RefAnnotationFieldsTest.thrift \
+	RemoteShadowClient.thrift \
+	RemoteShadowHost.thrift \
+	RemoteShadowTest.thrift \
 	RequiredFieldTest.thrift \
 	ServicesTest.thrift \
 	StringParseAllocationTest.thrift \
