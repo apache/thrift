@@ -127,10 +127,10 @@ ENV PATH=/usr/lib/dart/bin:$PATH
 RUN add-apt-repository ppa:dotnet/backports
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
-  dotnet-sdk-10.0 \
-  dotnet-runtime-10.0 \
-  aspnetcore-runtime-10.0 \
-  dotnet-apphost-pack-10.0
+  dotnet-sdk-11.0 \
+  dotnet-runtime-11.0 \
+  aspnetcore-runtime-11.0 \
+  dotnet-apphost-pack-11.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=25.3.2.9
