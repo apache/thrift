@@ -31,20 +31,23 @@ SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\install\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
 
 
-:: PLATFORM is x86 or x64
-:: NORM_PLATFORM is 32 or 64
+:: The MSYS2 environment to build in:
+:: MINGWPKG is its package name prefix, MINGWDIR its root directory
+:: PLATFORM = x86 means MINGW32, the only 32-bit environment MSYS2 still has
+:: PLATFORM = x64 means UCRT64, as MSYS2 is phasing out MINGW64
+::
+:: IGNORE keeps the system upgrade out of the environments the build does not
+:: use. The image comes with MINGW64 and MINGW32 packages, and MSYS2 removes
+:: packages from both; an installed package that is gone from the repository
+:: and requires an exact version of another one makes the whole upgrade fail.
 IF "%PLATFORM%" == "x86" (
-    SET NORM_PLATFORM=32
+  SET MINGWPKG=mingw-w64-i686
+  SET MINGWDIR=/mingw32
+  SET IGNORE=--ignore 'mingw-w64-x86_64-*'
 ) ELSE (
-    SET NORM_PLATFORM=64
-)
-
-:: PLATFORM = x86 means MINGWPLAT i686
-:: PLATFORM = x64 means MINGWPLAT x86_64
-IF "%PLATFORM%" == "x86" (
-  SET MINGWPLAT=i686
-) ELSE (
-  SET MINGWPLAT=x86_64
+  SET MINGWPKG=mingw-w64-ucrt-x86_64
+  SET MINGWDIR=/ucrt64
+  SET IGNORE=--ignore 'mingw-w64-x86_64-*' --ignore 'mingw-w64-i686-*'
 )
 
 
@@ -54,7 +57,7 @@ SET GENERATOR=MinGW Makefiles
 
 
 SET BASH=C:\msys64\usr\bin\bash.exe
-!BASH! -lc "sed -i '/export PATH=\/mingw32\/bin/d' ~/.bash_profile && sed -i '/export PATH=\/mingw64\/bin/d' ~/.bash_profile && echo 'export PATH=/mingw%NORM_PLATFORM%/bin:$PATH' >> ~/.bash_profile" || EXIT /B
+!BASH! -lc "sed -i '/export PATH=\/mingw32\/bin/d' ~/.bash_profile && sed -i '/export PATH=\/mingw64\/bin/d' ~/.bash_profile && sed -i '/export PATH=\/ucrt64\/bin/d' ~/.bash_profile && echo 'export PATH=%MINGWDIR%/bin:$PATH' >> ~/.bash_profile" || EXIT /B
 
 SET BUILDDIR=%BUILDDIR:\=/%
 SET BUILDDIR=/c!BUILDDIR:~2!
@@ -68,18 +71,17 @@ CALL win_showenv.bat || EXIT /B
 
 SET PACKAGES=^
   base-devel ^
-  mingw-w64-x86_64-toolchain ^
   bison ^
   flex ^
   make ^
-  mingw-w64-%MINGWPLAT%-boost ^
-  mingw-w64-%MINGWPLAT%-cmake ^
-  mingw-w64-%MINGWPLAT%-libevent ^
-  mingw-w64-%MINGWPLAT%-openssl ^
-  mingw-w64-%MINGWPLAT%-toolchain ^
-  mingw-w64-%MINGWPLAT%-zlib
+  %MINGWPKG%-boost ^
+  %MINGWPKG%-cmake ^
+  %MINGWPKG%-libevent ^
+  %MINGWPKG%-openssl ^
+  %MINGWPKG%-toolchain ^
+  %MINGWPKG%-zlib
 
-::mingw-w64-%MINGWPLAT%-qt5 : WAY too large (1GB download!) - tested in cygwin builds anyway
+::%MINGWPKG%-qt5 : WAY too large (1GB download!) - tested in cygwin builds anyway
 
 :: Upgrade things
 CALL pacman-retry.bat --noconfirm -Syu %IGNORE% || EXIT /B
@@ -108,10 +110,10 @@ SET CMAKEARGS=^
   -G'%GENERATOR%' ^
   -DCMAKE_BUILD_TYPE=%CONFIGURATION% ^
   -DCMAKE_INSTALL_PREFIX=%INSTDIR% ^
-  -DCMAKE_MAKE_PROGRAM=/mingw%NORM_PLATFORM%/bin/mingw32-make ^
-  -DCMAKE_C_COMPILER=/mingw%NORM_PLATFORM%/bin/gcc.exe ^
-  -DCMAKE_CXX_COMPILER=/mingw%NORM_PLATFORM%/bin/g++.exe ^
-  -DOPENSSL_ROOT_DIR=/mingw%NORM_PLATFORM% ^
+  -DCMAKE_MAKE_PROGRAM=%MINGWDIR%/bin/mingw32-make ^
+  -DCMAKE_C_COMPILER=%MINGWDIR%/bin/gcc.exe ^
+  -DCMAKE_CXX_COMPILER=%MINGWDIR%/bin/g++.exe ^
+  -DOPENSSL_ROOT_DIR=%MINGWDIR% ^
   -DWITH_PYTHON=OFF
 
 %BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --parallel %NUMBER_OF_PROCESSORS% && cmake --install . --config %CONFIGURATION%" || EXIT /B
