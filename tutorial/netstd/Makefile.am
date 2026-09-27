@@ -22,6 +22,9 @@ SUBDIRS = .
 all-local:
 	$(DOTNETCORE) build -c Release
 
+check-local:
+	DOTNET="$(DOTNETCORE)" bash ./smoketest.sh
+
 clean-local:
 	$(RM) Interfaces.dll
 	$(RM) -r Client/bin
@@ -47,5 +50,6 @@ EXTRA_DIST = \
 	Server \
 	Tutorial.slnx \
 	build.cmd \
-	build.sh
+	build.sh \
+	smoketest.sh
 			 
