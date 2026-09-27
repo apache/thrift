@@ -153,7 +153,12 @@ if test "$with_cpp" = "yes";  then
     AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
     AC_SUBST([BOOST_CHRONO_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_chrono.a")])
     AC_SUBST([BOOST_FILESYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_filesystem.a")])
-    AC_SUBST([BOOST_SYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_system.a")])
+    # Boost.System is header-only since 1.69, and 1.89 stopped shipping the stub library.
+    BOOST_SYSTEM_LDADD=
+    if test -f "$BOOST_LIB_DIR/libboost_system.a"; then
+      BOOST_SYSTEM_LDADD="$BOOST_LIB_DIR/libboost_system.a"
+    fi
+    AC_SUBST([BOOST_SYSTEM_LDADD])
     AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
     AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
     have_cpp="yes"
