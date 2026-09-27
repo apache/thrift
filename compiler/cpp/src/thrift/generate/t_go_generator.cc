@@ -600,7 +600,10 @@ string t_go_generator::render_program_import(const t_program* program, string& u
       // path components to generate a more readable name unique identifier (e.g. use
       // packageacommon as the alias for packagea/common instead of common=). But just
       // appending an integer is much simpler code
-      value = tmp(value);
+      string base = value;
+      do {
+        value = tmp(base);
+      } while (package_identifiers_set_.find(value) != package_identifiers_set_.end());
     }
     package_identifiers_set_.insert(value);
     it = package_identifiers_.emplace(go_module, std::move(value)).first;
@@ -2652,6 +2655,20 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
 
   string unused_protection;
 
+  // The stub is its own package main, so it gets its own import identifiers: those of the
+  // program's other files are restored once the stub is written. main() below declares these
+  // local variables; an imported package with one of these names would be shadowed by them, so
+  // the stub imports such a package under an alias. Keep this list in sync with main().
+  auto saved_package_identifiers = std::move(package_identifiers_);
+  auto saved_package_identifiers_set = std::move(package_identifiers_set_);
+  package_identifiers_.clear();
+  package_identifiers_set_ = {"cfg",      "client",    "cmd",       "err",
+                              "framed",   "headers",   "host",      "httptrans",
+                              "iprot",    "m",         "oprot",     "parsedUrl",
+                              "parts",    "port",      "portStr",   "protocol",
+                              "protocolFactory",       "trans",     "urlString",
+                              "useHttp"};
+
   std::vector<string> system_packages;
   system_packages.push_back("context");
   system_packages.push_back("flag");
@@ -3200,6 +3217,9 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "}" << '\n';
   indent_down();
   f_remote << indent() << "}" << '\n';
+  package_identifiers_ = std::move(saved_package_identifiers);
+  package_identifiers_set_ = std::move(saved_package_identifiers_set);
+
   // Close service file
   f_remote.close();
   format_go_output(f_remote_name);
