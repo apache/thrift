@@ -22,7 +22,7 @@
 set -e
 
 # Ensure the SharpFuzz.CommandLine global tool (runtimeconfig-pinned to
-# net9.0 in package 2.2.0) can roll forward onto the net10 runtime used
+# net9.0 in package 2.2.0) can roll forward onto the net11 runtime used
 # by this repo. Remove once SharpFuzz 2.3.0 (upstream PR #72) ships with
 # an updated runtimeconfig.
 export DOTNET_ROLL_FORWARD=Major
@@ -137,7 +137,7 @@ if [ ! -f "$LIBFUZZER" ]; then
     echo "See README for installation instructions."
     exit 1
 fi
-OUTPUT_DIR="$(dirname "$0")/Tests/Thrift.FuzzTests/bin/Debug/net10.0"
+OUTPUT_DIR="$(dirname "$0")/Tests/Thrift.FuzzTests/bin/Debug/net11.0"
 CORPUS_DIR="$(dirname "$0")/corpus/$FUZZER_NAME"
 
 # Create corpus directory if it doesn't exist

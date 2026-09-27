@@ -33,7 +33,7 @@ namespace Thrift.Tests.Protocols
     // payload would hit -- not the protocol's Write/ReadStructBegin methods in isolation.
     //
     // The recursive IDL types come from test/Recursive.thrift, generated into the
-    // Thrift.Compile.net10 test assembly, and cover all three struct-like kinds:
+    // Thrift.Compile.net11 test assembly, and cover all three struct-like kinds:
     //   * struct    -- CoRec <-> CoRec2 (mutually recursive), RecTree (wide tree)
     //   * exception -- CoError <-> CoError2 (mutually recursive)
     //   * union     -- CoUnion <-> CoUnion2 (mutually recursive)

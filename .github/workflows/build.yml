@@ -512,7 +512,7 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "11.0.x"
 
       - name: Show .NET SDKs
         run: dotnet --list-sdks
@@ -565,17 +565,20 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        dotnet-version: [8, 9, 10]
+        dotnet-version: [8, 9, 10, 11]
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # The library also targets net11.0, which only the .NET 11 SDK can build
       - name: Set up .NET SDK ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "${{ matrix.dotnet-version }}.0.x"
+          dotnet-version: |
+            ${{ matrix.dotnet-version }}.0.x
+            11.0.x
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
