@@ -175,9 +175,8 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
         ```bash
         gpg --armor --output thrift-1.0.0.tar.gz.asc --detach-sig thrift-1.0.0.tar.gz
-        md5sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.md5
-        sha1sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.sha1
         sha256sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.sha256
+        sha512sum thrift-1.0.0.tar.gz > thrift-1.0.0.tar.gz.sha512
 
 1. Generate the Windows Thrift Compiler.  The compiler is portable and folks find it useful to be able to download one, especially if they are using third-party distributed runtime libraries for interpreted languages on Windows. It requires Visual C++ Runtime due to ASF regulations.  There are two ways to generate this:
 
@@ -273,9 +272,8 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.tar.gz.asc
 
     The release candidates checksums are:
-    md5: 
-    sha1: 
     sha256: 
+    sha512: 
 
 
     A prebuilt Windows compiler is available at:
@@ -285,9 +283,8 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe.asc
 
     Prebuilt Windows compiler checksums are:
-    md5: 
-    sha1: 
     sha256: 
+    sha512: 
 
 
     A Windows installer for the compiler is available at:
@@ -297,9 +294,8 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0-setup.exe.asc
 
     Windows installer checksums are:
-    md5: 
-    sha1: 
     sha256: 
+    sha512: 
 
     
     The source tree as ZIP file to be published via Github releases:
@@ -309,9 +305,8 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.zip.asc
 
     ZIP source tree checksums are:
-    md5: 
-    sha1: 
     sha256: 
+    sha512: 
     
     The CHANGES list for this release is available at:
     https://github.com/apache/thrift/blob/release/1.0.0/CHANGES.md
