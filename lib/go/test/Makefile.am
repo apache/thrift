@@ -76,7 +76,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				RemoteShadowAlias.thrift \
 				RemoteShadowClient.thrift \
 				RemoteShadowHost.thrift \
-				RemoteShadowTest.thrift
+				RemoteShadowTest.thrift \
+				Hyphenated-Name.thrift
 	mkdir -p gopath/src build
 	grep -v 'set<Insanity>' $(THRIFTTEST) > build/ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
@@ -120,6 +121,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
 	$(THRIFT) $(THRIFTARGS) DocCommentTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r RemoteShadowTest.thrift
+	$(THRIFT) $(THRIFTARGS) Hyphenated-Name.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -156,7 +158,9 @@ check: gopath
 				./gopath/src/validatetest \
 				./gopath/src/forwardtypetest \
 				./gopath/src/remoteshadowtest \
-				./gopath/src/remoteshadowtest/shadow_service-remote
+				./gopath/src/remoteshadowtest/shadow_service-remote \
+				./gopath/src/hyphenated_name \
+				./gopath/src/hyphenated_name/hyphenated_service-remote
 	$(GO) test github.com/apache/thrift/lib/go/thrift
 	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
@@ -196,6 +200,7 @@ EXTRA_DIST = \
 	EqualsTest.thrift \
 	ForwardType.thrift \
 	GoTagTest.thrift \
+	Hyphenated-Name.thrift \
 	IgnoreInitialismsTest.thrift \
 	IncludesTest.thrift \
 	InitialismsTest.thrift \
