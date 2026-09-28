@@ -7,6 +7,7 @@
     <ClCompile Include="src\thrift\TUuid.cpp" />
     <ClCompile Include="src\thrift\TOutput.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
+    <ClCompile Include="src\thrift\TConfiguration.cpp" />
     <ClCompile Include="src\thrift\transport\TTransportException.cpp">
       <Filter>transport</Filter>
     </ClCompile>

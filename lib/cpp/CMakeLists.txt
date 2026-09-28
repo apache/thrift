@@ -30,6 +30,7 @@ endif()
 # Create the thrift C++ library
 set(thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
+   src/thrift/TConfiguration.cpp
    src/thrift/TOutput.cpp
    src/thrift/TUuid.cpp
    src/thrift/async/TAsyncChannel.cpp
