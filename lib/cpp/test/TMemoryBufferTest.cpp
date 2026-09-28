@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(test_observe) {
   };
   static const std::array<uint8_t, N> buf_mem = filler();
 
-  BOOST_STATIC_ASSERT(M < N);
+  static_assert(M < N, "");
 
   TMemoryBuffer buf((uint8_t*)&buf_mem.front(), N, TMemoryBuffer::MemoryPolicy::OBSERVE);
 
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(test_copy) {
   };
   static const std::array<uint8_t, N> buf_mem = filler();
 
-  BOOST_STATIC_ASSERT(M < N);
+  static_assert(M < N, "");
 
   TMemoryBuffer buf((uint8_t*)&buf_mem.front(), N, TMemoryBuffer::MemoryPolicy::COPY);
 
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(test_take_ownership)
   };
   uint8_t* buf_mem = filler();
 
-  BOOST_STATIC_ASSERT(M < N);
+  static_assert(M < N, "");
 
   TMemoryBuffer buf(buf_mem, N, TMemoryBuffer::MemoryPolicy::TAKE_OWNERSHIP);
 

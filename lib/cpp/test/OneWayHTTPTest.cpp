@@ -19,7 +19,7 @@
 
 #include "gen-cpp/OneWayService.h"
 #include <boost/test/unit_test.hpp>
-#include <boost/thread.hpp>
+#include "TestThread.h"
 #include <climits>
 #include <iostream>
 #include <memory>
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
   cerr << "Starting the server...\n";
 #endif
   RPC0ThreadClass t(server) ;
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE( JSON_HTTP_OneWayWrapperDoesNotPoisonNextCall )
   server.setServerEventHandler(pEventHandler);
 
   RPC0ThreadClass t(server);
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));
@@ -377,7 +377,7 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
   server.setServerEventHandler(pEventHandler);
 
   RPC0ThreadClass t(server);
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));

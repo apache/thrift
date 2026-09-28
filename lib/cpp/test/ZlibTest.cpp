@@ -33,13 +33,13 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+#include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
 
-#include <boost/random.hpp>
-#include <boost/shared_array.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/version.hpp>
 
@@ -54,7 +54,7 @@ using apache::thrift::protocol::TJSONProtocol;
 using std::shared_ptr;
 using std::string;
 
-boost::mt19937 rng;
+std::mt19937 rng;
 
 /*
  * Utility code
@@ -78,12 +78,12 @@ private:
 class LogNormalSizeGenerator : public SizeGenerator {
 public:
   LogNormalSizeGenerator(double mean, double std_dev)
-    : gen_(rng, boost::lognormal_distribution<double>(mean, std_dev)) {}
+    : engine_(rng), distribution_(fromMeanAndStdDev(mean, std_dev)) {}
 
   unsigned int getSize() override {
     // Loop until we get a size of 1 or more
     while (true) {
-      auto value = static_cast<unsigned int>(gen_());
+      auto value = static_cast<unsigned int>(distribution_(engine_));
       if (value >= 1) {
         return value;
       }
@@ -91,35 +91,43 @@ public:
   }
 
 private:
-  boost::variate_generator<boost::mt19937, boost::lognormal_distribution<double> > gen_;
+  // mean and std_dev describe the sizes themselves, as boost::lognormal_distribution
+  // took them; std::lognormal_distribution wants those of the underlying normal.
+  static std::lognormal_distribution<double> fromMeanAndStdDev(double mean, double std_dev) {
+    const double variance = std::log(1 + (std_dev * std_dev) / (mean * mean));
+    return std::lognormal_distribution<double>(std::log(mean) - variance / 2, std::sqrt(variance));
+  }
+
+  std::mt19937 engine_;
+  std::lognormal_distribution<double> distribution_;
 };
 
-boost::shared_array<uint8_t> gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
+std::shared_ptr<uint8_t> gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
   auto* buf = new uint8_t[buf_len];
   memset(buf, c, buf_len);
-  return boost::shared_array<uint8_t>(buf);
+  return std::shared_ptr<uint8_t>(buf, std::default_delete<uint8_t[]>());
 }
 
-boost::shared_array<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
+std::shared_ptr<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
   auto* buf = new uint8_t[buf_len];
 
   // Generate small runs of alternately increasing and decreasing bytes
-  boost::uniform_smallint<uint32_t> run_length_distribution(1, 64);
-  boost::uniform_smallint<uint8_t> byte_distribution(0, UINT8_MAX);
-  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint8_t> >
-      byte_generator(rng, byte_distribution);
-  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint32_t> >
-      run_len_generator(rng, run_length_distribution);
+  // Each generator draws from its own copy of the engine, as boost's
+  // variate_generator did when it was given the engine by value.
+  std::mt19937 byte_engine(rng);
+  std::mt19937 run_len_engine(rng);
+  std::uniform_int_distribution<uint32_t> run_length_distribution(1, 64);
+  std::uniform_int_distribution<unsigned int> byte_distribution(0, UINT8_MAX);
 
   uint32_t idx = 0;
   int8_t step = 1;
   while (idx < buf_len) {
-    uint32_t run_length = run_len_generator();
+    uint32_t run_length = run_length_distribution(run_len_engine);
     if (idx + run_length > buf_len) {
       run_length = buf_len - idx;
     }
 
-    uint8_t byte = byte_generator();
+    auto byte = static_cast<uint8_t>(byte_distribution(byte_engine));
     for (uint32_t n = 0; n < run_length; ++n) {
       buf[idx] = byte;
       ++idx;
@@ -129,41 +137,40 @@ boost::shared_array<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
     step *= -1;
   }
 
-  return boost::shared_array<uint8_t>(buf);
+  return std::shared_ptr<uint8_t>(buf, std::default_delete<uint8_t[]>());
 }
 
-boost::shared_array<uint8_t> gen_random_buffer(uint32_t buf_len) {
+std::shared_ptr<uint8_t> gen_random_buffer(uint32_t buf_len) {
   auto* buf = new uint8_t[buf_len];
 
-  boost::uniform_smallint<uint8_t> distribution(0, UINT8_MAX);
-  boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint8_t> >
-      generator(rng, distribution);
+  std::mt19937 engine(rng);
+  std::uniform_int_distribution<unsigned int> distribution(0, UINT8_MAX);
 
   for (uint32_t n = 0; n < buf_len; ++n) {
-    buf[n] = generator();
+    buf[n] = static_cast<uint8_t>(distribution(engine));
   }
 
-  return boost::shared_array<uint8_t>(buf);
+  return std::shared_ptr<uint8_t>(buf, std::default_delete<uint8_t[]>());
 }
 
 /*
  * Test functions
  */
 
-void test_write_then_read(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
+void test_write_then_read(const std::shared_ptr<uint8_t> buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
 
-  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[buf_len], std::default_delete<uint8_t[]>());
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   zlib_trans->verifyChecksum();
 }
 
-void test_separate_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
+void test_separate_checksum(const std::shared_ptr<uint8_t> buf, uint32_t buf_len) {
   // This one is tricky.  I separate the last byte of the stream out
   // into a separate crbuf_.  The last byte is part of the checksum,
   // so the entire read goes fine, but when I go to verify the checksum
@@ -180,14 +187,14 @@ void test_separate_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf
                                       TZlibTransport::DEFAULT_URBUF_SIZE,
                                       static_cast<uint32_t>(tmp_buf.length() - 1)));
 
-  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[buf_len], std::default_delete<uint8_t[]>());
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
   zlib_trans->verifyChecksum();
 }
 
-void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
+void test_incomplete_checksum(const std::shared_ptr<uint8_t> buf, uint32_t buf_len) {
   // Make sure we still get that "not complete" error if
   // it really isn't complete.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
@@ -200,7 +207,7 @@ void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t b
   membuf->resetBuffer(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(tmp_buf.data())),
                       static_cast<uint32_t>(tmp_buf.length()));
 
-  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[buf_len], std::default_delete<uint8_t[]>());
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf.get(), buf_len), 0);
@@ -212,7 +219,7 @@ void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t b
   }
 }
 
-void test_read_write_mix(const boost::shared_array<uint8_t> buf,
+void test_read_write_mix(const std::shared_ptr<uint8_t> buf,
                          uint32_t buf_len,
                          const shared_ptr<SizeGenerator>& write_gen,
                          const shared_ptr<SizeGenerator>& read_gen) {
@@ -234,7 +241,7 @@ void test_read_write_mix(const boost::shared_array<uint8_t> buf,
   zlib_trans->finish();
 
   tot = 0;
-  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[buf_len], std::default_delete<uint8_t[]>());
   while (tot < buf_len) {
     uint32_t read_len = read_gen->getSize();
     uint32_t expected_read_len = read_len;
@@ -251,7 +258,7 @@ void test_read_write_mix(const boost::shared_array<uint8_t> buf,
   zlib_trans->verifyChecksum();
 }
 
-void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
+void test_invalid_checksum(const std::shared_ptr<uint8_t> buf, uint32_t buf_len) {
   // Verify checksum checking.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
@@ -278,7 +285,7 @@ void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_
   membuf->resetBuffer(const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(tmp_buf.data())),
                       static_cast<uint32_t>(tmp_buf.length()));
 
-  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[buf_len], std::default_delete<uint8_t[]>());
   try {
     zlib_trans->readAll(mirror.get(), buf_len);
     zlib_trans->verifyChecksum();
@@ -288,7 +295,7 @@ void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_
   }
 }
 
-void test_write_after_flush(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
+void test_write_after_flush(const std::shared_ptr<uint8_t> buf, uint32_t buf_len) {
   // write some data
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
@@ -345,7 +352,7 @@ void test_get_underlying_transport() {
 void test_message_size_limit() {
   // Write 4 KB of compressible data, then read it back with a 1 KB limit.
   const uint32_t write_len = 4096;
-  boost::shared_array<uint8_t> buf = gen_uniform_buffer(write_len, 'a');
+  std::shared_ptr<uint8_t> buf = gen_uniform_buffer(write_len, 'a');
 
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   {
@@ -365,7 +372,7 @@ void test_message_size_limit() {
       Z_DEFAULT_COMPRESSION,
       config));
 
-  boost::shared_array<uint8_t> mirror(new uint8_t[write_len]);
+  std::shared_ptr<uint8_t> mirror(new uint8_t[write_len], std::default_delete<uint8_t[]>());
   try {
     reader->readAll(mirror.get(), write_len);
     BOOST_ERROR("readAll() should have thrown when maxMessageSize is exceeded");
@@ -436,7 +443,7 @@ void test_json_string_message_size_limit() {
 #endif
 
 void add_tests(boost::unit_test::test_suite* suite,
-               const boost::shared_array<uint8_t>& buf,
+               const std::shared_ptr<uint8_t>& buf,
                uint32_t buf_len,
                const char* name) {
   ADD_TEST_CASE(suite, name, test_write_then_read, buf, buf_len);

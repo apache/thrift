@@ -20,12 +20,12 @@
 #define BOOST_TEST_MODULE TSocketInterruptTest
 #include <boost/test/unit_test.hpp>
 
-#include <boost/chrono/duration.hpp>
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/thread/thread.hpp>
+#include <chrono>
+#include <thread>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include <memory>
+#include "TestThread.h"
 
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
@@ -58,11 +58,11 @@ BOOST_AUTO_TEST_CASE(test_interruptable_child_read) {
   TSocket clientSock("localhost", port);
   clientSock.open();
   std::shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  TestThread readThread(std::bind(readerWorkerMustThrow, accepted));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(readThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(readThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren did not interrupt child read");
   clientSock.close();
   accepted->close();
@@ -77,11 +77,11 @@ BOOST_AUTO_TEST_CASE(test_non_interruptable_child_read) {
   TSocket clientSock("localhost", port);
   clientSock.open();
   std::shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(std::bind(readerWorker, accepted, 0));
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  TestThread readThread(std::bind(readerWorker, accepted, 0));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // readThread is practically guaranteed to be blocking here
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(!readThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(!readThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child read");
 
   // only way to proceed is to have the client disconnect
@@ -110,11 +110,11 @@ BOOST_AUTO_TEST_CASE(test_interruptable_child_peek) {
   clientSock.open();
   std::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false if child is interrupted
-  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  TestThread peekThread(std::bind(peekerWorker, accepted, false));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(peekThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(peekThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren did not interrupt child peek");
   clientSock.close();
   accepted->close();
@@ -130,11 +130,11 @@ BOOST_AUTO_TEST_CASE(test_non_interruptable_child_peek) {
   clientSock.open();
   std::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false when remote side is closed
-  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  TestThread peekThread(std::bind(peekerWorker, accepted, false));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(!peekThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(!peekThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child peek");
 
   // only way to proceed is to have the client disconnect
