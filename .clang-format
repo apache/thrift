@@ -52,5 +52,13 @@ CommentPragmas:  '^ IWYU pragma:'
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
 SpaceBeforeParens: ControlStatements
 DisableFormat:   false
+FixNamespaceComments: false
+ReflowComments: false
+SortIncludes: Never
+BinPackArguments: false
+SortUsingDeclarations: false
+SpacesInLineCommentPrefix:
+  Minimum: 0
+  Maximum: -1
 ...
 

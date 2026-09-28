@@ -42,6 +42,7 @@ void base64_encode(const uint8_t* in, uint32_t len, uint8_t* buf) {
   }
 }
 
+// clang-format off
 static const uint8_t kBase64DecodeTable[256] = {
     0xff,
     0xff,
@@ -300,6 +301,7 @@ static const uint8_t kBase64DecodeTable[256] = {
     0xff,
     0xff,
 };
+// clang-format on
 
 void base64_decode(uint8_t* buf, uint32_t len) {
   buf[0] = (kBase64DecodeTable[buf[0]] << 2) | (kBase64DecodeTable[buf[1]] >> 4);
