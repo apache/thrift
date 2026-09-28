@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
+#include <chrono>
 #include <functional>
 
 #include <thrift/concurrency/Mutex.h>
@@ -179,6 +180,8 @@ private:
   int tcpRecvBuffer_;
   bool keepAlive_;
   bool listening_;
+  // Rate limit for the accept() retry log message.
+  std::chrono::steady_clock::time_point nextAcceptErrorLog_;
 
   concurrency::Mutex rwMutex_;                                 // thread-safe interrupt
   THRIFT_SOCKET interruptSockWriter_;                          // is notified on interrupt()

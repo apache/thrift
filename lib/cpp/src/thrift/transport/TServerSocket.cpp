@@ -19,10 +19,13 @@
 
 #include <thrift/thrift-config.h>
 
+#include <cerrno>
+#include <chrono>
 #include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <sys/types.h>
+#include <thread>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -52,6 +55,7 @@
 
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TServerSocketErrors.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TSocketUtils.h>
 #include <thrift/transport/SocketCommon.h>
@@ -648,62 +652,94 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   struct THRIFT_POLLFD fds[2];
 
   int maxEintrs = 5;
-  int numEintrs = 0;
-
-  while (true) {
-    std::memset(fds, 0, sizeof(fds));
-    fds[0].fd = serverSocket_;
-    fds[0].events = THRIFT_POLLIN;
-    if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
-      fds[1].fd = interruptSockReader_;
-      fds[1].events = THRIFT_POLLIN;
-    }
-    /*
-      TODO: if THRIFT_EINTR is received, we'll restart the timeout.
-      To be accurate, we need to fix this in the future.
-     */
-    int ret = THRIFT_POLL(fds, 2, accTimeout_);
-
-    if (ret < 0) {
-      // error cases
-      if (THRIFT_GET_SOCKET_ERROR == THRIFT_EINTR && (numEintrs++ < maxEintrs)) {
-        // THRIFT_EINTR needs to be handled manually and we can tolerate
-        // a certain number
-        continue;
-      }
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      TOutput::instance().perror("TServerSocket::acceptImpl() THRIFT_POLL() ", errno_copy);
-      throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
-    } else if (ret > 0) {
-      // Check for an interrupt signal
-      if (interruptSockReader_ != THRIFT_INVALID_SOCKET && (fds[1].revents & THRIFT_POLLIN)) {
-        int8_t buf;
-        if (-1 == recv(interruptSockReader_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
-          TOutput::instance().perror("TServerSocket::acceptImpl() recv() interrupt ",
-                              THRIFT_GET_SOCKET_ERROR);
-        }
-        throw TTransportException(TTransportException::INTERRUPTED);
-      }
-
-      // Check for the actual server socket being ready
-      if (fds[0].revents & THRIFT_POLLIN) {
-        break;
-      }
-    } else {
-      TOutput::instance()("TServerSocket::acceptImpl() THRIFT_POLL 0");
-      throw TTransportException(TTransportException::UNKNOWN);
-    }
-  }
 
   struct sockaddr_storage clientAddress;
-  int size = sizeof(clientAddress);
-  THRIFT_SOCKET clientSocket
-      = ::accept(serverSocket_, (struct sockaddr*)&clientAddress, (socklen_t*)&size);
+  int size = 0;
+  THRIFT_SOCKET clientSocket = THRIFT_INVALID_SOCKET;
+  int backoffMs = 0;
 
-  if (clientSocket == THRIFT_INVALID_SOCKET) {
+  while (clientSocket == THRIFT_INVALID_SOCKET) {
+    int numEintrs = 0;
+    while (true) {
+      std::memset(fds, 0, sizeof(fds));
+      fds[0].fd = serverSocket_;
+      fds[0].events = THRIFT_POLLIN;
+      if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
+        fds[1].fd = interruptSockReader_;
+        fds[1].events = THRIFT_POLLIN;
+      }
+      /*
+        TODO: if THRIFT_EINTR is received, we'll restart the timeout.
+        To be accurate, we need to fix this in the future.
+       */
+      int ret = THRIFT_POLL(fds, 2, accTimeout_);
+
+      if (ret < 0) {
+        // error cases
+        if (THRIFT_GET_SOCKET_ERROR == THRIFT_EINTR && (numEintrs++ < maxEintrs)) {
+          // THRIFT_EINTR needs to be handled manually and we can tolerate
+          // a certain number
+          continue;
+        }
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        TOutput::instance().perror("TServerSocket::acceptImpl() THRIFT_POLL() ", errno_copy);
+        throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
+      } else if (ret > 0) {
+        // Check for an interrupt signal
+        if (interruptSockReader_ != THRIFT_INVALID_SOCKET && (fds[1].revents & THRIFT_POLLIN)) {
+          int8_t buf;
+          if (-1 == recv(interruptSockReader_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
+            TOutput::instance().perror("TServerSocket::acceptImpl() recv() interrupt ",
+                                       THRIFT_GET_SOCKET_ERROR);
+          }
+          throw TTransportException(TTransportException::INTERRUPTED);
+        }
+
+        // Check for the actual server socket being ready
+        if (fds[0].revents & THRIFT_POLLIN) {
+          break;
+        }
+      } else {
+        TOutput::instance()("TServerSocket::acceptImpl() THRIFT_POLL 0");
+        throw TTransportException(TTransportException::UNKNOWN);
+      }
+    }
+
+    size = sizeof(clientAddress);
+    clientSocket = ::accept(serverSocket_, (struct sockaddr*)&clientAddress, (socklen_t*)&size);
+    if (clientSocket != THRIFT_INVALID_SOCKET) {
+      break;
+    }
+
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    TOutput::instance().perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
-    throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
+    bool connectionError = detail::isConnectionError(errno_copy);
+    if (!connectionError && !detail::isResourceExhaustion(errno_copy)) {
+      TOutput::instance().perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
+      throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
+    }
+
+    // Rate-limited: a peer can trigger connection errors at will.
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    if (now >= nextAcceptErrorLog_) {
+      nextAcceptErrorLog_ = now + std::chrono::minutes(1);
+      TOutput::instance().perror("TServerSocket::acceptImpl() ::accept() retrying ", errno_copy);
+    }
+    if (connectionError) {
+      continue;
+    }
+
+    // Out of descriptors or memory: back off, stay interruptible. An interrupt is left for the
+    // poll above. Each retry re-polls with the full accept timeout.
+    backoffMs = detail::nextBackoffMs(backoffMs);
+    if (interruptSockReader_ != THRIFT_INVALID_SOCKET) {
+      struct THRIFT_POLLFD interruptFd;
+      std::memset(&interruptFd, 0, sizeof(interruptFd));
+      interruptFd.fd = interruptSockReader_;
+      interruptFd.events = THRIFT_POLLIN;
+      THRIFT_POLL(&interruptFd, 1, backoffMs);
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(backoffMs));
+    }
   }
 
   // Make sure client socket is blocking
