@@ -190,6 +190,7 @@ include_transport_HEADERS = \
                          src/thrift/transport/THeaderTransport.h \
                          src/thrift/transport/TSimpleFileTransport.h \
                          src/thrift/transport/TServerSocket.h \
+                         src/thrift/transport/TServerSocketErrors.h \
                          src/thrift/transport/TSSLServerSocket.h \
                          src/thrift/transport/TServerTransport.h \
                          src/thrift/transport/TNonblockingServerTransport.h \
