@@ -541,3 +541,25 @@ BOOST_AUTO_TEST_CASE(test_json_number_size_measured_against_configured_maximum) 
   double out = 0;
   BOOST_CHECK_NO_THROW(proto->readDouble(out));
 }
+
+static std::string readJSONString(const std::string& json) {
+  auto buffer = std::make_shared<TMemoryBuffer>();
+  buffer->write(reinterpret_cast<const uint8_t*>(json.data()), static_cast<uint32_t>(json.size()));
+  TJSONProtocol proto(buffer);
+  std::string out;
+  proto.readString(out);
+  return out;
+}
+
+// \u escapes decode to UTF-8 of one to four bytes.
+BOOST_AUTO_TEST_CASE(test_json_unicode_escapes_to_utf8) {
+  BOOST_CHECK_EQUAL(readJSONString("\"\\u0041\""), "A");
+  BOOST_CHECK_EQUAL(readJSONString("\"\\u00e9\""), "\xc3\xa9");
+  BOOST_CHECK_EQUAL(readJSONString("\"\\u20ac\""), "\xe2\x82\xac");
+  BOOST_CHECK_EQUAL(readJSONString("\"\\ud835\\udd3e\""), "\xf0\x9d\x94\xbe");
+  BOOST_CHECK_EQUAL(readJSONString("\"x\\u0e01y\\ud835\\udd3ez\""),
+                    "x\xe0\xb8\x81y\xf0\x9d\x94\xbez");
+  // A high surrogate followed by something other than a low one is dropped
+  // together with it.
+  BOOST_CHECK_EQUAL(readJSONString("\"a\\ud835\\u0041b\""), "ab");
+}

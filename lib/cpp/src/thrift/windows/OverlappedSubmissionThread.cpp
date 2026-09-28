@@ -20,7 +20,6 @@
 #include <thrift/windows/OverlappedSubmissionThread.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/TNonCopyable.h>
-#include <boost/scope_exit.hpp>
 #include <process.h>
 
 namespace apache {
@@ -59,8 +58,11 @@ uint32_t TOverlappedWorkItem::overlappedResults(bool signal_failure) {
 }
 
 bool TOverlappedWorkItem::process() {
-  BOOST_SCOPE_EXIT((&doneSubmittingEvent)) { SetEvent(doneSubmittingEvent.h); }
-  BOOST_SCOPE_EXIT_END
+  // Signal the submitting thread on every return path.
+  struct SignalOnExit {
+    HANDLE event;
+    ~SignalOnExit() { SetEvent(event); }
+  } signalOnExit{doneSubmittingEvent.h};
 
   switch (action) {
   case (CONNECT):

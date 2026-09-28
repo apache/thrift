@@ -18,11 +18,11 @@
  */
 
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
+#include <cctype>
 #include <cstdlib>
 #include <limits>
 #include <sstream>
-#include <vector>
+#include <string>
 
 #include <thrift/config.h>
 #include <thrift/transport/THttpClient.h>
@@ -33,6 +33,30 @@ using std::string;
 namespace apache {
 namespace thrift {
 namespace transport {
+
+namespace {
+
+bool iequals(const string& a, const string& b) {
+  return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](char x, char y) {
+           return std::tolower(static_cast<unsigned char>(x))
+                  == std::tolower(static_cast<unsigned char>(y));
+         });
+}
+
+bool iends_with(const string& s, const string& suffix) {
+  return s.size() >= suffix.size() && iequals(s.substr(s.size() - suffix.size()), suffix);
+}
+
+string trim(const string& s) {
+  const char* const whitespace = " \t\n\v\f\r";
+  const string::size_type first = s.find_first_not_of(whitespace);
+  if (first == string::npos) {
+    return string();
+  }
+  return s.substr(first, s.find_last_not_of(whitespace) - first + 1);
+}
+
+} // namespace
 
 THttpClient::THttpClient(std::shared_ptr<TTransport> transport,
                          std::string host,
@@ -76,21 +100,26 @@ void THttpClient::parseHeader(char* header) {
   char* value = colon + 1;
 
   const string name(header, colon);
-  if (boost::iequals(name, "Transfer-Encoding")) {
-    if (boost::iends_with(value, "chunked")) {
+  if (iequals(name, "Transfer-Encoding")) {
+    if (iends_with(value, "chunked")) {
       chunked_ = true;
     }
-  } else if (boost::iequals(name, "Content-Length")) {
+  } else if (iequals(name, "Content-Length")) {
     chunked_ = false;
     contentLength_ = parseContentLength(value);
-  } else if (boost::iequals(name, "Connection")) {
-    std::vector<string> options;
-    boost::split(options, value, boost::is_any_of(","));
-    for (const string& option : options) {
-      if (boost::iequals(boost::trim_copy(option), "close")) {
+  } else if (iequals(name, "Connection")) {
+    const string options(value);
+    string::size_type start = 0;
+    for (;;) {
+      const string::size_type comma = options.find(',', start);
+      if (iequals(trim(options.substr(start, comma - start)), "close")) {
         closeAfterResponse_ = true;
         break;
       }
+      if (comma == string::npos) {
+        break;
+      }
+      start = comma + 1;
     }
   }
 }
