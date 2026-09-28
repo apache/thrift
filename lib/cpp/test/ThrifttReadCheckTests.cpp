@@ -24,7 +24,6 @@
 #include <climits>
 #include <random>
 #include <vector>
-#include <zlib.h>
 #include <thrift/TConfiguration.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
@@ -33,8 +32,11 @@
 #include <memory>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
+#ifdef THRIFT_TEST_WITH_ZLIB
+#include <zlib.h>
 #include <thrift/transport/THeaderTransport.h>
 #include <thrift/protocol/THeaderProtocol.h>
+#endif
 #include <thrift/TApplicationException.h>
 #include <thrift/transport/TSimpleFileTransport.h>
 #include <thrift/transport/TFileTransport.h>
@@ -330,6 +332,8 @@ BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
   protocol->readMapEnd();
 }
 
+// THeaderTransport lives in libthriftz, which is only built with zlib.
+#ifdef THRIFT_TEST_WITH_ZLIB
 BOOST_AUTO_TEST_CASE(test_theadertransport_header_size_exceeds_frame) {
   using apache::thrift::transport::THeaderTransport;
   // Header-format frame whose declared header size (3 * 4 = 12) leaves fewer
@@ -537,6 +541,7 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_below_magic_word) {
     }
   }
 }
+#endif // THRIFT_TEST_WITH_ZLIB
 
 BOOST_AUTO_TEST_CASE(test_prealloc_size_caps_reserved_capacity) {
   using apache::thrift::protocol::preallocSize;
@@ -554,6 +559,7 @@ BOOST_AUTO_TEST_CASE(test_prealloc_size_caps_reserved_capacity) {
   BOOST_CHECK_EQUAL(preallocSize(0xffffffffu), MAX_PREALLOC_SIZE);
 }
 
+#ifdef THRIFT_TEST_WITH_ZLIB
 BOOST_AUTO_TEST_CASE(test_theadertransport_framed_size_equal_to_magic_word) {
   using apache::thrift::transport::THeaderTransport;
   // Boundary control for the case above: a declared size of exactly 4 covers
@@ -627,5 +633,6 @@ BOOST_AUTO_TEST_CASE(test_theadertransport_unknown_protocol_id_error_reply) {
   int32_t seqId = 0;
   BOOST_CHECK_THROW(proto.readMessageBegin(name, messageType, seqId), TApplicationException);
 }
+#endif // THRIFT_TEST_WITH_ZLIB
 
 BOOST_AUTO_TEST_SUITE_END()
