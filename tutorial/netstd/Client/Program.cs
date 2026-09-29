@@ -66,6 +66,9 @@ Usage:
     Client -tr:<transport> -bf:<buffering> -pr:<protocol> [-mc:<numClients>]  [-multiplex]
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
+    Client -tr:http -parallel
+        will issue concurrent HTTP calls through one per-call client
+
 Options:
     -tr (transport): 
         tcp - (default) tcp transport  (localhost:9090)
@@ -87,6 +90,9 @@ Options:
 
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
+
+    -parallel (HTTP only):
+        issue three concurrent add() calls through one client using per-call transports
 
 Sample:
     Client -tr:tcp -pr:binary
@@ -114,6 +120,31 @@ Sample:
         
         private static async Task<bool> RunAsync(string[] args, CancellationToken cancellationToken)
         {
+            if (args.Any(x => x.Equals("-parallel", StringComparison.OrdinalIgnoreCase)))
+            {
+                if (GetTransport(args) != Transport.Http)
+                {
+                    throw new ArgumentException("The -parallel option requires -tr:http.");
+                }
+
+                if (GetMultiplex(args))
+                {
+                    throw new ArgumentException("The -parallel option does not support -multiplex.");
+                }
+
+                if (GetBuffering(args) != Buffering.None)
+                {
+                    throw new ArgumentException("The -parallel option requires -bf:none.");
+                }
+
+                if (GetProtocol(args) != Protocol.Binary)
+                {
+                    throw new ArgumentException("The tutorial HTTP server uses the binary protocol with -parallel.");
+                }
+
+                return await RunConcurrentHttpCallsAsync(args, cancellationToken);
+            }
+
             var numClients = GetNumberOfClients(args);
 
             if (Logger.IsEnabled(LogLevel.Information))
@@ -141,6 +172,36 @@ Sample:
 
             Task.WaitAll(tasks, cancellationToken);
             return tasks.All(task => task.Result);
+        }
+
+        private static async Task<bool> RunConcurrentHttpCallsAsync(
+            string[] args,
+            CancellationToken cancellationToken)
+        {
+            var transport = MakeTransport(args);
+            var client = new Calculator.Client(transport, new TBinaryProtocol.Factory());
+            try
+            {
+                await client.OpenTransportAsync(cancellationToken);
+                var sums = await Task.WhenAll(
+                    client.add(1, 1, cancellationToken),
+                    client.add(2, 3, cancellationToken),
+                    client.add(10, 20, cancellationToken));
+
+                var expected = new[] { 2, 5, 30 };
+                if (!sums.SequenceEqual(expected))
+                {
+                    throw new InvalidOperationException(
+                        $"Concurrent HTTP calls returned unexpected results: {string.Join(", ", sums)}.");
+                }
+
+                Logger.LogInformation("Concurrent HTTP add() results: {results}", string.Join(", ", sums));
+                return true;
+            }
+            finally
+            {
+                client.Dispose();
+            }
         }
 
         private static bool GetMultiplex(string[] args)

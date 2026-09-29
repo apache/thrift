@@ -53,6 +53,11 @@ namespace Thrift.Transport
             InitWriteBuffer();
         }
 
+        protected override TTransport CreatePerCallWrapper(TTransport innerTransport)
+        {
+            return new TFramedTransport(innerTransport);
+        }
+
         public override bool IsOpen => !IsDisposed && InnerTransport.IsOpen;
 
         public override async Task OpenAsync(CancellationToken cancellationToken)

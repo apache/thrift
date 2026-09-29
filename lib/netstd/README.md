@@ -27,6 +27,58 @@ or
 - Ensure you have a suitable .NET Core SDK installed, or use the [Ubuntu docker image](../../build/docker/README.md)
 - Follow common automake build practice: `./ bootstrap && ./ configure && make`
 
+## Per-call HTTP transport mode
+
+`THttpTransport` supports two modes:
+
+- shared mode: a single protocol pair is reused for the lifetime of the client.
+- per-call mode: a fresh protocol pair is created for each request when the client is constructed with a transport and protocol factory.
+
+The shared mode is the default for code such as:
+
+```csharp
+var http = new THttpTransport(new Uri("http://localhost:9090"));
+var client = new Calculator.Client(new TBinaryProtocol(http));
+```
+
+In this form, the same `HttpClient`, default headers, and `ConnectTimeout` remain in effect for the whole client, and the request/response buffers are also reused by the shared protocol instance.
+
+To opt into the per-call path, construct the client with the transport and a protocol factory instead of an already-created protocol instance:
+
+```csharp
+var http = new THttpTransport(new Uri("http://localhost:9090"));
+var client = new Calculator.Client(http, new TBinaryProtocol.Factory());
+```
+
+This constructor enables `ITPerCallTransportProvider` behavior for the generated RPC methods such as `add()`: each method scopes its send and receive operations to a fresh protocol pair for that call. Calling generated `send_add()` and `recv_add()` separately does not use that per-call scope; those methods use the client's shared protocols. Use the regular RPC method when you need per-call behavior.
+
+The per-call path is useful when you want multiple HTTP requests to be in flight at once. Each call gets its own request stream, response stream, and buffered protocol state, while the underlying `HttpClient`, default headers, and `ConnectTimeout` remain shared. In other words:
+
+- shared across calls: `HttpClient`, default headers, `ConnectTimeout`, connection-level settings
+- private to each call: request payload, response payload, protocol buffers, per-call `TTransport` state
+
+The same pattern also works when you need a protocol wrapper such as `TMultiplexedProtocol`. Netstd does not provide a built-in `TMultiplexedProtocol.Factory`, so you create a small protocol factory subclass that creates the wrapper for each per-call transport:
+
+```csharp
+var http = new THttpTransport(new Uri("http://localhost:9090"));
+var client = new Calculator.Client(http, new MultiplexedBinaryProtocolFactory("Calculator"));
+
+sealed class MultiplexedBinaryProtocolFactory : TProtocolFactory
+{
+    private readonly string _serviceName;
+
+    public MultiplexedBinaryProtocolFactory(string serviceName)
+    {
+        _serviceName = serviceName;
+    }
+
+    public override TProtocol GetProtocol(TTransport trans)
+        => new TMultiplexedProtocol(new TBinaryProtocol(trans), _serviceName);
+}
+```
+
+Socket transports such as `TSocketTransport` are not affected. They do not implement `ITPerCallTransportProvider`, so they continue to use a single shared transport/protocol pair. Wrappers such as `TBufferedTransport` or `TFramedTransport` also disable the per-call path because they are not themselves transport providers.
+
 ## Known issues
 - In trace logging mode you can see some not important internal exceptions
 

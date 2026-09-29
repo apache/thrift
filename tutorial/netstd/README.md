@@ -109,6 +109,20 @@ Remarks:
 	with binaries in case of command line usage (or at project level in case of debugging from IDE).
     Password for certificate - "ThriftTest".
 
+## Concurrent HTTP calls
+
+The client tutorial can issue several requests concurrently through one `Calculator.Client`. Its transport-and-protocol-factory constructor enables the generated methods to use an independent protocol and HTTP request/response state for each call.
+
+Build the tutorial solution, start the HTTP server in one terminal, then run the client in another (from `tutorial/netstd`):
+
+```sh
+dotnet build Tutorial.slnx
+dotnet run --project Server/Server.csproj -- -tr:http
+dotnet run --project Client/Client.csproj -- -tr:http -parallel
+```
+
+The client checks the expected results (`2, 5, 30`) and disposes the client after all calls complete. `-mc:<numClients>` remains a separate option for running multiple clients, each with its own transport.
+
 # How to test communication between NetCore and Python
 
 * Generate code with the latest **thrift** utility
