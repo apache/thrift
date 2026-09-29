@@ -69,8 +69,20 @@ public:
 
   // Standard transport callbacks
   void interrupt() override;
+  void interruptChildren() override;
   void close() override;
   void listen() override;
+
+  // When enabled (the default), interruptChildren() interrupts the pipes that
+  // accept() returns: read() on one of them then throws
+  // TTransportException::INTERRUPTED, and so does a write() that waits for the
+  // client, so a connected client cannot keep TServer::stop() from finishing.
+  // When disabled, those pipes wait for the client as before.  Anonymous pipes
+  // do synchronous I/O and are never interrupted.
+  //
+  // Must be called before listen(); mode cannot be switched after that.
+  // \throws std::logic_error if listen() has been called
+  void setInterruptableChildren(bool enable);
 
   // Accessors
   std::string getPipename();
@@ -101,6 +113,7 @@ private:
   uint32_t bufsize_;
   uint32_t maxconns_;
   bool isAnonymous_;
+  bool interruptableChildren_ = true;
 };
 #else //_WIN32
 //*NIX named pipe implementation uses domain socket
