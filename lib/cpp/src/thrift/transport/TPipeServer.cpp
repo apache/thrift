@@ -19,6 +19,7 @@
 
 #include <thrift/thrift-config.h>
 #include <cstring>
+#include <stdexcept>
 
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
@@ -45,6 +46,7 @@ public:
   TPipeServerImpl() {}
   virtual ~TPipeServerImpl() {}
   virtual void interrupt() = 0;
+  virtual void interruptChildren() {}
   virtual std::shared_ptr<TTransport> acceptImpl() = 0;
 
   virtual HANDLE getPipeHandle() = 0;
@@ -100,18 +102,24 @@ public:
   TNamedPipeServer(const std::string& pipename,
                    uint32_t bufsize,
                    uint32_t maxconnections,
-                   const std::string& securityDescriptor)
+                   const std::string& securityDescriptor,
+                   bool interruptableChildren)
     : stopping_(false),
       pipename_(pipename),
       bufsize_(bufsize),
       maxconns_(maxconnections),
-      securityDescriptor_(securityDescriptor) {
+      securityDescriptor_(securityDescriptor),
+      childInterrupt_(interruptableChildren ? std::make_shared<TManualResetEvent>() : nullptr) {
     connectOverlap_.action = TOverlappedWorkItem::CONNECT;
     cancelOverlap_.action = TOverlappedWorkItem::CANCELIO;
     TAutoCrit lock(pipe_protect_);
     initiateNamedConnect(lock);
   }
-  virtual ~TNamedPipeServer() {}
+  virtual ~TNamedPipeServer() {
+    // closing the server interrupts its children, as with TServerSocket
+    if (childInterrupt_)
+      SetEvent(childInterrupt_->h);
+  }
 
   virtual void interrupt() {
     TAutoCrit lock(pipe_protect_);
@@ -122,6 +130,11 @@ public:
       // This should wake up GetOverlappedResult
       thread_->addWorkItem(&cancelOverlap_);
     }
+  }
+
+  virtual void interruptChildren() {
+    if (childInterrupt_)
+      SetEvent(childInterrupt_->h);
   }
 
   virtual std::shared_ptr<TTransport> acceptImpl();
@@ -146,6 +159,9 @@ private:
   uint32_t bufsize_;
   uint32_t maxconns_;
   TManualResetEvent listen_event_;
+  // handed to every pipe this accepts, and signalled by interruptChildren();
+  // null if the children are not interruptable
+  std::shared_ptr<TManualResetEvent> childInterrupt_;
 
   TCriticalSection pipe_protect_;
   // only read or write these variables underneath a locked pipe_protect_
@@ -213,7 +229,8 @@ bool TPipeServer::isOpen() const {
 void TPipeServer::listen() {
   if (isAnonymous_)
     return;
-  impl_.reset(new TNamedPipeServer(pipename_, bufsize_, maxconns_, securityDescriptor_));
+  impl_.reset(new TNamedPipeServer(pipename_, bufsize_, maxconns_, securityDescriptor_,
+                                   interruptableChildren_));
 }
 
 shared_ptr<TTransport> TPipeServer::acceptImpl() {
@@ -258,7 +275,7 @@ void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
   // zero, GetLastError should return ERROR_PIPE_CONNECTED.
   if (connectOverlap_.success) {
     TOutput::instance().printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_));
+    cached_client_.reset(new TPipe(Pipe_, childInterrupt_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -268,7 +285,7 @@ void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
   switch (dwErr) {
   case ERROR_PIPE_CONNECTED:
     TOutput::instance().printf("Client connected.");
-    cached_client_.reset(new TPipe(Pipe_));
+    cached_client_.reset(new TPipe(Pipe_, childInterrupt_));
     // make sure people know that a connection is ready
     SetEvent(listen_event_.h);
     return;
@@ -314,7 +331,7 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
     TAutoCrit lock(pipe_protect_);
     shared_ptr<TPipe> client;
     try {
-      client.reset(new TPipe(Pipe_));
+      client.reset(new TPipe(Pipe_, childInterrupt_));
     } catch (TTransportException& ttx) {
       if (ttx.getType() == TTransportException::INTERRUPTED) {
         throw;
@@ -343,6 +360,19 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
 void TPipeServer::interrupt() {
   if (impl_)
     impl_->interrupt();
+}
+
+void TPipeServer::interruptChildren() {
+  if (impl_)
+    impl_->interruptChildren();
+}
+
+void TPipeServer::setInterruptableChildren(bool enable) {
+  // listen() has run once there is a named pipe server
+  if (std::dynamic_pointer_cast<TNamedPipeServer>(impl_)) {
+    throw std::logic_error("setInterruptableChildren cannot be called after listen()");
+  }
+  interruptableChildren_ = enable;
 }
 
 void TPipeServer::close() {

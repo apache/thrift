@@ -54,6 +54,12 @@ public:
   // Named pipe constructors -
   explicit TPipe(HANDLE Pipe, std::shared_ptr<TConfiguration> config = nullptr);       // HANDLE is a void*
   explicit TPipe(TAutoHandle& Pipe, std::shared_ptr<TConfiguration> config = nullptr); // this ctor will clear out / move from Pipe
+  // Like the one above, and once interruptListener is signalled, read() throws
+  // TTransportException::INTERRUPTED, as does a write() that waits on the pipe.
+  // TPipeServer uses this for the pipes it accepts, see interruptChildren().
+  TPipe(TAutoHandle& Pipe,
+        std::shared_ptr<TManualResetEvent> interruptListener,
+        std::shared_ptr<TConfiguration> config = nullptr);
   // need a const char * overload so string literals don't go to the HANDLE overload
   explicit TPipe(const char* pipename, std::shared_ptr<TConfiguration> config = nullptr);
   explicit TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config = nullptr);
