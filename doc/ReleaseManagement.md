@@ -443,7 +443,9 @@ file and the `release` environment.
 | `WINGET_TOKEN` | repository **secret** | `winget.yml` | nothing is submitted; see below |
 | `CHOCO_API_KEY` | repository **secret** | `chocolatey.yml` | nothing is pushed; see below |
 
-All of them are scoped to the `release` [environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
+The publishing jobs run in the `release` [environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments),
+which the trusted publishers name.  The secrets and the variable can be set for
+the repository or for that environment.
 `GITHUB_TOKEN` is provided by Actions itself and needs no setup.
 
 Two notes that are easy to get wrong:
@@ -455,9 +457,6 @@ Two notes that are easy to get wrong:
   build and upload the artifact, emit a warning, and print in the run summary how
   to publish by hand.  That keeps a missing secret from failing a release, but it
   means the run summary is what to read, not the tick.
-
-`CHOCO_API_KEY` is expected to be missing for now - see
-[Chocolatey](#chocolatey) below, the package id has not been handed over yet.
 
 ### Post-Release
 
@@ -510,6 +509,25 @@ GitHub is what the signatures on `dist.apache.org` cover.
 ~$ gh release upload v1.0.0 thrift-1.0.0-setup.exe --clobber --repo apache/thrift
 ```
 
+If the installer was not part of the release candidate, it is missing from
+`dist/release` too, and the Chocolatey and WinGet runs of the release fail to
+download it.  To add it afterwards:
+
+1. Build it from the voted compiler, with Inno Setup 6.3 or later, in a checkout
+   of the release tag, which provides the `LICENSE` and `NOTICE` it installs:
+
+    ```powershell
+    PS C:\thrift> .\build\windows\build-installer.ps1 -Version 1.0.0 -Compiler C:\dist\thrift-1.0.0.exe -OutputDir dist
+    ```
+
+    The `windows-installer` artifact of the `Windows packages` workflow will not
+    do: it contains a compiler that the workflow built itself, not the voted one.
+1. Sign and checksum it the same way as the other release artifacts, and commit
+   it with its signature and checksums to `dist/release/thrift/1.0.0`.
+1. Overwrite the asset on the GitHub release with it, as shown above.
+1. Once `archive.apache.org` has the file, run the [Chocolatey](#chocolatey) and
+   [WinGet](#winget) workflows again, as described below.
+
 ##### Chocolatey
 
 The [`Chocolatey`](../.github/workflows/chocolatey.yml) workflow builds the
@@ -520,27 +538,15 @@ The package does not carry the compiler.  It downloads the installer from
 `archive.apache.org` and records its checksum, so it can only be built once the
 archive has the release - `downloads.apache.org` only carries the current
 release, and a package naming it would stop installing at the next one.  If the
-release run was too early, run it again from the Actions tab once the archive
-has the file.
+release run was too early, re-run it once the archive has the file, which GitHub
+allows for 30 days, or start the workflow from the Actions tab (*Run workflow*)
+with the released version.
 
-**Nothing is pushed yet.**  The `thrift` id on the Chocolatey community
-repository belongs to a third-party package that last shipped 0.12.0 in February
-2019, maintained by `chaliy` and `Lite` from
-<https://github.com/Litee/chocolatey-packages>.  Before Apache Thrift can publish
-under that id, a maintainer takeover has to be requested from Chocolatey under
-their process for abandoned packages:
-
-1. Contact the current maintainers through their Chocolatey profile page and
-   allow the response time Chocolatey's policy requires.
-1. If there is no response, open a maintainer takeover request with Chocolatey.
-1. Once the id has been handed over, add the API key of the account that owns it
-   as a secret named `CHOCO_API_KEY` in the `release` environment.
-
-Until then the workflow builds and checks the package, attaches it to the run as
-an artifact, and says in its summary that it did not push.  If the takeover is
-refused, the free ids `apache-thrift` and `thrift-compiler` are the fallback;
-changing the id means editing `build/windows/chocolatey/thrift.nuspec.in` and
-the package name the build script expects.
+The workflow pushes with the API key in the secret `CHOCO_API_KEY`, which has to
+belong to an account that maintains the `thrift` package on the Chocolatey
+community repository.  Without the secret it builds and checks the package,
+attaches it to the run as an artifact, and says in its summary that it did not
+push.  Chocolatey checks every pushed version before it is listed.
 
 ##### WinGet
 
@@ -554,16 +560,18 @@ up - the manifest points at the archive, because `downloads.apache.org` only
 carries the current release and a manifest naming it would stop working at the
 next one.  This is the same wait the Docker Official Image update has.
 
-So expect to run it again, from the Actions tab, a while after the release:
+So expect to run it again a while after the release.  Re-running the release's
+run works for 30 days; starting the workflow from the Actions tab always works:
 
-1. Actions → `WinGet` → *Run workflow*, entering the released version.
+1. Actions → `WinGet` → *Run workflow*, entering the released version and its
+   release date.  Without a date, the manifest records the day of the run.
 1. The workflow renders the manifests, downloads the published installer to
    compute its checksum, validates the manifests against the WinGet schemas, and
    opens a pull request against `microsoft/winget-pkgs`.
 1. Watch that pull request.  Submissions are reviewed, and validation failures
    are reported there.
 
-For the submission step the `release` environment needs a secret named
+For the submission step the workflow needs a secret named
 `WINGET_TOKEN`: a **classic** GitHub personal access token with the `public_repo`
 scope.  Fine-grained tokens are not supported by `wingetcreate`.  Without it the
 workflow still renders and validates the manifests and leaves them as an
