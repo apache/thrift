@@ -622,6 +622,18 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   * PyPI distribution filenames are immutable. If an artifact was published with
     the wrong contents, prepare a new Apache Thrift release rather than trying
     to replace the existing PyPI file.
+* [ruby] The `Release Ruby Gem` GitHub Actions workflow publishes the `thrift`
+  gem to RubyGems.org when the GitHub release is published, using trusted
+  publishing.
+  * Before publishing, verify that the `thrift` gem on RubyGems.org has a
+    trusted publisher for the `apache/thrift` repository, the
+    `.github/workflows/release_ruby.yml` workflow and the `release` environment.
+  * The workflow skips pre-releases, and it publishes only from a release tag
+    whose version matches `lib/rb/thrift.gemspec`. To publish after a failed
+    run, re-run it, or start it from the Actions tab with the release tag
+    selected under *Use workflow from*.
+  * RubyGems.org takes a version only once. If a gem was published with the
+    wrong contents, prepare a new Apache Thrift release.
 * [rust] Any thrift project committer is allowed to upload a new crate.
 
 If you have any questions email `dev@thrift.apache.org`.

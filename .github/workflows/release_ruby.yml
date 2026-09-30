@@ -26,10 +26,16 @@ on:
 
 jobs:
   publish:
+    # Never for a pre-release, like pypi.yml and release_rust.yml.
+    if: ${{ github.event_name != 'release' || !github.event.release.prerelease }}
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      # Read only on purpose. Bundler's release task creates and pushes the
+      # version tag if it does not exist yet, and release tags are for the
+      # release manager to create. The version check below makes sure it
+      # always exists.
+      contents: read
       id-token: write
 
     environment: release
@@ -45,6 +51,38 @@ jobs:
           bundler-cache: false
           ruby-version: "4.0"
           working-directory: lib/rb
+
+      # Started from a branch, the release task would tag and publish whatever
+      # version the branch has. Only a release tag that matches the gemspec
+      # gets past this step.
+      - name: Verify the gem version matches the release tag
+        working-directory: lib/rb
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          case "$REF" in
+            refs/tags/v*) TAG_VERSION="${REF#refs/tags/v}" ;;
+            *)
+              echo "::error::$REF is not a release tag. Run this workflow from the release tag, for example v1.0.0."
+              exit 1
+              ;;
+          esac
+          GEM_VERSION=$(ruby -e 'print Gem::Specification.load("thrift.gemspec").version')
+          if [ "$GEM_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Version mismatch: thrift.gemspec=$GEM_VERSION, tag=v$TAG_VERSION"
+            exit 1
+          fi
+          echo "Version check passed: $GEM_VERSION"
+
+      # The release task runs through "bundle exec", so the bundle has to be
+      # installed. Not with bundler-cache above: a job that publishes should
+      # not restore a cache that another workflow run could have written.
+      - name: Install the bundle
+        working-directory: lib/rb
+        env:
+          # Exactly what Gemfile.lock records, or fail.
+          BUNDLE_FROZEN: "true"
+        run: bundle install
 
       # Release
       - uses: rubygems/release-gem@052cc82692552de3ef2b81fd670e41d13cba8092 # v1.4.0
