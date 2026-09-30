@@ -26,6 +26,15 @@ union UnionOfStrings {
   2: string bb;
 }
 
+typedef bool Flag
+typedef Flag FlagAlias
+
+struct BoolSetTest {
+  1: set<bool> direct;
+  2: set<Flag> aliased;
+  3: set<FlagAlias> chained;
+}
+
 service TestService {
     void test() throws(1: ThriftTest.Xception xception);
 }

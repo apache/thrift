@@ -1014,7 +1014,18 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
 
       transport.writeI32(zend_hash_num_elements(ht));
       HashPosition key_ptr;
-      if(ttype_is_scalar(keytype)){
+      bool set_uses_values = false;
+      if (ttype_is_scalar(keytype) && zend_array_is_list(ht)) {
+        // All-true lists retain the legacy element => true interpretation.
+        ZEND_HASH_FOREACH_VAL(ht, val_ptr) {
+          ZVAL_DEREF(val_ptr);
+          if (Z_TYPE_P(val_ptr) != IS_TRUE) {
+            set_uses_values = true;
+            break;
+          }
+        } ZEND_HASH_FOREACH_END();
+      }
+      if(ttype_is_scalar(keytype) && !set_uses_values){
         for (zend_hash_internal_pointer_reset_ex(ht, &key_ptr);
              (val_ptr = zend_hash_get_current_data_ex(ht, &key_ptr)) != nullptr;
              zend_hash_move_forward_ex(ht, &key_ptr)) {
