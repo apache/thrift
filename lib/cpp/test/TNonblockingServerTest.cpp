@@ -35,6 +35,7 @@
 #include "thrift/transport/TSocket.h"
 #include "thrift/transport/TTransportUtils.h"
 
+#include <cerrno>
 #include <new>
 
 #ifndef _WIN32
@@ -453,7 +454,8 @@ BOOST_AUTO_TEST_CASE(allocation_failure_on_the_io_thread_does_not_end_the_proces
     struct rlimit limit;
     limit.rlim_cur = limit.rlim_max = 256UL * 1024 * 1024;
     if (setrlimit(RLIMIT_AS, &limit) != 0) {
-      _exit(2);
+      // Some platforms, macOS among them, do not support an RLIMIT_AS limit at all.
+      _exit(errno == EINVAL ? 77 : 2);
     }
 
     auto socket = make_shared<transport::TNonblockingServerSocket>(0);
@@ -503,6 +505,10 @@ BOOST_AUTO_TEST_CASE(allocation_failure_on_the_io_thread_does_not_end_the_proces
   BOOST_REQUIRE_NE(waitpid(pid, &status, 0), -1);
   BOOST_CHECK_MESSAGE(WIFEXITED(status),
                       "the server process was killed by a signal rather than exiting");
+  if (WIFEXITED(status) && WEXITSTATUS(status) == 77) {
+    BOOST_TEST_MESSAGE("RLIMIT_AS is not supported on this platform; nothing to check");
+    return;
+  }
   if (WIFEXITED(status)) {
     BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
   }
