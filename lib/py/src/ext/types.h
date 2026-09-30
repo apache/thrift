@@ -119,10 +119,17 @@ private:
 /**
  * A cache of the two key attributes of a CReadableTransport,
  * so we don't have to keep calling PyObject_GetAttr.
+ * Also supports reading directly from a bytes object.
  */
 struct DecodeBuffer {
   ScopedPyObject stringiobuf;
   ScopedPyObject refill_callable;
+  ScopedPyObject direct_source;
+  const char* direct_buf;
+  size_t direct_size;
+  size_t direct_pos;
+
+  DecodeBuffer() : direct_buf(nullptr), direct_size(0), direct_pos(0) {}
 };
 
 #if PY_MAJOR_VERSION < 3
