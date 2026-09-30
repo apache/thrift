@@ -115,4 +115,8 @@ service container_test_parent {
 
 service container_test extends container_test_parent {
   void child_only_func(1: set<i32> s)
+  // The -remote stub must read a container argument by its field id, which
+  // need not be its position, and is negative when the IDL gives none.
+  void nonpositional_id_func(1: i32 a, 3: map<string, i32> m)
+  void implicit_id_func(list<i32> xs)
 }
