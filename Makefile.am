@@ -68,6 +68,14 @@ dist-hook:
 	find $(distdir) -type d -name node_modules -prune -exec rm -rf {} +
 	find $(distdir) -type d -name __pycache__ -prune -exec rm -rf {} +
 	find $(distdir) -type f -name "*.pyc" -exec rm -f {} +
+# Directories that EXTRA_DIST names whole (lib/d/src, test/erl, ...) also carry what configure,
+# the build and rebar3 left in them: configured Makefiles, objects, _build and rebar.lock.
+	find $(distdir) -type f -name Makefile -exec sh -c 'test -f "$$1.in" && rm -f "$$1"' _ {} \;
+	rm -f $(distdir)/config.h
+	find $(distdir) -type f \( -name "*.o" -or -name "*.lo" -or -name "*.a" -or -name "*.la" -or -name "*.obj" \) -exec rm -f {} +
+	find $(distdir) -type d -name _build -prune -exec rm -rf {} +
+	find $(distdir) -type f -name rebar.lock -exec rm -f {} +
+	find $(distdir) -type d -empty -delete
 	rm -f $(distdir)/doc/thrift-threat-model.md
 
 print-version:
