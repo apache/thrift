@@ -78,7 +78,7 @@ additionally requires the SharpFuzz.CommandLine global tool and the
 
 ## Prerequisites
 
-1. A .NET 10 SDK (same one used for the rest of `lib/netstd`).
+1. A .NET 11 SDK (same one used for the rest of `lib/netstd`).
 
 2. The SharpFuzz IL-rewriter CLI, installed as a .NET global tool:
 
@@ -103,7 +103,7 @@ additionally requires the SharpFuzz.CommandLine global tool and the
 ## A temporary note on `DOTNET_ROLL_FORWARD`
 
 As of SharpFuzz.CommandLine 2.2.0, the global tool's `runtimeconfig.json` pins the
-tool to .NET 9, which prevents it from running under a .NET 10-only host. Both
+tool to .NET 9, which prevents it from running under a .NET 11-only host. Both
 `buildfuzzers.sh` and `runfuzzer.sh` therefore export `DOTNET_ROLL_FORWARD=Major`
 at the top of the script as a workaround. Upstream fix:
 [SharpFuzz PR #72](https://github.com/Metalnem/sharpfuzz/pull/72) (merged, pending
