@@ -72,7 +72,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ValidateTest.thrift \
 				ForwardType.thrift \
 				StringParseAllocationTest.thrift \
-				DocCommentTest.thrift
+				DocCommentTest.thrift \
+				Hyphenated-Name.thrift
 	mkdir -p gopath/src
 	grep -v 'set<Insanity>' $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) $(RECURSIVE)
@@ -115,6 +116,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ForwardType.thrift
 	$(THRIFT) $(THRIFTARGS) StringParseAllocationTest.thrift
 	$(THRIFT) $(THRIFTARGS) DocCommentTest.thrift
+	$(THRIFT) $(THRIFTARGS) Hyphenated-Name.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -149,7 +151,9 @@ check: gopath
 				./gopath/src/processormiddlewaretest \
 				./gopath/src/clientmiddlewareexceptiontest \
 				./gopath/src/validatetest \
-				./gopath/src/forwardtypetest
+				./gopath/src/forwardtypetest \
+				./gopath/src/hyphenated_name \
+				./gopath/src/hyphenated_name/hyphenated_service-remote
 	$(GO) test github.com/apache/thrift/lib/go/thrift
 	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
@@ -189,6 +193,7 @@ EXTRA_DIST = \
 	EqualsTest.thrift \
 	ForwardType.thrift \
 	GoTagTest.thrift \
+	Hyphenated-Name.thrift \
 	IgnoreInitialismsTest.thrift \
 	IncludesTest.thrift \
 	InitialismsTest.thrift \
