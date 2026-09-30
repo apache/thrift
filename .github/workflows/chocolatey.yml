@@ -21,13 +21,13 @@
 #
 # The package downloads the installer from archive.apache.org rather than
 # carrying a copy, so it cannot be built until the release has been promoted
-# and the archive has picked it up. If the release run is too early, run it
-# again from the Actions tab once the archive has the file.
+# and the archive has picked it up. If the release run is too early, re-run it
+# once the archive has the file, or start this workflow from the Actions tab
+# with the version.
 #
-# Nothing is pushed until the CHOCO_API_KEY secret exists. The "thrift" id on
-# the Chocolatey community repository currently belongs to an abandoned third
-# party package, and a maintainer takeover has to be granted first. See
-# doc/ReleaseManagement.md.
+# Nothing is pushed unless the CHOCO_API_KEY secret is set, to the API key of
+# an account that maintains the "thrift" package on the Chocolatey community
+# repository. See doc/ReleaseManagement.md.
 
 name: "Chocolatey"
 
@@ -109,9 +109,11 @@ jobs:
         shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          IS_RELEASE: ${{ github.event_name == 'release' }}
+          # A release and a manual run both push, so only a pull request
+          # packages a placeholder.
+          IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
         run: |
-          if ($env:IS_RELEASE -eq 'true') {
+          if ($env:IS_PULL_REQUEST -ne 'true') {
             # No checksum given, so the published installer is downloaded and
             # hashed. The package then cannot record a checksum the published
             # file does not have.
@@ -147,7 +149,9 @@ jobs:
   push:
     name: Push to Chocolatey
     needs: package
-    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    # A manual run is how a release gets pushed once the archive has the
+    # installer, so it pushes too.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease) }}
     runs-on: windows-2025
     timeout-minutes: 20
     environment: release
@@ -169,19 +173,16 @@ jobs:
           $package = "chocolatey-package/thrift.$env:VERSION.nupkg"
 
           if (-not $env:CHOCO_API_KEY) {
-            # Expected until the "thrift" id has been handed over. The package
-            # is built and attached to the run either way.
+            # The package is built and attached to the run either way.
             Write-Host '::warning::CHOCO_API_KEY is not set, so nothing was pushed to Chocolatey.'
             @(
               '### Chocolatey push skipped',
               '',
-              'The `CHOCO_API_KEY` secret is not set in the `release` environment, so the',
-              'package was built but not pushed. It is attached to this run as the',
-              '`chocolatey-package` artifact.',
+              'The `CHOCO_API_KEY` secret is not set, so the package was built but not',
+              'pushed. It is attached to this run as the `chocolatey-package` artifact.',
               '',
-              'The `thrift` id on the Chocolatey community repository still belongs to an',
-              'abandoned third party package; a maintainer takeover has to be granted before',
-              'anything can be pushed under it. See `doc/ReleaseManagement.md`.'
+              'The key has to belong to an account that maintains the `thrift` package on',
+              'the Chocolatey community repository. See `doc/ReleaseManagement.md`.'
             ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
             exit 0
           }

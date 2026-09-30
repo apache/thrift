@@ -22,8 +22,8 @@
 # The manifest points at archive.apache.org, which keeps every release, rather
 # than downloads.apache.org, which only carries the current one. So this cannot
 # run until the release has been promoted and the archive has picked it up. If
-# the release run is too early, run it again from the Actions tab once the
-# archive has the file.
+# the release run is too early, re-run it once the archive has the file, or
+# start this workflow from the Actions tab with the version and release date.
 
 name: "WinGet"
 
@@ -133,9 +133,11 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           RELEASE_DATE: ${{ steps.version.outputs.release_date }}
-          IS_RELEASE: ${{ github.event_name == 'release' }}
+          # A release and a manual run both submit, so only a pull request
+          # renders with a placeholder.
+          IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
         run: |
-          if ($env:IS_RELEASE -eq 'true') {
+          if ($env:IS_PULL_REQUEST -ne 'true') {
             # No checksum given, so the renderer downloads the published
             # installer and hashes that. The manifest then cannot claim a
             # checksum the published file does not have.
@@ -192,7 +194,9 @@ jobs:
   submit:
     name: Submit to winget-pkgs
     needs: manifests
-    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    # A manual run is how a release gets submitted once the archive has the
+    # installer, so it submits too.
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease) }}
     # wingetcreate only runs on Windows.
     runs-on: windows-2025
     timeout-minutes: 20
@@ -224,9 +228,9 @@ jobs:
             @(
               '### WinGet submission skipped',
               '',
-              'The `WINGET_TOKEN` secret is not set in the `release` environment, so the',
-              'manifests were rendered but not submitted. They are attached to this run as the',
-              '`winget-manifests` artifact. To submit them by hand, from a Windows machine:',
+              'The `WINGET_TOKEN` secret is not set, so the manifests were rendered but not',
+              'submitted. They are attached to this run as the `winget-manifests` artifact.',
+              'To submit them by hand, from a Windows machine:',
               '',
               '```powershell',
               'curl.exe -JLO https://aka.ms/wingetcreate/latest',
