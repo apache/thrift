@@ -1148,7 +1148,7 @@ jobs:
 
       # Has to run before configure, which looks for dart on PATH.
       - name: Set up Dart SDK
-        uses: dart-lang/setup-dart@7654d458321ee25acccccfdb86cd48bd95768ff1 # v1.8.0
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
           sdk: ${{ matrix.sdk }}
 
