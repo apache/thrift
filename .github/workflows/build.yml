@@ -1434,7 +1434,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        uses: ruby/setup-ruby@762794c140bbeda0f1224786aa33b4b46783a6c1 # v1.326.0
         with:
           ruby-version: ${{ matrix.ruby-version }}
           # Old bundler used the internal constant of Pathname, that was not private due to a typo.
@@ -1686,7 +1686,7 @@ jobs:
           java-version: 8
           cache: "gradle"
 
-      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+      - uses: ruby/setup-ruby@762794c140bbeda0f1224786aa33b4b46783a6c1 # v1.326.0
         with:
           ruby-version: "4.0"
           bundler-cache: true
