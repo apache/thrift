@@ -516,34 +516,35 @@ signature checks out against `KEYS`.
 
 When the GitHub release is published, the workflow attaches the installer to it
 as an unsigned convenience copy, so that the download link is there
-immediately.  **One thing is left to do after the release:** overwrite that asset
-with the signed file from `dist/release`, so that what people download from
-GitHub is what the signatures on `dist.apache.org` cover.
+immediately.  If the vote covered the installer, **one thing is left to do after
+the release:** overwrite that asset with the signed file from `dist/release`, so
+that what people download from GitHub is what the signatures on
+`dist.apache.org` cover.
 
 ```bash
 ~$ gh release upload v1.0.0 thrift-1.0.0-setup.exe --clobber --repo apache/thrift
 ```
 
-If the installer was not part of the release candidate, it is missing from
-`dist/release` too, and the Chocolatey and WinGet runs of the release fail to
-download it.  To add it afterwards:
+If the installer was not part of the release candidate, the vote did not cover
+it.  It is then missing from `dist/release`, and it is not added there after the
+release either, since `dist/release` holds what the vote covered.  The
+Chocolatey and WinGet runs of the release fail to download it from the archive.
+Point both at the convenience copy on the GitHub release instead:
 
-1. Build it around the voted compiler.  Run the `Windows packages` workflow from
-   the Actions tab with `compiler_url` set to the executable in `dist/release`,
-   for example `https://dist.apache.org/repos/dist/release/thrift/1.0.0/thrift-1.0.0.exe`,
-   and take its `windows-installer` artifact.  It installs the `LICENSE` and
-   `NOTICE` of the release tag.  To build it yourself instead, use Inno Setup
-   6.3 or later in a checkout of the release tag:
-
-    ```powershell
-    PS C:\thrift> .\build\windows\build-installer.ps1 -Version 1.0.0 -Compiler C:\dist\thrift-1.0.0.exe -OutputDir dist
-    ```
-
-1. Sign and checksum it the same way as the other release artifacts, and commit
-   it with its signature and checksums to `dist/release/thrift/1.0.0`.
-1. Overwrite the asset on the GitHub release with it, as shown above.
-1. Once `archive.apache.org` has the file, run the [Chocolatey](#chocolatey) and
-   [WinGet](#winget) workflows again, as described below.
+1. Make sure that copy is built around the voted compiler.  The summary of the
+   release run of the `Windows packages` workflow names the compiler it
+   packaged, which has to be the executable in `dist/release`, not "built from
+   source".  If it is not, run that workflow from the Actions tab with
+   `compiler_url` set to the executable in `dist/release`, for example
+   `https://dist.apache.org/repos/dist/release/thrift/1.0.0/thrift-1.0.0.exe`,
+   and upload its `windows-installer` artifact to the release with the
+   `gh release upload` command above.
+1. Run the [Chocolatey](#chocolatey) and [WinGet](#winget) workflows from the
+   Actions tab with `installer_source` set to `github`.  There is nothing to wait
+   for: the copy is on the GitHub release from the start.
+1. Leave that asset alone from then on.  Both package managers record its
+   SHA-256, so replacing it, even with another build around the same compiler,
+   breaks every installation of that version.
 
 ##### Chocolatey
 
@@ -557,7 +558,10 @@ archive has the release - `downloads.apache.org` only carries the current
 release, and a package naming it would stop installing at the next one.  If the
 release run was too early, re-run it once the archive has the file, which GitHub
 allows for 30 days, or start the workflow from the Actions tab (*Run workflow*)
-with the released version.
+with the released version.  When the vote did not cover the installer, start it
+with `installer_source` set to `github` instead, as described under
+[Windows Packages](#windows-packages): the package then downloads the copy on
+the GitHub release.
 
 The workflow pushes with the API key in the secret `CHOCO_API_KEY`, which has to
 belong to an account that maintains the `thrift` package on the Chocolatey
@@ -575,13 +579,17 @@ It runs when the release is published, but it can only succeed once the release
 has been promoted to `dist.apache.org` **and** `archive.apache.org` has picked it
 up - the manifest points at the archive, because `downloads.apache.org` only
 carries the current release and a manifest naming it would stop working at the
-next one.  This is the same wait the Docker Official Image update has.
+next one.  This is the same wait the Docker Official Image update has.  When the
+vote did not cover the installer, the archive never gets it; the manifest then
+points at the copy on the GitHub release, as described under
+[Windows Packages](#windows-packages).
 
 So expect to run it again a while after the release.  Re-running the release's
 run works for 30 days; starting the workflow from the Actions tab always works:
 
 1. Actions → `WinGet` → *Run workflow*, entering the released version and its
-   release date.  Without a date, the manifest records the day of the run.
+   release date.  Without a date, the manifest records the day of the run.  Set
+   `installer_source` to `github` when the vote did not cover the installer.
 1. The workflow renders the manifests, downloads the published installer to
    compute its checksum, validates the manifests against the WinGet schemas, and
    opens a pull request against `microsoft/winget-pkgs`.

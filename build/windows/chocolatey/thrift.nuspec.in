@@ -49,8 +49,9 @@ This package installs the Thrift compiler, which turns a `.thrift` interface
 definition into client and server code. The runtime libraries are distributed
 separately, through each language's own package manager.
 
-The package downloads the Windows installer from the Apache archive and runs
-it. The installer adds the compiler to `PATH`, so open a new shell afterwards.
+The package downloads the Windows installer published with the Apache Thrift
+release and runs it. The installer adds the compiler to `PATH`, so open a new
+shell afterwards.
 
 ## Notes
 

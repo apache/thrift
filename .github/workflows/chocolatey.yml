@@ -25,6 +25,11 @@
 # once the archive has the file, or start this workflow from the Actions tab
 # with the version.
 #
+# An installer the release vote did not cover is not on dist.apache.org, and
+# so not in the archive either. For such a release, start this workflow from
+# the Actions tab with installer_source set to github: the package then
+# downloads the copy on the GitHub release. See doc/ReleaseManagement.md.
+#
 # Nothing is pushed unless the CHOCO_API_KEY secret is set, to the API key of
 # an account that maintains the "thrift" package on the Chocolatey community
 # repository. See doc/ReleaseManagement.md.
@@ -48,6 +53,14 @@ on:
         description: "Released version to package, for example 0.26.0. Taken from CMakeLists.txt when empty."
         required: false
         type: string
+      installer_source:
+        description: "Where the package downloads the installer from: archive (archive.apache.org) when the release vote covered the installer, github (the copy on the GitHub release) when it did not."
+        required: false
+        type: choice
+        options:
+          - archive
+          - github
+        default: archive
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -109,15 +122,21 @@ jobs:
         shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          INSTALLER_SOURCE: ${{ inputs.installer_source }}
           # A release and a manual run both push, so only a pull request
           # packages a placeholder.
           IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
         run: |
+          # Only a manual run has inputs. A release run uses the archive.
+          $source = if ($env:INSTALLER_SOURCE) { $env:INSTALLER_SOURCE } else { 'archive' }
+          Write-Host "Installer source: $source"
+
           if ($env:IS_PULL_REQUEST -ne 'true') {
             # No checksum given, so the published installer is downloaded and
             # hashed. The package then cannot record a checksum the published
             # file does not have.
-            ./build/windows/build-chocolatey-package.ps1 -Version $env:VERSION -OutputDir chocolatey-package
+            ./build/windows/build-chocolatey-package.ps1 -Version $env:VERSION `
+              -InstallerSource $source -OutputDir chocolatey-package
           }
           else {
             # Nothing is published for a pull request, so this packages an
@@ -126,7 +145,7 @@ jobs:
             # does not upload it.
             Write-Host '::notice::Packaging with a placeholder checksum; this run cannot push.'
             ./build/windows/build-chocolatey-package.ps1 -Version $env:VERSION `
-              -Sha256 ('DEADBEEF' * 8) -OutputDir chocolatey-package
+              -Sha256 ('DEADBEEF' * 8) -InstallerSource $source -OutputDir chocolatey-package
           }
 
       - name: Check the packed package
@@ -150,7 +169,7 @@ jobs:
     name: Push to Chocolatey
     needs: package
     # A manual run is how a release gets pushed once the archive has the
-    # installer, so it pushes too.
+    # installer, or from the GitHub release, so it pushes too.
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease) }}
     runs-on: windows-2025
     timeout-minutes: 20

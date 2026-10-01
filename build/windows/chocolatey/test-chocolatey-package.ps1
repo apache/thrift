@@ -150,11 +150,28 @@ try {
     Assert-True 'a given download URL is used' `
         ($customInstall -match "url64bit\s*=\s*'https://example\.invalid/thrift\.exe'")
 
+    # When the vote did not cover the installer, it is not on dist.apache.org,
+    # and the copy on the GitHub release is the one to download.
+    $github = & $builder -Version $version -Sha256 $sha -InstallerSource github `
+        -OutputDir (Join-Path $workDir 'github') -StageOnly | Select-Object -Last 1
+    $githubInstall = Get-Content -LiteralPath (Join-Path $github 'tools\chocolateyinstall.ps1') -Raw
+    $githubUrl = "https://github.com/apache/thrift/releases/download/v$version/thrift-$version-setup.exe"
+    Assert-True 'the download URL can be the asset on the GitHub release' `
+        ($githubInstall -match "url64bit\s*=\s*'$([regex]::Escape($githubUrl))'") $githubInstall
+
     Assert-Throws 'a version that is not major.minor.patch is refused' `
         { & $builder -Version '1.2' -Sha256 $sha -OutputDir (Join-Path $workDir 'bad1') -StageOnly } 'major.minor.patch'
 
     Assert-Throws 'a checksum that is not 64 hex digits is refused' `
         { & $builder -Version $version -Sha256 'nope' -OutputDir (Join-Path $workDir 'bad2') -StageOnly } 'hexadecimal'
+
+    # downloads.apache.org is the obvious third choice, and the wrong one.
+    Assert-Throws 'an unknown installer source is refused' `
+        { & $builder -Version $version -Sha256 $sha -InstallerSource downloads -OutputDir (Join-Path $workDir 'bad3') -StageOnly } 'does not belong to the set'
+
+    Assert-Throws 'an installer URL and an installer source together are refused' `
+        { & $builder -Version $version -Sha256 $sha -InstallerUrl 'https://example.invalid/thrift.exe' `
+            -InstallerSource github -OutputDir (Join-Path $workDir 'bad4') -StageOnly } 'not both'
 
     # ---- an already packed package, when one was given ---------------------
 

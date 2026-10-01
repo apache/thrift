@@ -212,10 +212,12 @@ PS C:\thrift> .\build\windows\build-chocolatey-package.ps1 -Version 0.26.0
 
 The package does not carry the compiler. It downloads the installer published
 with the release and runs it silently for all users, so what a user installs is
-what was voted on and signed, and no binary is redistributed through a third
-party CDN. As with the WinGet manifest, the URL is `archive.apache.org` and the
-checksum is computed from the file at that very URL, so the package cannot
-record a checksum the published file does not have.
+the voted compiler, and no binary is redistributed through a third party CDN.
+As with the WinGet manifest, the URL is `archive.apache.org` and the checksum is
+computed from the file at that very URL, so the package cannot record a
+checksum the published file does not have. For a release whose vote did not
+cover the installer, `-InstallerSource github` takes the copy on the GitHub
+release instead.
 
 Pass `-StageOnly` to render the package without packing it, which works on a
 machine that has no Chocolatey.
@@ -224,7 +226,8 @@ machine that has no Chocolatey.
 
 Tests the builder: that the URL, checksum and silent install arguments reach
 the install script, that no placeholder survives, that `LICENSE` and `NOTICE`
-are staged and not empty, and that a malformed version or checksum is refused.
+are staged and not empty, and that a malformed version or checksum, or an
+unknown installer source, is refused.
 Given `-Package`, it also looks inside a packed `.nupkg` - including that it
 carries no executable, since the compiler is downloaded at install time.
 
@@ -246,17 +249,21 @@ The manifest points at `archive.apache.org`, which keeps every release.
 would stop working at the next release and take every older version in
 winget-pkgs with it.
 
+An installer the release vote did not cover is not on `dist.apache.org`, and so
+not in the archive either. For such a release, `-InstallerSource github` points
+the manifest at the copy on the GitHub release, whose URL is just as permanent.
+
 Unless `-Sha256` is given, the installer is downloaded from the very URL that
 goes into the manifest and hashed, so the manifest cannot claim a checksum the
 published file does not have. That also means this cannot be run before the
-release has reached the archive.
+installer is there: for the archive, before the release has reached it.
 
 ### `winget/test-winget-manifests.ps1`
 
 Tests the renderer: that the values land where they belong, that no placeholder
 survives into a file that would be submitted verbatim, that the output is UTF-8
 without a BOM and with LF endings, and that a malformed version, checksum or
-date is refused.
+date, or an unknown installer source, is refused.
 
 ### `winget/validate_manifests.py`
 

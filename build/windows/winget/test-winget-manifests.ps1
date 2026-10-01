@@ -149,6 +149,15 @@ try {
     Assert-True 'a given installer URL is used' `
         ($customInstaller -match 'InstallerUrl: https://example\.invalid/thrift\.exe')
 
+    # When the vote did not cover the installer, it is not on dist.apache.org,
+    # and the copy on the GitHub release is the one to point at.
+    $github = & $renderer -Version $version -Sha256 $sha -ReleaseDate $date -InstallerSource github `
+        -OutputDir (Join-Path $workDir 'github') | Select-Object -Last 1
+    $githubInstaller = Get-Content -LiteralPath (Join-Path $github 'Apache.Thrift.installer.yaml') -Raw
+    $githubUrl = "https://github.com/apache/thrift/releases/download/v$version/thrift-$version-setup.exe"
+    Assert-True 'the installer URL can be the asset on the GitHub release' `
+        ($githubInstaller -match "InstallerUrl: $([regex]::Escape($githubUrl))") $githubInstaller
+
     # winget-pkgs manifests are UTF-8 without a BOM, and PowerShell is happy to
     # write both a BOM and CRLF if left to itself.
     $bytes = [System.IO.File]::ReadAllBytes((Join-Path $targetDir 'Apache.Thrift.yaml'))
@@ -166,6 +175,14 @@ try {
 
     Assert-Throws 'a release date that is not yyyy-MM-dd is refused' `
         { & $renderer -Version $version -Sha256 $sha -ReleaseDate '20.09.2026' -OutputDir (Join-Path $workDir 'bad3') } 'yyyy-MM-dd'
+
+    # downloads.apache.org is the obvious third choice, and the wrong one.
+    Assert-Throws 'an unknown installer source is refused' `
+        { & $renderer -Version $version -Sha256 $sha -InstallerSource downloads -OutputDir (Join-Path $workDir 'bad4') } 'does not belong to the set'
+
+    Assert-Throws 'an installer URL and an installer source together are refused' `
+        { & $renderer -Version $version -Sha256 $sha -InstallerUrl 'https://example.invalid/thrift.exe' `
+            -InstallerSource github -OutputDir (Join-Path $workDir 'bad5') } 'not both'
 }
 finally {
     Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue
