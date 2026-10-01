@@ -117,6 +117,25 @@ try {
         (@($dependencies | Where-Object { $_.id -eq 'vcredist140' }).Count -eq 1) `
         (($dependencies | ForEach-Object { $_.id }) -join ', ')
 
+    # The installed redistributable has to be at least as new as the build
+    # tools the compiler was built with. Without a minimum, any version that is
+    # already installed satisfies the dependency and is not updated.
+    $redist = @($dependencies | Where-Object { $_.id -eq 'vcredist140' }) | Select-Object -First 1
+    $redistMinimum = if ($redist) { [string]$redist.version } else { '' }
+    Assert-True 'the redistributable dependency names a minimum version' `
+        ($redistMinimum -match '^14\.\d+') "version '$redistMinimum'"
+
+    # Both package managers have to ask for the same runtime.
+    $wingetTemplate = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\winget\Apache.Thrift.installer.yaml.in') -Raw
+    $wingetMinimum = ([regex]::Match($wingetTemplate, "MinimumVersion:\s*'([^']*)'")).Groups[1].Value
+    Assert-True 'the minimum matches the one in the WinGet manifest' `
+        ([bool]$redistMinimum -and ($redistMinimum -eq $wingetMinimum)) "nuspec '$redistMinimum', WinGet '$wingetMinimum'"
+
+    # There is no square Thrift logo to point at, and Chocolatey flags a dead
+    # icon link.
+    Assert-True 'the nuspec names no icon' (-not $nuspec.package.metadata.iconUrl) `
+        ([string]$nuspec.package.metadata.iconUrl)
+
     $install = Get-Content -LiteralPath $installPath -Raw
     Assert-True 'the install script holds no placeholders' ($install -notmatch '__[A-Z0-9_]+__')
     Assert-True 'the checksum reaches the install script' ($install -match "checksum64\s*=\s*'$sha'")

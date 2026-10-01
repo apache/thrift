@@ -205,6 +205,13 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
             Do **not** build a statically linked compiler to make that list shorter.  The
             project moved away from one deliberately, and the released compiler is expected
             to require the Visual C++ redistributable; the check fails if it does not.
+
+            The installed redistributable has to be at least as new as the build tools the
+            compiler was built with, so the WinGet and Chocolatey packages ask for that version
+            or later: 14.51, what 0.25.0 was built with.  If you build with newer build tools -
+            `dumpbin /headers thrift.exe` shows their version as the linker version - raise
+            `MinimumVersion` in `build/windows/winget/Apache.Thrift.installer.yaml.in` and the
+            `vcredist140` version in `build/windows/chocolatey/thrift.nuspec.in` to match.
         1. Copy the executable `thrift.exe` to your linux system where the signed tarball lives and rename it to `thrift-1.0.0.exe` (substitute the correct version, of course).
         1. Sign the executable the same way you signed the tarball.
         1. Build the Windows installer from the very same executable:

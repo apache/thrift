@@ -126,6 +126,13 @@ try {
     Assert-True 'the redistributable is declared as a dependency' `
         ($installer -match 'PackageIdentifier:\s*Microsoft\.VCRedist\.2015\+\.x64') $installer
 
+    # The installed redistributable has to be at least as new as the build
+    # tools the compiler was built with. Without a minimum, any version that is
+    # already installed satisfies the dependency and is not updated. Quoted, so
+    # that YAML does not read 14.51 as a number.
+    Assert-True 'the redistributable dependency names a minimum version' `
+        ($installer -match "PackageIdentifier:\s*Microsoft\.VCRedist\.2015\+\.x64\s*\n\s*MinimumVersion:\s*'14\.\d+'") $installer
+
     # downloads.apache.org only carries the current release, so a manifest
     # naming it stops working at the next one.
     Assert-True 'the installer URL defaults to the Apache archive' `

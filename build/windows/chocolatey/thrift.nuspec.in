@@ -36,7 +36,7 @@
     <mailingListUrl>https://thrift.apache.org/mailing</mailingListUrl>
     <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <iconUrl>https://thrift.apache.org/assets/images/thrift-logo.svg</iconUrl>
+    <!-- No iconUrl: there is no square Thrift logo to point at. -->
     <copyright>Copyright (c) The Apache Software Foundation</copyright>
     <tags>apache thrift rpc idl codegen compiler serialization admin</tags>
     <summary>The Apache Thrift IDL compiler</summary>
@@ -64,8 +64,11 @@ shell afterwards.
     <dependencies>
       <!-- The compiler links the shared runtime, so it needs the Visual C++
            redistributable, which the ASF cannot ship. Chocolatey installs
-           this first. -->
-      <dependency id="vcredist140" />
+           this first. It has to be at least as new as the build tools the
+           compiler was built with, so a version already installed only
+           counts from that one on. Keep it equal to MinimumVersion in
+           build/windows/winget/Apache.Thrift.installer.yaml.in. -->
+      <dependency id="vcredist140" version="14.51" />
     </dependencies>
   </metadata>
   <files>
