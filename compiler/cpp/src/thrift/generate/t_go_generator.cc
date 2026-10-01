@@ -457,6 +457,19 @@ void t_go_generator::init_generator() {
   package_dir_ = get_out_dir();
   last_const_block_ = 0;
 
+  // The -remote stub's main() declares these local variables. An imported package with one of
+  // these names would be shadowed by them, so reserve them before any import is rendered; such a
+  // package is then imported under an alias in every file of this program.
+  if (!skip_remote_) {
+    for (const char* local :
+         {"cfg",       "client",    "cmd",     "err",      "framed",          "headers",
+          "host",      "httptrans", "iprot",   "m",        "oprot",           "parsedUrl",
+          "parts",     "port",      "portStr", "protocol", "protocolFactory", "trans",
+          "urlString", "useHttp"}) {
+      package_identifiers_set_.insert(local);
+    }
+  }
+
   // This set is taken from https://github.com/golang/lint/blob/master/lint.go#L692
   commonInitialisms.insert("API");
   commonInitialisms.insert("ASCII");
