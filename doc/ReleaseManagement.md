@@ -589,8 +589,13 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   * Run "pub publish" and go through the google account authorization to allow it.
 * [dlang] Within a day, the dlang dub site https://code.dlang.org/packages/apache-thrift?tab=info
   should pick up the release based on the tag.  No action is needed.
-* [npmjs] @jfarrell is the only one who can do this right now.
-    https://issues.apache.org/jira/browse/THRIFT-4688
+* [npmjs]
+  - naviagte to thrift release folder, stay at ROOT
+  - enter: `npm publish . -access public --dry-run`
+  - when happy: `npm publish . -access public`
+  - hold OTP device ready
+  - goto https://www.npmjs.com/package/thrift
+  - switch to "versions" and hit F5 a few times until the release is listed as "latest"
 * [nuget] The `.NET tool` GitHub Actions workflow publishes
   [`Apache.Thrift.Compiler`](https://www.nuget.org/packages/Apache.Thrift.Compiler/) when the
   GitHub release is published.  This is the Windows compiler packaged as a .NET tool, so that it
