@@ -56,8 +56,9 @@ you are using libthriftnb you will also need libevent.
 
 C++11 is required at a minimum.  C++03/C++98 are not supported after version 0.12.0.
 
-Boost is required to run the C++ unit tests.  It is not necessary to link against
-the runtime library.
+Boost is required to build and run the C++ unit tests, and by the autotools build.
+The CMake build of the runtime libraries does not need it when the tests are off
+(`-DBUILD_TESTING=OFF`), and nothing needs to link against it.
 
 libevent (for libthriftnb only) - most linux distributions have dev packages for this:
 http://monkey.org/~provos/libevent/
@@ -260,8 +261,8 @@ Some examples of supported string formats are:
 
 ## `TUuid` and `boost::uuids::uuid`
 
-Internally the TUuid class is implemented using the `boost::uuids::uuid` library. As a result the TUuid
-can seamlessly interoperate with the boost UUID type since the underlying data structure is the same.
+The TUuid class stores the same 16 bytes, in the same order, as `boost::uuids::uuid`, so the two
+types interoperate even though the thrift library itself does not use boost.
 
 For convenience, when boost is already used by a project the `THRIFT_TUUID_SUPPORT_BOOST_UUID` preprocessor
 directive can be set when including the thrift library to enable construction of a `TUuid` from a

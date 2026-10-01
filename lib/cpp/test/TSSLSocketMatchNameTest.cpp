@@ -19,7 +19,7 @@
 
 #define BOOST_TEST_MODULE TSSLSocketMatchNameTest
 #include <boost/test/unit_test.hpp>
-#include <boost/thread.hpp>
+#include <thread>
 #include <boost/version.hpp>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
@@ -208,7 +208,7 @@ public:
     socket_ = std::make_shared<TSSLServerSocket>("127.0.0.1", 0, factory);
     socket_->listen();
     port_ = socket_->getPort();
-    thread_ = boost::thread(&OneShotServer::run, this);
+    thread_ = std::thread(&OneShotServer::run, this);
   }
 
   ~OneShotServer() {
@@ -241,7 +241,7 @@ private:
   }
 
   std::shared_ptr<TSSLServerSocket> socket_;
-  boost::thread thread_;
+  std::thread thread_;
   int port_{0};
 };
 

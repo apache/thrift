@@ -27,10 +27,9 @@
 #include <sstream>
 #include <fstream>
 
-#include <boost/mpl/list.hpp>
-#include <boost/shared_array.hpp>
-#include <boost/random.hpp>
-#include <boost/type_traits.hpp>
+#include <memory>
+#include <random>
+
 #include <boost/test/unit_test.hpp>
 #include <boost/version.hpp>
 
@@ -49,7 +48,7 @@
 using namespace apache::thrift::transport;
 using namespace apache::thrift;
 
-static boost::mt19937 rng;
+static std::mt19937 rng;
 
 void initrand(unsigned int seed) {
   rng.seed(seed);
@@ -79,9 +78,9 @@ private:
 class RandomSizeGenerator : public SizeGenerator {
 public:
   RandomSizeGenerator(uint32_t min, uint32_t max)
-    : generator_(rng, boost::uniform_int<int>(min, max)) {}
+    : distribution_(static_cast<int>(min), static_cast<int>(max)) {}
 
-  uint32_t nextSize() override { return generator_(); }
+  uint32_t nextSize() override { return static_cast<uint32_t>(distribution_(rng)); }
 
   std::string describe() const override {
     std::ostringstream desc;
@@ -89,11 +88,11 @@ public:
     return desc.str();
   }
 
-  uint32_t getMin() const { return (generator_.distribution().min)(); }
-  uint32_t getMax() const { return (generator_.distribution().max)(); }
+  uint32_t getMin() const { return (distribution_.min)(); }
+  uint32_t getMax() const { return (distribution_.max)(); }
 
 private:
-  boost::variate_generator<boost::mt19937&, boost::uniform_int<int> > generator_;
+  std::uniform_int_distribution<int> distribution_;
 };
 
 /**
@@ -503,8 +502,8 @@ void test_rw(uint32_t totalSize,
   BOOST_REQUIRE(transports.in != nullptr);
   BOOST_REQUIRE(transports.out != nullptr);
 
-  boost::shared_array<uint8_t> wbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
-  boost::shared_array<uint8_t> rbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
+  std::unique_ptr<uint8_t[]> wbuf(new uint8_t[totalSize]);
+  std::unique_ptr<uint8_t[]> rbuf(new uint8_t[totalSize]);
 
   // store some data in wbuf
   for (uint32_t n = 0; n < totalSize; ++n) {

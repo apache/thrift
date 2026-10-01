@@ -40,6 +40,7 @@ BOOST_AUTO_TEST_CASE(construction_string_valid) {
   BOOST_TEST(to_string(TUuid("{5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}")) == expected_1);
   BOOST_TEST(to_string(TUuid("{5e2ab18817264e75a04f1ed9a6a89c4c}")) == expected_1);
   BOOST_TEST(to_string(TUuid("5e2ab18817264e75a04f1ed9a6a89c4c")) == expected_1);
+  BOOST_TEST(to_string(TUuid("5E2AB188-1726-4E75-A04F-1ED9A6A89C4C")) == expected_1);
 }
 
 BOOST_AUTO_TEST_CASE(construction_string_invalid) {
@@ -50,6 +51,11 @@ BOOST_AUTO_TEST_CASE(construction_string_invalid) {
   BOOST_TEST(to_string(TUuid("{}")) == expected);
   BOOST_TEST(to_string(TUuid("{5e2ab18817264e75a04f1ed9a6a89c4c")) == expected);
   BOOST_TEST(to_string(TUuid("5e2ab18817264e75a04f1ed9a689c4c")) == expected);
+  BOOST_TEST(to_string(TUuid("")) == expected);
+  BOOST_TEST(to_string(TUuid("5e2ab188-17264e75a04f1ed9a6a89c4c")) == expected);
+  BOOST_TEST(to_string(TUuid("5e2ab18817264e75a04f1ed9a6a89c4c0")) == expected);
+  BOOST_TEST(to_string(TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4g")) == expected);
+  BOOST_TEST(to_string(TUuid("5e2ab188-1726-4e75-a04f-1ed9a6a89c4c}")) == expected);
 }
 
 BOOST_AUTO_TEST_CASE(compare) {

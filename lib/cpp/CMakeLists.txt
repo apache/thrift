@@ -17,10 +17,6 @@
 # under the License.
 #
 
-# Remove the following once lib/cpp no longer depends on boost headers:
-include(BoostMacros)
-REQUIRE_BOOST_HEADERS()
-
 include_directories(src)
 
 if(NOT BUILD_SHARED_LIBS)

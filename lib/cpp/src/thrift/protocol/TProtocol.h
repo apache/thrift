@@ -124,20 +124,15 @@ static inline To bitwise_cast(From from) {
 #  define __THRIFT_BYTE_ORDER BYTE_ORDER
 #  define __THRIFT_LITTLE_ENDIAN LITTLE_ENDIAN
 #  define __THRIFT_BIG_ENDIAN BIG_ENDIAN
-# else
-#  include <boost/predef/other/endian.h>
-#  if BOOST_ENDIAN_BIG_BYTE
-#    define __THRIFT_BYTE_ORDER 4321
-#    define __THRIFT_LITTLE_ENDIAN 0
-#    define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
-#  elif BOOST_ENDIAN_LITTLE_BYTE
-#    define __THRIFT_BYTE_ORDER 1234
-#    define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
-#    define __THRIFT_BIG_ENDIAN 0
-#  endif
-#  ifdef BOOST_LITTLE_ENDIAN
-#  else
-#  endif
+# elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER__
+#  define __THRIFT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#  define __THRIFT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+# elif defined(_WIN32)
+   /* every Windows target is little-endian */
+#  define __THRIFT_BYTE_ORDER 1234
+#  define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
+#  define __THRIFT_BIG_ENDIAN 0
 # endif
 #endif
 
