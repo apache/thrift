@@ -513,6 +513,8 @@ gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cp
 	$(THRIFT) --gen cpp:templates,cob_style $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -I$(top_srcdir)/lib/cpp/src/thrift -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.
+# The tests here always link libthriftz
+AM_CPPFLAGS += -DTHRIFT_TEST_WITH_ZLIB
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 AM_CXXFLAGS = -Wall -Wextra -pedantic
 

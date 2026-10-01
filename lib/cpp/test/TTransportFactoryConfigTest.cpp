@@ -38,7 +38,9 @@
 #include <vector>
 
 #include <thrift/transport/TBufferTransports.h>
+#ifdef THRIFT_TEST_WITH_ZLIB
 #include <thrift/transport/THeaderTransport.h>
+#endif
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TTransportUtils.h>
 
@@ -75,10 +77,12 @@ BOOST_AUTO_TEST_CASE(test_framed_transport_factory_preserves_configuration) {
   checkPreservesConfiguration(factory);
 }
 
+#ifdef THRIFT_TEST_WITH_ZLIB
 BOOST_AUTO_TEST_CASE(test_header_transport_factory_preserves_configuration) {
   THeaderTransportFactory factory;
   checkPreservesConfiguration(factory);
 }
+#endif // THRIFT_TEST_WITH_ZLIB
 
 BOOST_AUTO_TEST_CASE(test_http_server_transport_factory_preserves_configuration) {
   THttpServerTransportFactory factory;
@@ -137,6 +141,8 @@ BOOST_AUTO_TEST_CASE(test_framed_transport_factory_enforces_custom_max_frame_siz
   BOOST_CHECK(caught);
 }
 
+// THeaderTransport lives in libthriftz, which is only built with zlib.
+#ifdef THRIFT_TEST_WITH_ZLIB
 // Behavioral coverage for THeaderTransport: like TFramedTransport, the header
 // receive path must reject a frame larger than the caller-configured
 // maxFrameSize, not only the internal MAX_FRAME_SIZE ceiling (~1 GiB). The
@@ -250,6 +256,7 @@ BOOST_AUTO_TEST_CASE(test_header_transport_accepts_frame_within_max_frame_size) 
   BOOST_CHECK_NO_THROW(reader->readAll(&first, 1));
   BOOST_CHECK_EQUAL(first, static_cast<uint8_t>('B'));
 }
+#endif // THRIFT_TEST_WITH_ZLIB
 
 // TFramedTransport has three constructors. The two that take an underlying
 // transport initialise maxFrameSize_ from the configuration; the one that takes
