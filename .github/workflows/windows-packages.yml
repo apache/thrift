@@ -35,7 +35,9 @@
 # The installer that counts is the one on dist.apache.org, signed by a release
 # manager. What this workflow attaches to the GitHub release is an unsigned
 # convenience copy, so that the link is there straight away; the release
-# manager overwrites it with the signed file afterwards. See
+# manager overwrites it with the signed file afterwards. When the vote did not
+# cover the installer, there is no signed file, and WinGet and Chocolatey
+# download this copy instead, so it must then stay as it is. See
 # doc/ReleaseManagement.md.
 
 name: "Windows packages"
@@ -343,4 +345,6 @@ jobs:
           # This is the unsigned convenience copy, around the voted compiler.
           # The release manager replaces it with the signed file from
           # dist.apache.org after the vote, which is also a --clobber upload.
+          # When the vote did not cover the installer, WinGet and Chocolatey
+          # download this copy, and it is not replaced.
           gh release upload "$RELEASE_TAG" "$installer" --clobber

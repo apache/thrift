@@ -26,16 +26,28 @@
 
     The package does not carry the compiler. It downloads the installer
     published with the release and runs it, so that what a user installs is
-    what was voted on and signed. Unless a checksum is given, it is computed
-    from the file at that very URL, which means this cannot run before the
-    release has reached the archive.
+    the voted compiler. Unless a checksum is given, it is computed from the
+    file at that very URL, which means this cannot run before the installer is
+    there: for the archive, until the release has reached it.
 
 .PARAMETER Version
     The released version, for example 0.26.0.
 
 .PARAMETER InstallerUrl
-    Where the installer is published. Defaults to the Apache archive, which
-    keeps every release; downloads.apache.org only carries the current one.
+    Where the installer is published. Defaults to the URL -InstallerSource
+    names.
+
+.PARAMETER InstallerSource
+    Where the installer is taken from when -InstallerUrl is not given:
+
+    - archive, the default: the Apache archive, which keeps every release. The
+      installer gets there through dist/release when the release vote
+      covered it.
+    - github: the convenience copy on the GitHub release, for a release whose
+      vote did not cover the installer, so that it is not on dist.apache.org.
+
+    downloads.apache.org is not offered: it only carries the current release,
+    so a package naming it stops installing at the next one.
 
 .PARAMETER Sha256
     The installer's SHA-256. Computed from the downloaded file when omitted.
@@ -53,6 +65,9 @@
 
 .EXAMPLE
     pwsh build/windows/build-chocolatey-package.ps1 -Version 0.26.0
+
+.EXAMPLE
+    pwsh build/windows/build-chocolatey-package.ps1 -Version 0.25.0 -InstallerSource github
 #>
 
 [CmdletBinding()]
@@ -60,6 +75,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $Version,
     [string] $InstallerUrl = '',
+    [ValidateSet('archive', 'github')]
+    [string] $InstallerSource = 'archive',
     [string] $Sha256 = '',
     [string] $OutputDir = 'chocolatey-package',
     [string] $SourceRoot = '',
@@ -71,8 +88,19 @@ $ErrorActionPreference = 'Stop'
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
     throw "Version '$Version' is not major.minor.patch."
 }
+if ($InstallerUrl -and $PSBoundParameters.ContainsKey('InstallerSource')) {
+    throw 'Pass either -InstallerUrl or -InstallerSource, not both.'
+}
+$downloadHint = ''
 if (-not $InstallerUrl) {
-    $InstallerUrl = "https://archive.apache.org/dist/thrift/$Version/thrift-$Version-setup.exe"
+    if ($InstallerSource -eq 'github') {
+        $InstallerUrl = "https://github.com/apache/thrift/releases/download/v$Version/thrift-$Version-setup.exe"
+        $downloadHint = "The Windows packages workflow attaches the installer to the GitHub release v$Version."
+    }
+    else {
+        $InstallerUrl = "https://archive.apache.org/dist/thrift/$Version/thrift-$Version-setup.exe"
+        $downloadHint = 'If the release was just promoted, the Apache archive may not have picked it up yet. Wait and try again.'
+    }
 }
 if (-not $SourceRoot) {
     $SourceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -97,8 +125,8 @@ else {
             Invoke-WebRequest -Uri $InstallerUrl -OutFile $download -MaximumRedirection 5
         }
         catch {
-            throw ("Could not download $InstallerUrl : " + $_.Exception.Message + "`n" +
-                   'If the release was just promoted, the Apache archive may not have picked it up yet. Wait and try again.')
+            throw ("Could not download $InstallerUrl : " + $_.Exception.Message +
+                   $(if ($downloadHint) { "`n$downloadHint" }))
         }
         $Sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $download).Hash.ToUpperInvariant()
         Write-Host "  sha256: $Sha256"

@@ -24,6 +24,11 @@
 # run until the release has been promoted and the archive has picked it up. If
 # the release run is too early, re-run it once the archive has the file, or
 # start this workflow from the Actions tab with the version and release date.
+#
+# An installer the release vote did not cover is not on dist.apache.org, and
+# so not in the archive either. For such a release, start this workflow from
+# the Actions tab with installer_source set to github: the manifest then points
+# at the copy on the GitHub release. See doc/ReleaseManagement.md.
 
 name: "WinGet"
 
@@ -48,6 +53,14 @@ on:
         description: "Release date as yyyy-MM-dd. Today when empty, which is only right on the day of the release."
         required: false
         type: string
+      installer_source:
+        description: "Where the manifest points for the installer: archive (archive.apache.org) when the release vote covered the installer, github (the copy on the GitHub release) when it did not."
+        required: false
+        type: choice
+        options:
+          - archive
+          - github
+        default: archive
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -133,16 +146,21 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           RELEASE_DATE: ${{ steps.version.outputs.release_date }}
+          INSTALLER_SOURCE: ${{ inputs.installer_source }}
           # A release and a manual run both submit, so only a pull request
           # renders with a placeholder.
           IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
         run: |
+          # Only a manual run has inputs. A release run uses the archive.
+          $source = if ($env:INSTALLER_SOURCE) { $env:INSTALLER_SOURCE } else { 'archive' }
+          Write-Host "Installer source: $source"
+
           if ($env:IS_PULL_REQUEST -ne 'true') {
             # No checksum given, so the renderer downloads the published
             # installer and hashes that. The manifest then cannot claim a
             # checksum the published file does not have.
             ./build/windows/build-winget-manifests.ps1 -Version $env:VERSION `
-              -ReleaseDate $env:RELEASE_DATE -OutputDir winget-manifests
+              -ReleaseDate $env:RELEASE_DATE -InstallerSource $source -OutputDir winget-manifests
           }
           else {
             # Nothing is published for a pull request, so the manifests are
@@ -151,7 +169,8 @@ jobs:
             # and the job does not upload them.
             Write-Host '::notice::Rendering with a placeholder checksum; this run cannot submit.'
             ./build/windows/build-winget-manifests.ps1 -Version $env:VERSION `
-              -ReleaseDate $env:RELEASE_DATE -Sha256 ('DEADBEEF' * 8) -OutputDir winget-manifests
+              -ReleaseDate $env:RELEASE_DATE -Sha256 ('DEADBEEF' * 8) -InstallerSource $source `
+              -OutputDir winget-manifests
           }
 
       - name: Set up Python
@@ -195,7 +214,7 @@ jobs:
     name: Submit to winget-pkgs
     needs: manifests
     # A manual run is how a release gets submitted once the archive has the
-    # installer, so it submits too.
+    # installer, or from the GitHub release, so it submits too.
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease) }}
     # wingetcreate only runs on Windows.
     runs-on: windows-2025

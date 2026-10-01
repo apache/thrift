@@ -24,9 +24,10 @@ $packageArgs = @{
     packageName    = 'thrift'
     fileType       = 'exe'
 
-    # The installer published with the Apache Thrift release. The archive keeps
-    # every release; downloads.apache.org only carries the current one, so a
-    # package naming it would stop installing at the next release.
+    # The installer published with the Apache Thrift release, on the Apache
+    # archive or on the GitHub release. Both keep every release;
+    # downloads.apache.org only carries the current one, so a package naming it
+    # would stop installing at the next release.
     url64bit       = '__INSTALLER_URL__'
     checksum64     = '__INSTALLER_SHA256__'
     checksumType64 = 'sha256'
