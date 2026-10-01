@@ -607,9 +607,9 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
 * [dlang] Within a day, the dlang dub site https://code.dlang.org/packages/apache-thrift?tab=info
   should pick up the release based on the tag.  No action is needed.
 * [npmjs]
-  - naviagte to thrift release folder, stay at ROOT
-  - enter: `npm publish . -access public --dry-run`
-  - when happy: `npm publish . -access public`
+  - navigate to thrift release folder, stay at ROOT
+  - enter: `npm publish . --access public --dry-run`
+  - when happy: `npm publish . --access public`
   - hold OTP device ready
   - goto https://www.npmjs.com/package/thrift
   - switch to "versions" and hit F5 a few times until the release is listed as "latest"
