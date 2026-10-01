@@ -41,6 +41,11 @@
 .PARAMETER ExpectedVersion
     Version thrift.exe is expected to report. Optional.
 
+.PARAMETER ExpectedSha256
+    SHA-256 the installed thrift.exe is expected to have, which shows that the
+    installer carries that very file - for a release, the one the vote
+    covered. Optional.
+
 .EXAMPLE
     pwsh build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.26.0-setup.exe
 #>
@@ -49,7 +54,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string] $Installer,
-    [string] $ExpectedVersion = ''
+    [string] $ExpectedVersion = '',
+    [string] $ExpectedSha256 = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -126,6 +132,11 @@ try {
 
     $compiler = Join-Path $installDir 'thrift.exe'
     Assert-True 'thrift.exe is installed' (Test-Path -LiteralPath $compiler)
+    if ($ExpectedSha256 -and (Test-Path -LiteralPath $compiler)) {
+        $installedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $compiler).Hash.ToLowerInvariant()
+        Assert-True 'the installed thrift.exe is the expected file' `
+            ($installedHash -eq $ExpectedSha256.ToLowerInvariant()) "sha256 $installedHash"
+    }
     Assert-True 'LICENSE is installed' (Test-Path -LiteralPath (Join-Path $installDir 'LICENSE.txt'))
     Assert-True 'NOTICE is installed' (Test-Path -LiteralPath (Join-Path $installDir 'NOTICE.txt'))
 

@@ -65,6 +65,40 @@ grew far enough rejects nothing. The tests pin down that a release build passes,
 that a static build and a third-party dependency are both rejected, and that the
 wildcard matching does what the default allow list relies on.
 
+## `get-voted-compiler.ps1`
+
+Fetches the `thrift-<version>.exe` of a release candidate or a release from
+`dist.apache.org` and checks it before anything is built from it: every
+checksum file next to it (`.sha512`, `.sha256`) must match, at least one must be
+there, and its detached signature must be good and made with a key from the
+project's `KEYS`. Only `dist.apache.org` URLs naming a `thrift-<version>.exe`
+are accepted.
+
+```powershell
+PS C:\thrift> .\build\windows\get-voted-compiler.ps1 -Url https://dist.apache.org/repos/dist/release/thrift/0.25.0/thrift-0.25.0.exe -OutputDir voted
+```
+
+The installer of a release has to contain the executable the vote covered, and
+a new build of the same source is not the same bytes. The
+[`Windows packages`](../../.github/workflows/windows-packages.yml) workflow uses
+this to get that executable. `-Path` and `-KeysPath` run the same checks on
+files that are already local. It needs `gpg`.
+
+## `get-voted-compiler-tests.ps1`
+
+Tests for the above. They sign stand-in executables with a throwaway GPG key, so
+they need `gpg` but no network:
+
+```bash
+$ pwsh build/windows/get-voted-compiler-tests.ps1
+```
+
+A signed executable with matching checksums passes. Refused are: one changed
+after signing, also when its checksums were redone; one with a wrong checksum;
+one signed by a key that is not in `KEYS`; one without a signature or without a
+checksum; and URLs that are not on `dist.apache.org` or do not name a
+`thrift-<version>.exe`.
+
 ## `build-installer.ps1`
 
 Packages a built `thrift.exe` into a Windows installer with
@@ -76,7 +110,9 @@ PS C:\thrift> .\build\windows\build-installer.ps1 -Version 0.26.0 -Compiler C:\i
 ```
 
 It writes `thrift-<version>-setup.exe` into the output directory and prints its
-path. `ISCC.exe` is located automatically; pass `-Iscc` to override.
+path. `ISCC.exe` is located automatically; pass `-Iscc` to override. The
+installer also carries `LICENSE` and `NOTICE`, taken from the checkout unless
+`-SourceRoot` names another directory.
 
 ## `installer/thrift.iss`
 
@@ -111,6 +147,10 @@ machine.
 ```powershell
 PS C:\thrift> .\build\windows\installer\test-installer.ps1 -Installer dist\thrift-0.26.0-setup.exe
 ```
+
+`-ExpectedVersion` checks what the installed compiler reports, and
+`-ExpectedSha256` that the installed `thrift.exe` is the very file the installer
+was built from.
 
 ## `build-dotnet-tool.ps1`
 

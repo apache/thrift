@@ -94,8 +94,11 @@ if (-not (Test-Path -LiteralPath $Compiler)) {
 }
 
 if (-not $SourceRoot) {
-    $SourceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+    $SourceRoot = Join-Path $PSScriptRoot '..\..'
 }
+# Inno Setup resolves a relative path against thrift.iss, not against the
+# current directory, so it gets an absolute one.
+$SourceRoot = (Resolve-Path -LiteralPath $SourceRoot).Path
 foreach ($required in @('LICENSE', 'NOTICE')) {
     if (-not (Test-Path -LiteralPath (Join-Path $SourceRoot $required))) {
         throw "$required not found below -SourceRoot $SourceRoot"

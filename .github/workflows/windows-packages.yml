@@ -18,15 +18,25 @@
 #
 # Windows packages for the Thrift compiler.
 #
-# The compiler build here mirrors the compiler-windows job in cmake.yml, minus
-# the tests, which that job already runs on every push. This workflow exists to
-# build and test what gets packaged.
+# The installer of a release has to contain the thrift.exe the vote covered,
+# not a new build of the same source: two builds are not the same bytes. So
+# where there is such an executable, this workflow packages that one:
+#
+#   - for a GitHub release, the thrift-<version>.exe in the release's
+#     directory on dist.apache.org;
+#   - for a manual run with compiler_url, the executable at that URL, such as
+#     the one a release candidate put on dist/dev.
+#
+# It is used only once its checksum and its signature against KEYS check out.
+# Pull requests, and manual runs without compiler_url, build the compiler from
+# source instead. That build mirrors the compiler-windows job in cmake.yml,
+# minus the tests, which that job already runs on every push.
 #
 # The installer that counts is the one on dist.apache.org, signed by a release
-# manager before the vote - long before a GitHub release exists. What this
-# workflow attaches to the GitHub release is an unsigned convenience copy, so
-# that the link is there straight away; the release manager overwrites it with
-# the signed file afterwards. See doc/ReleaseManagement.md.
+# manager. What this workflow attaches to the GitHub release is an unsigned
+# convenience copy, so that the link is there straight away; the release
+# manager overwrites it with the signed file afterwards. See
+# doc/ReleaseManagement.md.
 
 name: "Windows packages"
 
@@ -40,10 +50,16 @@ on:
       - ".github/workflows/windows-packages.yml"
       - "build/windows/**"
       - "doc/ReleaseManagement.md"
-  # Run by the release manager against the release branch while preparing a
-  # release candidate. The artifact this produces is what gets signed and
-  # uploaded to dist.apache.org.
+  # Run by the release manager from the release branch while preparing a
+  # release candidate, with compiler_url pointing at the candidate's signed
+  # executable on dist/dev. The installer this produces is what gets signed
+  # and uploaded next to it.
   workflow_dispatch:
+    inputs:
+      compiler_url:
+        description: "A signed thrift-X.Y.Z.exe on dist.apache.org to package, for example https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0.exe. Empty builds the compiler from the branch instead."
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -53,8 +69,97 @@ permissions:
   contents: read
 
 jobs:
+  # Tests the checks get-voted-compiler.ps1 makes on every run, pull requests
+  # included, so that a release does not find out that they are broken.
+  download-checks:
+    name: Download checks
+    # gpg is at hand on Linux.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test the download checks
+        shell: pwsh
+        run: ./build/windows/get-voted-compiler-tests.ps1
+
+  voted-compiler:
+    name: Voted compiler
+    needs: download-checks
+    if: ${{ github.event_name == 'release' || inputs.compiler_url != '' }}
+    # gpg is at hand on Linux.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.fetch.outputs.version }}
+      url: ${{ steps.fetch.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download and check the compiler
+        id: fetch
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_URL: ${{ inputs.compiler_url }}
+        run: |
+          $url = $env:INPUT_URL
+          if (-not $url) {
+            # A release is promoted to dist/release before its GitHub release
+            # is published, so the executable is already there.
+            $version = $env:RELEASE_TAG -replace '^v', ''
+            $url = "https://dist.apache.org/repos/dist/release/thrift/$version/thrift-$version.exe"
+          }
+          "url=$url" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          ./build/windows/get-voted-compiler.ps1 -Url $url -OutputDir voted
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Collect LICENSE and NOTICE
+        env:
+          VERSION: ${{ steps.fetch.outputs.version }}
+        run: |
+          # The installer carries the LICENSE and NOTICE of the release it
+          # installs. A release has a tag to take them from. A release
+          # candidate has none yet, so its files come from the branch this
+          # runs on, which then has to be at that version.
+          if git fetch --quiet --depth=1 origin "refs/tags/v${VERSION}:refs/tags/v${VERSION}" 2>/dev/null; then
+            git show "v${VERSION}:LICENSE" > voted/LICENSE
+            git show "v${VERSION}:NOTICE" > voted/NOTICE
+            echo "LICENSE and NOTICE from tag v${VERSION}"
+          else
+            branch_version=$(sed -n 's/^ *set(thrift_VERSION "\([0-9.]*\)").*/\1/p' CMakeLists.txt)
+            if [ "$branch_version" != "$VERSION" ]; then
+              echo "::error::There is no tag v${VERSION}, and this branch is at ${branch_version}. Run this from the branch the release candidate was made from."
+              exit 1
+            fi
+            cp LICENSE NOTICE voted/
+            echo "LICENSE and NOTICE from ${GITHUB_REF_NAME}"
+          fi
+
+      - name: Archive the compiler
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: voted-compiler
+          if-no-files-found: error
+          path: voted/
+          retention-days: 3
+
   installer:
     name: Installer
+    needs: [download-checks, voted-compiler]
+    # Runs when the voted compiler is there, and when there was none to fetch
+    # and voted-compiler was skipped. Not when fetching or checking it failed,
+    # and not when the checks themselves failed their tests: a release must
+    # not fall back to building its own compiler.
+    if: ${{ !cancelled() && needs.download-checks.result == 'success' && needs.voted-compiler.result != 'failure' }}
     runs-on: windows-2025
     timeout-minutes: 60
     permissions:
@@ -69,7 +174,15 @@ jobs:
       - name: Determine the version
         id: version
         shell: pwsh
+        env:
+          VOTED_VERSION: ${{ needs.voted-compiler.outputs.version }}
         run: |
+          if ($env:VOTED_VERSION) {
+            Write-Host "Version: $env:VOTED_VERSION"
+            "version=$env:VOTED_VERSION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+
           $sourceVersion = ''
           foreach ($line in Get-Content CMakeLists.txt) {
             if ($line -match '^\s*set\(thrift_VERSION\s+"(\d+\.\d+\.\d+)"\)') {
@@ -86,13 +199,22 @@ jobs:
           Write-Host "Version: $version"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
+      - name: Download the voted compiler
+        if: ${{ needs.voted-compiler.result == 'success' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: voted-compiler
+          path: voted
+
       - name: Install dependencies
+        if: ${{ needs.voted-compiler.result != 'success' }}
         shell: pwsh
         timeout-minutes: 10
         # Pinned to the version build/docker/msvc/Dockerfile uses.
         run: choco install winflexbison3 --version=2.5.24.20210105 -y --no-progress
 
       - name: Build the compiler
+        if: ${{ needs.voted-compiler.result != 'success' }}
         shell: pwsh
         timeout-minutes: 30
         run: |
@@ -104,34 +226,67 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --install cmake_build --config Release --prefix cmake_install
 
+      - name: Choose the compiler to package
+        id: compiler
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          VOTED: ${{ needs.voted-compiler.result == 'success' }}
+        run: |
+          if ($env:VOTED -eq 'true') {
+            $compiler = "voted/thrift-$env:VERSION.exe"
+            # The LICENSE and NOTICE of that release, collected with it.
+            $sourceRoot = 'voted'
+          }
+          else {
+            $compiler = 'cmake_install/bin/thrift.exe'
+            $sourceRoot = ''
+          }
+          $sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $compiler).Hash.ToLowerInvariant()
+          Write-Host "Packaging $compiler, sha256 $sha256"
+          "path=$compiler" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "source_root=$sourceRoot" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "sha256=$sha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
       - name: Check what the compiler imports
         shell: pwsh
-        run: ./build/windows/check-compiler-imports.ps1 -Path cmake_install/bin/thrift.exe
+        env:
+          COMPILER: ${{ steps.compiler.outputs.path }}
+        run: ./build/windows/check-compiler-imports.ps1 -Path $env:COMPILER
 
       - name: Build the installer
         shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          COMPILER: ${{ steps.compiler.outputs.path }}
+          SOURCE_ROOT: ${{ steps.compiler.outputs.source_root }}
         run: |
-          ./build/windows/build-installer.ps1 `
-            -Version $env:VERSION `
-            -Compiler cmake_install/bin/thrift.exe `
-            -OutputDir dist
+          $installerArgs = @{ Version = $env:VERSION; Compiler = $env:COMPILER; OutputDir = 'dist' }
+          if ($env:SOURCE_ROOT) {
+            $installerArgs['SourceRoot'] = $env:SOURCE_ROOT
+          }
+          ./build/windows/build-installer.ps1 @installerArgs
 
       - name: Test the installer
         shell: pwsh
         timeout-minutes: 15
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          COMPILER_SHA256: ${{ steps.compiler.outputs.sha256 }}
         run: |
+          # The hash shows that the installer carries the very file it was
+          # given - for a release, the one the vote covered.
           ./build/windows/installer/test-installer.ps1 `
             -Installer "dist/thrift-$env:VERSION-setup.exe" `
-            -ExpectedVersion $env:VERSION
+            -ExpectedVersion $env:VERSION `
+            -ExpectedSha256 $env:COMPILER_SHA256
 
       - name: Report the checksum
         shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          COMPILER_SHA256: ${{ steps.compiler.outputs.sha256 }}
+          COMPILER_URL: ${{ needs.voted-compiler.outputs.url }}
         run: |
           $installer = "dist/thrift-$env:VERSION-setup.exe"
           $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
@@ -145,7 +300,9 @@ jobs:
             "|---|---|",
             "| file | ``$([System.IO.Path]::GetFileName($installer))`` |",
             "| size | $size bytes |",
-            "| sha256 | ``$hash`` |"
+            "| sha256 | ``$hash`` |",
+            "| compiler | $(if ($env:COMPILER_URL) { $env:COMPILER_URL } else { 'built from source' }) |",
+            "| compiler sha256 | ``$env:COMPILER_SHA256`` |"
           ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
       - name: Archive the installer
@@ -183,7 +340,7 @@ jobs:
           installer="dist/thrift-${VERSION}-setup.exe"
           test -f "$installer"
           sha256sum "$installer"
-          # This is the unsigned convenience copy. The release manager replaces
-          # it with the signed file from dist.apache.org after the vote, which
-          # is also a --clobber upload.
+          # This is the unsigned convenience copy, around the voted compiler.
+          # The release manager replaces it with the signed file from
+          # dist.apache.org after the vote, which is also a --clobber upload.
           gh release upload "$RELEASE_TAG" "$installer" --clobber
