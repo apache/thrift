@@ -57,6 +57,9 @@ distributions package Thrift, and Homebrew has it as `thrift`.
 
 ## Provenance
 
-The executable in this package is built from the Apache Thrift source release of
-the same version. Releases are voted on by the Apache Thrift PMC; the source
-release is the official artifact, and this package is a convenience build of it.
+The executable in this package is the Windows compiler that the Apache Thrift
+PMC voted on with the source release of the same version, the
+`thrift-<version>.exe` on the [Download](https://thrift.apache.org/download)
+page. Its checksums and its signature are checked against the project's `KEYS`
+before it is packed. The source release is the official artifact, and this
+package is a convenience package of it.

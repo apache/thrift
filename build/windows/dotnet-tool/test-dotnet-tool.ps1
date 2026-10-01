@@ -44,6 +44,11 @@
     Text the bundled executable should print when run. Only checked on
     Windows. Optional.
 
+.PARAMETER ExpectedSha256
+    The SHA-256 the bundled thrift.exe should have, to show that the package
+    carries the very file it was built from - for a release, the one the vote
+    covered. Checked on every platform. Optional.
+
 .EXAMPLE
     pwsh build\windows\dotnet-tool\test-dotnet-tool.ps1 -Package nupkg\Apache.Thrift.Compiler.0.26.0.nupkg -Version 0.26.0
 #>
@@ -54,7 +59,8 @@ param(
     [string] $Package,
     [Parameter(Mandatory = $true)]
     [string] $Version,
-    [string] $ExpectedCompilerOutput = ''
+    [string] $ExpectedCompilerOutput = '',
+    [string] $ExpectedSha256 = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -116,6 +122,24 @@ try {
     $payloads = @($entries | Where-Object { $_ -like '*thrift.exe' })
     Assert-True 'the compiler appears exactly once' ($payloads.Count -eq 1) `
         ("found: " + ($payloads -join ', '))
+
+    if ($ExpectedSha256) {
+        $entry = $archive.GetEntry("$toolDir/thrift.exe")
+        $actual = ''
+        if ($entry) {
+            $stream = $entry.Open()
+            $sha = [System.Security.Cryptography.SHA256]::Create()
+            try {
+                $actual = [System.BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+            }
+            finally {
+                $sha.Dispose()
+                $stream.Dispose()
+            }
+        }
+        Assert-True 'the bundled compiler is the expected file' `
+            ($actual -eq $ExpectedSha256.ToLowerInvariant()) "sha256 $actual, expected $ExpectedSha256"
+    }
 
     function Read-Entry {
         param([string] $Name)

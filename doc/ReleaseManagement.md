@@ -619,6 +619,11 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   can be installed with `dotnet tool install --global Apache.Thrift.Compiler`.  It is not the
   `ApacheThrift` runtime library, which is still published by hand following the instructions in
   `ApacheThrift.nuspec`.
+  * The package carries the voted `thrift-<version>.exe` from `dist/release`, not a new build.
+    The workflow downloads it and checks its checksums and its signature against `KEYS` first;
+    if that fails, nothing is packed or published.  To check the package beforehand, for example
+    around a release candidate's executable, start the workflow from the Actions tab with
+    `compiler_url` set to that executable on `dist.apache.org`.  A manual run never publishes.
   * Before publishing, verify that nuget.org has a trusted publishing policy for the
     `apache/thrift` repository, the `.github/workflows/dotnet-tool.yml` workflow and the
     `release` environment, and that the repository variable `NUGET_USER` names the nuget.org

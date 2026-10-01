@@ -78,11 +78,12 @@ are accepted.
 PS C:\thrift> .\build\windows\get-voted-compiler.ps1 -Url https://dist.apache.org/repos/dist/release/thrift/0.25.0/thrift-0.25.0.exe -OutputDir voted
 ```
 
-The installer of a release has to contain the executable the vote covered, and
-a new build of the same source is not the same bytes. The
-[`Windows packages`](../../.github/workflows/windows-packages.yml) workflow uses
-this to get that executable. `-Path` and `-KeysPath` run the same checks on
-files that are already local. It needs `gpg`.
+The installer and the .NET tool of a release have to contain the executable the
+vote covered, and a new build of the same source is not the same bytes. The
+[`Windows packages`](../../.github/workflows/windows-packages.yml) and
+[`.NET tool`](../../.github/workflows/dotnet-tool.yml) workflows use this to get
+that executable. `-Path` and `-KeysPath` run the same checks on files that are
+already local. It needs `gpg`.
 
 ## `get-voted-compiler-tests.ps1`
 
@@ -164,7 +165,14 @@ PS C:\thrift> .\build\windows\build-dotnet-tool.ps1 -Version 0.26.0 -Compiler C:
 As with the installer, the version is passed in rather than stored in the
 project file, so [`build/veralign.sh`](../veralign.sh) gains nothing to keep in
 step. Building without `-Compiler` fails rather than producing a package with no
-compiler in it.
+compiler in it. `LICENSE` and `NOTICE` come from the checkout unless
+`-SourceRoot` names another directory.
+
+For a release, the [`.NET tool`](../../.github/workflows/dotnet-tool.yml)
+workflow packs the voted `thrift-<version>.exe` from `dist/release`, fetched
+and checked with `get-voted-compiler.ps1`, together with the `LICENSE` and
+`NOTICE` of the release tag. Started by hand with `compiler_url`, it does the
+same with the executable at that URL and publishes nothing.
 
 ## `dotnet-tool/`
 
@@ -199,7 +207,8 @@ in there and are not empty - and then proves the installed command works.
 
 It runs anywhere PowerShell and the .NET SDK do. Off Windows it checks the
 launcher's refusal instead of the compiler's output, which is the behaviour that
-keeps a Linux user from a confusing failure.
+keeps a Linux user from a confusing failure. `-ExpectedSha256` checks that the
+bundled `thrift.exe` is the very file the package was built from.
 
 ## `build-chocolatey-package.ps1` and `chocolatey/`
 
