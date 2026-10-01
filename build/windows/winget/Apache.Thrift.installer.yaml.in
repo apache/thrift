@@ -32,10 +32,15 @@ UpgradeBehavior: install
 ProductCode: '{064E0C5D-29EE-47DD-BB5E-172FE25FE936}_is1'
 ReleaseDate: __RELEASE_DATE__
 # The compiler links the shared runtime, so it needs the Visual C++
-# redistributable, which the ASF cannot ship. WinGet installs this first.
+# redistributable, which the ASF cannot ship. WinGet installs this first. It
+# has to be at least as new as the build tools the compiler was built with, so
+# a version already installed only counts from that one on. Keep it equal to
+# the vcredist140 version in build/windows/chocolatey/thrift.nuspec.in. Quoted,
+# so that YAML does not read it as a number.
 Dependencies:
   PackageDependencies:
     - PackageIdentifier: Microsoft.VCRedist.2015+.x64
+      MinimumVersion: '14.51'
 Installers:
   - Architecture: x64
     InstallerUrl: __INSTALLER_URL__

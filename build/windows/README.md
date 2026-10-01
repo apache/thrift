@@ -131,7 +131,10 @@ redistributable, which the ASF cannot ship. An interactive install says so when
 it cannot find `vcruntime140.dll`, rather than letting the first run fail with a
 missing-DLL dialog. It never blocks, and a silent install - which is what a
 package manager does - shows nothing; the WinGet and Chocolatey packages declare
-the redistributable as a dependency instead, so their users never see it.
+the redistributable as a dependency instead, so their users never see it. They
+ask for version 14.51 or later, because it has to be at least as new as the build
+tools the compiler was built with; a version already installed only counts from
+there on.
 
 ## `installer/test-installer.ps1`
 
