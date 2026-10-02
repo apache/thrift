@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: ["*"]
 
+# A new push to a pull request supersedes its running build. Pushes to a
+# branch are never cancelled, so every commit on master gets a full run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
   CONFIG_ARGS_FOR_LIBS: >
@@ -134,7 +140,9 @@ jobs:
   compiler-macos:
     strategy:
       matrix:
-        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
+        # The full set runs on pushes to apache/thrift. Pull requests and pushes
+        # to forks build on one image; the others catch up after merge.
+        os: &macos_versions ${{ fromJSON(github.event_name == 'push' && github.repository == 'apache/thrift' && '["macos-15-intel", "macos-14", "macos-15", "macos-26"]' || '["macos-15"]') }}
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -787,7 +795,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        python-version: &python_versions ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -866,7 +874,9 @@ jobs:
     strategy:
       matrix:
         os: *macos_versions
-        python-version: *python_versions
+        # lib-python covers every version on Linux. Outside pushes to
+        # apache/thrift, macOS tests only the oldest and newest.
+        python-version: ${{ fromJSON(github.event_name == 'push' && github.repository == 'apache/thrift' && '["3.10", "3.11", "3.12", "3.13", "3.14"]' || '["3.10", "3.14"]') }}
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
