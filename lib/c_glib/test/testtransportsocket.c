@@ -52,9 +52,18 @@ my_recv(int socket, void *buffer, size_t length, int flags)
 }
 
 static int send_error = 0;
+static int send_zero = 0;
+static int send_calls = 0;
 ssize_t
 my_send(int socket, const void *buffer, size_t length, int flags)
 {
+  send_calls++;
+  if (send_zero > 0)
+    {
+      /* report that nothing was sent, send_zero times in a row */
+      send_zero--;
+      return 0;
+    }
   if (send_error == 0)
     {
       return send (socket, buffer, length, flags);
@@ -200,6 +209,40 @@ test_read_and_write(void)
 	g_assert ( wait (&status) == pid );
 	g_assert ( status == 0 );
     }
+}
+
+/* send() answering 0 for a non-empty buffer has sent nothing, and asking again
+   cannot change that, so the write has to fail on the first 0.  my_send()
+   answers 0 a bounded number of times and then fails, so that a write which
+   keeps asking still returns; the number of calls tells the two apart. */
+static void
+test_write_fails_when_send_returns_zero(void)
+{
+  ThriftSocket *tsocket = NULL;
+  ThriftTransport *transport = NULL;
+  GError *error = NULL;
+  guchar buf[10] = TEST_DATA; /* a buffer */
+  int sv[2];
+
+  g_assert (socketpair (AF_UNIX, SOCK_STREAM, 0, sv) == 0);
+
+  tsocket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  tsocket->sd = sv[0];
+  transport = THRIFT_TRANSPORT (tsocket);
+
+  send_calls = 0;
+  send_zero = 100;
+  send_error = 1;
+  g_assert (thrift_socket_write (transport, buf, 10, &error) == FALSE);
+  g_assert_cmpint (send_calls, ==, 1);
+  g_assert_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SEND);
+  g_clear_error (&error);
+  send_zero = 0;
+  send_error = 0;
+
+  thrift_socket_close (transport, NULL);
+  g_object_unref (tsocket);
+  close (sv[1]);
 }
 
 /* test ThriftSocket's peek() implementation */
@@ -411,6 +454,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testtransportsocket/CreateAndDestroy", test_create_and_destroy);
   g_test_add_func ("/testtransportsocket/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testtransportsocket/ReadAndWrite", test_read_and_write);
+  g_test_add_func ("/testtransportsocket/WriteFailsWhenSendReturnsZero", test_write_fails_when_send_returns_zero);
   g_test_add_func ("/testtransportsocket/Peek", test_peek);
   g_test_add_func ("/testtransportsocket/OpenRejectsTooLongUnixPath", test_open_rejects_too_long_unix_path);
   g_test_add_func ("/testtransportsocket/ServerListenRejectsTooLongUnixPath", test_server_listen_rejects_too_long_unix_path);

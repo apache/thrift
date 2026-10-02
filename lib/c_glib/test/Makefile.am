@@ -200,7 +200,6 @@ testzlibshortread_LDADD = \
 testfdtransport_SOURCES = testfdtransport.c
 testfdtransport_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
-    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_fd_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o
 
 testreadallprogress_SOURCES = testreadallprogress.c

@@ -370,7 +370,9 @@ thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
   while (sent < len)
     {
       ret = SSL_write (ssl_socket->ssl, (guint8 *)buf + sent, len - sent);
-      if (ret < 0)
+      /* SSL_write() reports a failed write with a value <= 0.  A 0 has written
+         nothing, and asking again cannot make progress. */
+      if (ret <= 0)
 	{
 	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Send error",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, ret, error);

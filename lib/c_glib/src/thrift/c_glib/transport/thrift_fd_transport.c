@@ -153,6 +153,15 @@ thrift_fd_transport_write (ThriftTransport *transport,
                    "Failed to write from fd: %s",
                    strerror (errno));
       return FALSE;
+    } else if (n == 0) {
+      /* write(2) wrote nothing.  Asking again cannot make progress, so report
+         it rather than retry without end. */
+      g_set_error (error,
+                   THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_SEND,
+                   "Failed to write %u bytes to fd: write() returned 0",
+                   len);
+      return FALSE;
     } else {
       _buf += n;
       _len -= n;

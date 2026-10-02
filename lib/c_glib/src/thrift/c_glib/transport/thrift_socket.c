@@ -302,6 +302,15 @@ thrift_socket_write (ThriftTransport *transport, const gpointer buf,
                    "failed to send %d bytes - %s", len, strerror(errno));
       return FALSE;
     }
+    /* send() sent nothing.  Asking again cannot make progress, so report it
+       rather than retry without end. */
+    if (ret == 0)
+    {
+      g_set_error (error, THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_SEND,
+                   "failed to send %u bytes - send() returned 0", len);
+      return FALSE;
+    }
     sent += ret;
   }
 

@@ -29,6 +29,33 @@
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_fd_transport.h>
 
+/* substituted function to test failures of system calls */
+static int write_error = 0;
+static int write_zero = 0;
+static int write_calls = 0;
+ssize_t
+my_write(int fd, const void *buf, size_t count)
+{
+  write_calls++;
+  if (write_zero > 0)
+    {
+      /* report that nothing was written, write_zero times in a row */
+      write_zero--;
+      return 0;
+    }
+  if (write_error == 0)
+    {
+      return write (fd, buf, count);
+    }
+  return -1;
+}
+
+/* function-like, so that the write member of the transport class is left
+   alone */
+#define write(fd, buf, count) my_write (fd, buf, count)
+#include "../src/thrift/c_glib/transport/thrift_fd_transport.c"
+#undef write
+
 static const gchar TEST_DATA[12] = "abcde01234!";
 
 static void
@@ -167,6 +194,48 @@ test_read_and_write (void)
   g_free (filename);
 }
 
+/* write(2) answering 0 for a non-empty buffer has written nothing, and asking
+   again cannot change that, so the write has to fail on the first 0.
+   my_write() answers 0 a bounded number of times and then fails, so that a
+   write which keeps asking still returns; the number of calls tells the two
+   apart. */
+static void
+test_write_fails_when_write_returns_zero (void)
+{
+  ThriftTransport *transport;
+  ThriftTransportClass *klass;
+  GError *error;
+  gint fd;
+  gchar *filename;
+
+  error = NULL;
+  filename = NULL;
+
+  fd = g_file_open_tmp (NULL, &filename, &error);
+  g_assert (fd >= 0);
+
+  transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_FD_TRANSPORT,
+                                              "fd", fd,
+                                              NULL));
+  klass = THRIFT_TRANSPORT_GET_CLASS (transport);
+
+  write_calls = 0;
+  write_zero = 100;
+  write_error = 1;
+  g_assert (! klass->write (transport, (gpointer) TEST_DATA, 11, &error));
+  g_assert_cmpint (write_calls, ==, 1);
+  g_assert_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SEND);
+  g_clear_error (&error);
+  write_zero = 0;
+  write_error = 0;
+
+  g_assert (klass->close (transport, &error));
+  g_object_unref (transport);
+
+  g_remove (filename);
+  g_free (filename);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -179,6 +248,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/testfdtransport/CreateAndDestroy", test_create_and_destroy);
   g_test_add_func ("/testfdtransport/OpenAndClose", test_open_and_close);
   g_test_add_func ("/testfdtransport/ReadAndWrite", test_read_and_write);
+  g_test_add_func ("/testfdtransport/WriteFailsWhenWriteReturnsZero", test_write_fails_when_write_returns_zero);
 
   return g_test_run ();
 }
