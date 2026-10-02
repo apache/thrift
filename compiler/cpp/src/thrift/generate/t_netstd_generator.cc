@@ -2432,11 +2432,44 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         << indent() << "{" << '\n';
     indent_up();
 
-    out << indent() << "public Client(TProtocol protocol) : this(protocol, protocol)" << '\n'
+    out << indent() << "/// <summary>" << '\n'
+        << indent() << "/// Initializes a client that reuses a single protocol instance for both directions." << '\n'
+        << indent() << "/// </summary>" << '\n'
+        << indent() << "/// <remarks>Use this constructor when you already have a single protocol instance and want the client to share it for the lifetime of the client. This is the shared-protocol path; use the transport/factory overloads when you want a fresh protocol pair per call.</remarks>" << '\n'
+        << indent() << "/// <param name=\"protocol\">The shared protocol used for both input and output.</param>" << '\n'
+        << indent() << "public Client(TProtocol protocol) : this(protocol, protocol)" << '\n'
         << indent() << "{" << '\n'
         << indent() << "}" << '\n'
         << '\n'
+        << indent() << "/// <summary>" << '\n'
+        << indent() << "/// Initializes a client with separate shared input and output protocols." << '\n'
+        << indent() << "/// </summary>" << '\n'
+        << indent() << "/// <remarks>Use this constructor when you want a single, long-lived protocol pair for the client. This is the shared-protocol path; the per-call overloads are intended for transports such as <see cref=\"THttpTransport\"/> that can create a fresh protocol pair for each request.</remarks>" << '\n'
+        << indent() << "/// <param name=\"inputProtocol\">The shared input protocol used for the lifetime of the client.</param>" << '\n'
+        << indent() << "/// <param name=\"outputProtocol\">The shared output protocol used for the lifetime of the client.</param>" << '\n'
         << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)" << '\n'
+        << indent() << "{" << '\n'
+        << indent() << "}" << '\n'
+        << '\n'
+        << indent() << "/// <summary>" << '\n'
+        << indent() << "/// Initializes a client that reuses a single protocol pair for the shared client and, when the transport supports it, creates a fresh protocol pair for each call." << '\n'
+        << indent() << "/// </summary>" << '\n'
+        << indent() << "/// <remarks>Use this overload for transports such as <see cref=\"THttpTransport\"/> when you want a per-call protocol pair (for example, to issue overlapping HTTP requests in parallel). If the transport does not support per-call mode, the client continues to use the shared protocol instance.</remarks>" << '\n'
+        << indent() << "/// <param name=\"transport\">The shared transport. The client owns protocols created for this transport.</param>" << '\n'
+        << indent() << "/// <param name=\"protocolFactory\">The factory used to create input and output protocols for the shared client and, when supported, each call.</param>" << '\n'
+        << indent() << "public Client(TTransport transport, TProtocolFactory protocolFactory) : this(transport, protocolFactory, protocolFactory)" << '\n'
+        << indent() << "{" << '\n'
+        << indent() << "}" << '\n'
+        << '\n'
+        << indent() << "/// <summary>" << '\n'
+        << indent() << "/// Initializes a client with separate factories for the shared client and, when the transport supports it, a fresh protocol pair per call." << '\n'
+        << indent() << "/// </summary>" << '\n'
+        << indent() << "/// <remarks>Use this overload when the transport supports a per-call protocol path, such as concurrent HTTP calls through <see cref=\"THttpTransport\"/>. The transport may still choose to reuse shared protocols if it does not implement <see cref=\"ITPerCallTransportProvider\"/>.</remarks>" << '\n'
+        << indent() << "/// <param name=\"transport\">The shared transport. The client owns protocols created for this transport.</param>" << '\n'
+        << indent() << "/// <param name=\"inputProtocolFactory\">The factory used to create the shared input protocol and per-call input protocols when supported.</param>" << '\n'
+        << indent() << "/// <param name=\"outputProtocolFactory\">The factory used to create the shared output protocol and per-call output protocols when supported.</param>" << '\n'
+        << indent() << "public Client(TTransport transport, TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory)" << '\n'
+        << indent() << "    : base(transport, inputProtocolFactory, outputProtocolFactory)" << '\n'
         << indent() << "{" << '\n'
         << indent() << "}" << '\n'
         << '\n';
@@ -2454,6 +2487,13 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << '\n'
             << indent() << "{" << '\n';
         indent_up();
+        out << indent()
+            << (((!(*functions_iterator)->is_oneway()) && !(*functions_iterator)->get_returntype()->is_void())
+                    ? "return await "
+                    : "await ")
+            << "ExecutePerCallAsync(async () =>" << '\n'
+            << indent() << "{" << '\n';
+        indent_up();
         out << indent() << "await send_" << function_name << "(";
         string call_args = argument_list((*functions_iterator)->get_arglist(),false);
         if(! call_args.empty()) {
@@ -2464,6 +2504,8 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             out << indent() << ((*functions_iterator)->get_returntype()->is_void() ? "" : "return ")
                             << "await recv_" << function_name << "(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
         }
+        indent_down();
+        out << indent() << "}, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
         indent_down();
         out << indent() << "}" << '\n' << '\n';
 

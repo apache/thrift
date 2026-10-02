@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol;
+using Thrift.Transport;
 
 namespace Thrift
 {
@@ -32,6 +33,10 @@ namespace Thrift
     {
         private readonly TProtocol _inputProtocol;
         private readonly TProtocol _outputProtocol;
+        private readonly ITPerCallTransportProvider _perCallTransportProvider;
+        private readonly TProtocolFactory _inputProtocolFactory;
+        private readonly TProtocolFactory _outputProtocolFactory;
+        private readonly AsyncLocal<PerCallProtocols> _perCallProtocols = new AsyncLocal<PerCallProtocols>();
         private bool _isDisposed;
         private int _seqId;
         public readonly Guid ClientId = Guid.NewGuid();
@@ -42,13 +47,209 @@ namespace Thrift
             _outputProtocol = outputProtocol ?? throw new ArgumentNullException(nameof(outputProtocol));
         }
 
-        public TProtocol InputProtocol => _inputProtocol;
+        /// <summary>
+        /// Initializes a client with protocols created from the supplied transport and protocol factories.
+        /// </summary>
+        /// <param name="transport">
+        /// The shared transport. When it implements <see cref="ITPerCallTransportProvider"/>,
+        /// each client call uses protocols created for a new per-call transport.
+        /// </param>
+        /// <param name="inputProtocolFactory">The factory used to create input protocols.</param>
+        /// <param name="outputProtocolFactory">The factory used to create output protocols.</param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="transport"/>, <paramref name="inputProtocolFactory"/>,
+        /// or <paramref name="outputProtocolFactory"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when a protocol factory returns <see langword="null"/>.
+        /// </exception>
+        protected TBaseClient(
+            TTransport transport,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory)
+        {
+            if (transport == null) throw new ArgumentNullException(nameof(transport));
+            if (inputProtocolFactory == null) throw new ArgumentNullException(nameof(inputProtocolFactory));
+            if (outputProtocolFactory == null) throw new ArgumentNullException(nameof(outputProtocolFactory));
 
-        public TProtocol OutputProtocol => _outputProtocol;
+            var protocols = CreateProtocols(transport, inputProtocolFactory, outputProtocolFactory);
+            _inputProtocol = protocols.InputProtocol;
+            _outputProtocol = protocols.OutputProtocol;
+            _perCallTransportProvider = transport as ITPerCallTransportProvider;
+            if (_perCallTransportProvider != null)
+            {
+                _inputProtocolFactory = inputProtocolFactory;
+                _outputProtocolFactory = outputProtocolFactory;
+            }
+        }
 
+        private static ProtocolPair CreateProtocols(
+            TTransport transport,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory)
+        {
+            TProtocol inputProtocol = null;
+            TProtocol outputProtocol = null;
+            try
+            {
+                inputProtocol = inputProtocolFactory.GetProtocol(transport)
+                    ?? throw new InvalidOperationException("The input protocol factory returned null.");
+                outputProtocol = outputProtocolFactory.GetProtocol(transport)
+                    ?? throw new InvalidOperationException("The output protocol factory returned null.");
+                return new ProtocolPair(inputProtocol, outputProtocol);
+            }
+            catch
+            {
+                outputProtocol?.Dispose();
+                if (inputProtocol != null && !ReferenceEquals(inputProtocol, outputProtocol))
+                {
+                    inputProtocol.Dispose();
+                }
+                if (inputProtocol == null && outputProtocol == null)
+                {
+                    transport.Dispose();
+                }
+                throw;
+            }
+        }
+
+        private sealed class ProtocolPair
+        {
+            public ProtocolPair(TProtocol inputProtocol, TProtocol outputProtocol)
+            {
+                InputProtocol = inputProtocol;
+                OutputProtocol = outputProtocol;
+            }
+
+            public TProtocol InputProtocol { get; }
+            public TProtocol OutputProtocol { get; }
+        }
+
+        /// <summary>
+        /// Gets the input protocol for the current call, or the shared input protocol when no
+        /// per-call transport is active.
+        /// </summary>
+        public TProtocol InputProtocol => _perCallProtocols.Value?.InputProtocol ?? _inputProtocol;
+
+        /// <summary>
+        /// Gets the output protocol for the current call, or the shared output protocol when no
+        /// per-call transport is active.
+        /// </summary>
+        public TProtocol OutputProtocol => _perCallProtocols.Value?.OutputProtocol ?? _outputProtocol;
+
+        /// <summary>
+        /// Gets the next client sequence identifier.
+        /// </summary>
         public int SeqId
         {
-            get { return ++_seqId; }
+            get { return Interlocked.Increment(ref _seqId); }
+        }
+
+        /// <summary>
+        /// Executes an operation using protocols scoped to a new per-call transport when the
+        /// shared transport supports per-call transports.
+        /// </summary>
+        /// <param name="operation">The operation to execute.</param>
+        /// <param name="cancellationToken">The token used to cancel per-call transport creation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        protected async Task ExecutePerCallAsync(Func<Task> operation, CancellationToken cancellationToken)
+        {
+            await ExecutePerCallCoreAsync(async () =>
+            {
+                await operation();
+                return true;
+            }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes an operation using protocols scoped to a new per-call transport when the
+        /// shared transport supports per-call transports.
+        /// </summary>
+        /// <typeparam name="TResult">The type of result returned by the operation.</typeparam>
+        /// <param name="operation">The operation to execute.</param>
+        /// <param name="cancellationToken">The token used to cancel per-call transport creation.</param>
+        /// <returns>A task that contains the operation result.</returns>
+        protected Task<TResult> ExecutePerCallAsync<TResult>(
+            Func<Task<TResult>> operation,
+            CancellationToken cancellationToken)
+        {
+            return ExecutePerCallCoreAsync(operation, cancellationToken);
+        }
+
+        private async Task<TResult> ExecutePerCallCoreAsync<TResult>(
+            Func<Task<TResult>> operation,
+            CancellationToken cancellationToken)
+        {
+            if (_perCallTransportProvider == null)
+                return await operation();
+
+            var transport = await _perCallTransportProvider.CreatePerCallTransportAsync(cancellationToken)
+                ?? throw new InvalidOperationException("The per-call transport provider returned null.");
+            TProtocol inputProtocol = null;
+            TProtocol outputProtocol = null;
+            try
+            {
+                inputProtocol = _inputProtocolFactory.GetProtocol(transport)
+                    ?? throw new InvalidOperationException("The input protocol factory returned null.");
+                outputProtocol = _outputProtocolFactory.GetProtocol(transport)
+                    ?? throw new InvalidOperationException("The output protocol factory returned null.");
+            }
+            catch
+            {
+                if (outputProtocol != null)
+                {
+                    outputProtocol.Dispose();
+                }
+                if (inputProtocol != null && !ReferenceEquals(inputProtocol, outputProtocol))
+                {
+                    inputProtocol.Dispose();
+                }
+                if (inputProtocol == null && outputProtocol == null)
+                {
+                    transport.Dispose();
+                }
+                throw;
+            }
+
+            var protocols = new PerCallProtocols(inputProtocol, outputProtocol);
+            var previousProtocols = _perCallProtocols.Value;
+            _perCallProtocols.Value = protocols;
+            try
+            {
+                return await operation();
+            }
+            finally
+            {
+                _perCallProtocols.Value = previousProtocols;
+                protocols.Dispose();
+            }
+        }
+
+        private sealed class PerCallProtocols : IDisposable
+        {
+            public PerCallProtocols(TProtocol inputProtocol, TProtocol outputProtocol)
+            {
+                InputProtocol = inputProtocol;
+                OutputProtocol = outputProtocol;
+            }
+
+            public TProtocol InputProtocol { get; }
+            public TProtocol OutputProtocol { get; }
+
+            public void Dispose()
+            {
+                try
+                {
+                    OutputProtocol.Dispose();
+                }
+                finally
+                {
+                    if (!ReferenceEquals(InputProtocol, OutputProtocol))
+                    {
+                        InputProtocol.Dispose();
+                    }
+                }
+            }
         }
 
         public virtual async Task OpenTransportAsync()

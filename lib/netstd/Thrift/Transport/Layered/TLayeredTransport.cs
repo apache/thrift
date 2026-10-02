@@ -16,13 +16,15 @@
 // under the License.
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 #pragma warning disable IDE0079 // net20 - unneeded suppression
 #pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Transport
 {
-    public abstract class TLayeredTransport : TTransport
+    public abstract class TLayeredTransport : TTransport, ITPerCallTransportProvider
     {
         public readonly TTransport InnerTransport;
 
@@ -32,6 +34,20 @@ namespace Thrift.Transport
         {
             InnerTransport = transport ?? throw new ArgumentNullException(nameof(transport));
         }
+
+        public virtual async ValueTask<TTransport> CreatePerCallTransportAsync(CancellationToken cancellationToken = default)
+        {
+            if (!(InnerTransport is ITPerCallTransportProvider provider))
+            {
+                throw new InvalidOperationException(
+                    $"{GetType().Name} cannot provide a per-call transport because its inner transport does not implement {nameof(ITPerCallTransportProvider)}.");
+            }
+
+            var perCallTransport = await provider.CreatePerCallTransportAsync(cancellationToken);
+            return CreatePerCallWrapper(perCallTransport);
+        }
+
+        protected abstract TTransport CreatePerCallWrapper(TTransport innerTransport);
 
         public override void UpdateKnownMessageSize(long size)
         {
