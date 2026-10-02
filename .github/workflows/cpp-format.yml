@@ -1,0 +1,68 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# THRIFT-6219: most of lib/cpp predates .clang-format, so formatting whole
+# files would rewrite code the pull request never touched. Only the lines the
+# pull request changes are checked. The version is pinned because clang-format
+# releases differ in their output.
+
+name: "C++ formatting"
+
+on:
+  pull_request:
+    paths:
+      - ".clang-format"
+      - "lib/cpp/**"
+      - ".github/workflows/cpp-format.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  clang-format:
+    name: clang-format on changed lines
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # The pull_request checkout is the merge commit, so its first parent is
+      # the base branch and HEAD^ is exactly what the pull request changes.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Install clang-format 18
+        run: |
+          if ! command -v git-clang-format-18 >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq clang-format-18
+          fi
+          clang-format-18 --version
+
+      - name: Check changed lines in lib/cpp
+        run: |
+          # .tcc is not in git-clang-format's default extension list.
+          if ! git-clang-format-18 --binary clang-format-18 \
+                 --extensions c,cc,cpp,cxx,h,hh,hpp,tcc \
+                 --diff HEAD^ -- lib/cpp; then
+            echo "::error::Changed lines in lib/cpp do not match .clang-format. Run 'git clang-format --binary clang-format-18 --extensions c,cc,cpp,cxx,h,hh,hpp,tcc origin/master -- lib/cpp' and amend the commit."
+            exit 1
+          fi
