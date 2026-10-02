@@ -69,13 +69,35 @@ my_send(int socket, const void *buffer, size_t length, int flags)
   return -1;
 }
 
+static int ssl_write_error = 0;
+static int ssl_write_zero = 0;
+static int ssl_write_calls = 0;
+int
+my_SSL_write(SSL *ssl, const void *buf, int num)
+{
+  ssl_write_calls++;
+  if (ssl_write_zero > 0)
+    {
+      /* report that nothing was written, ssl_write_zero times in a row */
+      ssl_write_zero--;
+      return 0;
+    }
+  if (ssl_write_error == 0)
+    {
+      return SSL_write (ssl, buf, num);
+    }
+  return -1;
+}
+
 #define socket my_socket
 #define recv my_recv
 #define send my_send
+#define SSL_write my_SSL_write
 #include "../src/thrift/c_glib/transport/thrift_ssl_socket.c"
 #undef socket
 #undef recv
 #undef send
+#undef SSL_write
 
 static void thrift_socket_server (const int port);
 
@@ -220,6 +242,50 @@ test_ssl_write_invalid_socket(void)
   THRIFT_SOCKET(tSSLSocket)->sd = -1;
   thrift_ssl_socket_close (transport, NULL);
   g_object_unref (tSSLSocket);
+}
+
+/* SSL_write() reports a write that failed with a value <= 0.  A 0 for a
+   non-empty buffer has written nothing, and asking again cannot change that,
+   so the write has to fail on the first 0.  my_SSL_write() answers 0 a bounded
+   number of times and then fails, so that a write which keeps asking still
+   returns; the number of calls tells the two apart. */
+static void
+test_ssl_write_fails_when_ssl_write_returns_zero(void)
+{
+  ThriftSSLSocket *tSSLSocket = NULL;
+  ThriftTransport *transport = NULL;
+  GError *error = NULL;
+  guchar buf[17] = TEST_DATA; /* a buffer */
+  int sv[2];
+
+  g_assert (socketpair (AF_UNIX, SOCK_STREAM, 0, sv) == 0);
+
+  tSSLSocket = thrift_ssl_socket_new(SSLTLS, &error);
+  g_assert_no_error (error);
+  transport = THRIFT_TRANSPORT (tSSLSocket);
+
+  /* a socket and an SSL object, without a handshake: the write only ever
+     reaches my_SSL_write() */
+  THRIFT_SOCKET(tSSLSocket)->sd = sv[0];
+  g_assert (thrift_ssl_socket_create_ssl_context (transport, &error));
+  g_assert (tSSLSocket->ssl != NULL);
+
+  ERR_clear_error();
+  ssl_write_calls = 0;
+  ssl_write_zero = 100;
+  ssl_write_error = 1;
+  g_assert (thrift_ssl_socket_write (transport, buf, 17, &error) == FALSE);
+  g_assert_cmpint (ssl_write_calls, ==, 1);
+  g_assert_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_SSL_SOCKET_ERROR_SSL);
+  g_clear_error (&error);
+  ssl_write_zero = 0;
+  ssl_write_error = 0;
+
+  /* shutting down an SSL object that never shook hands queues an error */
+  thrift_ssl_socket_close (transport, NULL);
+  ERR_clear_error();
+  g_object_unref (tSSLSocket);
+  close (sv[1]);
 }
 
 
@@ -624,6 +690,7 @@ main(int argc, char *argv[])
   g_test_add_func ("/testtransportsslsocket/ContextUnavailableProtocol", test_ssl_context_unavailable_protocol);
   g_test_add_func ("/testtransportsslsocket/OpenAndCloseNonSSLServer", test_ssl_open_and_close_non_ssl_server);
   g_test_add_func ("/testtransportsslsocket/OpenAndWriteInvalidSocket", test_ssl_write_invalid_socket);
+  g_test_add_func ("/testtransportsslsocket/WriteFailsWhenSSLWriteReturnsZero", test_ssl_write_fails_when_ssl_write_returns_zero);
 
 
 
