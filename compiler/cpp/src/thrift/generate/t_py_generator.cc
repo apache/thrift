@@ -449,10 +449,11 @@ void t_py_generator::init_generator() {
 
   if (gen_type_hints_) {
     f_types_ << "all_structs: list[typing.Any] = []" << '\n';
+    f_types_ << "_THRIFT_DEFAULT: typing.Any = object()" << '\n';
   } else {
     f_types_ << "all_structs = []" << '\n';
+    f_types_ << "_THRIFT_DEFAULT = object()" << '\n';
   }
-  f_types_ << "_THRIFT_DEFAULT = object()" << '\n';
 
   f_consts_ <<
     py_autogen_comment() << '\n' <<
@@ -1320,8 +1321,13 @@ void t_py_generator::generate_service(t_service* tservice) {
     f_service_ << "from tornado import concurrent" << '\n';
   }
 
-  f_service_ << "all_structs = []" << '\n';
-  f_service_ << "_THRIFT_DEFAULT = object()" << '\n';
+  if (gen_type_hints_) {
+    f_service_ << "all_structs: list[typing.Any] = []" << '\n';
+    f_service_ << "_THRIFT_DEFAULT: typing.Any = object()" << '\n';
+  } else {
+    f_service_ << "all_structs = []" << '\n';
+    f_service_ << "_THRIFT_DEFAULT = object()" << '\n';
+  }
 
   // Generate the three main parts of the service
   generate_service_interface(tservice);
