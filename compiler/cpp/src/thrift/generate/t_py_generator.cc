@@ -908,8 +908,10 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // Initialize fields
-      t_type* type = get_true_type((*m_iter)->get_type());
-      if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != nullptr) {
+      t_type* type = (*m_iter)->get_type();
+      // Resolve typedefs only for THRIFT_DEFAULT checking to prevent None being stored for enums.
+      t_type* true_type = get_true_type(type);
+      if (!true_type->is_base_type() && !true_type->is_enum() && (*m_iter)->get_value() != nullptr) {
         indent(out) << "if " << maybe_escape_identifier((*m_iter)->get_name()) << " is _THRIFT_DEFAULT:" << '\n';
         indent_up();
         indent(out) << maybe_escape_identifier((*m_iter)->get_name()) << " = " << render_field_default_value(*m_iter)
