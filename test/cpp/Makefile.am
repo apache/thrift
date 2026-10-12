@@ -247,7 +247,7 @@ gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
 gen-cpp/SpecificNameTest_types.cpp gen-cpp/EchoService.cpp: $(top_srcdir)/test/SpecificName.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.
 AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
