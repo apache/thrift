@@ -23,9 +23,8 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 
-#include <boost/numeric/conversion/cast.hpp>
-
 #include <limits>
+#include <type_traits>
 #include <utility>
 #include <string>
 #include <string.h>
@@ -47,13 +46,15 @@ namespace transport {
  * that need to be enforced.
  */
 template <typename To, typename From> To safe_numeric_cast(From i) {
-  try {
-    return boost::numeric_cast<To>(i);
-  }
-  catch (const std::bad_cast& bc) {
+  static_assert(std::is_integral<To>::value && std::is_integral<From>::value,
+                "safe_numeric_cast only converts between integer types");
+  const auto result = static_cast<To>(i);
+  // The value survives the round trip and keeps its sign, or it did not fit.
+  if (static_cast<From>(result) != i || ((i < From{}) != (result < To{}))) {
     throw TTransportException(TTransportException::CORRUPTED_DATA,
-                              bc.what());
+                              "bad numeric conversion: overflow");
   }
+  return result;
 }
 
 using namespace apache::thrift::protocol;

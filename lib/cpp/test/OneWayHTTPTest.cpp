@@ -19,7 +19,7 @@
 
 #include "gen-cpp/OneWayService.h"
 #include <boost/test/unit_test.hpp>
-#include <boost/thread.hpp>
+#include "TestThread.h"
 #include <climits>
 #include <iostream>
 #include <memory>
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
   cerr << "Starting the server...\n";
 #endif
   RPC0ThreadClass t(server) ;
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE( JSON_HTTP_OneWayWrapperDoesNotPoisonNextCall )
   server.setServerEventHandler(pEventHandler);
 
   RPC0ThreadClass t(server);
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));
@@ -377,7 +377,7 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientReconnectsAfterConnectionClose) {
   server.setServerEventHandler(pEventHandler);
 
   RPC0ThreadClass t(server);
-  boost::thread thread(&RPC0ThreadClass::Run, &t);
+  TestThread thread(std::bind(&RPC0ThreadClass::Run, &t));
 
   {
     Synchronized sync(*(pEventHandler.get()));
@@ -419,6 +419,18 @@ BOOST_AUTO_TEST_CASE(HTTP_ClientRequiresExactConnectionHeaderName) {
   BOOST_CHECK(!client.chunksAfterHeader("Transfer-Encoding-Other: chunked"));
   BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length: 42"), 42U);
   BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("Content-Length-Mismatch: 42"), 0U);
+}
+
+BOOST_AUTO_TEST_CASE(HTTP_ClientMatchesHeadersCaseInsensitively) {
+  TInspectableHttpClient client(std::make_shared<TMemoryBuffer>());
+
+  BOOST_CHECK(client.closesAfterHeader("connection: Keep-Alive ,\tCLOSE "));
+  BOOST_CHECK(client.closesAfterHeader("CONNECTION:close"));
+  BOOST_CHECK(!client.closesAfterHeader("Connection: keep-alive, closed"));
+  BOOST_CHECK(!client.closesAfterHeader("Connection: keep-alive,"));
+  BOOST_CHECK(client.chunksAfterHeader("transfer-encoding: gzip, CHUNKED"));
+  BOOST_CHECK(!client.chunksAfterHeader("Transfer-Encoding: gzip"));
+  BOOST_CHECK_EQUAL(client.contentLengthAfterHeader("content-length: 7"), 7U);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -19,11 +19,11 @@
 
 #define BOOST_TEST_MODULE SecurityTest
 #include <boost/test/unit_test.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
-#include <boost/thread.hpp>
+#include <condition_variable>
+#include <fstream>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include <openssl/opensslv.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
@@ -47,12 +47,17 @@ using apache::thrift::transport::TTransportFactory;
 using std::bind;
 using std::shared_ptr;
 
-boost::filesystem::path keyDir;
-boost::filesystem::path certFile(const std::string& filename)
+std::string keyDir;
+std::string certFile(const std::string& filename)
 {
-    return keyDir / filename;
+    return keyDir + "/" + filename;
 }
-boost::mutex gMutex;
+std::mutex gMutex;
+
+bool fileExists(const std::string& path)
+{
+    return std::ifstream(path.c_str()).good();
+}
 
 struct GlobalFixture
 {
@@ -61,7 +66,7 @@ struct GlobalFixture
         using namespace boost::unit_test::framework;
     for (int i = 0; i < master_test_suite().argc; ++i)
     {
-      BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+      BOOST_TEST_MESSAGE("argv[" << i << "] = \"" << master_test_suite().argv[i] << "\"");
     }
 
     #ifdef __linux__
@@ -73,11 +78,11 @@ struct GlobalFixture
     TSSLSocketFactory::setManualOpenSSLInitialization(true);
     apache::thrift::transport::initializeOpenSSL();
 
-    keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-    if (!boost::filesystem::exists(certFile("server.crt")))
+    keyDir = "../../../test/keys";
+    if (!fileExists(certFile("server.crt")))
     {
-      keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-      if (!boost::filesystem::exists(certFile("server.crt")))
+      keyDir = master_test_suite().argv[master_test_suite().argc - 1];
+      if (!fileExists(certFile("server.crt")))
       {
         throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
       }
@@ -105,7 +110,7 @@ struct SecurityFixture
     {
         try
         {
-            boost::mutex::scoped_lock lock(mMutex);
+            std::unique_lock<std::mutex> lock(mMutex);
 
             shared_ptr<TSSLSocketFactory> pServerSocketFactory;
             shared_ptr<TSSLServerSocket> pServerSocket;
@@ -118,8 +123,8 @@ struct SecurityFixture
             #else
                 pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
             #endif
-            pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
-            pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+            pServerSocketFactory->loadCertificate(certFile("server.crt").c_str());
+            pServerSocketFactory->loadPrivateKey(certFile("server.key").c_str());
             pServerSocketFactory->server(true);
             pServerSocket.reset(new TSSLServerSocket("localhost", 0, pServerSocketFactory));
             shared_ptr<TTransport> connectedClient;
@@ -141,8 +146,8 @@ struct SecurityFixture
 
             catch (apache::thrift::transport::TTransportException& ex)
             {
-                boost::mutex::scoped_lock lock(gMutex);
-                BOOST_TEST_MESSAGE(boost::format("SRV %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+                std::lock_guard<std::mutex> lock(gMutex);
+                BOOST_TEST_MESSAGE("SRV " << std::this_thread::get_id() << " Exception: " << ex.what());
             }
 
             if (connectedClient)
@@ -156,7 +161,7 @@ struct SecurityFixture
         }
         catch (std::exception& ex)
         {
-            BOOST_FAIL(boost::format("%1%: %2%") % typeid(ex).name() % ex.what());
+            BOOST_FAIL(typeid(ex).name() << ": " << ex.what());
         }
     }
 
@@ -176,9 +181,9 @@ struct SecurityFixture
                     // to @SECLEVEL=0 or 1, so specify it to test all combinations.
                     pClientSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@SECLEVEL=0");
                 #endif
-                pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
-                pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
-                pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+                pClientSocketFactory->loadCertificate(certFile("client.crt").c_str());
+                pClientSocketFactory->loadPrivateKey(certFile("client.key").c_str());
+                pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").c_str());
                 pClientSocket = pClientSocketFactory->createSocket("localhost", mPort);
                 pClientSocket->open();
 
@@ -191,8 +196,8 @@ struct SecurityFixture
             }
             catch (apache::thrift::transport::TTransportException& ex)
             {
-                boost::mutex::scoped_lock lock(gMutex);
-                BOOST_TEST_MESSAGE(boost::format("CLI %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+                std::lock_guard<std::mutex> lock(gMutex);
+                BOOST_TEST_MESSAGE("CLI " << std::this_thread::get_id() << " Exception: " << ex.what());
             }
 
             if (pClientSocket)
@@ -203,7 +208,7 @@ struct SecurityFixture
         }
         catch (std::exception& ex)
         {
-            BOOST_FAIL(boost::format("%1%: %2%") % typeid(ex).name() % ex.what());
+            BOOST_FAIL(typeid(ex).name() << ": " << ex.what());
         }
     }
 
@@ -221,8 +226,8 @@ struct SecurityFixture
         return strings[protocol];
     }
 
-    boost::mutex mMutex;
-    boost::condition_variable mCVar;
+    std::mutex mMutex;
+    std::condition_variable mCVar;
     int mPort;
     bool mConnected;
 };
@@ -356,7 +361,7 @@ BOOST_AUTO_TEST_CASE(explicit_protocol_version_window)
 
     for (const auto& expected : expectations)
     {
-        BOOST_TEST_MESSAGE(boost::format("TEST: protocol = %1%") % expected.name);
+        BOOST_TEST_MESSAGE("TEST: protocol = " << expected.name);
         apache::thrift::transport::SSLContext context(expected.protocol);
         BOOST_CHECK_EQUAL(expected.version, SSL_CTX_get_min_proto_version(context.get()));
         BOOST_CHECK_EQUAL(expected.version, SSL_CTX_get_max_proto_version(context.get()));
@@ -413,29 +418,27 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
                 }
 #endif
 
-                boost::mutex::scoped_lock lock(mMutex);
+                std::unique_lock<std::mutex> lock(mMutex);
 
-                BOOST_TEST_MESSAGE(boost::format("TEST: Server = %1%, Client = %2%")
-                    % protocol2str(si) % protocol2str(ci));
+                BOOST_TEST_MESSAGE("TEST: Server = " << protocol2str(si) << ", Client = " << protocol2str(ci));
 
                 mConnected = false;
-                // thread_group manages the thread lifetime - ignore the return value of create_thread
-                boost::thread_group threads;
-                (void)threads.create_thread(bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
+                std::thread serverThread(bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
                 mCVar.wait(lock);           // wait for listen() to succeed
                 lock.unlock();
-                (void)threads.create_thread(bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
-                threads.join_all();
+                std::thread clientThread(bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
+                clientThread.join();
+                serverThread.join();
 
                 BOOST_CHECK_MESSAGE(mConnected == matrix[ci][si],
-                        boost::format("      Server = %1%, Client = %2% expected mConnected == %3% but was %4%")
-                            % protocol2str(si) % protocol2str(ci) % matrix[ci][si] % mConnected);
+                        "      Server = " << protocol2str(si) << ", Client = " << protocol2str(ci)
+                            << " expected mConnected == " << matrix[ci][si] << " but was " << mConnected);
             }
         }
     }
     catch (std::exception& ex)
     {
-        BOOST_FAIL(boost::format("%1%: %2%") % typeid(ex).name() % ex.what());
+        BOOST_FAIL(typeid(ex).name() << ": " << ex.what());
     }
 }
 
