@@ -33,6 +33,7 @@ use std::os::unix::net::UnixStream;
 #[cfg(unix)]
 use std::path::Path;
 
+use thrift::OrderedFloat;
 use thrift::protocol::{
     TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
     TInputProtocol, TMultiplexedOutputProtocol, TOutputProtocol,
@@ -41,7 +42,6 @@ use thrift::transport::{
     TBufferedReadTransport, TBufferedWriteTransport, TFramedReadTransport, TFramedWriteTransport,
     TIoChannel, TReadTransport, TTcpChannel, TTlsClientChannel, TWriteTransport,
 };
-use thrift::OrderedFloat;
 use thrift_test::*;
 
 const CLIENT_CERT: &[u8] = include_bytes!("../../../keys/client_v3.crt");
@@ -742,7 +742,7 @@ fn verify_expected_result<T: Debug + PartialEq + Sized>(
             } else {
                 info!("*** FAILED ***");
                 Err(thrift::Error::User(
-                    format!("expected {:?} but got {:?}", &expected, &v).into(),
+                    format!("expected {:?} but got {:?}", expected, v).into(),
                 ))
             }
         }

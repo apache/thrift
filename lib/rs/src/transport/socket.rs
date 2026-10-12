@@ -25,7 +25,7 @@ use std::time::Duration;
 use std::os::unix::net::UnixStream;
 
 use super::{ReadHalf, TIoChannel, WriteHalf};
-use crate::{new_transport_error, TransportErrorKind};
+use crate::{TransportErrorKind, new_transport_error};
 
 /// Bidirectional TCP/IP channel.
 ///

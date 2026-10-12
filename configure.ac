@@ -446,7 +446,7 @@ if test "$with_rs" = "yes";  then
   AC_PATH_PROG([CARGO], [cargo])
   AC_PATH_PROG([RUSTC], [rustc])
   if [[ -x "$CARGO" ]] && [[ -x "$RUSTC" ]]; then
-      min_rustc_version="1.13"
+      min_rustc_version="1.85"
 
       AC_MSG_CHECKING([for rustc version])
       rustc_version=`$RUSTC --version 2>&1 | $SED -n -e 's/^rustc \(@<:@0-9@:>@@<:@0-9.@:>@*\).*/\1/p'`

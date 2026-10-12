@@ -17,8 +17,8 @@
 
 use clap::{clap_app, value_t};
 use log::*;
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use rustls::ServerConfig;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Cursor;
@@ -26,6 +26,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use thrift::OrderedFloat;
 use thrift::protocol::{
     TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
     TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
@@ -35,7 +36,6 @@ use thrift::transport::{
     TBufferedReadTransportFactory, TBufferedWriteTransportFactory, TFramedReadTransportFactory,
     TFramedWriteTransportFactory, TReadTransportFactory, TWriteTransportFactory,
 };
-use thrift::OrderedFloat;
 use thrift_test::*;
 
 const SERVER_CERT: &[u8] = include_bytes!("../../../keys/server.crt");
@@ -207,12 +207,12 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     }
 
     fn handle_test_string(&self, thing: String) -> thrift::Result<String> {
-        info!("testString({})", &thing);
+        info!("testString({})", thing);
         Ok(thing)
     }
 
     fn handle_test_uuid(&self, thing: uuid::Uuid) -> thrift::Result<uuid::Uuid> {
-        info!("testUUID({})", &thing);
+        info!("testUUID({})", thing);
         Ok(thing)
     }
 
@@ -425,8 +425,8 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
 struct SecondServiceSyncHandlerImpl;
 impl SecondServiceSyncHandler for SecondServiceSyncHandlerImpl {
     fn handle_secondtest_string(&self, thing: String) -> thrift::Result<String> {
-        info!("(second)testString({})", &thing);
-        let ret = format!("testString(\"{}\")", &thing);
+        info!("(second)testString({})", thing);
+        let ret = format!("testString(\"{}\")", thing);
         Ok(ret)
     }
 }

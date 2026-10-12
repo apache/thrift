@@ -193,5 +193,5 @@ Last updated: May 2, 2026
 | php       | 8.2 (ondrej)  | 8.3           | jammy pulls 8.2 from ppa:ondrej/php |
 | python3   | 3.10.12       |               |       |
 | ruby      | 3.0.2p107     |               |       |
-| rust      | 1.83.0        |               |       |
+| rust      | 1.99.0        |               |       |
 | smalltalk |               |               | Not in CI |

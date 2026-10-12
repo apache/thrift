@@ -3176,9 +3176,10 @@ mod tests {
         match result {
             Err(crate::Error::Protocol(e)) => {
                 assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
-                assert!(e
-                    .message
-                    .contains("1600 bytes, exceeding message size limit of 1000"));
+                assert!(
+                    e.message
+                        .contains("1600 bytes, exceeding message size limit of 1000")
+                );
             }
             _ => panic!("Expected protocol error with SizeLimit"),
         }

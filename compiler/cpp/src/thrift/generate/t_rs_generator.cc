@@ -1302,10 +1302,9 @@ void t_rs_generator::render_result_struct_to_result_method(t_struct* tstruct) {
       string field_name("self." + rust_field_name(tfield));
       string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
 
-      f_gen_ << indent() << branch_statement << " " << field_name << ".is_some() {" << '\n';
+      f_gen_ << indent() << branch_statement << " let Some(e) = " << field_name << " {" << '\n';
       indent_up();
-      f_gen_ << indent() << "Err(thrift::Error::User(Box::new(" << field_name << ".unwrap())))"
-             << '\n';
+      f_gen_ << indent() << "Err(thrift::Error::User(Box::new(e)))" << '\n';
       indent_down();
 
       rendered_branch_count++;
@@ -1329,10 +1328,10 @@ void t_rs_generator::render_result_struct_to_result_method(t_struct* tstruct) {
     }
   } else {
     string branch_statement = rendered_branch_count == 0 ? "if" : "} else if";
-    f_gen_ << indent() << branch_statement << " self." << SERVICE_RESULT_VARIABLE << ".is_some() {"
-           << '\n';
+    f_gen_ << indent() << branch_statement << " let Some(r) = self." << SERVICE_RESULT_VARIABLE
+           << " {" << '\n';
     indent_up();
-    f_gen_ << indent() << "Ok(self." << SERVICE_RESULT_VARIABLE << ".unwrap())" << '\n';
+    f_gen_ << indent() << "Ok(r)" << '\n';
     indent_down();
     f_gen_ << indent() << "} else {" << '\n';
     indent_up();

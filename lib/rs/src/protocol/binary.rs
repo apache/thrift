@@ -468,7 +468,7 @@ where
                 kind: ProtocolErrorKind::Unknown,
                 message: format!(
                     "cannot write identifier {:?} without sequence number",
-                    &identifier
+                    identifier
                 ),
             }));
         }
@@ -820,9 +820,11 @@ mod tests {
     fn must_write_field_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(o_prot
-            .write_field_begin(&TFieldIdentifier::new("some_field", TType::String, 22))
-            .is_ok());
+        assert!(
+            o_prot
+                .write_field_begin(&TFieldIdentifier::new("some_field", TType::String, 22))
+                .is_ok()
+        );
 
         let expected: [u8; 3] = [0x0B, 0x00, 0x16];
         assert_eq_written_bytes!(o_prot, expected);
@@ -883,9 +885,11 @@ mod tests {
     fn must_write_list_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(o_prot
-            .write_list_begin(&TListIdentifier::new(TType::Bool, 5))
-            .is_ok());
+        assert!(
+            o_prot
+                .write_list_begin(&TListIdentifier::new(TType::Bool, 5))
+                .is_ok()
+        );
 
         let expected: [u8; 5] = [0x02, 0x00, 0x00, 0x00, 0x05];
         assert_eq_written_bytes!(o_prot, expected);
@@ -926,9 +930,11 @@ mod tests {
     fn must_write_set_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(o_prot
-            .write_set_begin(&TSetIdentifier::new(TType::I16, 7))
-            .is_ok());
+        assert!(
+            o_prot
+                .write_set_begin(&TSetIdentifier::new(TType::I16, 7))
+                .is_ok()
+        );
 
         let expected: [u8; 5] = [0x06, 0x00, 0x00, 0x00, 0x07];
         assert_eq_written_bytes!(o_prot, expected);
@@ -968,9 +974,11 @@ mod tests {
     fn must_write_map_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(o_prot
-            .write_map_begin(&TMapIdentifier::new(TType::I64, TType::Struct, 32))
-            .is_ok());
+        assert!(
+            o_prot
+                .write_map_begin(&TMapIdentifier::new(TType::I64, TType::Struct, 32))
+                .is_ok()
+        );
 
         let expected: [u8; 6] = [0x0A, 0x0C, 0x00, 0x00, 0x00, 0x20];
         assert_eq_written_bytes!(o_prot, expected);
@@ -1250,9 +1258,10 @@ mod tests {
         match result {
             Err(crate::Error::Protocol(e)) => {
                 assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
-                assert!(e
-                    .message
-                    .contains("Container size 200 exceeds maximum allowed size of 100"));
+                assert!(
+                    e.message
+                        .contains("Container size 200 exceeds maximum allowed size of 100")
+                );
             }
             _ => panic!("Expected protocol error with SizeLimit"),
         }
@@ -1304,9 +1313,10 @@ mod tests {
         match result {
             Err(crate::Error::Protocol(e)) => {
                 assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
-                assert!(e
-                    .message
-                    .contains("Byte array size 2000 exceeds maximum allowed size of 1000"));
+                assert!(
+                    e.message
+                        .contains("Byte array size 2000 exceeds maximum allowed size of 1000")
+                );
             }
             _ => panic!("Expected protocol error with SizeLimit"),
         }
@@ -1331,9 +1341,10 @@ mod tests {
         match result {
             Err(crate::Error::Protocol(e)) => {
                 assert_eq!(e.kind, ProtocolErrorKind::SizeLimit);
-                assert!(e
-                    .message
-                    .contains("Message name size 2000 exceeds maximum allowed size of 1000"));
+                assert!(
+                    e.message
+                        .contains("Message name size 2000 exceeds maximum allowed size of 1000")
+                );
             }
             _ => panic!("Expected protocol error with SizeLimit"),
         }

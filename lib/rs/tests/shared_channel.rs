@@ -17,7 +17,7 @@
 
 use std::collections::VecDeque;
 use std::io::{self, Read, Write};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::{Arc, Mutex};
 
 use thrift::transport::{TIoChannel, TSharedChannel};

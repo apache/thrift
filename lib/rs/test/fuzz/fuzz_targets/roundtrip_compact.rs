@@ -17,11 +17,11 @@
 
 #![no_main]
 
+use thrift::TConfiguration;
 use thrift::protocol::{
     TCompactInputProtocol, TCompactOutputProtocol, TOutputProtocol, TSerializable,
 };
 use thrift::transport::TBufferChannel;
-use thrift::TConfiguration;
 use thrift_fuzz::fuzz_test::FuzzTest;
 
 fn run(data: &[u8]) -> thrift::Result<()> {

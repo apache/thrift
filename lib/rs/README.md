@@ -56,14 +56,18 @@ Full [Rustdoc](https://docs.rs/thrift/)
 
 ## Compatibility
 
-The Rust library and auto-generated code target Rust versions 1.65+. The
-minimum was raised from Rust 1.28 by THRIFT-5158, when the library and generator
-moved to Rust 2021-only output. Enabling the optional `rustls` feature requires
-Rust 1.71+.
+The Rust library uses the Rust 2024 edition and requires Rust 1.85+, the
+`rust-version` declared in `Cargo.toml`. CI builds and tests with the Rust
+release pinned in the repository's `rust-toolchain` file.
 
 ### Breaking Changes
 
 Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
+
+##### Thrift 0.26.0
+
+* **[THRIFT-6162]** - The library moved to the Rust 2024 edition and requires Rust 1.85 or higher.
+  Previously the documented minimum was Rust 1.65 (1.71 with the `rustls` feature).
 
 ##### Thrift 0.15.0
 
