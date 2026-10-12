@@ -252,7 +252,7 @@ pub trait TInputProtocol {
             }
             u => Err(crate::Error::Protocol(ProtocolError {
                 kind: ProtocolErrorKind::Unknown,
-                message: format!("cannot skip field type {:?}", &u),
+                message: format!("cannot skip field type {:?}", u),
             })),
         }
     }
@@ -622,7 +622,7 @@ where
 pub trait TOutputProtocolFactory {
     /// Create a `TOutputProtocol` that writes bytes to `transport`.
     fn create(&self, transport: Box<dyn TWriteTransport + Send>)
-        -> Box<dyn TOutputProtocol + Send>;
+    -> Box<dyn TOutputProtocol + Send>;
 }
 
 impl<T> TOutputProtocolFactory for Box<T>

@@ -187,7 +187,7 @@ Thrift is a polyglot library; "the environment" varies per binding. Common assum
 
 ### Rust runtime (`lib/rs/`)
 
-- **Rust 1.65+ since 0.14.0** *(documented — `lib/rs/README.md` §Thrift 0.14.0 / THRIFT-5158)*.
+- **Rust 1.85+ since 0.26.0** *(documented — `lib/rs/README.md` §Thrift 0.26.0 / THRIFT-6162)*.
 - **Past CVE-class:** THRIFT-5812 (capacity overflow in Rust server).
 
 ### What Thrift does *not* do to its host

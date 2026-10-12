@@ -39,17 +39,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Rust 1.85
-        # The repo-pinned toolchain (rust-toolchain: 1.83) predates edition2024 support
-        # required by transitive dependencies (getrandom >= 0.4); 1.85 is the minimum
-        # that passes. Pin explicitly for reproducibility.
-        run: rustup toolchain install 1.85 --profile minimal
+      - name: Install Rust 1.99.0
+        run: rustup toolchain install 1.99.0 --profile minimal
 
       - name: Dry run
         working-directory: lib/rs
         run: cargo publish --dry-run
         env:
-          RUSTUP_TOOLCHAIN: "1.85"
+          RUSTUP_TOOLCHAIN: "1.99.0"
 
   publish:
     runs-on: ubuntu-latest
@@ -75,8 +72,8 @@ jobs:
           fi
           echo "Version check passed: $CRATE_VERSION"
 
-      - name: Install Rust 1.85
-        run: rustup toolchain install 1.85 --profile minimal
+      - name: Install Rust 1.99.0
+        run: rustup toolchain install 1.99.0 --profile minimal
 
       - name: Authenticate to crates.io
         id: crates-io-auth
@@ -86,5 +83,5 @@ jobs:
         working-directory: lib/rs
         run: cargo publish
         env:
-          RUSTUP_TOOLCHAIN: "1.85"
+          RUSTUP_TOOLCHAIN: "1.99.0"
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}

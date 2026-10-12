@@ -121,16 +121,7 @@ impl CalculatorSyncHandler for CalculatorServer {
         println!("handling calculate: l:{}, w:{:?}", logid, w);
 
         let res = if let Some(ref op) = w.op {
-            if w.num1.is_none() || w.num2.is_none() {
-                Err(InvalidOperation {
-                    what_op: Some(op.into()),
-                    why: Some("no operands specified".to_owned()),
-                })
-            } else {
-                // so that I don't have to call unwrap() multiple times below
-                let num1 = w.num1.as_ref().expect("operands checked");
-                let num2 = w.num2.as_ref().expect("operands checked");
-
+            if let (Some(num1), Some(num2)) = (w.num1.as_ref(), w.num2.as_ref()) {
                 match *op {
                     Operation::ADD => Ok(num1 + num2),
                     Operation::SUBTRACT => Ok(num1 - num2),
@@ -153,6 +144,11 @@ impl CalculatorSyncHandler for CalculatorServer {
                         })
                     }
                 }
+            } else {
+                Err(InvalidOperation {
+                    what_op: Some(op.into()),
+                    why: Some("no operands specified".to_owned()),
+                })
             }
         } else {
             Err(InvalidOperation::new(

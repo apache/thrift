@@ -28,7 +28,7 @@ use rustls::{
 };
 
 use super::{ReadHalf, TIoChannel, TSharedChannel, WriteHalf};
-use crate::{new_transport_error, TransportErrorKind};
+use crate::{TransportErrorKind, new_transport_error};
 
 /// A blocking rustls client channel.
 ///

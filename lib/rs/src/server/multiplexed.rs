@@ -25,7 +25,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::protocol::{TInputProtocol, TMessageIdentifier, TOutputProtocol, TStoredInputProtocol};
 
-use super::{handle_process_result, TProcessor};
+use super::{TProcessor, handle_process_result};
 
 const MISSING_SEPARATOR_AND_NO_DEFAULT: &str =
     "missing service separator and no default processor set";
@@ -109,7 +109,7 @@ impl TMultiplexedProcessor {
         o_prot: &mut dyn TOutputProtocol,
     ) -> crate::Result<()> {
         let (svc_name, svc_call) = split_ident_name(&msg_ident.name);
-        debug!("routing svc_name {:?} svc_call {}", &svc_name, &svc_call);
+        debug!("routing svc_name {:?} svc_call {}", svc_name, svc_call);
 
         let processor: Option<Arc<ThreadSafeProcessor>> = {
             let stored = self.stored.lock().unwrap();
@@ -143,7 +143,7 @@ impl TProcessor for TMultiplexedProcessor {
     ) -> crate::Result<()> {
         let msg_ident = i_prot.read_message_begin()?;
 
-        debug!("process incoming msg id:{:?}", &msg_ident);
+        debug!("process incoming msg id:{:?}", msg_ident);
         let res = self.process_message(&msg_ident, i_prot, o_prot);
 
         handle_process_result(&msg_ident, res, o_prot)
@@ -183,8 +183,8 @@ fn missing_processor_message(svc_name: Option<&str>) -> String {
 #[cfg(test)]
 mod tests {
     use std::convert::Into;
-    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     use crate::protocol::{
         TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType,

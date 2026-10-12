@@ -1,7 +1,8 @@
 [package]
 name = "thrift"
 description = "Rust bindings for the Apache Thrift RPC system"
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"
 version = "0.26.0"
 license = "Apache-2.0"
 authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
