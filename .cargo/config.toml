@@ -15,10 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Every Cargo build in this tree resolves dependencies to the newest versions
-# that the toolchain pinned in rust-toolchain can compile, instead of failing
-# when a dependency raises its minimum Rust version. None of the crates sets
-# package.rust-version, so the running rustc is the version that counts.
+# Every Cargo build in this tree prefers the newest dependency versions that
+# are compatible with the Rust version in effect, instead of failing when a
+# dependency raises its minimum Rust version. That version is the crates'
+# package.rust-version where one is set, and otherwise the running rustc,
+# i.e. the toolchain pinned in rust-toolchain.
 # Applies to builds from this checkout only; it is not part of the published
 # crate.
 [resolver]
