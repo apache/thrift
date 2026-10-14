@@ -108,8 +108,8 @@ RUN C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64 && `
 
 # Install OpenSSL
 ENV OPENSSL_ROOT="C:\Program Files\OpenSSL-Win64"
-RUN curl.exe -fsSL -o C:\TEMP\openssl.exe https://slproweb.com/download/Win64OpenSSL-3_6_4.exe && `
-    powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\openssl.exe' -Algorithm SHA256).Hash.ToLower() -ne 'b33a9be5307fc42e98e03604ebbdb1fcee89e24c91af6009e965bdcdbc63449c') { exit 1 }" && `
+RUN curl.exe -fsSL -o C:\TEMP\openssl.exe https://slproweb.com/download/Win64OpenSSL-3_6_5.exe && `
+    powershell -NoProfile -Command "if ((Get-FileHash 'C:\TEMP\openssl.exe' -Algorithm SHA256).Hash.ToLower() -ne '8b2fcf66088fa0d13fa5729ef374a182adf72edfffde89089b3b1bf48c3f257f') { exit 1 }" && `
     C:\TEMP\openssl.exe /silent && `
     DEL /F /Q C:\TEMP\openssl.exe && `
     powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('PATH', '%OPENSSL_ROOT%\bin;' + [Environment]::GetEnvironmentVariable('PATH', 'Machine'), 'Machine')" && `
