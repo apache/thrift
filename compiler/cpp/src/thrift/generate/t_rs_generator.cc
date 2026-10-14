@@ -33,6 +33,9 @@ using std::vector;
 
 static const string SERVICE_RESULT_VARIABLE("result_value");
 static const string RESULT_STRUCT_SUFFIX("Result");
+// Names that get a trailing underscore. alignof, offsetof, proc, pure and sizeof
+// are no longer reserved, but fields with these names keep their underscore so
+// that existing code does not break.
 static const string RUST_RESERVED_WORDS[]
     = {"abstract", "alignof",  "as",     "become",  "box",   "break", "const", "continue", "crate",
        "do",       "else",     "enum",   "extern",  "false", "final", "fn",    "for",      "if",
@@ -44,6 +47,23 @@ const set<string> RUST_RESERVED_WORDS_SET(RUST_RESERVED_WORDS,
                                           RUST_RESERVED_WORDS
                                               + sizeof(RUST_RESERVED_WORDS)
                                                     / sizeof(RUST_RESERVED_WORDS[0]));
+
+// Keywords added by later editions: async, await, dyn and try with Rust 2018,
+// gen with Rust 2024. They become raw identifiers (r#gen), which name the same
+// thing, so code written for an earlier edition keeps compiling.
+static const string RUST_RAW_IDENTIFIER_WORDS[] = {"async", "await", "dyn", "gen", "try"};
+const set<string> RUST_RAW_IDENTIFIER_WORDS_SET(RUST_RAW_IDENTIFIER_WORDS,
+                                                RUST_RAW_IDENTIFIER_WORDS
+                                                    + sizeof(RUST_RAW_IDENTIFIER_WORDS)
+                                                          / sizeof(RUST_RAW_IDENTIFIER_WORDS[0]));
+
+// Words Rust no longer reserves. Method names were never escaped, so methods
+// with these names keep them.
+static const string RUST_UNRESERVED_WORDS[] = {"alignof", "offsetof", "proc", "pure", "sizeof"};
+const set<string> RUST_UNRESERVED_WORDS_SET(RUST_UNRESERVED_WORDS,
+                                            RUST_UNRESERVED_WORDS
+                                                + sizeof(RUST_UNRESERVED_WORDS)
+                                                      / sizeof(RUST_UNRESERVED_WORDS[0]));
 
 static const string SYNC_CLIENT_GENERIC_BOUND_VARS("<IP, OP>");
 static const string SYNC_CLIENT_GENERIC_BOUNDS("where IP: TInputProtocol, OP: TOutputProtocol");
@@ -3283,13 +3303,19 @@ string t_rs_generator::rust_union_field_name(t_field* tfield) {
 string t_rs_generator::rust_safe_name(const string& name) {
   if (is_reserved(name)) {
     return name + "_";
+  } else if (RUST_RAW_IDENTIFIER_WORDS_SET.find(name) != RUST_RAW_IDENTIFIER_WORDS_SET.end()) {
+    return "r#" + name;
   } else {
     return name;
   }
 }
 
 string t_rs_generator::service_call_client_function_name(t_function* tfunc) {
-  return rust_snake_case(tfunc->get_name());
+  string function_name(rust_snake_case(tfunc->get_name()));
+  if (RUST_UNRESERVED_WORDS_SET.find(function_name) != RUST_UNRESERVED_WORDS_SET.end()) {
+    return function_name;
+  }
+  return rust_safe_name(function_name);
 }
 
 string t_rs_generator::service_call_handler_function_name(t_function* tfunc) {

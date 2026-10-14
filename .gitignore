@@ -319,6 +319,7 @@ SKILL.md
 /lib/rs/test/src/recursive.rs
 /lib/rs/test/src/ultimate.rs
 /lib/rs/test/src/identifiers.rs
+/lib/rs/test/src/keywords.rs
 /lib/rs/test_recursive/Cargo.lock
 /lib/rs/test_recursive/src/vehicles.rs
 /lib/rs/test_recursive/src/maintenance/maintenance_facility.rs
