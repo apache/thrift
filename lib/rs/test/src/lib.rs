@@ -17,6 +17,7 @@
 
 pub mod base_one;
 pub mod base_two;
+pub mod keywords;
 pub mod midlayer;
 pub mod recursive;
 pub mod ultimate;
@@ -264,6 +265,53 @@ mod tests {
             Some(42),
             "field following a suppressed union must not be silently dropped due to stream corruption"
         );
+    }
+
+    // ---- Rust keywords as Thrift names (THRIFT-6406) ----
+    //
+    // thrifts/Keywords.thrift uses names that are Rust keywords. The
+    // generated code has to escape them, otherwise it does not compile.
+    // Keywords of later editions become raw identifiers, the others get a
+    // trailing underscore.
+
+    #[test]
+    fn keyword_field_names_are_escaped() {
+        use std::io::Cursor;
+        use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TSerializable};
+
+        let original = keywords::KeywordFields {
+            r#async: Some(1),
+            r#await: Some(2),
+            r#dyn: Some(3),
+            r#try: Some(4),
+            r#gen: Some(5),
+            type_: Some(6),
+            match_: Some(7),
+        };
+        let mut buf: Vec<u8> = Vec::new();
+        {
+            let mut o = TBinaryOutputProtocol::new(Cursor::new(&mut buf), false);
+            original.write_to_out_protocol(&mut o).unwrap();
+        }
+        let read_back = keywords::KeywordFields::read_from_in_protocol(
+            &mut TBinaryInputProtocol::new(Cursor::new(buf), false),
+        )
+        .unwrap();
+        assert_eq!(original, read_back);
+    }
+
+    // Only has to compile: the client methods carry the escaped names, and
+    // proc, which Rust no longer reserves, keeps its name.
+    #[allow(dead_code)]
+    fn keyword_method_names_are_escaped(
+        client: &mut impl keywords::TKeywordMethodsSyncClient,
+    ) -> thrift::Result<()> {
+        client.r#gen(1, 2)?;
+        client.r#try()?;
+        client.type_(3)?;
+        client.match_()?;
+        client.r#await(4)?;
+        client.proc()
     }
 
     // ---- Recursion depth limiting (THRIFT-6057) ----
