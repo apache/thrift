@@ -6,12 +6,12 @@
 - **Scope:** the `apache/thrift` repository only. The `apache/thrift-website` repository is **excluded at PMC's go-ahead** *(maintainer — Jens 2026-05-19; the Security team recommended dropping the website on triage-cost-vs-value grounds, PMC concurred).*
 - **Version / commit binding:** authored against `apache/thrift`'s `master` branch at the time of drafting (2026-05). A report against project version *N* is triaged against this model as it stood at *N*, not at `HEAD`. Re-bind on each release.
 - **Authors:** drafted by the ASF Security Team (Glasswing pre-scan threat-model pass). Wave-1 maintainer review completed by Jens Geyer 2026-05-19/20; promotion of remaining *(inferred)* tags pending PMC-wide review.
-- **Status:** **DRAFT v2 — Wave 1 partially ratified by Jens Geyer; pending Thrift PMC-wide review.** 
+- **Status:** **DRAFT v2 — Wave 1 partially ratified by Jens Geyer; pending Thrift PMC-wide review.** Q59 (the P10 resource-use threshold) was ratified by the PMC on 2026-10-18.
 - **Reporting cross-reference:** at the time of drafting Thrift's repo has **no `SECURITY.md`**, and the project website exposes only the generic `apache.org/security` pointer rather than a project-specific page. Until a per-project disclosure document is added, findings should be reported via the ASF security PMC pipeline (`security@apache.org`) per ASF policy. Findings against §8 (claimed properties) are in-scope vulnerabilities; findings that fall under §3 or §9 will be closed citing this document.
 - **Provenance legend:**
   - *(documented)* — stated in the project's own artifacts: in-repo `README*`, `CHANGES.md`, `FUZZING.md`, `LANGUAGES.md`, `AGENTS.md`, `doc/specs/*`, per-binding `lib/<lang>/README*`, header comments, or JIRA tickets cited in `CHANGES.md`.
   - *(inferred)* — reasoned from code shape, the existence/absence of a defense, or general domain knowledge for RPC framing/codec/runtime libraries. Every *(inferred)* claim has a numbered match in §14.
-  - *(maintainer)* — explicitly **not used** in this draft. The Thrift PMC has not yet ratified anything here.
+  - *(maintainer)* — explicitly **not used** in this draft. The Thrift PMC has not yet ratified anything here, apart from Q59 (P10 "Threshold").
 - **Draft confidence (claim count):** **78 documented / 0 maintainer / 81 inferred** across §1–§13; §14 carries **77 numbered open questions** and every *(inferred)* tag is back-referenced to one of them by number. This is a *draft-first* model in the `SKILL.md` §3.2 sense — published artifacts (the specs, FUZZING, CHANGES, per-binding READMEs) carry a high *(documented)* count, but every assertion about *intent*, *adversary model*, *resource-bound policy*, *cross-binding parity*, and *what counts as a bug* is *(inferred)* until the PMC confirms.
 - **What Thrift is (one paragraph):** Apache Thrift is an IDL-driven cross-language RPC and serialization framework. A user writes service and struct definitions in the Thrift IDL (`.thrift` files); the **C++ `thrift` compiler** (under `compiler/cpp/`) emits client and server **generated code** for any of ~28 target languages. Each language's `lib/<lang>/` runtime supplies the **protocol** layer (Binary, Compact, JSON, Multiplex), the **endpoint transport** layer (Socket, TLS/SSL, Domain socket, Pipe, Memory, File), the **layered transport** wrappers (Framed/Buffered/Header/HTTP/zlib), and the **server** loop (Simple, Threaded, ThreadPool, Nonblocking, Forking). Downstream applications link the runtime + generated code; Thrift itself is **a library + code generator, not a deployed service**.
 
@@ -420,7 +420,11 @@ Each property below states: (1) the property and conditions; (2) the violation s
 - *Violation symptom:* OOM, swap thrash, CPU spin, stack overflow, hang.
 - *Severity:* high (availability).
 - *Provenance:* *(documented — spec files state the defaults are unlimited; CHANGES.md shows recurring fixes for cases where the cap was missing or bypassable.)*
-- **Threshold:** the model needs the PMC to pin a categorical line — *(maintainer — Q59)* — proposed: "super-linear memory or CPU in the *declared* size of any single field, given caps are set, is a bug; constant-factor blowup against caps is not. A hang on streaming input with no cap set is the operator's choice, not a bug." Without ratification this remains the most contested triage category.
+- **Threshold** *(ratified by the PMC on 2026-10-18 — Q59)*: given the caps are set, memory or CPU that grows super-linearly with the size of the input — the declared size of a field, the size of a message, or the number of frames or fragments it arrives in — is a bug; growth by a constant factor against the caps is not. A missing cap remains a bug. A hang on streaming input with no cap set is the operator's choice, not a bug.
+  - O(N log N) insertion into ordered containers (C++ `std::map` / `std::set`) is inherent to the data structure, not an amplification by Thrift.
+  - The constant factor depends on the schema (the in-memory size of a type against its minimum wire size) and can exceed 100× for collections of structs under the binary protocol; the container size limit bounds it, in addition to `maxMessageSize`.
+  - Framed transports cannot hang on this path, whatever the caps.
+  - Left open: on transports that check each field against the full `maxMessageSize`, several fields together can reserve more than the cap (Q59, "What the policy doesn't cover").
 
 ### Compiler property
 
@@ -630,7 +634,7 @@ OSS-Fuzz currently covers: **Go, c_glib (partial), C++, Java/JVM, JavaScript, Py
 
 - **Deserializer fuzzer corpus crashes the runtime → `VALID`.** Memory-safety on fuzzed inputs is implicit in P1/P2.
 - **Round-trip fuzzer detects mismatch → `VALID`** against P3.
-- **Deserializer corpus takes > N seconds / allocates > M bytes within configured caps → `KNOWN-NON-FINDING`** against §9 D11 unless wave-1 Q59 nails down a categorical CPU/memory threshold for "DoS by valid-but-pathological inputs".
+- **Deserializer corpus takes > N seconds / allocates > M bytes within configured caps → `KNOWN-NON-FINDING`** against §9 D11 when the cost grows by a constant factor with the input, and **`VALID`** against P10 when it grows super-linearly (the Q59 line, see P10 "Threshold").
 - **Deserializer corpus exhausts memory because no `stringSizeLimit` / `containerSizeLimit` is set in the fuzz harness → `KNOWN-NON-FINDING`** (harness configuration issue; the harness must set caps; or wave-1 Q38 reclassifies the default).
 - **A binding *not* on the OSS-Fuzz list discovers a deserializer crash via local fuzzing → still `VALID`** (the model claims P1/P2 across all bindings, even ones the fuzzer infrastructure has not yet reached).
 
@@ -1347,7 +1351,8 @@ Summary table
 └─────────┴─────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────┴─────────────────────────────────────────────────────┘
 ```
 
-**Q59.** 
+**Q59.** *Ratified on 2026-10-18; the line is recorded under P10 "Threshold". The analysis below is kept as the reasoning behind it.*
+
 How the cap/allocation machinery actually works
 
 The check (all bindings, same pattern):
@@ -1389,7 +1394,7 @@ The cumulative-remainder behaviour applies only to the in-memory buffer, zlib, a
 
 The cumulative counter bounds the bytes actually consumed, not the capacity reserved, and on the pre-allocation path the reservation runs first. checkReadBytesAvailable(declaredCount × minSize) is a pure comparison — it throws when remainingMessageSize_ < numBytes but does not itself decrement the budget (C++ TTransport.h:286; Java TEndpointTransport). Only reading the elements' bytes decrements it, and the reservation is made before any element is read, so the running remainder never sees the reservation.
 
-Whether the check re-offers the full maxMessageSize then turns on whether the transport narrows the budget to the real message length. Only the transports that call updateKnownMessageSize do so — the framed and in-memory ones (C++ TBufferTransports; Java TFramedTransport, TMemoryInputTransport, TMemoryBuffer, TByteBuffer). A plain unframed socket (C++ TSocket / TIOStreamTransport, Java TSocket) never calls it, so remainingMessageSize_ stays at maxMessageSize however few bytes have arrived, and the check is re-offered in full at every nesting level and every sibling field. Go re-offers on every transport (it keeps no running remainder at all); Java and C++ re-offer only on the transports that never narrow — which is the default unframed path. Over a framed or in-memory transport the budget is the body length and the amplification collapses to the constant-factor form below.
+Whether the check re-offers the full maxMessageSize then turns on whether the transport narrows the budget to the real message length. Only the transports that call updateKnownMessageSize do so — the framed and in-memory ones (C++ TBufferTransports; Java TFramedTransport, TMemoryInputTransport, TMemoryBuffer, TByteBuffer). A plain unframed socket (C++ TSocket; Java TSocket / TIOStreamTransport) never calls it, so remainingMessageSize_ stays at maxMessageSize however few bytes have arrived, and the check is re-offered in full at every nesting level and every sibling field. Go re-offers on every transport (it keeps no running remainder at all); Java and C++ re-offer only on the transports that never narrow — which is the default unframed path. Over a framed or in-memory transport the budget is the body length and the amplification collapses to the constant-factor form below.
 
 ---
 Evaluation of the three clauses
@@ -1708,7 +1713,7 @@ properties_provided:
     name: bounded_memory_cpu_per_message
     severity_tier: high-availability
     conditions: [caps_configured]
-    threshold: super-linear-in-declared-size-given-caps  # PENDING_Q59
+    threshold: super-linear-in-input-size-given-caps  # Q59, ratified 2026-10-18
   - id: P11
     name: deterministic_hermetic_codegen
     severity_tier: correctness
