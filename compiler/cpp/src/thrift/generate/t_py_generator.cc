@@ -453,8 +453,10 @@ void t_py_generator::init_generator() {
 
   if (gen_type_hints_) {
     f_types_ << "all_structs: list[typing.Any] = []" << '\n';
+    f_types_ << "_THRIFT_DEFAULT: typing.Any = object()" << '\n';
   } else {
     f_types_ << "all_structs = []" << '\n';
+    f_types_ << "_THRIFT_DEFAULT = object()" << '\n';
   }
 
   f_consts_ <<
@@ -912,9 +914,10 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // Initialize fields
       t_type* type = (*m_iter)->get_type();
-      if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != nullptr) {
-        indent(out) << "if " << maybe_escape_identifier((*m_iter)->get_name()) << " is "
-                    << "self.thrift_spec[" << (*m_iter)->get_key() << "][4]:" << '\n';
+      // Resolve typedefs only for THRIFT_DEFAULT checking to prevent None being stored for enums.
+      t_type* true_type = get_true_type(type);
+      if (!true_type->is_base_type() && !true_type->is_enum() && (*m_iter)->get_value() != nullptr) {
+        indent(out) << "if " << maybe_escape_identifier((*m_iter)->get_name()) << " is _THRIFT_DEFAULT:" << '\n';
         indent_up();
         indent(out) << maybe_escape_identifier((*m_iter)->get_name()) << " = " << render_field_default_value(*m_iter)
                     << '\n';
@@ -1322,7 +1325,13 @@ void t_py_generator::generate_service(t_service* tservice) {
     f_service_ << "from tornado import concurrent" << '\n';
   }
 
-  f_service_ << "all_structs = []" << '\n';
+  if (gen_type_hints_) {
+    f_service_ << "all_structs: list[typing.Any] = []" << '\n';
+    f_service_ << "_THRIFT_DEFAULT: typing.Any = object()" << '\n';
+  } else {
+    f_service_ << "all_structs = []" << '\n';
+    f_service_ << "_THRIFT_DEFAULT = object()" << '\n';
+  }
 
   // Generate the three main parts of the service
   generate_service_interface(tservice);
@@ -2807,7 +2816,12 @@ string t_py_generator::declare_argument(t_field* tfield) {
 
   result << " = ";
   if (tfield->get_value() != nullptr) {
-    result << render_field_default_value(tfield);
+    t_type* type = get_true_type(tfield->get_type());
+    if (!type->is_base_type() && !type->is_enum()) {
+      result << "_THRIFT_DEFAULT";
+    } else {
+      result << render_field_default_value(tfield);
+    }
   } else {
     result << "None";
   }
