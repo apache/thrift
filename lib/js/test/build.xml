@@ -182,7 +182,8 @@
          the following options would probably make sense in the future:
          browser,undef,eqeqeq,plusplus,bitwise,regexp,strict,newcap,immed
     -->
-    <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed" encoding="UTF-8">
+    <!-- es5: thrift.js uses Symbol.for(), and only ES5 allows "for" as a property name -->
+    <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed,es5" encoding="UTF-8">
       <formatter type="plain" />
       <fileset dir="../src" includes="thrift.js" />
 
