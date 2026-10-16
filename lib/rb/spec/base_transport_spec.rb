@@ -445,7 +445,7 @@ describe "BaseTransport" do
         (0..bytes.length).each do |position|
           @buffer.reset_buffer(input)
           @buffer.read(position)
-          expected = spellings.dup
+          expected = position == bytes.length ? [] : spellings.dup
           expected.insert(position, ">") if position < bytes.length
 
           output = @buffer.inspect_buffer
@@ -474,9 +474,9 @@ describe "BaseTransport" do
         @buffer.read_byte
         expect(@buffer.inspect_buffer).to eq("0 > f 10 ff")
         @buffer.read(3)
-        expect(@buffer.inspect_buffer).to eq("0 f 10 ff")
+        expect(@buffer.inspect_buffer).to eq("")
         @buffer.write([128].pack("C"))
-        expect(@buffer.inspect_buffer).to eq("0 f 10 ff > 80")
+        expect(@buffer.inspect_buffer).to eq("> 80")
         @buffer.reset_buffer([1].pack("C"))
         expect(@buffer.inspect_buffer).to eq("> 1")
       end
@@ -487,7 +487,7 @@ describe "BaseTransport" do
 
         expect(@buffer.inspect_buffer).to eq("> 0 ff")
         expect(@buffer.read(2)).to eq([0, 255].pack("C*"))
-        expect(@buffer.inspect_buffer).to eq("0 ff")
+        expect(@buffer.inspect_buffer).to eq("")
       end
 
       it "keeps dumps independent across calls and subclasses without consuming input" do
@@ -679,6 +679,106 @@ describe "BaseTransport" do
       @buffer.reset_buffer("x")
 
       expect { @buffer.read_all(3_397_380_576) }.to raise_error(EOFError)
+    end
+
+    {
+      read: ->(transport, size) { transport.read(size) },
+      read_all: ->(transport, size) { transport.read_all(size) },
+      read_byte: ->(transport, size) { Array.new(size) { transport.read_byte }.pack("C*") },
+      read_into_buffer: ->(transport, size) do
+        destination = "\0".b * size
+        transport.read_into_buffer(destination, size)
+        destination
+      end,
+    }.each do |operation, consume|
+      it "releases exhausted storage through #{operation}, including a shared suffix" do
+        @buffer.reset_buffer(("a" * 65_536) + ("z" * 1024))
+        @buffer.read(65_536)
+        consume.call(@buffer, 1024)
+
+        expect(@buffer.available).to eq(0)
+        expect(@buffer.instance_variable_get(:@buf)).to be_empty
+        expect { @buffer.read_byte }.to raise_error(EOFError)
+        expect(@buffer.read(0)).to eq("")
+        @buffer.write("new")
+        expect(@buffer.read_all(3)).to eq("new")
+      end
+
+      it "preserves a rolling backlog through #{operation}" do
+        backlog = 65_536
+        chunk = "b" * 4096
+        @buffer.reset_buffer("a" * backlog)
+        expected = ("a" * backlog) + (chunk * 40)
+        40.times do |iteration|
+          @buffer.write(chunk)
+          expect(consume.call(@buffer, chunk.bytesize)).to eq(expected.slice!(0, chunk.bytesize))
+          expect(@buffer.available).to eq(backlog)
+          expected_index = ((iteration + 1) * chunk.bytesize) % backlog
+          expect(@buffer.instance_variable_get(:@index)).to eq(expected_index)
+        end
+
+        expect(@buffer.read_all(backlog)).to eq("b" * backlog)
+      end
+
+      it "releases exhausted storage after resetting a partially read buffer through #{operation}" do
+        @buffer.reset_buffer("x" * 65_536)
+        expect(consume.call(@buffer, 1)).to eq("x")
+        @buffer.reset_buffer("abc")
+
+        expect(consume.call(@buffer, 3)).to eq("abc")
+        expect(@buffer.available).to eq(0)
+        expect(@buffer.instance_variable_get(:@buf)).to be_empty
+        @buffer.write("new")
+        expect(@buffer.read_all(3)).to eq("new")
+      end
+
+      it "preserves a caller-owned shared suffix through #{operation}" do
+        source = ("x" * 65_536).byteslice(-1024, 1024).freeze
+        @buffer = Thrift::MemoryBufferTransport.new(source)
+        consume.call(@buffer, 1024)
+
+        expect(source).to eq("x" * 1024)
+        expect(@buffer.available).to eq(0)
+        @buffer.write("new")
+        expect(@buffer.read_all(3)).to eq("new")
+      end
+    end
+
+    it "preserves a small unread suffix across compaction and subsequent writes" do
+      @buffer.reset_buffer(("a" * 65_536) + ("z" * 1024))
+      expect(@buffer.read(65_536)).to eq("a" * 65_536)
+      @buffer.write("tail")
+
+      expect(@buffer.available).to eq(1028)
+      expect(@buffer.read_all(1028)).to eq(("z" * 1024) + "tail")
+    end
+
+    it "preserves returned strings and caller input across compaction, exhaustion and reset" do
+      source = (("\xff" * 32_768) + ("z" * 8192)).b.freeze
+      @buffer.reset_buffer(source)
+      first = @buffer.read(32_768)
+      @buffer.write("tail")
+      last = @buffer.read_all(@buffer.available)
+      @buffer.reset_buffer("replacement")
+      @buffer.write("!")
+
+      expect(first).to eq("\xff".b * 32_768)
+      expect(last).to eq(("z" * 8192) + "tail")
+      first.setbyte(0, 0)
+      expect(source.getbyte(0)).to eq(255)
+      expect(@buffer.read_all(@buffer.available)).to eq("replacement!")
+    end
+
+    it "releases storage after a partial read exhausts input" do
+      @buffer.reset_buffer("abc")
+      expect { @buffer.read(4) }.to raise_error(EOFError)
+      expect(@buffer.instance_variable_get(:@buf)).to be_empty
+
+      @buffer.reset_buffer("abc")
+      destination = +"xxxx"
+      expect { @buffer.read_into_buffer(destination, 4) }.to raise_error(EOFError)
+      expect(destination).to eq("abcx")
+      expect(@buffer.instance_variable_get(:@buf)).to be_empty
     end
   end
 
