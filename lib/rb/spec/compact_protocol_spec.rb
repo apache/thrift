@@ -34,11 +34,161 @@ describe Thrift::CompactProtocol do
     i64: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01],
   }
 
+  INTEGER_VARINT_ENCODINGS = {
+    0 => [0x00],
+    -1 => [0x01],
+    1 => [0x02],
+    63 => [0x7e],
+    64 => [0x80, 0x01],
+    -64 => [0x7f],
+    -65 => [0x81, 0x01],
+    150 => [0xac, 0x02],
+    -150 => [0xab, 0x02],
+    8191 => [0xfe, 0x7f],
+    8192 => [0x80, 0x80, 0x01],
+    -8192 => [0xff, 0x7f],
+    -8193 => [0x81, 0x80, 0x01],
+    -32_768 => [0xff, 0xff, 0x03],
+    32_767 => [0xfe, 0xff, 0x03],
+    1_048_575 => [0xfe, 0xff, 0x7f],
+    1_048_576 => [0x80, 0x80, 0x80, 0x01],
+    -1_048_576 => [0xff, 0xff, 0x7f],
+    -1_048_577 => [0x81, 0x80, 0x80, 0x01],
+    134_217_727 => [0xfe, 0xff, 0xff, 0x7f],
+    134_217_728 => [0x80, 0x80, 0x80, 0x80, 0x01],
+    -134_217_728 => [0xff, 0xff, 0xff, 0x7f],
+    -134_217_729 => [0x81, 0x80, 0x80, 0x80, 0x01],
+    -2_147_483_648 => [0xff, 0xff, 0xff, 0xff, 0x0f],
+    2_147_483_647 => [0xfe, 0xff, 0xff, 0xff, 0x0f],
+    17_179_869_183 => [0xfe, 0xff, 0xff, 0xff, 0x7f],
+    17_179_869_184 => [0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -17_179_869_184 => [0xff, 0xff, 0xff, 0xff, 0x7f],
+    -17_179_869_185 => [0x81, 0x80, 0x80, 0x80, 0x80, 0x01],
+    2_199_023_255_551 => [0xfe, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    2_199_023_255_552 => [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -2_199_023_255_552 => [0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    -2_199_023_255_553 => [0x81, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    281_474_976_710_655 => [0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    281_474_976_710_656 => [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -281_474_976_710_656 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    -281_474_976_710_657 => [0x81, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    36_028_797_018_963_967 => [0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    36_028_797_018_963_968 => [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -36_028_797_018_963_968 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    -36_028_797_018_963_969 => [0x81, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    4_611_686_018_427_387_903 => [0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    4_611_686_018_427_387_904 => [0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -4_611_686_018_427_387_904 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f],
+    -4_611_686_018_427_387_905 => [0x81, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01],
+    -9_223_372_036_854_775_808 => [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01],
+    9_223_372_036_854_775_807 => [0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01],
+  }
+
   VARINT32_SIZE_ENCODINGS = {
+    0 => [0x00],
+    15 => [0x0f],
+    127 => [0x7f],
+    128 => [0x80, 0x01],
+    150 => [0x96, 0x01],
+    16_383 => [0xff, 0x7f],
+    16_384 => [0x80, 0x80, 0x01],
+    (2**21) - 1 => [0xff, 0xff, 0x7f],
+    2**21 => [0x80, 0x80, 0x80, 0x01],
+    (2**28) - 1 => [0xff, 0xff, 0xff, 0x7f],
+    2**28 => [0x80, 0x80, 0x80, 0x80, 0x01],
     (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
     2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
     (2**32) - 1 => [0xff, 0xff, 0xff, 0xff, 0x0f],
   }
+
+  describe "varint writes" do
+    let(:writes) { [] }
+    let(:transport) { double("transport", message_boundaries?: false) }
+    let(:protocol) { described_class.new(transport) }
+
+    before do
+      allow(transport).to receive(:write) do |buffer|
+        writes << buffer
+        nil
+      end
+    end
+
+    INTEGER_BOUNDARY_TESTS.slice(:i16, :i32, :i64).each do |type, (minimum, maximum)|
+      it "writes #{type} extrema and every width transition as one binary chunk" do
+        examples = INTEGER_VARINT_ENCODINGS.select { |value, _| value.between?(minimum, maximum) }
+
+        examples.each do |value, expected_bytes|
+          writes.clear
+          aggregate_failures("#{type} #{value}") do
+            protocol.public_send("write_#{type}", value)
+            expect(writes.map(&:bytes)).to eq([expected_bytes])
+            expect(writes.first.encoding).to eq(Encoding::BINARY)
+          end
+        end
+      end
+    end
+
+    it "keeps sequence ids unsigned on the wire and separate from envelope chunks" do
+      {
+        0 => [0x00],
+        127 => [0x7f],
+        128 => [0x80, 0x01],
+        150 => [0x96, 0x01],
+        16_383 => [0xff, 0x7f],
+        16_384 => [0x80, 0x80, 0x01],
+        (2**21) - 1 => [0xff, 0xff, 0x7f],
+        2**21 => [0x80, 0x80, 0x80, 0x01],
+        (2**28) - 1 => [0xff, 0xff, 0xff, 0x7f],
+        2**28 => [0x80, 0x80, 0x80, 0x80, 0x01],
+        (2**31) - 1 => [0xff, 0xff, 0xff, 0xff, 0x07],
+        -2**31 => [0x80, 0x80, 0x80, 0x80, 0x08],
+        -1 => [0xff, 0xff, 0xff, 0xff, 0x0f],
+      }.each do |sequence_id, expected_bytes|
+        writes.clear
+        protocol.write_message_begin("x", Thrift::MessageTypes::CALL, sequence_id)
+        expected = [[0x82], [0x21], expected_bytes, [1], [0x78]]
+        expect(writes.map(&:bytes)).to eq(expected)
+      end
+    end
+
+    it "batches collection sizes while preserving their type headers" do
+      [
+        15, 127, 128, 150, 16_383, 16_384, (2**21) - 1, 2**21, (2**28) - 1, 2**28, (2**31) - 1,
+      ].each do |size|
+        expected_bytes = VARINT32_SIZE_ENCODINGS.fetch(size)
+        [:write_list_begin, :write_set_begin].each do |method|
+          writes.clear
+          protocol.public_send(method, Thrift::Types::I32, size)
+          expect(writes.map(&:bytes)).to eq([[0xf5], expected_bytes])
+        end
+        writes.clear
+        protocol.write_map_begin(Thrift::Types::I32, Thrift::Types::I64, size)
+        expect(writes.map(&:bytes)).to eq([expected_bytes, [0x56]])
+      end
+    end
+
+    it "batches non-delta field ids after their type header" do
+      {
+        -32_768 => [0xff, 0xff, 0x03],
+        32_767 => [0xfe, 0xff, 0x03],
+      }.each do |field_id, expected_bytes|
+        writes.clear
+        protocol.write_struct_begin("Value")
+        protocol.write_field_begin("value", Thrift::Types::I32, field_id)
+        expect(writes.map(&:bytes)).to eq([[0x05], expected_bytes])
+        protocol.write_struct_end
+      end
+    end
+
+    it "batches binary lengths while keeping the payload in its own write" do
+      [0, 127, 128, 150, 16_383, 16_384].each do |size|
+        writes.clear
+        payload = "x".b * size
+        protocol.write_binary(payload)
+        expect(writes).to eq([VARINT32_SIZE_ENCODINGS.fetch(size).pack("C*"), payload])
+      end
+    end
+  end
 
   TESTS = {
     byte: (-127..127).to_a,
@@ -244,31 +394,6 @@ describe Thrift::CompactProtocol do
 
       proto.send(writer(primitive_type), INTEGER_BOUNDARY_TESTS.fetch(primitive_type).first)
       expect(trans.read(trans.available).bytes).to eq(expected_bytes)
-    end
-  end
-
-  it "should batch each native multibyte varint into one transport write" do
-    probe = Thrift::CompactProtocol.new(Thrift::MemoryBufferTransport.new)
-    skip "requires the native Compact Protocol" unless probe.native?
-
-    recording_transport_class = Class.new(Thrift::BaseTransport) do
-      attr_reader :writes
-
-      def initialize
-        @writes = []
-      end
-
-      def write(data)
-        @writes << data
-      end
-    end
-
-    INTEGER_MINIMUM_ENCODINGS.each_pair do |primitive_type, expected_bytes|
-      trans = recording_transport_class.new
-      proto = Thrift::CompactProtocol.new(trans)
-
-      proto.send(writer(primitive_type), INTEGER_BOUNDARY_TESTS.fetch(primitive_type).first)
-      expect(trans.writes).to eq([expected_bytes.pack("C*")])
     end
   end
 
