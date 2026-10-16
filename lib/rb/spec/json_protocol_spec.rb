@@ -55,6 +55,81 @@ describe "JsonProtocol" do
       expect(@trans.read(@trans.available)).to eq("\"this is a \\\\ json\\nstring\"")
     end
 
+    it "writes every ASCII character with the existing JSON escapes" do
+      escapes = {8 => "\\b", 9 => "\\t", 10 => "\\n", 12 => "\\f", 13 => "\\r", 34 => '\\"', 92 => "\\\\"}
+      value = (0..127).to_a.pack("C*").freeze
+      expected = (0..127).map do |byte|
+        escapes.fetch(byte) { byte < 32 ? format("\\u%04x", byte) : byte.chr }
+      end.join
+
+      @prot.write_string(value)
+
+      expect(@trans.read(@trans.available)).to eq('"' + expected + '"')
+      expect(value.encoding).to eq(Encoding::BINARY)
+    end
+
+    it "preserves character hooks and transport write boundaries" do
+      transport = double("Transport")
+      protocol = Thrift::JsonProtocol.new(transport)
+      value = "a\u{1f600}\\\"\n\x01"
+
+      value.each_char do |ch|
+        expect(protocol).to receive(:write_json_char).with(ch).and_call_original
+      end
+      expect(protocol).to receive(:write_json_escape_char).with("\x01").and_call_original
+      expected = ['"', "a", "\u{1f600}", "\\", "\\", "\\", '"', "\\", "n", "\\u", "0001", '"']
+      expected.each do |str|
+        encoding = str == "0001" ? Encoding::US_ASCII : Encoding::UTF_8
+        expect(transport).to receive(:write).with(eq(str).and(have_attributes(encoding: encoding))).ordered.and_return(:written)
+      end
+
+      expect(protocol.write_string(value)).to eq(:written)
+    end
+
+    it "propagates transport exceptions at the same escape boundary" do
+      failure = IOError.new("write failed")
+      allow(@trans).to receive(:write).and_call_original
+      allow(@trans).to receive(:write).with("0001").and_raise(failure)
+
+      expect { @prot.write_string("a\x01z") }.to raise_error(failure.class) { |error| expect(error).to equal(failure) }
+      expect(@trans.read(@trans.available)).to eq('"a\u')
+    end
+
+    it "preserves string and numeric map key contexts" do
+      @prot.write_map_begin(Thrift::Types::I32, Thrift::Types::STRING, 1)
+      @prot.write_i32(42)
+      @prot.write_string("line\n\u{1f600}")
+      @prot.write_map_end
+      expect(@trans.read(@trans.available)).to eq("[\"i32\",\"str\",1,{\"42\":\"line\\n\u{1f600}\"}]".b)
+
+      @prot.write_map_begin(Thrift::Types::STRING, Thrift::Types::DOUBLE, 1)
+      @prot.write_string("key\"")
+      @prot.write_double(1.5)
+      @prot.write_map_end
+      expect(@trans.read(@trans.available)).to eq("[\"str\",\"dbl\",1,{\"key\\\"\":1.5}]")
+    end
+
+    it "transcodes frozen UTF-16 strings without changing their ownership" do
+      value = "a\n\u{1f600}".encode(Encoding::UTF_16LE).freeze
+      @prot.write_string(value)
+      expect(@trans.read(@trans.available)).to eq("\"a\\n\u{1f600}\"".b)
+      expect(value.encoding).to eq(Encoding::UTF_16LE)
+      expect(value).to eq("a\n\u{1f600}".encode(Encoding::UTF_16LE))
+    end
+
+    it "rejects invalid binary and untranscodable strings before changing map context" do
+      ["\xFF".b, "\x00\xD8".b.force_encoding(Encoding::UTF_16LE)].each do |value|
+        trans = Thrift::MemoryBufferTransport.new
+        protocol = Thrift::JsonProtocol.new(trans)
+        protocol.write_map_begin(Thrift::Types::STRING, Thrift::Types::I32, 1)
+        expect { protocol.write_string(value) }.to raise_error(Thrift::ProtocolException, "Invalid UTF-8 string")
+        protocol.write_string("ok")
+        protocol.write_i32(1)
+        protocol.write_map_end
+        expect(trans.read(trans.available)).to eq('["str","i32",1,{"ok":1}]')
+      end
+    end
+
     it "should write json base64" do
       @prot.write_json_base64("this is a base64 string")
       expect(@trans.read(@trans.available)).to eq("\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\"")
