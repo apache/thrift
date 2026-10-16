@@ -565,6 +565,201 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  describe "binary payload storage" do
+    [false, true].each do |frozen|
+      [Encoding::BINARY, Encoding::UTF_8, Encoding::ISO_8859_1].each do |encoding|
+        [:memory, :framed].each do |kind|
+          it "round trips #{frozen ? "frozen" : "mutable"} #{encoding} input through #{kind}" do
+            input = ("a\x00\xff".b * 1024).force_encoding(encoding)
+            expected = input.b
+            input.freeze if frozen
+            memory = Thrift::MemoryBufferTransport.new
+            transport = kind == :memory ? memory : Thrift::FramedTransport.new(memory)
+            protocol = Thrift::CompactProtocol.new(transport)
+
+            protocol.write_binary(input)
+            transport.flush
+            input.replace("changed") unless frozen
+            expect(protocol.read_binary).to eq(expected)
+            expect(input.encoding).to eq(encoding) if frozen
+          end
+        end
+      end
+    end
+
+    context "with native callback ownership" do
+      before do
+        skip "native Compact ownership" unless Thrift::CompactProtocol.instance_method(:write_binary).source_location.nil?
+      end
+
+      [false, true].each do |frozen|
+        [Encoding::BINARY, Encoding::UTF_8, Encoding::ISO_8859_1].each do |encoding|
+          it "normalizes a separate #{frozen ? "frozen" : "mutable"} #{encoding} callback argument" do
+            input = ("a\x00\xff".b * 1024).force_encoding(encoding)
+            expected = input.b
+            input.freeze if frozen
+            writes = []
+            transport = Thrift::BaseTransport.new
+            transport.define_singleton_method(:write) { |bytes| writes << bytes }
+            Thrift::CompactProtocol.new(transport).write_binary(input)
+
+            expect(writes.last).to eq(expected)
+            expect(writes.last.encoding).to eq(Encoding::BINARY)
+            expect(writes.last).not_to equal(input)
+            expect(writes.last).not_to be_frozen
+            expect(input.encoding).to eq(frozen ? encoding : Encoding::BINARY)
+          end
+        end
+      end
+
+      [false, true].each do |frozen|
+        it "isolates a #{frozen ? "frozen" : "mutable"} input from a mutating callback" do
+          input = "payload".b * 1024
+          original = input.dup
+          input.freeze if frozen
+          writes = []
+          transport = Thrift::BaseTransport.new
+          transport.define_singleton_method(:write) { |bytes| writes << bytes; bytes.setbyte(0, 0) }
+
+          expect(Thrift::CompactProtocol.new(transport).write_binary(input)).to be_nil
+          expect(input).to eq(original)
+          expect(writes.last).not_to equal(input)
+          expect(writes.last).not_to be_frozen
+          expect(writes.last.encoding).to eq(Encoding::BINARY)
+        end
+      end
+
+      it "keeps retained payloads independent of later source and callback mutations" do
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) { |bytes| writes << bytes }
+        protocol = Thrift::CompactProtocol.new(transport)
+        input = "a".b * 4096
+        2.times { protocol.write_binary(input) }
+        input.replace("changed")
+        GC.start
+        GC.verify_compaction_references(double_heap: true, toward: :empty) if GC.respond_to?(:verify_compaction_references)
+
+        expect(writes[1]).to eq("a".b * 4096)
+        writes[1].setbyte(0, 98)
+        expect(writes[3]).to eq("a".b * 4096)
+        expect(input).to eq("changed")
+      end
+
+      it "passes a plain String without invoking input subclass copy hooks" do
+        klass = Class.new(String) do
+          def initialize_copy(other)
+            raise "unexpected copy hook"
+          end
+        end
+        input = klass.new("a".b * 4096).freeze
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) { |bytes| writes << bytes }
+        Thrift::CompactProtocol.new(transport).write_binary(input)
+
+        expect(writes.last).to be_instance_of(String)
+        expect(writes.last).to eq(input)
+      end
+
+      it "honors MemoryBuffer write overrides" do
+        transport = Thrift::MemoryBufferTransport.new
+        writes = []
+        transport.define_singleton_method(:write) { |bytes| writes << bytes; super(bytes) }
+        protocol = Thrift::CompactProtocol.new(transport)
+        protocol.write_binary("payload".b.freeze)
+
+        expect(writes.map(&:bytesize)).to eq([1, 7])
+        expect(protocol.read_binary).to eq("payload")
+      end
+
+      it "honors MemoryBuffer subclass write overrides" do
+        klass = Class.new(Thrift::MemoryBufferTransport) do
+          attr_reader :writes
+
+          def write(bytes)
+            (@writes ||= []) << bytes
+            super
+          end
+        end
+        transport = klass.new
+        protocol = Thrift::CompactProtocol.new(transport)
+        protocol.write_binary("a".b * 4096)
+
+        expect(transport.writes.map(&:bytesize)).to eq([2, 4096])
+        expect(protocol.read_binary).to eq("a".b * 4096)
+      end
+
+      it "passes a mutable empty payload after its length prefix" do
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) { |bytes| writes << bytes }
+        Thrift::CompactProtocol.new(transport).write_binary("".b.freeze)
+        expect(writes).to eq(["\x00".b, "".b])
+        expect(writes.last).not_to be_frozen
+      end
+
+      it "keeps write_string input separate from a mutating callback" do
+        input = ("\u20ac" * 1024).freeze
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) { |bytes| writes << bytes; bytes.clear }
+        Thrift::CompactProtocol.new(transport).write_string(input)
+        expect(input).to eq("\u20ac" * 1024)
+        expect(input.encoding).to eq(Encoding::UTF_8)
+        expect(writes.last.encoding).to eq(Encoding::BINARY)
+      end
+
+      it "preserves the declared length when the header callback appends to the source" do
+        input = "abc".b
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) do |bytes|
+          input << "d" if writes.empty?
+          writes << bytes
+        end
+        Thrift::CompactProtocol.new(transport).write_binary(input)
+        expect(writes).to eq(["\x03".b, "abc".b])
+      end
+
+      [false, true].each do |frozen|
+        it "passes binary bytes when the header callback re-encodes #{frozen ? "and freezes" : "a mutable"} input" do
+          input = "a".b * 4096
+          expected = input.dup
+          output = "".b
+          writes = []
+          transport = Thrift::BaseTransport.new
+          transport.define_singleton_method(:write) do |bytes|
+            if writes.empty?
+              input.force_encoding(Encoding::UTF_16LE)
+              input.freeze if frozen
+            end
+            writes << bytes
+            output << bytes
+          end
+
+          Thrift::CompactProtocol.new(transport).write_binary(input)
+
+          expect(writes.last.encoding).to eq(Encoding::BINARY)
+          expect(writes.last).not_to equal(input)
+          expect(writes.last).not_to be_frozen
+          expect(input.encoding).to eq(Encoding::UTF_16LE)
+          expect(Thrift::CompactProtocol.new(Thrift::MemoryBufferTransport.new(output)).read_binary).to eq(expected)
+        end
+      end
+
+      it "propagates payload callback exceptions without changing the input" do
+        input = "abc".b.freeze
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) do |bytes|
+          raise IOError, "payload rejected" if bytes.bytesize == 3
+        end
+        expect { Thrift::CompactProtocol.new(transport).write_binary(input) }.to raise_error(IOError, "payload rejected")
+        expect(input).to eq("abc")
+      end
+    end
+  end
+
   it "should accept a valid 10-byte varint" do
     trans = Thrift::MemoryBufferTransport.new((([0x80] * 9) + [0x01]).pack("C*"))
     proto = Thrift::CompactProtocol.new(trans)
