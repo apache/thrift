@@ -53,7 +53,7 @@
     "eslint-config-prettier": "^3.1.0",
     "eslint-plugin-prettier": "^3.0.0",
     "html-validator-cli": "^2.0.0",
-    "jsdoc": "^4.0.2",
+    "jsdoc": "^4.0.5",
     "json-int64": "^1.0.2",
     "nyc": "^15.0.0",
     "prettier": "^1.14.3",
