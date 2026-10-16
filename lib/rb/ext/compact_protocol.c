@@ -370,7 +370,15 @@ VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
     rb_raise(rb_eRangeError, "integer out of bounds");
   }
   write_varint32(transport, (uint32_t)size);
-  WRITE(transport, StringValuePtr(buf), size);
+  if (RSTRING_LEN(buf) == size) {
+    // Keep a separate mutable String for transport callbacks while allowing
+    // Ruby to share the payload storage until either String is modified.
+    rb_funcall(transport, write_method_id, 1, force_binary_encoding(rb_str_subseq(buf, 0, size)));
+  } else {
+    // A header callback may have changed the source length. Preserve the
+    // original byte-range write in that case.
+    WRITE(transport, StringValuePtr(buf), size);
+  }
   return Qnil;
 }
 
