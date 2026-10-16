@@ -40,6 +40,21 @@ VALUE rb_thrift_memory_buffer_read_all(VALUE self, VALUE length_value);
 VALUE rb_thrift_memory_buffer_read_byte(VALUE self);
 VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value);
 
+static void compact_buffer(VALUE self, VALUE buf, long index) {
+  long remaining = RSTRING_LEN(buf) - index;
+  if (remaining == 0) {
+    /* Drop exhausted storage, including shared suffixes of larger strings. */
+    rb_ivar_set(self, buf_ivar_id, rb_str_new(NULL, 0));
+    index = 0;
+  } else if (index >= GARBAGE_BUFFER_SIZE && index >= remaining) {
+    /* Bound copying by bytes consumed and detach the unread suffix now. */
+    rb_ivar_set(self, buf_ivar_id, rb_str_new(RSTRING_PTR(buf) + index, remaining));
+    index = 0;
+  }
+  rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
+  RB_GC_GUARD(buf);
+}
+
 VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
   VALUE buf = GET_BUF(self);
   str = force_binary_encoding(str);
@@ -65,11 +80,7 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
   } else {
     index += (long)length;
   }
-  if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, LONG2NUM(index), LONG2NUM(RSTRING_LEN(buf) - 1)));
-    index = 0;
-  }
-  rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
+  compact_buffer(self, buf, index);
 
   if (RSTRING_LEN(data) < length) {
     rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
@@ -96,18 +107,14 @@ VALUE rb_thrift_memory_buffer_read_all(VALUE self, VALUE length_value) {
   VALUE data = rb_str_subseq(buf, index, (long)length);
 
   index += (long)length;
-  if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_str_subseq(buf, index, RSTRING_LEN(buf) - index));
-    index = 0;
-  }
-  rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
+  compact_buffer(self, buf, index);
 
   return data;
 }
 
 VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
-  int index = FIX2INT(index_value);
+  long index = NUM2LONG(index_value);
 
   VALUE buf = GET_BUF(self);
   if (index >= RSTRING_LEN(buf)) {
@@ -115,11 +122,7 @@ VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
   }
   unsigned char byte = (unsigned char)RSTRING_PTR(buf)[index++];
 
-  if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(RSTRING_LEN(buf) - 1)));
-    index = 0;
-  }
-  rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+  compact_buffer(self, buf, index);
 
   return INT2FIX(byte);
 }
@@ -127,18 +130,18 @@ VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
 VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value) {
   int i = 0;
   int size = FIX2INT(size_value);
-  int index;
+  long index;
   VALUE buf = GET_BUF(self);
 
-  index = FIX2INT(rb_ivar_get(self, index_ivar_id));
+  index = NUM2LONG(rb_ivar_get(self, index_ivar_id));
   if (size > 0) {
     if (index >= RSTRING_LEN(buf)) {
-      rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+      compact_buffer(self, buf, index);
       rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
     }
     StringValue(buffer_value);
     if (RSTRING_LEN(buffer_value) == 0) {
-      rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+      rb_ivar_set(self, index_ivar_id, LONG2NUM(index));
       rb_raise(rb_eIndexError, "index 0 out of string");
     }
     rb_str_modify(buffer_value);
@@ -146,11 +149,11 @@ VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, V
 
   while (i < size) {
     if (index >= RSTRING_LEN(buf)) {
-      rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+      compact_buffer(self, buf, index);
       rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
     }
     if (i >= RSTRING_LEN(buffer_value)) {
-      rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+      compact_buffer(self, buf, index);
       rb_raise(rb_eIndexError, "index %d out of string", i);
     }
     char byte = RSTRING_PTR(buf)[index++];
@@ -158,11 +161,7 @@ VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, V
     i++;
   }
 
-  if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(RSTRING_LEN(buf) - 1)));
-    index = 0;
-  }
-  rb_ivar_set(self, index_ivar_id, INT2FIX(index));
+  compact_buffer(self, buf, index);
 
   return INT2FIX(i);
 }
