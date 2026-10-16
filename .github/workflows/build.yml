@@ -134,7 +134,7 @@ jobs:
   compiler-macos:
     strategy:
       matrix:
-        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
+        os: &macos_versions [macos-15-intel, macos-15, macos-26, xcode-27]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
