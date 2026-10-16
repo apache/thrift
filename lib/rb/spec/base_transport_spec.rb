@@ -436,6 +436,70 @@ describe "BaseTransport" do
       expect(@buffer.to_s).to eq("memory")
     end
 
+    describe "inspect_buffer" do
+      it "preserves every unpadded lowercase byte spelling at every cursor position" do
+        bytes = (0..255).to_a
+        input = bytes.pack("C*")
+        spellings = bytes.map { |byte| byte.to_s(16) }
+
+        (0..bytes.length).each do |position|
+          @buffer.reset_buffer(input)
+          @buffer.read(position)
+          expected = spellings.dup
+          expected.insert(position, ">") if position < bytes.length
+
+          output = @buffer.inspect_buffer
+          expect(output).to eq(expected.join(" "))
+          expect(output.encoding).to eq(position.zero? ? Encoding::BINARY : Encoding::US_ASCII)
+          expect(output).not_to be_frozen
+          expect(@buffer.available).to eq(bytes.length - position)
+          expect(@buffer.read(@buffer.available)).to eq(input.byteslice(position..-1))
+        end
+      end
+
+      it "returns a mutable empty ASCII string for empty and reset buffers" do
+        2.times do
+          output = @buffer.inspect_buffer
+          expect(output).to eq("")
+          expect(output.encoding).to eq(Encoding::US_ASCII)
+          expect(output).not_to be_frozen
+          @buffer.write("abc")
+          @buffer.reset_buffer
+        end
+      end
+
+      it "preserves the cursor after partial reads, exhaustion, writes and resets" do
+        @buffer.write([0, 15, 16, 255].pack("C*"))
+        expect(@buffer.inspect_buffer).to eq("> 0 f 10 ff")
+        @buffer.read_byte
+        expect(@buffer.inspect_buffer).to eq("0 > f 10 ff")
+        @buffer.read(3)
+        expect(@buffer.inspect_buffer).to eq("0 f 10 ff")
+        @buffer.write([128].pack("C"))
+        expect(@buffer.inspect_buffer).to eq("0 f 10 ff > 80")
+        @buffer.reset_buffer([1].pack("C"))
+        expect(@buffer.inspect_buffer).to eq("> 1")
+      end
+
+      it "inspects the entire remaining storage after read compaction" do
+        @buffer.write(("x" * Thrift::MemoryBufferTransport::GARBAGE_BUFFER_SIZE) + [0, 255].pack("C*"))
+        @buffer.read(Thrift::MemoryBufferTransport::GARBAGE_BUFFER_SIZE)
+
+        expect(@buffer.inspect_buffer).to eq("> 0 ff")
+        expect(@buffer.read(2)).to eq([0, 255].pack("C*"))
+        expect(@buffer.inspect_buffer).to eq("0 ff")
+      end
+
+      it "keeps dumps independent across calls and subclasses without consuming input" do
+        transport = Class.new(Thrift::MemoryBufferTransport).new("a" * 256)
+        first = transport.inspect_buffer
+        first.replace("changed")
+
+        expect(transport.inspect_buffer).to eq("> " + (["61"] * 256).join(" "))
+        expect(transport.available).to eq(256)
+      end
+    end
+
     it "should privately own a buffer passed on input" do
       source = +"this is a test"
       @buffer = Thrift::MemoryBufferTransport.new(source)
