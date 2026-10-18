@@ -2769,7 +2769,11 @@ void t_js_generator::generate_serialize_container(ostream& out, t_type* ttype, s
     string viter = tmp("viter");
     indent(out) << "for (" << js_let_type_ << kiter << " in " << prefix << ") {" << '\n';
     indent_up();
-    indent(out) << "if (" << prefix << ".hasOwnProperty(" << kiter << ")) {" << '\n';
+    // A map key can be "hasOwnProperty": calling it as prefix.hasOwnProperty()
+    // would then run the string instead of the inherited method, so the own-key
+    // test goes through Object.prototype.
+    indent(out) << "if (Object.prototype.hasOwnProperty.call(" << prefix << ", " << kiter << ")) {"
+                << '\n';
     indent_up();
     indent(out) << js_let_type_ << viter << " = " << prefix << "[" << kiter << "];" << '\n';
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
