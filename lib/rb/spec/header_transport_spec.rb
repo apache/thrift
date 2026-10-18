@@ -507,6 +507,56 @@ describe "HeaderTransport" do
       end
     end
 
+    describe "transform count limit" do
+      # Builds a HEADERS frame that lists +n_layers+ ZLIB transforms and carries
+      # +inner+ deflated once per layer.
+      def nested_zlib_frame(n_layers, inner)
+        payload = inner.b
+        n_layers.times { payload = Zlib::Deflate.deflate(payload) }
+
+        header = Thrift::Bytes.empty_byte_buffer
+        header << varint32(Thrift::HeaderSubprotocolID::BINARY)
+        header << varint32(n_layers)
+        n_layers.times { header << varint32(Thrift::HeaderTransformID::ZLIB) }
+        build_header_frame(header, payload)
+      end
+
+      # Counts how many times +read_trans+ inflates a transform layer.
+      def count_layers(read_trans)
+        layers = 0
+        original = Thrift::HeaderTransport.instance_method(:bounded_inflate)
+        read_trans.define_singleton_method(:bounded_inflate) do |compressed|
+          layers += 1
+          original.bind_call(self, compressed)
+        end
+        -> { layers }
+      end
+
+      it "round-trips a single ZLIB layer" do
+        inner = "payload-" * 128
+        frame = nested_zlib_frame(1, inner)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+        layers = count_layers(read_trans)
+
+        expect(read_trans.read(inner.bytesize)).to eq(inner)
+        expect(layers.call).to eq(1)
+      end
+
+      it "refuses a frame that lists more than one transform" do
+        inner = "payload-" * 128
+        n_layers = 1_500
+        frame = nested_zlib_frame(n_layers, inner)
+        read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(frame))
+        layers = count_layers(read_trans)
+
+        expect { read_trans.read(1) }.to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::SIZE_LIMIT)
+          expect(error.message).to match(/transform/)
+        end
+        expect(layers.call).to eq(0)
+      end
+    end
+
     describe "read and frame detection" do
       it "should detect Header format" do
         # Write a Header frame

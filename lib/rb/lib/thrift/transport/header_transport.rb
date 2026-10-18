@@ -83,6 +83,11 @@ module Thrift
     # Default decompressed-size cap for ZLIB transform (~15.6 MB, matches other Thrift bindings)
     DEFAULT_MAX_DECOMPRESSED_SIZE = 16_384_000
 
+    # The number of transforms a single frame may carry. ZLIB is the only
+    # transform defined here, and no sender applies it more than once, so one
+    # transform is the whole of what a well-formed frame needs.
+    MAX_TRANSFORMS = 1
+
     # Binary protocol version mask and version 1
     BINARY_VERSION_MASK = 0xffff0000
     BINARY_VERSION_1 = 0x80010000
@@ -425,6 +430,12 @@ module Thrift
       # Read transforms
       transforms = []
       transform_count = read_varint32(buf, end_of_headers)
+      if transform_count > MAX_TRANSFORMS
+        raise TransportException.new(
+          TransportException::SIZE_LIMIT,
+          "Frame declares #{transform_count} transforms; at most #{MAX_TRANSFORMS} is supported",
+        )
+      end
       transform_count.times do
         transform_id = read_varint32(buf, end_of_headers)
         unless transform_id == HeaderTransformID::ZLIB
