@@ -165,7 +165,6 @@ void authorize(SSL* ssl, TAccessManager accessManager,
   auto name = hasDnsName ? null : X509_get_subject_name(cert);
   if (name !is null) {
     X509_NAME_ENTRY* entry;
-    char* utf8;
     int last = -1;
     while (decision == Decision.SKIP) {
       last = X509_NAME_get_index_by_NID(name, NID_commonName, last);
@@ -175,7 +174,14 @@ void authorize(SSL* ssl, TAccessManager accessManager,
       if (entry is null)
         continue;
       auto common = X509_NAME_ENTRY_get_data(entry);
+      // ASN1_STRING_to_UTF8() leaves the output pointer untouched and returns a
+      // negative length for a commonName whose string type it cannot convert, so
+      // the pointer is scoped to the iteration and the result is checked before
+      // the name is sliced or released.
+      char* utf8;
       auto size = ASN1_STRING_to_UTF8(&utf8, common);
+      if (size < 0)
+        continue;
       decision = accessManager.verify(hostName, utf8[0 .. size]);
       CRYPTO_free(utf8);
     }
@@ -184,6 +190,25 @@ void authorize(SSL* ssl, TAccessManager accessManager,
   if (decision != Decision.ALLOW) {
     throw new TSSLException("Authorize: Could not authorize peer.");
   }
+}
+
+// ASN1_STRING_to_UTF8() reports a negative length and leaves its output pointer
+// untouched for a string whose type it cannot convert. The commonName fallback
+// in authorize() above relies on that: the pointer is scoped to each iteration
+// and the result checked before the name is sliced or released, so an entry
+// that does not convert is skipped rather than acted on.
+unittest {
+  import deimos.openssl.asn1;
+
+  auto common = ASN1_STRING_type_new(V_ASN1_OBJECT_DESCRIPTOR);
+  scope(exit) ASN1_STRING_free(common);
+  static immutable ubyte[4] raw = [1, 2, 3, 4];
+  ASN1_STRING_set(common, raw.ptr, cast(int) raw.length);
+
+  char* utf8;
+  auto size = ASN1_STRING_to_UTF8(&utf8, common);
+  assert(size < 0, "an unconvertible commonName string type must report failure");
+  assert(utf8 is null, "the output pointer must be left untouched on failure");
 }
 
 /*
