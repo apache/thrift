@@ -51,22 +51,10 @@ func testTHeaderHeadersReadWriteProtocolID(t *testing.T, protoID THeaderProtocol
 	const payload2 = "hello, world2\n"
 
 	// Write
+	// A frame carries at most one transform, so apply a single ZLIB layer.
 	if err := writer.AddTransform(TransformZlib); err != nil {
 		t.Fatalf(
 			"writer.AddTransform(TransformZlib) returned error: %v",
-			err,
-		)
-	}
-	// Use double zlib to make sure that we close them in the right order.
-	if err := writer.AddTransform(TransformZlib); err != nil {
-		t.Fatalf(
-			"writer.AddTransform(TransformZlib) returned error: %v",
-			err,
-		)
-	}
-	if err := writer.AddTransform(TransformNone); err != nil {
-		t.Fatalf(
-			"writer.AddTransform(TransformNone) returned error: %v",
 			err,
 		)
 	}
@@ -949,8 +937,9 @@ func emptyStoredBlocksZlibStream(blocks int) []byte {
 	return stream.Bytes()
 }
 
-// A frame can list the ZLIB transform more than once. Each of them is held to
-// the maximum frame size, not only the one that yields the payload.
+// A frame that lists the ZLIB transform more than once is refused: a frame
+// carries at most one transform. The read returns no bytes and a SIZE_LIMIT
+// error.
 func TestTHeaderTransportStackedZlibFrameSizeLimit(t *testing.T) {
 	const limit = 64 * 1024
 
@@ -988,4 +977,93 @@ func TestTHeaderTransportStackedZlibFrameSizeLimit(t *testing.T) {
 		t.Errorf("read %d bytes, want none", len(read))
 	}
 	requireReadSizeLimit(t, err)
+}
+
+// buildStackedZlibFrame builds a THeader frame that lists nZlib ZLIB transforms
+// and carries payload deflated once per transform, by driving the writer, so
+// the frame is exactly what a peer applying that many ZLIB layers would send.
+func buildStackedZlibFrame(t *testing.T, payload []byte, nZlib int) []byte {
+	t.Helper()
+	transforms := make([]THeaderTransformID, nZlib)
+	for i := range transforms {
+		transforms[i] = TransformZlib
+	}
+	mb := NewTMemoryBuffer()
+	w := NewTHeaderTransportConf(mb, &TConfiguration{
+		THeaderTransforms: transforms,
+		MaxFrameSize:      int32(THeaderMaxFrameSize), // allow a large frame on the writer
+		noPropagation:     true,
+	})
+	if _, err := w.Write(payload); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := w.Flush(context.Background()); err != nil {
+		t.Fatalf("flush: %v", err)
+	}
+	return mb.Bytes()
+}
+
+// A THeader frame carries at most one transform: a frame that lists more is
+// refused before any transform reader is built, while a single ZLIB layer
+// still round-trips.
+func TestTHeaderTransportRefusesStackedZlib(t *testing.T) {
+	// transformLayers reports how many transform readers the frame caused the
+	// reader to build.
+	transformLayers := func(rd *THeaderTransport) int {
+		tr, ok := rd.frameReader.(*TransformReader)
+		if !ok {
+			return 0
+		}
+		return len(tr.closers)
+	}
+
+	t.Run("single-layer-round-trips", func(t *testing.T) {
+		payload := bytes.Repeat([]byte("control payload "), 256) // 4096 bytes
+		trans := buildStackedZlibFrame(t, payload, 1)
+		rmb := NewTMemoryBuffer()
+		rmb.Write(trans)
+		reader := NewTHeaderTransportConf(rmb, &TConfiguration{})
+		got, err := io.ReadAll(reader)
+		if err != nil {
+			t.Fatalf("single ZLIB layer: read failed after %d bytes: %v", len(got), err)
+		}
+		if !bytes.Equal(got, payload) {
+			t.Fatalf("single ZLIB layer: read back %d bytes, want the %d written", len(got), len(payload))
+		}
+	})
+
+	t.Run("stacked-layers-refused", func(t *testing.T) {
+		const layers = 1000
+		frame := buildStackedZlibFrame(t, []byte("A"), layers)
+		rmb := NewTMemoryBuffer()
+		rmb.Write(frame)
+		reader := NewTHeaderTransportConf(rmb, &TConfiguration{})
+
+		err := reader.ReadFrame(context.Background())
+		if err == nil {
+			t.Fatalf(
+				"ReadFrame accepted a frame listing %d ZLIB transforms and built %d transform layers; want it refused",
+				layers, transformLayers(reader),
+			)
+		}
+		requireReadSizeLimit(t, err)
+		if n := transformLayers(reader); n != 0 {
+			t.Fatalf("refused frame still built %d transform layers, want 0", n)
+		}
+	})
+
+	t.Run("two-layers-refused", func(t *testing.T) {
+		// A frame that lists two transforms is refused and yields no bytes.
+		payload := bytes.Repeat([]byte("ABCDEFGH"), 1024) // 8192 bytes
+		frame := buildStackedZlibFrame(t, payload, 2)
+		rmb := NewTMemoryBuffer()
+		rmb.Write(frame)
+		reader := NewTHeaderTransportConf(rmb, &TConfiguration{})
+
+		got, err := io.ReadAll(reader)
+		if len(got) != 0 {
+			t.Fatalf("two stacked ZLIB layers: read back %d bytes, want none (frame refused)", len(got))
+		}
+		requireReadSizeLimit(t, err)
+	})
 }

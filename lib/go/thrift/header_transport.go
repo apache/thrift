@@ -111,6 +111,11 @@ const (
 	TransformZlib                           // 1, zlib
 )
 
+// maxTransforms is the number of transforms one frame may carry. ZLIB is the
+// only transform applied here, and no sender lists it more than once, so one
+// is the whole of what a well-formed frame needs.
+const maxTransforms = 1
+
 var supportedTransformIDs = map[THeaderTransformID]bool{
 	TransformNone: true,
 	TransformZlib: true,
@@ -521,6 +526,12 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 		int64(transformCount), 1, headerBuf.RemainingBytes(), t.cfg,
 	); err != nil {
 		return err
+	}
+	if transformCount > maxTransforms {
+		return NewTProtocolExceptionWithType(
+			SIZE_LIMIT,
+			fmt.Errorf("frame declares %d transforms; at most %d is supported", transformCount, maxTransforms),
+		)
 	}
 	if transformCount > 0 {
 		reader := NewTransformReaderWithCapacity(

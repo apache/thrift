@@ -201,20 +201,19 @@ func TestTHeaderTransportTransformCountMaxContainerSize(t *testing.T) {
 	}
 	frame.Write(headers.Bytes())
 
+	// A frame carries at most one transform, so this two-transform frame is
+	// refused with SIZE_LIMIT whatever the container limit: by the
+	// transform-count bound when the container limit would admit the count
+	// (limit 2), and by the container-size check when the limit is smaller
+	// than the count (limit 1).
 	for _, limit := range []int32{2, 1} {
 		trans := NewTMemoryBuffer()
 		binary.Write(trans, binary.BigEndian, uint32(frame.Len()))
 		trans.Write(frame.Bytes())
 		err := NewTHeaderTransportConf(trans, &TConfiguration{MaxContainerSize: limit}).ReadFrame(context.Background())
-		if limit == 2 {
-			if err != nil {
-				t.Errorf("2 transforms, limit 2: %v", err)
-			}
-			continue
-		}
 		var te TProtocolException
 		if !errors.As(err, &te) || te.TypeId() != SIZE_LIMIT {
-			t.Errorf("2 transforms, limit 1: got %v, want a SIZE_LIMIT TProtocolException", err)
+			t.Errorf("2 transforms, limit %d: got %v, want a SIZE_LIMIT TProtocolException", limit, err)
 		}
 	}
 }
