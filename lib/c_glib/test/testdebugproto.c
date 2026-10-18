@@ -27,6 +27,19 @@
 
 #include <thrift/c_glib/protocol/thrift_protocol.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
+
+/* mallinfo2 was added in glibc 2.33; the element-cleanup checks below use it
+ * and are compiled only where it is available. */
+#if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#  if __GLIBC_PREREQ(2, 33)
+#    define TEST_HAVE_MALLINFO2 1
+#  endif
+#endif
+
+#ifdef TEST_HAVE_MALLINFO2
+#include <malloc.h>
+#endif
 
 #include "gen-c_glib/t_test_debug_proto_test_types.h"
 #include "gen-c_glib/t_test_srv.h"
@@ -864,6 +877,138 @@ test_services_inherited (void)
   g_object_unref (protocol);
 }
 
+/* A generated reader allocates temporaries for a container element before
+ * the element is inserted into its container. When a later read inside the
+ * same element fails, those temporaries must be released on the error path.
+ * The checks below feed a reader a message that is truncated partway through
+ * an element and confirm that the heap retained after the rejected message is
+ * negligible rather than proportional to the element size. They use glibc's
+ * mallinfo2 and are skipped on other C libraries. */
+#ifdef TEST_HAVE_MALLINFO2
+
+#define READER_CLEANUP_ELEMLEN 262144   /* 256 KiB element temporary */
+
+static void
+bc_i32 (GByteArray *a, gint32 v)
+{
+  guint8 b[4] = { (guint8) ((v >> 24) & 0xff), (guint8) ((v >> 16) & 0xff),
+                  (guint8) ((v >> 8) & 0xff), (guint8) (v & 0xff) };
+  g_byte_array_append (a, b, 4);
+}
+
+static void
+bc_i16 (GByteArray *a, gint16 v)
+{
+  guint8 b[2] = { (guint8) ((v >> 8) & 0xff), (guint8) (v & 0xff) };
+  g_byte_array_append (a, b, 2);
+}
+
+static void
+bc_u8 (GByteArray *a, guint8 v)
+{
+  g_byte_array_append (a, &v, 1);
+}
+
+/* Reads MESSAGE into a fresh object ITERS times, each time with its own
+ * memory buffer and protocol, and returns the heap retained across the reads.
+ * Every read is expected to be rejected. */
+static glong
+retained_after_rejected_reads (GType type, const GByteArray *message, int iters)
+{
+  struct mallinfo2 before = { 0 }, after = { 0 };
+  int i;
+
+  for (i = 0; i < iters + 2; i++)
+  {
+    GByteArray *copy = g_byte_array_new ();
+    ThriftMemoryBuffer *mb;
+    ThriftProtocol *protocol;
+    ThriftStruct *object;
+    GError *error = NULL;
+    gint32 ret;
+
+    g_byte_array_append (copy, message->data, message->len);
+    mb = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf", copy,
+                       "buf_size", (guint) (message->len + 16), NULL);
+    protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", mb, NULL);
+    object = g_object_new (type, NULL);
+
+    ret = thrift_struct_read (object, protocol, &error);
+    g_assert_cmpint (ret, <, 0);        /* the truncated message is rejected */
+    g_clear_error (&error);
+
+    g_object_unref (object);
+    g_object_unref (protocol);
+    g_object_unref (mb);
+
+    /* The first two iterations warm up the allocator and the type system. */
+    if (i == 1)
+    {
+      before = mallinfo2 ();
+    }
+  }
+  after = mallinfo2 ();
+
+  return ((glong) after.uordblks + (glong) after.hblkhd)
+         - ((glong) before.uordblks + (glong) before.hblkhd);
+}
+
+static void
+test_reader_error_cleanup_map (void)
+{
+  /* ExceptionWithAMap field 2 is a map<string,string>. Send a single entry
+   * whose key is present but whose value is missing, so the value read fails
+   * after the key temporary has been allocated. */
+  GByteArray *message = g_byte_array_new ();
+  int i;
+  glong retained;
+
+  bc_u8 (message, 13);   /* field type  T_MAP    */
+  bc_i16 (message, 2);   /* field id 2           */
+  bc_u8 (message, 11);   /* key type    T_STRING */
+  bc_u8 (message, 11);   /* value type  T_STRING */
+  bc_i32 (message, 1);   /* map size 1           */
+  bc_i32 (message, READER_CLEANUP_ELEMLEN);
+  for (i = 0; i < READER_CLEANUP_ELEMLEN; i++)
+    bc_u8 (message, 'K');
+  /* the stream ends here, so the value read fails */
+
+  retained = retained_after_rejected_reads (T_TEST_TYPE_EXCEPTION_WITH_A_MAP,
+                                             message, 8);
+  g_assert_cmpint (retained / 8, <, READER_CLEANUP_ELEMLEN / 4);
+
+  g_byte_array_free (message, TRUE);
+}
+
+static void
+test_reader_error_cleanup_set (void)
+{
+  /* HolyMoley field 2 is a set<list<string>>. Send one inner list that
+   * declares two strings but provides only the first, so the second read
+   * fails after the inner list and its first string have been allocated. */
+  GByteArray *message = g_byte_array_new ();
+  int i;
+  glong retained;
+
+  bc_u8 (message, 14);   /* field type    T_SET    */
+  bc_i16 (message, 2);   /* field id 2             */
+  bc_u8 (message, 15);   /* element type  T_LIST   */
+  bc_i32 (message, 1);   /* set size 1             */
+  bc_u8 (message, 11);   /* inner element T_STRING */
+  bc_i32 (message, 2);   /* inner list size 2      */
+  bc_i32 (message, READER_CLEANUP_ELEMLEN);
+  for (i = 0; i < READER_CLEANUP_ELEMLEN; i++)
+    bc_u8 (message, 'E');
+  /* the stream ends here, so the second inner string read fails */
+
+  retained = retained_after_rejected_reads (T_TEST_TYPE_HOLY_MOLEY, message, 8);
+  g_assert_cmpint (retained / 8, <, READER_CLEANUP_ELEMLEN / 4);
+
+  g_byte_array_free (message, TRUE);
+}
+
+#endif /* TEST_HAVE_MALLINFO2 */
+
 int
 main(int argc, char *argv[])
 {
@@ -936,6 +1081,15 @@ main(int argc, char *argv[])
   g_test_add_func
     ("/testdebugproto/DebugProto/Services/Inherited",
      test_services_inherited);
+
+#ifdef TEST_HAVE_MALLINFO2
+  g_test_add_func
+    ("/testdebugproto/DebugProto/ReaderErrorCleanup/Map",
+     test_reader_error_cleanup_map);
+  g_test_add_func
+    ("/testdebugproto/DebugProto/ReaderErrorCleanup/Set",
+     test_reader_error_cleanup_set);
+#endif
 
   return g_test_run ();
 }
