@@ -308,6 +308,7 @@ abstract class TProtocol
     private static function skipBinaryString(TTransport $itrans): int
     {
         $len = self::readI32Signed($itrans);
+        $itrans->checkStringSize($len);
         $itrans->readAll($len);
 
         return 4 + $len;

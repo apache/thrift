@@ -26,9 +26,11 @@ namespace Test\Thrift\Unit\Lib\Protocol;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Thrift\Exception\TProtocolException;
+use Thrift\Exception\TTransportException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TProtocol;
 use Thrift\Transport\TMemoryBuffer;
+use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
 
 class TProtocolTest extends TestCase
@@ -280,6 +282,84 @@ class TProtocolTest extends TestCase
         $this->expectExceptionCode(TProtocolException::DEPTH_LIMIT);
 
         TProtocol::skipBinary(new TMemoryBuffer($buffer), TType::STRUCT);
+    }
+
+    public function testSkipBinaryStringUnderTheLimitReadsTheBytes(): void
+    {
+        // A STRING of 100 bytes: the 4-byte length prefix plus the body.
+        $body = str_repeat('A', 100);
+        $transport = $this->recordingTransport(pack('N', 100) . $body);
+
+        $this->assertSame(4 + 100, TProtocol::skipBinary($transport, TType::STRING));
+        // The body is requested from the transport, as it must be.
+        $this->assertSame(104, $transport->totalRead);
+    }
+
+    public function testSkipBinaryStringOverTheLimitIsRefusedBeforeTheBytesAreRead(): void
+    {
+        // A STRING declaring the largest positive i32 length (~2 GiB) with
+        // none of the bytes present.
+        $declared = 0x7fffffff;
+        $transport = $this->recordingTransport(pack('N', $declared));
+
+        try {
+            TProtocol::skipBinary($transport, TType::STRING);
+            $this->fail('expected a TProtocolException for the oversize string length');
+        } catch (TProtocolException $e) {
+            $this->assertSame(TProtocolException::SIZE_LIMIT, $e->getCode());
+        }
+
+        // The declared length is held before any of the body is requested:
+        // only the 4-byte length prefix is ever read from the transport.
+        $this->assertSame(4, $transport->maxRequested);
+        $this->assertSame(4, $transport->totalRead);
+    }
+
+    /**
+     * A transport over a fixed buffer that records the lengths it is asked to
+     * read, so a length that is refused can be told from one that is read.
+     */
+    private function recordingTransport(string $data): TTransport
+    {
+        return new class ($data) extends TTransport {
+            public int $maxRequested = 0;
+            public int $totalRead = 0;
+            private int $pos = 0;
+
+            public function __construct(private string $data)
+            {
+            }
+
+            public function isOpen(): bool
+            {
+                return true;
+            }
+
+            public function open(): void
+            {
+            }
+
+            public function close(): void
+            {
+            }
+
+            public function read(int $len): string
+            {
+                $this->maxRequested = max($this->maxRequested, $len);
+                $chunk = substr($this->data, $this->pos, $len);
+                $this->pos += strlen($chunk);
+                $this->totalRead += strlen($chunk);
+                if ($chunk === '') {
+                    throw new TTransportException('recording transport exhausted');
+                }
+
+                return $chunk;
+            }
+
+            public function write(string $buf): void
+            {
+            }
+        };
     }
 
     /**

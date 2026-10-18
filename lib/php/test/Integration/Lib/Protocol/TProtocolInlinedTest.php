@@ -27,7 +27,11 @@ use BasicInline\ThriftTest\Bonk;
 use BasicInline\ThriftTest\VersioningTestV1;
 use BasicInline\ThriftTest\VersioningTestV2;
 use PHPUnit\Framework\TestCase;
+use Thrift\Exception\TProtocolException;
+use Thrift\Exception\TTransportException;
 use Thrift\Transport\TMemoryBuffer;
+use Thrift\Transport\TTransport;
+use Thrift\Type\TType;
 
 /***
  * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
@@ -75,5 +79,63 @@ class TProtocolInlinedTest extends TestCase
         $this->assertNull($reader->old_string);
         $this->assertSame(14, $reader->end_in_both);
         $this->assertSame(0, (int)$transport->available());
+    }
+
+    public function testInlinedReaderRefusesAnOversizeStringBeforeReadingIt(): void
+    {
+        // Bonk field 1 is a string. Declare the largest positive i32 length
+        // (~2 GiB) for it with none of the bytes present: field type, field
+        // id, then the length.
+        $declared = 0x7fffffff;
+        $transport = new class (
+            pack('c', TType::STRING) . pack('n', 1) . pack('N', $declared)
+        ) extends TTransport {
+            public int $maxRequested = 0;
+            private int $pos = 0;
+
+            public function __construct(private string $data)
+            {
+            }
+
+            public function isOpen(): bool
+            {
+                return true;
+            }
+
+            public function open(): void
+            {
+            }
+
+            public function close(): void
+            {
+            }
+
+            public function read(int $len): string
+            {
+                $this->maxRequested = max($this->maxRequested, $len);
+                $chunk = substr($this->data, $this->pos, $len);
+                $this->pos += strlen($chunk);
+                if ($chunk === '') {
+                    throw new TTransportException('recording transport exhausted');
+                }
+
+                return $chunk;
+            }
+
+            public function write(string $buf): void
+            {
+            }
+        };
+
+        try {
+            (new Bonk())->read($transport);
+            $this->fail('expected a TProtocolException for the oversize string length');
+        } catch (TProtocolException $e) {
+            $this->assertSame(TProtocolException::SIZE_LIMIT, $e->getCode());
+        }
+
+        // The field header and length are read (at most 4 bytes at a time);
+        // the declared body is never requested from the transport.
+        $this->assertSame(4, $transport->maxRequested);
     }
 }

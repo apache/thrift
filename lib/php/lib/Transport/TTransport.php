@@ -61,6 +61,26 @@ abstract class TTransport
         --$this->recursionDepth;
     }
 
+    /**
+     * The string-length counterpart of incrementRecursionDepth(): a string or
+     * binary length read straight from this transport, by the read() methods
+     * of the code "--gen php:inlined" emits and by TProtocol::skipBinary(), is
+     * held to TProtocol::DEFAULT_MAX_STRING_SIZE before the bytes are read, the
+     * same bound TProtocol::checkStringSize() applies on the protocol path.
+     *
+     * @throws TProtocolException if $len is over TProtocol::DEFAULT_MAX_STRING_SIZE
+     */
+    public function checkStringSize(int $len): void
+    {
+        $max = TProtocol::DEFAULT_MAX_STRING_SIZE;
+        if ($max > 0 && $len > $max) {
+            throw new TProtocolException(
+                "String size ($len) larger than the maximum ($max)",
+                TProtocolException::SIZE_LIMIT
+            );
+        }
+    }
+
     abstract public function isOpen(): bool;
 
     /**

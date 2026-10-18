@@ -2270,7 +2270,8 @@ void t_php_generator::generate_deserialize_field(ostream& out,
             out << indent() << "$len = unpack('N', " << itrans << "->readAll(4));" << '\n'
                 << indent() << "$len = $len[1];" << '\n' << indent() << "if ($len > 0x7fffffff) {"
                 << '\n' << indent() << "    $len = 0 - (($len - 1) ^ 0xffffffff);" << '\n' << indent()
-                << "}" << '\n' << indent() << "$" << name << " = " << itrans << "->readAll($len);"
+                << "}" << '\n' << indent() << itrans << "->checkStringSize($len);" << '\n'
+                << indent() << "$" << name << " = " << itrans << "->readAll($len);"
                 << '\n';
             break;
           case t_base_type::TYPE_BOOL:
