@@ -155,6 +155,17 @@ class THeaderProtocol(TProtocolBase):
         self._fast_encode = self._protocol._fast_encode
         self._fast_decode = self._protocol._fast_decode
 
+    # The accelerated decoder reads these limits off the protocol object. Expose
+    # the inner protocol's current values so the fast path applies the same
+    # string and container bounds as the delegated read methods below.
+    @property
+    def string_length_limit(self):
+        return self._protocol.string_length_limit
+
+    @property
+    def container_length_limit(self):
+        return self._protocol.container_length_limit
+
     def readMessageBegin(self):
         try:
             self.trans.readFrame(0)
