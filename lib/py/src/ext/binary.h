@@ -217,7 +217,7 @@ public:
   bool skipDouble() { SKIPBYTES(8); }
   bool skipString() {
     int32_t len;
-    if (!readI32(len)) {
+    if (!readI32(len) || !checkLengthLimit(len, stringLimit())) {
       return false;
     }
     SKIPBYTES(len);

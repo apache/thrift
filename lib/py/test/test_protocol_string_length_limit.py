@@ -78,6 +78,16 @@ def compact_binary_field(length):
             return bytes(out)
 
 
+def compact_skip_field(length):
+    """A compact binary field with id 2 (not in _S's spec, so it is skipped)."""
+    out = bytearray(b'\x28')  # field-id delta 2, compact type 8 (CT_BINARY)
+    while True:
+        byte, length = length & 0x7f, length >> 7
+        out.append(byte | 0x80 if length else byte)
+        if not length:
+            return bytes(out)
+
+
 class StringLengthLimitTest(unittest.TestCase):
 
     def assert_refused_unread(self, trans, read, declared):
@@ -175,6 +185,48 @@ class AcceleratedStringLengthLimitTest(unittest.TestCase):
         requested = self.requested_by(TCompactProtocol.TCompactProtocolAccelerated,
                                       compact_binary_field(HUGE))
         self.assertLess(max(requested), HUGE // 2, requested)
+
+    # A field whose id is not in the spec is skipped, not read. The skip path
+    # must apply the same string_length_limit as the read path, so an oversized
+    # skipped field is never pulled through the transport.
+
+    def test_binary_skip_refuses_a_string_over_the_default_limit(self):
+        # Field id 2 is not in _S's spec, so the decoder skips it.
+        requested = self.requested_by(
+            TBinaryProtocol.TBinaryProtocolAccelerated,
+            struct.pack('!bhi', TType.STRING, 2, HUGE) + b'x' * 100000)
+        self.assertLess(max(requested), HUGE // 2, requested)
+
+    def test_compact_skip_refuses_a_string_over_the_default_limit(self):
+        requested = self.requested_by(
+            TCompactProtocol.TCompactProtocolAccelerated,
+            compact_skip_field(HUGE) + b'x' * 100000)
+        self.assertLess(max(requested), HUGE // 2, requested)
+
+    def skip_boundary(self, protocol_class, field, limit):
+        # At the limit the skipped field is consumed and the struct completes;
+        # one byte over is refused. (At this size a buffered transport reads in
+        # fixed chunks, so the discriminator here is refused-or-not, not the
+        # requested byte count.)
+        accepted = field(limit) + b'x' * limit + b'\x00'
+        inner = CountingTransport(accepted)
+        prot = protocol_class(TTransport.TBufferedTransport(inner), string_length_limit=limit)
+        s = _S()
+        prot._fast_decode(s, prot, [_S, _S.thrift_spec])
+        self.assertIsNone(s.name)  # field 2 was skipped, not stored
+        over = field(limit + 1) + b'x' * (limit + 1) + b'\x00'
+        inner = CountingTransport(over)
+        prot = protocol_class(TTransport.TBufferedTransport(inner), string_length_limit=limit)
+        with self.assertRaises(Exception):
+            prot._fast_decode(_S(), prot, [_S, _S.thrift_spec])
+
+    def test_binary_skip_honours_an_explicit_limit_at_the_boundary(self):
+        self.skip_boundary(TBinaryProtocol.TBinaryProtocolAccelerated,
+                           lambda n: struct.pack('!bhi', TType.STRING, 2, n), 1024)
+
+    def test_compact_skip_honours_an_explicit_limit_at_the_boundary(self):
+        self.skip_boundary(TCompactProtocol.TCompactProtocolAccelerated,
+                           compact_skip_field, 1024)
 
 
 if __name__ == '__main__':

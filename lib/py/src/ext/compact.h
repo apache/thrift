@@ -274,7 +274,7 @@ public:
   }
   bool skipString() {
     uint32_t len;
-    if (!readVarint<uint32_t, 5>(len)) {
+    if (!readVarint<uint32_t, 5>(len) || !checkLengthLimit(len, stringLimit())) {
       return false;
     }
     SKIPBYTES(len);
