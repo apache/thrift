@@ -259,8 +259,14 @@ public:
    * This is called when the application transitions from one state into
    * another. This means that it has finished writing the data that it needed
    * to, or finished receiving the data that it needed to.
+   *
+   * Returns true if the calling I/O thread may keep working this connection's
+   * socket. Returns false when the transition closed the connection -- close()
+   * hands the object back to the server, which may recycle or delete it -- or
+   * handed it to a worker task; in either case the caller must not read any of
+   * its members afterwards.
    */
-  void transition();
+  bool transition();
 
   /**
    * C-callable event handler for connection events.  Provides a callback
@@ -568,7 +574,13 @@ void TNonblockingServer::TConnection::workSocket() {
 
         // We are done reading, move onto the next state
         if (readBufferPos_ == readWant_) {
-          transition();
+          // Processing the request inline can close this connection, which hands
+          // the object back to the server to be recycled or deleted. Once that
+          // has happened none of its members may be read, so stop working the
+          // socket the moment transition() reports the connection is gone.
+          if (!transition()) {
+            return;
+          }
           if (socketState_ == SOCKET_RECV_FRAMING && tSocket_->hasPendingDataToRead())
           {
               continue;
@@ -633,8 +645,14 @@ bool TNonblockingServer::getHeaderTransport() {
  * This is called when the application transitions from one state into
  * another. This means that it has finished writing the data that it needed
  * to, or finished receiving the data that it needed to.
+ *
+ * Returns true if the calling I/O thread may keep working this connection's
+ * socket. Returns false when the transition closed the connection -- close()
+ * hands the object back to the server, which may recycle or delete it -- or
+ * handed it to a worker task; in either case the caller must not read any of
+ * its members afterwards.
  */
-void TNonblockingServer::TConnection::transition() {
+bool TNonblockingServer::TConnection::transition() {
   // ensure this connection is active right now
   assert(ioThread_);
   assert(server_);
@@ -687,13 +705,17 @@ void TNonblockingServer::TConnection::transition() {
         TOutput::instance().printf("IllegalStateException: Server::process() %s", ise.what());
         server_->decrementActiveProcessors();
         close();
+        return false;
       } catch (TimedOutException& to) {
         TOutput::instance().printf("[ERROR] TimedOutException: Server::process() %s", to.what());
         server_->decrementActiveProcessors();
         close();
+        return false;
       }
 
-      return;
+      // The task now owns the connection and a worker thread may close it, so
+      // this I/O thread must not read the connection's members again either.
+      return false;
     } else {
       try {
         if (serverEventHandler_) {
@@ -708,19 +730,19 @@ void TNonblockingServer::TConnection::transition() {
             ttx.what());
         server_->decrementActiveProcessors();
         close();
-        return;
+        return false;
       } catch (const std::exception& x) {
         TOutput::instance().printf("Server::process() uncaught exception: %s: %s",
                             typeid(x).name(),
                             x.what());
         server_->decrementActiveProcessors();
         close();
-        return;
+        return false;
       } catch (...) {
         TOutput::instance().printf("Server::process() unknown exception");
         server_->decrementActiveProcessors();
         close();
-        return;
+        return false;
       }
     }
     // fallthrough
@@ -754,7 +776,7 @@ void TNonblockingServer::TConnection::transition() {
       appState_ = APP_SEND_RESULT;
       setWrite();
 
-      return;
+      return true;
     }
 
     // In this case, the request was oneway and we should fall through
@@ -793,7 +815,7 @@ void TNonblockingServer::TConnection::transition() {
     // Register read event
     setRead();
 
-    return;
+    return true;
 
   case APP_READ_FRAME_SIZE:
     readWant_ += 4;
@@ -819,17 +841,21 @@ void TNonblockingServer::TConnection::transition() {
     socketState_ = SOCKET_RECV;
     appState_ = APP_READ_REQUEST;
 
-    return;
+    return true;
 
   case APP_CLOSE_CONNECTION:
     server_->decrementActiveProcessors();
     close();
-    return;
+    return false;
 
   default:
     TOutput::instance().printf("Unexpected Application State %d", appState_);
     assert(0);
   }
+
+  // Only an unexpected application state falls out of the switch without an
+  // explicit return; the connection is still alive in that case.
+  return true;
 }
 
 void TNonblockingServer::TConnection::setFlags(short eventFlags) {

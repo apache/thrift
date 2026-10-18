@@ -257,6 +257,12 @@ protected:
     threadManager_->start();
   }
 
+  // Replaces the processor the fixture builds while leaving the server on the
+  // inline path, so the request runs on the I/O thread rather than on a worker.
+  void setProcessor(const shared_ptr<TProcessor>& replacement) {
+    processor = replacement;
+  }
+
 private:
   shared_ptr<TProcessor> processor;
 protected:
@@ -380,6 +386,30 @@ private:
   std::atomic<bool> failed_;
   Monitor consumedMonitor_;
   bool consumed_;
+};
+
+// Refuses the first callsToFail requests by letting an exception leave
+// process() -- the way inline request processing fails when a request cannot be
+// handled, e.g. a malformed message or a handler that throws. On the inline
+// path TConnection::transition() logs and closes the connection for every
+// std::exception. Later requests are passed to the real processor, so the
+// server can be shown still serving after the refusals.
+struct FailsFirstNProcessor : public TProcessor {
+  FailsFirstNProcessor(int callsToFail, const shared_ptr<TProcessor>& delegate)
+    : remaining_(callsToFail), delegate_(delegate) {}
+
+  bool process(shared_ptr<protocol::TProtocol> in,
+               shared_ptr<protocol::TProtocol> out,
+               void* connectionContext) override {
+    if (remaining_.fetch_sub(1) > 0) {
+      throw TException("request refused by the test processor");
+    }
+    return delegate_->process(in, out, connectionContext);
+  }
+
+private:
+  std::atomic<int> remaining_;
+  shared_ptr<TProcessor> delegate_;
 };
 
 // A request that cannot be allocated is one request. Task::run() answered
@@ -974,5 +1004,87 @@ BOOST_AUTO_TEST_CASE(read_buffer_grows_with_the_payload_not_the_header) {
   BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
 }
 #endif
+
+// A request can be refused while it is processed inline on the I/O thread: a
+// malformed message or a handler that throws leaves process(), and
+// TConnection::transition() then closes the connection. close() hands the
+// connection object back to the server, which -- once the idle pool is at its
+// limit -- deletes it, or otherwise keeps it for reuse. Once transition() has
+// closed a connection, workSocket() must not read any of its members again. The
+// test drives several connections that each complete a frame whose processing
+// is refused: with the idle pool limited to one, the first refusal pools its
+// connection and every later one is deleted while that pooled connection is
+// still present, so a connection object is returned and deleted at the moment
+// workSocket() would otherwise inspect it to decide whether to keep reading.
+// The server has to keep serving a well-formed client afterwards. Built with
+// AddressSanitizer, the unfixed tree reports an error in workSocket(); with the
+// fix the run is clean and the final client round-trips.
+BOOST_FIXTURE_TEST_CASE(connection_refused_during_processing_is_not_touched_again, Fixture) {
+  const int kConnections = 4;
+
+  // The first kConnections completed frames are refused (the processor throws);
+  // anything after is served normally, so the final client round-trips.
+  auto failing = make_shared<FailsFirstNProcessor>(
+      kConnections, make_shared<test::ParentServiceProcessor>(make_shared<Handler>()));
+  setProcessor(failing);
+
+  startServer(0);
+  int port = server->getListenPort();
+  BOOST_REQUIRE_GT(port, 0);
+
+  // Delete a returned connection as soon as one other sits idle in the pool, so
+  // the refusals below free connection objects rather than pooling them all.
+  server->setConnectionStackLimit(1);
+
+  // Open every connection first and wait until the server has accepted all of
+  // them with an empty idle pool. Only then are frames completed, so each
+  // refusal returns its connection while the others are still active. If a
+  // frame were completed before all connections existed, each new connection
+  // would reuse the single pooled object and the pool would never hold one
+  // connection while another is returned.
+  std::vector<shared_ptr<transport::TSocket>> sockets;
+  for (int i = 0; i < kConnections; ++i) {
+    auto sock = make_shared<transport::TSocket>("localhost", port);
+    sock->setRecvTimeout(5000);
+    sock->open();
+    sockets.push_back(sock);
+  }
+  for (int i = 0; i < 500
+                  && server->getNumActiveConnections() < static_cast<size_t>(kConnections);
+       ++i) {
+    THRIFT_SLEEP_USEC(10000);
+  }
+  BOOST_REQUIRE_EQUAL(server->getNumActiveConnections(), static_cast<size_t>(kConnections));
+  BOOST_REQUIRE_EQUAL(server->getNumIdleConnections(), static_cast<size_t>(0));
+
+  // Complete a frame on every connection. Each one reaches the processor, is
+  // refused, and the connection is closed and returned -- the first pooled, the
+  // rest deleted while the pooled one is still present.
+  const uint32_t body = 8;
+  std::vector<uint8_t> payload(body, 0);
+  for (auto& sock : sockets) {
+    uint32_t netSize = htonl(body);
+    sock->write(reinterpret_cast<uint8_t*>(&netSize), sizeof(netSize));
+    sock->write(payload.data(), body);
+    sock->flush();
+  }
+
+  // Keep the clients in step with the server: each connection is closed by the
+  // server once its frame is refused, so the reads drain to end-of-stream.
+  for (auto& sock : sockets) {
+    uint8_t buf[16];
+    try {
+      while (sock->read(buf, sizeof(buf)) > 0) {
+      }
+    } catch (const transport::TTransportException&) {
+    }
+    sock->close();
+  }
+
+  // The refusals did not stop the server: a fresh, well-formed client is served.
+  BOOST_CHECK(canCommunicate(port));
+
+  server->stop();
+}
 
 BOOST_AUTO_TEST_SUITE_END()
