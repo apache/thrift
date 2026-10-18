@@ -28,7 +28,11 @@ thrift_transport_factory_get_transport (ThriftTransportFactory *factory,
                                         ThriftTransport *transport)
 {
   THRIFT_UNUSED_VAR (factory);
-  return transport;
+
+  /* Return an owned reference, consistent with the subclass factories that
+   * return a newly created wrapper transport. The caller is responsible for
+   * releasing the transport it receives. */
+  return g_object_ref (transport);
 }
 
 static void

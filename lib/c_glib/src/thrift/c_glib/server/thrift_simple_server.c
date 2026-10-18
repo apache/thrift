@@ -113,10 +113,20 @@ thrift_simple_server_stop (ThriftServer *server)
 static void
 thrift_simple_server_init (ThriftSimpleServer *tss)
 {
-  ThriftServer *server = THRIFT_SERVER(tss);
-
   tss->running = FALSE;
+}
 
+static void
+thrift_simple_server_constructed (GObject *object)
+{
+  ThriftServer *server = THRIFT_SERVER (object);
+
+  /* The transport and protocol factory properties are construct-only, so
+   * GObject assigns their NULL default after instance initialization when
+   * the caller does not supply them. Install the default factories here,
+   * once the construct properties have been processed, so that a server
+   * created without explicit factories still has a transport and protocol
+   * factory to use for each accepted connection. */
   if (server->input_transport_factory == NULL)
   {
     server->input_transport_factory =
@@ -137,6 +147,8 @@ thrift_simple_server_init (ThriftSimpleServer *tss)
     server->output_protocol_factory =
         g_object_new (THRIFT_TYPE_BINARY_PROTOCOL_FACTORY, NULL);
   }
+
+  G_OBJECT_CLASS (thrift_simple_server_parent_class)->constructed (object);
 }
 
 /* initialize the class */
@@ -144,6 +156,9 @@ static void
 thrift_simple_server_class_init (ThriftSimpleServerClass *class)
 {
   ThriftServerClass *cls = THRIFT_SERVER_CLASS(class);
+  GObjectClass *gobject_class = G_OBJECT_CLASS (class);
+
+  gobject_class->constructed = thrift_simple_server_constructed;
 
   cls->serve = thrift_simple_server_serve;
   cls->stop = thrift_simple_server_stop;
