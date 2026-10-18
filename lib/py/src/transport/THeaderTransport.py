@@ -68,6 +68,12 @@ class THeaderTransformID(object):
 KNOWN_READ_TRANSFORM_IDS = frozenset({THeaderTransformID.ZLIB})
 
 
+# The number of transforms a single frame may carry. ZLIB is the only transform
+# defined here, and no sender applies it more than once, so one transform is the
+# whole of what a well-formed frame needs.
+MAX_TRANSFORMS = 1
+
+
 WRITE_TRANSFORMS_BY_ID = {
     THeaderTransformID.ZLIB: zlib.compress,
 }
@@ -268,6 +274,12 @@ class THeaderTransport(TTransportBase, CReadableTransport):
 
         transforms = []
         transform_count = readVarint(buffer_transport)
+        if transform_count > MAX_TRANSFORMS:
+            raise TTransportException(
+                TTransportException.SIZE_LIMIT,
+                "Frame declares %d transforms; at most %d is supported"
+                % (transform_count, MAX_TRANSFORMS),
+            )
         for _ in range(transform_count):
             transform_id = readVarint(buffer_transport)
             if transform_id not in KNOWN_READ_TRANSFORM_IDS:
