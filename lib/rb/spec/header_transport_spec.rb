@@ -882,4 +882,55 @@ describe "HeaderTransport" do
       expect(trans.send(:read_varint32, io)).to eq(0xFFFFFFFF)
     end
   end
+
+  context "input lifetime" do
+    it "releases compressed and plain payloads without consuming the next frame or reply metadata" do
+      wire = Thrift::MemoryBufferTransport.new
+      writer = Thrift::HeaderTransport.new(wire)
+      writer.sequence_id = 42
+      writer.set_header("name", "value")
+      writer.write("x" * 32_768)
+      writer.flush
+      writer.add_transform(Thrift::HeaderTransformID::ZLIB)
+      writer.sequence_id = 43
+      writer.set_header("second", "frame")
+      writer.write("y" * 32_768)
+      writer.flush
+
+      reader = Thrift::HeaderTransport.new(wire)
+      expect(reader.read_all(32_768)).to eq("x" * 32_768)
+      expect(reader.instance_variable_get(:@read_buffer).string).to be_empty
+      expect(reader.get_headers).to eq("name" => "value")
+      expect(reader.sequence_id).to eq(42)
+      expect(wire.available).to be > 0
+      reader.reset_protocol
+      expect(reader.sequence_id).to eq(43)
+      expect(reader.read_all(32_768)).to eq("y" * 32_768)
+      expect(reader.instance_variable_get(:@read_buffer).string).to be_empty
+      expect(reader.get_headers).to eq("second" => "frame")
+    end
+
+    it "reads unsigned bytes across frame boundaries while preserving reply metadata" do
+      wire = Thrift::MemoryBufferTransport.new
+      writer = Thrift::HeaderTransport.new(wire)
+      writer.sequence_id = 42
+      writer.set_header("name", "first")
+      writer.write("\x00\x80\xff".b)
+      writer.flush
+      writer.sequence_id = 43
+      writer.set_header("name", "second")
+      writer.write("\x81".b)
+      writer.flush
+
+      reader = Thrift::HeaderTransport.new(wire)
+      expect(Array.new(3) { reader.read_byte }).to eq([0, 128, 255])
+      expect(reader.instance_variable_get(:@read_buffer).string).to be_empty
+      expect(reader.get_headers).to eq("name" => "first")
+      expect(reader.sequence_id).to eq(42)
+      expect(reader.read_byte).to eq(129)
+      expect(reader.instance_variable_get(:@read_buffer).string).to be_empty
+      expect(reader.get_headers).to eq("name" => "second")
+      expect(reader.sequence_id).to eq(43)
+    end
+  end
 end

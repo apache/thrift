@@ -66,17 +66,28 @@ module Thrift
 
       @index += sz
       @rbuf.slice(@index - sz, sz) || Bytes.empty_byte_buffer
+    ensure
+      clear_consumed_read_buffer if @rbuf && @index >= @rbuf.size
     end
 
     def read_byte
       return @transport.read_byte unless @read
 
-      read_frame if @index >= @rbuf.length
+      if @index < @rbuf.size - 1
+        @index += 1
+        return Bytes.get_string_byte(@rbuf, @index - 1)
+      end
 
-      # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
-      # allocating a temp string of size 1 unnecessarily.
-      @index += 1
-      Bytes.get_string_byte(@rbuf, @index - 1)
+      begin
+        read_frame if @index >= @rbuf.length
+
+        # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
+        # allocating a temp string of size 1 unnecessarily.
+        @index += 1
+        Bytes.get_string_byte(@rbuf, @index - 1)
+      ensure
+        clear_consumed_read_buffer if @rbuf && @index >= @rbuf.size
+      end
     end
 
     def read_into_buffer(buffer, size)
@@ -91,6 +102,8 @@ module Thrift
         i += 1
       end
       i
+    ensure
+      clear_consumed_read_buffer if @rbuf && @index >= @rbuf.size
     end
 
     def write(buf, sz = nil)
@@ -121,7 +134,16 @@ module Thrift
 
     private
 
+    # Replace exhausted storage; clearing it in place could change returned slices.
+    def clear_consumed_read_buffer
+      unless @rbuf.empty?
+        @rbuf = Bytes.empty_byte_buffer
+        @index = 0
+      end
+    end
+
     def read_frame
+      clear_consumed_read_buffer if @index >= @rbuf.size
       sz = @transport.read_all(4).unpack1("N")
       raise TransportException.new(TransportException::END_OF_FILE, "Cannot read from a zero-length frame") if sz == 0
 
@@ -134,8 +156,8 @@ module Thrift
         )
       end
 
-      @index = 0
       @rbuf = @transport.read_all(sz)
+      @index = 0
     end
   end
 

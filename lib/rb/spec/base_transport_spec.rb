@@ -19,6 +19,8 @@
 #
 
 require "spec_helper"
+require "weakref"
+require "timeout"
 
 describe "BaseTransport" do
   describe Thrift::TransportException do
@@ -653,6 +655,198 @@ describe "BaseTransport" do
       expect(@input).to receive(:close)
       expect(@output).to receive(:close)
       @trans.close
+    end
+  end
+
+  context "input lifetime" do
+    def input_transport(kind, payload)
+      case kind
+      when :buffered
+        Thrift::BufferedTransport.new(Thrift::MemoryBufferTransport.new(payload))
+      when :framed
+        Thrift::FramedTransport.new(Thrift::MemoryBufferTransport.new([payload.bytesize].pack("N") + payload))
+      when :header
+        wire = Thrift::MemoryBufferTransport.new
+        writer = Thrift::HeaderTransport.new(wire)
+        writer.set_header("name", "value")
+        writer.write(payload)
+        writer.flush
+        Thrift::HeaderTransport.new(wire)
+      when :http
+        transport = Thrift::HTTPClientTransport.new("http://localhost/")
+        transport.instance_variable_set(:@inbuf, StringIO.new(payload))
+        transport.instance_variable_set(:@response_code, 200)
+        transport
+      end
+    end
+
+    def input_storage(transport)
+      if transport.is_a?(Thrift::HeaderTransport)
+        transport.instance_variable_get(:@read_buffer).string
+      elsif transport.is_a?(Thrift::HTTPClientTransport)
+        transport.instance_variable_get(:@inbuf).string
+      else
+        transport.instance_variable_get(:@rbuf)
+      end
+    end
+
+    [:buffered, :framed, :header, :http].each do |kind|
+      size = kind == :buffered ? 4096 : 32_768
+      eof_error = [:header, :http].include?(kind) ? Thrift::TransportException : EOFError
+      [:read, :read_all, :read_byte, :read_into_buffer].each do |operation|
+        it "releases exhausted #{kind} storage after #{operation} while idle" do
+          transport, reference = Thread.new do
+            transport = input_transport(kind, "x".b * size)
+            # Leave one byte for each public read entry point to consume.
+            expect(transport.read_all(size - 1)).to eq("x" * (size - 1))
+            reference = WeakRef.new(input_storage(transport))
+            case operation
+            when :read, :read_all
+              expect(transport.public_send(operation, 1)).to eq("x")
+            when :read_byte
+              expect(transport.read_byte).to eq(120)
+            when :read_into_buffer
+              output = "\0".b
+              expect(transport.read_into_buffer(output, 1)).to eq(1)
+              expect(output).to eq("x")
+            end
+            [transport, reference]
+          end.value
+
+          GC.start
+          expect(input_storage(transport)).to be_empty
+          expect(reference.weakref_alive?).to be_falsey
+          transport.close
+          GC.start
+          expect(reference.weakref_alive?).to be_falsey
+        end
+      end
+
+      it "keeps returned #{kind} data valid after exhaustion and close" do
+        transport = input_transport(kind, "x".b * size)
+        output = transport.read_all(size)
+        transport.close
+        GC.start
+        expect(output).to eq("x" * size)
+        expect(output.encoding).to eq(Encoding::BINARY)
+      end
+
+      it "preserves unread #{kind} input across close and a failed destination write" do
+        transport = input_transport(kind, "x".b * size)
+        expect(transport.read_all(size - 1)).to eq("x" * (size - 1))
+        expect { transport.read_into_buffer("".b, 1) }.to raise_error(IndexError)
+        transport.close
+        # Buffered/Framed copy before advancing the cursor; the base implementation
+        # used by Header/HTTP consumes before copying into the destination.
+        if [:buffered, :framed].include?(kind)
+          expect(transport.read(1)).to eq("x")
+        end
+        expect(input_storage(transport)).to be_empty
+      end
+
+      it "releases consumed #{kind} input when a subsequent read fails" do
+        transport, reference = Thread.new do
+          transport = input_transport(kind, "x".b * size)
+          transport.read_all(1)
+          reference = WeakRef.new(input_storage(transport))
+          transport.read_all(size - 1)
+          expect { transport.read_all(1) }.to raise_error(eof_error)
+          [transport, reference]
+        end.value
+        GC.start
+        expect(input_storage(transport)).to be_empty
+        expect(reference.weakref_alive?).to be_falsey
+      end
+
+      unless kind == :http
+        it "preserves unread #{kind} input when the underlying close fails" do
+          transport = input_transport(kind, "x".b * size)
+          source = transport.instance_variable_get(:@transport)
+          allow(source).to receive(:close).and_raise(IOError, "close failed")
+          expect(transport.read(1)).to eq("x")
+          expect { transport.close }.to raise_error(IOError, "close failed")
+          expect(transport.read_all(size - 1)).to eq("x" * (size - 1))
+          expect(input_storage(transport)).to be_empty
+        end
+      end
+
+      it "preserves unsigned #{kind} bytes across mixed reads and releases the last byte" do
+        transport = input_transport(kind, "\x00\x80\xff".b + ("x" * (size - 4)) + "z")
+
+        expect(transport.read_byte).to eq(0)
+        expect(transport.read_byte).to eq(128)
+        expect(transport.read(1)).to eq("\xff".b)
+        expect(transport.read_all(size - 4)).to eq("x" * (size - 4))
+        expect(transport.read_byte).to eq(122)
+        expect(input_storage(transport)).to be_empty
+        expect { transport.read_byte }.to raise_error(eof_error)
+      end
+    end
+
+    [Thrift::FramedTransport, Thrift::HeaderTransport].each do |transport_class|
+      it "round trips Binary payloads over TCP using #{transport_class}" do
+        listener = TCPServer.new("127.0.0.1", 0)
+        server = Thread.new do
+          peer = listener.accept
+          begin
+            transport = transport_class.new(Thrift::IOStreamTransport.new(peer, peer))
+            transport.protocol_id = Thrift::HeaderSubprotocolID::BINARY if transport.is_a?(Thrift::HeaderTransport)
+            protocol = Thrift::BinaryProtocol.new(transport)
+            value = protocol.read_binary
+            expect(input_storage(transport)).to be_empty
+            protocol.write_binary(value.reverse)
+            transport.flush
+          ensure
+            peer.close
+          end
+        end
+        socket = nil
+        Timeout.timeout(10) do
+          socket = Thrift::Socket.new("127.0.0.1", listener.addr[1])
+          socket.open
+          client = transport_class.new(socket)
+          client.protocol_id = Thrift::HeaderSubprotocolID::BINARY if client.is_a?(Thrift::HeaderTransport)
+          protocol = Thrift::BinaryProtocol.new(client)
+          protocol.write_binary("xyz" * 32_768)
+          client.flush
+          expect(protocol.read_binary).to eq("zyx" * 32_768)
+          expect(input_storage(client)).to be_empty
+          server.value
+        end
+      ensure
+        socket.close if socket
+        listener.close if listener
+        server.kill.join if server && server.alive?
+      end
+    end
+
+    [:buffered, :framed].each do |kind|
+      it "preserves #{kind} unread bytes when read_into_buffer fails after crossing a refill" do
+        source = Thrift::MemoryBufferTransport.new(("x".b * 4096) + ("y".b * 4096))
+        if kind == :framed
+          source = Thrift::MemoryBufferTransport.new([4096].pack("N") + ("x".b * 4096) + [2].pack("N") + "yz")
+        end
+        transport = (kind == :buffered ? Thrift::BufferedTransport : Thrift::FramedTransport).new(source)
+        expect { transport.read_into_buffer("\0".b * 4096, 4097) }.to raise_error(IndexError)
+        expect(transport.read_all(kind == :buffered ? 4096 : 2)).to eq(kind == :buffered ? "y" * 4096 : "yz")
+        expect(input_storage(transport)).to be_empty
+      end
+    end
+
+    [["frame header", "\0"], ["frame payload", [3].pack("N") + "c"]].each do |stage, truncated|
+      it "releases the consumed frame when the next #{stage} read fails" do
+        source = Thrift::MemoryBufferTransport.new([2].pack("N") + "ab" + truncated)
+        transport = Thrift::FramedTransport.new(source)
+        output = "\0".b * 3
+
+        expect { transport.read_into_buffer(output, 3) }.to raise_error(EOFError)
+        expect(output).to eq("ab\0")
+        expect(input_storage(transport)).to be_empty
+
+        source.reset_buffer([2].pack("N") + "de")
+        expect(transport.read_all(2)).to eq("de")
+        expect(input_storage(transport)).to be_empty
+      end
     end
   end
 end
