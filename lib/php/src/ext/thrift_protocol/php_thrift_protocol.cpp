@@ -797,7 +797,20 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
-          if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
+          if (Z_TYPE(key) != IS_STRING) {
+            convert_to_string(&key);
+            // Converting a non-string key runs user code that can raise (an
+            // object with no __toString does). Propagate a pending error here
+            // as the other Zend calls in this file do, so it never outlives
+            // this read.
+            if (EG(exception)) {
+              zend_object *ex = EG(exception);
+              EG(exception) = nullptr;
+              zval_dtor(&key);
+              zval_dtor(&value);
+              throw PHPExceptionWrapper(ex);
+            }
+          }
           zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
         zval_dtor(&key);
@@ -862,7 +875,19 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
-          if (Z_TYPE(key) != IS_STRING) convert_to_string(&key);
+          if (Z_TYPE(key) != IS_STRING) {
+            convert_to_string(&key);
+            // Converting a non-string key runs user code that can raise (an
+            // object with no __toString does). Propagate a pending error here
+            // as the other Zend calls in this file do, so it never outlives
+            // this read.
+            if (EG(exception)) {
+              zend_object *ex = EG(exception);
+              EG(exception) = nullptr;
+              zval_dtor(&key);
+              throw PHPExceptionWrapper(ex);
+            }
+          }
           zend_symtable_update(Z_ARR_P(return_value), Z_STR(key), &value);
         }
         zval_dtor(&key);
