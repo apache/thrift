@@ -132,7 +132,11 @@ std::string readBio(BIO* bio) {
 
 // A self-signed certificate for `commonName`, carrying `subjectAltName` when
 // that is not empty (in OpenSSL's config syntax, e.g. "DNS:other.example").
-Pem selfSigned(const std::string& commonName, const std::string& subjectAltName) {
+// When `appendUnconvertibleCommonName` is set, a second commonName is added
+// whose ASN.1 string type ASN1_STRING_to_UTF8() cannot convert.
+Pem selfSigned(const std::string& commonName,
+               const std::string& subjectAltName,
+               bool appendUnconvertibleCommonName = false) {
   EVP_PKEY* key = nullptr;
   EVP_PKEY_CTX* keyCtx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
   BOOST_REQUIRE(keyCtx != nullptr);
@@ -162,6 +166,17 @@ Pem selfSigned(const std::string& commonName, const std::string& subjectAltName)
   X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC,
                              reinterpret_cast<const unsigned char*>(commonName.c_str()),
                              -1, -1, 0);
+  if (appendUnconvertibleCommonName) {
+    // A second commonName whose ASN.1 string type is not one that
+    // ASN1_STRING_to_UTF8() can convert (ObjectDescriptor): the conversion then
+    // reports a negative length and leaves its output pointer untouched. A
+    // BMPString of odd byte length is the same case, but X509_NAME_add_entry
+    // rejects that length outright, so this type carries it through the
+    // certificate's DER round trip instead.
+    static const unsigned char descriptor[] = {0x01, 0x02, 0x03, 0x04};
+    X509_NAME_add_entry_by_NID(subject, NID_commonName, V_ASN1_OBJECT_DESCRIPTOR, descriptor,
+                               sizeof(descriptor), -1, 0);
+  }
   X509_set_subject_name(cert, subject);
   X509_set_issuer_name(cert, subject);
   X509_NAME_free(subject);
@@ -296,6 +311,17 @@ BOOST_AUTO_TEST_CASE(common_name_still_answers_when_no_san_is_present) {
   Pem pem = selfSigned("127.0.0.1", "");
   OneShotServer server(pem);
   BOOST_CHECK(connectAccepts(pem, server.port()));
+}
+
+BOOST_AUTO_TEST_CASE(common_name_that_cannot_be_converted_is_refused) {
+  // No subjectAltName, so the commonName fallback runs. The subject carries two
+  // commonNames: a valid one that does not match the connected host, followed by
+  // one whose ASN.1 string ASN1_STRING_to_UTF8() cannot convert. The fallback
+  // must consult the conversion result before the name is used or released, walk
+  // past the entry, and refuse the peer rather than act on an unwritten pointer.
+  Pem pem = selfSigned("first.example", "", true);
+  OneShotServer server(pem);
+  BOOST_CHECK(!connectAccepts(pem, server.port()));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

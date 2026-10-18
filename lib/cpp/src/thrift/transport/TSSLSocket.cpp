@@ -885,7 +885,6 @@ void TSSLSocket::authorize() {
 #else
     X509_NAME_ENTRY* entry;
 #endif
-    unsigned char* utf8;
     int last = -1;
     while (decision == AccessManager::SKIP) {
       last = X509_NAME_get_index_by_NID(name, NID_commonName, last);
@@ -899,7 +898,14 @@ void TSSLSocket::authorize() {
 #else
       ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
 #endif
+      // ASN1_STRING_to_UTF8() leaves the output pointer untouched and returns a
+      // negative length for a commonName whose string type it cannot convert, so
+      // the pointer is scoped to the iteration and the result is checked before
+      // the name is consulted or released.
+      unsigned char* utf8 = nullptr;
       int size = ASN1_STRING_to_UTF8(&utf8, common);
+      if (size < 0)
+        continue;
       if (host.empty()) {
         host = (server() ? getPeerHost() : getHost());
       }
