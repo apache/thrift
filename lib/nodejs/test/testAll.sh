@@ -145,6 +145,7 @@ node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/json_own_properties.test.js || TESTOK=1
 node ${DIR}/json_container_size.test.js || TESTOK=1
+node ${DIR}/json_field_lookup.test.js || TESTOK=1
 node ${DIR}/map_keys.test.js || TESTOK=1
 node ${DIR}/multiplexed_processor.test.js || TESTOK=1
 node ${DIR}/int64_bigint.test.js || TESTOK=1
