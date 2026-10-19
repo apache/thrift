@@ -781,9 +781,19 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
 
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
+        ZVAL_UNDEF(&key);
+        ZVAL_UNDEF(&value);
 
-        binary_deserialize(types[0], transport, &key, keyspec, depth + 1);
-        binary_deserialize(types[1], transport, &value, valspec, depth + 1);
+        try {
+          binary_deserialize(types[0], transport, &key, keyspec, depth + 1);
+          binary_deserialize(types[1], transport, &value, valspec, depth + 1);
+        } catch (...) {
+          // The pair is owned here until it is stored in the array; release both
+          // temporaries if either read throws first.
+          zval_dtor(&value);
+          zval_dtor(&key);
+          throw;
+        }
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
         } else {
@@ -807,7 +817,15 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       array_init(return_value);
       for (uint32_t s = 0; s < size; ++s) {
         zval value;
-        binary_deserialize(type, transport, &value, elemspec, depth + 1);
+        ZVAL_UNDEF(&value);
+        try {
+          binary_deserialize(type, transport, &value, elemspec, depth + 1);
+        } catch (...) {
+          // The element is owned here until it is appended; release a partially
+          // built element if the read throws first.
+          zval_dtor(&value);
+          throw;
+        }
         zend_hash_next_index_insert(Z_ARR_P(return_value), &value);
       }
       return;
@@ -830,8 +848,16 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
       for (uint32_t s = 0; s < size; ++s) {
         zval key, value;
         ZVAL_TRUE(&value);
+        ZVAL_UNDEF(&key);
 
-        binary_deserialize(type, transport, &key, elemspec, depth + 1);
+        try {
+          binary_deserialize(type, transport, &key, elemspec, depth + 1);
+        } catch (...) {
+          // The key is owned here until it is stored in the array; release a
+          // partially built key if the read throws first.
+          zval_dtor(&key);
+          throw;
+        }
 
         if (Z_TYPE(key) == IS_LONG) {
           zend_hash_index_update(Z_ARR_P(return_value), Z_LVAL(key), &value);
@@ -1153,7 +1179,14 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
         zval rv;
         ZVAL_UNDEF(&rv);
 
-        binary_deserialize(ttype, transport, &rv, fieldspec, depth + 1);
+        try {
+          binary_deserialize(ttype, transport, &rv, fieldspec, depth + 1);
+        } catch (...) {
+          // The field value is owned here until it is stored on the object;
+          // release a partially built value if the read throws first.
+          zval_ptr_dtor(&rv);
+          throw;
+        }
         zend_update_property(ce, Z4_OBJ_P(zthis), varname, strlen(varname), &rv);
 
         zval_ptr_dtor(&rv);
@@ -1357,6 +1390,7 @@ PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin) {
     // ex will be destructed, so copy to a zval that zend_throw_exception_object can take ownership of
     zval myex;
     ZVAL_COPY(&myex, ex);
+    zval_dtor(return_value);
     zend_throw_exception_object(&myex);
     RETURN_NULL();
   } catch (const std::exception& ex) {
