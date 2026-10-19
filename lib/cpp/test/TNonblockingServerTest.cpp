@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <atomic>
 #include <climits>
+#include <csignal>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -504,6 +505,215 @@ BOOST_AUTO_TEST_CASE(allocation_failure_on_the_io_thread_does_not_end_the_proces
   BOOST_CHECK_MESSAGE(WIFEXITED(status),
                       "the server process was killed by a signal rather than exiting");
   if (WIFEXITED(status)) {
+    BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
+  }
+}
+
+// A server transport whose first accept() fails the way a transient ::accept()
+// error does. TNonblockingServerSocket turns every ::accept() failure into a
+// TTransportException(UNKNOWN), and that exception is raised from inside
+// libevent's listen callback. libevent is a C library, so an exception unwinding
+// out of the callback reaches std::terminate rather than a handler, and a single
+// such failure used to take the only listener down with it. The listener now
+// logs the one failure and keeps accepting, exactly as the per-connection
+// eventHandler()/notifyHandler() callbacks already do.
+class AcceptFailsOnceServerSocket : public transport::TNonblockingServerSocket {
+public:
+  explicit AcceptFailsOnceServerSocket(int port)
+    : transport::TNonblockingServerSocket(port), acceptCalls_(0), injectedFailures_(0) {}
+
+  int acceptCalls() const { return acceptCalls_.load(); }
+  int injectedFailures() const { return injectedFailures_.load(); }
+
+protected:
+  shared_ptr<transport::TSocket> acceptImpl() override {
+    ++acceptCalls_;
+    if (injectedFailures_.load() == 0) {
+      ++injectedFailures_;
+      throw transport::TTransportException(transport::TTransportException::UNKNOWN, "accept()");
+    }
+    return transport::TNonblockingServerSocket::acceptImpl();
+  }
+
+private:
+  std::atomic<int> acceptCalls_;
+  std::atomic<int> injectedFailures_;
+};
+
+// Run in a child, because before the fix the process aborts and that cannot be
+// caught. The child reaching _exit(0) is the assertion. It gets there only if
+// exactly one accept failure was injected, a later accept still ran (so the
+// listener did not stop), and a client was then served a full round-trip.
+BOOST_AUTO_TEST_CASE(transient_accept_error_does_not_end_the_server) {
+  pid_t pid = fork();
+  BOOST_REQUIRE_NE(pid, -1);
+
+  if (pid == 0) {
+    // The forked child must not run the Boost test monitor's signal handling:
+    // when the listener stops on the unfixed tree it aborts, and the parent
+    // should read that as a clean signal death rather than Boost's recovery path.
+    ::signal(SIGABRT, SIG_DFL);
+
+    auto socket = make_shared<AcceptFailsOnceServerSocket>(0);
+    auto processor = make_shared<test::ParentServiceProcessor>(make_shared<Handler>());
+    auto child = make_shared<server::TNonblockingServer>(processor, socket);
+
+    struct Serve : public Runnable {
+      shared_ptr<server::TNonblockingServer> server;
+      void run() override { server->serve(); }
+    };
+    auto runnable = make_shared<Serve>();
+    runnable->server = child;
+    auto factory = make_shared<ThreadFactory>(false);
+    auto serveThread = factory->newThread(runnable);
+    serveThread->start();
+
+    for (int i = 0; i < 1000 && child->getListenPort() == 0; ++i) {
+      THRIFT_SLEEP_USEC(5000);
+    }
+    if (child->getListenPort() == 0) {
+      _exit(2);
+    }
+    int port = child->getListenPort();
+
+    // The first accept() this connection triggers is the injected failure.
+    // Before the fix the listener is gone by now and this round-trip never
+    // completes; after the fix the failure is logged, the level-triggered listen
+    // event fires again, the retry accepts the connection, and the call is
+    // served.
+    bool served = false;
+    try {
+      auto client = make_shared<transport::TSocket>("localhost", port);
+      client->setRecvTimeout(10000);
+      client->open();
+      test::ParentServiceClient parent(make_shared<protocol::TBinaryProtocol>(
+          make_shared<transport::TFramedTransport>(client)));
+      parent.addString("after a transient accept error");
+      std::vector<std::string> strings;
+      parent.getStrings(strings);
+      served = (strings.size() == 1 && strings[0] == "after a transient accept error");
+      client->close();
+    } catch (...) {
+      _exit(3);
+    }
+
+    if (!served) {
+      _exit(4);
+    }
+    if (socket->injectedFailures() != 1) {
+      _exit(5);
+    }
+    if (socket->acceptCalls() < 2) {
+      _exit(6);
+    }
+
+    child->stop();
+    serveThread->join();
+    _exit(0);
+  }
+
+  int status = 0;
+  BOOST_REQUIRE_NE(waitpid(pid, &status, 0), -1);
+  if (WIFSIGNALED(status)) {
+    BOOST_ERROR("the server process was killed by signal "
+                << WTERMSIG(status) << "; a transient accept error ended the listener");
+  } else {
+    BOOST_REQUIRE(WIFEXITED(status));
+    BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
+  }
+}
+
+// A server event handler whose createContext() throws the first time. The
+// nonblocking server calls createContext() while setting an accepted connection
+// up (TConnection::init(), reached from handleEvent() on the listener thread),
+// so this exercises the second part of the listener's boundary: a throw after a
+// successful accept() must close that one connection and keep the listener
+// running, not unwind libevent.
+class ThrowsFirstCreateContextHandler : public TServerEventHandler {
+public:
+  ThrowsFirstCreateContextHandler() : thrown_(false) {}
+  void* createContext(shared_ptr<protocol::TProtocol>,
+                      shared_ptr<protocol::TProtocol>) override {
+    if (!thrown_.exchange(true)) {
+      throw std::runtime_error("createContext failed");
+    }
+    return nullptr;
+  }
+  std::atomic<bool> thrown_;
+};
+
+BOOST_AUTO_TEST_CASE(createContext_failure_does_not_end_the_server) {
+  pid_t pid = fork();
+  BOOST_REQUIRE_NE(pid, -1);
+
+  if (pid == 0) {
+    ::signal(SIGABRT, SIG_DFL);
+
+    auto socket = make_shared<transport::TNonblockingServerSocket>(0);
+    auto processor = make_shared<test::ParentServiceProcessor>(make_shared<Handler>());
+    auto child = make_shared<server::TNonblockingServer>(processor, socket);
+    auto handler = make_shared<ThrowsFirstCreateContextHandler>();
+    child->setServerEventHandler(handler);
+
+    struct Serve : public Runnable {
+      shared_ptr<server::TNonblockingServer> server;
+      void run() override { server->serve(); }
+    };
+    auto runnable = make_shared<Serve>();
+    runnable->server = child;
+    auto factory = make_shared<ThreadFactory>(false);
+    auto serveThread = factory->newThread(runnable);
+    serveThread->start();
+
+    for (int i = 0; i < 1000 && child->getListenPort() == 0; ++i) {
+      THRIFT_SLEEP_USEC(5000);
+    }
+    if (child->getListenPort() == 0) {
+      _exit(2);
+    }
+    int port = child->getListenPort();
+
+    // The first connection the server sets up throws in createContext(). Before
+    // the fix that unwinds libevent and aborts; after it the connection is
+    // closed and the listener keeps running. Retry a full round-trip: the first
+    // attempt's connection is dropped, a later one is served.
+    bool served = false;
+    for (int attempt = 0; attempt < 10 && !served; ++attempt) {
+      try {
+        auto client = make_shared<transport::TSocket>("localhost", port);
+        client->setRecvTimeout(5000);
+        client->open();
+        test::ParentServiceClient parent(make_shared<protocol::TBinaryProtocol>(
+            make_shared<transport::TFramedTransport>(client)));
+        parent.addString("after a createContext failure");
+        std::vector<std::string> strings;
+        parent.getStrings(strings);
+        served = (strings.size() == 1 && strings[0] == "after a createContext failure");
+        client->close();
+      } catch (...) {
+        THRIFT_SLEEP_USEC(50000);
+      }
+    }
+
+    if (!served) {
+      _exit(4);
+    }
+    if (!handler->thrown_.load()) {
+      _exit(5);
+    }
+
+    child->stop();
+    serveThread->join();
+    _exit(0);
+  }
+
+  int status = 0;
+  BOOST_REQUIRE_NE(waitpid(pid, &status, 0), -1);
+  if (WIFSIGNALED(status)) {
+    BOOST_ERROR("the server process was killed by signal "
+                << WTERMSIG(status) << "; a failed connection setup ended the listener");
+  } else {
+    BOOST_REQUIRE(WIFEXITED(status));
     BOOST_CHECK_EQUAL(WEXITSTATUS(status), 0);
   }
 }

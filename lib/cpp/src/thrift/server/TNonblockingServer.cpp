@@ -1032,54 +1032,91 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
   // Going to accept a new client socket
   std::shared_ptr<TSocket> clientSocket;
 
-  clientSocket = serverTransport_->accept();
-  if (clientSocket) {
-    // If we're overloaded, take action here
-    if (overloadAction_ != T_OVERLOAD_NO_ACTION && serverOverloaded()) {
-      Guard g(connMutex_);
-      nConnectionsDropped_++;
-      nTotalConnectionsDropped_++;
-      if (overloadAction_ == T_OVERLOAD_CLOSE_ON_ACCEPT) {
-        clientSocket->close();
-        return;
-      } else if (overloadAction_ == T_OVERLOAD_DRAIN_TASK_QUEUE) {
-        if (!drainPendingTask()) {
-          // Nothing left to discard, so we drop connection instead.
+  // libevent is C: an exception unwinding out of this callback does not reach a
+  // handler, it reaches std::terminate and the only listener loop ends. A failed
+  // ::accept() arrives here as a TTransportException -- that is one connection
+  // not taken, not a reason to stop serving the rest -- so it is logged and
+  // skipped, the same boundary eventHandler() and notifyHandler() already put
+  // around their own work.
+  try {
+    clientSocket = serverTransport_->accept();
+  } catch (const std::exception& x) {
+    TOutput::instance().printf("TNonblockingServer: %s while accepting a connection, continuing to listen.",
+                               x.what());
+    return;
+  } catch (...) {
+    TOutput::instance()("TNonblockingServer: unknown exception while accepting a connection, continuing to listen.");
+    return;
+  }
+
+  // Setting the accepted connection up can throw too (growing a buffer, or the
+  // application's createContext). Keep the pointer outside the try so that one
+  // connection can be closed rather than leaked, and keep the listener running.
+  TConnection* clientConnection = nullptr;
+  try {
+    if (clientSocket) {
+      // If we're overloaded, take action here
+      if (overloadAction_ != T_OVERLOAD_NO_ACTION && serverOverloaded()) {
+        Guard g(connMutex_);
+        nConnectionsDropped_++;
+        nTotalConnectionsDropped_++;
+        if (overloadAction_ == T_OVERLOAD_CLOSE_ON_ACCEPT) {
           clientSocket->close();
           return;
+        } else if (overloadAction_ == T_OVERLOAD_DRAIN_TASK_QUEUE) {
+          if (!drainPendingTask()) {
+            // Nothing left to discard, so we drop connection instead.
+            clientSocket->close();
+            return;
+          }
+        }
+      }
+
+      // Create a new TConnection for this client socket.
+      clientConnection = createConnection(clientSocket);
+
+      // Fail fast if we could not create a TConnection object
+      if (clientConnection == nullptr) {
+        TOutput::instance().printf("thriftServerEventHandler: failed TConnection factory");
+        clientSocket->close();
+        return;
+      }
+
+      /*
+       * Either notify the ioThread that is assigned this connection to
+       * start processing, or if it is us, we'll just ask this
+       * connection to do its initial state change here.
+       *
+       * (We need to avoid writing to our own notification pipe, to
+       * avoid possible deadlocks if the pipe is full.)
+       *
+       * The IO thread #0 is the only one that handles these listen
+       * events, so unless the connection has been assigned to thread #0
+       * we know it's not on our thread.
+       */
+      if (clientConnection->getIOThreadNumber() == 0) {
+        clientConnection->transition();
+      } else {
+        if (!clientConnection->notifyIOThread()) {
+          TOutput::instance().perror("[ERROR] notifyIOThread failed on fresh connection, closing", errno);
+          clientConnection->close();
         }
       }
     }
-
-    // Create a new TConnection for this client socket.
-    TConnection* clientConnection = createConnection(clientSocket);
-
-    // Fail fast if we could not create a TConnection object
-    if (clientConnection == nullptr) {
-      TOutput::instance().printf("thriftServerEventHandler: failed TConnection factory");
+  } catch (const std::exception& x) {
+    TOutput::instance().printf("TNonblockingServer: %s setting up an accepted connection, continuing to listen.",
+                               x.what());
+    if (clientConnection != nullptr) {
+      clientConnection->close();
+    } else if (clientSocket) {
       clientSocket->close();
-      return;
     }
-
-    /*
-     * Either notify the ioThread that is assigned this connection to
-     * start processing, or if it is us, we'll just ask this
-     * connection to do its initial state change here.
-     *
-     * (We need to avoid writing to our own notification pipe, to
-     * avoid possible deadlocks if the pipe is full.)
-     *
-     * The IO thread #0 is the only one that handles these listen
-     * events, so unless the connection has been assigned to thread #0
-     * we know it's not on our thread.
-     */
-    if (clientConnection->getIOThreadNumber() == 0) {
-      clientConnection->transition();
-    } else {
-      if (!clientConnection->notifyIOThread()) {
-        TOutput::instance().perror("[ERROR] notifyIOThread failed on fresh connection, closing", errno);
-        clientConnection->close();
-      }
+  } catch (...) {
+    TOutput::instance()("TNonblockingServer: unknown exception setting up an accepted connection, continuing to listen.");
+    if (clientConnection != nullptr) {
+      clientConnection->close();
+    } else if (clientSocket) {
+      clientSocket->close();
     }
   }
 }
