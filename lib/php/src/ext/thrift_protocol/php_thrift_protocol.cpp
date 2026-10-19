@@ -523,7 +523,10 @@ void throw_tprotocolexception(const char* what, long errorcode) {
   zval_dtor(&zwhat);
   zval_dtor(&zerrorcode);
 
-  throw PHPExceptionWrapper(&ex);
+  // Hand the object to the wrapper, which takes over this reference; passing
+  // the object rather than its zval selects the overload that does not copy,
+  // so the local is left with nothing to release.
+  throw PHPExceptionWrapper(Z_OBJ(ex));
 }
 
 // A string or binary field carries its length on the wire. Hold it to the
@@ -1368,7 +1371,10 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
         zval_ptr_dtor(&ex);
         throw;
       }
-      throw PHPExceptionWrapper(&ex);
+      // Hand the object to the wrapper, which takes over this reference; passing
+      // the object rather than its zval selects the overload that does not copy,
+      // so the local is left with nothing to release.
+      throw PHPExceptionWrapper(Z_OBJ(ex));
     }
 
     createObject(ZSTR_VAL(obj_typename), return_value);
