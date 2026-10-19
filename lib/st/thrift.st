@@ -195,7 +195,7 @@ type: anInteger
 	type := anInteger! !
 
 Object subclass: #TProtocol
-	instanceVariableNames: 'transport recursionDepth stringSizeLimit'
+	instanceVariableNames: 'transport recursionDepth stringSizeLimit containerSizeLimit'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'Thrift-Protocol'!
@@ -265,6 +265,7 @@ readListBegin
 	etype := self readByte.
 	sz := self readI32.
 	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
+	self checkContainerSize: sz.
 	^ TList new
 		elemType: etype;
 		size: sz! !
@@ -276,6 +277,7 @@ readMapBegin
 	vtype := self readByte.
 	sz := self readI32.
 	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
+	self checkContainerSize: sz.
 	^ TMap new
 		keyType: ktype;
 		valueType: vtype;
@@ -304,6 +306,7 @@ readSetBegin
 	etype := self readByte.
 	sz := self readI32.
 	sz < 0 ifTrue: [TProtocolError signalWithCode: TProtocolError negativeSize].
+	self checkContainerSize: sz.
 	^ TSet new
 		elemType: etype;
 		size: sz! !
@@ -479,7 +482,10 @@ skip: aType
 
 !TProtocol methodsFor: 'reading' stamp: 'pc 10/26/2007 21:34'!
 skipType: aType
-	aType = TType stop ifTrue: [^ self].
+	"stop carries no payload and is not valid as a field or element type to
+	 skip; like any unrecognised type it is refused, so a container header
+	 cannot make skip iterate a declared count while reading nothing."
+	aType = TType stop ifTrue: [TProtocolError signalWithCode: TProtocolError invalidData].
 	aType = TType bool ifTrue: [^ self readBool].
 	aType = TType byte ifTrue: [^ self readByte].
 	aType = TType i16 ifTrue: [^ self readI16].
@@ -509,7 +515,7 @@ skipType: aType
 		set size timesRepeat: [self skip: set elemType].
 		^ self readSetEnd].
 
-	self error: 'Unknown type'! !
+	TProtocolError signalWithCode: TProtocolError invalidData! !
 
 !TProtocol methodsFor: 'as yet unclassified' stamp: 'pc 10/24/2007 23:02'!
 transport
@@ -546,6 +552,24 @@ stringSizeLimit: anInteger
 !TProtocol methodsFor: 'as yet unclassified'!
 checkStringSize: anInteger
 	anInteger > self stringSizeLimit ifTrue: [
+		TProtocolError signalWithCode: TProtocolError sizeLimit]! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+containerSizeLimit
+	"Largest list, set or map this protocol will read. The declared count is a
+	 number the peer chose, and for an element type that reads nothing each
+	 iteration would cost nothing on the wire, so the count is bounded before
+	 the elements are read. 16 MB is the value the other bindings use."
+	^ containerSizeLimit ifNil: [16384000]! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+containerSizeLimit: anInteger
+	anInteger > 0 ifFalse: [self error: 'containerSizeLimit must be positive'].
+	containerSizeLimit := anInteger! !
+
+!TProtocol methodsFor: 'as yet unclassified'!
+checkContainerSize: anInteger
+	anInteger > self containerSizeLimit ifTrue: [
 		TProtocolError signalWithCode: TProtocolError sizeLimit]! !
 
 !TProtocol methodsFor: 'writing' stamp: 'pc 10/24/2007 19:37'!

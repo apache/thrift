@@ -40,6 +40,7 @@ set -euo pipefail
 # Update these when adding or removing a test.
 declare -A EXPECTED=(
     [TProtocolStringSizeLimitTest]=11
+    [TProtocolContainerSizeLimitTest]=13
     [TProtocolRecursionDepthTest]=6
     [TTransportReadAllTest]=6
     [TProtocolShortReadTest]=10
