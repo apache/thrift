@@ -242,7 +242,6 @@ struct
         | T_I64 -> ignore self#readI64
         | T_DOUBLE -> ignore self#readDouble
         | T_STRING -> ignore self#readString
-        | T_UTF7 -> ()
         | T_STRUCT -> ignore ((ignore self#readStructBegin);
                               (try
                                    while true do
@@ -271,8 +270,13 @@ struct
                                 self#skip t
                               done;
                               self#readListEnd)
-        | T_UTF8 -> ()
-        | T_UTF16 -> ()
+        (* A skip target that reads nothing lets a container of such elements be
+           iterated over its whole declared count without consuming anything
+           from the transport. T_UTF8/T_UTF16 (this module's names for wire 16
+           and 17) returned here without reading; they are now refused like any
+           other unhandled type. Note wire 16 is uuid in current Thrift, which
+           this module predates and cannot read, so refusing it is correct where
+           a zero-byte return would desync the stream. *)
         | _ -> raise (E (INVALID_DATA, "Invalid data"))
   end
 

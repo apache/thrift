@@ -52,7 +52,12 @@ let version_1 = 0x80010000l
    Same value TFramedTransport uses for a frame. *)
 let default_max_length = 16384000
 
-class t ?(max_length=default_max_length) trans =
+(* The largest list, set or map accepted unless the caller says otherwise. A
+   declared element count above this is refused before the elements are read.
+   Same value the string and frame caps use. *)
+let default_max_container_size = 16384000
+
+class t ?(max_length=default_max_length) ?(max_container_size=default_max_container_size) trans =
 object (self)
   inherit P.t trans
   val ibyte = String.create 8
@@ -165,18 +170,30 @@ object (self)
     let vt = vt (self#readByte) in
     let sz = Int32.to_int self#readI32 in
     if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    if sz > max_container_size
+    then raise (P.E (P.SIZE_LIMIT,
+                     Printf.sprintf "Container size (%i) larger than max size (%i)"
+                       sz max_container_size));
     (kt,vt, sz)
   method readMapEnd = ()
   method readListBegin =
     let t = vt (self#readByte) in
     let sz = Int32.to_int self#readI32 in
     if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    if sz > max_container_size
+    then raise (P.E (P.SIZE_LIMIT,
+                     Printf.sprintf "Container size (%i) larger than max size (%i)"
+                       sz max_container_size));
     (t, sz)
   method readListEnd = ()
   method readSetBegin =
     let t = vt (self#readByte) in
     let sz = Int32.to_int self#readI32 in
     if sz < 0 then raise (P.E (P.NEGATIVE_SIZE, "Negative size"));
+    if sz > max_container_size
+    then raise (P.E (P.SIZE_LIMIT,
+                     Printf.sprintf "Container size (%i) larger than max size (%i)"
+                       sz max_container_size));
     (t, sz);
   method readSetEnd = ()
 end

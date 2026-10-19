@@ -26,13 +26,17 @@ OCAMLC = ocamlc -thread unix.cma threads.cma -I $(SRC)
 
 all: test
 
-test: test_recursion_depth
+test: test_recursion_depth test_skip_container
 	./test_recursion_depth
+	./test_skip_container
 
 test_recursion_depth: $(SRC)/Thrift.ml test_recursion_depth.ml
 	$(OCAMLC) $(SRC)/Thrift.ml test_recursion_depth.ml -o test_recursion_depth
 
+test_skip_container: $(SRC)/Thrift.ml test_skip_container.ml
+	$(OCAMLC) $(SRC)/Thrift.ml test_skip_container.ml -o test_skip_container
+
 clean:
-	rm -f *.cm* *.o test_recursion_depth $(SRC)/Thrift.cm* $(SRC)/Thrift.o
+	rm -f *.cm* *.o test_recursion_depth test_skip_container $(SRC)/Thrift.cm* $(SRC)/Thrift.o
 
 .PHONY: all test clean
