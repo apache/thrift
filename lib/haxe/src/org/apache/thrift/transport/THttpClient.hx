@@ -70,8 +70,10 @@ class THttpClient extends TEndpointTransport {
             throw new TTransportException(TTransportException.UNKNOWN, "Response buffer is empty, no request.");
         }
 
+        // data is a fresh scratch buffer of length len, filled from index 0; off is the caller's
+        // running offset into the logical stream, honoured by appending to buf (as in TFramedTransport).
         var data =Bytes.alloc(len);
-        len = responseBuffer_.readBytes(data, off, len);
+        len = responseBuffer_.readBytes(data, 0, len);
         buf.addBytes(data,0,len);
         CountConsumedMessageBytes(len);
         return len;

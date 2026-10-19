@@ -29,6 +29,7 @@ import tests.MultiplexTest;
 import tests.FramedTransportTest;
 import tests.RecursionLimitTest;
 import tests.StreamTest;
+import tests.TransportPartialReadTest;
 import thrift.test.*;
 
 enum WhatTests
@@ -89,6 +90,7 @@ class Main
 				case Normal:
 					#if sys
 					tests.StreamTest.Run(server);
+					tests.TransportPartialReadTest.Run(server);
 					tests.RecursionLimitTest.Run(server);
 					tests.FramedTransportTest.Run(server);
 					#end

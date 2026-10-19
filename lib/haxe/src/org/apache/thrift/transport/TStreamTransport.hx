@@ -73,8 +73,10 @@ class TStreamTransport extends TEndpointTransport {
                                              "Cannot read from null InputStream");
         }
 
+        // data is a fresh scratch buffer of length len, always filled from index 0; the caller's
+        // offset is honoured by appending to buf (an append-only BytesBuffer), as in TFramedTransport.
         var data : Bytes =  Bytes.alloc(len);
-        var size = InputStream.Read( data, off, len);
+        var size = InputStream.Read( data, 0, len);
         buf.addBytes( data, 0, size);
 
         // Charge the read against the message budget, as every other endpoint does.

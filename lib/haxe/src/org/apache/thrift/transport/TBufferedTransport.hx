@@ -84,9 +84,10 @@ class TBufferedTransport extends TLayeredTransport
                 // there is no point in buffering whenever the
                 // remaining length exceeds the buffer size
                 if ( len >= bufSize) {
+                    // read() appends straight into buf and returns the count; data is not touched
+                    // on this path, so there is nothing further to append here.
                     var got = InnerTransport.read( buf, off, len);
                     if (got > 0) {
-                        buf.addBytes(data, 0, got);
                         return got;
                     }
                 }
