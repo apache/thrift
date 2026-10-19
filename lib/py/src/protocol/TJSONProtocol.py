@@ -348,7 +348,9 @@ class TJSONProtocolBase(TProtocolBase):
         return ''.join(string)
 
     def isJSONNumeric(self, character):
-        return (True if NUMERIC_CHAR.find(character) != - 1 else False)
+        # A read at the end of the input returns b'', and NUMERIC_CHAR.find(b'')
+        # is 0, so guard against it: only a single byte can be a numeric char.
+        return (True if len(character) == 1 and NUMERIC_CHAR.find(character) != -1 else False)
 
     def readJSONQuotes(self):
         if (self.context.escapeNum()):

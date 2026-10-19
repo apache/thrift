@@ -46,6 +46,7 @@ py3-test: py3-build
 	$(PYTHON3) test/test_sasl_frame_size.py
 	$(PYTHON3) test/test_sasl_transport.py
 	$(PYTHON3) test/test_tornado_frame_size.py
+	$(PYTHON3) test/test_json_numeric_eof.py
 else
 py3-build:
 py3-test:
@@ -92,6 +93,7 @@ check-local: all py3-test
 	$(PYTHON) test/test_sasl_frame_size.py
 	$(PYTHON) test/test_sasl_transport.py
 	$(PYTHON) test/test_tornado_frame_size.py
+	$(PYTHON) test/test_json_numeric_eof.py
 
 
 clean-local:
