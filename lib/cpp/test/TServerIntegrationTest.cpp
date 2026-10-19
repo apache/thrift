@@ -534,3 +534,235 @@ BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+// A handler whose incrementGeneration() parks the worker until the test releases
+// it, so the single-worker pool can be driven into saturation on demand.
+class BlockingParentHandler : public ParentServiceIf {
+public:
+  BlockingParentHandler() : entered_(0), released_(false) {}
+
+  int32_t incrementGeneration() override {
+    {
+      Synchronized s(enteredMon_);
+      ++entered_;
+      enteredMon_.notifyAll();
+    }
+    {
+      Synchronized s(releaseMon_);
+      while (!released_) {
+        releaseMon_.waitForTimeRelative(200);
+      }
+    }
+    return 1;
+  }
+
+  int32_t getGeneration() override { return 0; }
+  void addString(const std::string&) override {}
+  void getStrings(std::vector<std::string>& _return) override { _return.clear(); }
+  void getDataWait(std::string& _return, const int32_t) override {
+    THRIFT_UNUSED_VARIABLE(_return);
+  }
+  void onewayWait() override {}
+  void exceptionWait(const std::string&) override {}
+  void unexpectedExceptionWait(const std::string&) override {}
+
+  // Blocks until at least n calls have entered the handler, or maxWaits lapse.
+  bool awaitEntered(int n, int maxWaits) {
+    Synchronized s(enteredMon_);
+    int waits = 0;
+    while (entered_ < n) {
+      if (waits++ >= maxWaits) {
+        return false;
+      }
+      enteredMon_.waitForTimeRelative(100);
+    }
+    return true;
+  }
+
+  void release() {
+    Synchronized s(releaseMon_);
+    released_ = true;
+    releaseMon_.notifyAll();
+  }
+
+private:
+  Monitor enteredMon_;
+  Monitor releaseMon_;
+  int entered_;
+  bool released_;
+};
+
+// When a TThreadPoolServer's ThreadManager::add() rejects a dispatch -- a full
+// pending queue with a non-blocking timeout gives TooManyPendingTasksException,
+// a positive timeout that lapses gives TimedOutException, both derived from
+// TException rather than TTransportException -- the exception used to escape
+// serve() and stop the whole server. serve() now drops just that one client and
+// keeps accepting, like the Java TThreadPoolServer, which closes the latest
+// connection on a RejectedExecutionException and continues.
+//
+// Run serve() under a wrapper that records an escaping exception rather than
+// letting it reach std::terminate, so the two states are: serve() ended (before
+// the fix) versus serve() still accepting (after it).
+static void run_dispatch_rejection_case(int64_t dispatchTimeout) {
+  auto handler = make_shared<BlockingParentHandler>();
+  auto processor = make_shared<ParentServiceProcessor>(handler);
+
+  auto tm = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager(1, 1);
+  tm->threadFactory(make_shared<apache::thrift::concurrency::ThreadFactory>());
+  tm->start();
+
+  auto serverSocket = make_shared<TServerSocket>("localhost", 0);
+  auto server = make_shared<TThreadPoolServer>(processor,
+                                               serverSocket,
+                                               make_shared<TTransportFactory>(),
+                                               make_shared<TBinaryProtocolFactory>(),
+                                               tm);
+  server->setTimeout(dispatchTimeout);
+
+  auto ready = make_shared<TServerReadyEventHandler>();
+  server->setServerEventHandler(ready);
+
+  std::atomic<bool> serveThrew(false);
+  boost::thread serveThread([&server, &serveThrew]() {
+    try {
+      server->serve();
+    } catch (...) {
+      serveThrew = true;
+    }
+  });
+
+  {
+    Synchronized sync(*ready);
+    int waits = 0;
+    while (!ready->isListening() && waits++ < 200) {
+      ready->waitForTimeRelative(50);
+    }
+  }
+  BOOST_REQUIRE(ready->isListening());
+  int port = serverSocket->getPort();
+  BOOST_REQUIRE_GT(port, 0);
+
+  auto connect = [port]() {
+    auto sock = make_shared<TSocket>("localhost", port);
+    sock->setConnTimeout(2000);
+    sock->setSendTimeout(2000);
+    sock->setRecvTimeout(2000);
+    sock->open();
+    return sock;
+  };
+
+  // Client A takes the one worker; its call parks in the handler.
+  auto sockA = connect();
+  {
+    ParentServiceClient clientA(make_shared<TBinaryProtocol>(sockA));
+    clientA.send_incrementGeneration();
+  }
+  BOOST_REQUIRE_MESSAGE(handler->awaitEntered(1, 50),
+                        "the single worker never picked up the first client");
+
+  // Fire more clients than the busy worker plus the one pending slot can hold.
+  // serve() accepts each and tries to dispatch it; the ones past the queue are
+  // rejected by ThreadManager::add().
+  std::vector<shared_ptr<TSocket> > fired;
+  for (int i = 0; i < 6; ++i) {
+    try {
+      auto s = connect();
+      ParentServiceClient c(make_shared<TBinaryProtocol>(s));
+      c.send_incrementGeneration();
+      fired.push_back(s);
+    } catch (...) {
+      // Once serve() is gone (before the fix) a later connect/send may fail.
+    }
+  }
+
+  // Give serve() time to accept and attempt to dispatch all of them. A positive
+  // dispatch timeout makes each rejection wait that long, so allow for several.
+  boost::this_thread::sleep(milliseconds(1500));
+
+  // Two-state assertion: before the fix a rejected dispatch escaped serve().
+  BOOST_CHECK_MESSAGE(!serveThrew, "a rejected dispatch ended the server");
+
+  // Non-vacuous: a rejected client is closed by the server, so at least one of
+  // the fired sockets reads end-of-stream. Only true if a rejection happened.
+  if (!serveThrew) {
+    int closed = 0;
+    for (const auto& s : fired) {
+      try {
+        uint8_t b[1];
+        if (s->read(b, 1) == 0) {
+          ++closed; // clean end-of-stream
+        }
+      } catch (const TTransportException& e) {
+        // The server drops the connection with the request still unread, which
+        // some platforms report to the client as a reset rather than a clean
+        // EOF. Either is a drop. Only the one still-queued client that is simply
+        // waiting (a receive timeout) is not.
+        if (e.getType() != TTransportException::TIMED_OUT) {
+          ++closed;
+        }
+      }
+    }
+    BOOST_CHECK_MESSAGE(closed > 0,
+                        "no client was dropped; the pool was not driven into rejection");
+  }
+
+  // Release the parked worker and drop the saturation connections. A connected
+  // client is served in a loop, so the single worker would otherwise stay parked
+  // on client A's idle keep-alive socket; closing them lets it drain and become
+  // free for a fresh client.
+  handler->release();
+  for (const auto& s : fired) {
+    try { s->close(); } catch (...) {}
+  }
+  try { sockA->close(); } catch (...) {}
+
+  // The server must now serve a fresh client.
+  if (!serveThrew) {
+    bool served = false;
+    for (int attempt = 0; attempt < 40 && !served; ++attempt) {
+      try {
+        auto z = connect();
+        ParentServiceClient cz(make_shared<TBinaryProtocol>(z));
+        served = (cz.incrementGeneration() != 0);
+        z->close();
+      } catch (...) {
+        boost::this_thread::sleep(milliseconds(50));
+      }
+    }
+    BOOST_CHECK_MESSAGE(served, "the server did not serve a fresh client after the rejection");
+  }
+
+  // Teardown: stop the server, join, then stop the pool.
+  server->stop();
+  serveThread.join();
+  tm->stop();
+
+  // The concurrent-client count must settle to exactly zero. A negative value
+  // would mean a dropped client was counted down twice -- its deleter already
+  // adjusts the count when the rejected client goes out of scope in serve().
+  int64_t count = -1;
+  for (int i = 0; i < 300; ++i) {
+    count = server->getConcurrentClientCount();
+    if (count == 0) {
+      break;
+    }
+    boost::this_thread::sleep(milliseconds(10));
+  }
+  BOOST_CHECK_EQUAL(count, 0);
+}
+
+BOOST_AUTO_TEST_SUITE(dispatch_rejection)
+
+// Non-blocking dispatch (timeout -1): a full pending queue is rejected at once
+// with TooManyPendingTasksException.
+BOOST_AUTO_TEST_CASE(too_many_pending_tasks_does_not_end_the_server) {
+  run_dispatch_rejection_case(-1);
+}
+
+// Positive dispatch timeout: a pending queue that stays full past the timeout is
+// rejected with TimedOutException.
+BOOST_AUTO_TEST_CASE(dispatch_timeout_does_not_end_the_server) {
+  run_dispatch_rejection_case(100);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

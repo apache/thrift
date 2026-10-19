@@ -18,12 +18,15 @@
  */
 
 #include <thrift/server/TThreadPoolServer.h>
+#include <thrift/concurrency/Exception.h>
 
 namespace apache {
 namespace thrift {
 namespace server {
 
 using apache::thrift::concurrency::ThreadManager;
+using apache::thrift::concurrency::TimedOutException;
+using apache::thrift::concurrency::TooManyPendingTasksException;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
 using apache::thrift::transport::TServerTransport;
@@ -120,7 +123,23 @@ TThreadPoolServer::getThreadManager() const {
 }
 
 void TThreadPoolServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
-  threadManager_->add(pClient, getTimeout(), getTaskExpiration());
+  try {
+    threadManager_->add(pClient, getTimeout(), getTaskExpiration());
+  } catch (const TooManyPendingTasksException&) {
+    // The pool cannot take another task right now (the pending queue is full).
+    // Drop this one client and keep serving the rest, the way the Java
+    // TThreadPoolServer closes the latest connection on a rejected execution and
+    // continues. pClient's deleter adjusts the concurrent-client count when the
+    // rejected client goes out of scope in the accept loop, so none is touched
+    // here.
+    TOutput::instance()(
+        "TThreadPoolServer: thread pool saturated, closing one client and continuing to serve.");
+  } catch (const TimedOutException&) {
+    // A non-blocking or timed add() that could not enqueue the task; handle it
+    // the same way as a full queue.
+    TOutput::instance()(
+        "TThreadPoolServer: thread pool saturated, closing one client and continuing to serve.");
+  }
 }
 
 void TThreadPoolServer::onClientDisconnected(TConnectedClient*) {
