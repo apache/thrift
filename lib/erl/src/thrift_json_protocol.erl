@@ -479,6 +479,11 @@ expect(#json_protocol{jsx = {event, {Type, Data} = Ev, [Next | Rest]}} = State, 
         false ->
             {NextState, {error, {unexpected_json_event, Ev}}}
     end;
+%% No event is left after the current one: the message ran out before the
+%% expected token, which a declared count larger than the elements present
+%% leads to. Report it, rather than wrapping the last event over and over.
+expect(#json_protocol{jsx = {event, Event, []}} = State, _ExpectedEvent) ->
+    {State, {error, {unexpected_end_of_json, Event}}};
 expect(#json_protocol{jsx = {event, Event, Next}} = State, ExpectedEvent) ->
     expect(State#json_protocol{jsx = {event, {Event, none}, Next}}, ExpectedEvent).
 

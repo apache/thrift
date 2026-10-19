@@ -343,6 +343,82 @@ message_name_test() ->
         thrift_protocol:read(new_protocol(Over), message_begin)
     ).
 
+%%%% Container element count %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Reads Bytes the way a server does for an unknown method's arguments:
+%% message_begin, then skip over the arguments as a struct, then message_end.
+%% Any error raised along the way is returned as a value, so a caller can tell
+%% a read that ended from one that did not.
+skip_arguments(Bytes) ->
+    Protocol0 = new_protocol(Bytes),
+    try
+        {Protocol1, #protocol_message_begin{}} =
+            thrift_protocol:read(Protocol0, message_begin),
+        {Protocol2, ok} = thrift_protocol:skip(Protocol1, struct),
+        {_Protocol3, ok} = thrift_protocol:read(Protocol2, message_end),
+        ok
+    catch
+        Class:Reason -> {raised, Class, Reason}
+    end.
+
+%% Runs Fun in a process with a bounded heap, waiting a bounded time for it.
+%% {returned, Value} once it has returned, down if it was stopped for growing
+%% past the heap, never_returned if it did neither in time.
+bounded(Fun, HeapWords, Timeout) ->
+    Parent = self(),
+    {Pid, Ref} = spawn_opt(
+        fun() -> Parent ! {returned, self(), Fun()} end,
+        [monitor, {max_heap_size, #{size => HeapWords, kill => true, error_logger => false}}]
+    ),
+    receive
+        {returned, Pid, Value} ->
+            erlang:demonitor(Ref, [flush]),
+            {returned, Value};
+        {'DOWN', Ref, process, Pid, _Reason} ->
+            down
+    after Timeout ->
+        exit(Pid, kill),
+        erlang:demonitor(Ref, [flush]),
+        never_returned
+    end.
+
+%% A list or set that declares more elements than it carries runs the reader
+%% out of events while skip is still reading them. The read has to end, with an
+%% error, in bounded time and bounded memory; a container whose declared count
+%% matches the elements present still reads.
+oversized_container_count_test_() ->
+    Heap = 8000000,
+    Timeout = 5000,
+    Oversized = [
+        {"set declares 3, carries 0", <<"[1,\"m\",1,0,{\"1\":{\"set\":[\"i32\",3]}}]">>},
+        {"list declares 3, carries 0", <<"[1,\"m\",1,0,{\"1\":{\"lst\":[\"i32\",3]}}]">>}
+    ],
+    Matched = [
+        {"set declares 3, carries 3", <<"[1,\"m\",1,0,{\"1\":{\"set\":[\"i32\",3,1,2,3]}}]">>},
+        {"list declares 3, carries 3", <<"[1,\"m\",1,0,{\"1\":{\"lst\":[\"i32\",3,1,2,3]}}]">>}
+    ],
+    [
+        {Title,
+            {timeout, 30,
+                ?_test(begin
+                    Outcome = bounded(fun() -> skip_arguments(Bytes) end, Heap, Timeout),
+                    ?assertMatch({returned, _}, Outcome),
+                    ?assertNotMatch({returned, ok}, Outcome)
+                end)}}
+     || {Title, Bytes} <- Oversized
+    ] ++
+        [
+            {Title,
+                {timeout, 30,
+                    ?_test(
+                        ?assertEqual(
+                            {returned, ok},
+                            bounded(fun() -> skip_arguments(Bytes) end, Heap, Timeout)
+                        )
+                    )}}
+         || {Title, Bytes} <- Matched
+        ].
+
 %%%% Over a socket %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 handle_function(_Function, Args) -> {reply, element(1, Args)}.
