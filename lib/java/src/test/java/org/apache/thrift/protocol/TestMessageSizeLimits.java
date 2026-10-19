@@ -19,10 +19,13 @@
 package org.apache.thrift.protocol;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.AutoExpandingBufferReadTransport;
@@ -120,6 +123,131 @@ public class TestMessageSizeLimits {
         TProtocolException.class,
         proto::readBinary,
         "TCompactProtocol stringLengthLimit must also gate readBinary, not just readString");
+  }
+
+  // The skip path (TProtocol.skip, used by TDeserializer and by callers that skip unknown fields)
+  // must apply the same length check as the read path before consuming a declared string/binary
+  // length. The following tests exercise it through the public skip() entry point.
+
+  @Test
+  public void testBinaryProtocol_skipEnforcesStringLengthLimit() throws Exception {
+    // 100-byte string, all present, with the protocol limited to 10 bytes per string.
+    byte[] buf = encodeBinaryString(repeat('A', 100));
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TBinaryProtocol proto = new TBinaryProtocol(transport, 10L, -1L, false, true);
+
+    TProtocolException e =
+        assertThrows(
+            TProtocolException.class,
+            () -> proto.skip(TType.STRING),
+            "skipping a string longer than stringLengthLimit must be refused");
+    assertEquals(TProtocolException.SIZE_LIMIT, e.getType());
+    assertEquals(
+        4,
+        transport.getBufferPosition(),
+        "only the 4-byte length may be consumed before the declared size is refused");
+  }
+
+  @Test
+  public void testBinaryProtocol_skipAllowsStringWithinLimit() throws Exception {
+    byte[] buf = encodeBinaryString(repeat('A', 10));
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TBinaryProtocol proto = new TBinaryProtocol(transport, 10L, -1L, false, true);
+
+    assertDoesNotThrow(
+        () -> proto.skip(TType.STRING), "a string within the limit must still be skippable");
+    assertEquals(14, transport.getBufferPosition(), "the whole field should have been skipped");
+  }
+
+  @Test
+  public void testCompactProtocol_skipEnforcesStringLengthLimit() throws Exception {
+    byte[] buf = encodeCompactString(repeat('A', 100));
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TCompactProtocol proto = new TCompactProtocol(transport, 10L, -1L);
+
+    TProtocolException e =
+        assertThrows(
+            TProtocolException.class,
+            () -> proto.skip(TType.STRING),
+            "TCompactProtocol must refuse skipping a string longer than stringLengthLimit");
+    assertEquals(TProtocolException.SIZE_LIMIT, e.getType());
+    assertEquals(
+        1,
+        transport.getBufferPosition(),
+        "only the 1-byte length may be consumed before the declared size is refused");
+  }
+
+  @Test
+  public void testCompactProtocol_skipAllowsStringWithinLimit() throws Exception {
+    byte[] buf = encodeCompactString(repeat('A', 10));
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TCompactProtocol proto = new TCompactProtocol(transport, 10L, -1L);
+
+    assertDoesNotThrow(
+        () -> proto.skip(TType.STRING), "a string within the limit must still be skippable");
+    assertEquals(11, transport.getBufferPosition(), "the whole field should have been skipped");
+  }
+
+  @Test
+  public void testBinaryProtocol_skipChecksReadBytesAvailable() throws Exception {
+    // Default protocol (no stringLengthLimit). A 4-byte length declares ~1 GiB, but only 300
+    // payload bytes follow. The declared size exceeds the remaining budget, so it must be refused
+    // up front rather than after draining the bytes that are present.
+    byte[] buf = new byte[4 + 300];
+    int declared = 0x40000000;
+    buf[0] = (byte) (declared >> 24);
+    buf[1] = (byte) (declared >> 16);
+    buf[2] = (byte) (declared >> 8);
+    buf[3] = (byte) declared;
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TBinaryProtocol proto = new TBinaryProtocol(transport);
+
+    TTransportException e =
+        assertThrows(
+            TTransportException.class,
+            () -> proto.skip(TType.STRING),
+            "a declared length beyond the remaining budget must be refused");
+    assertEquals(TTransportException.MESSAGE_SIZE_LIMIT, e.getType());
+    assertEquals(
+        4,
+        transport.getBufferPosition(),
+        "no payload may be consumed before the declared size is checked");
+  }
+
+  @Test
+  public void testBinaryProtocol_skipRejectsNegativeStringLength() {
+    // A struct carrying one string field whose declared length is negative (-7). Without the
+    // length check, skipBytes(-7) rewinds the reader by 7 bytes and the struct loop re-reads the
+    // same field without end; the check turns it into a clean refusal.
+    byte[] buf = {0x0B, 0x00, 0x02, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xF9};
+    assertTimeoutPreemptively(
+        Duration.ofSeconds(5),
+        () -> {
+          TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+          TBinaryProtocol proto = new TBinaryProtocol(transport);
+          TProtocolException e =
+              assertThrows(
+                  TProtocolException.class,
+                  () -> proto.skip(TType.STRUCT),
+                  "a negative declared string length must be refused");
+          assertEquals(TProtocolException.NEGATIVE_SIZE, e.getType());
+        });
+  }
+
+  @Test
+  public void testCompactProtocol_skipRejectsNegativeStringLength() throws Exception {
+    // A 5-byte varint (0xFFFFFFFF) whose decoded binary length is negative. Without the check,
+    // skipBytes rewinds the reader and raises the remaining budget instead of lowering it.
+    byte[] buf = {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x0F};
+    TMemoryInputTransport transport = new TMemoryInputTransport(buf);
+    TCompactProtocol proto = new TCompactProtocol(transport);
+
+    TProtocolException e =
+        assertThrows(
+            TProtocolException.class,
+            () -> proto.skip(TType.STRING),
+            "a negative declared binary length must be refused");
+    assertEquals(TProtocolException.NEGATIVE_SIZE, e.getType());
   }
 
   @Test

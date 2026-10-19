@@ -571,6 +571,7 @@ public class TBinaryProtocol extends TProtocol {
   @Override
   protected void skipBinary() throws TException {
     int size = readI32();
+    checkStringReadLength(size);
     this.skipBytes(size);
   }
 }

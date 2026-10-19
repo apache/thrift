@@ -979,6 +979,7 @@ public class TCompactProtocol extends TProtocol {
   @Override
   protected void skipBinary() throws TException {
     int size = intToZigZag(readI32());
+    checkStringReadLength(size);
     this.skipBytes(size);
   }
 }
