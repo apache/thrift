@@ -194,6 +194,11 @@ protected:
 
   static const uint32_t MAX_FRAME_SIZE = 0x3FFFFFFF;
 
+  // A header frame carries at most one transform. ZLIB is the only transform
+  // this implementation applies, and no writer lists it more than once, so a
+  // frame that declares more is rejected before the transform list is built.
+  static const int16_t MAX_TRANSFORMS = 1;
+
   int16_t protoId;
   uint16_t clientType;
   uint32_t seqId;

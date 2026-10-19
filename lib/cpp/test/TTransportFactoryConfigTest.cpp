@@ -251,6 +251,77 @@ BOOST_AUTO_TEST_CASE(test_header_transport_accepts_frame_within_max_frame_size) 
   BOOST_CHECK_EQUAL(first, static_cast<uint8_t>('B'));
 }
 
+// A header frame lists a number of transforms and then the payload, and
+// untransform() applies each listed transform in turn. A frame that lists more
+// transforms than a legitimate writer ever emits (which is one) is refused when
+// the header is parsed, before the transform list is built and before any
+// transform runs. The frame is produced by the real header write path with the
+// transform set to three ZLIB layers, so its framing and zlib streams are
+// genuine; only the number of layers is what a correct reader must reject.
+BOOST_AUTO_TEST_CASE(test_header_transport_refuses_a_frame_with_more_than_one_transform) {
+  auto writeBuffer = std::make_shared<TMemoryBuffer>();
+  THeaderTransport writer(writeBuffer);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  const std::string payload(32, 'C');
+  writer.write(reinterpret_cast<const uint8_t*>(payload.data()),
+               static_cast<uint32_t>(payload.size()));
+  writer.flush();
+  const std::string frame = writeBuffer->getBufferAsString();
+
+  auto endpoint
+      = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(const_cast<char*>(frame.data())),
+                                        static_cast<uint32_t>(frame.size()),
+                                        TMemoryBuffer::COPY);
+  auto reader = std::make_shared<THeaderTransport>(endpoint);
+
+  // The refusal is a transport-level CORRUPTED_DATA, the same class the other
+  // frame checks in this transport raise. It is specifically not the protocol
+  // exception a failed inflate would raise, which is how this asserts the frame
+  // is refused before any transform is applied rather than during one.
+  uint8_t dummy = 0;
+  bool caught = false;
+  try {
+    reader->read(&dummy, 1);
+  } catch (const TTransportException& e) {
+    caught = true;
+    BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
+  }
+  BOOST_CHECK(caught);
+}
+
+// Positive control: a frame that lists exactly one ZLIB transform -- the only
+// shape a legitimate writer produces -- must still round-trip unchanged. This
+// guards against the check above refusing valid traffic: the single-transform
+// frame is admitted, its one layer is inflated, and the payload is delivered
+// byte-for-byte.
+BOOST_AUTO_TEST_CASE(test_header_transport_single_transform_round_trips) {
+  auto writeBuffer = std::make_shared<TMemoryBuffer>();
+  THeaderTransport writer(writeBuffer);
+  writer.setTransform(THeaderTransport::ZLIB_TRANSFORM);
+  std::string payload(256, '\0');
+  for (size_t i = 0; i < payload.size(); i++) {
+    payload[i] = static_cast<char>(i & 0xff);
+  }
+  writer.write(reinterpret_cast<const uint8_t*>(payload.data()),
+               static_cast<uint32_t>(payload.size()));
+  writer.flush();
+  const std::string frame = writeBuffer->getBufferAsString();
+
+  auto endpoint
+      = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(const_cast<char*>(frame.data())),
+                                        static_cast<uint32_t>(frame.size()),
+                                        TMemoryBuffer::COPY);
+  auto reader = std::make_shared<THeaderTransport>(endpoint);
+
+  std::vector<uint8_t> out(payload.size(), 0);
+  BOOST_CHECK_EQUAL(reader->readAll(out.data(), static_cast<uint32_t>(out.size())),
+                    static_cast<uint32_t>(out.size()));
+  const std::string delivered(reinterpret_cast<const char*>(out.data()), out.size());
+  BOOST_CHECK(delivered == payload);
+}
+
 // TFramedTransport has three constructors. The two that take an underlying
 // transport initialise maxFrameSize_ from the configuration; the one that takes
 // only a TConfiguration leaves it out of its member-init list entirely, so

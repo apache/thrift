@@ -256,6 +256,16 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
   int16_t numTransforms;
   ptr += readVarint16(ptr, &numTransforms, headerBoundary);
 
+  // Each transform the frame lists is applied in turn in untransform(), so the
+  // work a single frame can ask for grows with the number of transforms, not
+  // with its declared size. A valid frame never lists more than one, so refuse
+  // a larger count here, before the transform list is built and before any
+  // transform runs.
+  if (numTransforms > MAX_TRANSFORMS) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "Header transport frame declares too many transforms");
+  }
+
   // For now all transforms consist of only the ID, not data.
   for (int i = 0; i < numTransforms; i++) {
     int32_t transId;
