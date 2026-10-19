@@ -29,3 +29,10 @@ target_link_libraries(TQTcpServerTest_Qt5 thrift)
 target_link_libraries(TQTcpServerTest_Qt5 Qt5::Test Qt5::Network)
 
 add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
+
+add_executable(TQIODeviceTransportTest_Qt5 TQIODeviceTransportTest.cpp)
+target_link_libraries(TQIODeviceTransportTest_Qt5 thriftqt5)
+target_link_libraries(TQIODeviceTransportTest_Qt5 thrift)
+target_link_libraries(TQIODeviceTransportTest_Qt5 Qt5::Test Qt5::Network)
+
+add_test(NAME TQIODeviceTransportTest_Qt5 COMMAND TQIODeviceTransportTest_Qt5)

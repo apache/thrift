@@ -73,7 +73,24 @@ uint32_t TQIODeviceTransport::readAll(uint8_t* buf, uint32_t len) {
       throw;
     }
     if (readSize == 0) {
-      dev_->waitForReadyRead(50);
+      if (!dev_->waitForReadyRead(50)) {
+        // The wait timed out with no data. If the device can no longer deliver
+        // the rest of the message, stop here instead of retrying a read that
+        // can only return zero again: a socket that has reached the unconnected
+        // state, or a non-socket device that is closed or already at its end,
+        // will never produce the remaining bytes. A connected peer that is
+        // merely slow leaves the device able to deliver, so the loop waits on.
+        QAbstractSocket* socket = qobject_cast<QAbstractSocket*>(dev_.get());
+        if (socket != nullptr) {
+          if (socket->state() == QAbstractSocket::UnconnectedState) {
+            throw TTransportException(TTransportException::END_OF_FILE,
+                                      "readAll(): peer is no longer connected");
+          }
+        } else if (dev_->bytesAvailable() == 0 && (!dev_->isOpen() || dev_->atEnd())) {
+          throw TTransportException(TTransportException::END_OF_FILE,
+                                    "readAll(): no more data available from QIODevice");
+        }
+      }
     } else {
       buf += readSize;
       len -= readSize;
