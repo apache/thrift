@@ -224,6 +224,19 @@ module Thrift
       read_frame(bytes_left)
       additional = @read_buffer.read(bytes_left)
       data + (additional || Bytes.empty_byte_buffer)
+    ensure
+      # Keep frame metadata for replies, but release the exhausted payload.
+      if @read_buffer.eof? && !@read_buffer.string.empty?
+        @read_buffer.string = Bytes.empty_byte_buffer
+      end
+    end
+
+    def read_byte
+      return super unless @read_buffer && !@read_buffer.eof?
+
+      byte = @read_buffer.getbyte
+      @read_buffer.string = Bytes.empty_byte_buffer if @read_buffer.eof?
+      byte
     end
 
     def write(buf)

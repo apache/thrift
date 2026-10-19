@@ -19,6 +19,8 @@
 #
 
 require "spec_helper"
+require "timeout"
+require "weakref"
 
 describe "Thrift::HTTPClientTransport" do
   describe Thrift::HTTPClientTransport do
@@ -269,6 +271,81 @@ describe "Thrift::HTTPClientTransport" do
       end
       client.flush
       expect(client.read(4)).to eq("data")
+    end
+  end
+
+  context "input lifetime" do
+    it "releases real responses while idle and preserves unread data after a failed request" do
+      listener = TCPServer.new("127.0.0.1", 0)
+      server = Thread.new do
+        [200, 503, 200].each_with_index do |status, index|
+          socket = listener.accept
+          begin
+            socket.gets
+            headers = {}
+            while (line = socket.gets) != "\r\n"
+              key, value = line.split(":", 2)
+              headers[key.downcase] = value.strip
+            end
+            socket.read(headers.fetch("content-length", "0").to_i)
+            size = index == 0 ? 32_768 : 4
+            socket.write("HTTP/1.1 #{status} Result\r\nContent-Length: #{size}\r\nConnection: close\r\n\r\n")
+            if index == 0
+              8.times { socket.write("x" * 4096) }
+            else
+              socket.write("next")
+            end
+          ensure
+            socket.close
+          end
+        end
+      end
+
+      client_thread = nil
+      Timeout.timeout(10) do
+        # Discard request/response stack roots before checking transport ownership.
+        client_thread = Thread.new do
+          transport = Thrift::HTTPClientTransport.new("http://127.0.0.1:#{listener.addr[1]}/")
+          transport.write("request")
+          transport.flush
+          expect(transport.read(1)).to eq("x")
+          reference = WeakRef.new(transport.instance_variable_get(:@inbuf).string)
+          transport.close
+          transport.write("request")
+          expect { transport.flush }.to raise_error(Thrift::TransportException, /HTTP status code 503/)
+          7.times { expect(transport.read(4096)).to eq("x" * 4096) }
+          expect(transport.read(4095)).to eq("x" * 4095)
+          [transport, reference]
+        end
+        transport, reference = client_thread.value
+        GC.start
+        expect(transport.instance_variable_get(:@inbuf).string).to be_empty
+        expect(reference.weakref_alive?).to be_falsey
+        expect(transport.read(0)).to eq("")
+        expect { transport.read(1) }.to raise_error(Thrift::TransportException, /HTTP status code 200/)
+        transport.write("request")
+        transport.flush
+        expect(transport.read_all(4)).to eq("next")
+        transport.close
+        expect(transport.instance_variable_get(:@inbuf).string).to be_empty
+        server.value
+      end
+    ensure
+      client_thread.kill.join if client_thread && client_thread.alive?
+      server.kill.join if server && server.alive?
+      listener.close if listener
+    end
+
+    it "preserves response status when a byte read reaches EOF" do
+      transport = Thrift::HTTPClientTransport.new("http://localhost/")
+      transport.instance_variable_set(:@inbuf, StringIO.new("\xff".b))
+      transport.instance_variable_set(:@response_code, 206)
+
+      expect(transport.read_byte).to eq(255)
+      expect(transport.instance_variable_get(:@inbuf).string).to be_empty
+      expect { transport.read_byte }.to raise_error(Thrift::TransportException, /HTTP status code 206/) do |error|
+        expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+      end
     end
   end
 end

@@ -42,6 +42,18 @@ module Thrift
       return data unless data.nil?
 
       raise TransportException.new(TransportException::END_OF_FILE, "#{self.class.name} reached EOF reading response from #{self}, HTTP status code #{@response_code}")
+    ensure
+      if @inbuf && @inbuf.eof? && !@inbuf.string.empty?
+        @inbuf.string = Bytes.empty_byte_buffer
+      end
+    end
+
+    def read_byte
+      return super unless @inbuf && !@inbuf.eof?
+
+      byte = @inbuf.getbyte
+      @inbuf.string = Bytes.empty_byte_buffer if @inbuf.eof?
+      byte
     end
 
     def write(buf); @outbuf << Bytes.force_binary_encoding(buf) end
