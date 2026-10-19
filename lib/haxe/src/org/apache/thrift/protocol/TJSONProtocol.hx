@@ -516,9 +516,21 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
         var buffer : BytesBuffer = new BytesBuffer();
 
         ReadJSONSyntaxChar( JSONConstants.QUOTE);
+
+        // A quoted string carries no declared length, so bound the running count of
+        // consumed wire bytes against the configured maximum message size as characters
+        // accumulate, the same cap netstd applies in ReadJsonStringAsync.
+        var maxSize = Configuration.MaxMessageSize;
+        var count = 0;
+
         while (true)
         {
             var ch = reader.Read();
+            if( ++count > maxSize)
+            {
+                throw new TProtocolException( TProtocolException.SIZE_LIMIT,
+                                              'JSON string exceeds the maximum message size ($maxSize)');
+            }
 
             // end of string?
             if (StringFromBytes(ch) == JSONConstants.QUOTE)
@@ -535,6 +547,7 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 
             // distinguish between \uXXXX (hex unicode) and \X (control chars)
             ch = reader.Read();
+            ++count;
             if (StringFromBytes(ch) != JSONConstants.ESCSEQ.charAt(1))
             {
                 var value = JSONConstants.ESCAPE_CHARS_TO_VALUES[ch.get(0)];
@@ -550,6 +563,7 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
             // it's \uXXXX
             var hexbuf = new BytesBuffer();
             var hexlen = Transport.readAll( hexbuf, 0, 4);
+            count += 4;
             if( hexlen != 4)
             {
                 throw new TProtocolException( TProtocolException.INVALID_DATA, "Not enough data for \\uNNNN sequence");
@@ -595,8 +609,20 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
     private function ReadJSONNumericChars() : String
     {
         var buffer : BytesBuffer = new BytesBuffer();
+
+        // A numeric literal carries no declared length either, so bound the accumulated
+        // byte count against the configured maximum message size, the same cap netstd
+        // applies in ReadJsonNumericCharsAsync.
+        var maxSize = Configuration.MaxMessageSize;
+
         while (true)
         {
+            if( buffer.length > maxSize)
+            {
+                throw new TProtocolException( TProtocolException.SIZE_LIMIT,
+                                              'JSON number exceeds the maximum message size ($maxSize)');
+            }
+
             var ch = reader.Peek();
             if( ! IsJSONNumeric( ch.get(0)))
             {
