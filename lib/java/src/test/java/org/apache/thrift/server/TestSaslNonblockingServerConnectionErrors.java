@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -77,6 +78,19 @@ public class TestSaslNonblockingServerConnectionErrors {
     }
   }
 
+  /**
+   * An error whose stack-trace rendering fails the way it would when the heap is exhausted: the
+   * logging backend throws an {@link OutOfMemoryError} while formatting it. The network thread must
+   * still close only the failing connection and keep serving, so logging a per-connection failure
+   * cannot itself end the thread.
+   */
+  private static final class RenderingFailsError extends OutOfMemoryError {
+    @Override
+    public void printStackTrace(PrintWriter writer) {
+      throw new OutOfMemoryError("Java heap space");
+    }
+  }
+
   @Test
   public void testRuntimeExceptionClosesOnlyItsConnection() throws Exception {
     checkFailureClosesOnlyItsConnection(() -> new IllegalStateException("test failure"));
@@ -85,6 +99,11 @@ public class TestSaslNonblockingServerConnectionErrors {
   @Test
   public void testOutOfMemoryErrorClosesOnlyItsConnection() throws Exception {
     checkFailureClosesOnlyItsConnection(() -> new OutOfMemoryError("test failure"));
+  }
+
+  @Test
+  public void testFailureWhoseLoggingThrowsClosesOnlyItsConnection() throws Exception {
+    checkFailureClosesOnlyItsConnection(RenderingFailsError::new);
   }
 
   @Test

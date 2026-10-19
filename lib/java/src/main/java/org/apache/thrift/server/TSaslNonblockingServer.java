@@ -291,17 +291,32 @@ public class TSaslNonblockingServer extends TServer {
 
     /**
      * Closes a connection whose handling failed and lets this thread go on serving the others. This
-     * includes an OutOfMemoryError: closing the connection releases the memory it holds. Other
+     * includes an OutOfMemoryError: closing the connection releases the memory it holds, and the
+     * failure is logged only afterwards, through a call that cannot itself end the thread. Other
      * virtual machine errors and ThreadDeath end this thread.
      */
     private void closeAfterFailure(Throwable failure, Runnable closeConnection) {
       rethrowIfFatal(failure);
-      LOGGER.error("Closing a connection after a failure in " + getName(), failure);
       try {
         closeConnection.run();
       } catch (Throwable e) {
         rethrowIfFatal(e);
-        LOGGER.error("Failed to close a connection in " + getName(), e);
+        logFailure("Failed to close a connection in ", e);
+      }
+      logFailure("Closing a connection after a failure in ", failure);
+    }
+
+    /**
+     * Logs a failure without letting the logging itself end this thread: building the message and
+     * rendering the throwable both allocate, which under memory pressure can raise another error, so
+     * everything that allocates stays inside the guard. ThreadDeath and other virtual machine errors
+     * are still allowed through.
+     */
+    private void logFailure(String message, Throwable failure) {
+      try {
+        LOGGER.error(message + getName(), failure);
+      } catch (Throwable e) {
+        rethrowIfFatal(e);
       }
     }
 
