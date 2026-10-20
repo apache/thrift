@@ -179,6 +179,37 @@ to Java, Ruby, PHP).
 Look for the README.md file in the lib/<language>/ folder for more details on the
 installation of each language library package.
 
+Prebuilt compiler for Windows
+-----------------------------
+
+On Windows, the compiler does not have to be built from source. Alongside the
+source release, it is also published ready-built:
+
+* with [Chocolatey](https://community.chocolatey.org/packages/thrift):
+  `choco install thrift`
+* as a [.NET tool](https://www.nuget.org/packages/Apache.Thrift.Compiler):
+  `dotnet tool install --global Apache.Thrift.Compiler`
+* with the installer `thrift-<version>-setup.exe` from the
+  [GitHub release](https://github.com/apache/thrift/releases/latest)
+* as the plain executable `thrift-<version>.exe` from the
+  [download page](https://thrift.apache.org/download)
+
+Chocolatey installs for all users and needs an elevated shell. The installer
+installs for the current user by default and needs no administrator rights.
+Chocolatey and the .NET tool put `thrift` on the `PATH`, and the installer
+offers to do so.
+
+The compiler needs the Microsoft Visual C++ Redistributable (x64). Chocolatey
+installs it along with the compiler; otherwise, make sure the
+[latest version](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist)
+is installed.
+
+The .NET tool contains the Windows build only. Should `thrift` ask for .NET 8
+although a newer .NET is installed, uninstall the tool and install it again
+with `--allow-roll-forward` added. To pin its version for a repository with a
+tool manifest, see
+[build/windows/dotnet-tool/README.md](build/windows/dotnet-tool/README.md).
+
 Package Managers
 ================
 
