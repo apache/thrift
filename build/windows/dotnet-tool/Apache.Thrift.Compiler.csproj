@@ -34,6 +34,10 @@
     <OutputType>Exe</OutputType>
     <!-- The lowest SDK the tool has to install on. -->
     <TargetFramework>net8.0</TargetFramework>
+    <!-- Run on a newer .NET when .NET 8 is not there. Without this, a machine
+         with only .NET 9 or later installs the tool and then refuses to start
+         it, asking for .NET 8. -->
+    <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
