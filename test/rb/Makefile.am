@@ -30,6 +30,9 @@ if HAVE_BUNDLER
 	$(BUNDLER) exec $(RUBY) -I. test_suite.rb
 endif
 
+style-local:
+	cd $(srcdir) && $(BUNDLER) exec rubocop -a --config ../../lib/rb/.rubocop.yml
+
 clean-local:
 	$(RM) -r gen-rb/
 

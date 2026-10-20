@@ -45,6 +45,9 @@ check-local: all
 
 endif
 
+style-local:
+	cd $(srcdir) && $(BUNDLER) exec rubocop -a
+
 dist-hook:
 	$(RM) -r $(distdir)/spec/gen-rb/
 
