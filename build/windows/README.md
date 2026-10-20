@@ -189,6 +189,10 @@ managed code, but a package built that way cannot be installed by the .NET 8 or
 .NET 9 SDK at all, and the MSBuild properties involved are undocumented. The
 launcher costs one small assembly and works everywhere.
 
+The launcher targets .NET 8 and rolls forward to a newer major version when
+.NET 8 is not installed. Otherwise a machine with only .NET 9 or later would
+install the tool and then refuse to start it, asking for .NET 8.
+
 The package carries the Windows compiler only. NuGet installs a tool package on
 any platform, so the launcher checks and reports that rather than failing to
 start a Windows executable.
@@ -207,6 +211,8 @@ neither shows up before somebody installs it: the payload can be missing, and
 the layout can be such that the tool installs but does not run. So the test
 checks the package contents - including that `LICENSE` and `NOTICE` really are
 in there and are not empty - and then proves the installed command works.
+It also checks that the launcher may roll forward to a newer .NET, because
+running the tool on a machine that has .NET 8 as well cannot show that.
 
 It runs anywhere PowerShell and the .NET SDK do. Off Windows it checks the
 launcher's refusal instead of the compiler's output, which is the behaviour that

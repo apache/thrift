@@ -155,6 +155,18 @@ try {
     Assert-True 'the tool entry point is the managed launcher' `
         ($settings -match "EntryPoint\s*=\s*`"$([regex]::Escape($PackageId)).dll`"") $settings
 
+    # The launcher targets the oldest .NET the tool has to install on. Unless it
+    # may roll forward to a newer major version, a machine with only .NET 9 or
+    # later installs the tool and then refuses to start it, asking for .NET 8.
+    # Runners that also have .NET 8 never show that, so check the setting.
+    $runtimeConfig = Read-Entry "$toolDir/$PackageId.runtimeconfig.json"
+    $rollForward = ''
+    if ($runtimeConfig) {
+        $rollForward = [string](($runtimeConfig | ConvertFrom-Json).runtimeOptions.rollForward)
+    }
+    Assert-True 'the launcher may run on a newer major .NET' `
+        ($rollForward -in @('Major', 'LatestMajor')) "rollForward '$rollForward'"
+
     $nuspec = Read-Entry "$PackageId.nuspec"
     Assert-True 'the package is a DotnetTool package' ($nuspec -match 'packageType\s+name="DotnetTool"')
     Assert-True "the package id is $PackageId" ($nuspec -match "<id>$([regex]::Escape($PackageId))</id>")
