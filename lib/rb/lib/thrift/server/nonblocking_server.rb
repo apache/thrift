@@ -94,7 +94,10 @@ module Thrift
       if block
         shutdown_proc.call
       else
-        Thread.new(&shutdown_proc)
+        Thread.new do
+          Thread.current.name = "thrift.shutdown"
+          shutdown_proc.call
+        end
       end
     end
 
@@ -136,6 +139,7 @@ module Thrift
 
       def spawn
         @iom_thread = Thread.new do
+          Thread.current.name = "thrift.io"
           @logger.debug "Starting #{self}"
           run
         end
@@ -212,13 +216,13 @@ module Thrift
       def spin_worker_threads
         @logger.debug "#{self} is spinning up worker threads"
         @worker_threads = []
-        @num_threads.times do
-          @worker_threads << spin_thread
+        @num_threads.times do |index|
+          @worker_threads << spin_thread(index)
         end
       end
 
-      def spin_thread
-        Worker.new(@processor, @transport_factory, @protocol_factory, @logger, @worker_queue).spawn
+      def spin_thread(index)
+        Worker.new(@processor, @transport_factory, @protocol_factory, @logger, @worker_queue).spawn(index)
       end
 
       def signal(msg)
@@ -317,8 +321,9 @@ module Thrift
           @queue = queue
         end
 
-        def spawn
-          Thread.new do
+        def spawn(index)
+          Thread.new(index) do |worker_id|
+            Thread.current.name = "thrift.nb.#{worker_id}"
             @logger.debug "#{self} is spawning"
             run
           end
