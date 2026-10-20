@@ -60,6 +60,9 @@ class TProtocolUtil {
                 case TType.STRING:
                     prot.readBinary();
 
+                case TType.UUID:
+                    prot.readUuid();
+
                 case TType.STRUCT:
                     prot.readStructBegin();
                     while (true) {

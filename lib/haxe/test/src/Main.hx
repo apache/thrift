@@ -28,6 +28,7 @@ import tests.ConstantsTest;
 import tests.MultiplexTest;
 import tests.FramedTransportTest;
 import tests.RecursionLimitTest;
+import tests.SkipTest;
 import tests.StreamTest;
 import tests.TransportPartialReadTest;
 import thrift.test.*;
@@ -92,6 +93,7 @@ class Main
 					tests.StreamTest.Run(server);
 					tests.TransportPartialReadTest.Run(server);
 					tests.RecursionLimitTest.Run(server);
+					tests.SkipTest.Run(server);
 					tests.FramedTransportTest.Run(server);
 					#end
 				case Multiplex:
