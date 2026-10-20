@@ -861,3 +861,14 @@ func TestReadSimpleJSONProtocolListBeginSizeOverflow(t *testing.T) {
 		})
 	}
 }
+
+func TestReadSimpleJSONProtocolBoolEmptyInputErrors(t *testing.T) {
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	// No data written: an empty/EOF bool must be a protocol error, not a silent
+	// false, matching ReadString and ReadBinary on the same empty peek.
+	_, e := p.ReadBool(context.Background())
+	if e == nil {
+		t.Fatalf("ReadBool on empty input should return an error, got (false, nil)")
+	}
+}

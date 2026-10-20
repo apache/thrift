@@ -524,6 +524,9 @@ func (p *TSimpleJSONProtocol) ReadBool(ctx context.Context) (bool, error) {
 			e := fmt.Errorf("Expected \"true\", \"false\", or \"null\" but found: %s", string(f))
 			return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 		}
+	} else {
+		e := fmt.Errorf("Expected \"true\", \"false\", or \"null\" but found no data")
+		return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 	}
 	return value, p.ParsePostValue()
 }
