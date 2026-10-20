@@ -766,3 +766,196 @@ BOOST_AUTO_TEST_CASE(dispatch_timeout_does_not_end_the_server) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+// ---------------------------------------------------------------------------
+// A worker thread that cannot be started must not stop the whole server.
+//
+// TThreadedServer::onClientConnected() starts a worker thread for each accepted
+// client.  If the thread cannot be started (for example the process is out of
+// threads) std::thread's constructor throws.  That exception is not a
+// TTransportException, so the accept loop's only catch does not handle it: it
+// unwinds out of serve() and the server stops accepting.  The fix catches the
+// failure, drops the one client, and keeps serving.
+//
+// A real std::thread cannot be made to fail on demand, so a thread whose
+// start() always throws is injected through the ThreadFactory that the
+// TThreadedServer constructor accepts.
+// ---------------------------------------------------------------------------
+
+#include <chrono>
+#include <thread>
+#include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Thread.h>
+#include <thrift/concurrency/ThreadFactory.h>
+
+using apache::thrift::concurrency::Runnable;
+using apache::thrift::concurrency::SystemResourceException;
+using apache::thrift::concurrency::Thread;
+using apache::thrift::concurrency::ThreadFactory;
+
+// A Thread whose start() always fails, simulating the OS refusing to create
+// another worker thread.  It is created non-detached, matching TThreadedServer's
+// default ThreadFactory(false).  Destroying this never-started thread is safe only
+// because of the null-guard added to ~Thread()/join() in Thread.h (part of this
+// fix): without it, ~Thread dereferences the null thread_ and crashes.
+class FailingThread : public Thread {
+public:
+  FailingThread(bool detached,
+                shared_ptr<Runnable> runnable,
+                shared_ptr<std::atomic<int> > startAttempts)
+    : Thread(detached, runnable), startAttempts_(startAttempts) {}
+
+  void start() override {
+    ++(*startAttempts_);
+    throw SystemResourceException("cannot create worker thread");
+  }
+
+private:
+  shared_ptr<std::atomic<int> > startAttempts_;
+};
+
+// A ThreadFactory that hands out FailingThreads and counts how many times a
+// worker-thread start was attempted, so the test can prove the failing path was
+// actually exercised.
+class FailingThreadFactory : public ThreadFactory {
+public:
+  explicit FailingThreadFactory(shared_ptr<std::atomic<int> > startAttempts)
+    : ThreadFactory(false), startAttempts_(startAttempts) {}
+
+  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const override {
+    return std::make_shared<FailingThread>(isDetached(), runnable, startAttempts_);
+  }
+
+private:
+  shared_ptr<std::atomic<int> > startAttempts_;
+};
+
+BOOST_AUTO_TEST_SUITE(ThreadStartFailure)
+
+BOOST_AUTO_TEST_CASE(test_threaded_server_thread_start_failure) {
+  BOOST_TEST_MESSAGE("Testing that a failed worker-thread start does not stop the server");
+
+  shared_ptr<std::atomic<int> > startAttempts = std::make_shared<std::atomic<int> >(0);
+  shared_ptr<TProcessor> processor
+      = make_shared<ParentServiceProcessor>(make_shared<ParentHandler>());
+  shared_ptr<TServerSocket> serverSocket = make_shared<TServerSocket>("localhost", 0);
+  shared_ptr<TServerReadyEventHandler> readyHandler = make_shared<TServerReadyEventHandler>();
+
+  // Allocated with new, not on the stack: on the (unfixed) regression path
+  // serve() unwinds and leaves a client in activeClientMap_ that can never be
+  // drained, and running ~TThreadedServer would re-enter the server's own maps
+  // while they are being destroyed (a use-after-free).  The server is therefore
+  // deleted only when serve() returned normally (the fixed path); the shipped
+  // code always takes that branch, so this test does not leak in CI.
+  auto* server = new TThreadedServer(processor,
+                                     serverSocket,
+                                     make_shared<TTransportFactory>(),
+                                     make_shared<TBinaryProtocolFactory>(),
+                                     make_shared<FailingThreadFactory>(startAttempts));
+  server->setServerEventHandler(readyHandler);
+
+  std::atomic<bool> serveEnded(false);
+  std::atomic<bool> serveThrew(false);
+  std::string serveError;
+
+  std::thread serveThread([&]() {
+    try {
+      server->serve();
+    } catch (const std::exception& ex) {
+      serveThrew = true;
+      serveError = ex.what();
+    } catch (...) {
+      serveThrew = true;
+      serveError = "unknown exception";
+    }
+    serveEnded = true;
+  });
+
+  // Wait (bounded) until the server is listening so a client can connect.
+  bool listening = false;
+  for (int i = 0; i < 200 && !listening && !serveEnded; ++i) {
+    {
+      Synchronized sync(*readyHandler);
+      listening = readyHandler->isListening();
+    }
+    if (!listening) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+
+  if (listening) {
+    int port = serverSocket->getPort();
+
+    // First client: drives accept() -> onClientConnected(), whose attempt to
+    // start a worker thread throws.  Wait until that attempt is observed (it
+    // happens in both the fixed and unfixed builds) or serve() ends.
+    //
+    // Connecting is not enough: TServerSocket::listen() sets TCP_DEFER_ACCEPT,
+    // so accept() does not wake until the client sends data.  Send one byte so
+    // the server accepts promptly; it is never read, because the worker thread
+    // that would process it never starts.
+    shared_ptr<TSocket> clientSock1 = make_shared<TSocket>("localhost", port);
+    try {
+      clientSock1->open();
+      uint8_t wake = 0;
+      clientSock1->write(&wake, 1);
+    } catch (const std::exception&) {}
+    for (int i = 0; i < 200 && startAttempts->load() < 1 && !serveEnded; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Second client: in the fixed build the accept loop is still running and
+    // processes it (a second start attempt); in the unfixed build serve() has
+    // already unwound, so although the listening socket is still open and the
+    // connect succeeds, nothing accepts it and no second attempt happens.
+    shared_ptr<TSocket> clientSock2 = make_shared<TSocket>("localhost", port);
+    try {
+      clientSock2->open();
+      uint8_t wake = 0;
+      clientSock2->write(&wake, 1);
+    } catch (const std::exception&) {}
+    for (int i = 0; i < 200 && startAttempts->load() < 2 && !serveEnded; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    try { clientSock1->close(); } catch (...) {}
+    try { clientSock2->close(); } catch (...) {}
+  }
+
+  // Snapshot the observations before stopping the server: stop() makes serve()
+  // return in the fixed build, which would otherwise erase the distinction.
+  bool stillServing = !serveEnded.load();
+  int attempts = startAttempts->load();
+
+  // Settle the serve thread before asserting, so serveError is safe to read and
+  // a failing assertion cannot leave a running thread behind to std::terminate.
+  try { server->stop(); } catch (...) {}
+  serveThread.join();
+
+  bool threw = serveThrew.load();
+  std::string err = serveError;
+
+  BOOST_REQUIRE_MESSAGE(listening, "server never reached the listening state");
+
+  // The failing start path must have run at least once, otherwise the test
+  // proves nothing (the connection never reached onClientConnected).
+  BOOST_CHECK_MESSAGE(attempts >= 1,
+      "no worker-thread start was ever attempted; the client did not reach onClientConnected");
+
+  // FIXED behavior, which FAILS against the unfixed code:
+  //  - serve() is still running after the failed start (serveEnded == false), and
+  //  - the server kept accepting, so a second start was attempted.
+  BOOST_CHECK_MESSAGE(stillServing,
+      "serve() stopped after a worker thread failed to start (threw=" << threw
+      << ", error=\"" << err << "\"); the server should drop the client and keep serving");
+  BOOST_CHECK_MESSAGE(attempts >= 2,
+      "server stopped accepting after a failed worker-thread start; start attempts observed = "
+      << attempts << " (expected >= 2)");
+
+  if (!threw) {
+    delete server;
+  }
+  // else: regression path, server deliberately leaked (see note above).
+}
+
+BOOST_AUTO_TEST_SUITE_END()

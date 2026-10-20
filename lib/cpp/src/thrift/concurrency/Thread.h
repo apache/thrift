@@ -86,7 +86,10 @@ public:
   }
 
   virtual ~Thread() {
-    if (!detached_ && thread_->joinable()) {
+    // thread_ is null if start() was never called or threw before creating the
+    // std::thread (e.g. the process was out of threads); guard the deref so a
+    // non-detached thread that never started can still be destroyed.
+    if (!detached_ && thread_ && thread_->joinable()) {
       try {
         join();
       } catch (...) {
@@ -144,7 +147,10 @@ public:
    * nothing happens.
    */
   virtual void join() {
-    if (!detached_ && state_ != uninitialized) {
+    // thread_ is null if start() threw after setState(starting) but before the
+    // std::thread was created; guard the deref so join() on such a thread is a
+    // no-op rather than a crash.
+    if (!detached_ && state_ != uninitialized && thread_) {
       thread_->join();
     }
   }

@@ -118,7 +118,18 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
   shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
   pRunnable->thread(pThread);
   activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
-  pThread->start();
+  try {
+    pThread->start();
+  } catch (const std::exception&) {
+    // Starting the worker thread failed (for example the process is out of threads).
+    // Undo the bookkeeping for this client and keep serving the rest, instead of letting
+    // the exception unwind out of serve() and stop the whole server. pClient's deleter
+    // adjusts the concurrent-client count when the client goes out of scope in the accept
+    // loop, the same accounting a worker that never ran would have had.
+    activeClientMap_.erase(pClient.get());
+    TOutput::instance()(
+        "TThreadedServer: failed to start a worker thread, closing one client and continuing to serve.");
+  }
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
