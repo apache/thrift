@@ -1293,14 +1293,23 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     if (messageType == T_EXCEPTION) {
       zval ex;
       createObject("\\Thrift\\Exception\\TApplicationException", &ex);
-      zval* spec = zend_read_static_property(Z_OBJCE(ex), ZEND_STRL("tspec"), false);
-      ZVAL_DEREF(spec);
-      if (EG(exception)) {
-        zend_object *ex = EG(exception);
-        EG(exception) = nullptr;
-        throw PHPExceptionWrapper(ex);
+      try {
+        zval* spec = zend_read_static_property(Z_OBJCE(ex), ZEND_STRL("tspec"), false);
+        ZVAL_DEREF(spec);
+        if (EG(exception)) {
+          zend_object *pex = EG(exception);
+          EG(exception) = nullptr;
+          throw PHPExceptionWrapper(pex);
+        }
+        binary_deserialize_spec(&ex, transport, Z_ARRVAL_P(spec), 0);
+      } catch (...) {
+        // Reading the exception body failed partway (a PHP error reading the spec, or a
+        // malformed/oversize body making binary_deserialize_spec throw): release the
+        // partially-built TApplicationException before the exception unwinds past it,
+        // instead of orphaning it for the rest of the request/process.
+        zval_ptr_dtor(&ex);
+        throw;
       }
-      binary_deserialize_spec(&ex, transport, Z_ARRVAL_P(spec), 0);
       throw PHPExceptionWrapper(&ex);
     }
 
