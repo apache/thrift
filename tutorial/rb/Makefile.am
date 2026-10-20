@@ -28,6 +28,9 @@ tutorialserver: all
 tutorialclient: all
 	${RUBY} RubyClient.rb
 
+style-local:
+	cd $(top_srcdir)/lib/rb && $(BUNDLER) exec rubocop -a --config .rubocop.yml ../../tutorial/rb
+
 clean-local:
 	$(RM) -r gen-*
 
