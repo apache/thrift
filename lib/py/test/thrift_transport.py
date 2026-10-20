@@ -21,6 +21,7 @@ import struct
 import unittest
 import zlib
 import os
+from unittest.mock import Mock
 
 import _import_local_thrift  # noqa
 from thrift.transport import TTransport
@@ -28,6 +29,119 @@ from thrift.transport.THeaderTransport import (
     THeaderTransport, THeaderClientType, THeaderTransformID, HEADER_MAGIC,
 )
 from thrift.transport.TTransport import TTransportException
+
+
+class FragmentedTransport(TTransport.TTransportBase):
+
+    def __init__(self, chunks):
+        self.chunks = iter(chunks)
+        self.requests = []
+
+    def read(self, sz):
+        self.requests.append(sz)
+        chunk = next(self.chunks, b'')
+        if len(chunk) > sz:
+            raise AssertionError('Test chunk exceeds the requested size')
+        return chunk
+
+
+class TestReadAll(unittest.TestCase):
+
+    def test_fragmented_read(self):
+        chunks = [b'\x00\xff', b'a', b'bcd']
+        transport = FragmentedTransport(chunks)
+        self.assertEqual(transport.readAll(6), b''.join(chunks))
+        self.assertEqual(transport.requests, [6, 4, 3])
+
+    def test_single_read(self):
+        chunk = b'abc'
+        transport = FragmentedTransport([chunk])
+        result = transport.readAll(3)
+        self.assertEqual(result, b'abc')
+        self.assertIsInstance(result, bytes)
+        self.assertEqual(transport.requests, [3])
+
+    def test_single_read_other_chunk_types(self):
+        class ReflectedChunk(bytes):
+            def __radd__(self, prefix):
+                return prefix + b'xyz'
+
+        for chunk in (bytearray(b'abc'), memoryview(b'abc'), ReflectedChunk(b'abc')):
+            with self.subTest(chunk_type=type(chunk)):
+                result = FragmentedTransport([chunk]).readAll(3)
+                self.assertEqual(result, b'' + chunk)
+                self.assertIs(type(result), bytes)
+
+    def test_fragmented_large_reads(self):
+        for size in (32 * 1024, 128 * 1024, 512 * 1024):
+            payload = bytes(range(256)) * (size // 256)
+            for count in (2, 3, 4, 16):
+                with self.subTest(size=size, chunks=count):
+                    offsets = [size * i // count for i in range(count + 1)]
+                    chunks = [payload[start:end]
+                              for start, end in zip(offsets, offsets[1:])]
+                    transport = FragmentedTransport(chunks)
+                    result = transport.readAll(size)
+                    self.assertEqual(result, payload)
+                    self.assertIs(type(result), bytes)
+                    self.assertEqual(transport.requests,
+                                     [size - offset for offset in offsets[:-1]])
+
+    def test_fragmented_read_avoids_repeated_prefix_copies(self):
+        copied = []
+
+        # A subclass's reflected addition takes priority over the bytes prefix.
+        class CountingChunk(bytes):
+            def __radd__(self, prefix):
+                if type(prefix) is not bytes:
+                    return NotImplemented
+                copied.append(len(prefix) + len(self))
+                return prefix + bytes(self)
+
+        payload = bytes(range(256)) * 4096
+        chunks = [CountingChunk(payload[i:i + 4096])
+                  for i in range(0, len(payload), 4096)]
+        transport = FragmentedTransport(chunks)
+        self.assertEqual(transport.readAll(len(payload)), payload)
+        # Repeated immutable concatenation copies about 128 MiB for this 1 MiB read.
+        self.assertLessEqual(sum(copied), 2 * len(payload))
+
+    def test_nonpositive_size(self):
+        for size in (0, -1):
+            with self.subTest(size=size):
+                transport = FragmentedTransport([])
+                self.assertEqual(transport.readAll(size), b'')
+                self.assertEqual(transport.requests, [])
+
+    def test_eof(self):
+        cases = (([], [4]), ([b'ab'], [4, 2]), ([b'ab', b'', b'cd'], [4, 2]))
+        for chunks, requests in cases:
+            with self.subTest(chunks=chunks):
+                transport = FragmentedTransport(chunks)
+                with self.assertRaises(EOFError):
+                    transport.readAll(4)
+                self.assertEqual(transport.requests, requests)
+
+    def test_read_exception(self):
+        error = TTransportException(TTransportException.TIMED_OUT, 'read timeout')
+        transport = TTransport.TTransportBase()
+        transport.read = Mock(side_effect=[b'ab', error])
+        with self.assertRaises(TTransportException) as caught:
+            transport.readAll(4)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(transport.read.call_count, 2)
+
+    def test_leaves_following_data_unread(self):
+        transport = FragmentedTransport([b'ab', b'cd'])
+        self.assertEqual(transport.readAll(2), b'ab')
+        self.assertEqual(transport.readAll(2), b'cd')
+
+    def test_fragmented_frame(self):
+        payload = bytes(range(256)) * 256
+        chunks = [struct.pack('!i', len(payload))]
+        chunks.extend(payload[i:i + 1024] for i in range(0, len(payload), 1024))
+        transport = TTransport.TFramedTransport(FragmentedTransport(chunks))
+        self.assertEqual(transport.readAll(len(payload)), payload)
 
 
 class TestTFileObjectTransport(unittest.TestCase):
