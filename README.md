@@ -185,6 +185,8 @@ Prebuilt compiler for Windows
 On Windows, the compiler does not have to be built from source. Alongside the
 source release, it is also published ready-built:
 
+* with [WinGet](https://learn.microsoft.com/windows/package-manager/winget/):
+  `winget install Apache.Thrift`
 * with [Chocolatey](https://community.chocolatey.org/packages/thrift):
   `choco install thrift`
 * as a [.NET tool](https://www.nuget.org/packages/Apache.Thrift.Compiler):
@@ -194,13 +196,13 @@ source release, it is also published ready-built:
 * as the plain executable `thrift-<version>.exe` from the
   [download page](https://thrift.apache.org/download)
 
-Chocolatey installs for all users and needs an elevated shell. The installer
-installs for the current user by default and needs no administrator rights.
-Chocolatey and the .NET tool put `thrift` on the `PATH`, and the installer
-offers to do so.
+Chocolatey installs for all users and needs an elevated shell. WinGet installs
+for the current user. The installer installs for the current user by default
+and needs no administrator rights. WinGet, Chocolatey and the .NET tool put
+`thrift` on the `PATH`, and the installer offers to do so.
 
-The compiler needs the Microsoft Visual C++ Redistributable (x64). Chocolatey
-installs it along with the compiler; otherwise, make sure the
+The compiler needs the Microsoft Visual C++ Redistributable (x64). WinGet and
+Chocolatey install it along with the compiler; otherwise, make sure the
 [latest version](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist)
 is installed.
 
