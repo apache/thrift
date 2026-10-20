@@ -138,7 +138,7 @@ begin
   MsgBox('The Microsoft Visual C++ Redistributable does not seem to be installed.' + #13#10 + #13#10 +
          'The Thrift compiler needs it to start. Setup will continue; if thrift.exe ' +
          'does not run afterwards, install the x64 redistributable from ' +
-         'https://aka.ms/vs/17/release/vc_redist.x64.exe and try again.',
+         'https://aka.ms/vc14/vc_redist.x64.exe and try again.',
          mbInformation, MB_OK);
 end;
 

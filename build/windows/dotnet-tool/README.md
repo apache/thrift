@@ -44,7 +44,7 @@ See the [tutorial](https://thrift.apache.org/tutorial/) and the
 The compiler links the shared C++ runtime, so it needs the **Microsoft Visual
 C++ Redistributable (x64)**, which most Windows machines with development tools
 already have. If it is missing, `thrift` reports that and points at
-<https://aka.ms/vs/17/release/vc_redist.x64.exe>.
+<https://aka.ms/vc14/vc_redist.x64.exe>.
 
 ## Platforms
 

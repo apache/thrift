@@ -83,7 +83,7 @@ namespace Apache.Thrift.Compiler
                 Console.Error.WriteLine($"Could not start {compiler}: {ex.Message}");
                 Console.Error.WriteLine(
                     "The Thrift compiler needs the Microsoft Visual C++ Redistributable (x64). " +
-                    "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe and try again.");
+                    "Install it from https://aka.ms/vc14/vc_redist.x64.exe and try again.");
                 return 1;
             }
 
