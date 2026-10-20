@@ -75,18 +75,29 @@ class TTransportBase(object):
         pass
 
     def readAll(self, sz):
-        buff = b''
-        have = 0
-        while (have < sz):
+        if sz <= 0:
+            return b''
+        chunk = self.read(sz)
+        have = len(chunk)
+        if have == 0:
+            raise EOFError()
+        if have >= sz:
+            if type(chunk) is bytes:
+                return chunk
+            # Preserve the original behavior for other chunk types.
+            return b'' + chunk
+
+        # Collect short reads and copy the payload once when complete.
+        chunks = [chunk]
+        while have < sz:
             chunk = self.read(sz - have)
             chunkLen = len(chunk)
-            have += chunkLen
-            buff += chunk
-
             if chunkLen == 0:
                 raise EOFError()
+            have += chunkLen
+            chunks.append(chunk)
 
-        return buff
+        return b''.join(chunks)
 
     def write(self, buf):
         pass
