@@ -308,9 +308,9 @@ public class TSaslNonblockingServer extends TServer {
 
     /**
      * Logs a failure without letting the logging itself end this thread: building the message and
-     * rendering the throwable both allocate, which under memory pressure can raise another error, so
-     * everything that allocates stays inside the guard. ThreadDeath and other virtual machine errors
-     * are still allowed through.
+     * rendering the throwable both allocate, which under memory pressure can raise another error,
+     * so everything that allocates stays inside the guard. ThreadDeath and other virtual machine
+     * errors are still allowed through.
      */
     private void logFailure(String message, Throwable failure) {
       try {

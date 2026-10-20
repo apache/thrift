@@ -73,7 +73,7 @@ abstract class TTransport
     public function checkStringSize(int $len): void
     {
         $max = TProtocol::DEFAULT_MAX_STRING_SIZE;
-        if ($max > 0 && $len > $max) {
+        if ($len > $max) {
             throw new TProtocolException(
                 "String size ($len) larger than the maximum ($max)",
                 TProtocolException::SIZE_LIMIT
