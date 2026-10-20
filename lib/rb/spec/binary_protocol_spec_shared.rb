@@ -118,11 +118,17 @@ shared_examples_for "a binary protocol" do
   end
 
   it "should reject non-integer bytes" do
-    expect { @prot.write_byte(1.5) }.to raise_error(TypeError)
+    expect { @prot.write_byte(1.5) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
-  it "should error gracefully when trying to write a nil byte" do
-    expect { @prot.write_byte(nil) }.to raise_error(StandardError, "nil argument not allowed!")
+  it "should reject a nil byte as a type error without writing" do
+    expect { @prot.write_byte(nil) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
   it "should write an i16" do
@@ -143,11 +149,17 @@ shared_examples_for "a binary protocol" do
   end
 
   it "should reject non-integer i16 values" do
-    expect { @prot.write_i16(1.5) }.to raise_error(TypeError)
+    expect { @prot.write_i16(1.5) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
-  it "should error gracefully when trying to write a nil i16" do
-    expect { @prot.write_i16(nil) }.to raise_error(StandardError, "nil argument not allowed!")
+  it "should reject a nil i16 as a type error without writing" do
+    expect { @prot.write_i16(nil) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
   it "should write an i32" do
@@ -163,11 +175,17 @@ shared_examples_for "a binary protocol" do
   end
 
   it "should reject non-integer i32 values" do
-    expect { @prot.write_i32(1.5) }.to raise_error(TypeError)
+    expect { @prot.write_i32(1.5) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
-  it "should error gracefully when trying to write a nil i32" do
-    expect { @prot.write_i32(nil) }.to raise_error(StandardError, "nil argument not allowed!")
+  it "should reject a nil i32 as a type error without writing" do
+    expect { @prot.write_i32(nil) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
   it "should write an i64" do
@@ -193,22 +211,59 @@ shared_examples_for "a binary protocol" do
   end
 
   it "should reject non-integer i64 values" do
-    expect { @prot.write_i64(1.5) }.to raise_error(TypeError)
+    expect { @prot.write_i64(1.5) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
-  it "should error gracefully when trying to write a nil i64" do
-    expect { @prot.write_i64(nil) }.to raise_error(StandardError, "nil argument not allowed!")
+  it "should reject a nil i64 as a type error without writing" do
+    expect { @prot.write_i64(nil) }.to raise_error(TypeError, "integer argument expected") do |error|
+      expect(error).to be_instance_of(TypeError)
+    end
+    expect(@trans.available).to eq(0)
   end
 
-  it "should reject out-of-range field ids" do
-    expect { @prot.write_field_begin("foo", Thrift::Types::DOUBLE, -2**15 - 1) }.to raise_error(RangeError)
-    expect { @prot.write_field_begin("foo", Thrift::Types::DOUBLE, 2**15) }.to raise_error(RangeError)
+  it "should validate field ids before writing" do
+    {nil => TypeError, 1.5 => TypeError, -2**15 - 1 => RangeError, 2**15 => RangeError}.each do |field_id, error_class|
+      expect {
+        @prot.write_field_begin("foo", Thrift::Types::DOUBLE, field_id)
+      }.to raise_error(error_class) do |error|
+        expect(error).to be_instance_of(error_class)
+      end
+      expect(@trans.available).to eq(0)
+    end
   end
 
-  it "should reject out-of-range container sizes" do
-    expect { @prot.write_map_begin(Thrift::Types::STRING, Thrift::Types::LIST, -1) }.to raise_error(RangeError)
-    expect { @prot.write_list_begin(Thrift::Types::I16, 2**31) }.to raise_error(RangeError)
-    expect { @prot.write_set_begin(Thrift::Types::I16, 2**31) }.to raise_error(RangeError)
+  it "should validate message sequence ids before writing" do
+    [true, false].each do |strict_write|
+      {nil => TypeError, 1.5 => TypeError, -2**31 - 1 => RangeError, 2**31 => RangeError}.each do |sequence_id, error_class|
+        @prot = protocol_class.new(@trans, true, strict_write)
+        expect {
+          @prot.write_message_begin("testMessage", Thrift::MessageTypes::CALL, sequence_id)
+        }.to raise_error(error_class) do |error|
+          expect(error).to be_instance_of(error_class)
+        end
+        expect(@trans.available).to eq(0)
+      end
+    end
+  end
+
+  it "should validate container sizes before writing" do
+    writers = [
+      [:write_map_begin, [Thrift::Types::STRING, Thrift::Types::LIST]],
+      [:write_list_begin, [Thrift::Types::I16]],
+      [:write_set_begin, [Thrift::Types::I16]],
+    ]
+
+    writers.each do |method, arguments|
+      {nil => TypeError, 1.5 => TypeError, -1 => RangeError, 2**31 => RangeError}.each do |size, error_class|
+        expect { @prot.public_send(method, *arguments, size) }.to raise_error(error_class) do |error|
+          expect(error).to be_instance_of(error_class)
+        end
+        expect(@trans.available).to eq(0)
+      end
+    end
   end
 
   it "should write a double" do

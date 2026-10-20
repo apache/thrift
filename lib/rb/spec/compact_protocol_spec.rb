@@ -281,7 +281,9 @@ describe Thrift::CompactProtocol do
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
 
-      expect { proto.send(writer(primitive_type), 1.5) }.to raise_error(TypeError, "integer argument expected")
+      expect { proto.send(writer(primitive_type), 1.5) }.to raise_error(TypeError, "integer argument expected") do |error|
+        expect(error).to be_instance_of(TypeError)
+      end
       expect(trans.available).to eq(0)
     end
   end
@@ -291,7 +293,9 @@ describe Thrift::CompactProtocol do
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
 
-      expect { proto.send(writer(primitive_type), nil) }.to raise_error(StandardError, "nil argument not allowed!")
+      expect { proto.send(writer(primitive_type), nil) }.to raise_error(TypeError, "integer argument expected") do |error|
+        expect(error).to be_instance_of(TypeError)
+      end
       expect(trans.available).to eq(0)
     end
   end
@@ -302,10 +306,12 @@ describe Thrift::CompactProtocol do
       proto = Thrift::CompactProtocol.new(trans)
       proto.write_struct_begin("Value")
 
-      expected_error = field_id.nil? ? StandardError : field_id.is_a?(Integer) ? RangeError : TypeError
+      expected_error = field_id.is_a?(Integer) ? RangeError : TypeError
       expect {
         proto.write_field_begin("value", Thrift::Types::I32, field_id)
-      }.to raise_error(expected_error)
+      }.to raise_error(expected_error) do |error|
+        expect(error).to be_instance_of(expected_error)
+      end
       expect(trans.available).to eq(0)
     end
 
@@ -321,11 +327,13 @@ describe Thrift::CompactProtocol do
     [-2**31 - 1, 2**31, 1.5, nil].each do |sequence_id|
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::CompactProtocol.new(trans)
-      expected_error = sequence_id.nil? ? StandardError : sequence_id.is_a?(Integer) ? RangeError : TypeError
+      expected_error = sequence_id.is_a?(Integer) ? RangeError : TypeError
 
       expect {
         proto.write_message_begin("value", Thrift::MessageTypes::CALL, sequence_id)
-      }.to raise_error(expected_error)
+      }.to raise_error(expected_error) do |error|
+        expect(error).to be_instance_of(expected_error)
+      end
       expect(trans.available).to eq(0)
     end
   end
@@ -358,9 +366,11 @@ describe Thrift::CompactProtocol do
       [-1, 2**31, 1.5, nil].each do |size|
         trans = Thrift::MemoryBufferTransport.new
         proto = Thrift::CompactProtocol.new(trans)
-        expected_error = size.nil? ? StandardError : size.is_a?(Integer) ? RangeError : TypeError
+        expected_error = size.is_a?(Integer) ? RangeError : TypeError
 
-        expect { proto.public_send(method, *arguments, size) }.to raise_error(expected_error)
+        expect { proto.public_send(method, *arguments, size) }.to raise_error(expected_error) do |error|
+          expect(error).to be_instance_of(expected_error)
+        end
         expect(trans.available).to eq(0)
       end
 

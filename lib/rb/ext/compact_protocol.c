@@ -66,7 +66,6 @@ static uint32_t int_to_zig_zag(int32_t n);
 static void write_varint32(VALUE transport, uint32_t n);
 
 static int64_t checked_integer_range(VALUE value, int64_t min, int64_t max) {
-  CHECK_NIL(value);
   if (RB_UNLIKELY(!RB_INTEGER_TYPE_P(value))) {
     rb_raise(rb_eTypeError, "integer argument expected");
   }

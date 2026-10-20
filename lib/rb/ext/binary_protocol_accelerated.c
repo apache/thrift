@@ -168,16 +168,17 @@ VALUE rb_thrift_binary_proto_write_set_end(VALUE self) {
 VALUE rb_thrift_binary_proto_write_message_begin(VALUE self, VALUE name, VALUE type, VALUE seqid) {
   VALUE trans = GET_TRANSPORT(self);
   VALUE strict_write = GET_STRICT_WRITE(self);
+  int32_t sequence_id = checked_i32_value(seqid);
 
   if (strict_write == Qtrue) {
     int8_t message_type = checked_byte_value(type);
     write_i32_direct(trans, VERSION_1 | message_type);
     write_string_direct(trans, name);
-    write_i32_direct(trans, checked_i32_value(seqid));
+    write_i32_direct(trans, sequence_id);
   } else {
     write_string_direct(trans, name);
     write_byte_direct(trans, checked_byte_value(type));
-    write_i32_direct(trans, checked_i32_value(seqid));
+    write_i32_direct(trans, sequence_id);
   }
 
   return Qnil;
@@ -185,8 +186,9 @@ VALUE rb_thrift_binary_proto_write_message_begin(VALUE self, VALUE name, VALUE t
 
 VALUE rb_thrift_binary_proto_write_field_begin(VALUE self, VALUE name, VALUE type, VALUE id) {
   VALUE trans = GET_TRANSPORT(self);
+  int16_t field_id = checked_i16_value(id);
   write_byte_direct(trans, checked_byte_value(type));
-  write_i16_direct(trans, checked_i16_value(id));
+  write_i16_direct(trans, field_id);
 
   return Qnil;
 }
@@ -198,17 +200,19 @@ VALUE rb_thrift_binary_proto_write_field_stop(VALUE self) {
 
 VALUE rb_thrift_binary_proto_write_map_begin(VALUE self, VALUE ktype, VALUE vtype, VALUE size) {
   VALUE trans = GET_TRANSPORT(self);
+  int32_t map_size = checked_size_value(size);
   write_byte_direct(trans, checked_byte_value(ktype));
   write_byte_direct(trans, checked_byte_value(vtype));
-  write_i32_direct(trans, checked_size_value(size));
+  write_i32_direct(trans, map_size);
 
   return Qnil;
 }
 
 VALUE rb_thrift_binary_proto_write_list_begin(VALUE self, VALUE etype, VALUE size) {
   VALUE trans = GET_TRANSPORT(self);
+  int32_t list_size = checked_size_value(size);
   write_byte_direct(trans, checked_byte_value(etype));
-  write_i32_direct(trans, checked_size_value(size));
+  write_i32_direct(trans, list_size);
 
   return Qnil;
 }
@@ -224,25 +228,21 @@ VALUE rb_thrift_binary_proto_write_bool(VALUE self, VALUE b) {
 }
 
 VALUE rb_thrift_binary_proto_write_byte(VALUE self, VALUE byte) {
-  CHECK_NIL(byte);
   write_byte_direct(GET_TRANSPORT(self), checked_byte_value(byte));
   return Qnil;
 }
 
 VALUE rb_thrift_binary_proto_write_i16(VALUE self, VALUE i16) {
-  CHECK_NIL(i16);
   write_i16_direct(GET_TRANSPORT(self), checked_i16_value(i16));
   return Qnil;
 }
 
 VALUE rb_thrift_binary_proto_write_i32(VALUE self, VALUE i32) {
-  CHECK_NIL(i32);
   write_i32_direct(GET_TRANSPORT(self), checked_i32_value(i32));
   return Qnil;
 }
 
 VALUE rb_thrift_binary_proto_write_i64(VALUE self, VALUE i64) {
-  CHECK_NIL(i64);
   write_i64_direct(GET_TRANSPORT(self), checked_i64_value(i64));
   return Qnil;
 }
