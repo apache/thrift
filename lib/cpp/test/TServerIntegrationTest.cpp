@@ -664,12 +664,23 @@ static void run_dispatch_rejection_case(int64_t dispatchTimeout) {
   // serve() accepts each and tries to dispatch it; the ones past the queue are
   // rejected by ThreadManager::add().
   std::vector<shared_ptr<TSocket> > fired;
+  int droppedWhileSending = 0;
   for (int i = 0; i < 6; ++i) {
     try {
       auto s = connect();
-      ParentServiceClient c(make_shared<TBinaryProtocol>(s));
-      c.send_incrementGeneration();
-      fired.push_back(s);
+      try {
+        ParentServiceClient c(make_shared<TBinaryProtocol>(s));
+        c.send_incrementGeneration();
+        fired.push_back(s);
+      } catch (const TTransportException& e) {
+        // serve() can reject and drop a client before its request is fully
+        // written. Windows then fails the send with an aborted connection,
+        // so that client never gets to read end-of-stream below. It is a drop
+        // all the same; a send that merely timed out is not.
+        if (e.getType() != TTransportException::TIMED_OUT) {
+          ++droppedWhileSending;
+        }
+      }
     } catch (...) {
       // Once serve() is gone (before the fix) a later connect/send may fail.
     }
@@ -683,9 +694,10 @@ static void run_dispatch_rejection_case(int64_t dispatchTimeout) {
   BOOST_CHECK_MESSAGE(!serveThrew, "a rejected dispatch ended the server");
 
   // Non-vacuous: a rejected client is closed by the server, so at least one of
-  // the fired sockets reads end-of-stream. Only true if a rejection happened.
+  // the fired clients failed to send or reads end-of-stream. Only true if a
+  // rejection happened.
   if (!serveThrew) {
-    int closed = 0;
+    int closed = droppedWhileSending;
     for (const auto& s : fired) {
       try {
         uint8_t b[1];
