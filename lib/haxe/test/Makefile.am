@@ -94,6 +94,8 @@ EXTRA_DIST = \
              neko.hxml \
              php.hxml \
              python.hxml \
+             websocket.hxml \
+             websocket.mjs \
              project.hide \
              HaxeTests.hxproj \
              make_all.bat \

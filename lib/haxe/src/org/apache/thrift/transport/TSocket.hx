@@ -64,8 +64,9 @@ class TSocket extends TEndpointTransport  {
     #end
 
     #if js
-    private var input : Dynamic = null;
+    private var input : Bytes = null;  // what has arrived, read from readCount on
     private var output : WebSocket = null;
+    private var pending : Array<Dynamic->Void> = [];  // flush callbacks waiting for a reply
     #elseif flash
     private var input : Socket = null;
     private var output : Socket = null;
@@ -115,7 +116,7 @@ class TSocket extends TEndpointTransport  {
             #if flash
             return (input.bytesAvailable > 0);
             #elseif js
-            return true;
+            return (readCount < input.length);
             #else
             var ready = Socket.select( [socket], null, null, 0);
             return (ready.read.length > 0);
@@ -140,16 +141,19 @@ class TSocket extends TEndpointTransport  {
 
             #elseif js
 
-            if( input == null) {
+            // The messages that have arrived are read one after the other, from
+            // where the last read stopped.
+            if( (input == null) || (readCount >= input.length)) {
                 throw new TTransportException(TTransportException.UNKNOWN, "Still no data ");  // don't block
             }
-            var nr = len;
-            while( nr < len) {
-                buf.addByte( input.get(off+nr));
+            var nr = 0;
+            while( (nr < len) && (readCount < input.length)) {
+                buf.addByte( input.get(readCount));
+                ++readCount;
                 ++nr;
             }
-			CountConsumedMessageBytes(len);
-            return len;
+			CountConsumedMessageBytes(nr);
+            return nr;
 
             #else
 
@@ -231,16 +235,30 @@ class TSocket extends TEndpointTransport  {
         obuffer = new BytesOutput();
 		ResetConsumedMessageSize();
 
+        #if js
+
+        // The reply arrives later, as a message event; that is when the
+        // callback can read it, not right after sending.
+        if( callback != null) {
+            pending.push( callback);
+        }
+        try {
+            send( bytes);
+        }
+        catch (e : Dynamic) {
+            trace(e);
+            if( (callback != null) && pending.remove( callback)) {
+                callback( new TTransportException(TTransportException.UNKNOWN, 'Bad IO error : $e'));
+            }
+        }
+
+        #else
 
         ioCallback = callback;
         try {
             readCount = 0;
 
-            #if js
-            output.send( bytes);
-            #else
             output.writeBytes( bytes, 0, bytes.length);
-            #end
 
             if(ioCallback != null) {
                 ioCallback(null);  // success call
@@ -259,7 +277,51 @@ class TSocket extends TEndpointTransport  {
                 ioCallback(new TTransportException(TTransportException.UNKNOWN, 'Bad IO error : $e'));
             }
         }
+
+        #end
     }
+
+    #if js
+
+    // The WebSocket connects asynchronously; what is flushed before it is
+    // open goes out once it is.
+    private function send( bytes : js.lib.ArrayBuffer) : Void {
+        if( output.readyState == WebSocket.CONNECTING) {
+            output.addEventListener("open", function(_) { output.send( bytes); });
+        } else {
+            output.send( bytes);
+        }
+    }
+
+    // A message has arrived: keep it after what has not been read yet, and
+    // let the oldest waiting flush callback read its reply.
+    private function receive( data : Dynamic) : Void {
+        var bytes : Bytes = Std.isOfType( data, String) ? Bytes.ofString( data) : Bytes.ofData( data);
+        if( (input != null) && (readCount < input.length)) {
+            var joined = new BytesBuffer();
+            joined.addBytes( input, readCount, input.length - readCount);
+            joined.add( bytes);
+            bytes = joined.getBytes();
+        }
+        input = bytes;
+        readCount = 0;
+
+        var callback = pending.shift();
+        if( callback != null) {
+            callback( null);
+        }
+    }
+
+    // No reply will come any more for the callbacks still waiting.
+    private function failPending( reason : String) : Void {
+        var waiting = pending;
+        pending = [];
+        for( callback in waiting) {
+            callback( new TTransportException(TTransportException.NOT_OPEN, reason));
+        }
+    }
+
+    #end
 
     public override function isOpen()  :  Bool
     {
@@ -270,8 +332,13 @@ class TSocket extends TEndpointTransport  {
     {
         #if js
         var socket = new WebSocket(host);
+        // A Blob, the default, can only be read asynchronously.
+        socket.binaryType = js.html.BinaryType.ARRAYBUFFER;
         socket.onmessage = function( event : js.html.MessageEvent) {
-            this.input = event.data;
+            receive( event.data);
+        }
+        socket.onclose = function( event : js.html.CloseEvent) {
+            failPending( 'Connection closed (${event.code})');
         }
 
         #elseif flash
@@ -305,7 +372,12 @@ class TSocket extends TEndpointTransport  {
     {
         this.socket = socket;
 
-        #if (flash || js)
+        #if js
+        output = socket;
+        input = null;  // nothing has arrived yet
+        readCount = 0;
+
+        #elseif flash
         output = socket;
         input = socket;
 
