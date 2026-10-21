@@ -33,7 +33,12 @@ module Thrift
     ## must be caught. 'retry' can be used to continue. (threads will
     ## continue to run while the exception is being handled.)
     def rescuable_serve
-      Thread.new { serve } unless @running
+      unless @running
+        Thread.new do
+          Thread.current.name = "thrift.server"
+          serve
+        end
+      end
       @running = true
       raise @exception_q.pop
     end
@@ -42,11 +47,13 @@ module Thrift
     ## to die and another to be spawned in its place.
     def serve
       @server_transport.listen
+      next_worker_id = 0
 
       begin
         loop do
           @thread_q.push(:token)
-          Thread.new do
+          Thread.new(next_worker_id) do |worker_id|
+            Thread.current.name = "thrift.pool.#{worker_id}"
             loop do
               begin
                 client = @server_transport.accept
@@ -70,6 +77,7 @@ module Thrift
           ensure
             @thread_q.pop # thread died!
           end
+          next_worker_id += 1
         end
       ensure
         @server_transport.close

@@ -301,6 +301,8 @@ describe "Server" do
 
   describe Thrift::ThreadedServer do
     before(:each) do
+      # These examples run stubbed thread blocks on the example thread.
+      allow(Thread.current).to receive(:name=)
       @processor = double("Processor")
       @serverTrans = double("ServerTransport")
       @trans = double("BaseTransport")
@@ -364,6 +366,8 @@ describe "Server" do
 
   describe Thrift::ThreadPoolServer do
     before(:each) do
+      # These examples run stubbed thread blocks on the example thread.
+      allow(Thread.current).to receive(:name=)
       @processor = double("Processor")
       @server_trans = double("ServerTransport")
       @trans = double("BaseTransport")
@@ -407,7 +411,7 @@ describe "Server" do
       expect(@server_trans).to receive(:listen).ordered
       expect(thread_q).to receive(:push).with(:token)
       expect(thread_q).to receive(:pop)
-      expect(Thread).to receive(:new).and_yield
+      expect(Thread).to receive(:new).with(0).and_yield(0)
       expect(@server_trans).to receive(:accept).exactly(3).times.and_return(@client)
       expect(@trans).to receive(:get_transport).exactly(3).times.and_return(@trans)
       expect(@prot).to receive(:get_protocol).exactly(3).times.and_return(@prot)
@@ -433,7 +437,7 @@ describe "Server" do
       expect(@server_trans).to receive(:accept).ordered.and_return(@client)
       expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
       expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
-      allow(Thread).to receive(:new).and_yield
+      allow(Thread).to receive(:new).with(0).and_yield(0)
       expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
       expect(@trans).to receive(:close).once
       expect(@server_trans).to receive(:close)
@@ -441,6 +445,172 @@ describe "Server" do
       catch(:stop) { @server.serve }
 
       expect(exception_q).to be_empty
+    end
+  end
+
+  describe "thread names" do
+    before(:each) do
+      @threads = ThreadGroup.new
+    end
+
+    after(:each) do
+      stop_threads
+    end
+
+    def stop_threads
+      @server_thread&.kill
+      @server_thread&.join
+      until (threads = @threads.list).empty?
+        threads.each(&:kill)
+        threads.each(&:join)
+      end
+    end
+
+    def with_server_threads
+      previous_group = Thread.current.group
+      # Children inherit the group before their thread blocks can run.
+      @threads.add(Thread.current)
+      yield
+    ensure
+      previous_group.add(Thread.current)
+    end
+
+    def start_server(server)
+      with_server_threads do
+        @server_thread = Thread.new do
+          Thread.current.name = "application"
+          server.serve
+        end
+      end
+    end
+
+    def receive_threads(queue, count = 1)
+      Timeout.timeout(5) { Array.new(count) { queue.pop } }
+    end
+
+    it "stops pool workers that have not reported their names" do
+      entered = Queue.new
+      transport = double("server transport", listen: nil, close: nil)
+      allow(transport).to receive(:accept) do
+        entered << Thread.current
+        sleep
+      end
+      server = Thrift::ThreadPoolServer.new(nil, transport, nil, nil, 1)
+
+      start_server(server)
+      worker = receive_threads(entered).first
+      stop_threads
+
+      expect(worker).not_to be_alive
+    ensure
+      worker&.kill
+      worker&.join
+    end
+
+    it "names connection handlers before processing without renaming the serving thread" do
+      clients = Queue.new
+      clients << Thrift::MemoryBufferTransport.new
+      transport = double("server transport", listen: nil, close: nil)
+      allow(transport).to receive(:accept) { clients.pop }
+      names = Queue.new
+      processor = double("processor")
+      allow(processor).to receive(:process) do
+        names << Thread.current.name
+        sleep
+      end
+      server = Thrift::ThreadedServer.new(processor, transport)
+
+      start_server(server)
+
+      expect(receive_threads(names)).to eq(["thrift.threaded"])
+      expect(@server_thread.name).to eq("application")
+    end
+
+    it "numbers pool workers by creation order, including replacements" do
+      accepting = Queue.new
+      transport = double("server transport", listen: nil, close: nil)
+      allow(transport).to receive(:accept) do
+        commands = Queue.new
+        accepting << [Thread.current.name, commands]
+        commands.pop
+        raise "worker failed"
+      end
+      server = Thrift::ThreadPoolServer.new(nil, transport, nil, nil, 2)
+
+      start_server(server)
+      workers = receive_threads(accepting, 2).sort_by(&:first)
+
+      expect(workers.map(&:first)).to eq(["thrift.pool.0", "thrift.pool.1"])
+      workers.first.last << :fail
+      expect(receive_threads(accepting).first.first).to eq("thrift.pool.2")
+      expect(@server_thread.name).to eq("application")
+    end
+
+    it "restarts pool worker numbering for each server run" do
+      names = Queue.new
+      transport = double("server transport", listen: nil, close: nil)
+      allow(transport).to receive(:accept) do
+        names << Thread.current.name
+        sleep
+      end
+      server = Thrift::ThreadPoolServer.new(nil, transport, nil, nil, 1)
+
+      2.times do
+        start_server(server)
+        expect(receive_threads(names)).to eq(["thrift.pool.0"])
+        stop_threads
+      end
+    end
+
+    it "names the background server before entering serve" do
+      names = Queue.new
+      server = Thrift::ThreadPoolServer.new(nil, nil)
+      allow(server).to receive(:serve) do
+        names << Thread.current.name
+        server.instance_variable_get(:@exception_q) << RuntimeError.new("stopped")
+      end
+      caller_name = Thread.current.name
+
+      expect do
+        Timeout.timeout(5) { with_server_threads { server.rescuable_serve } }
+      end.to raise_error("stopped")
+      expect(receive_threads(names)).to eq(["thrift.server"])
+      expect(Thread.current.name).to eq(caller_name)
+    end
+
+    it "names nonblocking I/O and indexed workers before their first log messages" do
+      names = Queue.new
+      logger = double("logger")
+      allow(logger).to receive(:debug) do |message|
+        names << Thread.current.name if message.start_with?("Starting ") || message.end_with?("is spawning")
+      end
+      io_manager = Thrift::NonblockingServer::IOManager.new(nil, nil, nil, nil, 12, logger)
+      caller_name = Thread.current.name
+
+      with_server_threads { io_manager.spawn }
+
+      expect(receive_threads(names, 13)).to match_array(["thrift.io", *(0...12).map { |i| "thrift.nb.#{i}" }])
+      expect(Thread.current.name).to eq(caller_name)
+    ensure
+      io_manager&.ensure_closed
+    end
+
+    [true, false].each do |blocking|
+      it "#{blocking ? "preserves the caller name during synchronous" : "names the asynchronous"} shutdown" do
+        names = Queue.new
+        io_manager = double("I/O manager")
+        allow(io_manager).to receive(:shutdown) { names << Thread.current.name }
+        transport = double("server transport", close: nil)
+        server = Thrift::NonblockingServer.new(nil, transport)
+        server.instance_variable_set(:@io_manager, io_manager)
+        caller_name = Thread.current.name
+
+        thread = with_server_threads { server.shutdown(0, blocking) }
+        thread.join unless blocking
+
+        expect(receive_threads(names)).to eq([blocking ? caller_name : "thrift.shutdown"])
+        expect(Thread.current.name).to eq(caller_name)
+      end
     end
   end
 end

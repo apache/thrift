@@ -36,6 +36,7 @@ module Thrift
         trans = @transport_factory.get_transport(client)
         prot = @protocol_factory.get_protocol(trans)
         Thread.new(prot, trans) do |p, t|
+          Thread.current.name = "thrift.threaded"
           loop do
             @processor.process(p, p)
           end
