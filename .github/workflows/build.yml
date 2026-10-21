@@ -664,6 +664,15 @@ jobs:
           haxe --cwd . neko.hxml
           neko bin/Test.n
 
+      # TSocket on the js target talks WebSocket. websocket.mjs runs the
+      # compiled test under Node against a minimal WebSocket server of its
+      # own; it reuses the gen-haxe from the step above.
+      - name: Run Haxe js TSocket test (Node)
+        run: |
+          cd lib/haxe/test
+          haxe --cwd . websocket.hxml
+          node websocket.mjs bin/WebSocketTest.js
+
   lib-st:
     needs: compiler
     runs-on: ubuntu-24.04
