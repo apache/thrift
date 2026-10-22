@@ -452,6 +452,10 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     generate_netstd_doc(out, tenum);
 
     generate_deprecation_attribute(out, tenum->annotations_);
+    if (tenum->annotations_.count("enum.flags") != 0)
+    {
+        out << indent() << "[Flags]" << '\n';
+    }
     out << indent() << "public enum " << type_name(tenum,false) << '\n';
     scope_up(out);
 
