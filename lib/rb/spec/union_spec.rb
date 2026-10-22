@@ -19,6 +19,7 @@
 #
 
 require "spec_helper"
+require "thrift_spec_constants"
 
 describe "Union" do
   describe Thrift::Union do
@@ -26,6 +27,63 @@ describe "Union" do
       union = SpecNamespace::My_union.new
       expect(union.get_set_field).to eq(nil)
       expect(union.get_value).to eq(nil)
+    end
+
+    it "should preserve legacy behavior for a false selector" do
+      union = SpecNamespace::My_union.new(false)
+      expect(union.get_set_field).to be false
+      expect(union.get_value).to be_nil
+    end
+
+    [true, false].each do |type_checking|
+      context "with type checking #{type_checking}" do
+        before { Thrift.type_checking = type_checking }
+
+        {
+          "a String selector and value" => ["integer32", 25],
+          "a Hash with a String key" => [{"integer32" => 25}],
+        }.each do |form, arguments|
+          it "should normalize String field names supplied as #{form}" do
+            union = SpecNamespace::My_union.new(*arguments)
+            other_union = SpecNamespace::My_union.new(integer32: 25)
+
+            expect(union.get_set_field).to eq(:integer32)
+            expect(union.integer32).to eq(25)
+            expect(union.integer32?).to be true
+            expect(union.some_characters?).to be false
+            expect(union).to eq(other_union)
+            expect(union.hash).to eq(other_union.hash)
+            expect(union <=> other_union).to eq(0)
+          end
+        end
+      end
+    end
+
+    {
+      "constant" => -> { SpecNamespace::UNION_CONSTANT },
+      "field default" => -> { SpecNamespace::StructWithUnionDefault.new.union_field },
+    }.each do |source, build_union|
+      it "should expose the selected field of a generated union #{source}" do
+        union = build_union.call
+        expect(union.get_set_field).to eq(:string_field)
+        expect(union.string_field).to eq("default union value")
+        expect(union.string_field?).to be true
+        expect(union).to eq(SpecNamespace::TestUnion.new(string_field: "default union value"))
+      end
+
+      [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+        it "should preserve a generated union #{source} through #{protocol_class}" do
+          union = build_union.call
+          protocol = protocol_class.new(Thrift::MemoryBufferTransport.new)
+          union.write(protocol)
+          result = SpecNamespace::TestUnion.new
+          result.read(protocol)
+
+          expect(result.string_field).to eq("default union value")
+          expect(result).to eq(union)
+          expect(result.hash).to eq(union.hash)
+        end
+      end
     end
 
     it "should set a field and be accessible through get_value and the named field accessor" do

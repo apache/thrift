@@ -63,6 +63,12 @@ union TestUnion {
   6: uuid uuid_field;
 }
 
+const TestUnion UNION_CONSTANT = {"string_field": "default union value"}
+
+struct StructWithUnionDefault {
+  1: TestUnion union_field = {"string_field": "default union value"}
+}
+
 struct Foo {
   1: i32 simple = 53,
   2: string words = "words",
