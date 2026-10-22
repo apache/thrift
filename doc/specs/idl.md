@@ -60,6 +60,33 @@ An enum creates an enumerated type, with named values. If no constant value is s
 
     [10] Enum            ::=  'enum' Identifier '{' (Identifier ('=' IntConstant)? ListSeparator?)* '}'
 
+The `enum.flags` annotation marks an enum as a set of bit flags:
+
+```thrift
+enum Permissions {
+  Read = 1,
+  Write = 2,
+  ReadWrite = 3,
+} (enum.flags)
+```
+
+The C# (`netstd`) generator adds `[Flags]`. The Python generator uses `enum.Flag`,
+or `enum.IntFlag` with `--gen py:enum,type_hints`. Flag enums require Python 3.6
+or later. Unannotated enums keep their existing behavior. The annotation does not
+assign values or check that they are powers of two; zero and composite values are
+allowed. The wire representation remains an `i32`. Python preserves unknown flag
+bits when reading and writing values, allowing peers with different versions of
+an enum to exchange new flags without losing them. Bitwise complement also
+preserves this behavior: `permissions & ~Permissions.Read` clears `Read` without
+removing unknown bits. The complement uses signed integer semantics, so
+`~Permissions.Read` can have a negative value.
+
+Python flag values compare and hash by value (and, for `Flag`, by enum type when
+comparing). Unknown values are not retained in the enum's member cache; use `==`
+rather than `is` to compare them. With `--gen py:enum`, integer arguments to flag
+fields are converted to the enum type in immutable structs and exceptions as
+well as mutable structs.
+
 ### Struct
 
 Structs are the fundamental compositional type in Thrift. The name of each field must be unique within the struct.

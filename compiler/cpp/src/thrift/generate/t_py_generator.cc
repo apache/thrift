@@ -18,6 +18,7 @@
  */
 
 #include <string>
+#include <set>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -297,6 +298,64 @@ public:
     return package_dir + real_module;
   }
 
+  string flags_base_alias() {
+    std::set<string> names;
+    for (auto type : program_->get_enums()) {
+      names.insert(maybe_escape_identifier(type->get_name()));
+    }
+    for (auto type : program_->get_objects()) {
+      names.insert(maybe_escape_identifier(type->get_name()));
+    }
+    for (auto constant : program_->get_consts()) {
+      names.insert(maybe_escape_identifier(constant->get_name()));
+    }
+    for (auto include : program_->get_includes()) {
+      string module = get_real_py_module(include, gen_twisted_, package_prefix_);
+      names.insert(module.substr(0, module.find('.')));
+    }
+    string alias = "_thrift_Flag";
+    while (names.count(alias) != 0) {
+      alias += "_";
+    }
+    return alias;
+  }
+
+  static bool is_flags(t_type* type) {
+    type = type->get_true_type();
+    return type->is_enum() && type->annotations_.count("enum.flags") != 0;
+  }
+
+  static bool contains_flags(t_type* type, std::set<t_type*>& visited) {
+    type = type->get_true_type();
+    if (!visited.insert(type).second) {
+      return false;
+    }
+    if (is_flags(type)) {
+      return true;
+    }
+    if (type->is_struct() || type->is_xception()) {
+      for (auto field : static_cast<t_struct*>(type)->get_members()) {
+        if (contains_flags(field->get_type(), visited)) {
+          return true;
+        }
+      }
+    } else if (type->is_map()) {
+      auto map_type = static_cast<t_map*>(type);
+      return contains_flags(map_type->get_key_type(), visited)
+             || contains_flags(map_type->get_val_type(), visited);
+    } else if (type->is_list()) {
+      return contains_flags(static_cast<t_list*>(type)->get_elem_type(), visited);
+    } else if (type->is_set()) {
+      return contains_flags(static_cast<t_set*>(type)->get_elem_type(), visited);
+    }
+    return false;
+  }
+
+  static bool contains_flags(t_type* type) {
+    std::set<t_type*> visited;
+    return contains_flags(type, visited);
+  }
+
   static bool is_immutable(t_type* ttype) {
     std::map<std::string, std::vector<std::string>>::iterator it = ttype->annotations_.find("python.immutable");
 
@@ -511,6 +570,13 @@ string t_py_generator::py_imports() {
   if (gen_enum_) {
     ss << "from enum import IntEnum" << '\n';
   }
+  for (auto tenum : program_->get_enums()) {
+    if (is_flags(tenum)) {
+      ss << "from enum import " << (gen_type_hints_ ? "IntFlag" : "Flag")
+         << " as " << flags_base_alias() << '\n';
+      break;
+    }
+  }
   if (gen_utf8strings_) {
     ss << '\n' << "import sys";
   }
@@ -550,7 +616,9 @@ void t_py_generator::generate_enum(t_enum* tenum) {
   std::ostringstream to_string_mapping, from_string_mapping;
   std::string base_class;
 
-  if (gen_enum_) {
+  if (is_flags(tenum)) {
+    base_class = flags_base_alias();
+  } else if (gen_enum_) {
     base_class = "IntEnum";
   } else if (gen_newstyle_) {
     base_class = "object";
@@ -566,6 +634,49 @@ void t_py_generator::generate_enum(t_enum* tenum) {
            << '\n';
   indent_up();
   generate_python_docstring(f_types_, tenum);
+
+  if (is_flags(tenum)) {
+    int32_t declared_bits = 0;
+    for (auto value : tenum->get_constants()) {
+      declared_bits |= value->get_value();
+    }
+    // Preserve unknown bits on older Python versions as well as signed I32 values.
+    indent(f_types_) << "@classmethod" << '\n';
+    indent(f_types_) << "def _missing_(cls, value):" << '\n';
+    indent_up();
+    indent(f_types_) << "if not isinstance(value, int):" << '\n';
+    indent(f_types_) << indent_str() << "return None" << '\n';
+    // Let enum name known combinations, but do not cache unknown wire values.
+    indent(f_types_) << "if value >= 0 and not (value & ~(" << declared_bits << ")):" << '\n';
+    indent_up();
+    indent(f_types_) << "try:" << '\n';
+    indent(f_types_) << indent_str() << "return super()._missing_(value)" << '\n';
+    indent(f_types_) << "except ValueError:" << '\n';
+    indent(f_types_) << indent_str() << "pass" << '\n';
+    indent_down();
+    indent(f_types_) << "member = "
+                     << (gen_type_hints_ ? "int.__new__(cls, value)" : "object.__new__(cls)") << '\n';
+    indent(f_types_) << "member._name_ = None" << '\n';
+    indent(f_types_) << "member._value_ = value" << '\n';
+    indent(f_types_) << "return member" << '\n';
+    indent_down();
+    f_types_ << '\n';
+
+    if (!gen_type_hints_) {
+      // Uncached Flag values need value equality and a hash independent of their name.
+      indent(f_types_) << "def __eq__(self, other):" << '\n';
+      indent_up();
+      indent(f_types_) << "if self.__class__ is other.__class__:" << '\n';
+      indent(f_types_) << indent_str() << "return self._value_ == other._value_" << '\n';
+      indent(f_types_) << "return NotImplemented" << '\n';
+      indent_down();
+      f_types_ << '\n';
+      indent(f_types_) << "def __hash__(self):" << '\n';
+      indent(f_types_) << indent_str() << "return hash(self._value_)" << '\n' << '\n';
+    }
+    indent(f_types_) << "def __invert__(self):" << '\n';
+    indent(f_types_) << indent_str() << "return self.__class__(~self._value_)" << '\n' << '\n';
+  }
 
   to_string_mapping << indent() << "_VALUES_TO_NAMES = {" << '\n';
   from_string_mapping << indent() << "_NAMES_TO_VALUES = {" << '\n';
@@ -588,7 +699,7 @@ void t_py_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
   f_types_ << '\n';
-  if (!gen_enum_) {
+  if (!gen_enum_ && !is_flags(tenum)) {
     f_types_ << to_string_mapping.str() << '\n' << from_string_mapping.str();
   }
 }
@@ -648,7 +759,9 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     out << indent();
     int64_t int_val = value->get_integer();
-    if (gen_enum_) {
+    if (is_flags(type)) {
+      out << type_name(type) << "(" << int_val << ")";
+    } else if (gen_enum_) {
       t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
       out << type_name(type) << "." << maybe_escape_identifier(enum_val->get_name());
     } else {
@@ -925,7 +1038,13 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       }
 
       if (is_immutable(tstruct)) {
-        if (gen_enum_ && type->is_enum()) {
+        if (gen_enum_ && is_flags(type)) {
+          string field_name = maybe_escape_identifier((*m_iter)->get_name());
+          indent(out) << "super(" << maybe_escape_identifier(tstruct->get_name()) << ", self).__setattr__('"
+                      << (*m_iter)->get_name() << "', " << field_name
+                      << " if hasattr(" << field_name << ", 'value') or " << field_name << " is None else "
+                      << type_name(true_type) << "(" << field_name << "))" << '\n';
+        } else if (gen_enum_ && type->is_enum()) {
           indent(out) << "super(" << maybe_escape_identifier(tstruct->get_name()) << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << maybe_escape_identifier((*m_iter)->get_name())
                       << " if hasattr(" << maybe_escape_identifier((*m_iter)->get_name()) << ", 'value') else "
@@ -1024,7 +1143,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     }
   }
 
-  if (!gen_dynamic_) {
+  if (!gen_dynamic_ || contains_flags(tstruct)) {
     out << '\n';
     generate_py_struct_reader(out, tstruct);
     generate_py_struct_writer(out, tstruct);
@@ -1112,19 +1231,22 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
 
   const char* id = is_immutable(tstruct) ? "cls" : "self";
 
-  indent(out) << "if iprot._fast_decode is not None "
-                 "and isinstance(iprot.trans, TTransport.CReadableTransport) "
-                 "and "
-              << id << ".thrift_spec is not None:" << '\n';
-  indent_up();
+  // The accelerated codec's I32 specification does not preserve flag types.
+  if (!contains_flags(tstruct)) {
+    indent(out) << "if iprot._fast_decode is not None "
+                   "and isinstance(iprot.trans, TTransport.CReadableTransport) "
+                   "and "
+                << id << ".thrift_spec is not None:" << '\n';
+    indent_up();
 
-  if (is_immutable(tstruct)) {
-    indent(out) << "return iprot._fast_decode(None, iprot, [cls, cls.thrift_spec])" << '\n';
-  } else {
-    indent(out) << "iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])" << '\n';
-    indent(out) << "return" << '\n';
+    if (is_immutable(tstruct)) {
+      indent(out) << "return iprot._fast_decode(None, iprot, [cls, cls.thrift_spec])" << '\n';
+    } else {
+      indent(out) << "iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])" << '\n';
+      indent(out) << "return" << '\n';
+    }
+    indent_down();
   }
-  indent_down();
 
   indent(out) << "iprot.increment_recursion_depth()" << '\n';
   indent(out) << "try:" << '\n';
@@ -1221,14 +1343,16 @@ void t_py_generator::generate_py_struct_writer(ostream& out, t_struct* tstruct) 
   indent(out) << "def write(self, oprot):" << '\n';
   indent_up();
   indent(out) << "self.validate()" << '\n';
-  indent(out) << "if oprot._fast_encode is not None and self.thrift_spec is not None:" << '\n';
-  indent_up();
+  if (!contains_flags(tstruct)) {
+    indent(out) << "if oprot._fast_encode is not None and self.thrift_spec is not None:" << '\n';
+    indent_up();
 
-  indent(out)
-      << "oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))"
-      << '\n';
-  indent(out) << "return" << '\n';
-  indent_down();
+    indent(out)
+        << "oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))"
+        << '\n';
+    indent(out) << "return" << '\n';
+    indent_down();
+  }
 
   indent(out) << "oprot.increment_recursion_depth()" << '\n';
   indent(out) << "try:" << '\n';
@@ -2430,7 +2554,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     }
     out << '\n';
   } else if (type->is_enum()) {
-    if (gen_enum_) {
+    if (gen_enum_ || is_flags(type)) {
       indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     } else {
       indent(out) << name << " = iprot.readI32()";
@@ -2623,7 +2747,7 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      if (gen_enum_){
+      if (gen_enum_ || is_flags(type)) {
         out << "writeI32(" << name << ".value)";
       } else {
         out << "writeI32(" << name << ")";
