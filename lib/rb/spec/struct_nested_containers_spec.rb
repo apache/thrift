@@ -58,6 +58,43 @@ describe "StructNestedContainers" do
       end
     end
 
+    [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+      describe "sets of lists with #{protocol_class}" do
+        let(:lists) { [[], [1], [2, 3]] }
+
+        {
+          "Set" => ->(items) { Set.new(items) },
+          "Set subclass" => ->(items) { Class.new(Set).new(items) },
+          "Array" => ->(items) { items },
+          "Hash" => ->(items) { items.zip([true, false, nil]).to_h },
+        }.each do |representation, build_set|
+          it "preserves list elements in the pure-Ruby writer using #{representation}" do
+            struct = SpecNamespace::NestedListInSet.new
+            field = SpecNamespace::NestedListInSet::FIELDS[1]
+            transport = Thrift::MemoryBufferTransport.new
+            protocol = protocol_class.new(transport)
+
+            # Call the Ruby container writer even when the native struct writer is loaded.
+            struct.write_container(protocol, build_set.call(lists), field)
+
+            expect(struct.read_field(protocol_class.new(transport), field)).to eq(Set.new(lists))
+            expect(transport.available).to eq(0)
+          end
+        end
+
+        it "round trips a generated struct containing a set of lists" do
+          original = SpecNamespace::NestedListInSet.new(value: Set.new(lists))
+          transport = Thrift::MemoryBufferTransport.new
+          original.write(protocol_class.new(transport))
+          restored = SpecNamespace::NestedListInSet.new
+          restored.read(protocol_class.new(transport))
+
+          expect(restored).to eq(original)
+          expect(transport.available).to eq(0)
+        end
+      end
+    end
+
     it "should support nested lists in map keys" do
       with_type_checking do
         a, b = SpecNamespace::NestedListInMapKey.new, SpecNamespace::NestedListInMapKey.new
