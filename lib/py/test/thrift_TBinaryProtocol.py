@@ -203,13 +203,55 @@ def testMessage(data, strict=True):
     return result
 
 
+class SimpleStruct(object):
+    thrift_spec = (
+        None,
+        (1, 11, "name", "UTF8", None),
+        (2, 8, "value", None, None),
+        (3, 2, "flag", None, None),
+    )
+
+    def __init__(self, name=None, value=None, flag=None):
+        self.name = name
+        self.value = value
+        self.flag = flag
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+
+        oprot.writeStructBegin("SimpleStruct")
+        if self.name is not None:
+            oprot.writeFieldBegin("name", 11, 1)
+            oprot.writeString(self.name)
+            oprot.writeFieldEnd()
+        if self.value is not None:
+            oprot.writeFieldBegin("value", 8, 2)
+            oprot.writeI32(self.value)
+            oprot.writeFieldEnd()
+        if self.flag is not None:
+            oprot.writeFieldBegin("flag", 2, 3)
+            oprot.writeBool(self.flag)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    @classmethod
+    def read(cls, iprot):
+        # Accelerated path only: tests construct iprot with fallback=False.
+        return iprot._fast_decode(None, iprot, [cls, cls.thrift_spec])
+
+
 class TestTBinaryProtocol(unittest.TestCase):
 
     def setUp(self):
         try:
-            from thrift.protocol import fastbinary  # noqa: F401
+            from thrift.protocol import fastbinary
+            self._fastbinary = fastbinary
             self._has_fastbinary = True
         except ImportError:
+            self._fastbinary = None
             self._has_fastbinary = False
 
     def test_TBinaryProtocol_write_read(self):
@@ -317,6 +359,58 @@ class TestTBinaryProtocol(unittest.TestCase):
 
         self.assertEqual(decoded.message, original.message)
         self.assertEqual(decoded.type, original.type)
+
+    def _encode_accelerated_struct(self, value):
+        otrans = TTransport.TMemoryBuffer()
+        oproto = TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(otrans)
+        value.write(oproto)
+        return otrans.getvalue()
+
+    def _decode_accelerated_struct(self, encoded):
+        itrans = TTransport.TMemoryBuffer(encoded)
+        iproto = TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(itrans)
+        return SimpleStruct.read(iproto)
+
+    def test_decode_binary_from_bytes_matches_transport(self):
+        if self._fastbinary is None:
+            self.skipTest("C extension not available")
+
+        original = SimpleStruct(name="transport-free", value=42, flag=True)
+        encoded = self._encode_accelerated_struct(original)
+
+        decoded_transport = self._decode_accelerated_struct(encoded)
+        decoded_direct = self._fastbinary.decode_binary_from_bytes(
+            encoded,
+            [SimpleStruct, SimpleStruct.thrift_spec],
+        )
+
+        self.assertEqual(decoded_direct.name, decoded_transport.name)
+        self.assertEqual(decoded_direct.value, decoded_transport.value)
+        self.assertEqual(decoded_direct.flag, decoded_transport.flag)
+
+    def test_decode_binary_from_bytes_rejects_non_bytes(self):
+        if self._fastbinary is None:
+            self.skipTest("C extension not available")
+
+        with self.assertRaises(TypeError):
+            self._fastbinary.decode_binary_from_bytes(
+                "not-bytes",
+                [SimpleStruct, SimpleStruct.thrift_spec],
+            )
+
+    def test_decode_binary_from_bytes_rejects_truncated_input(self):
+        if self._fastbinary is None:
+            self.skipTest("C extension not available")
+
+        encoded = self._encode_accelerated_struct(
+            SimpleStruct(name="trim me", value=7, flag=False)
+        )
+
+        with self.assertRaises(EOFError):
+            self._fastbinary.decode_binary_from_bytes(
+                encoded[:-1],
+                [SimpleStruct, SimpleStruct.thrift_spec],
+            )
 
     def test_TBinaryProtocol_no_strict_write_read(self):
         TMessageType = {"T_CALL": 1, "T_REPLY": 2, "T_EXCEPTION": 3, "T_ONEWAY": 4}
