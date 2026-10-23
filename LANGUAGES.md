@@ -165,7 +165,7 @@ language; it is the effective minimum the project stands behind for that release
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/netstd/README.md">.NET</a></td>
 <!-- Since -----------------><td>0.13.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<!-- Language Levels -------><td colspan=2>.NET Standard 2.x, net8, net9, net10</td>
+<!-- Language Levels -------><td colspan=2>.NET Standard 2.x, net8, net9, net10, net11</td>
 <!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
