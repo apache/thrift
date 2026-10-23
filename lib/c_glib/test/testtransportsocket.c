@@ -78,9 +78,10 @@ my_send(int socket, const void *buffer, size_t length, int flags)
 #undef socket
 #undef recv
 #undef send
+#include "testserversocket.h"
 
-static void thrift_socket_server (const int port);
-static void thrift_socket_server_open (const int port, int times);
+static void thrift_socket_server (ThriftServerSocket *tsocket);
+static void thrift_socket_server_open (ThriftServerSocket *tsocket, int times);
 
 static gchar *
 make_too_long_unix_socket_path (void)
@@ -115,21 +116,24 @@ test_open_and_close(void)
   ThriftSocket *tsocket = NULL;
   ThriftTransport *transport = NULL;
   GError *err = NULL;
-  int port = 51199;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
   pid_t pid;
   int status;
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   pid = fork ();
   g_assert ( pid >= 0 );
 
   if ( pid == 0 )
     {
-      /* child listens */
-      thrift_socket_server_open (port, 1);
+      /* child accepts */
+      thrift_socket_server_open (server, 1);
       exit (0);
     } else {
-	/* parent connects, wait a bit for the socket to be created */
-	sleep (1);
+	/* parent connects; the child owns the listening socket now */
+	g_object_unref (server);
 
 	/* open a connection and close it */
 	tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
@@ -173,21 +177,24 @@ test_read_and_write(void)
   ThriftSocket *tsocket = NULL;
   ThriftTransport *transport = NULL;
   pid_t pid;
-  int port = 51199;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
   int status;
   guchar buf[10] = TEST_DATA; /* a buffer */
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   pid = fork ();
   g_assert ( pid >= 0 );
 
   if ( pid == 0 )
     {
-      /* child listens */
-      thrift_socket_server (port);
+      /* child accepts */
+      thrift_socket_server (server);
       exit (0);
     } else {
-	/* parent connects, wait a bit for the socket to be created */
-	sleep (1);
+	/* parent connects; the child owns the listening socket now */
+	g_object_unref (server);
 
 	tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
 				"port", port, NULL);
@@ -251,10 +258,13 @@ test_peek(void)
 {
   gint status;
   pid_t pid;
-  guint port = 51199;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
   gchar data = 'A';
   ThriftTransport *client_transport;
   GError *error = NULL;
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   client_transport = g_object_new (THRIFT_TYPE_SOCKET,
 				   "hostname", "localhost",
@@ -271,19 +281,11 @@ test_peek(void)
 
   if (pid == 0)
     {
-      ThriftServerTransport *server_transport = NULL;
+      ThriftServerTransport *server_transport = THRIFT_SERVER_TRANSPORT (server);
 
       g_object_unref (client_transport);
 
-      /* child listens */
-      server_transport = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-				       "port", port,
-				       NULL);
-      g_assert (server_transport != NULL);
-
-      thrift_server_transport_listen (server_transport, &error);
-      g_assert (error == NULL);
-
+      /* child accepts */
       client_transport = g_object_new
 	  (THRIFT_TYPE_BUFFERED_TRANSPORT,
 	   "transport",  thrift_server_transport_accept (server_transport, &error),
@@ -309,8 +311,8 @@ test_peek(void)
       exit (0);
     }
   else {
-      /* parent connects, wait a bit for the socket to be created */
-      sleep (1);
+      /* parent connects; the child owns the listening socket now */
+      g_object_unref (server);
 
       /* connect to the child */
       thrift_transport_open (client_transport, &error);
@@ -389,16 +391,13 @@ test_server_listen_rejects_too_long_unix_path (void)
 }
 
 static void
-thrift_socket_server_open (const int port, int times)
+thrift_socket_server_open (ThriftServerSocket *tsocket, int times)
 {
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
   int i;
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-					      "port", port, NULL);
 
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
   for(i=0;i<times;i++){
       client = thrift_server_transport_accept (transport, NULL);
       g_assert (client != NULL);
@@ -410,7 +409,7 @@ thrift_socket_server_open (const int port, int times)
 
 
 static void
-thrift_socket_server (const int port)
+thrift_socket_server (ThriftServerSocket *tsocket)
 {
   int bytes = 0;
   ThriftServerTransport *transport = NULL;
@@ -418,11 +417,7 @@ thrift_socket_server (const int port)
   guchar buf[10]; /* a buffer */
   guchar match[10] = TEST_DATA;
 
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-					      "port", port, NULL);
-
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
   g_assert (client != NULL);
 
