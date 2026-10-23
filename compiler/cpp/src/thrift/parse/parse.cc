@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#include <set>
+#include <string>
+
+#include "thrift/parse/t_program.h"
 #include "thrift/parse/t_type.h"
 #include "thrift/parse/t_typedef.h"
 
@@ -32,4 +36,66 @@ const t_type* t_type::get_true_type() const {
     type = ((t_typedef*)type)->get_type();
   }
   return type;
+}
+
+namespace {
+
+/**
+ * Follows typedefs and container elements one step at a time. path holds the
+ * types on the way here, so that a typedef reached again through itself,
+ * which would send get_true_type() round forever, is reported instead.
+ * done holds the types already walked in full.
+ */
+void resolve_type(const t_type* type,
+                  std::set<const t_type*>& path,
+                  std::set<const t_type*>& done) {
+  if (done.count(type) != 0) {
+    return;
+  }
+  if (!path.insert(type).second) {
+    throw std::string("Type \"") + type->get_name() + "\" refers to itself";
+  }
+  if (type->is_typedef()) {
+    resolve_type(((const t_typedef*)type)->get_type(), path, done);
+  } else if (type->is_list()) {
+    resolve_type(((const t_list*)type)->get_elem_type(), path, done);
+  } else if (type->is_set()) {
+    resolve_type(((const t_set*)type)->get_elem_type(), path, done);
+  } else if (type->is_map()) {
+    resolve_type(((const t_map*)type)->get_key_type(), path, done);
+    resolve_type(((const t_map*)type)->get_val_type(), path, done);
+  }
+  path.erase(type);
+  done.insert(type);
+}
+
+void resolve_type(const t_struct* tstruct,
+                  std::set<const t_type*>& path,
+                  std::set<const t_type*>& done) {
+  for (const t_field* field : tstruct->get_members()) {
+    resolve_type(field->get_type(), path, done);
+  }
+}
+
+} // namespace
+
+void t_program::resolve_types() const {
+  std::set<const t_type*> path;
+  std::set<const t_type*> done;
+  for (const t_typedef* td : typedefs_) {
+    resolve_type(td, path, done);
+  }
+  for (const t_const* c : consts_) {
+    resolve_type(c->get_type(), path, done);
+  }
+  for (const t_struct* ts : objects_) {
+    resolve_type(ts, path, done);
+  }
+  for (const t_service* service : services_) {
+    for (const t_function* function : service->get_functions()) {
+      resolve_type(function->get_returntype(), path, done);
+      resolve_type(function->get_arglist(), path, done);
+      resolve_type(function->get_xceptions(), path, done);
+    }
+  }
 }

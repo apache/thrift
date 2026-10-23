@@ -1002,6 +1002,12 @@ void parse(t_program* program, t_program* parent_program, std::set<std::string>&
     if (yyparse() != 0) {
       failure("Parser error during types pass.");
     }
+
+    // A type used before it is declared is a forward typedef, resolved on
+    // first use. Resolve every type the program refers to here, so that a
+    // target that is never declared, or a typedef that refers to itself, is
+    // reported before any generator has written a file.
+    program->resolve_types();
   } catch (string &x) {
     failure(x.c_str());
   }
