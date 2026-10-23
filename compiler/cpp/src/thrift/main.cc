@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <cstring>
+#include <exception>
 #include <string>
 #include <algorithm>
 #include <sys/types.h>
@@ -1055,8 +1056,10 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     failure("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     failure("Error: %s\n", exc);
-  } catch (const std::invalid_argument& invalid_argument_exception) {
-    failure("Error: %s\n", invalid_argument_exception.what());
+  } catch (const std::exception& e) {
+    // A generator that throws std::logic_error, std::runtime_error or any
+    // other std::exception would otherwise end the compiler with an abort.
+    failure("Error: %s\n", e.what());
   }
 }
 
