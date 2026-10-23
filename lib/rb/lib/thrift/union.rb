@@ -44,7 +44,7 @@ module Thrift
       elsif !value.nil?
         raise Exception, "Value provided, but no name!"
       end
-      @setfield = name
+      @setfield = name.is_a?(String) ? name.to_sym : name
       @value = value
     end
 
