@@ -83,6 +83,122 @@ describe "Struct" do
       SpecNamespace::Foo::FIELDS[4][:default] = [1, 2, 2, 3]
     end
 
+    it "gives generated nested containers their own elements" do
+      first = SpecNamespace::NestedDefaults.new
+      second = SpecNamespace::NestedDefaults.new
+
+      expect(first.nested_list.first).not_to equal(second.nested_list.first)
+      expect(first.nested_map["key"]).not_to equal(second.nested_map["key"])
+      expect(first.nested_set.first).not_to equal(second.nested_set.first)
+    end
+
+    it "isolates nested generated defaults between instances" do
+      first = SpecNamespace::NestedDefaults.new
+      second = SpecNamespace::NestedDefaults.new
+
+      first.nested_list.first << 2
+      first.nested_map["key"] << "changed"
+      first.nested_set.first << 2
+      first.nested_set.reset
+      first.child.greeting << " changed"
+      first.text << " changed"
+      first.frozen_list.first << 2
+      first.data << " changed"
+      first.token.replace("ffeeddcc-bbaa-9988-7766-554433221100")
+
+      expect(first.nested_set.include?([1, 2])).to be(true)
+      expect(second.nested_list).to eq([[1]])
+      expect(second.nested_map).to eq({"key" => ["value"]})
+      expect(second.nested_set).to eq(Set.new([[1]]))
+      expect(second.child.greeting).to eq("child")
+      expect(second.text).to eq("fixed")
+      expect(second.frozen_list).to eq([[1]])
+      expect(second.data).to eq("binary")
+      expect(second.token).to eq("00112233-4455-6677-8899-aabbccddeeff")
+      expect(first.scalar).to equal(second.scalar)
+    end
+
+    it "copies frozen containers and strings into mutable values" do
+      defaults = {
+        "list" => [[1].freeze].freeze,
+        "text" => "fixed",
+      }
+
+      copy = Thrift::Struct.copy_default_value(defaults)
+      copy["list"].first << 2
+      copy["text"] << " changed"
+
+      expect(copy).to eq({"list" => [[1, 2]], "text" => "fixed changed"})
+      expect(defaults).to eq({"list" => [[1]], "text" => "fixed"})
+    end
+
+    it "copies generated union defaults with string selectors" do
+      first = SpecNamespace::UnionDefaults.new
+      second = SpecNamespace::UnionDefaults.new
+
+      expect(first.choice.get_set_field).to eq("string_field")
+      first.choice.get_value << " changed"
+      expect(second.choice.get_value).to eq("choice")
+      expect(SpecNamespace::UnionDefaults::FIELDS[1][:default].get_value).to eq("choice")
+    end
+
+    it "does not confuse generated field accessors with default-copy helpers" do
+      value = SpecNamespace::DefaultCopyNames.new
+
+      expect(value.copy_default_value).to eq("literal")
+      expect(value.copy_struct_default.greeting).to eq("child")
+    end
+
+    it "does not rerun nested struct constructors when copying defaults" do
+      expect(SpecNamespace::Hello).not_to receive(:new)
+
+      expect(SpecNamespace::Foo.new.hello.greeting).to eq("hello, world!")
+    end
+
+    it "keeps explicitly supplied mutable values owned by the caller" do
+      value = [[7]]
+      struct = SpecNamespace::NestedDefaults.new(nested_list: value)
+
+      expect(struct.nested_list).to equal(value)
+    end
+
+    [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+      it "isolates omitted defaults on repeated #{protocol_class} reads" do
+        buffer = Thrift::MemoryBufferTransport.new
+        protocol = protocol_class.new(buffer)
+        protocol.write_struct_begin("NestedDefaults")
+        protocol.write_field_stop
+        protocol.write_struct_end
+        bytes = buffer.read(buffer.available)
+
+        first = SpecNamespace::NestedDefaults.new
+        second = SpecNamespace::NestedDefaults.new
+        2.times do
+          [first, second].each do |value|
+            value.read(protocol_class.new(Thrift::MemoryBufferTransport.new(bytes)))
+          end
+          expect(first.nested_list.first).not_to equal(second.nested_list.first)
+          expect(first.nested_map["key"]).not_to equal(second.nested_map["key"])
+          expect(first.nested_set.first).not_to equal(second.nested_set.first)
+          expect(first.child.greeting).not_to equal(second.child.greeting)
+          expect(first.nested_list).to eq([[1]])
+
+          [:text, :data, :token].each do |name|
+            default = first.fields_with_default_values.fetch(name.to_s)
+            first_value = first.public_send(name)
+            second_value = second.public_send(name)
+
+            expect(first_value).to eq(default)
+            expect(first_value.encoding).to eq(default.encoding)
+            expect(first_value).not_to equal(default)
+            expect(first_value).not_to equal(second_value)
+            first_value << " changed"
+            expect(second_value).to eq(default)
+          end
+        end
+      end
+    end
+
     it "should properly initialize boolean values" do
       struct = SpecNamespace::BoolStruct.new(yesno: false)
       expect(struct.yesno).to be_falsey

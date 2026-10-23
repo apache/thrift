@@ -34,6 +34,8 @@ ID to_s_method_id;
 ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
 static ID validate_container_size_method_id;
+static ID copy_default_value_method_id;
+static VALUE thrift_struct_module;
 static VALUE default_sym;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
@@ -487,16 +489,6 @@ static inline void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
   rb_ivar_set(obj, field_ivar_id(field_name), value);
 }
 
-/* Ruby's rescue and iteration APIs require addressable callback functions. */
-static VALUE duplicate_default_value(VALUE value) {
-  return rb_obj_dup(value);
-}
-
-static VALUE retain_default_value(VALUE value, VALUE exception) {
-  (void)exception;
-  return value;
-}
-
 static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
   (void)field_id;
 
@@ -509,14 +501,14 @@ static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
       rb_ivar_set(self, ivar_id, Qnil);
     }
   } else {
-    VALUE value = rb_rescue2(
-      duplicate_default_value,
-      default_value,
-      retain_default_value,
-      default_value,
-      rb_eStandardError,
-      (VALUE)0
-    );
+    VALUE value;
+    if (RB_TYPE_P(default_value, T_STRING)) {
+      value = rb_str_dup(default_value);
+    } else if (RB_SPECIAL_CONST_P(default_value) || RB_TYPE_P(default_value, T_FLOAT) || RB_TYPE_P(default_value, T_BIGNUM)) {
+      value = default_value;
+    } else {
+      value = rb_funcall(thrift_struct_module, copy_default_value_method_id, 1, default_value);
+    }
     rb_ivar_set(self, ivar_id, value);
   }
 
@@ -837,12 +829,13 @@ static VALUE rb_thrift_union_write(int argc, VALUE *argv, VALUE self) {
 }
 
 void Init_struct(void) {
-  VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
+  thrift_struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
+  rb_global_variable(&thrift_struct_module);
 
   recursion_limit = FIX2INT(rb_const_get(thrift_module, rb_intern("DEFAULT_RECURSION_DEPTH")));
 
-  rb_define_method(struct_module, "write", rb_thrift_struct_write, -1);
-  rb_define_method(struct_module, "read", rb_thrift_struct_read, -1);
+  rb_define_method(thrift_struct_module, "write", rb_thrift_struct_write, -1);
+  rb_define_method(thrift_struct_module, "read", rb_thrift_struct_read, -1);
 
   thrift_union_class = rb_const_get(thrift_module, rb_intern("Union"));
   rb_global_variable(&thrift_union_class);
@@ -866,6 +859,7 @@ void Init_struct(void) {
   rb_global_variable(&sorted_field_ids_method_id);
 
   validate_container_size_method_id = rb_intern("validate_container_size");
+  copy_default_value_method_id = rb_intern("copy_default_value");
 
   default_sym = ID2SYM(rb_intern("default"));
   rb_global_variable(&default_sym);
