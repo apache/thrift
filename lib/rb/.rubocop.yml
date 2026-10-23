@@ -351,6 +351,9 @@ Style/RedundantSelf:
 Style/RedundantStringEscape:
   Enabled: true
 
+Style/Semicolon:
+  Enabled: true
+
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes

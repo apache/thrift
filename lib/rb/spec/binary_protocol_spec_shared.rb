@@ -74,7 +74,7 @@ shared_examples_for "a binary protocol" do
 
   it "should write the map header" do
     @prot.write_map_begin(Thrift::Types::STRING, Thrift::Types::LIST, 17)
-    expect(@trans.read(@trans.available)).to eq([Thrift::Types::STRING, Thrift::Types::LIST, 17].pack("ccN"));
+    expect(@trans.read(@trans.available)).to eq([Thrift::Types::STRING, Thrift::Types::LIST, 17].pack("ccN"))
   end
 
   # map footer is a noop
@@ -380,7 +380,7 @@ shared_examples_for "a binary protocol" do
   # field footer is a noop
 
   it "should read a stop field" do
-    @trans.write([Thrift::Types::STOP].pack("c"));
+    @trans.write([Thrift::Types::STOP].pack("c"))
     expect(@prot.read_field_begin).to eq([nil, Thrift::Types::STOP, 0])
   end
 
@@ -427,7 +427,7 @@ shared_examples_for "a binary protocol" do
   # set footer is a noop
 
   it "should read a bool" do
-    @trans.write("\001\000");
+    @trans.write("\001\000")
     expect(@prot.read_bool).to eq(true)
     expect(@prot.read_bool).to eq(false)
   end
@@ -442,7 +442,7 @@ shared_examples_for "a binary protocol" do
   it "should read an i16" do
     # try a scattering of values, including min/max
     [-2**15, -5237, -353, 0, 1527, 2234, (2**15) - 1].each do |i|
-      @trans.write([i].pack("n"));
+      @trans.write([i].pack("n"))
       expect(@prot.read_i16).to eq(i)
     end
   end
@@ -488,7 +488,7 @@ shared_examples_for "a binary protocol" do
   it "should read a double" do
     # try a random scattering of values, including min/max
     [Float::MIN, -231231.12351, -323.233513, 0, 123.2351235, 2351235.12351235, Float::MAX].each do |f|
-      @trans.write([f].pack("G"));
+      @trans.write([f].pack("G"))
       expect(@prot.read_double).to eq(f)
     end
   end

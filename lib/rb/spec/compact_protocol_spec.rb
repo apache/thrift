@@ -754,7 +754,10 @@ describe Thrift::CompactProtocol do
           input.freeze if frozen
           writes = []
           transport = Thrift::BaseTransport.new
-          transport.define_singleton_method(:write) { |bytes| writes << bytes; bytes.setbyte(0, 0) }
+          transport.define_singleton_method(:write) do |bytes|
+            writes << bytes
+            bytes.setbyte(0, 0)
+          end
 
           expect(Thrift::CompactProtocol.new(transport).write_binary(input)).to be_nil
           expect(input).to eq(original)
@@ -800,7 +803,10 @@ describe Thrift::CompactProtocol do
       it "honors MemoryBuffer write overrides" do
         transport = Thrift::MemoryBufferTransport.new
         writes = []
-        transport.define_singleton_method(:write) { |bytes| writes << bytes; super(bytes) }
+        transport.define_singleton_method(:write) do |bytes|
+          writes << bytes
+          super(bytes)
+        end
         protocol = Thrift::CompactProtocol.new(transport)
         protocol.write_binary("payload".b.freeze)
 
@@ -838,7 +844,10 @@ describe Thrift::CompactProtocol do
         input = ("\u20ac" * 1024).freeze
         writes = []
         transport = Thrift::BaseTransport.new
-        transport.define_singleton_method(:write) { |bytes| writes << bytes; bytes.clear }
+        transport.define_singleton_method(:write) do |bytes|
+          writes << bytes
+          bytes.clear
+        end
         Thrift::CompactProtocol.new(transport).write_string(input)
         expect(input).to eq("\u20ac" * 1024)
         expect(input.encoding).to eq(Encoding::UTF_8)
