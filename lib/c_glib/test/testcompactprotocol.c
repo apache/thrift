@@ -51,7 +51,6 @@
 #define TEST_NI64 (-123456789012345)
 #define TEST_DOUBLE 1234567890.123
 #define TEST_STRING "this is a test string 1234567890!@#$%^&*()"
-#define TEST_PORT 51199
 
 static int transport_read_count = 0;
 static int transport_read_error = 0;
@@ -90,10 +89,11 @@ my_thrift_transport_write (ThriftTransport *transport, const gpointer buf,
 #include "../src/thrift/c_glib/protocol/thrift_compact_protocol.c"
 #undef thrift_transport_read_all
 #undef thrift_transport_write
+#include "testserversocket.h"
 
-static void thrift_server_primitives (const int port);
-static void thrift_server_complex_types (const int port);
-static void thrift_server_many_frames (const int port);
+static void thrift_server_primitives (ThriftServerSocket *tsocket);
+static void thrift_server_complex_types (ThriftServerSocket *tsocket);
+static void thrift_server_many_frames (ThriftServerSocket *tsocket);
 
 static void
 test_create_and_destroy (void)
@@ -141,7 +141,10 @@ test_read_and_write_primitives (void)
   ThriftProtocol *protocol = NULL;
   gpointer binary = (gpointer *) TEST_STRING;
   guint32 len = strlen (TEST_STRING);
-  int port = TEST_PORT;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   /* fork a server from the client */
   pid = fork ();
@@ -149,12 +152,12 @@ test_read_and_write_primitives (void)
 
   if (pid == 0)
   {
-    /* child listens */
-    thrift_server_primitives (port);
+    /* child accepts */
+    thrift_server_primitives (server);
     exit (0);
   } else {
-    /* parent.  wait a bit for the socket to be created. */
-    sleep (1);
+    /* parent connects; the child owns the listening socket now */
+    g_object_unref (server);
 
     /* create a ThriftSocket */
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
@@ -239,7 +242,10 @@ test_read_and_write_complex_types (void)
   ThriftTransport *transport = NULL;
   ThriftCompactProtocol *tc = NULL;
   ThriftProtocol *protocol = NULL;
-  int port = TEST_PORT;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   /* fork a server from the client */
   pid = fork ();
@@ -247,12 +253,12 @@ test_read_and_write_complex_types (void)
 
   if (pid == 0)
   {
-    /* child listens */
-    thrift_server_complex_types (port);
+    /* child accepts */
+    thrift_server_complex_types (server);
     exit (0);
   } else {
-    /* parent.  wait a bit for the socket to be created. */
-    sleep (1);
+    /* parent connects; the child owns the listening socket now */
+    g_object_unref (server);
 
     /* create a ThriftSocket */
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
@@ -563,7 +569,10 @@ test_read_and_write_many_frames (void)
   ThriftProtocol *protocol = NULL;
   gpointer binary = (gpointer *) TEST_STRING;
   const guint32 len = strlen (TEST_STRING);
-  int port = TEST_PORT;
+  ThriftServerSocket *server = NULL;
+  guint port = 0;
+
+  server = server_socket_new_on_free_port (NULL, &port);
 
   /* fork a server from the client */
   pid = fork ();
@@ -571,12 +580,12 @@ test_read_and_write_many_frames (void)
 
   if (pid == 0)
   {
-    /* child listens */
-    thrift_server_many_frames (port);
+    /* child accepts */
+    thrift_server_many_frames (server);
     exit (0);
   } else {
-    /* parent.  wait a bit for the socket to be created. */
-    sleep (1);
+    /* parent connects; the child owns the listening socket now */
+    g_object_unref (server);
 
     /* create a ThriftSocket */
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
@@ -661,7 +670,7 @@ test_read_and_write_many_frames (void)
 
 
 static void
-thrift_server_primitives (const int port)
+thrift_server_primitives (ThriftServerSocket *tsocket)
 {
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
@@ -684,10 +693,7 @@ thrift_server_primitives (const int port)
   guint32 len = 0;
   void *comparator = (void *) TEST_STRING;
 
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                              "port", port, NULL);
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
   g_assert (client != NULL);
 
@@ -788,7 +794,7 @@ thrift_server_primitives (const int port)
 }
 
 static void
-thrift_server_complex_types (const int port)
+thrift_server_complex_types (ThriftServerSocket *tsocket)
 {
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
@@ -807,10 +813,7 @@ thrift_server_complex_types (const int port)
   gint8 version_and_type = 0;
   gint8 protocol_id = 0;
 
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                              "port", port, NULL);
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
   g_assert (client != NULL);
 
@@ -1172,13 +1175,12 @@ thrift_server_complex_types (const int port)
 }
 
 static void
-thrift_server_many_frames (const int port)
+thrift_server_many_frames (ThriftServerSocket *tsocket)
 {
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
   ThriftCompactProtocol *tcp = NULL;
   ThriftProtocol *protocol = NULL;
-  ThriftServerSocket *tsocket = NULL;
   gboolean value_boolean = FALSE;
   gint8 value_byte = 0,
     zigzag_p16 = 0, zigzag_p32 = 0, zigzag_p64 = 0,
@@ -1196,9 +1198,7 @@ thrift_server_many_frames (const int port)
   guint32 len = 0;
   void *comparator = (void *) TEST_STRING;
 
-  tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET, "port", port, NULL);
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
 
   /* wrap the client in a framed transport */
   client = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport",

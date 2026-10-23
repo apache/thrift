@@ -51,7 +51,6 @@
 #define TEST_NI64 (-123456789012345)
 #define TEST_DOUBLE 1234567890.123
 #define TEST_STRING "this is a test string 1234567890!@#$%^&*()"
-#define TEST_PORT 51199
 
 #define MAX_MESSAGE_SIZE 2
 
@@ -92,8 +91,9 @@ my_thrift_transport_write (ThriftTransport *transport, const gpointer buf,
 #include "../src/thrift/c_glib/protocol/thrift_compact_protocol.c"
 #undef thrift_transport_read_all
 #undef thrift_transport_write
+#include "testserversocket.h"
 
-static void thrift_server_complex_types (const int port);
+static void thrift_server_complex_types (ThriftServerSocket *tsocket);
 
 static void
 test_create_and_destroy (void)
@@ -156,7 +156,16 @@ test_read_and_write_complex_types (void)
   ThriftTransport *transport = NULL;
   ThriftCompactProtocol *tc = NULL;
   ThriftProtocol *protocol = NULL;
-  int port = TEST_PORT;
+  ThriftServerSocket *server = NULL;
+  ThriftConfiguration *server_configuration = NULL;
+  guint port = 0;
+
+  server_configuration = g_object_new (THRIFT_TYPE_CONFIGURATION,
+                                       "max_message_size", MAX_MESSAGE_SIZE,
+                                       "max_frame_size", MAX_MESSAGE_SIZE,
+                                       NULL);
+  server = server_socket_new_on_free_port (server_configuration, &port);
+  g_object_unref (server_configuration);
 
   /* fork a server from the client */
   pid = fork ();
@@ -164,12 +173,12 @@ test_read_and_write_complex_types (void)
 
   if (pid == 0)
   {
-    /* child listens */
-    thrift_server_complex_types (port);
+    /* child accepts */
+    thrift_server_complex_types (server);
     exit (0);
   } else {
-    /* parent.  wait a bit for the socket to be created. */
-    sleep (1);
+    /* parent connects; the child owns the listening socket now */
+    g_object_unref (server);
 
     /* create a ThriftSocket */
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
@@ -211,7 +220,7 @@ test_read_and_write_complex_types (void)
 
 
 static void
-thrift_server_complex_types (const int port)
+thrift_server_complex_types (ThriftServerSocket *tsocket)
 {
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
@@ -220,13 +229,8 @@ thrift_server_complex_types (const int port)
   ThriftType element_type, key_type, value_type;
   guint32 size = 0;
 
-  ThriftConfiguration *tconfiguration = g_object_new (THRIFT_TYPE_CONFIGURATION, "max_message_size", MAX_MESSAGE_SIZE,
-                                                      "max_frame_size", MAX_MESSAGE_SIZE, NULL);
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                              "port", port, "configuration", tconfiguration, NULL);
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
   THRIFT_SERVER_TRANSPORT_GET_CLASS (tsocket)->resetConsumedMessageSize(transport, -1, NULL);
-  thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
   g_assert (client != NULL);
 
@@ -252,7 +256,6 @@ thrift_server_complex_types (const int port)
 
   g_object_unref (client);
   g_object_unref (tsocket);
-  g_object_unref (tconfiguration);
 }
 
 
