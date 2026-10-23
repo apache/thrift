@@ -142,7 +142,8 @@ module Thrift
         oprot.write_list_end
       when Types::SET
         oprot.write_set_begin(field[:element][:type], value.size)
-        value.each do |v,| # the , is to preserve compatibility with the old Hash-style sets
+        elements = value.is_a?(Hash) ? value.each_key : value # old Hash-style sets store elements as keys
+        elements.each do |v|
           write_data(oprot, v, field[:element], remaining_depth)
         end
         oprot.write_set_end
