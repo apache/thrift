@@ -867,11 +867,15 @@ uint32_t TJSONProtocol::readJSONNumericChars(std::string& str) {
 namespace {
 template <typename T>
 T fromString(const std::string& s) {
-  T t;
+  T t{};
   std::istringstream str(s);
   str.imbue(std::locale::classic());
   str >> t;
-  if (str.bad() || !str.eof())
+  // fail() rejects an empty token, where nothing is extracted and t would be
+  // returned with no value ever assigned, and a value outside the type's range,
+  // where extraction fails and leaves t clamped; !eof() rejects trailing
+  // non-numeric characters, as before.
+  if (str.fail() || !str.eof())
     throw std::runtime_error(s);
   return t;
 }

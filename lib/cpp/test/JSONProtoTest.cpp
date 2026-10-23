@@ -541,3 +541,29 @@ BOOST_AUTO_TEST_CASE(test_json_number_size_measured_against_configured_maximum) 
   double out = 0;
   BOOST_CHECK_NO_THROW(proto->readDouble(out));
 }
+
+// An empty numeric token must be rejected, not decoded into a value that was
+// never assigned. readJSONNumericChars() returns an empty string when no digits
+// are present where a number is expected; fromString() must then throw rather
+// than return an unset number.
+BOOST_AUTO_TEST_CASE(test_json_empty_number_rejected) {
+  std::string json = "}"; // a non-numeric byte where a number is expected
+  auto buffer = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(&json[0]),
+                                                static_cast<uint32_t>(json.size()),
+                                                TMemoryBuffer::COPY);
+  auto proto = std::make_shared<TJSONProtocol>(buffer);
+  int64_t out = 0;
+  BOOST_CHECK_THROW(proto->readI64(out), apache::thrift::protocol::TProtocolException);
+}
+
+// A numeric token outside the target type's range must be rejected, not clamped
+// and returned as if it were the value on the wire.
+BOOST_AUTO_TEST_CASE(test_json_overflow_number_rejected) {
+  std::string json = "99999999999999999999 "; // > INT64_MAX, then a terminator
+  auto buffer = std::make_shared<TMemoryBuffer>(reinterpret_cast<uint8_t*>(&json[0]),
+                                                static_cast<uint32_t>(json.size()),
+                                                TMemoryBuffer::COPY);
+  auto proto = std::make_shared<TJSONProtocol>(buffer);
+  int64_t out = 0;
+  BOOST_CHECK_THROW(proto->readI64(out), apache::thrift::protocol::TProtocolException);
+}
