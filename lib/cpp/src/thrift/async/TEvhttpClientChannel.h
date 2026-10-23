@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TEVHTTP_CLIENT_CHANNEL_H_
 #define _THRIFT_TEVHTTP_CLIENT_CHANNEL_H_ 1
 
-#include <queue>
+#include <deque>
 #include <string>
 #include <utility>
 #include <memory>
@@ -77,7 +77,7 @@ private:
   std::string host_;
   std::string path_;
   typedef std::pair<VoidCallback, apache::thrift::transport::TMemoryBuffer*> Completion;
-  typedef std::queue<Completion> CompletionQueue;
+  typedef std::deque<Completion> CompletionQueue;
   CompletionQueue completionQueue_;
   struct evhttp_connection* conn_;
 };

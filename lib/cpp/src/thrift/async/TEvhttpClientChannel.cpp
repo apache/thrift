@@ -82,12 +82,25 @@ void TEvhttpClientChannel::sendAndRecvMessage(const VoidCallback& cob,
     throw TException("evbuffer_add failed");
   }
 
+  // Queue the completion before making the request. libevent may invoke the
+  // response callback synchronously from within evhttp_make_request() (for
+  // example on an immediate connection failure), and finish() must then find
+  // this request's completion already queued.
+  const size_t outstanding = completionQueue_.size();
+  completionQueue_.push_back(Completion(cob, recvBuf));
+
   rv = evhttp_make_request(conn_, req, EVHTTP_REQ_POST, path_.c_str());
   if (rv != 0) {
-    throw TException("evhttp_make_request failed");
+    if (completionQueue_.size() > outstanding) {
+      // The callback did not run synchronously, so the completion just queued
+      // belongs to a request that was never sent; drop exactly that one and
+      // report the failure to the caller.
+      completionQueue_.pop_back();
+      throw TException("evhttp_make_request failed");
+    }
+    // Otherwise the callback already ran synchronously and reported the error.
+    return;
   }
-
-  completionQueue_.push(Completion(cob, recvBuf));
 }
 
 void TEvhttpClientChannel::sendMessage(const VoidCallback& cob,
@@ -107,9 +120,13 @@ void TEvhttpClientChannel::recvMessage(const VoidCallback& cob,
 }
 
 void TEvhttpClientChannel::finish(struct evhttp_request* req) {
-  assert(!completionQueue_.empty());
+  if (completionQueue_.empty()) {
+    // Nothing is queued: a spurious or re-entrant callback. Do not touch the
+    // empty queue (front()/pop_front() on it would be undefined behaviour).
+    return;
+  }
   Completion completion = completionQueue_.front();
-  completionQueue_.pop();
+  completionQueue_.pop_front();
   if (req == nullptr) {
     try {
       completion.first();
