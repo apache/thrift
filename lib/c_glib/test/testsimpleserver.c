@@ -34,9 +34,8 @@
 #include <thrift/c_glib/transport/thrift_transport_factory.h>
 #include <thrift/c_glib/protocol/thrift_binary_protocol_factory.h>
 
-#define TEST_PORT 51199
-
 #include <thrift/c_glib/server/thrift_simple_server.c>
+#include "testserversocket.h"
 
 /* create a rudimentary processor */
 #define TEST_PROCESSOR_TYPE (test_processor_get_type ())
@@ -93,7 +92,9 @@ test_processor_class_init (TestProcessorClass *proc)
 }
 
 /* A ThriftServerSocket that attaches a weak reference to every transport it
- * accepts, so a test can observe how many of them are released. */
+ * accepts, so a test can observe how many of them are released, and that
+ * keeps a socket it is already listening on: the tests listen before forking
+ * the server, whose serve() then calls listen() again. */
 #define TEST_TYPE_SERVER_SOCKET (test_server_socket_get_type ())
 
 struct _TestServerSocket
@@ -135,6 +136,18 @@ test_server_socket_accept (ThriftServerTransport *transport, GError **error)
   return t;
 }
 
+static gboolean
+test_server_socket_listen (ThriftServerTransport *transport, GError **error)
+{
+  ThriftServerTransportClass *parent_class =
+      THRIFT_SERVER_TRANSPORT_CLASS (test_server_socket_parent_class);
+
+  if (THRIFT_SERVER_SOCKET (transport)->sd != THRIFT_INVALID_SOCKET)
+    return TRUE;
+
+  return parent_class->listen (transport, error);
+}
+
 static void
 test_server_socket_init (TestServerSocket *s)
 {
@@ -145,6 +158,7 @@ static void
 test_server_socket_class_init (TestServerSocketClass *klass)
 {
   THRIFT_SERVER_TRANSPORT_CLASS (klass)->accept = test_server_socket_accept;
+  THRIFT_SERVER_TRANSPORT_CLASS (klass)->listen = test_server_socket_listen;
 }
 
 /* Original coverage: a server created without explicit factories starts and
@@ -155,11 +169,12 @@ test_server (void)
   int status;
   pid_t pid;
   TestProcessor *p = NULL;
-  ThriftServerSocket *tss = NULL;
+  TestServerSocket *tss = NULL;
   ThriftSimpleServer *ss = NULL;
 
   p = g_object_new (TEST_PROCESSOR_TYPE, NULL);
-  tss = g_object_new (THRIFT_TYPE_SERVER_SOCKET, "port", TEST_PORT, NULL);
+  tss = g_object_new (TEST_TYPE_SERVER_SOCKET, "port", 0, NULL);
+  server_socket_listen_on_free_port (THRIFT_SERVER_SOCKET (tss));
   ss = g_object_new (THRIFT_TYPE_SIMPLE_SERVER, "processor", p,
                      "server_transport", THRIFT_SERVER_TRANSPORT (tss), NULL);
 
@@ -185,30 +200,22 @@ test_server (void)
 }
 
 /* Open a TCP connection to the server, optionally send a short request-like
- * payload, then close it.  Retries until the child has started listening. */
+ * payload, then close it. */
 static void
-client_connect_and_close (gboolean send_payload)
+client_connect_and_close (guint port, gboolean send_payload)
 {
   int fd;
-  int tries;
   struct sockaddr_in addr;
 
   memset (&addr, 0, sizeof (addr));
   addr.sin_family = AF_INET;
-  addr.sin_port = htons (TEST_PORT);
+  addr.sin_port = htons (port);
   addr.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
 
-  for (tries = 0; tries < 500; tries++)
-  {
-    fd = socket (AF_INET, SOCK_STREAM, 0);
-    g_assert (fd >= 0);
-    if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) == 0)
-      break;
-    close (fd);
-    fd = -1;
-    g_usleep (10000); /* 10 ms */
-  }
+  fd = socket (AF_INET, SOCK_STREAM, 0);
   g_assert (fd >= 0);
+  g_assert_cmpint (connect (fd, (struct sockaddr *) &addr, sizeof (addr)),
+                   ==, 0);
 
   if (send_payload)
   {
@@ -246,6 +253,7 @@ run_lifetime_case (gboolean explicit_base_factory, gboolean send_payload)
   int status;
   pid_t pid;
   guint i;
+  guint port;
   TestProcessor *p = NULL;
   TestServerSocket *tss = NULL;
   ThriftSimpleServer *ss = NULL;
@@ -255,7 +263,8 @@ run_lifetime_case (gboolean explicit_base_factory, gboolean send_payload)
   ThriftProtocolFactory *pf_out = NULL;
 
   p = g_object_new (TEST_PROCESSOR_TYPE, NULL);
-  tss = g_object_new (TEST_TYPE_SERVER_SOCKET, "port", TEST_PORT, NULL);
+  tss = g_object_new (TEST_TYPE_SERVER_SOCKET, "port", 0, NULL);
+  port = server_socket_listen_on_free_port (THRIFT_SERVER_SOCKET (tss));
 
   if (explicit_base_factory)
   {
@@ -311,7 +320,7 @@ run_lifetime_case (gboolean explicit_base_factory, gboolean send_payload)
   else
   {
     for (i = 0; i < num_connections; i++)
-      client_connect_and_close (send_payload);
+      client_connect_and_close (port, send_payload);
 
     g_object_unref (ss);
     g_object_unref (tss);

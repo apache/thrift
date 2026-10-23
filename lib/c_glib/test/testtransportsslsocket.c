@@ -98,8 +98,9 @@ my_SSL_write(SSL *ssl, const void *buf, int num)
 #undef recv
 #undef send
 #undef SSL_write
+#include "testserversocket.h"
 
-static void thrift_socket_server (const int port);
+static void thrift_socket_server (ThriftServerSocket *tsocket);
 
 /* test object creation and destruction */
 static void
@@ -158,22 +159,24 @@ test_ssl_open_and_close_non_ssl_server(void)
   ThriftTransport *transport = NULL;
   GError *error=NULL;
   pid_t pid;
-  int non_ssl_port = 51198;
+  ThriftServerSocket *server = NULL;
+  guint non_ssl_port = 0;
   char errormsg[255];
 
+  server = server_socket_new_on_free_port (NULL, &non_ssl_port);
 
   pid = fork ();
   g_assert ( pid >= 0 );
 
   if ( pid == 0 )
     {
-      /* child listens */
+      /* child accepts */
       /* This is a non SSL server */
-      thrift_socket_server (non_ssl_port);
+      thrift_socket_server (server);
       exit (0);
     } else {
-	/* parent connects, wait a bit for the socket to be created */
-	sleep (1);
+	/* parent connects; the child owns the listening socket now */
+	g_object_unref (server);
 
 	/* open a connection and close it */
 	tSSLSocket = thrift_ssl_socket_new_with_host(SSLTLS, "localhost", non_ssl_port, &error);
@@ -638,37 +641,25 @@ test_ssl_context_unavailable_protocol(void)
   }
 }
 
+/* A plain (non-SSL) server. It waits for the first byte of the client's
+   TLS handshake and then closes with the rest of it unread, which resets the
+   connection. Waiting first means the reset always follows the client's
+   write, so the client sees the reset on its read instead of a SIGPIPE. */
 static void
-thrift_socket_server (const int port)
+thrift_socket_server (ThriftServerSocket *tsocket)
 {
-  int bytes = 0;
-  ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
-  guchar buf[10]; /* a buffer */
-  guchar match[] = TEST_DATA;
+  guchar buf[1];
 
-  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-					      "port", port, NULL);
-
-  transport = THRIFT_SERVER_TRANSPORT (tsocket);
-  thrift_server_transport_listen (transport, NULL);
-  client = thrift_server_transport_accept (transport, NULL);
+  client = thrift_server_transport_accept (THRIFT_SERVER_TRANSPORT (tsocket),
+                                           NULL);
   g_assert (client != NULL);
 
-  /* read 10 bytes */
-  bytes = thrift_ssl_socket_read (client, buf, 10, NULL);
-  g_assert (bytes == 10); /* make sure we've read 10 bytes */
-  g_assert ( memcmp(buf, match, 10) == 0 ); /* make sure what we got matches */
+  g_assert (thrift_transport_read (client, buf, sizeof buf, NULL) == sizeof buf);
 
-  /* failed read */
-  recv_error = 1;
-  thrift_ssl_socket_read (client, buf, 1, NULL);
-  recv_error = 0;
-
-  thrift_ssl_socket_read_end (client, NULL);
-  thrift_ssl_socket_close (client, NULL);
-  g_object_unref (tsocket);
+  thrift_transport_close (client, NULL);
   g_object_unref (client);
+  g_object_unref (tsocket);
 }
 
 int
