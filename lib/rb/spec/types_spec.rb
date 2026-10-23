@@ -37,6 +37,57 @@ describe Thrift::Types do
       expect(Thrift.type_name(42)).to be_nil
     end
 
+    it "keeps exact paths through mixed containers and struct class mismatches" do
+      field = {
+        type: Thrift::Types::MAP,
+        key: {type: Thrift::Types::STRING},
+        value: {
+          type: Thrift::Types::SET,
+          element: {type: Thrift::Types::LIST, element: {type: Thrift::Types::I32}},
+        },
+      }
+      expect { Thrift.check_type({nil => Set.new}, field, :root) }.to raise_error(
+        Thrift::TypeError, "Expected Types::STRING, received NilClass for field root.key",
+      )
+      expect { Thrift.check_type({"a" => Set.new([[1, nil]])}, field, :root) }.to raise_error(
+        Thrift::TypeError, "Expected Types::I32, received NilClass for field root.value.element.element",
+      )
+      field = {type: Thrift::Types::LIST, element: {type: Thrift::Types::STRUCT, class: SpecNamespace::Hello}}
+      expect { Thrift.check_type([SpecNamespace::BoolStruct.new], field, :root) }.to raise_error(
+        Thrift::TypeError, "Expected SpecNamespace::Hello, received SpecNamespace::BoolStruct for field root.element",
+      )
+    end
+
+    it "accepts primitive and container subclasses but requires the declared struct class" do
+      string = Class.new(String).new("value")
+      list = Class.new(Array).new([string])
+      map = Class.new(Hash).new
+      map[string] = list
+      field = {
+        type: Thrift::Types::MAP,
+        key: {type: Thrift::Types::STRING},
+        value: {type: Thrift::Types::LIST, element: {type: Thrift::Types::UUID}},
+      }
+      expect { Thrift.check_type(map, field, :root) }.not_to raise_error
+      set = Class.new(Set).new([false, true])
+      expect { Thrift.check_type(set, {type: Thrift::Types::SET, element: {type: Thrift::Types::BOOL}}, :root) }.not_to raise_error
+      subclass = Class.new(SpecNamespace::Hello)
+      value = subclass.new
+      expect { Thrift.check_type(value, {type: Thrift::Types::STRUCT, class: SpecNamespace::Hello}, :root) }.to raise_error(Thrift::TypeError)
+      expect { Thrift.check_type(value, {type: Thrift::Types::STRUCT, class: subclass}, :root) }.not_to raise_error
+      union = SpecNamespace::TestUnion.new
+      expect { Thrift.check_type(union, {type: Thrift::Types::STRUCT, class: union.class}, :root) }.not_to raise_error
+    end
+
+    it "preserves nil defaults, explicit void elements and unknown type errors" do
+      expect(Thrift.check_type(nil, nil, :root)).to be_nil
+      expect { Thrift.check_type(nil, {type: Thrift::Types::VOID}, :root, false) }.not_to raise_error
+      expect { Thrift.check_type([nil], {type: Thrift::Types::LIST, element: {type: Thrift::Types::VOID}}, :root) }.not_to raise_error
+      expect { Thrift.check_type(false, {type: 42}, :root) }.to raise_error(
+        Thrift::TypeError, "Expected , received FalseClass for field root",
+      )
+    end
+
     it "should check types properly" do
       # lambda { Thrift.check_type(nil, Thrift::Types::STOP) }.should raise_error(Thrift::TypeError)
       expect { Thrift.check_type(3,               {type: Thrift::Types::STOP},   :foo) }.to raise_error(Thrift::TypeError)

@@ -47,40 +47,41 @@ module Thrift
 
   def self.check_type(value, field, name, skip_nil = true)
     return if value.nil? and skip_nil
-    klasses = case field[:type]
+    valid = case field[:type]
     when Types::VOID
-      NilClass
+      NilClass === value
     when Types::BOOL
-      [TrueClass, FalseClass]
+      TrueClass === value || FalseClass === value
     when Types::BYTE, Types::I16, Types::I32, Types::I64
-      Integer
+      Integer === value
     when Types::DOUBLE
-      Float
+      Float === value
     when Types::STRING
-      String
+      String === value
     when Types::UUID
-      String
+      String === value
     when Types::STRUCT
-      [Struct, Union]
+      Struct === value || Union === value
     when Types::MAP
-      Hash
+      Hash === value
     when Types::SET
-      Set
+      Set === value
     when Types::LIST
-      Array
+      Array === value
     end
-    valid = klasses && [*klasses].any? { |klass| klass === value }
     raise TypeError, "Expected #{type_name(field[:type])}, received #{value.class} for field #{name}" unless valid
     # check elements now
     case field[:type]
     when Types::MAP
+      key_name = value_name = nil
       value.each_pair do |k, v|
-        check_type(k, field[:key], "#{name}.key", false)
-        check_type(v, field[:value], "#{name}.value", false)
+        check_type(k, field[:key], key_name ||= "#{name}.key", false)
+        check_type(v, field[:value], value_name ||= "#{name}.value", false)
       end
     when Types::SET, Types::LIST
+      element_name = nil
       value.each do |el|
-        check_type(el, field[:element], "#{name}.element", false)
+        check_type(el, field[:element], element_name ||= "#{name}.element", false)
       end
     when Types::STRUCT
       raise TypeError, "Expected #{field[:class]}, received #{value.class} for field #{name}" unless field[:class] == value.class
