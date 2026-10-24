@@ -19,14 +19,13 @@
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
-#include <boost/chrono/duration.hpp>
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
+#include <chrono>
+#include <fstream>
 #include <memory>
+#include <thread>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
+#include "TestThread.h"
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -42,12 +41,15 @@ using std::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TSSLSocketInterruptTest)
 
-boost::filesystem::path keyDir;
-boost::filesystem::path certFile(const std::string& filename)
+std::string keyDir;
+std::string certFile(const std::string& filename)
 {
-  return keyDir / filename;
+  return keyDir + "/" + filename;
 }
-boost::mutex gMutex;
+bool fileExists(const std::string& path)
+{
+  return std::ifstream(path.c_str()).good();
+}
 
 struct GlobalFixtureSSL
 {
@@ -56,7 +58,7 @@ struct GlobalFixtureSSL
       using namespace boost::unit_test::framework;
       for (int i = 0; i < master_test_suite().argc; ++i)
       {
-        BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+        BOOST_TEST_MESSAGE("argv[" << i << "] = \"" << master_test_suite().argv[i] << "\"");
       }
 
 #ifdef __linux__
@@ -68,11 +70,11 @@ struct GlobalFixtureSSL
       TSSLSocketFactory::setManualOpenSSLInitialization(true);
       apache::thrift::transport::initializeOpenSSL();
 
-      keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-      if (!boost::filesystem::exists(certFile("server.crt")))
+      keyDir = "../../../test/keys";
+      if (!fileExists(certFile("server.crt")))
       {
-        keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-        if (!boost::filesystem::exists(certFile("server.crt")))
+        keyDir = master_test_suite().argv[master_test_suite().argc - 1];
+        if (!fileExists(certFile("server.crt")))
         {
           throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
         }
@@ -120,8 +122,8 @@ shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
 
   pServerSocketFactory.reset(new TSSLSocketFactory());
   pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-  pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
-  pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+  pServerSocketFactory->loadCertificate(certFile("server.crt").c_str());
+  pServerSocketFactory->loadPrivateKey(certFile("server.key").c_str());
   pServerSocketFactory->server(true);
   return pServerSocketFactory;
 }
@@ -131,9 +133,9 @@ shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
 
   pClientSocketFactory.reset(new TSSLSocketFactory());
   pClientSocketFactory->authenticate(true);
-  pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
-  pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
-  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+  pClientSocketFactory->loadCertificate(certFile("client.crt").c_str());
+  pClientSocketFactory->loadPrivateKey(certFile("client.key").c_str());
+  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").c_str());
   return pClientSocketFactory;
 }
 
@@ -146,11 +148,11 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  TestThread readThread(std::bind(readerWorkerMustThrow, accepted));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(readThread.try_join_for(boost::chrono::milliseconds(20)),
+  BOOST_CHECK_MESSAGE(readThread.try_join_for(std::chrono::milliseconds(20)),
   "server socket interruptChildren did not interrupt child read");
   clientSock->close();
   accepted->close();
@@ -166,12 +168,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
+  TestThread readThread(std::bind(readerWorkerMustThrow, accepted));
   clientSock->write((const uint8_t*)"0", 1);
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(readThread.try_join_for(boost::chrono::milliseconds(20)),
+  BOOST_CHECK_MESSAGE(readThread.try_join_for(std::chrono::milliseconds(20)),
                       "server socket interruptChildren did not interrupt child read");
   accepted->close();
   clientSock->close();
@@ -189,12 +191,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
-  boost::thread readThread(std::bind(readerWorker, accepted, 0));
+  TestThread readThread(std::bind(readerWorker, accepted, 0));
   clientSock->write((const uint8_t*)"0", 1);
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // readThread is practically guaranteed to be blocking here
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(!readThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(!readThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child read");
 
   // wait for receive timeout to kick in
@@ -241,12 +243,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread peekThread(std::bind(peekerWorkerInterrupt, accepted));
+  TestThread peekThread(std::bind(peekerWorkerInterrupt, accepted));
   clientSock->write((const uint8_t*)"0", 1);
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(peekThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(peekThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren did not interrupt child peek");
   accepted->close();
   clientSock->close();
@@ -264,12 +266,12 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
-  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
+  TestThread peekThread(std::bind(peekerWorker, accepted, false));
   clientSock->write((const uint8_t*)"0", 1);
-  boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
-  BOOST_CHECK_MESSAGE(!peekThread.try_join_for(boost::chrono::milliseconds(200)),
+  BOOST_CHECK_MESSAGE(!peekThread.try_join_for(std::chrono::milliseconds(200)),
                       "server socket interruptChildren interrupted child peek");
 
   // wait for the receive timeout to kick in

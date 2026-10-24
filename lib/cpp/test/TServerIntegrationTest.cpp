@@ -20,10 +20,8 @@
 #define BOOST_TEST_MODULE TServerIntegrationTest
 #include <atomic>
 #include <boost/test/unit_test.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
-#include <boost/thread.hpp>
+#include <chrono>
+#include <thread>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TThreadedServer.h>
@@ -33,6 +31,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransport.h>
 #include "gen-cpp/ParentService.h"
+#include "TestThread.h"
 #include <string>
 #include <vector>
 
@@ -66,7 +65,7 @@ using apache::thrift::test::ParentServiceProcessor;
 using apache::thrift::test::ParentServiceProcessorFactory;
 using apache::thrift::TProcessor;
 using apache::thrift::TProcessorFactory;
-using boost::posix_time::milliseconds;
+using std::chrono::milliseconds;
 
 /**
  * preServe runs after listen() is successful, when we can connect
@@ -177,7 +176,7 @@ public:
   }
 
   void startServer() {
-    pServerThread.reset(new boost::thread(std::bind(&TServerType::serve, pServer.get())));
+    pServerThread.reset(new TestThread(std::bind(&TServerType::serve, pServer.get())));
 
     // block until listen() completes so clients will be able to connect
     Synchronized sync(*(pEventHandler.get()));
@@ -194,7 +193,7 @@ public:
       pEventHandler->wait();
     }
 
-    BOOST_TEST_MESSAGE(boost::format("  server has accepted %1%") % numAccepted);
+    BOOST_TEST_MESSAGE("  server has accepted " << numAccepted);
   }
 
   void stopServer() {
@@ -218,13 +217,13 @@ public:
    * \param[in]  purpose  a description of the test for logging purposes
    */
   void baseline(int64_t numToMake, int64_t expectedHWM, const std::string& purpose) {
-    BOOST_TEST_MESSAGE(boost::format("Testing %1%: %2% with %3% clients, expect %4% HWM")
-            % typeid(TServerType).name() % purpose % numToMake % expectedHWM);
+    BOOST_TEST_MESSAGE("Testing " << typeid(TServerType).name() << ": " << purpose << " with " << numToMake
+                                   << " clients, expect " << expectedHWM << " HWM");
 
     startServer();
 
     std::vector<shared_ptr<TSocket> > holdSockets;
-    std::vector<shared_ptr<boost::thread> > holdThreads;
+    std::vector<shared_ptr<TestThread> > holdThreads;
 
     for (int64_t i = 0; i < numToMake; ++i) {
       shared_ptr<TSocket> pClientSock(new TSocket("localhost", getServerPort()),
@@ -234,8 +233,8 @@ public:
       ParentServiceClient client(pClientProtocol);
       pClientSock->open();
       client.incrementGeneration();
-      holdThreads.push_back(shared_ptr<boost::thread>(
-          new boost::thread(std::bind(&TServerIntegrationTestFixture::delayClose,
+      holdThreads.push_back(shared_ptr<TestThread>(
+          new TestThread(std::bind(&TServerIntegrationTestFixture::delayClose,
                                         this,
                                         pClientSock,
                                         milliseconds(10 * numToMake)))));
@@ -243,7 +242,7 @@ public:
 
     BOOST_CHECK_EQUAL(expectedHWM, pServer->getConcurrentClientCountHWM());
 
-    BOOST_FOREACH (shared_ptr<boost::thread> pThread, holdThreads) { pThread->join(); }
+    for (const shared_ptr<TestThread>& pThread : holdThreads) { pThread->join(); }
     holdThreads.clear();
     holdSockets.clear();
 
@@ -255,8 +254,8 @@ public:
    * \param[in]  toClose  the connection to close
    * \param[in]  after  the delay to impose
    */
-  void delayClose(shared_ptr<TTransport> toClose, boost::posix_time::time_duration after) {
-    boost::this_thread::sleep(after);
+  void delayClose(shared_ptr<TTransport> toClose, milliseconds after) {
+    std::this_thread::sleep_for(after);
     toClose->close();
   }
 
@@ -275,25 +274,25 @@ public:
    * period of time to test for concurrency correctness.
    * \param[in]  numToMake  the number of concurrent clients
    */
-  void stress(int64_t numToMake, const boost::posix_time::time_duration& duration) {
-    BOOST_TEST_MESSAGE(boost::format("Stress testing %1% with %2% clients for %3% seconds")
-        % typeid(TServerType).name() % numToMake % duration.total_seconds());
+  void stress(int64_t numToMake, const milliseconds& duration) {
+    BOOST_TEST_MESSAGE("Stress testing " << typeid(TServerType).name() << " with " << numToMake
+        << " clients for " << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds");
 
     startServer();
 
-    std::vector<shared_ptr<boost::thread> > holdThreads;
+    std::vector<shared_ptr<TestThread> > holdThreads;
     for (int64_t i = 0; i < numToMake; ++i) {
-      holdThreads.push_back(shared_ptr<boost::thread>(
-        new boost::thread(std::bind(&TServerIntegrationTestFixture::stressor, this))));
+      holdThreads.push_back(shared_ptr<TestThread>(
+        new TestThread(std::bind(&TServerIntegrationTestFixture::stressor, this))));
     }
 
-    boost::this_thread::sleep(duration);
+    std::this_thread::sleep_for(duration);
     bStressDone = true;
 
-    BOOST_TEST_MESSAGE(boost::format("  serviced %1% connections (HWM %2%) totaling %3% requests")
-        % bStressConnectionCount % pServer->getConcurrentClientCountHWM() % bStressRequestCount);
+    BOOST_TEST_MESSAGE("  serviced " << bStressConnectionCount << " connections (HWM "
+        << pServer->getConcurrentClientCountHWM() << ") totaling " << bStressRequestCount << " requests");
 
-    BOOST_FOREACH (shared_ptr<boost::thread> pThread, holdThreads) { pThread->join(); }
+    for (const shared_ptr<TestThread>& pThread : holdThreads) { pThread->join(); }
     holdThreads.clear();
 
     BOOST_CHECK(bStressRequestCount > 0);
@@ -320,7 +319,7 @@ public:
 
   shared_ptr<TServerType> pServer;
   shared_ptr<TServerReadyEventHandler> pEventHandler;
-  shared_ptr<boost::thread> pServerThread;
+  shared_ptr<TestThread> pServerThread;
   std::atomic<bool> bStressDone;
   std::atomic<int64_t> bStressConnectionCount;
   std::atomic<int64_t> bStressRequestCount;
@@ -372,7 +371,7 @@ BOOST_FIXTURE_TEST_CASE(test_threaded_bound,
 
 BOOST_FIXTURE_TEST_CASE(test_threaded_stress,
                         TServerIntegrationProcessorFactoryTestFixture<TThreadedServer>) {
-  stress(10, boost::posix_time::seconds(3));
+  stress(10, std::chrono::seconds(3));
 }
 
 BOOST_FIXTURE_TEST_CASE(test_threadpool_factory,
@@ -423,7 +422,7 @@ BOOST_FIXTURE_TEST_CASE(test_threadpool_stress,
           new apache::thrift::concurrency::ThreadFactory));
   pServer->getThreadManager()->start();
 
-  stress(10, boost::posix_time::seconds(3));
+  stress(10, std::chrono::seconds(3));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -479,11 +478,11 @@ BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected) {
   // Ensure they have been accepted
   blockUntilAccepted(2);
 
-  boost::thread t1(std::bind(&TServerIntegrationTestFixture::delayClose,
+  TestThread t1(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock1,
                                milliseconds(250)));
-  boost::thread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
+  TestThread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock2,
                                milliseconds(250)));
@@ -517,7 +516,7 @@ BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
   BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
 
   // a third client cannot connect until one of the other two closes
-  boost::thread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
+  TestThread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock2,
                                milliseconds(250)));

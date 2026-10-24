@@ -19,41 +19,94 @@
 
 #include <thrift/TUuid.h>
 
-#include <boost/uuid/string_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <algorithm>
+#include <string>
 
 namespace apache {
 namespace thrift {
 
 namespace {
-static const boost::uuids::string_generator gen;
+
+int hexValue(char c) noexcept {
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+  if (c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+  if (c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  }
+  return -1;
 }
 
-TUuid::TUuid(const std::string& str) noexcept {
-  std::fill(this->begin(), this->end(), 0);
-  if (str.empty()) {
-    return ;
+// Accepts 32 hex digits, optionally in braces, and either without dashes or
+// with all four of them in the 8-4-4-4-12 positions.
+bool parseUuid(const std::string& str, uint8_t (&out)[16]) noexcept {
+  std::string::size_type pos = 0;
+  std::string::size_type end = str.size();
+  if (!str.empty() && str[0] == '{') {
+    if (str.size() < 2 || str[end - 1] != '}') {
+      return false;
+    }
+    pos = 1;
+    end -= 1;
   }
 
-  try {
-    const boost::uuids::uuid uuid = gen(str);
-    std::copy(uuid.begin(), uuid.end(), this->begin());
-  } catch (const std::runtime_error&) {
-    // Invalid string most probably
+  bool dashes = false;
+  for (int i = 0; i < 16; ++i) {
+    if (i == 4) {
+      dashes = pos < end && str[pos] == '-';
+    }
+    if (dashes && (i == 4 || i == 6 || i == 8 || i == 10)) {
+      if (pos >= end || str[pos] != '-') {
+        return false;
+      }
+      ++pos;
+    }
+    if (pos + 2 > end) {
+      return false;
+    }
+    const int high = hexValue(str[pos]);
+    const int low = hexValue(str[pos + 1]);
+    if (high < 0 || low < 0) {
+      return false;
+    }
+    out[i] = static_cast<uint8_t>((high << 4) | low);
+    pos += 2;
+  }
+  return pos == end;
+}
+
+} // namespace
+
+TUuid::TUuid(const std::string& str) noexcept {
+  uint8_t parsed[16];
+  if (parseUuid(str, parsed)) {
+    std::copy(std::begin(parsed), std::end(parsed), this->begin());
+  } else {
+    std::fill(this->begin(), this->end(), 0);
   }
 }
 
 bool TUuid::is_nil() const noexcept {
-  boost::uuids::uuid uuid_tmp{};
-  std::copy(this->begin(), this->end(), std::begin(uuid_tmp));
-  return uuid_tmp.is_nil();
+  return std::all_of(this->begin(), this->end(), [](uint8_t b) { return b == 0; });
 }
 
 std::string to_string(const TUuid& in) {
-  boost::uuids::uuid uuid_tmp{};
-  std::copy(std::begin(in), std::end(in), std::begin(uuid_tmp));
-  return boost::uuids::to_string(uuid_tmp);
+  static const char digits[] = "0123456789abcdef";
+  std::string result;
+  result.reserve(36);
+  int i = 0;
+  for (const uint8_t b : in) {
+    if (i == 4 || i == 6 || i == 8 || i == 10) {
+      result += '-';
+    }
+    result += digits[b >> 4];
+    result += digits[b & 0x0f];
+    ++i;
+  }
+  return result;
 }
 
 
