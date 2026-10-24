@@ -23,16 +23,75 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Default to using the shared http client. Library users are
 // free to change this global client or specify one through
 // THttpClientOptions.
+//
+// A client with no CheckRedirect policy of its own is used through a copy
+// that follows redirects only within the origin of the configured URL; see
+// THttpClientOptions.Client.
 var DefaultHttpClient *http.Client = http.DefaultClient
+
+// maxRedirects is the number of redirects a THttpClient follows at most, the
+// same number http.Client applies when it has no CheckRedirect policy.
+const maxRedirects = 10
+
+// checkRedirectWithinOrigin is the CheckRedirect policy THttpClient gives a
+// client that has none of its own. A redirect is followed only to the scheme,
+// host and port of the URL the request started at. Any other redirect
+// response is handed back as it is, and Flush reports its status code.
+func checkRedirectWithinOrigin(req *http.Request, via []*http.Request) error {
+	if len(via) >= maxRedirects {
+		return fmt.Errorf("stopped after %d redirects", maxRedirects)
+	}
+	if !sameOrigin(req.URL, via[0].URL) {
+		return http.ErrUseLastResponse
+	}
+	return nil
+}
+
+// sameOrigin reports whether a and b have the same scheme, host and port,
+// with the port defaulting to the scheme's when a URL does not name one.
+func sameOrigin(a, b *url.URL) bool {
+	return strings.EqualFold(a.Scheme, b.Scheme) &&
+		strings.EqualFold(a.Hostname(), b.Hostname()) &&
+		portOf(a) == portOf(b)
+}
+
+// portOf is the port of u, or the default port of its scheme when u names
+// none.
+func portOf(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	}
+	return ""
+}
+
+// redirectWithinOrigin returns client as it is when it has a CheckRedirect
+// policy of its own, and otherwise a copy of it whose policy follows
+// redirects only within the origin of the URL a request starts at.
+func redirectWithinOrigin(client *http.Client) *http.Client {
+	if client.CheckRedirect != nil {
+		return client
+	}
+	bound := *client
+	bound.CheckRedirect = checkRedirectWithinOrigin
+	return &bound
+}
 
 type THttpClient struct {
 	client        *http.Client
@@ -58,7 +117,13 @@ func (p *THttpClientTransportFactory) GetTransport(trans TTransport) (TTransport
 }
 
 type THttpClientOptions struct {
-	// If nil, DefaultHttpClient is used
+	// If nil, DefaultHttpClient is used.
+	//
+	// A client with no CheckRedirect policy of its own is used through a
+	// copy that follows a redirect only within the origin of the URL, that
+	// is to the same scheme, host and port; a redirect anywhere else is
+	// reported by Flush as the response status it arrived with. Set
+	// CheckRedirect on the client to apply a policy of your own instead.
 	Client *http.Client
 }
 
@@ -80,6 +145,7 @@ func NewTHttpClientWithOptions(urlstr string, options THttpClientOptions) (TTran
 	if client == nil {
 		client = DefaultHttpClient
 	}
+	client = redirectWithinOrigin(client)
 	httpHeader := map[string][]string{"Content-Type": {"application/x-thrift"}}
 	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: httpHeader}, nil
 }

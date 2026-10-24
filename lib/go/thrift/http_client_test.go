@@ -22,7 +22,9 @@ package thrift
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -57,6 +59,112 @@ func TestHttpClientHeaders(t *testing.T) {
 		t.Fatalf("Unable to connect to %s: %v", addr.String(), err)
 	}
 	TransportHeaderTest(t, trans, trans)
+}
+
+// TestHttpClientRedirects checks that a redirect is followed within the origin
+// of the configured URL and reported as its status code when it points
+// anywhere else, unless the client carries a CheckRedirect policy of its own.
+func TestHttpClientRedirects(t *testing.T) {
+	const header, value = "X-Thrift-Test", "transport-header-value"
+	const payload = "request-body"
+
+	// Every request that reaches the other origin, for the assertions.
+	type request struct {
+		method, header, body string
+	}
+	elsewhere := make(chan request, 16)
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		elsewhere <- request{r.Method, r.Header.Get(header), string(body)}
+		w.Write([]byte("elsewhere"))
+	}))
+	defer other.Close()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/elsewhere", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+"/", http.StatusTemporaryRedirect)
+	})
+	mux.HandleFunc("/moved", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/here", http.StatusTemporaryRedirect)
+	})
+	mux.HandleFunc("/here", func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, r.Body)
+	})
+	origin := httptest.NewServer(mux)
+	defer origin.Close()
+
+	// post sends payload with the test header to url and returns the first
+	// len(want) bytes of the response, or the error Flush reported.
+	post := func(t *testing.T, url string, options THttpClientOptions, want string) (string, error) {
+		t.Helper()
+		trans, err := NewTHttpClientWithOptions(url, options)
+		if err != nil {
+			t.Fatalf("Unable to create a client for %s: %v", url, err)
+		}
+		defer trans.Close()
+		client := trans.(*THttpClient)
+		client.SetHeader(header, value)
+		if _, err := client.Write([]byte(payload)); err != nil {
+			t.Fatalf("Unable to write: %v", err)
+		}
+		if err := client.Flush(context.Background()); err != nil {
+			return "", err
+		}
+		body := make([]byte, len(want))
+		if _, err := io.ReadFull(client, body); err != nil {
+			t.Fatalf("Unable to read the response: %v", err)
+		}
+		return string(body), nil
+	}
+
+	t.Run("otherOrigin", func(t *testing.T) {
+		for name, options := range map[string]THttpClientOptions{
+			"defaultClient": {},
+			"customClient":  {Client: &http.Client{}},
+		} {
+			t.Run(name, func(t *testing.T) {
+				_, err := post(t, origin.URL+"/elsewhere", options, "")
+				if err == nil {
+					t.Fatal("Flush did not report the redirect to another origin")
+				}
+				if _, ok := err.(TTransportException); !ok {
+					t.Fatalf("Flush returned %T, want TTransportException: %v", err, err)
+				}
+				select {
+				case got := <-elsewhere:
+					t.Fatalf("The other origin received %v", got)
+				default:
+				}
+			})
+		}
+	})
+
+	t.Run("sameOrigin", func(t *testing.T) {
+		body, err := post(t, origin.URL+"/moved", THttpClientOptions{}, payload)
+		if err != nil {
+			t.Fatalf("Flush did not follow the redirect within the origin: %v", err)
+		}
+		if body != payload {
+			t.Fatalf("Read %q after the redirect, want %q", body, payload)
+		}
+	})
+
+	t.Run("ownPolicy", func(t *testing.T) {
+		follow := func(*http.Request, []*http.Request) error { return nil }
+		body, err := post(t, origin.URL+"/elsewhere", THttpClientOptions{
+			Client: &http.Client{CheckRedirect: follow},
+		}, "elsewhere")
+		if err != nil {
+			t.Fatalf("Flush did not apply the client's own redirect policy: %v", err)
+		}
+		if body != "elsewhere" {
+			t.Fatalf("Read %q, want the other origin's response", body)
+		}
+		want := request{http.MethodPost, value, payload}
+		if got := <-elsewhere; got != want {
+			t.Fatalf("The other origin received %v, want %v", got, want)
+		}
+	})
 }
 
 func TestHttpCustomClient(t *testing.T) {
