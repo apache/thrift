@@ -56,6 +56,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FOR
 # Define the source files for the module
 
 libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
+                       src/thrift/TConfiguration.cpp \
                        src/thrift/TOutput.cpp \
                        src/thrift/TUuid.cpp \
                        src/thrift/VirtualProfiling.cpp \
