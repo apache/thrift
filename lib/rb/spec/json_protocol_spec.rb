@@ -21,6 +21,176 @@
 
 require "spec_helper"
 
+describe "JSON input byte ownership" do
+  class FragmentedJsonInput < Thrift::BaseTransport
+    attr_reader :requested
+
+    def initialize(parts)
+      @parts = parts.map(&:b)
+      @requested = []
+    end
+
+    def read(size)
+      @requested << size
+      @parts.shift while @parts.first == ""
+      raise EOFError, "fragmented input exhausted" if @parts.empty?
+
+      @parts.first.slice!(0, size)
+    end
+  end
+
+  it "reads Unicode, escapes, base64 and numbers across every fragment boundary" do
+    wire = <<~'JSON'.chomp.b
+      ["str",3,"raw € 😀\u20ac\uD83D\uDE00\\\"\/\b\f\n\r\t","QUJDRA",-12.5e+2]
+    JSON
+    (1...wire.bytesize).each do |split|
+      input = FragmentedJsonInput.new([wire.byteslice(0, split), wire.byteslice(split..-1)])
+      protocol = Thrift::JsonProtocol.new(Thrift::BufferedTransport.new(input))
+      expect(protocol.read_list_begin).to eq([Thrift::Types::STRING, 3])
+      expect(protocol.read_string).to eq("raw € 😀€😀\\\"/\b\f\n\r\t")
+      expect(protocol.read_binary).to eq("ABCD")
+      expect(protocol.read_double).to eq(-1250.0)
+      protocol.read_list_end
+    end
+  end
+
+  it "leaves the following value in the transport and owns at most one peeked byte" do
+    trans = Thrift::MemoryBufferTransport.new('"first"123,"second"')
+    protocol = Thrift::JsonProtocol.new(trans)
+    expect(protocol.read_string).to eq("first")
+    expect(trans.available).to eq('123,"second"'.bytesize)
+    expect(protocol.read_i32).to eq(123)
+    expect(trans.read(1)).to eq('"') # Only the comma belongs to the reader.
+    reader = protocol.instance_variable_get(:@reader)
+    expect(reader.peek).to eq(",")
+    expect(reader.read).to eq(",")
+  end
+
+  it "falls back to read when the transport has no byte API" do
+    klass = Class.new(Thrift::MemoryBufferTransport) { undef_method :read_byte }
+    value = "v" * 64
+    expect(Thrift::JsonProtocol.new(klass.new('"' + value + '"')).read_string).to eq(value)
+  end
+
+  it "uses the byte API on a duck-typed transport" do
+    value = "v" * 64
+    input = Thrift::MemoryBufferTransport.new('"' + value + '"')
+    transport = double("Transport")
+    allow(transport).to receive(:read).with(1) { input.read(1) }
+    expect(transport).to receive(:read_byte).at_least(:once) { input.read_byte }
+
+    expect(Thrift::JsonProtocol.new(transport).read_string).to eq(value)
+    expect(input.available).to eq(0)
+  end
+
+  it "preserves Unicode decoding hooks" do
+    protocol_class = Class.new(Thrift::JsonProtocol) do
+      def read_json_escape_char
+        super.upcase
+      end
+    end
+    trans = Thrift::MemoryBufferTransport.new('"' + ("v" * 64) + 'a\\u0062"')
+    expect(protocol_class.new(trans).read_string).to eq(("v" * 64) + "aB")
+  end
+
+  it "keeps tiny strings on the read path without inspecting byte-read eligibility" do
+    protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new('"""a"'))
+    reader = protocol.instance_variable_get(:@reader)
+    expect(reader).not_to receive(:byte_reads?)
+    expect(protocol.read_string).to eq("")
+    expect(protocol.read_string).to eq("a")
+  end
+
+  it "selects byte reads once when Unicode escapes cross the small-string threshold" do
+    wire = '"' + ('\\u20ac' * 6) + ("a" * 1024) + '"'
+    protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+    reader = protocol.instance_variable_get(:@reader)
+    expect(reader).to receive(:byte_reads?).once.and_call_original
+    expect(reader).to receive(:read_byte).at_least(:once).and_call_original
+    expect(protocol.read_string).to eq(("€" * 6) + ("a" * 1024))
+  end
+
+  [Thrift::MemoryBufferTransport, Thrift::BufferedTransport].each do |klass|
+    it "uses the byte API when #{klass} customizes it" do
+      reads = 0
+      transport_class = Class.new(klass) do
+        define_method(:read_byte) do
+          reads += 1
+          super()
+        end
+      end
+      value = "a" * 64
+      wire = '"' + value + '"'
+      trans = if klass == Thrift::BufferedTransport
+        transport_class.new(FragmentedJsonInput.new([wire]))
+      else
+        transport_class.new(wire)
+      end
+      expect(Thrift::JsonProtocol.new(trans).read_string).to eq(value)
+      expect(reads).to be > 0
+    end
+  end
+
+  it "supports duck-typed readers" do
+    value = "v" * 64
+    trans = Thrift::MemoryBufferTransport.new('"' + value + '"')
+    reader = Object.new
+    reader.define_singleton_method(:read) { trans.read(1) }
+    protocol = Thrift::JsonProtocol.new(trans)
+    protocol.instance_variable_set(:@reader, reader)
+    expect(protocol.read_string).to eq(value)
+  end
+
+  it "preserves invalid UTF-8 and Unicode errors across fragments" do
+    ["\"\xC3\x28\"".b, '"\\uD83D\\u0041"', '"\\uDE00"'].each do |wire|
+      (1...wire.bytesize).each do |split|
+        input = FragmentedJsonInput.new([wire.byteslice(0, split), wire.byteslice(split..-1)])
+        protocol = Thrift::JsonProtocol.new(Thrift::BufferedTransport.new(input))
+        expect { protocol.read_string }.to raise_error(Thrift::ProtocolException) do |error|
+          expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+        end
+      end
+    end
+  end
+
+  it "retains mutable independent read and peek results" do
+    reader = Thrift::LookaheadReader.new(Thrift::MemoryBufferTransport.new("ab"))
+    first = reader.peek
+    expect(reader.read).to equal(first)
+    second = reader.read
+    second.replace("z")
+    expect(first).to eq("a")
+  end
+
+  it "does not consume the next frame when a string ends at a frame boundary" do
+    value = "a" * 64
+    first = '"' + value + '"'
+    wire = [first.bytesize].pack("N") + first + [3].pack("N") + '"b"'
+    input = Thrift::MemoryBufferTransport.new(wire)
+    protocol = Thrift::JsonProtocol.new(Thrift::FramedTransport.new(input))
+    expect(protocol.read_string).to eq(value)
+    expect(input.available).to eq(7)
+    expect(protocol.read_string).to eq("b")
+    expect(input.available).to eq(0)
+
+    value = ('"' + ("a" * 64) + '€\\uD83D\\uDE00"').b
+    wire = value.bytes.map { |byte| [1, byte].pack("NC") }.join
+    protocol = Thrift::JsonProtocol.new(Thrift::FramedTransport.new(Thrift::MemoryBufferTransport.new(wire)))
+    expect(protocol.read_string).to eq(("a" * 64) + "€😀")
+  end
+
+  it "preserves truncated input errors in plain and Unicode strings" do
+    ['"abc', '"abc\\'].each do |wire|
+      protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+      expect { protocol.read_string }.to raise_error(EOFError, /Not enough bytes remain/)
+    end
+    ['"\\u123', '"\\uD83D\\uDE0'].each do |wire|
+      protocol = Thrift::JsonProtocol.new(Thrift::MemoryBufferTransport.new(wire))
+      expect { protocol.read_string }.to raise_error(Thrift::ProtocolException, "Incomplete Unicode escape")
+    end
+  end
+end
+
 describe "JsonProtocol" do
   describe Thrift::JsonProtocol do
     before(:each) do

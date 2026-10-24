@@ -142,6 +142,15 @@ mount Thrift::RackApplication.new(processor) => "/thrift"
 
 ## Breaking Changes
 
+### 0.26.0
+
+`Thrift::JsonProtocol` can now use any transport's `read_byte` method to read JSON
+strings. This cuts the number of temporary Strings. If you override `read`, keep
+`read_byte` consistent with it: `read` alone no longer sees every byte in JSON
+strings. `read_byte` must return the next byte as an Integer from 0 to 255, or raise
+an error at end of input. The same rule applies to custom `LookaheadReader` hooks.
+Transports without `read_byte` still use `read(1)`.
+
 ### 0.25.0
 
 Ruby 2.7 support has been removed because the runtime reached end of life on

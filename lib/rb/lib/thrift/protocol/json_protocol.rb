@@ -27,6 +27,18 @@ module Thrift
       @data = nil
     end
 
+    def byte_reads?
+      @trans.respond_to?(:read_byte)
+    end
+
+    def read_byte
+      if @hasData
+        read.getbyte(0)
+      else
+        @trans.read_byte
+      end
+    end
+
     def read
       if @hasData
         @hasData = false
@@ -142,6 +154,12 @@ module Thrift
       1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, # 2
     ].freeze
     private_constant :JSON_CHAR_TABLE
+
+    # Characters and decoded values share the same order.
+    # JSON permits the optional solidus escape "\/"; see RFC 8259, section 7.
+    JSON_ESCAPE_CHARS = "\"\\/bfnrt"
+    JSON_ESCAPE_VALUES = ["\"", "\\", "/", "\b", "\f", "\n", "\r", "\t"].map { |ch| ch.b.freeze }.freeze
+    private_constant :JSON_ESCAPE_CHARS, :JSON_ESCAPE_VALUES
 
     attr_reader :max_string_size
 
@@ -266,7 +284,7 @@ module Thrift
           trans.write(ch)
         end
       else
-        outCh = JSON_CHAR_TABLE[ch_value];
+        outCh = JSON_CHAR_TABLE[ch_value]
         # Check if regular character, backslash escaped, or JSON escaped
         if outCh.kind_of? String
           trans.write(@@kJSONBackslash)
@@ -307,7 +325,7 @@ module Thrift
       if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
-      trans.write(num.to_s);
+      trans.write(num.to_s)
       if escapeNum
         trans.write(@@kJSONStringDelimiter)
       end
@@ -318,15 +336,15 @@ module Thrift
     def write_json_double(num)
       @context.write(trans)
       # Normalize output of thrift::to_string for NaNs and Infinities
-      special = false;
+      special = false
       if num.nan?
-        special = true;
-        val = @@kThriftNan;
+        special = true
+        val = @@kThriftNan
       elsif num.infinite?
-        special = true;
-        val = @@kThriftInfinity;
+        special = true
+        val = @@kThriftInfinity
         if (num < 0.0)
-          val = @@kThriftNegativeInfinity;
+          val = @@kThriftNegativeInfinity
         end
       else
         val = num.to_s
@@ -345,7 +363,7 @@ module Thrift
     def write_json_object_start
       @context.write(trans)
       trans.write(@@kJSONObjectStart)
-      push_context(JSONPairContext.new);
+      push_context(JSONPairContext.new)
     end
 
     def write_json_object_end
@@ -356,7 +374,7 @@ module Thrift
     def write_json_array_start
       @context.write(trans)
       trans.write(@@kJSONArrayStart)
-      push_context(JSONListContext.new);
+      push_context(JSONListContext.new)
     end
 
     def write_json_array_end
@@ -498,40 +516,46 @@ module Thrift
 
     # Decodes a JSON string, including unescaping, and returns the string via str
     def read_json_string(skipContext = false)
-      # This string's characters must match up with the elements in escape_char_vals.
-      # JSON permits the optional solidus escape "\/"; see RFC 8259, section 7.
-      escape_chars = "\"\\/bfnrt"
-
-      # The elements of this array must match up with the sequence of characters in
-      # escape_chars
-      escape_char_vals = [
-        "\"", "\\", "/", "\b", "\f", "\n", "\r", "\t",
-      ]
-
       if !skipContext
         @context.read(@reader)
       end
       read_json_syntax_char(@@kJSONStringDelimiter)
       str = Bytes.empty_byte_buffer
+      ch = @reader.read
+      return decode_json_string(str) if ch == @@kJSONStringDelimiter
+
+      # nil: unchecked, false: unavailable, true: enabled.
+      byte_reads = nil
+      delimiter = @@kJSONStringDelimiter
+      backslash = @@kJSONBackslash
       while true
-        ch = @reader.read
-        if (ch == @@kJSONStringDelimiter)
-          break
-        end
-        if (ch == @@kJSONBackslash)
+        if (ch == backslash)
           ch = @reader.read
           if (ch == "u")
-            ch = read_json_escape_char
+            ch = Bytes.force_binary_encoding(read_json_escape_char)
           else
-            pos = escape_chars.index(ch);
+            pos = JSON_ESCAPE_CHARS.index(ch)
             if pos.nil? # not found
               raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected control char, got '#{ch}'.")
             end
-            ch = escape_char_vals[pos]
+            ch = JSON_ESCAPE_VALUES[pos]
+          end
+        elsif !byte_reads
+          ch = Bytes.force_binary_encoding(ch)
+        end
+        str << ch
+        size = str.bytesize
+        check_string_size(size)
+        # Avoid byte-read setup for tiny strings; select once per value.
+        if byte_reads.nil? && size >= 16
+          byte_reads = @reader.is_a?(LookaheadReader) && @reader.byte_reads?
+          if byte_reads
+            delimiter = @@kJSONStringDelimiter.getbyte(0)
+            backslash = @@kJSONBackslash.getbyte(0)
           end
         end
-        str << Bytes.force_binary_encoding(ch)
-        check_string_size(str.bytesize)
+        ch = byte_reads ? @reader.read_byte : @reader.read
+        break if ch == delimiter
       end
       decode_json_string(str)
     end
@@ -560,7 +584,7 @@ module Thrift
       while true
         ch = @reader.peek
         if !is_json_numeric(ch)
-          break;
+          break
         end
         ch = @reader.read
         str << ch
@@ -579,7 +603,7 @@ module Thrift
       str = read_json_numeric_chars
 
       begin
-        num = Integer(str);
+        num = Integer(str)
       rescue
         raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
       end

@@ -210,7 +210,7 @@ module Thrift
     end
 
     def write_set_begin(etype, size)
-      write_collection_begin(etype, size);
+      write_collection_begin(etype, size)
     end
 
     def write_bool(bool)

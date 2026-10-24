@@ -220,7 +220,7 @@ describe "BaseProtocol" do
       expect(@prot).to receive(:read_map_begin).ordered.and_return([Thrift::Types::STRING, Thrift::Types::STRUCT, 1])
       expect(@prot).to receive(:read_string).ordered
       expect(@prot).to receive(:read_struct_begin).ordered.and_return(["some_struct"])
-      expect(@prot).to receive(:read_field_begin).ordered.and_return([nil, Thrift::Types::STOP, nil]);
+      expect(@prot).to receive(:read_field_begin).ordered.and_return([nil, Thrift::Types::STOP, nil])
       expect(@prot).to receive(:read_struct_end).ordered
       expect(@prot).to receive(:read_map_end).ordered
       real_skip.call(Thrift::Types::MAP)
