@@ -38,7 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Primitives" Version="10.1.0" />
+    <!-- Keep at 8.x: 10.x has no net8.0 reference assemblies, so net8.0 and net9.0 resolve its
+         empty ref/netcoreapp2.0 placeholder and the generated WCF attributes no longer compile. -->
+    <PackageReference Include="System.ServiceModel.Primitives" Version="[8.1.2]" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
   </ItemGroup>
 
