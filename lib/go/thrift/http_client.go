@@ -59,6 +59,14 @@ func (p *THttpClientTransportFactory) GetTransport(trans TTransport) (TTransport
 
 type THttpClientOptions struct {
 	// If nil, DefaultHttpClient is used
+	//
+	// Redirects are handled by the client's CheckRedirect policy. When it is
+	// nil, as it is for http.DefaultClient, up to 10 redirects are followed to
+	// any URL, and headers set through SetHeader are sent along with them
+	// (net/http only drops Authorization, Cookie and similar headers when the
+	// redirect leaves the original domain). To restrict this, use a client
+	// with a CheckRedirect of your own; one that returns http.ErrUseLastResponse
+	// disables redirects, and Flush then returns the 3xx status as an error.
 	Client *http.Client
 }
 
