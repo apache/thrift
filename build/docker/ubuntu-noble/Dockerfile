@@ -268,6 +268,7 @@ RUN apt-get install -y --no-install-recommends \
   locales && \
   locale-gen en_US.UTF-8 && \
   locale-gen de_DE.UTF-8 && \
+  locale-gen tr_TR.UTF-8 && \
   update-locale
 
 RUN apt-get install -y --no-install-recommends \

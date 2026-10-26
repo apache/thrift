@@ -1228,6 +1228,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS locales
           sudo locale-gen en_US.UTF-8
           sudo locale-gen de_DE.UTF-8
+          sudo locale-gen tr_TR.UTF-8
           sudo update-locale
 
       - name: Run bootstrap

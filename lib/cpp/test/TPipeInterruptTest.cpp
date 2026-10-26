@@ -22,9 +22,6 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <boost/chrono/duration.hpp>
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
-#include <boost/thread/thread.hpp>
 #include <thrift/TOutput.h>
 #include <thrift/TProcessor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -80,7 +77,7 @@ static void acceptWorker(TPipeServer *pipe) {
 }
 
 static void interruptWorker(TPipeServer *pipe) {
-  boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   pipe->interrupt();
 }
 
@@ -91,8 +88,8 @@ BOOST_AUTO_TEST_CASE(stress_pipe_accept_interruption) {
   {
     TPipeServer pipeServer("TPipeInterruptTest");
     pipeServer.listen();
-    boost::thread acceptThread(std::bind(acceptWorker, &pipeServer));
-    boost::thread interruptThread(std::bind(interruptWorker, &pipeServer));
+    std::thread acceptThread(std::bind(acceptWorker, &pipeServer));
+    std::thread interruptThread(std::bind(interruptWorker, &pipeServer));
     try
     {
       for (;;)

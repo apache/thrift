@@ -19,8 +19,7 @@
 
 #define BOOST_TEST_MODULE TNonblockingSSLServerTest
 #include <boost/test/unit_test.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
+#include <fstream>
 
 #include "thrift/server/TNonblockingServer.h"
 #include "thrift/transport/TSSLSocket.h"
@@ -55,10 +54,14 @@ struct Handler : public test::ParentServiceIf {
   void unexpectedExceptionWait(const std::string&) override {}
 };
 
-boost::filesystem::path keyDir;
-boost::filesystem::path certFile(const std::string& filename)
+std::string keyDir;
+std::string certFile(const std::string& filename)
 {
-  return keyDir / filename;
+  return keyDir + "/" + filename;
+}
+bool fileExists(const std::string& path)
+{
+  return std::ifstream(path.c_str()).good();
 }
 
 struct GlobalFixtureSSL
@@ -68,7 +71,7 @@ struct GlobalFixtureSSL
       using namespace boost::unit_test::framework;
       for (int i = 0; i < master_test_suite().argc; ++i)
       {
-        BOOST_TEST_MESSAGE(boost::format("argv[%1%] = \"%2%\"") % i % master_test_suite().argv[i]);
+        BOOST_TEST_MESSAGE("argv[" << i << "] = \"" << master_test_suite().argv[i] << "\"");
       }
 
 #ifdef __linux__
@@ -80,11 +83,11 @@ struct GlobalFixtureSSL
       TSSLSocketFactory::setManualOpenSSLInitialization(true);
       apache::thrift::transport::initializeOpenSSL();
 
-      keyDir = boost::filesystem::current_path().parent_path().parent_path().parent_path() / "test" / "keys";
-      if (!boost::filesystem::exists(certFile("server.crt")))
+      keyDir = "../../../test/keys";
+      if (!fileExists(certFile("server.crt")))
       {
-        keyDir = boost::filesystem::path(master_test_suite().argv[master_test_suite().argc - 1]);
-        if (!boost::filesystem::exists(certFile("server.crt")))
+        keyDir = master_test_suite().argv[master_test_suite().argc - 1];
+        if (!fileExists(certFile("server.crt")))
         {
           throw std::invalid_argument("The last argument to this test must be the directory containing the test certificate(s).");
         }
@@ -111,8 +114,8 @@ std::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
 
   pServerSocketFactory.reset(new TSSLSocketFactory());
   pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-  pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
-  pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+  pServerSocketFactory->loadCertificate(certFile("server.crt").c_str());
+  pServerSocketFactory->loadPrivateKey(certFile("server.key").c_str());
   pServerSocketFactory->server(true);
   return pServerSocketFactory;
 }
@@ -122,9 +125,9 @@ std::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
 
   pClientSocketFactory.reset(new TSSLSocketFactory());
   pClientSocketFactory->authenticate(true);
-  pClientSocketFactory->loadCertificate(certFile("client.crt").string().c_str());
-  pClientSocketFactory->loadPrivateKey(certFile("client.key").string().c_str());
-  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+  pClientSocketFactory->loadCertificate(certFile("client.crt").c_str());
+  pClientSocketFactory->loadPrivateKey(certFile("client.key").c_str());
+  pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").c_str());
   return pClientSocketFactory;
 }
 

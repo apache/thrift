@@ -19,8 +19,6 @@
 
 #include <thrift/protocol/TJSONProtocol.h>
 
-#include <boost/locale.hpp>
-
 #include <cmath>
 #include <limits>
 #include <locale>
@@ -298,6 +296,42 @@ static bool isHighSurrogate(uint16_t val) {
 // Return true if the code unit is low surrogate
 static bool isLowSurrogate(uint16_t val) {
   return val >= 0xDC00 && val <= 0xDFFF;
+}
+
+// Append the UTF-16 code units to str as UTF-8. Decoding stops at a zero
+// code unit, and an unpaired surrogate is dropped together with the unit that
+// follows it.
+static void appendUtf16AsUtf8(std::string& str, const std::vector<uint16_t>& codeunits) {
+  for (std::size_t i = 0; i < codeunits.size() && codeunits[i] != 0; ++i) {
+    uint32_t cp = codeunits[i];
+    if (isHighSurrogate(codeunits[i])) {
+      if (i + 1 >= codeunits.size() || codeunits[i + 1] == 0) {
+        break;
+      }
+      const uint16_t low = codeunits[++i];
+      if (!isLowSurrogate(low)) {
+        continue;
+      }
+      cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00);
+    } else if (isLowSurrogate(codeunits[i])) {
+      continue;
+    }
+    if (cp < 0x80) {
+      str += static_cast<char>(cp);
+    } else if (cp < 0x800) {
+      str += static_cast<char>(0xC0 | (cp >> 6));
+      str += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+      str += static_cast<char>(0xE0 | (cp >> 12));
+      str += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+      str += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+      str += static_cast<char>(0xF0 | (cp >> 18));
+      str += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+      str += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+      str += static_cast<char>(0x80 | (cp & 0x3F));
+    }
+  }
 }
 
 /**
@@ -782,8 +816,7 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
                                      "Missing UTF-16 high surrogate pair.");
           }
           codeunits.push_back(cp);
-          codeunits.push_back(0);
-          str += boost::locale::conv::utf_to_utf<char>(codeunits.data());
+          appendUtf16AsUtf8(str, codeunits);
           codeunits.clear();
         }
         continue;

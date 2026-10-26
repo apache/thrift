@@ -16,11 +16,11 @@ specific soultion files. => No solution files within source tree.
 
 These are language-specific, however for C++ you must provide:
 
-- Boost
 - OpenSSL
 
 You may optionally provide:
 
+- Boost, for the unit tests (`BUILD_TESTING`)
 - libevent
 - zlib
 

@@ -20,7 +20,7 @@
 # Unit tests still require boost
 include(BoostMacros)
 REQUIRE_BOOST_HEADERS()
-set(BOOST_COMPONENTS filesystem thread unit_test_framework chrono)
+set(BOOST_COMPONENTS unit_test_framework)
 REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
 include(ThriftMacros)

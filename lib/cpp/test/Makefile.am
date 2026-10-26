@@ -142,6 +142,7 @@ UnitTests_SOURCES = \
 	TypedefTest.cpp \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
+	TestThread.h \
 	TTransportCheckThrow.h \
 	ThrifttReadCheckTests.cpp \
 	FrameBoundReadBudgetTest.cpp \
@@ -155,8 +156,6 @@ UnitTests_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
   $(BOOST_TEST_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD) \
   -lz
 
 UnitTestsUuid_SOURCES = \
@@ -165,9 +164,7 @@ UnitTestsUuid_SOURCES = \
 
 UnitTestsUuid_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 UnitTestsUuid_CPPFLAGS = \
    $(AM_CPPFLAGS) \
@@ -179,31 +176,25 @@ UnitTestsUuidNoDirective_SOURCES = \
 
 UnitTestsUuidNoDirective_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp \
-	TSSLSocketInterruptTest.cpp
+	TSSLSocketInterruptTest.cpp \
+	TestThread.h
 
 TInterruptTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_FILESYSTEM_LDADD) \
-  $(BOOST_CHRONO_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 TServerIntegrationTest_SOURCES = \
-	TServerIntegrationTest.cpp
+	TServerIntegrationTest.cpp \
+	TestThread.h
 
 TServerIntegrationTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 TServerExceptionTest_SOURCES = \
 	TServerExceptionTest.cpp
@@ -211,9 +202,7 @@ TServerExceptionTest_SOURCES = \
 TServerExceptionTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 SecurityTest_SOURCES = \
 	SecurityTest.cpp
@@ -221,10 +210,7 @@ SecurityTest_SOURCES = \
 SecurityTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_FILESYSTEM_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 SecurityFromBufferTest_SOURCES = \
 	SecurityFromBufferTest.cpp
@@ -232,10 +218,7 @@ SecurityFromBufferTest_SOURCES = \
 SecurityFromBufferTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD) \
-  $(BOOST_FILESYSTEM_LDADD) \
-  $(BOOST_SYSTEM_LDADD) \
-  $(BOOST_THREAD_LDADD)
+  $(BOOST_TEST_LDADD)
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
@@ -301,9 +284,7 @@ TPipedTransportTest_SOURCES = \
 TPipedTransportTest_LDADD = \
 	libtestgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD) \
-	$(BOOST_SYSTEM_LDADD) \
-	$(BOOST_THREAD_LDADD)
+	$(BOOST_TEST_LDADD)
 
 #
 # TTransportFactoryConfigTest
@@ -370,10 +351,6 @@ TNonblockingSSLServerTest_LDADD = libprocessortest.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
                                $(BOOST_TEST_LDADD) \
                                $(BOOST_LDFLAGS) \
-                               $(BOOST_FILESYSTEM_LDADD) \
-                               $(BOOST_CHRONO_LDADD) \
-                               $(BOOST_SYSTEM_LDADD) \
-                               $(BOOST_THREAD_LDADD) \
                                $(LIBEVENT_LIBS)
 
 #
@@ -458,13 +435,9 @@ OpenSSLManualInitTest_LDADD = \
 TSSLSocketMatchNameTest_SOURCES = \
 	TSSLSocketMatchNameTest.cpp
 
-# The test runs its listener on a boost::thread, so it links the boost thread
-# library the same way the other tests that start one do.
 TSSLSocketMatchNameTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(BOOST_TEST_LDADD) \
-	$(BOOST_SYSTEM_LDADD) \
-	$(BOOST_THREAD_LDADD) \
 	$(OPENSSL_LDFLAGS) \
 	$(OPENSSL_LIBS)
 
