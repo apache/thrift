@@ -7,7 +7,8 @@ on:
     branches: ["*"]
 
 env:
-  BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+  # Boost is installed only by the jobs that configure with C++
+  BUILD_DEPS: automake bison flex git libevent-dev libssl-dev libtool make pkg-config
   CONFIG_ARGS_FOR_LIBS: >
     --disable-debug
     --disable-dependency-tracking
@@ -1215,7 +1216,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS locales
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libboost-all-dev locales
           sudo locale-gen en_US.UTF-8
           sudo locale-gen de_DE.UTF-8
           sudo update-locale
@@ -1289,7 +1290,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libglib2.0-dev zlib1g-dev
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libboost-all-dev libglib2.0-dev zlib1g-dev
 
       - name: Run bootstrap
         run: ./bootstrap.sh
