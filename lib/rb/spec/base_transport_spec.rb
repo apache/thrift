@@ -223,7 +223,7 @@ describe "BaseTransport" do
     it "should wrap the given transport in a BufferedTransport" do
       trans = double("Transport")
       btrans = double("BufferedTransport")
-      expect(Thrift::BufferedTransport).to receive(:new).with(trans).and_return(btrans)
+      expect(Thrift::BufferedTransport).to receive(:new).with(trans, write_buffer_size: nil).and_return(btrans)
       expect(Thrift::BufferedTransportFactory.new.get_transport(trans)).to eq(btrans)
     end
 

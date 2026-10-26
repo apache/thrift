@@ -23,8 +23,19 @@ module Thrift
   class BufferedTransport < BaseTransport
     DEFAULT_BUFFER = 4096
 
-    def initialize(transport)
+    # By default writes are held until flush. A positive write_buffer_size opts
+    # into earlier downstream writes, bounding this layer's staging in bytes.
+    # It does not bound buffers owned by the caller or the underlying transport.
+    # Small writes are coalesced; writes at least this size bypass staging. Only
+    # explicit flush (including close) flushes downstream. Writes and their
+    # errors can become observable before flush when this option is enabled.
+    def initialize(transport, write_buffer_size: nil)
+      unless write_buffer_size.nil? || (write_buffer_size.is_a?(Integer) && write_buffer_size > 0)
+        raise ArgumentError, "write_buffer_size must be a positive Integer or nil"
+      end
+
       @transport = transport
+      @write_buffer_size = write_buffer_size
       @wbuf = Bytes.empty_byte_buffer
       @rbuf = Bytes.empty_byte_buffer
       @index = 0
@@ -107,15 +118,22 @@ module Thrift
     end
 
     def write(buf)
-      @wbuf << Bytes.force_binary_encoding(buf)
+      buf = Bytes.force_binary_encoding(buf)
+      if @write_buffer_size
+        drain_write_buffer if @wbuf.bytesize + buf.bytesize > @write_buffer_size
+        if buf.bytesize >= @write_buffer_size
+          # Keep caller ownership even if the underlying transport retains or
+          # modifies the string. Large writes do not enter our staging buffer.
+          @transport.write(String.new(buf))
+          return @wbuf
+        end
+      end
+
+      @wbuf << buf
     end
 
     def flush
-      unless @wbuf.empty?
-        @transport.write(@wbuf)
-        @wbuf = Bytes.empty_byte_buffer
-      end
-
+      drain_write_buffer
       @transport.flush
     end
 
@@ -132,11 +150,30 @@ module Thrift
         @index = 0
       end
     end
+
+    # Draining must not flush downstream: that could end a frame or HTTP request.
+    # Keep staged data if write raises, as for an explicit flush. A failed direct
+    # write is not staged; the caller must handle it. Partial downstream writes
+    # followed by an exception cannot be safely retried at this layer.
+    def drain_write_buffer
+      unless @wbuf.empty?
+        @transport.write(@wbuf)
+        @wbuf = Bytes.empty_byte_buffer
+      end
+    end
   end
 
   class BufferedTransportFactory < BaseTransportFactory
+    def initialize(write_buffer_size: nil)
+      unless write_buffer_size.nil? || (write_buffer_size.is_a?(Integer) && write_buffer_size > 0)
+        raise ArgumentError, "write_buffer_size must be a positive Integer or nil"
+      end
+
+      @write_buffer_size = write_buffer_size
+    end
+
     def get_transport(transport)
-      BufferedTransport.new(transport)
+      BufferedTransport.new(transport, write_buffer_size: @write_buffer_size)
     end
 
     def to_s
