@@ -3095,9 +3095,13 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
 
   // generate the instance init function
 
+  // The instance and class init functions take the arguments GInstanceInitFunc
+  // and GClassInitFunc pass, so that the type registration calls them through
+  // a matching function type.
   f_types_impl_ << "static void " << '\n' << this->nspace_lc << name_u << "_instance_init ("
-                << this->nspace << name << " * object)" << '\n' << "{" << '\n';
+                << this->nspace << name << " * object, gpointer g_class)" << '\n' << "{" << '\n';
   indent_up();
+  f_types_impl_ << indent() << "THRIFT_UNUSED_VAR (g_class);" << '\n';
 
   // generate default-value structures for container-type members
   bool constant_declaration_output = false;
@@ -3325,8 +3329,9 @@ void t_c_glib_generator::generate_object(t_struct* tstruct) {
   // generate the class init function
 
   f_types_impl_ << "static void" << '\n' << class_name_lc << "_class_init (" << class_name
-                << "Class * cls)" << '\n';
+                << "Class * cls, gpointer class_data)" << '\n';
   scope_up(f_types_impl_);
+  f_types_impl_ << indent() << "THRIFT_UNUSED_VAR (class_data);" << '\n';
 
   f_types_impl_ << indent() << "GObjectClass *gobject_class = G_OBJECT_CLASS (cls);" << '\n'
                 << indent() << "ThriftStructClass *struct_class = "

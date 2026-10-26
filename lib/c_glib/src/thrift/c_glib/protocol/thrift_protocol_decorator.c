@@ -577,8 +577,6 @@ thrift_protocol_decorator_class_init (ThriftProtocolDecoratorClass *klass)
       PROP_THRIFT_TYPE_PROTOCOL_DECORATOR_END,
       thrift_protocol_decorator_obj_properties);
 
-  g_debug("Current decorator write_message_begin addr %p, new %p", cls->write_message_begin, thrift_protocol_decorator_write_message_begin);
-
   cls->write_message_begin = thrift_protocol_decorator_write_message_begin;
   cls->write_message_end = thrift_protocol_decorator_write_message_end;
   cls->write_struct_begin = thrift_protocol_decorator_write_struct_begin;

@@ -182,7 +182,6 @@ thrift_socket_server_open (const int port, int times)
 static void
 thrift_server (const int port)
 {
-  int bytes = 0;
   gboolean check_sum = FALSE;
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
