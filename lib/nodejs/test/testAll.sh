@@ -144,6 +144,7 @@ node ${DIR}/check_set_uniqueness.test.js || TESTOK=1
 node ${DIR}/header.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/json_own_properties.test.js || TESTOK=1
+node ${DIR}/json_nested_empty_lists.test.js || TESTOK=1
 node ${DIR}/json_container_size.test.js || TESTOK=1
 node ${DIR}/json_field_lookup.test.js || TESTOK=1
 node ${DIR}/json_message_scan.test.js || TESTOK=1
