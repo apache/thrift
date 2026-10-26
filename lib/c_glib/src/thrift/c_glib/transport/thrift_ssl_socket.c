@@ -72,6 +72,10 @@ static MUTEX_TYPE *thrift_ssl_socket_global_mutex_buf=NULL;
 gboolean
 thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error);
 
+/* OpenSSL 1.1.0 does its own locking: CRYPTO_set_id_callback() and
+   CRYPTO_set_locking_callback() became macros that ignore their argument, so
+   the two callbacks are only defined where they are used. */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 /**
  * OpenSSL uniq id function.
  *
@@ -96,6 +100,7 @@ static void thrift_ssl_socket_static_locking_callback(int mode, int n, const cha
   else
     MUTEX_UNLOCK(thrift_ssl_socket_global_mutex_buf[n]);
 }
+#endif
 
 static int thrift_ssl_socket_static_thread_setup(void)
 {
@@ -106,8 +111,10 @@ static int thrift_ssl_socket_static_thread_setup(void)
     return 0;
   for (i = 0;  i < CRYPTO_num_locks(  );  i++)
     MUTEX_SETUP(thrift_ssl_socket_global_mutex_buf[i]);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
   CRYPTO_set_id_callback(thrift_ssl_socket_static_id_function);
   CRYPTO_set_locking_callback(thrift_ssl_socket_static_locking_callback);
+#endif
   return 1;
 }
 
@@ -247,7 +254,7 @@ thrift_ssl_socket_peek (ThriftTransport *transport, GError **error)
       gchar byte;
       rc = SSL_peek(ssl_socket->ssl, &byte, 1);
       if (rc < 0) {
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Check socket data",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Check socket data",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, rc, error);
       }
       if (rc == 0) {
@@ -336,7 +343,7 @@ thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
 	      continue;
 	  }
       }else{
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Receive error",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Receive error",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, bytes, error);
 
       }
@@ -374,7 +381,7 @@ thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
          nothing, and asking again cannot make progress. */
       if (ret <= 0)
 	{
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Send error",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Send error",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, ret, error);
 	  return FALSE;
 	}
@@ -451,7 +458,7 @@ thrift_ssl_socket_handle_handshake(ThriftTransport * transport, GError **error)
 	  rc = SSL_connect(ssl_socket->ssl);
       }
       if (rc <= 0) {
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Error while connect/bind", THRIFT_SSL_SOCKET_ERROR_CONNECT_BIND, rc, error);
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Error while connect/bind", THRIFT_SSL_SOCKET_ERROR_CONNECT_BIND, rc, error);
 	  return FALSE;
       }
   }else
@@ -701,7 +708,11 @@ thrift_ssl_socket_initialize_openssl(void)
   SSL_library_init();
   ERR_load_crypto_strings();
   SSL_load_error_strings();
+  /* OpenSSL 1.1.0 loads the error strings itself; the call is deprecated
+     since 3.0. */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
   ERR_load_BIO_strings();
+#endif
 
   /* Setup locking */
   g_debug("We setup %d threads locks", thrift_ssl_socket_static_thread_setup());
@@ -931,7 +942,7 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
 #endif
 
   if (context == NULL) {
-      thrift_ssl_socket_get_error((const guchar*)"No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE, error);
+      thrift_ssl_socket_get_error("No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE, error);
       return NULL;
   }
   SSL_CTX_set_mode(context, SSL_MODE_AUTO_RETRY);

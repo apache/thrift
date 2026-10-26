@@ -382,7 +382,8 @@ int verify_ip(char * hostname, struct sockaddr_storage *addr)
   return retval;
 }
 
-static void 
+#ifdef BUILD_SERVER
+static void
 read_from_file(char *buffer, long size, const char *file_name)
 {
   char ch;
@@ -405,6 +406,7 @@ read_from_file(char *buffer, long size, const char *file_name)
 
   fclose(fp);
 }
+#endif
 
 #define ISSUER_CN_PINNING "The Apache Software Foundation"
 #define SUBJECT_CN_PINNING "localhost"
