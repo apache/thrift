@@ -70,6 +70,38 @@ jobs:
           path: cmake_build/Testing/Temporary/LastTest.log
           if-no-files-found: warn
 
+  lib-cpp-without-boost:
+    # The C++ library and the tutorials must build where Boost is not
+    # installed; a plain container keeps any Boost header out of reach.
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        timeout-minutes: 10
+        run: |
+          apt-get update -yq
+          apt-get install -y --no-install-recommends bison flex g++ libevent-dev libssl-dev zlib1g-dev make cmake
+
+      - name: Generate makefile using CMake
+        timeout-minutes: 10
+        run: |
+          cmake -S . -B cmake_build -DCMAKE_CXX_STANDARD=11 -DBUILD_TESTING=OFF \
+            -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_JAVASCRIPT=OFF -DWITH_NODEJS=OFF -DWITH_PYTHON=OFF
+
+      - name: Run make
+        timeout-minutes: 30
+        run: cmake --build cmake_build -j"$(nproc)"
+
+      - name: Run install
+        run: cmake --install cmake_build --prefix cmake_install
+
   compiler-windows:
     runs-on: windows-2025
     timeout-minutes: 60
