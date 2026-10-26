@@ -23,22 +23,44 @@ project("thrift-compiler" VERSION ${PACKAGE_VERSION})
 # version.h now handled via veralign.sh
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
+find_package(FLEX)
+find_package(BISON)
 
-# create directory for thrifty and thriftl
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
-
-# Create flex and bison files and build the lib parse static library
-BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc COMPILE_FLAGS "--file-prefix-map=${CMAKE_BINARY_DIR}='' --file-prefix-map=${CMAKE_SOURCE_DIR}=''")
-FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
-ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
-
-set(parse_SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
+# The release tarball ships the parser that flex and bison generated for it
+# (make dist), so a build from the tarball needs neither tool.  A git checkout
+# has no such files, since .gitignore lists them.
+set(pregenerated_parse_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.hh
 )
+set(have_pregenerated_parser TRUE)
+foreach(src IN LISTS pregenerated_parse_SOURCES)
+    if(NOT EXISTS ${src})
+        set(have_pregenerated_parser FALSE)
+    endif()
+endforeach()
+
+if(FLEX_FOUND AND BISON_FOUND)
+    # create directory for thrifty and thriftl
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
+
+    # Create flex and bison files and build the lib parse static library
+    BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc COMPILE_FLAGS "--file-prefix-map=${CMAKE_BINARY_DIR}='' --file-prefix-map=${CMAKE_SOURCE_DIR}=''")
+    FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
+    ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
+
+    set(parse_SOURCES
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
+        ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.hh
+    )
+elseif(have_pregenerated_parser)
+    message(STATUS "flex or bison not found, using the parser shipped in ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift")
+    set(parse_SOURCES ${pregenerated_parse_SOURCES})
+else()
+    message(FATAL_ERROR "Building the compiler needs flex and bison, or the generated parser that the release tarball ships in ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift")
+endif()
 
 add_library(parse STATIC ${parse_SOURCES})
 

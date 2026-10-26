@@ -38,10 +38,10 @@ if(MSVC)
     endif(HAVE_STDINT_H)
 endif()
 
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
-
 if(NOT TARGET parse)
+    find_package(FLEX REQUIRED)
+    find_package(BISON REQUIRED)
+
     # create directory for thrifty and thriftl
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/)
 
