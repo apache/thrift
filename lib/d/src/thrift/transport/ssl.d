@@ -30,6 +30,7 @@ import core.stdc.config;
 import core.stdc.stdlib : free, malloc;
 import std.ascii : toUpper;
 import std.array : empty, front, popFront;
+import std.bitmanip : nativeToBigEndian;
 import std.conv : emplace, to;
 import std.exception : enforce;
 import std.socket : Address, InternetAddress, Internet6Address, Socket;
@@ -656,7 +657,9 @@ class TDefaultClientAccessManager : TAccessManager {
     bool match;
     if (certAddress.length == 4) {
       if (auto ia = cast(InternetAddress)address) {
-        match = ((cast(ubyte*)ia.addr())[0 .. 4] == certAddress[]);
+        // addr() is the address as a number in host byte order; the entry
+        // carries it in network byte order.
+        match = (nativeToBigEndian(ia.addr())[] == certAddress[]);
       }
     } else if (certAddress.length == 16) {
       if (auto ia = cast(Internet6Address)address) {
@@ -665,6 +668,30 @@ class TDefaultClientAccessManager : TAccessManager {
     }
     return (match ? Decision.ALLOW : Decision.SKIP);
   }
+}
+
+// An IP subjectAltName entry carries the address in network byte order, and
+// TDefaultClientAccessManager compares it with the peer address byte for byte.
+unittest {
+  alias Decision = TAccessManager.Decision;
+  auto manager = new TDefaultClientAccessManager;
+
+  Address v4 = new InternetAddress("10.1.2.3", 9090);
+  Address v6 = new Internet6Address("::1", 9090);
+  ubyte[] v4Entry = [10, 1, 2, 3];
+  ubyte[] v4Reversed = [3, 2, 1, 10];
+  ubyte[] v6Entry = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+
+  enforce(manager.verify(v4, v4Entry) == Decision.ALLOW,
+    "an IPv4 entry naming the peer address must match it");
+  enforce(manager.verify(v4, v4Reversed) == Decision.SKIP,
+    "an IPv4 entry is compared in network byte order");
+  enforce(manager.verify(v4, v6Entry) == Decision.SKIP,
+    "an IPv6 entry does not match an IPv4 peer");
+  enforce(manager.verify(v6, v6Entry) == Decision.ALLOW,
+    "an IPv6 entry naming the peer address must match it");
+  enforce(manager.verify(v6, v4Entry) == Decision.SKIP,
+    "an IPv4 entry does not match an IPv6 peer");
 }
 
 private {
