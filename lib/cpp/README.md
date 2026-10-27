@@ -176,7 +176,8 @@ First, (a) is called with the remote IP. It is called once at the beginning.
 Then, the certificate of remote peer is loaded. SubjectAltName extensions
 are extracted and sent to application for verification. When a DNS
 subjectAltName field is extracted, (b) is called. When an IP subjectAltName
-field is extracted, (c) is called.
+field is extracted, (c) is called, except on a client side socket that was
+opened with a host name rather than an address literal.
 
 The "host" in (b) is the value from TSocket::getHost() if this is a client
 side socket, or TSocket::getPeerHost() if this is a server side socket. The
@@ -222,12 +223,14 @@ The server and client expects the followings from the directory /test/
 - keys/CA.pem
 
 The file names are hard coded in the source code. You need to create these
-certificates before you can run the test code in SSL mode. Make sure at least
-one of the followings is included in "keys/server.crt",
+certificates before you can run the test code in SSL mode. Make sure
+"keys/server.crt" names the host the client connects to; for "localhost",
+at least one of the followings,
 
 - subjectAltName, DNS localhost
-- subjectAltName, IP  127.0.0.1
-- common name,    localhost
+- common name,    localhost (only for a certificate without DNS subjectAltName)
+
+An IP 127.0.0.1 subjectAltName covers a client that connects to 127.0.0.1.
 
 Run within /test/ folder,
 
@@ -284,7 +287,8 @@ Support for Boost at runtime was deprecated.
 
 TSSLSocket::authorize() consults a certificate's IP subjectAltName entries in
 client mode only when the host the socket was opened with is itself an IP
-address literal. Previously an IP entry equal to the address the connection
+address literal, recognised the way TSocket resolves it (getaddrinfo() with
+AI_NUMERICHOST). Previously an IP entry equal to the address the connection
 went to was accepted for any host, so a client that connected to a host name
 accepted a certificate that named the resolved address but not the name. A
 client that connects to a host name now needs that name in the certificate's

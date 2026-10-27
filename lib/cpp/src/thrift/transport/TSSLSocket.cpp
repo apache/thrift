@@ -178,6 +178,7 @@ void cleanupOpenSSL() {
 
 static void buildErrors(string& message, int errno_copy = 0, int sslerrno = 0);
 static bool matchName(const char* host, const char* pattern, int size);
+static bool isAddressLiteral(const std::string& host);
 static char uppercase(char c);
 
 // SSLContext implementation
@@ -813,18 +814,16 @@ void TSSLSocket::authorize() {
   }
 
   // In client mode the iPAddress entries are consulted only when the host the
-  // socket was opened with is itself an address literal (RFC 2818 3.1, RFC
-  // 6125 1.7.2): a client that was asked for a host name is answered by the
-  // dNSName entries and the common name, and an address the name resolved to
-  // does not cover the name.  A socket opened without a host, from a
-  // descriptor, keeps the peer address as its only reference identifier.
+  // socket was opened with is itself an address literal (RFC 9525 6.1.1): an
+  // address that a host name resolved to is not a reference identifier (RFC
+  // 9525 2), so a client that was asked for a host name is answered by the
+  // dNSName entries and the common name.  A socket opened without a host, from
+  // a descriptor, keeps the peer address as its only reference identifier.
   bool consultAddressEntries = true;
   if (!server()) {
     const string clientHost = getHost();
     if (!clientHost.empty()) {
-      ASN1_OCTET_STRING* literal = a2i_IPADDRESS(clientHost.c_str());
-      consultAddressEntries = (literal != nullptr);
-      ASN1_OCTET_STRING_free(literal);
+      consultAddressEntries = isAddressLiteral(clientHost);
     }
   }
 
@@ -1356,6 +1355,29 @@ Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa,
     match = (memcmp(&((sockaddr_in6*)&sa)->sin6_addr, data, size) == 0);
   }
   return (match ? ALLOW : SKIP);
+}
+
+/**
+ * Whether a host is an address literal rather than a name. It is classified the
+ * way TSocket::open() resolves it: getaddrinfo() with AI_NUMERICHOST accepts
+ * exactly the numeric forms the socket connects to as an address, and a name
+ * that merely begins with digits is not one of them (RFC 9525 7.4).
+ *
+ * @param  host Host the client socket was opened with
+ * @return True if "host" is an IPv4 or IPv6 address literal, false otherwise.
+ */
+bool isAddressLiteral(const std::string& host) {
+  struct addrinfo hints;
+  std::memset(&hints, 0, sizeof(hints));
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_NUMERICHOST;
+  struct addrinfo* res = nullptr;
+  if (getaddrinfo(host.c_str(), nullptr, &hints, &res) != 0) {
+    return false;
+  }
+  freeaddrinfo(res);
+  return true;
 }
 
 /**

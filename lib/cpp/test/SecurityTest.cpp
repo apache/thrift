@@ -456,6 +456,13 @@ BOOST_AUTO_TEST_CASE(client_host_name_against_address_entries)
         {"127.0.0.1", true},
         {"localhost", true},
         {"example.invalid", false},
+        // A host name that merely begins with a dotted quad is still a name.
+        {"127.0.0.1.example.invalid", false},
+#if defined(__linux__)
+        // A numeric form that getaddrinfo() accepts, and TSocket therefore
+        // connects to, as 127.0.0.1.
+        {"127.1", true},
+#endif
     };
 
     for (const NameCase& c : cases)
