@@ -655,6 +655,9 @@ class TCompactProtocol extends TProtocol
         $shift = 0;
 
         while (true) {
+            if ($idx >= self::MAX_VARINT_BYTES) {
+                throw new TProtocolException('Variable-length int over 10 bytes.', TProtocolException::INVALID_DATA);
+            }
             $x = $this->trans->readAll(1);
             $arr = unpack('C', $x);
             $byte = $arr[1];

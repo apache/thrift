@@ -192,6 +192,40 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(10, $byteCount);
     }
 
+    public function testReadI64RejectsOverlong()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturn("\x80"); // continuation byte — bit 7 always set
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::INVALID_DATA);
+        $protocol->readI64($result);
+    }
+
+    public function testReadI64AcceptsValid10ByteVarint()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        // The zigzag encoding of PHP_INT_MIN is all 64 bits set: ten bytes.
+        $continuations = array_fill(0, 9, "\xff");
+        $continuations[] = "\x01"; // terminating byte
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(...$continuations);
+
+        $byteCount = $protocol->readI64($result);
+        $this->assertSame(10, $byteCount);
+        $this->assertSame(PHP_INT_MIN, $result);
+    }
+
     /**
      * Ten varint bytes with every payload bit set. The last one lands in
      * bit 63 of a 64-bit int, so the value decodes to -1.
