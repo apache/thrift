@@ -62,11 +62,14 @@ type THttpClientOptions struct {
 	//
 	// Redirects are handled by the client's CheckRedirect policy. When it is
 	// nil, as it is for http.DefaultClient, up to 10 redirects are followed to
-	// any URL, and headers set through SetHeader are sent along with them
-	// (net/http only drops Authorization, Cookie and similar headers when the
-	// redirect leaves the original domain). To restrict this, use a client
-	// with a CheckRedirect of your own; one that returns http.ErrUseLastResponse
-	// disables redirects, and Flush then returns the 3xx status as an error.
+	// any URL, except that a redirect from https to http is not followed; Flush
+	// then returns the 3xx status as an error. Headers set through SetHeader are
+	// sent along with the redirects that are followed (net/http only drops
+	// Authorization, Cookie and similar headers when the redirect leaves the
+	// original domain). To restrict this further, use a client with a
+	// CheckRedirect of your own, which is used unchanged; one that returns
+	// http.ErrUseLastResponse disables redirects, and Flush then returns the
+	// 3xx status as an error.
 	Client *http.Client
 }
 
@@ -215,7 +218,15 @@ func (p *THttpClient) Flush(ctx context.Context) error {
 	if ctx != nil {
 		req = req.WithContext(ctx)
 	}
-	response, err := p.client.Do(req)
+	client := p.client
+	if client.CheckRedirect == nil {
+		// Use a copy, so that neither the client passed in nor
+		// http.DefaultClient is changed.
+		c := *client
+		c.CheckRedirect = checkRedirect
+		client = &c
+	}
+	response, err := client.Do(req)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
@@ -229,6 +240,20 @@ func (p *THttpClient) Flush(ctx context.Context) error {
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+strconv.Itoa(response.StatusCode))
 	}
 	p.response = response
+	return nil
+}
+
+// checkRedirect is the redirect policy for a client without a CheckRedirect
+// of its own. Like the default policy of net/http, it stops after 10
+// redirects. In addition, it does not follow a redirect from https to http:
+// the 3xx response is returned instead.
+func checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if len(via) > 0 && via[len(via)-1].URL.Scheme == "https" && req.URL.Scheme == "http" {
+		return http.ErrUseLastResponse
+	}
 	return nil
 }
 
