@@ -29,8 +29,10 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.Configurable;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.MinimalHttpClient;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.util.Timeout;
@@ -161,6 +163,15 @@ public class THttpClient extends TEndpointTransport {
     }
   }
 
+  /**
+   * Sets the connect timeout in milliseconds; zero or less leaves it unset.
+   *
+   * <p>With an {@link HttpClient}, the value is used as the connection request timeout (the time to
+   * wait for a connection from the pool) and added on top of the client's default request
+   * configuration. That works for clients that expose their defaults through {@link Configurable},
+   * such as those built with {@code HttpClients.custom()}, and for {@link MinimalHttpClient}. Any
+   * other client keeps its own configuration, and the timeout is not applied to it.
+   */
   public void setConnectTimeout(int timeout) {
     connectTimeout_ = timeout;
   }
@@ -232,15 +243,29 @@ public class THttpClient extends TEndpointTransport {
     requestBuffer_.write(buf, off, len);
   }
 
+  /**
+   * Returns the request configuration for the next request, or null to leave the default request
+   * configuration of the client in effect. A timeout set on this transport is added on top of the
+   * client's own defaults; that needs a client whose defaults are known (see {@link
+   * #setConnectTimeout}).
+   */
   private RequestConfig getRequestConfig() {
-    RequestConfig requestConfig = RequestConfig.DEFAULT;
-    if (connectTimeout_ > 0) {
-      requestConfig =
-          RequestConfig.copy(requestConfig)
-              .setConnectionRequestTimeout(Timeout.ofMilliseconds(connectTimeout_))
-              .build();
+    if (connectTimeout_ <= 0) {
+      return null;
     }
-    return requestConfig;
+    RequestConfig defaults;
+    if (client instanceof Configurable) {
+      defaults = ((Configurable) client).getConfig();
+    } else if (client instanceof MinimalHttpClient) {
+      // has no default request configuration of its own and uses RequestConfig.DEFAULT
+      defaults = null;
+    } else {
+      // the client's defaults are unknown: leave them in effect, without the timeout
+      return null;
+    }
+    return RequestConfig.copy(defaults != null ? defaults : RequestConfig.DEFAULT)
+        .setConnectionRequestTimeout(Timeout.ofMilliseconds(connectTimeout_))
+        .build();
   }
 
   private ConnectionConfig getConnectionConfig() {
@@ -274,7 +299,10 @@ public class THttpClient extends TEndpointTransport {
     HttpPost post = new HttpPost(this.url_.getFile());
     try {
       // Set request to path + query string
-      post.setConfig(getRequestConfig());
+      RequestConfig requestConfig = getRequestConfig();
+      if (null != requestConfig) {
+        post.setConfig(requestConfig);
+      }
       DEFAULT_HEADERS.forEach(post::addHeader);
       if (null != customHeaders_) {
         customHeaders_.forEach(post::addHeader);
