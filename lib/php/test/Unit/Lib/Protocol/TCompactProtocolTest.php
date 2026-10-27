@@ -192,6 +192,76 @@ class TCompactProtocolTest extends TestCase
         $this->assertSame(10, $byteCount);
     }
 
+    /**
+     * Ten varint bytes with every payload bit set. The last one lands in
+     * bit 63 of a 64-bit int, so the value decodes to -1.
+     */
+    private static function negativeVarint(): array
+    {
+        return array_merge(array_fill(0, 9, "\xff"), ["\x01"]);
+    }
+
+    public function testReadMapBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(...self::negativeVarint());
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readMapBegin($keyType, $valType, $size);
+    }
+
+    public function testReadListBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        // Size nibble 15 means the element count follows as a varint.
+        $transport->expects($this->exactly(11))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(chr(0xf0 | self::COMPACT_I32), ...self::negativeVarint());
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readListBegin($elemType, $size);
+    }
+
+    public function testReadSetBeginRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport->expects($this->exactly(11))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(chr(0xf0 | self::COMPACT_I32), ...self::negativeVarint());
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readSetBegin($elemType, $size);
+    }
+
+    public function testReadStringRejectsNegativeSize()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $protocol = new TCompactProtocol($transport);
+
+        $transport->expects($this->exactly(10))
+                  ->method('readAll')
+                  ->with(1)
+                  ->willReturnOnConsecutiveCalls(...self::negativeVarint());
+
+        $this->expectException(TProtocolException::class);
+        $this->expectExceptionCode(TProtocolException::NEGATIVE_SIZE);
+        $protocol->readString($value);
+    }
+
     public function testWriteMessageBegin()
     {
         $name = 'testName';
