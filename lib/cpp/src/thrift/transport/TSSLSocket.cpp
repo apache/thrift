@@ -812,6 +812,22 @@ void TSSLSocket::authorize() {
     return;
   }
 
+  // In client mode the iPAddress entries are consulted only when the host the
+  // socket was opened with is itself an address literal (RFC 2818 3.1, RFC
+  // 6125 1.7.2): a client that was asked for a host name is answered by the
+  // dNSName entries and the common name, and an address the name resolved to
+  // does not cover the name.  A socket opened without a host, from a
+  // descriptor, keeps the peer address as its only reference identifier.
+  bool consultAddressEntries = true;
+  if (!server()) {
+    const string clientHost = getHost();
+    if (!clientHost.empty()) {
+      ASN1_OCTET_STRING* literal = a2i_IPADDRESS(clientHost.c_str());
+      consultAddressEntries = (literal != nullptr);
+      ASN1_OCTET_STRING_free(literal);
+    }
+  }
+
   // extract subjectAlternativeName
   //
   // Whether the certificate carried a dNSName at all is tracked separately
@@ -843,7 +859,9 @@ void TSSLSocket::authorize() {
         decision = access_->verify(host, data, length);
         break;
       case GEN_IPADD:
-        decision = access_->verify(sa, data, length);
+        if (consultAddressEntries) {
+          decision = access_->verify(sa, data, length);
+        }
         break;
       }
     }

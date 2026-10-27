@@ -317,6 +317,18 @@ requires of it. An AccessManager of your own is otherwise unaffected: it is stil
 offered subjectAltName entries through (b) and (c) until one of them answers, and
 what changes is only whether it is asked about the common name afterwards.
 
+TSSLSocket::authorize() consults a certificate's IP subjectAltName entries in
+client mode only when the host the socket was opened with is itself an IP
+address literal. Previously an IP entry equal to the address the connection
+went to was accepted for any host, so a client that connected to a host name
+accepted a certificate that named the resolved address but not the name. A
+client that connects to a host name now needs that name in the certificate's
+DNS subjectAltName, or in the common name for a certificate that carries no DNS
+entry. Connecting to the address literal, and a socket opened from a descriptor
+with no host, are unchanged. An AccessManager of your own is not offered the IP
+entries through (c) for a client opened with a host name; (a) and (b) are
+called as before.
+
 ## 1.0.0
 
 THRIFT-4720:
