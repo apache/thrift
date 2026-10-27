@@ -19,6 +19,7 @@
 package org.apache.thrift.protocol;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
 import org.apache.thrift.TException;
@@ -46,6 +47,36 @@ public class TestTJSONProtocol extends ProtocolTestBase {
     buffer.write(jsonString.getBytes(StandardCharsets.UTF_8));
 
     assertEquals(expectedString, protocol.readString());
+  }
+
+  @Test
+  public void testEscapedUnicodeAboveU7FFF() throws TException {
+    // Regression test for https://issues.apache.org/jira/browse/THRIFT-4408.
+    // Escapes from \u8000 up to \uffff are code units with the top bit set.
+    String jsonString = "\"\\uff1c\\u8000\\uffff\"";
+    String expectedString = "\uff1c\u8000\uffff";
+
+    TMemoryBuffer buffer = new TMemoryBuffer(1000);
+    TJSONProtocol protocol = new TJSONProtocol(buffer);
+    buffer.write(jsonString.getBytes(StandardCharsets.UTF_8));
+
+    assertEquals(expectedString, protocol.readString());
+  }
+
+  @Test
+  public void testUnpairedHighSurrogate() throws TException {
+    // A high surrogate has to be followed by a low surrogate escape, whether the
+    // string ends, continues with a plain character, or continues with another
+    // non-surrogate escape.
+    String[] jsonStrings = {"\"\\ud834\"", "\"\\ud834a\"", "\"\\ud834\\u0041\\udd1e\""};
+    for (String jsonString : jsonStrings) {
+      TMemoryBuffer buffer = new TMemoryBuffer(1000);
+      TJSONProtocol protocol = new TJSONProtocol(buffer);
+      buffer.write(jsonString.getBytes(StandardCharsets.UTF_8));
+
+      TProtocolException e = assertThrows(TProtocolException.class, protocol::readString);
+      assertEquals(TProtocolException.INVALID_DATA, e.getType());
+    }
   }
 
   @Test

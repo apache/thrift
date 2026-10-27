@@ -653,31 +653,35 @@ public class TJSONProtocol extends TProtocol {
         if (ch == ESCSEQ[1]) {
           trans_.readAll(tmpbuf_, 0, 4);
           count += 4;
-          short cu =
-              (short)
-                  (((short) hexVal(tmpbuf_[0]) << 12)
-                      + ((short) hexVal(tmpbuf_[1]) << 8)
-                      + ((short) hexVal(tmpbuf_[2]) << 4)
-                      + (short) hexVal(tmpbuf_[3]));
+          char cu =
+              (char)
+                  ((hexVal(tmpbuf_[0]) << 12)
+                      + (hexVal(tmpbuf_[1]) << 8)
+                      + (hexVal(tmpbuf_[2]) << 4)
+                      + hexVal(tmpbuf_[3]));
           try {
-            if (Character.isHighSurrogate((char) cu)) {
+            if (Character.isHighSurrogate(cu)) {
               if (codeunits.size() > 0) {
                 throw new TProtocolException(
                     TProtocolException.INVALID_DATA, "Expected low surrogate char");
               }
-              codeunits.add((char) cu);
-            } else if (Character.isLowSurrogate((char) cu)) {
+              codeunits.add(cu);
+            } else if (Character.isLowSurrogate(cu)) {
               if (codeunits.size() == 0) {
                 throw new TProtocolException(
                     TProtocolException.INVALID_DATA, "Expected high surrogate char");
               }
 
-              codeunits.add((char) cu);
+              codeunits.add(cu);
               arr.write(
                   (new String(new int[] {codeunits.get(0), codeunits.get(1)}, 0, 2))
                       .getBytes(StandardCharsets.UTF_8));
               codeunits.clear();
             } else {
+              if (codeunits.size() > 0) {
+                throw new TProtocolException(
+                    TProtocolException.INVALID_DATA, "Expected low surrogate char");
+              }
               arr.write((new String(new int[] {cu}, 0, 1)).getBytes(StandardCharsets.UTF_8));
             }
             continue;
@@ -693,7 +697,14 @@ public class TJSONProtocol extends TProtocol {
           ch = ESCAPE_CHAR_VALS[off];
         }
       }
+      if (codeunits.size() > 0) {
+        throw new TProtocolException(
+            TProtocolException.INVALID_DATA, "Expected low surrogate char");
+      }
       arr.write(ch);
+    }
+    if (codeunits.size() > 0) {
+      throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected low surrogate char");
     }
     return arr;
   }
