@@ -510,6 +510,9 @@ class TCompactProtocol extends TProtocol
         if ($size == 15) {
             $result += $this->readVarint($size);
         }
+        if ($size < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
         $this->containers[] = $this->state;
         $this->state = TCompactProtocol::STATE_CONTAINER_READ;
 
@@ -519,6 +522,9 @@ class TCompactProtocol extends TProtocol
     public function readMapBegin(?int &$key_type, ?int &$val_type, ?int &$size): int
     {
         $result = $this->readVarint($size);
+        if ($size < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
         $types = 0;
         if ($size > 0) {
             $result += $this->readUByte($types);
@@ -602,6 +608,9 @@ class TCompactProtocol extends TProtocol
     public function readString(?string &$str): int
     {
         $result = $this->readVarint($len);
+        if ($len < 0) {
+            throw new TProtocolException('Negative size', TProtocolException::NEGATIVE_SIZE);
+        }
         $this->checkStringSize($len, $this->maxStringSize);
         if ($len) {
             $str = $this->trans->readAll($len);
