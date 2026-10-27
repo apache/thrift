@@ -908,7 +908,7 @@ begin
       end
       else if CharUtils.IsLowSurrogate(char(wch)) then begin
         if highSurogate = #0
-        then TProtocolExceptionInvalidData.Create('Expected high surrogate char');
+        then raise TProtocolExceptionInvalidData.Create('Expected high surrogate char');
         surrogatePairs[0] := highSurogate;
         surrogatePairs[1] := char(wch);
         tmp := TEncoding.UTF8.GetBytes(surrogatePairs);
