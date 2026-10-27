@@ -239,7 +239,7 @@ private:
 
     auto addr = socket_.getPeerAddress();
     authorize(ssl_, accessManager_, addr,
-      (serverSide_ ? addr.toHostNameString() : socket_.host));
+      (serverSide_ ? addr.toHostNameString() : socket_.host), serverSide_);
   }
 
   TAsyncSocket socket_;

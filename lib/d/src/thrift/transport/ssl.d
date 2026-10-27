@@ -228,7 +228,7 @@ private:
     }
     enforce(rc > 0, getSSLException());
     authorize(ssl_, accessManager_, getPeerAddress(),
-      (serverSide_ ? getPeerAddress().toHostNameString() : host));
+      (serverSide_ ? getPeerAddress().toHostNameString() : host), serverSide_);
   }
 
   bool serverSide_;

@@ -51,6 +51,23 @@ risk.
 Breaking Changes
 ----------------
 
+### 0.26.0
+
+thrift.internal.ssl.authorize() consults a certificate's IP subjectAltName
+entries in client mode only when the host the socket was opened with is itself
+an IP address literal, recognised the way the socket resolves it (getaddrinfo
+with AI_NUMERICHOST). Previously an IP entry equal to the address the
+connection went to was accepted for any host, so a client that connected to a
+host name accepted a certificate that named the resolved address but not the
+name. A client that connects to a host name now needs that name in the
+certificate's DNS subjectAltName, or in the common name for a certificate that
+carries no DNS entry. Connecting to an address literal, a socket opened on an
+existing connection without a host, and the server side are unchanged. A
+TAccessManager of your own is not offered the IP entries through
+verify(Address, ubyte[]) for a client opened with a host name; the other two
+verify() overloads are called as before. authorize() takes the side of the
+connection as a new last parameter.
+
 ### 0.25.0
 
 thrift.transport.http compares a header name in full instead of by prefix, so a

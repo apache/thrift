@@ -27,7 +27,7 @@ import deimos.openssl.ssl;
 import deimos.openssl.x509v3;
 import std.array : empty, appender;
 import std.conv : to;
-import std.socket : Address;
+import std.socket : Address, parseAddress, SocketException;
 import thrift.transport.ssl;
 
 version (use_openssl_3) {
@@ -47,9 +47,10 @@ version (use_openssl_3) {
  *   accessManager = The access manager to check the peer against.
  *   peerAddress = The (IP) address of the peer.
  *   hostName = The host name of the peer.
+ *   serverSide = Whether ssl is the server end of the connection.
  */
 void authorize(SSL* ssl, TAccessManager accessManager,
-  Address peerAddress, lazy string hostName
+  Address peerAddress, lazy string hostName, bool serverSide
 ) {
   alias TAccessManager.Decision Decision;
 
@@ -98,6 +99,21 @@ void authorize(SSL* ssl, TAccessManager accessManager,
     return;
   }
 
+  // In client mode the iPAddress entries are consulted only when the host the
+  // socket was opened with is itself an address literal (RFC 9525 6.1.1): an
+  // address that a host name resolved to is not a reference identifier
+  // (RFC 9525 2), so a client that was asked for a host name is answered by the
+  // dNSName entries and the common name. A socket opened without a host, on an
+  // existing connection, keeps the peer address as its only reference
+  // identifier.
+  bool consultAddressEntries = true;
+  if (!serverSide) {
+    auto clientHost = hostName;
+    if (!clientHost.empty) {
+      consultAddressEntries = isAddressLiteral(clientHost);
+    }
+  }
+
   // Check subjectAltName(s), if present.
   auto alternatives = cast(STACK_OF!(GENERAL_NAME)*)
     X509_get_ext_d2i(cert, NID_subject_alt_name, null, null);
@@ -140,7 +156,9 @@ void authorize(SSL* ssl, TAccessManager accessManager,
           decision = accessManager.verify(hostName, cast(char[])data[0 .. length]);
           break;
         case _GEN_IPADD:
-          decision = accessManager.verify(peerAddress, data[0 .. length]);
+          if (consultAddressEntries) {
+            decision = accessManager.verify(peerAddress, data[0 .. length]);
+          }
           break;
         default:
           // Do nothing.
@@ -192,6 +210,39 @@ void authorize(SSL* ssl, TAccessManager accessManager,
   }
 }
 
+/*
+ * Whether host is an address literal rather than a name. It is classified the
+ * way the socket resolves it -- getaddrinfo, here with AI_NUMERICHOST -- so that
+ * every form the socket connects to as an address counts as one, and a name
+ * that merely begins with a dotted quad does not (RFC 9525 7.4).
+ */
+private bool isAddressLiteral(string host) {
+  try {
+    parseAddress(host);
+    return true;
+  } catch (SocketException) {
+    return false;
+  }
+}
+
+unittest {
+  import std.exception : enforce;
+
+  foreach (literal; ["127.0.0.1", "::1", "0:0:0:0:0:0:0:1"]) {
+    enforce(isAddressLiteral(literal), literal);
+  }
+  foreach (name; ["localhost", "example.invalid", "10.1.2.3.example.com",
+                  "127.0.0.1.nip.io"]) {
+    enforce(!isAddressLiteral(name), name);
+  }
+  version (linux) {
+    // Numeric forms glibc's getaddrinfo accepts, and so connects to.
+    foreach (literal; ["127.1", "0x7f.0.0.1", "fe80::1%lo"]) {
+      enforce(isAddressLiteral(literal), literal);
+    }
+  }
+}
+
 // ASN1_STRING_to_UTF8() reports a negative length and leaves its output pointer
 // untouched for a string whose type it cannot convert. The commonName fallback
 // in authorize() above relies on that: the pointer is scoped to each iteration
@@ -209,6 +260,76 @@ unittest {
   auto size = ASN1_STRING_to_UTF8(&utf8, common);
   assert(size < 0, "an unconvertible commonName string type must report failure");
   assert(utf8 is null, "the output pointer must be left untouched on failure");
+}
+
+// In client mode the iPAddress entries of a certificate answer only for a host
+// that is itself an address literal. test/keys/server.crt names 127.0.0.1, ::1
+// and localhost, in that order: a handshake against it runs in memory, and
+// authorize() is then asked about the client's host in turn.
+unittest {
+  import deimos.openssl.bio;
+  import std.exception : enforce;
+  import std.path : buildPath, dirName;
+  import std.socket : Internet6Address, InternetAddress;
+
+  auto keys = buildPath(dirName(__FILE_FULL_PATH__),
+    "..", "..", "..", "..", "..", "test", "keys");
+
+  auto serverContext = new TSSLContext();
+  serverContext.serverSide = true;
+  serverContext.loadCertificate(buildPath(keys, "server.crt"));
+  serverContext.loadPrivateKey(buildPath(keys, "server.key"));
+
+  auto clientContext = new TSSLContext();
+  clientContext.authenticate = true;
+  clientContext.loadTrustedCertificates(buildPath(keys, "CA.pem"));
+
+  auto server = serverContext.createSSL();
+  scope(exit) SSL_free(server);
+  auto client = clientContext.createSSL();
+  scope(exit) SSL_free(client);
+
+  BIO* serverBio;
+  BIO* clientBio;
+  enforce(BIO_new_bio_pair(&serverBio, 0, &clientBio, 0) == 1);
+  SSL_set_bio(server, serverBio, serverBio);
+  SSL_set_bio(client, clientBio, clientBio);
+  SSL_set_accept_state(server);
+  SSL_set_connect_state(client);
+
+  bool serverDone, clientDone;
+  foreach (_; 0 .. 100) {
+    if (!clientDone) clientDone = (SSL_do_handshake(client) == 1);
+    if (!serverDone) serverDone = (SSL_do_handshake(server) == 1);
+    if (clientDone && serverDone) break;
+  }
+  enforce(clientDone && serverDone, "the in-memory handshake did not complete");
+
+  auto accessManager = new TDefaultClientAccessManager;
+  Address v4 = new InternetAddress("127.0.0.1", 9090);
+  Address v6 = new Internet6Address("::1", 9090);
+
+  bool accepted(Address peer, string host) {
+    try {
+      authorize(client, accessManager, peer, host, false);
+      return true;
+    } catch (TSSLException) {
+      return false;
+    }
+  }
+
+  enforce(accepted(v6, "::1"), "an address literal is covered by its address entry");
+  enforce(accepted(v6, "localhost"), "a host name is covered by its DNS entry");
+  enforce(accepted(v6, null), "a socket without a host keeps the peer address as its identifier");
+  enforce(!accepted(v6, "example.invalid"),
+    "an address entry must not answer for a host name the certificate does not carry");
+  // A client asked for a host name does not consult the address entries at
+  // all, so the 127.0.0.1 entry ahead of the DNS entry is not compared either.
+  enforce(accepted(v4, "localhost"), "a host name is covered by its DNS entry");
+  enforce(!accepted(v4, "example.invalid"),
+    "an address entry must not answer for a host name the certificate does not carry");
+  enforce(!accepted(v4, "127.0.0.1.example.invalid"),
+    "a host name that begins with a dotted quad is still a host name");
 }
 
 /*
