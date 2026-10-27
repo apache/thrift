@@ -708,14 +708,24 @@ private {
   bool matchName(const(char)[] host, const(char)[] pattern) {
     // RFC 6125 6.4.3: a wildcard must not appear outside the leftmost label.
     bool pastFirstDot;
-    foreach (c; pattern) {
+    bool wildcard;
+    ptrdiff_t firstDot = -1;
+    foreach (i, c; pattern) {
       if (c == '.') {
+        if (firstDot < 0) firstDot = i;
         pastFirstDot = true;
         continue;
       }
       if (c == '*' && pastFirstDot) {
         return false;
       }
+      if (c == '*') wildcard = true;
+    }
+    // A wildcard stands in for the leftmost label of a longer name. On its
+    // own, or with nothing after its dot, it would cover every single-label
+    // host name.
+    if (wildcard && (firstDot < 0 || firstDot == pattern.length - 1)) {
+      return false;
     }
 
     while (!host.empty && !pattern.empty) {
@@ -747,6 +757,14 @@ private {
 
     // ... and it covers one label, not several.
     enforce(!matchName("foo.bar.apache.org", "*.apache.org"));
+
+    // ... and it needs a label after it: on its own, or with nothing after
+    // its dot, it would cover every single-label host name.
+    enforce(!matchName("localhost", "*"));
+    enforce(!matchName("redis", "*"));
+    enforce(!matchName("foo", "f*"));
+    enforce(!matchName("localhost.", "*."));
+    enforce(matchName("localhost", "localhost"));
 
     enforce(matchName("", ""));
     enforce(!matchName("", "*"));
