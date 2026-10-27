@@ -1392,10 +1392,20 @@ bool isAddressLiteral(const std::string& host) {
 bool matchName(const char* host, const char* pattern, int size) {
   // RFC 6125 §6.4.3: wildcard must not appear outside the leftmost label.
   bool past_first_dot = false;
+  bool wildcard = false;
+  int first_dot = -1;
   for (int k = 0; k < size; k++) {
-    if (pattern[k] == '.') { past_first_dot = true; continue; }
+    if (pattern[k] == '.') {
+      if (first_dot < 0) first_dot = k;
+      past_first_dot = true;
+      continue;
+    }
     if (pattern[k] == '*' && past_first_dot) return false;
+    if (pattern[k] == '*') wildcard = true;
   }
+  // A wildcard stands in for the leftmost label of a longer name. On its own,
+  // or with nothing after its dot, it would cover every single-label host.
+  if (wildcard && (first_dot < 0 || first_dot == size - 1)) return false;
   bool match = false;
   int i = 0, j = 0;
   while (i < size && host[j] != '\0') {

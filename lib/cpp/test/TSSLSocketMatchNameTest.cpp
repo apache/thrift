@@ -103,6 +103,17 @@ BOOST_AUTO_TEST_CASE(no_suffix_bypass) {
   BOOST_CHECK(!allows("evil.com.attacker.com", "evil.com"));
 }
 
+BOOST_AUTO_TEST_CASE(wildcard_needs_a_label_after_it) {
+  // A wildcard stands in for the leftmost label of a longer name. On its own,
+  // or with nothing after its dot, it would cover every single-label host.
+  BOOST_CHECK(!allows("localhost", "*"));
+  BOOST_CHECK(!allows("redis", "*"));
+  BOOST_CHECK(!allows("foo", "f*"));
+  BOOST_CHECK(!allows("localhost.", "*."));
+  BOOST_CHECK(allows("localhost", "localhost"));
+  BOOST_CHECK(allows("foo.example.com", "*.example.com"));
+}
+
 
 // ---------------------------------------------------------------------------
 // Which identity in the certificate is consulted, and in what order.
