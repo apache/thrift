@@ -439,4 +439,89 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
     }
 }
 
+BOOST_AUTO_TEST_CASE(client_host_name_against_address_entries)
+{
+    // server.crt carries IP Address:127.0.0.1, IP Address:::1 and
+    // DNS:localhost.  The client socket is opened on the address literal, so
+    // that no name resolution is involved, and the host it reports is then set
+    // to the name under test before the handshake runs.  The IP entries cover
+    // a client that was opened with that address; a client that was opened
+    // with a host name is answered by the DNS entries and the common name.
+    struct NameCase
+    {
+        const char* host;
+        bool accepted;
+    };
+    const NameCase cases[] = {
+        {"127.0.0.1", true},
+        {"localhost", true},
+        {"example.invalid", false},
+        // A host name that merely begins with a dotted quad is still a name.
+        {"127.0.0.1.example.invalid", false},
+#if defined(__linux__)
+        // A numeric form that getaddrinfo() accepts, and TSocket therefore
+        // connects to, as 127.0.0.1.
+        {"127.1", true},
+#endif
+    };
+
+    for (const NameCase& c : cases)
+    {
+        shared_ptr<TSSLSocketFactory> pServerSocketFactory(new TSSLSocketFactory());
+        pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
+        pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+        pServerSocketFactory->server(true);
+        TSSLServerSocket serverSocket("127.0.0.1", 0, pServerSocketFactory);
+        serverSocket.setAcceptTimeout(5000);
+        serverSocket.listen();
+        const int port = serverSocket.getPort();
+
+        boost::thread serverThread([&serverSocket]()
+        {
+            try
+            {
+                shared_ptr<TTransport> connectedClient = serverSocket.accept();
+                uint8_t buf[2] = {'O', 'K'};
+                connectedClient->write(&buf[0], 2);
+                connectedClient->flush();
+                connectedClient->close();
+            }
+            catch (TTransportException& ex)
+            {
+                boost::mutex::scoped_lock lock(gMutex);
+                BOOST_TEST_MESSAGE(boost::format("SRV %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+            }
+        });
+
+        shared_ptr<TSSLSocketFactory> pClientSocketFactory(new TSSLSocketFactory());
+        pClientSocketFactory->authenticate(true);
+        pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+        shared_ptr<TSSLSocket> pClientSocket = pClientSocketFactory->createSocket("127.0.0.1", port);
+        pClientSocket->setRecvTimeout(5000);
+        pClientSocket->open();
+        pClientSocket->setHost(c.host);
+
+        bool accepted = false;
+        try
+        {
+            uint8_t buf[2] = {0, 0};
+            BOOST_CHECK_EQUAL(2, pClientSocket->read(&buf[0], 2));
+            BOOST_CHECK_EQUAL(0, memcmp(&buf[0], "OK", 2));
+            accepted = true;
+        }
+        catch (TSSLException& ex)
+        {
+            boost::mutex::scoped_lock lock(gMutex);
+            BOOST_TEST_MESSAGE(boost::format("CLI %1% Exception: %2%") % c.host % ex.what());
+        }
+        pClientSocket->close();
+        serverThread.join();
+        serverSocket.close();
+
+        BOOST_CHECK_MESSAGE(accepted == c.accepted,
+                boost::format("      Host = %1% expected accepted == %2% but was %3%")
+                    % c.host % c.accepted % accepted);
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END()

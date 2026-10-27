@@ -437,7 +437,9 @@ public:
   }
   /**
    * Determine whether the peer should be granted access or not. It's called
-   * every time an IP subjectAltName is extracted from peer's certificate.
+   * every time an IP subjectAltName is extracted from peer's certificate,
+   * except on a client socket that was opened with a host name rather than an
+   * address literal: an address that name resolved to does not identify it.
    *
    * @param  sa   Peer IP address retrieved from the underlying socket
    * @param  data IP address extracted from certificate
