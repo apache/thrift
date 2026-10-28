@@ -813,7 +813,12 @@ begin
   except
     on e:Exception do begin
       Writeln( e.ClassName+': '+ e.Message);
-      Write('Hit ENTER to close ... '); Readln;
+      ExitCode := 1;
+      // keep the console open only when started from the IDE, never block a scripted run
+      if IsDebuggerPresent then begin
+        Write('Hit ENTER to close ... ');
+        Readln;
+      end;
     end;
   end;
 end;
