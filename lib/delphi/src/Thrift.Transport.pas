@@ -1446,8 +1446,11 @@ end;
 { TBufferedTransportImpl.TFactory }
 
 function TBufferedTransportImpl.TFactory.GetTransport( const aTransport: ITransport): ITransport;
+var stream : IStreamTransport;
 begin
-  Result := TFramedTransportImpl.Create( aTransport);
+  if Supports( aTransport, IStreamTransport, stream)
+  then Result := TBufferedTransportImpl.Create( stream)
+  else raise TTransportExceptionBadArgs.Create('TBufferedTransportImpl requires an IStreamTransport');
 end;
 
 
