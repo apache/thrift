@@ -639,6 +639,11 @@ namespace Thrift.Protocol
         {
             // read length
             var length = (int) await ReadVarInt32Async(cancellationToken);
+            if (length < 0)
+            {
+                throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, $"Negative length: {length}");
+            }
+
             if (length == 0)
             {
                 return string.Empty;

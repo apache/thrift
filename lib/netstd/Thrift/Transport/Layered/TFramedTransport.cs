@@ -161,7 +161,11 @@ namespace Thrift.Transport
         public override void CheckReadBytesAvailable(long numBytes)
         {
             var buffered = ReadBuffer.Length - ReadBuffer.Position;
-            if (buffered < numBytes)
+            if (numBytes < 0)
+            {
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
+            else if (buffered < numBytes)
             {
                 numBytes -= buffered;
                 InnerTransport.CheckReadBytesAvailable(numBytes);

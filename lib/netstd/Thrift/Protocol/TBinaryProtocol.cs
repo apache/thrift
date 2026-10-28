@@ -428,6 +428,11 @@ namespace Thrift.Protocol
             cancellationToken.ThrowIfCancellationRequested();
 
             var size = await ReadI32Async(cancellationToken);
+            if (size < 0)
+            {
+                throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, $"Negative length: {size}");
+            }
+
             return size > 0 ? await ReadStringBodyAsync(size, cancellationToken) : string.Empty;
         }
 
