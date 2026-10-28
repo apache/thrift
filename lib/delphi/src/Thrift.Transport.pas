@@ -1436,7 +1436,9 @@ begin
 
   // buffered bytes
   buffered := FInputBuffer.Size - FInputBuffer.Position;
-  if buffered < need
+  if need < 0
+  then InnerTransport.CheckReadBytesAvailable( need)
+  else if buffered < need
   then InnerTransport.CheckReadBytesAvailable( need - buffered);
 end;
 
@@ -1598,7 +1600,9 @@ begin
 
   // buffered bytes
   buffered := FReadBuffer.Size - FReadBuffer.Position;
-  if buffered < need
+  if need < 0
+  then InnerTransport.CheckReadBytesAvailable( need)
+  else if buffered < need
   then InnerTransport.CheckReadBytesAvailable( need - buffered);
 end;
 
