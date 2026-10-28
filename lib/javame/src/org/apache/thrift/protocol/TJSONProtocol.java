@@ -682,20 +682,20 @@ public class TJSONProtocol extends TProtocol {
         ch = reader_.read();
         if (ch == ESCSEQ[1]) {
           trans_.readAll(tmpbuf_, 0, 4);
-          short cu = (short)(
-              ((short)hexVal(tmpbuf_[0]) << 12) +
-              ((short)hexVal(tmpbuf_[1]) << 8) +
-              ((short)hexVal(tmpbuf_[2]) << 4) +
-              (short)hexVal(tmpbuf_[3]));
+          char cu = (char)(
+              (hexVal(tmpbuf_[0]) << 12) +
+              (hexVal(tmpbuf_[1]) << 8) +
+              (hexVal(tmpbuf_[2]) << 4) +
+              hexVal(tmpbuf_[3]));
           try {
-            if (isHighSurrogate((char)cu)) {
+            if (isHighSurrogate(cu)) {
               if (highSurrogate != 0) {
                 throw new TProtocolException(TProtocolException.INVALID_DATA,
                     "Expected low surrogate char");
               }
               highSurrogate = cu;
             }
-            else if (isLowSurrogate((char)cu)) {
+            else if (isLowSurrogate(cu)) {
               if (highSurrogate == 0) {
                 throw new TProtocolException(TProtocolException.INVALID_DATA,
                     "Expected high surrogate char");
