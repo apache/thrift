@@ -28,6 +28,7 @@ import tests.ConstantsTest;
 import tests.MultiplexTest;
 import tests.FramedTransportTest;
 import tests.JSONLimitTest;
+import tests.LayeredSizeCheckTest;
 import tests.NegativeSizeTest;
 import tests.RecursionLimitTest;
 import tests.SkipTest;
@@ -99,6 +100,7 @@ class Main
 					tests.FramedTransportTest.Run(server);
 					tests.JSONLimitTest.Run(server);
 					tests.NegativeSizeTest.Run(server);
+					tests.LayeredSizeCheckTest.Run(server);
 					#end
 				case Multiplex:
 					#if ! (flash || html5 || js)

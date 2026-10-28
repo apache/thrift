@@ -163,7 +163,7 @@ class TFramedTransport extends TLayeredTransport
 	
 	public override function CheckReadBytesAvailable(numBytes : Int64) : Void
 	{
-		var buffered = readBuffer_.length - readBuffer_.position;
+		var buffered = (readBuffer_ != null) ? (readBuffer_.length - readBuffer_.position) : 0;
 		if (numBytes < 0)
 		{
 			InnerTransport.CheckReadBytesAvailable(numBytes);
