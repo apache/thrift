@@ -83,6 +83,7 @@ type
     class function DataPtrOf( const bytes : IThriftBytes) : Pointer; overload; inline;
 
     procedure Test_Serializer_Deserializer;
+    procedure Test_TransportFactories;
     procedure Test_COM_Types;
     procedure Test_ThriftBytesCTORs;
     procedure Test_Equal;
@@ -437,8 +438,9 @@ begin
       for factory in FProtocols do begin
         Writeln('- '+UserFriendlyName(factory));
 
-        // protocol conformity tests
-        if (method = TMethod.mt_Bytes) and (factory.trans = nil)
+        // protocol conformity tests, on the plain wire format, which a buffered transport does not change
+        if (method = TMethod.mt_Bytes)
+        and ((factory.trans = nil) or ((factory.trans as TObject) is TBufferedTransportImpl.TFactory))
         then Test_ProtocolConformity( factory, stream);
 
         // normal objects
@@ -803,10 +805,41 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_TransportFactories;
+var config  : IThriftConfiguration;
+    stm     : IStreamTransport;
+    framed  : ITransport;
+    trans   : ITransport;
+    factory : ITransportFactory;
+begin
+  config := TThriftConfigurationImpl.Create;
+  stm    := TStreamTransportImpl.Create( nil, nil, config);
+
+  factory := TBufferedTransportImpl.TFactory.Create;
+  trans   := factory.GetTransport( stm);
+  ASSERT( (trans as TObject) is TBufferedTransportImpl);
+
+  factory := TFramedTransportImpl.TFactory.Create;
+  framed  := factory.GetTransport( stm);
+  ASSERT( (framed as TObject) is TFramedTransportImpl);
+
+  // a buffered transport needs the stream interface of the transport below it
+  factory := TBufferedTransportImpl.TFactory.Create;
+  try
+    factory.GetTransport( framed);
+    raise EInOutError.Create('Expected exception not thrown?');
+  except
+    on e:TTransportExceptionBadArgs do {expected};
+    on e:Exception do raise; // unexpected
+  end;
+end;
+
+
 procedure TTestSerializer.RunTests;
 begin
   try
     Test_Serializer_Deserializer;
+    Test_TransportFactories;
     Test_COM_Types;
     Test_ThriftBytesCTORs;
     Test_Equal;
