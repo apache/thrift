@@ -99,9 +99,17 @@ Options:
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
+    -isolated:
+        every call gets its own transport view and protocol, so calls can overlap on one client. This needs a
+        call-isolated transport, so it works with -tr:http only (not with -multiplex). The client runs five
+        overlapping calls and then receives the replies of two calls in the opposite order of their requests. The
+        tutorial interfaces are generated with the `isolated` option for this. See "Isolated clients" in
+        lib/netstd/README.md.
+
 Sample:
 
     Client -tr:tcp -pr:binary -mc:10
+    Client -tr:http -isolated
 
 Remarks:
 

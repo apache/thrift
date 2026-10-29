@@ -25,7 +25,7 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class TMemoryBufferTransport : TEndpointTransport
+    public class TMemoryBufferTransport : TEndpointTransport, IAsyncCallIsolatedTransport
     {
         private bool IsDisposed;
         private byte[] Bytes;
@@ -81,6 +81,62 @@ namespace Thrift.Transport.Client
         }
 
         public override bool IsOpen => true;
+
+        /// <summary>Creates an empty, independent memory buffer for one call; the caller owns it.</summary>
+        public TTransport CreateCallTransport() => new CallBuffer(Configuration);
+
+        // The call view is a memory buffer that reports that it is not open once the call has disposed it.
+        // The shared transport, and the use of this class outside of calls, keep their behavior.
+        private sealed class CallBuffer : TMemoryBufferTransport
+        {
+            private bool _isViewDisposed;
+
+            public CallBuffer(TConfiguration config)
+                : base(config)
+            {
+            }
+
+            public override bool IsOpen => !_isViewDisposed;
+
+            public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                CheckOpen();
+                return base.ReadAsync(buffer, offset, length, cancellationToken);
+            }
+
+            public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            {
+                CheckOpen();
+                return base.WriteAsync(buffer, offset, count, cancellationToken);
+            }
+
+            public override Task FlushAsync(CancellationToken cancellationToken)
+            {
+                CheckOpen();
+                return base.FlushAsync(cancellationToken);
+            }
+
+            private void CheckOpen()
+            {
+                if (_isViewDisposed)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen, "The call transport has been disposed");
+                }
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                _isViewDisposed = true;
+                base.Dispose(disposing);
+            }
+        }
+
+        /// <summary>Creates an independent memory buffer for one call; no asynchronous setup is needed.</summary>
+        public Task<TTransport> CreateCallTransportAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(CreateCallTransport());
+        }
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
