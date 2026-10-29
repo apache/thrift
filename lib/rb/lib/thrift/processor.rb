@@ -50,7 +50,9 @@ module Thrift
         return false
       end
 
-      if respond_to?("process_#{name}")
+      # A name that is not valid UTF-8 names no method, and respond_to? would
+      # raise on it, so it is answered like any other unknown method.
+      if name.valid_encoding? && respond_to?("process_#{name}")
         begin
           send("process_#{name}", seqid, iprot, oprot)
         rescue ArgumentProtocolException => e

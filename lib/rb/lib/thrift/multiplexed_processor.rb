@@ -38,12 +38,16 @@ module Thrift
     def process(iprot, oprot)
       name, type, seqid = iprot.read_message_begin
       check_type(type)
-      if name.count(":") < 1
+      # Look for the separator in the bytes: String#count and #split raise on
+      # a name that is not valid UTF-8. The service processor then answers an
+      # unknown method part, as it does for any other name.
+      name_bytes = name.b
+      if name_bytes.count(":") < 1
         check_default_processor(name)
         return @default_processor.process(StoredMessageProtocol.new(iprot, [name, type, seqid]), oprot)
       end
 
-      service_name, method = name.split(":", 2)
+      service_name, method = name_bytes.split(":", 2).map { |part| part.force_encoding(name.encoding) }
       processor(service_name).process(StoredMessageProtocol.new(iprot, [method, type, seqid]), oprot)
     end
 

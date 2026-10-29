@@ -147,6 +147,38 @@ describe "Processor" do
       @processor.process(@prot, @prot)
     end
 
+    protocol_classes = [Thrift::BinaryProtocol, Thrift::CompactProtocol]
+    protocol_classes << Thrift::BinaryProtocolAccelerated if defined?(Thrift::BinaryProtocolAccelerated)
+    protocol_classes.each do |protocol_class|
+      it "answers a method name that is not valid UTF-8 with UNKNOWN_METHOD over #{protocol_class}" do
+        name = "wo\xFFrk".b.force_encoding(Encoding::UTF_8)
+        input_transport = Thrift::MemoryBufferTransport.new
+        request = protocol_class.new(input_transport)
+        request.write_message_begin(name, Thrift::MessageTypes::CALL, 15)
+        request.write_struct_begin("args")
+        request.write_field_stop
+        request.write_struct_end
+        request.write_message_end
+        output_transport = Thrift::MemoryBufferTransport.new
+
+        expect(@processor.process(protocol_class.new(input_transport), protocol_class.new(output_transport))).to be false
+        expect(@processor.processed).to be_nil
+        expect(input_transport.available).to eq(0)
+
+        response = protocol_class.new(output_transport)
+        reply_name, type, seqid = response.read_message_begin
+        exception = Thrift::ApplicationException.new
+        exception.read(response)
+        response.read_message_end
+
+        expect(reply_name.b).to eq(name.b)
+        expect(type).to eq(Thrift::MessageTypes::EXCEPTION)
+        expect(seqid).to eq(15)
+        expect(exception.type).to eq(Thrift::ApplicationException::UNKNOWN_METHOD)
+        expect(exception.message.b).to eq("Unknown function wo\xFFrk".b)
+      end
+    end
+
     it "should pass args off to the args class" do
       args_class = double("MockArgsClass")
       args = double("#<MockArgsClass:mock>").tap do |args|
