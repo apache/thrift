@@ -471,15 +471,15 @@ BOOST_AUTO_TEST_CASE(client_host_name_against_address_entries)
     for (const NameCase& c : cases)
     {
         shared_ptr<TSSLSocketFactory> pServerSocketFactory(new TSSLSocketFactory());
-        pServerSocketFactory->loadCertificate(certFile("server.crt").string().c_str());
-        pServerSocketFactory->loadPrivateKey(certFile("server.key").string().c_str());
+        pServerSocketFactory->loadCertificate(certFile("server.crt").c_str());
+        pServerSocketFactory->loadPrivateKey(certFile("server.key").c_str());
         pServerSocketFactory->server(true);
         TSSLServerSocket serverSocket("127.0.0.1", 0, pServerSocketFactory);
         serverSocket.setAcceptTimeout(5000);
         serverSocket.listen();
         const int port = serverSocket.getPort();
 
-        boost::thread serverThread([&serverSocket]()
+        std::thread serverThread([&serverSocket]()
         {
             try
             {
@@ -491,14 +491,14 @@ BOOST_AUTO_TEST_CASE(client_host_name_against_address_entries)
             }
             catch (TTransportException& ex)
             {
-                boost::mutex::scoped_lock lock(gMutex);
-                BOOST_TEST_MESSAGE(boost::format("SRV %1% Exception: %2%") % boost::this_thread::get_id() % ex.what());
+                std::unique_lock<std::mutex> lock(gMutex);
+                BOOST_TEST_MESSAGE("SRV " << std::this_thread::get_id() << " Exception: " << ex.what());
             }
         });
 
         shared_ptr<TSSLSocketFactory> pClientSocketFactory(new TSSLSocketFactory());
         pClientSocketFactory->authenticate(true);
-        pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").string().c_str());
+        pClientSocketFactory->loadTrustedCertificates(certFile("CA.pem").c_str());
         shared_ptr<TSSLSocket> pClientSocket = pClientSocketFactory->createSocket("127.0.0.1", port);
         pClientSocket->setRecvTimeout(5000);
         pClientSocket->open();
@@ -514,16 +514,16 @@ BOOST_AUTO_TEST_CASE(client_host_name_against_address_entries)
         }
         catch (TSSLException& ex)
         {
-            boost::mutex::scoped_lock lock(gMutex);
-            BOOST_TEST_MESSAGE(boost::format("CLI %1% Exception: %2%") % c.host % ex.what());
+            std::unique_lock<std::mutex> lock(gMutex);
+            BOOST_TEST_MESSAGE("CLI " << c.host << " Exception: " << ex.what());
         }
         pClientSocket->close();
         serverThread.join();
         serverSocket.close();
 
         BOOST_CHECK_MESSAGE(accepted == c.accepted,
-                boost::format("      Host = %1% expected accepted == %2% but was %3%")
-                    % c.host % c.accepted % accepted);
+                "      Host = " << c.host << " expected accepted == " << c.accepted
+                    << " but was " << accepted);
     }
 }
 
