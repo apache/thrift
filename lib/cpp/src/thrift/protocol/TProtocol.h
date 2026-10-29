@@ -124,20 +124,40 @@ static inline To bitwise_cast(From from) {
 #  define __THRIFT_BYTE_ORDER BYTE_ORDER
 #  define __THRIFT_LITTLE_ENDIAN LITTLE_ENDIAN
 #  define __THRIFT_BIG_ENDIAN BIG_ENDIAN
+# elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER__
+#  define __THRIFT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#  define __THRIFT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+# elif defined(_WIN32)
+   /* every Windows target is little-endian */
+#  define __THRIFT_BYTE_ORDER 1234
+#  define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
+#  define __THRIFT_BIG_ENDIAN 0
+   /* the remaining checks are the ones Boost.Predef's other/endian.h makes */
+# elif defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
+#  define __THRIFT_BYTE_ORDER __BYTE_ORDER
+#  define __THRIFT_LITTLE_ENDIAN __LITTLE_ENDIAN
+#  define __THRIFT_BIG_ENDIAN __BIG_ENDIAN
+# elif defined(_BYTE_ORDER) && defined(_LITTLE_ENDIAN) && defined(_BIG_ENDIAN)
+#  define __THRIFT_BYTE_ORDER _BYTE_ORDER
+#  define __THRIFT_LITTLE_ENDIAN _LITTLE_ENDIAN
+#  define __THRIFT_BIG_ENDIAN _BIG_ENDIAN
+# elif (defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)) \
+    || (defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)) \
+    || defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) \
+    || defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+#  define __THRIFT_BYTE_ORDER 4321
+#  define __THRIFT_LITTLE_ENDIAN 0
+#  define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
+# elif (defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)) \
+    || (defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)) \
+    || defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) \
+    || defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__) || defined(__riscv)
+#  define __THRIFT_BYTE_ORDER 1234
+#  define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
+#  define __THRIFT_BIG_ENDIAN 0
 # else
-#  include <boost/predef/other/endian.h>
-#  if BOOST_ENDIAN_BIG_BYTE
-#    define __THRIFT_BYTE_ORDER 4321
-#    define __THRIFT_LITTLE_ENDIAN 0
-#    define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
-#  elif BOOST_ENDIAN_LITTLE_BYTE
-#    define __THRIFT_BYTE_ORDER 1234
-#    define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
-#    define __THRIFT_BIG_ENDIAN 0
-#  endif
-#  ifdef BOOST_LITTLE_ENDIAN
-#  else
-#  endif
+#  error "Cannot determine endianness"
 # endif
 #endif
 
