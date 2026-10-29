@@ -274,8 +274,18 @@ void TFramedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   wBase_ += len;
 }
 
-void TFramedTransport::flush() {
+void TFramedTransport::resetReadBudget() {
+  // A frame can hold more than one message, and the next one is read from the
+  // bytes still buffered without another readFrame(), so it must not get the
+  // full budget back.
   resetConsumedMessageSize();
+  if (budgetBoundToBuffer_ && rBase_ < rBound_) {
+    updateKnownMessageSize(static_cast<long>(rBound_ - rBase_));
+  }
+}
+
+void TFramedTransport::flush() {
+  resetReadBudget();
   int32_t sz_hbo, sz_nbo;
   if (wBufSize_ <= sizeof(sz_nbo)) {
     throw TTransportException(TTransportException::INTERNAL_ERROR,
@@ -336,7 +346,7 @@ uint32_t TFramedTransport::readEnd() {
     setReadBuffer(rBuf_.get(), rBufSize_);
   }
 
-  resetConsumedMessageSize();
+  resetReadBudget();
 
   return bytes_read;
 }

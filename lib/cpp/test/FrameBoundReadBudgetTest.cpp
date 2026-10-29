@@ -285,6 +285,67 @@ BOOST_AUTO_TEST_CASE(test_declared_field_larger_than_frame_is_rejected) {
   BOOST_CHECK_LT(str.size(), 1024u);
 }
 
+namespace {
+
+/**
+ * One frame holding two messages: 16 bytes that stand for the first, then a
+ * string that declares 64 MB of which 64 bytes are present.
+ */
+std::vector<uint8_t> frameWithTwoMessages() {
+  std::vector<uint8_t> payload = filler(16);
+  std::vector<uint8_t> second = declaredString(64 * 1024 * 1024, 64);
+  payload.insert(payload.end(), second.begin(), second.end());
+  std::vector<uint8_t> wire;
+  appendFrame(wire, payload);
+  return wire;
+}
+
+} // namespace
+
+/**
+ * The second message of a frame is read from the bytes still buffered, without
+ * another readFrame().  readEnd() after the first message must therefore leave
+ * the budget bound to those bytes rather than give it the full configured
+ * maximum, under which the 64 MB would be allocated first.
+ */
+BOOST_AUTO_TEST_CASE(test_read_end_keeps_the_budget_bound_to_the_rest_of_the_frame) {
+  std::vector<uint8_t> wire = frameWithTwoMessages();
+  std::shared_ptr<TFramedTransport> trans = framedOver(wire, 100 * 1024 * 1024);
+  std::shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(trans));
+
+  uint8_t first[16];
+  BOOST_CHECK_EQUAL(trans->readAll(first, sizeof(first)), 16u);
+  trans->readEnd();
+
+  std::string str;
+  BOOST_CHECK_THROW(protocol->readBinary(str), TTransportException);
+  BOOST_CHECK_LT(str.size(), 1024u);
+}
+
+/**
+ * The same for flush(): a client that writes on the transport it is still
+ * reading a frame from must not reset that frame's budget.  The inner buffer
+ * copies the wire data so that it also takes the write.
+ */
+BOOST_AUTO_TEST_CASE(test_flush_keeps_the_budget_bound_to_the_rest_of_the_frame) {
+  std::vector<uint8_t> wire = frameWithTwoMessages();
+  std::shared_ptr<TConfiguration> config(new TConfiguration(100 * 1024 * 1024));
+  std::shared_ptr<TMemoryBuffer> buffer(
+      new TMemoryBuffer(wire.data(), static_cast<uint32_t>(wire.size()), TMemoryBuffer::COPY));
+  std::shared_ptr<TFramedTransport> trans(new TFramedTransport(buffer, config));
+  std::shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(trans));
+
+  uint8_t first[16];
+  BOOST_CHECK_EQUAL(trans->readAll(first, sizeof(first)), 16u);
+  uint8_t request = 1;
+  trans->write(&request, 1);
+  trans->flush();
+
+  std::string str;
+  BOOST_CHECK_THROW(protocol->readBinary(str), TTransportException);
+  BOOST_CHECK_LT(str.size(), 1024u);
+}
+
 /**
  * A 5-byte frame declares a list of 8 million i32s.  The protocol's own
  * element-count check needs 32 MB of budget to reject it, and the configured

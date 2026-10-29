@@ -446,6 +446,13 @@ protected:
    */
   virtual bool readFrame();
 
+  /**
+   * Resets the read budget after a message or a flush.  While bytes of the
+   * frame that readFrame() bound the budget to are still buffered, the budget
+   * stays bound to them; otherwise it gets the full maximum message size.
+   */
+  void resetReadBudget();
+
   void initPointers() {
     setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
