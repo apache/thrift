@@ -22,8 +22,8 @@ require "thread"
 
 module Thrift
   class ThreadPoolServer < BaseServer
-    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20)
-      super(processor, server_transport, transport_factory, protocol_factory)
+    def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, num = 20, logger: nil)
+      super(processor, server_transport, transport_factory, protocol_factory, logger: logger)
       @thread_q = SizedQueue.new(num)
       @exception_q = Queue.new
       @running = false
@@ -34,17 +34,20 @@ module Thrift
     ## continue to run while the exception is being handled.)
     def rescuable_serve
       unless @running
+        # Set before the server starts, so that its workers relay every exception.
+        @running = true
         Thread.new do
           Thread.current.name = "thrift.server"
           serve
         end
       end
-      @running = true
       raise @exception_q.pop
     end
 
-    ## exceptions that happen in worker threads simply cause that thread
-    ## to die and another to be spawned in its place.
+    ## an error while serving one client is logged and closes only that
+    ## client's connection. any other exception in a worker thread is logged
+    ## and causes that thread to die and another to be spawned in its place.
+    ## (under rescuable_serve, such exceptions are relayed instead of logged.)
     def serve
       @server_transport.listen
       next_worker_id = 0
@@ -68,12 +71,24 @@ module Thrift
                   @processor.process(prot, prot)
                 end
               rescue Thrift::TransportException, Thrift::ProtocolException
+              rescue => e
+                # rescuable_serve relays the exception to its caller.
+                raise if @running
+
+                # Under serve, as in SimpleServer: log the error, close this
+                # connection, and keep accepting clients.
+                @logger.error("Error while serving a client connection: #{e.inspect}")
               ensure
                 trans.close
               end
             end
           rescue => e
-            @exception_q.push(e)
+            # Only rescuable_serve reads the queue; under serve it would only grow.
+            if @running
+              @exception_q.push(e)
+            else
+              @logger.error("Error in thread pool worker: #{e.inspect}")
+            end
           ensure
             @thread_q.pop # thread died!
           end

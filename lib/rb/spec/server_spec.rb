@@ -19,6 +19,7 @@
 #
 require "spec_helper"
 require "openssl"
+require "stringio"
 require "timeout"
 
 describe "Server" do
@@ -460,8 +461,10 @@ describe "Server" do
     it "should serve using a thread pool" do
       thread_q = double("SizedQueue")
       exception_q = double("Queue")
+      logger = double("Logger")
       @server.instance_variable_set(:@thread_q, thread_q)
       @server.instance_variable_set(:@exception_q, exception_q)
+      @server.instance_variable_set(:@logger, logger)
       expect(@server_trans).to receive(:listen).ordered
       expect(thread_q).to receive(:push).with(:token)
       expect(thread_q).to receive(:pop)
@@ -479,9 +482,12 @@ describe "Server" do
         end
       end
       expect(@trans).to receive(:close).exactly(3).times
-      expect(exception_q).to receive(:push).with(error).and_throw(:stop)
+      # Only rescuable_serve reads the exception queue, so serve logs the error instead.
+      allow(exception_q).to receive(:push).and_throw(:stop)
+      expect(logger).to receive(:error).with("Error while serving a client connection: #{error.inspect}").and_throw(:stop)
       expect(@server_trans).to receive(:close)
       expect { @server.serve }.to(throw_symbol(:stop))
+      expect(exception_q).not_to have_received(:push)
     end
 
     it "should not enqueue TLS accept errors" do
@@ -499,6 +505,107 @@ describe "Server" do
       catch(:stop) { @server.serve }
 
       expect(exception_q).to be_empty
+    end
+
+    it "accepts a logger" do
+      logger = Logger.new(StringIO.new)
+      server = described_class.new(@processor, @server_trans, @trans, @prot, 1, logger: logger)
+      expect(server.instance_variable_get(:@logger)).to equal(logger)
+    end
+
+    context "with client connections" do
+      before(:each) do
+        @threads = ThreadGroup.new
+        @ready = Queue.new
+        @log = StringIO.new
+        @protocol_factory = Thrift::BinaryProtocolFactory.new
+        processor = Thrift::MultiplexedProcessor.new
+        processor.register_processor("Srv", Thrift::Test::Srv::Processor.new(double("Handler", voidMethod: nil)))
+        @server_transport = EphemeralServerSocket.new(@ready)
+        # With one worker, a replacement worker starts only after the failed one is done.
+        @pool_server = described_class.new(processor, @server_transport, nil, @protocol_factory, 1)
+        @pool_server.instance_variable_set(:@logger, Logger.new(@log))
+      end
+
+      after(:each) do
+        until (threads = @threads.list).empty?
+          threads.each(&:kill)
+          threads.each(&:join)
+        end
+        @server_transport.close
+      end
+
+      def in_server_threads
+        previous_group = Thread.current.group
+        # Children inherit the group before their thread blocks can run.
+        @threads.add(Thread.current)
+        yield
+      ensure
+        previous_group.add(Thread.current)
+      end
+
+      # A call without a "service:" prefix matches no registered processor.
+      def send_unprefixed_call(port)
+        request = Thrift::MemoryBufferTransport.new
+        Thrift::Test::Srv::Client.new(@protocol_factory.get_protocol(request)).send_voidMethod
+        client = TCPSocket.new("127.0.0.1", port)
+        client.write(request.read(request.available))
+        client.close_write
+
+        expect(IO.select([client], nil, nil, 2)).not_to be_nil
+        peer_closed = begin
+          client.readpartial(1)
+          false
+        rescue EOFError, Errno::ECONNRESET
+          true
+        end
+        expect(peer_closed).to be(true)
+      ensure
+        client&.close
+      end
+
+      def call_void_method(port)
+        transport = Thrift::Socket.new("127.0.0.1", port)
+        transport.open
+        protocol = Thrift::MultiplexedProtocol.new(@protocol_factory.get_protocol(transport), "Srv")
+        Timeout.timeout(2) { Thrift::Test::Srv::Client.new(protocol).voidMethod }
+      ensure
+        transport&.close
+      end
+
+      it "logs a failed connection under serve and keeps serving without keeping the error" do
+        server_thread = in_server_threads { Thread.new { @pool_server.serve } }
+        port = Timeout.timeout(2) { @ready.pop }
+
+        send_unprefixed_call(port)
+        call_void_method(port)
+
+        expect(server_thread).to be_alive
+        expect(@pool_server.instance_variable_get(:@exception_q).size).to eq(0)
+        expect(@log.string).to include(
+          "Error while serving a client connection: #<Thrift::Exception: Service name not found in message name: voidMethod.",
+        )
+      end
+
+      it "relays a worker exception to rescuable_serve" do
+        relayed = Queue.new
+        in_server_threads do
+          Thread.new do
+            @pool_server.rescuable_serve
+          rescue StandardError => e
+            relayed << e
+          end
+        end
+        port = Timeout.timeout(2) { @ready.pop }
+
+        send_unprefixed_call(port)
+        error = Timeout.timeout(2) { relayed.pop }
+
+        expect(error).to be_a(Thrift::Exception)
+        expect(error.message).to start_with("Service name not found in message name: voidMethod.")
+        call_void_method(port)
+        expect(@log.string).to be_empty
+      end
     end
   end
 
