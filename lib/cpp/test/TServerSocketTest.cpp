@@ -85,6 +85,16 @@ BOOST_AUTO_TEST_CASE(test_get_port) {
   BOOST_CHECK_EQUAL(888, sock1.getPort());
 }
 
+BOOST_AUTO_TEST_CASE(test_accept_timeout_is_timed_out) {
+  // An accept timeout that elapses with no connection is TIMED_OUT, which
+  // TServerFramework::serve() treats as a reason to keep accepting.
+  TServerSocket sock1("localhost", 0);
+  sock1.setAcceptTimeout(50);
+  sock1.listen();
+  TTRANSPORT_CHECK_THROW(sock1.accept(), TTransportException::TIMED_OUT);
+  sock1.close();
+}
+
 BOOST_AUTO_TEST_CASE(test_accept_error_classes) {
   // accept() goes back to poll() on these: only the one connection is lost.
   BOOST_CHECK(isConnectionError(THRIFT_EINTR));

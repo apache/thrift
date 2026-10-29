@@ -700,8 +700,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
           break;
         }
       } else {
-        TOutput::instance()("TServerSocket::acceptImpl() THRIFT_POLL 0");
-        throw TTransportException(TTransportException::UNKNOWN);
+        // The accept timeout elapsed with no connection; serve() keeps accepting after TIMED_OUT
+        throw TTransportException(TTransportException::TIMED_OUT, "accept() timed out");
       }
     }
 

@@ -971,3 +971,68 @@ BOOST_AUTO_TEST_CASE(test_threaded_server_thread_start_failure) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+// ---------------------------------------------------------------------------
+// An elapsed accept timeout must not stop the server.
+//
+// With TServerSocket::setAcceptTimeout(), accept() gives up when the timeout
+// elapses with no connection.  serve() keeps accepting after a TIMED_OUT, but
+// the timeout used to be reported as UNKNOWN, so serve() logged "TServerTransport
+// died" and returned in the first quiet interval.
+// ---------------------------------------------------------------------------
+
+BOOST_AUTO_TEST_SUITE(AcceptTimeout)
+
+BOOST_AUTO_TEST_CASE(test_accept_timeout_does_not_end_the_server) {
+  shared_ptr<TServerSocket> serverSocket = make_shared<TServerSocket>("localhost", 0);
+  serverSocket->setAcceptTimeout(50);
+  shared_ptr<TServerReadyEventHandler> readyHandler = make_shared<TServerReadyEventHandler>();
+  TSimpleServer server(make_shared<ParentServiceProcessor>(make_shared<ParentHandler>()),
+                       serverSocket,
+                       make_shared<TTransportFactory>(),
+                       make_shared<TBinaryProtocolFactory>());
+  server.setServerEventHandler(readyHandler);
+
+  std::atomic<bool> serveEnded(false);
+  std::thread serveThread([&]() {
+    try {
+      server.serve();
+    } catch (...) {
+    }
+    serveEnded = true;
+  });
+
+  bool listening = false;
+  for (int i = 0; i < 200 && !listening && !serveEnded; ++i) {
+    {
+      Synchronized sync(*readyHandler);
+      listening = readyHandler->isListening();
+    }
+    if (!listening) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+
+  // Let several accept timeouts elapse with no client, then make a call.
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  bool stillServing = !serveEnded.load();
+  int32_t generation = 0;
+  if (listening && stillServing) {
+    shared_ptr<TSocket> clientSock = make_shared<TSocket>("localhost", serverSocket->getPort());
+    ParentServiceClient client(make_shared<TBinaryProtocol>(clientSock));
+    try {
+      clientSock->open();
+      generation = client.incrementGeneration();
+      clientSock->close();
+    } catch (const std::exception&) {}
+  }
+
+  server.stop();
+  serveThread.join();
+
+  BOOST_REQUIRE_MESSAGE(listening, "server never reached the listening state");
+  BOOST_CHECK_MESSAGE(stillServing, "serve() ended when an accept timeout elapsed");
+  BOOST_CHECK_EQUAL(generation, 1);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
