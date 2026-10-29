@@ -69,7 +69,8 @@ namespace Thrift.Transport.Client
         /// </summary>
         /// <remarks>As the <c>HttpMessageHandler</c> of the client must be configured at the time of creation, it
         /// is assumed that the consumer has already added any certificates and configured decompression methods. The
-        /// consumer can use the <c>CreateHttpClientHandler</c> method to get a handler with these set.</remarks>
+        /// consumer can use the <c>CreateHttpClientHandler</c> method to get a handler with these set. The transport
+        /// does not add an <c>Accept-Encoding</c> header to this client.</remarks>
         /// <param name="httpClient">Client configured with the desired message handler, user agent, and URI if not
         /// specified in the <c>uri</c> parameter. A default user agent will be used if not set.</param>
         /// <param name="config">Thrift configuration object</param>
@@ -215,6 +216,11 @@ namespace Thrift.Transport.Client
                 }
             }
 
+            // The handler from CreateHttpClientHandler() decompresses deflate and gzip. A client passed in by the
+            // caller brings its own handler, so the encodings are advertised here and not in ConfigureClient().
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+
             return httpClient;
         }
 
@@ -230,9 +236,6 @@ namespace Thrift.Transport.Client
             // Clear any user agent values to avoid drift with the field value
             httpClient.DefaultRequestHeaders.UserAgent.Clear();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
-
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
