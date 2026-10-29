@@ -298,6 +298,14 @@ with no host, are unchanged. An AccessManager of your own is not offered the IP
 entries through (c) for a client opened with a host name; (a) and (b) are
 called as before.
 
+With an accept timeout set (TServerSocket::setAcceptTimeout()), accept() throws
+a TTransportException of type TIMED_OUT when the timeout elapses with no
+connection, and no longer logs "TServerSocket::acceptImpl() THRIFT_POLL 0". It
+threw UNKNOWN before, which ended TServerFramework::serve(), so a server with an
+accept timeout stopped in the first interval without a connection. Code that
+calls accept() itself and takes UNKNOWN for the timeout has to check for
+TIMED_OUT instead.
+
 ## 0.25.0
 
 The HTTP transport reads a header name as the whole token before the colon.  It
