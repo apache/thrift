@@ -114,7 +114,7 @@ test_initialize (void)
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
                             "port", 51188, "path", NULL, 
                             "configuration", tconfiguration, 
-                            "remainingmessagesize", tconfiguration->maxMessageSize_, NULL);
+                            "remainingmessagesize", (glong) tconfiguration->maxMessageSize_, NULL);
     g_assert (tsocket != NULL);
     /* fetch the properties */
     g_object_get (G_OBJECT (tconfiguration), "max_message_size", &tempsize, NULL);

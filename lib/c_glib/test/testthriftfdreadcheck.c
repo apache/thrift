@@ -134,7 +134,7 @@ test_read_and_write (void)
 
   transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_FD_TRANSPORT,
                                               "configuration", configuration, 
-                                              "remainingmessagesize", MAX_MESSAGE_SIZE, 
+                                              "remainingmessagesize", (glong) MAX_MESSAGE_SIZE, 
                                               "fd", fd,
                                               NULL));
   klass = THRIFT_TRANSPORT_GET_CLASS (transport);

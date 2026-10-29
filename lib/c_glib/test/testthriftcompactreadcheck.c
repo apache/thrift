@@ -122,7 +122,7 @@ test_initialize (void)
   /* create a ThriftTransport */
   tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
                           "port", 51188, "configuration", tconfiguration, 
-                          "remainingmessagesize", MAX_MESSAGE_SIZE, NULL);
+                          "remainingmessagesize", (glong) MAX_MESSAGE_SIZE, NULL);
   g_assert (tsocket != NULL);
   /* fetch the properties */
   g_object_get (G_OBJECT (tconfiguration), "max_message_size", &tempsize, NULL);
