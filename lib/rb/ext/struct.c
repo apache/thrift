@@ -34,6 +34,8 @@ ID to_s_method_id;
 ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
 static ID validate_container_size_method_id;
+static ID copy_default_value_method_id;
+static VALUE thrift_struct_module;
 static VALUE default_sym;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
@@ -483,20 +485,6 @@ static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int rem
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
-static inline void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
-  rb_ivar_set(obj, field_ivar_id(field_name), value);
-}
-
-/* Ruby's rescue and iteration APIs require addressable callback functions. */
-static VALUE duplicate_default_value(VALUE value) {
-  return rb_obj_dup(value);
-}
-
-static VALUE retain_default_value(VALUE value, VALUE exception) {
-  (void)exception;
-  return value;
-}
-
 static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
   (void)field_id;
 
@@ -509,14 +497,14 @@ static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
       rb_ivar_set(self, ivar_id, Qnil);
     }
   } else {
-    VALUE value = rb_rescue2(
-      duplicate_default_value,
-      default_value,
-      retain_default_value,
-      default_value,
-      rb_eStandardError,
-      (VALUE)0
-    );
+    VALUE value;
+    if (RB_TYPE_P(default_value, T_STRING)) {
+      value = rb_str_dup(default_value);
+    } else if (RB_SPECIAL_CONST_P(default_value) || RB_TYPE_P(default_value, T_FLOAT) || RB_TYPE_P(default_value, T_BIGNUM)) {
+      value = default_value;
+    } else {
+      value = rb_funcall(thrift_struct_module, copy_default_value_method_id, 1, default_value);
+    }
     rb_ivar_set(self, ivar_id, value);
   }
 
@@ -667,13 +655,18 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
   return result;
 }
 
-static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int remaining_depth) {
-  VALUE struct_fields = STRUCT_FIELDS(self);
+struct struct_read_context {
+  VALUE self;
+  VALUE protocol;
+  VALUE fields;
+  VALUE unread_fields;
+  int remaining_depth;
+};
 
-  if (RHASH_SIZE(struct_fields) > 0 && rb_ivar_count(self) > 0) {
-    rb_check_frozen(self);
-    rb_hash_foreach(struct_fields, reset_struct_field, self);
-  }
+static VALUE read_struct_fields(VALUE data) {
+  struct struct_read_context *context = (struct struct_read_context *)data;
+  VALUE self = context->self;
+  VALUE protocol = context->protocol;
 
   // read struct begin
   default_read_struct_begin(protocol);
@@ -689,14 +682,19 @@ static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int rem
     }
 
     // make sure we got a type we expected
-    VALUE field_info = rb_hash_aref(struct_fields, rb_ary_entry(field_header, 2));
+    VALUE field_id = rb_ary_entry(field_header, 2);
+    VALUE field_info = rb_hash_aref(context->fields, field_id);
 
     if (!NIL_P(field_info)) {
       int specified_type = FIX2INT(rb_hash_aref(field_info, type_sym));
       if (field_type == specified_type) {
         // read the value
         VALUE name = rb_hash_aref(field_info, name_sym);
-        set_field_value(self, name, read_anything(protocol, field_type, field_info, remaining_depth));
+        VALUE value = read_anything(protocol, field_type, field_info, context->remaining_depth);
+        rb_ivar_set(self, field_ivar_id(name), value);
+        if (!NIL_P(context->unread_fields)) {
+          rb_hash_delete(context->unread_fields, field_id);
+        }
       } else {
         rb_funcall(protocol, skip_method_id, 1, field_type_value);
       }
@@ -711,7 +709,30 @@ static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int rem
   // read struct end
   default_read_struct_end(protocol);
 
-  // call validate
+  return Qnil;
+}
+
+static VALUE reset_unread_struct_fields(VALUE data) {
+  struct struct_read_context *context = (struct struct_read_context *)data;
+  rb_hash_foreach(context->unread_fields, reset_struct_field, context->self);
+  return Qnil;
+}
+
+static VALUE rb_thrift_struct_read_recursive(VALUE self, VALUE protocol, int remaining_depth) {
+  VALUE fields = STRUCT_FIELDS(self);
+  VALUE unread_fields = Qnil;
+  if (RHASH_SIZE(fields) > 0 && rb_ivar_count(self) > 0) {
+    rb_check_frozen(self);
+    unread_fields = rb_hash_dup(fields);
+  }
+
+  struct struct_read_context context = {self, protocol, fields, unread_fields, remaining_depth};
+  if (NIL_P(unread_fields)) {
+    read_struct_fields((VALUE)&context);
+  } else {
+    // Reset omitted fields on success or failure, without copying received defaults.
+    rb_ensure(read_struct_fields, (VALUE)&context, reset_unread_struct_fields, (VALUE)&context);
+  }
   rb_funcall(self, validate_method_id, 0);
 
   return Qnil;
@@ -837,12 +858,13 @@ static VALUE rb_thrift_union_write(int argc, VALUE *argv, VALUE self) {
 }
 
 void Init_struct(void) {
-  VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
+  thrift_struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
+  rb_global_variable(&thrift_struct_module);
 
   recursion_limit = FIX2INT(rb_const_get(thrift_module, rb_intern("DEFAULT_RECURSION_DEPTH")));
 
-  rb_define_method(struct_module, "write", rb_thrift_struct_write, -1);
-  rb_define_method(struct_module, "read", rb_thrift_struct_read, -1);
+  rb_define_method(thrift_struct_module, "write", rb_thrift_struct_write, -1);
+  rb_define_method(thrift_struct_module, "read", rb_thrift_struct_read, -1);
 
   thrift_union_class = rb_const_get(thrift_module, rb_intern("Union"));
   rb_global_variable(&thrift_union_class);
@@ -866,6 +888,7 @@ void Init_struct(void) {
   rb_global_variable(&sorted_field_ids_method_id);
 
   validate_container_size_method_id = rb_intern("validate_container_size");
+  copy_default_value_method_id = rb_intern("copy_default_value");
 
   default_sym = ID2SYM(rb_intern("default"));
   rb_global_variable(&default_sym);

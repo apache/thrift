@@ -83,6 +83,283 @@ describe "Struct" do
       SpecNamespace::Foo::FIELDS[4][:default] = [1, 2, 2, 3]
     end
 
+    it "isolates nested generated defaults between instances" do
+      first = SpecNamespace::NestedDefaults.new
+      second = SpecNamespace::NestedDefaults.new
+
+      first.nested_list.first << 2
+      first.nested_map["key"] << "changed"
+      first.nested_set.first << 2
+      first.nested_set.reset
+      first.child.greeting << " changed"
+      first.text << " changed"
+      first.data << " changed"
+      first.token.replace("ffeeddcc-bbaa-9988-7766-554433221100")
+
+      expect(first.nested_set.include?([1, 2])).to be(true)
+      expect(second.nested_list).to eq([[1]])
+      expect(second.nested_map).to eq({"key" => ["value"]})
+      expect(second.nested_set).to eq(Set.new([[1]]))
+      expect(second.child.greeting).to eq("child")
+      expect(second.text).to eq("fixed")
+      expect(second.data).to eq("binary")
+      expect(second.token).to eq("00112233-4455-6677-8899-aabbccddeeff")
+      expect(first.scalar).to equal(second.scalar)
+    end
+
+    it "copies frozen containers and strings into mutable values" do
+      defaults = {
+        "list" => [[1].freeze].freeze,
+        "text" => "fixed",
+      }
+
+      copy = Thrift::Struct.copy_default_value(defaults)
+      copy["list"].first << 2
+      copy["text"] << " changed"
+
+      expect(copy).to eq({"list" => [[1, 2]], "text" => "fixed changed"})
+      expect(defaults).to eq({"list" => [[1]], "text" => "fixed"})
+    end
+
+    it "rejects a frozen defaulted target before consuming truncated input" do
+      buffer = Thrift::MemoryBufferTransport.new
+      protocol = Thrift::BinaryProtocol.new(buffer)
+      protocol.write_struct_begin("BoolStruct")
+      protocol.write_field_begin("yesno", Thrift::Types::BOOL, 1)
+      payload = buffer.read(buffer.available)
+      input = Thrift::MemoryBufferTransport.new(payload)
+      target = SpecNamespace::BoolStruct.new.freeze
+
+      expect { target.read(Thrift::BinaryProtocol.new(input)) }.to raise_error(FrozenError)
+
+      expect(input.available).to eq(payload.bytesize)
+      expect(target).to eq(SpecNamespace::BoolStruct.new)
+    end
+
+    [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+      describe "reading nested defaults with #{protocol_class}" do
+        def empty_nested_defaults(protocol_class)
+          transport = Thrift::MemoryBufferTransport.new
+          protocol = protocol_class.new(transport)
+          protocol.write_struct_begin("NestedDefaultsList")
+          protocol.write_field_begin("values", Thrift::Types::LIST, 1)
+          protocol.write_list_begin(Thrift::Types::STRUCT, 2)
+          2.times do
+            protocol.write_struct_begin("NestedDefaults")
+            protocol.write_field_stop
+            protocol.write_struct_end
+          end
+          protocol.write_list_end
+          protocol.write_field_end
+          protocol.write_field_stop
+          protocol.write_struct_end
+          protocol
+        end
+
+        it "isolates omitted defaults when reading nested values" do
+          protocol = empty_nested_defaults(protocol_class)
+          default = SpecNamespace::NestedDefaults::FIELDS[1][:default]
+
+          result = SpecNamespace::NestedDefaultsList.new
+          result.read(protocol)
+
+          first, second = result.values
+          first.nested_list.first << 2
+          expect(second.nested_list).to eq([[1]])
+          expect(default).to eq([[1]])
+        end
+
+        [[], [:nested_map, :child]].each do |omitted|
+          it "does not recopy defaults for received fields when #{omitted.inspect} are omitted" do
+            source = SpecNamespace::NestedDefaults.new
+            omitted.each { |name| source.public_send("#{name}=", nil) }
+            buffer = Thrift::MemoryBufferTransport.new
+            source.write(protocol_class.new(buffer))
+            target = SpecNamespace::NestedDefaults.new
+            list_default = SpecNamespace::NestedDefaults::FIELDS[1][:default]
+            map_default = SpecNamespace::NestedDefaults::FIELDS[2][:default]
+            copies = {list: 0, map: 0}
+            allow(Thrift::Struct).to receive(:copy_default_value).and_wrap_original do |original, value|
+              copies[:list] += 1 if value.equal?(list_default)
+              copies[:map] += 1 if value.equal?(map_default)
+              original.call(value)
+            end
+
+            target.read(protocol_class.new(buffer))
+
+            expect(copies).to eq({list: 0, map: omitted.include?(:nested_map) ? 1 : 0})
+            expect(target.nested_list).to eq([[1]])
+            expect(target.nested_map).to eq({"key" => ["value"]})
+            expect(target.child.greeting).to eq("child")
+          end
+        end
+
+        it "does not restore a default over a received container with mismatched elements" do
+          buffer = Thrift::MemoryBufferTransport.new
+          protocol = protocol_class.new(buffer)
+          protocol.write_struct_begin("NestedDefaults")
+          protocol.write_field_begin("nested_list", Thrift::Types::LIST, 1)
+          protocol.write_list_begin(Thrift::Types::STRING, 1)
+          protocol.write_string("ignored")
+          protocol.write_list_end
+          protocol.write_field_end
+          protocol.write_field_stop
+          protocol.write_struct_end
+          target = SpecNamespace::NestedDefaults.new
+
+          target.read(protocol_class.new(buffer))
+
+          expect(target.nested_list).to be_nil
+          expect(target.nested_map).to eq({"key" => ["value"]})
+        end
+
+        it "resets unread fields after failure without discarding completed fields" do
+          buffer = Thrift::MemoryBufferTransport.new
+          protocol = protocol_class.new(buffer)
+          protocol.write_struct_begin("NestedDefaults")
+          protocol.write_field_begin("text", Thrift::Types::STRING, 5)
+          protocol.write_string("received")
+          protocol.write_field_end
+          protocol.write_field_begin("scalar", Thrift::Types::I32, 6)
+          target = SpecNamespace::NestedDefaults.new(scalar: 99)
+          old_list = target.nested_list
+          old_list.first << 99
+
+          expect { target.read(protocol_class.new(buffer)) }.to raise_error(EOFError)
+
+          expect(target.text).to eq("received")
+          expect(target.scalar).to eq(7)
+          expect(target.nested_list).to eq([[1]])
+          expect(target.nested_list).not_to equal(old_list)
+        end
+
+        it "still resets fields changed by a custom initializer" do
+          custom_class = Class.new(SpecNamespace::NestedDefaults) do
+            def initialize
+              super
+              @nested_list.first << 99
+              @text = "custom"
+              @custom_initialized = true
+            end
+          end
+          field = SpecNamespace::NestedDefaultsList::FIELDS.fetch(1)
+          stub_const("SpecNamespace::NestedDefaultsList::FIELDS", {
+            1 => field.merge(element: field[:element].merge(class: custom_class)),
+          })
+
+          result = SpecNamespace::NestedDefaultsList.new
+          result.read(empty_nested_defaults(protocol_class))
+
+          result.values.each do |value|
+            expect(value.nested_list).to eq([[1]])
+            expect(value.text).to eq("fixed")
+            expect(value.instance_variable_get(:@custom_initialized)).to be(true)
+          end
+        end
+
+        it "preserves custom readers in the Ruby field reader" do
+          arguments = nil
+          custom_class = Class.new(SpecNamespace::NestedDefaults) do
+            define_method(:read) do |*args|
+              arguments = args
+              super(*args)
+            end
+          end
+          protocol = empty_nested_defaults(protocol_class)
+          protocol.read_struct_begin
+          protocol.read_field_begin
+          protocol.read_list_begin
+
+          value = SpecNamespace::Foo.new.read_field(protocol, {type: Thrift::Types::STRUCT, class: custom_class})
+
+          expect(arguments).to eq([protocol, Thrift::DEFAULT_RECURSION_DEPTH - 1])
+          expect(value.nested_list).to eq([[1]])
+        end
+
+        it "still resets pooled objects returned by custom constructors" do
+          custom_class = Class.new(SpecNamespace::NestedDefaults)
+          existing = custom_class.new
+          existing.nested_list.first << 99
+          allow(custom_class).to receive(:new).and_return(existing)
+          protocol = empty_nested_defaults(protocol_class)
+          protocol.read_struct_begin
+          protocol.read_field_begin
+          protocol.read_list_begin
+
+          value = SpecNamespace::Foo.new.read_field(protocol, {type: Thrift::Types::STRUCT, class: custom_class})
+
+          expect(value).to equal(existing)
+          expect(value.nested_list).to eq([[1]])
+        end
+      end
+    end
+
+    it "isolates generated union defaults between instances" do
+      first = SpecNamespace::StructWithUnionDefault.new
+      second = SpecNamespace::StructWithUnionDefault.new
+
+      first.union_field.string_field << " changed"
+      expect(second.union_field.string_field).to eq("default union value")
+      expect(SpecNamespace::StructWithUnionDefault::FIELDS[1][:default].get_value).to eq("default union value")
+    end
+
+    it "does not confuse generated field accessors with default-copy helpers" do
+      value = SpecNamespace::DefaultCopyNames.new
+
+      expect(value.copy_default_value).to eq("literal")
+      expect(value.copy_struct_default.greeting).to eq("child")
+    end
+
+    it "does not rerun nested struct constructors when copying defaults" do
+      expect(SpecNamespace::Hello).not_to receive(:new)
+
+      expect(SpecNamespace::Foo.new.hello.greeting).to eq("hello, world!")
+    end
+
+    it "keeps explicitly supplied mutable values owned by the caller" do
+      value = [[7]]
+      struct = SpecNamespace::NestedDefaults.new(nested_list: value)
+
+      expect(struct.nested_list).to equal(value)
+    end
+
+    [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+      it "isolates omitted defaults on repeated #{protocol_class} reads" do
+        buffer = Thrift::MemoryBufferTransport.new
+        protocol = protocol_class.new(buffer)
+        protocol.write_struct_begin("NestedDefaults")
+        protocol.write_field_stop
+        protocol.write_struct_end
+        bytes = buffer.read(buffer.available)
+
+        first = SpecNamespace::NestedDefaults.new
+        second = SpecNamespace::NestedDefaults.new
+        2.times do
+          [first, second].each do |value|
+            value.read(protocol_class.new(Thrift::MemoryBufferTransport.new(bytes)))
+          end
+          expect(first.nested_list.first).not_to equal(second.nested_list.first)
+          expect(first.nested_map["key"]).not_to equal(second.nested_map["key"])
+          expect(first.nested_set.first).not_to equal(second.nested_set.first)
+          expect(first.child.greeting).not_to equal(second.child.greeting)
+          expect(first.nested_list).to eq([[1]])
+
+          [:text, :data, :token].each do |name|
+            default = first.fields_with_default_values.fetch(name.to_s)
+            first_value = first.public_send(name)
+            second_value = second.public_send(name)
+
+            expect(first_value).to eq(default)
+            expect(first_value.encoding).to eq(default.encoding)
+            expect(first_value).not_to equal(default)
+            expect(first_value).not_to equal(second_value)
+            first_value << " changed"
+            expect(second_value).to eq(default)
+          end
+        end
+      end
+    end
+
     it "should properly initialize boolean values" do
       struct = SpecNamespace::BoolStruct.new(yesno: false)
       expect(struct.yesno).to be_falsey

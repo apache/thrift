@@ -49,7 +49,7 @@ module Thrift
       # assign all the default values
       unless fields_with_defaults.empty?
         fields_with_defaults.each do |name, default_value|
-          instance_variable_set("@#{name}", (default_value.dup rescue default_value))
+          instance_variable_set("@#{name}", Struct.copy_default_value(default_value))
         end
       end
 
@@ -85,23 +85,25 @@ module Thrift
     def read(iprot, remaining_depth = DEFAULT_RECURSION_DEPTH)
       raise ProtocolException.new(ProtocolException::DEPTH_LIMIT, "Maximum recursion depth exceeded") if remaining_depth <= 0
       unless instance_variables.empty?
-        defaults = fields_with_default_values
-        struct_fields.each_value do |field_info|
-          instance_variable_set("@#{field_info[:name]}", nil)
-        end
-        defaults.each do |name, default_value|
-          instance_variable_set("@#{name}", (default_value.dup rescue default_value))
-        end
+        unread_fields = struct_fields.dup
+        raise FrozenError, "can't modify frozen #{self.class}" if frozen? && !unread_fields.empty?
       end
 
-      iprot.read_struct_begin
-      loop do
-        _, ftype, fid = iprot.read_field_begin
-        break if (ftype == Types::STOP)
-        handle_message(iprot, fid, ftype, remaining_depth)
-        iprot.read_field_end
+      begin
+        iprot.read_struct_begin
+        loop do
+          _, ftype, fid = iprot.read_field_begin
+          break if (ftype == Types::STOP)
+          unread_fields&.delete(fid) if handle_message(iprot, fid, ftype, remaining_depth)
+          iprot.read_field_end
+        end
+        iprot.read_struct_end
+      ensure
+        # Reset omitted fields even after a failed read into a reused object.
+        unread_fields&.each_value do |field|
+          instance_variable_set("@#{field[:name]}", Struct.copy_default_value(field[:default]))
+        end
       end
-      iprot.read_struct_end
       validate
     end
 
@@ -212,6 +214,40 @@ module Thrift
       end
     end
 
+    # Copy generated Thrift defaults, not arbitrary Ruby object graphs.
+    # Container subclasses and custom Hash behavior are not preserved;
+    # unrecognized objects are retained.
+    def self.copy_default_value(value)
+      case value
+      when Numeric
+        value
+      when String
+        value.dup
+      when Array
+        value.map { |element| copy_default_value(element) }
+      when Hash
+        value.each_with_object({}) do |(key, element), copy|
+          copy[copy_default_value(key)] = copy_default_value(element)
+        end
+      when Set
+        value.each_with_object(Set.new) { |element, copy| copy.add(copy_default_value(element)) }
+      when Struct, Union
+        copy = value.dup
+        if value.is_a?(Union)
+          copy.instance_variable_set(:@setfield, copy_default_value(value.get_set_field))
+          copy.instance_variable_set(:@value, copy_default_value(value.get_value))
+        else
+          value.struct_fields.each_value do |field_info|
+            ivar = "@#{field_info[:name]}"
+            copy.instance_variable_set(ivar, copy_default_value(value.instance_variable_get(ivar)))
+          end
+        end
+        copy
+      else
+        value
+      end
+    end
+
     protected
 
     def self.append_features(mod)
@@ -245,8 +281,11 @@ module Thrift
       if field and field[:type] == ftype
         value = read_field(iprot, field, remaining_depth)
         instance_variable_set("@#{field[:name]}", value)
+        # A received field can legitimately result in false or nil.
+        true
       else
         iprot.skip(ftype)
+        false
       end
     end
   end
