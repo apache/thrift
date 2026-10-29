@@ -81,6 +81,7 @@ EXTRA_DIST = \
 		test/RecursionDepth.thrift \
 		test/test_recursion_depth.lua \
 		test/test_http_headers.lua \
+		test/test_simple_server.lua \
 		test/test_frame_and_string_limits.lua \
 		test/test_container_limits.lua \
 		test/test_json_escapes.lua \
@@ -89,10 +90,12 @@ EXTRA_DIST = \
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-# test_socket_send compiles usocket.c into itself, with send() and select()
-# replaced by scripted stand-ins, so it needs neither Lua nor a network.
-check_PROGRAMS = test/test_socket_send
+# test_socket_send and test_socket_accept compile usocket.c into themselves,
+# with send(), accept() and select() replaced by scripted stand-ins, so they
+# need neither Lua nor a network.
+check_PROGRAMS = test/test_socket_send test/test_socket_accept
 test_test_socket_send_SOURCES = test/test_socket_send.c
+test_test_socket_accept_SOURCES = test/test_socket_accept.c
 
 # test_recursion_depth.lua loads its generated types from gen-lua/ next to it.
 test/gen-lua/RecursionDepth_ttypes.lua: test/RecursionDepth.thrift $(THRIFT)
@@ -101,12 +104,14 @@ test/gen-lua/RecursionDepth_ttypes.lua: test/RecursionDepth.thrift $(THRIFT)
 check-local: test/gen-lua/RecursionDepth_ttypes.lua
 	$(LUA) test/test_recursion_depth.lua
 	$(LUA) test/test_http_headers.lua
+	$(LUA) test/test_simple_server.lua
 	$(LUA) test/test_frame_and_string_limits.lua
 	$(LUA) test/test_container_limits.lua
 	$(LUA) test/test_json_escapes.lua
 	$(LUA) test/test_socket_write.lua
 	$(LUA) test/test_socket_timeout.lua
 	./test/test_socket_send
+	./test/test_socket_accept
 
 clean-local:
 	$(RM) -r test/gen-lua

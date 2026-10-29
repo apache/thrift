@@ -133,12 +133,25 @@ TSimpleServer = __TObject:new(TServer, {
   __stop = false
 })
 
+-- TServerSocket:accept() raises the socket module's "Timeout" when no
+-- connection arrives within the socket's timeout. That ends one wait, not
+-- the server.
+local function isAcceptTimeout(err)
+  return type(err) == 'string' and
+    (err == 'Timeout' or string.sub(err, -9) == ': Timeout')
+end
+
 function TSimpleServer:serve()
   self.serverTransport:listen()
   self:_preServe()
   while not self.__stop do
-    client = self.serverTransport:accept()
-    self:handle(client)
+    local ok, client = pcall(self.serverTransport.accept, self.serverTransport)
+    if ok then
+      self:handle(client)
+    elseif not isAcceptTimeout(client) then
+      -- Any other error ends serve() as before, with the same message.
+      error(client, 0)
+    end
   end
   self:close()
 end

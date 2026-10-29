@@ -159,18 +159,25 @@ T_ERRCODE socket_accept(p_socket sock, p_socket client,
   if (*sock < 0) {
     return CLOSED;
   }
-  do {
+  for (;;) {
     *client = accept(*sock, addr, addrlen);
     if (*client > 0) {
       return SUCCESS;
     }
-  } while ((err = errno) == EINTR);
+    err = errno;
+    if (err == EINTR) {
+      continue;
+    }
+    if (err != EAGAIN && err != ECONNABORTED) {
+      return err;
+    }
 
-  if (err == EAGAIN || err == ECONNABORTED) {
-    return socket_wait(sock, WAIT_MODE_R, timeout);
+    // No connection to take yet: wait for one, then go back and accept it.
+    err = socket_wait(sock, WAIT_MODE_R, timeout);
+    if (err != SUCCESS) {
+      return err;
+    }
   }
-
-  return err;
 }
 
 T_ERRCODE socket_listen(p_socket sock, int backlog) {
