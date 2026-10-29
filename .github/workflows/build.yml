@@ -1634,8 +1634,9 @@ jobs:
         run: make -C lib/lua
 
       # Generates the types test_recursion_depth.lua needs, then runs the
-      # scripts in lib/lua/test. Those preload pure-Lua stand-ins for the C
-      # modules, so it is the cross test below that loads the ones built above.
+      # scripts in lib/lua/test. All but test_socket_timeout.lua preload
+      # pure-Lua stand-ins for the C modules; that one and the cross test below
+      # load the ones built above.
       - name: Run make check for lua
         run: make -C lib/lua check
 

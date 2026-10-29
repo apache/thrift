@@ -56,7 +56,7 @@ T_ERRCODE socket_wait(p_socket sock, int mode, int timeout) {
     return TIMEOUT;
   }
 
-  end = __gettime() + timeout/1000;
+  end = __gettime() + timeout / 1000.0;
   do {
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
