@@ -45,7 +45,8 @@ public:
 
   explicit THeaderProtocol(const std::shared_ptr<TTransport>& trans,
                            uint16_t protoId = T_COMPACT_PROTOCOL)
-    : TVirtualProtocol<THeaderProtocol>(std::shared_ptr<TTransport>(new THeaderTransport(trans))),
+    : TVirtualProtocol<THeaderProtocol>(std::shared_ptr<TTransport>(
+          new THeaderTransport(trans, trans ? trans->getConfiguration() : nullptr))),
       trans_(std::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);
@@ -55,8 +56,8 @@ public:
   THeaderProtocol(const std::shared_ptr<TTransport>& inTrans,
                   const std::shared_ptr<TTransport>& outTrans,
                   uint16_t protoId = T_COMPACT_PROTOCOL)
-    : TVirtualProtocol<THeaderProtocol>(
-          std::shared_ptr<TTransport>(new THeaderTransport(inTrans, outTrans))),
+    : TVirtualProtocol<THeaderProtocol>(std::shared_ptr<TTransport>(new THeaderTransport(
+          inTrans, outTrans, inTrans ? inTrans->getConfiguration() : nullptr))),
       trans_(std::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);

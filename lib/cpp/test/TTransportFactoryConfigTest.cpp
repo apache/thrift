@@ -39,6 +39,7 @@
 
 #include <thrift/transport/TBufferTransports.h>
 #ifdef THRIFT_TEST_WITH_ZLIB
+#include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/transport/THeaderTransport.h>
 #endif
 #include <thrift/transport/THttpServer.h>
@@ -81,6 +82,24 @@ BOOST_AUTO_TEST_CASE(test_framed_transport_factory_preserves_configuration) {
 BOOST_AUTO_TEST_CASE(test_header_transport_factory_preserves_configuration) {
   THeaderTransportFactory factory;
   checkPreservesConfiguration(factory);
+}
+
+// THeaderProtocol wraps the transport it is given in a THeaderTransport of its
+// own, which must carry that transport's configuration, as the factory above
+// does: through both constructors and through THeaderProtocolFactory.
+BOOST_AUTO_TEST_CASE(test_header_protocol_preserves_configuration) {
+  auto config = std::make_shared<TConfiguration>();
+  auto endpoint = endpointWithConfig(config);
+
+  protocol::THeaderProtocol single(endpoint);
+  BOOST_CHECK_EQUAL(single.getTransport()->getConfiguration().get(), config.get());
+
+  protocol::THeaderProtocol pair(endpoint, endpoint);
+  BOOST_CHECK_EQUAL(pair.getTransport()->getConfiguration().get(), config.get());
+
+  protocol::THeaderProtocolFactory factory;
+  auto made = factory.getProtocol(std::shared_ptr<TTransport>(endpoint));
+  BOOST_CHECK_EQUAL(made->getTransport()->getConfiguration().get(), config.get());
 }
 #endif // THRIFT_TEST_WITH_ZLIB
 
@@ -180,6 +199,46 @@ BOOST_AUTO_TEST_CASE(test_header_transport_enforces_custom_max_frame_size) {
   bool caught = false;
   try {
     transport->read(&dummy, 1);
+  } catch (const TTransportException& e) {
+    caught = true;
+    BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
+  }
+  BOOST_CHECK(caught);
+}
+
+// The same frame read through THeaderProtocol: the configured maxFrameSize of
+// the endpoint must hold there too, not the library default.
+BOOST_AUTO_TEST_CASE(test_header_protocol_enforces_custom_max_frame_size) {
+  const int kMaxFrameSize = 64;
+  auto config
+      = std::make_shared<TConfiguration>(TConfiguration::DEFAULT_MAX_MESSAGE_SIZE, kMaxFrameSize);
+
+  const uint32_t declaredFrameSize = 1024; // well beyond kMaxFrameSize
+  const uint32_t version1 = 0x80010000u;   // TBinaryProtocol::VERSION_1
+  std::vector<uint8_t> frame = {
+      static_cast<uint8_t>((declaredFrameSize >> 24) & 0xFF),
+      static_cast<uint8_t>((declaredFrameSize >> 16) & 0xFF),
+      static_cast<uint8_t>((declaredFrameSize >> 8) & 0xFF),
+      static_cast<uint8_t>(declaredFrameSize & 0xFF),
+      static_cast<uint8_t>((version1 >> 24) & 0xFF),
+      static_cast<uint8_t>((version1 >> 16) & 0xFF),
+      static_cast<uint8_t>((version1 >> 8) & 0xFF),
+      static_cast<uint8_t>(version1 & 0xFF),
+  };
+  frame.resize(frame.size() + declaredFrameSize - 4, 0x00);
+
+  auto endpoint = std::make_shared<TMemoryBuffer>(frame.data(),
+                                                  static_cast<uint32_t>(frame.size()),
+                                                  TMemoryBuffer::COPY,
+                                                  config);
+  protocol::THeaderProtocol proto(endpoint);
+
+  std::string name;
+  protocol::TMessageType type;
+  int32_t seqid = 0;
+  bool caught = false;
+  try {
+    proto.readMessageBegin(name, type, seqid);
   } catch (const TTransportException& e) {
     caught = true;
     BOOST_CHECK_EQUAL(e.getType(), TTransportException::CORRUPTED_DATA);
