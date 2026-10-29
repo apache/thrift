@@ -346,7 +346,7 @@ static int l_socket_create_and_connect(lua_State *L) {
   int timeout = luaL_checknumber(L, 3);
 
   // Create and connect loop for timeout milliseconds
-  end = __gettime() + timeout/1000;
+  end = __gettime() + timeout / 1000.0;
   do {
     // Create and connect the socket
     err = tcp_create_and_connect(&sock, host, port, timeout);

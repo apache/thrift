@@ -84,7 +84,8 @@ EXTRA_DIST = \
 		test/test_frame_and_string_limits.lua \
 		test/test_container_limits.lua \
 		test/test_json_escapes.lua \
-		test/test_socket_write.lua
+		test/test_socket_write.lua \
+		test/test_socket_timeout.lua
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
@@ -104,6 +105,7 @@ check-local: test/gen-lua/RecursionDepth_ttypes.lua
 	$(LUA) test/test_container_limits.lua
 	$(LUA) test/test_json_escapes.lua
 	$(LUA) test/test_socket_write.lua
+	$(LUA) test/test_socket_timeout.lua
 	./test/test_socket_send
 
 clean-local:
