@@ -63,7 +63,7 @@ Usage:
     Client -help
         will diplay help information 
 
-    Client -tr:<transport> -bf:<buffering> -pr:<protocol> [-mc:<numClients>]  [-multiplex]
+    Client -tr:<transport> -bf:<buffering> -pr:<protocol> [-mc:<numClients>]  [-multiplex] [-isolated]
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
@@ -84,6 +84,10 @@ Options:
         json - json protocol 
 
     -multiplex - adds multiplexed protocol
+
+    -isolated - every call gets its own transport view and protocol, so calls can overlap on one client.
+        Needs a call-isolated transport, so it works with -tr:http only, and not with -multiplex.
+        Besides the usual calls, the client then runs overlapping calls and receives replies out of order.
 
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
@@ -130,9 +134,24 @@ Sample:
             if (Logger.IsEnabled(LogLevel.Information))
                 Logger.LogInformation("Multiplex {mplex}", mplex);
 
+            var isolated = args.Any(x => x.Equals("-isolated"));
+            if (isolated && (transport != Transport.Http || mplex))
+            {
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("-isolated needs a call-isolated transport: use -tr:http, without -multiplex");
+                return false;
+            }
+
             var tasks = new Task<bool>[numClients];
             for (int i = 0; i < numClients; i++)
             {
+                if (isolated)
+                {
+                    // each client shares one call-isolated transport between all of its calls
+                    tasks[i] = RunIsolatedClientAsync(args, cancellationToken);
+                    continue;
+                }
+
                 // each client gets a transport and protocol of its own
                 var protocol = MakeProtocol(args, MakeTransport(args));
                 var task = RunClientAsync(protocol, mplex, cancellationToken);
@@ -307,6 +326,75 @@ Sample:
                 Protocol.Json => new TJsonProtocol(transport),
                 _ => throw new Exception("unhandled protocol"),
             };
+        }
+
+        private static ICallIsolatedTransport MakeIsolatedTransport(string[] args)
+        {
+            // the call views of this transport own their request and response, so calls can overlap
+            ICallIsolatedTransport transport = new THttpTransport(new Uri("http://localhost:9090"), Configuration);
+            return GetBuffering(args) switch
+            {
+                Buffering.Buffered => new TIsolatedBufferedTransport(transport),
+                Buffering.Framed => new TIsolatedFramedTransport(transport),
+                _ => transport,
+            };
+        }
+
+        private static TProtocolFactory MakeProtocolFactory(string[] args)
+        {
+            return GetProtocol(args) switch
+            {
+                Protocol.Binary => new TBinaryProtocol.Factory(),
+                Protocol.Compact => new TCompactProtocol.Factory(),
+                Protocol.Json => new TJsonProtocol.Factory(),
+                _ => throw new Exception("unhandled protocol"),
+            };
+        }
+
+        private static async Task<bool> RunIsolatedClientAsync(string[] args, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // disposing the client disposes the shared transport; keep it alive until all calls have finished
+                using var client = new Calculator.Client(MakeIsolatedTransport(args), MakeProtocolFactory(args));
+
+                await ExecuteCalculatorClientOperations(client, cancellationToken);
+                await ExecuteOverlappingCalls(client, cancellationToken);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (Logger.IsEnabled(LogLevel.Error))
+                    Logger.LogError("{ex}", ex);
+            }
+            return false;
+        }
+
+        private static async Task ExecuteOverlappingCalls(Calculator.Client client, CancellationToken cancellationToken)
+        {
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} Add() x5, all calls in flight at once", client.ClientId);
+
+            // every call gets its own transport view, so the requests and responses cannot get mixed up
+            var sums = await Task.WhenAll(Enumerable.Range(1, 5).Select(i => client.add(i, i, cancellationToken)));
+            for (int i = 1; i <= 5; i++)
+            {
+                if (sums[i - 1] != 2 * i)
+                    throw new InvalidOperationException($"Add({i},{i}) returned {sums[i - 1]}");
+            }
+
+            if (Logger.IsEnabled(LogLevel.Information))
+                Logger.LogInformation("{client.ClientId} send_add() twice, then recv_add() in the opposite order", client.ClientId);
+
+            // with explicit call contexts the requests and replies of the calls can be interleaved freely
+            using var first = client.CreateCallContext(cancellationToken);
+            using var second = client.CreateCallContext(cancellationToken);
+            await client.send_add(first, 1, 2);
+            await client.send_add(second, 3, 4);
+            var secondSum = await client.recv_add(second);
+            var firstSum = await client.recv_add(first);
+            if (firstSum != 3 || secondSum != 7)
+                throw new InvalidOperationException($"Interleaved calls returned {firstSum} and {secondSum}");
         }
 
         private static async Task<bool> RunClientAsync(TProtocol protocol, bool multiplex, CancellationToken cancellationToken)

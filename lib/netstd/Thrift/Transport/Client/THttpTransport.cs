@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class THttpTransport : TEndpointTransport
+    public class THttpTransport : TEndpointTransport, IAsyncCallIsolatedTransport, IPerCallTimeoutTransport
     {
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
@@ -110,6 +110,201 @@ namespace Thrift.Transport.Client
         }
 
         public override bool IsOpen => true;
+
+        /// <summary>
+        /// Maximum duration of one call made through a call view, from creation of its context until it is disposed.
+        /// <see cref="Timeout.InfiniteTimeSpan"/> (the default) means unbounded; the per-request
+        /// <see cref="ConnectTimeout"/> of the underlying client still applies.
+        /// </summary>
+        public TimeSpan PerCallTimeout { get; set; } = Timeout.InfiniteTimeSpan;
+
+        /// <summary>Creates a call view; HTTP call views need no asynchronous setup.</summary>
+        public Task<TTransport> CreateCallTransportAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(CreateCallTransport());
+        }
+
+        /// <summary>
+        /// Creates a transport view for one call. The view owns its request buffer and its response, so calls
+        /// made through the same <c>THttpTransport</c> can overlap. The caller must dispose the view; the shared
+        /// transport (and its <c>HttpClient</c>) must outlive it.
+        /// </summary>
+        public TTransport CreateCallTransport()
+        {
+            if (_isDisposed || _httpClient == null)
+            {
+                throw new ObjectDisposedException(nameof(THttpTransport));
+            }
+
+            return new CallTransport(this, _httpClient);
+        }
+
+        private sealed class CallTransport : TEndpointTransport
+        {
+            private readonly THttpTransport _owner;
+            private readonly HttpClient _httpClient;
+            private MemoryStream _outputStream = new MemoryStream();
+            private HttpResponseMessage _response;
+            private Stream _inputStream;
+            private bool _isDisposed;
+
+            public CallTransport(THttpTransport owner, HttpClient httpClient)
+                : base(owner.Configuration)
+            {
+                _owner = owner;
+                _httpClient = httpClient;
+            }
+
+            public override bool IsOpen => !_isDisposed;
+
+            public override Task OpenAsync(CancellationToken cancellationToken)
+            {
+                CheckNotDisposed();
+                cancellationToken.ThrowIfCancellationRequested();
+                return Task.CompletedTask;
+            }
+
+            public override void Close()
+            {
+                ReleaseResponse();
+            }
+
+            public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                CheckNotDisposed();
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (_inputStream == null)
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
+
+                CheckReadBytesAvailable(length);
+
+                try
+                {
+#if NET5_0_OR_GREATER
+                    var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
+                    var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#endif
+                    CountConsumedMessageBytes(ret);
+                    return ret;
+                }
+                catch (IOException iox)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
+                }
+                catch (OperationCanceledException ocx)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
+                }
+            }
+
+            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+            {
+                CheckNotDisposed();
+                cancellationToken.ThrowIfCancellationRequested();
+
+#if NET5_0_OR_GREATER
+                await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
+                await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#endif
+            }
+
+            public override async Task FlushAsync(CancellationToken cancellationToken)
+            {
+                CheckNotDisposed();
+
+                var request = _outputStream;
+                _outputStream = new MemoryStream();
+                try
+                {
+                    request.Seek(0, SeekOrigin.Begin);
+                    ReleaseResponse();
+
+                    using (var contentStream = new StreamContent(request))
+                    {
+                        contentStream.Headers.ContentType = _owner.ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
+
+                        // the response is owned by this view and released with it
+                        var response = await _httpClient.PostAsync(_owner._uri, contentStream, cancellationToken);
+                        _response = response;
+                        response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+                        _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+#else
+                        _inputStream = await response.Content.ReadAsStreamAsync();
+#endif
+                        if (_inputStream.CanSeek)
+                        {
+                            _inputStream.Seek(0, SeekOrigin.Begin);
+                        }
+                    }
+                }
+                catch (TTransportException)
+                {
+                    ReleaseResponse();
+                    throw;
+                }
+                catch (IOException iox)
+                {
+                    ReleaseResponse();
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString(), iox);
+                }
+                catch (HttpRequestException wx)
+                {
+                    ReleaseResponse();
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx, wx);
+                }
+                catch (OperationCanceledException ocx)
+                {
+                    ReleaseResponse();
+                    throw new TTransportException(TTransportException.ExceptionType.Interrupted, ocx.Message, ocx);
+                }
+                catch (Exception ex)
+                {
+                    ReleaseResponse();
+                    throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message, ex);
+                }
+                finally
+                {
+                    request.Dispose();
+                    ResetMessageSizeAndConsumedBytes();
+                }
+            }
+
+            private void ReleaseResponse()
+            {
+                _inputStream?.Dispose();
+                _inputStream = null;
+                _response?.Dispose();
+                _response = null;
+            }
+
+            private void CheckNotDisposed()
+            {
+                if (_isDisposed)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen, "The call transport has been disposed");
+                }
+            }
+
+            // Only this view's own resources are released; the shared HttpClient belongs to the owner.
+            protected override void Dispose(bool disposing)
+            {
+                if (!_isDisposed)
+                {
+                    _isDisposed = true;
+                    if (disposing)
+                    {
+                        ReleaseResponse();
+                        _outputStream?.Dispose();
+                    }
+                }
+            }
+        }
+
 
         public HttpRequestHeaders RequestHeaders => _httpClient.DefaultRequestHeaders;
 

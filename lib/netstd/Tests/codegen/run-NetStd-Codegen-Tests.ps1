@@ -20,7 +20,8 @@
 param(
     [string[]] $TargetVersions    = @(),   # override NET_VERSIONS; when empty all defaults are tested
     [string]   $TargetFolder      = "",    # output dir; when empty uses system temp
-    [string]   $ExtraThriftFiles  = ""     # additional .thrift search path; when empty none are added
+    [string]   $ExtraThriftFiles  = "",    # additional .thrift search path; when empty none are added
+    [switch]   $Isolated                   # generate with the netstd:isolated option (per-call clients)
 )
 
 #---- failing tests --------------------------------------------
@@ -52,7 +53,10 @@ if ($TargetVersions.Count -gt 0) { $NET_VERSIONS = $TargetVersions }
 
 #---- consts --------------------------------------------
 
-$EXE_EXT = ($OsType -eq "Windows") ? ".exe" : ""
+$EXE_EXT = $IsWindows ? ".exe" : ""
+
+# extra generator options; the isolated mode needs services, so IDL files without them just generate as usual
+$GEN_OPTIONS = $Isolated ? ",isolated" : ""
 
 
 #---- functions --------------------------------------------
@@ -128,6 +132,30 @@ function CopyFilesFrom([string] $source, $text) {
 	return $counter
 }
 
+function TestClientConstructorDocs([string] $gendir, [string] $idl) {
+	$ok = $true
+	gci $gendir -filter *.cs -recurse | where { $_.FullName -notmatch '[\\/](obj|bin)[\\/]' } | foreach {
+		$file = $_
+		$lines = get-content $file.FullName
+		for( $i = 1; $i -lt $lines.Count; $i++) {
+			# only the constructors of a service client; an IDL type may be called Client as well
+			if( $lines[$i] -match '^\s*public Client\((TProtocol|ICallIsolatedTransport) ') {
+				# a constructor is documented when the line above it is part of an XML documentation comment
+				$documented = $lines[$i - 1].Trim().StartsWith('///')
+				if( $Isolated -and (-not $documented)) {
+					write-host -foregroundcolor red ("Undocumented client constructor in " + $file.Name + " (" + $idl + "): " + $lines[$i].Trim())
+					$ok = $false
+				}
+				if( (-not $Isolated) -and $documented) {
+					write-host -foregroundcolor red ("Default output must not document client constructors, " + $file.Name + " (" + $idl + "): " + $lines[$i].Trim())
+					$ok = $false
+				}
+			}
+		}
+	}
+	return $ok
+}
+
 function TestIdlFile([string] $idl) {
 	# expected to fail at Thrift Compiler
 	$filter = $false
@@ -144,10 +172,15 @@ function TestIdlFile([string] $idl) {
 	$gendir      = [System.IO.Path]::Combine($TARGET, "gen-netstd")
 	$thrift_csproj = [System.IO.Path]::Combine($ROOTDIR, "lib", "netstd", "Thrift", "Thrift.csproj")
 	InitializeFolder  $gendir    "*.cs"
-	&$THRIFT_EXE $VERBOSE -r --gen "netstd:$net_version" $idl | out-file ([System.IO.Path]::Combine($TARGET, "thrift.log"))
+	&$THRIFT_EXE $VERBOSE -r --gen "netstd:$net_version$GEN_OPTIONS" $idl | out-file ([System.IO.Path]::Combine($TARGET, "thrift.log"))
 	if( -not $?) {
 		get-content ([System.IO.Path]::Combine($TARGET, "thrift.log")) | out-default
 		write-host -foregroundcolor red "Thrift compilation failed: $idl"
+		return $false
+	}
+
+	# with the isolated option every generated client constructor says when to use it; without it nothing is added
+	if( -not (TestClientConstructorDocs $gendir $idl)) {
 		return $false
 	}
 

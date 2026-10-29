@@ -23,6 +23,10 @@ The library ships as two packages so that non-web projects no longer pull in the
 or 
 - Build with scripts
 
+The test projects under `Tests/Thrift.Compile.Tests` generate their code with the compiler they find first, so rebuild
+the compiler after changing a generator. An outdated binary produces code that no longer matches the library and
+fails with confusing compile errors.
+
 ## How to build on Unix/Linux
 - Ensure you have a suitable .NET Core SDK installed, or use the [Ubuntu docker image](../../build/docker/README.md)
 - Follow common automake build practice: `./ bootstrap && ./ configure && make`
@@ -64,6 +68,127 @@ Because of the different environment requirements, migration from C# takes sligh
 - the server's `Serve()` method does now `ServeAsync()`
 - In case you are using Thrift server event handlers: the `SetEventHandler` method now starts with an uppercase letter
 - and you will also have to revise the method names of all `TServerEventHandler` descendants you have in your code
+
+# Isolated clients (overlapping calls)
+
+A generated client normally shares one protocol, and with it one transport, between all of its calls. That is fine for
+sequential use, but asynchronous calls that overlap can corrupt each other's request and response data. For transports
+that can keep request and response state per call, the generator offers an opt-in `isolated` option:
+
+```bash
+thrift -gen netstd:isolated my.thrift
+```
+
+The default output is unchanged. With `isolated`, the generated `Client` keeps its constructors that take protocols and
+gains a constructor that takes a call-isolated transport and a protocol factory. The constructor you choose decides how
+the client behaves:
+
+```csharp
+// shared protocols, exactly as without the option (socketTransport: any TTransport, for example a TSocketTransport)
+var legacy = new MyService.Client(new TBinaryProtocol(socketTransport));
+
+// per-call transport view and protocol for every call
+var transport = new THttpTransport(new Uri("http://localhost:9090/thrift"), new TConfiguration());
+using var client = new MyService.Client(transport, new TBinaryProtocol.Factory());
+
+// these calls may overlap
+var a = client.add(1, 2);
+var b = client.add(3, 4);
+await Task.WhenAll(a, b);
+```
+
+Call-isolated transports implement `ICallIsolatedTransport`: `THttpTransport` and `TMemoryBufferTransport`, plus
+`TIsolatedBufferedTransport` and `TIsolatedFramedTransport`, which wrap another call-isolated transport. The isolated
+layers only accept an `ICallIsolatedTransport`, so stream-based transports cannot be combined with them. Stream
+transports share ordered input and are not suitable for overlapping calls. A transport whose call views need
+asynchronous setup implements `IAsyncCallIsolatedTransport`; the client then creates each view asynchronously.
+
+`client.IsCallIsolated` tells which mode a client is in. A client built with a call-isolated transport has no shared
+protocols, so its `InputProtocol` and `OutputProtocol` properties throw.
+
+The legacy `TBufferedTransport` and `TFramedTransport` are not call-isolated. Wrapping a `THttpTransport` in one of
+them and passing the result to the call-isolated constructor does not compile, and that is intended: it is not
+silently ignored. Use `TIsolatedBufferedTransport` or `TIsolatedFramedTransport` instead.
+
+## What is shared and what is per call
+
+Shared by all calls of a client: the transport object and its configuration (for `THttpTransport` that is the
+`HttpClient`, its headers, `ContentType`, `ConnectTimeout` and `PerCallTimeout`), the protocol factory and the counter
+that hands out sequence IDs.
+
+Created for every call and released with it: the transport view with its request buffer and its response, the
+protocol, the sequence ID, and the cancellation token and timeout of the call.
+
+## Multiplexed protocol
+
+The constructor takes a protocol factory, and the factory decides what each call's protocol looks like. To address a
+service on a multiplexed server, return a `TMultiplexedProtocol` from the factory:
+
+```csharp
+class MultiplexedFactory : TProtocolFactory
+{
+    public override TProtocol GetProtocol(TTransport trans) =>
+        new TMultiplexedProtocol(new TBinaryProtocol(trans), "MyService");
+}
+
+using var client = new MyService.Client(transport, new MultiplexedFactory());
+```
+
+## Split send and receive
+
+Besides the high-level methods, the client exposes `send_<name>` and `recv_<name>`. Without a context they use the
+shared protocols, as before. For an isolated client there is a second overload of each that takes the `TCallContext` of
+the call, so replies can be received in any order:
+
+```csharp
+using var first = client.CreateCallContext();
+using var second = client.CreateCallContext();
+
+await client.send_add(first, 1, 2);
+await client.send_add(second, 3, 4);
+
+var r2 = await client.recv_add(second);
+var r1 = await client.recv_add(first);
+```
+
+The overloads that take a context have no `CancellationToken` parameter: the call's cancellation token and timeout are
+those of its context.
+
+## Timeouts and cancellation
+
+Two timeouts can apply to a call. A transport can declare a default for all of its calls, for example
+`THttpTransport.PerCallTimeout`, and one call can be given a tighter one of its own. Both are linked with the
+cancellation token you pass, and the shortest bound wins. A per-call timeout cannot loosen the transport's.
+
+```csharp
+var transport = new THttpTransport(new Uri("http://localhost:9090/thrift"), new TConfiguration())
+{
+    PerCallTimeout = TimeSpan.FromSeconds(30),
+};
+using var client = new MyService.Client(transport, new TBinaryProtocol.Factory());
+
+// this call is bounded by 5 seconds instead of 30
+using var context = client.CreateCallContext(TimeSpan.FromSeconds(5));
+await client.send_add(context, 1, 2);
+var sum = await client.recv_add(context);
+```
+
+The clock of a call runs from the creation of its context until the context is disposed, so for split calls it covers
+the time between send and receive. A call that exceeds its timeout fails with a `TTransportException` of type
+`TimedOut`. A call that the caller cancelled fails as cancelled instead, so the two can be told apart. Neither affects
+any other call.
+
+## Lifetime and ownership
+
+- The high-level methods create a context, use it for exactly one call and dispose it on success, failure and
+  cancellation. One-way calls release their context after the request has been sent. A call whose token is already
+  cancelled creates no transport view at all.
+- A context created with `CreateCallContext()` is owned by the caller. Dispose it once its reply has been received, or
+  when the call is abandoned. Disposing a context releases only that call's transport view.
+- Each call gets a sequence ID that is unique within the client. A reply whose ID differs from the ID of its call is
+  rejected with a `TApplicationException` of type `BadSequenceId`.
+- The client owns the shared transport. Disposing the client disposes the transport and rejects new calls, so keep the
+  client alive until all of its calls have finished.
 
 # Fuzzing
 

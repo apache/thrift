@@ -100,6 +100,7 @@ EXTRA_DIST = \
 	Thrift/GlobalSuppressions.cs \
 	Thrift/TApplicationException.cs \
 	Thrift/TBaseClient.cs \
+	Thrift/TCallContext.cs \
 	Thrift/TConfiguration.cs \
 	Thrift/TException.cs \
 	Thrift/Thrift.csproj \
