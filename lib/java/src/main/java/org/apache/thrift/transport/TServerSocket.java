@@ -38,6 +38,9 @@ public class TServerSocket extends TServerTransport {
   /** Timeout for client sockets from accept */
   private int clientTimeout_ = 0;
 
+  /** Max frame size */
+  private int maxFrameSize_ = 0;
+
   /** Max message size */
   private int maxMessageSize_ = 0;
 
@@ -81,6 +84,7 @@ public class TServerSocket extends TServerTransport {
 
   public TServerSocket(ServerSocketTransportArgs args) throws TTransportException {
     clientTimeout_ = args.clientTimeout;
+    maxFrameSize_ = args.maxFrameSize;
     maxMessageSize_ = args.maxMessageSize;
     if (args.serverSocket != null) {
       this.serverSocket_ = args.serverSocket;
@@ -127,7 +131,10 @@ public class TServerSocket extends TServerTransport {
     }
     TSocket socket = new TSocket(result);
     socket.setTimeout(clientTimeout_);
+    socket.setMaxFrameSize(maxFrameSize_);
     socket.setMaxMessageSize(maxMessageSize_);
+    // the read budget starts from the limit set above
+    socket.resetMessageSizeAndConsumedBytes();
     return socket;
   }
 
