@@ -123,6 +123,17 @@ namespace Thrift.Tests.Transports
             Assert.IsTrue(shared.IsOpen);
         }
 
+        [TestMethod]
+        public async Task Disposed_Memory_Transport_Creates_No_Call_Views()
+        {
+            var shared = new TMemoryBufferTransport(null);
+            shared.Dispose();
+
+            Assert.ThrowsExactly<ObjectDisposedException>(() => shared.CreateCallTransport());
+            await Assert.ThrowsExactlyAsync<ObjectDisposedException>(
+                () => ((IAsyncCallIsolatedTransport)shared).CreateCallTransportAsync(CancellationToken.None));
+        }
+
         private sealed class NoViewTransport : IAsyncCallIsolatedTransport
         {
             public TTransport CreateCallTransport() => null!;

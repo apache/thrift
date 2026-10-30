@@ -83,7 +83,15 @@ namespace Thrift.Transport.Client
         public override bool IsOpen => true;
 
         /// <summary>Creates an empty, independent memory buffer for one call; the caller owns it.</summary>
-        public TTransport CreateCallTransport() => new CallBuffer(Configuration);
+        public TTransport CreateCallTransport()
+        {
+            if (IsDisposed)
+            {
+                throw new ObjectDisposedException(nameof(TMemoryBufferTransport));
+            }
+
+            return new CallBuffer(Configuration);
+        }
 
         // The call view is a memory buffer that reports that it is not open once the call has disposed it.
         // The shared transport, and the use of this class outside of calls, keep their behavior.
