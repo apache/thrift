@@ -31,6 +31,7 @@ import tests.JSONLimitTest;
 import tests.LayeredSizeCheckTest;
 import tests.NegativeSizeTest;
 import tests.RecursionLimitTest;
+import tests.ServerSocketConfigTest;
 import tests.SkipTest;
 import tests.StreamTest;
 import tests.TransportPartialReadTest;
@@ -101,6 +102,9 @@ class Main
 					tests.JSONLimitTest.Run(server);
 					tests.NegativeSizeTest.Run(server);
 					tests.LayeredSizeCheckTest.Run(server);
+					#if !php  // TServerSocket does not listen on this target
+					tests.ServerSocketConfigTest.Run(server);
+					#end
 					#end
 				case Multiplex:
 					#if ! (flash || html5 || js)

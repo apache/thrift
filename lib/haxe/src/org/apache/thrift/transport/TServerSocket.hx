@@ -96,7 +96,7 @@ class TServerSocket extends TServerTransport {
         try
         {
             var accepted = _socket.accept();
-            var result = TSocket.fromSocket(accepted);
+            var result = TSocket.fromSocket(accepted, Configuration);
             result.setTimeout( _clientTimeout);
 
             if( _useBufferedSockets)

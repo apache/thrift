@@ -95,9 +95,9 @@ class TSocket extends TEndpointTransport  {
 
     #if ! (flash || js)
     // used by TSocketServer
-    public static function fromSocket( socket : Socket) : TSocket  {
+    public static function fromSocket( socket : Socket, config : TConfiguration = null) : TSocket  {
         var socketHost = socket.host();
-        var result = new TSocket(socketHost.host.toString(), socketHost.port);
+        var result = new TSocket(socketHost.host.toString(), socketHost.port, config);
         result.assignSocket(socket);
         return result;
     }
