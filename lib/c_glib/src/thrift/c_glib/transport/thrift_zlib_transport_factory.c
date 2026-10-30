@@ -25,7 +25,8 @@ G_DEFINE_TYPE (ThriftZlibTransportFactory,
                thrift_zlib_transport_factory,
                THRIFT_TYPE_TRANSPORT_FACTORY)
 
-/* Wraps a transport with a ThriftZlibTransport. */
+/* Wraps a transport with a ThriftZlibTransport,
+ * which takes over the limits the transport was configured with. */
 ThriftTransport *
 thrift_zlib_transport_factory_get_transport (ThriftTransportFactory *factory,
                                              ThriftTransport *transport)
@@ -34,6 +35,12 @@ thrift_zlib_transport_factory_get_transport (ThriftTransportFactory *factory,
 
   return THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_ZLIB_TRANSPORT,
                                          "transport", transport,
+                                         "configuration",
+                                         transport->configuration,
+                                         "remainingmessagesize",
+                                         transport->remainingMessageSize_,
+                                         "knowmessagesize",
+                                         transport->knowMessageSize_,
                                          NULL));
 }
 

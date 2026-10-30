@@ -168,6 +168,11 @@ if(WITH_ZLIB)
   target_link_libraries(testzlibshortread ${ZLIB_LIBRARIES})
   target_link_libraries(testzlibshortread thrift_c_glib_zlib)
   add_test(NAME testzlibshortread COMMAND testzlibshortread)
+
+  add_executable(testtransportfactoryconfig testtransportfactoryconfig.c)
+  target_link_libraries(testtransportfactoryconfig ${ZLIB_LIBRARIES})
+  target_link_libraries(testtransportfactoryconfig thrift_c_glib_zlib)
+  add_test(NAME testtransportfactoryconfig COMMAND testtransportfactoryconfig)
 endif(WITH_ZLIB)
 
 include_directories("${PROJECT_SOURCE_DIR}/test/c_glib/src" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")

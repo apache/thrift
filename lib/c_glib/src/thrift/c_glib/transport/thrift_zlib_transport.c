@@ -263,16 +263,16 @@ thrift_zlib_transport_read (ThriftTransport *transport, gpointer buf,
   return (gint32) i;
 }
 
-/* implements thrift_transport_read_end 
- * called when read is complete. nothing to do on our end. */
+/* implements thrift_transport_read_end
+ * called when read is complete.  The read budget belongs to one message, and on
+ * a server this is the only place where a message ends for the transport doing
+ * the reading: flush() goes to the transport that writes the reply. */
 gboolean
 thrift_zlib_transport_read_end (ThriftTransport *transport, GError **error)
 {
-  /* satisfy -Wall */
-  THRIFT_UNUSED_VAR (error);
-  THRIFT_UNUSED_VAR (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
 
-  return TRUE;
+  return ttc->resetConsumedMessageSize (transport, -1, error);
 }
 
 gboolean
