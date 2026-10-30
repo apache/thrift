@@ -2870,7 +2870,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         << indent() << "{" << '\n'
         << indent() << "  throw;" << '\n'
         << indent() << "}" << '\n'
-        << indent() << "catch (Exception " << tmpex << ")" << '\n'
+        << indent() << "catch (global::System.Exception " << tmpex << ")" << '\n'
         << indent() << "{" << '\n';
     indent_up();
 
