@@ -148,4 +148,10 @@ class TTransport {
             throw new AbstractMethodError();
     }
 
+    /**
+     * The protocol calls this when it has read a message to its end.
+     */
+    public function readEnd() : Void {
+    }
+
 }

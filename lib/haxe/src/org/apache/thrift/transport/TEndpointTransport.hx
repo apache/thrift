@@ -73,6 +73,12 @@ class TEndpointTransport extends TTransport
 		ResetConsumedMessageSize(newSize);
 	}
 
+	// The read budget belongs to one message.
+	public override function readEnd() : Void
+	{
+		ResetConsumedMessageSize();
+	}
+
 	// Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
 	// Will throw if we already consumed too many bytes or if the new size is larger than allowed.
 	public override function UpdateKnownMessageSize(size : Int64) : Void

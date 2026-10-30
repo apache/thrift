@@ -193,7 +193,9 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
         }
     }
 
-    public function readMessageEnd() : Void {}
+    public function readMessageEnd() : Void {
+        Transport.readEnd();
+    }
 
     public function readStructBegin():TStruct {
         return ANONYMOUS_STRUCT;

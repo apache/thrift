@@ -188,6 +188,7 @@ class TJSONProtocol extends TProtocolImplBase implements TProtocol {
 
     public function readMessageEnd() : Void {
         ReadJSONArrayEnd();
+        Transport.readEnd();
     }
 
     public function readStructBegin():TStruct {

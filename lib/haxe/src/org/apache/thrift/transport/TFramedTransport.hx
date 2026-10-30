@@ -138,6 +138,11 @@ class TFramedTransport extends TLayeredTransport
         }
     }
 
+    // The read budget belongs to the frame here. A frame can hold another message, which is read
+    // from the bytes still buffered, so the budget stays until readFrame() returns it.
+    public override function readEnd() : Void {
+    }
+
     public override function write(buf : Bytes, off : Int, len : Int) : Void {
         writeBuffer_.writeBytes(buf, off, len);
     }

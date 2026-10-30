@@ -634,7 +634,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 
     // These methods are here for the struct to call, but don't have any wire
     // encoding.
-    public function readMessageEnd() : Void { }
+    public function readMessageEnd() : Void { Transport.readEnd(); }
     public function readFieldEnd() : Void { }
     public function readMapEnd() : Void { }
     public function readListEnd() : Void { }
