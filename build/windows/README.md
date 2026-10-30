@@ -276,12 +276,20 @@ goes into the manifest and hashed, so the manifest cannot claim a checksum the
 published file does not have. That also means this cannot be run before the
 installer is there: for the archive, before the release has reached it.
 
+Each template names the manifest version twice, in `ManifestVersion` and in the
+`$schema` comment. winget-pkgs flags a submission that uses a version it has
+deprecated, so the version has to be raised now and then, in all six lines.
+Raise it only to a version the latest `wingetcreate` release knows:
+`wingetcreate submit` validates the manifests first, rejects a newer version,
+and then opens no pull request.
+
 ### `winget/test-winget-manifests.ps1`
 
 Tests the renderer: that the values land where they belong, that no placeholder
-survives into a file that would be submitted verbatim, that the output is UTF-8
-without a BOM and with LF endings, and that a malformed version, checksum or
-date, or an unknown installer source, is refused.
+survives into a file that would be submitted verbatim, that each `$schema`
+comment names the type and version of the manifest under it, that the output is
+UTF-8 without a BOM and with LF endings, and that a malformed version, checksum
+or date, or an unknown installer source, is refused.
 
 ### `winget/validate_manifests.py`
 
