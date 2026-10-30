@@ -111,6 +111,24 @@ try {
         Assert-True "$name holds no placeholders" ($content -notmatch '__[A-Z0-9_]+__')
     }
 
+    # WinGet checks the $schema comment against the manifest under it: the
+    # type and version it names have to be the ManifestType and the
+    # ManifestVersion, and the three manifests have to share that version. A
+    # new manifest version has to reach all six lines.
+    $manifestVersions = foreach ($name in $names) {
+        $content = Get-Content -LiteralPath (Join-Path $targetDir $name) -Raw
+        $header = [regex]::Match($content, '\$schema=https://aka\.ms/winget-manifest\.(\w+)\.(\d+\.\d+\.\d+)\.schema\.json')
+        $type = [regex]::Match($content, '(?m)^ManifestType: (\w+)\s*$')
+        $manifestVersion = [regex]::Match($content, '(?m)^ManifestVersion: (\d+\.\d+\.\d+)\s*$')
+        Assert-True "$name names its own type and version in the schema comment" `
+            ($header.Success -and $type.Success -and $manifestVersion.Success -and
+             ($header.Groups[1].Value -eq $type.Groups[1].Value) -and
+             ($header.Groups[2].Value -eq $manifestVersion.Groups[1].Value)) $content
+        $manifestVersion.Groups[1].Value
+    }
+    Assert-True 'the manifests share one manifest version' `
+        (@($manifestVersions | Select-Object -Unique).Count -eq 1) ($manifestVersions -join ', ')
+
     Assert-True 'the version reaches every manifest' `
         (($installer -match "PackageVersion: $([regex]::Escape($version))") -and
          ($locale -match "PackageVersion: $([regex]::Escape($version))") -and
