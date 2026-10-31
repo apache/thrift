@@ -161,6 +161,17 @@ module Thrift
     JSON_ESCAPE_VALUES = ["\"", "\\", "/", "\b", "\f", "\n", "\r", "\t"].map { |ch| ch.b.freeze }.freeze
     private_constant :JSON_ESCAPE_CHARS, :JSON_ESCAPE_VALUES
 
+    BYTE_MIN = -(2**7)
+    BYTE_MAX = (2**7) - 1
+    I16_MIN = -(2**15)
+    I16_MAX = (2**15) - 1
+    I32_MIN = -(2**31)
+    I32_MAX = (2**31) - 1
+    I64_MIN = -(2**63)
+    I64_MAX = (2**63) - 1
+    JSON_INTEGER = /\A-?(?:0|[1-9][0-9]*)\z/
+    JSON_NUMBER = /\A-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\z/
+
     attr_reader :max_string_size
 
     @@kJSONObjectStart = "{"
@@ -383,6 +394,11 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
+      raise ::TypeError, "integer argument expected" unless type.is_a?(Integer)
+      raise RangeError if type < BYTE_MIN || type > BYTE_MAX
+      raise ::TypeError, "integer argument expected" unless seqid.is_a?(Integer)
+      raise RangeError if seqid < I32_MIN || seqid > I32_MAX
+
       write_json_array_start
       write_json_integer(@@kThriftVersion1)
       write_json_string(name)
@@ -403,6 +419,9 @@ module Thrift
     end
 
     def write_field_begin(name, type, id)
+      raise ::TypeError, "integer argument expected" unless id.is_a?(Integer)
+      raise RangeError if id < I16_MIN || id > I16_MAX
+
       write_json_integer(id)
       write_json_object_start
       write_json_string(get_type_name_for_type_id(type))
@@ -415,6 +434,9 @@ module Thrift
     def write_field_stop; nil; end
 
     def write_map_begin(ktype, vtype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_json_array_start
       write_json_string(get_type_name_for_type_id(ktype))
       write_json_string(get_type_name_for_type_id(vtype))
@@ -428,6 +450,9 @@ module Thrift
     end
 
     def write_list_begin(etype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_json_array_start
       write_json_string(get_type_name_for_type_id(etype))
       write_json_integer(size)
@@ -438,6 +463,9 @@ module Thrift
     end
 
     def write_set_begin(etype, size)
+      raise ::TypeError, "integer argument expected" unless size.is_a?(Integer)
+      raise RangeError if size < 0 || size > I32_MAX
+
       write_json_array_start
       write_json_string(get_type_name_for_type_id(etype))
       write_json_integer(size)
@@ -452,18 +480,26 @@ module Thrift
     end
 
     def write_byte(byte)
+      raise ::TypeError, "integer argument expected" unless byte.is_a?(Integer)
+      raise RangeError if byte < BYTE_MIN || byte > BYTE_MAX
       write_json_integer(byte)
     end
 
     def write_i16(i16)
+      raise ::TypeError, "integer argument expected" unless i16.is_a?(Integer)
+      raise RangeError if i16 < I16_MIN || i16 > I16_MAX
       write_json_integer(i16)
     end
 
     def write_i32(i32)
+      raise ::TypeError, "integer argument expected" unless i32.is_a?(Integer)
+      raise RangeError if i32 < I32_MIN || i32 > I32_MAX
       write_json_integer(i32)
     end
 
     def write_i64(i64)
+      raise ::TypeError, "integer argument expected" unless i64.is_a?(Integer)
+      raise RangeError if i64 < I64_MIN || i64 > I64_MAX
       write_json_integer(i64)
     end
 
@@ -602,11 +638,8 @@ module Thrift
       end
       str = read_json_numeric_chars
 
-      begin
-        num = Integer(str)
-      rescue
-        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
-      end
+      invalid_number!(str) unless JSON_INTEGER.match?(str)
+      num = Integer(str)
 
       if @context.escapeNum
         read_json_syntax_char(@@kJSONStringDelimiter)
@@ -633,11 +666,8 @@ module Thrift
             # Raise exception -- we should not be in a string in this case
             raise ProtocolException.new(ProtocolException::INVALID_DATA, "Numeric data unexpectedly quoted")
           end
-          begin
-            num = Float(str)
-          rescue
-            raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
-          end
+          invalid_number!(str) unless JSON_NUMBER.match?(str)
+          num = Float(str)
         end
       else
         if @context.escapeNum
@@ -645,11 +675,8 @@ module Thrift
           read_json_syntax_char(@@kJSONStringDelimiter)
         end
         str = read_json_numeric_chars
-        begin
-          num = Float(str)
-        rescue
-          raise ProtocolException.new(ProtocolException::INVALID_DATA, "Expected numeric value; got \"#{str}\"")
-        end
+        invalid_number!(str) unless JSON_NUMBER.match?(str)
+        num = Float(str)
       end
       num
     end
@@ -687,8 +714,8 @@ module Thrift
         raise ProtocolException.new(ProtocolException::BAD_VERSION, "Message contained bad version.")
       end
       name = read_json_string
-      message_type = read_json_integer
-      seqid = read_json_integer
+      message_type = read_byte
+      seqid = read_i32
       [name, message_type, seqid]
     end
 
@@ -713,7 +740,7 @@ module Thrift
       if (ch == @@kJSONObjectEnd)
         field_type = Types::STOP
       else
-        field_id = read_json_integer
+        field_id = read_i16
         read_json_object_start
         field_type = get_type_id_for_type_name(read_json_string)
       end
@@ -764,24 +791,39 @@ module Thrift
     end
 
     def read_bool
-      byte = read_byte
-      byte != 0
+      read_json_integer != 0
     end
 
     def read_byte
-      read_json_integer
+      value = read_json_integer
+      if value < BYTE_MIN || value > BYTE_MAX
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Integer value #{value} is outside the Thrift type range")
+      end
+      value
     end
 
     def read_i16
-      read_json_integer
+      value = read_json_integer
+      if value < I16_MIN || value > I16_MAX
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Integer value #{value} is outside the Thrift type range")
+      end
+      value
     end
 
     def read_i32
-      read_json_integer
+      value = read_json_integer
+      if value < I32_MIN || value > I32_MAX
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Integer value #{value} is outside the Thrift type range")
+      end
+      value
     end
 
     def read_i64
-      read_json_integer
+      value = read_json_integer
+      if value < I64_MIN || value > I64_MAX
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, "Integer value #{value} is outside the Thrift type range")
+      end
+      value
     end
 
     def read_double
@@ -843,6 +885,13 @@ module Thrift
 
     def invalid_unicode!(message)
       raise ProtocolException.new(ProtocolException::INVALID_DATA, message)
+    end
+
+    def invalid_number!(value)
+      raise ProtocolException.new(
+        ProtocolException::INVALID_DATA,
+        "Expected numeric value; got \"#{value}\"",
+      )
     end
   end
 
