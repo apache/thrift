@@ -22,7 +22,8 @@ import unittest
 import _import_local_thrift  # noqa
 from thrift.protocol.TJSONProtocol import (TJSONProtocol, TJSONProtocolFactory,
                                            TSimpleJSONProtocol)
-from thrift.protocol.TProtocol import DEFAULT_STRING_LENGTH_LIMIT
+from thrift.protocol.TProtocol import (DEFAULT_STRING_LENGTH_LIMIT,
+                                       TProtocolException)
 from thrift.transport import TTransport
 
 #
@@ -109,6 +110,16 @@ class TestJSONString(unittest.TestCase):
         result_read[u_11] = u_12
 
         self.assertEqual(eval(expected), result_read)
+
+    def test_read_quoted_double(self):
+        # a double must not be quoted in non-key position (e.g. list context)
+        buff = TTransport.TMemoryBuffer(b'["1.5"]')
+        transport = TTransport.TBufferedTransportFactory().getTransport(buff)
+        protocol = TJSONProtocol(transport)
+        protocol.readJSONArrayStart()
+        with self.assertRaises(TProtocolException) as ctx:
+            protocol.readDouble()
+        self.assertEqual(ctx.exception.type, TProtocolException.INVALID_DATA)
 
 
 class TestJSONStringSizeLimit(unittest.TestCase):
