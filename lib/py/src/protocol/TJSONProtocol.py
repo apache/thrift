@@ -385,7 +385,7 @@ class TJSONProtocolBase(TProtocolBase):
             string = self.readJSONString(True)
             try:
                 double = float(string)
-                if (self.context.escapeNum is False and
+                if (self.context.escapeNum() is False and
                         not math.isinf(double) and
                         not math.isnan(double)):
                     raise TProtocolException(
