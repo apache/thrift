@@ -121,7 +121,7 @@ jobs:
       # For the jobs that run on ubuntu-24.04.
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -131,7 +131,7 @@ jobs:
       # does not start there: it needs glibc 2.38, and ubuntu-22.04 has 2.35.
       - name: Archive built thrift compiler (ubuntu-22.04)
         if: matrix.os == 'ubuntu-22.04'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: thrift-compiler-ubuntu-22.04
           path: compiler/cpp/thrift
@@ -172,7 +172,7 @@ jobs:
         run: /usr/local/bin/thrift -version
 
       - name: Archive built thrift compiler (macOS)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp/thrift
@@ -258,7 +258,7 @@ jobs:
 
       - name: Upload php precross artifacts
         if: matrix.php-version == '8.3'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: php-precross
           if-no-files-found: error
@@ -326,7 +326,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.27'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: go-precross
           if-no-files-found: error
@@ -404,7 +404,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: libthrift
           if-no-files-found: error
@@ -417,7 +417,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: java-precross
           if-no-files-found: error
@@ -440,7 +440,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -558,7 +558,7 @@ jobs:
         run: make -C test/netstd precross
 
       - name: Upload netstd precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: netstd-precross
           if-no-files-found: error
@@ -786,7 +786,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: rs-precross
           if-no-files-found: error
@@ -866,7 +866,7 @@ jobs:
 
       - name: Upload python precross artifacts
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: py-precross
           if-no-files-found: error
@@ -981,7 +981,7 @@ jobs:
         run: make -C lib/nodets precross
 
       - name: Upload nodejs precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nodejs-precross
           if-no-files-found: error
@@ -1073,7 +1073,7 @@ jobs:
           grep -aqE "[0-9]+ tests completed" /tmp/lib-js-check.log
 
       - name: Upload log files from a failed run
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: lib-js-check-log
@@ -1139,7 +1139,7 @@ jobs:
           grep -qE "[0-9]+ tests completed" /tmp/lib-ts-check.log
 
       - name: Upload log files from a failed run
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: lib-ts-check-log
@@ -1260,7 +1260,7 @@ jobs:
         run: make -j$(nproc) -C test/cpp precross
 
       - name: Upload cpp precross artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cpp-precross
           if-no-files-found: error
@@ -1274,7 +1274,7 @@ jobs:
           retention-days: 3
 
       - name: Upload log files from failed test runs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: lib-cpp-test-log
@@ -1498,7 +1498,7 @@ jobs:
       - name: Upload ruby precross artifacts
         # has to match the version used in cross-test
         if: matrix.ruby-version == '4.0' && matrix.skip-build-ext == false
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: rb-precross
           if-no-files-found: error
@@ -1649,7 +1649,7 @@ jobs:
         run: python3 test/test.py --server lua --client lua
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: lib-lua-cross-test-log_${{ matrix.lua-version }}
@@ -1820,7 +1820,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
