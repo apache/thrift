@@ -607,6 +607,13 @@ jobs:
           lib/netstd/Tests/codegen/run-NetStd-Codegen-Tests.ps1 `
             -TargetVersions @("net${{ matrix.dotnet-version }}")
 
+      - name: Run netstd codegen tests with the isolated option
+        shell: pwsh
+        run: |
+          lib/netstd/Tests/codegen/run-NetStd-Codegen-Tests.ps1 `
+            -TargetVersions @("net${{ matrix.dotnet-version }}") `
+            -Isolated
+
   lib-haxe-codegen:
     needs: [compiler]
     runs-on: ubuntu-24.04

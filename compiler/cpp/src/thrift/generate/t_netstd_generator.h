@@ -46,6 +46,7 @@ using std::vector;
 
 static const string DEEP_COPY_METHOD_NAME = "DeepCopy";
 static const string CANCELLATION_TOKEN_NAME = "cancellationToken";
+static const string CALL_CONTEXT_NAME = "callContext";
 
 class t_netstd_generator : public t_oop_generator
 {
@@ -64,6 +65,7 @@ public:
   bool is_wcf_enabled() const;
   bool is_hashcode_enabled() const;
   bool is_serialize_enabled() const;
+  bool is_isolated_enabled() const;
   bool is_union_enabled() const;
 
   // overrides
@@ -135,11 +137,16 @@ public:
   static const int MODE_FULL_DECL = 0x00;
   static const int MODE_NO_RETURN = 0x01;
   static const int MODE_NO_ARGS   = 0x02;
+  static const int MODE_CALL_CONTEXT = 0x04;
+  static const int MODE_NO_TOKEN = 0x08;
 
   string type_name(t_type* ttype, bool with_namespace = true);
   string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, bool allow_nullable = true, string prefix = "");
   string function_signature_async(t_function* tfunction, string prefix = "", int mode = MODE_FULL_DECL);
+  string free_parameter_name(t_function* tfunction, string wanted, const string& also_taken);
+  string context_variable_name(t_function* tfunction);
+  string timeout_cause_name(t_function* tfunction);
   string function_signature(t_function* tfunction, string prefix = "");
   string argument_list(t_struct* tstruct, bool with_types = true);
   string type_to_enum(t_type* ttype);
@@ -173,6 +180,7 @@ private:
   bool hashcode_;
   bool serialize_;
   bool wcf_;
+  bool isolated_;
   bool use_pascal_case_properties;
   bool suppress_deepcopy;
   int  target_net_version;  // 0 = any, 6 = net6, 8 = net8, etc.

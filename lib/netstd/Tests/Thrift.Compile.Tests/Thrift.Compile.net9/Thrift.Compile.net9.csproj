@@ -90,6 +90,9 @@
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial,net9 -r ../Thrift6474.thrift" />
     <!-- special options (see ticket) -->
     <Exec Command="$(PathToThrift) -gen netstd:net9                  -r ../Thrift5794.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:net9,isolated -r ../IsolatedCall.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:net9,isolated -r ../IsolatedExceptionName.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:net9,isolated -r ../IsolatedNames.thrift" />
   </Target>
 
 </Project>

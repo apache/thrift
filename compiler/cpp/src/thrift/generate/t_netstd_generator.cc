@@ -59,6 +59,7 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     union_ = false;
     serialize_ = false;
     wcf_ = false;
+    isolated_ = false;
 
     wcf_namespace_.clear();
 
@@ -76,6 +77,9 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
         else if (iter->first.compare("wcf") == 0) {
             wcf_ = true;
             wcf_namespace_ = iter->second;
+        }
+        else if (iter->first.compare("isolated") == 0) {
+          isolated_ = true;
         }
         else if (iter->first.compare("pascal") == 0) {
           use_pascal_case_properties = true;
@@ -128,6 +132,8 @@ bool t_netstd_generator::is_wcf_enabled() const { return wcf_; }
 
 bool t_netstd_generator::is_serialize_enabled() const { return serialize_; }
 
+bool t_netstd_generator::is_isolated_enabled() const { return isolated_; }
+
 bool t_netstd_generator::is_union_enabled() const { return union_; }
 
 void t_netstd_generator::init_generator()
@@ -173,6 +179,7 @@ void t_netstd_generator::init_generator()
     pverbose("- target NET version ... %d\n", target_net_version);
     pverbose("- no_deepcopy .......... %s\n", (suppress_deepcopy ? "ON" : "off"));
     pverbose("- async_postfix ........ %s\n", (add_async_postfix ? "ON" : "off"));
+    pverbose("- isolated ............. %s\n", (isolated_ ? "ON" : "off"));
 }
 
 string t_netstd_generator::normalize_name(string name, bool is_arg_name)
@@ -2436,14 +2443,79 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         << indent() << "{" << '\n';
     indent_up();
 
+    // With the isolated option there is a choice between the constructors, so each one says when to use it.
+    // Default output has nothing to choose from and stays as it is.
+    const string shared_protocol_remark =
+        "Use this constructor when the application owns and configures the protocol and the calls of this client do not overlap. "
+        "The calls share the protocol and its transport, so they must not run at the same time. "
+        "For overlapping calls use the constructor that takes a call-isolated transport.";
+
+    if (isolated_)
+    {
+        out << indent() << "/// <summary>Creates a client that uses one shared protocol for all of its calls.</summary>" << '\n'
+            << indent() << "/// <remarks>" << shared_protocol_remark << "</remarks>" << '\n'
+            << indent() << "/// <param name=\"protocol\">The protocol used for requests and replies. The client takes ownership of it.</param>" << '\n';
+    }
     out << indent() << "public Client(TProtocol protocol) : this(protocol, protocol)" << '\n'
         << indent() << "{" << '\n'
         << indent() << "}" << '\n'
-        << '\n'
-        << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)" << '\n'
+        << '\n';
+
+    if (isolated_)
+    {
+        out << indent() << "/// <summary>Creates a client that uses shared input and output protocols for all of its calls.</summary>" << '\n'
+            << indent() << "/// <remarks>" << shared_protocol_remark << "</remarks>" << '\n'
+            << indent() << "/// <param name=\"inputProtocol\">The protocol used for replies. The client takes ownership of it.</param>" << '\n'
+            << indent() << "/// <param name=\"outputProtocol\">The protocol used for requests. The client takes ownership of it.</param>" << '\n';
+    }
+    out << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)" << '\n'
         << indent() << "{" << '\n'
         << indent() << "}" << '\n'
         << '\n';
+
+    if (isolated_)
+    {
+        // dual mode: next to the legacy constructors, every call can get its own transport view and protocol,
+        // see TBaseClient.CreateCallContext()
+        out << indent() << "/// <summary>Creates a client that gives every call its own transport view and protocol.</summary>" << '\n'
+            << indent() << "/// <remarks>Use this constructor when calls on the same client can overlap, for example over a "
+            << "<c>THttpTransport</c>. The transport must be call-isolated; to add buffering or framing use "
+            << "<c>TIsolatedBufferedTransport</c> or <c>TIsolatedFramedTransport</c>, because a legacy buffered or framed "
+            << "transport is rejected at compile time. The transport applies its per-call timeout to every call, and a call can "
+            << "be given a shorter one through <c>CreateCallContext</c>. The client owns the transport and disposes it, so keep "
+            << "the client alive until all of its calls have completed. A client created this way has no shared protocols: "
+            << "<c>InputProtocol</c> and <c>OutputProtocol</c> throw.</remarks>" << '\n'
+            << indent() << "/// <param name=\"transport\">The call-isolated transport that creates a transport view for each call.</param>" << '\n'
+            << indent() << "/// <param name=\"protocolFactory\">Creates the protocol of each call over its transport view, "
+            << "for example a factory that returns a multiplexed protocol.</param>" << '\n'
+            << indent() << "public Client(global::Thrift.Transport.ICallIsolatedTransport transport, global::Thrift.Protocol.TProtocolFactory protocolFactory) : base(transport, protocolFactory)" << '\n'
+            << indent() << "{" << '\n'
+            << indent() << "}" << '\n'
+            << '\n';
+    }
+
+    // The operations that take a call context use the cancellation token of that context, which combines the caller's
+    // token with the timeouts. A failure caused by the timeout is reported as such, not as a plain cancellation.
+    // The names of the context variable and of the catch variable are chosen per method, so that they never collide
+    // with a parameter of the IDL; the parameters themselves are not renamed.
+    auto begin_ctx_body = [&](const string& ctx)
+    {
+        out << indent() << "var " << CANCELLATION_TOKEN_NAME << " = " << ctx << ".CancellationToken;" << '\n'
+            << indent() << "try" << '\n'
+            << indent() << "{" << '\n';
+        indent_up();
+    };
+    auto end_ctx_body = [&](const string& ctx, const string& cause)
+    {
+        indent_down();
+        out << indent() << "}" << '\n'
+            << indent() << "catch (global::System.Exception " << cause << ") when (" << ctx << ".IsTimeoutFailure(" << cause << "))" << '\n'
+            << indent() << "{" << '\n';
+        indent_up();
+        out << indent() << "throw " << ctx << ".CreateTimeoutException(" << cause << ");" << '\n';
+        indent_down();
+        out << indent() << "}" << '\n';
+    };
 
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::const_iterator functions_iterator;
@@ -2452,14 +2524,46 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
     {
         string raw_func_name = (*functions_iterator)->get_name();
         string function_name = raw_func_name + (add_async_postfix ? "Async" : "");
+        const string ctx = context_variable_name(*functions_iterator);
+        const string cause = timeout_cause_name(*functions_iterator);
 
         // async
         generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << '\n'
             << indent() << "{" << '\n';
         indent_up();
-        out << indent() << "await send_" << function_name << "(";
         string call_args = argument_list((*functions_iterator)->get_arglist(),false);
+        if (isolated_)
+        {
+            // a client built with a call-isolated transport uses a context for exactly the lifetime of this call;
+            // a client built with protocols keeps using the shared protocols below.
+            // The members of the client base class are reached through a cast to the client base class: the service, or an ancestor service (then "base" is its client), may have a method of the same name.
+            out << indent() << "if (((global::Thrift.TBaseClient)this).IsCallIsolated)" << '\n'
+                << indent() << "{" << '\n';
+            indent_up();
+            out << indent() << "using (var " << ctx << " = await ((global::Thrift.TBaseClient)this).CreateCallContextAsync(" << CANCELLATION_TOKEN_NAME << "))" << '\n'
+                << indent() << "{" << '\n';
+            indent_up();
+            out << indent() << "await send_" << function_name << "(" << ctx;
+            if(! call_args.empty()) {
+                out << ", " << call_args;
+            }
+            out << ");" << '\n';
+            if(! (*functions_iterator)->is_oneway()) {
+                out << indent() << ((*functions_iterator)->get_returntype()->is_void() ? "" : "return ")
+                                << "await recv_" << function_name << "(" << ctx << ");" << '\n';
+            }
+            indent_down();
+            out << indent() << "}" << '\n';
+            if ((*functions_iterator)->is_oneway() || (*functions_iterator)->get_returntype()->is_void())
+            {
+                // nothing to return, but the shared-protocol path below must not run as well
+                out << indent() << "return;" << '\n';
+            }
+            indent_down();
+            out << indent() << "}" << '\n' << '\n';
+        }
+        out << indent() << "await send_" << function_name << "(";
         if(! call_args.empty()) {
             out << call_args << ", ";
         }
@@ -2471,114 +2575,157 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         indent_down();
         out << indent() << "}" << '\n' << '\n';
 
-        // async send
-        generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
-        out << indent() << "public async " << function_signature_async(*functions_iterator, "send_", MODE_NO_RETURN) << '\n'
-            << indent() << "{" << '\n';
-        indent_up();
-
-        string tmpvar = tmp("tmp");
-        string argsname = (*functions_iterator)->get_name() + "_args";
-
-        out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
-            << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call")
-            << ", SeqId), " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << '\n'
-            << indent() << "var " << tmpvar << " = new InternalStructs." << argsname << "() {" << '\n';
-        indent_up();
-
-        t_struct* arg_struct = (*functions_iterator)->get_arglist();
-        collect_extensions_types(arg_struct);
-        prepare_member_name_mapping(arg_struct);
-        const vector<t_field*>& fields = arg_struct->get_members();
-        vector<t_field*>::const_iterator fld_iter;
-
-        for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter)
+        // the shared-protocol operations come first; an isolated client adds a second set that takes the call context
+        for (int pass = 0; pass < (isolated_ ? 2 : 1); ++pass)
         {
-            out << indent() << prop_name(*fld_iter) << " = " << normalize_name((*fld_iter)->get_name(),true) << "," << '\n';
-        }
+            const bool ctx_pass = (pass == 1);
+            const string out_protocol = ctx_pass ? ctx + ".Protocol" : "OutputProtocol";
+            const string in_protocol = ctx_pass ? ctx + ".Protocol" : "InputProtocol";
+            const string seq_id = ctx_pass ? ctx + ".SeqId" : "SeqId";
+            const int ctx_mode = ctx_pass ? (MODE_CALL_CONTEXT | MODE_NO_TOKEN) : MODE_FULL_DECL;
 
-        indent_down();
-        out << indent() << "};" << '\n';
-
-
-        out << indent() << '\n'
-            << indent() << "await " << tmpvar << ".WriteAsync(OutputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await OutputProtocol.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await OutputProtocol.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
-
-        indent_down();
-        out << indent() << "}" << '\n' << '\n';
-
-        if (!(*functions_iterator)->is_oneway())
-        {
-            // async recv
+            // async send
+            if (ctx_pass)
+            {
+                out << indent() << "/// <summary>Sends the request of one call. The caller owns <paramref name=\"" << ctx
+                    << "\"/> and must dispose it after the call has completed. The call's cancellation token and timeout"
+                    << " are those of the context.</summary>" << '\n';
+            }
             generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
-            out << indent() << "public async " << function_signature_async(*functions_iterator, "recv_", MODE_NO_ARGS) << '\n'
+            out << indent() << "public async " << function_signature_async(*functions_iterator, "send_", MODE_NO_RETURN | ctx_mode) << '\n'
                 << indent() << "{" << '\n';
             indent_up();
+            if (ctx_pass)
+            {
+                begin_ctx_body(ctx);
+            }
 
-            string resultname = (*functions_iterator)->get_name() + "_result";
-            t_struct noargs(program_);
-            t_struct* xs = (*functions_iterator)->get_xceptions();
-            collect_extensions_types(xs);
-            prepare_member_name_mapping(xs, xs->get_members(), resultname);
+            string tmpvar = tmp("tmp");
+            string argsname = (*functions_iterator)->get_name() + "_args";
 
-            tmpvar = tmp("tmp");
-            out << indent() << '\n'
-                << indent() << "var " << tmpvar << " = await InputProtocol.ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "if (" << tmpvar << ".Type == TMessageType.Exception)" << '\n'
-                << indent() << "{" << '\n';
+            out << indent() << "await " << out_protocol << ".WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
+                << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call")
+                << ", " << seq_id << "), " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                << indent() << '\n'
+                << indent() << "var " << tmpvar << " = new InternalStructs." << argsname << "() {" << '\n';
             indent_up();
 
-            tmpvar = tmp("tmp");
-            out << indent() << "var " << tmpvar << " = await TApplicationException.ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "throw " << tmpvar << ";" << '\n';
+            t_struct* arg_struct = (*functions_iterator)->get_arglist();
+            collect_extensions_types(arg_struct);
+            prepare_member_name_mapping(arg_struct);
+            const vector<t_field*>& fields = arg_struct->get_members();
+            vector<t_field*>::const_iterator fld_iter;
+
+            for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter)
+            {
+                out << indent() << prop_name(*fld_iter) << " = " << normalize_name((*fld_iter)->get_name(),true) << "," << '\n';
+            }
+
             indent_down();
+            out << indent() << "};" << '\n';
 
-            tmpvar = tmp("tmp");
-            out << indent() << "}" << '\n'
-                << '\n'
-                << indent() << "var " << tmpvar << " = new InternalStructs." << resultname << "();" << '\n'
-                << indent() << "await " << tmpvar << ".ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
 
-            if (!(*functions_iterator)->get_returntype()->is_void())
+            out << indent() << '\n'
+                << indent() << "await " << tmpvar << ".WriteAsync(" << out_protocol << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                << indent() << "await " << out_protocol << ".WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                << indent() << "await " << out_protocol << ".Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+
+            if (ctx_pass)
             {
-                out << indent() << "if (" << tmpvar << ".__isset.success)" << '\n'
-                    << indent() << "{" << '\n';
-                indent_up();
-                string nullable_value = nullable_value_access((*functions_iterator)->get_returntype());
-                out << indent() << "return " << tmpvar << ".Success" << nullable_value << ";" << '\n';
-                indent_down();
-                out << indent() << "}" << '\n';
+                end_ctx_body(ctx, cause);
             }
-
-            const vector<t_field*>& xceptions = xs->get_members();
-            vector<t_field*>::const_iterator x_iter;
-            for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
-            {
-                out << indent() << "if (" << tmpvar << ".__isset." << get_isset_name(normalize_name((*x_iter)->get_name())) << ")" << '\n'
-                    << indent() << "{" << '\n';
-                indent_up();
-                out << indent() << "throw " << tmpvar << "." << prop_name(*x_iter) << nullable_value_access((*x_iter)->get_type()) << ";" << '\n';
-                indent_down();
-                out << indent() << "}" << '\n';
-            }
-
-            if (!(*functions_iterator)->get_returntype()->is_void())
-            {
-                out << indent() << "throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, \""
-                    << function_name << " failed: unknown result\");" << '\n';
-            }
-
-            cleanup_member_name_mapping(xs);
             indent_down();
             out << indent() << "}" << '\n' << '\n';
-        }
 
-        cleanup_member_name_mapping(arg_struct);
+            if (!(*functions_iterator)->is_oneway())
+            {
+                // async recv
+                if (ctx_pass)
+                {
+                    out << indent() << "/// <summary>Receives the reply of the call that was sent with <paramref name=\"" << ctx
+                        << "\"/>; a reply with a different sequence id is rejected. The call's cancellation token and timeout"
+                        << " are those of the context.</summary>" << '\n';
+                }
+                generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
+                out << indent() << "public async " << function_signature_async(*functions_iterator, "recv_", MODE_NO_ARGS | ctx_mode) << '\n'
+                    << indent() << "{" << '\n';
+                indent_up();
+                if (ctx_pass)
+                {
+                    begin_ctx_body(ctx);
+                }
+
+                string resultname = (*functions_iterator)->get_name() + "_result";
+                t_struct noargs(program_);
+                t_struct* xs = (*functions_iterator)->get_xceptions();
+                collect_extensions_types(xs);
+                prepare_member_name_mapping(xs, xs->get_members(), resultname);
+
+                tmpvar = tmp("tmp");
+                out << indent() << '\n'
+                    << indent() << "var " << tmpvar << " = await " << in_protocol << ".ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                if (ctx_pass)
+                {
+                    // a reply (including an exception reply) must belong to this call
+                    out << indent() << ctx << ".ValidateReply(" << tmpvar << ");" << '\n';
+                }
+                out << indent() << "if (" << tmpvar << ".Type == TMessageType.Exception)" << '\n'
+                    << indent() << "{" << '\n';
+                indent_up();
+
+                tmpvar = tmp("tmp");
+                out << indent() << "var " << tmpvar << " = await TApplicationException.ReadAsync(" << in_protocol << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                    << indent() << "await " << in_protocol << ".ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                    << indent() << "throw " << tmpvar << ";" << '\n';
+                indent_down();
+
+                tmpvar = tmp("tmp");
+                out << indent() << "}" << '\n'
+                    << '\n'
+                    << indent() << "var " << tmpvar << " = new InternalStructs." << resultname << "();" << '\n'
+                    << indent() << "await " << tmpvar << ".ReadAsync(" << in_protocol << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                    << indent() << "await " << in_protocol << ".ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+
+                if (!(*functions_iterator)->get_returntype()->is_void())
+                {
+                    out << indent() << "if (" << tmpvar << ".__isset.success)" << '\n'
+                        << indent() << "{" << '\n';
+                    indent_up();
+                    string nullable_value = nullable_value_access((*functions_iterator)->get_returntype());
+                    out << indent() << "return " << tmpvar << ".Success" << nullable_value << ";" << '\n';
+                    indent_down();
+                    out << indent() << "}" << '\n';
+                }
+
+                const vector<t_field*>& xceptions = xs->get_members();
+                vector<t_field*>::const_iterator x_iter;
+                for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
+                {
+                    out << indent() << "if (" << tmpvar << ".__isset." << get_isset_name(normalize_name((*x_iter)->get_name())) << ")" << '\n'
+                        << indent() << "{" << '\n';
+                    indent_up();
+                    out << indent() << "throw " << tmpvar << "." << prop_name(*x_iter) << nullable_value_access((*x_iter)->get_type()) << ";" << '\n';
+                    indent_down();
+                    out << indent() << "}" << '\n';
+                }
+
+                if (!(*functions_iterator)->get_returntype()->is_void())
+                {
+                    out << indent() << "throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, \""
+                        << function_name << " failed: unknown result\");" << '\n';
+                }
+
+                cleanup_member_name_mapping(xs);
+                if (ctx_pass)
+                {
+                    end_ctx_body(ctx, cause);
+                }
+                indent_down();
+                out << indent() << "}" << '\n' << '\n';
+            }
+
+            cleanup_member_name_mapping(arg_struct);
+        }
     }
 
     indent_down();
@@ -4066,6 +4213,37 @@ string t_netstd_generator::function_signature(t_function* tfunction, string pref
     return type_name(ttype) + " " + func_name(normalize_name(prefix + tfunction->get_name())) + "(" + argument_list(tfunction->get_arglist()) + ")";
 }
 
+// A name that no parameter of the method has: the wanted name, with underscores appended until it is free.
+// The parameters keep the names of the IDL, so callers that pass arguments by name are not affected by the option.
+string t_netstd_generator::free_parameter_name(t_function* tfunction, string wanted, const string& also_taken)
+{
+    bool taken = true;
+    while (taken)
+    {
+        taken = (wanted == also_taken);
+        const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+        for (vector<t_field*>::const_iterator f_iter = fields.begin(); !taken && f_iter != fields.end(); ++f_iter)
+        {
+            taken = (normalize_name((*f_iter)->get_name(), true) == wanted);
+        }
+        if (taken)
+        {
+            wanted += "_";
+        }
+    }
+    return wanted;
+}
+
+string t_netstd_generator::context_variable_name(t_function* tfunction)
+{
+    return free_parameter_name(tfunction, CALL_CONTEXT_NAME, "");
+}
+
+string t_netstd_generator::timeout_cause_name(t_function* tfunction)
+{
+    return free_parameter_name(tfunction, "timeoutCause_", context_variable_name(tfunction));
+}
+
 string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix, int mode)
 {
     t_type* ttype = tfunction->get_returntype();
@@ -4076,15 +4254,22 @@ string t_netstd_generator::function_signature_async(t_function* tfunction, strin
     }
 
     string result = task + " " + func_name(normalize_name(prefix + tfunction->get_name()) + (add_async_postfix ? "Async" : "")) + "(";
+    string parameters;
+    if((mode & MODE_CALL_CONTEXT) != 0) {
+        parameters = "global::Thrift.TCallContext " + context_variable_name(tfunction);
+    }
     if((mode & MODE_NO_ARGS) == 0) {
         string args = argument_list(tfunction->get_arglist());
-        result += args;
         if (!args.empty())
         {
-            result += ", ";
+            parameters += (parameters.empty() ? "" : ", ") + args;
         }
     }
-    result += "CancellationToken " + CANCELLATION_TOKEN_NAME + " = default)";
+    // the operations that take a call context use the token of that context
+    if((mode & MODE_NO_TOKEN) == 0) {
+        parameters += (parameters.empty() ? "" : ", ") + string("CancellationToken ") + CANCELLATION_TOKEN_NAME + " = default";
+    }
+    result += parameters + ")";
 
     return result;
 }
@@ -4299,5 +4484,6 @@ THRIFT_REGISTER_GENERATOR(
     "    net9:            Enable features that require net9 and C# 13 or higher.\n"
     "    net10:           Enable features that require net10 and C# 14 or higher.\n"
     "    no_deepcopy:     Suppress generation of " + DEEP_COPY_METHOD_NAME + "() method.\n"
+    "    isolated:        Generate clients that use a per-call TCallContext (own protocol and transport view per call).\n"
     "    async_postfix:   Append \"Async\" to all service methods (maintains compatibility with existing code).\n"
 )
