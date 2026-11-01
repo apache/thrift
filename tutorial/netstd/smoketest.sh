@@ -36,6 +36,7 @@ CASES=(
   "-tr:tcptls"
   "-tr:namedpipe"
   "-tr:http"
+  "-tr:http -isolated"
 )
 
 cd "$(dirname "$0")" || exit 1
