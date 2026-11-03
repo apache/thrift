@@ -292,6 +292,15 @@ const
   NAME_SET    = 'set';
   NAME_UUID   = 'uid';
 
+  // JSON numbers cannot express these doubles, so they go over the wire as strings
+  VALUE_NAN          = 'NaN';
+  VALUE_INFINITY     = 'Infinity';
+  VALUE_NEG_INFINITY = '-Infinity';
+
+  // FloatToStr() spells the infinities like this, which is what older versions of this library wrote
+  VALUE_OLD_INFINITY     = 'INF';
+  VALUE_OLD_NEG_INFINITY = '-INF';
+
   INVARIANT_CULTURE : TFormatSettings
                     = ( ThousandSeparator: ',';
                         DecimalSeparator: '.');
@@ -618,14 +627,15 @@ var str : string;
 begin
   FContext.Write;
 
-  str := FloatToStr( num, INVARIANT_CULTURE);
-  special := FALSE;
+  special := Math.IsNaN(num) or Math.IsInfinite(num);
 
-  case UpCase(str[1]) of
-    'N' : special := TRUE;  // NaN
-    'I' : special := TRUE;  // Infinity
-    '-' : special := (UpCase(str[2]) = 'I'); // -Infinity
-  end;
+  if not special
+  then str := FloatToStr( num, INVARIANT_CULTURE)
+  else if Math.IsNaN(num)
+  then str := VALUE_NAN
+  else if num > 0
+  then str := VALUE_INFINITY
+  else str := VALUE_NEG_INFINITY;
 
   escapeNum := special or FContext.EscapeNumbers;
 
@@ -995,7 +1005,17 @@ begin
   if FReader.Peek = QUOTE[0]
   then begin
     str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString( TRUE));
-    dub := StrToFloat( str, INVARIANT_CULTURE);
+
+    // Don't leave these to TryStrToFloat(): it refuses "Infinity", and what it takes depends on the Delphi version
+    if SameText( str, VALUE_NAN)
+    then Exit( Math.NaN);
+    if SameText( str, VALUE_INFINITY) or SameText( str, VALUE_OLD_INFINITY)
+    then Exit( Math.Infinity);
+    if SameText( str, VALUE_NEG_INFINITY) or SameText( str, VALUE_OLD_NEG_INFINITY)
+    then Exit( Math.NegInfinity);
+
+    if not TryStrToFloat( str, dub, INVARIANT_CULTURE)
+    then raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+')');
 
     if not FContext.EscapeNumbers()
     and not Math.IsNaN(dub)
@@ -1012,13 +1032,9 @@ begin
   if FContext.EscapeNumbers
   then ReadJSONSyntaxChar( QUOTE[0]);
 
-  try
-    str := ReadJSONNumericChars;
-    result := StrToFloat( str, INVARIANT_CULTURE);
-  except
-    on e:Exception
-    do raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+') ('+e.Message+')');
-  end;
+  str := ReadJSONNumericChars;
+  if not TryStrToFloat( str, result, INVARIANT_CULTURE)
+  then raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+')');
 end;
 
 
