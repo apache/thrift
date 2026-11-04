@@ -2265,6 +2265,8 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
         t_type* ttype = (*f_iter)->get_type();
 
         generate_null_check_begin(out, *f_iter);
+        // the field ID goes in first, so that the same value hashes differently in another field
+        out << indent() << "hashcode = (hashcode * 397) + " << (*f_iter)->get_key() << ";" << '\n';
         out << indent() << "hashcode = (hashcode * 397) + ";
         if (ttype->is_container()) {
             out << "TCollections.GetHashCode(" << prop_name((*f_iter)) << ")";
