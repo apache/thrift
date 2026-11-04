@@ -30,6 +30,8 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>    
+    <!-- generated members that hide inherited ones must say so, and only those -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS0108;CS0109;CS0114</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -72,6 +74,7 @@
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../name_conflicts.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../../../../../test/ThriftTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift4833.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5253.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5320.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:union,serial -r ../Thrift5382.thrift" />

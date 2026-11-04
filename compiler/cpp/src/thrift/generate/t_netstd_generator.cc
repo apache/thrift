@@ -1239,7 +1239,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
         generate_netstd_doc(out, *m_iter);
-        generate_property(out, *m_iter, true, true);
+        generate_property(out, *m_iter, true, true, is_exception);
         bool is_required = field_is_required((*m_iter));
         if (is_required)
         {
@@ -3379,12 +3379,12 @@ void t_netstd_generator::generate_serialize_list_element(ostream& out, t_list* t
     generate_serialize_field(out, &efield, "", false, false);
 }
 
-void t_netstd_generator::generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset)
+void t_netstd_generator::generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset, bool in_exception)
 {
-    generate_netstd_property(out, tfield, isPublic, generateIsset, "_");
+    generate_netstd_property(out, tfield, isPublic, generateIsset, "_", in_exception);
 }
 
-void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset, string fieldPrefix)
+void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset, string fieldPrefix, bool in_exception)
 {
     if ((is_serialize_enabled() || is_wcf_enabled()) && isPublic)
     {
@@ -3394,6 +3394,7 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
 
     out << indent()
         << (isPublic ? "public " : "private ")
+        << (hides_inherited_member(prop_name(tfield), in_exception) ? "new " : "")
         << type_name(tfield->get_type())
         << nullable_field_suffix(tfield)
         << " "
@@ -3651,6 +3652,26 @@ string t_netstd_generator::convert_to_pascal_case(const string& str) {
 
 string t_netstd_generator::get_isset_name(const string& str) {
   return ("Isset" != str) ? str : str + "_";
+}
+
+
+// Whether a member of that name hides one that every generated class inherits from System.Object,
+// or that an exception inherits from System.Exception. Such a member is declared "new", which keeps
+// the inherited one intact (CS0108, CS0114). Equals(), GetHashCode() and ToString() are left out,
+// as the generated classes declare them themselves, and so is Finalize(), which cannot be hidden.
+bool t_netstd_generator::hides_inherited_member(const string& name, bool in_exception) {
+  static const std::set<string> object_members = {
+    "GetType", "MemberwiseClone", "ReferenceEquals"
+  };
+  static const std::set<string> exception_members = {
+    "Data", "GetBaseException", "GetObjectData", "HelpLink", "HResult", "InnerException",
+    "Message", "SerializeObjectState", "Source", "StackTrace", "TargetSite"
+  };
+
+  if (object_members.find(name) != object_members.end()) {
+    return true;
+  }
+  return in_exception && (exception_members.find(name) != exception_members.end());
 }
 
 
