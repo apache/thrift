@@ -60,14 +60,6 @@ typedef struct _ThriftMultiplexedProcessorClass ThriftMultiplexedProcessorClass;
 /* used by THRIFT_TYPE_MULTIPLEXED_PROCESSOR */
 GType thrift_multiplexed_processor_get_type (void);
 
-/*!
- * Processes the request.
- * \public \memberof ThriftMultiplexedProcessorClass
- */
-gboolean thrift_multiplexed_processor_process (ThriftMultiplexedProcessor *processor,
-                                   ThriftProtocol *in, ThriftProtocol *out,
-                                   GError **error);
-
 
 /* Public API */
 
