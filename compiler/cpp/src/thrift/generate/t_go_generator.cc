@@ -433,6 +433,17 @@ std::string t_go_generator::variable_name_to_go_name(const std::string& value) {
   return value2 + "_a1";
 }
 
+/**
+ * Function arguments become parameters of the generated client method, whose
+ * receiver is named "p", so an argument of that name gets the keyword suffix.
+ */
+std::string t_go_generator::argument_name_to_go_name(const std::string& value) {
+  if (value == "p") {
+    return value + "_a1";
+  }
+  return variable_name_to_go_name(value);
+}
+
 std::string t_go_generator::package_name_to_go_name(const std::string& value) {
   // Go package names only need to avoid keywords; "error" remains a valid package name.
   if (value == "error") {
@@ -2519,7 +2530,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_types_ << indent() << argsName << "." << publicize((*fld_iter)->get_name())
-               << " = " << variable_name_to_go_name((*fld_iter)->get_name()) << '\n';
+               << " = " << argument_name_to_go_name((*fld_iter)->get_name()) << '\n';
     }
 
     if (!(*f_iter)->is_oneway()) {
@@ -4698,7 +4709,7 @@ string t_go_generator::argument_list(t_struct* tstruct) {
       result += ", ";
     }
 
-    result += variable_name_to_go_name((*f_iter)->get_name()) + " "
+    result += argument_name_to_go_name((*f_iter)->get_name()) + " "
               + type_to_go_type((*f_iter)->get_type());
   }
 
