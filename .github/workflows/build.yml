@@ -1517,9 +1517,6 @@ jobs:
         # OTP and rebar3 are one axis, not two: rebar3 3.18.0 -- the version
         # build/docker/ubuntu-*/Dockerfile installs, next to OTP 25.3.2.9 --
         # does not load on OTP 27 or later, and 3.27.0 does not load on OTP 25.
-        # OTP 29 is left out because the eunit-only meck 0.9.2 dependency does
-        # not compile there any more, deprecated 'catch' having become an
-        # error; add it here once THRIFT-6186 is closed.
         include:
           - otp-version: "25.3"
             rebar3-version: "3.18.0"
@@ -1528,6 +1525,8 @@ jobs:
           - otp-version: "27.3"
             rebar3-version: "3.27.0"
           - otp-version: "28.5"
+            rebar3-version: "3.27.0"
+          - otp-version: "29.1"
             rebar3-version: "3.27.0"
       fail-fast: false
     steps:
