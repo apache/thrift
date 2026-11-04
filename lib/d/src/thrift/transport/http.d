@@ -375,7 +375,11 @@ private:
       if (httpBufRemaining_.length == 0) {
         // We have given all the data, reset position to head of the buffer.
         httpBufRemaining_ = httpBuf_[0 .. 0];
-        if (!refill()) return size - need;
+        if (!refill()) {
+          // The peer stopped before the end of the body it announced.
+          throw new TTransportException("Unexpected end of stream while reading an HTTP body",
+            TTransportException.Type.END_OF_FILE);
+        }
       }
 
       auto give = min(httpBufRemaining_.length, need);
@@ -866,7 +870,7 @@ unittest {
 }
 
 unittest {
-  import std.exception : assertThrown;
+  import std.exception : assertThrown, collectException;
   import thrift.transport.memory;
 
   // Everything a peer can send that stops in the middle of the header block.
@@ -910,16 +914,16 @@ unittest {
     assert(http.read(buf) == 0);
   }
 
-  // A complete header block whose body never arrives is a different case and
-  // is left as it is: the body does not go through readLine(), and
-  // readContent() reports a short read by returning fewer bytes than were
-  // declared rather than by throwing. Pinned here so that the boundary of the
-  // change above is visible.
-  {
-    auto http = new TServerHttpTransport(new TMemoryBuffer(
-      cast(ubyte[])"POST / HTTP/1.1\r\nContent-Length: 5\r\n\r\n"));
+  // A complete header block whose body stops short of its Content-Length is
+  // the end of the stream as well, whether none of the body arrives or only
+  // part of it.
+  foreach (wire; ["POST / HTTP/1.1\r\nContent-Length: 5\r\n\r\n",
+                  "POST / HTTP/1.1\r\nContent-Length: 10\r\n\r\nhello"]) {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])wire.dup));
     ubyte[64] buf;
-    assert(http.read(buf) == 0);
+    auto e = collectException!TTransportException(http.read(buf));
+    assert(e !is null, "a body shorter than its Content-Length was read without an error");
+    assert(e.type == TTransportException.Type.END_OF_FILE);
   }
 
   // And a complete request still reads.
