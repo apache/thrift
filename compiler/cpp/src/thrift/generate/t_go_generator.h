@@ -352,6 +352,7 @@ private:
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
+  static std::string argument_name_to_go_name(const std::string& value);
   static std::string package_name_to_go_name(const std::string& value);
   static bool omit_initialization(t_field* tfield);
   void begin_types_declaration();

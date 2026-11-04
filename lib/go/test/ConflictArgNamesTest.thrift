@@ -28,5 +28,6 @@ service ConflictArgNamesTest {
     3: string meta,
     4: string r,
     5: string err,
+    6: string p,
   )
 }

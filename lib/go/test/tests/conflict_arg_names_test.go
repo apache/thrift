@@ -20,8 +20,43 @@
 package tests
 
 import (
+	"context"
+	"testing"
+
 	"github.com/apache/thrift/lib/go/test/gopath/src/conflictargnamestest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 // We just want to make sure that the conflictargnamestest package compiles.
 var _ = conflictargnamestest.GoUnusedProtection__
+
+// The client puts every argument into the request, also those named like
+// identifiers of the generated client method itself.
+func TestConflictArgNamesClientSendsArgs(t *testing.T) {
+	var sent thrift.TStruct
+	client := conflictargnamestest.NewConflictArgNamesTestClient(thrift.WrappedTClient{
+		Wrapped: func(_ context.Context, _ string, args, _ thrift.TStruct) (thrift.ResponseMeta, error) {
+			sent = args
+			return thrift.ResponseMeta{}, nil
+		},
+	})
+	if err := client.TestNameConflicts(context.Background(), "result", "meta", "r", "err", "p"); err != nil {
+		t.Fatalf("TestNameConflicts: %v", err)
+	}
+
+	args, ok := sent.(*conflictargnamestest.ConflictArgNamesTestTestNameConflictsArgs)
+	if !ok {
+		t.Fatalf("client sent %T, want *conflictargnamestest.ConflictArgNamesTestTestNameConflictsArgs", sent)
+	}
+	for _, arg := range []struct{ name, got string }{
+		{"result", args.Result_},
+		{"meta", args.Meta},
+		{"r", args.R},
+		{"err", args.Err},
+		{"p", args.P},
+	} {
+		if arg.got != arg.name {
+			t.Errorf("argument %s arrived as %q, want %q", arg.name, arg.got, arg.name)
+		}
+	}
+}
