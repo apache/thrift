@@ -122,7 +122,7 @@ public:
         gen_dynbaseclass_frozen_exc_ = (iter->second);
       } else if( iter->first.compare("dynimport") == 0) {
         gen_dynbase_ = true;
-        import_dynbase_ = (iter->second);
+        import_dynbase_ = (iter->second) + "\n";
       } else if( iter->first.compare("zope.interface") == 0) {
         gen_zope_interface_ = true;
       } else if( iter->first.compare("twisted") == 0) {
