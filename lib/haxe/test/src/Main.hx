@@ -29,6 +29,7 @@ import tests.MultiplexTest;
 import tests.FramedTransportTest;
 import tests.JSONLimitTest;
 import tests.LayeredSizeCheckTest;
+import tests.MaxContainerSizeTest;
 import tests.MessageReadBudgetTest;
 import tests.NegativeSizeTest;
 import tests.RecursionLimitTest;
@@ -104,6 +105,7 @@ class Main
 					tests.NegativeSizeTest.Run(server);
 					tests.LayeredSizeCheckTest.Run(server);
 					tests.MessageReadBudgetTest.Run(server);
+					tests.MaxContainerSizeTest.Run(server);
 					#if !php  // TServerSocket does not listen on this target
 					tests.ServerSocketConfigTest.Run(server);
 					#end
