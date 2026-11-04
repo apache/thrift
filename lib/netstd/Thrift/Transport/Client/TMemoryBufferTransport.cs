@@ -56,8 +56,10 @@ namespace Thrift.Transport.Client
             }
             set
             {
+                // resizes the buffer only, content that no longer fits is cut off
                 Array.Resize(ref Bytes, value);
-                _bytesUsed = value;
+                _bytesUsed = Math.Min(_bytesUsed, value);
+                Position = Math.Min(Position, _bytesUsed);
             }
         }
 
