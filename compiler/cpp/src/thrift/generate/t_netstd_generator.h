@@ -82,8 +82,8 @@ public:
   // additional files
   void generate_extensions_file();
 
-  void generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset);
-  void generate_netstd_property(ostream& out, t_field* tfield, bool isPublic, bool includeIsset = true, string fieldPrefix = "");
+  void generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset, bool in_exception = false);
+  void generate_netstd_property(ostream& out, t_field* tfield, bool isPublic, bool includeIsset = true, string fieldPrefix = "", bool in_exception = false);
   bool print_const_value(ostream& out, string name, t_type* type, t_const_value* value, bool in_static, bool defval = false, bool needtype = false);
   string render_const_value(ostream& out, string name, t_type* type, t_const_value* value);
   void print_const_constructor(ostream& out, vector<t_const*> consts);
@@ -210,6 +210,7 @@ private:
   void cleanup_member_name_mapping(void* scope);
   string get_mapped_member_name(string oldname);
   string get_isset_name(const string& str);
+  bool hides_inherited_member(const string& name, bool in_exception);
   string get_deep_copy_method_call(t_type* ttype, bool is_not_null, bool& needs_typecast, string& suffix);
   string deep_copy_expression(const string& source, t_type* ttype, bool is_not_null, bool& needs_typecast, bool null_conditional = false);
   string extensions_class_name(t_program* program);
