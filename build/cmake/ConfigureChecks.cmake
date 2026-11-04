@@ -74,14 +74,6 @@ check_function_exists(sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX)
 check_function_exists(sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN)
 
 
-check_cxx_source_compiles(
-  "
-  #include <string.h>
-  int main(){char b;char *a = strerror_r(0, &b, 0); static_cast<void>(a); return(0);}
-  "
-  STRERROR_R_CHAR_P)
-
-
 set(PACKAGE ${PACKAGE_NAME})
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(VERSION ${thrift_VERSION})

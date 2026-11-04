@@ -86,6 +86,7 @@ set(UnitTest_SOURCES
     Base64Test.cpp
     ToStringTest.cpp
     TypedefTest.cpp
+    TOutputTest.cpp
     TServerSocketTest.cpp
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
