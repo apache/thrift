@@ -31,6 +31,29 @@
 namespace apache {
 namespace thrift {
 
+#ifdef HAVE_STRERROR_R
+namespace {
+
+// The C library declares one of two strerror_r() functions, depending on the
+// library and on feature macros such as _GNU_SOURCE, which g++ always defines.
+// Overloading on its result lets the compiler pick the matching one, so the
+// choice does not depend on what configure found.
+
+// GNU: returns the message, which need not be in buf.
+inline const char* strerror_r_message(const char* result, const char* buf) {
+  THRIFT_UNUSED_VARIABLE(buf);
+  return result;
+}
+
+// XSI: returns 0, or on failure an error number (-1 and errno before glibc
+// 2.13). Some libraries still write a message for an unknown error number.
+inline const char* strerror_r_message(int result, const char* buf) {
+  return (result == 0 || buf[0] != '\0') ? buf : nullptr;
+}
+
+} // namespace
+#endif // HAVE_STRERROR_R
+
 TOutput::TOutput() : f_(&errorTimeWrapper) {}
 
 void TOutput::printf(const char* message, ...) {
@@ -113,17 +136,12 @@ std::string TOutput::strerror_s(int errno_copy) {
   char b_errbuf[1024] = {'\0'};
 
 #ifdef HAVE_STRERROR_R
-#ifdef STRERROR_R_CHAR_P
-  char* b_error = ::strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
-#else // STRERROR_R_CHAR_P
-  char* b_error = b_errbuf;
-  int rv = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
-  if (rv == -1) {
-    // strerror_r failed.  omgwtfbbq.
+  const char* b_error
+      = strerror_r_message(::strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf)), b_errbuf);
+  if (b_error == nullptr) {
     return "XSI-compliant strerror_r() failed with errno = "
            + to_string(errno_copy);
   }
-#endif // STRERROR_R_CHAR_P
 #else // HAVE_STRERROR_R
 #ifdef _WIN32
   const size_t size = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
