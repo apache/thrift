@@ -283,6 +283,7 @@ SKILL.md
 /lib/php/src/ext/thrift_protocol/missing
 /lib/php/src/ext/thrift_protocol/mkinstalldirs
 /lib/php/src/ext/thrift_protocol/modules/
+/lib/php/src/ext/thrift_protocol/php_thrift_protocol.dep
 /lib/php/src/ext/thrift_protocol/php_thrift_protocol.lo
 /lib/php/src/ext/thrift_protocol/php_thrift_protocol.loT
 /lib/php/src/ext/thrift_protocol/run-tests.php
