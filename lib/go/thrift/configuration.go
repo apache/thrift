@@ -419,7 +419,7 @@ func (f *tTransportFactoryConf) GetTransport(orig TTransport) (TTransport, error
 }
 
 func (f *tTransportFactoryConf) SetTConfiguration(cfg *TConfiguration) {
-	PropagateTConfiguration(f.delegate, f.cfg)
+	PropagateTConfiguration(f.delegate, cfg)
 	f.cfg = cfg
 }
 
@@ -445,7 +445,7 @@ func (f *tProtocolFactoryConf) GetProtocol(trans TTransport) TProtocol {
 }
 
 func (f *tProtocolFactoryConf) SetTConfiguration(cfg *TConfiguration) {
-	PropagateTConfiguration(f.delegate, f.cfg)
+	PropagateTConfiguration(f.delegate, cfg)
 	f.cfg = cfg
 }
 

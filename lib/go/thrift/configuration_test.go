@@ -336,3 +336,59 @@ func TestPropagateTConfiguration(t *testing.T) {
 	var transFactory TTransportFactory
 	PropagateTConfiguration(transFactory, cfg)
 }
+
+// recordingTransportFactory hands back the transport it is given and
+// remembers the configuration it was handed.
+type recordingTransportFactory struct {
+	conf *TConfiguration
+}
+
+func (f *recordingTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
+	return trans, nil
+}
+
+func (f *recordingTransportFactory) SetTConfiguration(conf *TConfiguration) {
+	f.conf = conf
+}
+
+// recordingProtocolFactory makes binary protocols and remembers the
+// configuration it was handed.
+type recordingProtocolFactory struct {
+	conf *TConfiguration
+}
+
+func (f *recordingProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	return NewTBinaryProtocolConf(trans, f.conf)
+}
+
+func (f *recordingProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	f.conf = conf
+}
+
+// A configuration set on the factory TTransportFactoryConf returns reaches
+// the factory it wraps.
+func TestTTransportFactoryConfSetTConfiguration(t *testing.T) {
+	delegate := &recordingTransportFactory{}
+	factory := TTransportFactoryConf(delegate, &TConfiguration{MaxFrameSize: 1024})
+
+	updated := &TConfiguration{MaxFrameSize: 2048}
+	PropagateTConfiguration(factory, updated)
+	if delegate.conf != updated {
+		t.Errorf("wrapped factory has MaxFrameSize %d, want %d",
+			delegate.conf.GetMaxFrameSize(), updated.GetMaxFrameSize())
+	}
+}
+
+// A configuration set on the factory TProtocolFactoryConf returns reaches
+// the factory it wraps.
+func TestTProtocolFactoryConfSetTConfiguration(t *testing.T) {
+	delegate := &recordingProtocolFactory{}
+	factory := TProtocolFactoryConf(delegate, &TConfiguration{MaxFrameSize: 1024})
+
+	updated := &TConfiguration{MaxFrameSize: 2048}
+	PropagateTConfiguration(factory, updated)
+	if delegate.conf != updated {
+		t.Errorf("wrapped factory has MaxFrameSize %d, want %d",
+			delegate.conf.GetMaxFrameSize(), updated.GetMaxFrameSize())
+	}
+}
