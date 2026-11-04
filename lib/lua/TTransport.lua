@@ -62,7 +62,9 @@ TTransportBase = __TObject:new{
 }
 
 -- Refuses a length the peer declared before anything is read on account of it.
+-- With no limit given, DEFAULT_MAX_SIZE applies.
 function TTransportBase:checkDeclaredSize(size, limit)
+  limit = limit or DEFAULT_MAX_SIZE
   if size < 0 then
     terror(TTransportException:new{
       message = 'Read a negative size (' .. tostring(size) .. ')',

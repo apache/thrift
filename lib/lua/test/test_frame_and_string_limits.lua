@@ -124,6 +124,28 @@ trans, inner = framed_over(string.len(payload), payload)
 ok, err = pcall(function() return trans:read(string.len(payload)) end)
 check(ok and err == payload, 'a frame within the maximum still reads')
 
+-- checkDeclaredSize() is shared by every transport. Given no limit it holds
+-- the size to DEFAULT_MAX_SIZE, and what it raises is a TTransportException.
+ok, err = pcall(function()
+  TTransportBase:checkDeclaredSize(DEFAULT_MAX_SIZE + 1, nil)
+end)
+check(not ok and
+      tostring(err):find('TTransportException', 1, true) ~= nil and
+      tostring(err):find('exceeds maximum ' .. DEFAULT_MAX_SIZE, 1, true) ~= nil,
+      'with no limit, a size over DEFAULT_MAX_SIZE raises a ' ..
+      'TTransportException: ' .. tostring(err))
+ok, err = pcall(function()
+  TTransportBase:checkDeclaredSize(DEFAULT_MAX_SIZE, nil)
+end)
+check(ok, 'with no limit, a size of DEFAULT_MAX_SIZE is accepted: ' ..
+      tostring(err))
+ok, err = pcall(function() TTransportBase:checkDeclaredSize(-1, nil) end)
+check(not ok and
+      tostring(err):find('TTransportException', 1, true) ~= nil and
+      tostring(err):find('negative size', 1, true) ~= nil,
+      'with no limit, a negative size raises a TTransportException: ' ..
+      tostring(err))
+
 --------------------------------------------------------------------------
 -- String length
 --------------------------------------------------------------------------
