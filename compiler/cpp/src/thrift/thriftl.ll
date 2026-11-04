@@ -168,13 +168,14 @@ literal_begin (['\"])
  /* Rather, the parser will grab it out of the global. */
   if (g_parse_mode == PROGRAM) {
     clear_doctext();
+    // parsed is "/**", the text and "*/". The "*/" becomes a blank before the
+    // copy is made: a NUL in the text ends the C string short of it.
+    parsed.replace(parsed.length() - 2, 2, " ");
     g_doctext = strdup(parsed.c_str() + 3);
-    assert(strlen(g_doctext) >= 2);
-    g_doctext[strlen(g_doctext) - 2] = ' ';
-    g_doctext[strlen(g_doctext) - 1] = '\0';
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
-    if( (g_program_doctext_candidate == nullptr) && (g_program_doctext_status == INVALID)){
+    // clean_up_doctext() returns nullptr for a comment with nothing but blanks.
+    if( (g_doctext != nullptr) && (g_program_doctext_candidate == nullptr) && (g_program_doctext_status == INVALID)){
       g_program_doctext_candidate = strdup(g_doctext);
       g_program_doctext_lineno = g_doctext_lineno;
       g_program_doctext_status = STILL_CANDIDATE;
