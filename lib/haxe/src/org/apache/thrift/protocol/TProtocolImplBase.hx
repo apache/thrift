@@ -65,18 +65,29 @@ class TProtocolImplBase {
     }
 
 
+	// Throws if a container declares more elements than TConfiguration.MaxContainerSize allows
+	private function CheckContainerSize(size : Int) : Void
+	{
+		var limit = Configuration.MaxContainerSize;
+		if ((limit > 0) && (size > limit))
+			throw new TProtocolException(TProtocolException.SIZE_LIMIT, 'Container of ${size} elements exceeds the limit of ${limit}');
+	}
+
 	private function CheckReadBytesAvailableSet(set : TSet) : Void
 	{
+		CheckContainerSize(set.size);
 		Transport.CheckReadBytesAvailable(Int64.ofInt(set.size) * Int64.ofInt(GetMinSerializedSize(set.elemType)));
 	}
 
 	private function CheckReadBytesAvailableList(list : TList) : Void
 	{
+		CheckContainerSize(list.size);
 		Transport.CheckReadBytesAvailable(Int64.ofInt(list.size) * Int64.ofInt(GetMinSerializedSize(list.elemType)));
 	}
 
 	private function CheckReadBytesAvailableMap (map : TMap) : Void
 	{
+		CheckContainerSize(map.size);
 		var elmSize = GetMinSerializedSize(map.keyType) + GetMinSerializedSize(map.valueType);
 		Transport.CheckReadBytesAvailable(Int64.ofInt(map.size) * Int64.ofInt(elmSize));
 	}

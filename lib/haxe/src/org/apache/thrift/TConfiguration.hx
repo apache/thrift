@@ -29,6 +29,10 @@ class TConfiguration
 	public var MaxFrameSize(default,default) : Int = DEFAULT_MAX_FRAME_SIZE;
 	public var RecursionLimit(default,default) : Int = DEFAULT_RECURSION_DEPTH;
 
+	// Max. number of elements a single list, set or map may declare when it is read.
+	// Any value <= 0, which is the default, leaves the count without a limit of its own.
+	public var MaxContainerSize(default,default) : Int = 0;
+
 	// TODO(JensG): add connection and i/o timeouts
 	
 	public function new() {
