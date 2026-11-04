@@ -150,6 +150,7 @@ jobs:
           make -j"$(nproc)" -C test/cpp precross
 
           make -j"$(nproc)" -C lib/c_glib
+          make -j"$(nproc)" -C lib/c_glib/test
           make -j"$(nproc)" -C test/c_glib precross
 
       - name: Run cppcheck
