@@ -192,6 +192,7 @@ SKILL.md
 /lib/c_glib/thriftc.pc
 /lib/c_glib/thrift_c_glib.pc
 /lib/d/test/*.pem
+/lib/d/index.html
 /lib/d/libthriftd*.a
 /lib/d/test/async_test
 /lib/d/test/client_pool_test
