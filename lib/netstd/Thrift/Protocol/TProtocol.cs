@@ -83,18 +83,31 @@ namespace Thrift.Protocol
         }
 
 
+        // Throws if a container declares more elements than TConfiguration.MaxContainerSize allows
+        private void CheckContainerSize(int count)
+        {
+            var limit = Transport.Configuration.MaxContainerSize;
+            if ((limit > 0) && (count > limit))
+            {
+                throw new TProtocolException(TProtocolException.SIZE_LIMIT, $"Container of {count} elements exceeds the limit of {limit}");
+            }
+        }
+
         protected void CheckReadBytesAvailable(TSet set)
         {
+            CheckContainerSize(set.Count);
             Transport.CheckReadBytesAvailable((long)set.Count * GetMinSerializedSize(set.ElementType));
         }
 
         protected void CheckReadBytesAvailable(TList list)
         {
+            CheckContainerSize(list.Count);
             Transport.CheckReadBytesAvailable((long)list.Count * GetMinSerializedSize(list.ElementType));
         }
 
         protected void CheckReadBytesAvailable(TMap map)
         {
+            CheckContainerSize(map.Count);
             var elmSize = GetMinSerializedSize(map.KeyType) + GetMinSerializedSize(map.ValueType);
             Transport.CheckReadBytesAvailable((long)map.Count * elmSize);
         }
