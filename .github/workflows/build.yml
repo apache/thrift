@@ -1516,18 +1516,18 @@ jobs:
       matrix:
         # OTP and rebar3 are one axis, not two: rebar3 3.18.0 -- the version
         # build/docker/ubuntu-*/Dockerfile installs, next to OTP 25.3.2.9 --
-        # does not load on OTP 27 or later, and 3.27.0 does not load on OTP 25.
+        # does not load on OTP 27 or later, and 3.28.0 does not load on OTP 25.
         include:
           - otp-version: "25.3"
             rebar3-version: "3.18.0"
           - otp-version: "26.2"
-            rebar3-version: "3.27.0"
+            rebar3-version: "3.28.0"
           - otp-version: "27.3"
-            rebar3-version: "3.27.0"
+            rebar3-version: "3.28.0"
           - otp-version: "28.5"
-            rebar3-version: "3.27.0"
+            rebar3-version: "3.28.0"
           - otp-version: "29.1"
-            rebar3-version: "3.27.0"
+            rebar3-version: "3.28.0"
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
