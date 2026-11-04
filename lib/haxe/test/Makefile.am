@@ -25,15 +25,15 @@ RECURSIVE = $(top_srcdir)/test/Recursive.thrift
 CONSTANTSDEMO = $(top_srcdir)/test/ConstantsDemo.thrift
 
 BIN_CPP = bin/Main-debug
-BIN_PHP = bin/php/Main-debug.php
+BIN_PHP = bin/php/index.php
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
 
-gen-haxe/thrift/test/Aggr.hx: $(AGGR)
+gen-haxe/Aggr.hx: $(AGGR)
 	$(THRIFTCMD) $(AGGR)
 
-gen-haxe/thrift/test/BenchmarkService.hx: $(BENCHMARK)
+gen-haxe/BenchmarkService.hx: $(BENCHMARK)
 	$(THRIFTCMD) $(BENCHMARK)
 
 gen-haxe/CoRec.hx: $(RECURSIVE)
@@ -46,20 +46,24 @@ all-local: $(BIN_CPP) $(BIN_PHP)
 
 $(BIN_CPP): \
 		src/*.hx \
+		src/tests/*.hx \
+		../src/org/apache/thrift/*.hx \
 		../src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx \
-		gen-haxe/thrift/test/Aggr.hx \
-		gen-haxe/thrift/test/BenchmarkService.hx \
+		gen-haxe/Aggr.hx \
+		gen-haxe/BenchmarkService.hx \
 		gen-haxe/CoRec.hx \
 		gen-haxe/constantsDemo/ConstantsDemoConstants.hx
 	$(HAXE) --cwd .  cpp.hxml
 
 $(BIN_PHP): \
 		src/*.hx \
+		src/tests/*.hx \
+		../src/org/apache/thrift/*.hx \
 		../src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx \
-		gen-haxe/thrift/test/Aggr.hx \
-		gen-haxe/thrift/test/BenchmarkService.hx \
+		gen-haxe/Aggr.hx \
+		gen-haxe/BenchmarkService.hx \
 		gen-haxe/CoRec.hx \
 		gen-haxe/constantsDemo/ConstantsDemoConstants.hx
 	$(HAXE) --cwd .  php.hxml
