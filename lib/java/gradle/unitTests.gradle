@@ -65,8 +65,8 @@ test {
         outputs.upToDateWhen { false }
     }
 
-    include '**/Test*.class'
-    exclude '**/Test*\$*.class'
+    include '**/Test*.class', '**/*Test.class'
+    exclude '**/Test*\$*.class', '**/*Test\$*.class'
 
     // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle
     useJUnitPlatform() {
