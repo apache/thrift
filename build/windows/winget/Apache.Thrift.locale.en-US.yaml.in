@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.28.0.schema.json
 
 PackageIdentifier: Apache.Thrift
 PackageVersion: __VERSION__
@@ -56,4 +56,4 @@ Documentations:
   - DocumentLabel: Tutorial
     DocumentUrl: https://thrift.apache.org/tutorial/
 ManifestType: defaultLocale
-ManifestVersion: 1.12.0
+ManifestVersion: 1.28.0
