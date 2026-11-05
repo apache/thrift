@@ -202,19 +202,22 @@ int luaopen_libluasocket(lua_State *L) {
 // sock,err create() -> any port on localhost
 static int l_socket_create(lua_State *L) {
   const char *err;
-  t_socket sock;
+  t_socket sock = -1;
   const char *addr = lua_tostring(L, 1);
   if (!addr) {
     addr = DEFAULT_HOST;
   }
   unsigned short port = lua_tonumber(L, 2);
+  // Allocate the userdata before the socket: lua_newuserdata raises on memory
+  // exhaustion, which would leak a descriptor created earlier. On failure the
+  // unused userdata stays below the two values returned.
+  p_tcp tcp = (p_tcp)lua_newuserdata(L, sizeof(t_tcp));
   err = tcp_create(&sock);
   if (!err) {
     err = tcp_bind(&sock, addr, port); // bind on create
     if (err) {
       tcp_destroy(&sock);
     } else {
-      p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
       settype(L, -2, SOCKET_GENERIC);
       socket_setnonblocking(&sock);
       tcp->sock = sock;
@@ -234,7 +237,7 @@ static int l_socket_destroy(lua_State *L) {
 
 // send(socket, data)
 static int l_socket_send(lua_State *L) {
-  p_tcp self = (p_tcp) checktype(L, 1, SOCKET_CONN);
+  checktype(L, 1, SOCKET_CONN);
   p_tcp tcp = (p_tcp) checktype(L, 2, SOCKET_CONN);
   size_t len;
   const char *data = luaL_checklstring(L, 3, &len);
@@ -306,12 +309,14 @@ static int l_socket_getsockinfo(lua_State *L) {
 static int l_socket_accept(lua_State *L) {
   const char *err;
   p_tcp self = (p_tcp) checktype(L, 1, SOCKET_SERVER);
-  t_socket sock;
+  t_socket sock = -1;
+  // Allocate the userdata first, so that a memory error cannot leak the
+  // accepted descriptor.
+  p_tcp client = (p_tcp)lua_newuserdata(L, sizeof(t_tcp));
   err = tcp_accept(&self->sock, &sock, self->timeout);
   if (!err) { // Success
     // Create a reference to the client
-    p_tcp client = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-    settype(L, 2, SOCKET_CLIENT);
+    settype(L, -2, SOCKET_CLIENT);
     socket_setnonblocking(&sock);
     client->sock = sock;
     client->timeout = self->timeout;
@@ -340,21 +345,24 @@ extern double __gettime();
 static int l_socket_create_and_connect(lua_State *L) {
   const char* err = NULL;
   double end;
-  t_socket sock;
+  t_socket sock = -1;
   const char *host = luaL_checkstring(L, 1);
   unsigned short port = luaL_checknumber(L, 2);
   int timeout = luaL_checknumber(L, 3);
+  // Allocate the userdata before any socket exists: lua_newuserdata raises on
+  // memory exhaustion, which would leak the connected descriptor.
+  p_tcp tcp = (p_tcp)lua_newuserdata(L, sizeof(t_tcp));
 
   // Create and connect loop for timeout milliseconds
   end = __gettime() + timeout / 1000.0;
   do {
     // Create and connect the socket
+    sock = -1; // tcp_create_and_connect leaves it unset when name lookup fails
     err = tcp_create_and_connect(&sock, host, port, timeout);
     if (err) {
       tcp_destroy(&sock);
       usleep(100000); // sleep for 100ms
     } else {
-      p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
       settype(L, -2, SOCKET_CLIENT);
       socket_setnonblocking(&sock);
       tcp->sock = sock;

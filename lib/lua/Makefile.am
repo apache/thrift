@@ -86,16 +86,18 @@ EXTRA_DIST = \
 		test/test_container_limits.lua \
 		test/test_json_escapes.lua \
 		test/test_socket_write.lua \
-		test/test_socket_timeout.lua
+		test/test_socket_timeout.lua \
+		test/test_longnumber_arith.lua
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-# test_socket_send and test_socket_accept compile usocket.c into themselves,
-# with send(), accept() and select() replaced by scripted stand-ins, so they
+# test_socket_send, test_socket_accept and test_socket_flags compile usocket.c into themselves,
+# with send(), accept(), select() and fcntl() replaced by scripted stand-ins, so they
 # need neither Lua nor a network.
-check_PROGRAMS = test/test_socket_send test/test_socket_accept
+check_PROGRAMS = test/test_socket_send test/test_socket_accept test/test_socket_flags
 test_test_socket_send_SOURCES = test/test_socket_send.c
 test_test_socket_accept_SOURCES = test/test_socket_accept.c
+test_test_socket_flags_SOURCES = test/test_socket_flags.c
 
 # test_recursion_depth.lua loads its generated types from gen-lua/ next to it.
 test/gen-lua/RecursionDepth_ttypes.lua: test/RecursionDepth.thrift $(THRIFT)
@@ -110,8 +112,10 @@ check-local: test/gen-lua/RecursionDepth_ttypes.lua
 	$(LUA) test/test_json_escapes.lua
 	$(LUA) test/test_socket_write.lua
 	$(LUA) test/test_socket_timeout.lua
+	$(LUA) test/test_longnumber_arith.lua
 	./test/test_socket_send
 	./test/test_socket_accept
+	./test/test_socket_flags
 
 clean-local:
 	$(RM) -r test/gen-lua
