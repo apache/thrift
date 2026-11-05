@@ -91,6 +91,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'JavaAnnotationTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
     thriftCompile(it, 'FuzzTest.thrift')
+    thriftCompile(it, 'JavaRequiredUnion.thrift')
 }
 
 task generateOptionalTypeJava(group: 'Build') {
