@@ -1952,8 +1952,13 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << indent() << "public override int GetHashCode()" << '\n';
     out << indent() << "{" << '\n';
     indent_up();
+    // as in the member classes, the ID of the field that is set goes in first
+    out << indent() << "int hashcode = 157;" << '\n';
+    out << indent() << "unchecked {" << '\n';
+    indent_up();
+    out << indent() << "hashcode = (hashcode * 397) + Isset;" << '\n';
     if(target_net_version >= 6) {
-        out << indent() << "return Isset switch" << '\n';
+        out << indent() << "hashcode = (hashcode * 397) + (Isset switch" << '\n';
         out << indent() << "{" << '\n';
         indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
@@ -1967,7 +1972,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         }
         out << indent() << "_ =>  (new ___undefined()).GetHashCode()" << '\n';
         indent_down();
-        out << indent() << "};" << '\n';
+        out << indent() << "});" << '\n';
     } else {
         out << indent() << "switch (Isset)" << '\n';
         out << indent() << "{" << '\n';
@@ -1977,20 +1982,26 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
             string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");
             out << indent() << "case " << (*f_iter)->get_key() << ":" << '\n';
             indent_up();
-            out << indent() << "return As_" << (*f_iter)->get_name() << null_coalesce << ".GetHashCode()";
+            out << indent() << "hashcode = (hashcode * 397) + ";
             if( null_coalesce.size() > 0) {
-              out << " ?? 0";
+              out << "(As_" << (*f_iter)->get_name() << null_coalesce << ".GetHashCode() ?? 0);" << '\n';
+            } else {
+              out << "As_" << (*f_iter)->get_name() << ".GetHashCode();" << '\n';
             }
-            out << ";" << '\n';
+            out << indent() << "break;" << '\n';
             indent_down();
         }
         out << indent() << "default:" << '\n';
         indent_up();
-        out << indent() << "return (new ___undefined()).GetHashCode();" << '\n';
+        out << indent() << "hashcode = (hashcode * 397) + (new ___undefined()).GetHashCode();" << '\n';
+        out << indent() << "break;" << '\n';
         indent_down();
         indent_down();
         out << indent() << "}" << '\n';
     }
+    indent_down();
+    out << indent() << "}" << '\n';
+    out << indent() << "return hashcode;" << '\n';
     indent_down();
     out << indent() << "}" << '\n' << '\n';
 
@@ -2131,6 +2142,8 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     }
     out << indent() << "if (ReferenceEquals(this, other)) return true;" << '\n';
     out << '\n';
+    out << indent() << "if(this.Isset != other.Isset) return false;" << '\n';
+    out << '\n';
     out << indent() << "return Equals( _data, other.As_" << tfield->get_name() << ");" << '\n';
     indent_down();
     out << indent() << "}" << '\n' << '\n';
@@ -2138,7 +2151,15 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "public override int GetHashCode()" << '\n';
     out << indent() << "{" << '\n';
     indent_up();
-    out << indent() << "return _data.GetHashCode();" << '\n';
+    // the field ID goes in first, so that the same value hashes differently in another member
+    out << indent() << "int hashcode = 157;" << '\n';
+    out << indent() << "unchecked {" << '\n';
+    indent_up();
+    out << indent() << "hashcode = (hashcode * 397) + " << tfield->get_key() << ";" << '\n';
+    out << indent() << "hashcode = (hashcode * 397) + _data.GetHashCode();" << '\n';
+    indent_down();
+    out << indent() << "}" << '\n';
+    out << indent() << "return hashcode;" << '\n';
     indent_down();
     out << indent() << "}" << '\n' << '\n';
 
