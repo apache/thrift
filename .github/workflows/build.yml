@@ -235,6 +235,10 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
+      # This job runs no top-level make check, so run the PHP tutorial check here.
+      - name: Check that the PHP tutorial code follows its IDL
+        run: make -C tutorial/php check
+
       - name: Build Thrift Classes
         run: |
           mkdir -p ./lib/php/test/Resources/packages/php
