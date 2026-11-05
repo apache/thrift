@@ -27,9 +27,17 @@ require "bundler/gem_tasks"
 THRIFT = "../../compiler/cpp/thrift"
 
 task default: [:gem]
-task spec: [:'gen-rb', :build_ext, :realspec]
+task spec: [:'gen-rb', :build_ext, :realspec, :flatspec]
 
 RSpec::Core::RakeTask.new(:realspec) do |t|
+  # flat_spec.rb loads a second, un-namespaced copy of the same IDL; sharing a
+  # process with namespaced_spec.rb redefines its constants (THRIFT-3384).
+  t.exclude_pattern = "spec/flat_spec.rb"
+  t.rspec_opts = ["--color", "--format d"]
+end
+
+RSpec::Core::RakeTask.new(:flatspec) do |t|
+  t.pattern = "spec/flat_spec.rb"
   t.rspec_opts = ["--color", "--format d"]
 end
 
