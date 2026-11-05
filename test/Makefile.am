@@ -30,7 +30,7 @@ SUBDIRS += cl
 PRECROSS_TARGET += precross-cl
 endif
 
-if WITH_CPP
+if WITH_CPP_TESTS
 SUBDIRS += cpp
 PRECROSS_TARGET += precross-cpp
 endif
