@@ -2266,7 +2266,8 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
 
         generate_null_check_begin(out, *f_iter);
         out << indent() << "hashcode = (hashcode * 397) + ";
-        if (ttype->is_container()) {
+        // by content, the same way as Equals() compares them
+        if (ttype->is_container() || ttype->is_binary()) {
             out << "TCollections.GetHashCode(" << prop_name((*f_iter)) << ")";
         }
         else {
