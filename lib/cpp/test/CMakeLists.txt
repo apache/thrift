@@ -20,8 +20,11 @@
 # Unit tests still require boost
 include(BoostMacros)
 REQUIRE_BOOST_HEADERS()
-set(BOOST_COMPONENTS unit_test_framework)
-REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
+# Boost.Test is built here from its headers, in BoostTestFramework.cpp, and
+# linked statically, so the dynamic-link defines that DefineOptions.cmake sets
+# for the rest of the build must not apply.
+remove_definitions(-DBOOST_ALL_DYN_LINK -DBOOST_TEST_DYN_LINK)
+add_library(boosttestframework STATIC BoostTestFramework.cpp)
 
 include(ThriftMacros)
 
@@ -102,7 +105,7 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})
-target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
+target_link_libraries(UnitTests testgencpp boosttestframework)
 target_link_libraries(UnitTests thrift)
 if(WITH_ZLIB)
     target_link_libraries(UnitTests thriftz)
@@ -120,7 +123,7 @@ add_executable(UnitTestsUuid
     UnitTestMain.cpp
     TUuidTestBoost.cpp
 )
-target_link_libraries(UnitTestsUuid testgencpp ${Boost_LIBRARIES})
+target_link_libraries(UnitTestsUuid testgencpp boosttestframework)
 target_link_libraries(UnitTestsUuid thrift)
 target_compile_definitions(UnitTestsUuid PUBLIC THRIFT_TUUID_SUPPORT_BOOST_UUID)
 add_test(NAME UnitTestsUuid COMMAND UnitTestsUuid)
@@ -131,7 +134,7 @@ add_executable(UnitTestsUuidNoDirective
     UnitTestMain.cpp
     TUuidTestBoostNoDirective.cpp
 )
-target_link_libraries(UnitTestsUuidNoDirective testgencpp ${Boost_LIBRARIES})
+target_link_libraries(UnitTestsUuidNoDirective testgencpp boosttestframework)
 target_link_libraries(UnitTestsUuidNoDirective thrift)
 add_test(NAME UnitTestsUuidNoDirective COMMAND UnitTestsUuidNoDirective)
 
@@ -147,7 +150,7 @@ endif()
 add_executable(TInterruptTest ${TInterruptTest_SOURCES})
 target_link_libraries(TInterruptTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
@@ -158,7 +161,7 @@ add_test(NAME TInterruptTest COMMAND TInterruptTest -- "${CMAKE_CURRENT_SOURCE_D
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
     testgencpp_cob
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TServerIntegrationTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
@@ -169,7 +172,7 @@ add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 add_executable(TServerExceptionTest TServerExceptionTest.cpp)
 target_link_libraries(TServerExceptionTest
     testgencpp_cob
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TServerExceptionTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
@@ -182,7 +185,7 @@ include_directories(SYSTEM "${ZLIB_INCLUDE_DIRS}")
 add_executable(TransportTest TransportTest.cpp)
 target_link_libraries(TransportTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
     ${ZLIB_LIBRARIES}
 )
 target_link_libraries(TransportTest thrift)
@@ -192,7 +195,7 @@ add_test(NAME TransportTest COMMAND TransportTest)
 add_executable(ZlibTest ZlibTest.cpp)
 target_link_libraries(ZlibTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
     ${ZLIB_LIBRARIES}
 )
 target_link_libraries(ZlibTest thrift)
@@ -203,7 +206,7 @@ endif(WITH_ZLIB)
 add_executable(AnnotationTest AnnotationTest.cpp)
 target_link_libraries(AnnotationTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(AnnotationTest thrift)
 add_test(NAME AnnotationTest COMMAND AnnotationTest)
@@ -211,7 +214,7 @@ add_test(NAME AnnotationTest COMMAND AnnotationTest)
 add_executable(EnumTest EnumTest.cpp)
 target_link_libraries(EnumTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(EnumTest thrift)
 add_test(NAME EnumTest COMMAND EnumTest)
@@ -220,7 +223,7 @@ if(HAVE_GETOPT_H)
 add_executable(TFileTransportTest TFileTransportTest.cpp)
 target_link_libraries(TFileTransportTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TFileTransportTest thrift)
 add_test(NAME TFileTransportTest COMMAND TFileTransportTest)
@@ -228,21 +231,21 @@ endif()
 
 add_executable(TFDTransportTest TFDTransportTest.cpp)
 target_link_libraries(TFDTransportTest
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TFDTransportTest thrift)
 add_test(NAME TFDTransportTest COMMAND TFDTransportTest)
 
 add_executable(TPipedTransportTest TPipedTransportTest.cpp)
 target_link_libraries(TPipedTransportTest
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TPipedTransportTest thrift)
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
 add_executable(TTransportFactoryConfigTest TTransportFactoryConfigTest.cpp)
 target_link_libraries(TTransportFactoryConfigTest
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TTransportFactoryConfigTest thrift)
 if(WITH_ZLIB)
@@ -260,7 +263,7 @@ set(AllProtocolsTest_SOURCES
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
 target_link_libraries(AllProtocolsTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(AllProtocolsTest thrift)
 add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
@@ -270,7 +273,7 @@ if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
     add_executable(DebugProtoTest DebugProtoTest.cpp)
     target_link_libraries(DebugProtoTest
         testgencpp
-        ${Boost_LIBRARIES}
+        boosttestframework
     )
     target_link_libraries(DebugProtoTest thrift)
     add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
@@ -279,7 +282,7 @@ endif()
 add_executable(JSONProtoTest JSONProtoTest.cpp)
 target_link_libraries(JSONProtoTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(JSONProtoTest thrift)
 add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
@@ -287,7 +290,7 @@ add_test(NAME JSONProtoTest COMMAND JSONProtoTest)
 add_executable(OptionalRequiredTest OptionalRequiredTest.cpp)
 target_link_libraries(OptionalRequiredTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(OptionalRequiredTest thrift)
 add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
@@ -295,7 +298,7 @@ add_test(NAME OptionalRequiredTest COMMAND OptionalRequiredTest)
 add_executable(RecursiveTest RecursiveTest.cpp)
 target_link_libraries(RecursiveTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(RecursiveTest thrift)
 add_test(NAME RecursiveTest COMMAND RecursiveTest)
@@ -303,7 +306,7 @@ add_test(NAME RecursiveTest COMMAND RecursiveTest)
 add_executable(SpecializationTest SpecializationTest.cpp)
 target_link_libraries(SpecializationTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(SpecializationTest thrift)
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
@@ -343,7 +346,7 @@ if(WITH_LIBEVENT)
     add_executable(processor_test ${processor_test_SOURCES})
     target_link_libraries(processor_test
         testgencpp_cob
-        ${Boost_LIBRARIES}
+        boosttestframework
     )
     target_link_libraries(processor_test thriftnb)
     add_test(NAME processor_test COMMAND processor_test)
@@ -353,7 +356,7 @@ if(WITH_LIBEVENT)
     include_directories(${LIBEVENT_INCLUDE_DIRS})
     target_link_libraries(TNonblockingServerTest
         testgencpp_cob
-        ${Boost_LIBRARIES}
+        boosttestframework
     )
     target_link_libraries(TNonblockingServerTest thriftnb)
     add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
@@ -364,7 +367,7 @@ if(WITH_LIBEVENT)
       include_directories(${LIBEVENT_INCLUDE_DIRS})
       target_link_libraries(TNonblockingSSLServerTest
         testgencpp_cob
-        ${Boost_LIBRARIES}
+        boosttestframework
       )
       target_link_libraries(TNonblockingSSLServerTest thriftnb)
       add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
@@ -374,7 +377,7 @@ if(WITH_LIBEVENT)
     add_executable(TEvhttpServerRequestContextTest ${TEvhttpServerRequestContextTest_SOURCES})
     include_directories(${LIBEVENT_INCLUDE_DIRS})
     target_link_libraries(TEvhttpServerRequestContextTest
-        ${Boost_LIBRARIES}
+        boosttestframework
     )
     target_link_libraries(TEvhttpServerRequestContextTest thriftnb)
     add_test(NAME TEvhttpServerRequestContextTest COMMAND TEvhttpServerRequestContextTest)
@@ -384,7 +387,7 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
 add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)
 target_link_libraries(OpenSSLManualInitTest
     ${OPENSSL_LIBRARIES}
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(OpenSSLManualInitTest thrift)
 add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
@@ -392,7 +395,7 @@ add_test(NAME OpenSSLManualInitTest COMMAND OpenSSLManualInitTest)
 add_executable(SecurityTest SecurityTest.cpp)
 target_link_libraries(SecurityTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
@@ -402,7 +405,7 @@ add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/
 
 add_executable(TSSLSocketMatchNameTest TSSLSocketMatchNameTest.cpp)
 target_link_libraries(TSSLSocketMatchNameTest
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(TSSLSocketMatchNameTest thrift)
 add_test(NAME TSSLSocketMatchNameTest COMMAND TSSLSocketMatchNameTest)
@@ -410,7 +413,7 @@ add_test(NAME TSSLSocketMatchNameTest COMMAND TSSLSocketMatchNameTest)
 add_executable(SecurityFromBufferTest SecurityFromBufferTest.cpp)
 target_link_libraries(SecurityFromBufferTest
     testgencpp
-    ${Boost_LIBRARIES}
+    boosttestframework
 )
 target_link_libraries(SecurityFromBufferTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD" AND NOT MINGW)
