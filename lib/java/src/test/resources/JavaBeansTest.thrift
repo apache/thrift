@@ -33,6 +33,14 @@ struct OneOfEachBeans {
   11: list<i64> i64_list
 }
 
+union BeansUnion {
+  1: i32 number,
+  2: string text
+}
+
+struct BeansRequiredUnionHolder {
+  1: required BeansUnion choice
+}
 
 service Service {
   i64 mymethod(i64 blah);
