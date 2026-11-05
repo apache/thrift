@@ -44,10 +44,8 @@
 #include <inttypes.h>
 #endif
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
-#include <boost/random/random_device.hpp>
+#include "TestKeysDir.h"
+#include "TestOptions.h"
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -61,6 +59,11 @@ using namespace apache::thrift::async;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
+
+// True if s begins with prefix.
+static bool startsWith(const string& s, const char* prefix) {
+  return s.rfind(prefix, 0) == 0;
+}
 
 //
 // A pedantic protocol that checks to make sure the response sequence ID
@@ -196,11 +199,11 @@ bool print_eq(T expected, T actual) {
 
 int binary_test(ThriftTestClient& testClient, string::size_type siz);
 
-BOOST_CONSTEXPR_OR_CONST int ERR_BASETYPES = 1;
-BOOST_CONSTEXPR_OR_CONST int ERR_STRUCTS = 2;
-BOOST_CONSTEXPR_OR_CONST int ERR_CONTAINERS = 4;
-BOOST_CONSTEXPR_OR_CONST int ERR_EXCEPTIONS = 8;
-BOOST_CONSTEXPR_OR_CONST int ERR_UNKNOWN = 64;
+constexpr int ERR_BASETYPES = 1;
+constexpr int ERR_STRUCTS = 2;
+constexpr int ERR_CONTAINERS = 4;
+constexpr int ERR_EXCEPTIONS = 8;
+constexpr int ERR_UNKNOWN = 64;
 
 int main(int argc, char** argv) {
   cout.precision(19);
@@ -221,42 +224,31 @@ int main(int argc, char** argv) {
 
   int return_code = 0;
 
-  boost::program_options::options_description desc("Allowed options");
-  desc.add_options()
-      ("help,h", "produce help message")
-      ("host",
-          boost::program_options::value<string>(&host)->default_value(host),
-          "Host to connect")
-      ("port",
-          boost::program_options::value<int>(&port)->default_value(port),
-          "Port number to connect")
-      ("domain-socket",
-          boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
-          "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
-      ("abstract-namespace",
-          "Look for the domain socket in the Abstract Namespace"
-          " (no connection with filesystem pathnames)")
-      ("transport",
-          boost::program_options::value<string>(&transport_type)->default_value(transport_type),
-          "Transport: buffered, framed, http, evhttp, zlib")
-      ("protocol",
-          boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-          "Protocol: binary, compact, header, json, multi, multic, multih, multij")
-      ("ssl",
-          "Encrypted Transport using SSL")
-      ("zlib",
-          "Wrap Transport with Zlib")
-      ("testloops,n",
-          boost::program_options::value<int>(&numTests)->default_value(numTests),
-          "Number of Tests")
-      ("noinsane",
-          "Do not run insanity test");
+  TestOptions desc("Allowed options");
+  desc.flag("help,h", "produce help message")
+      .value("host", &host, "Host to connect")
+      .value("port", &port, "Port number to connect")
+      .value("domain-socket", &domain_socket,
+             "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+      .flag("abstract-namespace",
+            "Look for the domain socket in the Abstract Namespace"
+            " (no connection with filesystem pathnames)")
+      .value("transport", &transport_type, "Transport: buffered, framed, http, evhttp, zlib")
+      .value("protocol", &protocol_type,
+             "Protocol: binary, compact, header, json, multi, multic, multih, multij")
+      .flag("ssl", "Encrypted Transport using SSL")
+      .flag("zlib", "Wrap Transport with Zlib")
+      .value("testloops,n", &numTests, "Number of Tests")
+      .flag("noinsane", "Do not run insanity test");
+  try {
+    desc.parse(argc, argv);
+  } catch (invalid_argument& e) {
+    cerr << e.what() << '\n';
+    cout << desc << '\n';
+    return ERR_UNKNOWN;
+  }
 
-  boost::program_options::variables_map vm;
-  boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
-  boost::program_options::notify(vm);
-
-  if (vm.count("help")) {
+  if (desc.count("help")) {
     cout << desc << '\n';
     return ERR_UNKNOWN;
   }
@@ -294,19 +286,19 @@ int main(int argc, char** argv) {
     return ERR_UNKNOWN;
   }
 
-  if (vm.count("ssl")) {
+  if (desc.count("ssl")) {
     ssl = true;
   }
 
-  if (vm.count("zlib")) {
+  if (desc.count("zlib")) {
     zlib = true;
   }
 
-  if (vm.count("abstract-namespace")) {
+  if (desc.count("abstract-namespace")) {
     abstract_namespace = true;
   }
 
-  if (vm.count("noinsane")) {
+  if (desc.count("noinsane")) {
     noinsane = true;
   }
 
@@ -318,25 +310,21 @@ int main(int argc, char** argv) {
   std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
-    boost::filesystem::path testDir = boost::filesystem::system_complete(argv[0]).parent_path();
-    while (!boost::filesystem::exists(testDir / "keys" / "CA.pem")) {
-      boost::filesystem::path parent = testDir.parent_path();
-      if (parent == testDir) {
-        cerr << "Unable to locate test/keys from " << argv[0] << '\n';
-        return ERR_UNKNOWN;
-      }
-      testDir = parent;
+    const string testDir = findTestKeysDir(argv[0], "CA.pem");
+    if (testDir.empty()) {
+      cerr << "Unable to locate test/keys from " << argv[0] << '\n';
+      return ERR_UNKNOWN;
     }
-    string caPath = (testDir / "keys" / "CA.pem").string();
-    string certPath = (testDir / "keys" / "client_v3.crt").string();
-    string keyPath = (testDir / "keys" / "client_v3.key").string();
+    string caPath = testDir + "/keys/CA.pem";
+    string certPath = testDir + "/keys/client_v3.crt";
+    string keyPath = testDir + "/keys/client_v3.key";
 
     auto fileExists = [](const std::string& path) {
       std::ifstream f(path.c_str());
       return f.good();
     };
 
-    cout << "Client Path            : " << testDir.string() << '\n';
+    cout << "Client Path            : " << testDir << '\n';
     cout << "Client Certificate File: " << certPath << " (" << std::boolalpha << fileExists(certPath) << ")"<< '\n';
     cout << "Client Key         File: " << keyPath  << " (" << std::boolalpha << fileExists(keyPath) << ")"<< '\n';
     cout << "CA                 File: " << caPath   << " (" << std::boolalpha << fileExists(caPath) << ")"<< '\n';
@@ -389,7 +377,7 @@ int main(int argc, char** argv) {
     protocol = std::make_shared<TPedanticBinaryProtocol>(transport);
   }
 
-  if (boost::starts_with(protocol_type, "multi")) {
+  if (startsWith(protocol_type, "multi")) {
     protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
     // we don't need access to the original protocol any more, so...
     protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
@@ -481,7 +469,7 @@ int main(int argc, char** argv) {
     // Multiplexed protocol - call another service method
     // in the middle of the ThriftTest
     //
-    if (boost::starts_with(protocol_type, "multi")) {
+    if (startsWith(protocol_type, "multi")) {
     SecondServiceClient ssc(protocol2);
     // transport is already open...
 
