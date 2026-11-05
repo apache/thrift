@@ -23,7 +23,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using shared;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net.Security;
@@ -370,7 +370,7 @@ Sample:
 
         public class CalculatorAsyncHandler : Calculator.IAsync
         {
-            private readonly Dictionary<int, SharedStruct> _log = [];
+            private readonly ConcurrentDictionary<int, SharedStruct> _log = [];
 
             public CalculatorAsyncHandler()
             {
