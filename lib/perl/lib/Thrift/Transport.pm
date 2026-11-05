@@ -103,7 +103,15 @@ sub readAll
     my $got = 0;
 
     while (($got = length($data)) < $len) {
-        $data .= $self->read($len - $got);
+        my $buf = $self->read($len - $got);
+
+        # A read that returns nothing is the end of the stream: asking again
+        # cannot bring anything either.
+        if (!defined($buf) || length($buf) == 0) {
+            die Thrift::TTransportException->new(ref($self).': Could not read '.$len.' bytes, got '.$got,
+                                                 Thrift::TTransportException::END_OF_FILE);
+        }
+        $data .= $buf;
     }
 
     return $data;
