@@ -17,10 +17,10 @@
 # under the License.
 #
 
-gen-php/tutorial/Calculator.php gen-php/shared/SharedService.php: $(top_srcdir)/tutorial/tutorial.thrift
+gen-php/tutorial/CalculatorIf.php gen-php/shared/SharedServiceIf.php: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen php:server -r $<
 
-all-local: gen-php/tutorial/Calculator.php
+all-local: gen-php/tutorial/CalculatorIf.php
 
 tutorialserver: all
 	${PYTHON} runserver.py

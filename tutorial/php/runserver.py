@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -20,15 +20,18 @@
 #
 
 import os
-import BaseHTTPServer
-import CGIHTTPServer
+import shutil
+import sys
 
-# chdir(2) into the tutorial directory.
+# PHP may name a command on PATH (php8.3) or a path. Resolve it before the
+# chdir below, which moves into a directory that has a php/ subdirectory.
+php_command = os.environ.get('PHP') or 'php'
+php = shutil.which(php_command)
+if not php:
+    sys.exit('%s not found; set the PHP environment variable to a php command or path' % php_command)
+php = os.path.abspath(php)
+
+# Serve the tutorial directory with PHP's built-in web server, so that
+# PhpClient.php --http finds the server at http://localhost:8080/php/PhpServer.php.
 os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-
-
-class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
-    cgi_directories = ['/php']
-
-
-BaseHTTPServer.HTTPServer(('', 8080), Handler).serve_forever()
+os.execv(php, [php, '-S', 'localhost:8080', '-t', '.'])
