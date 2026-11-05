@@ -924,11 +924,28 @@ void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transpor
   zval_dtor(&z);
 }
 
+// Copy of a zval that is released on scope exit, so the conversion functions can run on it without
+// changing the value the PHP caller still holds (THRIFT-796).
+struct ConvertedCopy {
+  zval copied;
+  ConvertedCopy() { ZVAL_UNDEF(&copied); }
+  ~ConvertedCopy() { zval_ptr_dtor(&copied); }
+  ConvertedCopy(const ConvertedCopy&) = delete;
+  ConvertedCopy& operator=(const ConvertedCopy&) = delete;
+  zval* copy(zval* value) {
+    ZVAL_COPY(&copied, value);
+    return &copied;
+  }
+};
+
 static
 void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval* value, HashTable* fieldspec) {
   if (value) {
     ZVAL_DEREF(value);
   }
+  // Holds the converted copy when the value needs a type conversion; the caller's zval stays as it
+  // was.
+  ConvertedCopy converted;
   // At this point the typeID (and field num, if applicable) should've already been written to the output so all we need to do is write the payload.
   switch (thrift_typeID) {
     case T_STOP:
@@ -948,29 +965,47 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       binary_serialize_spec(value, transport, Z_ARRVAL_P(spec));
     } return;
     case T_BOOL:
-      if (!zval_is_bool(value)) convert_to_boolean(value);
+      if (!zval_is_bool(value)) {
+        value = converted.copy(value);
+        convert_to_boolean(value);
+      }
       transport.writeI8(Z_TYPE_INFO_P(value) == IS_TRUE ? 1 : 0);
       return;
     case T_BYTE:
-      if (Z_TYPE_P(value) != IS_LONG) convert_to_long(value);
+      if (Z_TYPE_P(value) != IS_LONG) {
+        value = converted.copy(value);
+        convert_to_long(value);
+      }
       transport.writeI8(Z_LVAL_P(value));
       return;
     case T_I16:
-      if (Z_TYPE_P(value) != IS_LONG) convert_to_long(value);
+      if (Z_TYPE_P(value) != IS_LONG) {
+        value = converted.copy(value);
+        convert_to_long(value);
+      }
       transport.writeI16(Z_LVAL_P(value));
       return;
     case T_I32:
-      if (Z_TYPE_P(value) != IS_LONG) convert_to_long(value);
+      if (Z_TYPE_P(value) != IS_LONG) {
+        value = converted.copy(value);
+        convert_to_long(value);
+      }
       transport.writeI32(Z_LVAL_P(value));
       return;
     case T_I64:
     case T_U64: {
       int64_t l_data;
 #if defined(_LP64) || defined(_WIN64)
-      if (Z_TYPE_P(value) != IS_LONG) convert_to_long(value);
+      if (Z_TYPE_P(value) != IS_LONG) {
+        value = converted.copy(value);
+        convert_to_long(value);
+      }
       l_data = Z_LVAL_P(value);
 #else
-      if (Z_TYPE_P(value) != IS_DOUBLE) convert_to_double(value);
+      if (Z_TYPE_P(value) != IS_DOUBLE) {
+        value = converted.copy(value);
+        convert_to_double(value);
+      }
       l_data = (int64_t)Z_DVAL_P(value);
 #endif
       transport.writeI64(l_data);
@@ -980,12 +1015,18 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
         int64_t c;
         double d;
       } a;
-      if (Z_TYPE_P(value) != IS_DOUBLE) convert_to_double(value);
+      if (Z_TYPE_P(value) != IS_DOUBLE) {
+        value = converted.copy(value);
+        convert_to_double(value);
+      }
       a.d = Z_DVAL_P(value);
       transport.writeI64(a.c);
     } return;
     case T_UUID: {
-      if (Z_TYPE_P(value) != IS_STRING) convert_to_string(value);
+      if (Z_TYPE_P(value) != IS_STRING) {
+        value = converted.copy(value);
+        convert_to_string(value);
+      }
       uint8_t uuid[16];
       if (!parse_uuid_string(Z_STRVAL_P(value), Z_STRLEN_P(value), uuid)) {
         throw_tprotocolexception("Attempt to send an invalid UUID string", INVALID_DATA);
@@ -995,11 +1036,17 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
     }
     case T_UTF16:
     case T_STRING:
-      if (Z_TYPE_P(value) != IS_STRING) convert_to_string(value);
+      if (Z_TYPE_P(value) != IS_STRING) {
+        value = converted.copy(value);
+        convert_to_string(value);
+      }
       transport.writeString(Z_STRVAL_P(value), Z_STRLEN_P(value));
       return;
     case T_MAP: {
-      if (Z_TYPE_P(value) != IS_ARRAY) convert_to_array(value);
+      if (Z_TYPE_P(value) != IS_ARRAY) {
+        value = converted.copy(value);
+        convert_to_array(value);
+      }
       if (Z_TYPE_P(value) != IS_ARRAY) {
         throw_tprotocolexception("Attempt to send an incompatible type as an array (T_MAP)", INVALID_DATA);
       }
@@ -1029,7 +1076,10 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       }
     } return;
     case T_LIST: {
-      if (Z_TYPE_P(value) != IS_ARRAY) convert_to_array(value);
+      if (Z_TYPE_P(value) != IS_ARRAY) {
+        value = converted.copy(value);
+        convert_to_array(value);
+      }
       if (Z_TYPE_P(value) != IS_ARRAY) {
         throw_tprotocolexception("Attempt to send an incompatible type as an array (T_LIST)", INVALID_DATA);
       }
@@ -1053,7 +1103,10 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       }
     } return;
     case T_SET: {
-      if (Z_TYPE_P(value) != IS_ARRAY) convert_to_array(value);
+      if (Z_TYPE_P(value) != IS_ARRAY) {
+        value = converted.copy(value);
+        convert_to_array(value);
+      }
       if (Z_TYPE_P(value) != IS_ARRAY) {
         throw_tprotocolexception("Attempt to send an incompatible type as an array (T_SET)", INVALID_DATA);
       }
