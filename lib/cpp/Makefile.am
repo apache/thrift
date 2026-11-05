@@ -24,7 +24,7 @@ moc__%.cpp: %.h
 
 SUBDIRS = .
 
-if WITH_TESTS
+if WITH_CPP_TESTS
 SUBDIRS += test
 endif
 
