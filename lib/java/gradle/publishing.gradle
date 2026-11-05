@@ -20,14 +20,15 @@
 // Following Gradle best practices to keep build logic organized
 
 // ----------------------------------------------------------------------------
-// Installation subtasks, not used currently, we use "make install/fast"
+// Installation subtasks. "make install" runs installDist with install.path set to
+// $(DESTDIR)$(JAVA_PREFIX); installJavadoc is not used currently.
 task installDist(type: Copy, group: 'Install') {
     description = "Copy Thrift JAR and dependencies into $installPath location"
 
     destinationDir = file(installPath)
 
     from jar
-    from configurations.implementation
+    from configurations.runtimeClasspath
 }
 
 task installJavadoc(type: Copy, group: 'Install', dependsOn: javadoc) {

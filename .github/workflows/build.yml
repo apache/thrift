@@ -426,9 +426,13 @@ jobs:
       - name: Run make for java
         run: make -C lib/java
 
-      # this will invoke publishToMavenLocal and install locally
+      # This publishes to the local Maven repository and copies the jars to
+      # JAVA_PREFIX. The runner cannot write to the default /usr/local/lib,
+      # so install under a DESTDIR and check that the jar arrived there.
       - name: Run make install for java
-        run: make -C lib/java install
+        run: |
+          make -C lib/java install DESTDIR="$RUNNER_TEMP/java-install"
+          ls -l "$RUNNER_TEMP"/java-install/usr/local/lib/libthrift-*.jar
 
       - name: Upload java libthrift artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
