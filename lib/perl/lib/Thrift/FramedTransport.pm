@@ -119,6 +119,36 @@ sub read
 }
 
 #
+# Guarantees that the full amount of data is read, moving on to the next frame
+# as each one is used up. read() returns nothing for an empty frame, which the
+# readAll() of Thrift::Transport would take for the end of the stream.
+#
+# @param int $len How much data
+# @return string The data, of exact length
+# @throws TTransportException if cannot read data
+#
+sub readAll
+{
+    my $self = shift;
+    my $len  = shift;
+
+    if (!$self->{read}) {
+        return $self->{transport}->readAll($len);
+    }
+
+    my $data = '';
+    while (length($data) < $len) {
+        if (length($self->{rBuf}) == 0) {
+            $self->_readFrame();
+            next;
+        }
+        $data .= $self->read($len - length($data));
+    }
+
+    return $data;
+}
+
+#
 # Reads a chunk of data into the internal read buffer.
 # (private)
 sub _readFrame
