@@ -136,6 +136,8 @@ check_PROGRAMS = \
 #	$(check_PROGRAMS)
 
 TestServer_SOURCES = \
+	src/TestKeysDir.h \
+	src/TestOptions.h \
 	src/TestServer.cpp
 
 TestServer_LDADD = \
@@ -143,9 +145,11 @@ TestServer_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options $(BOOST_SYSTEM_LDADD) -lboost_filesystem $(ZLIB_LIBS)
+	-levent $(ZLIB_LIBS)
 
 TestClient_SOURCES = \
+	src/TestKeysDir.h \
+	src/TestOptions.h \
 	src/TestClient.cpp
 
 TestClient_LDADD = \
@@ -153,7 +157,7 @@ TestClient_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
 	$(top_builddir)/lib/cpp/libthriftnb.la \
-	-levent -lboost_program_options $(BOOST_SYSTEM_LDADD) -lboost_filesystem $(ZLIB_LIBS)
+	-levent $(ZLIB_LIBS)
 
 StressTest_SOURCES = \
 	src/StressTest.cpp
@@ -247,9 +251,9 @@ gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
 gen-cpp/SpecificNameTest_types.cpp gen-cpp/EchoService.cpp: $(top_srcdir)/test/SpecificName.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.
+AM_CPPFLAGS = $(OPENSSL_INCLUDES) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.
 AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
+AM_LDFLAGS = $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
 	$(RM) -r gen-cpp/ gen-cpp-forward/ gen-cpp-private/ gen-cpp-enumclass/ gen-cpp-templatestreamop/ gen-cpp-private-templatestreamop/

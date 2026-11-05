@@ -67,9 +67,8 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/program_options.hpp>
+#include "TestKeysDir.h"
+#include "TestOptions.h"
 
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
@@ -85,6 +84,11 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
 using namespace thrift::test;
+
+// True if s begins with prefix.
+static bool startsWith(const string& s, const char* prefix) {
+  return s.rfind(prefix, 0) == 0;
+}
 
 // to handle a controlled shutdown, signal handling is mandatory
 #ifdef HAVE_SIGNAL_H
@@ -619,8 +623,6 @@ struct DomainSocketFd {
   }
 };
 
-namespace po = boost::program_options;
-
 int main(int argc, char** argv) {
 
 #if _WIN32
@@ -640,28 +642,36 @@ int main(int argc, char** argv) {
   int string_limit = 0;
   int container_limit = 0;
 
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help,h", "produce help message")
-    ("port", po::value<int>(&port)->default_value(port), "Port number to listen")
-    ("domain-socket", po::value<string>(&domain_socket) ->default_value(domain_socket), "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")
-    ("abstract-namespace", "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")
-    ("emulate-socketactivation","Open the socket from the tester program and pass the library an already open fd")
-    ("server-type", po::value<string>(&server_type)->default_value(server_type), "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
-    ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http, websocket, zlib")
-    ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json, multi, multic, multih, multij")
-    ("ssl", "Encrypted Transport using SSL")
-    ("zlib", "Wrapped Transport using Zlib")
-    ("processor-events", "processor-events")
-    ("workers,n", po::value<size_t>(&workers)->default_value(workers), "Number of thread pools workers. Only valid for thread-pool server type")
-    ("string-limit", po::value<int>(&string_limit))
-    ("container-limit", po::value<int>(&container_limit));
+  TestOptions desc("Allowed options");
+  desc.flag("help,h", "produce help message")
+      .value("port", &port, "Port number to listen")
+      .value("domain-socket", &domain_socket, "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")
+      .flag("abstract-namespace",
+            "Create the domain socket in the Abstract Namespace (no connection with filesystem "
+            "pathnames)")
+      .flag("emulate-socketactivation",
+            "Open the socket from the tester program and pass the library an already open fd")
+      .value("server-type", &server_type,
+             "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
+      .value("transport", &transport_type, "transport: buffered, framed, http, websocket, zlib")
+      .value("protocol", &protocol_type,
+             "protocol: binary, compact, header, json, multi, multic, multih, multij")
+      .flag("ssl", "Encrypted Transport using SSL")
+      .flag("zlib", "Wrapped Transport using Zlib")
+      .flag("processor-events", "processor-events")
+      .value("workers,n", &workers,
+             "Number of thread pools workers. Only valid for thread-pool server type")
+      .value("string-limit", &string_limit, "", false)
+      .value("container-limit", &container_limit, "", false);
+  try {
+    desc.parse(argc, argv);
+  } catch (invalid_argument& e) {
+    cerr << e.what() << '\n';
+    cout << desc << "\n";
+    return 1;
+  }
 
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-
-  if (vm.count("help")) {
+  if (desc.count("help")) {
     cout << desc << "\n";
     return 1;
   }
@@ -709,11 +719,11 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (vm.count("ssl")) {
+  if (desc.count("ssl")) {
     ssl = true;
   }
 
-  if (vm.count("zlib")) {
+  if (desc.count("zlib")) {
     zlib = true;
   }
 
@@ -723,10 +733,10 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  if (vm.count("abstract-namespace")) {
+  if (desc.count("abstract-namespace")) {
     abstract_namespace = true;
   }
-  if (vm.count("emulate-socketactivation")) {
+  if (desc.count("emulate-socketactivation")) {
     emulate_socketactivation = true;
   }
 
@@ -754,7 +764,7 @@ int main(int argc, char** argv) {
   std::shared_ptr<TestHandler> testHandler(new TestHandler());
   std::shared_ptr<TProcessor> testProcessor(new ThriftTestProcessor(testHandler));
 
-  if (vm.count("processor-events")) {
+  if (desc.count("processor-events")) {
     testProcessor->setEventHandler(
         std::shared_ptr<TProcessorEventHandler>(new TestProcessorEventHandler()));
   }
@@ -764,17 +774,13 @@ int main(int argc, char** argv) {
   std::shared_ptr<TServerSocket> serverSocket;
 
   if (ssl) {
-    boost::filesystem::path testDir = boost::filesystem::system_complete(argv[0]).parent_path();
-    while (!boost::filesystem::exists(testDir / "keys" / "server.crt")) {
-      boost::filesystem::path parent = testDir.parent_path();
-      if (parent == testDir) {
-        cerr << "Unable to locate test/keys from " << argv[0] << '\n';
-        return 1;
-      }
-      testDir = parent;
+    const string testDir = findTestKeysDir(argv[0], "server.crt");
+    if (testDir.empty()) {
+      cerr << "Unable to locate test/keys from " << argv[0] << '\n';
+      return 1;
     }
-    string certPath = (testDir / "keys" / "server.crt").string();
-    string keyPath = (testDir / "keys" / "server.key").string();
+    string certPath = testDir + "/keys/server.crt";
+    string keyPath = testDir + "/keys/server.key";
 
     sslSocketFactory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     sslSocketFactory->loadCertificate(certPath.c_str());
@@ -842,7 +848,7 @@ int main(int argc, char** argv) {
   cout << '\n';
 
   // Multiplexed Processor if needed
-  if (boost::starts_with(protocol_type, "multi")) {
+  if (startsWith(protocol_type, "multi")) {
     std::shared_ptr<SecondHandler> secondHandler(new SecondHandler());
     std::shared_ptr<SecondServiceProcessor> secondProcessor(new SecondServiceProcessor(secondHandler));
 
