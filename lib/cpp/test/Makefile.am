@@ -107,6 +107,7 @@ check_PROGRAMS = \
 	TInterruptTest \
 	TServerIntegrationTest \
 	TServerExceptionTest \
+	TUnixSocketOptionsTest \
 	SecurityTest \
 	SecurityFromBufferTest \
 	ZlibTest \
@@ -206,6 +207,19 @@ TServerExceptionTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
   libboosttestframework.la
+
+# Interposes setsockopt, so it must not share a binary with other tests.
+TUnixSocketOptionsTest_SOURCES = \
+	TUnixSocketOptionsTest.cpp
+
+TUnixSocketOptionsTest_LDADD = \
+  $(top_builddir)/lib/cpp/libthrift.la \
+  libboosttestframework.la \
+  -ldl
+
+TUnixSocketOptionsTest_CPPFLAGS = \
+   $(AM_CPPFLAGS) \
+  -DTHRIFT_TEST_NONBLOCKING_SERVER_SOCKET
 
 SecurityTest_SOURCES = \
 	SecurityTest.cpp
