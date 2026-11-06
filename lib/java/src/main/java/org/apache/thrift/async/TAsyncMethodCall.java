@@ -280,7 +280,7 @@ public abstract class TAsyncMethodCall<T> {
     if (transport.write(frameBuffer) < 0) {
       throw new TTransportException(TTransportException.END_OF_FILE, "Write call frame failed");
     }
-    if (frameBuffer.remaining() == 0) {
+    if (frameBuffer.remaining() == 0 && !transport.hasPendingWrites()) {
       if (isOneway) {
         cleanUpAndFireCallback(key);
       } else {
@@ -296,7 +296,7 @@ public abstract class TAsyncMethodCall<T> {
       throw new TTransportException(
           TTransportException.END_OF_FILE, "Write call frame size failed");
     }
-    if (sizeBuffer.remaining() == 0) {
+    if (sizeBuffer.remaining() == 0 && !transport.hasPendingWrites()) {
       state = State.WRITING_REQUEST_BODY;
     }
   }

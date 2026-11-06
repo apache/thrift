@@ -124,7 +124,8 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   public synchronized int write(ByteBuffer buffer) throws TTransportException {
     int numBytes = buffer.remaining();
 
-    while (buffer.hasRemaining()) {
+    do {
+      int position = buffer.position();
       try {
         if (doWrap(buffer) == -1) {
           throw new IOException("Unable to write " + numBytes + " bytes");
@@ -132,8 +133,16 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
       } catch (IOException iox) {
         throw new TTransportException(TTransportException.UNKNOWN, iox);
       }
-    }
-    return numBytes;
+      if (hasPendingWrites() || buffer.position() == position) {
+        break;
+      }
+    } while (buffer.hasRemaining());
+    return numBytes - buffer.remaining();
+  }
+
+  @Override
+  public synchronized boolean hasPendingWrites() {
+    return netWrap.position() > 0;
   }
 
   /** {@inheritDoc} */
@@ -162,7 +171,9 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
   private synchronized boolean doHandShake() throws IOException {
     while (true) {
-      HandshakeStatus hs = sslEngine_.getHandshakeStatus();
+      // The engine may advance before its last output has reached the socket.
+      HandshakeStatus hs =
+          netWrap.position() > 0 ? HandshakeStatus.NEED_WRAP : sslEngine_.getHandshakeStatus();
       switch (hs) {
         case NEED_UNWRAP:
           if (doUnwrap() == -1) {
@@ -233,6 +244,12 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
   private int doWrap(ByteBuffer appWrap) throws IOException {
     int num = 0;
+    if (hasPendingWrites()) {
+      num = writeNetBuffer();
+      if (hasPendingWrites() || !appWrap.hasRemaining()) {
+        return num;
+      }
+    }
     SSLEngineResult wrapResult;
     try {
       wrapResult = sslEngine_.wrap(appWrap, netWrap);
@@ -244,9 +261,7 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     switch (wrapResult.getStatus()) {
       case OK:
         if (netWrap.position() > 0) {
-          netWrap.flip();
-          num = getSocketChannel().write(netWrap);
-          netWrap.clear();
+          num += writeNetBuffer();
         }
         break;
       case BUFFER_UNDERFLOW:
@@ -259,5 +274,20 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
         return -1;
     }
     return num;
+  }
+
+  private int writeNetBuffer() throws IOException {
+    netWrap.flip();
+    try {
+      return getSocketChannel().write(netWrap);
+    } finally {
+      if (netWrap.position() == 0) {
+        // Restore write mode without compacting an unchanged buffer under backpressure.
+        netWrap.position(netWrap.limit());
+        netWrap.limit(netWrap.capacity());
+      } else {
+        netWrap.compact();
+      }
+    }
   }
 }
