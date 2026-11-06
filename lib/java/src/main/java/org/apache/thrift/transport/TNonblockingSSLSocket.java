@@ -65,6 +65,7 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     int appBufferSize = sslEngine_.getSession().getApplicationBufferSize();
     int netBufferSize = sslEngine_.getSession().getPacketBufferSize();
     appUnwrap = ByteBuffer.allocate(appBufferSize);
+    appUnwrap.flip();
     netUnwrap = ByteBuffer.allocate(netBufferSize);
     netWrap = ByteBuffer.allocate(netBufferSize);
     isHandshakeCompleted = false;
@@ -94,9 +95,8 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   @Override
   public synchronized int read(ByteBuffer buffer) throws TTransportException {
     int numBytes = buffer.remaining();
-    while (appUnwrap.limit() == appUnwrap.capacity()
-        || appUnwrap.remaining() < buffer.remaining()) {
-      if (appUnwrap.limit() < appUnwrap.capacity() && appUnwrap.hasRemaining()) {
+    while (appUnwrap.remaining() < buffer.remaining()) {
+      if (appUnwrap.hasRemaining()) {
         buffer.put(appUnwrap);
       }
       try {
@@ -198,37 +198,41 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   }
 
   private int doUnwrap() throws IOException {
-    int num = getSocketChannel().read(netUnwrap);
-    netUnwrap.flip();
-    if (num < 0) {
-      LOGGER.error("Failed during read operation. Probably server is down");
-      return -1;
-    }
-    SSLEngineResult unwrapResult;
+    int num = 0;
+    while (true) {
+      netUnwrap.flip();
+      appUnwrap.compact();
+      SSLEngineResult unwrapResult;
+      try {
+        unwrapResult = sslEngine_.unwrap(netUnwrap, appUnwrap);
+      } catch (SSLException ex) {
+        LOGGER.error(ex.getMessage());
+        throw ex;
+      } finally {
+        netUnwrap.compact();
+        appUnwrap.flip();
+      }
 
-    try {
-      appUnwrap.clear();
-      unwrapResult = sslEngine_.unwrap(netUnwrap, appUnwrap);
-      netUnwrap.compact();
-    } catch (SSLException ex) {
-      LOGGER.error(ex.getMessage());
-      throw ex;
-    }
+      switch (unwrapResult.getStatus()) {
+        case OK:
+          return num;
+        case CLOSED:
+          return appUnwrap.hasRemaining() ? num : -1;
+        case BUFFER_OVERFLOW:
+          throw new IllegalStateException("Failed to unwrap");
+        case BUFFER_UNDERFLOW:
+          if (appUnwrap.hasRemaining()) {
+            return num;
+          }
+          break;
+      }
 
-    switch (unwrapResult.getStatus()) {
-      case OK:
-        if (appUnwrap.position() > 0) {
-          appUnwrap.flip();
-        }
-        break;
-      case CLOSED:
-        return -1;
-      case BUFFER_OVERFLOW:
-        throw new IllegalStateException("Failed to unwrap");
-      case BUFFER_UNDERFLOW:
-        break;
+      // Drain buffered records before reading from the socket, which may already be at EOF.
+      num = getSocketChannel().read(netUnwrap);
+      if (num <= 0) {
+        return num;
+      }
     }
-    return num;
   }
 
   private int doWrap(ByteBuffer appWrap) throws IOException {
