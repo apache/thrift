@@ -45,6 +45,17 @@ public abstract class TNonblockingTransport extends TEndpointTransport {
    */
   public abstract boolean finishConnect() throws IOException;
 
+  /**
+   * Whether output remains buffered after a write, even if all source bytes were consumed. Call
+   * {@link #write(java.nio.ByteBuffer)} with an empty buffer on write readiness to drain it before
+   * completing the request or switching to reads.
+   *
+   * @return true while transport output still needs to be written
+   */
+  public boolean hasPendingWrites() {
+    return false;
+  }
+
   public abstract SelectionKey registerSelector(Selector selector, int interests)
       throws IOException;
 }
