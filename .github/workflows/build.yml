@@ -263,6 +263,20 @@ jobs:
         if: matrix.php-version == '8.3'
         run: make -C lib/php src/ext/thrift_protocol/modules/thrift_protocol.so
 
+      # phpunit.xml runs each test in its own process, so the extension is loaded from an ini
+      # file that every PHP process reads, not with `php -d`.
+      - name: Run Tests with the C extension
+        if: matrix.php-version == '8.3'
+        run: |
+          mkdir -p "$RUNNER_TEMP/php-ini"
+          echo "extension=$GITHUB_WORKSPACE/lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so" > "$RUNNER_TEMP/php-ini/thrift_protocol.ini"
+          PHP_INI_SCAN_DIR=":$RUNNER_TEMP/php-ini" php -r 'exit(extension_loaded("thrift_protocol") ? 0 : 1);'
+          PHP_INI_SCAN_DIR=":$RUNNER_TEMP/php-ini" vendor/bin/phpunit -c lib/php/phpunit.xml
+
+      - name: Run the C extension's phpt tests
+        if: matrix.php-version == '8.3'
+        run: make -C lib/php/src/ext/thrift_protocol test NO_INTERACTION=1 REPORT_EXIT_STATUS=1
+
       - name: Run make precross for php test
         if: matrix.php-version == '8.3'
         run: make -C test/php precross
