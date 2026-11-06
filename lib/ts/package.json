@@ -1,5 +1,6 @@
 {
   "name": "thrift",
+  "private": true,
   "version": "0.26.0",
   "description": "Thrift is a software framework for scalable cross-language services development.",
   "author": {
