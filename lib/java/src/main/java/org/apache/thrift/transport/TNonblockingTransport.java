@@ -32,6 +32,16 @@ public abstract class TNonblockingTransport extends TEndpointTransport {
   }
 
   /**
+   * Whether buffered input may let a read progress without further socket readiness. This can
+   * include incomplete records; a subsequent read may still return zero and wait for more input.
+   *
+   * @return true when input remains buffered inside the transport
+   */
+  public boolean hasPendingReads() {
+    return false;
+  }
+
+  /**
    * Non-blocking connection initialization.
    *
    * @see java.nio.channels.SocketChannel#connect(SocketAddress remote)

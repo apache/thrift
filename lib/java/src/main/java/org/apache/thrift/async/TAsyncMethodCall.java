@@ -190,28 +190,43 @@ public abstract class TAsyncMethodCall<T> {
 
     // Transition function
     try {
-      switch (state) {
-        case CONNECTING:
-          doConnecting(key);
+      do {
+        State previousState = state;
+        ByteBuffer response =
+            state == State.READING_RESPONSE_SIZE
+                ? sizeBuffer
+                : state == State.READING_RESPONSE_BODY ? frameBuffer : null;
+        int position = response == null ? 0 : response.position();
+        switch (state) {
+          case CONNECTING:
+            doConnecting(key);
+            break;
+          case WRITING_REQUEST_SIZE:
+            doWritingRequestSize();
+            break;
+          case WRITING_REQUEST_BODY:
+            doWritingRequestBody(key);
+            break;
+          case READING_RESPONSE_SIZE:
+            doReadingResponseSize();
+            break;
+          case READING_RESPONSE_BODY:
+            doReadingResponseBody(key);
+            break;
+          default: // RESPONSE_READ, ERROR, or bug
+            throw new IllegalStateException(
+                "Method call in state "
+                    + state
+                    + " but selector called transition method. Seems like a bug...");
+        }
+        // Buffered responses do not require another socket event. Stop if a partial record
+        // or a pending handshake prevented this read from making progress.
+        if (state == previousState && response != null && response.position() == position) {
           break;
-        case WRITING_REQUEST_SIZE:
-          doWritingRequestSize();
-          break;
-        case WRITING_REQUEST_BODY:
-          doWritingRequestBody(key);
-          break;
-        case READING_RESPONSE_SIZE:
-          doReadingResponseSize();
-          break;
-        case READING_RESPONSE_BODY:
-          doReadingResponseBody(key);
-          break;
-        default: // RESPONSE_READ, ERROR, or bug
-          throw new IllegalStateException(
-              "Method call in state "
-                  + state
-                  + " but selector called transition method. Seems like a bug...");
-      }
+        }
+      } while ((state == State.READING_RESPONSE_SIZE || state == State.READING_RESPONSE_BODY)
+          && ((state == State.READING_RESPONSE_BODY && !frameBuffer.hasRemaining())
+              || transport.hasPendingReads()));
     } catch (Exception e) {
       key.cancel();
       key.attach(null);

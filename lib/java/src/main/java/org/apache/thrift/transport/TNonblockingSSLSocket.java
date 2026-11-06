@@ -24,7 +24,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -51,8 +53,11 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   private final ByteBuffer netUnwrap;
 
   private final ByteBuffer netWrap;
+  private final Deque<ByteBuffer> pendingPlaintext = new ArrayDeque<>();
+  private long pendingPlaintextBytes;
 
   private boolean isHandshakeCompleted;
+  private boolean applicationHandshake;
 
   private SelectionKey selectionKey;
   private FutureTask<Void> delegatedTask;
@@ -97,9 +102,90 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     throw new RuntimeException("open() is not implemented for TNonblockingSSLSocket");
   }
 
+  private boolean continueApplicationHandshake(boolean reading) throws TTransportException {
+    if (delegatedTask == null) {
+      HandshakeStatus status = sslEngine_.getHandshakeStatus();
+      if (status != HandshakeStatus.NEED_TASK
+          && status != HandshakeStatus.NEED_WRAP
+          && status != HandshakeStatus.NEED_UNWRAP) {
+        return true;
+      }
+      if (reading && status == HandshakeStatus.NEED_UNWRAP && appUnwrap.hasRemaining()) {
+        return true;
+      }
+    }
+    applicationHandshake = true;
+    try {
+      do {
+        if (!reading) {
+          preserveApplicationData();
+        }
+        if (!doHandShake()) {
+          return false;
+        }
+      } while (!reading
+          && appUnwrap.hasRemaining()
+          && sslEngine_.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP);
+      return true;
+    } catch (IOException e) {
+      throw new TTransportException(TTransportException.UNKNOWN, e);
+    } finally {
+      applicationHandshake = false;
+    }
+  }
+
+  private void preserveApplicationData() throws TTransportException {
+    int size = appUnwrap.remaining();
+    if (size == 0) {
+      return;
+    }
+    if (size > getMaxMessageSize() - pendingPlaintextBytes) {
+      throw new TTransportException(
+          TTransportException.MESSAGE_SIZE_LIMIT,
+          "Buffered TLS application data exceeds message size limit: " + getMaxMessageSize());
+    }
+    ByteBuffer saved = ByteBuffer.allocate(size);
+    saved.put(appUnwrap);
+    saved.flip();
+    pendingPlaintext.addLast(saved);
+    pendingPlaintextBytes += size;
+  }
+
+  @Override
+  public synchronized boolean hasPendingReads() {
+    return !pendingPlaintext.isEmpty() || appUnwrap.hasRemaining() || netUnwrap.position() > 0;
+  }
+
   /** {@inheritDoc} */
   @Override
   public synchronized int read(ByteBuffer buffer) throws TTransportException {
+    if (buffer.hasRemaining() && delegatedTask != null && !continueApplicationHandshake(true)) {
+      return 0;
+    }
+    int numBytes = buffer.remaining();
+    while (buffer.hasRemaining() && !pendingPlaintext.isEmpty()) {
+      ByteBuffer saved = pendingPlaintext.peekFirst();
+      int count = Math.min(buffer.remaining(), saved.remaining());
+      int limit = saved.limit();
+      saved.limit(saved.position() + count);
+      buffer.put(saved);
+      saved.limit(limit);
+      pendingPlaintextBytes -= count;
+      if (!saved.hasRemaining()) {
+        pendingPlaintext.removeFirst();
+      }
+    }
+    int count = numBytes - buffer.remaining();
+    if (buffer.hasRemaining()) {
+      return count + readApplicationData(buffer);
+    }
+    if (count > 0) {
+      selectionKey.interestOps(SelectionKey.OP_READ);
+    }
+    return count;
+  }
+
+  private int readApplicationData(ByteBuffer buffer) throws TTransportException {
     if (!buffer.hasRemaining()) {
       return 0;
     }
@@ -107,6 +193,12 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     while (appUnwrap.remaining() < buffer.remaining()) {
       if (appUnwrap.hasRemaining()) {
         buffer.put(appUnwrap);
+      }
+      if (!continueApplicationHandshake(true)) {
+        return numBytes - buffer.remaining();
+      }
+      if (appUnwrap.hasRemaining()) {
+        continue;
       }
       try {
         int buffered = netUnwrap.position();
@@ -128,9 +220,7 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
       buffer.put(appUnwrap);
       appUnwrap.limit(originLimit);
     }
-    // In SSL mode, the Thrift server may merge the frame size and body into a single TLS package.
-    // Setting OP_WRITE to trigger subsequent read operations in the Thrift async client.
-    selectionKey.interestOps(SelectionKey.OP_WRITE);
+    selectionKey.interestOps(SelectionKey.OP_READ);
     return numBytes;
   }
 
@@ -141,6 +231,13 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
     while (buffer.hasRemaining()) {
       try {
+        if (!continueApplicationHandshake(false)) {
+          return numBytes - buffer.remaining();
+        }
+        // A resumed handshake may have been waiting for reads or delegated tasks.
+        if (selectionKey != null) {
+          selectionKey.interestOps(SelectionKey.OP_WRITE);
+        }
         if (doWrap(buffer) == -1) {
           throw new IOException("Unable to write " + numBytes + " bytes");
         }
@@ -155,6 +252,10 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   @Override
   public synchronized void close() {
     super.close();
+    pendingPlaintext.clear();
+    pendingPlaintextBytes = 0;
+    appUnwrap.limit(0);
+    netUnwrap.clear();
     if (!executorService.isShutdown()) {
       try {
         if (delegatedTask != null && !delegatedTask.isDone()) {
@@ -238,6 +339,12 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
           return true;
         default:
           throw new IOException("Unexpected TLS handshake status: " + hs);
+      }
+      // Application records can arrive between handshake records. Let the caller drain them.
+      if (applicationHandshake
+          && appUnwrap.hasRemaining()
+          && sslEngine_.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP) {
+        return true;
       }
     }
   }
