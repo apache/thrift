@@ -267,6 +267,11 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   }
 
   protected void gracefullyShutdownInvokerPool() {
+    // workerThreads(0) means requests run on the selector threads and there is no pool
+    if (invoker == null) {
+      return;
+    }
+
     // try to gracefully shut down the executor service
     invoker.shutdown();
 
