@@ -68,3 +68,27 @@ apcu_fetch(), apcu_store()
 1. [PSR-4](https://www.php-fig.org/psr/psr-4/) loader is now the default. If you want to use class maps instead, use `-gen php:classmap`.
 
 2. If using PSR-4, use `$thriftClassLoader->registerNamespace('namespace', '<path>')` instead of `$thriftClassLoader->registerDefinition('namespace', '<path>')`.
+
+# Running the tests
+
+Run `composer install` in the repository root, generate the test code the way the `lib-php` job
+in `.github/workflows/build.yml` does (the `thrift --gen php...` commands that write to
+`lib/php/test/Resources/packages`), then run `vendor/bin/phpunit -c lib/php/phpunit.xml`.
+Without the generated code the integration tests fail with class-not-found errors. Without the
+`thrift_protocol` extension, the generated code and `TBinaryProtocolAccelerated` take their
+pure-PHP paths, so the tests pass without exercising the extension.
+
+To run the tests with the extension, build it in `lib/php/src/ext/thrift_protocol`, then load it
+from an ini file. `phpunit.xml` runs each test in its own process (`processIsolation`), so a
+`php -d extension=...` option does not reach the tests. `lib/php/thrift_protocol.ini` names the
+module without a path, which only works for an installed extension, so write an ini file that
+gives the full path. From the repository root:
+
+```bash
+(cd lib/php/src/ext/thrift_protocol && phpize && ./configure && make)
+mkdir -p /tmp/thrift-php-ini
+echo "extension=$PWD/lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so" > /tmp/thrift-php-ini/thrift.ini
+PHP_INI_SCAN_DIR=":/tmp/thrift-php-ini" vendor/bin/phpunit -c lib/php/phpunit.xml
+```
+
+The leading `:` keeps the directories PHP scans by default.
