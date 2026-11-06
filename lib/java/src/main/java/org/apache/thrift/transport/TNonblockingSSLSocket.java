@@ -47,8 +47,8 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
   private final SSLEngine sslEngine_;
 
-  private final ByteBuffer appUnwrap;
-  private final ByteBuffer netUnwrap;
+  private ByteBuffer appUnwrap;
+  private ByteBuffer netUnwrap;
 
   private final ByteBuffer netWrap;
 
@@ -283,6 +283,38 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     executorService.execute(delegatedTask);
   }
 
+  /** Resize netUnwrap to the packet buffer size the session reports, keeping buffered bytes. */
+  private void growNetUnwrap() throws SSLException {
+    int size = sslEngine_.getSession().getPacketBufferSize();
+    if (size <= netUnwrap.capacity()) {
+      throw new SSLException(
+          "The SSL session packet buffer size did not grow beyond "
+              + netUnwrap.capacity()
+              + " bytes");
+    }
+    ByteBuffer larger = ByteBuffer.allocate(size);
+    netUnwrap.flip();
+    larger.put(netUnwrap);
+    netUnwrap = larger;
+  }
+
+  /**
+   * Resize appUnwrap to the application buffer size the session reports, keeping buffered bytes.
+   */
+  private void growAppUnwrap() throws SSLException {
+    int size = sslEngine_.getSession().getApplicationBufferSize();
+    if (size <= appUnwrap.capacity()) {
+      throw new SSLException(
+          "The SSL session application buffer size did not grow beyond "
+              + appUnwrap.capacity()
+              + " bytes");
+    }
+    ByteBuffer larger = ByteBuffer.allocate(size);
+    larger.put(appUnwrap);
+    larger.flip();
+    appUnwrap = larger;
+  }
+
   private int doUnwrap() throws IOException {
     int num = 0;
     while (true) {
@@ -305,10 +337,20 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
         case CLOSED:
           return appUnwrap.hasRemaining() ? num : -1;
         case BUFFER_OVERFLOW:
-          throw new IllegalStateException("Failed to unwrap");
+          // Drain what is already decoded first; otherwise resize appUnwrap to the
+          // size the session now reports and retry.
+          if (appUnwrap.hasRemaining()) {
+            return num;
+          }
+          growAppUnwrap();
+          continue;
         case BUFFER_UNDERFLOW:
           if (appUnwrap.hasRemaining()) {
             return num;
+          }
+          // Resize netUnwrap to the size the session now reports before reading more.
+          if (!netUnwrap.hasRemaining()) {
+            growNetUnwrap();
           }
           break;
       }
