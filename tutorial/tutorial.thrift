@@ -107,7 +107,7 @@ const map<string,string> MAPCONSTANT = {'hello':'world', 'goodnight':'moon'}
 
 /**
  * You can define enums, which are just 32 bit integers. Values are optional
- * and start at 1 if not supplied, C style again.
+ * and start at 0 if not supplied, C style again.
  */
 enum Operation {
   ADD = 1,
