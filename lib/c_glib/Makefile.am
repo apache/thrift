@@ -17,7 +17,11 @@
 # under the License.
 #
 AUTOMAKE_OPTIONS = serial-tests nostdinc
-SUBDIRS = . test
+SUBDIRS = .
+
+if WITH_TESTS
+SUBDIRS += test
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 
