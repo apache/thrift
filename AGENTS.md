@@ -120,6 +120,20 @@ authentication, serialization bounds, or anything flagged by the project's secur
   or mix fixes into existing/unrelated work unless told otherwise.
 - Follow a strict test-first workflow: write or update tests demonstrating the bug BEFORE applying the fix, 
   and inspect any generated code before changing it.
+- A new test counts once a CI job runs it, not when it passes locally. Name the job and find the
+  test in its log or test report; locally, `ctest -N` lists CMake tests and lib/java writes one
+  XML file per test class under `build/test-results/test`. Each job builds only what it needs:
+  the CMake compiler job configures with `-DBUILD_LIBRARIES=OFF` and still runs the Python tests
+  under `compiler/cpp/test/compiler`, so they cannot import an installed `thrift` package.
+- For a generator change, diff the output for `test/ThriftTest.thrift` before and after and
+  explain every hunk in the PR. The c_glib, perl, erl and dart generators do not handle `uuid`,
+  which that file uses, so for them diff `test/v0.16/ThriftTest.thrift`, as their test builds do.
+  If the emitted signatures change, update `tutorial/<lang>` too: only `tutorial/netstd` has its
+  client run against its server in CI. The `lib-cpp-without-boost` job in `cmake.yml` builds
+  `tutorial/cpp`, whose handlers are marked `override`, so a changed C++ signature fails there; a
+  broken tutorial in any other language goes unnoticed. A change to the behaviour of one binding (for example which
+  result field a client checks first) is a question for the other bindings as well: port it or
+  file a JIRA ticket for them, and name it in the PR.
 - **Prose-only changes skip CI.** A commit that only edits the text of existing documentation
   files ends its subject line with `[skip ci]`, and the PR title carries it too:
   ```
@@ -155,7 +169,8 @@ authentication, serialization bounds, or anything flagged by the project's secur
 - [ ] Commit message includes affected `Client:` languages
 - [ ] Single squashed commit
 - [ ] Prose-only change: `[skip ci]` ends the commit subject and the PR title; any other change: no such marker anywhere in the commit message
-- [ ] Tests added or updated
+- [ ] Tests added or updated, and seen running in a CI job
+- [ ] Generator change: output diff for `test/ThriftTest.thrift` (`test/v0.16/ThriftTest.thrift` for c_glib, perl, erl, dart) explained; tutorials updated where signatures changed
 - [ ] `make style` passes
 - [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable
 - [ ] No tool-internal or AI session URLs anywhere in the commit message or PR text
