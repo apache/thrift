@@ -878,6 +878,28 @@ void t_java_generator::generate_xception(t_struct* txception) {
  * @param tstruct The struct definition
  */
 void t_java_generator::generate_java_struct(t_struct* tstruct, bool is_exception) {
+  if (is_exception) {
+    // The getter of a field named "message" must override Throwable.getMessage(), which returns
+    // String; a bool field gets isMessage() instead, and binary returns byte[]. With option_type,
+    // an optional field's getter returns an Option or Optional, which cannot override it either.
+    for (t_field* field : tstruct->get_members()) {
+      t_type* type = get_true_type(field->get_type());
+      if (get_cap_name(field->get_name()) != "Message" || type->is_bool()) {
+        continue;
+      }
+      if (!(type->is_string() && !type->is_binary())) {
+        throw "exception " + tstruct->get_name() + ": field '" + field->get_name()
+            + "' must be a string or bool, because its getter would clash with"
+              " Throwable.getMessage()";
+      }
+      if (use_option_type_ && field->get_req() == t_field::T_OPTIONAL) {
+        throw "exception " + tstruct->get_name() + ": optional field '" + field->get_name()
+            + "' cannot be used with option_type, because its getter would clash with"
+              " Throwable.getMessage()";
+      }
+    }
+  }
+
   // Make output file
   string f_struct_name
       = package_dir_ + "/" + make_valid_java_filename(tstruct->get_name()) + ".java";
