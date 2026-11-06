@@ -244,6 +244,51 @@ class TSocket extends TTransport
     }
 
     /**
+     * Wait for the stream to become readable or writable.
+     *
+     * A signal arriving during the select makes stream_select() return false
+     * with errno EINTR, which is not a transport failure. Retry with the time
+     * left of the original timeout, so interrupts never extend the deadline.
+     * Any other failure is returned as false.
+     *
+     * @return int|false number of ready streams, 0 on timeout
+     */
+    private function selectRetryingOnInterrupt(bool $forWrite, int $timeoutSec, int $timeoutUsec): int|false
+    {
+        $deadline = hrtime(true) + ($timeoutSec * 1000000 + $timeoutUsec) * 1000;
+
+        while (true) {
+            $null = null;
+            $read = $forWrite ? null : [$this->handle];
+            $write = $forWrite ? [$this->handle] : null;
+
+            error_clear_last();
+            $ready = @stream_select($read, $write, $null, $timeoutSec, $timeoutUsec);
+            if ($ready !== false || !self::lastErrorIsInterrupt()) {
+                return $ready;
+            }
+
+            // hrtime(true) is a float on 32-bit PHP, so no intdiv() or % here
+            $remainingUsec = ($deadline - hrtime(true)) / 1000;
+            if ($remainingUsec < 1) {
+                return 0;
+            }
+            $timeoutSec = (int) ($remainingUsec / 1000000);
+            $timeoutUsec = (int) ($remainingUsec - $timeoutSec * 1000000);
+        }
+    }
+
+    private static function lastErrorIsInterrupt(): bool
+    {
+        $message = error_get_last()['message'] ?? '';
+
+        // EINTR is 4 on POSIX; Windows reports WSAEINTR as 10004
+        return str_contains($message, '[4]')
+            || str_contains($message, '[10004]')
+            || stripos($message, 'Interrupted system call') !== false;
+    }
+
+    /**
      * Read from the socket at most $len bytes.
      *
      * This method will not wait for all the requested data, it will return as
@@ -251,15 +296,7 @@ class TSocket extends TTransport
      */
     public function read(int $len): string
     {
-        $null = null;
-        $read = [$this->handle];
-        $readable = @stream_select(
-            $read,
-            $null,
-            $null,
-            $this->recvTimeoutSec,
-            $this->recvTimeoutUsec
-        );
+        $readable = $this->selectRetryingOnInterrupt(false, $this->recvTimeoutSec, $this->recvTimeoutUsec);
 
         if ($readable > 0) {
             $data = fread($this->handle, $len);
@@ -285,19 +322,10 @@ class TSocket extends TTransport
      */
     public function write(string $buf): void
     {
-        $null = null;
-        $write = [$this->handle];
-
         // keep writing until all the data has been written
         while (strlen($buf) > 0) {
             // wait for stream to become available for writing
-            $writable = @stream_select(
-                $null,
-                $write,
-                $null,
-                $this->sendTimeoutSec,
-                $this->sendTimeoutUsec
-            );
+            $writable = $this->selectRetryingOnInterrupt(true, $this->sendTimeoutSec, $this->sendTimeoutUsec);
             if ($writable > 0) {
                 // write buffer to stream
                 $written = fwrite($this->handle, $buf);
