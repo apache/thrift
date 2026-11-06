@@ -21,10 +21,15 @@ package org.apache.thrift.transport;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -50,6 +55,7 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   private boolean isHandshakeCompleted;
 
   private SelectionKey selectionKey;
+  private FutureTask<Void> delegatedTask;
 
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -93,6 +99,9 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   /** {@inheritDoc} */
   @Override
   public synchronized int read(ByteBuffer buffer) throws TTransportException {
+    if (!buffer.hasRemaining()) {
+      return 0;
+    }
     int numBytes = buffer.remaining();
     while (appUnwrap.limit() == appUnwrap.capacity()
         || appUnwrap.remaining() < buffer.remaining()) {
@@ -100,8 +109,14 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
         buffer.put(appUnwrap);
       }
       try {
-        if (doUnwrap() == -1) {
+        int buffered = netUnwrap.position();
+        int progress = doUnwrap();
+        if (progress == -1) {
           throw new IOException("Unable to read " + numBytes + " bytes");
+        }
+        if (progress == 0 && netUnwrap.position() == buffered) {
+          selectionKey.interestOps(SelectionKey.OP_READ);
+          return numBytes - buffer.remaining();
         }
       } catch (IOException iox) {
         throw new TTransportException(TTransportException.UNKNOWN, iox);
@@ -138,10 +153,21 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
   /** {@inheritDoc} */
   @Override
-  public void close() {
-    executorService.shutdown();
-    sslEngine_.closeOutbound();
+  public synchronized void close() {
     super.close();
+    if (!executorService.isShutdown()) {
+      try {
+        if (delegatedTask != null && !delegatedTask.isDone()) {
+          // A provider can hold its engine lock throughout a delegated task.
+          // Keep timeout handling independent of that task and close the engine afterward.
+          executorService.execute(sslEngine_::closeOutbound);
+        } else {
+          sslEngine_.closeOutbound();
+        }
+      } finally {
+        executorService.shutdown();
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -161,40 +187,91 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
   }
 
   private synchronized boolean doHandShake() throws IOException {
+    if (delegatedTask != null) {
+      if (!delegatedTask.isDone()) {
+        return false;
+      }
+      try {
+        delegatedTask.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while completing TLS tasks", e);
+      } catch (ExecutionException e) {
+        throw new IOException("TLS delegated task failed", e.getCause());
+      }
+      delegatedTask = null;
+    }
     while (true) {
-      HandshakeStatus hs = sslEngine_.getHandshakeStatus();
+      // The engine may advance before its last output has reached the socket.
+      HandshakeStatus hs =
+          netWrap.position() > 0 ? HandshakeStatus.NEED_WRAP : sslEngine_.getHandshakeStatus();
       switch (hs) {
         case NEED_UNWRAP:
-          if (doUnwrap() == -1) {
-            LOGGER.error("Unexpected. Handshake failed abruptly during unwrap");
+          int buffered = netUnwrap.position();
+          int read = doUnwrap();
+          if (read == -1) {
+            throw new IOException("TLS peer closed during handshake");
+          }
+          if (read == 0
+              && netUnwrap.position() == buffered
+              && sslEngine_.getHandshakeStatus() == hs) {
+            selectionKey.interestOps(SelectionKey.OP_READ);
             return false;
           }
           break;
         case NEED_WRAP:
-          if (doWrap(ByteBuffer.wrap(new byte[0])) == -1) {
-            LOGGER.error("Unexpected. Handshake failed abruptly during wrap");
+          int written = doWrap(ByteBuffer.allocate(0));
+          if (written == -1) {
+            throw new IOException("TLS engine closed during handshake");
+          }
+          if (written == 0 && (netWrap.position() > 0 || sslEngine_.getHandshakeStatus() == hs)) {
+            selectionKey.interestOps(SelectionKey.OP_WRITE);
             return false;
           }
           break;
         case NEED_TASK:
           doTask();
-          break;
+          return false;
         case FINISHED:
         case NOT_HANDSHAKING:
           isHandshakeCompleted = true;
           return true;
         default:
-          LOGGER.error("Unknown handshake status. Handshake failed");
-          return false;
+          throw new IOException("Unexpected TLS handshake status: " + hs);
       }
     }
   }
 
-  private void doTask() {
-    Runnable runnable;
-    while ((runnable = sslEngine_.getDelegatedTask()) != null) {
-      executorService.submit(runnable);
+  private void doTask() throws IOException {
+    List<Runnable> tasks = new ArrayList<>();
+    Runnable task;
+    while ((task = sslEngine_.getDelegatedTask()) != null) {
+      tasks.add(task);
     }
+    if (tasks.isEmpty()) {
+      throw new IOException("TLS engine requested tasks but supplied none");
+    }
+    selectionKey.interestOps(0);
+    delegatedTask =
+        new FutureTask<Void>(
+            () -> {
+              for (Runnable runnable : tasks) {
+                runnable.run();
+              }
+              return null;
+            }) {
+          @Override
+          protected void done() {
+            // FutureTask marks itself done before this callback, avoiding a lost wakeup.
+            try {
+              selectionKey.interestOps(SelectionKey.OP_WRITE);
+              selectionKey.selector().wakeup();
+            } catch (CancelledKeyException ignored) {
+              // The call may have timed out or closed while its TLS task was running.
+            }
+          }
+        };
+    executorService.execute(delegatedTask);
   }
 
   private int doUnwrap() throws IOException {
