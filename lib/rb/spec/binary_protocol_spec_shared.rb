@@ -553,10 +553,11 @@ shared_examples_for "a binary protocol" do
   end
 
   def get_socket_connection
-    server = Thrift::ServerSocket.new("localhost", 9090)
+    # Port 0 lets the OS pick a free port, so a busy 9090 cannot fail the spec.
+    server = Thrift::ServerSocket.new("localhost", 0)
     server.listen
 
-    clientside = Thrift::Socket.new("localhost", 9090)
+    clientside = Thrift::Socket.new("localhost", server.handle.addr[1])
     clientside.open
     serverside = server.accept
     [clientside, serverside, server]
