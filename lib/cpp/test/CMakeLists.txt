@@ -92,6 +92,7 @@ set(UnitTest_SOURCES
     TypedefTest.cpp
     TOutputTest.cpp
     TServerSocketTest.cpp
+    TSocketPeerHostTest.cpp
     TServerTransportTest.cpp
     ThrifttReadCheckTests.cpp
     FrameBoundReadBudgetTest.cpp
