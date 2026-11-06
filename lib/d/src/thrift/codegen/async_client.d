@@ -213,16 +213,26 @@ template TAsyncClient(Interface, InputProtocol = TProtocol, OutputProtocol = voi
       // Create the future instance that will represent the result.
       code ~= "auto promise = new TPromise!(" ~ returnTypeCode ~ ");\n";
 
+      // Snapshot the arguments: struct parameters are passed by ref, so the
+      // delegate below would otherwise see whatever the caller stored there
+      // by the time the work item runs.
+      string[] argNames;
+      foreach (i, name; paramNames) {
+        immutable argName = name ~ "_";
+        code ~= "auto " ~ argName ~ " = " ~ name ~ ";\n";
+        argNames ~= argName;
+      }
+
       // Prepare delegate which executes the TClient method call.
       code ~= "auto work = {\n";
       code ~= "try {\n";
       code ~= "static if (is(ReturnType!(Interface." ~ methodName ~
         ") == void)) {\n";
-      code ~= "client_." ~ methodName ~ "(" ~ ctfeJoin(paramNames) ~ ");\n";
+      code ~= "client_." ~ methodName ~ "(" ~ ctfeJoin(argNames) ~ ");\n";
       code ~= "promise.succeed();\n";
       code ~= "} else {\n";
       code ~= "auto result = client_." ~ methodName ~ "(" ~
-        ctfeJoin(paramNames) ~ ");\n";
+        ctfeJoin(argNames) ~ ");\n";
       code ~= "promise.succeed(result);\n";
       code ~= "}\n";
       code ~= "} catch (Exception e) {\n";
