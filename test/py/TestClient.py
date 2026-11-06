@@ -244,10 +244,9 @@ class AbstractTest(unittest.TestCase):
         except Xception as x:
             self.assertEqual(x.errorCode, 1001)
             self.assertEqual(x.message, 'Xception')
-            # TODO ensure same behavior for repr within generated python variants
             # ensure exception's repr method works
-            # x_repr = repr(x)
-            # self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
+            x_repr = repr(x)
+            self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
         try:
             self.client.testException('TException')
