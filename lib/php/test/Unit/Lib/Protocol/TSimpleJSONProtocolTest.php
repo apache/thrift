@@ -103,12 +103,12 @@ class TSimpleJSONProtocolTest extends TestCase
         yield 'bool true' => [
             'writeMethod' => 'writeBool',
             'value' => true,
-            'expectedJson' => '1',
+            'expectedJson' => 'true',
         ];
         yield 'bool false' => [
             'writeMethod' => 'writeBool',
             'value' => false,
-            'expectedJson' => '0',
+            'expectedJson' => 'false',
         ];
         yield 'byte zero' => [
             'writeMethod' => 'writeByte',
@@ -253,6 +253,26 @@ class TSimpleJSONProtocolTest extends TestCase
                 ['writeListEnd', []],
             ],
             'expectedJson' => '[]',
+        ];
+        yield 'list of bools' => [
+            'operations' => [
+                ['writeListBegin', [TType::BOOL, 2]],
+                ['writeBool', [true]],
+                ['writeBool', [false]],
+                ['writeListEnd', []],
+            ],
+            'expectedJson' => '[true,false]',
+        ];
+        yield 'map of bool to bool' => [
+            'operations' => [
+                ['writeMapBegin', [TType::BOOL, TType::BOOL, 2]],
+                ['writeBool', [true]],
+                ['writeBool', [false]],
+                ['writeBool', [false]],
+                ['writeBool', [true]],
+                ['writeMapEnd', []],
+            ],
+            'expectedJson' => '{"true":false,"false":true}',
         ];
         yield 'set of integers' => [
             'operations' => [
