@@ -50,6 +50,7 @@ jobs:
         os:
           - ubuntu-22.04
           - ubuntu-24.04
+          - ubuntu-24.04-arm
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -124,6 +125,15 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: thrift-compiler
+          path: compiler/cpp/thrift
+          retention-days: 3
+
+      # For lib-cpp-arm64. The other jobs keep the x86-64 thrift-compiler.
+      - name: Archive built thrift compiler (ubuntu-24.04-arm)
+        if: matrix.os == 'ubuntu-24.04-arm'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: thrift-compiler-ubuntu-24.04-arm
           path: compiler/cpp/thrift
           retention-days: 3
 
@@ -1279,6 +1289,63 @@ jobs:
         if: failure()
         with:
           name: lib-cpp-test-log
+          path: lib/cpp/test/*.xml
+          retention-days: 3
+
+  # The C++ library on arm64. A job of its own rather than a lib-cpp matrix
+  # leg, so that cross-test, which needs lib-cpp, does not wait for it.
+  lib-cpp-arm64:
+    needs: compiler
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS libboost-all-dev locales
+          sudo locale-gen en_US.UTF-8
+          sudo locale-gen de_DE.UTF-8
+          sudo locale-gen tr_TR.UTF-8
+          sudo update-locale
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed -E 's/without-cpp/with-cpp/g')
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: thrift-compiler-ubuntu-24.04-arm
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for cpp
+        run: make -j$(nproc) -C lib/cpp
+
+      - name: Run make check for lib/cpp
+        run: make -j$(nproc) -C lib/cpp check
+
+      - name: Run make check for test/cpp
+        run: make -j$(nproc) -C test/cpp check
+
+      - name: Upload log files from failed test runs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: lib-cpp-arm64-test-log
           path: lib/cpp/test/*.xml
           retention-days: 3
 
