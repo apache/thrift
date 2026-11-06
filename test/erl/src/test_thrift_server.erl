@@ -160,20 +160,6 @@ handle_function(testMapMap, {Hello}) ->
     {reply, MapMap};
 
 handle_function(testInsanity, {Insanity}) when is_record(Insanity, 'thrift.test.Insanity') ->
-    Hello = #'thrift.test.Xtruct'{string_thing = <<"Hello2">>,
-                                  byte_thing = 2,
-                                  i32_thing = 2,
-                                  i64_thing = 2},
-
-    Goodbye = #'thrift.test.Xtruct'{string_thing = <<"Goodbye4">>,
-                                   byte_thing = 4,
-                                    i32_thing = 4,
-                                    i64_thing = 4},
-    Crazy = #'thrift.test.Insanity'{
-               userMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_EIGHT, 8}]),
-               xtructs = [Goodbye]
-              },
-
     Looney = #'thrift.test.Insanity'{},
 
     FirstMap = dict:from_list([{?THRIFT_TEST_NUMBERZ_TWO, Insanity},
