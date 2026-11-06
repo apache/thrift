@@ -50,12 +50,6 @@
     <ClInclude Include="src\thrift\windows\config.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\thrift\windows\TargetVersion.h">
-      <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\windows\force_inc.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\thrift\transport\TNonblockingServerSocket.h">
       <Filter>transport</Filter>
     </ClInclude>
