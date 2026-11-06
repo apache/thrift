@@ -24,6 +24,7 @@ from thrift.protocol.TJSONProtocol import (TJSONProtocol, TJSONProtocolFactory,
                                            TSimpleJSONProtocol)
 from thrift.protocol.TProtocol import (DEFAULT_STRING_LENGTH_LIMIT,
                                        TProtocolException)
+from thrift.Thrift import TType
 from thrift.transport import TTransport
 
 #
@@ -224,6 +225,33 @@ class TestJSONStringSizeLimit(unittest.TestCase):
             proto.readString()
         self.assertEqual(ctx.exception.type, TTransport.TTransportException.SIZE_LIMIT)
         self.assertLess(trans.bytes_read, limit + 100)
+
+
+class TestSimpleJSONBool(unittest.TestCase):
+
+    def _write(self, fn):
+        buff = TTransport.TMemoryBuffer()
+        protocol = TSimpleJSONProtocol(buff)
+        fn(protocol)
+        return buff.getvalue()
+
+    def test_bool_literals(self):
+        def write(p):
+            p.writeListBegin(TType.BOOL, 2)
+            p.writeBool(True)
+            p.writeBool(False)
+            p.writeListEnd()
+        self.assertEqual(self._write(write), b'[true,false]')
+
+    def test_bool_map_keys_are_quoted(self):
+        def write(p):
+            p.writeMapBegin(TType.BOOL, TType.BOOL, 2)
+            p.writeBool(True)
+            p.writeBool(False)
+            p.writeBool(False)
+            p.writeBool(True)
+            p.writeMapEnd()
+        self.assertEqual(self._write(write), b'{"true":false,"false":true}')
 
 
 class _ByteCountingTransport(TTransport.TTransportBase):

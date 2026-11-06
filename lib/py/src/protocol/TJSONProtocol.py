@@ -704,7 +704,8 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
         self.writeJSONNumber(i64)
 
     def writeBool(self, boolean):
-        self.writeJSONNumber(1 if boolean is True else 0)
+        # JSON literal; writeJSONNumber also quotes it as a map key
+        self.writeJSONNumber('true' if boolean is True else 'false')
 
     def writeDouble(self, dbl):
         self.writeJSONNumber(dbl)
