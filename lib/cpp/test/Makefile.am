@@ -36,7 +36,10 @@ BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/OneWayService.h \
                 gen-cpp/proc_types.h
 
-noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
+noinst_LTLIBRARIES = libboosttestframework.la libtestgencpp.la libprocessortest.la
+
+# Boost.Test, built from its headers so that only those are needed
+libboosttestframework_la_SOURCES = BoostTestFramework.cpp
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/AnnotationTest_types.cpp \
 	gen-cpp/AnnotationTest_types.h \
@@ -155,7 +158,7 @@ UnitTests_SOURCES = \
 UnitTests_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_TEST_LDADD) \
+  libboosttestframework.la \
   -lz
 
 UnitTestsUuid_SOURCES = \
@@ -164,7 +167,7 @@ UnitTestsUuid_SOURCES = \
 
 UnitTestsUuid_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 UnitTestsUuid_CPPFLAGS = \
    $(AM_CPPFLAGS) \
@@ -176,7 +179,7 @@ UnitTestsUuidNoDirective_SOURCES = \
 
 UnitTestsUuidNoDirective_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp \
@@ -185,7 +188,7 @@ TInterruptTest_SOURCES = \
 
 TInterruptTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 TServerIntegrationTest_SOURCES = \
 	TServerIntegrationTest.cpp \
@@ -194,7 +197,7 @@ TServerIntegrationTest_SOURCES = \
 TServerIntegrationTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 TServerExceptionTest_SOURCES = \
 	TServerExceptionTest.cpp
@@ -202,7 +205,7 @@ TServerExceptionTest_SOURCES = \
 TServerExceptionTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 SecurityTest_SOURCES = \
 	SecurityTest.cpp
@@ -210,7 +213,7 @@ SecurityTest_SOURCES = \
 SecurityTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 SecurityFromBufferTest_SOURCES = \
 	SecurityFromBufferTest.cpp
@@ -218,7 +221,7 @@ SecurityFromBufferTest_SOURCES = \
 SecurityFromBufferTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
@@ -226,7 +229,7 @@ TransportTest_SOURCES = \
 TransportTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_TEST_LDADD) \
+  libboosttestframework.la \
   -lz
 
 ZlibTest_SOURCES = \
@@ -235,7 +238,7 @@ ZlibTest_SOURCES = \
 ZlibTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_TEST_LDADD) \
+  libboosttestframework.la \
   -lz
 
 EnumTest_SOURCES = \
@@ -243,25 +246,25 @@ EnumTest_SOURCES = \
 
 EnumTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 RenderedDoubleConstantsTest_SOURCES = RenderedDoubleConstantsTest.cpp
 
-RenderedDoubleConstantsTest_LDADD = libtestgencpp.la $(BOOST_TEST_LDADD)
+RenderedDoubleConstantsTest_LDADD = libtestgencpp.la libboosttestframework.la
 
 AnnotationTest_SOURCES = \
 	AnnotationTest.cpp
 
 AnnotationTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
 
 TFileTransportTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 #
 # TFDTransportTest
@@ -271,7 +274,7 @@ TFDTransportTest_SOURCES = \
 
 TFDTransportTest_LDADD =  \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 
 #
@@ -284,7 +287,7 @@ TPipedTransportTest_SOURCES = \
 TPipedTransportTest_LDADD = \
 	libtestgencpp.la \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 #
 # TTransportFactoryConfigTest
@@ -295,7 +298,7 @@ TTransportFactoryConfigTest_SOURCES = \
 TTransportFactoryConfigTest_LDADD =  \
 	$(top_builddir)/lib/cpp/libthrift.la \
 	$(top_builddir)/lib/cpp/libthriftz.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 #
 # AllProtocolsTest
@@ -307,7 +310,7 @@ AllProtocolsTest_SOURCES = \
 
 AllProtocolsTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  libboosttestframework.la
 
 #
 # DebugProtoTest
@@ -317,7 +320,7 @@ DebugProtoTest_SOURCES = \
 
 DebugProtoTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 
 #
@@ -328,7 +331,7 @@ JSONProtoTest_SOURCES = \
 
 JSONProtoTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 #
 # TNonblockingServerTest
@@ -338,7 +341,7 @@ TNonblockingServerTest_SOURCES = TNonblockingServerTest.cpp
 TNonblockingServerTest_LDADD = libprocessortest.la \
                                $(top_builddir)/lib/cpp/libthrift.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
-                               $(BOOST_TEST_LDADD) \
+                               libboosttestframework.la \
                                $(BOOST_LDFLAGS) \
                                $(LIBEVENT_LIBS)
 #
@@ -349,7 +352,7 @@ TNonblockingSSLServerTest_SOURCES = TNonblockingSSLServerTest.cpp
 TNonblockingSSLServerTest_LDADD = libprocessortest.la \
                                $(top_builddir)/lib/cpp/libthrift.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
-                               $(BOOST_TEST_LDADD) \
+                               libboosttestframework.la \
                                $(BOOST_LDFLAGS) \
                                $(LIBEVENT_LIBS)
 
@@ -360,7 +363,7 @@ TEvhttpServerRequestContextTest_SOURCES = TEvhttpServerRequestContextTest.cpp
 
 TEvhttpServerRequestContextTest_LDADD = $(top_builddir)/lib/cpp/libthrift.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
-                               $(BOOST_TEST_LDADD) \
+                               libboosttestframework.la \
                                $(BOOST_LDFLAGS) \
                                $(LIBEVENT_LIBS)
 
@@ -372,7 +375,7 @@ OptionalRequiredTest_SOURCES = \
 
 OptionalRequiredTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 #
 # OptionalRequiredTest
@@ -382,7 +385,7 @@ RecursiveTest_SOURCES = \
 
 RecursiveTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 #
 # SpecializationTest
@@ -392,7 +395,7 @@ SpecializationTest_SOURCES = \
 
 SpecializationTest_LDADD = \
 	libtestgencpp.la \
-	$(BOOST_TEST_LDADD)
+	libboosttestframework.la
 
 concurrency_test_SOURCES = \
 	concurrency/Tests.cpp \
@@ -419,7 +422,7 @@ processor_test_SOURCES = \
 processor_test_LDADD = libprocessortest.la \
                        $(top_builddir)/lib/cpp/libthrift.la \
                        $(top_builddir)/lib/cpp/libthriftnb.la \
-                       $(BOOST_TEST_LDADD) \
+                       libboosttestframework.la \
                        $(BOOST_LDFLAGS) \
                        $(LIBEVENT_LIBS)
 
@@ -428,7 +431,7 @@ OpenSSLManualInitTest_SOURCES = \
 
 OpenSSLManualInitTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD) \
+	libboosttestframework.la \
 	$(OPENSSL_LDFLAGS) \
 	$(OPENSSL_LIBS)
 
@@ -437,7 +440,7 @@ TSSLSocketMatchNameTest_SOURCES = \
 
 TSSLSocketMatchNameTest_LDADD = \
 	$(top_builddir)/lib/cpp/libthrift.la \
-	$(BOOST_TEST_LDADD) \
+	libboosttestframework.la \
 	$(OPENSSL_LDFLAGS) \
 	$(OPENSSL_LIBS)
 
