@@ -147,9 +147,15 @@ fi
 
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
+have_cpp_tests=no
 if test "$with_cpp" = "yes";  then
-  AX_BOOST_BASE([1.56.0])
-  if test "x$succeeded" = "xyes" ; then
+  have_cpp="yes"
+  # The library does not use Boost; its tests and the cross-test client
+  # and server do. --enable-tests is parsed later, so test it directly.
+  if test "x$enable_tests" != "xno" ; then
+    AX_BOOST_BASE([1.56.0])
+  fi
+  if test "x$enable_tests" != "xno" -a "x$succeeded" = "xyes" ; then
     AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
     AC_SUBST([BOOST_CHRONO_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_chrono.a")])
     AC_SUBST([BOOST_FILESYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_filesystem.a")])
@@ -161,7 +167,9 @@ if test "$with_cpp" = "yes";  then
     AC_SUBST([BOOST_SYSTEM_LDADD])
     AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
     AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
-    have_cpp="yes"
+    have_cpp_tests="yes"
+  elif test "x$enable_tests" != "xno" ; then
+    AC_MSG_WARN([Boost was not found: the C++ library is built, its tests are not])
   fi
 
   AX_LIB_EVENT([2.0])
@@ -186,6 +194,7 @@ if test "$with_cpp" = "yes";  then
   fi
 fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
+AM_CONDITIONAL([WITH_CPP_TESTS], [test "$have_cpp_tests" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_QT5], [test "$have_qt5" = "yes"])
@@ -878,7 +887,7 @@ AC_CONFIG_FILES([
   tutorial/rs/Makefile
 ])
 
-if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
+if test "$have_cpp_tests" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
 AC_SUBST([MAYBE_CPP])
 if test "$have_c_glib" = "yes" ; then MAYBE_C_GLIB="c_glib" ; else MAYBE_C_GLIB="" ; fi
 AC_SUBST([MAYBE_C_GLIB])
@@ -952,6 +961,7 @@ if test "$have_cpp" = "yes" ; then
   echo
   echo "C++ Library:"
   echo "   C++ compiler .............. : $CXX"
+  echo "   Build tests (needs Boost) . : $have_cpp_tests"
   echo "   Build TZlibTransport ...... : $have_zlib"
   echo "   Build TNonblockingServer .. : $have_libevent"
   echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
