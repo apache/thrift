@@ -29,14 +29,11 @@
 /*
  * *_to_zigzag depend on the fact that the right shift
  * operator on a signed integer is an arithmetic (sign-extending) shift.
- * If this is not the case, the current implementation will not work.
+ * C leaves it implementation-defined, and every compiler Thrift supports
+ * does it. Check it here rather than in configure, which cannot run a
+ * test program when cross-compiling.
  */
-#if !defined(SIGNED_RIGHT_SHIFT_IS) || !defined(ARITHMETIC_RIGHT_SHIFT)
-# error "Unable to determine the behavior of a signed right shift"
-#endif
-#if SIGNED_RIGHT_SHIFT_IS != ARITHMETIC_RIGHT_SHIFT
-# error "thrift_compact_protocol only works if signed right shift is arithmetic"
-#endif
+G_STATIC_ASSERT ((G_MININT32 >> 31) == -1 && (G_MININT64 >> 63) == -1);
 
 /* object properties */
 enum _ThriftCompactProtocolProperties
