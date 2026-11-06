@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\LoggerInterface;
@@ -738,6 +739,300 @@ class TSocketTest extends TestCase
 
         $socket->open();
         $this->assertTrue($socket->isOpen());
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testReadSurvivesInterruptedSelect()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setRecvTimeout(5000);
+
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use ($peer) {
+            fwrite($peer, 'x');
+        });
+        try {
+            pcntl_alarm(1);
+            $this->assertSame('x', $socket->read(1));
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+        }
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testReadTimeoutIsNotExtendedByInterrupts()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setRecvTimeout(2500);
+
+        $signals = 0;
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use (&$signals, $peer) {
+            // data after 8 signals stops a retry loop that restarts the full timeout
+            if (++$signals >= 8) {
+                fwrite($peer, 'x');
+            } else {
+                pcntl_alarm(1);
+            }
+        });
+        $start = hrtime(true);
+        try {
+            pcntl_alarm(1);
+            $socket->read(1);
+            $this->fail('Expected a read timeout');
+        } catch (TTransportException $e) {
+            $this->assertStringContainsString('timed out reading', $e->getMessage());
+            $this->assertLessThan(4.0, (hrtime(true) - $start) / 1e9);
+            $this->assertGreaterThanOrEqual(2, $signals);
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+        }
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testWriteSurvivesInterruptedSelect()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setSendTimeout(5000);
+
+        // fill the socket buffer so that write() has to wait in select
+        stream_set_blocking($socket->getHandle(), false);
+        while (($n = fwrite($socket->getHandle(), str_repeat('a', 65536))) > 0) {
+        }
+        stream_set_blocking($socket->getHandle(), true);
+
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use ($peer) {
+            stream_set_blocking($peer, false);
+            while (fread($peer, 1048576) !== '' && !feof($peer)) {
+            }
+        });
+        try {
+            pcntl_alarm(1);
+            $socket->write('b');
+            $this->addToAssertionCount(1);
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+        }
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testReadSurvivesInterruptedSelectWithHandlerThatHandlesWarnings()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setRecvTimeout(5000);
+
+        // a handled warning never reaches error_get_last()
+        $handler = fn() => true;
+        set_error_handler($handler);
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use ($peer) {
+            fwrite($peer, 'x');
+        });
+        try {
+            pcntl_alarm(1);
+            $this->assertSame('x', $socket->read(1));
+            $this->assertSame($handler, set_error_handler(null), 'the error handler was not restored');
+            restore_error_handler();
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+            restore_error_handler();
+        }
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testReadSurvivesInterruptedSelectWhenSignalHandlerRaisesWarning()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setRecvTimeout(5000);
+
+        // returns false, so PHP records the warning as the last error
+        $seen = [];
+        set_error_handler(function (int $errno, string $message) use (&$seen) {
+            $seen[] = [$errno, $message];
+
+            return false;
+        }, E_USER_WARNING);
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use ($peer) {
+            fwrite($peer, 'x');
+            @trigger_error('Unrelated warning from a signal handler', E_USER_WARNING);
+        });
+        try {
+            pcntl_alarm(1);
+            $this->assertSame('x', $socket->read(1));
+            // the application handler is the active one while the signal handler runs
+            $this->assertSame([[E_USER_WARNING, 'Unrelated warning from a signal handler']], $seen);
+            $this->assertTrue(pcntl_async_signals(), 'asynchronous signals were not switched back on');
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+            restore_error_handler();
+        }
+    }
+
+    #[RequiresFunction('pcntl_alarm')]
+    public function testErrorHandlerSetBySignalHandlerSurvivesInterruptedSelect()
+    {
+        [$socket, $peer] = $this->createInterruptibleSocket();
+        $socket->setRecvTimeout(5000);
+
+        $handler = fn() => true;
+        $previous = pcntl_async_signals(true);
+        pcntl_signal(SIGALRM, function () use ($peer, $handler) {
+            fwrite($peer, 'x');
+            set_error_handler($handler);
+        });
+        $installed = false;
+        try {
+            pcntl_alarm(1);
+            $this->assertSame('x', $socket->read(1));
+            $installed = set_error_handler(null) === $handler;
+            restore_error_handler();
+            $this->assertTrue($installed, 'the handler set by the signal handler was removed');
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(SIGALRM, SIG_DFL);
+            pcntl_async_signals($previous);
+            if ($installed) {
+                restore_error_handler();
+            }
+        }
+    }
+
+    public function testInterruptIsRecognizedWithHtmlErrors()
+    {
+        $handle = fopen('php://memory', 'r+');
+
+        $calls = 0;
+        $this->getFunctionMock('Thrift\Transport', 'stream_select')
+             ->expects($this->exactly(2))
+             ->willReturnCallback(function () use (&$calls) {
+                if (++$calls === 1) {
+                    trigger_error(
+                        "stream_select() [<a href='function.stream-select'>function.stream-select</a>]: "
+                        . 'Unable to select [4]: Interrupted system call (max_fd=5)',
+                        E_USER_WARNING
+                    );
+
+                    return false;
+                }
+
+                 return 1;
+             });
+        $this->getFunctionMock('Thrift\Transport', 'fread')
+             ->expects($this->once())
+             ->with($handle, 1)
+             ->willReturn('x');
+
+        $transport = new TSocket('localhost', 9090, false, null);
+        $transport->setRecvTimeout(5000);
+        $transport->setHandle($handle);
+
+        $this->assertSame('x', $transport->read(1));
+    }
+
+    public function testSelectPassesOtherErrorsToTheApplicationHandler()
+    {
+        $handle = fopen('php://memory', 'r+');
+
+        $this->getFunctionMock('Thrift\Transport', 'stream_select')
+             ->expects($this->once())
+             ->willReturnCallback(function () {
+                 trigger_error('Unrelated warning during the select', E_USER_WARNING);
+
+                 return 1;
+             });
+        $this->getFunctionMock('Thrift\Transport', 'fread')
+             ->expects($this->once())
+             ->with($handle, 1)
+             ->willReturn('x');
+
+        $transport = new TSocket('localhost', 9090, false, null);
+        $transport->setHandle($handle);
+
+        $seen = [];
+        $handler = function (int $errno, string $message) use (&$seen) {
+            $seen[] = [$errno, $message];
+
+            return true;
+        };
+        set_error_handler($handler);
+        try {
+            $this->assertSame('x', $transport->read(1));
+            $this->assertSame([[E_USER_WARNING, 'Unrelated warning during the select']], $seen);
+            $this->assertSame($handler, set_error_handler(null), 'the error handler was not restored');
+            restore_error_handler();
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    public function testInterruptedSelectRetriesWithFloatHrtime()
+    {
+        $handle = fopen('php://memory', 'r+');
+
+        // 32-bit PHP returns a float from hrtime(true)
+        $this->getFunctionMock('Thrift\Transport', 'hrtime')
+             ->expects($this->exactly(2))
+             ->willReturnOnConsecutiveCalls(1000.0, 1500001000.0);
+
+        $timeouts = [];
+        $select = function (&$read, &$write, &$except, $sec, $usec) use (&$timeouts) {
+            $timeouts[] = [$sec, $usec];
+            if (count($timeouts) === 1) {
+                trigger_error('stream_select(): Unable to select [4]: Interrupted system call', E_USER_WARNING);
+
+                return false;
+            }
+
+            return 1;
+        };
+        $this->getFunctionMock('Thrift\Transport', 'stream_select')
+             ->expects($this->exactly(2))
+             ->willReturnCallback($select);
+
+        $this->getFunctionMock('Thrift\Transport', 'fread')
+             ->expects($this->once())
+             ->with($handle, 1)
+             ->willReturn('x');
+
+        $transport = new TSocket('localhost', 9090, false, null);
+        $transport->setRecvTimeout(5000);
+        $transport->setHandle($handle);
+
+        $this->assertSame('x', $transport->read(1));
+        $this->assertSame([[5, 0], [3, 500000]], $timeouts);
+    }
+
+    private function createInterruptibleSocket(): array
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $this->assertIsArray($pair);
+
+        $socket = new class extends TSocket {
+            public function setHandle($handle): void
+            {
+                $this->handle = $handle;
+            }
+
+            public function getHandle()
+            {
+                return $this->handle;
+            }
+        };
+        $socket->setHandle($pair[0]);
+
+        return [$socket, $pair[1]];
     }
 
     private function createSocketStream()
