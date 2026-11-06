@@ -302,10 +302,9 @@ public abstract class TAsyncMethodCall<T> {
   }
 
   private void doConnecting(SelectionKey key) throws IOException {
-    if (!key.isConnectable() || !transport.finishConnect()) {
-      throw new IOException(
-          "not connectable or finishConnect returned false after we got an OP_CONNECT");
+    // A layered transport can need read/write readiness to complete its connection handshake.
+    if (transport.finishConnect()) {
+      registerForFirstWrite(key);
     }
-    registerForFirstWrite(key);
   }
 }
