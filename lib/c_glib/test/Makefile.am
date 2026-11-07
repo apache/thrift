@@ -509,5 +509,6 @@ distdir:
 EXTRA_DIST = \
              CMakeLists.txt \
              ContainerTest.thrift \
-             RecursionLimitTest.thrift
+             RecursionLimitTest.thrift \
+             testserversocket.h
 
