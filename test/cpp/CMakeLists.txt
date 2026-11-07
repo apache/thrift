@@ -17,12 +17,6 @@
 # under the License.
 #
 
-# The test executables still depend on Boost
-include(BoostMacros)
-REQUIRE_BOOST_HEADERS()
-set(BOOST_COMPONENTS filesystem program_options random)
-REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
-
 # Contains the thrift specific target_link_libraries
 include(ThriftMacros)
 
@@ -72,17 +66,17 @@ add_library(crossspecificnamegencpp STATIC ${crossspecificnamegencpp_SOURCES})
 target_link_libraries(crossspecificnamegencpp thrift)
 
 add_executable(TestServer src/TestServer.cpp)
-target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES})
+target_link_libraries(TestServer crosstestgencpp)
 target_link_libraries(TestServer thriftnb)
 target_link_libraries(TestServer thriftz)
 
 add_executable(TestClient src/TestClient.cpp)
-target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES})
+target_link_libraries(TestClient crosstestgencpp)
 target_link_libraries(TestClient thriftnb)
 target_link_libraries(TestClient thriftz)
 
 add_executable(StressTest src/StressTest.cpp)
-target_link_libraries(StressTest crossstressgencpp ${Boost_LIBRARIES})
+target_link_libraries(StressTest crossstressgencpp)
 target_link_libraries(StressTest thriftnb)
 add_test(NAME StressTest COMMAND StressTest)
 add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
@@ -91,14 +85,14 @@ add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
 # is broken on Windows. Contributions welcome.
 if (NOT WIN32 AND NOT CYGWIN)
     add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
-    target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES})
+    target_link_libraries(StressTestNonBlocking crossstressgencpp)
     target_link_libraries(StressTestNonBlocking thriftnb)
     target_link_libraries(StressTestNonBlocking thriftz)
     add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
 endif()
 
 add_executable(SpecificNameTest src/SpecificNameTest.cpp)
-target_link_libraries(SpecificNameTest crossspecificnamegencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
+target_link_libraries(SpecificNameTest crossspecificnamegencpp ${LIBEVENT_LIB})
 target_link_libraries(SpecificNameTest thrift)
 target_link_libraries(SpecificNameTest thriftnb)
 add_test(NAME SpecificNameTest COMMAND SpecificNameTest)
@@ -122,7 +116,7 @@ target_include_directories(ForwardSetterTest BEFORE PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward/gen-cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-forward"
 )
-target_link_libraries(ForwardSetterTest forwardsettertestgencpp ${Boost_LIBRARIES})
+target_link_libraries(ForwardSetterTest forwardsettertestgencpp)
 target_link_libraries(ForwardSetterTest thrift)
 add_test(NAME ForwardSetterTest COMMAND ForwardSetterTest)
 
@@ -146,7 +140,7 @@ target_include_directories(PrivateOptionalTest BEFORE PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private/gen-cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private"
 )
-target_link_libraries(PrivateOptionalTest privateoptonaltestgencpp ${Boost_LIBRARIES})
+target_link_libraries(PrivateOptionalTest privateoptonaltestgencpp)
 target_link_libraries(PrivateOptionalTest thrift)
 add_test(NAME PrivateOptionalTest COMMAND PrivateOptionalTest)
 
@@ -169,7 +163,7 @@ target_include_directories(EnumClassTest BEFORE PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass/gen-cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-enumclass"
 )
-target_link_libraries(EnumClassTest enumclasstestgencpp ${Boost_LIBRARIES})
+target_link_libraries(EnumClassTest enumclasstestgencpp)
 target_link_libraries(EnumClassTest thrift)
 add_test(NAME EnumClassTest COMMAND EnumClassTest)
 
@@ -192,7 +186,7 @@ target_include_directories(TemplateStreamOpTest BEFORE PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop/gen-cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-templatestreamop"
 )
-target_link_libraries(TemplateStreamOpTest templatestreamoptestgencpp ${Boost_LIBRARIES})
+target_link_libraries(TemplateStreamOpTest templatestreamoptestgencpp)
 target_link_libraries(TemplateStreamOpTest thrift)
 add_test(NAME TemplateStreamOpTest COMMAND TemplateStreamOpTest)
 
@@ -216,7 +210,7 @@ target_include_directories(PrivateOptionalTemplateStreamOpTest BEFORE PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop/gen-cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/gen-cpp-private-templatestreamop"
 )
-target_link_libraries(PrivateOptionalTemplateStreamOpTest privateopttemplstreamoptestgencpp ${Boost_LIBRARIES})
+target_link_libraries(PrivateOptionalTemplateStreamOpTest privateopttemplstreamoptestgencpp)
 target_link_libraries(PrivateOptionalTemplateStreamOpTest thrift)
 add_test(NAME PrivateOptionalTemplateStreamOpTest COMMAND PrivateOptionalTemplateStreamOpTest)
 
