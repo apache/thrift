@@ -1837,7 +1837,9 @@ void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bo
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED)
       out << indent() << "if (!isset_" << (*f_iter)->get_name() << ')' << '\n' << indent()
-          << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << '\n';
+          << "  throw TProtocolException(TProtocolException::INVALID_DATA, "
+          << "\"TProtocolException::INVALID_DATA reading struct '" << tstruct->get_name()
+          << "': missing required field '" << (*f_iter)->get_name() << "'\");" << '\n';
   }
 
   indent(out) << "return xfer;" << '\n';
