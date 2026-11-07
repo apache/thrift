@@ -40,6 +40,7 @@ Instructions:
  1. Squash your changes to a single commit.  This maintains clean change history.
  1. Commit and push changes to your branch (please use issue name and description as commit title, e.g. "THRIFT-9999: make it perfect"), with the affected languages on the next line of the description.
  1. Use GitHub to create a pull request going from your branch to apache:master.  Ensure that the Jira ticket number is at the beginning of the title of your pull request, same as the commit title.
+ 1. Fill in every section of the pull request template: the `Jira:` line, why the change is needed, what it changes, how you verified it, what changes for users, and whether AI was used.  Reviewers read the description before the diff.
  1. Wait for other contributors or committers to review your new addition, and for a CI build to complete.
  1. Wait for a committer to commit your patch.  You can nudge the committers if necessary by sending a message to the [Apache Thrift mailing list](https://thrift.apache.org/mailing).
 
@@ -115,7 +116,7 @@ This procedure will apply only your commits in order to the current master, then
 
 ## AI generated content ##
 
-The [ASF Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html) serves as a great summary. It also outlines potential issues that come with generative tools. For the reasons set out in this document, but also to make it absolutely clear to the reviewers, we strongly recommend using either the `Generated-by:` (as recommended by the linked ASF source) or `Co-Authored-By:` clause (widely adopted common practice, e.g. [here](https://issues.apache.org/jira/browse/SPARK-25018) and [here](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/CommitMessageConventions.html)) in commits and pull requests, if applicable.
+The [ASF Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html) serves as a great summary. It also outlines potential issues that come with generative tools. For the reasons set out in this document, but also to make it absolutely clear to the reviewers, we strongly recommend using either the `Generated-by:` (as recommended by the linked ASF source) or `Co-Authored-By:` clause (widely adopted common practice, e.g. [here](https://issues.apache.org/jira/browse/SPARK-25018) and [here](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/CommitMessageConventions.html)) in commits, if applicable, and to answer the "Was AI used?" question of the pull request template.
 
 ----
 
