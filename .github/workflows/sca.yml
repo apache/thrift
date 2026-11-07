@@ -275,14 +275,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Configure apt retries and timeouts
-        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
-
+      # Same apt install as lib-python in build.yml: per-attempt budgets, a
+      # fallback to archive.ubuntu.com, and a step timeout as the backstop.
       - name: Install dependencies
-        run: |
-          sudo apt-get update -yq
-          # shellcheck disable=SC2086
-          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
+        uses: $/.github/actions/apt-install
+        timeout-minutes: 15
+        with:
+          packages: g++ ${{ env.BUILD_DEPS }}
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
