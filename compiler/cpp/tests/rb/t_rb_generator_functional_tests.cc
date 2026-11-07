@@ -58,8 +58,7 @@ TEST_CASE("t_rb_generator emits bare marker for CRLF blank RDoc lines", "[functi
     REQUIRE(!generated_content.empty());
     REQUIRE(generated_content.find("\r") == string::npos);
     REQUIRE(generated_content.rfind("# frozen_string_literal: true\n", 0) == 0);
-    REQUIRE(generated_content.find("#  * first line\n") != string::npos);
-    REQUIRE(generated_content.find("#  *\n") != string::npos);
+    REQUIRE(generated_content.find("# first line\n#\n# second line\n") != string::npos);
 
     std::remove(thrift_path.c_str());
 }
