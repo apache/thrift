@@ -147,7 +147,9 @@ public:
   void generate_generic_isset_method(std::ostream& out, t_struct* tstruct);
   void generate_property_getters_setters(std::ostream& out, t_struct* tstruct);
 
-  void generate_function_helpers(t_function* tfunction);
+  void generate_function_helpers(t_service* tservice, t_function* tfunction);
+  std::string args_struct_name(t_service* tservice, t_function* tfunction);
+  std::string result_struct_name(t_service* tservice, t_function* tfunction);
   std::string get_cap_name(std::string name);
   std::string make_haxe_user_type_name(const std::string& name);
   std::string escape_haxe_keyword(std::string name);
@@ -1820,9 +1822,28 @@ void t_haxe_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
+    string name_orig = ts->get_name();
+    ts->set_name(args_struct_name(tservice, *f_iter));
     generate_haxe_struct(ts, false);
-    generate_function_helpers(*f_iter);
+    ts->set_name(name_orig);
+    generate_function_helpers(tservice, *f_iter);
   }
+}
+
+/**
+ * The names of the argument and result structs of a method. These are classes of the package, as
+ * are those of the other services in it, so they carry the name of the service that declares the
+ * method.
+ *
+ * @param tservice  The service that declares the method
+ * @param tfunction The method
+ */
+string t_haxe_generator::args_struct_name(t_service* tservice, t_function* tfunction) {
+  return get_cap_name(tservice->get_name() + "_" + tfunction->get_name() + "_args");
+}
+
+string t_haxe_generator::result_struct_name(t_service* tservice, t_function* tfunction) {
+  return get_cap_name(tservice->get_name() + "_" + tfunction->get_name() + "_result");
 }
 
 /**
@@ -1895,7 +1916,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
 
-    string argsname = get_cap_name((*f_iter)->get_name() + "_args");
+    string argsname = args_struct_name(tservice, *f_iter);
     vector<t_field*>::const_iterator fld_iter;
     const vector<t_field*>& fields = arg_struct->get_members();
 
@@ -1930,7 +1951,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
       indent_up();
       string appex = tmp("appex");
       indent(f_service_) << "var " << appex << " : TApplicationException;" << '\n';
-      string resultname = get_cap_name((*f_iter)->get_name() + "_result");
+      string resultname = result_struct_name(tservice, *f_iter);
       indent(f_service_) << "if (error != null) {" << '\n';
       indent_up();
       indent(f_service_) << "if (onError == null)" << '\n';
@@ -2137,14 +2158,15 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
 /**
  * Generates a struct and helpers for a function.
  *
+ * @param tservice  The service that declares the function
  * @param tfunction The function
  */
-void t_haxe_generator::generate_function_helpers(t_function* tfunction) {
+void t_haxe_generator::generate_function_helpers(t_service* tservice, t_function* tfunction) {
   if (tfunction->is_oneway()) {
     return;
   }
 
-  string resultname = get_cap_name(tfunction->get_name() + "_result");
+  string resultname = result_struct_name(tservice, tfunction);
   t_struct result(program_, resultname);
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
@@ -2167,7 +2189,6 @@ void t_haxe_generator::generate_function_helpers(t_function* tfunction) {
  * @param tfunction The function to write a dispatcher for
  */
 void t_haxe_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
-  (void)tservice;
   // Open class
   indent(f_service_) << "private function " << tfunction->get_name()
                      << "() : Int->TProtocol->TProtocol->Void {" << '\n';
@@ -2178,8 +2199,8 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
                      << '\n';
   scope_up(f_service_);
 
-  string argsname = get_cap_name(tfunction->get_name() + "_args");
-  string resultname = get_cap_name(tfunction->get_name() + "_result");
+  string argsname = args_struct_name(tservice, tfunction);
+  string resultname = result_struct_name(tservice, tfunction);
 
   f_service_ << indent() << "var args : " << argsname << " = new " << argsname << "();" << '\n'
              << indent() << "args.read(iprot);" << '\n' << indent() << "iprot.readMessageEnd();"
