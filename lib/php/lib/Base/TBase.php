@@ -349,8 +349,31 @@ abstract class TBase
         } else {
             $xfer += $output->writeListBegin($etype, count($var));
         }
+        $setUsesValues = false;
+        if ($set && array_is_list($var)) {
+            // Preserve the legacy `element => true` marker form when every
+            // value is `true`. This keeps ambiguous `set<bool>` inputs such
+            // as `[true]` on the backward-compatible path.
+
+            foreach ($var as $candidate) {
+                if ($candidate !== true) {
+                    $setUsesValues = true;
+                    break;
+                }
+            }
+        }
         foreach ($var as $key => $val) {
-            $elem = $set ? $key : $val;
+            $elem = $set && !$setUsesValues ? $key : $val;
+            if ($set) {
+                // Match the generated serializer for both keyed sets and value lists.
+                $elem = match ($etype) {
+                    TType::BOOL => (bool) $elem,
+                    TType::BYTE, TType::I16, TType::I32, TType::I64 => (int) $elem,
+                    TType::DOUBLE => (float) $elem,
+                    TType::STRING, TType::UUID => (string) $elem,
+                    default => $elem,
+                };
+            }
             if (isset($ewrite)) {
                 $xfer += $output->$ewrite($elem);
             } else {

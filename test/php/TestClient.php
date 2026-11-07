@@ -319,6 +319,22 @@ if ($setin[2] !== $setout[2] || is_int($setin[2])) {
     $exitcode |= ERR_CONTAINERS;
 }
 
+// THRIFT-2950: list-form input must send values, not PHP array indexes.
+foreach ([[], [-2, -1, 0, 1, 2], [42, -7, 19]] as $setValues) {
+    print_r('testSet(list values {' . implode(', ', $setValues) . '})');
+    $setin = $testClient->testSet($setValues);
+    print_r(' = {' . implode(', ', array_keys($setin)) . "}\n");
+
+    // Reading a set still returns the legacy element => true representation.
+    $expectedSet = array_fill_keys($setValues, true);
+    ksort($expectedSet);
+    ksort($setin);
+    if ($setin !== $expectedSet) {
+        echo "**FAILED**\n";
+        $exitcode |= ERR_CONTAINERS;
+    }
+}
+
 /**
  * LIST TEST
  */
