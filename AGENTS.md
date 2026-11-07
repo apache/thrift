@@ -51,6 +51,9 @@ Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) in full. Key points:
 - Verify coding standards: `make style`.
 - Branch name convention: use the JIRA ticket ID, e.g. `THRIFT-9999`.
 - PRs go from your fork branch → `apache:master`.
+- Fill in [`.github/pull_request_template.md`](.github/pull_request_template.md): complete the
+  `Jira:` line with the ticket key (or `none` and the reason), and answer every heading.
+  `No` and `None` are answers; a deleted heading is not.
 
 ---
 
@@ -139,8 +142,8 @@ authentication, serialization bounds, or anything flagged by the project's secur
     own. When a review round adds anything but prose, drop the marker as you amend.
   - GitHub also matches the marker when it is quoted. A commit that is not prose-only must not
     contain it, or GitHub's variants `[ci skip]`, `[no ci]`, `[skip actions]` and
-    `[actions skip]`, anywhere in its message. A squash message built from a PR description
-    picks it up from the checklist in the PR template.
+    `[actions skip]`, anywhere in its message, and the PR description must not contain it
+    either: a squash message can be built from the description.
   - The marker also stops the tool-internal links check (§4) from running, so check the commit
     message (`git log --format=%B`) and the PR text yourself before pushing.
 
@@ -150,14 +153,16 @@ authentication, serialization bounds, or anything flagged by the project's secur
 
 - [ ] License of any new dependency checked against [ASF Category A/X list](https://www.apache.org/legal/resolved.html)
 - [ ] `LICENSE` and/or `NOTICE` updated if third-party attribution is required
-- [ ] JIRA ticket exists (unless truly trivial)
+- [ ] JIRA ticket exists (unless truly trivial) and the `Jira:` line of the PR description names it
 - [ ] PR title starts with `THRIFT-NNNN:` (if ticket exists)
 - [ ] Commit message includes affected `Client:` languages
+- [ ] The PR description says how the change was verified
 - [ ] Single squashed commit
 - [ ] Prose-only change: `[skip ci]` ends the commit subject and the PR title; any other change: no such marker anywhere in the commit message
 - [ ] Tests added or updated
 - [ ] `make style` passes
-- [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable
+- [ ] AI authorship labelled with `Co-Authored-By:` / `Generated-by:` where applicable, and the
+      PR description answers "Was AI used?"
 - [ ] No tool-internal or AI session URLs anywhere in the commit message or PR text
 - [ ] Security-sensitive changes use neutral commit/PR language (no public vulnerability details)
 - [ ] Changes touching transport limits / TLS / auth cross-checked against `doc/thrift-threat-model.md`
