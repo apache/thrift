@@ -188,7 +188,7 @@ thrift_server (const int port)
   client = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport",
                          thrift_server_transport_accept (transport, NULL),
                          "r_buf_size", 5, "configuration", tconfiguration, 
-                         "remainingmessagesize", MAX_MESSAGE_SIZE, NULL);
+                         "remainingmessagesize", (glong) MAX_MESSAGE_SIZE, NULL);
   g_assert (client != NULL);
 
   /* read 2 bytes */

@@ -194,8 +194,8 @@ thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
   if(tst->configuration != NULL)
   {
     socket = g_object_new (THRIFT_TYPE_SOCKET, "configuration", tst->configuration, 
-		           "remainingmessagesize", tst->configuration->maxMessageSize_, 
-		           "knowmessagesize", tst->configuration->maxMessageSize_, NULL);
+		           "remainingmessagesize", (glong) tst->configuration->maxMessageSize_,
+		           "knowmessagesize", (glong) tst->configuration->maxMessageSize_, NULL);
   }
   else
   {
