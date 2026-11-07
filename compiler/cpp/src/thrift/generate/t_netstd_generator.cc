@@ -2529,7 +2529,8 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
         // async
         generate_deprecation_attribute(out, (*functions_iterator)->annotations_);
-        out << indent() << "public async " << function_signature_async(*functions_iterator, "") << '\n'
+        out << indent() << "public " << (hides_base_client_member(*functions_iterator) ? "new " : "") << "async "
+            << function_signature_async(*functions_iterator, "") << '\n'
             << indent() << "{" << '\n';
         indent_up();
         string call_args = argument_list((*functions_iterator)->get_arglist(),false);
@@ -4244,6 +4245,25 @@ string t_netstd_generator::timeout_cause_name(t_function* tfunction)
     return free_parameter_name(tfunction, "timeoutCause_", context_variable_name(tfunction));
 }
 
+string t_netstd_generator::async_method_name(t_function* tfunction, string prefix)
+{
+    return func_name(normalize_name(prefix + tfunction->get_name()) + (add_async_postfix ? "Async" : ""));
+}
+
+// Whether the client method of that function hides a member that the client base class declares for isolated
+// calls. Any method named IsCallIsolated hides that property. CreateCallContext and CreateCallContextAsync are
+// hidden only by a method without arguments, whose only parameter is then the cancellation token, as theirs is.
+// Such a method is declared "new" (CS0108), and no other one is (CS0109).
+bool t_netstd_generator::hides_base_client_member(t_function* tfunction)
+{
+    const string name = async_method_name(tfunction);
+    if (name == "IsCallIsolated") {
+        return true;
+    }
+    const bool token_only = tfunction->get_arglist()->get_members().empty();
+    return token_only && ((name == "CreateCallContext") || (name == "CreateCallContextAsync"));
+}
+
 string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix, int mode)
 {
     t_type* ttype = tfunction->get_returntype();
@@ -4253,7 +4273,7 @@ string t_netstd_generator::function_signature_async(t_function* tfunction, strin
         task += "<" + type_name(ttype) + ">";
     }
 
-    string result = task + " " + func_name(normalize_name(prefix + tfunction->get_name()) + (add_async_postfix ? "Async" : "")) + "(";
+    string result = task + " " + async_method_name(tfunction, prefix) + "(";
     string parameters;
     if((mode & MODE_CALL_CONTEXT) != 0) {
         parameters = "global::Thrift.TCallContext " + context_variable_name(tfunction);

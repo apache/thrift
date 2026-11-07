@@ -144,6 +144,8 @@ public:
   string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, bool allow_nullable = true, string prefix = "");
   string function_signature_async(t_function* tfunction, string prefix = "", int mode = MODE_FULL_DECL);
+  string async_method_name(t_function* tfunction, string prefix = "");
+  bool hides_base_client_member(t_function* tfunction);
   string free_parameter_name(t_function* tfunction, string wanted, const string& also_taken);
   string context_variable_name(t_function* tfunction);
   string timeout_cause_name(t_function* tfunction);

@@ -46,3 +46,11 @@ service Parent {
 service Child extends Parent {
   i32 ping(1: i32 a)
 }
+
+// the same names for methods without arguments: the cancellation token is then their only parameter, as it is for
+// the methods of the client base class, so they hide those by signature, not only the property by name
+service NoArgs {
+  i32 IsCallIsolated()
+  i32 CreateCallContext()
+  i32 CreateCallContextAsync()
+}

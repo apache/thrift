@@ -29,9 +29,9 @@ namespace Thrift.Tests.Protocols
 {
     /// <summary>
     /// The IDL of the fixture uses names that look like the names of the generated isolated client: a type
-    /// <c>TCallContext</c>, methods <c>IsCallIsolated</c> and <c>CreateCallContextAsync</c>, and parameters
-    /// <c>callContext</c>, <c>callContext_</c> and <c>timeoutCause_</c>. Compiling the generated code is the first
-    /// half of the test; the second half is that the operations keep the parameter names of the IDL.
+    /// <c>TCallContext</c>, methods <c>IsCallIsolated</c>, <c>CreateCallContext</c> and <c>CreateCallContextAsync</c>,
+    /// and parameters <c>callContext</c>, <c>callContext_</c> and <c>timeoutCause_</c>. Compiling the generated code
+    /// is the first half of the test; the second half is that the operations keep the parameter names of the IDL.
     /// </summary>
     [TestClass]
     public class TIsolatedGeneratedNamesTests
@@ -78,6 +78,25 @@ namespace Thrift.Tests.Protocols
             Assert.IsTrue(((TBaseClient)client).IsCallIsolated);
             Assert.IsNotNull(ClientType.GetMethod("IsCallIsolated", new[] { typeof(int), typeof(CancellationToken) }));
             Assert.IsNotNull(ClientType.GetMethod("CreateCallContextAsync", new[] { typeof(int), typeof(CancellationToken) }));
+        }
+
+        [TestMethod]
+        public void Service_Methods_Without_Arguments_Take_Only_The_Token_Like_The_Client_Members()
+        {
+            // the fixture's methods without arguments must have the parameters of the members of the client base
+            // class, or compiling them would not show that the generated client declares them new
+            var noArgsClient = typeof(NamesIdl.NoArgs.Client);
+            foreach (var name in new[] { "IsCallIsolated", "CreateCallContext", "CreateCallContextAsync" })
+            {
+                var method = noArgsClient.GetMethod(name,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                Assert.IsNotNull(method, name);
+                CollectionAssert.AreEqual(new[] { typeof(CancellationToken) },
+                    method.GetParameters().Select(p => p.ParameterType).ToArray(), name);
+            }
+
+            using var client = new NamesIdl.NoArgs.Client(new TMemoryBufferTransport(null), new TBinaryProtocol.Factory());
+            Assert.IsTrue(((TBaseClient)client).IsCallIsolated);
         }
 
         [TestMethod]
