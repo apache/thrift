@@ -479,7 +479,7 @@ void TSSLSocket::close() {
 /*
  * Returns number of bytes read in SSL Socket.
  * If eventSafe is set, and it may returns 0 bytes then read method
- * needs to be called again until it is successfull or it throws
+ * needs to be called again until it is successful or it throws
  * exception incase of failure.
 */
 uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
