@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -20,15 +20,8 @@
 #
 
 import os
-import BaseHTTPServer
-import CGIHTTPServer
 
-# chdir(2) into the tutorial directory.
-os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-
-
-class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
-    cgi_directories = ['/php']
-
-
-BaseHTTPServer.HTTPServer(('', 8080), Handler).serve_forever()
+# Use PHP's built-in server to handle /php/PhpServer.php directly.
+php = os.environ.get('PHP', 'php')
+document_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+os.execvp(php, [php, '-S', 'localhost:8080', '-t', document_root])

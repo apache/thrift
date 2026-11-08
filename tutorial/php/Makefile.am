@@ -17,13 +17,13 @@
 # under the License.
 #
 
-gen-php/tutorial/Calculator.php gen-php/shared/SharedService.php: $(top_srcdir)/tutorial/tutorial.thrift
+gen-php/tutorial/CalculatorProcessor.php: $(top_srcdir)/tutorial/tutorial.thrift $(top_srcdir)/tutorial/shared.thrift
 	$(THRIFT) --gen php:server -r $<
 
-all-local: gen-php/tutorial/Calculator.php
+all-local: gen-php/tutorial/CalculatorProcessor.php
 
 tutorialserver: all
-	${PYTHON} runserver.py
+	PHP="$(PHP)" $(PYTHON) $(srcdir)/runserver.py
 
 tutorialclient: all
 	${PHP} PhpClient.php --http
@@ -37,4 +37,5 @@ distdir:
 EXTRA_DIST = \
 	PhpServer.php \
 	PhpClient.php \
-	runserver.py
+	runserver.py \
+	test_tutorial.py

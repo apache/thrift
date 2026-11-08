@@ -248,6 +248,12 @@ jobs:
       - name: Run Tests
         run: vendor/bin/phpunit -c lib/php/phpunit.xml
 
+      - name: Run PHP tutorial
+        run: |
+          make -C tutorial/php all
+          make -C tutorial/php -q gen-php/tutorial/CalculatorProcessor.php
+          python3 tutorial/php/test_tutorial.py -v
+
       - name: Build PHP cross test extension
         if: matrix.php-version == '8.3'
         run: make -C lib/php src/ext/thrift_protocol/modules/thrift_protocol.so

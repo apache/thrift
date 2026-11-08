@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 
 namespace tutorial\php;
@@ -38,8 +37,8 @@ $loader->register();
 
 /*
  * This is not a stand-alone server.  It should be run as a normal
- * php web script (like through Apache's mod_php) or as a cgi script
- * (like with the included runserver.py).  You can connect to it with
+ * php web script (like through Apache's mod_php or the built-in server
+ * started by python3 runserver.py).  You can connect to it with
  * THttpClient in any language that supports it.  The PHP tutorial client
  * will work if you pass it the argument "--http".
  *
@@ -62,16 +61,16 @@ use Thrift\Transport\TBufferedTransport;
 class CalculatorHandler implements \tutorial\CalculatorIf {
   protected $log = array();
 
-  public function ping() {
+  public function ping(): void {
     error_log("ping()");
   }
 
-  public function add($num1, $num2) {
+  public function add(?int $num1, ?int $num2): ?int {
     error_log("add({$num1}, {$num2})");
     return $num1 + $num2;
   }
 
-  public function calculate($logid, \tutorial\Work $w) {
+  public function calculate(?int $logid, ?\tutorial\Work $w): ?int {
     error_log("calculate({$logid}, {{$w->op}, {$w->num1}, {$w->num2}})");
     switch ($w->op) {
       case \tutorial\Operation::ADD:
@@ -107,7 +106,7 @@ class CalculatorHandler implements \tutorial\CalculatorIf {
     return $val;
   }
 
-  public function getStruct($key) {
+  public function getStruct(?int $key): ?\shared\SharedStruct {
     error_log("getStruct({$key})");
     // This actually doesn't work because the PHP interpreter is
     // restarted for every request.
@@ -115,13 +114,13 @@ class CalculatorHandler implements \tutorial\CalculatorIf {
     return new \shared\SharedStruct(array("key" => $key, "value" => "PHP is stateless!"));
   }
 
-  public function zip() {
+  public function zip(): void {
     error_log("zip()");
   }
 
 };
 
-header('Content-Type', 'application/x-thrift');
+header('Content-Type: application/x-thrift');
 if (php_sapi_name() == 'cli') {
   echo "\r\n";
 }
