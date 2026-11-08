@@ -866,6 +866,21 @@ describe Thrift::CompactProtocol do
         expect(writes).to eq(["\x03".b, "abc".b])
       end
 
+      it "preserves the payload when the header callback shrinks the source" do
+        input = "a".b * 4096
+        writes = []
+        transport = Thrift::BaseTransport.new
+        transport.define_singleton_method(:write) do |bytes|
+          input.replace("b") if writes.empty?
+          writes << bytes
+        end
+
+        Thrift::CompactProtocol.new(transport).write_binary(input)
+
+        expect(writes.last.bytesize).to eq(4096)
+        expect(writes.last.bytes.all?(97)).to be(true)
+      end
+
       [false, true].each do |frozen|
         it "passes binary bytes when the header callback re-encodes #{frozen ? "and freezes" : "a mutable"} input" do
           input = "a".b * 4096
