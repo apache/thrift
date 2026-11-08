@@ -55,28 +55,6 @@ const (
 	COMPACT_UUID          = 0x0D
 )
 
-var (
-	ttypeToCompactType map[TType]tCompactType
-)
-
-func init() {
-	ttypeToCompactType = map[TType]tCompactType{
-		STOP:   STOP,
-		BOOL:   COMPACT_BOOLEAN_TRUE,
-		BYTE:   COMPACT_BYTE,
-		I16:    COMPACT_I16,
-		I32:    COMPACT_I32,
-		I64:    COMPACT_I64,
-		DOUBLE: COMPACT_DOUBLE,
-		STRING: COMPACT_BINARY,
-		LIST:   COMPACT_LIST,
-		SET:    COMPACT_SET,
-		MAP:    COMPACT_MAP,
-		STRUCT: COMPACT_STRUCT,
-		UUID:   COMPACT_UUID,
-	}
-}
-
 type TCompactProtocolFactory struct {
 	cfg *TConfiguration
 }
@@ -358,7 +336,10 @@ func (p *TCompactProtocol) WriteBinary(ctx context.Context, bin []byte) error {
 
 // Write a Tuuid to the wire as 16 bytes.
 func (p *TCompactProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
-	_, err := p.trans.Write(value[:])
+	// Copy into the scratch buffer so value does not escape to the heap.
+	buf := p.buffer[:len(value)]
+	copy(buf, value[:])
+	_, err := p.trans.Write(buf)
 	return NewTProtocolException(err)
 }
 
@@ -606,7 +587,7 @@ func (p *TCompactProtocol) ReadDouble(ctx context.Context) (value float64, err e
 	if e != nil {
 		return 0.0, NewTProtocolException(e)
 	}
-	return math.Float64frombits(p.bytesToUint64(longBits)), nil
+	return math.Float64frombits(binary.LittleEndian.Uint64(longBits)), nil
 }
 
 // Reads a []byte (via readBinary), and then UTF-8 decodes it.
@@ -692,45 +673,13 @@ func (p *TCompactProtocol) writeCollectionBegin(elemType TType, size int) (int, 
 }
 
 // Write an i32 as a varint. Results in 1-5 bytes on the wire.
-// TODO(pomack): make a permanent buffer like writeVarint64?
 func (p *TCompactProtocol) writeVarint32(n int32) (int, error) {
-	i32buf := p.buffer[0:5]
-	idx := 0
-	for {
-		if (n & ^0x7F) == 0 {
-			i32buf[idx] = byte(n)
-			idx++
-			// p.writeByteDirect(byte(n));
-			break
-			// return;
-		} else {
-			i32buf[idx] = byte((n & 0x7F) | 0x80)
-			idx++
-			// p.writeByteDirect(byte(((n & 0x7F) | 0x80)));
-			u := uint32(n)
-			n = int32(u >> 7)
-		}
-	}
-	return p.trans.Write(i32buf[0:idx])
+	return p.trans.Write(binary.AppendUvarint(p.buffer[:0], uint64(uint32(n))))
 }
 
 // Write an i64 as a varint. Results in 1-10 bytes on the wire.
 func (p *TCompactProtocol) writeVarint64(n int64) (int, error) {
-	varint64out := p.buffer[0:10]
-	idx := 0
-	for {
-		if (n & ^0x7F) == 0 {
-			varint64out[idx] = byte(n)
-			idx++
-			break
-		} else {
-			varint64out[idx] = byte((n & 0x7F) | 0x80)
-			idx++
-			u := uint64(n)
-			n = int64(u >> 7)
-		}
-	}
-	return p.trans.Write(varint64out[0:idx])
+	return p.trans.Write(binary.AppendUvarint(p.buffer[:0], uint64(n)))
 }
 
 // Convert l into a zigzag long. This allows negative numbers to be
@@ -808,13 +757,6 @@ func (p *TCompactProtocol) zigzagToInt64(n int64) int64 {
 	return int64(u>>1) ^ -(n & 1)
 }
 
-// Note that it's important that the mask bytes are long literals,
-// otherwise they'll default to ints, and when you shift an int left 56 bits,
-// you just get a messed up int.
-func (p *TCompactProtocol) bytesToUint64(b []byte) uint64 {
-	return binary.LittleEndian.Uint64(b)
-}
-
 //
 // type testing and converting
 //
@@ -859,7 +801,33 @@ func (p *TCompactProtocol) getTType(t tCompactType) (TType, error) {
 
 // Given a TType value, find the appropriate TCompactProtocol.Types constant.
 func (p *TCompactProtocol) getCompactType(t TType) tCompactType {
-	return ttypeToCompactType[t]
+	switch t {
+	case BOOL:
+		return COMPACT_BOOLEAN_TRUE
+	case BYTE:
+		return COMPACT_BYTE
+	case I16:
+		return COMPACT_I16
+	case I32:
+		return COMPACT_I32
+	case I64:
+		return COMPACT_I64
+	case DOUBLE:
+		return COMPACT_DOUBLE
+	case STRING:
+		return COMPACT_BINARY
+	case LIST:
+		return COMPACT_LIST
+	case SET:
+		return COMPACT_SET
+	case MAP:
+		return COMPACT_MAP
+	case STRUCT:
+		return COMPACT_STRUCT
+	case UUID:
+		return COMPACT_UUID
+	}
+	return STOP // STOP, and the zero value for an unknown type
 }
 
 func (p *TCompactProtocol) SetTConfiguration(conf *TConfiguration) {

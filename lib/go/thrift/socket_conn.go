@@ -23,6 +23,7 @@ import (
 	"errors"
 	"net"
 	"sync/atomic"
+	"time"
 )
 
 // socketConn is a wrapped net.Conn that tries to do connectivity check.
@@ -126,4 +127,20 @@ func (sc *socketConn) Close() error {
 		return sc.Conn.Close()
 	}
 	return net.ErrClosed
+}
+
+// pushDeadline sets the read and/or write deadline to timeout from now, or
+// clears it when timeout is not positive.
+func (sc *socketConn) pushDeadline(timeout time.Duration, read, write bool) {
+	var t time.Time
+	if timeout > 0 {
+		t = time.Now().Add(timeout)
+	}
+	if read && write {
+		sc.SetDeadline(t)
+	} else if read {
+		sc.SetReadDeadline(t)
+	} else if write {
+		sc.SetWriteDeadline(t)
+	}
 }

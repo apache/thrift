@@ -83,11 +83,11 @@ func (p *TSSLServerSocket) Open() error {
 	if p.IsListening() {
 		return NewTTransportException(ALREADY_OPEN, "Server socket already open")
 	}
-	if l, err := tls.Listen(p.addr.Network(), p.addr.String(), p.cfg); err != nil {
+	l, err := tls.Listen(p.addr.Network(), p.addr.String(), p.cfg)
+	if err != nil {
 		return err
-	} else {
-		p.listener = l
 	}
+	p.listener = l
 	return nil
 }
 

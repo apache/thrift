@@ -294,12 +294,11 @@ func treatEOFErrorsAsNil(err error) error {
 	if errors.Is(err, io.EOF) {
 		return nil
 	}
-	var te TTransportException
 	// NOT_OPEN returned by processor.Process is usually caused by client
 	// abandoning the connection (e.g. client side time out, or just client
 	// closes connections from the pool because of shutting down).
 	// Those logs will be very noisy, so suppress those logs as well.
-	if errors.As(err, &te) && (te.TypeId() == END_OF_FILE || te.TypeId() == NOT_OPEN) {
+	if te, ok := errors.AsType[TTransportException](err); ok && (te.TypeId() == END_OF_FILE || te.TypeId() == NOT_OPEN) {
 		return nil
 	}
 	return err
@@ -340,17 +339,20 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 	if outputTransport != nil {
 		defer outputTransport.Close()
 	}
+	// The response helper depends only on outputProtocol, so build it once
+	// per connection rather than once per request.
+	baseCtx := SetResponseHelper(
+		defaultCtx,
+		TResponseHelper{
+			THeaderResponseHelper: NewTHeaderResponseHelper(outputProtocol),
+		},
+	)
 	for {
 		if p.closed.Load() != 0 {
 			return nil
 		}
 
-		ctx := SetResponseHelper(
-			defaultCtx,
-			TResponseHelper{
-				THeaderResponseHelper: NewTHeaderResponseHelper(outputProtocol),
-			},
-		)
+		ctx := baseCtx
 		if headerProtocol != nil {
 			// We need to call ReadFrame here, otherwise we won't
 			// get any headers on the AddReadTHeaderToContext call.
@@ -369,11 +371,10 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		if errors.Is(err, ErrAbandonRequest) {
 			return nil
 		}
-		if errors.As(err, new(TTransportException)) && err != nil {
+		if _, ok := errors.AsType[TTransportException](err); ok {
 			return err
 		}
-		var tae TApplicationException
-		if errors.As(err, &tae) && tae.TypeId() == UNKNOWN_METHOD {
+		if tae, ok := errors.AsType[TApplicationException](err); ok && tae.TypeId() == UNKNOWN_METHOD {
 			continue
 		}
 		if !ok {

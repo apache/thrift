@@ -43,35 +43,26 @@ type reseter interface {
 }
 
 func (t *TDeserializer) ReadString(ctx context.Context, msg TStruct, s string) (err error) {
-	t.Transport.Reset()
-	if r, ok := t.Protocol.(reseter); ok {
-		r.Reset()
-	}
-
-	err = nil
-	if _, err = t.Transport.Write([]byte(s)); err != nil {
+	t.reset()
+	if _, err = t.Transport.WriteString(s); err != nil {
 		return
 	}
-	if err = msg.Read(ctx, t.Protocol); err != nil {
-		return
-	}
-	return
+	return msg.Read(ctx, t.Protocol)
 }
 
 func (t *TDeserializer) Read(ctx context.Context, msg TStruct, b []byte) (err error) {
+	t.reset()
+	if _, err = t.Transport.Write(b); err != nil {
+		return
+	}
+	return msg.Read(ctx, t.Protocol)
+}
+
+func (t *TDeserializer) reset() {
 	t.Transport.Reset()
 	if r, ok := t.Protocol.(reseter); ok {
 		r.Reset()
 	}
-
-	err = nil
-	if _, err = t.Transport.Write(b); err != nil {
-		return
-	}
-	if err = msg.Read(ctx, t.Protocol); err != nil {
-		return
-	}
-	return
 }
 
 // TDeserializerPool is the thread-safe version of TDeserializer,

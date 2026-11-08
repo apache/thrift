@@ -139,17 +139,7 @@ func (p *TSocket) SetSocketTimeout(timeout time.Duration) error {
 }
 
 func (p *TSocket) pushDeadline(read, write bool) {
-	var t time.Time
-	if timeout := p.cfg.GetSocketTimeout(); timeout > 0 {
-		t = time.Now().Add(time.Duration(timeout))
-	}
-	if read && write {
-		p.conn.SetDeadline(t)
-	} else if read {
-		p.conn.SetReadDeadline(t)
-	} else if write {
-		p.conn.SetWriteDeadline(t)
-	}
+	p.conn.pushDeadline(p.cfg.GetSocketTimeout(), read, write)
 }
 
 // Connects the socket, creating a new socket object if necessary.
