@@ -46,7 +46,6 @@ module Thrift
       endpoint = RackApplication.mapped(path, processor, protocol_factory)
       app = Rack::Builder.new do
         use Rack::CommonLogger
-        use Rack::ShowExceptions
         use Rack::Lint
         run endpoint
       end

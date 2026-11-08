@@ -46,6 +46,9 @@ module Thrift
         @data = @trans.read(1)
       end
 
+      if @data.nil? || @data.empty?
+        raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
+      end
       @data
     end
 

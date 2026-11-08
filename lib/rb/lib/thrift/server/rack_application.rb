@@ -25,6 +25,10 @@ module Thrift
   class RackApplication
     THRIFT_HEADER = "application/x-thrift"
 
+    class MalformedRequest < Thrift::Exception
+    end
+    private_constant :MalformedRequest
+
     def initialize(processor, protocol_factory = BinaryProtocolFactory.new)
       @processor = processor
       @protocol_factory = protocol_factory
@@ -38,6 +42,11 @@ module Thrift
       else
         self.class.failed_request.finish
       end
+    rescue MalformedRequest
+      Rack::Response.new([], 400, {Rack::CONTENT_TYPE => THRIFT_HEADER}).finish
+    rescue => error
+      env["rack.exception"] = error
+      Rack::Response.new([], 500, {Rack::CONTENT_TYPE => THRIFT_HEADER}).finish
     end
 
     def self.mapped(path, processor, protocol_factory = BinaryProtocolFactory.new)
@@ -53,7 +62,11 @@ module Thrift
       response = Rack::Response.new([], 200, {Rack::CONTENT_TYPE => THRIFT_HEADER})
       transport = IOStreamTransport.new(rack_request.body, response)
       protocol = protocol_factory.get_protocol(transport)
-      processor.process protocol, protocol
+      processor.process(protocol, protocol) do |error, kind|
+        raise MalformedRequest.new(error.message) if kind == :malformed_request
+        raise error if kind == :response_error
+        rack_request.env["rack.exception"] = error
+      end
 
       response
     end

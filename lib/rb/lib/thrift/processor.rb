@@ -20,12 +20,21 @@
 
 require "logger"
 require "thrift/protocol/base_protocol"
+require "thrift/transport/base_transport"
 
 module Thrift
   module Processor
     class ArgumentProtocolException < ProtocolException
     end
     private_constant :ArgumentProtocolException
+
+    class ArgumentTransportException < TransportException
+    end
+    private_constant :ArgumentTransportException
+
+    class ResponseError < StandardError
+    end
+    private_constant :ResponseError
 
     def initialize(handler, logger = nil)
       @handler = handler
@@ -37,9 +46,14 @@ module Thrift
       end
     end
 
-    def process(iprot, oprot)
-      name, type, seqid = iprot.read_message_begin
+    # The optional block receives an error and its source:
+    # :malformed_request, :unexpected, or :response_error. It may raise to
+    # prevent a fallback reply. With a block, unexpected ONEWAY failures are
+    # reported without writing the automatic INTERNAL_ERROR reply.
+    def process(iprot, oprot, &on_error)
+      name, type, seqid = decode_request(on_error) { iprot.read_message_begin }
       unless type == MessageTypes::CALL || type == MessageTypes::ONEWAY
+        on_error.call(Thrift::Exception.new("Invalid message type #{type}"), :malformed_request) if on_error
         iprot.skip(Types::STRUCT)
         iprot.read_message_end
         x = ApplicationException.new(
@@ -52,25 +66,41 @@ module Thrift
 
       # A name that is not valid UTF-8 names no method, and respond_to? would
       # raise on it, so it is answered like any other unknown method.
-      if name.valid_encoding? && respond_to?("process_#{name}")
-        begin
-          send("process_#{name}", seqid, iprot, oprot)
-        rescue ArgumentProtocolException => e
-          x = ApplicationException.new(ApplicationException::PROTOCOL_ERROR, e.message)
-          write_error(x, oprot, name, seqid)
-        rescue => e
-          x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
-          @logger.debug "Internal error : #{e.message}\n#{e.backtrace.join("\n")}"
-          write_error(x, oprot, name, seqid)
+      unless name.valid_encoding? && respond_to?("process_#{name}")
+        decode_request(on_error) do
+          iprot.skip(Types::STRUCT)
+          iprot.read_message_end
         end
-        true
-      else
-        iprot.skip(Types::STRUCT)
-        iprot.read_message_end
         x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "Unknown function " + name)
         write_error(x, oprot, name, seqid)
-        false
+        return false
       end
+
+      begin
+        send("process_#{name}", seqid, iprot, oprot)
+      rescue ArgumentProtocolException => e
+        on_error.call(e, :malformed_request) if on_error
+        x = ApplicationException.new(ApplicationException::PROTOCOL_ERROR, e.message)
+        write_error(x, oprot, name, seqid)
+      rescue ArgumentTransportException => e
+        on_error.call(e, :malformed_request) if on_error
+        log_error(e.cause)
+        x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
+        write_error(x, oprot, name, seqid)
+      rescue ResponseError => e
+        on_error.call(e.cause, :response_error) if on_error
+        log_error(e.cause)
+        x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
+        write_error(x, oprot, name, seqid)
+      rescue => e
+        on_error.call(e, :unexpected) if on_error
+        log_error(e)
+        return true if on_error && type == MessageTypes::ONEWAY
+
+        x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
+        write_error(x, oprot, name, seqid)
+      end
+      true
     end
 
     def read_args(iprot, args_class)
@@ -80,13 +110,31 @@ module Thrift
       args
     rescue ProtocolException => e
       raise ArgumentProtocolException.new(e.type, e.message)
+    rescue TransportException => e
+      raise ArgumentTransportException.new(e.type, e.message)
     end
+
+    def decode_request(on_error)
+      yield
+    rescue ProtocolException, TransportException => e
+      on_error.call(e, :malformed_request) if on_error
+      raise
+    end
+    private :decode_request
+
+    def log_error(error)
+      @logger.debug "Internal error : #{error.message}\n#{error.backtrace.join("\n")}"
+    end
+    private :log_error
 
     def write_result(result, oprot, name, seqid)
       oprot.write_message_begin(name, MessageTypes::REPLY, seqid)
       result.write(oprot)
       oprot.write_message_end
       oprot.trans.flush
+    rescue => e
+      # Even a failure before the first byte belongs to response encoding.
+      raise ResponseError.new(e.message)
     end
 
     def write_error(err, oprot, name, seqid)

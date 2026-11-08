@@ -392,6 +392,9 @@ module Thrift
       raise_unframed_size_limit if remaining <= 0
 
       data = @transport.read([size, remaining].min)
+      if data.nil? || data.empty?
+        raise TransportException.new(TransportException::END_OF_FILE, "No more data available")
+      end
       @unframed_bytes_read += data.bytesize
       data
     end

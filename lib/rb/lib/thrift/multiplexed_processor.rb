@@ -35,20 +35,25 @@ module Thrift
       @default_processor = processor
     end
 
-    def process(iprot, oprot)
-      name, type, seqid = iprot.read_message_begin
-      check_type(type)
+    def process(iprot, oprot, &on_error)
+      begin
+        name, type, seqid = iprot.read_message_begin
+      rescue ProtocolException, TransportException => e
+        on_error.call(e, :malformed_request) if on_error
+        raise
+      end
+      check_type(type, &on_error)
       # Look for the separator in the bytes: String#count and #split raise on
       # a name that is not valid UTF-8. The service processor then answers an
       # unknown method part, as it does for any other name.
       name_bytes = name.b
       if name_bytes.count(":") < 1
         check_default_processor(name)
-        return @default_processor.process(StoredMessageProtocol.new(iprot, [name, type, seqid]), oprot)
+        return @default_processor.process(StoredMessageProtocol.new(iprot, [name, type, seqid]), oprot, &on_error)
       end
 
       service_name, method = name_bytes.split(":", 2).map { |part| part.force_encoding(name.encoding) }
-      processor(service_name).process(StoredMessageProtocol.new(iprot, [method, type, seqid]), oprot)
+      processor(service_name).process(StoredMessageProtocol.new(iprot, [method, type, seqid]), oprot, &on_error)
     end
 
     protected
@@ -61,9 +66,11 @@ module Thrift
       end
     end
 
-    def check_type(type)
+    def check_type(type, &on_error)
       unless [MessageTypes::CALL, MessageTypes::ONEWAY].include?(type)
-        raise Thrift::Exception.new("This should not have happened!?")
+        error = Thrift::Exception.new("This should not have happened!?")
+        on_error.call(error, :malformed_request) if on_error
+        raise error
       end
     end
 
