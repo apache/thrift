@@ -38,6 +38,20 @@ require_once 'packages/Service/Service.php';
 require_once 'packages/Service/Types.php';
 ```
 
+## Generating a server
+
+The compiler writes the `*Processor` class that a server needs (for example
+`\tutorial\CalculatorProcessor`) only when you pass the `server` option. Without
+it, you get the client, the service interface and the types, but no processor:
+
+```
+thrift --gen php:server -r tutorial.thrift
+```
+
+The tutorial server, `tutorial/php/PhpServer.php`, passes the processor a handler
+that implements the generated `CalculatorIf` interface. The other options are
+listed by `thrift --help` under `php`.
+
 # Dependencies
 
 PHP_INT_SIZE

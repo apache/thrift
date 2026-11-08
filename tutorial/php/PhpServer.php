@@ -42,6 +42,13 @@ $loader->register();
  * (like with the included runserver.py).  You can connect to it with
  * THttpClient in any language that supports it.  The PHP tutorial client
  * will work if you pass it the argument "--http".
+ *
+ * This script uses \tutorial\CalculatorProcessor, which the compiler only
+ * generates with the "server" option.  Without it, only the client, the
+ * service interface and the types are written.  Generate the code
+ * from this directory with:
+ *
+ *   thrift --gen php:server -r ../tutorial.thrift
  */
 
 if (php_sapi_name() == 'cli') {
