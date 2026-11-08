@@ -65,23 +65,29 @@ check: check_cpp \
 	check_php \
 	check_php_web 
 
+# The test servers never exit on their own: each one is started in the
+# background, the client runs against it, and the server is then stopped and
+# reaped so the next test finds its port free.
 check_cpp: $(BIN_CPP) 
-	timeout 20 $(BIN_CPP) server &
-	sleep 1
-	$(BIN_CPP) client
-	sleep 10
+	timeout 20 $(BIN_CPP) server & pid=$$!; \
+	sleep 1; \
+	$(BIN_CPP) client; rc=$$?; \
+	kill $$pid; wait $$pid; \
+	exit $$rc
 
 check_php: $(BIN_PHP) 
-	timeout 20 php -f $(BIN_PHP) server &
-	sleep 1
-	php -f $(BIN_PHP) client
-	sleep 10
+	timeout 20 php -f $(BIN_PHP) server & pid=$$!; \
+	sleep 1; \
+	php -f $(BIN_PHP) client; rc=$$?; \
+	kill $$pid; wait $$pid; \
+	exit $$rc
 
 check_php_web: $(BIN_PHP_WEB) $(BIN_CPP)
-	timeout 20 php -S 127.0.0.1:9090 router.php &
-	sleep 1
-	$(BIN_CPP) client --transport http
-	sleep 10
+	timeout 20 php -S 127.0.0.1:9090 router.php & pid=$$!; \
+	sleep 1; \
+	$(BIN_CPP) client --transport http; rc=$$?; \
+	kill $$pid; wait $$pid; \
+	exit $$rc
 
 
 distdir:
