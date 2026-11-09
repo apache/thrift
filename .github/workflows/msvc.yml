@@ -6,8 +6,10 @@ on:
   pull_request:
     branches: [ '*' ]
 
+# A new push to a pull request supersedes its running build. Each push to a
+# branch gets a group of its own, so no commit on master loses its run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
 
 permissions:
