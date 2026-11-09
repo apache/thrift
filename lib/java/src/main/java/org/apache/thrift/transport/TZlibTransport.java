@@ -89,11 +89,36 @@ public class TZlibTransport extends TIOStreamTransport {
     transport_.open();
   }
 
+  /**
+   * Finishes compression, flushes the output, and closes the underlying transport.
+   *
+   * <p>This can block while sending the compressed output. To abort pending I/O, close the
+   * underlying transport directly.
+   *
+   * <p>If finishing the output and closing the underlying transport both fail unchecked, the
+   * cleanup failure is suppressed on the first failure.
+   */
   @Override
   public void close() {
-    super.close();
-    if (transport_.isOpen()) {
-      transport_.close();
+    Throwable primaryFailure = null;
+    try {
+      super.close();
+    } catch (RuntimeException | Error failure) {
+      primaryFailure = failure;
+      throw failure;
+    } finally {
+      try {
+        if (transport_.isOpen()) {
+          transport_.close();
+        }
+      } catch (RuntimeException | Error cleanupFailure) {
+        if (primaryFailure == null) {
+          throw cleanupFailure;
+        }
+        if (cleanupFailure != primaryFailure) {
+          primaryFailure.addSuppressed(cleanupFailure);
+        }
+      }
     }
   }
 }
@@ -160,5 +185,12 @@ class TTransportOutputStream extends OutputStream {
     } catch (TTransportException e) {
       throw new IOException(e);
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    // DeflaterOutputStream.close() finishes compression before closing this adapter. Flush the
+    // resulting trailer while the underlying transport is still open; its owner closes it later.
+    flush();
   }
 }
