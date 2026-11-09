@@ -579,6 +579,8 @@ module Thrift
             end
             ch = JSON_ESCAPE_VALUES[pos]
           end
+        elsif (byte_reads ? ch : ch.getbyte(0)) < 0x20
+          raise ProtocolException.new(ProtocolException::INVALID_DATA, "Unescaped control character in JSON string")
         elsif !byte_reads
           ch = Bytes.force_binary_encoding(ch)
         end
