@@ -32,7 +32,8 @@ namespace detail {
 
 // accept() error classes for TServerSocket. Installed, but no compatibility promise.
 
-// Failure of this connection only; the listening socket is fine. Linux: see accept(2) NOTES.
+// Failure of this connection only; the listening socket is fine. Linux: see accept(2) NOTES,
+// except EOPNOTSUPP, which a non-stream socket returns for good.
 inline bool isConnectionError(int err) {
   switch (err) {
   case THRIFT_EINTR:
@@ -56,7 +57,6 @@ inline bool isConnectionError(int err) {
   case EHOSTDOWN:
   case ENONET:
   case ENOPROTOOPT:
-  case EOPNOTSUPP:
 #endif
 #endif
     return true;
