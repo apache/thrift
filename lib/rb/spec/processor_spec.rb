@@ -19,6 +19,7 @@
 #
 
 require "spec_helper"
+require "stringio"
 
 describe "Processor" do
   class ProcessorSpec
@@ -189,6 +190,15 @@ describe "Processor" do
       expect(@processor.read_args(@prot, args_class)).to eql(args)
     end
 
+    it "keeps truncated argument input as a transport exception" do
+      transport = Thrift::IOStreamTransport.new(StringIO.new(""), StringIO.new)
+      protocol = Thrift::BinaryProtocol.new(transport)
+
+      expect { @processor.read_args(protocol, SpecNamespace::NonblockingService::Sleep_args) }.to raise_error(Thrift::TransportException) do |error|
+        expect(error.type).to eq Thrift::TransportException::END_OF_FILE
+      end
+    end
+
     it "classifies malformed JSON binary arguments as invalid protocol data" do
       input = Thrift::JsonProtocol.new(
         Thrift::MemoryBufferTransport.new('{"1":{"str":"%"}}'),
@@ -240,6 +250,62 @@ describe "Processor" do
 
       expect(exception.type).to eq(Thrift::ApplicationException::INTERNAL_ERROR)
       expect(exception.message).to eq("Internal error")
+    end
+
+    it "retains the non-Rack error reply for a failed ONEWAY request without a callback" do
+      handler = double("Handler")
+      expect(handler).to receive(:shutdown).and_raise("handler failed")
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      input = input_protocol("shutdown", Thrift::MessageTypes::ONEWAY, 21, SpecNamespace::NonblockingService::Shutdown_args.new)
+      output_transport, output = output_protocol
+
+      expect(processor.process(input, output)).to be true
+      response = Thrift::BinaryProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq ["shutdown", Thrift::MessageTypes::EXCEPTION, 21]
+      exception = Thrift::ApplicationException.new
+      exception.read(response)
+      expect(exception.type).to eq Thrift::ApplicationException::INTERNAL_ERROR
+    end
+
+    it "retains non-Rack fallback behavior after a response writer failure" do
+      handler = double("Handler")
+      expect(handler).to receive(:sleep).with(3.0)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
+      input = input_protocol("sleep", Thrift::MessageTypes::CALL, 22, SpecNamespace::NonblockingService::Sleep_args.new(seconds: 3.0))
+      output_transport, output = output_protocol
+      allow(output).to receive(:write_message_begin).with("sleep", Thrift::MessageTypes::REPLY, 22).and_raise(IOError, "writer failed")
+      allow(output).to receive(:write_message_begin).with("sleep", Thrift::MessageTypes::EXCEPTION, 22).and_call_original
+
+      expect(processor.process(input, output)).to be true
+      response = Thrift::BinaryProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq ["sleep", Thrift::MessageTypes::EXCEPTION, 22]
+      exception = Thrift::ApplicationException.new
+      exception.read(response)
+      expect(exception.type).to eq Thrift::ApplicationException::INTERNAL_ERROR
+    end
+
+    it "logs the original transport backtrace when argument decoding fails" do
+      error = Thrift::TransportException.new(Thrift::TransportException::END_OF_FILE, "request ended")
+      error.set_backtrace(["request_reader.rb:37:in 'read'"])
+      log = StringIO.new
+      handler = double("Handler")
+      expect(handler).not_to receive(:sleep)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler, Logger.new(log))
+      input = input_protocol("sleep", Thrift::MessageTypes::CALL, 24, SpecNamespace::NonblockingService::Sleep_args.new(seconds: 3.0))
+      allow(input).to receive(:read_message_end).and_raise(error)
+      output_transport, output = output_protocol
+
+      expect(processor.process(input, output)).to be true
+      expect(log.string).to include(error.message, *error.backtrace)
+
+      response = Thrift::BinaryProtocol.new(output_transport)
+      expect(response.read_message_begin).to eq ["sleep", Thrift::MessageTypes::EXCEPTION, 24]
+      exception = Thrift::ApplicationException.new
+      exception.read(response)
+      response.read_message_end
+      expect(exception.type).to eq Thrift::ApplicationException::INTERNAL_ERROR
+      expect(exception.message).to eq "Internal error"
+      expect(output_transport.available).to eq 0
     end
 
     it "should write out a reply when asked" do

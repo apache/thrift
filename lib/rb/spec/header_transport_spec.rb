@@ -327,6 +327,19 @@ describe "HeaderTransport" do
         end
       end
 
+      [nil, ""].each do |eof|
+        it "raises END_OF_FILE when an unframed read returns #{eof.inspect}" do
+          input = StringIO.new(binary_message)
+          input.define_singleton_method(:read) { |size| super(size) || eof }
+          transport = Thrift::HeaderTransport.new(Thrift::IOStreamTransport.new(input, StringIO.new))
+
+          expect(transport.read(4)).to eq binary_message
+          expect { transport.read(1) }.to raise_error(Thrift::TransportException) do |error|
+            expect(error.type).to eq Thrift::TransportException::END_OF_FILE
+          end
+        end
+      end
+
       it "rejects an unframed protocol signature larger than the configured limit" do
         payload = unframed_message(Thrift::BinaryProtocol)
         read_trans = Thrift::HeaderTransport.new(Thrift::MemoryBufferTransport.new(payload))

@@ -20,6 +20,7 @@
 #
 
 require "spec_helper"
+require "stringio"
 
 describe "JSON input byte ownership" do
   class FragmentedJsonInput < Thrift::BaseTransport
@@ -794,6 +795,15 @@ describe "JsonProtocol" do
 
       @trans.write("1453T")
       expect(@prot.read_json_integer).to eq(1453)
+    end
+
+    it "reads complete numbers at the end of an IO stream" do
+      {"-123" => [:read_i32, -123], "-1.25e2" => [:read_double, -125.0]}.each do |wire, (method, value)|
+        input = Thrift::IOStreamTransport.new(StringIO.new(wire), StringIO.new)
+        protocol = Thrift::JsonProtocol.new(input)
+
+        expect(protocol.public_send(method)).to eq(value)
+      end
     end
 
     it "rejects non-canonical JSON integer spellings" do

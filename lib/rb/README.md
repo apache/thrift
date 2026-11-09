@@ -122,6 +122,62 @@ processor = Calculator::Processor.new(CalculatorHandler.new)
 mount Thrift::RackApplication.new(processor) => "/thrift"
 ```
 
+### Error responses
+
+HTTP 200 does not necessarily mean the RPC succeeded: Thrift also uses it to
+return exceptions to the client.
+
+| Event | HTTP status and body | Unexpected-error reporting |
+| --- | --- | --- |
+| Successful call | 200, encoded Thrift result | None |
+| Exception declared in the method's IDL | 200, encoded declared exception | None |
+| Successful oneway call | 200, empty | None |
+| Malformed or truncated request | 400, empty | None |
+| Unexpected error before reply encoding (CALL) | 200, generic Thrift `INTERNAL_ERROR` | Original exception |
+| Unexpected error before reply encoding (ONEWAY) | 200, empty | Original exception |
+| Reply encoding fails, including an error reply | 500, empty | Original writer exception |
+| Wrong HTTP method or content type | 404, `Not Found` | None |
+
+These responses use `application/x-thrift`. Unexpected error messages and
+backtraces are not sent to clients.
+
+### Error reporting with Sentry or another tracker
+
+The endpoint puts unexpected errors in `env['rack.exception']`, keeping the
+original exception, backtrace and cause even when the response is 200.
+Reporting middleware must check this key after calling the app; catching raised
+exceptions alone will miss errors that Thrift has already handled.
+
+Sentry's `Sentry::Rack::CaptureExceptions`, Honeybadger and Airbrake support this
+convention. Place your reporter's middleware outside the endpoint. If your
+framework already sets up reporting, use that rather than adding a second
+reporter.
+
+For a reporting client without Rack middleware, you can write a small adapter:
+
+```ruby
+class ThriftErrorReporter
+  def initialize(app, reporter)
+    @app = app
+    @reporter = reporter
+  end
+
+  def call(env)
+    response = @app.call(env)
+    error = env['rack.exception']
+    @reporter.call(error) if error
+    response
+  end
+end
+
+use ThriftErrorReporter, ->(error) { YourErrorTracker.capture_exception(error) }
+run Thrift::RackApplication.new(processor)
+```
+
+If you wrap a generated processor, forward `&on_error` when calling its
+`process` method. Otherwise, the endpoint won't see errors that the processor
+handles itself.
+
 ## Development and Tests
 
 - `bundle exec rake spec` runs the Ruby specs. It expects a built Thrift

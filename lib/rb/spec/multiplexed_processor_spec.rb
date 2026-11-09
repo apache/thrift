@@ -19,6 +19,7 @@
 #
 
 require "spec_helper"
+require "thrift/server/rack_application"
 
 describe Thrift::MultiplexedProcessor do
   before(:each) do
@@ -53,6 +54,71 @@ describe Thrift::MultiplexedProcessor do
     end
 
     expect(@processor.process(@iprot, @oprot)).to eq(true)
+  end
+
+  ["Service:", ""].each do |prefix|
+    context "Rack error handling with #{prefix.empty? ? "default" : "named"} routing" do
+      let(:handler) { double("Handler") }
+
+      before do
+        actual_processor = SpecNamespace::NonblockingService::Processor.new(handler)
+        @processor.register_processor("Service", actual_processor)
+        @processor.register_default(actual_processor)
+      end
+
+      [Thrift::MessageTypes::CALL, Thrift::MessageTypes::ONEWAY].each do |type|
+        it "reports the original handler failure and respects envelope #{type}" do
+          error = RuntimeError.new("handler failed")
+          expect(handler).to receive(:shutdown).and_raise(error)
+          transport = Thrift::MemoryBufferTransport.new
+          protocol = Thrift::BinaryProtocol.new(transport)
+          protocol.write_message_begin("#{prefix}shutdown", type, 19)
+          SpecNamespace::NonblockingService::Shutdown_args.new.write(protocol)
+          protocol.write_message_end
+          env = Rack::MockRequest.env_for("/", method: "POST", "CONTENT_TYPE" => "application/x-thrift", input: transport.read(transport.available))
+          response = Rack::MockResponse.new(*Thrift::RackApplication.new(@processor).call(env))
+
+          expect(response.status).to eq 200
+          expect(env["rack.exception"]).to equal error
+          if type == Thrift::MessageTypes::ONEWAY
+            expect(response.body).to be_empty
+          else
+            protocol = Thrift::BinaryProtocol.new(Thrift::MemoryBufferTransport.new(response.body))
+            expect(protocol.read_message_begin).to eq ["shutdown", Thrift::MessageTypes::EXCEPTION, 19]
+            exception = Thrift::ApplicationException.new
+            exception.read(protocol)
+            expect(exception.type).to eq Thrift::ApplicationException::INTERNAL_ERROR
+          end
+        end
+      end
+
+      [Thrift::BinaryProtocolFactory, Thrift::HeaderProtocolFactory].each do |factory_class|
+        [Thrift::MessageTypes::CALL, Thrift::MessageTypes::ONEWAY].each do |type|
+          it "returns an unreported 400 for truncated #{factory_class} arguments with envelope #{type}" do
+            transport = Thrift::MemoryBufferTransport.new
+            Thrift::BinaryProtocol.new(transport).write_message_begin("#{prefix}shutdown", type, 19)
+            expect(handler).not_to receive(:shutdown)
+            env = Rack::MockRequest.env_for("/", method: "POST", "CONTENT_TYPE" => "application/x-thrift", input: transport.read(transport.available))
+            response = Rack::MockResponse.new(*Thrift::RackApplication.new(@processor, factory_class.new).call(env))
+
+            expect(response.status).to eq 400
+            expect(response.headers["Content-Type"]).to eq "application/x-thrift"
+            expect(response.body).to be_empty
+            expect(env["rack.exception"]).to be_nil
+          end
+        end
+      end
+    end
+  end
+
+  it "returns an unreported 400 for a malformed Header frame before routing" do
+    env = Rack::MockRequest.env_for("/", method: "POST", "CONTENT_TYPE" => "application/x-thrift", input: [8, 0x12345678, 0].pack("N*"))
+    response = Rack::MockResponse.new(*Thrift::RackApplication.new(@processor, Thrift::HeaderProtocolFactory.new).call(env))
+
+    expect(response.status).to eq 400
+    expect(response.headers["Content-Type"]).to eq "application/x-thrift"
+    expect(response.body).to be_empty
+    expect(env["rack.exception"]).to be_nil
   end
 
   it "raises for non-multiplexed calls when no default processor is registered" do

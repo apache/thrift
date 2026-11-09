@@ -58,12 +58,14 @@ describe "Thrift::ThinHTTPServer", thin_dependency do
         Thrift::ThinHTTPServer.new(processor)
       end
 
-      it "retains the historical Rack middleware" do
+      it "returns an empty Thrift 500 when the processor fails" do
+        error = RuntimeError.new("private processor detail")
+        allow(processor).to receive(:process).and_raise(error)
         allow(Thin::Server).to receive(:new) do |_ip, _port, app|
-          expect(Rack::CommonLogger).to receive(:new).and_call_original
-          expect(Rack::ShowExceptions).to receive(:new).and_call_original
-          expect(Rack::Lint).to receive(:new).and_call_original
-          app.to_app
+          response = Rack::MockRequest.new(app.to_app).post("/", "CONTENT_TYPE" => "application/x-thrift")
+          expect(response.status).to eq 500
+          expect(response.headers["Content-Type"]).to eq "application/x-thrift"
+          expect(response.body).to be_empty
         end
 
         Thrift::ThinHTTPServer.new(processor)
