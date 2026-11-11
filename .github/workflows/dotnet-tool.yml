@@ -332,7 +332,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "8.0"
+          dotnet-version: "10.0"
 
       # Trusted publishing, as for PyPI in pypi.yml and crates.io in
       # release_rust.yml: nuget.org hands back a short lived key in exchange

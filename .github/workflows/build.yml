@@ -578,7 +578,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        dotnet-version: [8, 9, 10, 11]
+        dotnet-version: [10, 11]
       fail-fast: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
