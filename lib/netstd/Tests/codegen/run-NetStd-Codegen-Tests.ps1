@@ -43,8 +43,6 @@ $KNOWN_BUGS = @(
     )
 
 $NET_VERSIONS = @(
-	"net8",
-	"net9",
 	"net10",
 	"net11"
 )

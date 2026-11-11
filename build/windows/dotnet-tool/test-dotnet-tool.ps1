@@ -66,7 +66,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $PackageId = 'Apache.Thrift.Compiler'
-$Tfm = 'net8.0'
+$Tfm = 'net10.0'
 
 $failures = [System.Collections.Generic.List[string]]::new()
 $passed = 0
@@ -156,9 +156,9 @@ try {
         ($settings -match "EntryPoint\s*=\s*`"$([regex]::Escape($PackageId)).dll`"") $settings
 
     # The launcher targets the oldest .NET the tool has to install on. Unless it
-    # may roll forward to a newer major version, a machine with only .NET 9 or
-    # later installs the tool and then refuses to start it, asking for .NET 8.
-    # Runners that also have .NET 8 never show that, so check the setting.
+    # may roll forward to a newer major version, a machine with only .NET 11 or
+    # later installs the tool and then refuses to start it, asking for .NET 10.
+    # Runners that also have .NET 10 never show that, so check the setting.
     $runtimeConfig = Read-Entry "$toolDir/$PackageId.runtimeconfig.json"
     $rollForward = ''
     if ($runtimeConfig) {

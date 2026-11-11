@@ -23,8 +23,6 @@ all-local:
 	$(DOTNETCORE) build -c Release
 
 check-local: precompile-fuzzers
-	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj
-	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj
 	$(DOTNETCORE) test Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
@@ -55,10 +53,6 @@ clean-local:
 	$(RM) -r Tests/Thrift.Tests/obj
 	$(RM) -r Tests/Thrift.IntegrationTests/bin
 	$(RM) -r Tests/Thrift.IntegrationTests/obj
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/bin
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net8/obj
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/bin
-	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net9/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net10/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net10/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net11/bin
@@ -87,8 +81,6 @@ EXTRA_DIST = \
 	Tests/Thrift.Compile.Tests \
 	Tests/Thrift.Compile.Tests/CassandraTest.thrift \
 	Tests/Thrift.Compile.Tests/optional_required_default.thrift \
-	Tests/Thrift.Compile.Tests/Thrift.Compile.net8/Thrift.Compile.net8.csproj \
-	Tests/Thrift.Compile.Tests/Thrift.Compile.net9/Thrift.Compile.net9.csproj \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj \
 	Tests/Thrift.FuzzTests \
 	Tests/Thrift.Tests/Collections \
