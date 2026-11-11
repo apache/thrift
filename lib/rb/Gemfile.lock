@@ -23,7 +23,7 @@ GEM
       racc
     prism (1.9.0)
     racc (1.8.1)
-    rack (2.2.23)
+    rack (2.2.25)
     rack-test (0.8.3)
       rack (>= 1.0, < 3)
     rainbow (3.1.1)
