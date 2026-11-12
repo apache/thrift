@@ -26,7 +26,6 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Collections.Generic;
 using System.IO;
-using System.Diagnostics;
 
 #pragma warning disable IDE0079 // net20 - unneeded suppression
 #pragma warning disable IDE0028 // net8 - simplified collection init 
@@ -70,6 +69,7 @@ namespace Thrift.Transport.Server
         private readonly List<TaskStreamPair> _streams = new List<TaskStreamPair>();
         private readonly bool _onlyLocalClients = false;  // compatibility default
         private readonly byte _numListenPipes = 1;  // compatibility default
+        private CancellationTokenSource _listening;  // ends the waits for a client, see Close()
 
         public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeServerFlags flags, int numListenPipes)
             : base(config)
@@ -110,21 +110,24 @@ namespace Thrift.Transport.Server
 
         public override void Close()
         {
+            // take everything first: a wait that ends here can run a Close() or an accept of its own
+            var listening = _listening;
+            _listening = null;
+            var streams = new TaskStreamPair[_streams.Count];
+            _streams.CopyTo(streams);
+            _streams.Clear();
+            _isPending = false;
+
             try
             {
-                if (_streams != null)
-                {
-                    while(_streams.Count > 0)
-                    {
-                        Close(_streams[0].Stream);
-                        _streams.RemoveAt(0);
-                    }
-                }
+                // while their pipes still exist, the waits end as cancelled rather than failed
+                listening?.Cancel();
             }
             finally
             {
-                _streams.Clear();
-                _isPending = false;
+                listening?.Dispose();
+                foreach (var pair in streams)
+                    Close(pair.Stream);
             }
         }
 
@@ -310,25 +313,52 @@ namespace Thrift.Transport.Server
             {
                 EnsurePipeInstances();
 
-                // fill the list and wait for any task to be completed
-                var tasks = new List<Task>();
+                // A pipe waits for a client until one connects or Close() ends the wait. The caller's token is
+                // not used for that: when another pipe gets the client, the wait goes on after this call, and
+                // the token may be cancelled by then.
+                if (_listening == null)
+                    _listening = new CancellationTokenSource();
+                var listening = _listening.Token;
+
+                // Close() may change the list while we wait, so the waits go into an array of their own,
+                // together with one that ends when the caller's token is cancelled
+                var waits = new Task[_streams.Count + 1];
                 for (var i = 0; i < _streams.Count; ++i)
                 {
                     if (_streams[i].Task == null)
                     {
                         var pair = _streams[i];
-                        pair.Task = Task.Run(async () => await pair.Stream.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false), cancellationToken);
+                        pair.Task = Task.Run(async () => await pair.Stream.WaitForConnectionAsync(listening).ConfigureAwait(false), listening);
                         _streams[i] = pair;
                     }
 
-                    tasks.Add(_streams[i].Task);
+                    waits[i] = _streams[i].Task;
                 }
 
-                // there must be an exact mapping between task index and stream index
-                Debug.Assert(_streams.Count == tasks.Count);
-                #pragma warning disable IDE0305  // see https://github.com/dotnet/roslyn/issues/70656 - yet unsolved
-                var index = Task.WaitAny(tasks.ToArray(), cancellationToken);
-                #pragma warning restore IDE0305 
+                var cancelled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                waits[waits.Length - 1] = cancelled.Task;
+
+                Task completed;
+                using (cancellationToken.Register(() => cancelled.TrySetCanceled(cancellationToken)))
+                {
+                    completed = await Task.WhenAny(waits).ConfigureAwait(false);
+                }
+
+                // throws the TaskCanceledException the servers stop on
+                if (completed == cancelled.Task)
+                    await completed.ConfigureAwait(false);
+
+                // Close() has ended the wait
+                if (completed.IsCanceled || listening.IsCancellationRequested)
+                    throw new TTransportException(TTransportException.ExceptionType.Interrupted, "Closed while waiting for a client");
+
+                // throws the error of a failed wait
+                await completed.ConfigureAwait(false);
+
+                var index = _streams.FindIndex(p => p.Task == completed);
+                if (index < 0)  // Close() has run since
+                    throw new TTransportException(TTransportException.ExceptionType.Interrupted, "Closed while waiting for a client");
+
                 var trans = new ServerTransport(_streams[index].Stream, Configuration);
                 _streams.RemoveAt(index); // pass stream ownership to ServerTransport
 
