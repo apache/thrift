@@ -99,7 +99,7 @@ GEM
     puma (7.2.1)
       nio4r (~> 2.0)
     racc (1.8.1)
-    rack (2.2.23)
+    rack (2.2.25)
     rainbow (3.1.1)
     regexp_parser (2.11.3)
     rubocop (1.82.1)
@@ -150,7 +150,7 @@ DEPENDENCIES
   falcon (~> 0.51)
   ostruct
   puma (~> 7.2)
-  rack (~> 2.2, >= 2.2.23)
+  rack (~> 2.2)
   rubocop (~> 1.82.0)
   rubocop-performance (~> 1.26.1)
   rubocop-rspec (~> 3.8.0)
