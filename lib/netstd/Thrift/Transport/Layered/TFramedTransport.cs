@@ -59,7 +59,7 @@ namespace Thrift.Transport
         {
             CheckNotDisposed();
 
-            await InnerTransport.OpenAsync(cancellationToken);
+            await InnerTransport.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void Close()
@@ -82,16 +82,16 @@ namespace Thrift.Transport
             // Read another frame of data if we run out of bytes
             if (ReadBuffer.Position >= ReadBuffer.Length)
             {
-                await ReadFrameAsync(cancellationToken);
+                await ReadFrameAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+            return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
         {
             UpdateKnownMessageSize(-1);
-            await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken);
+            await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken).ConfigureAwait(false);
             int size = BinaryPrimitives.ReadInt32BigEndian(HeaderBuf);
 
             if ((0 > size) || (size > Configuration.MaxFrameSize))  // size must be in the range 0 to allowed max
@@ -102,7 +102,7 @@ namespace Thrift.Transport
             ReadBuffer.Seek(0, SeekOrigin.Begin);
 
             ReadBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
-            await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken);
+            await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -117,10 +117,10 @@ namespace Thrift.Transport
 
             if (WriteBuffer.Length > (int.MaxValue - length))
             {
-                await FlushAsync(cancellationToken);
+                await FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+            await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -144,11 +144,11 @@ namespace Thrift.Transport
             BinaryPrimitives.WriteInt32BigEndian(bufSegment.Array, dataLen);
 
             // Send the entire message at once
-            await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+            await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken).ConfigureAwait(false);
 
             InitWriteBuffer();
 
-            await InnerTransport.FlushAsync(cancellationToken);
+            await InnerTransport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private void InitWriteBuffer()

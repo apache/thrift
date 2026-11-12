@@ -73,7 +73,7 @@ namespace Thrift.Transport
         {
             CheckNotDisposed();
 
-            await InnerTransport.OpenAsync(cancellationToken);
+            await InnerTransport.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void Close()
@@ -98,24 +98,24 @@ namespace Thrift.Transport
             var count = ReadBuffer.Length - ReadBuffer.Position;
             if (count > 0)
             {
-                return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+                return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             }
 
             // does the request even fit into the buffer?
             // Note we test for >= instead of > to avoid nonsense buffering
             if (length >= ReadBuffer.Capacity)
             {
-                return await InnerTransport.ReadAsync(buffer, offset, length, cancellationToken);
+                return await InnerTransport.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
             }
 
             // buffer a new chunk of bytes from the underlying transport
             ReadBuffer.Length = ReadBuffer.Capacity;
             ReadBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
-            ReadBuffer.Length = await InnerTransport.ReadAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+            ReadBuffer.Length = await InnerTransport.ReadAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken).ConfigureAwait(false);
             ReadBuffer.Position = 0;
 
             // deliver the bytes
-            return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
+            return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
 
@@ -134,7 +134,7 @@ namespace Thrift.Transport
             if (length > free)
             {
                 WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
-                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken).ConfigureAwait(false);
                 WriteBuffer.SetLength(0);
             }
 
@@ -142,12 +142,12 @@ namespace Thrift.Transport
             // Note we test for < instead of <= to avoid nonsense buffering
             if (length < WriteBuffer.Capacity)
             {
-                await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+                await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
             // write thru
-            await InnerTransport.WriteAsync(buffer, offset, length, cancellationToken);
+            await InnerTransport.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -162,11 +162,11 @@ namespace Thrift.Transport
             if (WriteBuffer.Length > 0)
             {
                 WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
-                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken).ConfigureAwait(false);
                 WriteBuffer.SetLength(0);
             }
 
-            await InnerTransport.FlushAsync(cancellationToken);
+            await InnerTransport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override void CheckReadBytesAvailable(long numBytes)

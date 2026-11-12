@@ -101,9 +101,9 @@ namespace Thrift.Transport.Client
             }
 
 #if NET5_0_OR_GREATER
-            return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+            return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
+            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
         }
 
@@ -116,15 +116,15 @@ namespace Thrift.Transport.Client
             }
 
 #if NET5_0_OR_GREATER
-            await OutputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+            await OutputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            await OutputStream.FlushAsync(cancellationToken);
+            await OutputStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             ResetMessageSizeAndConsumedBytes();
         }
 

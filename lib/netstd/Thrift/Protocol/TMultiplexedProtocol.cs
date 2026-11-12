@@ -83,10 +83,10 @@ namespace Thrift.Protocol
             {
                 case TMessageType.Call:
                 case TMessageType.Oneway:
-                    await base.WriteMessageBeginAsync(new TMessage($"{_serviceName}{Separator}{message.Name}", message.Type, message.SeqID), cancellationToken);
+                    await base.WriteMessageBeginAsync(new TMessage($"{_serviceName}{Separator}{message.Name}", message.Type, message.SeqID), cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-                    await base.WriteMessageBeginAsync(message, cancellationToken);
+                    await base.WriteMessageBeginAsync(message, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }

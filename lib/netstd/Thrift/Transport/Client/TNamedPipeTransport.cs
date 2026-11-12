@@ -53,7 +53,7 @@ namespace Thrift.Transport.Client
                 throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen);
             }
 
-            await PipeStream.ConnectAsync( ConnectTimeout, cancellationToken);
+            await PipeStream.ConnectAsync( ConnectTimeout, cancellationToken).ConfigureAwait(false);
             ResetMessageSizeAndConsumedBytes();
         }
 
@@ -77,9 +77,9 @@ namespace Thrift.Transport.Client
 
             CheckReadBytesAvailable(length);
 #if NET5_0_OR_GREATER
-            var numRead = await PipeStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+            var numRead = await PipeStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+            var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
             CountConsumedMessageBytes(numRead);
             return numRead;
@@ -99,9 +99,9 @@ namespace Thrift.Transport.Client
             while (nBytes > 0)
             {
 #if NET5_0_OR_GREATER
-                await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken);
+                await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken).ConfigureAwait(false);
 #else
-                await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
+                await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken).ConfigureAwait(false);
 #endif
                 offset += nBytes;
                 length -= nBytes;
@@ -111,7 +111,7 @@ namespace Thrift.Transport.Client
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            await PipeStream.FlushAsync(cancellationToken);
+            await PipeStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             ResetMessageSizeAndConsumedBytes();
         }
 

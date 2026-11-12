@@ -53,19 +53,19 @@ namespace Thrift
 
         public virtual async Task OpenTransportAsync()
         {
-            await OpenTransportAsync(CancellationToken.None);
+            await OpenTransportAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         public virtual async Task OpenTransportAsync(CancellationToken cancellationToken)
         {
             if (!_inputProtocol.Transport.IsOpen)
             {
-                await _inputProtocol.Transport.OpenAsync(cancellationToken);
+                await _inputProtocol.Transport.OpenAsync(cancellationToken).ConfigureAwait(false);
             }
 
             if (!_outputProtocol.Transport.IsOpen)
             {
-                await _outputProtocol.Transport.OpenAsync(cancellationToken);
+                await _outputProtocol.Transport.OpenAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 

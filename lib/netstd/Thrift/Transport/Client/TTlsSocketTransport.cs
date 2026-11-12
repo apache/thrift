@@ -223,8 +223,8 @@ namespace Thrift.Transport.Client
 
             if (_client != null)
             {
-                await _client.ConnectAsync(_host, _port);
-                await SetupTlsAsync();
+                await _client.ConnectAsync(_host, _port).ConfigureAwait(false);
+                await SetupTlsAsync().ConfigureAwait(false);
             }
         }
 
@@ -248,7 +248,7 @@ namespace Thrift.Transport.Client
                     // Server authentication
                     await
                         _secureStream.AuthenticateAsServerAsync(_certificate, _certValidator != null, _sslProtocols,
-                            true);
+                            true).ConfigureAwait(false);
                 }
                 else
                 {
@@ -258,7 +258,7 @@ namespace Thrift.Transport.Client
                         : new X509CertificateCollection();
 
                     var targetHost = _targetHost ?? _host.ToString();
-                    await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true);
+                    await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true).ConfigureAwait(false);
                 }
             }
             catch (Exception)

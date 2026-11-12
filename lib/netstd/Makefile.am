@@ -83,6 +83,7 @@ EXTRA_DIST = \
 	Tests/Thrift.Compile.Tests/optional_required_default.thrift \
 	Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj \
 	Tests/Thrift.FuzzTests \
+	Tests/Thrift.Tests/Async \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \
 	Tests/Thrift.Tests/Protocols \

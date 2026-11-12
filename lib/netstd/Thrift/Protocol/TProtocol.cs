@@ -157,7 +157,7 @@ namespace Thrift.Protocol
         public virtual async Task WriteStringAsync(string s, CancellationToken cancellationToken = default)
         {
             var bytes = Encoding.UTF8.GetBytes(s);
-            await WriteBinaryAsync(bytes, cancellationToken);
+            await WriteBinaryAsync(bytes, cancellationToken).ConfigureAwait(false);
         }
 
         public abstract Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken = default);
@@ -201,7 +201,7 @@ namespace Thrift.Protocol
 
         public virtual async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken = default)
         {
-            var buf = await ReadBinaryAsync(cancellationToken);
+            var buf = await ReadBinaryAsync(cancellationToken).ConfigureAwait(false);
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
         }
 

@@ -179,6 +179,13 @@ function TestIdlFile([string] $idl) {
 	$lines += ""
 	$lines | set-content ([System.IO.Path]::Combine($gendir, "$TESTAPP.csproj"))
 
+	# generated code must not resume on the caller's SynchronizationContext,
+	# so every await it contains needs ConfigureAwait(false)
+	$lines = @()
+	$lines += "[*.cs]"
+	$lines += "dotnet_diagnostic.CA2007.severity = error"
+	$lines | set-content ([System.IO.Path]::Combine($gendir, ".editorconfig"))
+
 	# generate project file
 	$testcs = [System.IO.Path]::Combine($gendir, "$TESTAPP.cs")
 	if( -not (test-path $testcs)) {

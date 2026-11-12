@@ -118,9 +118,9 @@ namespace Thrift.Transport.Server
             {
                 TTransport tSocketTransport = null;
                 #if NET6_0_OR_GREATER
-                var tcpClient = await _server.AcceptTcpClientAsync(cancellationToken);
+                var tcpClient = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
                 #else
-                var tcpClient = await _server.AcceptTcpClientAsync();
+                var tcpClient = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
                 #endif
                 try
                 {
