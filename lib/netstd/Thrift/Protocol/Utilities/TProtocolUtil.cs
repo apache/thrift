@@ -34,68 +34,68 @@ namespace Thrift.Protocol.Utilities
                 switch (type)
                 {
                     case TType.Bool:
-                        await protocol.ReadBoolAsync(cancellationToken);
+                        await protocol.ReadBoolAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Byte:
-                        await protocol.ReadByteAsync(cancellationToken);
+                        await protocol.ReadByteAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.I16:
-                        await protocol.ReadI16Async(cancellationToken);
+                        await protocol.ReadI16Async(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.I32:
-                        await protocol.ReadI32Async(cancellationToken);
+                        await protocol.ReadI32Async(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.I64:
-                        await protocol.ReadI64Async(cancellationToken);
+                        await protocol.ReadI64Async(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Double:
-                        await protocol.ReadDoubleAsync(cancellationToken);
+                        await protocol.ReadDoubleAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.String:
                         // Don't try to decode the string, just skip it.
-                        await protocol.ReadBinaryAsync(cancellationToken);
+                        await protocol.ReadBinaryAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Uuid:
-                        await protocol.ReadUuidAsync(cancellationToken);
+                        await protocol.ReadUuidAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Struct:
-                        await protocol.ReadStructBeginAsync(cancellationToken);
+                        await protocol.ReadStructBeginAsync(cancellationToken).ConfigureAwait(false);
                         while (true)
                         {
-                            var field = await protocol.ReadFieldBeginAsync(cancellationToken);
+                            var field = await protocol.ReadFieldBeginAsync(cancellationToken).ConfigureAwait(false);
                             if (field.Type == TType.Stop)
                             {
                                 break;
                             }
-                            await SkipAsync(protocol, field.Type, cancellationToken);
-                            await protocol.ReadFieldEndAsync(cancellationToken);
+                            await SkipAsync(protocol, field.Type, cancellationToken).ConfigureAwait(false);
+                            await protocol.ReadFieldEndAsync(cancellationToken).ConfigureAwait(false);
                         }
-                        await protocol.ReadStructEndAsync(cancellationToken);
+                        await protocol.ReadStructEndAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Map:
-                        var map = await protocol.ReadMapBeginAsync(cancellationToken);
+                        var map = await protocol.ReadMapBeginAsync(cancellationToken).ConfigureAwait(false);
                         for (var i = 0; i < map.Count; i++)
                         {
-                            await SkipAsync(protocol, map.KeyType, cancellationToken);
-                            await SkipAsync(protocol, map.ValueType, cancellationToken);
+                            await SkipAsync(protocol, map.KeyType, cancellationToken).ConfigureAwait(false);
+                            await SkipAsync(protocol, map.ValueType, cancellationToken).ConfigureAwait(false);
                         }
-                        await protocol.ReadMapEndAsync(cancellationToken);
+                        await protocol.ReadMapEndAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.Set:
-                        var set = await protocol.ReadSetBeginAsync(cancellationToken);
+                        var set = await protocol.ReadSetBeginAsync(cancellationToken).ConfigureAwait(false);
                         for (var i = 0; i < set.Count; i++)
                         {
-                            await SkipAsync(protocol, set.ElementType, cancellationToken);
+                            await SkipAsync(protocol, set.ElementType, cancellationToken).ConfigureAwait(false);
                         }
-                        await protocol.ReadSetEndAsync(cancellationToken);
+                        await protocol.ReadSetEndAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     case TType.List:
-                        var list = await protocol.ReadListBeginAsync(cancellationToken);
+                        var list = await protocol.ReadListBeginAsync(cancellationToken).ConfigureAwait(false);
                         for (var i = 0; i < list.Count; i++)
                         {
-                            await SkipAsync(protocol, list.ElementType, cancellationToken);
+                            await SkipAsync(protocol, list.ElementType, cancellationToken).ConfigureAwait(false);
                         }
-                        await protocol.ReadListEndAsync(cancellationToken);
+                        await protocol.ReadListEndAsync(cancellationToken).ConfigureAwait(false);
                         break;
                     default:
                         throw new TProtocolException(TProtocolException.INVALID_DATA, "Unknown data type " + type.ToString("d"));

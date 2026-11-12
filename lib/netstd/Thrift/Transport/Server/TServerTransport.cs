@@ -43,7 +43,7 @@ namespace Thrift.Transport
 
         public async ValueTask<TTransport> AcceptAsync(CancellationToken cancellationToken = default)
         {
-            return await AcceptImplementationAsync(cancellationToken)
+            return await AcceptImplementationAsync(cancellationToken).ConfigureAwait(false)
                 ?? throw new TTransportException($"{nameof(AcceptImplementationAsync)} should not return null");
         }
     }

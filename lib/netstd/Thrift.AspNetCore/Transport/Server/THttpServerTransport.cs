@@ -90,7 +90,7 @@ namespace Thrift.Transport.Server
 
         public async Task Invoke(HttpContext context)
         {
-            await ProcessRequestAsync(context, context.RequestAborted); //TODO: check for correct logic
+            await ProcessRequestAsync(context, context.RequestAborted).ConfigureAwait(false); //TODO: check for correct logic
         }
 
         public async Task ProcessRequestAsync(HttpContext context, CancellationToken cancellationToken)
@@ -105,10 +105,10 @@ namespace Thrift.Transport.Server
                 var output = OutputProtocolFactory.GetProtocol(outtrans);
 
                 context.Response.ContentType = ContentType;
-                while (await Processor.ProcessAsync(input, output, cancellationToken))
+                while (await Processor.ProcessAsync(input, output, cancellationToken).ConfigureAwait(false))
                 {
                     if (!context.Response.HasStarted)  // oneway method called
-                        await context.Response.Body.FlushAsync(cancellationToken);
+                        await context.Response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (TTransportException)

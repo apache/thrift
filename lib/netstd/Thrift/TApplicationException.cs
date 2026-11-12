@@ -66,10 +66,10 @@ namespace Thrift
             string message = null;
             var type = ExceptionType.Unknown;
 
-            await inputProtocol.ReadStructBeginAsync(cancellationToken);
+            await inputProtocol.ReadStructBeginAsync(cancellationToken).ConfigureAwait(false);
             while (true)
             {
-                var field = await inputProtocol.ReadFieldBeginAsync(cancellationToken);
+                var field = await inputProtocol.ReadFieldBeginAsync(cancellationToken).ConfigureAwait(false);
                 if (field.Type == TType.Stop)
                 {
                     break;
@@ -80,32 +80,32 @@ namespace Thrift
                     case MessageTypeFieldId:
                         if (field.Type == TType.String)
                         {
-                            message = await inputProtocol.ReadStringAsync(cancellationToken);
+                            message = await inputProtocol.ReadStringAsync(cancellationToken).ConfigureAwait(false);
                         }
                         else
                         {
-                            await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken);
+                            await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken).ConfigureAwait(false);
                         }
                         break;
                     case ExTypeFieldId:
                         if (field.Type == TType.I32)
                         {
-                            type = (ExceptionType) await inputProtocol.ReadI32Async(cancellationToken);
+                            type = (ExceptionType) await inputProtocol.ReadI32Async(cancellationToken).ConfigureAwait(false);
                         }
                         else
                         {
-                            await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken);
+                            await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken).ConfigureAwait(false);
                         }
                         break;
                     default:
-                        await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken);
+                        await TProtocolUtil.SkipAsync(inputProtocol, field.Type, cancellationToken).ConfigureAwait(false);
                         break;
                 }
 
-                await inputProtocol.ReadFieldEndAsync(cancellationToken);
+                await inputProtocol.ReadFieldEndAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            await inputProtocol.ReadStructEndAsync(cancellationToken);
+            await inputProtocol.ReadStructEndAsync(cancellationToken).ConfigureAwait(false);
 
             return new TApplicationException(type, message);
         }
@@ -121,27 +121,27 @@ namespace Thrift
             var struc = new TStruct(structApplicationExceptionName);
             var field = new TField();
 
-            await outputProtocol.WriteStructBeginAsync(struc, cancellationToken);
+            await outputProtocol.WriteStructBeginAsync(struc, cancellationToken).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(Message))
             {
                 field.Name = messageTypeFieldName;
                 field.Type = TType.String;
                 field.ID = MessageTypeFieldId;
-                await outputProtocol.WriteFieldBeginAsync(field, cancellationToken);
-                await outputProtocol.WriteStringAsync(Message, cancellationToken);
-                await outputProtocol.WriteFieldEndAsync(cancellationToken);
+                await outputProtocol.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+                await outputProtocol.WriteStringAsync(Message, cancellationToken).ConfigureAwait(false);
+                await outputProtocol.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
             }
 
             field.Name = exTypeFieldName;
             field.Type = TType.I32;
             field.ID = ExTypeFieldId;
 
-            await outputProtocol.WriteFieldBeginAsync(field, cancellationToken);
-            await outputProtocol.WriteI32Async((int) Type, cancellationToken);
-            await outputProtocol.WriteFieldEndAsync(cancellationToken);
-            await outputProtocol.WriteFieldStopAsync(cancellationToken);
-            await outputProtocol.WriteStructEndAsync(cancellationToken);
+            await outputProtocol.WriteFieldBeginAsync(field, cancellationToken).ConfigureAwait(false);
+            await outputProtocol.WriteI32Async((int) Type, cancellationToken).ConfigureAwait(false);
+            await outputProtocol.WriteFieldEndAsync(cancellationToken).ConfigureAwait(false);
+            await outputProtocol.WriteFieldStopAsync(cancellationToken).ConfigureAwait(false);
+            await outputProtocol.WriteStructEndAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

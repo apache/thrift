@@ -196,7 +196,7 @@ namespace Thrift.Transport.Client
                 throw new InvalidOperationException("Invalid or not initialized tcp client");
             }
 
-            await TcpClient.ConnectAsync(Host, Port);
+            await TcpClient.ConnectAsync(Host, Port).ConfigureAwait(false);
             SetInputOutputStream();
         }
 

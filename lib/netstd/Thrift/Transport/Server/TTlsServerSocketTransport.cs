@@ -140,9 +140,9 @@ namespace Thrift.Transport.Server
             try
             {
                 #if NET6_0_OR_GREATER
-                var client = await _server.AcceptTcpClientAsync(cancellationToken);
+                var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
                 #else
-                var client = await _server.AcceptTcpClientAsync();
+                var client = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
                 #endif
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
@@ -152,7 +152,7 @@ namespace Thrift.Transport.Server
                     _serverCertificate, true, _clientCertValidator,
                     _localCertificateSelectionCallback, _sslProtocols);
 
-                await tTlsSocket.SetupTlsAsync();
+                await tTlsSocket.SetupTlsAsync().ConfigureAwait(false);
 
                 return tTlsSocket;
             }

@@ -155,9 +155,9 @@ namespace Thrift.Transport.Client
             try
             {
 #if NET5_0_OR_GREATER
-                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken).ConfigureAwait(false);
 #else
-                var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+                var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
                 if (ret == -1)
                 {
@@ -178,9 +178,9 @@ namespace Thrift.Transport.Client
             cancellationToken.ThrowIfCancellationRequested();
 
 #if NET5_0_OR_GREATER
-            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken).ConfigureAwait(false);
 #else
-            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+            await _outputStream.WriteAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
         }
 
@@ -248,13 +248,13 @@ namespace Thrift.Transport.Client
                 {
                     contentStream.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
 
-                    var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
+                    var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken).ConfigureAwait(false)).EnsureSuccessStatusCode();
 
                     _inputStream?.Dispose();
 #if NET5_0_OR_GREATER
-                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #else
-                    _inputStream = await response.Content.ReadAsStreamAsync();
+                    _inputStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
                     if (_inputStream.CanSeek)
                     {

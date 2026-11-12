@@ -39,7 +39,7 @@ namespace Thrift.Processor
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)
         {
-            return await ProcessAsync(iprot, oprot, CancellationToken.None);
+            return await ProcessAsync(iprot, oprot, CancellationToken.None).ConfigureAwait(false);
         }
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
@@ -48,12 +48,12 @@ namespace Thrift.Processor
 
             try
             {
-                var message = await iprot.ReadMessageBeginAsync(cancellationToken);
+                var message = await iprot.ReadMessageBeginAsync(cancellationToken).ConfigureAwait(false);
 
                 if ((message.Type != TMessageType.Call) && (message.Type != TMessageType.Oneway))
                 {
                     await FailAsync(oprot, message, TApplicationException.ExceptionType.InvalidMessageType,
-                        "Message exType CALL or ONEWAY expected", cancellationToken);
+                        "Message exType CALL or ONEWAY expected", cancellationToken).ConfigureAwait(false);
                     return false;
                 }
 
@@ -63,7 +63,7 @@ namespace Thrift.Processor
                 {
                     await FailAsync(oprot, message, TApplicationException.ExceptionType.InvalidProtocol,
                         $"Service name not found in message name: {message.Name}. Did you forget to use a TMultiplexProtocol in your client?",
-                        cancellationToken);
+                        cancellationToken).ConfigureAwait(false);
                     return false;
                 }
 
@@ -73,7 +73,7 @@ namespace Thrift.Processor
                 {
                     await FailAsync(oprot, message, TApplicationException.ExceptionType.InternalError,
                         $"Service name not found: {serviceName}. Did you forget to call RegisterProcessor()?",
-                        cancellationToken);
+                        cancellationToken).ConfigureAwait(false);
                     return false;
                 }
 
@@ -87,7 +87,7 @@ namespace Thrift.Processor
                 return
                     await
                         actualProcessor.ProcessAsync(new StoredMessageProtocol(iprot, newMessage), oprot,
-                            cancellationToken);
+                            cancellationToken).ConfigureAwait(false);
             }
             catch (IOException)
             {
@@ -113,10 +113,10 @@ namespace Thrift.Processor
 
             var newMessage = new TMessage(message.Name, TMessageType.Exception, message.SeqID);
 
-            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken);
-            await appex.WriteAsync(oprot, cancellationToken);
-            await oprot.WriteMessageEndAsync(cancellationToken);
-            await oprot.Transport.FlushAsync(cancellationToken);
+            await oprot.WriteMessageBeginAsync(newMessage, cancellationToken).ConfigureAwait(false);
+            await appex.WriteAsync(oprot, cancellationToken).ConfigureAwait(false);
+            await oprot.WriteMessageEndAsync(cancellationToken).ConfigureAwait(false);
+            await oprot.Transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private class StoredMessageProtocol : TProtocolDecorator

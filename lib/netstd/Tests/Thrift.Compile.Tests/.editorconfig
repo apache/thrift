@@ -1,0 +1,4 @@
+# CA2007: generated code must not resume on the caller's SynchronizationContext either,
+# so every await it contains needs ConfigureAwait(false)
+[**/gen-netstd/**.cs]
+dotnet_diagnostic.CA2007.severity = error

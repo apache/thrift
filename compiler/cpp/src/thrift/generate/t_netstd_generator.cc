@@ -1535,11 +1535,11 @@ void t_netstd_generator::generate_netstd_struct_reader(ostream& out, t_struct* t
     }
 
     out << indent() << "TField field;" << '\n'
-        << indent() << "await iprot.ReadStructBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+        << indent() << "await iprot.ReadStructBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << indent() << "while (true)" << '\n'
         << indent() << "{" << '\n';
     indent_up();
-    out << indent() << "field = await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+    out << indent() << "field = await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << indent() << "if (field.Type == TType.Stop)" << '\n'
         << indent() << "{" << '\n';
     indent_up();
@@ -1570,7 +1570,7 @@ void t_netstd_generator::generate_netstd_struct_reader(ostream& out, t_struct* t
             << indent() << "else" << '\n'
             << indent() << "{" << '\n';
         indent_up();
-        out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
         indent_down();
         out << indent() << "}" << '\n'
             << indent() << "break;" << '\n';
@@ -1579,17 +1579,17 @@ void t_netstd_generator::generate_netstd_struct_reader(ostream& out, t_struct* t
 
     out << indent() << "default: " << '\n';
     indent_up();
-    out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+    out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << indent() << "break;" << '\n';
     indent_down();
     indent_down();
     out << indent() << "}" << '\n'
         << '\n'
-        << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     indent_down();
     out << indent() << "}" << '\n'
         << '\n'
-        << indent() << "await iprot.ReadStructEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await iprot.ReadStructEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
@@ -1671,7 +1671,7 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
 
     string tmpvar = tmp("tmp");
     out << indent() << "var " << tmpvar << " = new TStruct(\"" << name << "\");" << '\n'
-        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     if (fields.size() > 0)
     {
@@ -1686,11 +1686,11 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
             out << indent() << tmpvar << ".Name = \"" << (*f_iter)->get_name() << "\";" << '\n'
                 << indent() << tmpvar << ".Type = " << type_to_enum((*f_iter)->get_type()) << ";" << '\n'
                 << indent() << tmpvar << ".ID = " << (*f_iter)->get_key() << ";" << '\n'
-                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
             generate_serialize_field(out, *f_iter);
 
-            out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
             generate_null_check_end(out, *f_iter);
         }
         if(target_net_version >= 8) {
@@ -1698,8 +1698,8 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
         }
     }
 
-    out << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     indent_down();
     out << indent() << "}" << '\n'
         << indent() << "finally" << '\n'
@@ -1729,7 +1729,7 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
 
     string tmpvar = tmp("tmp");
     out << indent() << "var " << tmpvar << " = new TStruct(\"" << name << "\");" << '\n'
-        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     if (fields.size() > 0)
     {
@@ -1766,11 +1766,11 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
             out << indent() << tmpvar << ".Name = \"" << prop_name(*f_iter) << "\";" << '\n'
                 << indent() << tmpvar << ".Type = " << type_to_enum((*f_iter)->get_type()) << ";" << '\n'
                 << indent() << tmpvar << ".ID = " << (*f_iter)->get_key() << ";" << '\n'
-                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
             generate_serialize_field(out, *f_iter);
 
-            out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
             if (null_allowed)
             {
@@ -1786,8 +1786,8 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
         }
     }
 
-    out << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     indent_down();
     out << indent() << "}" << '\n'
         << indent() << "finally" << '\n'
@@ -2166,7 +2166,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     indent_up();
 
     out << indent() << "var struc = new TStruct(\"" << tunion->get_name() << "\");" << '\n'
-        << indent() << "await oprot.WriteStructBeginAsync(struc, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await oprot.WriteStructBeginAsync(struc, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     out << indent() << "var field = new TField()" << '\n';
     out << indent() << "{" << '\n';
@@ -2176,13 +2176,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << indent() << "ID = " << tfield->get_key() << '\n';
     indent_down();
     out << indent() << "};" << '\n';
-    out << indent() << "await oprot.WriteFieldBeginAsync(field, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await oprot.WriteFieldBeginAsync(field, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     generate_serialize_field(out, tfield, "_data", true, false);
 
-    out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await oprot.WriteFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.WriteFieldStopAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.WriteStructEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     indent_down();
     out << indent() << "}" << '\n'
         << indent() << "finally" << '\n'
@@ -2481,10 +2481,10 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         if(! call_args.empty()) {
             out << call_args << ", ";
         }
-        out << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
         if(! (*functions_iterator)->is_oneway()) {
             out << indent() << ((*functions_iterator)->get_returntype()->is_void() ? "" : "return ")
-                            << "await recv_" << function_name << "(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                            << "await recv_" << function_name << "(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
         }
         indent_down();
         out << indent() << "}" << '\n' << '\n';
@@ -2500,7 +2500,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
         out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
             << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call")
-            << ", SeqId), " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+            << ", SeqId), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
             << indent() << '\n'
             << indent() << "var " << tmpvar << " = new InternalStructs." << argsname << "() {" << '\n';
         indent_up();
@@ -2521,9 +2521,9 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
 
         out << indent() << '\n'
-            << indent() << "await " << tmpvar << ".WriteAsync(OutputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await OutputProtocol.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await OutputProtocol.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << indent() << "await " << tmpvar << ".WriteAsync(OutputProtocol, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+            << indent() << "await OutputProtocol.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+            << indent() << "await OutputProtocol.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
         indent_down();
         out << indent() << "}" << '\n' << '\n';
@@ -2544,14 +2544,14 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
             tmpvar = tmp("tmp");
             out << indent() << '\n'
-                << indent() << "var " << tmpvar << " = await InputProtocol.ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+                << indent() << "var " << tmpvar << " = await InputProtocol.ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
                 << indent() << "if (" << tmpvar << ".Type == TMessageType.Exception)" << '\n'
                 << indent() << "{" << '\n';
             indent_up();
 
             tmpvar = tmp("tmp");
-            out << indent() << "var " << tmpvar << " = await TApplicationException.ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+            out << indent() << "var " << tmpvar << " = await TApplicationException.ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
                 << indent() << "throw " << tmpvar << ";" << '\n';
             indent_down();
 
@@ -2559,8 +2559,8 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             out << indent() << "}" << '\n'
                 << '\n'
                 << indent() << "var " << tmpvar << " = new InternalStructs." << resultname << "();" << '\n'
-                << indent() << "await " << tmpvar << ".ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                << indent() << "await " << tmpvar << ".ReadAsync(InputProtocol, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+                << indent() << "await InputProtocol.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
             if (!(*functions_iterator)->get_returntype()->is_void())
             {
@@ -2673,7 +2673,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
         out << indent() << "public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)" << '\n'
             << indent() << "{" << '\n';
         indent_up();
-        out << indent() << "return await ProcessAsync(iprot, oprot, CancellationToken.None);" << '\n';
+        out << indent() << "return await ProcessAsync(iprot, oprot, CancellationToken.None).ConfigureAwait(false);" << '\n';
         indent_down();
         out << indent() << "}" << '\n' << '\n';
 
@@ -2684,7 +2684,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
         out << indent() << "public new async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot)" << '\n'
             << indent() << "{" << '\n';
         indent_up();
-        out << indent() << "return await ProcessAsync(iprot, oprot, CancellationToken.None);" << '\n';
+        out << indent() << "return await ProcessAsync(iprot, oprot, CancellationToken.None).ConfigureAwait(false);" << '\n';
         indent_down();
         out << indent() << "}" << '\n' << '\n';
 
@@ -2696,25 +2696,25 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
     out << indent() << "try" << '\n'
         << indent() << "{" << '\n';
     indent_up();
-    out << indent() << "var msg = await iprot.ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+    out << indent() << "var msg = await iprot.ReadMessageBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << '\n'
         << indent() << "processMap_.TryGetValue(msg.Name, out var fn);" << '\n'
         << '\n'
         << indent() << "if (fn == null)" << '\n'
         << indent() << "{" << '\n';
     indent_up();
-    out << indent() << "await TProtocolUtil.SkipAsync(iprot, TType.Struct, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await iprot.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+    out << indent() << "await TProtocolUtil.SkipAsync(iprot, TType.Struct, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await iprot.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << indent() << "var x = new TApplicationException (TApplicationException.ExceptionType.UnknownMethod, \"Invalid method name: '\" + msg.Name + \"'\");" << '\n'
-        << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID), " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await x.WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await oprot.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
+        << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await x.WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await oprot.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << indent() << "return true;" << '\n';
     indent_down();
     out << indent() << "}" << '\n'
         << '\n'
-        << indent() << "await fn(msg.SeqID, iprot, oprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
+        << indent() << "await fn(msg.SeqID, iprot, oprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
         << '\n';
     indent_down();
     out << indent() << "}" << '\n';
@@ -2778,8 +2778,8 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
     string args = tmp("tmp");
     out << indent() << "var " << args << " = new InternalStructs." << argsname << "();" << '\n'
-        << indent() << "await " << args << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-        << indent() << "await iprot.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        << indent() << "await " << args << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+        << indent() << "await iprot.ReadMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     string tmpResult = tmp("tmp");
     if (!tfunction->is_oneway())
@@ -2841,7 +2841,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         out << ", ";
     }
 
-    out << "" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << "" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
     if( is_deprecated(tfunction->annotations_)) {
       out << indent() << "#pragma warning restore CS0618,CS0612" << '\n';
@@ -2875,8 +2875,8 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     if (!tfunction->is_oneway())
     {
         out << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\""
-                << tfunction->get_name() << "\", TMessageType.Reply, seqid), " << CANCELLATION_TOKEN_NAME << "); " << '\n'
-            << indent() << "await " << tmpResult << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+                << tfunction->get_name() << "\", TMessageType.Reply, seqid), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false); " << '\n'
+            << indent() << "await " << tmpResult << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     indent_down();
 
@@ -2913,13 +2913,13 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         tmpvar = tmp("tmp");
         out << indent() << "var " << tmpvar << " = new TApplicationException(TApplicationException.ExceptionType.InternalError,\" Internal error.\");" << '\n'
             << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\"" << tfunction->get_name()
-            << "\", TMessageType.Exception, seqid), " << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await " << tmpvar << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << "\", TMessageType.Exception, seqid), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+            << indent() << "await " << tmpvar << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
         indent_down();
 
         out << indent() << "}" << '\n'
-            << indent() << "await oprot.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n'
-            << indent() << "await oprot.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << indent() << "await oprot.WriteMessageEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n'
+            << indent() << "await oprot.Transport.FlushAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
 
     indent_down();
@@ -2941,12 +2941,12 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
 
     string tmpRetval = tmp("tmp");
     out << indent() << tunion->get_name() << " " << tmpRetval << ";" << '\n';
-    out << indent() << "await iprot.ReadStructBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
-    out << indent() << "TField field = await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await iprot.ReadStructBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
+    out << indent() << "TField field = await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     // we cannot have the first field be a stop -- we must have a single field defined
     out << indent() << "if (field.Type == TType.Stop)" << '\n';
     scope_up(out);
-    out << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     out << indent() << "" << tmpRetval << " = new ___undefined();" << '\n';
     scope_down(out);
     out << indent() << "else" << '\n';
@@ -2967,7 +2967,7 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
         out << indent() << tmpRetval << " = new " << (*f_iter)->get_name() << "(" << tmpvar << ");" << '\n';
 
         indent_down();
-        out << indent() << "} else { " << '\n' << indent() << " await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ");"
+        out << indent() << "} else { " << '\n' << indent() << " await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);"
             << '\n' << indent() << "  " << tmpRetval << " = new ___undefined();" << '\n' << indent() << "}" << '\n'
             << indent() << "break;" << '\n';
         indent_down();
@@ -2975,23 +2975,23 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
 
     out << indent() << "default: " << '\n';
     indent_up();
-    out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ");" << '\n' << indent()
+    out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n' << indent()
         << tmpRetval << " = new ___undefined();" << '\n';
     out << indent() << "break;" << '\n';
     indent_down();
 
     scope_down(out);
 
-    out << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await iprot.ReadFieldEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 
-    out << indent() << "if ((await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ")).Type != TType.Stop)" << '\n';
+    out << indent() << "if ((await iprot.ReadFieldBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false)).Type != TType.Stop)" << '\n';
     scope_up(out);
     out << indent() << "throw new TProtocolException(TProtocolException.INVALID_DATA);" << '\n';
     scope_down(out);
 
     // end of else for TStop
     scope_down(out);
-    out << indent() << "await iprot.ReadStructEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await iprot.ReadStructEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     out << indent() << "return " << tmpRetval << ";" << '\n';
     indent_down();
 
@@ -3046,33 +3046,33 @@ void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfiel
             case t_base_type::TYPE_STRING:
                 if (type->is_binary())
                 {
-                    out << "ReadBinaryAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                    out << "ReadBinaryAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 }
                 else
                 {
-                    out << "ReadStringAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                    out << "ReadStringAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 }
                 break;
             case t_base_type::TYPE_UUID:
-                out << "ReadUuidAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadUuidAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_BOOL:
-                out << "ReadBoolAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadBoolAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I8:
-                out << "ReadByteAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadByteAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I16:
-                out << "ReadI16Async(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadI16Async(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I32:
-                out << "ReadI32Async(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadI32Async(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I64:
-                out << "ReadI64Async(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadI64Async(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_DOUBLE:
-                out << "ReadDoubleAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                out << "ReadDoubleAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             default:
                 throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase);
@@ -3080,7 +3080,7 @@ void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfiel
         }
         else if (type->is_enum())
         {
-            out << "ReadI32Async(" << CANCELLATION_TOKEN_NAME << ");";
+            out << "ReadI32Async(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
         }
         out << '\n';
     }
@@ -3094,12 +3094,12 @@ void t_netstd_generator::generate_deserialize_struct(ostream& out, t_struct* tst
 {
     if (is_union_enabled() && tstruct->is_union())
     {
-        out << indent() << prefix << " = await " << type_name(tstruct) << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << prefix << " = await " << type_name(tstruct) << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else
     {
         out << indent() << prefix << " = new " << type_name(tstruct) << "();" << '\n'
-            << indent() << "await " << prefix << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << indent() << "await " << prefix << ".ReadAsync(iprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
 }
 
@@ -3125,15 +3125,15 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
 
     if (ttype->is_map())
     {
-        out << indent() << "var " << obj << " = await iprot.ReadMapBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "var " << obj << " = await iprot.ReadMapBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_set())
     {
-        out << indent() << "var " << obj << " = await iprot.ReadSetBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "var " << obj << " = await iprot.ReadSetBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_list())
     {
-        out << indent() << "var " << obj << " = await iprot.ReadListBeginAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "var " << obj << " = await iprot.ReadListBeginAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
 
     if( (target_net_version < 5) && ttype->is_set()) {
@@ -3164,15 +3164,15 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
 
     if (ttype->is_map())
     {
-        out << indent() << "await iprot.ReadMapEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await iprot.ReadMapEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_set())
     {
-        out << indent() << "await iprot.ReadSetEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await iprot.ReadSetEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_list())
     {
-        out << indent() << "await iprot.ReadListEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await iprot.ReadListEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
 
     indent_down();
@@ -3261,28 +3261,28 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
                 {
                     out << "WriteStringAsync(";
                 }
-                out << name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_UUID:
-                out << "WriteUuidAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteUuidAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_BOOL:
-                out << "WriteBoolAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteBoolAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I8:
-                out << "WriteByteAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteByteAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I16:
-                out << "WriteI16Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteI16Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I32:
-                out << "WriteI32Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteI32Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_I64:
-                out << "WriteI64Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteI64Async(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             case t_base_type::TYPE_DOUBLE:
-                out << "WriteDoubleAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                out << "WriteDoubleAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
                 break;
             default:
                 throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase);
@@ -3290,7 +3290,7 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
         }
         else if (type->is_enum())
         {
-            out << "WriteI32Async((int)" << name << ", " << CANCELLATION_TOKEN_NAME << ");";
+            out << "WriteI32Async((int)" << name << ", " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);";
         }
         out << '\n';
     }
@@ -3303,7 +3303,7 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
 void t_netstd_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix)
 {
     (void)tstruct;
-    out << indent() << "await " << prefix << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+    out << indent() << "await " << prefix << ".WriteAsync(oprot, " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
 }
 
 void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix)
@@ -3312,17 +3312,17 @@ void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttyp
     {
         out << indent() << "await oprot.WriteMapBeginAsync(new TMap(" << type_to_enum(static_cast<t_map*>(ttype)->get_key_type())
             << ", " << type_to_enum(static_cast<t_map*>(ttype)->get_val_type()) << ", " << prefix
-            << ".Count), " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << ".Count), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_set())
     {
         out << indent() << "await oprot.WriteSetBeginAsync(new TSet(" << type_to_enum(static_cast<t_set*>(ttype)->get_elem_type())
-            << ", " << prefix << ".Count), " << CANCELLATION_TOKEN_NAME << ");" << '\n';
+            << ", " << prefix << ".Count), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_list())
     {
         out << indent() << "await oprot.WriteListBeginAsync(new TList("
-            << type_to_enum(static_cast<t_list*>(ttype)->get_elem_type()) << ", " << prefix << ".Count), " << CANCELLATION_TOKEN_NAME << ");"
+            << type_to_enum(static_cast<t_list*>(ttype)->get_elem_type()) << ", " << prefix << ".Count), " << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);"
             << '\n';
     }
 
@@ -3365,15 +3365,15 @@ void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttyp
 
     if (ttype->is_map())
     {
-        out << indent() << "await oprot.WriteMapEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await oprot.WriteMapEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_set())
     {
-        out << indent() << "await oprot.WriteSetEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await oprot.WriteSetEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
     else if (ttype->is_list())
     {
-        out << indent() << "await oprot.WriteListEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << '\n';
+        out << indent() << "await oprot.WriteListEndAsync(" << CANCELLATION_TOKEN_NAME << ").ConfigureAwait(false);" << '\n';
     }
 }
 

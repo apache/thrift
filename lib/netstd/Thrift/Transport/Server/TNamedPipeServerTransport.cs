@@ -317,7 +317,7 @@ namespace Thrift.Transport.Server
                     if (_streams[i].Task == null)
                     {
                         var pair = _streams[i];
-                        pair.Task = Task.Run(async () => await pair.Stream.WaitForConnectionAsync(cancellationToken), cancellationToken);
+                        pair.Task = Task.Run(async () => await pair.Stream.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false), cancellationToken);
                         _streams[i] = pair;
                     }
 
@@ -389,9 +389,9 @@ namespace Thrift.Transport.Server
 
                 CheckReadBytesAvailable(length);
 #if NET5_0_OR_GREATER
-                var numBytes = await PipeStream.ReadAsync(buffer.AsMemory(offset, length), cancellationToken);
+                var numBytes = await PipeStream.ReadAsync(buffer.AsMemory(offset, length), cancellationToken).ConfigureAwait(false);
 #else
-                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken).ConfigureAwait(false);
 #endif
                 CountConsumedMessageBytes(numBytes);
                 return numBytes;
@@ -411,9 +411,9 @@ namespace Thrift.Transport.Server
                 while (nBytes > 0)
                 {
 #if NET5_0_OR_GREATER
-                    await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken);
+                    await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken).ConfigureAwait(false);
 #else
-                    await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
+                    await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken).ConfigureAwait(false);
 #endif
                     offset += nBytes;
                     length -= nBytes;
@@ -423,7 +423,7 @@ namespace Thrift.Transport.Server
 
             public override async Task FlushAsync(CancellationToken cancellationToken)
             {
-                await PipeStream.FlushAsync(cancellationToken);
+                await PipeStream.FlushAsync(cancellationToken).ConfigureAwait(false);
                 ResetMessageSizeAndConsumedBytes();
             }
 

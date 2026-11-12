@@ -169,14 +169,14 @@ namespace Thrift.Server
 
                 //Fire the preServe server event when server is up but before any client connections
                 if (ServerEventHandler != null)
-                    await ServerEventHandler.PreServeAsync(cancellationToken);
+                    await ServerEventHandler.PreServeAsync(cancellationToken).ConfigureAwait(false);
 
                 while (!(stop || ServerCancellationToken.IsCancellationRequested))
                 {
                     try
                     {
-                        TTransport client = await ServerTransport.AcceptAsync(cancellationToken);
-                        _ = Task.Run(async () => await ExecuteAsync(client), cancellationToken);  // intentionally ignoring retval
+                        TTransport client = await ServerTransport.AcceptAsync(cancellationToken).ConfigureAwait(false);
+                        _ = Task.Run(async () => await ExecuteAsync(client).ConfigureAwait(false), cancellationToken);  // intentionally ignoring retval
                     }
                     catch (TaskCanceledException)
                     {
@@ -240,12 +240,12 @@ namespace Thrift.Server
 
                         //Recover event handler (if any) and fire createContext server event when a client connects
                         if (ServerEventHandler != null)
-                            connectionContext = await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken);
+                            connectionContext = await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken).ConfigureAwait(false);
 
                         //Process client requests until client disconnects
                         while (!(stop || cancellationToken.IsCancellationRequested))
                         {
-                            if (!await inputTransport.PeekAsync(cancellationToken))
+                            if (!await inputTransport.PeekAsync(cancellationToken).ConfigureAwait(false))
                                 break;
 
                             //Fire processContext server event
@@ -253,10 +253,10 @@ namespace Thrift.Server
                             //That is to say it may be many minutes between the event firing and the client request
                             //actually arriving or the client may hang up without ever makeing a request.
                             if (ServerEventHandler != null)
-                                await ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken);
+                                await ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken).ConfigureAwait(false);
 
                             //Process client request (blocks until transport is readable)
-                            if (!await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
+                            if (!await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken).ConfigureAwait(false))
                                 break;
                         }
                     }
@@ -272,7 +272,7 @@ namespace Thrift.Server
 
                     //Fire deleteContext server event after client disconnects
                     if (ServerEventHandler != null)
-                        await ServerEventHandler.DeleteContextAsync(connectionContext, inputProtocol, outputProtocol, cancellationToken);
+                        await ServerEventHandler.DeleteContextAsync(connectionContext, inputProtocol, outputProtocol, cancellationToken).ConfigureAwait(false);
 
                 }
                 finally

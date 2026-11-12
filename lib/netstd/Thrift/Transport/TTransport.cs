@@ -63,7 +63,7 @@ namespace Thrift.Transport
             //Try to read one byte. If succeeds we will need to store it for the next read.
             try
             {
-                var bytes = await ReadAsync(_peekBuffer, 0, 1, cancellationToken);
+                var bytes = await ReadAsync(_peekBuffer, 0, 1, cancellationToken).ConfigureAwait(false);
                 if (bytes == 0)
                 {
                     return false;
@@ -136,7 +136,7 @@ namespace Thrift.Transport
             Debug.Assert(remaining > 0);  // any other possible cases should have been handled already 
             while (true)
             {
-                var numBytes = await ReadAsync(buffer, offset, remaining, cancellationToken);
+                var numBytes = await ReadAsync(buffer, offset, remaining, cancellationToken).ConfigureAwait(false);
                 totalBytes += numBytes;
                 if (totalBytes >= length)
                 {
@@ -156,12 +156,12 @@ namespace Thrift.Transport
 
         public virtual async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
         {
-            await WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
+            await WriteAsync(buffer, 0, buffer.Length, CancellationToken.None).ConfigureAwait(false);
         }
 
         public virtual async Task WriteAsync(byte[] buffer, int offset, int length)
         {
-            await WriteAsync(buffer, offset, length, CancellationToken.None);
+            await WriteAsync(buffer, offset, length, CancellationToken.None).ConfigureAwait(false);
         }
 
         public abstract Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken);
