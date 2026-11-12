@@ -38,7 +38,7 @@ namespace Thrift.Transport.Client
         public TNamedPipeTransport(string server, string pipe, TConfiguration config, int timeout = DEFAULT_CONNECT_TIMEOUT) 
             : base(config)
         {
-            var serverName = string.IsNullOrWhiteSpace(server) ? server : ".";
+            var serverName = string.IsNullOrWhiteSpace(server) ? "." : server;
             ConnectTimeout = (timeout > 0) ? timeout : DEFAULT_CONNECT_TIMEOUT;
 
             PipeStream = new NamedPipeClientStream(serverName, pipe, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Anonymous);
