@@ -250,6 +250,7 @@ SKILL.md
 /lib/kotlin/gradlew
 /lib/kotlin/gradlew.bat
 /lib/lua/test/test_socket_accept
+/lib/lua/test/test_socket_flags
 /lib/lua/test/test_socket_send
 /lib/netstd/**/bin
 /lib/netstd/**/obj
