@@ -2063,14 +2063,20 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
       that_present += " && that." + generate_isset_check(*m_iter);
     }
 
-    out << indent() << "boolean this_present_" << name << " = " << this_present << ";" << '\n'
-        << indent() << "boolean that_present_" << name << " = " << that_present << ";" << '\n'
-        << indent() << "if ("
-        << "this_present_" << name << " || that_present_" << name << ") {" << '\n';
-    indent_up();
-    out << indent() << "if (!("
-        << "this_present_" << name << " && that_present_" << name << "))" << '\n'
-        << indent() << "  return false;" << '\n';
+    // A field that is neither optional nor nullable is present on both sides, so
+    // the presence flags would be constant true (Coverity DEADCODE, THRIFT-4191).
+    bool always_present = !is_optional && !can_be_null;
+
+    if (!always_present) {
+      out << indent() << "boolean this_present_" << name << " = " << this_present << ";" << '\n'
+          << indent() << "boolean that_present_" << name << " = " << that_present << ";" << '\n'
+          << indent() << "if ("
+          << "this_present_" << name << " || that_present_" << name << ") {" << '\n';
+      indent_up();
+      out << indent() << "if (!("
+          << "this_present_" << name << " && that_present_" << name << "))" << '\n'
+          << indent() << "  return false;" << '\n';
+    }
 
     if (t->is_binary()) {
       unequal = "!this." + make_valid_java_identifier(name) + ".equals(that." + make_valid_java_identifier(name) + ")";
@@ -2082,7 +2088,9 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
 
     out << indent() << "if (" << unequal << ")" << '\n' << indent() << "  return false;" << '\n';
 
-    scope_down(out);
+    if (!always_present) {
+      scope_down(out);
+    }
   }
   out << '\n';
   indent(out) << "return true;" << '\n';

@@ -80,6 +80,7 @@ test {
 
     systemProperties = [
         'test.port': "${testPort}",
+        'test.genSrc': "${genSrc}",
         'javax.net.ssl.trustStore': "${projectDir}/src/crossTest/resources/.truststore",
         'javax.net.ssl.trustStorePassword': 'thrift',
         'javax.net.ssl.keyStore': "${projectDir}/src/crossTest/resources/.serverkeystore",
