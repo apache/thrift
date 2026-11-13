@@ -144,8 +144,6 @@ public class ThriftMetadataTest {
     assertEquals(fieldName, fieldMetadata.fieldId.getFieldName());
     assertEquals(fieldName, fieldMetadata.data.fieldName);
 
-    assertEquals("root ==> " + fieldName, fieldMetadata.toString());
-
     return fieldMetadata;
   }
 

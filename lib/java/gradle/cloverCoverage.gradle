@@ -29,7 +29,7 @@ if (Boolean.parseBoolean(project.cloverEnabled)) {
 
     clover {
 
-        testIncludes = ['**/Test*.java']
+        testIncludes = ['**/Test*.java', '**/*Test.java']
         // Exclude the generated test code from code coverage
         testExcludes = ['thrift/test/Test*.java']
 
