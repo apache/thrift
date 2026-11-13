@@ -589,3 +589,18 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escapes_to_utf8) {
   // together with it.
   BOOST_CHECK_EQUAL(readJSONString("\"a\\ud835\\u0041b\""), "ab");
 }
+
+// writeString() escapes a NUL byte as \u0000; reading it back must keep it.
+BOOST_AUTO_TEST_CASE(test_json_string_with_nul_round_trips) {
+  BOOST_CHECK_EQUAL(readJSONString("\"\\u0000\""), std::string(1, '\0'));
+
+  const std::string original("a\0b", 3);
+  auto buffer = std::make_shared<TMemoryBuffer>();
+  TJSONProtocol proto(buffer);
+  proto.writeString(original);
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), "\"a\\u0000b\"");
+  std::string out;
+  proto.readString(out);
+  BOOST_CHECK_EQUAL(out.size(), original.size());
+  BOOST_CHECK(out == original);
+}
