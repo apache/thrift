@@ -103,8 +103,10 @@ __TObject = {
 }
 function __TObject:new(init_obj)
   local obj = {}
-  if ttype(obj) == 'table' then
+  if type(init_obj) == 'table' then
     obj = init_obj
+  elseif init_obj ~= nil then
+    error(ttype(self) .. ' must be initialized with a table')
   end
 
   -- Use the __parent key and the __index function to achieve inheritance
