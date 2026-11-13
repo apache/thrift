@@ -169,6 +169,22 @@ if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTE
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Interposes setsockopt, so it must not share a binary with other tests.
+    add_executable(TUnixSocketOptionsTest TUnixSocketOptionsTest.cpp)
+    target_link_libraries(TUnixSocketOptionsTest
+        boosttestframework
+        ${CMAKE_DL_LIBS}
+    )
+    target_link_libraries(TUnixSocketOptionsTest thrift)
+    if (WITH_LIBEVENT)
+        # TNonblockingServerSocket is part of thriftnb in the CMake build.
+        target_link_libraries(TUnixSocketOptionsTest thriftnb)
+        target_compile_definitions(TUnixSocketOptionsTest PRIVATE THRIFT_TEST_NONBLOCKING_SERVER_SOCKET)
+    endif ()
+    add_test(NAME TUnixSocketOptionsTest COMMAND TUnixSocketOptionsTest)
+endif ()
+
 add_executable(TServerExceptionTest TServerExceptionTest.cpp)
 target_link_libraries(TServerExceptionTest
     testgencpp_cob
