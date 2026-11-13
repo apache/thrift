@@ -879,7 +879,8 @@ void t_st_generator::generate_send_method(t_function* function) {
   f_ << "oprot writeMessageBegin:" << '\n';
   indent_up();
 
-  f_ << indent() << "(TCallMessage new" << '\n';
+  f_ << indent() << "(" << (function->is_oneway() ? "TOnewayMessage" : "TCallMessage") << " new"
+     << '\n';
   indent_up();
 
   f_ << indent() << "name: '" << funname << "'; " << '\n' << indent() << "seqid: self nextSeqid)."
