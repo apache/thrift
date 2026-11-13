@@ -1,0 +1,53 @@
+name: Install apt packages
+description: >
+  apt-get update and install for the GitHub Actions jobs: the apt timers of
+  the runner image are stopped first, every attempt has a time budget, and a
+  failed attempt is retried against the canonical Ubuntu archive instead of
+  the runner's mirror list. See install.sh for the details.
+
+inputs:
+  packages:
+    description: Packages to install, separated by spaces.
+    required: true
+  attempts:
+    description: How many times to try before the step fails.
+    required: false
+    default: "3"
+  update-timeout:
+    description: Seconds one apt-get update may take.
+    required: false
+    default: "60"
+  install-timeout:
+    description: Seconds one apt-get install may take.
+    required: false
+    default: "240"
+
+runs:
+  using: composite
+  steps:
+    - name: Configure apt retries and timeouts
+      shell: bash
+      run: sudo cp "$GITHUB_ACTION_PATH/../../apt/99-ci-network" /etc/apt/apt.conf.d/
+
+    # The runner image boots with apt-daily.timer and apt-daily-upgrade.timer
+    # armed. Either one can start apt-daily.service (or the upgrade service,
+    # which runs unattended-upgrade) right under our apt-get and hold the dpkg
+    # lock for minutes. Disarm the timers so nothing new starts, then wait for
+    # a run that is already going instead of killing it mid-dpkg.
+    - name: Stop the apt timers
+      shell: bash
+      run: |
+        sudo systemctl disable --now apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+        sudo systemd-run --quiet --wait \
+          --property=After=apt-daily.service \
+          --property=After=apt-daily-upgrade.service \
+          true 2>/dev/null || true
+
+    - name: apt-get update and install
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+        ATTEMPTS: ${{ inputs.attempts }}
+        UPDATE_TIMEOUT: ${{ inputs.update-timeout }}
+        INSTALL_TIMEOUT: ${{ inputs.install-timeout }}
+      run: "$GITHUB_ACTION_PATH/install.sh"

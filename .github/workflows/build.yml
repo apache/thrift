@@ -832,14 +832,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Configure apt retries and timeouts
-        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
-
+      # The action stops the apt timers, bounds each attempt and falls back
+      # to archive.ubuntu.com, so a stalled mirror costs minutes, not the
+      # job. The step timeout is the backstop: with it the log says this
+      # step ran out of time, not that the job was cancelled at 20 minutes.
       - name: Install dependencies
-        run: |
-          sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
-          sudo apt-get install -y --no-install-recommends curl openssl ca-certificates
+        uses: ./.github/actions/apt-install
+        timeout-minutes: 15
+        with:
+          packages: ${{ env.BUILD_DEPS }} curl openssl ca-certificates
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
