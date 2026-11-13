@@ -57,6 +57,8 @@ clean-local:
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net10/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net11/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net11/obj
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net48/bin
+	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.net48/obj
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/bin
 	$(RM) -r Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/obj
 	$(RM) -r Tests/Thrift.FuzzTests/bin

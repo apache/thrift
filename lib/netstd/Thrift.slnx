@@ -29,6 +29,7 @@
   <Folder Name="/Tests/">
     <Project Path="Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj" />
     <Project Path="Tests/Thrift.Compile.Tests/Thrift.Compile.net11/Thrift.Compile.net11.csproj" />
+    <Project Path="Tests/Thrift.Compile.Tests/Thrift.Compile.net48/Thrift.Compile.net48.csproj" />
     <Project Path="Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj" />
     <Project Path="Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj" />
     <Project Path="Tests/Thrift.Tests/Thrift.Tests.csproj" />

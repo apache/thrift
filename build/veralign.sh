@@ -71,6 +71,7 @@ FILES[lib/lua/Thrift.lua]=simpleReplace
 FILES[lib/netstd/Benchmarks/Thrift.Benchmarks/Thrift.Benchmarks.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net10/Thrift.Compile.net10.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net11/Thrift.Compile.net11.csproj]=simpleReplace
+FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.net48/Thrift.Compile.net48.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Compile.Tests/Thrift.Compile.netstd2/Thrift.Compile.netstd2.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj]=simpleReplace
 FILES[lib/netstd/Tests/Thrift.Tests/Thrift.Tests.csproj]=simpleReplace
