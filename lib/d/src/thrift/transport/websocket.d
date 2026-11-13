@@ -383,10 +383,10 @@ private:
       header[1] = cast(ubyte)length;
     } else if (length < 65536) {
       header[1] = 126;
-      header[2..4] = nativeToBigEndian(cast(ushort)length);
+      header[2..4] = nativeToBigEndian!ushort(cast(ushort)length);
     } else {
       header[1] = 127;
-      header[2..10] = nativeToBigEndian(cast(ulong)length);
+      header[2..10] = nativeToBigEndian!ulong(cast(ulong)length);
     }
 
     transport_.write(header);
@@ -579,11 +579,11 @@ version (unittest) {
       frame ~= cast(ubyte)(0x80 | payload.length);
     } else if (payload.length < 65536) {
       frame ~= cast(ubyte)(0x80 | 126);
-      auto length = nativeToBigEndian(cast(ushort)payload.length);
+      auto length = nativeToBigEndian!ushort(cast(ushort)payload.length);
       frame ~= length[];
     } else {
       frame ~= cast(ubyte)(0x80 | 127);
-      auto length = nativeToBigEndian(cast(ulong)payload.length);
+      auto length = nativeToBigEndian!ulong(cast(ulong)payload.length);
       frame ~= length[];
     }
     frame ~= key[];
