@@ -223,8 +223,10 @@ void t_netstd_generator::pragmas_and_directives(ostream& out)
         out << "// targeting net 10" << '\n';
         out << "#if( NET11_0_OR_GREATER || !NET10_0_OR_GREATER)" << '\n';
     } else {
+        // Reject only .NET Core and .NET 5 or later, which have the net options or are no longer
+        // supported. A classic .NET Framework project defines no framework symbols at all.
         out << "// targeting netstandard 2.x" << '\n';
-        out << "#if(! NETSTANDARD2_0_OR_GREATER)" << '\n';
+        out << "#if( NETCOREAPP)" << '\n';
     }
     out << "#error Unexpected target platform. See 'thrift --help' for details." << '\n';
     out << "#endif" << '\n';
