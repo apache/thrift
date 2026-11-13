@@ -44,45 +44,33 @@ func NewTSerializer() *TSerializer {
 }
 
 func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, err error) {
-	t.Transport.Reset()
-	if r, ok := t.Protocol.(reseter); ok {
-		r.Reset()
-	}
-
-	if err = msg.Write(ctx, t.Protocol); err != nil {
+	if err = t.encode(ctx, msg); err != nil {
 		return
 	}
-
-	if err = t.Protocol.Flush(ctx); err != nil {
-		return
-	}
-	if err = t.Transport.Flush(ctx); err != nil {
-		return
-	}
-
 	return t.Transport.String(), nil
 }
 
 func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err error) {
+	if err = t.encode(ctx, msg); err != nil {
+		return
+	}
+	b = append(b, t.Transport.Bytes()...)
+	return
+}
+
+// encode resets the serializer and writes msg into t.Transport.
+func (t *TSerializer) encode(ctx context.Context, msg TStruct) error {
 	t.Transport.Reset()
 	if r, ok := t.Protocol.(reseter); ok {
 		r.Reset()
 	}
-
-	if err = msg.Write(ctx, t.Protocol); err != nil {
-		return
+	if err := msg.Write(ctx, t.Protocol); err != nil {
+		return err
 	}
-
-	if err = t.Protocol.Flush(ctx); err != nil {
-		return
+	if err := t.Protocol.Flush(ctx); err != nil {
+		return err
 	}
-
-	if err = t.Transport.Flush(ctx); err != nil {
-		return
-	}
-
-	b = append(b, t.Transport.Bytes()...)
-	return
+	return t.Transport.Flush(ctx)
 }
 
 // TSerializerPool is the thread-safe version of TSerializer, it uses resource

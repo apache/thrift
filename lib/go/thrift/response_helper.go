@@ -82,9 +82,7 @@ func (h *THeaderResponseHelper) ClearHeaders() {
 // If no helper was found in the context object, a nop helper with ok == false
 // will be returned.
 func GetResponseHelper(ctx context.Context) (helper TResponseHelper, ok bool) {
-	if v := ctx.Value(responseHelperKey{}); v != nil {
-		helper, ok = v.(TResponseHelper)
-	}
+	helper, ok = ctx.Value(responseHelperKey{}).(TResponseHelper)
 	return
 }
 
