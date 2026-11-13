@@ -275,6 +275,39 @@ by defining the `THRIFT_TUUID_BOOST_CONSTRUCTOR_EXPLICIT` preprocessor directive
 The thrift library does not need to be compiled differently when this constructor is needed. The preprocessor
 directives can be set on the project that uses the thrift library.
 
+# The cpp.type annotation
+
+The `cpp.type` annotation replaces the C++ type that the generator uses for a base type. It goes
+right after the base type: before the alias name of a typedef, inside the angle brackets of a
+container, or before the name of a field, an argument or a function's return value, as in
+`1: i32 ( cpp.type = "std::int32_t" ) bar`. The generator ignores the usual trailing form after the alias name,
+`typedef i64 my_i64 ( cpp.type = "..." )`, which annotates the typedef, not the type.
+
+    typedef i64 ( cpp.type = "std::int64_t" ) my_i64
+    struct s {
+      1: list<i32 ( cpp.type = "std::int32_t" )> nums
+      2: list<my_i64> ids
+    }
+
+The generated header then contains `typedef std::int64_t my_i64;`, `std::vector<std::int32_t> nums;`
+and `std::vector<my_i64> ids;`.
+
+The generated code still reads and writes the value with the protocol method of the Thrift base
+type, `readI32(int32_t&)` for an `i32`, so the C++ type must be that type or an alias of it, for
+example a typedef brought in with `cpp_include`. A type of another width or signedness, such as
+`unsigned int` for an `i32` or `int16_t` for an `i64`, declares the member, but the generated
+reader does not compile.
+
+The generator ignores the annotation on a struct, union or exception, after a field's name, and
+after a typedef's alias name. A struct `struct foo2 { 1: i32 x } ( cpp.type = "DenseFoo2" )` still
+generates `class foo2`, a field `1: i32 bar ( cpp.type = "int16_t" )` still generates
+`int32_t bar`, and `typedef i64 my_i64 ( cpp.type = "int16_t" )` still generates
+`typedef int64_t my_i64`.
+
+`test/AnnotationTest.thrift` sets `cpp.type = "DenseFoo"` on the struct `foo`, and the generated
+header still declares `class foo`. The `test_cpp_type` case in `lib/cpp/test/AnnotationTest.cpp`, which
+expects `DenseFoo`, is commented out.
+
 # Deprecations
 
 ## 0.12.0
