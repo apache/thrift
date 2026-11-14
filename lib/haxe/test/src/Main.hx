@@ -37,6 +37,7 @@ import tests.ServerSocketConfigTest;
 import tests.SkipTest;
 import tests.StreamTest;
 import tests.TransportPartialReadTest;
+import tests.WriteByteTest;
 import thrift.test.*;
 
 enum WhatTests
@@ -103,6 +104,7 @@ class Main
 					tests.FramedTransportTest.Run(server);
 					tests.JSONLimitTest.Run(server);
 					tests.NegativeSizeTest.Run(server);
+					tests.WriteByteTest.Run(server);
 					tests.LayeredSizeCheckTest.Run(server);
 					tests.MessageReadBudgetTest.Run(server);
 					tests.MaxContainerSizeTest.Run(server);
