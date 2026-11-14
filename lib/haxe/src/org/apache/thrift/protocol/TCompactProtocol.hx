@@ -411,12 +411,12 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     public function readMessageBegin():TMessage {
         Reset();
 
-        var protocolId : Int = readByte();
+        var protocolId : Int = ReadByteDirect();
         if (protocolId != PROTOCOL_ID) {
             throw new TProtocolException( TProtocolException.INVALID_DATA, "Expected protocol id " + StringTools.hex(PROTOCOL_ID,2) + " but got " + StringTools.hex(protocolId));
         }
 
-        var versionAndType : Int = readByte();
+        var versionAndType : Int = ReadByteDirect();
         var version : Int = (versionAndType & VERSION_MASK);
         if (version != VERSION) {
             throw new TProtocolException( TProtocolException.INVALID_DATA, "Expected version " + VERSION + " but got " + version);
@@ -451,7 +451,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
      * Read a field header off the wire.
      */
     public function readFieldBegin() : TField {
-        var type : Int = readByte();
+        var type : Int = ReadByteDirect();
 
         // if it's a stop, then we can return immediately, as the struct is over.
         if (type == cast(TCompactTypes.STOP,Int)) {
@@ -487,7 +487,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
      */
     public function readMapBegin() : TMap {
         var size : Int = cast( ReadVarint32(), Int);
-        var keyAndValueType : Int = ((size == 0)  ?  0  :  readByte());
+        var keyAndValueType : Int = ((size == 0)  ?  0  :  ReadByteDirect());
         var key : Int = cast( getTType( (keyAndValueType & 0xF0) >> 4), Int);
         var val : Int = cast( getTType( keyAndValueType & 0x0F), Int);
         var map = new TMap( key, val, size);
@@ -502,7 +502,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
      * true size.
      */
     public function readListBegin():TList {
-        var size_and_type : Int = readByte();
+        var size_and_type : Int = ReadByteDirect();
 
         var size : Int = ((size_and_type & 0xF0) >> 4) & 0x0F;
         if (size == 15) {
@@ -522,7 +522,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
      * true size.
      */
     public function readSetBegin() : TSet {
-        var size_and_type : Int = readByte();
+        var size_and_type : Int = ReadByteDirect();
 
         var size : Int = ((size_and_type & 0xF0) >> 4) & 0x0F;
         if (size == 15) {
@@ -547,16 +547,15 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
             return result;
         }
 
-        return (readByte() == cast(TCompactTypes.BOOLEAN_TRUE,Int));
+        return (ReadByteDirect() == cast(TCompactTypes.BOOLEAN_TRUE,Int));
     }
 
     /**
-     * Read a single byte off the wire. Nothing interesting here.
+     * Read an i8 off the wire. The byte is signed, so the value is -128 to 127.
      */
     public function readByte() : Int {
-        var byteRawBuf = new BytesBuffer();
-        Transport.readAll( byteRawBuf, 0, 1);
-        return byteRawBuf.getBytes().get(0);
+        var b : Int = ReadByteDirect();
+        return (b < 0x80) ? b : (b - 0x100);
     }
 
     /**
@@ -645,6 +644,17 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     //
 
     /**
+     * Reads a byte without any possibility of all that field header nonsense, unsigned (0 to 255).
+     * Used internally by other reading methods for the bytes that hold no i8: the protocol id,
+     * version and type, headers, booleans and varints.
+     */
+    private function ReadByteDirect() : Int {
+        var byteRawBuf = new BytesBuffer();
+        Transport.readAll( byteRawBuf, 0, 1);
+        return byteRawBuf.getBytes().get(0);
+    }
+
+    /**
      * Read an i32 from the wire as a varint. The MSB of each byte is set
      * if there is another byte to follow. This can Read up to 5 bytes.
      */
@@ -652,7 +662,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         var result : UInt = 0;
         var shift : Int = 0;
         for (idx in 0 ... MAX_VARINT_BYTES) {
-            var b : Int = readByte();
+            var b : Int = ReadByteDirect();
             result |= cast((b & 0x7f) << shift, UInt);
             if ((b & 0x80) != 0x80) {
                 return result;
@@ -670,7 +680,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         var shift : Int = 0;
         var result : Int64 = Int64.make(0,0);
         for (idx in 0 ... MAX_VARINT_BYTES) {
-            var b : Int = readByte();
+            var b : Int = ReadByteDirect();
             result = Int64.or( result, Int64.shl( Int64.make(0,b & 0x7f), shift));
             if ((b & 0x80) != 0x80) {
                 return result;

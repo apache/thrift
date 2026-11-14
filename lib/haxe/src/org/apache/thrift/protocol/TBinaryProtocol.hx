@@ -249,7 +249,7 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
         var len = Transport.readAll( buffer, 0, 1);
         var inp = new BytesInput( buffer.getBytes(), 0, 1);
         inp.bigEndian = true;
-        return inp.readByte();
+        return inp.readInt8();
     }
 
     public function readI16() : Int {

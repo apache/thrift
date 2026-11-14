@@ -34,6 +34,7 @@ import tests.MessageReadBudgetTest;
 import tests.NegativeSizeTest;
 import tests.RecursionLimitTest;
 import tests.ServerSocketConfigTest;
+import tests.SignedByteTest;
 import tests.SkipTest;
 import tests.StreamTest;
 import tests.TransportPartialReadTest;
@@ -101,6 +102,7 @@ class Main
 					tests.TransportPartialReadTest.Run(server);
 					tests.RecursionLimitTest.Run(server);
 					tests.SkipTest.Run(server);
+					tests.SignedByteTest.Run(server);
 					tests.FramedTransportTest.Run(server);
 					tests.JSONLimitTest.Run(server);
 					tests.NegativeSizeTest.Run(server);
