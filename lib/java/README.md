@@ -63,6 +63,12 @@ mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
 ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 ```
 
+Run Gradle itself on that JDK 17, for example with `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`
+(the directory name depends on the platform). The build compiles with a JDK 17 toolchain and
+configures no toolchain download, so Gradle has to find an installed JDK 17, and CI runs Gradle on
+JDK 17 as well. With Gradle 8.14 on a JDK 21 launcher, `gradle spotlessCheck` reports a formatting
+violation in `TMultiplexedProcessor.java` that it does not report on JDK 17.
+
 After the above step, `gradle` binary will be available in `/usr/local/bin/`. You can further choose
 to locally create the gradle wrapper (even if they are ignored) using:
 
