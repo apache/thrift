@@ -698,12 +698,13 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 
     /**
      * Given a TCompactProtocol.TCompactTypes constant, convert it to its corresponding
-     * TType value.
+     * TType value. Only the low nibble holds the type; in a header byte, the high nibble
+     * holds a field id delta or a size.
      */
     private function getTType( type : Int) : Int {
         try
         {
-            return tcompactTypeToType[type];
+            return tcompactTypeToType[type & 0x0f];
         }
         catch ( e : Dynamic)
         {
