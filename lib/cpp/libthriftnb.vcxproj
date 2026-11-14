@@ -51,8 +51,6 @@
     <ClInclude Include="src\thrift\transport\TNonblockingServerTransport.h" />
     <ClInclude Include="src\thrift\transport\TNonblockingSSLServerSocket.h" />
     <ClInclude Include="src\thrift\windows\config.h" />
-    <ClInclude Include="src\thrift\windows\force_inc.h" />
-    <ClInclude Include="src\thrift\windows\TargetVersion.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D8696CCE-7D46-4659-B432-91754A41DEB0}</ProjectGuid>
