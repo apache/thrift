@@ -70,6 +70,82 @@ jobs:
           path: cmake_build/Testing/Temporary/LastTest.log
           if-no-files-found: warn
 
+  # Cross-builds the compiler with zig c++ for every target below, and checks
+  # that the x86_64 Linux build generates what a gcc build generates.
+  compiler-zig:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ZIG_TARGETS: >-
+        x86_64-linux-musl
+        aarch64-linux-musl
+        aarch64-macos
+        x86_64-windows-gnu
+        aarch64-windows-gnu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        timeout-minutes: 10
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.17.1
+          use-cache: false
+
+      - name: Build the reference compiler with gcc
+        run: |
+          cmake -S . -B build-gcc -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF
+          cmake --build build-gcc -j"$(nproc)"
+
+      - name: Cross-build the compiler with zig c++
+        run: |
+          for target in $ZIG_TARGETS; do
+            cmake -S . -B "build-$target" \
+              -DCMAKE_TOOLCHAIN_FILE=build/cmake/zig-toolchain.cmake -DZIG_TARGET="$target" \
+              -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS=-s \
+              -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF
+            cmake --build "build-$target" -j"$(nproc)"
+            mkdir -p "zig-out/$target"
+            case "$target" in
+              *windows*) cp "build-$target/compiler/cpp/bin/thrift.exe" "zig-out/$target/" ;;
+              *) cp "build-$target/compiler/cpp/bin/thrift" "zig-out/$target/" ;;
+            esac
+          done
+          ls -l zig-out/*
+
+      - name: Check that the Linux builds are linked statically
+        run: |
+          for target in x86_64-linux-musl aarch64-linux-musl; do
+            readelf -d "zig-out/$target/thrift" > "readelf-$target.txt"
+            if grep NEEDED "readelf-$target.txt"; then
+              echo "zig-out/$target/thrift loads shared libraries"
+              exit 1
+            fi
+          done
+
+      - name: Compare the generated code with the gcc build
+        run: |
+          build/compare-compiler-output.sh \
+            build-gcc/compiler/cpp/bin/thrift zig-out/x86_64-linux-musl/thrift \
+            test/ThriftTest.thrift test/DebugProtoTest.thrift test/ConstantsDemo.thrift \
+            tutorial/tutorial.thrift
+
+      - name: Archive the cross-built compilers
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: thrift-compiler-zig
+          path: zig-out/
+          retention-days: 3
+
   lib-cpp-without-boost:
     # The C++ library and the tutorials must build where Boost is not
     # installed; a plain container keeps any Boost header out of reach.
