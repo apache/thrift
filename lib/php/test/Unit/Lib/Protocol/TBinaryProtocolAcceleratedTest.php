@@ -30,6 +30,7 @@ use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Transport\TMemoryBuffer;
 use Thrift\Transport\TSocket;
+use Thrift\Type\TType;
 
 class TBinaryProtocolAcceleratedTest extends TestCase
 {
@@ -68,5 +69,51 @@ class TBinaryProtocolAcceleratedTest extends TestCase
         yield 'not strict read and write' => [false, false];
         yield 'strict read and not strict write' => [true, false];
         yield 'not strict read and strict write' => [false, true];
+    }
+
+    /**
+     * THRIFT-796: the extension converts values to the declared Thrift type
+     * and must do so on a copy, not on the caller's property.
+     */
+    public function testWriteDoesNotChangeFieldTypes(): void
+    {
+        if (!function_exists('thrift_protocol_write_binary')) {
+            $this->markTestSkipped('thrift_protocol extension not loaded');
+        }
+
+        $struct = new class {
+            public static $tspec = [
+                1 => ['var' => 'num', 'type' => TType::I32],
+                2 => ['var' => 'text', 'type' => TType::STRING],
+                3 => ['var' => 'real', 'type' => TType::DOUBLE],
+                4 => [
+                    'var' => 'items',
+                    'type' => TType::LST,
+                    'etype' => TType::I32,
+                    'elem' => ['type' => TType::I32],
+                ],
+                5 => [
+                    'var' => 'scalar',
+                    'type' => TType::LST,
+                    'etype' => TType::STRING,
+                    'elem' => ['type' => TType::STRING],
+                ],
+            ];
+            public static $isValidate = false;
+            public $num = '100';
+            public $text = 100;
+            public $real = '1.5';
+            public $items = ['1', 2.0];
+            public $scalar = '5';
+        };
+
+        $protocol = new TBinaryProtocolAccelerated(new TMemoryBuffer());
+        thrift_protocol_write_binary($protocol, 'foo', 1, $struct, 0, true);
+
+        $this->assertSame('100', $struct->num);
+        $this->assertSame(100, $struct->text);
+        $this->assertSame('1.5', $struct->real);
+        $this->assertSame(['1', 2.0], $struct->items);
+        $this->assertSame('5', $struct->scalar);
     }
 }
