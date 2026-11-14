@@ -113,7 +113,7 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
     public function writeByte(b : Int) : Void {
         var out = new BytesOutput();
         out.bigEndian = true;
-        out.writeByte(b);
+        out.writeByte(b & 0xFF);  // the i8 as its unsigned byte, the only form some targets take
         Transport.write(out.getBytes(), 0, 1);
     }
 
