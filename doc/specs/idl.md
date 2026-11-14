@@ -36,9 +36,9 @@ A C++ include adds a custom C++ include to the output of the C++ code generator 
 
 A namespace declares which namespaces/package/module/etc. the type definitions in this file will be declared in for the target languages. The namespace scope indicates which language the namespace applies to; a scope of '*' indicates that the namespace applies to all target languages.
 
-    [5]  Namespace       ::=  ( 'namespace' ( NamespaceScope Identifier ) )
+    [5]  Namespace       ::=  ( 'namespace' ( '*' Identifier ) ) | ( 'namespace' ( NamespaceScope Identifier ) TypeAnnotations? )
 
-    [6]  NamespaceScope  ::=  '*' | 'c_glib' | 'cpp' | 'delphi' | 'haxe' | 'go' | 'java' | 'js' | 'lua' | 'netstd' | 'perl' | 'php' | 'py' | 'py.twisted' | 'rb' | 'st' | 'xsd'
+    [6]  NamespaceScope  ::=  'c_glib' | 'cpp' | 'delphi' | 'haxe' | 'go' | 'java' | 'js' | 'lua' | 'netstd' | 'perl' | 'php' | 'py' | 'py.twisted' | 'rb' | 'st' | 'xsd'
 
 ## Definition
 
@@ -52,13 +52,13 @@ A namespace declares which namespaces/package/module/etc. the type definitions i
 
 A typedef creates an alternate name for a type.
 
-    [9]  Typedef         ::=  'typedef' DefinitionType Identifier
+    [9]  Typedef         ::=  'typedef' DefinitionType Identifier TypeAnnotations?
 
 ### Enum
 
 An enum creates an enumerated type, with named values. If no constant value is supplied, the value is either 0 for the first element, or one greater than the preceding value for any subsequent element. Any constant value that is supplied must be non-negative.
 
-    [10] Enum            ::=  'enum' Identifier '{' (Identifier ('=' IntConstant)? ListSeparator?)* '}'
+    [10] Enum            ::=  'enum' Identifier '{' (Identifier ('=' IntConstant)? TypeAnnotations? ListSeparator?)* '}' TypeAnnotations?
 
 The `enum.flags` annotation marks an enum as a set of bit flags:
 
@@ -91,7 +91,7 @@ well as mutable structs.
 
 Structs are the fundamental compositional type in Thrift. The name of each field must be unique within the struct.
 
-    [11] Struct          ::=  'struct' Identifier 'xsd_all'? '{' Field* '}'
+    [11] Struct          ::=  'struct' Identifier 'xsd_all'? '{' Field* '}' TypeAnnotations?
 
 N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no purpose in Thrift itself. Use of this feature is strongly discouraged
 
@@ -99,7 +99,7 @@ N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no 
 
 Unions are similar to structs, except that they provide a means to transport exactly one field of a possible set of fields, just like union {} in C++. Consequently, union members are implicitly considered optional (see requiredness).
 
-    [12] Union          ::=  'union' Identifier 'xsd_all'? '{' Field* '}'
+    [12] Union          ::=  'union' Identifier 'xsd_all'? '{' Field* '}' TypeAnnotations?
 
 N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no purpose in Thrift itself. Use of this feature is strongly discouraged
 
@@ -107,17 +107,17 @@ N.B.: The `xsd_all` keyword has some purpose internal to Facebook but serves no 
 
 Exceptions are similar to structs except that they are intended to integrate with the native exception handling mechanisms in the target languages. The name of each field must be unique within the exception.
 
-    [13] Exception       ::=  'exception' Identifier '{' Field* '}'
+    [13] Exception       ::=  'exception' Identifier '{' Field* '}' TypeAnnotations?
 
 ### Service
 
 A service provides the interface for a set of functionality provided by a Thrift server. The interface is simply a list of functions. A service can extend another service, which simply means that it provides the functions of the extended service in addition to its own.
 
-    [14] Service         ::=  'service' Identifier ( 'extends' Identifier )? '{' Function* '}'
+    [14] Service         ::=  'service' Identifier ( 'extends' Identifier )? '{' Function* '}' TypeAnnotations?
 
 ## Field
 
-    [15] Field           ::=  FieldID? FieldReq? FieldType Identifier ('=' ConstValue)? XsdFieldOptions ListSeparator?
+    [15] Field           ::=  FieldID? FieldReq? FieldType Identifier ('=' ConstValue)? XsdFieldOptions TypeAnnotations? ListSeparator?
 
 ### Field ID
 
@@ -173,7 +173,7 @@ N.B.: These have some internal purpose at Facebook but serve no current purpose 
 
 ## Functions
 
-    [20] Function        ::=  'oneway'? FunctionType Identifier '(' Field* ')' Throws? ListSeparator?
+    [20] Function        ::=  'oneway'? FunctionType Identifier '(' Field* ')' Throws? TypeAnnotations? ListSeparator?
 
     [21] FunctionType    ::=  FieldType | 'void'
 
@@ -185,9 +185,9 @@ N.B.: These have some internal purpose at Facebook but serve no current purpose 
 
     [24] DefinitionType  ::=  BaseType | ContainerType
 
-    [25] BaseType        ::=  'bool' | 'byte' | 'i8' | 'i16' | 'i32' | 'i64' | 'double' | 'string' | 'binary' | 'uuid'
+    [25] BaseType        ::=  ( 'bool' | 'byte' | 'i8' | 'i16' | 'i32' | 'i64' | 'double' | 'string' | 'binary' | 'uuid' ) TypeAnnotations?
 
-    [26] ContainerType   ::=  MapType | SetType | ListType
+    [26] ContainerType   ::=  ( MapType | SetType | ListType ) TypeAnnotations?
 
     [27] MapType         ::=  'map' CppType? '<' FieldType ',' FieldType '>'
 
@@ -234,6 +234,47 @@ A literal is enclosed in double or single quotes and cannot contain a line break
     [41] Letter          ::=  ['A'-'Z'] | ['a'-'z']
 
     [42] Digit           ::=  ['0'-'9']
+
+## Annotations
+
+An annotation attaches a key and an optional string value to a definition. The compiler parses annotations on every target language, stores them on the annotated element, and ignores any key that the selected generator does not read. A misspelled key therefore produces no error.
+
+    [43] TypeAnnotations      ::=  '(' TypeAnnotation* ')'
+
+    [44] TypeAnnotation       ::=  Identifier TypeAnnotationValue? ListSeparator?
+
+    [45] TypeAnnotationValue  ::=  '=' Literal
+
+The annotation list follows the element it annotates: after the closing `}` of an enum, struct, union, exception or service, after the name of a typedef or a language-scoped namespace, after an enum value (and its number, if it has one), after the argument and `throws` lists of a function, after a field, and after a base type or container type (after the closing `>`). A key without a value gets the value `"1"`. Repeating a key keeps every value, and generators usually read the last one. Keys conventionally start with the target language, such as `python.immutable` or `cpp.type`.
+
+```thrift
+struct Insanity {
+  1: map<Numberz, UserId> userMap,
+  2: list<Xtruct> xtructs
+} (python.immutable = "")
+
+typedef string ( cpp.type = "MyString" ) Name
+
+service Greeter {
+  void oldHello() ( deprecated = "Use hello()" )
+}
+```
+
+Some annotations that generators read:
+
+| Annotation | Applies to | Effect |
+|---|---|---|
+| `enum.flags` | enum | Generates a flags enum (see [Enum](#enum)). |
+| `python.immutable` | struct, union, exception, container type | Python generates an immutable (hashable) class or tuple. Exceptions are immutable by default; `python.immutable = "false"` makes one mutable. |
+| `cpp.type` | base type | C++ uses the given type name instead of the default one. |
+| `cpp.customostream` | struct, enum | C++ omits the generated `operator<<`. |
+| `final` | struct | Java, Delphi, JavaME and C# (`netstd`) mark the generated class final. C++ omits the declared destructor. |
+| `go.tag` | field | Go adds or overrides struct tags. |
+| `deprecated` | function | Haxe marks the function as deprecated; the value becomes the message. |
+
+This list is not exhaustive. See the `annotations_` lookups in the generators under `compiler/cpp/src/thrift/generate/`, and [AnnotationTest.thrift][] for examples of where the parser accepts annotations.
+
+ [AnnotationTest.thrift]: https://raw.githubusercontent.com/apache/thrift/master/test/AnnotationTest.thrift
 
 ## Reserved keywords
 
