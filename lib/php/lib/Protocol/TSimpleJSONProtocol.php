@@ -109,6 +109,26 @@ class TSimpleJSONProtocol extends TProtocol
         }
     }
 
+    /**
+     * Write a bare JSON literal (true/false), quoted when it is a map key.
+     */
+    private function writeJSONLiteral(string $literal): void
+    {
+        $isMapKey = $this->writeContext->isMapKey();
+
+        $this->writeContext->write();
+
+        if ($isMapKey) {
+            $this->trans->write(self::QUOTE);
+        }
+
+        $this->trans->write($literal);
+
+        if ($isMapKey) {
+            $this->trans->write(self::QUOTE);
+        }
+    }
+
     private function writeJSONDouble(float $num): void
     {
         $isMapKey = $this->writeContext->isMapKey();
@@ -261,7 +281,7 @@ class TSimpleJSONProtocol extends TProtocol
 
     public function writeBool(bool $bool): int
     {
-        $this->writeJSONInteger($bool ? 1 : 0);
+        $this->writeJSONLiteral($bool ? 'true' : 'false');
 
         return 0;
     }

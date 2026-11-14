@@ -99,14 +99,14 @@ class TSimpleJSONProtocolTest extends TestCase
             'argsValues' => [
                 'thing' => true,
             ],
-            'expected' => '{"thing":1}',
+            'expected' => '{"thing":true}',
         ];
         yield 'bool false' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testBool_args::class,
             'argsValues' => [
                 'thing' => false,
             ],
-            'expected' => '{"thing":0}',
+            'expected' => '{"thing":false}',
         ];
         yield 'string1' => [
             'argsClassName' => \Basic\ThriftTest\ThriftTest_testString_args::class,
