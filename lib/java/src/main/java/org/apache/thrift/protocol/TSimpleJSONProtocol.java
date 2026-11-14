@@ -233,7 +233,13 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeBool(boolean b) throws TException {
-    writeByte(b ? (byte) 1 : (byte) 0);
+    String literal = b ? "true" : "false";
+    if (writeContext_.isMapKey()) {
+      writeString(literal);
+    } else {
+      writeContext_.write();
+      _writeStringData(literal);
+    }
   }
 
   @Override
