@@ -819,6 +819,23 @@ jobs:
       - name: Run make test_recursive for rust
         run: make -C lib/rs/test_recursive check
 
+      # Builds and tests the same crates, generated code included, with the
+      # oldest toolchain the manifests accept. No fmt or clippy here: their
+      # rules change between releases, and the pinned toolchain runs them.
+      - name: Build and test rust with the minimum supported version
+        run: |
+          MSRV=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' lib/rs/Cargo.toml)
+          rustup install --profile minimal "$MSRV"
+          export RUSTUP_TOOLCHAIN="$MSRV"
+          rustc --version
+          cargo test --manifest-path lib/rs/Cargo.toml --all-features
+          cargo check --manifest-path lib/rs/Cargo.toml --no-default-features --features rustls
+          for crate in lib/rs/test lib/rs/test_recursive test/rs; do
+            cargo test --manifest-path "$crate/Cargo.toml"
+          done
+          make -C lib/rs/test/fuzz stubs
+          cargo build --manifest-path lib/rs/test/fuzz/Cargo.toml
+
   lib-python:
     needs: compiler
     runs-on: ubuntu-24.04
