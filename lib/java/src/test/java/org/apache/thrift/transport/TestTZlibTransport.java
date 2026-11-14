@@ -20,7 +20,13 @@ package org.apache.thrift.transport;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -28,17 +34,145 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 import org.apache.thrift.TConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class TestTZlibTransport {
 
+  @ParameterizedTest
+  @CsvSource({"false, false", "true, false", "true, true"})
+  public void testCloseFinishesCompressedStreamOverSocket(
+      boolean writeData, boolean flushBeforeClose) throws Exception {
+    byte[] expected = writeData ? new byte[] {1, 2, 3} : new byte[0];
+    try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+        TSocket socket =
+            new TSocket(new Socket(listener.getInetAddress(), listener.getLocalPort()));
+        Socket peer = listener.accept();
+        TTransport transport = getTransport(socket)) {
+      peer.setSoTimeout(5000);
+      if (writeData) {
+        transport.write(expected);
+      }
+      if (flushBeforeClose) {
+        transport.flush();
+      }
+
+      transport.close();
+
+      try (DataInputStream input =
+          new DataInputStream(new InflaterInputStream(peer.getInputStream()))) {
+        byte[] actual = new byte[expected.length];
+        input.readFully(actual);
+        assertArrayEquals(expected, actual);
+        // Reading to the end also verifies that the compression trailer reached the peer.
+        assertEquals(-1, input.read());
+      }
+    }
+  }
+
   protected TTransport getTransport(TTransport underlying) throws TTransportException {
     return new TZlibTransport(underlying);
+  }
+
+  @Test
+  public void testCheckedFinalFlushFailureStillClosesUnderlyingTransport() throws Exception {
+    TTransport underlying = mock(TTransport.class);
+    when(underlying.isOpen()).thenReturn(true);
+    TZlibTransport transport = new TZlibTransport(underlying);
+    doThrow(new TTransportException("Final flush failure")).when(underlying).flush();
+
+    transport.close();
+
+    verify(underlying).close();
+    assertNull(transport.inputStream_);
+    assertNull(transport.outputStream_);
+  }
+
+  @Test
+  public void testUncheckedFinalFlushFailureStillClosesUnderlyingTransport() throws Exception {
+    TTransport underlying = mock(TTransport.class);
+    when(underlying.isOpen()).thenReturn(true);
+    TZlibTransport transport = new TZlibTransport(underlying);
+    IllegalStateException failure = new IllegalStateException("Final flush failure");
+    doThrow(failure).when(underlying).flush();
+
+    assertSame(failure, assertThrows(IllegalStateException.class, transport::close));
+
+    verify(underlying).close();
+    assertNull(transport.inputStream_);
+    assertNull(transport.outputStream_);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"false, false", "false, true", "true, false", "true, true"})
+  public void testClosePreservesFirstUncheckedFailure(boolean primaryError, boolean cleanupError)
+      throws Exception {
+    TTransport underlying = mock(TTransport.class);
+    when(underlying.isOpen()).thenReturn(true);
+    TZlibTransport transport = new TZlibTransport(underlying);
+    Throwable primary =
+        primaryError
+            ? new AssertionError("Final flush failure")
+            : new IllegalStateException("Final flush failure");
+    Throwable cleanup =
+        cleanupError
+            ? new AssertionError("Underlying close failure")
+            : new IllegalArgumentException("Underlying close failure");
+    doThrow(primary).when(underlying).flush();
+    doThrow(cleanup).when(underlying).close();
+
+    Throwable actual = assertThrows(Throwable.class, transport::close);
+
+    assertSame(primary, actual);
+    assertArrayEquals(new Throwable[] {cleanup}, actual.getSuppressed());
+    verify(underlying).close();
+    assertNull(transport.inputStream_);
+    assertNull(transport.outputStream_);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  public void testClosePropagatesUncheckedCleanupFailure(boolean cleanupError) throws Exception {
+    TTransport underlying = mock(TTransport.class);
+    when(underlying.isOpen()).thenReturn(true);
+    TZlibTransport transport = new TZlibTransport(underlying);
+    Throwable failure =
+        cleanupError
+            ? new AssertionError("Underlying close failure")
+            : new IllegalStateException("Underlying close failure");
+    doThrow(failure).when(underlying).close();
+
+    assertSame(failure, assertThrows(Throwable.class, transport::close));
+
+    assertEquals(0, failure.getSuppressed().length);
+    verify(underlying).close();
+    assertNull(transport.inputStream_);
+    assertNull(transport.outputStream_);
+  }
+
+  @Test
+  public void testCloseDoesNotSuppressFailureOntoItself() throws Exception {
+    TTransport underlying = mock(TTransport.class);
+    when(underlying.isOpen()).thenReturn(true);
+    TZlibTransport transport = new TZlibTransport(underlying);
+    IllegalStateException failure = new IllegalStateException("Transport failure");
+    doThrow(failure).when(underlying).flush();
+    doThrow(failure).when(underlying).close();
+
+    assertSame(failure, assertThrows(IllegalStateException.class, transport::close));
+
+    assertEquals(0, failure.getSuppressed().length);
+    verify(underlying).close();
   }
 
   public static byte[] byteSequence(int start, int end) {

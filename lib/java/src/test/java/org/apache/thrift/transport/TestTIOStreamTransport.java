@@ -20,14 +20,31 @@ package org.apache.thrift.transport;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 public class TestTIOStreamTransport {
+  @Test
+  public void testCloseIndependentStreamsInOriginalOrder() throws Exception {
+    InputStream input = mock(InputStream.class);
+    OutputStream output = mock(OutputStream.class);
+    TIOStreamTransport transport = new TIOStreamTransport(input, output);
+
+    transport.close();
+
+    InOrder order = inOrder(input, output);
+    order.verify(input).close();
+    order.verify(output).close();
+    assertFalse(transport.isOpen());
+  }
+
   // THRIFT-5022
   @Test
   public void testOpenClose_2streams() throws TTransportException {

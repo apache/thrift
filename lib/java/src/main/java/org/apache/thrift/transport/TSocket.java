@@ -233,19 +233,27 @@ public class TSocket extends TIOStreamTransport implements SocketAddressProvider
     }
   }
 
-  /** Closes the socket. */
+  /**
+   * Closes the socket and discards any unflushed output.
+   *
+   * <p>Close the socket directly so that a blocked read or write can be interrupted without waiting
+   * for a buffered stream's lock. Call flush() before close() when pending output must be sent.
+   */
   public void close() {
-    // Close the underlying streams
-    super.close();
-
-    // Close the socket
-    if (socket_ != null) {
-      try {
-        socket_.close();
-      } catch (IOException iox) {
-        LOGGER.warn("Could not close socket.", iox);
+    Socket socket = socket_;
+    try {
+      if (socket != null) {
+        try {
+          socket.close();
+        } catch (IOException iox) {
+          LOGGER.warn("Could not close socket.", iox);
+        }
+        socket_ = null;
       }
-      socket_ = null;
+    } finally {
+      // The socket owns its streams; the buffering wrappers have no separate resources to release.
+      inputStream_ = null;
+      outputStream_ = null;
     }
   }
 
