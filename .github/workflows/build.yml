@@ -819,6 +819,22 @@ jobs:
       - name: Run make test_recursive for rust
         run: make -C lib/rs/test_recursive check
 
+      # Builds the tutorial (fmt and clippy included) and runs its client
+      # against its server.
+      - name: Run make check for tutorial/rs
+        timeout-minutes: 10
+        run: |
+          make -C tutorial/rs check
+          cd tutorial/rs
+          bin/tutorial_server --port 9095 &
+          server=$!
+          for _ in $(seq 20); do
+            (exec 3<>/dev/tcp/127.0.0.1/9095) 2>/dev/null && break
+            sleep 0.5
+          done
+          bin/tutorial_client --port 9095
+          kill "$server"
+
   lib-python:
     needs: compiler
     runs-on: ubuntu-24.04
