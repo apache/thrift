@@ -98,7 +98,7 @@ class TProtocolUtil {
                     prot.readListEnd();
 
                 default:
-					throw new TProtocolException(TProtocolException.UNKNOWN, "Unknown field type ${type}");
+					throw new TProtocolException(TProtocolException.UNKNOWN, 'Unknown field type ${type}');
             }
 
             prot.DecrementRecursionDepth();
