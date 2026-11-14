@@ -24,6 +24,7 @@ import org.apache.thrift.meta_data.*;
 import org.apache.thrift.protocol.*;
 import org.apache.thrift.server.*;
 import org.apache.thrift.transport.*;
+import tests.CompactVarintTest;
 import tests.ConstantsTest;
 import tests.MultiplexTest;
 import tests.FramedTransportTest;
@@ -110,6 +111,7 @@ class Main
 					tests.LayeredSizeCheckTest.Run(server);
 					tests.MessageReadBudgetTest.Run(server);
 					tests.MaxContainerSizeTest.Run(server);
+					tests.CompactVarintTest.Run(server);
 					#if !php  // TServerSocket does not listen on this target
 					tests.ServerSocketConfigTest.Run(server);
 					#end

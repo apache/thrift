@@ -380,7 +380,8 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         var varint64out = new BytesBuffer();
         while (true)
         {
-            if( Int64.isZero( Int64.and( n, Int64.neg(Int64.make(0,0x7F)))))
+            // the last group if nothing is left above its 7 bits; -0x80 is the mask ~0x7F
+            if( Int64.isZero( Int64.and( n, Int64.neg(Int64.make(0,0x80)))))
             {
                 #if( haxe_ver < 3.2)
                 varint64out.addByte( Int64.getLow(n));
