@@ -120,8 +120,16 @@ class TWebSocket implements TSocket {
   }
 
   void _onMessage(MessageEvent message) {
+    // Messages travel as base64 text frames. Report any other frame on
+    // onError, as a text frame that is not base64 is reported.
+    var text = message.data;
+    if (text is! String) {
+      _onErrorController.add(TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a text frame with a Base 64 encoded string."));
+      return;
+    }
     try {
-      Uint8List data = Uint8List.fromList(base64.decode(message.data));
+      Uint8List data = Uint8List.fromList(base64.decode(text));
       _onMessageController.add(data);
     } on FormatException catch (_) {
       var error = TProtocolError(TProtocolErrorType.INVALID_DATA,

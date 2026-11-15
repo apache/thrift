@@ -25,6 +25,7 @@ import 'dart:typed_data' show Uint8List;
 
 import 'package:http/http.dart' show BaseRequest;
 import 'package:http/http.dart' show Client;
+import 'package:http/http.dart' show ClientException;
 import 'package:http/http.dart' show Response;
 import 'package:http/http.dart' show StreamedResponse;
 import 'package:test/test.dart';
@@ -112,6 +113,42 @@ void main() {
       expect(bufferText, expectedText);
     });
   });
+
+  // A failure has to reach the caller of flush(), through the future that
+  // flush() returned.
+  group('THttpClientTransport errors', () {
+    for (var sync in [false, true]) {
+      test(
+          'flush fails with TProtocolError on a reply that is not base64 '
+          '(sync: $sync)', () async {
+        var client = FakeHttpClient(sync: sync)
+          ..postResponse = '%%% not base64 %%%';
+        var config = THttpConfig(Uri.parse('http://localhost'), {});
+        var transport = THttpClientTransport(client, config);
+        transport.writeAll(utf8Codec.encode('my request'));
+        await expectLater(transport.flush(), throwsA(isA<TProtocolError>()));
+      });
+
+      test('flush fails when the request fails (sync: $sync)', () async {
+        var client = FailingHttpClient(sync: sync);
+        var config = THttpConfig(Uri.parse('http://localhost'), {});
+        var transport = THttpClientTransport(client, config);
+        transport.writeAll(utf8Codec.encode('my request'));
+        await expectLater(transport.flush(), throwsA(isA<ClientException>()));
+      });
+    }
+  }, timeout: Timeout(Duration(seconds: 5)));
+}
+
+class FailingHttpClient extends FakeHttpClient {
+  FailingHttpClient({bool sync = false}) : super(sync: sync);
+
+  @override
+  Future<Response> post(url,
+      {Map<String, String>? headers, body, Encoding? encoding}) {
+    var error = ClientException('connection refused');
+    return sync ? Future.sync(() => throw error) : Future.error(error);
+  }
 }
 
 class FakeHttpClient implements Client {

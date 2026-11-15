@@ -47,7 +47,7 @@ class TWebSocket implements TSocket {
     }
 
     _socket = socket;
-    _socket!.listen((dynamic message) => _onMessage(message as String),
+    _socket!.listen(_onFrame,
       onError: (dynamic error) => _onError(error),
       onDone: () => close(),);
   }
@@ -79,6 +79,17 @@ class TWebSocket implements TSocket {
   void send(Uint8List data) {
     if (_socket != null) {
       _socket!.add(base64.encode(data));
+    }
+  }
+
+  void _onFrame(dynamic frame) {
+    // Messages travel as base64 text frames. Report any other frame on
+    // onError, as a text frame that is not base64 is reported.
+    if (frame is String) {
+      _onMessage(frame);
+    } else {
+      _onErrorController.add(TProtocolError(TProtocolErrorType.INVALID_DATA,
+          "Expected a text frame with a Base 64 encoded string."));
     }
   }
 

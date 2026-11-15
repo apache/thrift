@@ -147,7 +147,20 @@ class TAsyncClientSocketTransport extends TSocketTransport {
   void handleIncomingMessage(Uint8List messageBytes) {
     super.handleIncomingMessage(messageBytes);
 
-    TMessage message = messageReader.readMessage(messageBytes);
+    TMessage message;
+    try {
+      message = messageReader.readMessage(messageBytes);
+    } catch (error, stackTrace) {
+      // A message that cannot be read cannot be matched to its request, so
+      // deliver the error to every waiting request.
+      logger.warning('Received a message that could not be read: $error');
+      var pending = _completers.values.toList();
+      _completers.clear();
+      for (var completer in pending) {
+        completer.completeError(error, stackTrace);
+      }
+      return;
+    }
     var completer = _completers.remove(message.seqid);
     if (completer != null) {
       completer.complete(Uint8List(0));

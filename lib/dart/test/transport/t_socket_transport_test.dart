@@ -151,6 +151,34 @@ void main() {
     });
   }, timeout: Timeout(Duration(seconds: 1)));
 
+  // A message the reader cannot parse has to be reported to the waiting
+  // callers.
+  group('TAsyncClientSocketTransport with a malformed message', () {
+    test('fails the pending request with the read error', () async {
+      var socket = FakeSocket(sync: true);
+      await socket.open();
+      var transport = TAsyncClientSocketTransport(
+          socket, TMessageReader(TBinaryProtocolFactory()),
+          responseTimeout: Duration(seconds: 5));
+      await transport.open();
+
+      var request = TBufferedTransport();
+      TBinaryProtocol(request)
+        ..writeMessageBegin(TMessage('foo', TMessageType.CALL, 7))
+        ..writeMessageEnd();
+      transport.writeAll(request.consumeWriteBuffer());
+      // Listen before the reply arrives, as an awaiting caller does: this fake
+      // socket delivers synchronously, a real one in a later event.
+      var failed =
+          expectLater(transport.flush(), throwsA(isA<TProtocolError>()));
+
+      // A first word the binary protocol refuses.
+      socket.receiveFakeMessage(
+          base64.encode([0x12, 0x34, 0x56, 0x78, 0, 0, 0, 0]));
+      await failed;
+    });
+  }, timeout: Timeout(Duration(seconds: 10)));
+
   group('TAsyncClientSocketTransport with TFramedTransport', () {
     late FakeSocket socket;
     late FakeProtocolFactory protocolFactory;

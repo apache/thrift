@@ -66,6 +66,12 @@ class THttpClientTransport extends TBufferedTransport {
 
       _setReadBuffer(data);
       completer.complete();
+    }).catchError((Object error, StackTrace stackTrace) {
+      // Report a failed request or a reply that cannot be decoded through
+      // the future returned by flush(), so that its caller receives it.
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
+      }
     });
 
     return completer.future;
