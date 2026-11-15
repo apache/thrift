@@ -19,6 +19,9 @@
 #
 
 require "spec_helper"
+require "fileutils"
+require "timeout"
+require "tmpdir"
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
 describe "UNIXSocket" do
@@ -126,6 +129,48 @@ describe "UNIXSocket" do
 
     it "should provide a reasonable to_s" do
       expect(@socket.to_s).to eq("domain(#{@path})")
+    end
+
+    context "with a real socket file" do
+      before(:each) do
+        @dir = Dir.mktmpdir("thrift_unix_spec")
+        @path = File.join(@dir, "server.sock")
+        @socket = Thrift::UNIXServerSocket.new(@path)
+      end
+
+      after(:each) do
+        @socket.close
+        FileUtils.remove_entry(@dir)
+      end
+
+      it "should raise IOError from to_io unless listening" do
+        expect { @socket.to_io }.to raise_error(IOError, "closed stream")
+        @socket.listen
+        expect(@socket.to_io).to equal(@socket.handle)
+        @socket.close
+        expect { @socket.to_io }.to raise_error(IOError, "closed stream")
+        expect { IO.select([@socket], nil, nil, 0) }.to raise_error(IOError)
+      end
+
+      it "should let a NonblockingServer shut down cleanly" do
+        server = Thrift::NonblockingServer.new(
+          double("processor"), @socket, Thrift::FramedTransportFactory.new, nil, 1, Logger.new(IO::NULL),
+        )
+        selecting = Queue.new
+        allow(server).to receive(:select).and_wrap_original do |original, *args|
+          selecting << true
+          original.call(*args)
+        end
+
+        serve_thread = Thread.new { server.serve }
+        serve_thread.report_on_exception = false
+        Timeout.timeout(5) { selecting.pop }
+        server.shutdown
+
+        expect(serve_thread.join(5)).to equal(serve_thread)
+        expect { serve_thread.value }.not_to raise_error
+        expect(File.exist?(@path)).to be false
+      end
     end
   end
 end
