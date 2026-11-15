@@ -206,6 +206,25 @@ describe "Union" do
       expect(other_union).to eq(union)
     end
 
+    [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol].each do |protocol_class|
+      it "should round-trip a binary field through #{protocol_class}" do
+        bin = "\xff\x00\x80".b
+        protocol = protocol_class.new(Thrift::MemoryBufferTransport.new)
+        SpecNamespace::TestUnion.new(binary_field: bin).write(protocol)
+        result = SpecNamespace::TestUnion.new
+        result.read(protocol)
+
+        expect(result.binary_field).to eq(bin)
+        expect(result.binary_field.encoding).to eq(Encoding::BINARY)
+      end
+    end
+
+    it "should write a binary field to json as base64" do
+      trans = Thrift::MemoryBufferTransport.new
+      SpecNamespace::TestUnion.new(binary_field: "abc".b).write(Thrift::JsonProtocol.new(trans))
+      expect(trans.read(trans.available)).to eq('{"5":{"str":"YWJj"}}')
+    end
+
     it "should raise when validating unset union" do
       union = SpecNamespace::My_union.new
       expect { union.validate }.to raise_error(Thrift::ProtocolException, "Union fields are not set.") { |error|
