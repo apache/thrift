@@ -723,8 +723,10 @@ private {
     }
     // A wildcard stands in for the leftmost label of a longer name. On its
     // own, or with nothing after its dot, it would cover every single-label
-    // host name.
-    if (wildcard && (firstDot < 0 || firstDot == pattern.length - 1)) {
+    // host name. It is also the whole of that label (RFC 9525 6.3), so with a
+    // wildcard present the first dot is the pattern's second character; a
+    // leftmost label such as "f*", "*o" or "**" matches nothing.
+    if (wildcard && (firstDot != 1 || firstDot == pattern.length - 1)) {
       return false;
     }
 
@@ -765,6 +767,19 @@ private {
     enforce(!matchName("foo", "f*"));
     enforce(!matchName("localhost.", "*."));
     enforce(matchName("localhost", "localhost"));
+
+    // ... and it is the whole of that label (RFC 9525 6.3): a label that holds
+    // a wildcard next to other characters, or holds two, is not a pattern.
+    enforce(!matchName("foo.example.com", "f*.example.com"));
+    enforce(!matchName("f.example.com", "f*.example.com"));
+    enforce(!matchName("foo.example.com", "foo*.example.com"));
+    enforce(!matchName("foo.example.com", "*o.example.com"));
+    enforce(!matchName("foo.example.com", "f*o.example.com"));
+    enforce(!matchName("foo.example.com", "**.example.com"));
+    enforce(!matchName("xn--80ak6aa92e.example.com", "x*.example.com"));
+    enforce(!matchName("xn--80ak6aa92e.example.com", "xn--*.example.com"));
+    enforce(matchName("foo.example.com", "*.example.com"));
+    enforce(matchName("xn--80ak6aa92e.example.com", "*.example.com"));
 
     enforce(matchName("", ""));
     enforce(!matchName("", "*"));

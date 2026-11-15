@@ -68,6 +68,14 @@ verify(Address, ubyte[]) for a client opened with a host name; the other two
 verify() overloads are called as before. authorize() takes the side of the
 connection as a new last parameter.
 
+matchName(), which backs TDefaultClientAccessManager, honours a wildcard in a
+certificate name only as the whole of the name's leftmost label, as RFC 9525
+6.3 requires. A leftmost label that ended in a wildcard after other characters
+used to stand in for host names in its place -- "f*.example.com" matched
+"foo.example.com" -- and no longer matches anything. "*.example.com" is
+unchanged. A certificate affected needs reissuing with the host, or a
+whole-label wildcard, in its subjectAltName.
+
 ### 0.25.0
 
 thrift.transport.http compares a header name in full instead of by prefix, so a
