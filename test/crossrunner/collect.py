@@ -22,7 +22,7 @@ import re
 from itertools import product
 
 from .util import merge_dict
-from .test import TestEntry
+from .test import test_name
 
 # Those keys are passed to execution as is.
 # Note that there are keys other than these, namely:
@@ -149,7 +149,7 @@ def _do_collect_tests(servers, clients):
 
 def _filter_entries(tests, regex):
     if regex:
-        return filter(lambda t: re.search(regex, TestEntry.get_name(**t)), tests)
+        return filter(lambda t: re.search(regex, test_name(**t)), tests)
     return tests
 
 
