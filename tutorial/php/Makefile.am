@@ -17,10 +17,26 @@
 # under the License.
 #
 
-gen-php/tutorial/Calculator.php gen-php/shared/SharedService.php: $(top_srcdir)/tutorial/tutorial.thrift
+# tutorial.thrift includes shared.thrift, so a change to either regenerates both.
+gen-php/tutorial/CalculatorIf.php gen-php/shared/SharedServiceIf.php: $(top_srcdir)/tutorial/tutorial.thrift $(top_srcdir)/tutorial/shared.thrift
 	$(THRIFT) --gen php:server -r $<
 
-all-local: gen-php/tutorial/Calculator.php
+all-local: gen-php/tutorial/CalculatorIf.php
+
+# Generate from copies of the IDL in gen-check, add a struct to the copy of
+# shared.thrift, and check that make regenerates the PHP code.
+check-local:
+	$(RM) -r gen-check
+	$(MKDIR_P) gen-check/tutorial
+	cp $(top_srcdir)/tutorial/tutorial.thrift $(top_srcdir)/tutorial/shared.thrift gen-check/tutorial/
+	$(MAKE) $(AM_MAKEFLAGS) -C gen-check -f $(abs_builddir)/Makefile \
+	  top_srcdir=$(abs_builddir)/gen-check all-local
+	sleep 1
+	test ! -e gen-check/gen-php/shared/AddedByCheck.php
+	echo 'struct AddedByCheck { 1: i32 key }' >> gen-check/tutorial/shared.thrift
+	$(MAKE) $(AM_MAKEFLAGS) -C gen-check -f $(abs_builddir)/Makefile \
+	  top_srcdir=$(abs_builddir)/gen-check all-local
+	test -e gen-check/gen-php/shared/AddedByCheck.php
 
 tutorialserver: all
 	${PYTHON} runserver.py
