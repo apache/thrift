@@ -114,6 +114,21 @@ BOOST_AUTO_TEST_CASE(wildcard_needs_a_label_after_it) {
   BOOST_CHECK(allows("foo.example.com", "*.example.com"));
 }
 
+BOOST_AUTO_TEST_CASE(wildcard_is_the_whole_leftmost_label) {
+  // RFC 9525 6.3: a label that holds a wildcard next to other characters, or
+  // holds two, is not a pattern.
+  BOOST_CHECK(!allows("foo.example.com", "f*.example.com"));
+  BOOST_CHECK(!allows("f.example.com", "f*.example.com"));
+  BOOST_CHECK(!allows("foo.example.com", "foo*.example.com"));
+  BOOST_CHECK(!allows("foo.example.com", "*o.example.com"));
+  BOOST_CHECK(!allows("foo.example.com", "f*o.example.com"));
+  BOOST_CHECK(!allows("foo.example.com", "**.example.com"));
+  BOOST_CHECK(!allows("xn--80ak6aa92e.example.com", "x*.example.com"));
+  BOOST_CHECK(!allows("xn--80ak6aa92e.example.com", "xn--*.example.com"));
+  BOOST_CHECK(allows("foo.example.com", "*.example.com"));
+  BOOST_CHECK(allows("xn--80ak6aa92e.example.com", "*.example.com"));
+}
+
 
 // ---------------------------------------------------------------------------
 // Which identity in the certificate is consulted, and in what order.

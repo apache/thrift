@@ -1406,8 +1406,11 @@ bool matchName(const char* host, const char* pattern, int size) {
     if (pattern[k] == '*') wildcard = true;
   }
   // A wildcard stands in for the leftmost label of a longer name. On its own,
-  // or with nothing after its dot, it would cover every single-label host.
-  if (wildcard && (first_dot < 0 || first_dot == size - 1)) return false;
+  // or with nothing after its dot, it would cover every single-label host. It
+  // is also the whole of that label (RFC 9525 6.3), so with a wildcard present
+  // the first dot is the pattern's second character; a leftmost label such as
+  // "f*", "*o" or "**" matches nothing.
+  if (wildcard && (first_dot != 1 || first_dot == size - 1)) return false;
   bool match = false;
   int i = 0, j = 0;
   while (i < size && host[j] != '\0') {
