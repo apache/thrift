@@ -243,6 +243,28 @@ describe Thrift::BufferedTransport do
     expect(sink).to receive(:close).ordered
     transport.close
   end
+
+  it "closes downstream and discards staged data when the final flush fails" do
+    transport.write("abc")
+    expect(sink).to receive(:write).with("abc").ordered.and_raise(IOError, "write failed")
+    expect(sink).to receive(:close).ordered
+    expect { transport.close }.to raise_error(IOError, "write failed")
+    expect(sink).to receive(:flush).ordered
+    transport.flush
+  end
+
+  it "raises the final flush error when closing downstream also fails" do
+    transport.write("abc")
+    expect(sink).to receive(:write).with("abc").ordered.and_raise(IOError, "write failed")
+    expect(sink).to receive(:close).ordered.and_raise(IOError, "close failed")
+    expect { transport.close }.to raise_error(IOError, "write failed")
+  end
+
+  it "raises a downstream close error after a successful flush" do
+    expect(sink).to receive(:flush).ordered
+    expect(sink).to receive(:close).ordered.and_raise(IOError, "close failed")
+    expect { transport.close }.to raise_error(IOError, "close failed")
+  end
 end
 
 describe Thrift::BufferedTransportFactory do

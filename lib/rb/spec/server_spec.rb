@@ -609,6 +609,167 @@ describe "Server" do
     end
   end
 
+  describe "when closing a client connection fails" do
+    # Answers each 4-byte request with "pong" once the example releases it.
+    class PongAfterReleaseProcessor
+      def initialize(handled, release)
+        @handled = handled
+        @release = release
+      end
+
+      def process(iprot, oprot)
+        iprot.trans.read_all(4)
+        @handled << Thread.current
+        @release.pop
+        oprot.trans.write("pong")
+        oprot.trans.flush
+      end
+    end
+
+    class RecordingServerSocket < EphemeralServerSocket
+      def initialize(ready, accepted)
+        super(ready)
+        @accepted = accepted
+      end
+
+      def accept
+        super.tap { |client| @accepted << client.handle }
+      end
+    end
+
+    before(:each) do
+      @threads = ThreadGroup.new
+      @ready = Queue.new
+      @accepted = Queue.new
+      @handled = Queue.new
+      @release = Queue.new
+      @errors = Queue.new
+      @log = StringIO.new
+      @processor = PongAfterReleaseProcessor.new(@handled, @release)
+      @server_transport = RecordingServerSocket.new(@ready, @accepted)
+      @transport_factory = Thrift::BufferedTransportFactory.new
+    end
+
+    after(:each) do
+      until (threads = @threads.list).empty?
+        threads.each(&:kill)
+        threads.each(&:join)
+      end
+      @server_transport.close
+    end
+
+    def start_server(server)
+      previous_group = Thread.current.group
+      # Children inherit the group before their thread blocks can run.
+      @threads.add(Thread.current)
+      Thread.new do
+        server.serve
+      rescue StandardError => e
+        @errors << e
+      end
+    ensure
+      previous_group.add(Thread.current)
+    end
+
+    # The server's reply to the first client fails, so closing its buffered
+    # transport cannot flush. Returns the threads that served each client.
+    def reset_first_client_then_call_another(server)
+      server_thread = start_server(server)
+      port = Timeout.timeout(2) { @ready.pop }
+
+      dropped = TCPSocket.new("127.0.0.1", port)
+      dropped.write("ping")
+      server_side = Timeout.timeout(2) { @accepted.pop }
+      dropped_handler = Timeout.timeout(2) { @handled.pop }
+      dropped.setsockopt(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack("ii"))
+      dropped.close
+      # Reply only once the server sees the reset.
+      expect(IO.select([server_side], nil, nil, 2)).not_to be_nil
+      @release << :reply
+
+      second = TCPSocket.new("127.0.0.1", port)
+      second.write("ping")
+      @release << :reply
+      expect(Timeout.timeout(2) { second.read(4) }).to eq("pong")
+      [server_thread, dropped_handler, Timeout.timeout(2) { @handled.pop }]
+    ensure
+      dropped&.close
+      second&.close
+    end
+
+    def expect_closed_stream_logged_at_debug
+      expect(@log.string).to include(
+        "DEBUG -- : Error while closing a client connection: #<Thrift::TransportException: closed stream>",
+      )
+    end
+
+    it "keeps SimpleServer accepting clients" do
+      server = Thrift::SimpleServer.new(@processor, @server_transport, @transport_factory, logger: Logger.new(@log))
+
+      server_thread, = reset_first_client_then_call_another(server)
+
+      expect(server_thread).to be_alive
+      expect(@errors).to be_empty
+      expect_closed_stream_logged_at_debug
+    end
+
+    it "ends the ThreadedServer connection thread without an exception" do
+      server = Thrift::ThreadedServer.new(@processor, @server_transport, @transport_factory, logger: Logger.new(@log))
+
+      server_thread, dropped_handler, = reset_first_client_then_call_another(server)
+
+      expect(dropped_handler.join(2)).to equal(dropped_handler)
+      expect(server_thread).to be_alive
+      expect_closed_stream_logged_at_debug
+    end
+
+    it "keeps the ThreadPoolServer worker serving clients" do
+      server = Thrift::ThreadPoolServer.new(@processor, @server_transport, @transport_factory, nil, 1, logger: Logger.new(@log))
+
+      server_thread, dropped_handler, second_handler = reset_first_client_then_call_another(server)
+
+      expect(second_handler).to equal(dropped_handler)
+      expect(server_thread).to be_alive
+      expect(@log.string).not_to include("Error in thread pool worker")
+      expect_closed_stream_logged_at_debug
+    end
+
+    [Thrift::SimpleServer, Thrift::ThreadedServer, Thrift::ThreadPoolServer].each do |server_class|
+      it "logs an unexpected #{server_class.name.split("::").last} close error at error level" do
+        failing_close = Class.new(Thrift::BaseTransportFactory) do
+          def get_transport(socket)
+            Thrift::BufferedTransport.new(socket).tap do |transport|
+              transport.define_singleton_method(:close) do
+                super()
+                raise NoMethodError, "close bug"
+              end
+            end
+          end
+        end
+        logged = Queue.new
+        logger = Logger.new(@log)
+        logger.formatter = proc do |severity, _, _, message|
+          logged << "#{severity} #{message}"
+          ""
+        end
+        start_server(server_class.new(@processor, @server_transport, failing_close.new, logger: logger))
+        port = Timeout.timeout(2) { @ready.pop }
+
+        client = TCPSocket.new("127.0.0.1", port)
+        client.write("ping")
+        @release << :reply
+        expect(Timeout.timeout(2) { client.read(4) }).to eq("pong")
+        client.close
+
+        expect(Timeout.timeout(2) { logged.pop }).to eq(
+          "ERROR Error while closing a client connection: #<NoMethodError: close bug>",
+        )
+      ensure
+        client&.close
+      end
+    end
+  end
+
   describe "thread names" do
     before(:each) do
       @threads = ThreadGroup.new
