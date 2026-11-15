@@ -519,6 +519,21 @@ describe "NonblockingServer" do
       end
     end
 
+    context "when a client resets the connection during the TLS handshake" do
+      it "continues accepting connections" do
+        reset_client = TCPSocket.new("localhost", @port)
+        reset_client.write("\x16\x03\x01\x02\x00\x01".b) # start of a ClientHello record
+        reset_client.setsockopt(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack("ii"))
+        reset_client.close # with a zero linger time, close sends a TCP RST
+
+        client = setup_tls_client
+        expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
+        expect(@server_thread).to be_alive
+      ensure
+        reset_client&.close
+      end
+    end
+
     def setup_tls_client
       transport = Thrift::FramedTransport.new(
         Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context),
