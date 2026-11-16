@@ -21,14 +21,19 @@
 module Thrift
   class Deserializer
     def initialize(protocol_factory = BinaryProtocolFactory.new)
+      @protocol_factory = protocol_factory
       @transport = MemoryBufferTransport.new
       @protocol = protocol_factory.get_protocol(@transport)
     end
 
     def deserialize(base, buffer)
       @transport.reset_buffer(buffer)
+      @protocol ||= @protocol_factory.get_protocol(@transport)
       base.read(@protocol)
       base
+    rescue
+      @protocol = nil
+      raise
     end
   end
 end
