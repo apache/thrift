@@ -77,6 +77,7 @@ SET PACKAGES=^
   %MINGWPKG%-boost ^
   %MINGWPKG%-cmake ^
   %MINGWPKG%-libevent ^
+  %MINGWPKG%-make ^
   %MINGWPKG%-openssl ^
   %MINGWPKG%-toolchain ^
   %MINGWPKG%-zlib
