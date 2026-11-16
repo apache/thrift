@@ -70,8 +70,8 @@ module Thrift
         else
           value = {}
           size.times do
-            k = read_field(iprot, field_info(field[:key]), remaining_depth)
-            v = read_field(iprot, field_info(field[:value]), remaining_depth)
+            k = read_field(iprot, field[:key], remaining_depth)
+            v = read_field(iprot, field[:value], remaining_depth)
             value[k] = v
           end
         end
@@ -88,7 +88,7 @@ module Thrift
         else
           value = []
           size.times do
-            value << read_field(iprot, field_info(field[:element]), remaining_depth)
+            value << read_field(iprot, field[:element], remaining_depth)
           end
         end
         iprot.read_list_end
@@ -103,7 +103,7 @@ module Thrift
         else
           value = Set.new
           size.times do
-            element = read_field(iprot, field_info(field[:element]), remaining_depth)
+            element = read_field(iprot, field[:element], remaining_depth)
             value << element
           end
         end
@@ -158,16 +158,6 @@ module Thrift
     CONTAINER_TYPES[Types::SET] = true
     def is_container?(type)
       CONTAINER_TYPES[type]
-    end
-
-    def field_info(field)
-      {
-        type: field[:type],
-        class: field[:class],
-        key: field[:key],
-        value: field[:value],
-        element: field[:element],
-      }
     end
 
     def inspect_field(value, field_info)

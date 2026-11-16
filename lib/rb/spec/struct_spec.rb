@@ -358,6 +358,29 @@ describe "Struct" do
           end
         end
       end
+
+      it "keeps binary container elements, keys and values binary through #{protocol_class}" do
+        bin = "\xff\x00\x80".b
+        struct = Thrift::Test::CompactProtoTestStruct.new(
+          binary_list: [bin],
+          binary_set: Set[bin],
+          binary_byte_map: {bin => 1},
+          byte_binary_map: {1 => bin},
+        )
+        protocol = protocol_class.new(Thrift::MemoryBufferTransport.new)
+        struct.write(protocol)
+        result = Thrift::Test::CompactProtoTestStruct.new
+        result.read(protocol)
+
+        values = [
+          result.binary_list.first,
+          result.binary_set.first,
+          result.binary_byte_map.keys.first,
+          result.byte_binary_map.values.first,
+        ]
+        expect(values).to eq([bin] * 4)
+        expect(values.map(&:encoding)).to all(eq(Encoding::BINARY))
+      end
     end
 
     it "should properly initialize boolean values" do

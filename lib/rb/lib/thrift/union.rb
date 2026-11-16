@@ -92,10 +92,8 @@ module Thrift
         oprot.write_field_begin(@setfield, type, fid)
         write_container(oprot, @value, field_info, remaining_depth)
         oprot.write_field_end
-      elsif type == Types::STRUCT
-        oprot.write_field(field_info, fid, @value, remaining_depth)
       else
-        oprot.write_field(@setfield, type, fid, @value)
+        oprot.write_field(field_info, fid, @value, remaining_depth)
       end
 
       oprot.write_field_stop
