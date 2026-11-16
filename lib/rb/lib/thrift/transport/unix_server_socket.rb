@@ -59,7 +59,9 @@ module Thrift
       @handle.nil? or @handle.closed?
     end
 
-    alias to_io handle
+    def to_io
+      @handle&.to_io || raise(IOError, "closed stream")
+    end
 
     def to_s
       "domain(#{@path})"
