@@ -52,6 +52,21 @@ describe "Thrift::ServerSocket" do
       expect(@socket.accept).to eq(trans)
     end
 
+    it "should accept a socket when TCP_NODELAY cannot be set" do
+      handle = double("TCPServer")
+      allow(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
+      @socket.listen
+      sock = double("sock")
+      # macOS rejects setsockopt with EINVAL once the peer has reset the connection.
+      expect(sock).to receive(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1).and_raise(Errno::EINVAL)
+      allow(handle).to receive(:accept).and_return(sock)
+
+      transport = @socket.accept
+
+      expect(transport).to be_a(Thrift::Socket)
+      expect(transport.handle).to equal(sock)
+    end
+
     it "should default accepted sockets to a finite client timeout" do
       expect(@socket.client_timeout).to eq(5)
     end

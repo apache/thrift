@@ -490,21 +490,24 @@ describe "Server" do
       expect(exception_q).not_to have_received(:push)
     end
 
-    it "should not enqueue TLS accept errors" do
-      exception_q = @server.instance_variable_get(:@exception_q)
-      expect(@server_trans).to receive(:listen).ordered
-      expect(@server_trans).to receive(:accept).ordered.and_raise(OpenSSL::SSL::SSLError)
-      expect(@server_trans).to receive(:accept).ordered.and_return(@client)
-      expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
-      expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
-      allow(Thread).to receive(:new).with(0).and_yield(0)
-      expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
-      expect(@trans).to receive(:close).once
-      expect(@server_trans).to receive(:close)
+    [OpenSSL::SSL::SSLError, Errno::ECONNRESET, Errno::EPIPE].each do |error_class|
+      it "should keep the worker accepting after accept raises #{error_class}" do
+        exception_q = @server.instance_variable_get(:@exception_q)
+        expect(@server_trans).to receive(:listen).ordered
+        expect(@server_trans).to receive(:accept).ordered.and_raise(error_class)
+        expect(@server_trans).to receive(:accept).ordered.and_return(@client)
+        expect(@trans).to receive(:get_transport).once.with(@client).and_return(@trans)
+        expect(@prot).to receive(:get_protocol).once.with(@trans).and_return(@prot)
+        # The first worker accepts the next client; no replacement is spawned.
+        expect(Thread).to receive(:new).with(0).once.and_yield(0)
+        expect(@processor).to receive(:process).once.with(@prot, @prot) { throw :stop }
+        expect(@trans).to receive(:close).once
+        expect(@server_trans).to receive(:close)
 
-      catch(:stop) { @server.serve }
+        catch(:stop) { @server.serve }
 
-      expect(exception_q).to be_empty
+        expect(exception_q).to be_empty
+      end
     end
 
     it "accepts a logger" do
@@ -604,6 +607,32 @@ describe "Server" do
         expect(error).to be_a(Thrift::Exception)
         expect(error.message).to start_with("Service name not found in message name: voidMethod.")
         call_void_method(port)
+        expect(@log.string).to be_empty
+      end
+
+      it "does not relay a client reset during accept to rescuable_serve" do
+        relayed = Queue.new
+        accepts = 0
+        allow(@server_transport).to receive(:accept).and_wrap_original do |accept|
+          # The client went away before the server could accept it.
+          raise Errno::ECONNRESET if (accepts += 1) == 1
+
+          accept.call
+        end
+        caller_thread = in_server_threads do
+          Thread.new do
+            @pool_server.rescuable_serve
+          rescue StandardError => e
+            relayed << e
+          end
+        end
+        port = Timeout.timeout(2) { @ready.pop }
+
+        call_void_method(port)
+
+        # A relayed error would end rescuable_serve in the caller's thread.
+        expect(caller_thread.join(0.2)).to be_nil
+        expect(relayed).to be_empty
         expect(@log.string).to be_empty
       end
     end

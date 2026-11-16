@@ -45,7 +45,12 @@ module Thrift
     def accept
       unless @handle.nil?
         sock = @handle.accept
-        sock.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+        begin
+          sock.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+        rescue SystemCallError
+          # macOS raises EINVAL when the peer has already reset the connection.
+          # The first read or write then reports the reset.
+        end
         trans = Socket.new
         trans.timeout = @client_timeout
         trans.handle = sock
