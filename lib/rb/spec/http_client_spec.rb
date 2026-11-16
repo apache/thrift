@@ -347,5 +347,15 @@ describe "Thrift::HTTPClientTransport" do
         expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
       end
     end
+
+    it "reports EOF when reading before any response" do
+      transport = Thrift::HTTPClientTransport.new("http://localhost/")
+
+      [-> { transport.read(1) }, -> { transport.read_byte }, -> { transport.read_all(4) }].each do |read|
+        expect(&read).to raise_error(Thrift::TransportException) do |error|
+          expect(error.type).to eq(Thrift::TransportException::END_OF_FILE)
+        end
+      end
+    end
   end
 end
