@@ -44,7 +44,12 @@ module Thrift
       transport = nil
       ssl_socket = @handle.accept
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + @client_timeout unless @client_timeout.nil? || @client_timeout == 0
-      ssl_socket.to_io.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      begin
+        ssl_socket.to_io.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
+      rescue SystemCallError
+        # macOS raises EINVAL when the peer has already reset the connection.
+        # The handshake below then reports the reset.
+      end
       accept_ssl_socket(ssl_socket, deadline)
 
       transport = Socket.new.tap do |accepted_transport|

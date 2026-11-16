@@ -133,6 +133,26 @@ describe "SSLServerSocket" do
       stop_thread(accept_thread)
     end
 
+    it "reports a reset client as a connection reset when TCP_NODELAY cannot be set" do
+      server = build_server(client_timeout: 1)
+      # macOS rejects setsockopt with EINVAL once the peer has reset the connection.
+      allow(server.handle).to receive(:accept).and_wrap_original do |accept|
+        accept.call.tap do |ssl_socket|
+          allow(ssl_socket.to_io).to receive(:setsockopt)
+            .with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1).and_raise(Errno::EINVAL)
+        end
+      end
+      client = TCPSocket.new("127.0.0.1", server.to_io.local_address.ip_port)
+      client.write("\x16\x03\x01\x02\x00\x01".b) # start of a ClientHello record
+      client.setsockopt(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack("ii"))
+      client.close # with a zero linger time, close sends a TCP RST
+
+      expect { server.accept }.to raise_error(Errno::ECONNRESET)
+    ensure
+      client&.close
+      server&.close
+    end
+
     it "closes an accepted socket when the accepting thread is interrupted" do
       server = build_server(client_timeout: 1)
       handshake_waiting = Queue.new

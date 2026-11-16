@@ -60,6 +60,8 @@ module Thrift
           next if rd.nil?
           begin
             socket = @server_transport.accept
+          rescue Errno::ECONNRESET, Errno::EPIPE
+            next
           rescue => e
             next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
             raise
