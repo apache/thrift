@@ -551,6 +551,62 @@ describe "JsonProtocol" do
       expect(@trans.read(@trans.available)).to eq("\"-Infinity\"")
     end
 
+    it "writes Integer and Rational doubles as floats" do
+      {1 => "1.0", -3 => "-3.0", 2**70 => "1.1805916207174113e+21", Rational(1, 4) => "0.25"}.each do |value, json|
+        @prot.write_double(value)
+        expect(@trans.read(@trans.available)).to eq(json)
+      end
+
+      @prot.write_map_begin(Thrift::Types::DOUBLE, Thrift::Types::I32, 3)
+      [2, Float::INFINITY, Float::NAN].each_with_index do |key, index|
+        @prot.write_double(key)
+        @prot.write_i32(index)
+      end
+      @prot.write_map_end
+      expect(@trans.read(@trans.available)).to eq('["dbl","i32",3,{"2.0":0,"Infinity":1,"NaN":2}]')
+    end
+
+    {nil: nil, string: "1.5", boolean: true, object: Object.new}.each do |label, value|
+      it "rejects #{label} double arguments with Ruby TypeError before writing" do
+        @prot.write_list_begin(Thrift::Types::DOUBLE, 2)
+        @prot.write_double(1.5)
+        written = @trans.available
+
+        expect { @prot.write_double(value) }.to raise_error(::TypeError) do |error|
+          expect(error.class).to eq(::TypeError)
+        end
+        expect(@trans.available).to eq(written)
+
+        @prot.write_double(2.5)
+        @prot.write_list_end
+        expect(@trans.read(@trans.available)).to eq('["dbl",2,1.5,2.5]')
+      end
+    end
+
+    it "round-trips Integer and Rational values in double fields" do
+      Thrift.type_checking = false # the default; type checking rejects non-Float doubles
+      numeric = Thrift::Test::Doubles.new(
+        nan: Float::NAN, inf: Float::INFINITY, neginf: -Float::INFINITY, repeating: Rational(1, 3),
+        big: 2**70, tiny: Rational(1, 2**60), zero: 0, negzero: -0.0,
+      )
+      floats = Thrift::Test::Doubles.new(
+        nan: Float::NAN, inf: Float::INFINITY, neginf: -Float::INFINITY, repeating: 1.0 / 3,
+        big: 1180591620717411303424.0, tiny: 2.0**-60, zero: 0.0, negzero: -0.0,
+      )
+      expected = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(floats)
+
+      wire = Thrift::Serializer.new(Thrift::JsonProtocolFactory.new).serialize(numeric)
+      expect(wire).to eq(expected)
+      expect(wire).to include('"1":{"dbl":"NaN"}', '"2":{"dbl":"Infinity"}', '"3":{"dbl":"-Infinity"}', '"7":{"dbl":0.0}', '"8":{"dbl":-0.0}')
+
+      result = Thrift::Deserializer.new(Thrift::JsonProtocolFactory.new).deserialize(Thrift::Test::Doubles.new, wire)
+      expect(result.nan).to be_nan
+      expect([result.inf, result.neginf, result.repeating, result.big, result.tiny, result.zero])
+        .to eq([Float::INFINITY, -Float::INFINITY, 1.0 / 3, 1180591620717411303424.0, 2.0**-60, 0.0])
+      expect([result.repeating, result.big, result.tiny, result.zero, result.negzero]).to all(be_a(Float))
+      expect(1.0 / result.negzero).to eq(-Float::INFINITY)
+    end
+
     it "should write string" do
       @prot.write_string("this is a test string")
       a = @trans.read(@trans.available)

@@ -348,6 +348,10 @@ module Thrift
     # Convert the given double to a JSON string, which is either the number,
     # "NaN" or "Infinity" or "-Infinity".
     def write_json_double(num)
+      # Accept any Numeric, as Binary and Compact do through pack("G")
+      raise ::TypeError, "can't convert #{num.class} into Float" unless num.is_a?(Numeric)
+      num = Float(num)
+
       @context.write(trans)
       # Normalize output of thrift::to_string for NaNs and Infinities
       special = false
