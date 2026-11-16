@@ -741,7 +741,7 @@ describe "Server" do
             Thrift::BufferedTransport.new(socket).tap do |transport|
               transport.define_singleton_method(:close) do
                 super()
-                raise NoMethodError, "close bug"
+                raise "close bug"
               end
             end
           end
@@ -762,7 +762,7 @@ describe "Server" do
         client.close
 
         expect(Timeout.timeout(2) { logged.pop }).to eq(
-          "ERROR Error while closing a client connection: #<NoMethodError: close bug>",
+          "ERROR Error while closing a client connection: #<RuntimeError: close bug>",
         )
       ensure
         client&.close
