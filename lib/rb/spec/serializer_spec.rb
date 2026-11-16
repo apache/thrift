@@ -401,6 +401,25 @@ describe "Serializer" do
       expect(target.get_value).to be_nil
     end
 
+    [
+      Thrift::BinaryProtocolFactory,
+      Thrift::CompactProtocolFactory,
+      Thrift::JsonProtocolFactory,
+    ].each do |factory_class|
+      it "decodes valid input after truncated input with #{factory_class}" do
+        value = SpecNamespace::Foo.new(complex: {1 => {"a" => 1.5}}, opt_string: "x", my_bool: true)
+        data = Thrift::Serializer.new(factory_class.new).serialize(value)
+        deserializer = Thrift::Deserializer.new(factory_class.new)
+
+        (1...data.bytesize).each do |length|
+          expect {
+            deserializer.deserialize(SpecNamespace::Foo.new, data.byteslice(0, length))
+          }.to raise_error(EOFError)
+          expect(deserializer.deserialize(SpecNamespace::Foo.new, data)).to eq(value)
+        end
+      end
+    end
+
     def binary_payload(finish: true)
       transport = Thrift::MemoryBufferTransport.new
       protocol = Thrift::BinaryProtocol.new(transport)
