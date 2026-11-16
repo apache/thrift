@@ -118,7 +118,14 @@ module Thrift
     #
     # Returns nothing.
     def write(buf); end
-    alias_method :<<, :write
+
+    # Writes the byte buffer through #write, so subclasses that override #write are used.
+    #
+    # Returns the transport, so calls can be chained like IO#<<.
+    def <<(buf)
+      write(buf)
+      self
+    end
 
     def flush; end
 

@@ -122,8 +122,18 @@ describe "BaseTransport" do
       end
     end
 
-    it "should alias << to write" do
-      expect(Thrift::BaseTransport.instance_method(:<<)).to eq(Thrift::BaseTransport.instance_method(:write))
+    it "should send << to the subclass's write and return the transport" do
+      transport_class = Class.new(Thrift::BaseTransport) do
+        attr_reader :written
+
+        def write(buf)
+          (@written ||= []) << buf
+        end
+      end
+      transport = transport_class.new
+
+      expect(transport << "one" << "two").to equal(transport)
+      expect(transport.written).to eq(["one", "two"])
     end
 
     it "should provide a reasonable to_s" do
@@ -215,6 +225,16 @@ describe "BaseTransport" do
       trans = double("Transport")
       expect(trans).to receive(:flush)
       btrans = Thrift::BufferedTransport.new(trans)
+      btrans.flush
+    end
+
+    it "should buffer data appended with <<" do
+      trans = double("Transport")
+      btrans = Thrift::BufferedTransport.new(trans)
+      btrans << "one/"
+      btrans << "two/"
+      expect(trans).to receive(:write).with("one/two/").ordered
+      expect(trans).to receive(:flush).ordered
       btrans.flush
     end
   end
@@ -415,6 +435,15 @@ describe "BaseTransport" do
       expect(@trans).to receive(:write).with("\000\000\000\000")
       ftrans.flush
     end
+
+    it "should frame data appended with <<" do
+      ftrans = Thrift::FramedTransport.new(@trans)
+      expect(@trans).to receive(:write).with("\000\000\000\010one/two/").ordered
+      expect(@trans).to receive(:flush).ordered
+      ftrans << "one/"
+      ftrans << "two/"
+      ftrans.flush
+    end
   end
 
   describe Thrift::FramedTransportFactory do
@@ -567,6 +596,13 @@ describe "BaseTransport" do
       @buffer.write "foo"
       @buffer.write " bar"
       expect(@buffer.read(@buffer.available)).to eq("foo bar")
+    end
+
+    it "should return from read what was appended with <<" do
+      @buffer << "foo"
+      @buffer << " bar"
+      expect(@buffer.available).to eq(7)
+      expect(@buffer.read(7)).to eq("foo bar")
     end
 
     it "should force mutable write buffers into binary in place" do
