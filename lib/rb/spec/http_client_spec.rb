@@ -44,6 +44,42 @@ describe "Thrift::HTTPClientTransport" do
       expect(client.to_s).to eq("https([2001:db8::1]:8443/path/to/service)")
     end
 
+    it "should post to an IPv6 literal host" do
+      begin
+        listener = TCPServer.new("::1", 0)
+      rescue SystemCallError => e
+        skip "IPv6 loopback is unavailable: #{e.message}"
+      end
+      server = Thread.new do
+        socket = listener.accept
+        begin
+          request_line = socket.gets
+          content_length = 0
+          while (line = socket.gets) != "\r\n"
+            key, value = line.split(":", 2)
+            content_length = value.to_i if key.casecmp?("content-length")
+          end
+          body = socket.read(content_length)
+          socket.write("HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok")
+          [request_line, body]
+        ensure
+          socket.close
+        end
+      end
+
+      Timeout.timeout(10) do
+        client = Thrift::HTTPClientTransport.new("http://[::1]:#{listener.addr[1]}/thrift")
+        client.write("request")
+        client.flush
+
+        expect(client.read(2)).to eq("ok")
+        expect(server.value).to eq(["POST /thrift HTTP/1.1\r\n", "request"])
+      end
+    ensure
+      server.kill.join if server && server.alive?
+      listener.close if listener
+    end
+
     it "should not include userinfo in its endpoint label" do
       client = Thrift::HTTPClientTransport.new("https://user:secret@my.domain.com/path/to/service?token=secret")
 
