@@ -45,7 +45,14 @@ module Thrift
           # the accept loop. Log it, close the connection, and keep serving.
           @logger.error("Error while serving a client connection: #{e.inspect}")
         ensure
-          trans.close
+          begin
+            trans.close
+          rescue Thrift::TransportException => e
+            # Closing can fail to flush a reply to a client that has gone away.
+            @logger.debug("Error while closing a client connection: #{e.inspect}")
+          rescue => e
+            @logger.error("Error while closing a client connection: #{e.inspect}")
+          end
         end
       end
     ensure

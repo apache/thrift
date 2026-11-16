@@ -42,7 +42,14 @@ module Thrift
           end
         rescue Thrift::TransportException, Thrift::ProtocolException
         ensure
-          t.close
+          begin
+            t.close
+          rescue Thrift::TransportException => e
+            # Closing can fail to flush a reply to a client that has gone away.
+            @logger.debug("Error while closing a client connection: #{e.inspect}")
+          rescue => e
+            @logger.error("Error while closing a client connection: #{e.inspect}")
+          end
         end
       end
     ensure

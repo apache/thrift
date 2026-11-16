@@ -49,8 +49,21 @@ module Thrift
       @transport.open
     end
 
+    # Closes the underlying transport even if the final flush raises, and still
+    # raises that error. Staged bytes that could not be written are discarded,
+    # so a reopened transport does not start with the end of an old message.
     def close
-      flush
+      begin
+        flush
+      rescue ::Exception # rubocop:disable Lint/RescueException
+        @wbuf = Bytes.empty_byte_buffer
+        begin
+          @transport.close
+        rescue StandardError
+          # Keep the flush error, which explains why this close failed.
+        end
+        raise
+      end
       @transport.close
     end
 

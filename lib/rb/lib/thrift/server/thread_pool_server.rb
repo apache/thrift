@@ -31,10 +31,11 @@ module Thrift
 
     ## exceptions that happen in worker threads will be relayed here and
     ## must be caught. 'retry' can be used to continue. (threads will
-    ## continue to run while the exception is being handled.)
+    ## continue to run while the exception is being handled.) errors from
+    ## closing a client connection are logged instead, as under serve.
     def rescuable_serve
       unless @running
-        # Set before the server starts, so that its workers relay every exception.
+        # Set before the server starts, so that its workers relay their exceptions.
         @running = true
         Thread.new do
           Thread.current.name = "thrift.server"
@@ -48,6 +49,8 @@ module Thrift
     ## client's connection. any other exception in a worker thread is logged
     ## and causes that thread to die and another to be spawned in its place.
     ## (under rescuable_serve, such exceptions are relayed instead of logged.)
+    ## an error from closing a client connection is logged in both modes and
+    ## does not end the worker.
     def serve
       @server_transport.listen
       next_worker_id = 0
@@ -79,7 +82,14 @@ module Thrift
                 # connection, and keep accepting clients.
                 @logger.error("Error while serving a client connection: #{e.inspect}")
               ensure
-                trans.close
+                begin
+                  trans.close
+                rescue Thrift::TransportException => e
+                  # Closing can fail to flush a reply to a client that has gone away.
+                  @logger.debug("Error while closing a client connection: #{e.inspect}")
+                rescue => e
+                  @logger.error("Error while closing a client connection: #{e.inspect}")
+                end
               end
             end
           rescue => e
