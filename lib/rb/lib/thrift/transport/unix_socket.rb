@@ -31,9 +31,13 @@ module Thrift
     end
 
     def open
-      @handle = ::UNIXSocket.new(@path)
-    rescue StandardError
-      raise TransportException.new(TransportException::NOT_OPEN, "Could not open UNIX socket at #{@path}")
+      raise TransportException.new(TransportException::ALREADY_OPEN, "Socket already open") if open?
+
+      begin
+        @handle = ::UNIXSocket.new(@path)
+      rescue StandardError
+        raise TransportException.new(TransportException::NOT_OPEN, "Could not open UNIX socket at #{@path}")
+      end
     end
 
     def to_s

@@ -20,6 +20,32 @@
 
 require "spec_helper"
 
+# Expects the including group to define +listener+ (a listening ::TCPServer or
+# ::UNIXServer), +transport+ (an unopened client transport connecting to it),
+# and +accept_peer+ (the server side of the transport's first connection).
+shared_examples_for "a socket rejecting duplicate opens" do
+  it "should reject a second open without connecting again or orphaning the live connection" do
+    transport.open
+    peer = accept_peer
+    first_handle = transport.handle
+
+    expect { transport.open }.to raise_error(Thrift::TransportException, "Socket already open") do |error|
+      expect(error.type).to eq(Thrift::TransportException::ALREADY_OPEN)
+    end
+    expect(transport.handle).to equal(first_handle)
+    expect(IO.select([listener], nil, nil, 0)).to be_nil
+
+    transport.close
+    expect(first_handle).to be_closed
+    expect(peer.read).to eq("")
+  ensure
+    transport.close
+    first_handle.close unless first_handle.nil? || first_handle.closed?
+    peer&.close
+    listener.close
+  end
+end
+
 shared_examples_for "a socket" do
   it "should open a socket" do
     expect(@socket.open).to eq(@handle)
