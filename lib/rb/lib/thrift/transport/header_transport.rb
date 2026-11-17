@@ -498,7 +498,7 @@ module Thrift
         inflater.inflate(compressed, &append_chunk)
         inflater.finish(&append_chunk)
         buffer
-      rescue Zlib::DataError, Zlib::BufError
+      rescue Zlib::DataError, Zlib::BufError, Zlib::NeedDict
         raise TransportException.new(TransportException::UNKNOWN, "Invalid ZLIB payload")
       ensure
         inflater.close rescue nil
