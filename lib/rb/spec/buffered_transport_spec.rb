@@ -265,6 +265,41 @@ describe Thrift::BufferedTransport do
     expect(sink).to receive(:close).ordered.and_raise(IOError, "close failed")
     expect { transport.close }.to raise_error(IOError, "close failed")
   end
+
+  describe "at the end of the underlying input" do
+    # IOStreamTransport#read returns nil at EOF, as IO#read does; other transports may return "".
+    def each_input
+      ["", "ab"].each do |data|
+        stream = Thrift::IOStreamTransport.new(StringIO.new(data.b), StringIO.new)
+        custom = double("Transport")
+        allow(custom).to receive(:read).and_return(data.b, "".b)
+        [stream, custom].each { |underlying| yield data, described_class.new(underlying) }
+      end
+    end
+
+    def raise_eof
+      raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::END_OF_FILE) }
+    end
+
+    it "returns an empty string from read, so read_all reports EOF" do
+      each_input do |data, buffered|
+        expect(buffered.read(4)).to eq(data)
+        expect(buffered.read(4)).to eq("")
+      end
+      each_input { |_, buffered| expect { buffered.read_all(4) }.to raise_eof }
+    end
+
+    it "raises EOF from read_byte after the last byte" do
+      each_input do |data, buffered|
+        expect(Array.new(data.bytesize) { buffered.read_byte }).to eq(data.bytes)
+        expect { buffered.read_byte }.to raise_eof
+      end
+    end
+
+    it "raises EOF from read_into_buffer when the input ends early" do
+      each_input { |_, buffered| expect { buffered.read_into_buffer(Thrift::Bytes.empty_byte_buffer(4), 4) }.to raise_eof }
+    end
+  end
 end
 
 describe Thrift::BufferedTransportFactory do
