@@ -31,6 +31,7 @@ module Thrift
       @url = URI url
       @headers = {"Content-Type" => "application/x-thrift"}
       @outbuf = Bytes.empty_byte_buffer
+      @inbuf = StringIO.new(Bytes.empty_byte_buffer)
       @ssl_verify_mode = opts.fetch(:ssl_verify_mode, OpenSSL::SSL::VERIFY_PEER)
       @ssl_ca_file = opts[:ssl_ca_file]
     end
@@ -43,13 +44,13 @@ module Thrift
 
       raise TransportException.new(TransportException::END_OF_FILE, "#{self.class.name} reached EOF reading response from #{self}, HTTP status code #{@response_code}")
     ensure
-      if @inbuf && @inbuf.eof? && !@inbuf.string.empty?
+      if @inbuf.eof? && !@inbuf.string.empty?
         @inbuf.string = Bytes.empty_byte_buffer
       end
     end
 
     def read_byte
-      return super unless @inbuf && !@inbuf.eof?
+      return super if @inbuf.eof?
 
       byte = @inbuf.getbyte
       @inbuf.string = Bytes.empty_byte_buffer if @inbuf.eof?
