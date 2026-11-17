@@ -63,7 +63,7 @@ module Thrift
     end
 
     def flush
-      http = Net::HTTP.new @url.host, @url.port
+      http = Net::HTTP.new @url.hostname, @url.port
       http.use_ssl = @url.scheme == "https"
       if @url.scheme == "https"
         http.verify_mode = @ssl_verify_mode
