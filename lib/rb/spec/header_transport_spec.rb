@@ -458,6 +458,7 @@ describe "HeaderTransport" do
       {
         "invalid" => "not-zlib",
         "truncated" => Zlib::Deflate.deflate("valid payload")[0...-1],
+        "preset dictionary" => Zlib::Deflate.new.tap { |d| d.set_dictionary("dictionary") }.deflate("valid payload", Zlib::FINISH),
       }.each do |failure_type, payload|
         it "adapts #{failure_type} ZLIB payloads to the transport exception boundary" do
           header_data = [
