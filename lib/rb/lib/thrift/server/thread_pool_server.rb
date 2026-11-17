@@ -32,7 +32,8 @@ module Thrift
     ## exceptions that happen in worker threads will be relayed here and
     ## must be caught. 'retry' can be used to continue. (threads will
     ## continue to run while the exception is being handled.) errors from
-    ## closing a client connection are logged instead, as under serve.
+    ## closing a client connection are logged instead, and a client that
+    ## goes away before it is accepted is skipped, as under serve.
     def rescuable_serve
       unless @running
         # Set before the server starts, so that its workers relay their exceptions.
@@ -50,7 +51,8 @@ module Thrift
     ## and causes that thread to die and another to be spawned in its place.
     ## (under rescuable_serve, such exceptions are relayed instead of logged.)
     ## an error from closing a client connection is logged in both modes and
-    ## does not end the worker.
+    ## does not end the worker. a client that resets the connection or fails
+    ## the TLS handshake before it is accepted is skipped in both modes.
     def serve
       @server_transport.listen
       next_worker_id = 0
@@ -63,6 +65,8 @@ module Thrift
             loop do
               begin
                 client = @server_transport.accept
+              rescue Errno::ECONNRESET, Errno::EPIPE
+                next
               rescue => e
                 next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
                 raise
