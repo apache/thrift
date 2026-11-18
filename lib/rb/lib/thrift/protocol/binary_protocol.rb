@@ -172,7 +172,7 @@ module Thrift
           raise ProtocolException.new(ProtocolException::BAD_VERSION, "No version identifier, old protocol client?")
         end
         check_string_size(version)
-        name = trans.read_all(version)
+        name = Bytes.convert_to_string(trans.read_all(version))
         type = read_byte
         seqid = read_i32
         [name, type, seqid]

@@ -370,6 +370,19 @@ shared_examples_for "a binary protocol" do
     expect(@trans.read(@trans.available)).to eq("\200\001\000\001\000\000\000\vtestMessage\000\000\000\021")
   end
 
+  it "should read a UTF-8 message name with and without a version" do
+    name = "h\u00E9llo".encode("UTF-8")
+    utf8_bytes = [0x68, 0xC3, 0xA9, 0x6C, 0x6C, 0x6F].pack("C*")
+    {
+      true => [protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, 6].pack("NN") + utf8_bytes + [17].pack("N"),
+      false => [6].pack("N") + utf8_bytes + [Thrift::MessageTypes::CALL, 17].pack("cN"),
+    }.each do |versioned, bytes|
+      @trans.write(bytes)
+      actual_name, type, seqid = protocol_class.new(@trans, false, false).read_message_begin
+      expect([versioned, actual_name, actual_name.encoding, type, seqid]).to eq([versioned, name, Encoding::UTF_8, Thrift::MessageTypes::CALL, 17])
+    end
+  end
+
   # message footer is a noop
 
   it "should read a field header" do
