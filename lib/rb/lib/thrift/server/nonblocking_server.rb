@@ -179,11 +179,7 @@ module Thrift
             break if read_signals == :shutdown
           end
           rd.each do |fd|
-            if fd.handle.eof?
-              remove_connection fd
-            else
-              read_connection fd
-            end
+            read_connection fd
           rescue Errno::ECONNRESET
             remove_connection fd
           end
@@ -194,8 +190,20 @@ module Thrift
       end
 
       def read_connection(fd)
+        # Read only what has arrived: a blocking read on a TLS connection waits
+        # for the rest of a record and holds up every other connection.
+        handle = fd.handle
+        data = handle.read_nonblock(DEFAULT_BUFFER, exception: false)
+        return remove_connection(fd) if data.nil?
+        return if data.is_a?(Symbol) # :wait_readable or :wait_writable
+        # select cannot see what OpenSSL has already decrypted and buffered
+        while handle.respond_to?(:pending) && handle.pending > 0
+          more = handle.read_nonblock(DEFAULT_BUFFER, exception: false)
+          break unless more.is_a?(String)
+          data << more
+        end
         buf = @buffers[fd]
-        buf << fd.read(DEFAULT_BUFFER)
+        buf << data
         while buf.length >= 4
           # Refuse the size before collecting the frame: the four-byte length
           # is read here and the bytes are then buffered as they arrive, for as

@@ -237,6 +237,18 @@ describe "NonblockingServer" do
       end
     end
 
+    it "keeps answering other clients while one client has sent part of a frame" do
+      partial_client = TCPSocket.new("localhost", @port)
+      client = setup_client
+      begin
+        partial_client.write("\x00\x00\x00".b) # three of the four frame size bytes
+        reply = Timeout.timeout(2) { client.greeting(true) }
+        expect(reply).to eq(SpecNamespace::Hello.new)
+      ensure
+        partial_client.close
+      end
+    end
+
     it "should shut down when asked" do
       # connect first to ensure it's running
       client = setup_client
@@ -395,9 +407,7 @@ describe "NonblockingServer" do
     # applied here, to the declared size, and not only by the FramedTransport
     # the worker later reads the collected frame through.
     def connection_sending(bytes)
-      connection = double("connection", close: nil)
-      allow(connection).to receive(:read).and_return(bytes)
-      connection
+      double("connection", close: nil, handle: double("handle", read_nonblock: bytes))
     end
 
     def read_from(io_manager, connection)
@@ -454,6 +464,26 @@ describe "NonblockingServer" do
 
       expect(connection).not_to have_received(:close)
       expect(frames_queued(io_manager)).to eq([[:frame, connection, frame]])
+    end
+
+    it "drops a connection at the end of its stream" do
+      io_manager = build_io_manager
+      connection = connection_sending(nil)
+
+      read_from(io_manager, connection)
+
+      expect(io_manager.instance_variable_get(:@connections)).to be_empty
+      expect(frames_queued(io_manager)).to be_empty
+    end
+
+    it "keeps a connection that has nothing to read yet" do
+      io_manager = build_io_manager
+      connection = connection_sending(:wait_readable)
+
+      read_from(io_manager, connection)
+
+      expect(io_manager.instance_variable_get(:@connections)).to eq([connection])
+      expect(frames_queued(io_manager)).to be_empty
     end
   end
 
@@ -534,10 +564,43 @@ describe "NonblockingServer" do
       end
     end
 
-    def setup_tls_client
-      transport = Thrift::FramedTransport.new(
-        Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context),
-      )
+    it "keeps answering other clients while one client has sent part of a TLS record" do
+      stalled_socket = Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context)
+      stalled_client = setup_tls_client(stalled_socket)
+      expect(stalled_client.greeting(true)).to eq(SpecNamespace::Hello.new)
+      client = setup_tls_client
+
+      stalled_io = stalled_socket.to_io
+      stalled_io.write("\x17\x03\x03".b) # the start of an application data record header
+      reply = Timeout.timeout(2) { client.greeting(true) }
+      expect(reply).to eq(SpecNamespace::Hello.new)
+    ensure
+      # Reset the connection so the unfinished record ends with ECONNRESET, not an SSL error.
+      stalled_io&.setsockopt(Socket::SOL_SOCKET, Socket::SO_LINGER, [1, 0].pack("ii"))
+      stalled_io&.close
+    end
+
+    it "reads a request that arrives in several TLS records, each larger than one read" do
+      # What is left of a record after one read is buffered by OpenSSL, where
+      # select cannot see it, so the server has to read it without waiting.
+      stub_const("Thrift::NonblockingServer::IOManager::DEFAULT_BUFFER", 4)
+      socket = Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context)
+      records = []
+      allow(socket).to receive(:write).and_wrap_original do |write, data|
+        data.b.scan(/.{1,10}/m).each do |record| # one TLS record per write
+          records << record
+          write.call(record)
+        end
+      end
+      client = setup_tls_client(socket)
+
+      reply = Timeout.timeout(2) { client.greeting(true) }
+      expect(reply).to eq(SpecNamespace::Hello.new)
+      expect(records.length).to be > 2
+    end
+
+    def setup_tls_client(socket = Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context))
+      transport = Thrift::FramedTransport.new(socket)
       protocol = Thrift::BinaryProtocol.new(transport)
       client = SpecNamespace::NonblockingService::Client.new(protocol)
       transport.open
