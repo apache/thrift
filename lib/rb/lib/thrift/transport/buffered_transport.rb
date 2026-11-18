@@ -72,7 +72,8 @@ module Thrift
       ret = @rbuf.slice(@index - sz, sz) || Bytes.empty_byte_buffer
 
       if ret.length == 0
-        @rbuf = @transport.read([sz, DEFAULT_BUFFER].max)
+        # An empty result tells read_all that the input ended.
+        @rbuf = @transport.read([sz, DEFAULT_BUFFER].max) || Bytes.empty_byte_buffer
         @index = sz
         ret = @rbuf.slice(0, sz) || Bytes.empty_byte_buffer
       end
@@ -90,10 +91,7 @@ module Thrift
 
       begin
         # If the read buffer is exhausted, try to read up to DEFAULT_BUFFER more bytes into it.
-        if @index >= @rbuf.size
-          @rbuf = @transport.read(DEFAULT_BUFFER)
-          @index = 0
-        end
+        fill_read_buffer if @index >= @rbuf.size
 
         # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
         # allocating a temp string of size 1 unnecessarily.
@@ -114,10 +112,7 @@ module Thrift
       i = 0
       while i < size
         # If the read buffer is exhausted, try to read up to DEFAULT_BUFFER more bytes into it.
-        if @index >= @rbuf.size
-          @rbuf = @transport.read(DEFAULT_BUFFER)
-          @index = 0
-        end
+        fill_read_buffer if @index >= @rbuf.size
 
         # The read buffer has some data now, so copy bytes over to the output buffer.
         byte = Bytes.get_string_byte(@rbuf, @index)
@@ -155,6 +150,14 @@ module Thrift
     end
 
     private
+
+    # Raises at the end of the input instead of reading past the buffer. The
+    # underlying transport may return nil or an empty string there.
+    def fill_read_buffer
+      @rbuf = @transport.read(DEFAULT_BUFFER) || Bytes.empty_byte_buffer
+      @index = 0
+      raise TransportException.new(TransportException::END_OF_FILE, "No more data available") if @rbuf.empty?
+    end
 
     # Replace exhausted storage; clearing it in place could change returned slices.
     def clear_consumed_read_buffer
