@@ -220,6 +220,28 @@ describe "SSLServerSocket" do
       stop_thread(accept_thread)
     end
 
+    it "returns an open transport when accept is called while handling an exception" do
+      server = build_server(client_timeout: 1)
+      accept_thread = Thread.new do
+        raise "caller error"
+      rescue
+        server.accept
+      end
+      tcp_client, ssl_client = connect_ssl_client(server)
+      ssl_client.write("ping")
+
+      expect(accept_thread.join(1)).not_to be_nil
+      transport = accept_thread.value
+      expect(transport).to be_open
+      expect(transport.read(4)).to eq("ping")
+    ensure
+      transport&.close
+      ssl_client&.close
+      tcp_client&.close
+      server&.close
+      stop_thread(accept_thread)
+    end
+
     it "supports resumed client-authenticated TLS sessions" do
       context = server_context
       context.verify_mode = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT

@@ -57,8 +57,9 @@ module Thrift
         accepted_transport.handle = ssl_socket
       end
     ensure
-      # Thread#kill leaves $! nil, but marks the thread as aborting.
-      close_accepted_socket(ssl_socket) if transport.nil? || $! || Thread.current.status == "aborting"
+      # transport is assigned last, so it is still nil if an exception, Thread#kill, or Timeout
+      # interrupts accept before then.
+      close_accepted_socket(ssl_socket) if transport.nil?
     end
 
     def to_s
