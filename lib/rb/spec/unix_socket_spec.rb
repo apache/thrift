@@ -52,6 +52,25 @@ describe "UNIXSocket" do
     end
   end
 
+  describe "with a live connection" do
+    before(:each) do
+      @dir = Dir.mktmpdir("thrift_unix_spec")
+    end
+
+    after(:each) do
+      FileUtils.remove_entry(@dir)
+    end
+
+    let(:listener) { ::UNIXServer.new(File.join(@dir, "server.sock")) }
+    let(:transport) { Thrift::UNIXSocket.new(listener.path, 1) }
+
+    def accept_peer
+      listener.accept
+    end
+
+    it_should_behave_like "a socket rejecting duplicate opens"
+  end
+
   describe Thrift::UNIXServerSocket do
     before(:each) do
       @path = "/tmp/thrift_spec_socket"

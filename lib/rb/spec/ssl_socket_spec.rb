@@ -372,16 +372,48 @@ describe "SSLSocket" do
         server_hostname: "localhost",
       )
     end
+  end
 
-    def server_context
-      OpenSSL::SSL::SSLContext.new.tap do |context|
-        context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "server.crt")))
-        context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "server.key")))
+  describe "with a live connection" do
+    before(:each) do
+      server = listener
+      context = server_context
+      @server_thread = Thread.new do
+        peer = OpenSSL::SSL::SSLSocket.new(server.accept, context)
+        peer.sync_close = true
+        peer.accept
       end
+      @server_thread.report_on_exception = false
     end
 
-    def ssl_keys_dir
-      File.expand_path("../../../test/keys", __dir__)
+    after(:each) do
+      @server_thread.join(1)
+      @server_thread.kill if @server_thread.alive?
     end
+
+    let(:listener) { TCPServer.new("127.0.0.1", 0) }
+    let(:transport) do
+      context = OpenSSL::SSL::SSLContext.new
+      context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      context.ca_file = File.join(ssl_keys_dir, "server.crt")
+      Thrift::SSLSocket.new("127.0.0.1", listener.local_address.ip_port, 1, context, server_hostname: "localhost")
+    end
+
+    def accept_peer
+      @server_thread.value
+    end
+
+    it_should_behave_like "a socket rejecting duplicate opens"
+  end
+
+  def server_context
+    OpenSSL::SSL::SSLContext.new.tap do |context|
+      context.cert = OpenSSL::X509::Certificate.new(File.read(File.join(ssl_keys_dir, "server.crt")))
+      context.key = OpenSSL::PKey::RSA.new(File.read(File.join(ssl_keys_dir, "server.key")))
+    end
+  end
+
+  def ssl_keys_dir
+    File.expand_path("../../../test/keys", __dir__)
   end
 end
