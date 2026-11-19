@@ -29,6 +29,7 @@ target_link_libraries(TQTcpServerTest_Qt5 thrift)
 target_link_libraries(TQTcpServerTest_Qt5 Qt5::Test Qt5::Network)
 
 add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
+set_tests_properties(TQTcpServerTest_Qt5 PROPERTIES ENVIRONMENT "MALLOC_PERTURB_=165")
 
 add_executable(TQIODeviceTransportTest_Qt5 TQIODeviceTransportTest.cpp)
 target_link_libraries(TQIODeviceTransportTest_Qt5 thriftqt5)

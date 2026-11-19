@@ -143,7 +143,7 @@ void TQTcpServer::scheduleDeleteConnectionContext(QTcpSocket* connection) {
 void TQTcpServer::finish(shared_ptr<ConnectionContext> ctx, bool healthy) {
   if (!healthy) {
     qWarning("[TQTcpServer] Processor failed to process data successfully");
-    deleteConnectionContext(ctx->connection_.get());
+    scheduleDeleteConnectionContext(ctx->connection_.get());
   }
 }
 }

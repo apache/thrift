@@ -48,11 +48,15 @@ private slots:
   void initTestCase();
   void cleanupTestCase();
   void test_communicate();
+  void test_failedRequestsLeaveServerServing();
 
 private:
+  void sendAndClose(const QByteArray& bytes);
+
   std::shared_ptr<QThread> serverThread;
   std::shared_ptr<async::TQTcpServer> server;
   std::shared_ptr<test::ParentServiceClient> client;
+  int port = 0;
 };
 
 void TQTcpServerTest::initTestCase() {
@@ -63,7 +67,7 @@ void TQTcpServerTest::initTestCase() {
                                       std::make_shared<AsyncHandler>()),
                                       std::make_shared<protocol::TBinaryProtocolFactory>()));
   QVERIFY(serverSocket->listen(QHostAddress::LocalHost));
-  int port = serverSocket->serverPort();
+  port = serverSocket->serverPort();
   QVERIFY(port > 0);
 
   //setup server thread and move server to it
@@ -103,6 +107,49 @@ void TQTcpServerTest::test_communicate() {
   QCOMPARE(QString::fromStdString(reply[1]), QString("bar"));
 }
 
+// Opens a connection of its own, writes bytes and closes it, then gives the
+// server thread time to handle the data and the close.
+void TQTcpServerTest::sendAndClose(const QByteArray& bytes) {
+  QTcpSocket raw;
+  raw.connectToHost(QHostAddress::LocalHost, port);
+  QVERIFY(raw.waitForConnected());
+  raw.write(bytes);
+  QVERIFY(raw.waitForBytesWritten());
+  raw.disconnectFromHost();
+  if (raw.state() != QAbstractSocket::UnconnectedState) {
+    raw.waitForDisconnected();
+  }
+  QTest::qWait(200);
+}
+
+// A request the processor cannot complete ends that connection only: a reply
+// sent to the server, and a call whose arguments end with the connection.
+void TQTcpServerTest::test_failedRequestsLeaveServerServing() {
+  // strict binary header of a REPLY: version | type, name "x", seqid 1
+  const QByteArray reply(
+      "\x80\x01\x00\x02"
+      "\x00\x00\x00\x01"
+      "x"
+      "\x00\x00\x00\x01",
+      13);
+  sendAndClose(reply);
+
+  // CALL addString, seqid 1, field 1 a string of 100 bytes of which 3 are sent
+  const QByteArray call(
+      "\x80\x01\x00\x01"
+      "\x00\x00\x00\x09"
+      "addString"
+      "\x00\x00\x00\x01"
+      "\x0b\x00\x01"
+      "\x00\x00\x00\x64"
+      "abc",
+      31);
+  sendAndClose(call);
+
+  std::vector<std::string> reply2;
+  client->getStrings(reply2);
+  QCOMPARE(reply2.size(), static_cast<size_t>(2));
+}
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 QTEST_GUILESS_MAIN(TQTcpServerTest);
