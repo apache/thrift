@@ -128,6 +128,7 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
   Completion completion = completionQueue_.front();
   completionQueue_.pop_front();
   if (req == nullptr) {
+    completion.second->resetBuffer();
     try {
       completion.first();
     } catch (const TTransportException& e) {
@@ -138,6 +139,7 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
     }
     return;
   } else if (req->response_code != 200) {
+    completion.second->resetBuffer();
     try {
       completion.first();
     } catch (const TTransportException& e) {
@@ -153,7 +155,8 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
     return;
   }
   completion.second->resetBuffer(EVBUFFER_DATA(req->input_buffer),
-                        static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)));
+                                 static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)),
+                                 apache::thrift::transport::TMemoryBuffer::COPY);
   completion.first();
   return;
 }

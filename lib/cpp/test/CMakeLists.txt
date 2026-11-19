@@ -382,6 +382,15 @@ if(WITH_LIBEVENT)
     )
     target_link_libraries(TEvhttpServerRequestContextTest thriftnb)
     add_test(NAME TEvhttpServerRequestContextTest COMMAND TEvhttpServerRequestContextTest)
+
+    set(TEvhttpClientChannelTest_SOURCES TEvhttpClientChannelTest.cpp)
+    add_executable(TEvhttpClientChannelTest ${TEvhttpClientChannelTest_SOURCES})
+    include_directories(${LIBEVENT_INCLUDE_DIRS})
+    target_link_libraries(TEvhttpClientChannelTest
+        boosttestframework
+    )
+    target_link_libraries(TEvhttpClientChannelTest thriftnb)
+    add_test(NAME TEvhttpClientChannelTest COMMAND TEvhttpClientChannelTest)
 endif()
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)

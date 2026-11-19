@@ -124,7 +124,8 @@ noinst_PROGRAMS += \
 check_PROGRAMS += \
 	TNonblockingServerTest \
 	TNonblockingSSLServerTest \
-	TEvhttpServerRequestContextTest
+	TEvhttpServerRequestContextTest \
+	TEvhttpClientChannelTest
 endif
 
 TESTS_ENVIRONMENT= \
@@ -363,6 +364,17 @@ TNonblockingSSLServerTest_LDADD = libprocessortest.la \
 TEvhttpServerRequestContextTest_SOURCES = TEvhttpServerRequestContextTest.cpp
 
 TEvhttpServerRequestContextTest_LDADD = $(top_builddir)/lib/cpp/libthrift.la \
+                               $(top_builddir)/lib/cpp/libthriftnb.la \
+                               libboosttestframework.la \
+                               $(BOOST_LDFLAGS) \
+                               $(LIBEVENT_LIBS)
+
+#
+# TEvhttpClientChannelTest
+#
+TEvhttpClientChannelTest_SOURCES = TEvhttpClientChannelTest.cpp
+
+TEvhttpClientChannelTest_LDADD = $(top_builddir)/lib/cpp/libthrift.la \
                                $(top_builddir)/lib/cpp/libthriftnb.la \
                                libboosttestframework.la \
                                $(BOOST_LDFLAGS) \
