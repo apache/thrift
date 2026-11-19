@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -124,20 +125,27 @@ public class TSSLTransportFactory {
       InetAddress ifAddress,
       TSSLTransportParameters params)
       throws TTransportException {
+    SSLServerSocket serverSocket = null;
     try {
-      SSLServerSocket serverSocket =
-          (SSLServerSocket) factory.createServerSocket(port, 100, ifAddress);
+      serverSocket = (SSLServerSocket) factory.createServerSocket(port, 100, ifAddress);
       serverSocket.setSoTimeout(timeout);
       serverSocket.setNeedClientAuth(clientAuth);
-      if (params != null && params.cipherSuites != null) {
-        serverSocket.setEnabledCipherSuites(params.cipherSuites);
+      if (params != null) {
+        if (params.cipherSuites != null) {
+          serverSocket.setEnabledCipherSuites(params.cipherSuites);
+        }
+        String[] enabledProtocols = params.enabledProtocols;
+        if (enabledProtocols != null) {
+          serverSocket.setEnabledProtocols(enabledProtocols);
+        }
       }
       return new TServerSocket(
           new TServerSocket.ServerSocketTransportArgs()
               .serverSocket(serverSocket)
               .clientTimeout(timeout));
     } catch (Exception e) {
-      throw new TTransportException("Could not bind to port " + port, e);
+      closeSocketOnFailure(serverSocket, e);
+      throw new TTransportException("Could not create SSL server socket on port " + port, e);
     }
   }
 
@@ -154,7 +162,7 @@ public class TSSLTransportFactory {
   public static TSocket getClientSocket(String host, int port, int timeout)
       throws TTransportException {
     SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-    return createClient(factory, host, port, timeout);
+    return createClient(factory, host, port, timeout, null);
   }
 
   /**
@@ -190,7 +198,7 @@ public class TSSLTransportFactory {
     }
 
     SSLContext ctx = createSSLContext(params);
-    return createClient(ctx.getSocketFactory(), host, port, timeout);
+    return createClient(ctx.getSocketFactory(), host, port, timeout, params.enabledProtocols);
   }
 
   /**
@@ -246,7 +254,7 @@ public class TSSLTransportFactory {
           "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
     }
     SSLContext ctx = createSSLContext(params);
-    return new TNonblockingSSLSocket(host, port, timeout, ctx);
+    return new TNonblockingSSLSocket(host, port, timeout, ctx, params.enabledProtocols);
   }
 
   private static SSLContext createSSLContext(TSSLTransportParameters params)
@@ -339,20 +347,38 @@ public class TSSLTransportFactory {
     }
   }
 
-  private static TSocket createClient(SSLSocketFactory factory, String host, int port, int timeout)
+  private static TSocket createClient(
+      SSLSocketFactory factory, String host, int port, int timeout, String[] enabledProtocols)
       throws TTransportException {
+    SSLSocket socket = null;
     try {
-      SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+      socket = (SSLSocket) factory.createSocket(host, port);
       socket.setSoTimeout(timeout);
       SSLParameters sslParams = socket.getSSLParameters();
       sslParams.setEndpointIdentificationAlgorithm("HTTPS");
       socket.setSSLParameters(sslParams);
+      if (enabledProtocols != null) {
+        socket.setEnabledProtocols(enabledProtocols);
+      }
       return new TSocket(socket);
     } catch (TTransportException tte) {
+      closeSocketOnFailure(socket, tte);
       throw tte;
     } catch (Exception e) {
+      closeSocketOnFailure(socket, e);
       throw new TTransportException(
           TTransportException.NOT_OPEN, "Could not connect to " + host + " on port " + port, e);
+    }
+  }
+
+  private static void closeSocketOnFailure(Closeable socket, Exception failure) {
+    if (socket == null) {
+      return;
+    }
+    try {
+      socket.close();
+    } catch (IOException closeError) {
+      failure.addSuppressed(closeError);
     }
   }
 
@@ -374,12 +400,14 @@ public class TSSLTransportFactory {
     protected boolean isKeyStoreSet = false;
     protected boolean isTrustStoreSet = false;
 
+    private String[] enabledProtocols;
+
     public TSSLTransportParameters() {}
 
     /**
      * Create parameters specifying the protocol and cipher suites
      *
-     * @param protocol The specific protocol (TLS/SSL) can be specified with versions
+     * @param protocol the algorithm passed to {@link SSLContext#getInstance(String)}
      * @param cipherSuites
      */
     public TSSLTransportParameters(String protocol, String[] cipherSuites) {
@@ -390,7 +418,7 @@ public class TSSLTransportFactory {
      * Create parameters specifying the protocol, cipher suites and if client authentication is
      * required
      *
-     * @param protocol The specific protocol (TLS/SSL) can be specified with versions
+     * @param protocol the algorithm passed to {@link SSLContext#getInstance(String)}
      * @param cipherSuites
      * @param clientAuth
      */
@@ -401,6 +429,21 @@ public class TSSLTransportFactory {
       this.cipherSuites =
           cipherSuites != null ? Arrays.copyOf(cipherSuites, cipherSuites.length) : null;
       this.clientAuth = clientAuth;
+    }
+
+    /**
+     * Sets the protocols enabled on server sockets and on synchronous and asynchronous client
+     * transports created with these parameters.
+     *
+     * @param protocols protocol names supported by the JSSE provider, or {@code null} to use the
+     *     provider defaults
+     * @throws IllegalArgumentException if the array is empty
+     */
+    public void setEnabledProtocols(String... protocols) {
+      if (protocols != null && protocols.length == 0) {
+        throw new IllegalArgumentException("At least one protocol must be specified");
+      }
+      enabledProtocols = protocols == null ? null : Arrays.copyOf(protocols, protocols.length);
     }
 
     /**

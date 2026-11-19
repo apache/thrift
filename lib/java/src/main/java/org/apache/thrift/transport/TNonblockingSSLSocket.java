@@ -61,12 +61,19 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
 
   protected TNonblockingSSLSocket(String host, int port, int timeout, SSLContext sslContext)
       throws IOException, TTransportException {
+    this(host, port, timeout, sslContext, null);
+  }
+
+  TNonblockingSSLSocket(
+      String host, int port, int timeout, SSLContext sslContext, String[] enabledProtocols)
+      throws IOException, TTransportException {
+    this(host, port, timeout, createClientEngine(sslContext, host, port, enabledProtocols));
+  }
+
+  private TNonblockingSSLSocket(String host, int port, int timeout, SSLEngine sslEngine)
+      throws IOException, TTransportException {
     super(host, port, timeout);
-    sslEngine_ = sslContext.createSSLEngine(host, port);
-    sslEngine_.setUseClientMode(true);
-    SSLParameters sslParams = sslEngine_.getSSLParameters();
-    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-    sslEngine_.setSSLParameters(sslParams);
+    sslEngine_ = sslEngine;
 
     int appBufferSize = sslEngine_.getSession().getApplicationBufferSize();
     int netBufferSize = sslEngine_.getSession().getPacketBufferSize();
@@ -75,6 +82,27 @@ public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketA
     netUnwrap = ByteBuffer.allocate(netBufferSize);
     netWrap = ByteBuffer.allocate(netBufferSize);
     isHandshakeCompleted = false;
+  }
+
+  private static SSLEngine createClientEngine(
+      SSLContext sslContext, String host, int port, String[] enabledProtocols)
+      throws TTransportException {
+    SSLEngine engine = sslContext.createSSLEngine(host, port);
+    engine.setUseClientMode(true);
+    SSLParameters sslParams = engine.getSSLParameters();
+    sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+    engine.setSSLParameters(sslParams);
+    if (enabledProtocols != null) {
+      try {
+        engine.setEnabledProtocols(enabledProtocols);
+      } catch (IllegalArgumentException e) {
+        throw new TTransportException(
+            TTransportException.NOT_OPEN,
+            "Could not configure TLS protocols for " + host + ":" + port,
+            e);
+      }
+    }
+    return engine;
   }
 
   /** {@inheritDoc} */
