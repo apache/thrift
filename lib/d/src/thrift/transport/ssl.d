@@ -218,6 +218,13 @@ private:
 
     if (ssl_ !is null) return;
     ssl_ = context_.createSSL();
+    // A failed handshake or peer check ends the connection: ssl_ is kept only
+    // once both have succeeded.
+    scope (failure) {
+      super.close();  // while ssl_ is set, as isOpen requires it
+      SSL_free(ssl_);
+      ssl_ = null;
+    }
 
     SSL_set_fd(ssl_, cast(int)socketHandle);
     int rc;
@@ -576,6 +583,49 @@ unittest {
       context.ctx_, SSL_CTRL_GET_MIN_PROTO_VERSION, 0, null);
     assert(minVersion == TLS1_2_VERSION, "the default context floor is not TLS 1.2");
   }
+}
+
+unittest {
+  // A handshake that fails ends the connection and closes the transport.
+  import core.thread : Thread;
+  import std.socket : AddressFamily, SocketShutdown, TcpSocket;
+
+  auto listener = new TcpSocket(AddressFamily.INET);
+  scope (exit) listener.close();
+  listener.bind(new InternetAddress("127.0.0.1", InternetAddress.PORT_ANY));
+  listener.listen(1);
+  auto port = (cast(InternetAddress) listener.localAddress).port;
+
+  // The peer answers with bytes that are not TLS, then closes.
+  auto peer = new Thread({
+    auto conn = listener.accept();
+    conn.send("not a TLS handshake\n");
+    conn.shutdown(SocketShutdown.BOTH);
+    conn.close();
+  });
+  peer.start();
+  scope (exit) peer.join();
+
+  auto socket = new TSSLSocket(new TSSLContext(), "127.0.0.1", port);
+  socket.open();
+
+  auto handshakeFailed = false;
+  try {
+    socket.write([1]);
+    socket.flush();
+  } catch (TTransportException e) {
+    handshakeFailed = true;
+  }
+  enforce(handshakeFailed, "the handshake with a peer that does not speak TLS succeeded");
+  enforce(!socket.isOpen, "the transport stayed open after the handshake failed");
+
+  auto notOpen = false;
+  try {
+    socket.write([1]);
+  } catch (TTransportException e) {
+    notOpen = (e.type == TTransportException.Type.NOT_OPEN);
+  }
+  enforce(notOpen, "a write after the failed handshake did not report NOT_OPEN");
 }
 
 /**

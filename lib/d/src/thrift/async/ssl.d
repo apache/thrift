@@ -225,6 +225,12 @@ private:
 
     if (ssl_ !is null) return;
     ssl_ = context_.createSSL();
+    // A failed handshake or peer check ends the connection: ssl_ is kept only
+    // once both have succeeded.
+    scope (failure) {
+      cleanupSSL();
+      socket_.close();
+    }
 
     auto bio = createTTransportBIO(socket_, false);
     SSL_set_bio(ssl_, bio, bio);
