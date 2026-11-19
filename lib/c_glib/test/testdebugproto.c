@@ -1007,6 +1007,126 @@ test_reader_error_cleanup_set (void)
   g_byte_array_free (message, TRUE);
 }
 
+/* Reads MESSAGE into a fresh object of TYPE, which must succeed. */
+static ThriftStruct *
+read_message (GType type, const GByteArray *message)
+{
+  GByteArray *copy = g_byte_array_new ();
+  ThriftMemoryBuffer *mb;
+  ThriftProtocol *protocol;
+  ThriftStruct *object;
+  GError *error = NULL;
+
+  g_byte_array_append (copy, message->data, message->len);
+  mb = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf", copy,
+                     "buf_size", (guint) (message->len + 16), NULL);
+  protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, "transport", mb, NULL);
+  object = g_object_new (type, NULL);
+
+  g_assert_cmpint (thrift_struct_read (object, protocol, &error), >, 0);
+  g_assert_no_error (error);
+
+  g_object_unref (protocol);
+  g_object_unref (mb);
+  return object;
+}
+
+static void
+test_reader_nested_set (void)
+{
+  /* CompactProtoTestStruct field 48 is a map<i8, set<i8>>. Send one entry
+   * whose set holds two elements. */
+  GByteArray *message = g_byte_array_new ();
+  TTestCompactProtoTestStruct *object;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  bc_u8 (message, 13);   /* field type    T_MAP  */
+  bc_i16 (message, 48);  /* field id 48          */
+  bc_u8 (message, 3);    /* key type      T_BYTE */
+  bc_u8 (message, 14);   /* value type    T_SET  */
+  bc_i32 (message, 1);   /* map size 1           */
+  bc_u8 (message, 1);    /* key 1                */
+  bc_u8 (message, 3);    /* element type  T_BYTE */
+  bc_i32 (message, 2);   /* set size 2           */
+  bc_u8 (message, 2);
+  bc_u8 (message, 3);
+  bc_u8 (message, 0);    /* T_STOP               */
+
+  object = T_TEST_COMPACT_PROTO_TEST_STRUCT (
+      read_message (T_TEST_TYPE_COMPACT_PROTO_TEST_STRUCT, message));
+  g_assert_cmpint (g_hash_table_size (object->byte_set_map), ==, 1);
+  g_hash_table_iter_init (&iter, object->byte_set_map);
+  g_assert (g_hash_table_iter_next (&iter, &key, &value));
+  g_assert_nonnull (value);
+  g_assert_cmpint (g_hash_table_size ((GHashTable *) value), ==, 2);
+
+  g_object_unref (object);
+  g_byte_array_free (message, TRUE);
+}
+
+static void
+test_reader_set_repeated_element (void)
+{
+  /* CompactProtoTestStruct field 25 is a set<string>. Send the same element
+   * twice: the set holds it once, as both key and value. */
+  GByteArray *message = g_byte_array_new ();
+  TTestCompactProtoTestStruct *object;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  bc_u8 (message, 14);   /* field type    T_SET    */
+  bc_i16 (message, 25);  /* field id 25            */
+  bc_u8 (message, 11);   /* element type  T_STRING */
+  bc_i32 (message, 2);   /* set size 2             */
+  bc_i32 (message, 1);
+  bc_u8 (message, 'a');
+  bc_i32 (message, 1);
+  bc_u8 (message, 'a');
+  bc_u8 (message, 0);    /* T_STOP                 */
+
+  object = T_TEST_COMPACT_PROTO_TEST_STRUCT (
+      read_message (T_TEST_TYPE_COMPACT_PROTO_TEST_STRUCT, message));
+  g_assert_cmpint (g_hash_table_size (object->string_set), ==, 1);
+  g_hash_table_iter_init (&iter, object->string_set);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+  {
+    g_assert (value == key);
+  }
+
+  g_object_unref (object);
+  g_byte_array_free (message, TRUE);
+}
+
+static void
+test_reader_error_cleanup_nested_set (void)
+{
+  /* CompactProtoTestStruct field 48 is a map<i8, set<i8>>. Send one entry
+   * whose set declares one element more than is sent, so the read fails after
+   * the set has received its elements. */
+  GByteArray *message = g_byte_array_new ();
+  int i;
+  glong retained;
+
+  bc_u8 (message, 13);   /* field type    T_MAP  */
+  bc_i16 (message, 48);  /* field id 48          */
+  bc_u8 (message, 3);    /* key type      T_BYTE */
+  bc_u8 (message, 14);   /* value type    T_SET  */
+  bc_i32 (message, 1);   /* map size 1           */
+  bc_u8 (message, 1);    /* key 1                */
+  bc_u8 (message, 3);    /* element type  T_BYTE */
+  bc_i32 (message, READER_CLEANUP_ELEMLEN + 1);
+  for (i = 0; i < READER_CLEANUP_ELEMLEN; i++)
+    bc_u8 (message, (guint8) i);
+  /* the stream ends here, so the last element read fails */
+
+  retained = retained_after_rejected_reads (T_TEST_TYPE_COMPACT_PROTO_TEST_STRUCT,
+                                             message, 8);
+  g_assert_cmpint (retained / 8, <, READER_CLEANUP_ELEMLEN / 4);
+
+  g_byte_array_free (message, TRUE);
+}
+
 #endif /* TEST_HAVE_MALLINFO2 */
 
 int
@@ -1089,6 +1209,15 @@ main(int argc, char *argv[])
   g_test_add_func
     ("/testdebugproto/DebugProto/ReaderErrorCleanup/Set",
      test_reader_error_cleanup_set);
+  g_test_add_func
+    ("/testdebugproto/DebugProto/ReaderErrorCleanup/NestedSet",
+     test_reader_error_cleanup_nested_set);
+  g_test_add_func
+    ("/testdebugproto/DebugProto/Reader/NestedSet",
+     test_reader_nested_set);
+  g_test_add_func
+    ("/testdebugproto/DebugProto/Reader/SetRepeatedElement",
+     test_reader_set_repeated_element);
 #endif
 
   return g_test_run ();

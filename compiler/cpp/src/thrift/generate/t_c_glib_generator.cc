@@ -4318,6 +4318,10 @@ void t_c_glib_generator::declare_local_variable(ostream& out, t_type* ttype, str
     t_list* tlist = (t_list*)ttype;
     out << indent() << tname << ptr << " " << name << " = "
         << generate_new_array_from_type(tlist->get_elem_type()) << '\n';
+  } else if (ttype->is_set()) {
+    t_set* tset = (t_set*)ttype;
+    out << indent() << tname << ptr << " " << name << " = "
+        << generate_new_hash_from_type(tset->get_elem_type(), nullptr) << '\n';
   } else if (for_hash_table && ttype->is_enum()) {
     out << indent() << tname << " " << name << ";" << '\n';
   } else {
@@ -4408,8 +4412,9 @@ void t_c_glib_generator::generate_deserialize_set_element(ostream& out,
 
   indent(out) << "if (" << prefix << " && " << elem << ")" << '\n';
   indent_up();
-  indent(out) << "g_hash_table_insert ((GHashTable *) " << prefix << ", (gpointer) " << elem
-              << ", (gpointer) " << elem << ");" << '\n';
+  // g_hash_table_add stores the element as both key and value.
+  indent(out) << "g_hash_table_add ((GHashTable *) " << prefix << ", (gpointer) " << elem << ");"
+              << '\n';
   indent_down();
 }
 
