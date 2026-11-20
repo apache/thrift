@@ -106,7 +106,20 @@ class TSocket extends TEndpointTransport  {
     public override function close()  :  Void  {
         input = null;
         output = null;
+        #if js
+        // Nothing the old connection still delivers belongs to this transport
+        // any more, and no call waiting on it will get its reply.
+        var closing = socket;
+        socket = null;
+        if( closing != null) {
+            closing.onmessage = null;
+            closing.onclose = null;
+            closing.close();
+        }
+        failPending( "Connection closed by close()");
+        #else
         socket.close();
+        #end
     }
 
     public override function peek()  :  Bool  {
@@ -331,14 +344,23 @@ class TSocket extends TEndpointTransport  {
     public override function open()  :  Void
     {
         #if js
+        failPending( "Connection reopened");
         var socket = new WebSocket(host);
         // A Blob, the default, can only be read asynchronously.
         socket.binaryType = js.html.BinaryType.ARRAYBUFFER;
+        // The handlers act only while this is still the transport's connection.
         socket.onmessage = function( event : js.html.MessageEvent) {
-            receive( event.data);
+            if( this.socket == socket) {
+                receive( event.data);
+            }
         }
         socket.onclose = function( event : js.html.CloseEvent) {
-            failPending( 'Connection closed (${event.code})');
+            if( this.socket == socket) {
+                this.socket = null;
+                input = null;
+                output = null;
+                failPending( 'Connection closed (${event.code})');
+            }
         }
 
         #elseif flash
