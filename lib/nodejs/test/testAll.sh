@@ -17,10 +17,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-if [ -n "${1}" ]; then
-  COVER=${1};
-fi
-
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 EPISODIC_DIR=${DIR}/episodic-code-generation-test
@@ -29,30 +25,14 @@ THRIFT_FILES_DIR=${DIR}/../../../test
 
 THRIFT_COMPILER=${DIR}/../../../compiler/cpp/thrift
 
-ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
-
-REPORT_PREFIX="${DIR}/../coverage/report"
-
-COUNT=0
-
 testServer()
 {
   echo "  [Variant: $1] Testing $2 Client/Server with protocol $3 and transport $4 $5";
   RET=0
-  if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/server.mjs --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $2 -p $3 -t $4 $5 &
-    COUNT=$((COUNT+1))
-  else
-    node ${DIR}/server.mjs --${1} --type $2 -p $3 -t $4 $5 &
-  fi
+  node ${DIR}/server.mjs --${1} --type $2 -p $3 -t $4 $5 &
   SERVERPID=$!
   sleep 0.1
-  if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/client.mjs --dir ${REPORT_PREFIX}${COUNT} -- --${1} --type $2 -p $3 -t $4 $5 || RET=1
-    COUNT=$((COUNT+1))
-  else
-    node ${DIR}/client.mjs --${1} --type $2 -p $3 -t $4 $5 || RET=1
-  fi
+  node ${DIR}/client.mjs --${1} --type $2 -p $3 -t $4 $5 || RET=1
   kill -2 $SERVERPID || RET=1
   wait $SERVERPID
   return $RET
@@ -64,20 +44,10 @@ testEpisodicCompilation()
   local _client=$2
   echo "  [Episodic Variant: ${_server}:${_client}] Testing Client(${_client})/Server(${_server})";
   RET=0
-  if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${EPISODIC_DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --base "${_server}"   &
-    COUNT=$((COUNT+1))
-  else
-    node ${EPISODIC_DIR}/server.js --base "${_server}" &
-  fi
+  node ${EPISODIC_DIR}/server.js --base "${_server}" &
   SERVERPID=$!
   sleep 0.1
-  if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${EPISODIC_DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --base "${_client}" || RET=1
-    COUNT=$((COUNT+1))
-  else
-    node ${EPISODIC_DIR}/client.js --base "${_client}" || RET=1
-  fi
+  node ${EPISODIC_DIR}/client.js --base "${_client}" || RET=1
   kill -2 $SERVERPID || RET=1
   wait $SERVERPID
   return $RET
@@ -193,11 +163,5 @@ testEpisodicCompilation 'base' 'base' || TESTOK=1
 testEpisodicCompilation 'extend' 'extend' || TESTOK=1
 testEpisodicCompilation 'extend' 'base' || TESTOK=1
 testEpisodicCompilation 'base' 'pure' || TESTOK=1
-
-if [ -n "${COVER}" ]; then
-  ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html
-  rm -r ${DIR}/../coverage/report*/*
-  rmdir ${DIR}/../coverage/report*
-fi
 
 exit $TESTOK
