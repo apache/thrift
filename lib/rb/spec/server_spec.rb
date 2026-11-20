@@ -352,6 +352,61 @@ describe "Server" do
       server_thread&.kill
       server_thread&.join
     end
+
+    # Reads the first call it is handed and raises a ScriptError, outside
+    # StandardError, for it; hands every later call to the wrapped processor.
+    class NotImplementedOnceProcessor
+      def initialize(inner)
+        @inner = inner
+        @raised = false
+      end
+
+      def process(iprot, oprot)
+        unless @raised
+          @raised = true
+          iprot.read_message_begin
+          iprot.skip(Thrift::Types::STRUCT)
+          iprot.read_message_end
+          raise NotImplementedError, "processor not implemented"
+        end
+        @inner.process(iprot, oprot)
+      end
+    end
+
+    it "closes a connection whose processor raises outside StandardError and continues accepting clients" do
+      ready = Queue.new
+      errors = Queue.new
+      server_transport = EphemeralServerSocket.new(ready)
+      handler = StopAfterVoidHandler.new
+      protocol_factory = Thrift::BinaryProtocolFactory.new
+      processor = NotImplementedOnceProcessor.new(Thrift::Test::Srv::Processor.new(handler))
+      server = Thrift::SimpleServer.new(processor, server_transport, nil, protocol_factory)
+      server_thread = Thread.new do
+        catch(:stop) { server.serve }
+      rescue StandardError, ScriptError, SystemStackError => error
+        errors << error
+      end
+      server_thread.report_on_exception = false
+
+      port = Timeout.timeout(2) { ready.pop }
+      failing_transport = Thrift::Socket.new("127.0.0.1", port)
+      failing_transport.open
+      Thrift::Test::Srv::Client.new(protocol_factory.get_protocol(failing_transport)).send_voidMethod
+
+      valid_transport = Thrift::Socket.new("127.0.0.1", port)
+      valid_transport.open
+      Thrift::Test::Srv::Client.new(protocol_factory.get_protocol(valid_transport)).send_voidMethod
+
+      expect(server_thread.join(2)).to eq(server_thread)
+      expect(errors).to be_empty
+      expect(handler.calls).to eq(1)
+    ensure
+      failing_transport&.close
+      valid_transport&.close
+      server_transport&.close
+      server_thread&.kill
+      server_thread&.join
+    end
   end
 
   describe Thrift::ThreadedServer do

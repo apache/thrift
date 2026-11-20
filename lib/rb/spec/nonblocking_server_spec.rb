@@ -578,6 +578,60 @@ describe "NonblockingServer" do
     end
   end
 
+  describe "NonblockingServer workers" do
+    # Raises a ScriptError, outside StandardError, for the first frame it is
+    # handed, and hands every later frame to the wrapped processor.
+    class NotImplementedOnceFrameProcessor
+      attr_reader :raised
+
+      def initialize(inner)
+        @inner = inner
+        @raised = Queue.new
+        @done = false
+      end
+
+      def process(iprot, oprot)
+        unless @done
+          @done = true
+          @raised << true
+          raise NotImplementedError, "processor not implemented"
+        end
+        @inner.process(iprot, oprot)
+      end
+    end
+
+    it "keep serving after the processor raises outside StandardError" do
+      port = available_port
+      queue = Queue.new
+      transport = SpecServerSocket.new("localhost", port, queue)
+      processor = NotImplementedOnceFrameProcessor.new(SpecNamespace::NonblockingService::Processor.new(Handler.new))
+      server = Thrift::NonblockingServer.new(
+        processor, transport, Thrift::FramedTransportFactory.new, nil, 1, Logger.new(nil),
+      )
+      server_thread = Thread.new { server.serve }
+      queue.pop
+      wait_until_listening(transport, server_thread)
+
+      # The server's one worker is handed this frame first.
+      failing_transport = Thrift::FramedTransport.new(Thrift::Socket.new("localhost", port, 5))
+      failing_transport.open
+      SpecNamespace::NonblockingService::Client.new(Thrift::BinaryProtocol.new(failing_transport)).send_greeting(true)
+      Timeout.timeout(5) { processor.raised.pop }
+
+      client_transport = Thrift::FramedTransport.new(Thrift::Socket.new("localhost", port, 5))
+      client = SpecNamespace::NonblockingService::Client.new(Thrift::BinaryProtocol.new(client_transport))
+      client_transport.open
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
+    ensure
+      failing_transport&.close
+      client_transport&.close
+      server&.shutdown(1, false)
+      server_thread&.join(2)
+      server_thread&.kill if server_thread&.alive?
+      transport&.close
+    end
+  end
+
   def wait_until_listening(server_transport, server_thread)
     Timeout.timeout(2) do
       until server_transport.handle

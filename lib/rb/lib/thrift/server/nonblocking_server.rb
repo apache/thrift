@@ -349,7 +349,7 @@ module Thrift
                 itrans = @transport_factory.get_transport(membuf)
                 iprot = @protocol_factory.get_protocol(itrans)
                 @processor.process(iprot, oprot)
-              rescue => e
+              rescue StandardError, ScriptError, SystemStackError => e
                 @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
               end
             end

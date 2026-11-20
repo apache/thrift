@@ -92,7 +92,7 @@ module Thrift
         log_error(e.cause)
         x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, "Internal error")
         write_error(x, oprot, name, seqid)
-      rescue => e
+      rescue StandardError, ScriptError, SystemStackError => e
         on_error.call(e, :unexpected) if on_error
         log_error(e)
         return true if on_error && type == MessageTypes::ONEWAY

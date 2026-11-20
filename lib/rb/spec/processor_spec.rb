@@ -252,6 +252,27 @@ describe "Processor" do
       expect(exception.message).to eq("Internal error")
     end
 
+    [NotImplementedError, SystemStackError].each do |error_class|
+      it "answers a handler that raises #{error_class} with an internal error" do
+        handler = double("Handler")
+        expect(handler).to receive(:sleep).with(3.0).and_raise(error_class, "handler failed")
+        processor = SpecNamespace::NonblockingService::Processor.new(handler)
+        args = SpecNamespace::NonblockingService::Sleep_args.new(seconds: 3.0)
+        input = input_protocol("sleep", Thrift::MessageTypes::CALL, 19, args)
+        output_transport, output = output_protocol
+
+        expect(processor.process(input, output)).to be true
+
+        response = Thrift::BinaryProtocol.new(output_transport)
+        expect(response.read_message_begin).to eq(["sleep", Thrift::MessageTypes::EXCEPTION, 19])
+        exception = Thrift::ApplicationException.new
+        exception.read(response)
+        response.read_message_end
+
+        expect(exception.type).to eq(Thrift::ApplicationException::INTERNAL_ERROR)
+      end
+    end
+
     it "retains the non-Rack error reply for a failed ONEWAY request without a callback" do
       handler = double("Handler")
       expect(handler).to receive(:shutdown).and_raise("handler failed")
