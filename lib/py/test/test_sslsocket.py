@@ -466,6 +466,40 @@ class TSSLSocketHostnameTest(unittest.TestCase):
         with self.assertRaises(Exception):
             match_peer_ipaddress(plain, '::1')
 
+    def test_refused_server_leaves_the_transport_closed(self):
+        # A validate_callback that refuses the server ends the connection: the
+        # transport is not open afterwards, a write is refused, and the next
+        # open() connects and checks again.
+        from thrift.transport.TSSLSocket import TSSLSocket
+        from thrift.transport.TTransport import TTransportException
+        checked = []
+
+        def refuse(cert, hostname):
+            checked.append(hostname)
+            raise TTransportException(message='server certificate not allowed')
+
+        port = self._listener()
+        client = TSSLSocket('127.0.0.1', port, cert_reqs=ssl.CERT_REQUIRED,
+                            ca_certs=SERVER_CERT, server_hostname='localhost',
+                            validate_callback=refuse)
+        client.setTimeout(2000)
+        self.addCleanup(client.close)
+
+        with self.assertRaises(TTransportException):
+            client.open()
+        self.assertFalse(client.isOpen())
+        with self.assertRaises(TTransportException) as cm:
+            client.write(b'x')
+        self.assertEqual(cm.exception.type, TTransportException.NOT_OPEN)
+
+        with self.assertRaises(TTransportException) as cm:
+            client.open()
+        self.assertNotEqual(cm.exception.type, TTransportException.ALREADY_OPEN)
+        self.assertEqual(checked, ['localhost', 'localhost'])
+        self.assertFalse(client.isOpen())
+        # Closing a transport that is not open is harmless.
+        client.close()
+
 
 class TSSLServerSocketClientCertTest(unittest.TestCase):
     """A client certificate is matched against the peer address by default.

@@ -284,12 +284,13 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
                                  socket_keepalive=socket_keepalive)
 
     def close(self):
-        try:
-            self.handle.settimeout(0.001)
-            self.handle = self.handle.unwrap()
-        except (ssl.SSLError, socket.error, OSError):
-            # could not complete shutdown in a reasonable amount of time.  bail.
-            pass
+        if self.handle:
+            try:
+                self.handle.settimeout(0.001)
+                self.handle = self.handle.unwrap()
+            except (ssl.SSLError, socket.error, OSError):
+                # could not complete shutdown in a reasonable amount of time.  bail.
+                pass
         TSocket.TSocket.close(self)
 
     @property
@@ -328,11 +329,13 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
                 return
             try:
                 self._validate_callback(self.peercert, self._server_hostname)
-                self.is_valid = True
-            except TTransportException:
-                raise
             except Exception as ex:
+                # A peer the callback refuses ends the connection.
+                self.close()
+                if isinstance(ex, TTransportException):
+                    raise
                 raise TTransportException(message=str(ex), inner=ex)
+            self.is_valid = True
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
