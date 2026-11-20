@@ -165,4 +165,9 @@
 # ── Documentation & project governance ────────────────────────
 /doc/                         @Jens-G
 
+# Rules for AI-assisted work, in any directory (AGENTS.md section 5
+# lets a language directory carry its own copy)
+AGENTS.md                     @Jens-G
+CLAUDE.md                     @Jens-G
+
 # eof
