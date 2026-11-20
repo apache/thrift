@@ -646,13 +646,17 @@ void t_py_generator::generate_enum(t_enum* tenum) {
     indent_up();
     indent(f_types_) << "if not isinstance(value, int):" << '\n';
     indent(f_types_) << indent_str() << "return None" << '\n';
-    // Let enum name known combinations, but do not cache unknown wire values.
+    // Let enum name known combinations, but keep them out of the class's value cache, as values
+    // with unknown bits are.
     indent(f_types_) << "if value >= 0 and not (value & ~(" << declared_bits << ")):" << '\n';
     indent_up();
     indent(f_types_) << "try:" << '\n';
-    indent(f_types_) << indent_str() << "return super()._missing_(value)" << '\n';
+    indent(f_types_) << indent_str() << "member = super()._missing_(value)" << '\n';
     indent(f_types_) << "except ValueError:" << '\n';
     indent(f_types_) << indent_str() << "pass" << '\n';
+    indent(f_types_) << "else:" << '\n';
+    indent(f_types_) << indent_str() << "cls._value2member_map_.pop(value, None)" << '\n';
+    indent(f_types_) << indent_str() << "return member" << '\n';
     indent_down();
     indent(f_types_) << "member = "
                      << (gen_type_hints_ ? "int.__new__(cls, value)" : "object.__new__(cls)") << '\n';

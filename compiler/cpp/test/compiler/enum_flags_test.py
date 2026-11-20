@@ -159,6 +159,24 @@ class TestEnumFlags(unittest.TestCase):
                     self.assertEqual(flags(-bits).value, -bits)
                 self.assertEqual(flags._value2member_map_, original)
 
+    def test_python_known_flag_combinations_are_not_cached(self):
+        for options in ("py", "py:enum", "py:enum,type_hints"):
+            with self.subTest(options=options):
+                ns = self.generate_schema(
+                    "enum Permissions { Read = 1, Write = 2, Execute = 4, Admin = 8 } (enum.flags)",
+                    options)
+                flags = ns["Permissions"]
+                original = dict(flags._value2member_map_)
+                for bits in range(16):
+                    self.assertEqual(flags(bits).value, bits)
+                self.assertEqual(flags._value2member_map_, original)
+                combined = flags.Read | flags.Write
+                self.assertEqual(flags(3), combined)
+                self.assertEqual(repr(flags(3)), repr(combined))
+                self.assertIn("Read", repr(combined))
+                self.assertIn("Write", repr(combined))
+                self.assertEqual(flags._value2member_map_, original)
+
     def test_python_clearing_flags_preserves_unknown_bits(self):
         schema = """
             enum Permissions { Read = 1, Write = 2, ReadWrite = 3 } (enum.flags)
