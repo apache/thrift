@@ -25,17 +25,43 @@ import org.apache.thrift.scheme.TupleScheme;
 import org.apache.thrift.transport.TTransport;
 
 public final class TTupleProtocol extends TCompactProtocol {
+  /** The most elements a container may declare when no other limit is given. */
+  public static final long DEFAULT_CONTAINER_LENGTH_LIMIT = 16_384_000;
+
   public static class Factory implements TProtocolFactory {
-    public Factory() {}
+    private final long containerLengthLimit_;
+
+    public Factory() {
+      this(DEFAULT_CONTAINER_LENGTH_LIMIT);
+    }
+
+    /**
+     * @param containerLengthLimit the most elements a container may declare, or -1 for no limit.
+     */
+    public Factory(long containerLengthLimit) {
+      containerLengthLimit_ = containerLengthLimit;
+    }
 
     @Override
     public TProtocol getProtocol(TTransport trans) {
-      return new TTupleProtocol(trans);
+      return new TTupleProtocol(trans, containerLengthLimit_);
     }
   }
 
+  /** The most elements a container may declare, or -1 for no limit. */
+  private final long containerLengthLimit_;
+
   public TTupleProtocol(TTransport transport) {
+    this(transport, DEFAULT_CONTAINER_LENGTH_LIMIT);
+  }
+
+  /**
+   * @param transport the transport to read from and write to.
+   * @param containerLengthLimit the most elements a container may declare, or -1 for no limit.
+   */
+  public TTupleProtocol(TTransport transport, long containerLengthLimit) {
     super(transport);
+    containerLengthLimit_ = containerLengthLimit;
   }
 
   @Override
@@ -93,6 +119,7 @@ public final class TTupleProtocol extends TCompactProtocol {
 
   public TMap readMapBegin(byte keyType, byte valTyep) throws TException {
     int size = super.readI32();
+    checkContainerLength(size);
     TMap map = new TMap(keyType, valTyep, size);
 
     checkReadBytesAvailable(map);
@@ -101,6 +128,7 @@ public final class TTupleProtocol extends TCompactProtocol {
 
   public TList readListBegin(byte type) throws TException {
     int size = super.readI32();
+    checkContainerLength(size);
     TList list = new TList(type, size);
 
     checkReadBytesAvailable(list);
@@ -109,6 +137,16 @@ public final class TTupleProtocol extends TCompactProtocol {
 
   public TSet readSetBegin(byte type) throws TException {
     return new TSet(readListBegin(type));
+  }
+
+  private void checkContainerLength(int size) throws TProtocolException {
+    if (size < 0) {
+      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + size);
+    }
+    if (containerLengthLimit_ != -1 && size > containerLengthLimit_) {
+      throw new TProtocolException(
+          TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + size);
+    }
   }
 
   @Override
