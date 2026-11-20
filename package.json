@@ -55,22 +55,18 @@
     "globals": "^15.14.0",
     "jsdoc": "^4.0.2",
     "json-int64": "^1.0.2",
-    "nyc": "^15.0.0",
     "prettier": "^3.4.2",
     "tape": "^4.9.0",
     "typescript": "^5.7.2",
     "utf-8-validate": "^5.0.0"
   },
   "overrides": {
-    "@babel/helpers": "^7.26.10",
     "ajv": "^6.14.0",
     "brace-expansion": "^2.0.3",
     "debug": "^4.3.1",
-    "semver": "^7.5.2",
     "underscore": "^1.13.8"
   },
   "scripts": {
-    "cover": "lib/nodejs/test/testAll.sh COVER",
     "test": "lib/nodejs/test/testAll.sh",
     "test-ts": "lib/nodets/test/testAll.sh",
     "prettier": "prettier --write '**/*.{js,mjs,ts}'",

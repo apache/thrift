@@ -253,7 +253,6 @@ SKILL.md
 /lib/lua/test/test_socket_send
 /lib/netstd/**/bin
 /lib/netstd/**/obj
-/lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
 /lib/perl/MYMETA.json
