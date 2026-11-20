@@ -1170,6 +1170,13 @@ private {
           }
 
           auto size = netToHost(frameSize);
+          if (size == 0) {
+            // A frame carries at least a message header, so an empty one is
+            // not a request.
+            logError("Frame size zero, closing the client connection.");
+            close();
+            return;
+          }
           if (size > server_.maxFrameSize) {
             // Resolving the peer address can fail, e.g. when the client has
             // already reset the connection. Keep that out of the callback so
@@ -1886,4 +1893,58 @@ unittest {
   client.readAll(reply);
   assert(reply == expected, "the server stopped serving after a peer reset " ~
     "its connection while announcing an over-limit frame");
+}
+
+// A frame that declares no payload is not a request: the server closes that
+// connection and goes on serving other clients, with one I/O thread as well as
+// with several.
+unittest {
+  import std.exception : collectException;
+
+  auto oldInfoLogSink = g_infoLogSink;
+  auto oldErrorLogSink = g_errorLogSink;
+  g_infoLogSink = null;
+  g_errorLogSink = null;
+  scope (exit) {
+    g_infoLogSink = oldInfoLogSink;
+    g_errorLogSink = oldErrorLogSink;
+  }
+
+  static immutable size_t[] ioThreadCounts = [1, 4];
+  foreach (numIOThreads; ioThreadCounts) {
+    auto server = makeServer();
+    server.numIOThreads = numIOThreads;
+
+    withServerPort(server, (ushort port) {
+      {
+        auto client = new TSocket("127.0.0.1", port);
+        client.recvTimeout = dur!"seconds"(10);
+        client.open();
+        scope (exit) client.close();
+
+        writeFrameSize(client, 0);
+
+        ubyte[1] buf;
+        size_t received = size_t.max;
+        auto e = collectException!TTransportException(
+          received = client.read(buf));
+        assert(e is null && received == 0, "a frame without payload must " ~
+          "close the connection");
+      }
+
+      auto client = new TSocket("127.0.0.1", port);
+      client.recvTimeout = dur!"seconds"(10);
+      client.open();
+      scope (exit) client.close();
+
+      writeFrameSize(client, 1);
+      ubyte[1] payload = [7];
+      client.write(payload);
+
+      static immutable ubyte[5] expected = [0, 0, 0, 1, 42];
+      ubyte[5] reply;
+      client.readAll(reply);
+      assert(reply == expected, "the server must go on serving");
+    });
+  }
 }
