@@ -11,13 +11,16 @@
   "homepage": "http://thrift.apache.org",
   "repository": "https://github.com/apache/thrift",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "devDependencies": {
     "browserify": "~16.5",
     "grunt": "^1.6.3",
     "grunt-cli": "^1.4.3",
     "grunt-contrib-concat": "~1.0",
     "grunt-contrib-jshint": "~3.2",
-    "grunt-contrib-qunit": "~3.1",
+    "grunt-contrib-qunit": "^11.0.0",
     "grunt-contrib-uglify": "~4.0",
     "grunt-jsdoc": "~2.4",
     "grunt-shell-spawn": "~0.4",
@@ -25,7 +28,8 @@
     "jslint": "~0.12.1",
     "json-int64": "~1.0.2",
     "node-int64": "~0.4.0",
-    "nopt": "~4.0"
+    "nopt": "~4.0",
+    "yauzl": "^3.4.0"
   },
   "overrides": {
     "jsdoc": "^4.0.0",
