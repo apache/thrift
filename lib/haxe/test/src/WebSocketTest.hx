@@ -22,6 +22,7 @@ package;
 import haxe.Int64;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransportException;
 import thrift.test.ThriftTestImpl;
 
 /**
@@ -33,7 +34,9 @@ import thrift.test.ThriftTestImpl;
  *
  * The first call goes out right after open(), before the connection is up,
  * and two calls are made before either reply has arrived, as an application
- * may do. Exits 0 when every reply reads back as what was sent.
+ * may do. Then the server closes the connection after a reply, and close() is
+ * called while a call still waits for its reply; after each, open() makes the
+ * transport usable again. Exits 0 when every reply reads back as what was sent.
  */
 class WebSocketTest {
 
@@ -57,7 +60,7 @@ class WebSocketTest {
             });
             client.testI64(i64, failed("testI64"), function(r : Int64) {
                 check(Int64.compare(r, i64) == 0, 'testI64 returns ${Int64.toStr(r)}');
-                finish();
+                closedByServer(transport, client);
             });
         });
 
@@ -65,6 +68,54 @@ class WebSocketTest {
             check(false, "all replies arrived within 10 s");
             finish();
         }, 10000);
+    }
+
+    // The server answers testI32(-1) and then closes the connection.
+    static function closedByServer(transport : TSocket, client : ThriftTestImpl) : Void {
+        client.testI32(-1, failed("testI32(-1)"), function(r : Int) {
+            check(r == -1, 'testI32(-1) returns $r');
+            whenClosed(transport, 50, function() {
+                check(!transport.isOpen(), "isOpen() is false once the server has closed the connection");
+                try {
+                    client.testI32(5, failed("testI32(5)"), function(r : Int) {
+                        check(false, 'a call on the closed transport returns $r');
+                    });
+                    check(false, "a call on the closed transport is refused");
+                } catch (e : TTransportException) {
+                    check(e.errorID == TTransportException.NOT_OPEN, 'a call on the closed transport is refused: ${e.errorMsg}');
+                }
+                closedWhileWaiting(transport, client);
+            });
+        });
+    }
+
+    static function whenClosed(transport : TSocket, tries : Int, then : Void->Void) : Void {
+        if (!transport.isOpen() || (tries == 0)) {
+            then();
+        } else {
+            haxe.Timer.delay(function() { whenClosed(transport, tries - 1, then); }, 20);
+        }
+    }
+
+    // The server never answers testI32(-2). close() ends that call, and after
+    // open() the next reply goes to the call it answers.
+    static function closedWhileWaiting(transport : TSocket, client : ThriftTestImpl) : Void {
+        transport.open();
+        var ended = false;
+        client.testI32(-2, function(e : Dynamic) {
+            ended = true;
+            check(Std.isOfType(e, TTransportException), 'close() ends the waiting call with $e');
+        }, function(r : Int) {
+            check(false, 'the call waiting at close() returns $r');
+            finish();
+        });
+        transport.close();
+        check(ended, "close() ends a call still waiting for its reply");
+        transport.open();
+        client.testI32(7, failed("testI32(7) after open()"), function(r : Int) {
+            check(r == 7, 'testI32(7) after open() returns $r');
+            finish();
+        });
     }
 
     static function failed(call : String) : Dynamic->Void {
