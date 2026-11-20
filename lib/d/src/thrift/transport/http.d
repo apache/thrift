@@ -493,7 +493,12 @@ protected:
         TTransportException.Type.CORRUPTED_DATA);
     }
 
-    auto codeReason = firstSplit[2][countUntil!"a != b"(firstSplit[2], ' ') .. $];
+    auto codeStart = countUntil!"a != b"(firstSplit[2], ' ');
+    if (codeStart < 0) {
+      throw new TTransportException("Bad status: " ~ to!string(status),
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+    auto codeReason = firstSplit[2][codeStart .. $];
     auto secondSplit = findSplit(codeReason, [' ']);
     if (secondSplit[1].empty) {
       throw new TTransportException("Bad status: " ~ to!string(status),
@@ -550,7 +555,12 @@ protected:
         TTransportException.Type.CORRUPTED_DATA);
     }
 
-    auto uriVersion = split[2][countUntil!"a != b"(split[2], ' ') .. $];
+    auto uriStart = countUntil!"a != b"(split[2], ' ');
+    if (uriStart < 0) {
+      throw new TTransportException("Bad status: " ~ to!string(status),
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+    auto uriVersion = split[2][uriStart .. $];
     if (!canFind(uriVersion, ' ')) {
       throw new TTransportException("Bad status: " ~ to!string(status),
         TTransportException.Type.CORRUPTED_DATA);
@@ -933,5 +943,27 @@ unittest {
     ubyte[16] buf;
     assert(http.read(buf) == 5);
     assert(cast(string)buf[0 .. 5] == "hello");
+  }
+}
+
+// A request or status line with nothing but spaces after its first token is
+// malformed: reading it fails with a transport error, on the server side as
+// well as on the client side.
+unittest {
+  import std.exception : assertThrown;
+  import thrift.transport.memory;
+
+  foreach (wire; ["POST \r\n\r\n", "POST    \r\n\r\n",
+      "POST \r\nContent-Length: 0\r\n\r\n"]) {
+    auto http = new TServerHttpTransport(new TMemoryBuffer(cast(ubyte[])wire.dup));
+    ubyte[16] buf;
+    assertThrown!TTransportException(http.read(buf), wire);
+  }
+
+  foreach (wire; ["HTTP/1.1 \r\n\r\n", "HTTP/1.1    \r\n\r\n"]) {
+    auto http = new TClientHttpTransport(new TMemoryBuffer(cast(ubyte[])wire.dup),
+      "localhost", "/");
+    ubyte[16] buf;
+    assertThrown!TTransportException(http.read(buf), wire);
   }
 }

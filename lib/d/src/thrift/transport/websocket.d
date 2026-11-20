@@ -160,7 +160,12 @@ protected:
         TTransportException.Type.CORRUPTED_DATA);
     }
 
-    auto uriVersion = split[2][countUntil!"a != b"(split[2], ' ') .. $];
+    auto uriStart = countUntil!"a != b"(split[2], ' ');
+    if (uriStart < 0) {
+      throw new TTransportException("Bad status: " ~ to!string(status),
+        TTransportException.Type.CORRUPTED_DATA);
+    }
+    auto uriVersion = split[2][uriStart .. $];
     if (!canFind(uriVersion, ' ')) {
       throw new TTransportException("Bad status: " ~ to!string(status),
         TTransportException.Type.CORRUPTED_DATA);
@@ -692,4 +697,16 @@ unittest {
   ws.write(cast(const(ubyte)[])"hello");
   ws.flush();
   assert(peer.written == cast(const(ubyte)[])[0x82, 0x05] ~ cast(const(ubyte)[])"hello");
+}
+
+unittest {
+  import std.exception : assertThrown;
+
+  // A request line with nothing but spaces after the method is malformed, and
+  // reading it fails with a transport error.
+  foreach (wire; ["GET \r\n\r\n", "GET    \r\n\r\n"]) {
+    auto ws = new TServerWebSocketTransport!true(new TPipeTransport(wire));
+    ubyte[16] buf;
+    assertThrown!TTransportException(ws.read(buf), wire);
+  }
 }
