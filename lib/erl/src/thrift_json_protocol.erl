@@ -553,7 +553,7 @@ read(This0, field_begin) ->
                 {ok, [FieldId, _, FieldType]} ->
                     {This1, #protocol_field_begin{
                         type = json_to_typeid(FieldType),
-                        id = binary_to_integer(FieldId)
+                        id = key_to_integer(FieldId)
                     }};
                 Other ->
                     io:format("**** OTHER branch selected ****"),
@@ -725,6 +725,13 @@ read_message_begin(This0) ->
             Other
     end.
 
+%% An object key holds a number as text, which the parser takes as a string, so
+%% a key longer than a number may be is refused here.
+key_to_integer(Key) when byte_size(Key) > ?MAX_NUMBER_LENGTH -> erlang:error(badarg);
+key_to_integer(Key) -> binary_to_integer(Key).
+
+key_to_number(Key, _Convert, Error) when byte_size(Key) > ?MAX_NUMBER_LENGTH ->
+    {error, Error};
 key_to_number(Key, Convert, Error) ->
     try Convert(Key) of
         Number -> {ok, Number}

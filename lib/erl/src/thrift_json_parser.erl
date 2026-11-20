@@ -20,6 +20,9 @@
 %% the jsx json library
 
 -module(thrift_json_parser).
+
+-include("thrift_constants.hrl").
+
 -export([parser/0, handle_event/2]).
 
 -record(config, {strict_utf8 = false :: boolean()}).
@@ -85,11 +88,6 @@ new_seq(C) -> [C].
 
 acc_seq(Seq, C) when is_list(C) -> lists:reverse(C) ++ Seq;
 acc_seq(Seq, C) -> [C] ++ Seq.
-
-%% The most characters a number may take. A 64-bit integer takes at most 20,
-%% and a double with 17 significant digits about 25, or about 330 written
-%% without an exponent.
--define(MAX_NUMBER_LENGTH, 1024).
 
 %% The characters of a string: {Count, Characters, Chunks}. The characters,
 %% newest first, are turned into a UTF-8 chunk every ?STRING_CHUNK_LENGTH of

@@ -330,6 +330,29 @@ long_number_test() ->
     ?assertEqual(binary_to_integer(Longest), Value),
     ?assertError(badarg, read_message(new_protocol(Message(<<Longest/binary, "1">>)), Type)).
 
+%% A field id or a numeric map key of more than 1024 characters is refused, as
+%% a number is; one of 1024 is read.
+long_number_key_test() ->
+    Longest = binary:copy(<<"1">>, 1024),
+    TooLong = <<Longest/binary, "1">>,
+    FieldMessage = fun(Digits) ->
+        iolist_to_binary([<<"[1,\"m\",1,42,{\"">>, Digits, <<"\":{\"i64\":1}}]">>])
+    end,
+    FieldType = {struct, [{1, i64}]},
+    ?assertMatch(
+        {_, {"m", {undefined}}}, read_message(new_protocol(FieldMessage(Longest)), FieldType)
+    ),
+    ?assertError(badarg, read_message(new_protocol(FieldMessage(TooLong)), FieldType)),
+    MapMessage = fun(Digits) ->
+        iolist_to_binary([
+            <<"[1,\"m\",1,42,{\"1\":{\"map\":[\"i64\",\"i64\",1,{\"">>, Digits, <<"\":2}]}}]">>
+        ])
+    end,
+    MapType = {struct, [{1, {map, i64, i64}}]},
+    {_, {"m", {Map}}} = read_message(new_protocol(MapMessage(Longest)), MapType),
+    ?assertEqual([{binary_to_integer(Longest), 2}], dict:to_list(Map)),
+    ?assertError(_, read_message(new_protocol(MapMessage(TooLong)), MapType)).
+
 %% A message name up to ?MAX_MESSAGE_NAME_SIZE bytes is read; a longer one is
 %% refused by message_begin.
 message_name_test() ->

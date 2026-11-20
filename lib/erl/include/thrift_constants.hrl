@@ -86,3 +86,8 @@
 %% A name the processor can dispatch is a function name, an atom of at most
 %% 255 characters, after a service name and a ':' for a multiplexed service.
 -define(MAX_MESSAGE_NAME_SIZE, 4096).
+
+%% The most characters a JSON number may take, as a value or as an object
+%% key. A 64-bit integer takes at most 20, and a double with 17 significant
+%% digits about 25, or about 330 written without an exponent.
+-define(MAX_NUMBER_LENGTH, 1024).
