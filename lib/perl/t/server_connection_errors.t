@@ -24,7 +24,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 8;
 
 use Thrift;
 use Thrift::Type;
@@ -47,6 +47,12 @@ sub process {
     $served++;
     return 1;
 }
+
+# A registered service whose handler dies with a plain reference rather than an
+# exception object or a message.
+package RefDyingService;
+sub new { return bless {}, shift }
+sub process { die { code => 400, reason => 'refused' } }
 
 # An accepted connection: reads come from the request it was built with, writes
 # are collected apart from it, and close() is counted. A connection may be asked
@@ -72,6 +78,9 @@ sub write   { my ($self, $buf) = @_; return $self->{out}->write($buf) }
 sub close {
     my $self = shift;
     $self->{closed}++;
+    if ($self->{close_dies} and $self->{close_dies} eq 'ref') {
+        die [ 'could not close the connection' ];
+    }
     if ($self->{close_dies}) {
         die Thrift::TTransportException->new('Thrift::Socket: could not close the connection',
             Thrift::TTransportException::UNKNOWN);
@@ -144,3 +153,38 @@ is($error, '', 'serve() returns after connections fail instead of propagating th
 is($server_transport->{accepted}, 4, 'the server accepts every connection');
 is($CountingService::served, 3, 'every registered call is served');
 is($connections[2]->{closed} > 0, 1, 'a connection that fails to close is still closed');
+
+# A connection can also end with something that is neither an exception object
+# nor a message: a handler that dies with a plain reference, or a close that
+# does. That too ends only that connection.
+{
+    my $processor = Thrift::MultiplexedProcessor->new();
+    $processor->registerProcessor('GoodService', CountingService->new());
+    $processor->registerProcessor('RefService', RefDyingService->new());
+
+    my @connections = (
+        FakeConnection->new(multiplexed_call('RefService', 'doWork')),
+        FakeConnection->new(multiplexed_call('GoodService', 'doWork'), close_dies => 'ref'),
+        FakeConnection->new(multiplexed_call('GoodService', 'doWork')),
+    );
+    my $server_transport = FakeServerTransport->new([@connections]);
+
+    my $server = Thrift::SimpleServer->new(
+        $processor, $server_transport,
+        Thrift::TransportFactory->new(), Thrift::TransportFactory->new(),
+        Thrift::BinaryProtocolFactory->new(), Thrift::BinaryProtocolFactory->new(),
+    );
+
+    $CountingService::served = 0;
+    my $error;
+    {
+        local $SIG{__WARN__} = sub { };
+        eval { $server->serve(); };
+        $error = $@;
+    }
+
+    is($error, '', 'serve() returns after a connection ends with a plain reference');
+    is($server_transport->{accepted}, 3, 'the server accepts every connection after a plain-reference failure');
+    is($CountingService::served, 2, 'the calls after a plain-reference failure are served');
+    is($connections[1]->{closed} > 0, 1, 'a connection whose close dies with a plain reference is still closed');
+}

@@ -31,6 +31,7 @@ use Thrift::Exception;
 #
 package Thrift::Server;
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
+use Scalar::Util qw(blessed);
 
 #
 # 3 possible constructors:
@@ -115,7 +116,7 @@ sub _handleException
     my $self = shift;
     my $e    = shift;
 
-    if ($e->isa('Thrift::TException') and exists $e->{message}) {
+    if (blessed($e) and $e->isa('Thrift::TException') and exists $e->{message}) {
         my $message = $e->{message};
         my $code    = $e->{code};
         my $out     = $code . ':' . $message;
@@ -148,7 +149,7 @@ sub tryClose
         }
     };
     if($@) {
-        if ($@->isa('Thrift::TException') and exists $@->{message}) {
+        if (blessed($@) and $@->isa('Thrift::TException') and exists $@->{message}) {
             my $message = $@->{message};
             my $code    = $@->{code};
             my $out     = $code . ':' . $message;
