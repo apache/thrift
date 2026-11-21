@@ -130,6 +130,7 @@ node ${DIR}/ws_client_errors.test.js || TESTOK=1
 node ${DIR}/transport_receiver.test.js || TESTOK=1
 node ${DIR}/transport_reset.test.js || TESTOK=1
 node ${DIR}/server_error_events.test.js || TESTOK=1
+node ${DIR}/handler_rejections.test.js || TESTOK=1
 node ${DIR}/web_server_ws.test.js || TESTOK=1
 node ${DIR}/web_server_ws_fragments.test.js || TESTOK=1
 node ${DIR}/web_server_post_errors.test.js || TESTOK=1

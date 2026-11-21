@@ -245,6 +245,7 @@ public:
    */
 
   std::string js_includes();
+  std::string js_error_message(const std::string& var_name);
   std::string ts_includes();
   std::string ts_service_includes();
   std::string render_includes();
@@ -552,6 +553,16 @@ void t_js_generator::init_generator() {
       f_types_ts_ << "declare module " << ts_module_ << " {";
     }
   }
+}
+
+/**
+ * The message of a TApplicationException for a failure the handler reported as
+ * var_name, whatever that value is: an Error, a string, null, or an object whose
+ * message is no string.
+ */
+string t_js_generator::js_error_message(const string& var_name) {
+  return "((" + var_name + " === null || typeof " + var_name + " === 'undefined') ? 'Unknown error' : "
+         "(typeof " + var_name + ".message === 'string' ? " + var_name + ".message : String(" + var_name + ")))";
 }
 
 /**
@@ -1626,7 +1637,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
 
   // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
-    indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
+    indent(f_service_) << js_const_type_ << "returned = this._handler." << tfunction->get_name() << "(";
 
     bool first = true;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1639,6 +1650,17 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     }
 
     f_service_ << ");" << '\n';
+    // A oneway call has no reply in which a failure of an asynchronous handler
+    // could be reported, so the handler's rejection is handled here.
+    indent(f_service_) << "if (returned && typeof returned.then === 'function') {" << '\n';
+    indent_up();
+    if (gen_es6_) {
+      indent(f_service_) << "returned.then(null, () => {});" << '\n';
+    } else {
+      indent(f_service_) << "returned.then(null, function () {});" << '\n';
+    }
+    indent_down();
+    indent(f_service_) << "}" << '\n';
     indent_down();
 
     if (gen_es6_) {
@@ -1695,6 +1717,10 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
     indent(f_service_) << "}).catch(function (err) {" << '\n';
   }
   indent_up();
+  // Writing the error reply must not throw, whatever the handler rejected
+  // with: nothing else would catch it.
+  indent(f_service_) << "try {" << '\n';
+  indent_up();
   indent(f_service_) << js_let_type_ << "result;" << '\n';
 
   bool has_exception = false;
@@ -1729,8 +1755,8 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   f_service_ << indent() << "result = new "
-                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
-                            " err.message);" << '\n' << indent() << "output.writeMessageBegin(\""
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, "
+             << js_error_message("err") << ");" << '\n' << indent() << "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << '\n';
 
   if (has_exception) {
@@ -1741,6 +1767,12 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   f_service_ << indent() << "result[Symbol.for(\"write\")](output);" << '\n' << indent()
              << "output.writeMessageEnd();" << '\n' << indent() << "output.flush();" << '\n';
   indent_down();
+  indent(f_service_) << "} catch (e) {" << '\n';
+  indent_up();
+  indent(f_service_) << "// the error reply could not be written either; the connection carries on" << '\n';
+  indent_down();
+  indent(f_service_) << "}" << '\n';
+  indent_down();
   indent(f_service_) << "});" << '\n';
   indent_down();
   // End promise style invocation
@@ -1748,18 +1780,21 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   // Callback style invocation
   indent(f_service_) << "} else {" << '\n';
   indent_up();
-  indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
-
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    f_service_ << "args." << (*f_iter)->get_name() << ", ";
-  }
-
+  // The reply goes out once, and a handler that also returns a promise has its
+  // rejection answered as an error reply.
+  indent(f_service_) << js_let_type_ << "replied = false;" << '\n';
   if (gen_es6_) {
-    f_service_ << "(err, result) => {" << '\n';
+    indent(f_service_) << js_const_type_ << "reply = (err, result) => {" << '\n';
   } else {
-    f_service_ << "function (err, result) {" << '\n';
+    indent(f_service_) << js_const_type_ << "reply = function (err, result) {" << '\n';
   }
   indent_up();
+  indent(f_service_) << "if (replied) {" << '\n';
+  indent_up();
+  indent(f_service_) << "return;" << '\n';
+  indent_down();
+  indent(f_service_) << "}" << '\n';
+  indent(f_service_) << "replied = true;" << '\n';
   indent(f_service_) << js_let_type_ << "result_obj;" << '\n';
 
   indent(f_service_) << "if ((err === null || typeof err === 'undefined')";
@@ -1782,15 +1817,42 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent(f_service_) << "} else {" << '\n';
   indent_up();
   f_service_ << indent() << "result_obj = new "
-                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN,"
-                            " err.message);" << '\n' << indent() << "output.writeMessageBegin(\""
+                            "Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, "
+             << js_error_message("err") << ");" << '\n' << indent() << "output.writeMessageBegin(\""
              << tfunction->get_name() << "\", Thrift.MessageType.EXCEPTION, seqid);" << '\n';
   indent_down();
   f_service_ << indent() << "}" << '\n' << indent() << "result_obj[Symbol.for(\"write\")](output);" << '\n' << indent()
              << "output.writeMessageEnd();" << '\n' << indent() << "output.flush();" << '\n';
 
   indent_down();
+  indent(f_service_) << "};" << '\n';
+  indent(f_service_) << js_const_type_ << "returned = this._handler." << tfunction->get_name() << "(";
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    f_service_ << "args." << (*f_iter)->get_name() << ", ";
+  }
+  f_service_ << "reply);" << '\n';
+  indent(f_service_) << "if (returned && typeof returned.then === 'function') {" << '\n';
+  indent_up();
+  if (gen_es6_) {
+    indent(f_service_) << "returned.then(null, err => {" << '\n';
+  } else {
+    indent(f_service_) << "returned.then(null, function (err) {" << '\n';
+  }
+  indent_up();
+  indent(f_service_) << "try {" << '\n';
+  indent_up();
+  indent(f_service_) << "reply(err === null || typeof err === 'undefined' ? new Error('Unknown error') : err);"
+                     << '\n';
+  indent_down();
+  indent(f_service_) << "} catch (e) {" << '\n';
+  indent_up();
+  indent(f_service_) << "// the error reply could not be written either; the connection carries on" << '\n';
+  indent_down();
+  indent(f_service_) << "}" << '\n';
+  indent_down();
   indent(f_service_) << "});" << '\n';
+  indent_down();
+  indent(f_service_) << "}" << '\n';
   indent_down();
   indent(f_service_) << "}" << '\n';
   // End callback style invocation
