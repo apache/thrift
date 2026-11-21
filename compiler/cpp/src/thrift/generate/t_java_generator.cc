@@ -3579,15 +3579,18 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
         << '\n'
         << indent() << "  throw new java.lang.IllegalStateException(\"Method call not finished!\");"
         << '\n'
-        << indent() << "}" << '\n'
-        << indent()
-        << "org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new "
-           "org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());"
-        << '\n'
-        << indent()
-        << "org.apache.thrift.protocol.TProtocol prot = "
-           "client.getProtocolFactory().getProtocol(memoryTransport);"
-        << '\n';
+        << indent() << "}" << '\n';
+    // A oneway call has no reply to read, so the transport and protocol would be dead stores.
+    if (!(*f_iter)->is_oneway()) {
+      f_service_ << indent()
+                 << "org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new "
+                    "org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());"
+                 << '\n'
+                 << indent()
+                 << "org.apache.thrift.protocol.TProtocol prot = "
+                    "client.getProtocolFactory().getProtocol(memoryTransport);"
+                 << '\n';
+    }
     indent(f_service_);
     if (ret_type->is_void()) { // NB: Includes oneways which always return void.
       if (!(*f_iter)->is_oneway()) {
@@ -5742,6 +5745,12 @@ void t_java_generator::generate_java_struct_standard_scheme(ostream& out,
   out << indent() << "}" << '\n' << '\n';
 }
 
+// The tuple scheme reads and writes through the TTupleProtocol only for required, optional and
+// default-requiredness fields; for a struct with none of them the cast would be a dead store.
+static bool tuple_scheme_uses_protocol(t_struct* tstruct) {
+  return !tstruct->get_members().empty();
+}
+
 void t_java_generator::generate_java_struct_tuple_reader(ostream& out, t_struct* tstruct) {
   indent(out) << java_override_annotation() << '\n';
   indent(out) << "public void read(org.apache.thrift.protocol.TProtocol prot, "
@@ -5750,9 +5759,11 @@ void t_java_generator::generate_java_struct_tuple_reader(ostream& out, t_struct*
   indent(out) << "prot.incrementRecursionDepth();" << '\n';
   indent(out) << "try {" << '\n';
   indent_up();
-  indent(out) << "org.apache.thrift.protocol.TTupleProtocol iprot = "
-                 "(org.apache.thrift.protocol.TTupleProtocol) prot;"
-              << '\n';
+  if (tuple_scheme_uses_protocol(tstruct)) {
+    indent(out) << "org.apache.thrift.protocol.TTupleProtocol iprot = "
+                   "(org.apache.thrift.protocol.TTupleProtocol) prot;"
+                << '\n';
+  }
   int optional_count = 0;
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -5801,9 +5812,11 @@ void t_java_generator::generate_java_struct_tuple_writer(ostream& out, t_struct*
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol prot, "
               << make_valid_java_identifier(tstruct->get_name()) << " struct) throws org.apache.thrift.TException {" << '\n';
   indent_up();
-  indent(out) << "org.apache.thrift.protocol.TTupleProtocol oprot = "
-                 "(org.apache.thrift.protocol.TTupleProtocol) prot;"
-              << '\n';
+  if (tuple_scheme_uses_protocol(tstruct)) {
+    indent(out) << "org.apache.thrift.protocol.TTupleProtocol oprot = "
+                   "(org.apache.thrift.protocol.TTupleProtocol) prot;"
+                << '\n';
+  }
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
