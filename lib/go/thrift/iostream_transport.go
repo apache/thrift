@@ -118,9 +118,8 @@ func (p *StreamTransport) IsOpen() bool {
 func (p *StreamTransport) Open() error {
 	if !p.closed {
 		return NewTTransportException(ALREADY_OPEN, "StreamTransport already open.")
-	} else {
-		return NewTTransportException(NOT_OPEN, "cannot reopen StreamTransport.")
 	}
+	return NewTTransportException(NOT_OPEN, "cannot reopen StreamTransport.")
 }
 
 // Closes both the input and output streams.

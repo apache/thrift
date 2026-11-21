@@ -193,12 +193,7 @@ func (p *TBinaryProtocol) WriteListEnd(ctx context.Context) error {
 }
 
 func (p *TBinaryProtocol) WriteSetBegin(ctx context.Context, elemType TType, size int) error {
-	e := p.WriteByte(ctx, int8(elemType))
-	if e != nil {
-		return e
-	}
-	e = p.WriteI32(ctx, int32(size))
-	return e
+	return p.WriteListBegin(ctx, elemType, size)
 }
 
 func (p *TBinaryProtocol) WriteSetEnd(ctx context.Context) error {
@@ -261,7 +256,10 @@ func (p *TBinaryProtocol) WriteBinary(ctx context.Context, value []byte) error {
 }
 
 func (p *TBinaryProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
-	_, err := p.trans.Write(value[:])
+	// Copy into the scratch buffer so value does not escape to the heap.
+	buf := p.buffer[:len(value)]
+	copy(buf, value[:])
+	_, err := p.trans.Write(buf)
 	return NewTProtocolException(err)
 }
 
@@ -401,24 +399,7 @@ func (p *TBinaryProtocol) ReadListEnd(ctx context.Context) error {
 }
 
 func (p *TBinaryProtocol) ReadSetBegin(ctx context.Context) (elemType TType, size int, err error) {
-	b, e := p.ReadByte(ctx)
-	if e != nil {
-		err = NewTProtocolException(e)
-		return
-	}
-	elemType = TType(b)
-	size32, e := p.ReadI32(ctx)
-	if e != nil {
-		err = NewTProtocolException(e)
-		return
-	}
-	minElemSize := p.getMinSerializedSize(elemType)
-	err = checkContainerSizeForProtocol(int64(size32), minElemSize, p.trans.RemainingBytes(), p.cfg)
-	if err != nil {
-		return
-	}
-	size = int(size32)
-	return elemType, size, nil
+	return p.ReadListBegin(ctx)
 }
 
 func (p *TBinaryProtocol) ReadSetEnd(ctx context.Context) error {

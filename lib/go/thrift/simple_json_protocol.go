@@ -557,14 +557,24 @@ func (p *TSimpleJSONProtocol) ReadDouble(ctx context.Context) (float64, error) {
 }
 
 func (p *TSimpleJSONProtocol) ReadString(ctx context.Context) (string, error) {
-	var v string
+	return readQuotedOrNull(p, p.ParseStringBody)
+}
+
+func (p *TSimpleJSONProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
+	return readQuotedOrNull(p, p.ParseBase64EncodedBody)
+}
+
+// readQuotedOrNull reads a JSON string value with parseBody, called after the
+// opening quote, or a JSON null, which yields the zero value of T.
+func readQuotedOrNull[T any](p *TSimpleJSONProtocol, parseBody func() (T, error)) (T, error) {
+	var v T
 	if err := p.ParsePreValue(); err != nil {
 		return v, err
 	}
 	f, _ := p.reader.Peek(1)
 	if len(f) > 0 && f[0] == JSON_QUOTE {
 		p.reader.ReadByte()
-		value, err := p.ParseStringBody()
+		value, err := parseBody()
 		v = value
 		if err != nil {
 			return v, err
@@ -583,37 +593,6 @@ func (p *TSimpleJSONProtocol) ReadString(ctx context.Context) (string, error) {
 		e := fmt.Errorf("Expected a JSON string, found unquoted data started with %s", string(f))
 		return v, NewTProtocolExceptionWithType(INVALID_DATA, e)
 	}
-	return v, p.ParsePostValue()
-}
-
-func (p *TSimpleJSONProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
-	var v []byte
-	if err := p.ParsePreValue(); err != nil {
-		return nil, err
-	}
-	f, _ := p.reader.Peek(1)
-	if len(f) > 0 && f[0] == JSON_QUOTE {
-		p.reader.ReadByte()
-		value, err := p.ParseBase64EncodedBody()
-		v = value
-		if err != nil {
-			return v, err
-		}
-	} else if len(f) > 0 && f[0] == JSON_NULL[0] {
-		b := make([]byte, len(JSON_NULL))
-		_, err := p.reader.Read(b)
-		if err != nil {
-			return v, NewTProtocolException(err)
-		}
-		if string(b) != string(JSON_NULL) {
-			e := fmt.Errorf("Expected a JSON string, found unquoted data started with %s", string(b))
-			return v, NewTProtocolExceptionWithType(INVALID_DATA, e)
-		}
-	} else {
-		e := fmt.Errorf("Expected a JSON string, found unquoted data started with %s", string(f))
-		return v, NewTProtocolExceptionWithType(INVALID_DATA, e)
-	}
-
 	return v, p.ParsePostValue()
 }
 
@@ -1045,7 +1024,7 @@ func (p *TSimpleJSONProtocol) ParseI64() (int64, bool, error) {
 	var value int64
 	var isnull bool
 	if p.safePeekContains(JSON_NULL) {
-		p.reader.Read(make([]byte, len(JSON_NULL)))
+		p.reader.Discard(len(JSON_NULL))
 		isnull = true
 	} else {
 		num, err := p.readNumeric()
@@ -1067,7 +1046,7 @@ func (p *TSimpleJSONProtocol) ParseF64() (float64, bool, error) {
 	var value float64
 	var isnull bool
 	if p.safePeekContains(JSON_NULL) {
-		p.reader.Read(make([]byte, len(JSON_NULL)))
+		p.reader.Discard(len(JSON_NULL))
 		isnull = true
 	} else {
 		num, err := p.readNumeric()
@@ -1262,7 +1241,7 @@ func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 		}
 	}
 	if p.safePeekContains(JSON_NULL) {
-		p.reader.Read(make([]byte, len(JSON_NULL)))
+		p.reader.Discard(len(JSON_NULL))
 		return true, nil
 	}
 	return false, nil

@@ -614,15 +614,8 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 }
 
 func (t *THeaderTransport) needReadFrame() bool {
-	if t.clientType == clientUnknown {
-		// This is a new connection that's never read before.
-		return true
-	}
-	if t.isFramed() && t.frameReader == nil {
-		// We just finished the last frame.
-		return true
-	}
-	return false
+	// A new connection that has never been read, or the last frame is done.
+	return t.clientType == clientUnknown || (t.isFramed() && t.frameReader == nil)
 }
 
 func (t *THeaderTransport) Read(p []byte) (read int, err error) {
@@ -743,9 +736,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		padding := 4 - headers.Len()%4
 		if padding < 4 {
 			buf := t.buffer[:padding]
-			for i := range buf {
-				buf[i] = 0
-			}
+			clear(buf)
 			if _, err := headers.Write(buf); err != nil {
 				return NewTTransportExceptionFromError(err)
 			}

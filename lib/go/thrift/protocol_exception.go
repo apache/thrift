@@ -77,7 +77,7 @@ func NewTProtocolException(err error) TProtocolException {
 		return e
 	}
 
-	if errors.As(err, new(base64.CorruptInputError)) {
+	if _, ok := errors.AsType[base64.CorruptInputError](err); ok {
 		return NewTProtocolExceptionWithType(INVALID_DATA, err)
 	}
 
