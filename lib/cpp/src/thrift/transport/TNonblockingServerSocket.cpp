@@ -268,13 +268,18 @@ void TNonblockingServerSocket::_setup_sockopts() {
     }
   }
 
-  // Turn linger off, don't want to block on calls to close
-  struct linger ling = {0, 0};
-  if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&ling), sizeof(ling))) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
+  // Turn linger off, don't want to block on calls to close. Not for domain
+  // sockets: linger is meaningless there and WSL fails the call (THRIFT-5374).
+  if (!isUnixDomainSocket()) {
+    struct linger ling = {0, 0};
+    if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&ling), sizeof(ling))) {
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      TOutput::instance().perror("TNonblockingServerSocket::listen() setsockopt() SO_LINGER ",
+                                 errno_copy);
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER",
+                                errno_copy);
+    }
   }
 
   // Keepalive to ensure full result flushing

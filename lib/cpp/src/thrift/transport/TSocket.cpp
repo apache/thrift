@@ -727,7 +727,8 @@ void TSocket::setPath(std::string path) {
 void TSocket::setLinger(bool on, int linger) {
   lingerOn_ = on;
   lingerVal_ = linger;
-  if (socket_ == THRIFT_INVALID_SOCKET) {
+  // Linger does not apply to domain sockets, and WSL rejects it (THRIFT-5374).
+  if (socket_ == THRIFT_INVALID_SOCKET || isUnixDomainSocket()) {
     return;
   }
 
