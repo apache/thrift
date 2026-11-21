@@ -113,8 +113,10 @@ public class TAsyncClientManager {
           transitionMethods();
           timeoutMethods();
           startPendingMethods();
-        } catch (Exception exception) {
-          LOGGER.error("Ignoring uncaught exception in SelectThread", exception);
+        } catch (Throwable throwable) {
+          // This thread serves every call of the manager, so nothing that one call
+          // throws may end it.
+          LOGGER.error("Ignoring uncaught exception in SelectThread", throwable);
         }
       }
 
@@ -189,6 +191,9 @@ public class TAsyncClientManager {
         } catch (Exception exception) {
           LOGGER.warn("Caught exception in TAsyncClientManager!", exception);
           methodCall.onError(exception);
+        } catch (Error error) {
+          LOGGER.warn("Caught error in TAsyncClientManager!", error);
+          methodCall.onError(new TException(error));
         }
       }
     }

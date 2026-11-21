@@ -212,11 +212,16 @@ public abstract class TAsyncMethodCall<T> {
                   + state
                   + " but selector called transition method. Seems like a bug...");
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
+      // An Error too ends this call only, not the selector thread that serves all calls
       key.cancel();
       key.attach(null);
-      onError(e);
+      onError(asException(e));
     }
+  }
+
+  private static Exception asException(Throwable t) {
+    return t instanceof Exception ? (Exception) t : new TException(t);
   }
 
   protected void onError(Exception e) {
@@ -243,9 +248,9 @@ public abstract class TAsyncMethodCall<T> {
       T result = this.getResult();
       client.onComplete();
       callback.onComplete(result);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       key.cancel();
-      onError(e);
+      onError(asException(e));
     }
   }
 
