@@ -44,9 +44,10 @@ distdir:
 # The actual test targets.
 # There just must be some way to reassign a variable without warnings in
 # Automake...
-targets__ = async_test client_pool_test serialization_benchmark \
+targets__ = async_client_test async_test client_pool_test serialization_benchmark \
 	stress_test_server thrift_test_client thrift_test_server transport_test
-ran_tests__ = client_pool_test \
+ran_tests__ = async_client_test \
+	client_pool_test \
 	transport_test \
 	async_test_runner.sh \
 	thrift_test_runner.sh
@@ -82,7 +83,7 @@ d_test_flags += -w -wi -O -release -inline -I$(top_srcdir)/lib/d/src -Igen-d \
 	$(top_builddir)/lib/d/$(D_LIB_NAME)
 
 
-async_test client_pool_test transport_test: %: %.d
+async_client_test async_test client_pool_test transport_test: %: %.d
 	$(DMD) $(d_test_flags) -of$@ $^
 
 serialization_benchmark: %: %.d $(debug_proto_gen)
