@@ -35,6 +35,7 @@ import static org.mockito.Mockito.mock;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -64,6 +65,7 @@ import org.apache.thrift.transport.TNonblockingSSLSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.junit.jupiter.api.Test;
 
 public class TestTAsyncSSLProgress {
@@ -85,6 +87,45 @@ public class TestTAsyncSSLProgress {
   @Test
   public void testSunJsseTls13TaskDoesNotDelayTimeoutOrOtherCalls() throws Exception {
     checkTaskTimeout("TLSv1.3");
+  }
+
+  @Test
+  public void testNonblockingClientNegotiatesConfiguredProtocol() throws Exception {
+    TSSLTransportParameters params = new TSSLTransportParameters();
+    params.setTrustStore(
+        System.getProperty("javax.net.ssl.trustStore"),
+        System.getProperty("javax.net.ssl.trustStorePassword"));
+    params.setEnabledProtocols("TLSv1.2");
+    try (SSLServerSocket listener =
+            (SSLServerSocket)
+                SSLContext.getDefault()
+                    .getServerSocketFactory()
+                    .createServerSocket(0, 1, InetAddress.getByName("localhost"));
+        TNonblockingTransport transport =
+            TSSLTransportFactory.getNonblockingClientSocket(
+                "localhost", listener.getLocalPort(), 0, params)) {
+      listener.setEnabledProtocols(new String[] {"TLSv1.3", "TLSv1.2"});
+      listener.setSoTimeout(5000);
+      CompletableFuture<Void> serverDone =
+          serve(
+              listener,
+              socket -> {
+                readRequest(socket);
+                DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                output.writeInt(1);
+                output.writeByte(42);
+                output.flush();
+                assertEquals("TLSv1.2", ((SSLSocket) socket).getSession().getProtocol());
+              });
+
+      TAsyncClientManager manager = new TAsyncClientManager();
+      try {
+        assertArrayEquals(new byte[] {42}, call(manager, transport, 5000).get(6, TimeUnit.SECONDS));
+        serverDone.get(5, TimeUnit.SECONDS);
+      } finally {
+        manager.stop();
+      }
+    }
   }
 
   private void checkTaskTimeout(String protocol) throws Exception {
