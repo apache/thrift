@@ -3888,13 +3888,14 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   } else {
     indent(f_service_) << "byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;" << '\n';
     indent(f_service_) << "org.apache.thrift.TSerializable msg;" << '\n';
-    indent(f_service_) << resultname << " result = new " << resultname << "();" << '\n';
 
     t_struct* xs = tfunction->get_xceptions();
     const std::vector<t_field*>& xceptions = xs->get_members();
 
     vector<t_field*>::const_iterator x_iter;
     if (xceptions.size() > 0) {
+      // Only needed to carry the declared exceptions back to the client
+      indent(f_service_) << resultname << " result = new " << resultname << "();" << '\n';
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         if (x_iter == xceptions.begin())
           f_service_ << indent();
