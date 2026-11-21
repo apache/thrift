@@ -16,7 +16,11 @@
 // under the License.
 
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.IO;
+using System.IO.Pipes;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -188,6 +192,50 @@ namespace Thrift.Tests.Transports
             }
         }
 
+        // A failed wait ends only the listen pipe it belongs to. A client connected to another listen pipe keeps
+        // its connection, and the next call returns it.
+        [TestMethod]
+        public async Task AcceptAsync_WaitOfOnePipeFailed_KeepsClientOfOtherPipe()
+        {
+            var pipeName = NewPipeName();
+            var server = NewServer(pipeName, 2);
+            try
+            {
+                using var limit = new CancellationTokenSource(WaitLimit);
+                using var client1 = new TNamedPipeTransport(pipeName, new TConfiguration(), ConnectTimeoutMs);
+                var connecting1 = client1.OpenAsync(limit.Token);
+                using var accepted1 = await server.AcceptAsync(limit.Token);
+                await connecting1;
+
+                // the other listen pipe goes on waiting and gets the second client, which is not accepted yet
+                using var client2 = new TNamedPipeTransport(pipeName, new TConfiguration(), ConnectTimeoutMs);
+                await client2.OpenAsync(limit.Token);
+
+                // the next call takes the failed wait first, and closes that pipe
+                var error = new IOException("The wait of a listen pipe failed");
+                var failedPipeName = NewPipeName();
+                using var failedPipe = new NamedPipeServerStream(failedPipeName, PipeDirection.InOut, 1,
+                    PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 4096, 4096);
+                InsertListenPipeWithFailedWait(server, failedPipe, error);
+                var ex = await Assert.ThrowsExactlyAsync<TTransportException>(async () => await server.AcceptAsync(limit.Token));
+                Assert.AreEqual(TTransportException.ExceptionType.NotOpen, ex.Type, ex.ToString());
+                Assert.AreSame(error, ex.InnerException, ex.ToString());
+                using (var probe = new NamedPipeClientStream(".", failedPipeName, PipeDirection.InOut))
+                {
+                    Assert.ThrowsExactly<TimeoutException>(() => probe.Connect(300), "the pipe of the failed wait is still open");
+                }
+
+                using var accepted2 = await server.AcceptAsync(limit.Token);
+                Assert.IsTrue(accepted2.IsOpen, "AcceptAsync() returned a pipe no client is connected to");
+                await AssertRoundTripAsync(client2, accepted2, 21, limit.Token);
+                await AssertRoundTripAsync(client1, accepted1, 12, limit.Token);
+            }
+            finally
+            {
+                server.Close();
+            }
+        }
+
         // A cancelled call closes the server transport; the next call sets up the pipes again.
         [TestMethod]
         public async Task AcceptAsync_AfterCancelledCall_AcceptsNextClient()
@@ -270,6 +318,20 @@ namespace Thrift.Tests.Transports
             {
                 return ex.GetType().Name;
             }
+        }
+
+        // Puts a listen pipe whose wait has failed in front of the server's listen pipes. Its pipe has a name of
+        // its own, so no client of the server connects to it.
+        private static void InsertListenPipeWithFailedWait(TNamedPipeServerTransport server, NamedPipeServerStream pipe, Exception error)
+        {
+            const BindingFlags instance = BindingFlags.Instance | BindingFlags.NonPublic;
+            var streams = (IList?)typeof(TNamedPipeServerTransport).GetField("_streams", instance)?.GetValue(server);
+            var pairType = typeof(TNamedPipeServerTransport).GetNestedType("TaskStreamPair", BindingFlags.NonPublic);
+            Assert.IsNotNull(streams, "TNamedPipeServerTransport._streams not found");
+            Assert.IsNotNull(pairType, "TNamedPipeServerTransport.TaskStreamPair not found");
+
+            var pair = Activator.CreateInstance(pairType, new object?[] { pipe, Task.FromException(error) });
+            streams.Insert(0, pair);
         }
 
         // One byte from the client to the server, and another one back.
