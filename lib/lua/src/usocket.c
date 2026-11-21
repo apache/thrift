@@ -286,12 +286,18 @@ T_ERRCODE socket_recv(
 
 T_ERRCODE socket_setnonblocking(p_socket sock) {
   int flags = fcntl(*sock, F_GETFL, 0);
+  if (flags == -1) {
+    return errno;
+  }
   flags |= O_NONBLOCK;
   return fcntl(*sock, F_SETFL, flags) != -1 ? SUCCESS : errno;
 }
 
 T_ERRCODE socket_setblocking(p_socket sock) {
   int flags = fcntl(*sock, F_GETFL, 0);
+  if (flags == -1) {
+    return errno;
+  }
   flags &= (~(O_NONBLOCK));
   return fcntl(*sock, F_SETFL, flags) != -1 ? SUCCESS : errno;
 }

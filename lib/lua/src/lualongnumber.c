@@ -82,7 +82,12 @@ static int l_div(lua_State *L) {
   int64_t a, b, c;
   a = lualongnumber_checklong(L, 1);
   b = lualongnumber_checklong(L, 2);
-  c = a / b;
+  if (b == 0) {
+    return luaL_error(L, "division by zero");
+  }
+  // INT64_MIN / -1 does not fit; wrap like l_add and l_mul do, and avoid the
+  // hardware trap that the plain division raises on some CPUs.
+  c = (b == -1) ? (int64_t)(0 - (uint64_t)a) : a / b;
   lualongnumber_pushlong(L, &c);
   return 1;
 }
@@ -126,7 +131,10 @@ static int l_mod(lua_State *L) {
   int64_t a, b, c;
   a = lualongnumber_checklong(L, 1);
   b = lualongnumber_checklong(L, 2);
-  c = a % b;
+  if (b == 0) {
+    return luaL_error(L, "modulo by zero");
+  }
+  c = (b == -1) ? 0 : a % b;
   lualongnumber_pushlong(L, &c);
   return 1;
 }
