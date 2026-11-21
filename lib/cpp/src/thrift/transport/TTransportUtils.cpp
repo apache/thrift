@@ -41,12 +41,7 @@ uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
 
     // Double the size of the underlying buffer if it is full
     if (rLen_ == rBufSize_) {
-      rBufSize_ *= 2;
-      auto *tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
-      if (tmpBuf == nullptr) {
-       throw std::bad_alloc();
-      }
-      rBuf_ = tmpBuf;
+      growReadBuffer();
     }
 
     // try to fill up the buffer
@@ -64,6 +59,9 @@ uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
     need -= give;
   }
 
+  // The pipe keeps every byte of the message until readEnd(), so they all
+  // count against the maximum message size.
+  countConsumedMessageBytes(len - need);
   return (len - need);
 }
 
@@ -72,11 +70,17 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
     return;
   }
 
-  // Make the buffer as big as it needs to be
-  if ((len + wLen_) >= wBufSize_) {
-    uint32_t newBufSize = wBufSize_ * 2;
-    while ((len + wLen_) >= newBufSize) {
+  // Make the buffer as big as it needs to be, as long as its size still fits a uint32_t
+  const uint64_t needed = static_cast<uint64_t>(len) + wLen_;
+  if (needed >= wBufSize_) {
+    uint64_t newBufSize
+        = (std::max)(static_cast<uint64_t>(wBufSize_), static_cast<uint64_t>(1)) * 2;
+    while (needed >= newBufSize) {
       newBufSize *= 2;
+    }
+    if (newBufSize > (std::numeric_limits<uint32_t>::max)()) {
+      throw TTransportException(TTransportException::BAD_ARGS,
+                                "TPipedTransport: the write buffer cannot grow further");
     }
     auto *tmpBuf= (uint8_t*)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
     if (tmpBuf == nullptr) {
@@ -84,7 +88,7 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
     }
     wBuf_ = tmpBuf;
 
-    wBufSize_ = newBufSize;
+    wBufSize_ = static_cast<uint32_t>(newBufSize);
   }
 
   // Copy into the buffer

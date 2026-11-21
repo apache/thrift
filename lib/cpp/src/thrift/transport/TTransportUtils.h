@@ -22,6 +22,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 #include <algorithm>
 #include <thrift/transport/TTransport.h>
@@ -122,12 +123,7 @@ public:
     if (rPos_ >= rLen_) {
       // Double the size of the underlying buffer if it is full
       if (rLen_ == rBufSize_) {
-        rBufSize_ *= 2;
-        auto * tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
-	if (tmpBuf == nullptr) {
-	  throw std::bad_alloc();
-	}
-	rBuf_ = tmpBuf;
+        growReadBuffer();
       }
 
       // try to fill up the buffer
@@ -156,12 +152,14 @@ public:
     srcTrans_->readEnd();
 
     // If requests are being pipelined, copy down our read-ahead data,
-    // then reset our state.
+    // then reset our state.  The two ranges overlap when the read-ahead is
+    // longer than what was read.
     int read_ahead = rLen_ - rPos_;
     uint32_t bytes = rPos_;
-    memcpy(rBuf_, rBuf_ + rPos_, read_ahead);
+    memmove(rBuf_, rBuf_ + rPos_, read_ahead);
     rPos_ = 0;
     rLen_ = read_ahead;
+    resetConsumedMessageSize();
 
     return bytes;
   }
@@ -189,6 +187,21 @@ public:
   void write_virt(const uint8_t* buf, uint32_t len) override { this->write(buf, len); }
 
 protected:
+  // Doubles rBuf_, as long as its size still fits a uint32_t.
+  void growReadBuffer() {
+    if (rBufSize_ > (std::numeric_limits<uint32_t>::max)() / 2) {
+      throw TTransportException(TTransportException::BAD_ARGS,
+                                "TPipedTransport: the read buffer cannot grow further");
+    }
+    uint32_t newBufSize = rBufSize_ * 2;
+    auto* tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * newBufSize);
+    if (tmpBuf == nullptr) {
+      throw std::bad_alloc();
+    }
+    rBuf_ = tmpBuf;
+    rBufSize_ = newBufSize;
+  }
+
   std::shared_ptr<TTransport> srcTrans_;
   std::shared_ptr<TTransport> dstTrans_;
 
