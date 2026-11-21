@@ -148,15 +148,17 @@ public class TThreadPoolServer extends TServer {
       return;
     }
 
-    execute();
+    try {
+      execute();
+    } finally {
+      executorService_.shutdownNow();
 
-    executorService_.shutdownNow();
+      if (!waitForShutdown()) {
+        LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
+      }
 
-    if (!waitForShutdown()) {
-      LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
+      setServing(false);
     }
-
-    setServing(false);
   }
 
   protected void execute() {
@@ -171,12 +173,33 @@ public class TThreadPoolServer extends TServer {
                 "ThreadPool is saturated with incoming requests. Closing latest connection.");
           }
           client.close();
+        } catch (OutOfMemoryError oom) {
+          // No worker thread could be started for this client, e.g. "unable to create native
+          // thread". Serve the others once threads are free again, as for a rejected execution.
+          if (!stopped_) {
+            LOGGER.warn("Could not start a worker thread. Closing latest connection.", oom);
+          }
+          client.close();
+          if (!pauseAfterWorkerFailure()) {
+            break;
+          }
         }
       } catch (TTransportException ttx) {
         if (!stopped_) {
           LOGGER.warn("Transport error occurred during acceptance of message", ttx);
         }
       }
+    }
+  }
+
+  /** Waits a moment before the next accept, so that a server out of threads does not spin. */
+  private boolean pauseAfterWorkerFailure() {
+    try {
+      TimeUnit.MILLISECONDS.sleep(100);
+      return true;
+    } catch (InterruptedException ix) {
+      Thread.currentThread().interrupt();
+      return false;
     }
   }
 
