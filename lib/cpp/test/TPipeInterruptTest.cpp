@@ -489,5 +489,55 @@ BOOST_AUTO_TEST_CASE(stress_pipe_close_during_use) {
   BOOST_CHECK_MESSAGE(reader.finishesWithin(std::chrono::seconds(10)), "the reader did not finish");
 }
 
+// A client may send its last request and close the pipe before the child has
+// read it, as a client of a oneway call does.  The child must still hand out
+// that data.  After it, a read must fail at once, the wait handle must say so,
+// and close() must return.  If one of these calls waits for good instead, the
+// thread below is left behind with the only reference to the child, so that
+// the test can still end; that is also why this case comes last.
+BOOST_AUTO_TEST_CASE(test_child_after_client_sent_and_closed) {
+  ConnectedPipes pipes("TPipeInterruptTest.SentAndClosed");
+  std::shared_ptr<std::shared_ptr<TPipe> > child(
+      new std::shared_ptr<TPipe>(std::dynamic_pointer_cast<TPipe>(pipes.accepted)));
+  pipes.accepted.reset();
+  BOOST_REQUIRE(*child);
+
+  const uint8_t data[4] = {'d', 'a', 't', 'a'};
+  const uint32_t sent = static_cast<uint32_t>(sizeof(data));
+  pipes.client->write(data, sent);
+  pipes.client->close();
+  // the data is there once the read that the child keeps pending has completed
+  BOOST_REQUIRE_EQUAL(WAIT_OBJECT_0, WaitForSingleObject((*child)->getNativeWaitHandle(), 10000));
+
+  struct Results {
+    std::string received;
+    DWORD waitAfterData = WAIT_FAILED;
+    std::string nextRead;
+  };
+  std::shared_ptr<Results> results(new Results);
+  BackgroundCall calls([child, results, sent]() {
+    std::shared_ptr<TPipe> pipe;
+    pipe.swap(*child);
+    uint8_t buf[16];
+    uint32_t got = pipe->read(buf, sent);
+    results->received.assign(reinterpret_cast<const char*>(buf), got);
+    results->waitAfterData = WaitForSingleObject(pipe->getNativeWaitHandle(), 5000);
+    try {
+      got = pipe->read(buf, sizeof(buf));
+      results->nextRead = "returned " + std::to_string(got) + " byte(s)";
+    } catch (const TTransportException&) {
+      results->nextRead = "threw";
+    }
+    pipe->close();
+  });
+
+  BOOST_REQUIRE_MESSAGE(calls.finishesWithin(wakeupTime), "the child's calls did not return");
+  BOOST_CHECK_MESSAGE(calls.outcome() == "returned",
+                      "the child's calls ended: " << calls.outcome());
+  BOOST_CHECK_EQUAL(std::string("data"), results->received);
+  BOOST_CHECK_EQUAL(static_cast<DWORD>(WAIT_OBJECT_0), results->waitAfterData);
+  BOOST_CHECK_EQUAL(std::string("threw"), results->nextRead);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 #endif
