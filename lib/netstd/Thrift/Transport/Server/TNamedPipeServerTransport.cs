@@ -309,6 +309,7 @@ namespace Thrift.Transport.Server
 
         protected override async ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
         {
+            Exception failure;
             try
             {
                 EnsurePipeInstances();
@@ -352,17 +353,23 @@ namespace Thrift.Transport.Server
                 if (completed.IsCanceled || listening.IsCancellationRequested)
                     throw new TTransportException(TTransportException.ExceptionType.Interrupted, "Closed while waiting for a client");
 
-                // throws the error of a failed wait
-                await completed.ConfigureAwait(false);
-
                 var index = _streams.FindIndex(p => p.Task == completed);
                 if (index < 0)  // Close() has run since
                     throw new TTransportException(TTransportException.ExceptionType.Interrupted, "Closed while waiting for a client");
 
-                var trans = new ServerTransport(_streams[index].Stream, Configuration);
-                _streams.RemoveAt(index); // pass stream ownership to ServerTransport
+                if (!completed.IsFaulted)
+                {
+                    var trans = new ServerTransport(_streams[index].Stream, Configuration);
+                    _streams.RemoveAt(index); // pass stream ownership to ServerTransport
+                    return trans;
+                }
 
-                return trans;
+                // A failed wait ends only its own pipe. The other pipes keep their clients and go on waiting,
+                // and the next call sets up a new pipe in its place.
+                var failed = _streams[index].Stream;
+                _streams.RemoveAt(index);
+                Close(failed);
+                failure = completed.Exception.InnerException ?? completed.Exception;
             }
             catch (TTransportException)
             {
@@ -379,6 +386,9 @@ namespace Thrift.Transport.Server
                 Close();
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message, e);
             }
+
+            // thrown here, where the catch blocks above do not close the other pipes
+            throw new TTransportException(TTransportException.ExceptionType.NotOpen, failure.Message, failure);
         }
 
         private class ServerTransport : TEndpointTransport
