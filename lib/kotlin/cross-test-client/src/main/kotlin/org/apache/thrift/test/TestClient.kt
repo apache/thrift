@@ -121,7 +121,7 @@ class TestClient : CliktCommand() {
 
             else ->
                 throw UnsupportedOperationException(
-                    "only frame transport type is supported for now, got $transportType"
+                    "only frame transport type is supported for now, got $transportType",
                 )
         }
 
@@ -280,7 +280,7 @@ class TestClient : CliktCommand() {
                             if (xtructs != null) {
                                 for ((string_thing, byte_thing, i32_thing, i64_thing) in xtructs) {
                                     print(
-                                        "{\"$string_thing\", $byte_thing, $i32_thing, $i64_thing}, "
+                                        "{\"$string_thing\", $byte_thing, $i32_thing, $i64_thing}, ",
                                     )
                                 }
                             }
@@ -536,7 +536,7 @@ private suspend fun ThriftTestClient.structTest(returnCode: Int): Pair<Xtruct, I
     out.i64_thing = -5
     val input: Xtruct = testStruct(out)
     print(
-        """ = {"${input.string_thing}",${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}"""
+        """ = {"${input.string_thing}",${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}""",
     )
     if (input != out) {
         code = code or ERR_STRUCTS
@@ -655,7 +655,7 @@ private suspend fun ThriftTestClient.nestedStructTest(out: Xtruct, returnCode: I
     val input = xstruct2.struct_thing!!
     print(
         """ = {${xstruct2.byte_thing}, {"${input.string_thing}", ${input.byte_thing}, ${input.i32_thing}, ${input.i64_thing}}, ${xstruct2.i32_thing}}
-    """
+    """,
     )
     if (xstruct2 != out2) {
         code = code or ERR_STRUCTS
