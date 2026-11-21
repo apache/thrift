@@ -84,7 +84,7 @@ object TestServer {
                 }
             } catch (e: Exception) {
                 throw RuntimeException(
-                    "The context is not a wrapper and does not implement the interface"
+                    "The context is not a wrapper and does not implement the interface",
                 )
             }
         }
@@ -99,7 +99,7 @@ object TestServer {
 
         override fun preServe() {
             println(
-                "TServerEventHandler.preServe - called only once before server starts accepting connections"
+                "TServerEventHandler.preServe - called only once before server starts accepting connections",
             )
         }
 
@@ -110,7 +110,7 @@ object TestServer {
             println(
                 "TServerEventHandler.createContext - connection #" +
                     ctx.connectionId +
-                    " established"
+                    " established",
             )
             return ctx
         }
@@ -124,7 +124,7 @@ object TestServer {
             println(
                 "TServerEventHandler.deleteContext - connection #" +
                     ctx.connectionId +
-                    " terminated"
+                    " terminated",
             )
         }
 
@@ -137,7 +137,7 @@ object TestServer {
             println(
                 "TServerEventHandler.processContext - connection #" +
                     ctx.connectionId +
-                    " is ready to process next request"
+                    " is ready to process next request",
             )
         }
     }
@@ -204,7 +204,7 @@ class TestServerCommand : CliktCommand() {
         serverEngine.setServerEventHandler(TestServer.TestServerEventHandler())
         // Run it
         println(
-            "Starting the ${if (useSSL) "ssl server" else "server"} [$protocolType/$transportType/$serverType] on port $port"
+            "Starting the ${if (useSSL) "ssl server" else "server"} [$protocolType/$transportType/$serverType] on port $port",
         )
         serverEngine.serve()
     }
@@ -268,7 +268,7 @@ private fun getServerEngine(
                 ServerType.NonBlocking -> {
                     val tNonblockingServerArgs = TNonblockingServer.Args(tNonblockingServerSocket)
                     tNonblockingServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor
+                        if (isMulti) multiplexedProcessor else testProcessor,
                     )
                     tNonblockingServerArgs.protocolFactory(tProtocolFactory)
                     tNonblockingServerArgs.transportFactory(tTransportFactory)
@@ -278,7 +278,7 @@ private fun getServerEngine(
                     val tThreadedSelectorServerArgs =
                         TThreadedSelectorServer.Args(tNonblockingServerSocket)
                     tThreadedSelectorServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor
+                        if (isMulti) multiplexedProcessor else testProcessor,
                     )
                     tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory)
                     tThreadedSelectorServerArgs.transportFactory(tTransportFactory)
@@ -306,7 +306,7 @@ private fun getServerEngine(
                 else -> {
                     val tThreadPoolServerArgs = TThreadPoolServer.Args(tServerSocket)
                     tThreadPoolServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor
+                        if (isMulti) multiplexedProcessor else testProcessor,
                     )
                     tThreadPoolServerArgs.protocolFactory(tProtocolFactory)
                     tThreadPoolServerArgs.transportFactory(tTransportFactory)
