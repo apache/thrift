@@ -44,6 +44,7 @@ declare -A EXPECTED=(
     [TProtocolRecursionDepthTest]=6
     [TTransportReadAllTest]=6
     [TProtocolShortReadTest]=10
+    [TProtocolOnewayTest]=2
 )
 
 THRIFT=""
@@ -93,6 +94,8 @@ cp "$lib_st/thrift.st" "$here"/*.st "$work/"
 # read/write code, so the generated code has to exist first.
 "$THRIFT" --gen st -out "$work" "$here/RecursionDepthTest.thrift"
 [ -f "$work/RecursionDepthTest.st" ] || die "the compiler produced no RecursionDepthTest.st"
+"$THRIFT" --gen st -out "$work" "$here/OnewayTest.thrift"
+[ -f "$work/OnewayTest.st" ] || die "the compiler produced no OnewayTest.st"
 
 # run_suite <suite class> <file to file in>...
 run_suite() {
@@ -122,6 +125,8 @@ for suite in "${!EXPECTED[@]}"; do
     case "$suite" in
         TProtocolRecursionDepthTest)
             out="$(run_suite "$suite" thrift.st RecursionDepthTest.st "$suite.st")" ;;
+        TProtocolOnewayTest)
+            out="$(run_suite "$suite" thrift.st OnewayTest.st "$suite.st")" ;;
         *)
             out="$(run_suite "$suite" thrift.st "$suite.st")" ;;
     esac
