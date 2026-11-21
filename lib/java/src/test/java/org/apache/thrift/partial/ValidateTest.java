@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
@@ -290,7 +289,7 @@ public class ValidateTest {
   public void testCheckPathExists() throws IOException {
     Path tempFile = Files.createTempFile("foo", "bar");
     Path tempDir = tempFile.getParent();
-    Path notFound = Paths.get("<not-found>");
+    Path notFound = tempDir.resolve(tempFile.getFileName() + "-not-found");
 
     // Should not throw.
     Validate.checkPathExists(tempFile, "tempFile");
@@ -305,7 +304,7 @@ public class ValidateTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> Validate.checkPathExists(notFound, "notFound"),
-        "Path notFound (<not-found>) does not exist");
+        "Path notFound (" + notFound + ") does not exist");
 
     assertThrows(
         IllegalArgumentException.class,
