@@ -120,18 +120,19 @@ BOOST_AUTO_TEST_CASE(test_accept_error_classes) {
   BOOST_CHECK(isConnectionError(EHOSTDOWN));
   BOOST_CHECK(isConnectionError(ENONET));
   BOOST_CHECK(isConnectionError(ENOPROTOOPT));
-  BOOST_CHECK(isConnectionError(EOPNOTSUPP));
 #endif
   // accept() backs off and retries on these.
   BOOST_CHECK(isResourceExhaustion(EMFILE));
   BOOST_CHECK(isResourceExhaustion(ENFILE));
   BOOST_CHECK(isResourceExhaustion(ENOBUFS));
   BOOST_CHECK(isResourceExhaustion(ENOMEM));
-  // accept() throws on anything else, such as a listening socket that is no longer valid.
+  // accept() throws on anything else: a listening socket that is invalid, or not a stream socket.
   BOOST_CHECK(!isConnectionError(EBADF));
   BOOST_CHECK(!isResourceExhaustion(EBADF));
   BOOST_CHECK(!isConnectionError(EINVAL));
   BOOST_CHECK(!isResourceExhaustion(EINVAL));
+  BOOST_CHECK(!isConnectionError(EOPNOTSUPP));
+  BOOST_CHECK(!isResourceExhaustion(EOPNOTSUPP));
 #endif
 }
 
@@ -173,13 +174,16 @@ public:
     exhausted_ = (errno == EMFILE);
   }
   bool exhausted() const { return exhausted_; }
-  ~DescriptorExhaustion() { release(); }
+  ~DescriptorExhaustion() {
+    release();
+    BOOST_WARN_EQUAL(0, setrlimit(RLIMIT_NOFILE, &saved_));
+  }
+  // Closes the descriptors; callable from another thread, so no Boost assertion here.
   void release() {
     for (int fd : fds_) {
       ::close(fd);
     }
     fds_.clear();
-    BOOST_WARN_EQUAL(0, setrlimit(RLIMIT_NOFILE, &saved_));
   }
 
 private:
@@ -204,7 +208,11 @@ BOOST_AUTO_TEST_CASE(test_accept_waits_out_descriptor_exhaustion) {
     std::thread releaser([&exhaustion, &lateClient] {
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       exhaustion.release();
-      connectAndSend(lateClient);
+      try {
+        connectAndSend(lateClient);
+      } catch (TTransportException&) {
+        // accept() then times out and fails the test; an uncaught throw here would abort it.
+      }
     });
     try {
       accepted = server.accept();
