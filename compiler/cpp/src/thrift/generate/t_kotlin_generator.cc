@@ -1177,7 +1177,7 @@ void t_kotlin_generator::generate_struct_definition(std::ostream& out,
         out << "override ";
       }
       out << "val " << kotlin_safe_name(field->get_name()) << ": " << type_name(field->get_type())
-          << " get() = _" + kotlin_safe_name(field->get_name()) << "!!" << '\n';
+          << " get() = _" + field->get_name() << "!!" << '\n';
     }
   }
 
