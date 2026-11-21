@@ -115,7 +115,8 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
   }
 
   public void listen() throws TTransportException {
-    // Make sure not to block on accept
+    // No accept timeout. The channel is non-blocking (see the constructor), so accept()
+    // returns null at once when no connection is pending; SO_TIMEOUT does not apply.
     if (serverSocket_ != null) {
       try {
         serverSocket_.setSoTimeout(0);
