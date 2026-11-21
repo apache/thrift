@@ -267,6 +267,17 @@ An annotation attaches a key and an optional string value to a definition. The c
 The annotation list follows the element it annotates: after the closing `}` of an enum, struct, union, exception or service, after the name of a typedef or a language-scoped namespace, after an enum value (and its number, if it has one), after the argument and `throws` lists of a function, after a field, and after a base type or container type (after the closing `>`). A key without a value gets the value `"1"`. Repeating a key keeps every value, and generators usually read the last one. Keys conventionally start with the target language, such as `python.immutable` or `cpp.type`.
 
 ```thrift
+typedef i64 UserId
+
+enum Numberz {
+  ONE = 1,
+  TWO = 2
+}
+
+struct Xtruct {
+  1: string string_thing
+}
+
 struct Insanity {
   1: map<Numberz, UserId> userMap,
   2: list<Xtruct> xtructs
@@ -275,6 +286,7 @@ struct Insanity {
 typedef string ( cpp.type = "MyString" ) Name
 
 service Greeter {
+  void hello(1: Name name),
   void oldHello() ( deprecated = "Use hello()" )
 }
 ```
