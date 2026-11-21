@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Test\Thrift\Unit\Lib\Base;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Base\Fixture\ComplexStruct;
 use Test\Thrift\Unit\Lib\Base\Fixture\NestedStruct;
@@ -32,6 +33,44 @@ use Thrift\Type\TType;
 
 class TBaseTest extends TestCase
 {
+    #[DataProvider('scalarSetCoercionProvider')]
+    public function testScalarSetValuesAreCastToDeclaredType(string $field, array $values, array $expected): void
+    {
+        $value = new ComplexStruct();
+        $value->$field = $values;
+
+        $restored = $this->roundTrip($value);
+
+        $this->assertSame($expected, $restored->$field);
+    }
+
+    public static function scalarSetCoercionProvider(): iterable
+    {
+        yield 'numeric strings' => ['setField', ['10', '20'], [10 => true, 20 => true]];
+        yield 'integer booleans' => ['boolSetField', [1, 0], [1 => true, 0 => true]];
+    }
+
+    public function testWriteLegacyNumericStringSet(): void
+    {
+        $protocol = new TBinaryProtocol(new TMemoryBuffer());
+        $method = new \ReflectionMethod(\Thrift\Base\TBase::class, 'writeList');
+        $method->invoke(
+            new ComplexStruct(),
+            ['123' => true],
+            ['etype' => TType::STRING, 'elem' => ['type' => TType::STRING]],
+            $protocol,
+            true
+        );
+
+        $type = $size = 0;
+        $protocol->readSetBegin($type, $size);
+        $protocol->readString($value);
+        $protocol->readSetEnd();
+        $this->assertSame(TType::STRING, $type);
+        $this->assertSame(1, $size);
+        $this->assertSame('123', $value);
+    }
+
     public function testConstructorHydratesKnownFieldsFromSpec(): void
     {
         $struct = new ComplexStruct(
@@ -72,6 +111,76 @@ class TBaseTest extends TestCase
         $this->assertSame([10 => true, 20 => true], $restored->setField);
         $this->assertSame([1 => [3, 4], 2 => [5]], $restored->mapOfLists);
         $this->assertNull($restored->optionalField);
+    }
+
+    public function testWriteSetAcceptsSequentialValues(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'setField' => [10, 20],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([10 => true, 20 => true], $restored->setField);
+    }
+
+    public function testWriteSetPreservesSequentialLegacyKeys(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'setField' => [0 => true, 1 => true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([0 => true, 1 => true], $restored->setField);
+    }
+
+    public function testWriteBoolSetAcceptsSequentialValuesWhenUnambiguous(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [true, false],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([1 => true, 0 => true], $restored->boolSetField);
+    }
+
+    public function testWriteBoolSetPreservesLegacyKeys(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [1 => true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([1 => true], $restored->boolSetField);
+    }
+
+    public function testWriteBoolSetPreservesLegacyMarkersForAmbiguousSequentialValues(): void
+    {
+        $struct = new ComplexStruct(
+            ComplexStruct::$tspec,
+            [
+                'boolSetField' => [true],
+            ]
+        );
+
+        $restored = $this->roundTrip($struct);
+
+        $this->assertSame([0 => true], $restored->boolSetField);
     }
 
     public function testReadSkipsUnknownAndUnexpectedFields(): void
