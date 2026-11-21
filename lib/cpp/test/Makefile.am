@@ -146,6 +146,7 @@ UnitTests_SOURCES = \
 	TypedefTest.cpp \
 	TOutputTest.cpp \
 	TServerSocketTest.cpp \
+	TSocketPeerHostTest.cpp \
 	TServerTransportTest.cpp \
 	TestThread.h \
 	TTransportCheckThrow.h \

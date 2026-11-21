@@ -874,15 +874,18 @@ std::string TSocket::getPeerHost() const {
     char clienthost[NI_MAXHOST];
     char clientservice[NI_MAXSERV];
 
-    getnameinfo((sockaddr*)addrPtr,
-                addrLen,
-                clienthost,
-                sizeof(clienthost),
-                clientservice,
-                sizeof(clientservice),
-                0);
+    int rc = getnameinfo((sockaddr*)addrPtr, addrLen, clienthost, sizeof(clienthost), clientservice,
+                         sizeof(clientservice), 0);
+    if (rc != 0) {
+      // The reverse lookup failed (for example EAI_AGAIN after a DNS timeout),
+      // and clienthost is undefined. Fall back to the numeric address.
+      rc = getnameinfo((sockaddr*)addrPtr, addrLen, clienthost, sizeof(clienthost), clientservice,
+                       sizeof(clientservice), NI_NUMERICHOST);
+    }
 
-    peerHost_ = clienthost;
+    if (rc == 0) {
+      peerHost_ = clienthost;
+    }
   }
   return peerHost_;
 }
