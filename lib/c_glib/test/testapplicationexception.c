@@ -21,6 +21,15 @@
 #include <string.h>
 
 #include <thrift/c_glib/thrift_application_exception.h>
+#include <thrift/c_glib/thrift_struct.h>
+#include <thrift/c_glib/protocol/thrift_binary_protocol.h>
+#include <thrift/c_glib/protocol/thrift_compact_protocol.h>
+#include <thrift/c_glib/transport/thrift_memory_buffer.h>
+
+#if defined (__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 33))
+#include <malloc.h>
+#define HAVE_MALLINFO2 1
+#endif
 
 static void
 test_create_and_destroy (void)
@@ -158,6 +167,84 @@ test_properties_message (void)
   g_object_unref (xception);
 }
 
+#ifdef HAVE_MALLINFO2
+static size_t
+heap_in_use (void)
+{
+  struct mallinfo2 info = mallinfo2 ();
+  return info.uordblks + info.hblkhd;
+}
+#endif
+
+/* Writes an application exception whose message field comes count times,
+   and reads it back. */
+static void
+write_and_read_repeated_message (gboolean compact, gint count)
+{
+  GError *error = NULL;
+  ThriftTransport *transport;
+  ThriftProtocol *protocol;
+  ThriftApplicationException *xception;
+  gint i;
+
+  transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                                              "buf_size", 1024 * 1024,
+                                              NULL));
+  protocol = THRIFT_PROTOCOL (g_object_new (compact
+                                            ? THRIFT_TYPE_COMPACT_PROTOCOL
+                                            : THRIFT_TYPE_BINARY_PROTOCOL,
+                                            "transport", transport,
+                                            NULL));
+
+  g_assert (thrift_protocol_write_struct_begin (protocol, "TApplicationException",
+                                                &error) >= 0);
+  for (i = 0; i < count; i++)
+  {
+    g_assert (thrift_protocol_write_field_begin (protocol, "message", T_STRING, 1,
+                                                 &error) >= 0);
+    g_assert (thrift_protocol_write_string (protocol, i + 1 < count ? "" : "last",
+                                            &error) >= 0);
+    g_assert (thrift_protocol_write_field_end (protocol, &error) >= 0);
+  }
+  g_assert (thrift_protocol_write_field_stop (protocol, &error) >= 0);
+  g_assert (thrift_protocol_write_struct_end (protocol, &error) >= 0);
+  g_assert_no_error (error);
+
+  xception = g_object_new (THRIFT_TYPE_APPLICATION_EXCEPTION, NULL);
+  g_assert (thrift_struct_read (THRIFT_STRUCT (xception), protocol, &error) > 0);
+  g_assert_no_error (error);
+  g_assert_cmpstr (xception->message, ==, "last");
+
+  g_object_unref (xception);
+  g_object_unref (protocol);
+  g_object_unref (transport);
+}
+
+/* A message field that comes more than once replaces the message read
+   before, which must not stay allocated. */
+static void
+test_read_repeated_message (gconstpointer compact)
+{
+#ifdef HAVE_MALLINFO2
+  const gint count = 20000;
+  size_t before;
+  size_t after;
+
+  /* the first round sets up what stays allocated anyway */
+  write_and_read_repeated_message (GPOINTER_TO_INT (compact), 2);
+
+  before = heap_in_use ();
+  write_and_read_repeated_message (GPOINTER_TO_INT (compact), count);
+  after = heap_in_use ();
+
+  /* each message left behind would take at least 16 bytes */
+  g_assert_cmpuint (after > before ? after - before : 0, <, (size_t) count * 4);
+#else
+  write_and_read_repeated_message (GPOINTER_TO_INT (compact), 2);
+  g_test_skip ("needs mallinfo2() to measure the heap");
+#endif
+}
+
 int
 main (int argc, char **argv)
 {
@@ -175,6 +262,10 @@ main (int argc, char **argv)
     test_properties_test);
   g_test_add_func ("/testapplicationexception/Properties/message",
     test_properties_message);
+  g_test_add_data_func ("/testapplicationexception/Read/RepeatedMessage/Binary",
+    GINT_TO_POINTER (FALSE), test_read_repeated_message);
+  g_test_add_data_func ("/testapplicationexception/Read/RepeatedMessage/Compact",
+    GINT_TO_POINTER (TRUE), test_read_repeated_message);
 
   return g_test_run ();
 }

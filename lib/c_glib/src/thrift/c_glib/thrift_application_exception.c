@@ -72,6 +72,12 @@ thrift_application_exception_read (ThriftStruct *object,
       case 1:
         if (ftype == T_STRING)
         {
+          /* a repeated field replaces the message read before */
+          if (this->message != NULL)
+          {
+            g_free (this->message);
+            this->message = NULL;
+          }
           if ((ret = thrift_protocol_read_string (protocol, &this->message,
                                                   error)) < 0)
             return -1;
