@@ -248,7 +248,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
             self.bytes_out += len(wout)
             self.bytes_out_comp += len(zbuf)
         else:
-            zbuf = ''
+            zbuf = b''
         ztail = self._zcomp_write.flush(zlib.Z_SYNC_FLUSH)
         self.bytes_out_comp += len(ztail)
         if (len(zbuf) + len(ztail)) > 0:

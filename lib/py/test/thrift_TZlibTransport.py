@@ -201,6 +201,17 @@ class TestTZlibTransport(unittest.TestCase):
         self.assertEqual(outcomes, [size_limit, size_limit])
         self.assertEqual(reader._bytes_decompressed, limit)
 
+    def test_flush_with_empty_write_buffer(self):
+        trans = ChunkedTransport()
+        writer = TZlibTransport.TZlibTransport(trans)
+        writer.flush()
+        writer.write(b'hello thrift')
+        writer.flush()
+        writer.flush()
+
+        reader = TZlibTransport.TZlibTransport(ChunkedTransport(trans.chunks))
+        self.assertEqual(reader.readAll(12), b'hello thrift')
+
     def test_max_decompressed_size_is_validated(self):
         for size in (0, -1):
             with self.assertRaises(ValueError):
