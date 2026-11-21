@@ -87,6 +87,7 @@ set(UnitTest_SOURCES
     TMemoryBufferTest.cpp
     TBufferBaseTest.cpp
     Base64Test.cpp
+    StatsProcessorTest.cpp
     ToStringTest.cpp
     TypedefTest.cpp
     TOutputTest.cpp

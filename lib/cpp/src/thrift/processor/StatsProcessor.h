@@ -20,10 +20,14 @@
 #ifndef STATSPROCESSOR_H
 #define STATSPROCESSOR_H
 
+#include <cstdio>
+#include <map>
 #include <memory>
-#include <thrift/transport/TTransport.h>
+#include <string>
+#include <thrift/TProcessor.h>
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/protocol/TProtocol.h>
-#include <TProcessor.h>
+#include <thrift/transport/TTransport.h>
 
 namespace apache {
 namespace thrift {
@@ -32,23 +36,27 @@ namespace processor {
 /*
  * Class for keeping track of function call statistics and printing them if desired
  *
+ * One instance may serve many connections at once. It counts the calls of at most
+ * maxFrequencyNames method names one by one; the calls of any further name count
+ * together under "(other)".
  */
 class StatsProcessor : public apache::thrift::TProcessor {
 public:
-  StatsProcessor(bool print, bool frequency) : print_(print), frequency_(frequency) {}
+  StatsProcessor(bool print, bool frequency, size_t maxFrequencyNames = 1024)
+    : print_(print), frequency_(frequency), maxFrequencyNames_(maxFrequencyNames) {}
   virtual ~StatsProcessor(){};
 
   virtual bool process(std::shared_ptr<apache::thrift::protocol::TProtocol> piprot,
                        std::shared_ptr<apache::thrift::protocol::TProtocol> poprot,
                        void* serverContext) {
-
-    piprot_ = piprot;
+    (void)poprot;
+    (void)serverContext;
 
     std::string fname;
     apache::thrift::protocol::TMessageType mtype;
     int32_t seqid;
 
-    piprot_->readMessageBegin(fname, mtype, seqid);
+    piprot->readMessageBegin(fname, mtype, seqid);
     if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {
       if (print_) {
         printf("Unknown message type\n");
@@ -59,23 +67,19 @@ public:
       printf("%s (", fname.c_str());
     }
     if (frequency_) {
-      if (frequency_map_.find(fname) != frequency_map_.end()) {
-        frequency_map_[fname]++;
-      } else {
-        frequency_map_[fname] = 1;
-      }
+      count(fname);
     }
 
     apache::thrift::protocol::TType ftype;
     int16_t fid;
 
     while (true) {
-      piprot_->readFieldBegin(fname, ftype, fid);
+      piprot->readFieldBegin(fname, ftype, fid);
       if (ftype == apache::thrift::protocol::T_STOP) {
         break;
       }
 
-      printAndPassToBuffer(ftype);
+      printAndPassToBuffer(*piprot, ftype);
       if (print_) {
         printf(", ");
       }
@@ -87,56 +91,62 @@ public:
     return true;
   }
 
-  const std::map<std::string, int64_t>& get_frequency_map() { return frequency_map_; }
+  // A copy, since other connections may be counting at the same time.
+  std::map<std::string, int64_t> get_frequency_map() {
+    concurrency::Guard guard(mutex_);
+    return frequency_map_;
+  }
 
 protected:
-  void printAndPassToBuffer(apache::thrift::protocol::TType ftype) {
+  void printAndPassToBuffer(apache::thrift::protocol::TProtocol& piprot,
+                            apache::thrift::protocol::TType ftype) {
+    apache::thrift::protocol::TInputRecursionTracker tracker(piprot);
     switch (ftype) {
     case apache::thrift::protocol::T_BOOL: {
       bool boolv;
-      piprot_->readBool(boolv);
+      piprot.readBool(boolv);
       if (print_) {
         printf("%d", boolv);
       }
     } break;
     case apache::thrift::protocol::T_BYTE: {
       int8_t bytev;
-      piprot_->readByte(bytev);
+      piprot.readByte(bytev);
       if (print_) {
         printf("%d", bytev);
       }
     } break;
     case apache::thrift::protocol::T_I16: {
       int16_t i16;
-      piprot_->readI16(i16);
+      piprot.readI16(i16);
       if (print_) {
         printf("%d", i16);
       }
     } break;
     case apache::thrift::protocol::T_I32: {
       int32_t i32;
-      piprot_->readI32(i32);
+      piprot.readI32(i32);
       if (print_) {
         printf("%d", i32);
       }
     } break;
     case apache::thrift::protocol::T_I64: {
       int64_t i64;
-      piprot_->readI64(i64);
+      piprot.readI64(i64);
       if (print_) {
         printf("%ld", i64);
       }
     } break;
     case apache::thrift::protocol::T_DOUBLE: {
       double dub;
-      piprot_->readDouble(dub);
+      piprot.readDouble(dub);
       if (print_) {
         printf("%f", dub);
       }
     } break;
     case apache::thrift::protocol::T_STRING: {
       std::string str;
-      piprot_->readString(str);
+      piprot.readString(str);
       if (print_) {
         printf("%s", str.c_str());
       }
@@ -145,22 +155,22 @@ protected:
       std::string name;
       int16_t fid;
       apache::thrift::protocol::TType ftype;
-      piprot_->readStructBegin(name);
+      piprot.readStructBegin(name);
       if (print_) {
         printf("<");
       }
       while (true) {
-        piprot_->readFieldBegin(name, ftype, fid);
+        piprot.readFieldBegin(name, ftype, fid);
         if (ftype == apache::thrift::protocol::T_STOP) {
           break;
         }
-        printAndPassToBuffer(ftype);
+        printAndPassToBuffer(piprot, ftype);
         if (print_) {
           printf(",");
         }
-        piprot_->readFieldEnd();
+        piprot.readFieldEnd();
       }
-      piprot_->readStructEnd();
+      piprot.readStructEnd();
       if (print_) {
         printf("\b>");
       }
@@ -169,21 +179,21 @@ protected:
       apache::thrift::protocol::TType keyType;
       apache::thrift::protocol::TType valType;
       uint32_t i, size;
-      piprot_->readMapBegin(keyType, valType, size);
+      piprot.readMapBegin(keyType, valType, size);
       if (print_) {
         printf("{");
       }
       for (i = 0; i < size; i++) {
-        printAndPassToBuffer(keyType);
+        printAndPassToBuffer(piprot, keyType);
         if (print_) {
           printf("=>");
         }
-        printAndPassToBuffer(valType);
+        printAndPassToBuffer(piprot, valType);
         if (print_) {
           printf(",");
         }
       }
-      piprot_->readMapEnd();
+      piprot.readMapEnd();
       if (print_) {
         printf("\b}");
       }
@@ -191,17 +201,17 @@ protected:
     case apache::thrift::protocol::T_SET: {
       apache::thrift::protocol::TType elemType;
       uint32_t i, size;
-      piprot_->readSetBegin(elemType, size);
+      piprot.readSetBegin(elemType, size);
       if (print_) {
         printf("{");
       }
       for (i = 0; i < size; i++) {
-        printAndPassToBuffer(elemType);
+        printAndPassToBuffer(piprot, elemType);
         if (print_) {
           printf(",");
         }
       }
-      piprot_->readSetEnd();
+      piprot.readSetEnd();
       if (print_) {
         printf("\b}");
       }
@@ -209,17 +219,17 @@ protected:
     case apache::thrift::protocol::T_LIST: {
       apache::thrift::protocol::TType elemType;
       uint32_t i, size;
-      piprot_->readListBegin(elemType, size);
+      piprot.readListBegin(elemType, size);
       if (print_) {
         printf("[");
       }
       for (i = 0; i < size; i++) {
-        printAndPassToBuffer(elemType);
+        printAndPassToBuffer(piprot, elemType);
         if (print_) {
           printf(",");
         }
       }
-      piprot_->readListEnd();
+      piprot.readListEnd();
       if (print_) {
         printf("\b]");
       }
@@ -229,11 +239,26 @@ protected:
     }
   }
 
-  std::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;
   std::map<std::string, int64_t> frequency_map_;
 
   bool print_;
   bool frequency_;
+
+private:
+  void count(const std::string& fname) {
+    concurrency::Guard guard(mutex_);
+    auto entry = frequency_map_.find(fname);
+    if (entry != frequency_map_.end()) {
+      entry->second++;
+    } else if (frequency_map_.size() < maxFrequencyNames_) {
+      frequency_map_[fname] = 1;
+    } else {
+      frequency_map_["(other)"]++;
+    }
+  }
+
+  size_t maxFrequencyNames_;
+  concurrency::Mutex mutex_;
 };
 }
 }
