@@ -83,7 +83,7 @@ final class TZlibTransport : TBaseTransport {
     wstream_.next_in = uwbuf_.ptr;
     wstream_.avail_in = 0;
     wstream_.next_out = cwbuf_.ptr;
-    wstream_.avail_out = to!uint(crbuf_.length);
+    wstream_.avail_out = to!uint(cwbuf_.length);
 
     zlibEnforce(inflateInit(rstream_), rstream_);
     scope (failure) {
@@ -426,6 +426,28 @@ unittest {
   zlib.readAll(result);
   enforce(data == result);
   zlib.verifyChecksum();
+}
+
+// Make sure writing works with a compressed writing buffer that is smaller
+// than the compressed reading buffer, for data that does not compress.
+unittest {
+  import std.random : Mt19937, uniform;
+
+  auto buf = new TMemoryBuffer;
+  auto zlib = new TZlibTransport(buf, TZlibTransport.DEFAULT_URBUF_SIZE, 4096,
+    TZlibTransport.DEFAULT_UWBUF_SIZE, 64);
+
+  auto gen = Mt19937(42);
+  auto data = new ubyte[1000];
+  foreach (ref b; data) b = cast(ubyte) uniform(0, 256, gen);
+  zlib.write(data);
+  zlib.finish();
+
+  auto reader = new TZlibTransport(buf);
+  auto result = new ubyte[data.length];
+  reader.readAll(result);
+  enforce(data == result);
+  reader.verifyChecksum();
 }
 
 // Make sure there is no data is written if write() is never called.
