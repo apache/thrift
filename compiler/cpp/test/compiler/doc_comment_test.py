@@ -19,8 +19,8 @@
 #
 """Runs the compiler on files whose first doc comment holds nothing but
 blanks or has a NUL byte in it, and checks that it compiles them. The compiler
-unit tests cannot see the blank case: they build with a stand-in for
-clean_up_doctext()."""
+unit tests call the same clean_up_doctext(); this test runs the built compiler
+binary end to end."""
 
 import os
 import shutil

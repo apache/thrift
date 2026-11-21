@@ -111,11 +111,6 @@ void clear_doctext() {
   }
 }
 
-char* clean_up_doctext(char* doctext) {
-  // Keep behavior minimal for unit tests.
-  return doctext;
-}
-
 void declare_valid_program_doctext() {
   if ((g_program_doctext_candidate != nullptr) && (g_program_doctext_status == STILL_CANDIDATE)) {
     g_program_doctext_status = ABSOLUTELY_SURE;
