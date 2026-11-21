@@ -155,7 +155,8 @@ UnitTests_SOURCES = \
 	THttpBufferBoundTest.cpp \
 	THttpHeaderParseTest.cpp \
 	Thrift5272.cpp \
-	TUuidTest.cpp
+	TUuidTest.cpp \
+	PeekProcessorTest.cpp
 
 UnitTests_LDADD = \
   libtestgencpp.la \

@@ -90,24 +90,34 @@ bool PeekProcessor::process(std::shared_ptr<TProtocol> in,
     in->readFieldEnd();
   }
   in->readMessageEnd();
-  in->getTransport()->readEnd();
 
-  //
-  // All the data is now in memoryBuffer_ and ready to be processed
-  //
-
-  // Let's first take a peek at the full data in memory
-  uint8_t* buffer;
-  uint32_t size;
-  memoryBuffer_->getBuffer(&buffer, &size);
-  peekBuffer(buffer, size);
-
-  // Done peeking at variables
-  peekEnd();
-
-  bool ret = actualProcessor_->process(pipedProtocol_, out, connectionContext);
+  // From here on the request is in memoryBuffer_, which all connections share.
+  // It holds one request at a time and is empty again however the call ends.
+  concurrency::Guard guard(mutex_);
   memoryBuffer_->resetBuffer();
-  return ret;
+  try {
+    in->getTransport()->readEnd();
+
+    //
+    // All the data is now in memoryBuffer_ and ready to be processed
+    //
+
+    // Let's first take a peek at the full data in memory
+    uint8_t* buffer;
+    uint32_t size;
+    memoryBuffer_->getBuffer(&buffer, &size);
+    peekBuffer(buffer, size);
+
+    // Done peeking at variables
+    peekEnd();
+
+    bool ret = actualProcessor_->process(pipedProtocol_, out, connectionContext);
+    memoryBuffer_->resetBuffer();
+    return ret;
+  } catch (...) {
+    memoryBuffer_->resetBuffer();
+    throw;
+  }
 }
 
 void PeekProcessor::peekName(const std::string& fname) {

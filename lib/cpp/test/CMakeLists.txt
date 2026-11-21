@@ -98,6 +98,7 @@ set(UnitTest_SOURCES
     THttpHeaderParseTest.cpp
     TUuidTest.cpp
     Thrift5272.cpp
+    PeekProcessorTest.cpp
 )
 
 # TWebSocketServer is only built when OpenSSL is available.

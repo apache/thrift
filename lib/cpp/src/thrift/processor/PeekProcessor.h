@@ -22,6 +22,7 @@
 
 #include <string>
 #include <thrift/TProcessor.h>
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -75,6 +76,9 @@ private:
   std::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory_;
   std::shared_ptr<apache::thrift::transport::TMemoryBuffer> memoryBuffer_;
   std::shared_ptr<apache::thrift::transport::TTransport> targetTransport_;
+  // Every connection's request passes through memoryBuffer_ and pipedProtocol_, so process()
+  // hands one request at a time to the actual processor.
+  apache::thrift::concurrency::Mutex mutex_;
 };
 }
 }
