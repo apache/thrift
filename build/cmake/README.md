@@ -36,6 +36,7 @@ CMake to generate a build framework, then build:
 if you use a specific toolchain pass it to cmake, the same for options:
 
     cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake ..
+    cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/zig-toolchain.cmake -DZIG_TARGET=aarch64-linux-musl -DBUILD_LIBRARIES=OFF ..
     cmake -DCMAKE_C_COMPILER=clang-3.5 -DCMAKE_CXX_COMPILER=clang++-3.5 ..
     cmake -DTHRIFT_COMPILER_HS=OFF ..
     cmake -DWITH_ZLIB=ON ..
