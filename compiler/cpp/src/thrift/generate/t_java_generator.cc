@@ -2227,8 +2227,14 @@ void t_java_generator::generate_java_validator(ostream& out, t_struct* tstruct) 
   out << indent() << "// check for required fields" << '\n';
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      // A union that was read with no recognized field is non-null but carries no value.
+      t_type* req_type = get_true_type((*f_iter)->get_type());
+      bool is_union = req_type->is_struct() && ((t_struct*)req_type)->is_union();
+      string union_unset
+          = is_union ? " || !" + make_valid_java_identifier((*f_iter)->get_name()) + ".isSet()"
+                     : "";
       if (bean_style_) {
-        out << indent() << "if (!" << generate_isset_check(*f_iter) << ") {" << '\n'
+        out << indent() << "if (!" << generate_isset_check(*f_iter) << union_unset << ") {" << '\n'
             << indent()
             << "  throw new org.apache.thrift.protocol.TProtocolException(\"Required field '"
             << (*f_iter)->get_name() << "' is unset! Struct:\" + toString());" << '\n'
@@ -2236,7 +2242,8 @@ void t_java_generator::generate_java_validator(ostream& out, t_struct* tstruct) 
             << '\n';
       } else {
         if (type_can_be_null((*f_iter)->get_type())) {
-          indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << '\n';
+          indent(out) << "if (" << (*f_iter)->get_name() << " == null" << union_unset << ") {"
+                      << '\n';
           indent(out)
               << "  throw new org.apache.thrift.protocol.TProtocolException(\"Required field '"
               << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << '\n';
