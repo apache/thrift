@@ -298,14 +298,14 @@ static bool isLowSurrogate(uint16_t val) {
   return val >= 0xDC00 && val <= 0xDFFF;
 }
 
-// Append the UTF-16 code units to str as UTF-8. Decoding stops at a zero
-// code unit, and an unpaired surrogate is dropped together with the unit that
-// follows it.
+// Append the UTF-16 code units to str as UTF-8. A zero code unit is a NUL
+// character like any other, and an unpaired surrogate is dropped together with
+// the unit that follows it.
 static void appendUtf16AsUtf8(std::string& str, const std::vector<uint16_t>& codeunits) {
-  for (std::size_t i = 0; i < codeunits.size() && codeunits[i] != 0; ++i) {
+  for (std::size_t i = 0; i < codeunits.size(); ++i) {
     uint32_t cp = codeunits[i];
     if (isHighSurrogate(codeunits[i])) {
-      if (i + 1 >= codeunits.size() || codeunits[i + 1] == 0) {
+      if (i + 1 >= codeunits.size()) {
         break;
       }
       const uint16_t low = codeunits[++i];
