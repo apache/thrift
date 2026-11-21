@@ -232,6 +232,14 @@ class TJSONProtocolBase(TProtocolBase):
         else:
             self.trans.write(jsNumber)
 
+    def writeJSONDouble(self, dbl, formatter='{0}'):
+        if math.isnan(dbl):
+            self.writeJSONString('NaN')
+        elif math.isinf(dbl):
+            self.writeJSONString('Infinity' if dbl > 0 else '-Infinity')
+        else:
+            self.writeJSONNumber(dbl, formatter)
+
     def writeJSONBase64(self, binary):
         self.context.write()
         self.trans.write(QUOTE)
@@ -610,7 +618,7 @@ class TJSONProtocol(TJSONProtocolBase):
     def writeDouble(self, dbl):
         # 17 significant digits should be just enough for any double precision
         # value.
-        self.writeJSONNumber(dbl, '{0:.17g}')
+        self.writeJSONDouble(dbl, '{0:.17g}')
 
     def writeString(self, string):
         self.writeJSONString(string)
@@ -707,7 +715,7 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
         self.writeJSONNumber(1 if boolean is True else 0)
 
     def writeDouble(self, dbl):
-        self.writeJSONNumber(dbl)
+        self.writeJSONDouble(dbl)
 
     def writeString(self, string):
         self.writeJSONString(string)
