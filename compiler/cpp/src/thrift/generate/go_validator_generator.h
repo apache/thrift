@@ -65,6 +65,24 @@ private:
 
   //std::string get_field_name(t_field* field);  -- no impl?
   std::string get_field_reference_name(t_field* field);
+  std::string get_field_presence_check(t_field* field);
+
+  // A rule that refers to a field which is not set does not apply, as a rule
+  // on a field which is not set does not.  The guard opens an "if" on the
+  // fields the rule refers to that can be unset, and closes it again when it
+  // goes out of scope.
+  class reference_guard {
+  public:
+    reference_guard(go_validator_generator* generator, std::ostream& out, validation_rule* rule);
+    ~reference_guard();
+    reference_guard(const reference_guard&) = delete;
+    reference_guard& operator=(const reference_guard&) = delete;
+
+  private:
+    go_validator_generator* generator_;
+    std::ostream& out_;
+    bool opened_;
+  };
 
   std::string GenID(std::string id) { return id + std::to_string(tmp_[id]++); };
 
