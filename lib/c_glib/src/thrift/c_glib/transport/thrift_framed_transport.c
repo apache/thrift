@@ -58,7 +58,8 @@ gboolean
 thrift_framed_transport_peek (ThriftTransport *transport, GError **error)
 {
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
-  return (t->r_buf->len > 0) || thrift_transport_peek (t->transport, error);
+  return (t->r_buf->len > t->r_buf_pos)
+         || thrift_transport_peek (t->transport, error);
 }
 
 /* implements thrift_transport_open */
@@ -141,6 +142,31 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
   return result;
 }
 
+/* Hands out up to len bytes of the frame in r_buf, from where the previous
+ * read stopped.  The frame stays where it is while it is being read, and
+ * r_buf is emptied once all of it has been handed out. */
+static guint32
+thrift_framed_transport_take (ThriftFramedTransport *t, gpointer buf,
+                              guint32 len)
+{
+  guint32 have = t->r_buf->len - t->r_buf_pos;
+  guint32 give = len < have ? len : have;
+
+  if (give > 0)
+  {
+    memcpy (buf, t->r_buf->data + t->r_buf_pos, give);
+    t->r_buf_pos += give;
+  }
+
+  if (t->r_buf_pos == t->r_buf->len)
+  {
+    g_byte_array_set_size (t->r_buf, 0);
+    t->r_buf_pos = 0;
+  }
+
+  return give;
+}
+
 /* the actual read is "slow" because it calls the underlying transport */
 gint32
 thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
@@ -148,30 +174,25 @@ thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
 {
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
   guint32 want = len;
-  guint32 have = t->r_buf->len;
+  guint32 have = t->r_buf->len - t->r_buf_pos;
   gint32 result = -1;
 
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
-  g_assert (t->r_buf->len < want);
+  g_assert (have < want);
 
   /* first copy what we have in our buffer, if there is anything left */
-  if (have > 0)
-  {
-    memcpy (buf, t->r_buf->data, t->r_buf->len);
-    want -= t->r_buf->len;
-    t->r_buf = g_byte_array_remove_range (t->r_buf, 0, t->r_buf->len);
-  }
+  want -= thrift_framed_transport_take (t, buf, have);
+
+  /* the next frame starts out alone in r_buf: read_frame() binds the read
+   * budget to what r_buf holds */
+  g_byte_array_set_size (t->r_buf, 0);
+  t->r_buf_pos = 0;
 
   /* read a frame of input and buffer it */
   if (thrift_framed_transport_read_frame (transport, error) == TRUE)
   {
     /* hand over what we have up to what the caller wants */
-    guint32 give = want < t->r_buf->len ? want : t->r_buf->len;
-
-    /* copy the data into the buffer */
-    memcpy ((guint8 *)buf + len - want, t->r_buf->data, give);
-    t->r_buf = g_byte_array_remove_range (t->r_buf, 0, give);
-    want -= give;
+    want -= thrift_framed_transport_take (t, (guint8 *)buf + len - want, want);
 
     result = len - want;
   }
@@ -198,7 +219,8 @@ thrift_framed_transport_read (ThriftTransport *transport, gpointer buf,
    * checkReadBytesAvailable() directly with the size the wire declared, and
    * never come through here.
    */
-  guint32 checked = len < t->r_buf->len ? len : t->r_buf->len;
+  guint32 have = t->r_buf->len - t->r_buf_pos;
+  guint32 checked = len < have ? len : have;
 
   if(!ttc->checkReadBytesAvailable (transport, checked, error))
   {
@@ -207,11 +229,9 @@ thrift_framed_transport_read (ThriftTransport *transport, gpointer buf,
 
   /* if we have enough buffer data to fulfill the read, just use
    * a memcpy from the buffer */
-  if (len <= t->r_buf->len)
+  if (len <= have)
   {
-    memcpy (buf, t->r_buf->data, len);
-    g_byte_array_remove_range (t->r_buf, 0, len);
-    return len;
+    return thrift_framed_transport_take (t, buf, len);
   }
 
   return thrift_framed_transport_read_slow (transport, buf, len, error);
@@ -317,6 +337,7 @@ thrift_framed_transport_init (ThriftFramedTransport *transport)
 {
   transport->transport = NULL;
   transport->r_buf = g_byte_array_new ();
+  transport->r_buf_pos = 0;
   transport->w_buf = g_byte_array_new ();
   transport->max_frame_size = DEFAULT_MAX_FRAME_SIZE;
 }

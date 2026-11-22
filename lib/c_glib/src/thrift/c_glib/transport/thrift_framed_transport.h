@@ -58,6 +58,9 @@ struct _ThriftFramedTransport
   GByteArray *w_buf;
   guint32 r_buf_size;
   guint32 w_buf_size;
+
+  /* how much of the frame in r_buf has been read */
+  guint r_buf_pos;
 };
 
 typedef struct _ThriftFramedTransportClass ThriftFramedTransportClass;

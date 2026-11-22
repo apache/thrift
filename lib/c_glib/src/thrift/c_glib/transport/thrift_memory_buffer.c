@@ -69,6 +69,32 @@ thrift_memory_buffer_close (ThriftTransport *transport, GError **error)
   return TRUE;
 }
 
+/* Where the next read starts.  A caller that passed its own array in may
+ * have shortened it since the last read; a position past its end refers to
+ * bytes that are gone, and reading then starts at the front again. */
+static guint
+thrift_memory_buffer_read_position (ThriftMemoryBuffer *t)
+{
+  if (t->buf_pos > t->buf->len)
+  {
+    t->buf_pos = 0;
+  }
+  return t->buf_pos;
+}
+
+/* removes the bytes that have been read from the front of buf */
+static void
+thrift_memory_buffer_remove_read_bytes (ThriftMemoryBuffer *t)
+{
+  guint pos = thrift_memory_buffer_read_position (t);
+
+  if (pos > 0)
+  {
+    g_byte_array_remove_range (t->buf, 0, pos);
+    t->buf_pos = 0;
+  }
+}
+
 /* implements thrift_transport_read */
 gint32
 thrift_memory_buffer_read (ThriftTransport *transport, gpointer buf,
@@ -77,26 +103,37 @@ thrift_memory_buffer_read (ThriftTransport *transport, gpointer buf,
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (transport);
   ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
 
-  guint32 give = len; 
+  guint32 give = len;
+  guint pos;
 
   if(!ttc->checkReadBytesAvailable (transport, len, error))
   {
     return -1;
   }
 
+  pos = thrift_memory_buffer_read_position (t);
+
   /* if the requested bytes are more than what we have available,
    * just give all that we have the buffer */
-  if (t->buf->len < len)
+  if (t->buf->len - pos < len)
   {
-    give = t->buf->len;
+    give = t->buf->len - pos;
   }
 
   if (give == 0) {
     return -1;
   }
 
-  memcpy (buf, t->buf->data, give);
-  g_byte_array_remove_range (t->buf, 0, give);
+  memcpy (buf, t->buf->data + pos, give);
+  t->buf_pos = pos + give;
+
+  /* Removing what has been read moves what has not, so wait until the bytes
+   * read are at least as many as those left: then no byte is moved more than
+   * once on average, however small the reads are. */
+  if (t->buf_pos >= t->buf->len - t->buf_pos)
+  {
+    thrift_memory_buffer_remove_read_bytes (t);
+  }
 
   return give;
 }
@@ -121,6 +158,12 @@ thrift_memory_buffer_write (ThriftTransport *transport,
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (transport);
 
   THRIFT_UNUSED_VAR (error);
+
+  /* the bytes that have been read do not count against buf_size */
+  if (len > t->buf_size - t->buf->len)
+  {
+    thrift_memory_buffer_remove_read_bytes (t);
+  }
 
   /* return an exception if the buffer doesn't have enough space. */
   if (len > t->buf_size - t->buf->len)
@@ -160,7 +203,7 @@ thrift_memory_buffer_flush (ThriftTransport *transport, GError **error)
 static void
 thrift_memory_buffer_init (ThriftMemoryBuffer *t)
 {
-  THRIFT_UNUSED_VAR (t);
+  t->buf_pos = 0;
 }
 
 /* destructor */

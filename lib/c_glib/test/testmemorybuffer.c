@@ -18,6 +18,7 @@
  */
 
 #include <netdb.h>
+#include <time.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -199,6 +200,244 @@ test_read_and_write_external (void)
   g_object_unref (tbuffer);
 }
 
+/* Reading a buffer a few bytes at a time hands out every byte once and in
+   order; once everything has been read, the buffer is empty. */
+static void
+test_read_in_pieces (void)
+{
+  static const guint32 pieces[] = { 1, 2, 3, 5, 8, 13, 21 };
+  ThriftMemoryBuffer *tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
+  guchar data[10000];
+  guchar buf[21];
+  guint32 done = 0;
+  guint i, n = 0;
+
+  for (i = 0; i < sizeof (data); i++)
+    data[i] = (guchar) (i * 7 + i / 256);
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer), data,
+                                        sizeof (data), NULL) == TRUE);
+
+  while (done < sizeof (data))
+    {
+      guint32 want = MIN (pieces[n++ % G_N_ELEMENTS (pieces)],
+                          sizeof (data) - done);
+
+      g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                                  buf, want, NULL),
+                       ==, (gint32) want);
+      g_assert (memcmp (buf, data + done, want) == 0);
+      done += want;
+    }
+  g_assert_cmpuint (tbuffer->buf->len, ==, 0);
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              buf, 1, NULL), ==, -1);
+
+  g_object_unref (tbuffer);
+}
+
+/* Bytes written between reads come after the ones not read yet. */
+static void
+test_writes_between_reads (void)
+{
+  ThriftMemoryBuffer *tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
+  guchar data[6000];
+  guchar buf[7];
+  guint32 written = 3000;
+  guint32 done = 0;
+  guint i;
+
+  for (i = 0; i < sizeof (data); i++)
+    data[i] = (guchar) (i * 13 + i / 256);
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer), data,
+                                        written, NULL) == TRUE);
+
+  while (done < sizeof (data))
+    {
+      guint32 want = MIN (7, written - done);
+
+      g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                                  buf, want, NULL),
+                       ==, (gint32) want);
+      g_assert (memcmp (buf, data + done, want) == 0);
+      done += want;
+
+      if (written < sizeof (data))
+        {
+          guint32 more = MIN (5, sizeof (data) - written);
+
+          g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                                data + written, more,
+                                                NULL) == TRUE);
+          written += more;
+        }
+    }
+
+  g_object_unref (tbuffer);
+}
+
+/* The bytes that have been read do not count against buf_size. */
+static void
+test_read_bytes_leave_room_for_writes (void)
+{
+  ThriftMemoryBuffer *tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                                              "buf_size", 8, NULL);
+  GError *error = NULL;
+  gchar buf[8];
+
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                        (gpointer) TEST_DATA, 8,
+                                        NULL) == TRUE);
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              buf, 2, NULL), ==, 2);
+  g_assert (memcmp (buf, TEST_DATA, 2) == 0);
+
+  /* six bytes are left to read, so two more fit, and no more than that */
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                        (gpointer) TEST_DATA, 2,
+                                        NULL) == TRUE);
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                        (gpointer) TEST_DATA, 1,
+                                        &error) == FALSE);
+  g_assert (error != NULL);
+  g_clear_error (&error);
+
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              buf, 8, NULL), ==, 8);
+  g_assert (memcmp (buf, TEST_DATA + 2, 6) == 0);
+  g_assert (memcmp (buf + 6, TEST_DATA, 2) == 0);
+
+  g_object_unref (tbuffer);
+}
+
+/* A buffer that is read as fast as it is written holds what has not been
+   read yet; the bytes read so far do not pile up in it. */
+static void
+test_rolling_use_keeps_the_buffer_small (void)
+{
+  ThriftMemoryBuffer *tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
+  gchar buf[4];
+  guint i;
+
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                        (gpointer) TEST_DATA, 8,
+                                        NULL) == TRUE);
+  for (i = 0; i < 100000; i++)
+    {
+      g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+                                            (gpointer) TEST_DATA, 4,
+                                            NULL) == TRUE);
+      g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                                  buf, 4, NULL), ==, 4);
+    }
+
+  /* eight bytes are not read yet */
+  g_assert_cmpuint (tbuffer->buf->len, <=, 64);
+
+  g_object_unref (tbuffer);
+}
+
+/* A caller that passed its own array in may shorten it between reads.  The
+   next read then starts at the front of what the array holds now, and does
+   not reach past its end. */
+static void
+test_shortened_external_array (void)
+{
+  GByteArray *buf = g_byte_array_new ();
+  ThriftMemoryBuffer *tbuffer;
+  guchar data[100];
+  guchar out[16];
+  guint i;
+
+  for (i = 0; i < sizeof (data); i++)
+    data[i] = (guchar) i;
+  tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf", buf, NULL);
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer), data,
+                                        sizeof (data), NULL) == TRUE);
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              out, 10, NULL), ==, 10);
+
+  g_byte_array_set_size (buf, 0);
+  g_byte_array_append (buf, (const guint8 *) TEST_DATA, 5);
+
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              out, sizeof (out), NULL), ==, 5);
+  g_assert (memcmp (out, TEST_DATA, 5) == 0);
+  g_assert_cmpint (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
+                                              out, 1, NULL), ==, -1);
+
+  g_object_unref (tbuffer);
+}
+
+/* the CPU time this process has used, in seconds */
+static gdouble
+cpu_seconds (void)
+{
+  struct timespec now;
+
+  g_assert (clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &now) == 0);
+  return (gdouble) now.tv_sec + (gdouble) now.tv_nsec / 1e9;
+}
+
+/* reads a buffer of size bytes back one byte at a time and returns the CPU
+   time that took */
+static gdouble
+time_bytewise_read (guint32 size)
+{
+  ThriftMemoryBuffer *tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
+  guchar *data = g_malloc0 (size);
+  gdouble start, elapsed;
+  guchar byte;
+  guint32 i;
+
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer), data,
+                                        size, NULL) == TRUE);
+  g_free (data);
+
+  start = cpu_seconds ();
+  for (i = 0; i < size; i++)
+    {
+      if (thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer), &byte, 1,
+                                     NULL) != 1)
+        g_error ("reading byte %u of %u failed", i, size);
+    }
+  elapsed = cpu_seconds () - start;
+
+  g_object_unref (tbuffer);
+  return elapsed;
+}
+
+/* A protocol reads in many small pieces.  Reading eight times the bytes that
+   way should take about eight times as long.  The smaller run is made long
+   enough to be timed, the larger one gets a few tries so that a busy machine
+   does not decide the outcome, and three times the linear ratio is
+   allowed. */
+static void
+test_bytewise_reads_take_time_in_proportion_to_the_buffer (void)
+{
+  guint32 size = 64 * 1024;
+  gdouble base;
+  gdouble larger = 0.0;
+  guint attempt;
+
+  base = time_bytewise_read (size);
+  while (base < 0.002 && size < 1024 * 1024)
+    {
+      size *= 2;
+      base = time_bytewise_read (size);
+    }
+  g_assert_cmpfloat (base, >, 0.0);
+
+  for (attempt = 0; attempt < 3; attempt++)
+    {
+      larger = time_bytewise_read (8 * size);
+      g_test_message ("%u bytes: %.4f s, %u bytes: %.4f s (x%.1f)",
+                      size, base, 8 * size, larger, larger / base);
+      if (larger <= 24 * base)
+        break;
+    }
+  g_assert_cmpfloat (larger, <=, 24 * base);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -217,6 +456,16 @@ main(int argc, char *argv[])
   g_test_add_func ("/testmemorybuffer/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testmemorybuffer/ReadAndWriteUnlimited", test_read_and_write_default);
   g_test_add_func ("/testmemorybuffer/ReadAndWriteExternal", test_read_and_write_external);
+  g_test_add_func ("/testmemorybuffer/ReadInPieces", test_read_in_pieces);
+  g_test_add_func ("/testmemorybuffer/WritesBetweenReads", test_writes_between_reads);
+  g_test_add_func ("/testmemorybuffer/ReadBytesLeaveRoomForWrites",
+                   test_read_bytes_leave_room_for_writes);
+  g_test_add_func ("/testmemorybuffer/RollingUseKeepsTheBufferSmall",
+                   test_rolling_use_keeps_the_buffer_small);
+  g_test_add_func ("/testmemorybuffer/ShortenedExternalArray",
+                   test_shortened_external_array);
+  g_test_add_func ("/testmemorybuffer/BytewiseReadsTakeTimeInProportionToTheBuffer",
+                   test_bytewise_reads_take_time_in_proportion_to_the_buffer);
 
   return g_test_run ();
 }

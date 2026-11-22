@@ -52,6 +52,10 @@ struct _ThriftMemoryBuffer
   GByteArray *buf;
   guint32 buf_size;
   gboolean owner;
+
+  /* The first buf_pos bytes of buf have been read.  They are removed from
+   * time to time, and always once everything in buf has been read. */
+  guint buf_pos;
 };
 
 typedef struct _ThriftMemoryBufferClass ThriftMemoryBufferClass;

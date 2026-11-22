@@ -19,6 +19,7 @@
 
 #include <netdb.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -360,6 +361,135 @@ test_read_across_frames (void)
   g_object_unref (membuf);
 }
 
+/* Reading frames a few bytes at a time hands out every byte once and in
+   order, however the reads fall on the frame boundaries. */
+static void
+test_read_frames_in_pieces (void)
+{
+  static const guint32 sizes[] = { 1, 7, 300, 4096, 2, 1000 };
+  static const guint32 pieces[] = { 1, 2, 3, 5, 8, 13, 21 };
+  GByteArray *wire = g_byte_array_new ();
+  GByteArray *expected = g_byte_array_new ();
+  ThriftMemoryBuffer *membuf;
+  ThriftTransport *transport;
+  guchar buf[21];
+  guint32 total = 0;
+  guint32 done = 0;
+  guint i, j, n = 0;
+
+  for (i = 0; i < G_N_ELEMENTS (sizes); i++)
+    {
+      guchar *frame = g_malloc (sizes[i]);
+
+      for (j = 0; j < sizes[i]; j++)
+        frame[j] = (guchar) (i * 37 + j * 11);
+      append_frame (wire, frame, sizes[i]);
+      g_byte_array_append (expected, frame, sizes[i]);
+      total += sizes[i];
+      g_free (frame);
+    }
+
+  membuf = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                         "buf", wire,
+                         "buf_size", (guint32) 0,
+                         NULL);
+  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (membuf),
+                            NULL);
+
+  while (done < total)
+    {
+      guint32 want = MIN (pieces[n++ % G_N_ELEMENTS (pieces)], total - done);
+
+      g_assert_cmpint (thrift_transport_read_all (transport, buf, want, NULL),
+                       ==, (gint32) want);
+      g_assert (memcmp (buf, expected->data + done, want) == 0);
+      done += want;
+    }
+
+  g_byte_array_unref (expected);
+  g_object_unref (transport);
+  g_object_unref (membuf);
+}
+
+/* the CPU time this process has used, in seconds */
+static gdouble
+cpu_seconds (void)
+{
+  struct timespec now;
+
+  g_assert (clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &now) == 0);
+  return (gdouble) now.tv_sec + (gdouble) now.tv_nsec / 1e9;
+}
+
+/* reads one frame of size bytes back one byte at a time and returns the CPU
+   time that took */
+static gdouble
+time_bytewise_read_of_one_frame (guint32 size)
+{
+  GByteArray *wire = g_byte_array_new ();
+  guchar *frame = g_malloc0 (size);
+  ThriftMemoryBuffer *membuf;
+  ThriftTransport *transport;
+  gdouble start, elapsed;
+  guchar byte;
+  guint32 i;
+
+  append_frame (wire, frame, size);
+  g_free (frame);
+  membuf = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
+                         "buf", wire,
+                         "buf_size", (guint32) 0,
+                         NULL);
+  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+                            "transport", THRIFT_TRANSPORT (membuf),
+                            NULL);
+
+  start = cpu_seconds ();
+  for (i = 0; i < size; i++)
+    {
+      if (thrift_transport_read (transport, &byte, 1, NULL) != 1)
+        g_error ("reading byte %u of a %u byte frame failed", i, size);
+    }
+  elapsed = cpu_seconds () - start;
+
+  g_object_unref (transport);
+  g_object_unref (membuf);
+  return elapsed;
+}
+
+/* A protocol reads a frame in many small pieces.  Reading eight times the
+   bytes that way should take about eight times as long.  The smaller run is
+   made long enough to be timed, the larger one gets a few tries so that a
+   busy machine does not decide the outcome, and three times the linear
+   ratio is allowed. */
+static void
+test_bytewise_reads_take_time_in_proportion_to_the_frame (void)
+{
+  guint32 size = 64 * 1024;
+  gdouble base;
+  gdouble larger = 0.0;
+  guint attempt;
+
+  base = time_bytewise_read_of_one_frame (size);
+  while (base < 0.002 && size < 1024 * 1024)
+    {
+      size *= 2;
+      base = time_bytewise_read_of_one_frame (size);
+    }
+  g_assert_cmpfloat (base, >, 0.0);
+
+  for (attempt = 0; attempt < 3; attempt++)
+    {
+      larger = time_bytewise_read_of_one_frame (8 * size);
+      g_test_message ("%u bytes: %.4f s, %u bytes: %.4f s (x%.1f)",
+                      size, base, 8 * size, larger, larger / base);
+      if (larger <= 24 * base)
+        break;
+    }
+  g_assert_cmpfloat (larger, <=, 24 * base);
+}
+
 /* A transport whose write() or flush() fails when told to, and which counts
  * the flushes it is asked for. */
 #define TEST_TYPE_FAILING_TRANSPORT (test_failing_transport_get_type ())
@@ -555,6 +685,9 @@ main(int argc, char *argv[])
   g_test_add_func ("/testframedtransport/ReadAndWrite", test_read_and_write);
   g_test_add_func ("/testframedtransport/ReadAfterPeerClose", test_read_after_peer_close);
   g_test_add_func ("/testframedtransport/ReadAcrossFrames", test_read_across_frames);
+  g_test_add_func ("/testframedtransport/ReadFramesInPieces", test_read_frames_in_pieces);
+  g_test_add_func ("/testframedtransport/BytewiseReadsTakeTimeInProportionToTheFrame",
+                   test_bytewise_reads_take_time_in_proportion_to_the_frame);
   g_test_add_func ("/testframedtransport/FlushReportsAFailedWrite",
                    test_flush_reports_a_failed_write);
   g_test_add_func ("/testframedtransport/FlushReportsAFailedFlush",
