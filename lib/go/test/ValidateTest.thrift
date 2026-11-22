@@ -105,3 +105,20 @@ struct AnnotationCompatibleTest {
         9: EnumFoo Enum0 = EnumFoo.e2 (vt.in = "[EnumFoo.e2]", go.tag = 'json:"enum1"')
         10: Foo Struct0 (vt.skip = "true", go.tag = 'json:"struct1"')
 }
+
+struct Bounded {
+        1: i32 X (vt.ge = "0")
+}
+
+// Rules that refer to optional fields, which may be unset.
+struct UnsetReferenceTest {
+        1: optional i32 Max
+        2: optional i32 Val (vt.le = "$Max")
+        3: i32 Plain = 1 (vt.le = "$Max")
+        4: optional string Name (vt.max_size = "$Max")
+        5: i32 Picked = 5 (vt.in = "[$Max, 5]")
+        6: optional bool Skip
+        7: optional Bounded Checked (vt.skip = "$Skip")
+        8: Bounded Nested (vt.skip = "false")
+        9: optional Bounded Unchecked
+}

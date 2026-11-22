@@ -533,3 +533,100 @@ func TestAnnotationCompatibleTest(t *testing.T) {
 		}
 	}
 }
+
+// expectValidationError reports whether err is a validation error of the
+// given check for the given type and field.
+func expectValidationError(t *testing.T, err error, check, typeName, field string) {
+	t.Helper()
+	var ve *thrift.ValidationError
+	if err == nil {
+		t.Errorf("Expected %s error for %s.%s, got none", check, typeName, field)
+	} else if !errors.As(err, &ve) {
+		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
+	} else if ve.Check() != check || ve.TypeName() != typeName || ve.Field() != field {
+		t.Errorf("Expected %s error for %s.%s, got %s for %s", check, typeName, field, ve.Check(), ve.FieldSymbol())
+	}
+}
+
+// Validate() on structs as they are created, with every optional field unset.
+func TestValidateWithUnsetFields(t *testing.T) {
+	for name, v := range map[string]interface{ Validate() error }{
+		"BasicTest":                validatetest.NewBasicTest(),
+		"FieldReferenceTest":       validatetest.NewFieldReferenceTest(),
+		"ValidationFunctionTest":   validatetest.NewValidationFunctionTest(),
+		"AnnotationCompatibleTest": validatetest.NewAnnotationCompatibleTest(),
+		"Bounded":                  validatetest.NewBounded(),
+		"UnsetReferenceTest":       validatetest.NewUnsetReferenceTest(),
+	} {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("%s.Validate() panicked: %v", name, r)
+				}
+			}()
+			if err := v.Validate(); err != nil {
+				t.Errorf("%s.Validate() = %v", name, err)
+			}
+		}()
+	}
+}
+
+// A rule that refers to an unset field does not apply, as a rule on an unset
+// field does not; once the referenced field is set, the rule is checked.
+func TestUnsetFieldReference(t *testing.T) {
+	ur := validatetest.NewUnsetReferenceTest()
+	ur.Val = new(int32(100))
+	ur.Plain = 100
+	ur.Name = new("a long name")
+	ur.Picked = 7
+	if err := ur.Validate(); err != nil {
+		t.Errorf("Rules that refer to the unset Max must not apply, got %v", err)
+	}
+
+	for _, tc := range []struct {
+		check string
+		field string
+		set   func(*validatetest.UnsetReferenceTest)
+	}{
+		{"vt.le", "Val", func(p *validatetest.UnsetReferenceTest) { p.Val = new(int32(100)) }},
+		{"vt.le", "Plain", func(p *validatetest.UnsetReferenceTest) { p.Plain = 100 }},
+		{"vt.max_size", "Name", func(p *validatetest.UnsetReferenceTest) { p.Name = new("a long name") }},
+		{"vt.in", "Picked", func(p *validatetest.UnsetReferenceTest) { p.Picked = 7 }},
+	} {
+		ur := validatetest.NewUnsetReferenceTest()
+		ur.Max = new(int32(2))
+		if err := ur.Validate(); err != nil {
+			t.Errorf("Expected no error with Max set and the defaults, got %v", err)
+		}
+		tc.set(ur)
+		expectValidationError(t, ur.Validate(), tc.check, "UnsetReferenceTest", tc.field)
+	}
+}
+
+// vt.skip = "$Skip" skips the nested check only when Skip is set and true, and
+// a struct field that is not set has nothing to check.
+func TestSkipReferenceAndUnsetStruct(t *testing.T) {
+	for _, skip := range []*bool{nil, new(false), new(true)} {
+		ur := validatetest.NewUnsetReferenceTest()
+		ur.Skip = skip
+		ur.Checked = &validatetest.Bounded{X: -1}
+		err := ur.Validate()
+		if skip != nil && *skip {
+			if err != nil {
+				t.Errorf("Skip=true must skip the check of Checked, got %v", err)
+			}
+		} else {
+			expectValidationError(t, err, "vt.ge", "Bounded", "X")
+		}
+	}
+
+	ur := validatetest.NewUnsetReferenceTest()
+	ur.Nested = &validatetest.Bounded{X: -1}
+	expectValidationError(t, ur.Validate(), "vt.ge", "Bounded", "X")
+
+	ur = validatetest.NewUnsetReferenceTest()
+	ur.Unchecked = &validatetest.Bounded{X: -1}
+	if err := ur.Validate(); err != nil {
+		t.Errorf("Unchecked has no rule, got %v", err)
+	}
+}

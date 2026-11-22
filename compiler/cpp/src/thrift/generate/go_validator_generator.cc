@@ -56,6 +56,62 @@ std::string go_validator_generator::get_field_reference_name(t_field* field) {
   return tgt;
 }
 
+// The Go condition under which a field is set, or "" for a field that is
+// always set.
+std::string go_validator_generator::get_field_presence_check(t_field* field) {
+  if (!go_generator->is_pointer_field(field)) {
+    return "";
+  }
+  std::string name;
+  t_const_value* def_value;
+  go_generator->get_publicized_name_and_def_value(field, &name, &def_value);
+  return "p." + name + " != nil";
+}
+
+static void collect_field_references(validation_value* value, std::vector<t_field*>& fields) {
+  if (value->is_field_reference()) {
+    fields.push_back(value->get_field_reference());
+  } else if (value->is_validation_function()) {
+    for (auto argument : value->get_function()->arguments) {
+      collect_field_references(argument, fields);
+    }
+  }
+}
+
+go_validator_generator::reference_guard::reference_guard(go_validator_generator* generator,
+                                                         std::ostream& out,
+                                                         validation_rule* rule)
+  : generator_(generator), out_(out), opened_(false) {
+  std::vector<t_field*> fields;
+  for (auto value : rule->get_values()) {
+    collect_field_references(value, fields);
+  }
+  std::vector<std::string> checks;
+  for (auto field : fields) {
+    std::string check = generator_->get_field_presence_check(field);
+    if (!check.empty() && std::find(checks.begin(), checks.end(), check) == checks.end()) {
+      checks.push_back(check);
+    }
+  }
+  if (checks.empty()) {
+    return;
+  }
+  out_ << generator_->indent() << "if ";
+  for (size_t i = 0; i < checks.size(); i++) {
+    out_ << (i > 0 ? " && " : "") << checks[i];
+  }
+  out_ << " {" << '\n';
+  generator_->indent_up();
+  opened_ = true;
+}
+
+go_validator_generator::reference_guard::~reference_guard() {
+  if (opened_) {
+    generator_->indent_down();
+    out_ << generator_->indent() << "}" << '\n';
+  }
+}
+
 void go_validator_generator::generate_struct_validator(std::ostream& out, t_struct* tstruct) {
   std::vector<t_field*> members = tstruct->get_members();
   validation_parser parser(tstruct);
@@ -142,6 +198,7 @@ void go_validator_generator::generate_enum_field_validator(std::ostream& out,
       continue;
     }
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
 
     if (key == "vt.in") {
       if (values.size() > 1) {
@@ -263,6 +320,7 @@ void go_validator_generator::generate_bool_field_validator(std::ostream& out,
       continue;
     }
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
 
     if (key == "vt.const") {
       out << indent() << "if " << context.tgt << " != ";
@@ -300,6 +358,7 @@ void go_validator_generator::generate_double_field_validator(std::ostream& out,
                                              {"vt.gt", "<="},
                                              {"vt.ge", "<"}};
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
     auto key_it = signs.find(key);
     if (key_it != signs.end()) {
       out << indent() << "if " << context.tgt << " " << key_it->second << " ";
@@ -440,6 +499,7 @@ void go_validator_generator::generate_integer_field_validator(std::ostream& out,
                                              {"vt.gt", "<="},
                                              {"vt.ge", "<"}};
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
     auto key_it = signs.find(key);
     if (key_it != signs.end()) {
       out << indent() << "if " << context.tgt << " " << key_it->second << " ";
@@ -643,6 +703,7 @@ void go_validator_generator::generate_string_field_validator(std::ostream& out,
       continue;
     }
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
 
     if (key == "vt.const") {
       out << indent() << "if " << target << " != ";
@@ -764,6 +825,7 @@ void go_validator_generator::generate_list_field_validator(std::ostream& out,
   for (auto it = context.rules.begin(); it != context.rules.end(); it++) {
     const std::vector<validation_value*>& values = (*it)->get_values();
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
     if (key == "vt.min_size" || key == "vt.max_size") {
       out << indent() << "if len(" << context.tgt << ")";
       if (key == "vt.min_size") {
@@ -815,6 +877,7 @@ void go_validator_generator::generate_map_field_validator(std::ostream& out,
   for (auto it = context.rules.begin(); it != context.rules.end(); it++) {
     const std::vector<validation_value*>& values = (*it)->get_values();
     std::string key = (*it)->get_name();
+    reference_guard guard(this, out, *it);
     if (key == "vt.min_size" || key == "vt.max_size") {
       out << indent() << "if len(" << context.tgt << ")";
       if (key == "vt.min_size") {
@@ -922,34 +985,38 @@ void go_validator_generator::generate_struct_field_validator(std::ostream& out,
       last_valid_rule = *it;
     }
   }
-  if (generate_valid) {
-    if (last_valid_rule == nullptr) {
-      out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
-      indent_up();
-      out << indent() << "return err" << '\n';
-      indent_down();
-      out << indent() << "}" << '\n';
-    } else {
-      const std::vector<validation_value*>& values = last_valid_rule->get_values();
-      if (!values[0]->get_bool()) {
-        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
-        indent_up();
-        out << indent() << "return err" << '\n';
-        indent_down();
-        out << indent() << "}" << '\n';
-      } else if (values[0]->is_field_reference()) {
-        out << indent() << "if !";
-        out << get_field_reference_name(values[0]->get_field_reference());
-        out << " {" << '\n';
-        indent_up();
-        out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
-        indent_up();
-        out << indent() << "return err" << '\n';
-        indent_down();
-        out << indent() << "}" << '\n';
-        indent_down();
-        out << indent() << "}" << '\n';
-      }
-    }
+  if (!generate_valid) {
+    return;
   }
+
+  // A struct that is not set has nothing to check.
+  out << indent() << "if " << context.tgt << " != nil {" << '\n';
+  indent_up();
+
+  // vt.skip = "$Flag" skips the check when Flag is set and true.
+  bool skip_reference
+      = last_valid_rule != nullptr && last_valid_rule->get_values()[0]->is_field_reference();
+  if (skip_reference) {
+    std::string flag
+        = get_field_reference_name(last_valid_rule->get_values()[0]->get_field_reference());
+    out << indent() << "if ";
+    if (flag[0] == '*') {
+      out << flag.substr(1) << " == nil || ";
+    }
+    out << "!" << flag << " {" << '\n';
+    indent_up();
+  }
+
+  out << indent() << "if err := " << context.tgt << ".Validate(); err != nil {" << '\n';
+  indent_up();
+  out << indent() << "return err" << '\n';
+  indent_down();
+  out << indent() << "}" << '\n';
+
+  if (skip_reference) {
+    indent_down();
+    out << indent() << "}" << '\n';
+  }
+  indent_down();
+  out << indent() << "}" << '\n';
 }
