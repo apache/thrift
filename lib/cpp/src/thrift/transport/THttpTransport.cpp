@@ -231,13 +231,23 @@ uint32_t THttpTransport::readContent(uint32_t size) {
 }
 
 char* THttpTransport::readLine() {
+  // How far into the line the search for its CRLF has got, counted from the
+  // start of the line. shift() and refill() move the line, but do not change
+  // it, so the part already searched is not searched again.
+  uint32_t searched = 0;
   while (true) {
     char* eol = nullptr;
 
-    eol = strstr(httpBuf_ + httpPos_, CRLF);
+    eol = strstr(httpBuf_ + httpPos_ + searched, CRLF);
 
     // No CRLF yet?
     if (eol == nullptr) {
+      // strstr() went as far as the first NUL. Go on from there next time,
+      // less one byte, which may be the CR of a CRLF whose LF is still to come.
+      searched += static_cast<uint32_t>(strlen(httpBuf_ + httpPos_ + searched));
+      if (searched > 0) {
+        --searched;
+      }
       // Shift whatever we have now to front and refill
       shift();
       refill();
@@ -253,9 +263,12 @@ char* THttpTransport::readLine() {
 
 void THttpTransport::shift() {
   if (httpBufLen_ > httpPos_) {
-    // Shift down remaining data and read more
+    // Shift down remaining data and read more; data already at the front
+    // stays where it is
     uint32_t length = httpBufLen_ - httpPos_;
-    memmove(httpBuf_, httpBuf_ + httpPos_, length);
+    if (httpPos_ > 0) {
+      memmove(httpBuf_, httpBuf_ + httpPos_, length);
+    }
     httpBufLen_ = length;
   } else {
     httpBufLen_ = 0;

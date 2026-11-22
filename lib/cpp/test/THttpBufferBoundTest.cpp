@@ -283,4 +283,127 @@ BOOST_AUTO_TEST_CASE(a_chunked_response_still_works) {
   BOOST_CHECK_EQUAL(std::string(reinterpret_cast<char*>(out), 5), "hello");
 }
 
+namespace {
+
+// Hands out the wire at most `piece` bytes per read(), as a socket does when
+// the peer sends slowly.
+class TrickleTransport : public apache::thrift::transport::TVirtualTransport<TrickleTransport> {
+public:
+  TrickleTransport(std::string wire, uint32_t piece)
+    : wire_(std::move(wire)), pos_(0), piece_(piece) {}
+
+  uint32_t read(uint8_t* buf, uint32_t len) {
+    const size_t left = wire_.size() - pos_;
+    const uint32_t n = static_cast<uint32_t>(
+        (std::min)((std::min)(static_cast<size_t>(len), static_cast<size_t>(piece_)), left));
+    std::memcpy(buf, wire_.data() + pos_, n);
+    pos_ += n;
+    return n;
+  }
+
+  void write(const uint8_t*, uint32_t) {}
+  bool isOpen() const override { return true; }
+  void open() override {}
+  void close() override {}
+
+private:
+  std::string wire_;
+  size_t pos_;
+  uint32_t piece_;
+};
+
+} // namespace
+
+BOOST_AUTO_TEST_CASE(lines_that_arrive_one_byte_at_a_time_are_read_whole) {
+  // One byte per read puts every CR and its LF into different reads.
+  const std::string request = "POST / HTTP/1.1\r\nHost: localhost\r\nX-Filler: "
+                              + std::string(3000, 'A') + "\r\nContent-Length: 5\r\n\r\nhello";
+  auto config = std::make_shared<TConfiguration>(static_cast<int>(kMaxMessageSize));
+  TestHttpServer server(std::make_shared<TrickleTransport>(request, 1), config);
+
+  uint8_t out[5];
+  BOOST_CHECK_EQUAL(server.readAll(out, sizeof(out)), 5u);
+  BOOST_CHECK_EQUAL(std::string(reinterpret_cast<char*>(out), 5), "hello");
+
+  const std::string response
+      = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+        "3\r\nhel\r\n2\r\nlo\r\n0\r\n\r\n";
+  TestHttpClient client(std::make_shared<TrickleTransport>(response, 1), "localhost", "/", config);
+  BOOST_CHECK_EQUAL(client.readAll(out, sizeof(out)), 5u);
+  BOOST_CHECK_EQUAL(std::string(reinterpret_cast<char*>(out), 5), "hello");
+}
+
+BOOST_AUTO_TEST_CASE(a_header_line_with_a_nul_byte_never_ends) {
+  // The line is searched as a C string, so a NUL ends the search for its
+  // CRLF: the line goes on until the peer has nothing more to send.
+  std::string request = "POST / HTTP/1.1\r\nX-Bad: abc";
+  request.push_back('\0');
+  request += "def\r\nContent-Length: 5\r\n\r\nhello";
+  auto config = std::make_shared<TConfiguration>(static_cast<int>(kMaxMessageSize));
+  TestHttpServer server(std::make_shared<TrickleTransport>(request, 7), config);
+
+  uint8_t out[5];
+  try {
+    server.read(out, sizeof(out));
+    BOOST_ERROR("a header line with a NUL byte was accepted");
+  } catch (const TTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::END_OF_FILE);
+  }
+}
+
+#if !defined(_WIN32)
+namespace {
+
+// The CPU time this process has used, in seconds.  Windows has no clock fine
+// enough for runs of a few milliseconds, so the case below runs elsewhere.
+double cpuSeconds() {
+  struct timespec now;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
+  return static_cast<double>(now.tv_sec) + static_cast<double>(now.tv_nsec) / 1e9;
+}
+
+// Reads one request whose header line is `length` bytes long, 1460 bytes (an
+// Ethernet segment) per read, and returns the CPU time that took.
+double timeLongHeaderLine(uint32_t length) {
+  const std::string request = "POST / HTTP/1.1\r\nX-Filler: " + std::string(length, 'A')
+                              + "\r\nContent-Length: 1\r\n\r\nZ";
+  auto config = std::make_shared<TConfiguration>(256 * 1024 * 1024);
+  TestHttpServer server(std::make_shared<TrickleTransport>(request, 1460), config);
+
+  uint8_t out = 0;
+  const double start = cpuSeconds();
+  BOOST_REQUIRE_EQUAL(server.read(&out, 1), 1u);
+  const double elapsed = cpuSeconds() - start;
+  BOOST_REQUIRE_EQUAL(out, 'Z');
+  return elapsed;
+}
+
+} // namespace
+
+BOOST_AUTO_TEST_CASE(a_header_line_in_pieces_takes_time_in_proportion_to_its_length) {
+  // Eight times the line should take about eight times as long.  The shorter
+  // run is made long enough to be timed, the longer one gets a few tries so
+  // that a busy machine does not decide the outcome, and three times the
+  // linear ratio is allowed.
+  uint32_t length = 512 * 1024;
+  double base = timeLongHeaderLine(length);
+  while (base < 0.002 && length < 8 * 1024 * 1024) {
+    length *= 2;
+    base = timeLongHeaderLine(length);
+  }
+  BOOST_REQUIRE_GT(base, 0.0);
+
+  double larger = 0.0;
+  for (int attempt = 0; attempt < 3; ++attempt) {
+    larger = timeLongHeaderLine(8 * length);
+    BOOST_TEST_MESSAGE(length << " bytes: " << base << " s, " << 8 * length << " bytes: " << larger
+                              << " s");
+    if (larger <= 24 * base) {
+      break;
+    }
+  }
+  BOOST_CHECK_LE(larger, 24 * base);
+}
+#endif
+
 BOOST_AUTO_TEST_SUITE_END()
