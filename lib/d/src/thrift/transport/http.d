@@ -272,16 +272,25 @@ protected:
 
 private:
   ubyte[] readLine() {
+    // How far into the line the search for its CRLF has got. Moving the line
+    // to the front and refilling do not change it, so the part already
+    // searched is not searched again.
+    size_t searched;
     while (true) {
-      auto split = findSplit(httpBufRemaining_, cast(ubyte[])"\r\n");
+      auto split = findSplit(httpBufRemaining_[searched .. $], cast(ubyte[])"\r\n");
 
       if (split[1].empty) {
+        // Go on from the end next time, less one byte, which may be the CR of
+        // a CRLF whose LF is still to come.
+        searched = httpBufRemaining_.empty ? 0 : httpBufRemaining_.length - 1;
+
         // No CRLF yet, move whatever we have now to front and refill.
         if (httpBufRemaining_.empty) {
           httpBufRemaining_ = httpBuf_[0 .. 0];
-        } else {
+        } else if (httpBufRemaining_.ptr != httpBuf_.ptr) {
           // Source and destination overlap whenever anything is left over,
-          // which a slice assignment does not allow.
+          // which a slice assignment does not allow. A line that is at the
+          // front already stays where it is.
           auto length = httpBufRemaining_.length;
           memmove(httpBuf_.ptr, httpBufRemaining_.ptr, length);
           httpBufRemaining_ = httpBuf_[0 .. length];
@@ -300,8 +309,9 @@ private:
       } else {
         // Set the remaining buffer to the part after \r\n and return the part
         // (line) before it.
+        auto line = httpBufRemaining_[0 .. searched + split[0].length];
         httpBufRemaining_ = split[2];
-        return split[0];
+        return line;
       }
     }
   }
@@ -966,4 +976,109 @@ unittest {
     ubyte[16] buf;
     assertThrown!TTransportException(http.read(buf), wire);
   }
+}
+
+version (unittest) {
+  /**
+   * Hands out the wire at most piece bytes per read, as a socket does when
+   * the peer sends slowly.
+   */
+  private final class TTrickleTransport : TBaseTransport {
+    this(string wire, size_t piece) {
+      wire_ = cast(ubyte[])wire.dup;
+      piece_ = piece;
+    }
+
+    override bool isOpen() @property { return true; }
+    override bool peek() { return pos_ < wire_.length; }
+    override void open() {}
+    override void close() {}
+
+    override size_t read(ubyte[] buf) {
+      auto n = min(buf.length, piece_, wire_.length - pos_);
+      buf[0 .. n] = wire_[pos_ .. pos_ + n];
+      pos_ += n;
+      return n;
+    }
+
+  private:
+    ubyte[] wire_;
+    size_t pos_;
+    size_t piece_;
+  }
+
+  private string readFive(THttpTransport http) {
+    ubyte[5] buf;
+    size_t have;
+    while (have < buf.length) {
+      auto got = http.read(buf[have .. $]);
+      assert(got > 0, "the body ended early");
+      have += got;
+    }
+    return cast(string)buf.idup;
+  }
+}
+
+// Lines that arrive one byte at a time, so that every CR and its LF come in
+// different reads, are read whole, on the server side as well as on the
+// client side, a chunk size included.
+unittest {
+  import std.array : replicate;
+
+  auto server = new TServerHttpTransport(new TTrickleTransport(
+    "POST / HTTP/1.1\r\nHost: localhost\r\nX-Filler: " ~ replicate("A", 3000)
+    ~ "\r\nContent-Length: 5\r\n\r\nhello", 1));
+  assert(readFive(server) == "hello");
+
+  auto client = new TClientHttpTransport(new TTrickleTransport(
+    "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n", 1),
+    "localhost", "/");
+  assert(readFive(client) == "hello");
+  client.readEnd();
+}
+
+// A long header line that arrives in pieces takes time in proportion to its
+// length: eight times the line should take about eight times as long. The
+// shorter run is made long enough to be timed, the longer one gets a few
+// tries so that a busy machine does not decide the outcome, and three times
+// the linear ratio is allowed.
+version (linux) unittest {
+  import core.sys.posix.time : clock_gettime, timespec, CLOCK_PROCESS_CPUTIME_ID;
+  import std.array : replicate;
+
+  static double cpuSeconds() {
+    timespec now;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
+    return now.tv_sec + now.tv_nsec / 1e9;
+  }
+
+  // One request whose header line is length bytes long, read 1460 bytes (an
+  // Ethernet segment) at a time.
+  static double timeLine(size_t length) {
+    auto http = new TServerHttpTransport(new TTrickleTransport(
+      "POST / HTTP/1.1\r\nX-Filler: " ~ replicate("A", length)
+      ~ "\r\nContent-Length: 1\r\n\r\nZ", 1460));
+    ubyte[1] buf;
+    auto start = cpuSeconds();
+    auto got = http.read(buf[]);
+    auto elapsed = cpuSeconds() - start;
+    assert(got == 1 && buf[0] == 'Z');
+    return elapsed;
+  }
+
+  size_t length = 256 * 1024;
+  auto base = timeLine(length);
+  while (base < 0.002 && length < 1024 * 1024) {
+    length *= 2;
+    base = timeLine(length);
+  }
+  assert(base > 0);
+
+  double larger = 0;
+  foreach (attempt; 0 .. 3) {
+    larger = timeLine(8 * length);
+    if (larger <= 24 * base) break;
+  }
+  assert(larger <= 24 * base, "a header line of " ~ to!string(8 * length) ~ " bytes took "
+    ~ to!string(larger) ~ " s, one of " ~ to!string(length) ~ " bytes " ~ to!string(base) ~ " s");
 }
