@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 3bd6e0bc99143d614ddb80ee0aec192e385c8927 */
+ * Stub hash: c49eeb6ee892411fbace875821d0ebd45146afca */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_thrift_protocol_write_binary, 0, 6, IS_VOID, 0)
 	ZEND_ARG_TYPE_INFO(0, protocol, IS_OBJECT, 0)

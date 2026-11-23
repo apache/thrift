@@ -3,6 +3,7 @@
 
   "id": "http://thrift.apache.org/schema.json#",
   "description": "Schema for Apache Thrift protocol descriptors",
+  "$comment": "SPDX-License-Identifier: Apache-2.0\nSPDX-FileCopyrightText: See the NOTICE file distributed with this work for additional information regarding copyright ownership\nSPDX-FileContributor: Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements",
 
   "definitions": {
     "type-id": {

@@ -19,6 +19,8 @@
 
 package tests
 
+//go:generate go run go.uber.org/mock/mockgen@v0.6.0 -copyright_file=protocol_mock_license.txt -write_command_comment=false -destination=protocol_mock.go -package=tests github.com/apache/thrift/lib/go/thrift TProtocol
+
 import (
 	"testing"
 

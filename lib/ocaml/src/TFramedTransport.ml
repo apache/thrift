@@ -2,9 +2,11 @@ open Thrift
 
 module T = Transport
 
+(* The frame-size helpers below are adapted from OCamlnet's src/rpc/rtypes.ml.
+   Copyright (c) 2001-2006 Patrick Doane and Gerd Stolpmann.
+   See the OCamlnet license in LICENSE. *)
 let c_0xff_32 = Int32.of_string "0xff"
 
-(* Copied from OCamlnet rtypes.ml *)
 let encode_frame_size x =
 	let s = String.create 4 in
 	let n3 = Int32.to_int (Int32.shift_right_logical x 24) land 0xff in
