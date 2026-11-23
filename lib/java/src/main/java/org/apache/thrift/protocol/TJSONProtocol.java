@@ -42,6 +42,8 @@ public class TJSONProtocol extends TProtocol {
   /** Factory for JSON protocol objects */
   public static class Factory implements TProtocolFactory {
     protected boolean fieldNamesAsString_ = false;
+    protected long stringLengthLimit_ = NO_LENGTH_LIMIT;
+    protected long containerLengthLimit_ = NO_LENGTH_LIMIT;
 
     public Factory() {}
 
@@ -49,10 +51,28 @@ public class TJSONProtocol extends TProtocol {
       fieldNamesAsString_ = fieldNamesAsString;
     }
 
+    /**
+     * @param stringLengthLimit the most bytes a string or binary value may hold, or -1 for no
+     *     limit.
+     * @param containerLengthLimit the most elements a container may declare, or -1 for no limit.
+     */
+    public Factory(long stringLengthLimit, long containerLengthLimit) {
+      this(false, stringLengthLimit, containerLengthLimit);
+    }
+
+    public Factory(boolean fieldNamesAsString, long stringLengthLimit, long containerLengthLimit) {
+      fieldNamesAsString_ = fieldNamesAsString;
+      stringLengthLimit_ = stringLengthLimit;
+      containerLengthLimit_ = containerLengthLimit;
+    }
+
     public TProtocol getProtocol(TTransport trans) {
-      return new TJSONProtocol(trans, fieldNamesAsString_);
+      return new TJSONProtocol(
+          trans, fieldNamesAsString_, stringLengthLimit_, containerLengthLimit_);
     }
   }
+
+  private static final long NO_LENGTH_LIMIT = -1;
 
   private static final byte[] COMMA = new byte[] {','};
   private static final byte[] COLON = new byte[] {':'};
@@ -294,6 +314,18 @@ public class TJSONProtocol extends TProtocol {
   // Write out the TField names as a string instead of the default integer value
   private boolean fieldNamesAsString_ = false;
 
+  /**
+   * The most bytes a string or binary value may hold once decoded, or {@link #NO_LENGTH_LIMIT} for
+   * unlimited.
+   */
+  private final long stringLengthLimit_;
+
+  /**
+   * The most elements a container (map, set, list) may declare, or {@link #NO_LENGTH_LIMIT} for
+   * unlimited.
+   */
+  private final long containerLengthLimit_;
+
   // Push a new JSON context onto the stack.
   private void pushContext(JSONBaseContext c) {
     contextStack_.push(context_);
@@ -314,12 +346,31 @@ public class TJSONProtocol extends TProtocol {
 
   /** Constructor */
   public TJSONProtocol(TTransport trans) {
-    super(trans);
+    this(trans, false);
   }
 
   public TJSONProtocol(TTransport trans, boolean fieldNamesAsString) {
+    this(trans, fieldNamesAsString, NO_LENGTH_LIMIT, NO_LENGTH_LIMIT);
+  }
+
+  /**
+   * @param trans the transport to read from and write to.
+   * @param stringLengthLimit the most bytes a string or binary value may hold, or -1 for no limit.
+   * @param containerLengthLimit the most elements a container may declare, or -1 for no limit.
+   */
+  public TJSONProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit) {
+    this(trans, false, stringLengthLimit, containerLengthLimit);
+  }
+
+  public TJSONProtocol(
+      TTransport trans,
+      boolean fieldNamesAsString,
+      long stringLengthLimit,
+      long containerLengthLimit) {
     super(trans);
     fieldNamesAsString_ = fieldNamesAsString;
+    stringLengthLimit_ = stringLengthLimit;
+    containerLengthLimit_ = containerLengthLimit;
   }
 
   @Override
@@ -625,6 +676,13 @@ public class TJSONProtocol extends TProtocol {
   // Read in a JSON string, unescaping as appropriate.. Skip reading from the
   // context if skipContext is true.
   private TByteArrayOutputStream readJSONString(boolean skipContext) throws TException {
+    return readJSONString(skipContext, NO_LENGTH_LIMIT);
+  }
+
+  // Read in a JSON string as above, refusing it once it holds more than
+  // lengthLimit bytes after unescaping, unless lengthLimit is NO_LENGTH_LIMIT.
+  private TByteArrayOutputStream readJSONString(boolean skipContext, long lengthLimit)
+      throws TException {
     TByteArrayOutputStream arr = new TByteArrayOutputStream(DEF_STRING_SIZE);
     ArrayList<Character> codeunits = new ArrayList<Character>();
     if (!skipContext) {
@@ -638,6 +696,7 @@ public class TJSONProtocol extends TProtocol {
     long maxSize = trans_.getConfiguration().getMaxMessageSize();
     long count = 0;
     while (true) {
+      checkStringLength(arr.len(), lengthLimit);
       byte ch = reader_.read();
       count++;
       if (count > maxSize) {
@@ -707,6 +766,31 @@ public class TJSONProtocol extends TProtocol {
       throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected low surrogate char");
     }
     return arr;
+  }
+
+  private static void checkStringLength(int length, long lengthLimit) throws TProtocolException {
+    if (lengthLimit != NO_LENGTH_LIMIT && length > lengthLimit) {
+      throw new TProtocolException(
+          TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + length);
+    }
+  }
+
+  // The most base64 characters, padding included, that encode lengthLimit bytes.
+  private static long base64LengthLimit(long lengthLimit) {
+    if (lengthLimit == NO_LENGTH_LIMIT || lengthLimit > Integer.MAX_VALUE) {
+      return NO_LENGTH_LIMIT;
+    }
+    return (lengthLimit + 2) / 3 * 4;
+  }
+
+  private void checkContainerReadLength(int length) throws TProtocolException {
+    if (length < 0) {
+      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + length);
+    }
+    if (containerLengthLimit_ != NO_LENGTH_LIMIT && length > containerLengthLimit_) {
+      throw new TProtocolException(
+          TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + length);
+    }
   }
 
   // Return true if the given byte could be a valid part of a JSON number.
@@ -800,7 +884,7 @@ public class TJSONProtocol extends TProtocol {
 
   // Read in a JSON string containing base-64 encoded data and decode it.
   private byte[] readJSONBase64() throws TException {
-    TByteArrayOutputStream arr = readJSONString(false);
+    TByteArrayOutputStream arr = readJSONString(false, base64LengthLimit(stringLengthLimit_));
     byte[] b = arr.get();
     int len = arr.len();
     int off = 0;
@@ -824,6 +908,7 @@ public class TJSONProtocol extends TProtocol {
       TBase64Utils.decode(b, off, len, b, size); // NB: decoded in place
       size += len - 1;
     }
+    checkStringLength(size, stringLengthLimit_);
     // Sadly we must copy the byte[] (any way around this?)
     byte[] result = new byte[size];
     System.arraycopy(b, 0, result, 0, size);
@@ -860,7 +945,7 @@ public class TJSONProtocol extends TProtocol {
       throw new TProtocolException(
           TProtocolException.BAD_VERSION, "Message contained bad version.");
     }
-    String name = readJSONString(false).toString(StandardCharsets.UTF_8);
+    String name = readJSONString(false, stringLengthLimit_).toString(StandardCharsets.UTF_8);
     byte type = (byte) readJSONInteger();
     int seqid = (int) readJSONInteger();
     return new TMessage(name, type, seqid);
@@ -908,6 +993,7 @@ public class TJSONProtocol extends TProtocol {
     byte keyType = getTypeIDForTypeName(readJSONString(false).get());
     byte valueType = getTypeIDForTypeName(readJSONString(false).get());
     int size = (int) readJSONInteger();
+    checkContainerReadLength(size);
     readJSONObjectStart();
     TMap map = new TMap(keyType, valueType, size);
 
@@ -926,6 +1012,7 @@ public class TJSONProtocol extends TProtocol {
     readJSONArrayStart();
     byte elemType = getTypeIDForTypeName(readJSONString(false).get());
     int size = (int) readJSONInteger();
+    checkContainerReadLength(size);
     TList list = new TList(elemType, size);
 
     checkReadBytesAvailable(list);
@@ -942,6 +1029,7 @@ public class TJSONProtocol extends TProtocol {
     readJSONArrayStart();
     byte elemType = getTypeIDForTypeName(readJSONString(false).get());
     int size = (int) readJSONInteger();
+    checkContainerReadLength(size);
     TSet set = new TSet(elemType, size);
 
     checkReadBytesAvailable(set);
@@ -990,7 +1078,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public String readString() throws TException {
-    return readJSONString(false).toString(StandardCharsets.UTF_8);
+    return readJSONString(false, stringLengthLimit_).toString(StandardCharsets.UTF_8);
   }
 
   @Override
