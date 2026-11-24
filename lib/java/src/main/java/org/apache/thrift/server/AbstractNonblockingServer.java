@@ -24,6 +24,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.HashSet;
 import java.util.Set;
@@ -235,6 +236,24 @@ public abstract class AbstractNonblockingServer extends TServer {
       }
       // cancel the selection key
       key.cancel();
+    }
+
+    /**
+     * Do connection-close cleanup on every key the selector still holds. A failure while closing
+     * one connection is logged and does not keep the others open.
+     */
+    protected void cleanupSelectionKeys() {
+      for (SelectionKey key : selector.keys()) {
+        try {
+          if (key.attachment() == null && key.channel() instanceof SocketChannel) {
+            // A connection whose FrameBuffer could not be created: nothing else closes it.
+            key.channel().close();
+          }
+          cleanupSelectionKey(key);
+        } catch (Throwable t) {
+          LOGGER.error("Got an error while closing a connection!", t);
+        }
+      }
     }
   } // SelectThread
 
