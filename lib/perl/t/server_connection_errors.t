@@ -18,13 +18,15 @@
 #
 
 # SimpleServer serves one connection at a time. A failure while serving one
-# connection - a request that cannot be dispatched, or a transport that fails
-# to close - must end only that connection; the server must go on accepting.
+# connection - a request that cannot be dispatched, a transport that fails to
+# close, or a reply to a client that has gone - must end only that connection;
+# the server must go on accepting.
 
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use POSIX ();
+use Test::More tests => 11;
 
 use Thrift;
 use Thrift::Type;
@@ -187,4 +189,79 @@ is($connections[2]->{closed} > 0, 1, 'a connection that fails to close is still 
     is($server_transport->{accepted}, 3, 'the server accepts every connection after a plain-reference failure');
     is($CountingService::served, 2, 'the calls after a plain-reference failure are served');
     is($connections[1]->{closed} > 0, 1, 'a connection whose close dies with a plain reference is still closed');
+}
+
+# A registered service that answers each call.
+package ReplyingService;
+sub new { return bless {}, shift }
+sub process {
+    my ($self, $input, $output) = @_;
+    my ($name, $type, $seqid);
+    $input->readMessageBegin(\$name, \$type, \$seqid);
+    $input->skip(Thrift::TType::STRUCT);
+    $input->readMessageEnd();
+    $output->writeMessageBegin($name, Thrift::TMessageType::REPLY, $seqid);
+    $output->writeStructBegin('result');
+    $output->writeFieldStop();
+    $output->writeStructEnd();
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+    $CountingService::served++;
+    return 1;
+}
+
+# A connection whose client has gone. Writing to it raises SIGPIPE, as a write
+# to a TLS socket whose peer has reset the connection does; where that signal
+# is ignored, the write fails the way such a write then does.
+package GoneConnection;
+use parent -norequire, 'FakeConnection';
+sub write {
+    kill 'PIPE', $$;
+    die Thrift::TTransportException->new('Thrift::SSLSocket: Could not write',
+        Thrift::TTransportException::END_OF_FILE);
+}
+
+package main;
+
+# Serves a call to a client that has gone and then an ordinary one, in a child
+# process so that the test can see how the server ends. The child's exit code
+# is what $report returns. Returns the child's wait status.
+sub serve_gone_client_in_child {
+    my ($report, $setup) = @_;
+    my $pid = fork();
+    die "fork: $!" unless defined $pid;
+    if ($pid == 0) {
+        $setup->() if $setup;
+        my $processor = Thrift::MultiplexedProcessor->new();
+        $processor->registerProcessor('ReplyService', ReplyingService->new());
+        my $server_transport = FakeServerTransport->new([
+            GoneConnection->new(multiplexed_call('ReplyService', 'doWork')),
+            FakeConnection->new(multiplexed_call('ReplyService', 'doWork')),
+        ]);
+        my $server = Thrift::SimpleServer->new(
+            $processor, $server_transport,
+            Thrift::TransportFactory->new(), Thrift::TransportFactory->new(),
+            Thrift::BinaryProtocolFactory->new(), Thrift::BinaryProtocolFactory->new(),
+        );
+        $CountingService::served = 0;
+        local $SIG{__WARN__} = sub { };
+        eval { $server->serve(); };
+        POSIX::_exit($report->());
+    }
+    waitpid($pid, 0);
+    return $?;
+}
+
+{
+    my $status = serve_gone_client_in_child(sub { $CountingService::served });
+    is($status & 127, 0, 'a reply that raises SIGPIPE does not end the server process');
+    is($status >> 8, 1, 'the call after it is served');
+}
+
+# A SIGPIPE handler of the application's own stays in place while it serves.
+{
+    my $pipes = 0;
+    my $status = serve_gone_client_in_child(sub { 10 * $pipes + $CountingService::served },
+                                            sub { $SIG{PIPE} = sub { $pipes++ } });
+    is($status, (10 * 1 + 1) << 8, "the application's own SIGPIPE handler is called, and the next call served");
 }

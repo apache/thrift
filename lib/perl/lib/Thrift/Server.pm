@@ -183,6 +183,14 @@ sub serve
     my $self = shift;
     my $stop = 0;
 
+    # A reply written to a client that has gone raises SIGPIPE on a socket
+    # that does not check its peer first, such as a TLS one, and by default
+    # that signal ends the process. Ignored, the write fails instead, which
+    # ends only that connection, as any other error while serving it does.
+    # A disposition the application has set for SIGPIPE stays as it is.
+    local $SIG{PIPE} = $SIG{PIPE};
+    $SIG{PIPE} = 'IGNORE' if !$SIG{PIPE} || $SIG{PIPE} eq 'DEFAULT';
+
     $self->{serverTransport}->listen();
     while (!$stop) {
         my $client = $self->{serverTransport}->accept();
@@ -237,6 +245,11 @@ sub serve
 
     # THRIFT-3848: without ignoring SIGCHLD, perl ForkingServer goes into a tight loop
     $SIG{CHLD} = 'IGNORE';
+
+    # As in SimpleServer: a write to a client that has gone fails rather than
+    # ending the process. The children that serve the connections inherit it.
+    local $SIG{PIPE} = $SIG{PIPE};
+    $SIG{PIPE} = 'IGNORE' if !$SIG{PIPE} || $SIG{PIPE} eq 'DEFAULT';
 
     $self->{serverTransport}->listen();
     while (1)
