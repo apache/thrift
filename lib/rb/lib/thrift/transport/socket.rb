@@ -105,6 +105,31 @@ module Thrift
       data
     end
 
+    # Reads what has already arrived, without waiting: up to sz bytes, or over
+    # TLS, the rest of the current record (at most 16 KiB) if that is longer.
+    # Returns nil at the end of the stream, or :wait_readable or :wait_writable
+    # when nothing can be read yet, as IO#read_nonblock(exception: false)
+    # does. Any error closes the socket and raises a TransportException.
+    def read_nonblock(sz)
+      raise TransportException.new(TransportException::NOT_OPEN, "closed stream") unless open?
+
+      data = @handle.read_nonblock(sz, exception: false)
+      return data unless data.is_a?(String)
+      # select cannot see what OpenSSL has already decrypted and buffered
+      while @handle.respond_to?(:pending) && @handle.pending > 0
+        more = @handle.read_nonblock(sz, exception: false)
+        break unless more.is_a?(String)
+        data << more
+      end
+      data
+    rescue TransportException
+      close
+      raise
+    rescue StandardError => e
+      close
+      raise TransportException.new(TransportException::NOT_OPEN, e.message)
+    end
+
     def close
       close_socket(@handle)
       @handle = nil

@@ -49,7 +49,7 @@ module Thrift
 
       begin
         loop do
-          break if @server_transport.closed?
+          break if @server_transport.closed? || @io_manager.error
           begin
             rd, = select([@server_transport], nil, nil, 0.1)
           rescue Errno::EBADF => e
@@ -71,6 +71,8 @@ module Thrift
         end
       rescue IOError
       end
+      # without the IO thread no connection would be read
+      raise @io_manager.error if @io_manager.error
       # we must be shutting down
       @logger.info "#{self} is shutting down, goodbye"
     ensure
@@ -139,11 +141,17 @@ module Thrift
         signal [:connection, socket]
       end
 
+      # The error that stopped the IO thread, if one did.
+      attr_reader :error
+
       def spawn
         @iom_thread = Thread.new do
           Thread.current.name = "thrift.io"
           @logger.debug "Starting #{self}"
           run
+        rescue => e
+          @logger.error "#{self} stopped: #{e.inspect}\n#{e.backtrace.join("\n")}"
+          @error = e
         end
       end
 
@@ -174,13 +182,22 @@ module Thrift
         spin_worker_threads
 
         loop do
-          rd, = select([@signal_pipes[0], *@connections])
+          # A worker closes its connection when writing a reply fails.
+          @connections.reject(&:open?).each { |fd| remove_connection fd }
+          begin
+            rd, = select([@signal_pipes[0], *@connections])
+          rescue IOError
+            # A worker closed a connection while select waited on it. Drop it and
+            # select again; an IOError with every connection open is not that.
+            raise if @connections.all?(&:open?)
+            next
+          end
           if rd.delete @signal_pipes[0]
             break if read_signals == :shutdown
           end
           rd.each do |fd|
             read_connection fd
-          rescue Errno::ECONNRESET
+          rescue TransportException
             remove_connection fd
           end
         end
@@ -192,16 +209,9 @@ module Thrift
       def read_connection(fd)
         # Read only what has arrived: a blocking read on a TLS connection waits
         # for the rest of a record and holds up every other connection.
-        handle = fd.handle
-        data = handle.read_nonblock(DEFAULT_BUFFER, exception: false)
+        data = fd.read_nonblock(DEFAULT_BUFFER)
         return remove_connection(fd) if data.nil?
         return if data.is_a?(Symbol) # :wait_readable or :wait_writable
-        # select cannot see what OpenSSL has already decrypted and buffered
-        while handle.respond_to?(:pending) && handle.pending > 0
-          more = handle.read_nonblock(DEFAULT_BUFFER, exception: false)
-          break unless more.is_a?(String)
-          data << more
-        end
         buf = @buffers[fd]
         buf << data
         while buf.length >= 4

@@ -297,7 +297,7 @@ describe "NonblockingServer" do
         close: nil,
       )
       allow(server_transport).to receive(:accept).and_raise(error)
-      io_manager = double("IOManager", ensure_closed: nil)
+      io_manager = double("IOManager", ensure_closed: nil, error: nil)
       server = Thrift::NonblockingServer.new(
         double("processor"),
         server_transport,
@@ -407,7 +407,7 @@ describe "NonblockingServer" do
     # applied here, to the declared size, and not only by the FramedTransport
     # the worker later reads the collected frame through.
     def connection_sending(bytes)
-      double("connection", close: nil, handle: double("handle", read_nonblock: bytes))
+      double("connection", close: nil, read_nonblock: bytes)
     end
 
     def read_from(io_manager, connection)
@@ -484,6 +484,93 @@ describe "NonblockingServer" do
 
       expect(io_manager.instance_variable_get(:@connections)).to eq([connection])
       expect(frames_queued(io_manager)).to be_empty
+    end
+  end
+
+  describe "NonblockingServer connection failures" do
+    let(:server_transport_class) { Thrift::ServerSocket }
+
+    before(:each) do
+      # A "big!" request gets a reply larger than the socket buffers hold, so
+      # writing it times out while the client is not reading. Anything else
+      # gets "pong".
+      @write_failures = Queue.new
+      processor = double("processor")
+      allow(processor).to receive(:process) do |iprot, oprot|
+        reply = iprot.trans.read(4) == "big!" ? "x" * (32 * 1024 * 1024) : "pong"
+        oprot.trans.write(reply)
+        oprot.trans.flush
+      rescue Thrift::TransportException => e
+        @write_failures << e
+        raise
+      end
+
+      @log = StringIO.new
+      @transport = server_transport_class.new("127.0.0.1", 0, client_timeout: 0.2)
+      @server = Thrift::NonblockingServer.new(
+        processor, @transport, Thrift::FramedTransportFactory.new, nil, 2, Logger.new(@log),
+      )
+      @server_thread = Thread.new do
+        Thread.current.report_on_exception = false
+        @server.serve
+      end
+      wait_until_listening(@transport, @server_thread)
+      @port = @transport.handle.addr[1]
+      @clients = []
+    end
+
+    after(:each) do
+      @clients.each(&:close)
+      @server.shutdown(1, false) if @server_thread.alive?
+      begin
+        @server_thread.join(2)
+      rescue RuntimeError
+        # the example checks how serve ended
+      end
+      @server_thread.kill if @server_thread.alive?
+      @transport.close
+    end
+
+    def connect
+      client = TCPSocket.new("127.0.0.1", @port)
+      @clients << client
+      client
+    end
+
+    def frame(payload)
+      [payload.bytesize].pack("N") + payload
+    end
+
+    it "keeps serving other connections after a reply cannot be written" do
+      connect.write(frame("big!")) # and never read the reply
+      failure = Timeout.timeout(5) { @write_failures.pop }
+      expect(failure.type).to eq(Thrift::TransportException::TIMED_OUT)
+
+      client = connect
+      client.write(frame("ping"))
+      expect(Timeout.timeout(2) { client.read(8) }).to eq(frame("pong"))
+      expect(io_thread).to be_alive
+      expect(@server_thread).to be_alive
+    end
+
+    context "when the IO thread fails" do
+      let(:server_transport_class) do
+        Class.new(Thrift::ServerSocket) do
+          def accept
+            super.tap do |socket|
+              socket.define_singleton_method(:to_io) { raise "unexpected failure" }
+            end
+          end
+        end
+      end
+
+      it "logs the failure and stops serving" do
+        connect
+
+        expect { @server_thread.join(2) }.to raise_error(RuntimeError, "unexpected failure")
+        expect(@log.string).to include("unexpected failure")
+        expect(@transport).to be_closed
+      end
     end
   end
 
@@ -599,6 +686,19 @@ describe "NonblockingServer" do
       expect(records.length).to be > 2
     end
 
+    context "when a connection's stream ends inside a TLS record" do
+      it "keeps serving other connections" do
+        broken = Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context)
+        broken.open
+        broken.to_io.write("\x17\x03\x03".b) # the start of a record header
+        broken.close
+
+        client = setup_tls_client
+        expect(Timeout.timeout(2) { client.greeting(true) }).to eq(SpecNamespace::Hello.new)
+        expect(io_thread).to be_alive
+      end
+    end
+
     def setup_tls_client(socket = Thrift::SSLSocket.new("localhost", @port, nil, create_client_ssl_context))
       transport = Thrift::FramedTransport.new(socket)
       protocol = Thrift::BinaryProtocol.new(transport)
@@ -702,6 +802,10 @@ describe "NonblockingServer" do
         sleep 0.01
       end
     end
+  end
+
+  def io_thread
+    @server.instance_variable_get(:@io_manager).instance_variable_get(:@iom_thread)
   end
 
   def available_port
