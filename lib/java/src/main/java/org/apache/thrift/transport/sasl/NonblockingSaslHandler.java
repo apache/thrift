@@ -330,11 +330,14 @@ public class NonblockingSaslHandler {
       if (eventHandler != null) {
         if (!serverContextCreated) {
           serverContext = eventHandler.createContext(requestProtocol, responseProtocol);
-          SocketAddress remoteAddress =
-              underlyingTransport instanceof SocketAddressProvider
-                  ? ((SocketAddressProvider) underlyingTransport).getRemoteSocketAddress()
-                  : null;
-          serverContext.setRemoteAddress(remoteAddress);
+          // A handler may keep no context for a connection.
+          if (serverContext != null) {
+            SocketAddress remoteAddress =
+                underlyingTransport instanceof SocketAddressProvider
+                    ? ((SocketAddressProvider) underlyingTransport).getRemoteSocketAddress()
+                    : null;
+            serverContext.setRemoteAddress(remoteAddress);
+          }
           serverContextCreated = true;
         }
         eventHandler.processContext(serverContext, memoryTransport, memoryTransport);

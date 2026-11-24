@@ -265,11 +265,14 @@ public class TThreadPoolServer extends TServer {
 
         if (eventHandler.isPresent()) {
           connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
-          SocketAddress remoteAddress =
-              client_ instanceof SocketAddressProvider
-                  ? ((SocketAddressProvider) client_).getRemoteSocketAddress()
-                  : null;
-          connectionContext.setRemoteAddress(remoteAddress);
+          // A handler may keep no context for a connection.
+          if (connectionContext != null) {
+            SocketAddress remoteAddress =
+                client_ instanceof SocketAddressProvider
+                    ? ((SocketAddressProvider) client_).getRemoteSocketAddress()
+                    : null;
+            connectionContext.setRemoteAddress(remoteAddress);
+          }
         }
 
         while (true) {

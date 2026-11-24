@@ -323,11 +323,14 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       if (eventHandler_ != null) {
         context_ = eventHandler_.createContext(inProt_, outProt_);
-        SocketAddress remoteAddress =
-            trans_ instanceof SocketAddressProvider
-                ? ((SocketAddressProvider) trans_).getRemoteSocketAddress()
-                : null;
-        context_.setRemoteAddress(remoteAddress);
+        // A handler may keep no context for a connection.
+        if (context_ != null) {
+          SocketAddress remoteAddress =
+              trans_ instanceof SocketAddressProvider
+                  ? ((SocketAddressProvider) trans_).getRemoteSocketAddress()
+                  : null;
+          context_.setRemoteAddress(remoteAddress);
+        }
       } else {
         context_ = null;
       }

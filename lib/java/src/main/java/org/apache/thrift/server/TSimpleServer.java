@@ -72,11 +72,14 @@ public class TSimpleServer extends TServer {
           outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
           if (eventHandler_ != null) {
             connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
-            SocketAddress remoteAddress =
-                client instanceof SocketAddressProvider
-                    ? ((SocketAddressProvider) client).getRemoteSocketAddress()
-                    : null;
-            connectionContext.setRemoteAddress(remoteAddress);
+            // A handler may keep no context for a connection.
+            if (connectionContext != null) {
+              SocketAddress remoteAddress =
+                  client instanceof SocketAddressProvider
+                      ? ((SocketAddressProvider) client).getRemoteSocketAddress()
+                      : null;
+              connectionContext.setRemoteAddress(remoteAddress);
+            }
           }
           while (true) {
             if (eventHandler_ != null) {
