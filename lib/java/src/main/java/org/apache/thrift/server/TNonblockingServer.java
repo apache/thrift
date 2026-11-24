@@ -143,18 +143,20 @@ public class TNonblockingServer extends AbstractNonblockingServer {
           select();
           processInterestChanges();
         }
-        for (SelectionKey selectionKey : selector.keys()) {
-          cleanupSelectionKey(selectionKey);
-        }
       } catch (Throwable t) {
         LOGGER.error("run() exiting due to uncaught error", t);
       } finally {
         try {
-          selector.close();
-        } catch (IOException e) {
-          LOGGER.error("Got an IOException while closing selector!", e);
+          // Close the connections also when the loop has ended with an error.
+          cleanupSelectionKeys();
+        } finally {
+          try {
+            selector.close();
+          } catch (IOException e) {
+            LOGGER.error("Got an IOException while closing selector!", e);
+          }
+          stopped_ = true;
         }
-        stopped_ = true;
       }
     }
 
