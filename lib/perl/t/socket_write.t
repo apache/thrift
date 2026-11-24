@@ -71,7 +71,8 @@ sub take
 }
 
 #
-# What Thrift::Socket sends to: its __send() calls send() on the socket.
+# What Thrift::Socket sends to: its __send() calls send() on the socket, with
+# the socket switched to non-blocking for the call.
 #
 package SinkSocket;
 use base qw(PartialSink);
@@ -80,6 +81,14 @@ sub send
 {
     my $self = shift;
     return $self->take($_[0]);
+}
+
+sub blocking
+{
+    my ($self, $on) = @_;
+    my $was = exists $self->{blocking} ? $self->{blocking} : 1;
+    $self->{blocking} = $on if defined $on;
+    return $was;
 }
 
 #

@@ -225,6 +225,9 @@ sub write
 
         my $sent = $self->__send($sockets[0], $buf);
 
+        # No room after all: wait for it again, within the timeout.
+        next if !defined $sent && ($!{EAGAIN} || $!{EWOULDBLOCK});
+
         if (!defined $sent || $sent == 0 ) {
 
             die Thrift::TTransportException->new(ref($self).': Could not write '.length($buf).' bytes '.
@@ -305,6 +308,10 @@ sub __recv
 # yet. Use the buffer in place, as $_[0] after shifting $self and $sock:
 # copying it into a variable copies all of that data on every call.
 #
+# It sends only what the socket has room for now. write() waits for room, at
+# most sendTimeout, before each call; a blocking send would go on waiting for
+# room for all of the data, however long the peer takes to read it.
+#
 # @param[in] $sock the socket
 # @param[in] $buf the data buffer
 # @returns the number of bytes written
@@ -313,7 +320,12 @@ sub __send
 {
     my $self = shift;
     my $sock = shift;
-    return $sock->send($_[0]);
+    my $blocking = $sock->blocking(0);
+    my $sent = $sock->send($_[0]);
+    my $errno = $! + 0;
+    $sock->blocking($blocking) if defined $blocking;
+    $! = $errno;
+    return $sent;
 }
 
 #
