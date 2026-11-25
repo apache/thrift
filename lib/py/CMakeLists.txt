@@ -28,6 +28,7 @@ add_custom_target(python_build ALL
 
 if(BUILD_TESTING)
     add_test(NAME PythonTestSSLSocket COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sslsocket.py)
+    add_test(NAME PythonTestSSLServerHandshake COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/test/test_ssl_server_handshake.py)
     add_test(NAME PythonThriftJson COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_json.py)
     add_test(NAME PythonThriftTransport COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_transport.py)
     add_test(NAME PythonThriftTBinaryProtocol COMMAND Python3::Interpreter ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TBinaryProtocol.py)

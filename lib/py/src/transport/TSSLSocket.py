@@ -179,7 +179,7 @@ class TSSLBase(object):
         return self._has_ssl_context and bool(
             getattr(self._context, 'check_hostname', False))
 
-    def _wrap_socket(self, sock):
+    def _wrap_socket(self, sock, do_handshake_on_connect=True):
         if self._has_ssl_context:
             if not self._custom_context:
                 self.ssl_context.verify_mode = self.cert_reqs
@@ -198,7 +198,8 @@ class TSSLBase(object):
                     self.ssl_context.load_verify_locations(self.ca_certs)
             return self.ssl_context.wrap_socket(
                 sock, server_side=self._server_side,
-                server_hostname=self._server_hostname)
+                server_hostname=self._server_hostname,
+                do_handshake_on_connect=do_handshake_on_connect)
         else:
             ssl_opts = {
                 'ssl_version': self._ssl_version,
@@ -207,6 +208,7 @@ class TSSLBase(object):
                 'keyfile': self.keyfile,
                 'certfile': self.certfile,
                 'cert_reqs': self.cert_reqs,
+                'do_handshake_on_connect': do_handshake_on_connect,
             }
             if self.ciphers:
                 if self._has_ciphers:
@@ -345,6 +347,8 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
     negotiated encryption.
     """
 
+    DEFAULT_HANDSHAKE_TIMEOUT = 10.0
+
     # New signature
     # def __init__(self, host='localhost', port=9090, unix_socket=None, **ssl_args):
     # Deprecated signature
@@ -360,7 +364,12 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
           ``server_hostname``: Passed to SSLContext.wrap_socket
 
-        Common keyword argument:
+        Common keyword arguments:
+          ``handshake_timeout``: Seconds that ``accept()`` waits for a
+              connected client to complete the TLS handshake before it
+              closes that connection, so that the server can go on with the
+              next one. ``None`` waits without a limit. Default
+              ``DEFAULT_HANDSHAKE_TIMEOUT`` (10 seconds).
           ``validate_callback`` (cert, peer_address) -> None:
               Called after the SSL handshake whenever ``cert_reqs`` asks for
               a client certificate. It receives the certificate as
@@ -400,6 +409,10 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         # IPv4-mapped peer and on the commonName fallback.
         self._validate_callback = \
             kwargs.pop('validate_callback', match_peer_ipaddress)
+        handshake_timeout = kwargs.pop('handshake_timeout', self.DEFAULT_HANDSHAKE_TIMEOUT)
+        if handshake_timeout is not None and not handshake_timeout > 0:
+            raise ValueError('handshake_timeout must be positive, or None for no limit')
+        self._handshake_timeout = handshake_timeout
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
 
@@ -418,10 +431,19 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             DeprecationWarning, stacklevel=2)
         self.certfile = certfile
 
+    @property
+    def handshake_timeout(self):
+        """Seconds that accept() waits for a client's TLS handshake, or None."""
+        return self._handshake_timeout
+
     def accept(self):
         plain_client, addr = self.handle.accept()
         try:
+            # The handshake runs inside _wrap_socket(): bound it, then give
+            # the server the blocking socket it expects.
+            plain_client.settimeout(self._handshake_timeout)
             client = self._wrap_socket(plain_client)
+            client.settimeout(None)
         except (ssl.SSLError, socket.error, OSError):
             logger.exception('Error while accepting from %s', addr)
             # failed handshake/ssl wrap, close socket to client
@@ -432,7 +454,33 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             # Instead, return None, and let the TServer instance deal with it in
             # other exception handling.  (but TSimpleServer dies anyway)
             return None
+        return self._accepted(client, plain_client, addr)
 
+    def accept_deferred(self):
+        """Accepts a client and leaves its TLS handshake to the caller.
+
+        For servers that serve all their connections from one select or poll
+        loop, such as TNonblockingServer, which accept() would hold for as
+        long as a client takes over its handshake. Returns None when the
+        connection fails right away, or a pair (sslsocket, complete):
+        sslsocket is a non-blocking ssl.SSLSocket whose handshake the caller
+        advances with do_handshake() whenever the socket is ready, and
+        complete(sslsocket) runs the checks that accept() runs after the
+        handshake. complete returns a TSocket, or None when it has refused
+        the client and closed the connection.
+        """
+        plain_client, addr = self.handle.accept()
+        try:
+            plain_client.setblocking(False)
+            client = self._wrap_socket(plain_client, do_handshake_on_connect=False)
+        except (ssl.SSLError, socket.error, OSError):
+            logger.exception('Error while accepting from %s', addr)
+            plain_client.close()
+            return None
+        return client, lambda sslsocket: self._accepted(sslsocket, plain_client, addr)
+
+    def _accepted(self, client, plain_client, addr):
+        """Checks a client whose handshake is complete; returns its TSocket or None."""
         if self._should_verify:
             client.peercert = client.getpeercert()
             try:

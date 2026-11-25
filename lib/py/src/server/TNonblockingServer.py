@@ -28,6 +28,7 @@ maximum connections
 import logging
 import select
 import socket
+import ssl
 import struct
 import threading
 
@@ -68,6 +69,7 @@ WAIT_MESSAGE = 1
 WAIT_PROCESS = 2
 SEND_ANSWER = 3
 CLOSED = 4
+WAIT_HANDSHAKE = 5
 
 
 def locked(func):
@@ -115,11 +117,17 @@ class Connection(object):
         SEND_ANSWER --- connection is sending answer string (including length
                         of answer).
         CLOSED --- socket was closed and connection should be deleted.
+        WAIT_HANDSHAKE --- a TLS connection is completing its handshake.
     """
-    def __init__(self, new_socket, wake_up, max_frame_size=TTransport.DEFAULT_MAX_FRAME_SIZE):
+    def __init__(self, new_socket, wake_up, max_frame_size=TTransport.DEFAULT_MAX_FRAME_SIZE,
+                 handshake_complete=None):
         self.socket = new_socket
         self.socket.setblocking(False)
-        self.status = WAIT_LEN
+        # A TLS connection from TSSLServerSocket.accept_deferred() completes
+        # its handshake first; handshake() advances it.
+        self.status = WAIT_LEN if handshake_complete is None else WAIT_HANDSHAKE
+        self._handshake_complete = handshake_complete
+        self._handshake_wants_write = False
         self.len = 0
         self.received = deque()
         self._reading = Message(0, 4, True)
@@ -132,6 +140,23 @@ class Connection(object):
         self.max_frame_size = max_frame_size
 
     @socket_exception
+    def handshake(self):
+        """Advances the TLS handshake without blocking; switches to WAIT_LEN once it is complete."""
+        assert self.status == WAIT_HANDSHAKE
+        try:
+            self.socket.do_handshake()
+        except ssl.SSLWantReadError:
+            self._handshake_wants_write = False
+            return
+        except ssl.SSLWantWriteError:
+            self._handshake_wants_write = True
+            return
+        if not self._handshake_complete(self.socket):
+            self.close()
+            return
+        self.status = WAIT_LEN
+
+    @socket_exception
     def read(self):
         """Reads data from stream and switch state."""
         assert self.status in (WAIT_LEN, WAIT_MESSAGE)
@@ -140,7 +165,12 @@ class Connection(object):
         first = True
         done = False
         while not done:
-            read = self.socket.recv(buf_size)
+            try:
+                read = self.socket.recv(buf_size)
+            except (ssl.SSLWantReadError, ssl.SSLWantWriteError):
+                # Only part of a TLS record is here yet; the rest makes the
+                # socket readable again.
+                break
             rlen = len(read)
             done = rlen < buf_size
             self._rbuf += read
@@ -183,7 +213,11 @@ class Connection(object):
     def write(self):
         """Writes data from socket and switch state."""
         assert self.status == SEND_ANSWER
-        sent = self.socket.send(self._wbuf)
+        try:
+            sent = self.socket.send(self._wbuf)
+        except (ssl.SSLWantWriteError, ssl.SSLWantReadError):
+            # TLS could not take the record yet; retried when writable.
+            return
         if sent == len(self._wbuf):
             self.status = WAIT_LEN
             self._wbuf = b''
@@ -222,13 +256,15 @@ class Connection(object):
     @locked
     def is_writeable(self):
         """Return True if connection should be added to write list of select"""
-        return self.status == SEND_ANSWER
+        return self.status == SEND_ANSWER or (
+            self.status == WAIT_HANDSHAKE and self._handshake_wants_write)
 
     # it's not necessary, but...
     @locked
     def is_readable(self):
         """Return True if connection should be added to read list of select"""
-        return self.status in (WAIT_LEN, WAIT_MESSAGE)
+        return self.status in (WAIT_LEN, WAIT_MESSAGE) or (
+            self.status == WAIT_HANDSHAKE and not self._handshake_wants_write)
 
     @locked
     def is_closed(self):
@@ -375,6 +411,26 @@ class TNonblockingServer(object):
 
         return rlist, wlist, xlist, True
 
+    def _accept(self):
+        """Accepts a client as a Connection, or returns None.
+
+        The TLS handshake of a client of a TSSLServerSocket is left to the
+        select loop (accept_deferred()), so that a client that is slow to
+        complete it does not hold up the other connections.
+        """
+        accept_deferred = getattr(self.socket, 'accept_deferred', None)
+        if accept_deferred is None:
+            client = self.socket.accept()
+            if not client:
+                return None
+            return Connection(client.handle, self.wake_up, self.max_frame_size)
+        accepted = accept_deferred()
+        if not accepted:
+            return None
+        sslsocket, complete = accepted
+        return Connection(sslsocket, self.wake_up, self.max_frame_size,
+                          handshake_complete=complete)
+
     def handle(self):
         """Handle requests.
 
@@ -388,15 +444,16 @@ class TNonblockingServer(object):
                 self._read.recv(1024)
             elif readable == self.socket.handle.fileno():
                 try:
-                    client = self.socket.accept()
-                    if client:
-                        self.clients[client.handle.fileno()] = Connection(client.handle,
-                                                                          self.wake_up,
-                                                                          self.max_frame_size)
+                    connection = self._accept()
+                    if connection:
+                        self.clients[connection.fileno()] = connection
                 except socket.error:
                     logger.debug('error while accepting', exc_info=True)
             else:
                 connection = self.clients[readable]
+                if connection.status == WAIT_HANDSHAKE:
+                    connection.handshake()
+                    continue
                 if selected:
                     connection.read()
                 if connection.received:
@@ -411,7 +468,11 @@ class TNonblockingServer(object):
                     self.tasks.put([self.processor, iprot, oprot,
                                     otransport, connection.ready])
         for writeable in wset:
-            self.clients[writeable].write()
+            connection = self.clients[writeable]
+            if connection.status == WAIT_HANDSHAKE:
+                connection.handshake()
+            else:
+                connection.write()
         for oob in xset:
             self.clients[oob].close()
 
