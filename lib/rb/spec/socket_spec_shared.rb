@@ -96,6 +96,14 @@ shared_examples_for "a socket" do
     expect(@socket).not_to be_open
     expect { @socket.write("fail") }.to raise_error(Thrift::TransportException, "closed stream") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
     expect { @socket.read(10) }.to raise_error(Thrift::TransportException, "closed stream") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
+    expect { @socket.read_nonblock(10) }.to raise_error(Thrift::TransportException, "closed stream") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
+  end
+
+  it "should close and raise a TransportException when a nonblocking read fails" do
+    @socket.open
+    expect(@handle).to receive(:read_nonblock).with(17, exception: false).and_raise(StandardError, "read failed")
+    expect { @socket.read_nonblock(17) }.to raise_error(Thrift::TransportException, "read failed") { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
+    expect(@socket).not_to be_open
   end
 
   it "should support the timeout accessor for read" do
