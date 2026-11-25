@@ -296,6 +296,16 @@ http://gradle.org/
 
 # Breaking Changes
 
+## 0.26.0
+
+- Generated `validate()` rejects a field declared `required` whose type is a
+union (typedef'd unions included) when the union has no member set, and generated `read()` ends with `validate()`. A reader whose IDL does not
+know the union member sent by a newer writer skips it, so `read()` now throws
+`TProtocolException` for that struct where it was accepted before
+([THRIFT-735](https://issues.apache.org/jira/browse/THRIFT-735)). Optional
+fields are unchanged; make the field optional if old readers must accept
+unknown members.
+
 ## 0.24.0
 
 - `TProtocolUtil.setMaxSkipDepth(int depth)` has been deprecated and 
