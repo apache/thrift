@@ -228,7 +228,16 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public async Task SetupTlsAsync()
+        public Task SetupTlsAsync()
+        {
+            return SetupTlsAsync(CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Performs the TLS handshake. When <paramref name="cancellationToken"/> is cancelled before the handshake
+        /// has completed, the connection is closed and an <see cref="OperationCanceledException"/> is thrown.
+        /// </summary>
+        public async Task SetupTlsAsync(CancellationToken cancellationToken)
         {
             var validator = _certValidator ?? DefaultCertificateValidator;
 
@@ -243,27 +252,35 @@ namespace Thrift.Transport.Client
 
             try
             {
-                if (_isServer)
+                // Closing the connection ends a handshake in progress on every target framework.
+                using (cancellationToken.Register(state => ((IDisposable)state).Dispose(), _client))
                 {
-                    // Server authentication
-                    await
-                        _secureStream.AuthenticateAsServerAsync(_certificate, _certValidator != null, _sslProtocols,
-                            true).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Client authentication
-                    var certs = _certificate != null
-                        ? new X509CertificateCollection { _certificate }
-                        : new X509CertificateCollection();
+                    if (_isServer)
+                    {
+                        // Server authentication
+                        await
+                            _secureStream.AuthenticateAsServerAsync(_certificate, _certValidator != null, _sslProtocols,
+                                true).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // Client authentication
+                        var certs = _certificate != null
+                            ? new X509CertificateCollection { _certificate }
+                            : new X509CertificateCollection();
 
-                    var targetHost = _targetHost ?? _host.ToString();
-                    await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true).ConfigureAwait(false);
+                        var targetHost = _targetHost ?? _host.ToString();
+                        await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true).ConfigureAwait(false);
+                    }
                 }
+
+                // The cancellation may have closed the connection just as the handshake completed.
+                cancellationToken.ThrowIfCancellationRequested();
             }
             catch (Exception)
             {
                 Close();
+                cancellationToken.ThrowIfCancellationRequested();
                 throw;
             }
 

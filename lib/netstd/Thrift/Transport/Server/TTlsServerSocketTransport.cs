@@ -30,12 +30,38 @@ namespace Thrift.Transport.Server
     // ReSharper disable once InconsistentNaming
     public class TTlsServerSocketTransport : TServerTransport
     {
+        /// <summary>
+        /// The default of <see cref="HandshakeTimeout"/>: 10 seconds.
+        /// </summary>
+        public static readonly TimeSpan DefaultHandshakeTimeout = TimeSpan.FromSeconds(10);
+
         private readonly RemoteCertificateValidationCallback _clientCertValidator;
         private readonly int _clientTimeout = 0;
         private readonly LocalCertificateSelectionCallback _localCertificateSelectionCallback;
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
         private TcpListener _server;
+        private TimeSpan _handshakeTimeout = DefaultHandshakeTimeout;
+
+        /// <summary>
+        /// How long <see cref="TServerTransport.AcceptAsync"/> waits for a connected client to complete the TLS
+        /// handshake. A client that takes longer is disconnected, and AcceptAsync fails with
+        /// <see cref="TTransportException.ExceptionType.TimedOut"/>, so that the server can accept the next client.
+        /// <see cref="Timeout.InfiniteTimeSpan"/> waits without a limit. Defaults to <see cref="DefaultHandshakeTimeout"/>.
+        /// </summary>
+        public TimeSpan HandshakeTimeout
+        {
+            get => _handshakeTimeout;
+            set
+            {
+                if (value != Timeout.InfiniteTimeSpan && (value <= TimeSpan.Zero || value.TotalMilliseconds > int.MaxValue))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value,
+                        "HandshakeTimeout must be positive and at most int.MaxValue milliseconds, or Timeout.InfiniteTimeSpan");
+                }
+                _handshakeTimeout = value;
+            }
+        }
 
         public TTlsServerSocketTransport(
             TcpListener listener,
@@ -152,13 +178,40 @@ namespace Thrift.Transport.Server
                     _serverCertificate, true, _clientCertValidator,
                     _localCertificateSelectionCallback, _sslProtocols);
 
-                await tTlsSocket.SetupTlsAsync().ConfigureAwait(false);
+                await SetupTlsWithinHandshakeTimeoutAsync(tTlsSocket, cancellationToken).ConfigureAwait(false);
 
                 return tTlsSocket;
+            }
+            catch (TTransportException ttx) when (ttx.Type == TTransportException.ExceptionType.TimedOut)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 throw new TTransportException(ex.ToString(), ex);
+            }
+        }
+
+        private async Task SetupTlsWithinHandshakeTimeoutAsync(TTlsSocketTransport tTlsSocket, CancellationToken cancellationToken)
+        {
+            var handshakeTimeout = _handshakeTimeout;
+            using (var handshake = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            {
+                if (handshakeTimeout != Timeout.InfiniteTimeSpan)
+                {
+                    handshake.CancelAfter(handshakeTimeout);
+                }
+
+                try
+                {
+                    await tTlsSocket.SetupTlsAsync(handshake.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // SetupTlsAsync has closed the connection.
+                    throw new TTransportException(TTransportException.ExceptionType.TimedOut,
+                        $"The client did not complete the TLS handshake within {handshakeTimeout.TotalMilliseconds} ms.");
+                }
             }
         }
 
