@@ -63,6 +63,9 @@ jobs:
           if ! git-clang-format-18 --binary clang-format-18 \
                  --extensions c,cc,cpp,cxx,h,hh,hpp,tcc \
                  --diff HEAD^ -- lib/cpp; then
-            echo "::error::Changed lines in lib/cpp do not match .clang-format. Run 'git clang-format --binary clang-format-18 --extensions c,cc,cpp,cxx,h,hh,hpp,tcc origin/master -- lib/cpp' and amend the commit."
+            # HEAD^ keeps the fix to the lines of a single squashed commit. A
+            # local origin/master is often a fork's stale master, and formatting
+            # against it rewrites lines the pull request never touched.
+            echo "::error::Changed lines in lib/cpp do not match .clang-format. With your single squashed commit checked out, run 'git clang-format-18 --binary clang-format-18 --extensions c,cc,cpp,cxx,h,hh,hpp,tcc HEAD^ -- lib/cpp' and amend the commit. For a branch with several commits, replace HEAD^ with the merge base with the upstream master."
             exit 1
           fi
