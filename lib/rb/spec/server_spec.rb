@@ -18,6 +18,7 @@
 # under the License.
 #
 require "spec_helper"
+require "json"
 require "openssl"
 require "stringio"
 require "timeout"
@@ -1016,6 +1017,311 @@ describe "Server" do
 
         expect(receive_threads(names)).to eq([blocking ? caller_name : "thrift.shutdown"])
         expect(Thread.current.name).to eq(caller_name)
+      end
+    end
+  end
+
+  describe "when accept fails" do
+    # Ends a scripted run; none of the servers skips it.
+    class AcceptScriptDone < StandardError; end
+
+    # Plays back accept results: an exception class is raised, anything else
+    # is returned. Once the script is used up, accept blocks. Once closed,
+    # accept returns nil, as Thrift::ServerSocket#accept does.
+    class ScriptedServerTransport
+      def initialize(script)
+        @script = script.dup
+        @closed = false
+      end
+
+      def listen; end
+
+      def close
+        @closed = true
+      end
+
+      def closed?
+        @closed
+      end
+
+      def accept
+        return if @closed
+
+        sleep if @script.empty?
+        step = @script.shift
+        raise step if step.is_a?(Class)
+
+        step
+      end
+    end
+
+    SERVER_KINDS = [:simple, :threaded, :thread_pool, :nonblocking].freeze
+
+    before(:each) do
+      @threads = ThreadGroup.new
+      @log = StringIO.new
+      @served = Queue.new
+      @processor = double("processor")
+      allow(@processor).to receive(:process) do |iprot, _oprot|
+        @served << iprot.trans
+        raise Thrift::TransportException
+      end
+    end
+
+    after(:each) do
+      until (threads = @threads.list).empty?
+        threads.each(&:kill)
+        threads.each(&:join)
+      end
+    end
+
+    def build_server(kind, transport)
+      logger = Logger.new(@log, level: Logger::WARN)
+      case kind
+      when :simple then Thrift::SimpleServer.new(@processor, transport, nil, nil, logger: logger)
+      when :threaded then Thrift::ThreadedServer.new(@processor, transport, nil, nil, logger: logger)
+      when :thread_pool then Thrift::ThreadPoolServer.new(@processor, transport, nil, nil, 1, logger: logger)
+      when :nonblocking
+        Thrift::NonblockingServer.new(@processor, transport, nil, nil, 1, logger).tap do |server|
+          io_manager = double("IOManager", ensure_closed: nil, error: nil)
+          allow(io_manager).to receive(:add_connection) { |socket| @served << socket }
+          allow(server).to receive(:start_io_manager).and_return(io_manager)
+          allow(server).to receive(:select).and_return([[transport], nil, nil])
+        end
+      end
+    end
+
+    # Serves the scripted accept results and returns the error that ended the
+    # run (nil if it ended without one), the clients served, and the pauses.
+    # Yields the transport at each pause.
+    def run_script(kind, script, transport: ScriptedServerTransport.new(script))
+      server = build_server(kind, transport)
+      pauses = []
+      allow(server).to receive(:sleep) do |seconds|
+        pauses << seconds
+        yield transport if block_given?
+      end
+      finished = Queue.new
+      previous_group = Thread.current.group
+      # Children inherit the group before their thread blocks can run.
+      @threads.add(Thread.current)
+      Thread.new do
+        # Only rescuable_serve passes a pool worker's error to its caller.
+        kind == :thread_pool ? server.rescuable_serve : server.serve
+        finished << nil
+      rescue StandardError => e
+        finished << e
+      end
+      previous_group.add(Thread.current)
+      error = Timeout.timeout(5) { finished.pop }
+      clients = script.reject { |step| step.is_a?(Class) }
+      served = Timeout.timeout(5) { Array.new(clients.size) { @served.pop } }
+      [error, served, pauses]
+    end
+
+    def retry_log_lines
+      @log.string.lines.grep(/Error while accepting a client connection, retrying/)
+    end
+
+    SERVER_KINDS.each do |kind|
+      context "in a #{kind} server" do
+        [Errno::ECONNRESET, Errno::EPIPE, Errno::ECONNABORTED, Errno::EPROTO].each do |error_class|
+          it "skips #{error_class} at once and keeps accepting" do
+            client = Thrift::MemoryBufferTransport.new
+            error, served, pauses = run_script(kind, [error_class, client, AcceptScriptDone])
+
+            expect(error).to be_a(AcceptScriptDone)
+            expect(served).to eq([client])
+            expect(pauses).to be_empty
+            expect(@log.string).to be_empty
+          end
+        end
+
+        [Errno::EMFILE, Errno::ENFILE, Errno::ENOBUFS, Errno::ENOMEM].each do |error_class|
+          it "pauses after #{error_class}, logs it and keeps accepting" do
+            client = Thrift::MemoryBufferTransport.new
+            error, served, pauses = run_script(kind, [error_class, client, AcceptScriptDone])
+
+            expect(error).to be_a(AcceptScriptDone)
+            expect(served).to eq([client])
+            expect(pauses).to eq([0.005])
+            expect(retry_log_lines.size).to eq(1)
+            expect(retry_log_lines.first).to include(error_class.name)
+          end
+        end
+
+        it "doubles the pause up to its limit, logs once per run of failures and starts over after a client" do
+          first = Thrift::MemoryBufferTransport.new
+          second = Thrift::MemoryBufferTransport.new
+          script = [*[Errno::EMFILE] * 10, first, Errno::ENFILE, Errno::EMFILE, second, AcceptScriptDone]
+          error, served, pauses = run_script(kind, script)
+
+          expect(error).to be_a(AcceptScriptDone)
+          # ThreadedServer may run its handlers in either order.
+          expect(served).to match_array([first, second])
+          doubling = [0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56].map { |pause| [pause, 1.0].min }
+          expect(pauses).to eq([*doubling, 0.005, 0.01])
+          expect(retry_log_lines.size).to eq(2)
+        end
+
+        it "stops on an accept error it does not name" do
+          error, _served, pauses = run_script(kind, [Errno::EBADF])
+
+          expect(error).to be_a(Errno::EBADF)
+          expect(pauses).to be_empty
+        end
+
+        it "starts a new run of pauses after a connection that fails while it is accepted" do
+          client = Thrift::MemoryBufferTransport.new
+          script = [Errno::EMFILE, Errno::EMFILE, Errno::ECONNRESET, Errno::EMFILE, client, AcceptScriptDone]
+          error, served, pauses = run_script(kind, script)
+
+          expect(error).to be_a(AcceptScriptDone)
+          expect(served).to eq([client])
+          expect(pauses).to eq([0.005, 0.01, 0.005])
+          expect(retry_log_lines.size).to eq(2)
+        end
+      end
+    end
+
+    it "ends SimpleServer and ThreadedServer when the transport is closed from another thread" do
+      [:simple, :threaded].each do |kind|
+        error, _served, _pauses = run_script(kind, [IOError])
+        expect(error).to be_a(IOError)
+      end
+    end
+
+    [:simple, :threaded, :thread_pool].each do |kind|
+      it "ends a #{kind} server when the transport is closed during a pause" do
+        error, _served, _pauses = run_script(kind, [Errno::EMFILE], &:close)
+
+        expect(error).to be_a(IOError)
+        expect(@processor).not_to have_received(:process)
+      end
+    end
+
+    [Errno::ECONNRESET, Errno::EMFILE].each do |error_class|
+      it "lets NonblockingServer see an IO manager failure after accept raises #{error_class}" do
+        failure = RuntimeError.new("IO manager failed")
+        server = build_server(:nonblocking, ScriptedServerTransport.new([error_class]))
+        io_manager = double("IOManager", ensure_closed: nil)
+        allow(io_manager).to receive(:error).and_return(nil, failure)
+        allow(server).to receive(:start_io_manager).and_return(io_manager)
+        allow(server).to receive(:sleep)
+
+        expect { Timeout.timeout(2) { server.serve } }.to raise_error(failure)
+      end
+    end
+
+    it "ends NonblockingServer without an error when the transport is closed" do
+      error, _served, _pauses = run_script(:nonblocking, [IOError])
+      expect(error).to be_nil
+    end
+
+    describe "when the process runs out of file descriptors" do
+      # Runs in its own process so the descriptor limit stays out of rspec.
+      SERVER_SCRIPT = <<~'RUBY'
+        require "json"
+        require "logger"
+        require "socket"
+        require "stringio"
+        require "thrift"
+
+        class EchoProcessor
+          def process(iprot, oprot)
+            oprot.trans.write(iprot.trans.read_all(4))
+            oprot.trans.flush
+          end
+        end
+
+        kind = ARGV[0]
+        log = StringIO.new
+        logger = Logger.new(log)
+        transport = Thrift::ServerSocket.new("127.0.0.1", 0)
+        server = case kind
+        when "simple" then Thrift::SimpleServer.new(EchoProcessor.new, transport, nil, nil, logger: logger)
+        when "threaded" then Thrift::ThreadedServer.new(EchoProcessor.new, transport, nil, nil, logger: logger)
+        when "thread_pool" then Thrift::ThreadPoolServer.new(EchoProcessor.new, transport, nil, nil, 2, logger: logger)
+        when "nonblocking"
+          Thrift::NonblockingServer.new(EchoProcessor.new, transport, Thrift::FramedTransportFactory.new, nil, 1, logger)
+        end
+        request = kind == "nonblocking" ? [4].pack("N") + "ping" : "ping"
+        call = lambda do |socket|
+          socket.write(request)
+          IO.select([socket], nil, nil, 5) ? socket.read(request.bytesize) : nil
+        end
+
+        Process.setrlimit(Process::RLIMIT_NOFILE, 64)
+        server_thread = Thread.new { kind == "thread_pool" ? server.rescuable_serve : server.serve }
+        server_thread.report_on_exception = false
+        Thread.pass until transport.handle
+        port = transport.handle.addr[1]
+        TCPSocket.open("127.0.0.1", port) { |socket| call.(socket) }
+        # Let the server close its end of that connection first.
+        sleep 0.2
+
+        # This client connects once no descriptor is left to accept it with.
+        # Linux keeps it queued, but only the next client counts.
+        waiting = Socket.new(:INET, :STREAM)
+        # A collection could close a dropped socket and free a descriptor.
+        GC.start
+        GC.disable
+        held = []
+        begin
+          loop { held << File.open(File::NULL) }
+        rescue Errno::EMFILE
+        end
+        begin
+          waiting.connect(Socket.sockaddr_in(port, "127.0.0.1"))
+          waiting.write(request)
+        rescue SystemCallError
+        end
+        sleep 0.5
+        held.each(&:close)
+        GC.enable
+        begin
+          IO.select([waiting], nil, nil, 2) && waiting.read(request.bytesize)
+        rescue SystemCallError
+        end
+        waiting.close
+
+        reply = begin
+          TCPSocket.open("127.0.0.1", port) { |socket| call.(socket) }
+        rescue SystemCallError => e
+          e.inspect
+        end
+        error = begin
+          server_thread.join(0.2)
+          nil
+        rescue Exception => e
+          e.inspect
+        end
+        puts JSON.generate(
+          reply: reply == request ? "echoed" : reply.inspect,
+          serving: server_thread.alive?,
+          error: error,
+          retry_logs: log.string.scan("Errno::EMFILE").size,
+        )
+        $stdout.flush
+        exit!(0)
+      RUBY
+
+      SERVER_KINDS.each do |kind|
+        it "keeps a #{kind} server accepting once descriptors are free again" do
+          # macOS drops the connection it cannot accept, and Ruby then waits
+          # for another instead of raising EMFILE.
+          skip "accept(2) reports EMFILE to Ruby only on Linux" unless RUBY_PLATFORM.include?("linux")
+
+          lib = File.expand_path("../lib", __dir__)
+          output = Timeout.timeout(30) do
+            IO.popen([RbConfig.ruby, "-I", lib, "-e", SERVER_SCRIPT, kind.to_s], err: File::NULL, &:read)
+          end
+          result = JSON.parse(output.lines.last.to_s)
+
+          expect(result).to include("reply" => "echoed", "serving" => true, "error" => nil)
+          # One run of failures per accepting thread; the pool has two workers.
+          expect(result["retry_logs"]).to be_between(1, kind == :thread_pool ? 2 : 1)
+        end
       end
     end
   end

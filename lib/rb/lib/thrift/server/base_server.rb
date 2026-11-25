@@ -22,6 +22,21 @@ require "logger"
 
 module Thrift
   class BaseServer
+    # accept errors that end only the connection being accepted; the listening
+    # socket is fine. Ruby retries EINTR and EAGAIN itself. Linux also reports
+    # pending network errors of the new connection here; see accept(2).
+    ACCEPT_CONNECTION_ERRORS = [
+      *%w[ECONNRESET EPIPE ECONNABORTED EPROTO],
+      *(RUBY_PLATFORM.include?("linux") ? %w[EPERM ENETDOWN ENETUNREACH EHOSTUNREACH EHOSTDOWN ENONET ENOPROTOOPT EOPNOTSUPP] : []),
+    ].select { |name| Errno.const_defined?(name) }.map { |name| Errno.const_get(name) }.freeze
+
+    # accept errors when descriptors or memory run out, which pass once other
+    # connections close.
+    ACCEPT_RESOURCE_ERRORS = %w[EMFILE ENFILE ENOBUFS ENOMEM]
+      .select { |name| Errno.const_defined?(name) }.map { |name| Errno.const_get(name) }.freeze
+
+    private_constant :ACCEPT_CONNECTION_ERRORS, :ACCEPT_RESOURCE_ERRORS
+
     def initialize(processor, server_transport, transport_factory = nil, protocol_factory = nil, logger: nil)
       @processor = processor
       @server_transport = server_transport
@@ -41,6 +56,47 @@ module Thrift
 
     def to_s
       "server(#{@protocol_factory}(#{@transport_factory}(#{@server_transport})))"
+    end
+
+    private
+
+    # Yields each client accepted from the server transport, for as long as
+    # wait_for_client returns true. Skips a connection that fails while it is
+    # accepted. While descriptors or memory run out, accepts again after a
+    # pause that starts at 5 ms and doubles up to 1 s, and logs the first
+    # failure of each such run. Raises IOError once the transport is closed.
+    def accept_clients
+      pause = 0
+      while wait_for_client
+        begin
+          client = @server_transport.accept
+        rescue *ACCEPT_CONNECTION_ERRORS
+          pause = 0
+          next
+        rescue *ACCEPT_RESOURCE_ERRORS => e
+          @logger.error("Error while accepting a client connection, retrying: #{e.inspect}") if pause.zero?
+          pause = pause.zero? ? 0.005 : [pause * 2, 1.0].min
+          sleep(pause)
+          next
+        rescue => e
+          raise unless defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
+
+          pause = 0
+          next
+        end
+        # ServerSocket#accept returns nil once the socket is closed, for
+        # example by a shutdown during a pause.
+        raise IOError, "closed stream" if client.nil?
+
+        pause = 0
+        yield client
+      end
+    end
+
+    # Called before each accept; return false to stop accepting. The servers
+    # that block in accept have nothing to wait for.
+    def wait_for_client
+      true
     end
   end
 end

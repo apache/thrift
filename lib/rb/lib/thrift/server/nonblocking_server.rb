@@ -48,24 +48,7 @@ module Thrift
       @io_manager = start_io_manager
 
       begin
-        loop do
-          break if @server_transport.closed? || @io_manager.error
-          begin
-            rd, = select([@server_transport], nil, nil, 0.1)
-          rescue Errno::EBADF => e
-            # In Ruby 1.9, calling @server_transport.close in shutdown paths causes the select() to raise an
-            # Errno::EBADF. If this happens, ignore it and retry the loop.
-            break
-          end
-          next if rd.nil?
-          begin
-            socket = @server_transport.accept
-          rescue Errno::ECONNRESET, Errno::EPIPE
-            next
-          rescue => e
-            next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
-            raise
-          end
+        accept_clients do |socket|
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
@@ -106,6 +89,18 @@ module Thrift
     end
 
     private
+
+    # Waits until a client is ready to be accepted, and returns false once the
+    # server is shutting down or the IO manager has failed.
+    def wait_for_client
+      until @server_transport.closed? || @io_manager.error
+        return true if select([@server_transport], nil, nil, 0.1)
+      end
+      false
+    rescue Errno::EBADF
+      # Closing @server_transport in shutdown can make select raise EBADF.
+      false
+    end
 
     def start_io_manager
       iom = IOManager.new(
