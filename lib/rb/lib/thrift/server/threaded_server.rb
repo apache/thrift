@@ -24,15 +24,7 @@ module Thrift
   class ThreadedServer < BaseServer
     def serve
       @server_transport.listen
-      loop do
-        begin
-          client = @server_transport.accept
-        rescue Errno::ECONNRESET, Errno::EPIPE
-          next
-        rescue => e
-          next if defined?(OpenSSL::SSL::SSLError) && e.is_a?(OpenSSL::SSL::SSLError)
-          raise
-        end
+      accept_clients do |client|
         trans = @transport_factory.get_transport(client)
         prot = @protocol_factory.get_protocol(trans)
         Thread.new(prot, trans) do |p, t|
