@@ -181,9 +181,9 @@ module Thrift
           @connections.reject(&:open?).each { |fd| remove_connection fd }
           begin
             rd, = select([@signal_pipes[0], *@connections])
-          rescue IOError
+          rescue IOError, Errno::EBADF
             # A worker closed a connection while select waited on it. Drop it and
-            # select again; an IOError with every connection open is not that.
+            # select again; an error with every connection open is not that.
             raise if @connections.all?(&:open?)
             next
           end
