@@ -125,6 +125,11 @@ module Thrift
         @max_frame_size = max_frame_size
         @connections = []
         @buffers = Hash.new { |h, k| h[k] = Bytes.empty_byte_buffer }
+        # Frames of each connection that the workers have not finished.
+        @frames_in_progress = Hash.new(0)
+        # Connections whose stream ended before the workers finished their frames.
+        @ended_connections = {}
+        @frames_lock = Mutex.new
         @signal_queue = Queue.new
         @signal_pipes = IO.pipe
         @signal_pipes[1].sync = true
@@ -152,9 +157,18 @@ module Thrift
 
       def shutdown(timeout = 0)
         @logger.debug "#{self} is shutting down workers"
-        @worker_queue.clear
-        @num_threads.times { @worker_queue.push [:shutdown] }
-        signal [:shutdown, timeout]
+        # An interrupt from another thread, such as a Timeout around shutdown,
+        # waits until the discarded frames are accounted for, so that it
+        # cannot leave their connections open.
+        Thread.handle_interrupt(Object => :never) do
+          discarded = take_queued_frames
+          # Frames the IO thread queues after these wait unstarted until it
+          # discards them.
+          @num_threads.times { @worker_queue.push [:shutdown] }
+          signal [:shutdown, timeout]
+          # After the signal, so that closing connections does not delay it.
+          discarded.each { |fd| frame_done(fd) }
+        end
         @shutdown_queue.pop
         @signal_pipes[0].close
         @signal_pipes[1].close
@@ -196,6 +210,10 @@ module Thrift
             remove_connection fd
           end
         end
+        # This thread queues every frame, so none arrives after this. Taking
+        # them also takes the stop commands shutdown queued, so queue new ones.
+        take_queued_frames.each { |fd| frame_done(fd) }
+        @num_threads.times { @worker_queue.push [:shutdown] }
         join_worker_threads(@shutdown_timeout)
       ensure
         @shutdown_queue.push :shutdown
@@ -205,7 +223,7 @@ module Thrift
         # Read only what has arrived: a blocking read on a TLS connection waits
         # for the rest of a record and holds up every other connection.
         data = fd.read_nonblock(DEFAULT_BUFFER)
-        return remove_connection(fd) if data.nil?
+        return end_connection(fd) if data.nil?
         return if data.is_a?(Symbol) # :wait_readable or :wait_writable
         buf = @buffers[fd]
         buf << data
@@ -224,6 +242,7 @@ module Thrift
           frame = slice_frame!(buf)
           break if frame.nil?
           @logger.debug "#{self} is processing a frame"
+          @frames_lock.synchronize { @frames_in_progress[fd] += 1 }
           @worker_queue.push [:frame, fd, frame]
         end
       end
@@ -237,7 +256,48 @@ module Thrift
       end
 
       def spin_thread(index)
-        Worker.new(@processor, @transport_factory, @protocol_factory, @logger, @worker_queue).spawn(index)
+        Worker.new(
+          @processor, @transport_factory, @protocol_factory, @logger, @worker_queue, method(:frame_done),
+        ).spawn(index)
+      end
+
+      # Stops reading a connection whose stream has ended, and closes it once
+      # the workers have written the replies to the frames already read.
+      def end_connection(fd)
+        # Before removing it, so that a connection being ended is always in
+        # one of the lists close_connections closes.
+        @frames_lock.synchronize do
+          if @frames_in_progress.key?(fd)
+            @ended_connections[fd] = true
+          else
+            fd.close
+          end
+        end
+        remove_connection fd
+      end
+
+      # Empties the worker queue and returns the connection of each frame no
+      # worker has started. Passing each to frame_done closes a connection
+      # whose stream has ended now, and not only once the running frames
+      # finish.
+      def take_queued_frames
+        fds = []
+        loop do
+          cmd, fd, = @worker_queue.pop(true)
+          fds << fd if cmd == :frame
+        rescue ThreadError # the queue is empty
+          return fds
+        end
+      end
+
+      # Called by a worker once it has processed a frame of the connection.
+      def frame_done(fd)
+        @frames_lock.synchronize do
+          next if (@frames_in_progress[fd] -= 1) > 0
+
+          @frames_in_progress.delete fd
+          fd.close if @ended_connections.delete fd
+        end
       end
 
       def signal(msg)
@@ -299,11 +359,18 @@ module Thrift
       end
 
       def close_connections
-        @connections.each do |fd|
-          fd.close
-        rescue IOError, SystemCallError, TransportException
+        # A killed worker can still report its frame while this runs.
+        @frames_lock.synchronize do
+          [*@connections, *@ended_connections.keys].each do |fd|
+            fd.close
+          rescue IOError, SystemCallError, TransportException
+          end
+          @connections.clear
+          @ended_connections.clear
+          # Counts no worker will report: frames still queued when the IO
+          # thread failed, and frames of workers killed before reporting.
+          @frames_in_progress.clear
         end
-        @connections.clear
         @buffers.clear
       end
 
@@ -328,12 +395,13 @@ module Thrift
       end
 
       class Worker # :nodoc:
-        def initialize(processor, transport_factory, protocol_factory, logger, queue)
+        def initialize(processor, transport_factory, protocol_factory, logger, queue, frame_done)
           @processor = processor
           @transport_factory = transport_factory
           @protocol_factory = protocol_factory
           @logger = logger
           @queue = queue
+          @frame_done = frame_done
         end
 
         def spawn(index)
@@ -364,6 +432,8 @@ module Thrift
                 @processor.process(iprot, oprot)
               rescue StandardError, ScriptError, SystemStackError => e
                 @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
+              ensure
+                @frame_done.call(fd)
               end
             end
           end

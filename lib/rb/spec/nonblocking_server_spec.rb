@@ -359,18 +359,26 @@ describe "NonblockingServer" do
       pipe_a = double("pipe_a", closed?: false, close: nil)
       pipe_b = double("pipe_b", closed?: false, close: nil)
 
+      ended = double("ended connection", close: nil)
+
       io_manager.instance_variable_set(:@connections, [connection])
       io_manager.instance_variable_set(:@buffers, { connection => "frame" })
+      # frames still queued when the IO thread failed
+      io_manager.instance_variable_get(:@frames_in_progress).merge!(connection => 1, ended => 1)
+      io_manager.instance_variable_set(:@ended_connections, { ended => true })
       io_manager.instance_variable_set(:@signal_pipes, [pipe_a, pipe_b])
       io_manager.instance_variable_set(:@worker_threads, [])
 
       io_manager.ensure_closed
 
       expect(connection).to have_received(:close)
+      expect(ended).to have_received(:close)
       expect(pipe_a).to have_received(:close)
       expect(pipe_b).to have_received(:close)
       expect(io_manager.instance_variable_get(:@connections)).to be_empty
       expect(io_manager.instance_variable_get(:@buffers)).to be_empty
+      expect(io_manager.instance_variable_get(:@frames_in_progress)).to be_empty
+      expect(io_manager.instance_variable_get(:@ended_connections)).to be_empty
     end
 
     it "continues closing remaining signal pipes when one close raises" do
@@ -466,12 +474,13 @@ describe "NonblockingServer" do
       expect(frames_queued(io_manager)).to eq([[:frame, connection, frame]])
     end
 
-    it "drops a connection at the end of its stream" do
+    it "drops and closes a connection at the end of its stream" do
       io_manager = build_io_manager
       connection = connection_sending(nil)
 
       read_from(io_manager, connection)
 
+      expect(connection).to have_received(:close)
       expect(io_manager.instance_variable_get(:@connections)).to be_empty
       expect(frames_queued(io_manager)).to be_empty
     end
@@ -492,12 +501,21 @@ describe "NonblockingServer" do
 
     before(:each) do
       # A "big!" request gets a reply larger than the socket buffers hold, so
-      # writing it times out while the client is not reading. Anything else
-      # gets "pong".
+      # writing it times out while the client is not reading. A "slow" request
+      # gets "pong" after a pause, and a "hold" request once @release lets it
+      # go. Anything else gets "pong" at once.
       @write_failures = Queue.new
+      @held = Queue.new
+      @release = Queue.new
       processor = double("processor")
       allow(processor).to receive(:process) do |iprot, oprot|
-        reply = iprot.trans.read(4) == "big!" ? "x" * (32 * 1024 * 1024) : "pong"
+        request = iprot.trans.read(4)
+        sleep 0.2 if request == "slow"
+        if request == "hold"
+          @held << true
+          @release.pop
+        end
+        reply = request == "big!" ? "x" * (32 * 1024 * 1024) : "pong"
         oprot.trans.write(reply)
         oprot.trans.flush
       rescue Thrift::TransportException => e
@@ -580,6 +598,56 @@ describe "NonblockingServer" do
       expect(Timeout.timeout(2) { client.read(8) }).to eq(frame("pong"))
       expect(io_thread).to be_alive
       expect(@server_thread).to be_alive
+    end
+
+    it "closes its end of a connection once the client's stream ends and the replies are written" do
+      client = connect
+      client.write(frame("slow"))
+      client.close_write # the stream ends while the request is still being processed
+
+      reply_and_end = Timeout.timeout(2) { client.read } # reads until the server closes
+      expect(reply_and_end).to eq(frame("pong"))
+    end
+
+    it "closes a connection whose stream has ended once shutdown discards its requests" do
+      2.times { connect.write(frame("hold")) } # keeps both workers busy
+      2.times { Timeout.timeout(2) { @held.pop } }
+      client = connect
+      client.write(frame("ping"))
+      client.close_write
+      ended = io_manager.instance_variable_get(:@ended_connections)
+      Timeout.timeout(2) { sleep 0.01 while ended.empty? } # its request is queued
+
+      @server.shutdown(0, false) # waits for the held requests, and discards the queued one
+      expect(Timeout.timeout(2) { client.read }).to eq("")
+    ensure
+      2.times { @release << true }
+    end
+
+    it "still closes those connections when a timeout interrupts shutdown as it discards their requests" do
+      2.times { connect.write(frame("hold")) } # keeps both workers busy
+      2.times { Timeout.timeout(2) { @held.pop } }
+      client = connect
+      client.write(frame("ping"))
+      client.close_write
+      ended = io_manager.instance_variable_get(:@ended_connections)
+      Timeout.timeout(2) { sleep 0.01 while ended.empty? } # its request is queued
+
+      # Interrupts shutdown from another thread, as Timeout does, once it has
+      # taken the queued requests and before it has closed their connections.
+      shutdown_thread = Thread.current
+      allow(io_manager).to receive(:take_queued_frames).and_wrap_original do |take|
+        take.call.tap do
+          next unless Thread.current == shutdown_thread # the IO thread takes them too
+
+          Thread.new { shutdown_thread.raise Timeout::Error, "interrupted" }.join
+          sleep 0.1
+        end
+      end
+      expect { @server.shutdown }.to raise_error(Timeout::Error, "interrupted")
+      expect(Timeout.timeout(2) { client.read }).to eq("")
+    ensure
+      2.times { @release << true }
     end
 
     context "when the IO thread fails" do
@@ -833,8 +901,12 @@ describe "NonblockingServer" do
     end
   end
 
+  def io_manager
+    @server.instance_variable_get(:@io_manager)
+  end
+
   def io_thread
-    @server.instance_variable_get(:@io_manager).instance_variable_get(:@iom_thread)
+    io_manager.instance_variable_get(:@iom_thread)
   end
 
   def available_port
