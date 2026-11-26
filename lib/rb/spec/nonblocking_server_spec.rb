@@ -553,6 +553,35 @@ describe "NonblockingServer" do
       expect(@server_thread).to be_alive
     end
 
+    it "keeps serving other connections after a worker closes a connection select is waiting on" do
+      # A worker closes the connection when writing its reply fails. If the
+      # close lands while select waits on it, select can raise EBADF rather
+      # than IOError; the window is too narrow to hit reliably, so the first
+      # select that sees a connection closes it and raises the same way.
+      Timeout.timeout(2) { sleep 0.01 until @server.instance_variable_get(:@io_manager) }
+      closed = Queue.new
+      raised = false
+      allow(@server.instance_variable_get(:@io_manager)).to receive(:select).and_wrap_original do |select, readers, *rest|
+        connection = readers[1]
+        if connection && !raised
+          raised = true
+          connection.close
+          closed << connection
+          raise Errno::EBADF
+        end
+        select.call(readers, *rest)
+      end
+
+      connect
+      expect(Timeout.timeout(2) { closed.pop }).not_to be_open
+
+      client = connect
+      client.write(frame("ping"))
+      expect(Timeout.timeout(2) { client.read(8) }).to eq(frame("pong"))
+      expect(io_thread).to be_alive
+      expect(@server_thread).to be_alive
+    end
+
     context "when the IO thread fails" do
       let(:server_transport_class) do
         Class.new(Thrift::ServerSocket) do
