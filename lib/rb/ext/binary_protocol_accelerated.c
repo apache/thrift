@@ -125,9 +125,7 @@ static void write_i64_direct(VALUE trans, int64_t value) {
 }
 
 static void write_string_direct(VALUE trans, VALUE str) {
-  if (TYPE(str) != T_STRING) {
-    rb_raise(rb_eStandardError, "Value should be a string");
-  }
+  StringValue(str);
   str = convert_to_utf8_byte_buffer(str);
   write_i32_direct(trans, checked_string_length(str));
   rb_funcall(trans, write_method_id, 1, str);

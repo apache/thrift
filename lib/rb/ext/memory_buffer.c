@@ -58,7 +58,8 @@ static void compact_buffer(VALUE self, VALUE buf, long index) {
 VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
   VALUE buf = GET_BUF(self);
   str = force_binary_encoding(str);
-  rb_str_buf_cat(buf, StringValuePtr(str), RSTRING_LEN(str));
+  rb_str_buf_cat(buf, RSTRING_PTR(str), RSTRING_LEN(str));
+  RB_GC_GUARD(str);
   return Qnil;
 }
 

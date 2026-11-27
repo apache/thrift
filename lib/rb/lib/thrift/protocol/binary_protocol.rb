@@ -140,12 +140,14 @@ module Thrift
 
     def write_string(str)
       raise "nil argument not allowed!" if str.nil?
+      str = String.new(str) unless str.is_a?(String)
       buf = Bytes.convert_to_utf8_byte_buffer(str)
       write_binary(buf)
     end
 
     def write_binary(buf)
       raise "nil argument not allowed!" if buf.nil?
+      buf = String.new(buf) unless buf.is_a?(String)
       write_i32_size(buf.bytesize)
       trans.write(buf)
     end

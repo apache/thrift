@@ -356,6 +356,7 @@ VALUE rb_thrift_compact_proto_write_double(VALUE self, VALUE dub) {
 }
 
 VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
+  StringValue(str);
   str = convert_to_utf8_byte_buffer(str);
   rb_thrift_compact_proto_write_binary(self, str);
   return Qnil;

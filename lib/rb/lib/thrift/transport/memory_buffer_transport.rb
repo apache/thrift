@@ -101,6 +101,7 @@ module Thrift
     end
 
     def write(wbuf)
+      wbuf = String.new(wbuf) unless wbuf.is_a?(String)
       @buf << Bytes.force_binary_encoding(wbuf)
     end
 

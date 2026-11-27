@@ -259,11 +259,13 @@ module Thrift
     end
 
     def write_string(str)
+      str = String.new(str) unless str.is_a?(String)
       buf = Bytes.convert_to_utf8_byte_buffer(str)
       write_binary(buf)
     end
 
     def write_binary(buf)
+      buf = String.new(buf) unless buf.is_a?(String)
       size = validate_size(buf.bytesize)
       write_varint32(size)
       @trans.write(buf)

@@ -342,6 +342,38 @@ shared_examples_for "a binary protocol" do
     expect { @prot.write_binary(nil) }.to raise_error(StandardError, "nil argument not allowed!")
   end
 
+  [:sym, "\xff0".b.to_sym, 123].each do |value|
+    it "should raise TypeError for a #{value.inspect} binary without writing" do
+      expect { @prot.write_binary(value) }.to raise_error(TypeError, "no implicit conversion of #{value.class} into String")
+      expect(@trans.available).to eq(0)
+    end
+  end
+
+  it "should write the bytes returned by to_str for a binary" do
+    @prot.write_binary(Struct.new(:to_str).new("abc".b))
+    expect(@trans.read(@trans.available)).to eq("\x00\x00\x00\x03abc".b)
+  end
+
+  it "should write the bytes of a non-String returned by encode for a string" do
+    converted = Struct.new(:to_str).new("abc".b)
+    def converted.force_encoding(*) = self
+    value = Class.new(String) { define_method(:encode) { |*| converted } }.new("xyz".b)
+    @prot.write_string(value)
+    expect(@trans.read(@trans.available)).to eq("\x00\x00\x00\x03abc".b)
+  end
+
+  [:sym, 123].each do |value|
+    it "should raise TypeError for a #{value.inspect} string without writing" do
+      expect { @prot.write_string(value) }.to raise_error(TypeError, "no implicit conversion of #{value.class} into String")
+      expect(@trans.available).to eq(0)
+    end
+  end
+
+  it "should write the bytes returned by to_str for a string" do
+    @prot.write_string(Struct.new(:to_str).new("abc"))
+    expect(@trans.read(@trans.available)).to eq("\x00\x00\x00\x03abc".b)
+  end
+
   it "should write a uuid" do
     @prot.write_uuid("00112233-4455-6677-8899-aabbccddeeff")
     a = @trans.read(@trans.available)

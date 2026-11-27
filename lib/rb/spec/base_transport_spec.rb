@@ -553,6 +553,19 @@ describe "BaseTransport" do
       expect(@buffer.read(2)).to eq("xy")
     end
 
+    it "appends the bytes returned by to_str" do
+      @buffer.write("x")
+      @buffer.write(Struct.new(:to_str).new("abc".b))
+      expect(@buffer.read(@buffer.available)).to eq("xabc".b)
+    end
+
+    [:sym, "\xff0".b.to_sym, 123].each do |value|
+      it "raises TypeError for #{value.inspect} without writing" do
+        expect { @buffer.write(value) }.to raise_error(TypeError, "no implicit conversion of #{value.class} into String")
+        expect(@buffer.available).to eq(0)
+      end
+    end
+
     it "should always remain open" do
       expect(@buffer).to be_open
       @buffer.close
