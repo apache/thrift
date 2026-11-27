@@ -224,5 +224,73 @@ describe "StructNestedContainers" do
         expect(a).not_to eq(b)
       end
     end
+
+    protocols = [Thrift::BinaryProtocol, Thrift::CompactProtocol, Thrift::JsonProtocol]
+    protocols << Thrift::BinaryProtocolAccelerated if defined?(Thrift::BinaryProtocolAccelerated)
+    protocols.each do |protocol_class|
+      describe "double set elements and map keys with #{protocol_class}" do
+        # Separate NaN objects, with and without a sign bit or payload; a Hash keeps every one of them.
+        let(:nans) { [Float::NAN, -Float::NAN, [0x7ff8000000000001].pack("Q>").unpack1("G")].map { |nan| nan * 1.0 } }
+        let(:ordinary) { [1.5, -0.0, Float::INFINITY, -Float::INFINITY] }
+        let(:ordinary_weights) { ordinary.each_with_index.to_h { |value, i| [value, 10 + i] } }
+        let(:transport) do
+          values = Set.new(nans + ordinary)
+          weights = nans.each_with_index.to_h { |nan, i| [nan, i + 1] }.merge(ordinary_weights)
+          expect([values.size, weights.size]).to eq([nans.size + ordinary.size] * 2)
+          Thrift::MemoryBufferTransport.new.tap do |buffer|
+            SpecNamespace::DoubleKeys.new(values: values, weights: weights).write(protocol_class.new(buffer))
+          end
+        end
+
+        def expect_one_nan(values, weights)
+          expect(values.size).to eq(ordinary.size + 1)
+          expect(values.select(&:nan?)).to eq([Float::NAN])
+          expect(values.reject(&:nan?)).to match_array(ordinary)
+          expect(values.find(&:zero?).to_s).to eq("-0.0")
+
+          # The last NaN key read keeps its value.
+          expect(weights.size).to eq(ordinary.size + 1)
+          expect(weights.select { |key, _| key.nan? }.to_a).to eq([[Float::NAN, nans.size]])
+          expect(weights.reject { |key, _| key.nan? }).to eq(ordinary_weights)
+          expect(transport.available).to eq(0)
+        end
+
+        it "keeps one NaN when a generated struct reads them" do
+          restored = SpecNamespace::DoubleKeys.new
+          restored.read(protocol_class.new(transport))
+
+          expect_one_nan(restored.values, restored.weights)
+        end
+
+        it "keeps every NaN in a list of doubles" do
+          list_transport = Thrift::MemoryBufferTransport.new
+          SpecNamespace::SimpleList.new(doubles: nans + [1.5] + nans).write(protocol_class.new(list_transport))
+          restored = SpecNamespace::SimpleList.new
+          restored.read(protocol_class.new(list_transport))
+
+          expect(restored.doubles.size).to eq((2 * nans.size) + 1)
+          expect(restored.doubles.map(&:nan?)).to eq(([true] * nans.size) + [false] + ([true] * nans.size))
+          expect(restored.doubles[nans.size]).to eq(1.5)
+          expect(list_transport.available).to eq(0)
+        end
+
+        it "keeps one NaN when the pure-Ruby reader reads them" do
+          protocol = protocol_class.new(transport)
+          struct = SpecNamespace::DoubleKeys.new
+          read = {}
+          # Call the Ruby container reader even when the native struct reader is loaded.
+          protocol.read_struct_begin
+          loop do
+            _, type, id = protocol.read_field_begin
+            break if type == Thrift::Types::STOP
+            read[id] = struct.read_field(protocol, SpecNamespace::DoubleKeys::FIELDS[id])
+            protocol.read_field_end
+          end
+          protocol.read_struct_end
+
+          expect_one_nan(read[1], read[2])
+        end
+      end
+    end
   end
 end

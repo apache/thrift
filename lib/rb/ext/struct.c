@@ -586,6 +586,10 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
           key = read_anything(protocol, key_ttype, key_info, remaining_depth);
           val = read_anything(protocol, value_ttype, value_info, remaining_depth);
 
+          // Store every NaN key as the one Float::NAN object: NaNs read separately never match each other.
+          if (key_ttype == TTYPE_DOUBLE && RB_FLOAT_TYPE_P(key) && isnan(RFLOAT_VALUE(key))) {
+            key = rb_const_get(rb_cFloat, rb_intern("NAN"));
+          }
           rb_hash_aset(result, key, val);
         }
       } else {
@@ -636,7 +640,12 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info, int rema
         items = new_container_array(num_elements);
 
         for (int i = 0; i < num_elements; ++i) {
-          rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym), remaining_depth));
+          VALUE element = read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym), remaining_depth);
+          // Store every NaN element as the one Float::NAN object: NaNs read separately never match each other.
+          if (element_ttype == TTYPE_DOUBLE && RB_FLOAT_TYPE_P(element) && isnan(RFLOAT_VALUE(element))) {
+            element = rb_const_get(rb_cFloat, rb_intern("NAN"));
+          }
+          rb_ary_push(items, element);
         }
 
         result = rb_class_new_instance(1, &items, rb_cSet);
