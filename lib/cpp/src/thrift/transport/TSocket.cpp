@@ -874,15 +874,28 @@ std::string TSocket::getPeerHost() const {
     char clienthost[NI_MAXHOST];
     char clientservice[NI_MAXSERV];
 
-    getnameinfo((sockaddr*)addrPtr,
-                addrLen,
-                clienthost,
-                sizeof(clienthost),
-                clientservice,
-                sizeof(clientservice),
-                0);
+    int rc = getnameinfo((sockaddr*)addrPtr,
+                         addrLen,
+                         clienthost,
+                         sizeof(clienthost),
+                         clientservice,
+                         sizeof(clientservice),
+                         0);
+    if (rc != 0) {
+      // The reverse lookup failed (for example EAI_AGAIN after a DNS timeout),
+      // and clienthost is undefined. Fall back to the numeric address.
+      rc = getnameinfo((sockaddr*)addrPtr,
+                       addrLen,
+                       clienthost,
+                       sizeof(clienthost),
+                       clientservice,
+                       sizeof(clientservice),
+                       NI_NUMERICHOST);
+    }
 
-    peerHost_ = clienthost;
+    if (rc == 0) {
+      peerHost_ = clienthost;
+    }
   }
   return peerHost_;
 }
@@ -912,16 +925,18 @@ std::string TSocket::getPeerAddress() const {
     char clienthost[NI_MAXHOST];
     char clientservice[NI_MAXSERV];
 
-    getnameinfo(addrPtr,
-                addrLen,
-                clienthost,
-                sizeof(clienthost),
-                clientservice,
-                sizeof(clientservice),
-                NI_NUMERICHOST | NI_NUMERICSERV);
+    int rc = getnameinfo(addrPtr,
+                         addrLen,
+                         clienthost,
+                         sizeof(clienthost),
+                         clientservice,
+                         sizeof(clientservice),
+                         NI_NUMERICHOST | NI_NUMERICSERV);
 
-    peerAddress_ = clienthost;
-    peerPort_ = std::atoi(clientservice);
+    if (rc == 0) {
+      peerAddress_ = clienthost;
+      peerPort_ = std::atoi(clientservice);
+    }
   }
   return peerAddress_;
 }
