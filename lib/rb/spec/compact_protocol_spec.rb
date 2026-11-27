@@ -919,6 +919,43 @@ describe Thrift::CompactProtocol do
     end
   end
 
+  describe "binary argument conversion" do
+    let(:transport) { Thrift::MemoryBufferTransport.new }
+    let(:protocol) { Thrift::CompactProtocol.new(transport) }
+
+    [:sym, "\xff0".b.to_sym, 123].each do |value|
+      it "raises TypeError for #{value.inspect} without writing" do
+        expect { protocol.write_binary(value) }.to raise_error(TypeError, "no implicit conversion of #{value.class} into String")
+        expect(transport.available).to eq(0)
+      end
+    end
+
+    it "writes the bytes returned by to_str" do
+      protocol.write_binary(Struct.new(:to_str).new("abc".b))
+      expect(transport.read(transport.available)).to eq("\x03abc".b)
+    end
+
+    it "writes the bytes of a non-String returned by encode" do
+      converted = Struct.new(:to_str).new("abc".b)
+      def converted.force_encoding(*) = self
+      value = Class.new(String) { define_method(:encode) { |*| converted } }.new("xyz".b)
+      protocol.write_string(value)
+      expect(transport.read(transport.available)).to eq("\x03abc".b)
+    end
+
+    [:sym, 123].each do |value|
+      it "raises TypeError for a #{value.inspect} string without writing" do
+        expect { protocol.write_string(value) }.to raise_error(TypeError, "no implicit conversion of #{value.class} into String")
+        expect(transport.available).to eq(0)
+      end
+    end
+
+    it "writes the bytes returned by to_str for a string" do
+      protocol.write_string(Struct.new(:to_str).new("abc"))
+      expect(transport.read(transport.available)).to eq("\x03abc".b)
+    end
+  end
+
   it "should accept a valid 10-byte varint" do
     trans = Thrift::MemoryBufferTransport.new((([0x80] * 9) + [0x01]).pack("C*"))
     proto = Thrift::CompactProtocol.new(trans)
