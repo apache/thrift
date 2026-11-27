@@ -485,6 +485,19 @@ describe "NonblockingServer" do
       expect(frames_queued(io_manager)).to be_empty
     end
 
+    it "lets a worker close a connection while the IO thread is not reading its signals" do
+      io_manager = build_io_manager
+      connection = double("connection", close: nil)
+      signal_pipe = io_manager.instance_variable_get(:@signal_pipes)[1]
+      nil until signal_pipe.write_nonblock(" " * 4096, exception: false) == :wait_writable
+
+      Timeout.timeout(2) { io_manager.send(:close_connection, connection) }
+
+      expect(connection).to have_received(:close)
+    ensure
+      io_manager.send(:close_signal_pipes)
+    end
+
     it "keeps a connection that has nothing to read yet" do
       io_manager = build_io_manager
       connection = connection_sending(:wait_readable)
@@ -503,7 +516,7 @@ describe "NonblockingServer" do
       # A "big!" request gets a reply larger than the socket buffers hold, so
       # writing it times out while the client is not reading. A "slow" request
       # gets "pong" after a pause, and a "hold" request once @release lets it
-      # go. Anything else gets "pong" at once.
+      # go. A "fail" request raises. Anything else gets "pong" at once.
       @write_failures = Queue.new
       @held = Queue.new
       @release = Queue.new
@@ -515,6 +528,8 @@ describe "NonblockingServer" do
           @held << true
           @release.pop
         end
+        raise "processor failed" if request == "fail"
+
         reply = request == "big!" ? "x" * (32 * 1024 * 1024) : "pong"
         oprot.trans.write(reply)
         oprot.trans.flush
@@ -524,9 +539,16 @@ describe "NonblockingServer" do
       end
 
       @log = StringIO.new
+      @log_messages = Queue.new
+      logger = Logger.new(@log)
+      formatter = Logger::Formatter.new
+      logger.formatter = proc do |severity, time, progname, message|
+        @log_messages << [severity, message]
+        formatter.call(severity, time, progname, message)
+      end
       @transport = server_transport_class.new("127.0.0.1", 0, client_timeout: 0.2)
       @server = Thrift::NonblockingServer.new(
-        processor, @transport, Thrift::FramedTransportFactory.new, nil, 2, Logger.new(@log),
+        processor, @transport, Thrift::FramedTransportFactory.new, nil, 2, logger,
       )
       @server_thread = Thread.new do
         Thread.current.report_on_exception = false
@@ -563,12 +585,65 @@ describe "NonblockingServer" do
       connect.write(frame("big!")) # and never read the reply
       failure = Timeout.timeout(5) { @write_failures.pop }
       expect(failure.type).to eq(Thrift::TransportException::TIMED_OUT)
+      # logged as before, not as a frame that could not be decoded
+      Timeout.timeout(2) { sleep 0.01 until @log.string.include?("raised error") }
+      expect(@log.string).to include("ERROR").and include(__FILE__)
+      expect(@log.string).not_to include("could not be decoded")
 
       client = connect
       client.write(frame("ping"))
       expect(Timeout.timeout(2) { client.read(8) }).to eq(frame("pong"))
       expect(io_thread).to be_alive
       expect(@server_thread).to be_alive
+    end
+
+    def logged_messages
+      messages = []
+      messages << @log_messages.pop until @log_messages.empty?
+      messages
+    end
+
+    it "closes a connection after a frame that cannot be decoded and logs it once" do
+      client = connect
+      client.write(frame("")) # a zero-length frame holds no message
+
+      expect(Timeout.timeout(2) { client.read }).to eq("") # the server closed the connection
+      Timeout.timeout(2) { sleep 0.01 until @log.string.include?("TransportException") }
+      about_it = logged_messages.select { |_, message| message.include?("TransportException") }
+      expect(about_it.size).to eq(1)
+      severity, message = about_it.first
+      expect(severity).to eq("DEBUG")
+      expect(message).not_to include("\n")
+
+      other = connect
+      other.write(frame("ping"))
+      expect(Timeout.timeout(2) { other.read(8) }).to eq(frame("pong"))
+    end
+
+    it "drops the requests still queued for a connection it closed after a frame that cannot be decoded" do
+      connect.write(frame("hold")) # one worker is left, taking the frames below in order
+      Timeout.timeout(2) { @held.pop }
+      client = connect
+      client.write(frame("") + frame("ping"))
+
+      expect(Timeout.timeout(2) { client.read }).to eq("") # no reply to the ping
+      in_progress = io_manager.instance_variable_get(:@frames_in_progress)
+      Timeout.timeout(2) { sleep 0.01 until in_progress.size == 1 } # only the held request is left
+      expect(@log.string).not_to include("raised error") # the ping was not processed
+    ensure
+      @release << true
+    end
+
+    it "still logs a processor failure with its backtrace and keeps the connection" do
+      client = connect
+      client.write(frame("fail"))
+      Timeout.timeout(2) { sleep 0.01 until @log.string.include?("processor failed") }
+      errors = logged_messages.select { |severity, _| severity == "ERROR" }
+      expect(errors.size).to eq(1)
+      expect(errors.first[1]).to include("processor failed").and include(__FILE__)
+
+      client.write(frame("ping"))
+      expect(Timeout.timeout(2) { client.read(8) }).to eq(frame("pong"))
     end
 
     it "keeps serving other connections after a worker closes a connection select is waiting on" do
