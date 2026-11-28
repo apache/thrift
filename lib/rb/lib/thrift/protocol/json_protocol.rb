@@ -173,6 +173,8 @@ module Thrift
     I64_MIN = -(2**63)
     I64_MAX = (2**63) - 1
     JSON_INTEGER = /\A-?(?:0|[1-9][0-9]*)\z/
+    # The length of the longest i64, -9223372036854775808.
+    MAX_JSON_INTEGER_LENGTH = 20
     JSON_NUMBER = /\A-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\z/
 
     attr_reader :max_string_size
@@ -623,13 +625,17 @@ module Thrift
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
-    # a valid JSON numeric character.
-    def read_json_numeric_chars
+    # a valid JSON numeric character. With max_length, raises instead of
+    # reading more than max_length characters.
+    def read_json_numeric_chars(max_length = nil)
       str = String.new(encoding: Encoding::UTF_8)
       while true
         ch = @reader.peek
         if !is_json_numeric(ch)
           break
+        end
+        if max_length && str.bytesize >= max_length
+          raise ProtocolException.new(ProtocolException::INVALID_DATA, "Numeric value is longer than #{max_length} characters")
         end
         ch = @reader.read
         str << ch
@@ -645,7 +651,7 @@ module Thrift
       if @context.escapeNum
         read_json_syntax_char(@@kJSONStringDelimiter)
       end
-      str = read_json_numeric_chars
+      str = read_json_numeric_chars(MAX_JSON_INTEGER_LENGTH)
 
       invalid_number!(str) unless JSON_INTEGER.match?(str)
       num = Integer(str)
