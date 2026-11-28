@@ -915,6 +915,23 @@ describe "JsonProtocol" do
       end
     end
 
+    it "rejects JSON integer tokens longer than an i64 can be written" do
+      ["1" + ("0" * 20), "-1" + ("0" * 19), "9" * 1_000_000].each do |digits|
+        ["#{digits}]", "[\"i64\",\"i16\",1,{\"#{digits}\":2}]"].each do |wire|
+          transport = Thrift::MemoryBufferTransport.new(wire)
+          protocol = Thrift::JsonProtocol.new(transport)
+          protocol.read_map_begin if wire.start_with?("[")
+
+          expect { protocol.read_i64 }.to raise_error(Thrift::ProtocolException) do |error|
+            expect(error.type).to eq(Thrift::ProtocolException::INVALID_DATA)
+            expect(error.message.bytesize).to be < 100
+          end
+          # Reading stops at the limit instead of consuming the whole token.
+          expect(transport.available).to be >= digits.bytesize - 21
+        end
+      end
+    end
+
     it "accepts the complete JSON number grammar for doubles" do
       {
         "0" => 0.0,

@@ -225,7 +225,13 @@ describe "The maximum string size in the JSON protocol" do
   it "refuses a number over a lowered maximum near the maximum" do
     trans = transport_with(("1" * 64) + " ")
     prot = Thrift::JsonProtocol.new(trans, max_string_size: 32)
-    expect_refused_within(trans, 32 + 8) { prot.read_i64 }
+    expect_refused_within(trans, 32 + 8) { prot.read_double }
+
+    # Integers longer than an i64 can be are refused sooner, so lower the
+    # maximum below that length.
+    trans = transport_with(("1" * 64) + " ")
+    prot = Thrift::JsonProtocol.new(trans, max_string_size: 8)
+    expect_refused_within(trans, 8 + 8) { prot.read_i64 }
   end
 
   it "reads a number at the maximum" do
