@@ -45,6 +45,20 @@ module StructEqualityFixtures
 
     Thrift::Struct.generate_accessors self
   end
+
+  class SymbolNames
+    include Thrift::Struct, Thrift::Struct_Union
+
+    FIELDS = {
+      1 => {type: Thrift::Types::I32, name: :count},
+      2 => {type: Thrift::Types::STRING, name: :label},
+    }
+
+    def struct_fields; FIELDS; end
+    def validate; end
+
+    Thrift::Struct.generate_accessors self
+  end
 end
 
 describe "Struct" do
@@ -613,6 +627,41 @@ describe "Struct" do
       serializer = Thrift::Serializer.new(Thrift::BinaryProtocolFactory.new)
 
       expect(serializer.serialize(subclassed)).to eq(serializer.serialize(regular))
+    end
+
+    {
+      Thrift::BinaryProtocolFactory => "\x08\x00\x01\x00\x00\x00\x05\x00".b,
+      Thrift::CompactProtocolFactory => "\x15\x0A\x00".b,
+    }.each do |factory, bytes|
+      it "round-trips a struct whose field names are symbols with #{factory}" do
+        source = StructEqualityFixtures::SymbolNames.new
+        source.count = 5
+
+        payload = Thrift::Serializer.new(factory.new).serialize(source)
+        expect(payload).to eq(bytes)
+
+        target = StructEqualityFixtures::SymbolNames.new
+        target.label = "stale"
+        Thrift::Deserializer.new(factory.new).deserialize(target, payload)
+        expect(target.count).to eq(5)
+        expect(target.label).to be_nil
+      end
+    end
+
+    [7, "7"].each do |name|
+      it "raises NameError for the field name #{name.inspect} when writing and reading" do
+        struct_class = Class.new do
+          include Thrift::Struct, Thrift::Struct_Union
+
+          const_set(:FIELDS, {1 => {type: Thrift::Types::I32, name: name}})
+          def struct_fields; self.class::FIELDS; end
+          def validate; end
+        end
+        error = [NameError, /@7. is not allowed as an instance variable name/]
+
+        expect { Thrift::Serializer.new.serialize(struct_class.new) }.to raise_error(*error)
+        expect { Thrift::Deserializer.new.deserialize(struct_class.new, "\x08\x00\x01\x00\x00\x00\x05\x00".b) }.to raise_error(*error)
+      end
     end
 
     it "should raise an exception if presented with an unknown container" do
