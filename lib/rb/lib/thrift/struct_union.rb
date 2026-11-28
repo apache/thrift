@@ -72,6 +72,8 @@ module Thrift
           size.times do
             k = read_field(iprot, field[:key], remaining_depth)
             v = read_field(iprot, field[:value], remaining_depth)
+            # Store every NaN key as the one Float::NAN object: NaNs read separately never match each other.
+            k = Float::NAN if key_type == Types::DOUBLE && Float === k && k.nan?
             value[k] = v
           end
         end
@@ -104,6 +106,8 @@ module Thrift
           value = Set.new
           size.times do
             element = read_field(iprot, field[:element], remaining_depth)
+            # Store every NaN element as the one Float::NAN object, as for map keys above.
+            element = Float::NAN if e_type == Types::DOUBLE && Float === element && element.nan?
             value << element
           end
         end

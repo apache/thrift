@@ -212,6 +212,11 @@ struct NestedMapInMapValue {
   2: map<byte, map<byte, byte>> value
 }
 
+struct DoubleKeys {
+  1: set<double> values
+  2: map<double, i32> weights
+}
+
 # Recursive types for the struct/union/exception recursion-depth limit specs (THRIFT-6045).
 struct RecTree {
   1: list<RecTree> children
