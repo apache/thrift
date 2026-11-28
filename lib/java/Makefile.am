@@ -26,7 +26,7 @@ all-local:
 		--console=plain
 
 install-exec-hook:
-	$(GRADLE) $(GRADLE_OPTS) publishToMavenLocal \
+	$(GRADLE) $(GRADLE_OPTS) publishToMavenLocal installDist \
 		-Prelease=true \
 		-Pinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
 		-Pinstall.javadoc.path=$(DESTDIR)$(docdir)/java \
