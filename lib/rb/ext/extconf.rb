@@ -37,7 +37,5 @@ else
   # selectively, or entirely remove this flag.
   append_cflags("-fvisibility=hidden")
 
-  have_func("strlcpy", "string.h")
-
   create_makefile "thrift_native"
 end

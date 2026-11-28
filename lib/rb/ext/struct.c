@@ -18,12 +18,13 @@
  */
 
 #include <stdint.h>
+#include <string.h>
+#include <ruby/encoding.h>
 
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
 #include "protocol.h"
-#include "strlcpy.h"
 
 VALUE thrift_union_class;
 
@@ -37,6 +38,9 @@ static ID validate_container_size_method_id;
 static ID copy_default_value_method_id;
 static VALUE thrift_struct_module;
 static VALUE default_sym;
+static VALUE ivar_prefix;
+static ID instance_variable_get_method_id;
+static ID to_sym_method_id;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
@@ -283,17 +287,38 @@ static VALUE rb_thrift_struct_write_recursive(VALUE self, VALUE protocol, int re
 static VALUE rb_thrift_union_write_recursive(VALUE self, VALUE protocol, int remaining_depth);
 static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info, int remaining_depth);
 
-static inline ID field_ivar_id(VALUE field_name) {
-  char name_buf[RSTRING_LEN(field_name) + 2];
+// Resolves the instance variable "@#{field_name}" the way the pure-Ruby
+// implementation does, including the NameError for a name that is not valid.
+static inline ID field_ivar_id(VALUE obj, VALUE field_name) {
+  char name_buf[64];
+  long name_len;
+  ID ivar_id;
 
-  name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING_PTR(field_name), RSTRING_LEN(field_name) + 1);
+  if (SYMBOL_P(field_name)) {
+    field_name = rb_sym2str(field_name);
+  } else {
+    field_name = rb_obj_as_string(field_name);
+  }
 
-  return rb_intern(name_buf);
+  name_len = RSTRING_LEN(field_name);
+  if (name_len < (long)sizeof(name_buf)) {
+    name_buf[0] = '@';
+    memcpy(&name_buf[1], RSTRING_PTR(field_name), name_len);
+    ivar_id = rb_intern3(name_buf, name_len + 1, rb_enc_get(field_name));
+  } else {
+    ivar_id = rb_intern_str(rb_str_plus(ivar_prefix, field_name));
+  }
+
+  if (!rb_is_instance_id(ivar_id)) {
+    // Let Ruby raise the same NameError as instance_variable_get.
+    rb_funcall(obj, instance_variable_get_method_id, 1, rb_str_plus(ivar_prefix, field_name));
+  }
+
+  return ivar_id;
 }
 
 VALUE get_field_value(VALUE obj, VALUE field_name) {
-  return rb_ivar_get(obj, field_ivar_id(field_name));
+  return rb_ivar_get(obj, field_ivar_id(obj, field_name));
 }
 
 static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol, int remaining_depth) {
@@ -489,7 +514,7 @@ static int reset_struct_field(VALUE field_id, VALUE field_info, VALUE self) {
   (void)field_id;
 
   VALUE field_name = rb_hash_aref(field_info, name_sym);
-  ID ivar_id = field_ivar_id(field_name);
+  ID ivar_id = field_ivar_id(self, field_name);
   VALUE default_value = rb_hash_aref(field_info, default_sym);
 
   if (NIL_P(default_value)) {
@@ -700,7 +725,7 @@ static VALUE read_struct_fields(VALUE data) {
         // read the value
         VALUE name = rb_hash_aref(field_info, name_sym);
         VALUE value = read_anything(protocol, field_type, field_info, context->remaining_depth);
-        rb_ivar_set(self, field_ivar_id(name), value);
+        rb_ivar_set(self, field_ivar_id(self, name), value);
         if (!NIL_P(context->unread_fields)) {
           rb_hash_delete(context->unread_fields, field_id);
         }
@@ -787,7 +812,8 @@ static VALUE rb_thrift_union_read_recursive(VALUE self, VALUE protocol, int rema
       // read the value
       VALUE name = rb_hash_aref(field_info, name_sym);
       VALUE value = read_anything(protocol, field_type, field_info, remaining_depth);
-      rb_iv_set(self, "@setfield", rb_str_intern(name));
+      // Same conversion as the pure-Ruby field[:name].to_sym.
+      rb_iv_set(self, "@setfield", rb_funcall(name, to_sym_method_id, 0));
       rb_iv_set(self, "@value", value);
     } else {
       rb_funcall(protocol, skip_method_id, 1, field_type_value);
@@ -880,6 +906,11 @@ void Init_struct(void) {
 
   rb_define_method(thrift_union_class, "write", rb_thrift_union_write, -1);
   rb_define_method(thrift_union_class, "read", rb_thrift_union_read, -1);
+
+  ivar_prefix = rb_obj_freeze(rb_usascii_str_new_cstr("@"));
+  rb_global_variable(&ivar_prefix);
+  instance_variable_get_method_id = rb_intern("instance_variable_get");
+  to_sym_method_id = rb_intern("to_sym");
 
   setfield_id = rb_intern("@setfield");
   rb_global_variable(&setfield_id);

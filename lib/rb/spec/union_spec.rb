@@ -23,6 +23,35 @@ require "thrift_spec_constants"
 
 describe "Union" do
   describe Thrift::Union do
+    it "reads a union whose field names are symbols" do
+      union_class = Class.new(Thrift::Union) do
+        include Thrift::Struct_Union
+
+        const_set(:FIELDS, {1 => {type: Thrift::Types::I32, name: :count}})
+        def struct_fields; self.class::FIELDS; end
+        def validate; end
+      end
+      payload = "\x08\x00\x01\x00\x00\x00\x05\x00".b
+
+      union = Thrift::Deserializer.new.deserialize(union_class.new, payload)
+
+      expect(union.get_set_field).to eq(:count)
+      expect(union.get_value).to eq(5)
+    end
+
+    it "converts the field name with to_sym when reading a union" do
+      union_class = Class.new(Thrift::Union) do
+        include Thrift::Struct_Union
+
+        const_set(:FIELDS, {1 => {type: Thrift::Types::I32, name: 7}})
+        def struct_fields; self.class::FIELDS; end
+        def validate; end
+      end
+      payload = "\x08\x00\x01\x00\x00\x00\x05\x00".b
+
+      expect { Thrift::Deserializer.new.deserialize(union_class.new, payload) }.to raise_error(NoMethodError, /to_sym/)
+    end
+
     it "should return nil value in unset union" do
       union = SpecNamespace::My_union.new
       expect(union.get_set_field).to eq(nil)
