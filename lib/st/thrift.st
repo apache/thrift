@@ -170,6 +170,16 @@ TMessage subclass: #TCallMessage
 type
 	^ 1! !
 
+TMessage subclass: #TOnewayMessage
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'Thrift-Protocol'!
+
+!TOnewayMessage methodsFor: 'accessing'!
+type
+	^ 4! !
+
 !TMessage methodsFor: 'accessing' stamp: 'pc 10/24/2007 20:05'!
 name
 	^ name ifNil: ['']! !
