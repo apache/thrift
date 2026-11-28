@@ -244,6 +244,95 @@ class TSocket extends TTransport
     }
 
     /**
+     * Wait for the stream to become readable or writable.
+     *
+     * A signal arriving during the select makes stream_select() return false
+     * with errno EINTR, which is not a transport failure. Retry with the time
+     * left of the original timeout, so interrupts never extend the deadline.
+     * Any other failure is returned as false.
+     *
+     * @return int|false number of ready streams, 0 on timeout
+     */
+    private function streamSelectWithRetry(bool $forWrite, int $timeoutSec, int $timeoutUsec): int|false
+    {
+        $deadline = hrtime(true) + ($timeoutSec * 1000000 + $timeoutUsec) * 1000;
+
+        while (true) {
+            $ready = $this->streamSelect($forWrite, $timeoutSec, $timeoutUsec, $interrupted);
+            if ($ready !== false || !$interrupted) {
+                return $ready;
+            }
+
+            // hrtime(true) is a float on 32-bit PHP, so no intdiv() or % here
+            $remainingUsec = ($deadline - hrtime(true)) / 1000;
+            if ($remainingUsec < 1) {
+                return 0;
+            }
+            $timeoutSec = (int) ($remainingUsec / 1000000);
+            $timeoutUsec = (int) ($remainingUsec - $timeoutSec * 1000000);
+        }
+    }
+
+    /**
+     * Run one stream_select() and report whether a signal interrupted it.
+     *
+     * The interrupt is only visible as a warning. error_get_last() cannot be
+     * trusted for it: an application error handler that returns true keeps the
+     * warning out of it, and a warning raised by the signal handler replaces
+     * it. So a handler installed for the duration of the call takes the
+     * interrupt warning itself.
+     *
+     * Asynchronous pcntl signal handlers are held back until the application's
+     * error handler is in place again; otherwise they would run while it is
+     * replaced, and their errors would miss it. That leaves stream_select() as
+     * the only source of errors during the call. A failure other than the
+     * interrupt is passed on to the replaced handler, or to PHP when there was
+     * none. PHP does not expose the severity mask of that handler, so it gets
+     * this warning even if it was registered without E_WARNING.
+     */
+    private function streamSelect(bool $forWrite, int $timeoutSec, int $timeoutUsec, ?bool &$interrupted): int|false
+    {
+        $interrupted = false;
+        $asyncSignals = function_exists('pcntl_async_signals') && pcntl_async_signals(false);
+        $previous = null;
+        $previous = set_error_handler(
+            static function (int $errno, string $message, ...$rest) use (&$interrupted, &$previous) {
+                if (self::isInterruptWarning($message)) {
+                    $interrupted = true;
+
+                    return true;
+                }
+
+                return $previous !== null ? $previous($errno, $message, ...$rest) : false;
+            }
+        );
+
+        try {
+            $null = null;
+            $read = $forWrite ? null : [$this->handle];
+            $write = $forWrite ? [$this->handle] : null;
+
+            return @stream_select($read, $write, $null, $timeoutSec, $timeoutUsec);
+        } finally {
+            restore_error_handler();
+            if ($asyncSignals) {
+                pcntl_async_signals(true);
+                pcntl_signal_dispatch();
+            }
+        }
+    }
+
+    private static function isInterruptWarning(string $message): bool
+    {
+        // with html_errors the function name is followed by a link, not a colon;
+        // EINTR is 4 on POSIX, and Windows reports WSAEINTR as 10004
+        return str_starts_with($message, 'stream_select()')
+            && (str_contains($message, '[4]')
+                || str_contains($message, '[10004]')
+                || stripos($message, 'Interrupted system call') !== false);
+    }
+
+    /**
      * Read from the socket at most $len bytes.
      *
      * This method will not wait for all the requested data, it will return as
@@ -251,15 +340,7 @@ class TSocket extends TTransport
      */
     public function read(int $len): string
     {
-        $null = null;
-        $read = [$this->handle];
-        $readable = @stream_select(
-            $read,
-            $null,
-            $null,
-            $this->recvTimeoutSec,
-            $this->recvTimeoutUsec
-        );
+        $readable = $this->streamSelectWithRetry(false, $this->recvTimeoutSec, $this->recvTimeoutUsec);
 
         if ($readable > 0) {
             $data = fread($this->handle, $len);
@@ -285,19 +366,10 @@ class TSocket extends TTransport
      */
     public function write(string $buf): void
     {
-        $null = null;
-        $write = [$this->handle];
-
         // keep writing until all the data has been written
         while (strlen($buf) > 0) {
             // wait for stream to become available for writing
-            $writable = @stream_select(
-                $null,
-                $write,
-                $null,
-                $this->sendTimeoutSec,
-                $this->sendTimeoutUsec
-            );
+            $writable = $this->streamSelectWithRetry(true, $this->sendTimeoutSec, $this->sendTimeoutUsec);
             if ($writable > 0) {
                 // write buffer to stream
                 $written = fwrite($this->handle, $buf);
