@@ -194,6 +194,7 @@ SKILL.md
 /lib/d/test/*.pem
 /lib/d/index.html
 /lib/d/libthriftd*.a
+/lib/d/test/async_client_test
 /lib/d/test/async_test
 /lib/d/test/client_pool_test
 /lib/d/test/serialization_benchmark
