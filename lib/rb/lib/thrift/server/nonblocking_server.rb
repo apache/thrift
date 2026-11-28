@@ -257,7 +257,8 @@ module Thrift
 
       def spin_thread(index)
         Worker.new(
-          @processor, @transport_factory, @protocol_factory, @logger, @worker_queue, method(:frame_done),
+          @processor, @transport_factory, @protocol_factory, @logger, @worker_queue,
+          method(:frame_done), method(:close_connection),
         ).spawn(index)
       end
 
@@ -298,6 +299,14 @@ module Thrift
           @frames_in_progress.delete fd
           fd.close if @ended_connections.delete fd
         end
+      end
+
+      # Called by a worker that cannot decode a frame. Closing now makes the
+      # workers skip the connection's queued frames. The wake-up must not
+      # block: at shutdown this thread stops reading the pipe.
+      def close_connection(fd)
+        fd.close
+        @signal_pipes[1].write_nonblock(" ", exception: false)
       end
 
       def signal(msg)
@@ -395,13 +404,14 @@ module Thrift
       end
 
       class Worker # :nodoc:
-        def initialize(processor, transport_factory, protocol_factory, logger, queue, frame_done)
+        def initialize(processor, transport_factory, protocol_factory, logger, queue, frame_done, close_connection)
           @processor = processor
           @transport_factory = transport_factory
           @protocol_factory = protocol_factory
           @logger = logger
           @queue = queue
           @frame_done = frame_done
+          @close_connection = close_connection
         end
 
         def spawn(index)
@@ -424,6 +434,9 @@ module Thrift
             when :frame
               fd, frame = args
               begin
+                # A connection the server has closed gets no more replies.
+                next unless fd.open?
+
                 otrans = @transport_factory.get_transport(fd)
                 oprot = @protocol_factory.get_protocol(otrans)
                 membuf = MemoryBufferTransport.new(frame)
@@ -431,7 +444,15 @@ module Thrift
                 iprot = @protocol_factory.get_protocol(itrans)
                 @processor.process(iprot, oprot)
               rescue StandardError, ScriptError, SystemStackError => e
-                @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
+                # Writing a reply closes the connection when it fails, so an
+                # open one means the frame itself could not be decoded: end
+                # the connection, as the other servers do.
+                if (e.is_a?(TransportException) || e.is_a?(ProtocolException)) && fd.open?
+                  @close_connection.call(fd)
+                  @logger.debug "Closed a connection after a frame that could not be decoded: #{e.inspect}"
+                else
+                  @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
+                end
               ensure
                 @frame_done.call(fd)
               end
