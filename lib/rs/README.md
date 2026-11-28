@@ -58,7 +58,8 @@ Full [Rustdoc](https://docs.rs/thrift/)
 
 The Rust library uses the Rust 2024 edition and requires Rust 1.85+, the
 `rust-version` declared in `Cargo.toml`. CI builds and tests with the Rust
-release pinned in the repository's `rust-toolchain` file.
+release pinned in the repository's `rust-toolchain` file, then builds and
+tests again with the `rust-version` toolchain.
 
 ### Breaking Changes
 
