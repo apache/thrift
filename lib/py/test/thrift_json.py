@@ -23,7 +23,7 @@ import _import_local_thrift  # noqa
 from thrift.protocol.TJSONProtocol import (TJSONProtocol, TJSONProtocolFactory,
                                            TSimpleJSONProtocol)
 from thrift.protocol.TProtocol import (DEFAULT_STRING_LENGTH_LIMIT,
-                                       TProtocolException)
+                                       TProtocolException, TType)
 from thrift.transport import TTransport
 
 #
@@ -120,6 +120,34 @@ class TestJSONString(unittest.TestCase):
         with self.assertRaises(TProtocolException) as ctx:
             protocol.readDouble()
         self.assertEqual(ctx.exception.type, TProtocolException.INVALID_DATA)
+
+    def test_non_finite_double_round_trip(self):
+        buf = TTransport.TMemoryBuffer()
+        protocol = TJSONProtocol(buf)
+        protocol.writeListBegin(TType.DOUBLE, 3)
+        for value in (float('inf'), float('-inf'), float('nan')):
+            protocol.writeDouble(value)
+        protocol.writeListEnd()
+        self.assertEqual(buf.getvalue(), b'["dbl",3,"Infinity","-Infinity","NaN"]')
+
+        protocol = TJSONProtocol(TTransport.TMemoryBuffer(buf.getvalue()))
+        protocol.readListBegin()
+        self.assertEqual([str(protocol.readDouble()) for _ in range(3)],
+                         ['inf', '-inf', 'nan'])
+
+    def test_non_finite_double_map_key(self):
+        buf = TTransport.TMemoryBuffer()
+        protocol = TJSONProtocol(buf)
+        protocol.writeMapBegin(TType.DOUBLE, TType.I32, 1)
+        protocol.writeDouble(float('nan'))
+        protocol.writeI32(1)
+        protocol.writeMapEnd()
+        self.assertEqual(buf.getvalue(), b'["dbl","i32",1,{"NaN":1}]')
+
+    def test_simple_json_non_finite_double(self):
+        buf = TTransport.TMemoryBuffer()
+        TSimpleJSONProtocol(buf).writeDouble(float('nan'))
+        self.assertEqual(buf.getvalue(), b'"NaN"')
 
 
 class TestJSONStringSizeLimit(unittest.TestCase):
