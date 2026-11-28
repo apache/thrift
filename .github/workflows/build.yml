@@ -38,6 +38,7 @@ env:
     --without-nodets
     --without-lua
     --without-rs
+    --without-zig
 
 permissions:
   contents: read
@@ -1754,6 +1755,87 @@ jobs:
           path: test/log/
           retention-days: 3
 
+  lib-zig:
+    needs: compiler
+    runs-on: ubuntu-24.04
+    env:
+      ZIG_VERSION: 0.17.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configure apt retries and timeouts
+        run: sudo cp .github/apt/99-ci-network /etc/apt/apt.conf.d/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Zig version sanity check
+        run: |
+          installed="$(zig version | head -1)"
+          expected="${ZIG_VERSION}"
+          if [ "$installed" != "$expected" ]; then
+            echo "Expected Zig ${expected}, got: ${installed}"
+            exit 1
+          fi
+          echo "Zig version OK: $installed"
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure for zig
+        run: |
+          summary=$(./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-zig/with-zig/'))
+          echo "$summary"
+          # configure disables a binding it cannot find rather than failing, and
+          # the steps below would then pass without running a single test. A
+          # green job that tests nothing is worse than no job, so insist that
+          # Zig was actually found.
+          echo "$summary" | grep -qE "Building Zig Library [.]+ : yes"
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Verify generated TApplicationException is in sync
+        run: make -C lib/zig verify-generated
+
+      - name: Run make for zig
+        run: make -C lib/zig
+
+      - name: Run make checks for zig
+        run: |
+          make -C lib/zig check
+
+      - name: Run make tests for zig
+        run: make -C lib/zig/tests check
+
+      - name: Run make precross for test zig
+        run: make -C test/zig precross
+
+      - name: Upload zig precross artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: zig-precross
+          if-no-files-found: error
+          path: |
+            test/zig/zig-out/bin/test_server
+            test/zig/zig-out/bin/test_client
+          retention-days: 3
+
   cross-test:
     needs:
       - lib-php
@@ -1765,16 +1847,17 @@ jobs:
       - lib-ruby
       - lib-nodejs
       - lib-netstd
+      - lib-zig
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       matrix:
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'rb.thin', 'rb.puma', 'rb.falcon', 'php', 'nodejs', 'nodets', 'netstd']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'py', 'rb', 'rb.thin', 'rb.puma', 'rb.falcon', 'php', 'nodejs', 'nodets', 'netstd', 'zig']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
         # netstd joins the smaller java,kotlin group; a group of its own would add a job per server,
         # and test.py exits 1 for rb.thin/rb.puma/rb.falcon, which share no transport with netstd
-        client_lang: ['java,kotlin,netstd', 'go,rs,cpp,py,php,nodejs,nodets,rb']
+        client_lang: ['java,kotlin,netstd', 'go,rs,cpp,py,php,nodejs,nodets,rb,zig']
       fail-fast: false
     env:
       BUNDLE_WITH: falcon_http_server
@@ -1903,6 +1986,12 @@ jobs:
           name: netstd-precross
           path: test/netstd
 
+      - name: Download zig precross artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: zig-precross
+          path: test/zig/zig-out/bin
+
       - name: Set back executable flags
         run: |
           chmod a+x lib/java/build/run*
@@ -1917,6 +2006,7 @@ jobs:
           chmod a+x lib/rb/ext/*.so
           chmod a+x test/netstd/Client/bin/Release/*/Client
           chmod a+x test/netstd/Server/bin/Release/*/Server
+          chmod a+x test/zig/zig-out/bin/*
 
       # The first dotnet command sets the SDK up for first use (NuGet migration
       # under a named mutex). Run it once, before the concurrent test runs.

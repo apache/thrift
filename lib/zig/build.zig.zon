@@ -1,0 +1,12 @@
+.{
+    .name = .thrift,
+    .version = "0.26.0",
+    .fingerprint = 0x6acc3344868a6278,
+    .minimum_zig_version = "0.17.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
