@@ -306,3 +306,30 @@ Source: https://github.com/B-Con/crypto-algorithms
 The author has placed this code in the public domain (no copyright claimed).
 No algorithmic changes were made; the file was adapted to a C++ header-only
 form for inclusion in the Thrift compiler.
+
+---------------------------------------------------
+For the frame-size helpers in lib/ocaml/src/TFramedTransport.ml
+
+These helpers are adapted from src/rpc/rtypes.ml in OCamlnet.
+Source: https://projects.camlcity.org/projects/ocamlnet.html
+
+Copyright (c) 2001-2006 Patrick Doane and Gerd Stolpmann
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must
+not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
