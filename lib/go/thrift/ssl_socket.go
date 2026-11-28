@@ -143,40 +143,15 @@ func (p *TSSLSocket) SetSocketTimeout(timeout time.Duration) error {
 }
 
 func (p *TSSLSocket) pushDeadline(read, write bool) {
-	var t time.Time
-	if timeout := p.cfg.GetSocketTimeout(); timeout > 0 {
-		t = time.Now().Add(time.Duration(timeout))
-	}
-	if read && write {
-		p.conn.SetDeadline(t)
-	} else if read {
-		p.conn.SetReadDeadline(t)
-	} else if write {
-		p.conn.SetWriteDeadline(t)
-	}
+	p.conn.pushDeadline(p.cfg.GetSocketTimeout(), read, write)
 }
 
 // Connects the socket, creating a new socket object if necessary.
 func (p *TSSLSocket) Open() error {
-	var err error
 	// If we have a hostname, we need to pass the hostname to tls.Dial for
 	// certificate hostname checks.
-	if p.hostPort != "" {
-		if p.conn, err = createSocketConnFromReturn(tls.DialWithDialer(
-			&net.Dialer{
-				Timeout: p.cfg.GetConnectTimeout(),
-			},
-			"tcp",
-			p.hostPort,
-			p.cfg.GetTLSConfig(),
-		)); err != nil {
-			return &tTransportException{
-				typeId: NOT_OPEN,
-				err:    err,
-				msg:    err.Error(),
-			}
-		}
-	} else {
+	network, address := "tcp", p.hostPort
+	if p.hostPort == "" {
 		if p.conn.isValid() {
 			return NewTTransportException(ALREADY_OPEN, "Socket already connected.")
 		}
@@ -189,19 +164,21 @@ func (p *TSSLSocket) Open() error {
 		if len(p.addr.String()) == 0 {
 			return NewTTransportException(NOT_OPEN, "Cannot open bad address.")
 		}
-		if p.conn, err = createSocketConnFromReturn(tls.DialWithDialer(
-			&net.Dialer{
-				Timeout: p.cfg.GetConnectTimeout(),
-			},
-			p.addr.Network(),
-			p.addr.String(),
-			p.cfg.GetTLSConfig(),
-		)); err != nil {
-			return &tTransportException{
-				typeId: NOT_OPEN,
-				err:    err,
-				msg:    err.Error(),
-			}
+		network, address = p.addr.Network(), p.addr.String()
+	}
+	var err error
+	if p.conn, err = createSocketConnFromReturn(tls.DialWithDialer(
+		&net.Dialer{
+			Timeout: p.cfg.GetConnectTimeout(),
+		},
+		network,
+		address,
+		p.cfg.GetTLSConfig(),
+	)); err != nil {
+		return &tTransportException{
+			typeId: NOT_OPEN,
+			err:    err,
+			msg:    err.Error(),
 		}
 	}
 	return nil

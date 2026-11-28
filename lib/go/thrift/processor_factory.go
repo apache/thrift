@@ -113,9 +113,9 @@ func (pe *ProcessorError) Unwrap() []error {
 func (pe *ProcessorError) Error() string {
 	var sb strings.Builder
 	sb.WriteString("thrift.ProcessorError: ")
-	sb.WriteString(fmt.Sprintf("write response to client: %v", pe.WriteError))
+	fmt.Fprintf(&sb, "write response to client: %v", pe.WriteError)
 	if pe.EndpointError != nil {
-		sb.WriteString(fmt.Sprintf("; original error from endpoint: %v", pe.EndpointError))
+		fmt.Fprintf(&sb, "; original error from endpoint: %v", pe.EndpointError)
 	}
 	return sb.String()
 }

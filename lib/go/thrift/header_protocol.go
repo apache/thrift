@@ -243,8 +243,8 @@ func (p *THeaderProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 	var newProto TProtocol
 	newProto, err = p.transport.Protocol().GetProtocol(p.transport)
 	if err != nil {
-		var tAppExc TApplicationException
-		if !errors.As(err, &tAppExc) {
+		tAppExc, ok := errors.AsType[TApplicationException](err)
+		if !ok {
 			return
 		}
 		if e := p.protocol.WriteMessageBegin(ctx, "", EXCEPTION, seqID); e != nil {

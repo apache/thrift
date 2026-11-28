@@ -159,15 +159,13 @@ func (t *TMultiplexedProcessor) ProcessorMap() map[string]TProcessorFunction {
 // the given ProcessorName or if all that is given is the FunctionName and there
 // is no DefaultProcessor set.
 func (t *TMultiplexedProcessor) AddToProcessorMap(name string, processorFunc TProcessorFunction) {
-	components := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
-	if len(components) != 2 {
-		if t.DefaultProcessor != nil && len(components) == 1 {
-			t.DefaultProcessor.AddToProcessorMap(components[0], processorFunc)
+	processorName, funcName, found := strings.Cut(name, MULTIPLEXED_SEPARATOR)
+	if !found {
+		if t.DefaultProcessor != nil {
+			t.DefaultProcessor.AddToProcessorMap(name, processorFunc)
 		}
 		return
 	}
-	processorName := components[0]
-	funcName := components[1]
 	if processor, ok := t.serviceProcessorMap[processorName]; ok {
 		processor.AddToProcessorMap(funcName, processorFunc)
 	}
@@ -197,8 +195,8 @@ func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) 
 		return false, NewTProtocolException(fmt.Errorf("Unexpected message type %v", typeId))
 	}
 	//extract the service name
-	v := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
-	if len(v) != 2 {
+	serviceName, funcName, found := strings.Cut(name, MULTIPLEXED_SEPARATOR)
+	if !found {
 		if t.DefaultProcessor != nil {
 			smb := NewStoredMessageProtocol(in, name, typeId, seqid)
 			return t.DefaultProcessor.Process(ctx, smb, out)
@@ -208,14 +206,14 @@ func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) 
 			name,
 		))
 	}
-	actualProcessor, ok := t.serviceProcessorMap[v[0]]
+	actualProcessor, ok := t.serviceProcessorMap[serviceName]
 	if !ok {
 		return false, NewTProtocolException(fmt.Errorf(
 			"Service name not found: %s.  Did you forget to call registerProcessor()?",
-			v[0],
+			serviceName,
 		))
 	}
-	smb := NewStoredMessageProtocol(in, v[1], typeId, seqid)
+	smb := NewStoredMessageProtocol(in, funcName, typeId, seqid)
 	return actualProcessor.Process(ctx, smb, out)
 }
 
